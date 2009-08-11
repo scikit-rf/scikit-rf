@@ -1,0 +1,201 @@
+
+<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>mwavepy</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/tmp/googleCode/mwavepy/mwavepy.py">/home/alex/tmp/googleCode/mwavepy/mwavepy.py</a></font></td></tr></table>
+    <p><tt>Filename:&nbsp;mwavepy.py<br>
+Author:&nbsp;alex&nbsp;arsenovic<br>
+Data:&nbsp;04/04/09<br>
+Requires:&nbsp;numpy,&nbsp;matplotlib&nbsp;(aka&nbsp;pylab)<br>
+&nbsp;<br>
+Summary:&nbsp;This&nbsp;is&nbsp;a&nbsp;collection&nbsp;of&nbsp;datatypes&nbsp;and&nbsp;functions&nbsp;which&nbsp;aid&nbsp;in&nbsp;microwave&nbsp;engineering.<br>
+there&nbsp;are&nbsp;a&nbsp;few&nbsp;classes&nbsp;such&nbsp;as&nbsp;<a href="#s">s</a>,&nbsp;<a href="#z">z</a>&nbsp;which&nbsp;represent&nbsp;scattering&nbsp;and&nbsp;impedance&nbsp;parameters.&nbsp;There<br>
+is&nbsp;also&nbsp;a&nbsp;<a href="#twoPort">twoPort</a>&nbsp;and&nbsp;<a href="#onePort">onePort</a>&nbsp;class,&nbsp;which&nbsp;represent&nbsp;networks.&nbsp;The&nbsp;main&nbsp;use&nbsp;of&nbsp;these&nbsp;functions&nbsp;is&nbsp;<br>
+for&nbsp;analyzing&nbsp;data&nbsp;gotten&nbsp;from&nbsp;network&nbsp;analyzers&nbsp;or&nbsp;simulation&nbsp;programs.&nbsp;The&nbsp;standard&nbsp;format&nbsp;for&nbsp;<br>
+such&nbsp;parameters&nbsp;is&nbsp;Touchtone&nbsp;file&nbsp;format.&nbsp;There&nbsp;is&nbsp;a&nbsp;function&nbsp;which&nbsp;reads&nbsp;a&nbsp;standard&nbsp;formated&nbsp;<br>
+touchtone&nbsp;file&nbsp;and&nbsp;creates&nbsp;an&nbsp;object&nbsp;representing&nbsp;the&nbsp;data&nbsp;within&nbsp;the&nbsp;file.&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+Examples:&nbsp;<br>
+&nbsp;<br>
+Loading&nbsp;a&nbsp;touchtone&nbsp;file:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;import&nbsp;mwavepy&nbsp;as&nbsp;m<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myTwoPort&nbsp;=&nbsp;m.loadTouchton('myTouchToneFile.s2p')<br>
+&nbsp;<br>
+Plotting&nbsp;some&nbsp;data:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;import&nbsp;pylab&nbsp;as&nbsp;p<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.figure()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myTwoPort.plotAllS()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.figure()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myTwoPort.plotZin1()<br>
+&nbsp;<br>
+Accessing&nbsp;parameter&nbsp;functions:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.figure()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myTwoPort.s11.plotdB()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.figure()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myTwoPort.s11.plotPhase()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;p.figure()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;myTwoPort.s11.plotSmith()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Most&nbsp;of&nbsp;these&nbsp;functions&nbsp;have&nbsp;not&nbsp;been&nbsp;rigidly&nbsp;tested.&nbsp;use&nbsp;with&nbsp;caution</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#fffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="pylab.html">pylab</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.html#onePort">onePort</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mwavepy.html#s">s</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mwavepy.html#twoPort">twoPort</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mwavepy.html#z">z</a>
+</font></dt></dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="onePort">class <strong>onePort</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>represents&nbsp;a&nbsp;one&nbsp;port&nbsp;network&nbsp;characterized&nbsp;by&nbsp;its&nbsp;<a href="#s">s</a>-parameters<br>
+has&nbsp;the&nbsp;following&nbsp;fields:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq,&nbsp;s11<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="onePort-__init__"><strong>__init__</strong></a>(self, s11<font color="#909090">=&lt;mwavepy.s instance at 0x1bce488&gt;</font>)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="s">class <strong>s</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>represents&nbsp;a&nbsp;<a href="#s">s</a>-parameter.&nbsp;has&nbsp;the&nbsp;following&nbsp;fields:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq,&nbsp;re,&nbsp;im,&nbsp;dB,&nbsp;mag,&nbsp;deg,&nbsp;complex,&nbsp;z0<br>
+TODO:&nbsp;fix&nbsp;constructor&nbsp;to&nbsp;allow&nbsp;more&nbsp;versitile&nbsp;input&nbsp;check&nbsp;for<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vectors&nbsp;being&nbsp;the&nbsp;same&nbsp;length<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="s-__init__"><strong>__init__</strong></a>(self, format<font color="#909090">=None</font>, freq<font color="#909090">=[]</font>, input1<font color="#909090">=[]</font>, input2<font color="#909090">=[]</font>, z0<font color="#909090">=50</font>)</dt><dd><tt>The&nbsp;format&nbsp;variable,&nbsp;is&nbsp;a&nbsp;string&nbsp;which&nbsp;determines&nbsp;what&nbsp;the<br>
+input&nbsp;vectors&nbsp;are&nbsp;assigned&nbsp;to.&nbsp;Values&nbsp;for&nbsp;format:<br>
+'dB'&nbsp;-&nbsp;input1&nbsp;=&nbsp;mag(dB)&nbsp;,&nbsp;input2&nbsp;=&nbsp;phase(degrees)<br>
+'re'&nbsp;-&nbsp;input1&nbsp;=&nbsp;real,&nbsp;input2&nbsp;=&nbsp;imaginary&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;dB&nbsp;is&nbsp;20*log10(mag)</tt></dd></dl>
+
+<dl><dt><a name="s-plotPhase"><strong>plotPhase</strong></a>(self)</dt><dd><tt>Plot&nbsp;the&nbsp;S-parameters&nbsp;phase&nbsp;mode.</tt></dd></dl>
+
+<dl><dt><a name="s-plotSmith"><strong>plotSmith</strong></a>(self, radius<font color="#909090">=1</font>, res<font color="#909090">=1000</font>)</dt><dd><tt>Plot&nbsp;the&nbsp;S-parameters&nbsp;on&nbsp;a&nbsp;smith&nbsp;chart.<br>
+can&nbsp;be&nbsp;passed&nbsp;the&nbsp;smith&nbsp;radius&nbsp;and&nbsp;resolution&nbsp;of&nbsp;smith&nbsp;chart&nbsp;circles</tt></dd></dl>
+
+<dl><dt><a name="s-plotZ0"><strong>plotZ0</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="s-plotdB"><strong>plotdB</strong></a>(self)</dt><dd><tt>Plot&nbsp;the&nbsp;S-parameter&nbsp;mag&nbsp;in&nbsp;log&nbsp;mode.</tt></dd></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="twoPort">class <strong>twoPort</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>represents&nbsp;a&nbsp;two&nbsp;port&nbsp;network&nbsp;characterized&nbsp;by&nbsp;its&nbsp;<a href="#s">s</a>-parameters<br>
+has&nbsp;the&nbsp;following&nbsp;fields:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq,&nbsp;&nbsp;&nbsp;s11,&nbsp;s12,&nbsp;s21,&nbsp;s22,&nbsp;z11,&nbsp;z12,&nbsp;z21,&nbsp;z22,&nbsp;zin1,&nbsp;zin2,&nbsp;swr1,&nbsp;swr2<br>
+and&nbsp;the&nbsp;folling&nbsp;functions:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plotAllS,&nbsp;plotReturnLoss,&nbsp;plotTransmission,&nbsp;plotSwr1,&nbsp;plotSwr2,&nbsp;plotZin1,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;plotZin2,&nbsp;plotZ01,&nbsp;plotZ02<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;<a href="#s">s</a>-parameter&nbsp;fields&nbsp;and&nbsp;<a href="#z">z</a>-parameter&nbsp;fields&nbsp;have&nbsp;their&nbsp;own&nbsp;functions&nbsp;as&nbsp;well.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;many&nbsp;of&nbsp;twoPorts&nbsp;functions&nbsp;just&nbsp;calls&nbsp;these.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="twoPort-__init__"><strong>__init__</strong></a>(self, s11<font color="#909090">=&lt;mwavepy.s instance at 0x1b8f680&gt;</font>, s21<font color="#909090">=&lt;mwavepy.s instance at 0x1b8f5f0&gt;</font>, s12<font color="#909090">=&lt;mwavepy.s instance at 0x1b8f440&gt;</font>, s22<font color="#909090">=&lt;mwavepy.s instance at 0x1bce440&gt;</font>)</dt><dd><tt>#TODO:&nbsp;generalize&nbsp;this&nbsp;constructor&nbsp;so&nbsp;we&nbsp;can&nbsp;call&nbsp;it&nbsp;from&nbsp;S,&nbsp;Z,Y,&nbsp;or&nbsp;ABCD</tt></dd></dl>
+
+<dl><dt><a name="twoPort-plotAllS"><strong>plotAllS</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotReturnLoss"><strong>plotReturnLoss</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotSwr1"><strong>plotSwr1</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotSwr2"><strong>plotSwr2</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotTransmission"><strong>plotTransmission</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotZ01"><strong>plotZ01</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotZ02"><strong>plotZ02</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotZin1"><strong>plotZin1</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="twoPort-plotZin2"><strong>plotZin2</strong></a>(self)</dt></dl>
+
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="z">class <strong>z</strong></a></font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>represents&nbsp;a&nbsp;<a href="#z">z</a>-parameter.&nbsp;has&nbsp;the&nbsp;following&nbsp;fields:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq,&nbsp;re,&nbsp;im,&nbsp;mag,&nbsp;deg,&nbsp;z0<br>
+TODO:&nbsp;fix&nbsp;constructor&nbsp;to&nbsp;allow&nbsp;more&nbsp;versitile&nbsp;input&nbsp;check&nbsp;for<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vectors&nbsp;being&nbsp;the&nbsp;same&nbsp;length<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="z-__init__"><strong>__init__</strong></a>(self, format<font color="#909090">=None</font>, freq<font color="#909090">=[]</font>, input1<font color="#909090">=[]</font>, input2<font color="#909090">=[]</font>, z0<font color="#909090">=50</font>)</dt><dd><tt>The&nbsp;format&nbsp;variable,&nbsp;is&nbsp;a&nbsp;string&nbsp;which&nbsp;determines&nbsp;what&nbsp;the<br>
+input&nbsp;vectors&nbsp;are&nbsp;assigned&nbsp;to.&nbsp;Values&nbsp;for&nbsp;format:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'re'&nbsp;-&nbsp;input1&nbsp;=&nbsp;real,&nbsp;input2&nbsp;=&nbsp;imaginary</tt></dd></dl>
+
+<dl><dt><a name="z-plotReIm"><strong>plotReIm</strong></a>(self)</dt><dd><tt>Plot&nbsp;the&nbsp;S-parameter&nbsp;mag&nbsp;in&nbsp;log&nbsp;mode.</tt></dd></dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-dB2Mag"><strong>dB2Mag</strong></a>(dB)</dt></dl>
+ <dl><dt><a name="-dBDeg2ReIm"><strong>dBDeg2ReIm</strong></a>(dB, deg)</dt></dl>
+ <dl><dt><a name="-deg2rad"><strong>deg2rad</strong></a>(deg)</dt></dl>
+ <dl><dt><a name="-loadPortImpedanceFromTouchtone"><strong>loadPortImpedanceFromTouchtone</strong></a>(inputFileName)</dt><dd><tt>Takes&nbsp;the&nbsp;name&nbsp;of&nbsp;a&nbsp;HFSS&nbsp;formated&nbsp;touchtone&nbsp;file,&nbsp;which&nbsp;has&nbsp;frequency&nbsp;<br>
+dependent&nbsp;port&nbsp;impendance,&nbsp;such&nbsp;as&nbsp;the&nbsp;case&nbsp;for&nbsp;waveguide.&nbsp;<br>
+Returns&nbsp;two&nbsp;arrays&nbsp;representing&nbsp;the&nbsp;port&nbsp;impedances&nbsp;in&nbsp;complex&nbsp;format.&nbsp;<br>
+NOTE:&nbsp;this&nbsp;only&nbsp;supports&nbsp;twoPorts.&nbsp;needs&nbsp;to&nbsp;be&nbsp;generalized</tt></dd></dl>
+ <dl><dt><a name="-loadTouchtone"><strong>loadTouchtone</strong></a>(inputFileName)</dt><dd><tt>Takes&nbsp;the&nbsp;full&nbsp;pathname&nbsp;of&nbsp;a&nbsp;touchtone&nbsp;plain-text&nbsp;file.<br>
+Returns&nbsp;a&nbsp;network&nbsp;object&nbsp;representing&nbsp;its&nbsp;contents&nbsp;(1&nbsp;or&nbsp;2-port).<br>
+touchtone&nbsp;files&nbsp;usually&nbsp;have&nbsp;extension&nbsp;of&nbsp;.s1p,&nbsp;.s2p,&nbsp;.s1,.s2.<br>
+&nbsp;<br>
+example:<br>
+myTwoPort&nbsp;=&nbsp;mwavepy.loadTouchTone('inputFile.s1p')</tt></dd></dl>
+ <dl><dt><a name="-mag2dB"><strong>mag2dB</strong></a>(mag)</dt></dl>
+ <dl><dt><a name="-magDeg2ReIm"><strong>magDeg2ReIm</strong></a>(mag, deg)</dt></dl>
+ <dl><dt><a name="-magPhase2ReIm"><strong>magPhase2ReIm</strong></a>(mag, phase)</dt><dd><tt>##-----&nbsp;conversion&nbsp;utilities&nbsp;----<br>
+#&nbsp;TODO:&nbsp;explicitly&nbsp;call&nbsp;j&nbsp;from&nbsp;numpy</tt></dd></dl>
+ <dl><dt><a name="-plotCsv"><strong>plotCsv</strong></a>(filename, rowsToSkip<font color="#909090">=1</font>, delim<font color="#909090">=','</font>)</dt></dl>
+ <dl><dt><a name="-rad2deg"><strong>rad2deg</strong></a>(rad)</dt></dl>
+ <dl><dt><a name="-reIm2MagPhase"><strong>reIm2MagPhase</strong></a>(re, im)</dt></dl>
+ <dl><dt><a name="-reIm2dBDeg"><strong>reIm2dBDeg</strong></a>(re, im)</dt></dl>
+ <dl><dt><a name="-seriesTwoPort"><strong>seriesTwoPort</strong></a>(twoPortA, twoPortB)</dt><dd><tt>returns&nbsp;<a href="#twoPort">twoPort</a>&nbsp;representing&nbsp;the&nbsp;series&nbsp;combination&nbsp;of&nbsp;twoPortA<br>
+and&nbsp;twoPortB.&nbsp;twoPortA&nbsp;and&nbsp;twoPortB&nbsp;are&nbsp;type&nbsp;<a href="#twoPort">twoPort</a>.</tt></dd></dl>
+ <dl><dt><a name="-smith"><strong>smith</strong></a>(smithRadius<font color="#909090">=1</font>, res<font color="#909090">=1000</font>)</dt><dd><tt>##------&nbsp;ploting&nbsp;--------</tt></dd></dl>
+</td></tr></table>
+</body></html>
