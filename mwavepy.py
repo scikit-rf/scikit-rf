@@ -513,3 +513,42 @@ def plotCsv(filename,rowsToSkip=1,delim=','):
 		p.plot(data[:,0], data[:,1:])
 		p.grid(1)
 		p.title(filename)
+
+
+##------ other functions ---
+def psd2TimeDomain(f,y):
+	'''convert a one sided complex spectrum into a real time-signal.
+	returns in the form:
+		[timeVector, signalVector]
+	timeVector is in inverse units of the input variable f,
+	if spectrum is not baseband then, timeSignal is modulated by 
+		exp(t*2*pi*f[0])
+	so keep i mind units, also due to this f must be increasing left to right'''
+	if ( 1 == 1 ):
+		# this is a basband signal
+		spectrum = (n.hstack([n.real(y[:0:-1]),n.real(y)])) + 1j*(n.hstack([-n.imag(y[:0:-1]),n.imag(y)]))
+	#else:
+	#	# this is not a baseband signal, we must assume no DC offset
+	#	spectrum = (hstack([real(y[::-1]),0,real(y)])) + 1j*(hstack([-imag(y[::-1]),0,imag(y)]))
+	df = abs(f[1]-f[0])
+	timeVector = n.linspace(0,1/df,2*len(f)-1)
+	signalVector = p.ifft(p.ifftshift(spectrum)) *n.exp(1j*2*n.pi*timeVector*f[0])
+	return [spectrum, timeVector, signalVector]
+
+
+def timeDomain2Psd(t,y):
+	''' returns the right hand side of a the psd for a real-values signal
+	returns in the form:
+		[freqVector,spectrumVector]
+	freq has inverse units of t's units. also, sampling frequency is 
+	fs = 1/abs(t[1]-t[0])
+	'''
+	dt = abs(t[1]-t[0])
+	fs = 1/dt
+	numPoints = len(t)
+	f = n.linspace(-fs/2,fs/2,numPoints)
+
+	Y = p.fftshift(p.fft(y))
+	spectrumVector = Y[len(Y)/2:]
+	freqVector = f[len(f)/2:]
+	return [freqVector,spectrumVector]
