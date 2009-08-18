@@ -59,11 +59,11 @@ import pylab as p
 ##------- objects ---------
 class s:
 	''' represents a s-parameter. has the following fields:
-			freq, re, im, dB, mag, deg, complex, z0
+			freq, freqUnit, re, im, dB, mag, deg, complex, z0
 	 	TODO: fix constructor to allow more versitile input check for
 			vectors being the same length
 	'''	
-	def __init__(self, format=None, freq=[], input1=[],input2=[], z0=50):
+	def __init__(self, format=None, freq=[],freqUnit='GHz', input1=[],input2=[], z0=50):
 		''' The format variable, is a string which determines what the
 			input vectors are assigned to. Values for format:
 			'dB' - input1 = mag(dB) , input2 = phase(degrees)
@@ -74,6 +74,7 @@ class s:
 		
 		if format == 'db':
 			self.freq= freq
+			self.freqUnit = freqUnit
 			self.dB = input1
 			self.deg = input2
 			self.re, self.im  = dBDeg2ReIm(self.dB,self.deg)
@@ -82,6 +83,7 @@ class s:
 			self.z0 = z0
 		elif format == 'ma':
 			self.freq= freq
+			self.freqUnit = freqUnit
 			self.mag = input1
 			self.deg = input2
 			self.dB = mag2dB(self.mag)
@@ -90,6 +92,7 @@ class s:
 			self.z0 = z0	
 		elif ( (format == 're') or (format == 'ri')):
 			self.freq= freq
+			self.freqUnit = freqUnit
 			self.re = input1
 			self.im = input2
 			self.dB, self.deg = reIm2dBDeg(self.re,self.im)
@@ -99,6 +102,7 @@ class s:
 		else:
 			# not type passed we dont know what to do
 			self.freq = freq
+			self.freqUnit = freqUnit
 			self.re = input1
 			self.im = input1
 			self.dB = input1
@@ -112,7 +116,7 @@ class s:
 		''' Plot the S-parameter mag in log mode. 
 		'''
 		p.plot(self.freq, self.dB)
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')') 
 		p.ylabel('Magnitude (dB)')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -121,7 +125,7 @@ class s:
 		''' Plot the S-parameters phase mode. 
 		'''
 		p.plot(self.freq, self.deg)
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')') 
 		p.ylabel('Phase (deg)')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -137,7 +141,7 @@ class s:
 	def plotZ0(self):
 		# could check for complex port impedance
 		p.plot(self.freq, self.z0)
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')') 
 		p.ylabel('Impedance (Ohms)')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -151,7 +155,7 @@ class z:
 	 	TODO: fix constructor to allow more versitile input check for
 			vectors being the same length
 	'''	
-	def __init__(self, format=None, freq=[], input1=[],input2=[], z0=50):
+	def __init__(self, format=None, freq=[], freqUnit='GHz', input1=[],input2=[], z0=50):
 		''' The format variable, is a string which determines what the
 			input vectors are assigned to. Values for format:
 				're' - input1 = real, input2 = imaginary 
@@ -161,6 +165,7 @@ class z:
 		if format == 'db':
 			print('ERROR: this format is not supported for a parameter of this type, defaulting to MA format.') 
 			self.freq= freq
+			self.freqUnit = freqUnit
 			self.mag = input1
 			self.deg = input2
 			self.re, self.im  = magDeg2ReIm(self.mag,self.deg)
@@ -168,6 +173,7 @@ class z:
 			self.z0 = z0	
 		elif format == 'ma':
 			self.freq= freq
+			self.freqUnit = freqUnit
 			self.mag = input1
 			self.deg = input2
 			self.re, self.im  = magDeg2ReIm(self.mag,self.deg)
@@ -175,6 +181,7 @@ class z:
 			self.z0 = z0	
 		elif format == 're':
 			self.freq= freq
+			self.freqUnit = freqUnit
 			self.re = input1
 			self.im = input2
 			self.mag, self.deg = reIm2MagPhase(self.re,self.im)
@@ -183,6 +190,7 @@ class z:
 		else:
 			# no type passed we dont know what to do
 			self.freq = freq
+			self.freqUnit = freqUnit
 			self.re = input1
 			self.im = input1
 			self.mag = input1
@@ -195,7 +203,7 @@ class z:
 		'''
 		p.plot(self.freq, self.re)
 		p.plot(self.freq, self.im)
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')')
 		p.ylabel('Impedance')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -215,6 +223,7 @@ class twoPort:
 	#TODO: generalize this constructor so we can call it from S, Z,Y, or ABCD
 	def __init__ (self, s11=s(), s21=s(), s12= s(), s22 = s()):
 		self.freq = s11.freq # frequencies must be same for all s-param
+		self.freqUnit = s11.freqUnit
 		self.s11 = s11	
 		self.s12 = s12
 		self.s21 = s21
@@ -253,12 +262,14 @@ class twoPort:
 		self.s22.plotdB()
 		p.legend(('S11','S22'))
 		p.title('Return Loss')
+		p.xlabel('Frequency (' + self.freqUnit +')')
 		
 	def plotTransmission(self):
 		self.s12.plotdB()
 		self.s21.plotdB()
 		p.legend(('S12','S21'))
 		p.title('Transmission')
+		p.xlabel('Frequency (' + self.freqUnit +')')
 	
 	def plotAllS(self):
 		
@@ -267,12 +278,13 @@ class twoPort:
 		self.s21.plotdB()
 		self.s22.plotdB()
 		p.legend(('S11','S12','S21','S22'))
+		p.xlabel('Frequency (' + self.freqUnit +')')
 		
 		
 	def plotZin1(self):
 		p.plot(self.freq, n.real(self.zin1), label='Real')
 		p.plot(self.freq, n.imag(self.zin1), label='Imaginary')
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')')
 		p.ylabel('Impedance (Ohms)')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -281,7 +293,7 @@ class twoPort:
 	def plotZin2(self):
 		p.plot(self.freq, n.real(self.zin2),label='Real')
 		p.plot(self.freq, n.imag(self.zin2), label='Imaginary')
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')')
 		p.ylabel('Impedance (Ohms)')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -289,7 +301,7 @@ class twoPort:
 	
 	def plotSwr1(self):
 		p.plot(self.freq, self.swr1)
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')') 
 		p.ylabel('SWR')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -297,7 +309,7 @@ class twoPort:
 	
 	def plotSwr2(self):
 		p.plot(self.freq, self.swr2)
-		p.xlabel('Frequency') 
+		p.xlabel('Frequency (' + self.freqUnit +')') 
 		p.ylabel('SWR')
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
@@ -317,6 +329,7 @@ class onePort:
 	'''
 	def __init__ (self, s11=s()):
 		self.freq = s11.freq
+		self.freqUnit = s11.freqUnit
 		self.s11 = s11	
 		
 
@@ -463,15 +476,15 @@ def loadTouchtone(inputFileName):
 	
 	if ( data.shape[1] == 9 ):
 		# we have a 2-port netowork 
-		s11 = s(format,data[:,0],data[:,1],data[:,2],port1Z0)
-		s21 = s(format,data[:,0],data[:,3],data[:,4],port1Z0)
-		s12 = s(format,data[:,0],data[:,5],data[:,6],port2Z0)
-		s22 = s(format,data[:,0],data[:,7],data[:,8],port2Z0)
+		s11 = s(format,data[:,0],freqUnit,data[:,1],data[:,2],port1Z0)
+		s21 = s(format,data[:,0],freqUnit,data[:,3],data[:,4],port1Z0)
+		s12 = s(format,data[:,0],freqUnit,data[:,5],data[:,6],port2Z0)
+		s22 = s(format,data[:,0],freqUnit,data[:,7],data[:,8],port2Z0)
 		return twoPort(s11,s21,s12,s22)
 
 	elif ( data.shape[1] == 3):
 		# we have a 1-port
-		return onePort(s(format, data[:,0], data[:,1],data[:,2],float(z0)))
+		return onePort(s(format, data[:,0], freqUnit,data[:,1],data[:,2],float(z0)))
 
 	else:
 		# TODO: handle errors correctly
@@ -524,16 +537,14 @@ def psd2TimeDomain(f,y):
 	if spectrum is not baseband then, timeSignal is modulated by 
 		exp(t*2*pi*f[0])
 	so keep i mind units, also due to this f must be increasing left to right'''
-	if ( 1 == 1 ):
-		# this is a basband signal
-		spectrum = (n.hstack([n.real(y[:0:-1]),n.real(y)])) + 1j*(n.hstack([-n.imag(y[:0:-1]),n.imag(y)]))
-	#else:
-	#	# this is not a baseband signal, we must assume no DC offset
-	#	spectrum = (hstack([real(y[::-1]),0,real(y)])) + 1j*(hstack([-imag(y[::-1]),0,imag(y)]))
+	spectrum = (n.hstack([n.real(y[:0:-1]),n.real(y)])) + 1j*(n.hstack([-n.imag(y[:0:-1]),n.imag(y)]))
 	df = abs(f[1]-f[0])
 	timeVector = n.linspace(0,1/df,2*len(f)-1)
-	signalVector = p.ifft(p.ifftshift(spectrum)) *n.exp(1j*2*n.pi*timeVector*f[0])
-	return [spectrum, timeVector, signalVector]
+	signalVector = p.ifft(p.ifftshift(spectrum))
+	# the response of bandlimiting, and frequency shifting is 
+	# n.sinc((f[-1]-f[0])* timeVector)*n.exp(1j*2*n.pi*timeVector*f[0])
+	# i dont know how to use this though. 
+	return timeVector, signalVector
 
 
 def timeDomain2Psd(t,y):
