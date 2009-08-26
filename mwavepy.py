@@ -39,6 +39,7 @@ Accessing parameter functions:
 import numpy as n
 import pylab as p
 from scipy import constants as const
+from scipy import signal
 import os # for fileIO
 
 # most of these functions have not been rigidly tested. use with caution
@@ -357,6 +358,9 @@ class onePort:
 		self.freqUnit = s11.freqUnit
 		self.s11 = s11	
 		
+		# these might be better as a property of the s-parameters
+		# input impedance (NOT z11 of impedance matrix) of the 2 ports
+		self.zin = s11.z0 * (1 + s11.complex) / (1 - s11.complex)
 
 
 
@@ -553,25 +557,44 @@ def loadPortImpedanceFromTouchtone(inputFileName):
 
 
 def plotCsv(filename,rowsToSkip=1,delim=','):
-		data = p.loadtxt(filename,skiprows=rowsToSkip,delimiter=delim)
-		p.plot(data[:,0], data[:,1:])
-		p.grid(1)
-		p.title(filename)
+	'''plots columns from csv file. plots all columns against the first
+	see pylab.loadtxt for more information
+	'''
+	data = p.loadtxt(filename,skiprows=rowsToSkip,delimiter=delim)
+	p.plot(data[:,0], data[:,1:])
+	p.grid(1)
+	p.title(filename)
 
 
 ##------ other functions ---
-def psd2TimeDomain(f,y):
+def psd2TimeDomain(f,y, windowType='rect'):
 	'''convert a one sided complex spectrum into a real time-signal.
+	takes 
+		f: frequency array, 
+		y: complex PSD arary 
+		windowType: windowing function, defaults to rect
+	
 	returns in the form:
 		[timeVector, signalVector]
 	timeVector is in inverse units of the input variable f,
 	if spectrum is not baseband then, timeSignal is modulated by 
 		exp(t*2*pi*f[0])
-	so keep i mind units, also due to this f must be increasing left to right'''
+	so keep in mind units, also due to this f must be increasing left to right'''
+	
+	
+	# apply window function
+	#TODO: make sure windowType exists in scipy.signal
+	if (windowType != 'rect' ):
+		exec "window = signal.%s(%i)" % (windowType,len(f))
+		spectrum = spectrum * window
+	
+	#create other half of spectrum
 	spectrum = (n.hstack([n.real(y[:0:-1]),n.real(y)])) + 1j*(n.hstack([-n.imag(y[:0:-1]),n.imag(y)]))
+	
+	# do the transform 
 	df = abs(f[1]-f[0])
 	T = 1./df
-	timeVector = n.linspace(-T/2,T/2,2*len(f)-1)
+	timeVector = n.linspace(-T/2,T/2,2*len(f)-1)	
 	signalVector = p.ifft(p.ifftshift(spectrum))
 	
 	#the imaginary part of this signal should be from fft errors only,
@@ -585,8 +608,8 @@ def psd2TimeDomain(f,y):
 	return timeVector, signalVector
 
 
-def timeDomain2Psd(t,y):
-	''' returns the positive baseband psd for a real-values signal
+def timeDomain2Psd(t,y, windowType='rect'):
+	''' returns the positive baseband PSD for a real-valued signal
 	returns in the form:
 		[freqVector,spectrumVector]
 	freq has inverse units of t's units. also, sampling frequency is 
@@ -594,6 +617,12 @@ def timeDomain2Psd(t,y):
 	the result is scaled by 1/length(n), where n is number of samples
 	to attain the original spectrum you must shift the freqVector appropriatly
 	'''
+	# apply window function
+	#TODO: make sure windowType exists in scipy.signal
+	if (windowType != 'rect' ):
+		exec "window = signal.%s(%i)" % (windowType,len(f))
+		spectrum = spectrum * window
+	
 	dt = abs(t[1]-t[0])
 	fs = 1./dt
 	numPoints = len(t)
@@ -609,3 +638,63 @@ def cutOff(a):
 	waveguide with major dimension given by a. a is in meters'''
 	
 	return n.sqrt((n.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*n.pi)
+
+##------- Calibrations ------
+def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
+	'''calculates calibration coefficients for a one port OSM calibration
+	 
+	 returns:
+		abc is a Nx3 ndarray containing the complex calibrations coefficients,
+		where N is the number of frequency points in the standards that where 
+		given.
+	
+	 takes:
+		 mOpen, mShort, and mMatch are 1xN complex ndarrays representing the 
+		measured reflection coefficients off the corresponding standards.
+			
+	 	aOpen, aShort, and aMatch are 1xN complex ndarrays representing the
+	 	assumed reflection coefficients off the corresponding standards. 
+	 	
+	 note:
+	  the standards used in OSM calibration dont actually have to be 
+	  an open, short, and match. they are arbitrary but should provide
+	  good seperation on teh smith chart for good accuracy 
+	'''
+	
+	# loop through all frequencies and solve for the calibration coefficients.
+	# note: abc are related to error terms with:
+	# a = e10*e01-e00*e11, b=e00, c=e11  
+	#TODO: check to make sure all arrays are same length
+	abc= n.complex_(n.zeros([len(mOpen),3]))
+	
+	for k in range(len(mOpen)):
+		
+		Y = n.vstack( [	mShort[k],\
+						mOpen[k],\
+						mMatch[k]\
+						] )
+		
+		X = n.vstack([ \
+					n.hstack([aShort[k], 1, aShort[k]*mShort[k] ]),\
+					n.hstack([aOpen[k],	 1, aOpen[k] *mOpen[k] ]),\
+					n.hstack([aMatch[k], 1, aMatch[k]*mMatch[k] ])\
+					])
+		
+		#matrix of correction coefficients
+		abc[k,:] = n.dot(n.linalg.inv(X), Y).flatten()
+		
+	return abc
+
+def applyABC( gamma, abc):
+	'''
+	takes a complex array of uncalibrated reflection coefficient and applies
+	the one-port OSM callibration, using the coefficients abc. 
+
+	takes:
+		gamma - complex reflection coefficient
+		abc - Nx3 OSM calibration coefficients. 
+	'''
+	# for clarity this is same as:
+	# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
+	gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
+	return gammaCal
