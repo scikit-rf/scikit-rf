@@ -38,7 +38,8 @@ Accessing parameter functions:
 
 import numpy as n
 import pylab as p
-
+from scipy import constants as const
+import os # for fileIO
 
 # most of these functions have not been rigidly tested. use with caution
 
@@ -320,6 +321,30 @@ class twoPort:
 		
 	def plotZ02(self):
 		self.s22.plotZ0()
+	def writeTouchtone(self, fileName='twoPort.s2p',format='MA'):
+		if os.access(fileName,1):
+			# TODO: prompt for file removal
+			os.remove(fileName)
+		f=open(fileName,"w")
+		
+		# write header file. note: the #  line is NOT a comment it is essential and it must be exactly
+		# this way for puff to read it
+		#TODO check format string for acceptable values
+		f.write("# GHz S " + format + " R " + self.s11.z0 +" \n! EEsoF format of Network Analyzer Results\n")
+		f.write ("!freq\t")
+		for p in range(size(arrayOfS)):
+			f.write( arrayOfS[p].name + "Mag\t" + arrayOfS[p].name + "Phase\t")
+		
+		# loop through frequency points and write out s-parmeter info in Mag Phase
+		for k in range(0,fPoints):	
+			f.write("\n"+repr(freqs[k]))
+			for kk in range(size(arrayOfS)):
+				f.write("\t"+repr( arrayOfS[kk].mag[k]) +"\t" + repr(arrayOfS[kk].phase[k]))
+			
+		
+		f.close()
+
+
 
 
 class onePort:
@@ -428,6 +453,8 @@ def smith(smithRadius=1, res=1000 ):
 
 ##------ File import -----
 def loadTouchtone(inputFileName):
+	
+	
 	''' Takes the full pathname of a touchtone plain-text file.
 	Returns a network object representing its contents (1 or 2-port).
 	touchtone files usually have extension of .s1p, .s2p, .s1,.s2.
@@ -456,7 +483,8 @@ def loadTouchtone(inputFileName):
 	# the format is 
 	#	# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
 
-	freqUnit = headerInfo[1].lower()
+	freqUnit = headerInfo[1]
+	freqUnit = freqUnit[:-1]+freqUnit[-1].lower() # format string nicely
 	paramType = headerInfo[2].lower()
 	format = headerInfo[3].lower()
 	
@@ -492,6 +520,9 @@ def loadTouchtone(inputFileName):
 		return -1
 
 	
+
+
+
 def loadPortImpedanceFromTouchtone(inputFileName):
 	'''Takes the name of a HFSS formated touchtone file, which has frequency 
 	dependent port impendance, such as the case for waveguide. 
@@ -539,27 +570,42 @@ def psd2TimeDomain(f,y):
 	so keep i mind units, also due to this f must be increasing left to right'''
 	spectrum = (n.hstack([n.real(y[:0:-1]),n.real(y)])) + 1j*(n.hstack([-n.imag(y[:0:-1]),n.imag(y)]))
 	df = abs(f[1]-f[0])
-	timeVector = n.linspace(0,1/df,2*len(f)-1)
+	T = 1./df
+	timeVector = n.linspace(-T/2,T/2,2*len(f)-1)
 	signalVector = p.ifft(p.ifftshift(spectrum))
-	# the response of bandlimiting, and frequency shifting is 
-	# n.sinc((f[-1]-f[0])* timeVector)*n.exp(1j*2*n.pi*timeVector*f[0])
-	# i dont know how to use this though. 
+	
+	#the imaginary part of this signal should be from fft errors only,
+	signalVector= real(signalVector)
+	# the response of frequency shifting is 
+	# n.exp(1j*2*n.pi*timeVector*f[0])
+	# but i would have to manually undo this for the inverse, which is just 
+	# another  variable to require. the reason you need this is because 
+	# you canttransform to a bandpass signal, only a lowpass. 
+	# 
 	return timeVector, signalVector
 
 
 def timeDomain2Psd(t,y):
-	''' returns the right hand side of a the psd for a real-values signal
+	''' returns the positive baseband psd for a real-values signal
 	returns in the form:
 		[freqVector,spectrumVector]
 	freq has inverse units of t's units. also, sampling frequency is 
 	fs = 1/abs(t[1]-t[0])
+	the result is scaled by 1/length(n), where n is number of samples
+	to attain the original spectrum you must shift the freqVector appropriatly
 	'''
 	dt = abs(t[1]-t[0])
-	fs = 1/dt
+	fs = 1./dt
 	numPoints = len(t)
 	f = n.linspace(-fs/2,fs/2,numPoints)
 
-	Y = p.fftshift(p.fft(y))
+	Y = 1./len(y)* p.fftshift(p.fft(y))
 	spectrumVector = Y[len(Y)/2:]
 	freqVector = f[len(f)/2:]
 	return [freqVector,spectrumVector]
+
+def cutOff(a):
+	'''returns the cutoff frequency (in Hz) for first  resonance of a
+	waveguide with major dimension given by a. a is in meters'''
+	
+	return n.sqrt((n.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*n.pi)
