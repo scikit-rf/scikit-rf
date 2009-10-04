@@ -364,6 +364,38 @@ class onePort:
 
 
 
+
+
+class wr:
+	'''
+	waveguide class, following WR naming convention, 
+		ie WR75 = wr(75)
+	wr has following fields
+		a, b, fco, fStart, fStop, fCenter
+	'''
+	def __init__(self, a):
+		'''
+		takes one argument, "a" in tenths of an inch. 
+		which is the number	following WR, ie WR75  has a=.75*inch
+		'''
+		self.a = a *1e-2 * const.inch
+		self.fco = const.c/(2.*self.a)
+		self.fStart = 1.2 * self.fco
+		self.fStop = 1.9*self.fco
+		self.fCenter = 1.55*self.fco
+	
+		
+	def printSpecs(self):
+		'''
+		print the useful fields of a WR 
+		'''
+		print ' ----- WR%i Specs -------' % (self.a * 1e2/const.inch)
+		print 'f cut-off:	%.1f GHz' % (self.fco *1e-9)
+		print 'band start:	%.1f GHz' %(self.fStart *1e-9)
+		print 'band stop:	%.1f GHz' %(self.fStop *1e-9)
+		print 'band center:	%.1f GHz' %(self.fCenter *1e-9)
+	
+
 ##------- networks --------
 def seriesTwoPort(twoPortA ,twoPortB):
 	''' returns twoPort representing the series combination of twoPortA
@@ -633,11 +665,7 @@ def timeDomain2Psd(t,y, windowType='rect'):
 	freqVector = f[len(f)/2:]
 	return [freqVector,spectrumVector]
 
-def cutOff(a):
-	'''returns the cutoff frequency (in Hz) for first  resonance of a
-	waveguide with major dimension given by a. a is in meters'''
-	
-	return n.sqrt((n.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*n.pi)
+
 
 ##------- Calibrations ------
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
