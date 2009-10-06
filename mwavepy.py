@@ -383,8 +383,16 @@ class wr:
 		self.fStart = 1.2 * self.fco
 		self.fStop = 1.9*self.fco
 		self.fCenter = 1.55*self.fco
-	
 		
+	
+	def guideWavelength(self, f ):
+		'''
+		guide wavelength in meters, returns center band guide wavelength
+		if nothing is passed.
+		''' 
+		return const.c / f * 1/(n.sqrt(1-(const.c/(2*self.a*f))**2)) 
+	
+	
 	def printSpecs(self):
 		'''
 		print the useful fields of a WR 
