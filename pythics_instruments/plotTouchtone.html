@@ -1,0 +1,91 @@
+
+<html>
+<head><title>Plot Touchtone</title></head>
+<body>
+
+<h1>Plot Touchtone File</h1>
+<br/>
+
+<br/>
+<object classid='FilePicker' id='touchtoneFileName' width='80%'>
+    <param name='save' value='True'/>
+</object>
+<br/>
+
+<object classid='CheckBox' id='s11_check_box'>
+    <param name='label' value='S11'/>
+</object>
+<object classid='CheckBox' id='s12_check_box'>
+    <param name='label' value='S12'/>
+</object>
+<object classid='CheckBox' id='s21_check_box'>
+    <param name='label' value='S21'/>
+</object>
+<object classid='CheckBox' id='s22_check_box'>
+    <param name='label' value='S22'/>
+</object>
+<br/>
+
+
+<object classid='CheckBox' id='legend_check_box'>
+    <param name='label' value='legend'/>
+</object>
+<br/>
+<p>smith radius</p>
+<object classid='NumBox' width='100'>
+
+    <param name='key' value='smith_radius_num_box'/>
+    <param name='digits' value='1'/>
+    <param name='minimum' value='.1'/>
+    <param name='maximum' value='20'/>
+</object>
+
+
+<br/>
+
+
+<object classid='Button' width='200'>
+    <param name='label' value='Plot'/>
+    <param name='action' value='plotTouchtone.plot'/>
+</object>
+<object classid='Button' width='200'>
+    <param name='label' value='Clear'/>
+    <param name='action' value='plotTouchtone.clear'/>
+</object>
+
+
+
+<hr/>
+
+<h3>Magnitude</h3>
+<object classid='MPLPlot' width='100%' height='200'>
+    <param name='key' value='mag_plot'/>
+</object>
+
+<hr/><h3>Phase</h3>
+<object classid='MPLPlot' width='100%' height='200'>
+    <param name='key' value='phase_plot'/>
+</object>
+<br/>
+
+<hr/><h3>Smith Chart</h3>
+<object classid='MPLPlot' width='200' height='200'>
+    <param name='key' value='smith_plot'/>
+</object>
+<br/>
+
+<hr/>
+
+<object classid='ScriptLoader' width='100%'>
+    <param name='filename' value='plotTouchtone'/>
+</object>
+
+<object classid='ParameterLoader' width='100%'>
+    <param name='filename' value='defaults.txt'/>
+</object>
+
+
+
+
+</body>
+</html>
