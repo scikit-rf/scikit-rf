@@ -1,3 +1,4 @@
+
 '''
 Filename: mwavepy.py
 Author: alex arsenovic
@@ -363,47 +364,10 @@ class onePort:
 		self.zin = s11.z0 * (1 + s11.complex) / (1 - s11.complex)
 
 
-
-
-
-class wr:
-	'''
-	waveguide class, following WR naming convention, 
-		ie WR75 = wr(75)
-	wr has following fields
-		a, b, fco, fStart, fStop, fCenter
-	'''
-	def __init__(self, a):
-		'''
-		takes one argument, "a" in tenths of an inch. 
-		which is the number	following WR, ie WR75  has a=.75*inch
-		'''
-		self.a = a *1e-2 * const.inch
-		self.fco = const.c/(2.*self.a)
-		self.fStart = 1.2 * self.fco
-		self.fStop = 1.9*self.fco
-		self.fCenter = 1.55*self.fco
-		
-	
-	def guideWavelength(self, f ):
-		'''
-		guide wavelength in meters, returns center band guide wavelength
-		if nothing is passed.
-		''' 
-		return const.c / f * 1/(n.sqrt(1-(const.c/(2*self.a*f))**2)) 
-	
-	
-	def printSpecs(self):
-		'''
-		print the useful fields of a WR 
-		'''
-		print ' ----- WR%i Specs -------' % (self.a * 1e2/const.inch)
-		print 'f cut-off:	%.1f GHz' % (self.fco *1e-9)
-		print 'band start:	%.1f GHz' %(self.fStart *1e-9)
-		print 'band stop:	%.1f GHz' %(self.fStop *1e-9)
-		print 'band center:	%.1f GHz' %(self.fCenter *1e-9)
-	
-
+	def plotReturnLoss(self):
+		self.s11.plotdB()
+		p.title('Return Loss')
+		p.xlabel('Frequency (' + self.freqUnit +')')
 ##------- networks --------
 def seriesTwoPort(twoPortA ,twoPortB):
 	''' returns twoPort representing the series combination of twoPortA
@@ -462,6 +426,7 @@ def deg2rad(deg):
 
 ##------ ploting --------
 def smith(smithRadius=1, res=1000 ):
+	
 	# smith(res=1000, smithRadius=1)
 	#	plots a smith chart with radius given by smithRadius and 
 	#	point density resolution given by res. 
@@ -494,6 +459,67 @@ def smith(smithRadius=1, res=1000 ):
 		currentCirle[abs(currentCirle)>smithRadius] = p.nan
 		p.plot(n.real(currentCirle), n.imag(currentCirle),'gray', linewidth=1)
 	
+def updatePlotDb(inputS,mpl_plot):
+	''' Plot the S-parameter mag in log mode. given an already existing 
+	axes 'mplplot'
+	'''
+	mpl_plot.plot(inputS.freq, inputS.dB)
+	mpl_plot.set_xlabel('Frequency (' + inputS.freqUnit +')') 
+	mpl_plot.set_ylabel('Magnitude (dB)')
+	mpl_plot.grid(1)
+	mpl_plot.set_xlim([ inputS.freq[0], inputS.freq[-1]])
+
+def updatePlotPhase(inputS,mpl_plot):
+	''' Plot the S-parameter phase mode. given an already existing 
+	axes 'mplplot'
+	'''
+	mpl_plot.plot(inputS.freq, inputS.deg)
+	mpl_plot.set_xlabel('Frequency (' + inputS.freqUnit +')') 
+	mpl_plot.set_ylabel('Phase (deg)')
+	mpl_plot.grid(1)
+	mpl_plot.set_xlim([ inputS.freq[0], inputS.freq[-1]])
+
+def updatePlotSmith(inputS, mpl_plot):
+	''' Plot the S-parameters on a smith chart.given an already existing 
+	axes 'mplplot'
+	can be passed the smith radius and resolution of smith chart circles 
+	'''
+	mpl_plot.plot(inputS.re, inputS.im)
+	
+def updateSmithChart(mpl_plot, smithRadius=1, res=1000 ):
+	# smith(res=1000, smithRadius=1)
+	#	plots a smith chart with radius given by smithRadius and 
+	#	point density resolution given by res. 
+	#TODO: this could be plotted more efficiently if all data was ploted
+	#	at once. cirlces could be computer analytically, contour density
+	#	could be configurable
+	def circle(offset,r, numPoints ):
+		circleVector = r*n.exp(1j* n.linspace(0,2*n.pi,numPoints))+ offset
+		return circleVector
+				
+	# generate complex pairs of [center, radius] for smith chart contours
+	# TODO: generate this by logical algorithm
+	heavyContour = [[0,1],[1+1j,1],[1-1j,1],[.5,.5]]
+	lightContour = [[1+4j,4],[1-4j,4],[1+.5j,.5],[1-.5j,.5],[1+.25j,.25],[1-.25j,.25],[1+2j,2],[1-2j,2],[.25,.75],[.75,.25],[-1,2]]
+
+	# verticle and horizontal axis
+	mpl_plot.axvline(x=1,color='k')
+	mpl_plot.axhline(y=0,color='k')
+	
+	
+	# loop through countour vectors and plot the circles with appropriate 
+	# clipping at smithRadius
+	for contour in heavyContour:	
+		currentCirle= circle(contour[0],contour[1], res)
+		currentCirle[abs(currentCirle)>smithRadius] = n.nan
+		mpl_plot.plot(n.real(currentCirle), n.imag(currentCirle),'k', linewidth=1)
+		
+	for contour in lightContour:	
+		currentCirle= circle(contour[0],contour[1], res)
+		currentCirle[abs(currentCirle)>smithRadius] = n.nan
+		mpl_plot.plot(n.real(currentCirle), n.imag(currentCirle),'gray', linewidth=1)
+	
+
 
 ##------ File import -----
 def loadTouchtone(inputFileName):
@@ -507,6 +533,7 @@ def loadTouchtone(inputFileName):
 	myTwoPort = mwavepy.loadTouchTone('inputFile.s1p') 
 	'''
 	
+	#BUG: error while reading empty header line, see line  while line.split()[0] != '#': 
 	#TODO: use the freqUnit, and paramTypes
 	#	check the header, hfss does not produce correct header
 	f = file(inputFileName)
@@ -556,7 +583,7 @@ def loadTouchtone(inputFileName):
 
 	elif ( data.shape[1] == 3):
 		# we have a 1-port
-		return onePort(s(format, data[:,0], freqUnit,data[:,1],data[:,2],float(z0)))
+		return onePort(s(format, data[:,0], freqUnit,data[:,1],data[:,2],float(port1Z0)))
 
 	else:
 		# TODO: handle errors correctly
@@ -626,7 +653,7 @@ def psd2TimeDomain(f,y, windowType='rect'):
 	#TODO: make sure windowType exists in scipy.signal
 	if (windowType != 'rect' ):
 		exec "window = signal.%s(%i)" % (windowType,len(f))
-		spectrum = spectrum * window
+		y = y * window
 	
 	#create other half of spectrum
 	spectrum = (n.hstack([n.real(y[:0:-1]),n.real(y)])) + 1j*(n.hstack([-n.imag(y[:0:-1]),n.imag(y)]))
@@ -634,11 +661,11 @@ def psd2TimeDomain(f,y, windowType='rect'):
 	# do the transform 
 	df = abs(f[1]-f[0])
 	T = 1./df
-	timeVector = n.linspace(-T/2,T/2,2*len(f)-1)	
+	timeVector = n.linspace(0,T,2*len(f)-1)	
 	signalVector = p.ifft(p.ifftshift(spectrum))
 	
 	#the imaginary part of this signal should be from fft errors only,
-	signalVector= real(signalVector)
+	signalVector= n.real(signalVector)
 	# the response of frequency shifting is 
 	# n.exp(1j*2*n.pi*timeVector*f[0])
 	# but i would have to manually undo this for the inverse, which is just 
@@ -673,7 +700,11 @@ def timeDomain2Psd(t,y, windowType='rect'):
 	freqVector = f[len(f)/2:]
 	return [freqVector,spectrumVector]
 
-
+def cutOff(a):
+	'''returns the cutoff frequency (in Hz) for first  resonance of a
+	waveguide with major dimension given by a. a is in meters'''
+	
+	return n.sqrt((n.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*n.pi)
 
 ##------- Calibrations ------
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
