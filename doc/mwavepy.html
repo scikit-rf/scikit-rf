@@ -1,6 +1,6 @@
 
-<!doctype html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
-<html><head><title>Python: module mwavepy</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: package mwavepy</title>
 </head><body bgcolor="#f0f0f8">
 
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>mwavepy</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/tmp/googleCode/mwavepy/mwavepy.py">/home/alex/tmp/googleCode/mwavepy/mwavepy.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/mwavepy/__init__.py">/home/alex/docs/python/mwavepy/__init__.py</a></font></td></tr></table>
     <p><tt>Filename:&nbsp;mwavepy.py<br>
 Author:&nbsp;alex&nbsp;arsenovic<br>
 Data:&nbsp;04/04/09<br>
@@ -48,12 +48,11 @@ Accessing&nbsp;parameter&nbsp;functions:<br>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#aa55cc">
 <td colspan=3 valign=bottom>&nbsp;<br>
-<font color="#fffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Package Contents</strong></big></font></td></tr>
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
-</td><td width="25%" valign=top><a href="pylab.html">pylab</a><br>
-</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.mwavepy.html">mwavepy</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -78,7 +77,9 @@ has&nbsp;the&nbsp;following&nbsp;fields:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq,&nbsp;s11<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="onePort-__init__"><strong>__init__</strong></a>(self, s11<font color="#909090">=&lt;mwavepy.s instance at 0x1bce488&gt;</font>)</dt></dl>
+<dl><dt><a name="onePort-__init__"><strong>__init__</strong></a>(self, s11<font color="#909090">=&lt;mwavepy.s instance at 0x1cbd758&gt;</font>)</dt></dl>
+
+<dl><dt><a name="onePort-plotReturnLoss"><strong>plotReturnLoss</strong></a>(self)</dt></dl>
 
 </td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -88,12 +89,12 @@ has&nbsp;the&nbsp;following&nbsp;fields:<br>
     
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
 <td colspan=2><tt>represents&nbsp;a&nbsp;<a href="#s">s</a>-parameter.&nbsp;has&nbsp;the&nbsp;following&nbsp;fields:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq,&nbsp;re,&nbsp;im,&nbsp;dB,&nbsp;mag,&nbsp;deg,&nbsp;complex,&nbsp;z0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq,&nbsp;freqUnit,&nbsp;re,&nbsp;im,&nbsp;dB,&nbsp;mag,&nbsp;deg,&nbsp;complex,&nbsp;z0<br>
 TODO:&nbsp;fix&nbsp;constructor&nbsp;to&nbsp;allow&nbsp;more&nbsp;versitile&nbsp;input&nbsp;check&nbsp;for<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vectors&nbsp;being&nbsp;the&nbsp;same&nbsp;length<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="s-__init__"><strong>__init__</strong></a>(self, format<font color="#909090">=None</font>, freq<font color="#909090">=[]</font>, input1<font color="#909090">=[]</font>, input2<font color="#909090">=[]</font>, z0<font color="#909090">=50</font>)</dt><dd><tt>The&nbsp;format&nbsp;variable,&nbsp;is&nbsp;a&nbsp;string&nbsp;which&nbsp;determines&nbsp;what&nbsp;the<br>
+<dl><dt><a name="s-__init__"><strong>__init__</strong></a>(self, format<font color="#909090">=None</font>, freq<font color="#909090">=[]</font>, freqUnit<font color="#909090">='GHz'</font>, input1<font color="#909090">=[]</font>, input2<font color="#909090">=[]</font>, z0<font color="#909090">=50</font>)</dt><dd><tt>The&nbsp;format&nbsp;variable,&nbsp;is&nbsp;a&nbsp;string&nbsp;which&nbsp;determines&nbsp;what&nbsp;the<br>
 input&nbsp;vectors&nbsp;are&nbsp;assigned&nbsp;to.&nbsp;Values&nbsp;for&nbsp;format:<br>
 'dB'&nbsp;-&nbsp;input1&nbsp;=&nbsp;mag(dB)&nbsp;,&nbsp;input2&nbsp;=&nbsp;phase(degrees)<br>
 're'&nbsp;-&nbsp;input1&nbsp;=&nbsp;real,&nbsp;input2&nbsp;=&nbsp;imaginary&nbsp;<br>
@@ -127,7 +128,7 @@ note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;many&nbsp;of&nbsp;twoPorts&nbsp;functions&nbsp;just&nbsp;calls&nbsp;these.<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="twoPort-__init__"><strong>__init__</strong></a>(self, s11<font color="#909090">=&lt;mwavepy.s instance at 0x1b8f680&gt;</font>, s21<font color="#909090">=&lt;mwavepy.s instance at 0x1b8f5f0&gt;</font>, s12<font color="#909090">=&lt;mwavepy.s instance at 0x1b8f440&gt;</font>, s22<font color="#909090">=&lt;mwavepy.s instance at 0x1bce440&gt;</font>)</dt><dd><tt>#TODO:&nbsp;generalize&nbsp;this&nbsp;constructor&nbsp;so&nbsp;we&nbsp;can&nbsp;call&nbsp;it&nbsp;from&nbsp;S,&nbsp;Z,Y,&nbsp;or&nbsp;ABCD</tt></dd></dl>
+<dl><dt><a name="twoPort-__init__"><strong>__init__</strong></a>(self, s11<font color="#909090">=&lt;mwavepy.s instance at 0x1cbd5f0&gt;</font>, s21<font color="#909090">=&lt;mwavepy.s instance at 0x1cbd638&gt;</font>, s12<font color="#909090">=&lt;mwavepy.s instance at 0x1cbd680&gt;</font>, s22<font color="#909090">=&lt;mwavepy.s instance at 0x1cbd6c8&gt;</font>)</dt><dd><tt>#TODO:&nbsp;generalize&nbsp;this&nbsp;constructor&nbsp;so&nbsp;we&nbsp;can&nbsp;call&nbsp;it&nbsp;from&nbsp;S,&nbsp;Z,Y,&nbsp;or&nbsp;ABCD</tt></dd></dl>
 
 <dl><dt><a name="twoPort-plotAllS"><strong>plotAllS</strong></a>(self)</dt></dl>
 
@@ -147,6 +148,8 @@ note:<br>
 
 <dl><dt><a name="twoPort-plotZin2"><strong>plotZin2</strong></a>(self)</dt></dl>
 
+<dl><dt><a name="twoPort-writeTouchtone"><strong>writeTouchtone</strong></a>(self, fileName<font color="#909090">='twoPort.s2p'</font>, format<font color="#909090">='MA'</font>)</dt></dl>
+
 </td></tr></table> <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ffc8d8">
@@ -160,7 +163,7 @@ TODO:&nbsp;fix&nbsp;constructor&nbsp;to&nbsp;allow&nbsp;more&nbsp;versitile&nbsp
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;vectors&nbsp;being&nbsp;the&nbsp;same&nbsp;length<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="z-__init__"><strong>__init__</strong></a>(self, format<font color="#909090">=None</font>, freq<font color="#909090">=[]</font>, input1<font color="#909090">=[]</font>, input2<font color="#909090">=[]</font>, z0<font color="#909090">=50</font>)</dt><dd><tt>The&nbsp;format&nbsp;variable,&nbsp;is&nbsp;a&nbsp;string&nbsp;which&nbsp;determines&nbsp;what&nbsp;the<br>
+<dl><dt><a name="z-__init__"><strong>__init__</strong></a>(self, format<font color="#909090">=None</font>, freq<font color="#909090">=[]</font>, freqUnit<font color="#909090">='GHz'</font>, input1<font color="#909090">=[]</font>, input2<font color="#909090">=[]</font>, z0<font color="#909090">=50</font>)</dt><dd><tt>The&nbsp;format&nbsp;variable,&nbsp;is&nbsp;a&nbsp;string&nbsp;which&nbsp;determines&nbsp;what&nbsp;the<br>
 input&nbsp;vectors&nbsp;are&nbsp;assigned&nbsp;to.&nbsp;Values&nbsp;for&nbsp;format:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'re'&nbsp;-&nbsp;input1&nbsp;=&nbsp;real,&nbsp;input2&nbsp;=&nbsp;imaginary</tt></dd></dl>
 
@@ -173,9 +176,35 @@ input&nbsp;vectors&nbsp;are&nbsp;assigned&nbsp;to.&nbsp;Values&nbsp;for&nbsp;for
 <font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
     
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><dl><dt><a name="-dB2Mag"><strong>dB2Mag</strong></a>(dB)</dt></dl>
+<td width="100%"><dl><dt><a name="-applyABC"><strong>applyABC</strong></a>(gamma, abc)</dt><dd><tt>takes&nbsp;a&nbsp;complex&nbsp;array&nbsp;of&nbsp;uncalibrated&nbsp;reflection&nbsp;coefficient&nbsp;and&nbsp;applies<br>
+the&nbsp;one-port&nbsp;OSM&nbsp;callibration,&nbsp;using&nbsp;the&nbsp;coefficients&nbsp;abc.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma&nbsp;-&nbsp;complex&nbsp;reflection&nbsp;coefficient<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;abc&nbsp;-&nbsp;Nx3&nbsp;OSM&nbsp;calibration&nbsp;coefficients.</tt></dd></dl>
+ <dl><dt><a name="-cutOff"><strong>cutOff</strong></a>(a)</dt><dd><tt>returns&nbsp;the&nbsp;cutoff&nbsp;frequency&nbsp;(in&nbsp;Hz)&nbsp;for&nbsp;first&nbsp;&nbsp;resonance&nbsp;of&nbsp;a<br>
+waveguide&nbsp;with&nbsp;major&nbsp;dimension&nbsp;given&nbsp;by&nbsp;a.&nbsp;a&nbsp;is&nbsp;in&nbsp;meters</tt></dd></dl>
+ <dl><dt><a name="-dB2Mag"><strong>dB2Mag</strong></a>(dB)</dt></dl>
  <dl><dt><a name="-dBDeg2ReIm"><strong>dBDeg2ReIm</strong></a>(dB, deg)</dt></dl>
  <dl><dt><a name="-deg2rad"><strong>deg2rad</strong></a>(deg)</dt></dl>
+ <dl><dt><a name="-getABC"><strong>getABC</strong></a>(mOpen, mShort, mMatch, aOpen, aShort, aMatch)</dt><dd><tt>calculates&nbsp;calibration&nbsp;coefficients&nbsp;for&nbsp;a&nbsp;one&nbsp;port&nbsp;OSM&nbsp;calibration<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;abc&nbsp;is&nbsp;a&nbsp;Nx3&nbsp;ndarray&nbsp;containing&nbsp;the&nbsp;complex&nbsp;calibrations&nbsp;coefficients,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where&nbsp;N&nbsp;is&nbsp;the&nbsp;number&nbsp;of&nbsp;frequency&nbsp;points&nbsp;in&nbsp;the&nbsp;standards&nbsp;that&nbsp;where&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;given.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mOpen,&nbsp;mShort,&nbsp;and&nbsp;mMatch&nbsp;are&nbsp;1xN&nbsp;complex&nbsp;ndarrays&nbsp;representing&nbsp;the&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured&nbsp;reflection&nbsp;coefficients&nbsp;off&nbsp;the&nbsp;corresponding&nbsp;standards.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aOpen,&nbsp;aShort,&nbsp;and&nbsp;aMatch&nbsp;are&nbsp;1xN&nbsp;complex&nbsp;ndarrays&nbsp;representing&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;assumed&nbsp;reflection&nbsp;coefficients&nbsp;off&nbsp;the&nbsp;corresponding&nbsp;standards.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;the&nbsp;standards&nbsp;used&nbsp;in&nbsp;OSM&nbsp;calibration&nbsp;dont&nbsp;actually&nbsp;have&nbsp;to&nbsp;be&nbsp;<br>
+&nbsp;an&nbsp;open,&nbsp;short,&nbsp;and&nbsp;match.&nbsp;they&nbsp;are&nbsp;arbitrary&nbsp;but&nbsp;should&nbsp;provide<br>
+&nbsp;good&nbsp;seperation&nbsp;on&nbsp;teh&nbsp;smith&nbsp;chart&nbsp;for&nbsp;good&nbsp;accuracy</tt></dd></dl>
  <dl><dt><a name="-loadPortImpedanceFromTouchtone"><strong>loadPortImpedanceFromTouchtone</strong></a>(inputFileName)</dt><dd><tt>Takes&nbsp;the&nbsp;name&nbsp;of&nbsp;a&nbsp;HFSS&nbsp;formated&nbsp;touchtone&nbsp;file,&nbsp;which&nbsp;has&nbsp;frequency&nbsp;<br>
 dependent&nbsp;port&nbsp;impendance,&nbsp;such&nbsp;as&nbsp;the&nbsp;case&nbsp;for&nbsp;waveguide.&nbsp;<br>
 Returns&nbsp;two&nbsp;arrays&nbsp;representing&nbsp;the&nbsp;port&nbsp;impedances&nbsp;in&nbsp;complex&nbsp;format.&nbsp;<br>
@@ -190,12 +219,40 @@ myTwoPort&nbsp;=&nbsp;mwavepy.loadTouchTone('inputFile.s1p')</tt></dd></dl>
  <dl><dt><a name="-magDeg2ReIm"><strong>magDeg2ReIm</strong></a>(mag, deg)</dt></dl>
  <dl><dt><a name="-magPhase2ReIm"><strong>magPhase2ReIm</strong></a>(mag, phase)</dt><dd><tt>##-----&nbsp;conversion&nbsp;utilities&nbsp;----<br>
 #&nbsp;TODO:&nbsp;explicitly&nbsp;call&nbsp;j&nbsp;from&nbsp;numpy</tt></dd></dl>
- <dl><dt><a name="-plotCsv"><strong>plotCsv</strong></a>(filename, rowsToSkip<font color="#909090">=1</font>, delim<font color="#909090">=','</font>)</dt></dl>
+ <dl><dt><a name="-plotCsv"><strong>plotCsv</strong></a>(filename, rowsToSkip<font color="#909090">=1</font>, delim<font color="#909090">=','</font>)</dt><dd><tt>plots&nbsp;columns&nbsp;from&nbsp;csv&nbsp;file.&nbsp;plots&nbsp;all&nbsp;columns&nbsp;against&nbsp;the&nbsp;first<br>
+see&nbsp;pylab.loadtxt&nbsp;for&nbsp;more&nbsp;information</tt></dd></dl>
+ <dl><dt><a name="-psd2TimeDomain"><strong>psd2TimeDomain</strong></a>(f, y, windowType<font color="#909090">='rect'</font>)</dt><dd><tt>convert&nbsp;a&nbsp;one&nbsp;sided&nbsp;complex&nbsp;spectrum&nbsp;into&nbsp;a&nbsp;real&nbsp;time-signal.<br>
+takes&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;array,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y:&nbsp;complex&nbsp;PSD&nbsp;arary&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;windowType:&nbsp;windowing&nbsp;function,&nbsp;defaults&nbsp;to&nbsp;rect<br>
+&nbsp;<br>
+returns&nbsp;in&nbsp;the&nbsp;form:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[timeVector,&nbsp;signalVector]<br>
+timeVector&nbsp;is&nbsp;in&nbsp;inverse&nbsp;units&nbsp;of&nbsp;the&nbsp;input&nbsp;variable&nbsp;f,<br>
+if&nbsp;spectrum&nbsp;is&nbsp;not&nbsp;baseband&nbsp;then,&nbsp;timeSignal&nbsp;is&nbsp;modulated&nbsp;by&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exp(t*2*pi*f[0])<br>
+so&nbsp;keep&nbsp;in&nbsp;mind&nbsp;units,&nbsp;also&nbsp;due&nbsp;to&nbsp;this&nbsp;f&nbsp;must&nbsp;be&nbsp;increasing&nbsp;left&nbsp;to&nbsp;right</tt></dd></dl>
  <dl><dt><a name="-rad2deg"><strong>rad2deg</strong></a>(rad)</dt></dl>
  <dl><dt><a name="-reIm2MagPhase"><strong>reIm2MagPhase</strong></a>(re, im)</dt></dl>
  <dl><dt><a name="-reIm2dBDeg"><strong>reIm2dBDeg</strong></a>(re, im)</dt></dl>
  <dl><dt><a name="-seriesTwoPort"><strong>seriesTwoPort</strong></a>(twoPortA, twoPortB)</dt><dd><tt>returns&nbsp;<a href="#twoPort">twoPort</a>&nbsp;representing&nbsp;the&nbsp;series&nbsp;combination&nbsp;of&nbsp;twoPortA<br>
 and&nbsp;twoPortB.&nbsp;twoPortA&nbsp;and&nbsp;twoPortB&nbsp;are&nbsp;type&nbsp;<a href="#twoPort">twoPort</a>.</tt></dd></dl>
  <dl><dt><a name="-smith"><strong>smith</strong></a>(smithRadius<font color="#909090">=1</font>, res<font color="#909090">=1000</font>)</dt><dd><tt>##------&nbsp;ploting&nbsp;--------</tt></dd></dl>
+ <dl><dt><a name="-timeDomain2Psd"><strong>timeDomain2Psd</strong></a>(t, y, windowType<font color="#909090">='rect'</font>)</dt><dd><tt>returns&nbsp;the&nbsp;positive&nbsp;baseband&nbsp;PSD&nbsp;for&nbsp;a&nbsp;real-valued&nbsp;signal<br>
+returns&nbsp;in&nbsp;the&nbsp;form:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[freqVector,spectrumVector]<br>
+freq&nbsp;has&nbsp;inverse&nbsp;units&nbsp;of&nbsp;t'<a href="#s">s</a>&nbsp;units.&nbsp;also,&nbsp;sampling&nbsp;frequency&nbsp;is&nbsp;<br>
+fs&nbsp;=&nbsp;1/abs(t[1]-t[0])<br>
+the&nbsp;result&nbsp;is&nbsp;scaled&nbsp;by&nbsp;1/length(n),&nbsp;where&nbsp;n&nbsp;is&nbsp;number&nbsp;of&nbsp;samples<br>
+to&nbsp;attain&nbsp;the&nbsp;original&nbsp;spectrum&nbsp;you&nbsp;must&nbsp;shift&nbsp;the&nbsp;freqVector&nbsp;appropriatly</tt></dd></dl>
+ <dl><dt><a name="-updatePlotDb"><strong>updatePlotDb</strong></a>(inputS, mpl_plot)</dt><dd><tt>Plot&nbsp;the&nbsp;S-parameter&nbsp;mag&nbsp;in&nbsp;log&nbsp;mode.&nbsp;given&nbsp;an&nbsp;already&nbsp;existing&nbsp;<br>
+axes&nbsp;'mplplot'</tt></dd></dl>
+ <dl><dt><a name="-updatePlotPhase"><strong>updatePlotPhase</strong></a>(inputS, mpl_plot)</dt><dd><tt>Plot&nbsp;the&nbsp;S-parameter&nbsp;phase&nbsp;mode.&nbsp;given&nbsp;an&nbsp;already&nbsp;existing&nbsp;<br>
+axes&nbsp;'mplplot'</tt></dd></dl>
+ <dl><dt><a name="-updatePlotSmith"><strong>updatePlotSmith</strong></a>(inputS, mpl_plot)</dt><dd><tt>Plot&nbsp;the&nbsp;S-parameters&nbsp;on&nbsp;a&nbsp;smith&nbsp;chart.given&nbsp;an&nbsp;already&nbsp;existing&nbsp;<br>
+axes&nbsp;'mplplot'<br>
+can&nbsp;be&nbsp;passed&nbsp;the&nbsp;smith&nbsp;radius&nbsp;and&nbsp;resolution&nbsp;of&nbsp;smith&nbsp;chart&nbsp;circles</tt></dd></dl>
+ <dl><dt><a name="-updateSmithChart"><strong>updateSmithChart</strong></a>(mpl_plot, smithRadius<font color="#909090">=1</font>, res<font color="#909090">=1000</font>)</dt></dl>
 </td></tr></table>
 </body></html>

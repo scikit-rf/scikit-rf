@@ -10,10 +10,11 @@ horn = m.loadTouchtone('horn.s2p')
 
 #plot returnloss in dB, on a smith chart and, plot SWR.
 p.figure(1)
-horn.plotReturnLoss()
+horn.s11.plotdB()
 
 p.figure(2)
 horn.s11.plotSmith()
+p.axis('equal')
 p.axis([-1,1,-1,1])
 
 p.figure(3)
