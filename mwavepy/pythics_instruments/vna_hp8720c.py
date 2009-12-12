@@ -30,7 +30,7 @@ def setS(self, desiredS, opc=True):
 	return None
 			
 
-def readData(self):
+def getData(self):
 	'''
 	returns output from 'OUTPDATA' in array format
 	'''
@@ -88,7 +88,7 @@ def putInSingSweepMode(self):
 	self.write("SING;")	
 	return None
 
-def putInForm4(self):
+def setDataFormatAscii(self):
 	'''
 	TODO: verify what this does
 	set output data in ascii and re/im pairs
