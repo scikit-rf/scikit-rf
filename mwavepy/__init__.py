@@ -63,7 +63,7 @@ import os # for fileIO
 class s:
 	''' represents a s-parameter. has the following fields:
 			freq, freqUnit, re, im, dB, mag, deg, complex, z0
-	 	TODO: fix constructor to allow more versitile input check for
+	 	TODO: fix constructor to allow more versitile input - by using keywork arguments check for
 			vectors being the same length
 	'''	
 	def __init__(self, format=None, freq=[],freqUnit='GHz', input1=[],input2=[], z0=50):
@@ -368,6 +368,9 @@ class onePort:
 		self.s11.plotdB()
 		p.title('Return Loss')
 		p.xlabel('Frequency (' + self.freqUnit +')')
+	def writeTouchtone():
+		# NEEDS TO BE DONE
+		return None
 ##------- networks --------
 def seriesTwoPort(twoPortA ,twoPortB):
 	''' returns twoPort representing the series combination of twoPortA
