@@ -1,0 +1,47 @@
+
+<html>
+<head><title>Record asdfTouchtone</title>
+<style type='text/css'>
+body {background-color: #eeeeee; border-width: 10px; padding: 5px}
+a {align: center; font-size: 10pt; font-family: default; font-style: normal; font-weight: normal}
+p {align: left; color: black; font-size: 10pt; font-family: default; font-style: normal; font-weight: normal}
+h1 {align: center; font-size: 18pt; font-family: default; font-style: normal; font-weight: bold}
+h2 {align: left; font-size: 16pt; font-family: default; font-style: normal; font-weight: normal}
+h3 {align: left; font-size: 14pt; font-family: default; font-style: normal; font-weight: normal}
+h4 {align: left; font-size: 12pt; font-family: default; font-style: normal; font-weight: normal}
+h5 {align: left; font-size: 10pt; font-family: default; font-style: normal; font-weight: normal}
+h6 {align: left; font-size: 8pt; font-family: default; font-style: normal; font-weight: normal}
+object {align: left}
+table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-gap: 5}
+</style>
+
+</head>
+<body>
+
+<h1>record Touchtone File</h1>
+<br/>
+<object classid='FilePicker' id='touchtone_file_picker' width='80%'>
+    <param name='save' value='True'/>
+</object>
+<br/>
+<object classid='Button' width='200'>
+    <param name='label' value='Get DATA'/>
+    <param name='action' value='recordTouchtone.getTouchtone'/>
+</object>
+
+<br/>
+<object classid='ScriptLoader' width='100%'>
+    <param name='filename' value='recordTouchtone'/>
+</object>
+
+<!--
+<object classid='ParameterLoader' width='100%'>
+    <param name='filename' value='defaults_recordTouchtone.txt'/>
+</object>
+-->
+
+
+
+
+</body>
+</html>

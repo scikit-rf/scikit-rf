@@ -328,20 +328,22 @@ class twoPort:
 			# TODO: prompt for file removal
 			os.remove(fileName)
 		f=open(fileName,"w")
-		
+		#TODO : fix this shitty 
+		arrayOfS = ['S11','S21','S12','S22']
 		# write header file. note: the #  line is NOT a comment it is essential and it must be exactly
 		# this way for puff to read it
-		#TODO check format string for acceptable values
-		f.write("# GHz S " + format + " R " + self.s11.z0 +" \n! EEsoF format of Network Analyzer Results\n")
+		#TODO check format string for acceptable values and do somthing with it
+		f.write("# " + self.s11.freqUnit+ " S " + format + " R " + str(self.s11.z0) +" \n! EEsoF format of Network Analyzer Results\n")
 		f.write ("!freq\t")
-		for p in range(size(arrayOfS)):
-			f.write( arrayOfS[p].name + "Mag\t" + arrayOfS[p].name + "Phase\t")
+		#write header
+		for p in ['S11','S21','S12','S22']:
+			f.write( p + "Mag\t" + p + "Phase\t")
 		
 		# loop through frequency points and write out s-parmeter info in Mag Phase
-		for k in range(0,fPoints):	
-			f.write("\n"+repr(freqs[k]))
-			for kk in range(size(arrayOfS)):
-				f.write("\t"+repr( arrayOfS[kk].mag[k]) +"\t" + repr(arrayOfS[kk].phase[k]))
+		for k in range(len(self.s11.freq)):	
+			f.write("\n"+repr(self.s11.freq[k]))
+			for kk in self.s11, self.s21,self.s12,self.s22:
+				f.write("\t"+repr( kk.mag[k]) +"\t" + repr(kk.deg[k]))
 			
 		
 		f.close()
