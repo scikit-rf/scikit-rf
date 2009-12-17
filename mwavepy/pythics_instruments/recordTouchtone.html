@@ -1,6 +1,6 @@
 
 <html>
-<head><title>Record asdfTouchtone</title>
+<head><title>Record Touchtone</title>
 <style type='text/css'>
 body {background-color: #eeeeee; border-width: 10px; padding: 5px}
 a {align: center; font-size: 10pt; font-family: default; font-style: normal; font-weight: normal}
@@ -20,20 +20,79 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
 
 <h1>record Touchtone File</h1>
 <br/>
+<object classid='Button' id = 'button_1' width='200'>
+    <param name='label' value='initialize vna'/>
+    <param name='action' value='recordTouchtone.initializeVna'/>
+</object>
+<p>       GPIB address:</p>
+<object classid='NumBox' width='100'>
+    <param name='key' value='gpib_num_box'/>
+    <param name='digits' value='0'/>
+</object>
+<br/>
+
+<br/>
+<object classid='Button' id = 'button_1' width='200'>
+    <param name='label' value='Get All S-parameters'/>
+    <param name='action' value='recordTouchtone.getAllS'/>
+</object>
+<object classid='Button' width='200'>
+    <param name='label' value='Get Current S-parameter'/>
+    <param name='action' value='recordTouchtone.getCurrentS'/>
+</object>
+<br/>
+<object classid='Button' width='200'>
+    <param name='label' value='Save Touchtone'/>
+    <param name='action' value='recordTouchtone.writeTouchtone'/>
+</object>
+<p>     </p>
 <object classid='FilePicker' id='touchtone_file_picker' width='80%'>
     <param name='save' value='True'/>
 </object>
 <br/>
-<object classid='Button' width='200'>
-    <param name='label' value='Get DATA'/>
-    <param name='action' value='recordTouchtone.getTouchtone'/>
-</object>
 
-<br/>
+
 <object classid='ScriptLoader' width='100%'>
     <param name='filename' value='recordTouchtone'/>
 </object>
 
+
+<hr/>
+<object classid='Button' width='200'>
+    <param name='label' value='Plot'/>
+    <param name='action' value='plotTouchtone.plot'/>
+</object>
+<object classid='Button' width='200'>
+    <param name='label' value='Clear'/>
+    <param name='action' value='plotTouchtone.clear'/>
+</object>
+
+
+<hr/>
+<a href='#magnitude'>Magnitude</a><p>|</p>
+ <a href='#phase'>Phase</a><p>|</p> 
+ <a href='#smith'>Smith Chart</a> 
+
+<hr/>
+
+<a id='magnitude'/><h3>Magnitude</h3>
+<object classid='MPLPlot' width='100%' height='200'>
+    <param name='key' value='mag_plot'/>
+</object>
+
+<hr/>
+<a id='phase'/><h3>Phase</h3>
+<object classid='MPLPlot' width='100%' height='200'>
+    <param name='key' value='phase_plot'/>
+</object>
+<br/>
+
+<hr/>
+<a id='smith'/><h3>Smith Chart</h3>
+<object classid='MPLPlot' width='200' height='200'>
+    <param name='key' value='smith_plot'/>
+</object>
+<br/>
 <!--
 <object classid='ParameterLoader' width='100%'>
     <param name='filename' value='defaults_recordTouchtone.txt'/>

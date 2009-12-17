@@ -57,6 +57,26 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 		# call s-parameter constructor
 		return m.s('re',freqArray,'GHz', sReal,sImag,z0)
 		
+	def getTwoPort(self, freqArray=[],z0=50):
+		'''
+		returns an two-port type, which represents current DUT
+		
+		freqArray - is the frequency array assigned to the s-parameter
+		z0 - is the characteristic impedance to assign to the s-parameter
+		'''
+		# Long sweeps may create time outs, see pyvisa page for solving this
+		# using contructor  options
+		self.setS('s11') 
+		s11 = self.getS(freqArray,z0)	
+		self.setS('s21') 
+		s21 = self.getS(freqArray,z0)
+		self.setS('s12') 
+		s12 = self.getS(freqArray,z0)
+		self.setS('s22') 
+		s22 = self.getS(freqArray,z0)
+		# call s-parameter constructor
+		return m.twoPort (s11,s12,s21,s22)
+		
 	def getFrequencyAxis(self, freqUnit=1e9):
 		'''
 		returns the current frequency axis.
