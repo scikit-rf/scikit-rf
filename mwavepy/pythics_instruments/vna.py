@@ -2,7 +2,7 @@ import visa
 import pythics.libinstrument
 import mwavepy as m	
 import numpy as n
-
+from time import sleep 
 
 # see http://pyvisa.sourceforge.net/pyvisa/node10.html for GPIB methods
 GHz= 1e9
@@ -154,11 +154,10 @@ class hp8510c(pythics.libinstrument.GPIBInstrument):
 		'''
 		makes the vna measure the desiredS s-parameterS.
 		desiredS - a string. may be either s11,s12,s21, or s22
-		opc=True/False  sends a "OPC?" to vna after setting s-parame, 
-			which waits for it to switch, before continuing (doesnt work on 8510)
+		uses the a "SING;" command for timing
 		
 		'''	
-		self.write(input + ';')
+		self.write(input + ';sing;')
 		
 		# learn how to call these methods from within methodss waitOPC()
 		return None
