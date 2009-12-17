@@ -1,25 +1,33 @@
-
+import multiprocessing
 import mwavepy as m	
 from mwavepy.pythics_instruments import vna
 
-def getTouchtone(touchtone_file_picker, **kwargs):
-	myvna = vna.vna_hp8720c("GPIB::16")
-	
+logger = multiprocessing.get_logger()
+
+myvna = []
+myntwk = []
+
+def initializeVna(gpib_num_box, **kwargs):
+	global myvna
+	myvna = vna.hp8720c("GPIB::" + str(int(gpib_num_box.value)))
 	myvna.setDataFormatAscii()
-	freqVector = myvna.getFrequencyAxis() # this may not work on other vna's
-	myvna.setS('s11') # this defaults to sending an OPC?, see help
-	s11 = myvna.getS(freqVector)	
-	myvna.setS('s21') # this defaults to sending an OPC?, see help
-	s21 = myvna.getS(freqVector)
-	myvna.setS('s12') # this defaults to sending an OPC?, see help
-	s12 = myvna.getS(freqVector)
-	myvna.setS('s22') # this defaults to sending an OPC?, see help
-	s22 = myvna.getS(freqVector)
 	
-	myntwk = m.twoPort(s11,s21,s12,s22)
-	myntwk.writeTouchtone(touchtone_file_picker.value)
+def getAllS(**kwargs):
+	global myvna
+	global myntwk
+
+	
+	freqVector = myvna.getFrequencyAxis() # this may not work on other vna's
+	myntwk = myvna.getTwoPort(freqVector,50) # implicitly makes OPC? call
 	myvna.putInContSweepMode()
 
 
-
+def getCurrentS( **kwargs):
+	global myvna
+	global myntwk
+	myntwk = m.onePort(myvna.getS(myvna.getFrequencyAxis()))
+	myvna.putInContSweepMode()
+	
+def saveTouchtone(touchtone_file_picker,**kwargs ):
+	myntwk.writeTouchtone(touchtone_file_picker.value)
 
