@@ -10,11 +10,12 @@ GHz= 1e9
 class hp8720c(pythics.libinstrument.GPIBInstrument):
 	def __init__(self, *args, **kwargs):
 		'''
-		default constructor. 
+		default constructor. common options are 
+			"GPIB::$addressNumber"
+			timeout=
+		
 		'''
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
-		# DO WE NEED TO INITIALIZE SOME DEFAULT VALUES?
-		
 	
 	
 		
@@ -136,5 +137,4 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 	
 	
 	
-	#doesnt belong in instrument VI
 	

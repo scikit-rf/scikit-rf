@@ -113,7 +113,7 @@ class s:
 			self.deg = input1
 			self.complex = input1
 			self.z0 = z0
-		#elif format == ma:
+			
 	
 	def plotdB(self):
 		''' Plot the S-parameter mag in log mode. 
@@ -202,7 +202,7 @@ class z:
 			self.z0 = z0
 		
 	def plotReIm(self):
-		''' Plot the S-parameter mag in log mode. 
+		''' Plot the real and imaginary parts of Z-parameters 
 		'''
 		p.plot(self.freq, self.re)
 		p.plot(self.freq, self.im)
@@ -323,19 +323,37 @@ class twoPort:
 		
 	def plotZ02(self):
 		self.s22.plotZ0()
-	def writeTouchtone(self, fileName='twoPort.s2p',format='MA'):
+		
+	def writeTouchtone(self, fileName='mytwoPort.s2p'):
+		'''
+		write twoPort network to a file in touchtone format. 
+		
+		takes 1 argument, the filename (as a string)
+		
+		
+		the line starting with # holds import information about the data
+		the lines starting with ! are just comments for the user
+		this only write in mag-angle format for now. 
+		'''
+		#TODO:  maybe some exception handling
+		#	allow for other formats instead of just mag angle (MA)
+		format = 'MA'
+		
 		if os.access(fileName,1):
 			# TODO: prompt for file removal
 			os.remove(fileName)
 		f=open(fileName,"w")
-		#TODO : fix this shitty 
-		arrayOfS = ['S11','S21','S12','S22']
-		# write header file. note: the #  line is NOT a comment it is essential and it must be exactly
-		# this way for puff to read it
+		
+
+		# write header file. note: the #  line is NOT a comment it is 
+		#essential and it must be exactly this format, to work
+		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
+		
 		#TODO check format string for acceptable values and do somthing with it
-		f.write("# " + self.s11.freqUnit+ " S " + format + " R " + str(self.s11.z0) +" \n! EEsoF format of Network Analyzer Results\n")
+		f.write("# " + self.s11.freqUnit+ " S " + format + " R " + str(self.s11.z0) +" \n")
+		
+		#write comment line for users
 		f.write ("!freq\t")
-		#write header
 		for p in ['S11','S21','S12','S22']:
 			f.write( p + "Mag\t" + p + "Phase\t")
 		
@@ -370,9 +388,45 @@ class onePort:
 		self.s11.plotdB()
 		p.title('Return Loss')
 		p.xlabel('Frequency (' + self.freqUnit +')')
-	def writeTouchtone():
-		# NEEDS TO BE DONE
-		return None
+	def writeTouchtone(fileName='myonePort.s1p'):
+		'''
+		write onePort network to a file in touchtone format. 
+		
+		takes 1 argument, the filename (as a string)
+		
+		
+		the line starting with # holds import information about the data
+		the lines starting with ! are just comments for the user
+		this only write in mag-angle format for now. 
+		'''
+		#TODO:  maybe some exception handling
+		#	allow for other formats instead of just mag angle (MA)
+		if os.access(fileName,1):
+			# TODO: prompt for file removal
+			os.remove(fileName)
+		f=open(fileName,"w")
+		
+
+		# write header file. note: the #  line is NOT a comment it is 
+		#essential and it must be exactly this format, to work
+		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
+		
+		#TODO check format string for acceptable values and do somthing with it
+		f.write("# " + self.s11.freqUnit+ " S " + format + " R " + str(self.s11.z0) +" \n")
+		
+		#write comment line for users
+		f.write ("!freq\tS11Mag\tS11Phase\t")
+		
+		# loop through frequency points and write out s-parmeter info in Mag Phase
+		for k in range(len(self.s11.freq)):	
+			f.write("\n"+repr(self.s11.freq[k]))
+			for kk in self.s11:
+				f.write("\t"+repr( kk.mag[k]) +"\t" + repr(kk.deg[k]))
+			
+		
+		f.close()
+
+
 ##------- networks --------
 def seriesTwoPort(twoPortA ,twoPortB):
 	''' returns twoPort representing the series combination of twoPortA
@@ -383,7 +437,7 @@ def seriesTwoPort(twoPortA ,twoPortB):
 	s11 = twoPortA.s11 + twoPortA.s21*twoPortB.s11*twoPortA.s12 / (1-twoPortA.s22*twoPortB.s11);
 	s22 = twoPortB.s22 + twoPortB.s12*twoPortA.s22*twoPortB.s21 / (1-twoPortA.s22*twoPortB.s11);
 	
-	return TwoPort([],s11,s21,s12,s22)
+	return twoPort(s11,s21,s12,s22)
 	
 
 
@@ -463,7 +517,16 @@ def smith(smithRadius=1, res=1000 ):
 		currentCirle= circle(contour[0],contour[1], res)
 		currentCirle[abs(currentCirle)>smithRadius] = p.nan
 		p.plot(n.real(currentCirle), n.imag(currentCirle),'gray', linewidth=1)
-	
+
+
+# TODO: all of these updatePlot?? utilities could be incorperated into
+# 		the s-parameters functions with a try except like 
+#		s.plotdB(mpl_plot):
+#			try:
+#				mpl_plot
+#				#assert mpl_plot exists so update it 
+#			except:
+#				mpl_plot was not passed/doesnt exist so make a new plot
 def updatePlotDb(inputS,mpl_plot):
 	''' Plot the S-parameter mag in log mode. given an already existing 
 	axes 'mplplot'
@@ -588,7 +651,8 @@ def loadTouchtone(inputFileName):
 
 	elif ( data.shape[1] == 3):
 		# we have a 1-port
-		return onePort(s(format, data[:,0], freqUnit,data[:,1],data[:,2],float(port1Z0)))
+		s11 = s(format, data[:,0], freqUnit,data[:,1],data[:,2],port1Z0)
+		return onePort(s11)
 
 	else:
 		# TODO: handle errors correctly
