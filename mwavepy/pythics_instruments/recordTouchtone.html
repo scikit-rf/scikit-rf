@@ -54,35 +54,26 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
     <param name='label' value='Get Current S-parameter'/>
     <param name='action' value='recordTouchtone.getCurrentS'/>
 </object>
+
+
+<br/>
 <object classid='Button' width='200'>
-    <param name='label' value='Get Specific S-parameters'/>
-    <param name='action' value='recordTouchtone.getSpecificS'/>
-</object>
-
-<object classid='CheckBox' id='s11_check_box'>
-    <param name='label' value='S11'/>
-</object>
-<object classid='CheckBox' id='s12_check_box'>
-    <param name='label' value='S12'/>
-</object>
-<object classid='CheckBox' id='s21_check_box'>
-    <param name='label' value='S21'/>
-</object>
-<object classid='CheckBox' id='s22_check_box'>
-    <param name='label' value='S22'/>
+    <param name='label' value='Clear Plots'/>
+    <param name='action' value='recordTouchtone.clearPlots'/>
 </object>
 <br/>
 
-<br/>
+<!--
 <object classid='Gauge' width='100%' height='20'>
     <param name='key' value='timer_gauge'/>
 </object>
+-->
 
 <br/>
 
 <object classid='Button' width='200'>
     <param name='label' value='Save Touchtone'/>
-    <param name='action' value='recordTouchtone.writeTouchtone'/>
+    <param name='action' value='recordTouchtone.saveTouchtone'/>
 </object>
 <p>     </p>
 <object classid='FilePicker' id='touchtone_file_picker' width='100%'>
@@ -119,7 +110,7 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
 
 
 <object classid='Timer'>
-    <param name='action' value='testing.test_timer'/>
+    <param name='action' value='recordTouchtone.run_timer'/>
     <param name='key' value='timer_1'/>
 </object>
 <object classid='ScriptLoader' width='100%'>
