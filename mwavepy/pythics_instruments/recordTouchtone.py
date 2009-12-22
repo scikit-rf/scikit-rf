@@ -7,11 +7,16 @@ logger = multiprocessing.get_logger()
 myvna = []
 myntwk = []
 
-def initializeVna(logger_text_box,gpib_num_box, timeout_num_box,**kwargs):
+def initializeVna(vna_choice_button,logger_text_box,gpib_num_box, timeout_num_box,**kwargs):
 	global myvna
 	try:
 		logger.info(str(timeout_num_box.value))
-		myvna = vna.hp8510c("GPIB::" + str(int(gpib_num_box.value)),timeout=timeout_num_box.value)
+		if vna_choice_button.value == 'HP8720C':
+			myvna = vna.hp8720c("GPIB::" + str(int(gpib_num_box.value)),timeout=timeout_num_box.value)
+		elif vna_choice_button == 'HP8510C':
+			myvna = vna.hp8510c("GPIB::" + str(int(gpib_num_box.value)),timeout=timeout_num_box.value)
+			
+		
 		myvna.setDataFormatAscii()
 		logger_text_box.value =  'loaded vna.\n' + logger_text_box.value
 	except:

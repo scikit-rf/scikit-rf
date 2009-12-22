@@ -1,6 +1,6 @@
 
 <html>
-<head><title>Record Touchtone</title>
+<head><title>VNA Get Data</title>
 <style type='text/css'>
 body {background-color: #eeeeee; border-width: 10px; padding: 5px}
 a {align: center; font-size: 10pt; font-family: default; font-style: normal; font-weight: normal}
@@ -18,7 +18,7 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
 </head>
 <body>
 
-<h1>HP8720c Get Data</h1>
+<h1>VNA Get Data</h1>
 <br/>
 
 <p>Log:</p>
@@ -28,9 +28,15 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
     <param name='save' value='False'/>
 </object>
 <br/>
+
 <object classid='Button' width='200'>
     <param name='label' value='Initialize VNA'/>
     <param name='action' value='recordTouchtone.initializeVna'/>
+</object>
+<p>       Model:</p>
+<object classid='ChoiceButton' width='100'>
+	<param name='key' value='vna_choice_button'/>
+    <param name='choices' value='[HP8720C, HP8510C]'/>
 </object>
 <p>       GPIB address:</p>
 <object classid='NumBox' width='50'>
@@ -56,8 +62,6 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
     <param name='action' value='recordTouchtone.getCurrentS'/>
 </object>
 
-
-<br/>
 <object classid='Button' width='200'>
     <param name='label' value='Clear Plots'/>
     <param name='action' value='recordTouchtone.clearPlots'/>

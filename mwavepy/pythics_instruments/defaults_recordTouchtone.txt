@@ -1,12 +1,16 @@
 (dp0
-S'touchtone_file_picker'
+S'vna_choice_button'
 p1
-VC:\u005cDocuments and Settings\u005cmeasurement\u005cDesktop\u005ctmp.s2p
+VHP8510C
 p2
-sS'gpib_num_box'
+sS'touchtone_file_picker'
 p3
+V~/outputTouchtone.s2p
+p4
+sS'gpib_num_box'
+p5
 L16L
 sS'timeout_num_box'
-p4
-F5.0
+p6
+F10.0
 s.
