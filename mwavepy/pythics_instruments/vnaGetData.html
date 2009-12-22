@@ -31,7 +31,7 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
 
 <object classid='Button' width='200'>
     <param name='label' value='Initialize VNA'/>
-    <param name='action' value='recordTouchtone.initializeVna'/>
+    <param name='action' value='vnaGetData.initializeVna'/>
 </object>
 <p>       Model:</p>
 <object classid='ChoiceButton' width='100'>
@@ -55,16 +55,16 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
 <br/>
 <object classid='Button' width='200'>
     <param name='label' value='Get All S-parameters'/>
-    <param name='action' value='recordTouchtone.getAllS'/>
+    <param name='action' value='vnaGetData.getAllS'/>
 </object>
 <object classid='Button' width='200'>
     <param name='label' value='Get Current S-parameter'/>
-    <param name='action' value='recordTouchtone.getCurrentS'/>
+    <param name='action' value='vnaGetData.getCurrentS'/>
 </object>
 
 <object classid='Button' width='200'>
     <param name='label' value='Clear Plots'/>
-    <param name='action' value='recordTouchtone.clearPlots'/>
+    <param name='action' value='vnaGetData.clearPlots'/>
 </object>
 <br/>
 
@@ -78,7 +78,7 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
 
 <object classid='Button' width='200'>
     <param name='label' value='Save Touchtone'/>
-    <param name='action' value='recordTouchtone.saveTouchtone'/>
+    <param name='action' value='vnaGetData.saveTouchtone'/>
 </object>
 <p>     </p>
 <object classid='FilePicker' id='touchtone_file_picker' width='100%'>
@@ -115,16 +115,16 @@ table {align: center; cell-align: left; cell-horizontal-gap: 20; cell-vertical-g
 
 
 <object classid='Timer'>
-    <param name='action' value='recordTouchtone.run_timer'/>
+    <param name='action' value='vnaGetData.run_timer'/>
     <param name='key' value='timer_1'/>
 </object>
 <object classid='ScriptLoader' width='100%'>
-    <param name='filename' value='recordTouchtone'/>
+    <param name='filename' value='vnaGetData'/>
 </object>
 
 
 <object classid='ParameterLoader' width='100%'>
-    <param name='filename' value='defaults_recordTouchtone.txt'/>
+    <param name='filename' value='defaults_vnaGetData.txt'/>
 </object>
 
 
