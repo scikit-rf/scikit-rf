@@ -1,4 +1,4 @@
-import visa
+#import visa
 import pythics.libinstrument
 import mwavepy as m	
 import numpy as n
@@ -8,11 +8,14 @@ from time import sleep
 GHz= 1e9
 
 class hp8720c(pythics.libinstrument.GPIBInstrument):
+	'''
+	Virtual Instrument for HP8720C model VNA.
+	'''
 	def __init__(self, *args, **kwargs):
 		'''
 		default constructor. common options are 
 			"GPIB::$addressNumber"
-			timeout=
+			timeout=$GPIBTimeout
 		
 		'''
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
@@ -139,6 +142,9 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 	
 	
 class hp8510c(pythics.libinstrument.GPIBInstrument):
+	'''
+	Virtual Instrument for HP8720C model VNA.
+	'''
 	def __init__(self, *args, **kwargs):
 		'''
 		default constructor. common options are 
