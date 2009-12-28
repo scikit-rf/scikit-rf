@@ -43,6 +43,10 @@ from scipy import constants as const
 from scipy import signal
 import os # for fileIO
 
+# for drawing smith chart
+from matplotlib.patches import Circle
+from matplotlib.lines import Line2D
+	
 # most of these functions have not been rigidly tested. use with caution
 
 #TODO: this could be structured as a generic 2-port to n-port, with type of S, Z, Y, or ABCD
@@ -484,39 +488,65 @@ def deg2rad(deg):
 
 
 ##------ ploting --------
-def smith(smithRadius=1, res=1000 ):
+def smith(smithR=1):
+	'''
+	plots the smith chart of a given radius
+	takes:
+		smithR - radius of smith chart
+	'''
+	#TODO: fix this so that an axes object may be passed as argument
+	ax = p.gca()
+	# contour holds matplotlib instances of: pathes.Circle, and lines.Line2D, which 
+	# are the contours on the smith chart 
+	contour = []
 	
-	# smith(res=1000, smithRadius=1)
-	#	plots a smith chart with radius given by smithRadius and 
-	#	point density resolution given by res. 
-	#TODO: this could be plotted more efficiently if all data was ploted
-	#	at once. cirlces could be computer analytically, contour density
-	#	could be configurable
-	def circle(offset,r, numPoints ):
-		circleVector = r*n.exp(1j* n.linspace(0,2*n.pi,numPoints))+ offset
-		return circleVector
-				
-	# generate complex pairs of [center, radius] for smith chart contours
-	# TODO: generate this by logical algorithm
-	heavyContour = [[0,1],[1+1j,1],[1-1j,1],[.5,.5]]
-	lightContour = [[1+4j,4],[1-4j,4],[1+.5j,.5],[1-.5j,.5],[1+.25j,.25],[1-.25j,.25],[1+2j,2],[1-2j,2],[.25,.75],[.75,.25],[-1,2]]
-
-	# verticle and horizontal axis
-	p.axvline(x=1,color='k')
-	p.axhline(y=0,color='k')
+	# these are hard-coded on purpose,as they should always be present
+	rHeavyList = [0,1]
+	xHeavyList = [1,-1]
 	
+	# these could be dynamically coded in the future, but work good'nuff for now 
+	rLightList = p.logspace(3,-5,9,base=.5)
+	xLightList = p.hstack([p.logspace(2,-5,8,base=.5), -1*p.logspace(2,-5,8,base=.5)]) 
 	
-	# loop through countour vectors and plot the circles with appropriate 
-	# clipping at smithRadius
-	for contour in heavyContour:	
-		currentCirle= circle(contour[0],contour[1], res)
-		currentCirle[abs(currentCirle)>smithRadius] = p.nan
-		p.plot(n.real(currentCirle), n.imag(currentCirle),'k', linewidth=1)
+	# cheap way to make a ok-looking smith chart at larger than 1 radii
+	if smithR > 1:
+		rMax = (1.+smithR)/(1.-smithR)
+		rLightList = p.hstack([ p.linspace(0,rMax,11)  , rLightList ])
 		
-	for contour in lightContour:	
-		currentCirle= circle(contour[0],contour[1], res)
-		currentCirle[abs(currentCirle)>smithRadius] = p.nan
-		p.plot(n.real(currentCirle), n.imag(currentCirle),'gray', linewidth=1)
+	
+	# loops through Light and Heavy lists and draws circles using patches
+	# for analysis of this see R.M. Weikles Microwave II notes (from uva)
+	for r in rLightList:
+		center = (r/(1.+r),0 )
+		radius = 1./(1+r)
+		contour.append( Circle( center, radius, ec='grey',fc = 'none'))
+	for x in xLightList:
+		center = (1,1./x)
+		radius = 1./x
+		contour.append( Circle( center, radius, ec='grey',fc = 'none'))
+			
+	for r in rHeavyList:
+		center = (r/(1.+r),0 )
+		radius = 1./(1+r)
+		contour.append( Circle( center, radius, ec= 'black', fc = 'none'))	
+	for x in xHeavyList:
+		center = (1,1./x)
+		radius = 1./x	
+		contour.append( Circle( center, radius, ec='black',fc = 'none'))
+	
+	#draw x and y axis
+	contour.append(Line2D([-smithR, smithR],[0,0],color='black'))
+	contour.append(Line2D([1,1],[-smithR,smithR],color='black'))
+	
+	#set axis limits
+	ax.axis(smithR*n.array([-1., 1., -1., 1.]))
+	
+	# loop though contours and draw them on the given axes
+	for currentContour in contour:
+		if isinstance(currentContour, Circle):
+			ax.add_patch(currentContour)
+		elif isinstance(currentContour, Line2D):
+			ax.add_line(currentContour)
 
 
 # TODO: all of these updatePlot?? utilities could be incorperated into
