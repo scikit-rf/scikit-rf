@@ -1,4 +1,4 @@
-#!/bin/python
+#!/usr/bin/env python
 import sys
 sys.path.append('../')
 import mwavepy as m 

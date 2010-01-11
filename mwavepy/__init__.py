@@ -137,12 +137,12 @@ class s:
 		p.grid(1)
 		p.xlim([ self.freq[0], self.freq[-1]])
 	
-	def plotSmith(self, radius=1, res=1000):
+	def plotSmith(self, radius=1):
 		''' Plot the S-parameters on a smith chart.
 		can be passed the smith radius and resolution of smith chart circles 
 		'''
 		p.hold(1)
-		smith(radius,res)
+		smith(radius)
 		p.plot(self.re, self.im)
 	
 	def plotZ0(self):
