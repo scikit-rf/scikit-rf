@@ -1,41 +1,25 @@
-
 '''
-Filename: mwavepy.py
-Author: alex arsenovic
-Data: 04/04/09
-Requires: numpy, matplotlib (aka pylab)
-
-Summary: This is a collection of datatypes and functions which aid in microwave engineering.
-there are a few classes such as s, z which represent scattering and impedance parameters. There
-is also a twoPort and onePort class, which represent networks. The main use of these functions is 
-for analyzing data gotten from network analyzers or simulation programs. The standard format for 
-such parameters is Touchtone file format. There is a function which reads a standard formated 
-touchtone file and creates an object representing the data within the file. 
-
-
-Examples: 
-
-Loading a touchtone file:
-	import mwavepy as m
-	myTwoPort = m.loadTouchton('myTouchToneFile.s2p')
-
-Plotting some data:
-	import pylab as p
-	p.figure()
-	myTwoPort.plotAllS()
-	p.figure()
-	myTwoPort.plotZin1()
-
-Accessing parameter functions:
-	p.figure()
-	myTwoPort.s11.plotdB()
-	p.figure()
-	myTwoPort.s11.plotPhase()
-	p.figure()
-	myTwoPort.s11.plotSmith()
-	
-	Most of these functions have not been rigidly tested. use with caution
+#       __init__.py
+#       
+#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
+#       
+#       This program is free software; you can redistribute it and/or modify
+#       it under the terms of the GNU General Public License as published by
+#       the Free Software Foundation; either version 2 of the License, or
+#       (at your option) any later version.
+#       
+#       This program is distributed in the hope that it will be useful,
+#       but WITHOUT ANY WARRANTY; without even the implied warranty of
+#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#       GNU General Public License for more details.
+#       
+#       You should have received a copy of the GNU General Public License
+#       along with this program; if not, write to the Free Software
+#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#       MA 02110-1301, USA.
 '''
+
+#	Most of these functions have not been rigidly tested. use with caution!!
 
 import numpy as n
 import pylab as p
@@ -47,7 +31,6 @@ import os # for fileIO
 from matplotlib.patches import Circle
 from matplotlib.lines import Line2D
 	
-# most of these functions have not been rigidly tested. use with caution
 
 #TODO: this could be structured as a generic 2-port to n-port, with type of S, Z, Y, or ABCD
 # each netowrk could have difference function depending on the type. as of now it is still structured
