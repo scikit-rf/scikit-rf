@@ -603,6 +603,7 @@ def updateSmithChart(mpl_plot, smithRadius=1, res=1000 ):
 
 
 ##------ File import -----
+
 def loadTouchtone(inputFileName):
 	
 	
@@ -705,6 +706,28 @@ def loadPortImpedanceFromTouchtone(inputFileName):
 	
 
 
+
+def loadAllTouchtonesInDir(dir = '.'):
+	'''
+	loads all touchtone files in a given dir 
+	
+	takes:
+		dir  - the path to the dir, passed as a string (defalut is cwd)
+	returns:
+		(nameList, ntwkList)  - lists holding basenames of the files loaded, and a list of mwavepy networks 
+	'''
+	ntwkList=[]
+	nameList=[]
+	
+	for f in os.listdir (dir):
+		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
+			nameList.append(f[:-4]) #strips of extension
+			ntwkList.append(loadTouchtone(f))
+		
+	return (nameList, ntwkList)
+
+
+
 def plotCsv(filename,rowsToSkip=1,delim=','):
 	'''plots columns from csv file. plots all columns against the first
 	see pylab.loadtxt for more information
@@ -713,6 +736,7 @@ def plotCsv(filename,rowsToSkip=1,delim=','):
 	p.plot(data[:,0], data[:,1:])
 	p.grid(1)
 	p.title(filename)
+
 
 
 ##------ other functions ---
