@@ -6,7 +6,7 @@
 #       This program is free software; you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
 #       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later version.
+#       (at your option) any later versionpy.
 #       
 #       This program is distributed in the hope that it will be useful,
 #       but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -21,7 +21,7 @@
 
 #	Most of these functions have not been rigidly tested. use with caution!!
 
-import numpy as n
+import numpy as npy
 import pylab as p
 from scipy import constants as const
 from scipy import signal
@@ -127,7 +127,7 @@ class s:
 		p.hold(1)
 		smith(radius)
 		p.plot(self.re, self.im)
-		p.axis(radius*n.array([-1., 1., -1., 1.]))
+		p.axis(radius*npy.array([-1., 1., -1., 1.]))
 		
 	
 	def plotZ0(self):
@@ -222,7 +222,7 @@ class twoPort:
 		self.s22 = s22
 		
 		#this will be index as [i,j,f], meaning S_ij at frequency f
-		self.sMat = n.array([[self.s11.complex, self.s12.complex],\
+		self.sMat = npy.array([[self.s11.complex, self.s12.complex],\
 						[self.s21.complex,self.s22.complex]])
 
 		
@@ -238,10 +238,10 @@ class twoPort:
 		z22Complex = s22.z0 *	( (1-s11.complex)*(1+s22.complex) + s12.complex*s21.complex) / \
 								( (1-s11.complex)*(1-s22.complex) - s12.complex*s21.complex)
 		
-		self.z11 = z('re', self.freq, n.real(z11Complex), n.imag(z11Complex), s11.z0)
-		self.z12 = z('re', self.freq, n.real(z12Complex), n.imag(z12Complex), s12.z0)
-		self.z21 = z('re', self.freq, n.real(z21Complex), n.imag(z21Complex), s21.z0)
-		self.z22 = z('re', self.freq, n.real(z22Complex), n.imag(z22Complex), s22.z0)
+		self.z11 = z('re', self.freq, npy.real(z11Complex), npy.imag(z11Complex), s11.z0)
+		self.z12 = z('re', self.freq, npy.real(z12Complex), npy.imag(z12Complex), s12.z0)
+		self.z21 = z('re', self.freq, npy.real(z21Complex), npy.imag(z21Complex), s21.z0)
+		self.z22 = z('re', self.freq, npy.real(z22Complex), npy.imag(z22Complex), s22.z0)
 		#TODO: self.y's and self.abcd's
 		
 		
@@ -251,8 +251,8 @@ class twoPort:
 		self.zin2 = s22.z0 * (1 + s22.complex) / (1 - s22.complex)
 		
 		# standing wave ratio
-		self.swr1 = (1 + n.abs(s11.complex)) / (1 - n.abs(s11.complex))
-		self.swr2 = (1 + n.abs(s22.complex)) / (1 - n.abs(s22.complex))
+		self.swr1 = (1 + npy.abs(s11.complex)) / (1 - npy.abs(s11.complex))
+		self.swr2 = (1 + npy.abs(s22.complex)) / (1 - npy.abs(s22.complex))
 				
 	def plotReturnLoss(self):
 		self.s11.plotdB()
@@ -279,8 +279,8 @@ class twoPort:
 		
 		
 	def plotZin1(self):
-		p.plot(self.freq, n.real(self.zin1), label='Real')
-		p.plot(self.freq, n.imag(self.zin1), label='Imaginary')
+		p.plot(self.freq, npy.real(self.zin1), label='Real')
+		p.plot(self.freq, npy.imag(self.zin1), label='Imaginary')
 		p.xlabel('Frequency (' + self.freqUnit +')')
 		p.ylabel('Impedance (Ohms)')
 		p.grid(1)
@@ -288,8 +288,8 @@ class twoPort:
 		p.title('Input Impedance, Port 1')
 		
 	def plotZin2(self):
-		p.plot(self.freq, n.real(self.zin2),label='Real')
-		p.plot(self.freq, n.imag(self.zin2), label='Imaginary')
+		p.plot(self.freq, npy.real(self.zin2),label='Real')
+		p.plot(self.freq, npy.imag(self.zin2), label='Imaginary')
 		p.xlabel('Frequency (' + self.freqUnit +')')
 		p.ylabel('Impedance (Ohms)')
 		p.grid(1)
@@ -438,39 +438,39 @@ def seriesTwoPort(twoPortA ,twoPortB):
 ##----- conversion utilities ----
 # TODO: explicitly call j from numpy
 def magPhase2ReIm( mag, phase):
-	re = n.real(mag*n.exp(1j*(phase)))
-	im = n.imag(mag*n.exp(1j*(phase)))
+	re = npy.real(mag*npy.exp(1j*(phase)))
+	im = npy.imag(mag*npy.exp(1j*(phase)))
 	return re, im
 def magDeg2ReIm( mag, deg):
-	re = n.real(mag*n.exp(1j*(deg*n.pi/180)))
-	im = n.imag(mag*n.exp(1j*(deg*n.pi/180)))
+	re = npy.real(mag*npy.exp(1j*(deg*npy.pi/180)))
+	im = npy.imag(mag*npy.exp(1j*(deg*npy.pi/180)))
 	return re, im
 def dBDeg2ReIm(dB,deg):
-	re = n.real(10**((dB)/20.)*n.exp(1j*(deg*n.pi/180)))
-	im = n.imag(10**((dB)/20.)*n.exp(1j*(deg*n.pi/180)))
+	re = npy.real(10**((dB)/20.)*npy.exp(1j*(deg*npy.pi/180)))
+	im = npy.imag(10**((dB)/20.)*npy.exp(1j*(deg*npy.pi/180)))
 	return re, im
 	
 def reIm2MagPhase( re, im):
-	mag = n.abs( (re) + 1j*im )
-	phase = n.angle( (re) + 1j*im)
+	mag = npy.abs( (re) + 1j*im )
+	phase = npy.angle( (re) + 1j*im)
 	return mag, phase
 	
 def reIm2dBDeg (re, im):
-	dB = 20 * n.log10(n.abs( (re) + 1j*im ))
-	deg = n.angle( (re) + 1j*im) * 180/n.pi 
+	dB = 20 * npy.log10(npy.abs( (re) + 1j*im ))
+	deg = npy.angle( (re) + 1j*im) * 180/npy.pi 
 	return dB, deg 
 
 def mag2dB(mag):
-	return  20*n.log10(mag)
+	return  20*npy.log10(mag)
 	
 def dB2Mag(dB):
 	return 10**((dB)/20.)
 	
 def rad2deg(rad):
-	return (rad)*180/n.pi
+	return (rad)*180/npy.pi
 	
 def deg2rad(deg):
-	return (deg)*n.pi/180
+	return (deg)*npy.pi/180
 	
 
 
@@ -529,7 +529,7 @@ def smith(smithR=1):
 	contour.append(Line2D([1,1],[-smithR,smithR],color='black'))
 	
 	#set axis limits
-	ax.axis(smithR*n.array([-1., 1., -1., 1.]))
+	ax.axis(smithR*npy.array([-1., 1., -1., 1.]))
 	
 	# loop though contours and draw them on the given axes
 	for currentContour in contour:
@@ -582,7 +582,7 @@ def updateSmithChart(mpl_plot, smithRadius=1, res=1000 ):
 	#	at once. cirlces could be computer analytically, contour density
 	#	could be configurable
 	def circle(offset,r, numPoints ):
-		circleVector = r*n.exp(1j* n.linspace(0,2*n.pi,numPoints))+ offset
+		circleVector = r*npy.exp(1j* npy.linspace(0,2*npy.pi,numPoints))+ offset
 		return circleVector
 				
 	# generate complex pairs of [center, radius] for smith chart contours
@@ -599,13 +599,13 @@ def updateSmithChart(mpl_plot, smithRadius=1, res=1000 ):
 	# clipping at smithRadius
 	for contour in heavyContour:	
 		currentCirle= circle(contour[0],contour[1], res)
-		currentCirle[abs(currentCirle)>smithRadius] = n.nan
-		mpl_plot.plot(n.real(currentCirle), n.imag(currentCirle),'k', linewidth=1)
+		currentCirle[abs(currentCirle)>smithRadius] = npy.nan
+		mpl_plot.plot(npy.real(currentCirle), npy.imag(currentCirle),'k', linewidth=1)
 		
 	for contour in lightContour:	
 		currentCirle= circle(contour[0],contour[1], res)
-		currentCirle[abs(currentCirle)>smithRadius] = n.nan
-		mpl_plot.plot(n.real(currentCirle), n.imag(currentCirle),'gray', linewidth=1)
+		currentCirle[abs(currentCirle)>smithRadius] = npy.nan
+		mpl_plot.plot(npy.real(currentCirle), npy.imag(currentCirle),'gray', linewidth=1)
 	
 
 
@@ -634,7 +634,7 @@ def loadTouchtone(inputFileName):
 		line = f.readline()
 
 	headerInfo = line.split()
-	data = n.loadtxt(f, comments='!')
+	data = npy.loadtxt(f, comments='!')
 
 	
 	
@@ -706,8 +706,8 @@ def loadPortImpedanceFromTouchtone(inputFileName):
 			port2Z0r.append(splitLine[5])
 			port2Z0i.append(splitLine[6])
 		
-	port1Z0 = n.array(port1Z0r,dtype=float) + 1j*n.array(port1Z0i,dtype=float)
-	port2Z0 = n.array(port2Z0r,dtype=float) + 1j*n.array(port2Z0i,dtype=float)
+	port1Z0 = npy.array(port1Z0r,dtype=float) + 1j*npy.array(port1Z0i,dtype=float)
+	port2Z0 = npy.array(port2Z0r,dtype=float) + 1j*npy.array(port2Z0i,dtype=float)
 
 	return port1Z0,port2Z0
 	
@@ -727,7 +727,7 @@ def loadAllTouchtonesInDir(dir = '.'):
 		import mwavepy as m
 		nameList, ntwkList = m.loadAllTouchtonesInDir()
 		for n in ntwkList:
-			n.plotReturnLoss()
+			npy.plotReturnLoss()
 		legend(nameList)
 	'''
 	ntwkList=[]
@@ -776,18 +776,18 @@ def psd2TimeDomain(f,y, windowType='rect'):
 		y = y * window
 	
 	#create other half of spectrum
-	spectrum = (n.hstack([n.real(y[:0:-1]),n.real(y)])) + 1j*(n.hstack([-n.imag(y[:0:-1]),n.imag(y)]))
+	spectrum = (npy.hstack([npy.real(y[:0:-1]),npy.real(y)])) + 1j*(npy.hstack([-npy.imag(y[:0:-1]),npy.imag(y)]))
 	
 	# do the transform 
 	df = abs(f[1]-f[0])
 	T = 1./df
-	timeVector = n.linspace(0,T,2*len(f)-1)	
+	timeVector = npy.linspace(0,T,2*len(f)-1)	
 	signalVector = p.ifft(p.ifftshift(spectrum))
 	
 	#the imaginary part of this signal should be from fft errors only,
-	signalVector= n.real(signalVector)
+	signalVector= npy.real(signalVector)
 	# the response of frequency shifting is 
-	# n.exp(1j*2*n.pi*timeVector*f[0])
+	# npy.exp(1j*2*npy.pi*timeVector*f[0])
 	# but i would have to manually undo this for the inverse, which is just 
 	# another  variable to require. the reason you need this is because 
 	# you canttransform to a bandpass signal, only a lowpass. 
@@ -813,7 +813,7 @@ def timeDomain2Psd(t,y, windowType='rect'):
 	dt = abs(t[1]-t[0])
 	fs = 1./dt
 	numPoints = len(t)
-	f = n.linspace(-fs/2,fs/2,numPoints)
+	f = npy.linspace(-fs/2,fs/2,numPoints)
 
 	Y = 1./len(y)* p.fftshift(p.fft(y))
 	spectrumVector = Y[len(Y)/2:]
@@ -824,7 +824,7 @@ def cutOff(a):
 	'''returns the cutoff frequency (in Hz) for first  resonance of a
 	waveguide with major dimension given by a. a is in meters'''
 	
-	return n.sqrt((n.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*n.pi)
+	return npy.sqrt((npy.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*npy.pi)
 
 
 def passivityTest(smat):
@@ -836,9 +836,9 @@ def passivityTest(smat):
 		passivity - matrix containing I-S*conj(traspose(S))
 	'''
 	#TODO: it probably would be better to structure this to take a 2D matrix, then have a twoPort function which itterates over all frequencies
-	passivity = n.zeros(smat.shape)
+	passivity = npy.zeros(smat.shape)
 	for f in range(smat.shape[2]):
-		passivity[:,:,f] = n.eye(smat.shape[1]) - n.dot(smat[:,:,f],smat[:,:,f].conj().transpose())
+		passivity[:,:,f] = npy.eye(smat.shape[1]) - npy.dot(smat[:,:,f],smat[:,:,f].conj().transpose())
 			#for tmp in  eigvals(passivity[:,:,f]):
 				#if real(tmp) < 0:
 					#if abs(tmp) < tol:
@@ -851,26 +851,36 @@ def passivityTest(smat):
 #def genDelayShort(f0,fStart,fStop,fNumPoints):
 	#(j*tan(pi*freq/(2*f0))-1)./(j*tan(pi*freq/(2*f0))+1);
 
+class wr:
+	'''
+	class which represents waveguide band. 
+	'''
+	def __init__(self, number):
+		self.a = number * 10 * const.mil 
+		self.b = .5 * self.a
+		self.cutOff = cutOff(self.a)/1e9
+		self.band = npy.array(1.2*self.cutOff , 1.9 * self.cutOff)/1e9
+		
 def genShort(numPoints):
 	'''
 	generates the two port S matrix for a Short. 
 	takes:
 		numPoints - number of points
 	'''
-	s11 = s22 = n.complex_( -1 * n.ones(numPoints))
-	s21 = s12 = n.complex_( n.zeros(numPoints) )
-	return n.array([[s11, s12],\
+	s11 = s22 = npy.complex_( -1 * npy.ones(numPoints))
+	s21 = s12 = npy.complex_( npy.zeros(numPoints) )
+	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
 def genOpen(numPoints):
 	'''
-	generates the two port S matrix for a Open. 
+	generates the two port S matrix for a Openpy. 
 	takes:
 		numPoints - number of points
 	'''
-	s11 = s22 = n.complex_( n.ones(numPoints))
-	s21 = s12 = n.complex_( n.zeros(numPoints) )
-	return n.array([[s11, s12],\
+	s11 = s22 = npy.complex_( npy.ones(numPoints))
+	s21 = s12 = npy.complex_( npy.zeros(numPoints) )
+	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
 
@@ -880,22 +890,58 @@ def genMatch(numPoints):
 	takes:
 		numPoints - number of points
 	'''
-	s11 = s22 = n.complex_( n.zeros(numPoints))
-	s21 = s12 = n.complex_( n.ones(numPoints))
-	return n.array([[s11, s12],\
+	s11 = s22 = npy.complex_( npy.zeros(numPoints))
+	s21 = s12 = npy.complex_( npy.ones(numPoints))
+	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
-def genMatchedTline(numPoints, l= ):
+def waveguideBeta(a,b,m=1,n=0):
+	kx = m*npy.pi / a
+	ky = m*npy.pi / b
+	return lambda omega: sqrt((omega/const.c)**2 - kx**2 - ky**2 )
+	
+def genMatchedTline(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
 	'''
-	generates the two port S matrix for a Delay of length l. this assumes a TEM mode.  
+	generates the two port S matrix for a Delay of length l. 
 	takes:
+		fStart - start frequency
+		fStop - stop frequency 
 		numPoints - number of points
-		l - lenght of delay in units of 
+		l - length of delay in units of m 
+		beta - propagation constant, which is a function of angular frequency (omega), and returns a value with units radian/m. 
+		
+		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave
+		
+		
 	'''
-	s11 = s22 = n.complex_( n.zeros(numPoints))
-	s21 = s12 = n.complex_( n.ones(numPoints)) * n.exp(-1j* )
-	return n.array([[s11, s12],\
+	s11 = s22 = npy.complex_( npy.zeros(numPoints))
+	
+	#initialized vectors
+	s21 = s12 = npy.complex_(npy.zeros(numPoints))
+	
+	#loop through band and calculate the delay
+	fband = npy.linspace(fStart,fStop,numPoints)
+	for f in range(numPoints):
+		s12[f] = s21[f] =  npy.exp(-1j * electricalLength(l,fband[f],beta) )
+	
+	return npy.array([[s11, s12],\
 					[s21, s22] ])
+
+
+def electricalLength( l , f0, beta=lambda omega: omega/const.c):
+	'''
+	calculates the electrical length of a section of transmission line.
+	takes:
+		l - length of line in meters
+		f0 - frequency at which to calculate 
+		beta - propagation constant, which is a function of angular frequency (omega), and returns a value with units radian/m. 
+		
+		note: defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0)
+	returns:
+		electrical length of tline, at f0 in radians
+	'''
+	return  beta(2*npy.pi*f0 ) *l 
+
 
 
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
@@ -904,7 +950,7 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	 returns:
 		abc is a Nx3 ndarray containing the complex calibrations coefficients,
 		where N is the number of frequency points in the standards that where 
-		given.
+		givenpy.
 	
 	 takes:
 		 mOpen, mShort, and mMatch are 1xN complex ndarrays representing the 
@@ -923,23 +969,23 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	# note: abc are related to error terms with:
 	# a = e10*e01-e00*e11, b=e00, c=e11  
 	#TODO: check to make sure all arrays are same length
-	abc= n.complex_(n.zeros([len(mOpen),3]))
+	abc= npy.complex_(npy.zeros([len(mOpen),3]))
 	
 	for k in range(len(mOpen)):
 		
-		Y = n.vstack( [	mShort[k],\
+		Y = npy.vstack( [	mShort[k],\
 						mOpen[k],\
 						mMatch[k]\
 						] )
 		
-		X = n.vstack([ \
-					n.hstack([aShort[k], 1, aShort[k]*mShort[k] ]),\
-					n.hstack([aOpen[k],	 1, aOpen[k] *mOpen[k] ]),\
-					n.hstack([aMatch[k], 1, aMatch[k]*mMatch[k] ])\
+		X = npy.vstack([ \
+					npy.hstack([aShort[k], 1, aShort[k]*mShort[k] ]),\
+					npy.hstack([aOpen[k],	 1, aOpen[k] *mOpen[k] ]),\
+					npy.hstack([aMatch[k], 1, aMatch[k]*mMatch[k] ])\
 					])
 		
 		#matrix of correction coefficients
-		abc[k,:] = n.dot(n.linalg.inv(X), Y).flatten()
+		abc[k,:] = npy.dot(npy.linalg.inv(X), Y).flatten()
 		
 	return abc
 
