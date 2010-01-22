@@ -127,6 +127,8 @@ class s:
 		p.hold(1)
 		smith(radius)
 		p.plot(self.re, self.im)
+		p.axis(radius*n.array([-1., 1., -1., 1.]))
+		
 	
 	def plotZ0(self):
 		# could check for complex port impedance
@@ -218,6 +220,11 @@ class twoPort:
 		self.s12 = s12
 		self.s21 = s21
 		self.s22 = s22
+		
+		#this will be index as [i,j,f], meaning S_ij at frequency f
+		self.sMat = n.array([[self.s11.complex, self.s12.complex],\
+						[self.s21.complex,self.s22.complex]])
+
 		
 		# set the z-parameters, see 'Microwave Engineering'  by Pozar, section 4.4 for details
 		# BUG: i dont know what to do for the z0 when translating to z-parameters, i just guessed
@@ -375,7 +382,7 @@ class onePort:
 		self.s11.plotdB()
 		p.title('Return Loss')
 		p.xlabel('Frequency (' + self.freqUnit +')')
-	def writeTouchtone(fileName='myonePort.s1p'):
+	def writeTouchtonnae(fileName='myonePort.s1p'):
 		'''
 		write onePort network to a file in touchtone format. 
 		
@@ -714,7 +721,14 @@ def loadAllTouchtonesInDir(dir = '.'):
 	takes:
 		dir  - the path to the dir, passed as a string (defalut is cwd)
 	returns:
-		(nameList, ntwkList)  - lists holding basenames of the files loaded, and a list of mwavepy networks 
+		(nameList, ntwkList)  - lists holding basenames of the files loaded, and a list of mwavepy networks. If you are using pylab you can plot these easily like so: 
+	
+	example usage:
+		import mwavepy as m
+		nameList, ntwkList = m.loadAllTouchtonesInDir()
+		for n in ntwkList:
+			n.plotReturnLoss()
+		legend(nameList)
 	'''
 	ntwkList=[]
 	nameList=[]
@@ -812,7 +826,78 @@ def cutOff(a):
 	
 	return n.sqrt((n.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*n.pi)
 
+
+def passivityTest(smat):
+	'''
+	check that the network represented by S matrix (smat) is passive. I-S*conj(traspose(S))
+	takes:
+		smat - S matrix 
+	returns:
+		passivity - matrix containing I-S*conj(traspose(S))
+	'''
+	#TODO: it probably would be better to structure this to take a 2D matrix, then have a twoPort function which itterates over all frequencies
+	passivity = n.zeros(smat.shape)
+	for f in range(smat.shape[2]):
+		passivity[:,:,f] = n.eye(smat.shape[1]) - n.dot(smat[:,:,f],smat[:,:,f].conj().transpose())
+			#for tmp in  eigvals(passivity[:,:,f]):
+				#if real(tmp) < 0:
+					#if abs(tmp) < tol:
+						## structure fails the passivity test
+						#return False
+			#return True
+	return passivity
+
 ##------- Calibrations ------
+#def genDelayShort(f0,fStart,fStop,fNumPoints):
+	#(j*tan(pi*freq/(2*f0))-1)./(j*tan(pi*freq/(2*f0))+1);
+
+def genShort(numPoints):
+	'''
+	generates the two port S matrix for a Short. 
+	takes:
+		numPoints - number of points
+	'''
+	s11 = s22 = n.complex_( -1 * n.ones(numPoints))
+	s21 = s12 = n.complex_( n.zeros(numPoints) )
+	return n.array([[s11, s12],\
+					[s21, s22] ])
+
+def genOpen(numPoints):
+	'''
+	generates the two port S matrix for a Open. 
+	takes:
+		numPoints - number of points
+	'''
+	s11 = s22 = n.complex_( n.ones(numPoints))
+	s21 = s12 = n.complex_( n.zeros(numPoints) )
+	return n.array([[s11, s12],\
+					[s21, s22] ])
+
+
+def genMatch(numPoints):
+	'''
+	generates the two port S matrix for a Match. 
+	takes:
+		numPoints - number of points
+	'''
+	s11 = s22 = n.complex_( n.zeros(numPoints))
+	s21 = s12 = n.complex_( n.ones(numPoints))
+	return n.array([[s11, s12],\
+					[s21, s22] ])
+
+def genMatchedTline(numPoints, l= ):
+	'''
+	generates the two port S matrix for a Delay of length l. this assumes a TEM mode.  
+	takes:
+		numPoints - number of points
+		l - lenght of delay in units of 
+	'''
+	s11 = s22 = n.complex_( n.zeros(numPoints))
+	s21 = s12 = n.complex_( n.ones(numPoints)) * n.exp(-1j* )
+	return n.array([[s11, s12],\
+					[s21, s22] ])
+
+
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	'''calculates calibration coefficients for a one port OSM calibration
 	 
