@@ -848,22 +848,44 @@ def passivityTest(smat):
 	return passivity
 
 ##------- Calibrations ------
-#def genDelayShort(f0,fStart,fStop,fNumPoints):
-	#(j*tan(pi*freq/(2*f0))-1)./(j*tan(pi*freq/(2*f0))+1);
+
+
+
 
 class wr:
 	'''
 	class which represents waveguide band. 
+	
+	constructor takes 
 	'''
 	def __init__(self, number):
 		self.a = number * 10 * const.mil 
 		self.b = .5 * self.a
-		self.cutOff = cutOff(self.a)/1e9
-		self.band = npy.array(1.2*self.cutOff , 1.9 * self.cutOff)/1e9
+		self.cutOff = cutOff(self.a)/1e9 # in GHz
+		self.band = npy.array([1.25*self.cutOff , 1.9 * self.cutOff]) # in GHz
+		
+
+# standar waveguide bands, note that the names are not perfectly cordinated with guide dims. 
+# info taken from Virginia Diodes Inc. Waveguide Band Designations
+WR10 = wr(10)
+WR8 = wr(8)
+WR6 = wr(6.5)
+WR5 = wr(5.1)
+WR4 = wr(4.3)
+WR3 = wr(3.4)
+WR1p5 = wr(1.5)		
+		
+		
+		
+		
+		
+		
+		
 		
 def genShort(numPoints):
 	'''
 	generates the two port S matrix for a Short. 
+	
 	takes:
 		numPoints - number of points
 	'''
@@ -875,6 +897,7 @@ def genShort(numPoints):
 def genOpen(numPoints):
 	'''
 	generates the two port S matrix for a Openpy. 
+	
 	takes:
 		numPoints - number of points
 	'''
@@ -887,6 +910,7 @@ def genOpen(numPoints):
 def genMatch(numPoints):
 	'''
 	generates the two port S matrix for a Match. 
+	
 	takes:
 		numPoints - number of points
 	'''
@@ -895,14 +919,79 @@ def genMatch(numPoints):
 	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
-def waveguideBeta(a,b,m=1,n=0):
-	kx = m*npy.pi / a
-	ky = m*npy.pi / b
-	return lambda omega: sqrt((omega/const.c)**2 - kx**2 - ky**2 )
-	
-def genMatchedTline(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
+def betaWaveguide(a,b,m=1,n=0):
 	'''
-	generates the two port S matrix for a Delay of length l. 
+	produces a function for rectangular waveguide propagation constant,beta.
+	
+	takes:
+		a - waveguide width.
+		b - waveguide height
+		m - width dimension mode number. default 1
+		n - height dimension mode number 	default 0 
+	returns:
+		a functions which takes angular frequency (rad) and returns propagtion constant (rad/m)
+	'''
+	kx = m*npy.pi / a
+	ky = n*npy.pi / b
+	return lambda omega: npy.sqrt((omega/const.c)**2 - kx**2 - ky**2 )
+
+def eEffMicrostrip(w,h,epR):
+	'''
+	The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pp. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pp. 1422-1444, 1969.
+	'''
+	
+	if w < h:
+		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w) + .04*(1-w/h)**2)
+	else:
+		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w))
+	
+	
+	
+
+def betaMicrostrip(w,h,epR):
+	return lambda omega: omega/const.c * npy.sqrt(eEffMicrostrip(w,h,epR))
+	
+	
+def impedanceMicrostrip(w,h,epR):
+	'''
+	
+	
+	taken from pozar
+	'''
+	eEff = eEffMicrostrip(w,h,epR)
+	if w/h < 1:
+		return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
+	else:
+		return 120*npy.pi/ ( npy.sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
+
+def betaFreeSpace():
+	'''
+	returns a function of omega: omega/c = omega*sqrt(epsilon*mu)
+	'''
+	return lambda omega: omega/const.c
+
+
+def genWaveguideThu(wg,l,numPoints=201):
+	'''
+	generate the two port S matrix for a waveguide thru section of length l 
+	
+	takes:
+		wg - wr type representing a waveguide band 
+		l - length of thru, in meters
+		numPoints - number of points to produce
+	returns:
+		two port S matrix for a waveguide thru section of length l 
+	'''
+	if isinstance(wg,wr):
+		return genThru(wg.band[0]*1e9,wg.band[1]*1e9,numPoints,l, betaWaveguide(wg.a, wg.b))
+	else:
+		print 'ERROR: first argument must be of waveguide type'
+		return None
+		
+def genThru(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
+	'''
+	generates the two port S matrix for a matched Delay line of length l. 
+	
 	takes:
 		fStart - start frequency
 		fStop - stop frequency 
@@ -931,6 +1020,7 @@ def genMatchedTline(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c
 def electricalLength( l , f0, beta=lambda omega: omega/const.c):
 	'''
 	calculates the electrical length of a section of transmission line.
+	
 	takes:
 		l - length of line in meters
 		f0 - frequency at which to calculate 
@@ -945,7 +1035,8 @@ def electricalLength( l , f0, beta=lambda omega: omega/const.c):
 
 
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
-	'''calculates calibration coefficients for a one port OSM calibration
+	'''
+	calculates calibration coefficients for a one port OSM calibration
 	 
 	 returns:
 		abc is a Nx3 ndarray containing the complex calibrations coefficients,
