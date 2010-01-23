@@ -933,8 +933,7 @@ class wr(waveguide):
 	constructor takes 
 	'''
 	def __init__(self, number):
-		self.a = number * 10 * const.mil 
-		self.b = .5 * self.a
+		waveguide.__init__(self,number*10*const.mil ,.5 * number*10*const.mil  )
 # standar waveguide bands, note that the names are not perfectly cordinated with guide dims. 
 # info taken from Virginia Diodes Inc. Waveguide Band Designations
 WR10 = wr(10)
@@ -948,7 +947,22 @@ WR1p5 = wr(1.5)
 		
 		
 		
-		
+def genWaveguideThu(wg,l,numPoints=201):
+	'''
+	generate the two port S matrix for a waveguide thru section of length l 
+	
+	takes:
+		wg - wr type representing a waveguide band 
+		l - length of thru, in meters
+		numPoints - number of points to produce
+	returns:
+		two port S matrix for a waveguide thru section of length l 
+	'''
+	if isinstance(wg,waveguide):
+		return genThru(wg.band[0],wg.band[1],numPoints,l, lambda omega:wg.beta(omega))
+	else:
+		print 'ERROR: first argument must be of waveguide type'
+		return None		
 		
 		
 		
@@ -990,6 +1004,30 @@ def genMatch(numPoints):
 					[s21, s22] ])
 
 
+def genThru(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
+	'''
+	generates the two port S matrix for a matched Delay line of length l. 
+	
+	takes:
+		fStart - start frequency
+		fStop - stop frequency 
+		numPoints - number of points
+		l - length of delay in units of m 
+		beta - propagation constant, which is a function of angular frequency (omega), and returns a value with units radian/m. 
+		
+		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave	
+	'''
+	s11 = s22 = npy.complex_( npy.zeros(numPoints))
+	#initialized vectors
+	s21 = s12 = npy.complex_(npy.zeros(numPoints))
+	
+	#loop through band and calculate the delay
+	fband = npy.linspace(fStart,fStop,numPoints)
+	for f in range(numPoints):
+		s12[f] = s21[f] =  npy.exp(-1j*electricalLength(l,fband[f],beta) )
+	
+	return npy.array([[s11, s12],\
+					[s21, s22] ])
 
 
 def beta(omega,epsilonR = 1, muR = 1):
@@ -1046,48 +1084,8 @@ def betaWaveguide(a,b,m=1,n=0):
 	return lambda omega: npy.sqrt((omega/const.c)**2 - kx**2 - ky**2 )
 	
 	
-def genWaveguideThu(wg,l,numPoints=201):
-	'''
-	generate the two port S matrix for a waveguide thru section of length l 
-	
-	takes:
-		wg - wr type representing a waveguide band 
-		l - length of thru, in meters
-		numPoints - number of points to produce
-	returns:
-		two port S matrix for a waveguide thru section of length l 
-	'''
-	if isinstance(wg,wr):
-		return genThru(wg.band[0],wg.band[1],numPoints,l, betaWaveguide(wg.a, wg.b))
-	else:
-		print 'ERROR: first argument must be of waveguide type'
-		return None
+
 		
-def genThru(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
-	'''
-	generates the two port S matrix for a matched Delay line of length l. 
-	
-	takes:
-		fStart - start frequency
-		fStop - stop frequency 
-		numPoints - number of points
-		l - length of delay in units of m 
-		beta - propagation constant, which is a function of angular frequency (omega), and returns a value with units radian/m. 
-		
-		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave	
-	'''
-	s11 = s22 = npy.complex_( npy.zeros(numPoints))
-	
-	#initialized vectors
-	s21 = s12 = npy.complex_(npy.zeros(numPoints))
-	
-	#loop through band and calculate the delay
-	fband = npy.linspace(fStart,fStop,numPoints)
-	for f in range(numPoints):
-		s12[f] = s21[f] =  npy.exp(-1j * 1*electricalLength(l,fband[f],beta) )
-	
-	return npy.array([[s11, s12],\
-					[s21, s22] ])
 
 
 def electricalLength( l , f0, beta=lambda omega: omega/const.c,deg=False):
@@ -1104,9 +1102,9 @@ def electricalLength( l , f0, beta=lambda omega: omega/const.c,deg=False):
 		electrical length of tline, at f0 in radians
 	'''
 	if deg==False:
-		return  beta(2*npy.pi*f0 ) *l 
+		return  beta(2*npy.pi*f0 ) *l +npy.pi
 	elif deg ==True:
-		return  rad2deg(beta(2*npy.pi*f0 ) *l )
+		return  rad2deg(beta(2*npy.pi*f0 ) *l ) +	 npy.pi
 
 
 ########################
