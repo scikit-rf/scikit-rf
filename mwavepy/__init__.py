@@ -861,9 +861,36 @@ class wr:
 	def __init__(self, number):
 		self.a = number * 10 * const.mil 
 		self.b = .5 * self.a
-		self.cutOff = cutOff(self.a)/1e9 # in GHz
-		self.band = npy.array([1.25*self.cutOff , 1.9 * self.cutOff]) # in GHz
+		self.fc10 = self.fc(1,0) 
+		self.band = npy.array([1.25*self.fc10 , 1.9 * self.fc10]) 
+		#all for dominant mode
+	
+	def fc(self,m=1,n=0):
+		return const.c/(2*npy.pi)*npy.sqrt( (m*npy.pi/self.a)**2 +(n*npy.pi/self.b)**2)
+
+	def beta(self, omega,m=1,n=0):
+		k = betaWaveguide(self.a, self.b,m,n)
+		return k(omega)
+	
+	def beta_f(self,f,m=1,n=0):
+		return self.beta(2*npy.pi*f,m,n)
 		
+	def lambdaG(self,omega,m=1,n=0):
+		return (2*npy.pi / self.beta(omega,m,n))
+	
+	def lambdaG_f(self,f,m=1,n=0):
+		return self.lambdaG(2*npy.pi *f,m,n)
+	
+	def vp(self, omega,m=1,n=0):
+		return omega / self.beta(omega,m,n)
+	
+	def vp_f(self, f,m=1,n=0):
+		return 2*npy.pi*f / self.beta(2*npy.pi*f,m,n)
+		
+	def zTE(self, omega,m=1,n=0):
+		return None
+	def zTM(self, omega,m=1,n=0):
+		return None	
 
 # standar waveguide bands, note that the names are not perfectly cordinated with guide dims. 
 # info taken from Virginia Diodes Inc. Waveguide Band Designations
@@ -919,21 +946,7 @@ def genMatch(numPoints):
 	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
-def betaWaveguide(a,b,m=1,n=0):
-	'''
-	produces a function for rectangular waveguide propagation constant,beta.
-	
-	takes:
-		a - waveguide width.
-		b - waveguide height
-		m - width dimension mode number. default 1
-		n - height dimension mode number 	default 0 
-	returns:
-		a functions which takes angular frequency (rad) and returns propagtion constant (rad/m)
-	'''
-	kx = m*npy.pi / a
-	ky = n*npy.pi / b
-	return lambda omega: npy.sqrt((omega/const.c)**2 - kx**2 - ky**2 )
+
 
 def eEffMicrostrip(w,h,epR):
 	'''
@@ -970,7 +983,23 @@ def betaFreeSpace():
 	'''
 	return lambda omega: omega/const.c
 
-
+def betaWaveguide(a,b,m=1,n=0):
+	'''
+	produces a function for rectangular waveguide propagation constant,beta.
+	
+	takes:
+		a - waveguide width.
+		b - waveguide height
+		m - width dimension mode number. default 1
+		n - height dimension mode number 	default 0 
+	returns:
+		a functions which takes angular frequency (rad) and returns propagtion constant (rad/m)
+	'''
+	kx = m*npy.pi / a
+	ky = n*npy.pi / b
+	return lambda omega: npy.sqrt((omega/const.c)**2 - kx**2 - ky**2 )
+	
+	
 def genWaveguideThu(wg,l,numPoints=201):
 	'''
 	generate the two port S matrix for a waveguide thru section of length l 
@@ -983,7 +1012,7 @@ def genWaveguideThu(wg,l,numPoints=201):
 		two port S matrix for a waveguide thru section of length l 
 	'''
 	if isinstance(wg,wr):
-		return genThru(wg.band[0]*1e9,wg.band[1]*1e9,numPoints,l, betaWaveguide(wg.a, wg.b))
+		return genThru(wg.band[0],wg.band[1],numPoints,l, betaWaveguide(wg.a, wg.b))
 	else:
 		print 'ERROR: first argument must be of waveguide type'
 		return None
@@ -999,9 +1028,7 @@ def genThru(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
 		l - length of delay in units of m 
 		beta - propagation constant, which is a function of angular frequency (omega), and returns a value with units radian/m. 
 		
-		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave
-		
-		
+		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave	
 	'''
 	s11 = s22 = npy.complex_( npy.zeros(numPoints))
 	
@@ -1011,13 +1038,13 @@ def genThru(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
 	#loop through band and calculate the delay
 	fband = npy.linspace(fStart,fStop,numPoints)
 	for f in range(numPoints):
-		s12[f] = s21[f] =  npy.exp(-1j * electricalLength(l,fband[f],beta) )
+		s12[f] = s21[f] =  npy.exp(-1j * 1*electricalLength(l,fband[f],beta) )
 	
 	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
 
-def electricalLength( l , f0, beta=lambda omega: omega/const.c):
+def electricalLength( l , f0, beta=lambda omega: omega/const.c,deg=False):
 	'''
 	calculates the electrical length of a section of transmission line.
 	
@@ -1030,9 +1057,10 @@ def electricalLength( l , f0, beta=lambda omega: omega/const.c):
 	returns:
 		electrical length of tline, at f0 in radians
 	'''
-	return  beta(2*npy.pi*f0 ) *l 
-
-
+	if deg==False:
+		return  beta(2*npy.pi*f0 ) *l 
+	elif deg ==True:
+		return  rad2deg(beta(2*npy.pi*f0 ) *l )
 
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	'''
