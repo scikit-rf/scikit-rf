@@ -850,17 +850,50 @@ def passivityTest(smat):
 ##------- Calibrations ------
 
 
-
-
-class wr:
+########################
+def eEffMicrostrip(w,h,epR):
 	'''
-	class which represents waveguide band. 
+	The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pp. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pp. 1422-1444, 1969.
+	'''
+	
+	if w < h:
+		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w) + .04*(1-w/h)**2)
+	else:
+		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w))
+	
+	
+	
+
+def betaMicrostrip(w,h,epR):
+	return lambda omega: omega/const.c * npy.sqrt(eEffMicrostrip(w,h,epR))
+	
+	
+def impedanceMicrostrip(w,h,epR):
+	'''
+	
+	
+	taken from pozar
+	'''
+	eEff = eEffMicrostrip(w,h,epR)
+	if w/h < 1:
+		return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
+	else:
+		return 120*npy.pi/ ( npy.sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
+
+
+
+
+
+#################
+class waveguide:
+	'''
+	class which represents rectangular waveguide . 
 	
 	constructor takes 
 	'''
-	def __init__(self, number):
-		self.a = number * 10 * const.mil 
-		self.b = .5 * self.a
+	def __init__(self, a,b):
+		self.a = a
+		self.b = b
 		self.fc10 = self.fc(1,0) 
 		self.band = npy.array([1.25*self.fc10 , 1.9 * self.fc10]) 
 		#all for dominant mode
@@ -869,6 +902,7 @@ class wr:
 		return const.c/(2*npy.pi)*npy.sqrt( (m*npy.pi/self.a)**2 +(n*npy.pi/self.b)**2)
 
 	def beta(self, omega,m=1,n=0):
+		# TODO: should do a test below cutoff and handle imaginary sign
 		k = betaWaveguide(self.a, self.b,m,n)
 		return k(omega)
 	
@@ -888,10 +922,19 @@ class wr:
 		return 2*npy.pi*f / self.beta(2*npy.pi*f,m,n)
 		
 	def zTE(self, omega,m=1,n=0):
-		return None
+		return eta0 * beta0(omega)/self.beta(omega,m,n)
 	def zTM(self, omega,m=1,n=0):
-		return None	
+		return eta0 * self.beta(omega,m,n)/beta0(omega)
 
+class wr(waveguide):
+	'''
+	class which represents defined rectangular waveguide band. 
+	
+	constructor takes 
+	'''
+	def __init__(self, number):
+		self.a = number * 10 * const.mil 
+		self.b = .5 * self.a
 # standar waveguide bands, note that the names are not perfectly cordinated with guide dims. 
 # info taken from Virginia Diodes Inc. Waveguide Band Designations
 WR10 = wr(10)
@@ -948,41 +991,44 @@ def genMatch(numPoints):
 
 
 
-def eEffMicrostrip(w,h,epR):
-	'''
-	The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pp. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pp. 1422-1444, 1969.
-	'''
-	
-	if w < h:
-		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w) + .04*(1-w/h)**2)
-	else:
-		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w))
-	
-	
-	
 
-def betaMicrostrip(w,h,epR):
-	return lambda omega: omega/const.c * npy.sqrt(eEffMicrostrip(w,h,epR))
-	
-	
-def impedanceMicrostrip(w,h,epR):
+def beta(omega,epsilonR = 1, muR = 1):
 	'''
-	
-	
-	taken from pozar
+	propagation constant of a material.
+	takes:
+		omega - radian angular frequency (rad/s)
+		epsilonR - relative permativity (default = 1) 
+		muR -  relative permiability (default = 1)
+	returns:
+		omega/c = omega*sqrt(epsilon*mu)
 	'''
-	eEff = eEffMicrostrip(w,h,epR)
-	if w/h < 1:
-		return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
-	else:
-		return 120*npy.pi/ ( npy.sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
+	return omega* npy.sqrt((const.mu_0*muR)*(epsilonR*const.epsilon_0))
 
-def betaFreeSpace():
+def beta0(omega):
 	'''
-	returns a function of omega: omega/c = omega*sqrt(epsilon*mu)
+	propagation constant of a free space.
+	takes:
+		omega - radian angular frequency (rad/s)
+	returns:
+		omega/c = omega*sqrt(epsilon*mu)
 	'''
-	return lambda omega: omega/const.c
+	return beta(omega,1,1)
 
+
+	
+def eta(epsilonR = 1, muR = 1):
+	'''
+	characteristic impedance of a material.
+	takes:
+		epsilonR - relative permativity (default = 1) 
+		muR -  relative permiability (default = 1)
+	'''
+	return npy.sqrt((const.mu_0*muR)/(epsilonR*const.epsilon_0))
+def eta0(omega):
+	'''
+	characteristic impedance of free space.
+	'''
+	return eta(omega, 1,1)
 def betaWaveguide(a,b,m=1,n=0):
 	'''
 	produces a function for rectangular waveguide propagation constant,beta.
@@ -1062,6 +1108,8 @@ def electricalLength( l , f0, beta=lambda omega: omega/const.c,deg=False):
 	elif deg ==True:
 		return  rad2deg(beta(2*npy.pi*f0 ) *l )
 
+
+########################
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	'''
 	calculates calibration coefficients for a one port OSM calibration
