@@ -22,9 +22,12 @@
 #	Most of these functions have not been rigidly tested. use with caution!!
 
 import numpy as npy
+from numpy import sqrt, exp
 import pylab as p
 from scipy import constants as const
+from scipy.constants import  epsilon_0, mu_0, c,pi
 from scipy import signal
+
 import os # for fileIO
 
 # for drawing smith chart
@@ -44,6 +47,7 @@ from matplotlib.lines import Line2D
 #		p.ion()
 
 
+############# CONSTANTS ##################
 
 
 ##------- objects ---------
@@ -438,16 +442,16 @@ def seriesTwoPort(twoPortA ,twoPortB):
 ##----- conversion utilities ----
 # TODO: explicitly call j from numpy
 def magPhase2ReIm( mag, phase):
-	re = npy.real(mag*npy.exp(1j*(phase)))
-	im = npy.imag(mag*npy.exp(1j*(phase)))
+	re = npy.real(mag*exp(1j*(phase)))
+	im = npy.imag(mag*exp(1j*(phase)))
 	return re, im
 def magDeg2ReIm( mag, deg):
-	re = npy.real(mag*npy.exp(1j*(deg*npy.pi/180)))
-	im = npy.imag(mag*npy.exp(1j*(deg*npy.pi/180)))
+	re = npy.real(mag*exp(1j*(deg*pi/180)))
+	im = npy.imag(mag*exp(1j*(deg*pi/180)))
 	return re, im
 def dBDeg2ReIm(dB,deg):
-	re = npy.real(10**((dB)/20.)*npy.exp(1j*(deg*npy.pi/180)))
-	im = npy.imag(10**((dB)/20.)*npy.exp(1j*(deg*npy.pi/180)))
+	re = npy.real(10**((dB)/20.)*exp(1j*(deg*pi/180)))
+	im = npy.imag(10**((dB)/20.)*exp(1j*(deg*pi/180)))
 	return re, im
 	
 def reIm2MagPhase( re, im):
@@ -457,7 +461,7 @@ def reIm2MagPhase( re, im):
 	
 def reIm2dBDeg (re, im):
 	dB = 20 * npy.log10(npy.abs( (re) + 1j*im ))
-	deg = npy.angle( (re) + 1j*im) * 180/npy.pi 
+	deg = npy.angle( (re) + 1j*im) * 180/pi 
 	return dB, deg 
 
 def mag2dB(mag):
@@ -467,10 +471,10 @@ def dB2Mag(dB):
 	return 10**((dB)/20.)
 	
 def rad2deg(rad):
-	return (rad)*180/npy.pi
+	return (rad)*180/pi
 	
 def deg2rad(deg):
-	return (deg)*npy.pi/180
+	return (deg)*pi/180
 	
 
 
@@ -582,7 +586,7 @@ def updateSmithChart(mpl_plot, smithRadius=1, res=1000 ):
 	#	at once. cirlces could be computer analytically, contour density
 	#	could be configurable
 	def circle(offset,r, numPoints ):
-		circleVector = r*npy.exp(1j* npy.linspace(0,2*npy.pi,numPoints))+ offset
+		circleVector = r*exp(1j* npy.linspace(0,2*pi,numPoints))+ offset
 		return circleVector
 				
 	# generate complex pairs of [center, radius] for smith chart contours
@@ -787,7 +791,7 @@ def psd2TimeDomain(f,y, windowType='rect'):
 	#the imaginary part of this signal should be from fft errors only,
 	signalVector= npy.real(signalVector)
 	# the response of frequency shifting is 
-	# npy.exp(1j*2*npy.pi*timeVector*f[0])
+	# exp(1j*2*pi*timeVector*f[0])
 	# but i would have to manually undo this for the inverse, which is just 
 	# another  variable to require. the reason you need this is because 
 	# you canttransform to a bandpass signal, only a lowpass. 
@@ -824,7 +828,7 @@ def cutOff(a):
 	'''returns the cutoff frequency (in Hz) for first  resonance of a
 	waveguide with major dimension given by a. a is in meters'''
 	
-	return npy.sqrt((npy.pi/a)**2 *1/(const.epsilon_0*const.mu_0))/(2*npy.pi)
+	return sqrt((pi/a)**2 *1/(epsilon_0*const.mu_0))/(2*pi)
 
 
 def passivityTest(smat):
@@ -857,15 +861,15 @@ def eEffMicrostrip(w,h,epR):
 	'''
 	
 	if w < h:
-		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w) + .04*(1-w/h)**2)
+		return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w) + .04*(1-w/h)**2)
 	else:
-		return (epR+1.)/2 + (epR-1)/2 *(1/npy.sqrt(1+12*h/w))
+		return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w))
 	
 	
 	
 
 def betaMicrostrip(w,h,epR):
-	return lambda omega: omega/const.c * npy.sqrt(eEffMicrostrip(w,h,epR))
+	return lambda omega: omega/c * sqrt(eEffMicrostrip(w,h,epR))
 	
 	
 def impedanceMicrostrip(w,h,epR):
@@ -878,20 +882,41 @@ def impedanceMicrostrip(w,h,epR):
 	if w/h < 1:
 		return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
 	else:
-		return 120*npy.pi/ ( npy.sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
+		return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
 
 
 
 
 
 #################
+class transmissionLine():
+	'''
+	should be main class, which all transmission line sub-classes inhereit
+	'''
+	def __init__(self):
+		raise NotImplementedError
+		return None
+class coax():
+	def __init__(self):
+		raise NotImplementedError
+		return None
+
+class microstrip():
+	def __init__(self):
+		raise NotImplementedError
+		return None
+
+class coplanar():
+	def __init__(self):
+		raise NotImplementedError
+		return None
 class waveguide:
 	'''
 	class which represents rectangular waveguide . 
 	
-	constructor takes 
+	TODO: implement different filling materials, and wall material losses
 	'''
-	def __init__(self, a,b):
+	def __init__(self, a,b,epsilonR=1, muR=1):
 		self.a = a
 		self.b = b
 		self.fc10 = self.fc(1,0) 
@@ -899,27 +924,28 @@ class waveguide:
 		#all for dominant mode
 	
 	def fc(self,m=1,n=0):
-		return const.c/(2*npy.pi)*npy.sqrt( (m*npy.pi/self.a)**2 +(n*npy.pi/self.b)**2)
+		return c/(2*pi)*sqrt( (m*pi/self.a)**2 +(n*pi/self.b)**2)
 
 	def beta(self, omega,m=1,n=0):
 		# TODO: should do a test below cutoff and handle imaginary sign
-		k = betaWaveguide(self.a, self.b,m,n)
-		return k(omega)
+		# the beta here is just the space beta, which should be a method of mwavepy
+		k = omega/c
+		return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2)
 	
 	def beta_f(self,f,m=1,n=0):
-		return self.beta(2*npy.pi*f,m,n)
+		return self.beta(2*pi*f,m,n)
 		
 	def lambdaG(self,omega,m=1,n=0):
-		return (2*npy.pi / self.beta(omega,m,n))
+		return (2*pi / self.beta(omega,m,n))
 	
 	def lambdaG_f(self,f,m=1,n=0):
-		return self.lambdaG(2*npy.pi *f,m,n)
+		return self.lambdaG(2*pi *f,m,n)
 	
 	def vp(self, omega,m=1,n=0):
 		return omega / self.beta(omega,m,n)
 	
 	def vp_f(self, f,m=1,n=0):
-		return 2*npy.pi*f / self.beta(2*npy.pi*f,m,n)
+		return 2*pi*f / self.beta(2*pi*f,m,n)
 		
 	def zTE(self, omega,m=1,n=0):
 		return eta0 * beta0(omega)/self.beta(omega,m,n)
@@ -934,7 +960,7 @@ class wr(waveguide):
 	'''
 	def __init__(self, number):
 		waveguide.__init__(self,number*10*const.mil ,.5 * number*10*const.mil  )
-# standar waveguide bands, note that the names are not perfectly cordinated with guide dims. 
+# standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
 # info taken from Virginia Diodes Inc. Waveguide Band Designations
 WR10 = wr(10)
 WR8 = wr(8)
@@ -1004,7 +1030,9 @@ def genMatch(numPoints):
 					[s21, s22] ])
 
 
-def genThru(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
+	
+
+def genThru(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
 	'''
 	generates the two port S matrix for a matched Delay line of length l. 
 	
@@ -1024,13 +1052,13 @@ def genThru(fStart, fStop,numPoints, l, beta=lambda omega: omega/const.c ):
 	#loop through band and calculate the delay
 	fband = npy.linspace(fStart,fStop,numPoints)
 	for f in range(numPoints):
-		s12[f] = s21[f] =  npy.exp(-1j*electricalLength(l,fband[f],beta) )
+		s12[f] = s21[f] =  exp(-1j*electricalLength(l,fband[f],beta) )
 	
 	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
 
-def beta(omega,epsilonR = 1, muR = 1):
+def betaSpace(omega,epsilonR = 1, muR = 1):
 	'''
 	propagation constant of a material.
 	takes:
@@ -1040,7 +1068,7 @@ def beta(omega,epsilonR = 1, muR = 1):
 	returns:
 		omega/c = omega*sqrt(epsilon*mu)
 	'''
-	return omega* npy.sqrt((const.mu_0*muR)*(epsilonR*const.epsilon_0))
+	return omega* sqrt((const.mu_0*muR)*(epsilonR*epsilon_0))
 
 def beta0(omega):
 	'''
@@ -1050,7 +1078,7 @@ def beta0(omega):
 	returns:
 		omega/c = omega*sqrt(epsilon*mu)
 	'''
-	return beta(omega,1,1)
+	return betaSpace(omega,1,1)
 
 
 	
@@ -1061,34 +1089,21 @@ def eta(epsilonR = 1, muR = 1):
 		epsilonR - relative permativity (default = 1) 
 		muR -  relative permiability (default = 1)
 	'''
-	return npy.sqrt((const.mu_0*muR)/(epsilonR*const.epsilon_0))
+	return sqrt((const.mu_0*muR)/(epsilonR*epsilon_0))
 def eta0(omega):
 	'''
 	characteristic impedance of free space.
 	'''
 	return eta(omega, 1,1)
-def betaWaveguide(a,b,m=1,n=0):
-	'''
-	produces a function for rectangular waveguide propagation constant,beta.
 	
-	takes:
-		a - waveguide width.
-		b - waveguide height
-		m - width dimension mode number. default 1
-		n - height dimension mode number 	default 0 
-	returns:
-		a functions which takes angular frequency (rad) and returns propagtion constant (rad/m)
-	'''
-	kx = m*npy.pi / a
-	ky = n*npy.pi / b
-	return lambda omega: npy.sqrt((omega/const.c)**2 - kx**2 - ky**2 )
+
 	
 	
 
 		
 
 
-def electricalLength( l , f0, beta=lambda omega: omega/const.c,deg=False):
+def electricalLength( l , f0, beta=lambda omega: omega/c,deg=False):
 	'''
 	calculates the electrical length of a section of transmission line.
 	
@@ -1102,9 +1117,9 @@ def electricalLength( l , f0, beta=lambda omega: omega/const.c,deg=False):
 		electrical length of tline, at f0 in radians
 	'''
 	if deg==False:
-		return  beta(2*npy.pi*f0 ) *l +npy.pi
+		return  beta(2*pi*f0 ) *l 
 	elif deg ==True:
-		return  rad2deg(beta(2*npy.pi*f0 ) *l ) +	 npy.pi
+		return  rad2deg(beta(2*pi*f0 ) *l )
 
 
 ########################
