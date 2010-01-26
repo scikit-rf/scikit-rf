@@ -22,7 +22,7 @@
 #	Most of these functions have not been rigidly tested. use with caution!!
 
 import numpy as npy
-from numpy import sqrt, exp, array,tan,sin,cos
+from numpy import sqrt, exp, array,tan,sin,cos,inf
 import pylab as p
 from scipy import constants as const
 from scipy.constants import  epsilon_0, mu_0, c,pi
@@ -482,31 +482,7 @@ def deg2rad(deg):
 
 
 
-def zl2gamma(zl,z0):
-	return (zl-z0)/(zl+z0)
-def zl2T(zl,z0):
-	return 1 + gamma(zl,z0)
 
-def zin(zl,z0,el):
-	'''
-	returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
-	takes:
-		zl - load impedance 
-		z0 - characteristic impedance of tline
-		el - electrical length ( in radians)
-	returns:
-		input impedance ( in general complex)
-	'''
-	return z0 *	(zl + 1j*z0 * tan(el)) /\
-				(z0 + 1j*zl * tan(el))
-
-def zinShort (z0,el):
-	return 1j*z0*tan(el)
-def zinOpen(z0,el):
-	return -1j*z0*cot(el)
-
-#def gammaAtADistance(zl,z0,l,beta = lambda omega: omega/c):
-	
 
 ##------ ploting --------
 def smith(smithR=1):
@@ -1006,6 +982,58 @@ WR1p5 = wr(1.5)
 ############# two-port structures ########################
 # these conversions where taken from Pozar. Microwave Engineering sec 5.6
 
+# relationships
+def zl2gamma(zl,z0):
+	return (zl-z0)/(zl+z0)
+def zl2T(zl,z0):
+	return 1 + gamma(zl,z0)
+
+def zin(zl,z0,el):
+	'''
+	returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
+	takes:
+		zl - load impedance 
+		z0 - characteristic impedance of tline
+		el - electrical length ( in radians)
+	returns:
+		input impedance ( in general complex)
+	'''
+	if zl == inf:
+		return -1j*z0*1./(tan(el))
+	elif zl == 0:
+		return 1j*z0*tan(el)
+	else:
+		return z0 *	(zl + 1j*z0 * tan(el)) /\
+					(z0 + 1j*zl * tan(el))
+
+def zinShort (z0,el):
+	'''
+	returns the input impedance of a shorted transmission line of character impedance z0 and electrical length el.
+	takes:
+		z0 - characteristic impedance of tline
+		el - electrical length ( in radians)
+	returns:
+		input impedance ( in general complex)
+		
+	note: this just calls zin()
+	'''
+	return zin(0,z0,el)
+def zinOpen(z0,el):
+	'''
+	returns the input impedance of a open-circuited transmission line of character impedance z0 and electrical length el.
+	takes:
+		z0 - characteristic impedance of tline
+		el - electrical length ( in radians)
+	returns:
+		input impedance ( in general complex)
+		
+	note: this just calls zin()
+	'''
+	return zin(inf,z0,el)
+	
+
+
+
 ## representation conversions
 def s2abcd(sMat,z0=50):
 	'''
@@ -1087,7 +1115,23 @@ def connectionSeries(ntwkA,ntwkB, type='s'):
 
 ## networks
 
-
+def genWaveguideDelayShort(wg,l,numPoints=201):
+	'''
+	generate the two port S matrix for a waveguide delayed short of length l 
+	
+	takes:
+		wg - wr type representing a waveguide band 
+		l - length of thru, in meters
+		numPoints - number of points to produce
+	returns:
+		two port S matrix for a waveguide thru section of length l 
+	'''
+	if isinstance(wg,waveguide):
+		return genDelayShort(wg.band[0],wg.band[1],numPoints,l, lambda omega:wg.beta(omega))
+	else:
+		print 'ERROR: first argument must be of waveguide type'
+		return None	
+		
 def genWaveguideThu(wg,l,numPoints=201):
 	'''
 	generate the two port S matrix for a waveguide thru section of length l 
@@ -1160,9 +1204,10 @@ def genThru(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
 		
 		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave	
 	'''
-	s11 = s22 = npy.complex_( npy.zeros(numPoints))
-	#initialized vectors
-	s21 = s12 = npy.complex_(npy.zeros(numPoints))
+	s11 = npy.complex_( npy.zeros(numPoints))
+	s12 = npy.complex_( npy.zeros(numPoints))
+	s21 = npy.complex_( npy.zeros(numPoints))
+	s22 = npy.complex_( npy.zeros(numPoints))
 	
 	#loop through band and calculate the delay
 	fband = npy.linspace(fStart,fStop,numPoints)
@@ -1174,8 +1219,19 @@ def genThru(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
 
 
 
-#def genOffsetShort(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
+def genDelayShort(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
+	z0 = 1 #characeristice impedance is irelevant this will divide out. 
+	s11 = npy.complex_( npy.zeros(numPoints))
+	s22 = npy.complex_( npy.zeros(numPoints))
+	s21 = npy.complex_( npy.zeros(numPoints))
+	s12 = npy.complex_( npy.zeros(numPoints))
 	
+	#loop through band and calculate the delay
+	fband = npy.linspace(fStart,fStop,numPoints)
+	for f in range(numPoints):
+		s11[f] = -1*exp(-1j* 2*electricalLength(l,fband[f],beta))	
+	return npy.array([[s11, s12],\
+					[s21, s22] ])
 
 ############## general EM ##########################
 def betaSpace(omega,epsilonR = 1, muR = 1):
