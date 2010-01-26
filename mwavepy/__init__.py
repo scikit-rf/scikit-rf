@@ -1132,7 +1132,7 @@ def genWaveguideDelayShort(wg,l,numPoints=201):
 		print 'ERROR: first argument must be of waveguide type'
 		return None	
 		
-def genWaveguideThu(wg,l,numPoints=201):
+def genWaveguideThru(wg,l,numPoints=201):
 	'''
 	generate the two port S matrix for a waveguide thru section of length l 
 	
@@ -1220,7 +1220,6 @@ def genThru(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
 
 
 def genDelayShort(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
-	z0 = 1 #characeristice impedance is irelevant this will divide out. 
 	s11 = npy.complex_( npy.zeros(numPoints))
 	s22 = npy.complex_( npy.zeros(numPoints))
 	s21 = npy.complex_( npy.zeros(numPoints))
