@@ -22,7 +22,7 @@
 #	Most of these functions have not been rigidly tested. use with caution!!
 
 import numpy as npy
-from numpy import sqrt, exp
+from numpy import sqrt, exp, array,tan,sin,cos
 import pylab as p
 from scipy import constants as const
 from scipy.constants import  epsilon_0, mu_0, c,pi
@@ -481,6 +481,33 @@ def deg2rad(deg):
 
 
 
+
+def zl2gamma(zl,z0):
+	return (zl-z0)/(zl+z0)
+def zl2T(zl,z0):
+	return 1 + gamma(zl,z0)
+
+def zin(zl,z0,el):
+	'''
+	returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
+	takes:
+		zl - load impedance 
+		z0 - characteristic impedance of tline
+		el - electrical length ( in radians)
+	returns:
+		input impedance ( in general complex)
+	'''
+	return z0 *	(zl + 1j*z0 * tan(el)) /\
+				(z0 + 1j*zl * tan(el))
+
+def zinShort (z0,el):
+	return 1j*z0*tan(el)
+def zinOpen(z0,el):
+	return -1j*z0*cot(el)
+
+#def gammaAtADistance(zl,z0,l,beta = lambda omega: omega/c):
+	
+
 ##------ ploting --------
 def smith(smithR=1):
 	'''
@@ -851,38 +878,11 @@ def passivityTest(smat):
 			#return True
 	return passivity
 
-##------- Calibrations ------
 
 
-########################
-def eEffMicrostrip(w,h,epR):
-	'''
-	The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pp. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pp. 1422-1444, 1969.
-	'''
-	
-	if w < h:
-		return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w) + .04*(1-w/h)**2)
-	else:
-		return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w))
-	
-	
-	
 
-def betaMicrostrip(w,h,epR):
-	return lambda omega: omega/c * sqrt(eEffMicrostrip(w,h,epR))
-	
-	
-def impedanceMicrostrip(w,h,epR):
-	'''
-	
-	
-	taken from pozar
-	'''
-	eEff = eEffMicrostrip(w,h,epR)
-	if w/h < 1:
-		return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
-	else:
-		return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
+############### transmission lines ################
+## 
 
 
 
@@ -905,6 +905,34 @@ class microstrip():
 	def __init__(self):
 		raise NotImplementedError
 		return None
+	def eEffMicrostrip(w,h,epR):
+		'''
+		The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pp. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pp. 1422-1444, 1969.
+		'''
+		
+		if w < h:
+			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w) + .04*(1-w/h)**2)
+		else:
+			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w))
+		
+		
+		
+	
+	def betaMicrostrip(w,h,epR):
+		return lambda omega: omega/c * sqrt(eEffMicrostrip(w,h,epR))
+		
+		
+	def impedanceMicrostrip(w,h,epR):
+		'''
+		
+		
+		taken from pozar
+		'''
+		eEff = eEffMicrostrip(w,h,epR)
+		if w/h < 1:
+			return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
+		else:
+			return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
 
 class coplanar():
 	def __init__(self):
@@ -916,11 +944,16 @@ class waveguide:
 	
 	TODO: implement different filling materials, and wall material losses
 	'''
-	def __init__(self, a,b,epsilonR=1, muR=1):
+	def __init__(self, a,b,band=None, epsilonR=1, muR=1):
 		self.a = a
 		self.b = b
-		self.fc10 = self.fc(1,0) 
-		self.band = npy.array([1.25*self.fc10 , 1.9 * self.fc10]) 
+		self.fc10 = self.fc(1,0)
+		if band == None: 
+			self.band = npy.array([1.25*self.fc10 , 1.9 * self.fc10]) 
+		else:
+			self.band= band
+		self.fStart = self.band[0]
+		self.fStop = self.band[1]
 		#all for dominant mode
 	
 	def fc(self,m=1,n=0):
@@ -970,9 +1003,91 @@ WR4 = wr(4.3)
 WR3 = wr(3.4)
 WR1p5 = wr(1.5)		
 		
+############# two-port structures ########################
+# these conversions where taken from Pozar. Microwave Engineering sec 5.6
+
+## representation conversions
+def s2abcd(sMat,z0=50):
+	'''
+	converts a 2-port network represented by a  S matrix to a 2-port ABCD matrix
+	takes:
+		s - 2x2 complex matrix, representing a Scattering matrix for some network.
+		z0 - characteristic impedance
+	returns: 
+		abcd - 2x2 complex matrix, representing a ABCD matrix for some network.
 		
+	
+	there might be a matrix implementation which is more concise but i dont know it 
+	'''
+	a = 		( (1+sMat[0,0]) * (1-sMat[1,1]) + sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	b = z0 * 	( (1+sMat[0,0]) * (1+sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	c = 1./z0 *	( (1-sMat[0,0]) * (1-sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	d = 		( (1-sMat[0,0]) * (1+sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	return array([[a,b],[c,d]])
+
+def s2z():
+	raise NotImplementedError
+def s2y():
+	raise NotImplementedError
+def z2s():
+	raise NotImplementedError
+def z2y():
+	raise NotImplementedError
+def z2abcd():
+	raise NotImplementedError
+def y2s():
+	raise NotImplementedError
+def y2z():
+	raise NotImplementedError
+def y2abcd():
+	raise NotImplementedError
+def abcd2s(abcdMat,z0=50):
+	'''
+	converts a 2-port network represented by a  ABCD matrix to a 2-port S matrix
+	takes:
+		abcdMat - 2x2 complex matrix, representing a Scattering matrix for some network
+		z0 - characteristic impedance
+	returns: 
+		abcd - 2x2 complex matrix, representing a ABCD matrix for some network.
 		
-		
+	
+	there might be a matrix implementation which is more concise but i dont know it 
+	'''
+	a = abcdMat[0,0]
+	b = abcdMat[0,1]
+	c = abcdMat[1,0]
+	d = abcdMat[1,1]
+	
+	s11 = (a + b/z0 - c*z0 - d) / ( a + b/z0 + c*z0 + d )
+	s12 = 2.*( a*d-b*c) / (a + b/z0 + c*z0 + d) 
+	s21 = 2./(a + b/z0 + c*z0 + d)
+	s22 =  (-1*a + b/z0 - c*z0 + d)/(a + b/z0 + c*z0 + d)
+	
+	return array([[s11, s12],[s21,s22]])
+	
+def abcd2z():
+	raise NotImplementedError
+def abcd2y():
+	raise NotImplementedError
+
+## connections
+def connectionSeries(ntwkA,ntwkB, type='s'):
+	if type not in 'szyabcd':
+		print( type +' is not a valid Type')
+		return None
+	elif type == 's':
+		return abcd2s(npy.dot(s2abcd(ntwkA),s2abcd(ntwkB)))
+	elif type == 'abcd':
+		return npy.dot(ntwkA,ntwkB)
+	elif type == 'z':
+		raise NotImplementedError
+	elif type == 'y':
+		raise NotImplementedError
+	
+
+## networks
+
+
 def genWaveguideThu(wg,l,numPoints=201):
 	'''
 	generate the two port S matrix for a waveguide thru section of length l 
@@ -991,7 +1106,7 @@ def genWaveguideThu(wg,l,numPoints=201):
 		return None		
 		
 		
-		
+# note: these S matricies may be re-shaped if one wants the frequency index to come first, like  S = S.transpose().reshape(-1,2,2)
 def genShort(numPoints):
 	'''
 	generates the two port S matrix for a Short. 
@@ -1058,6 +1173,11 @@ def genThru(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
 					[s21, s22] ])
 
 
+
+#def genOffsetShort(fStart, fStop,numPoints, l, beta = lambda omega: omega/c ):
+	
+
+############## general EM ##########################
 def betaSpace(omega,epsilonR = 1, muR = 1):
 	'''
 	propagation constant of a material.
@@ -1122,7 +1242,8 @@ def electricalLength( l , f0, beta=lambda omega: omega/c,deg=False):
 		return  rad2deg(beta(2*pi*f0 ) *l )
 
 
-########################
+############### calibration ##############
+## one port
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	'''
 	calculates calibration coefficients for a one port OSM calibration
@@ -1182,3 +1303,4 @@ def applyABC( gamma, abc):
 	# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
 	gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
 	return gammaCal
+## two port 
