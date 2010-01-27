@@ -485,6 +485,10 @@ def deg2rad(deg):
 
 
 ##------ ploting --------
+def plotOnSmith(complexData,**kwargs):
+	p.plot(npy.real(complexData), npy.imag(complexData), **kwargs)
+	smith(1)
+
 def smith(smithR=1):
 	'''
 	plots the smith chart of a given radius
@@ -536,6 +540,7 @@ def smith(smithR=1):
 	contour.append(Line2D([1,1],[-smithR,smithR],color='black'))
 	
 	#set axis limits
+	ax.axis('equal')
 	ax.axis(smithR*npy.array([-1., 1., -1., 1.]))
 	
 	# loop though contours and draw them on the given axes
@@ -1335,9 +1340,9 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 						] )
 		
 		X = npy.vstack([ \
-					npy.hstack([aShort[k], 1, aShort[k]*mShort[k] ]),\
-					npy.hstack([aOpen[k],	 1, aOpen[k] *mOpen[k] ]),\
-					npy.hstack([aMatch[k], 1, aMatch[k]*mMatch[k] ])\
+					npy.hstack([aShort[k], 	1, aShort[k]*mShort[k] ]),\
+					npy.hstack([aOpen[k],	1, aOpen[k] *mOpen[k] ]),\
+					npy.hstack([aMatch[k], 	1, aMatch[k]*mMatch[k] ])\
 					])
 		
 		#matrix of correction coefficients
@@ -1359,3 +1364,34 @@ def applyABC( gamma, abc):
 	gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
 	return gammaCal
 ## two port 
+
+## calibrations should be classed and handled somthing like this 
+#class calibration:
+	#def __init__(self,kit=calKit(),measured=None):
+		#self.kit = inkit
+		#self.measured = measured
+		#raise NotImplementedError
+
+#class calKit:
+	#def __init__(self,type = 'osm', medium = 'waveguide', fStart, fStop, nPoints, name='default cal kit',):
+		#self.name = name
+		#self.type = type
+		#self.numberOfStandards=0
+		#self.standards=[]
+	#def addStandard():
+		#raise NotImplementedError
+	#def delStandard():
+		#raise NotImplementedError
+	#def editStandard():
+		#raise NotImplementedError
+
+#calGeneralOSM = calkit('OSM', 'coax', fStart,fStop,nPoints)
+
+#calGeneralOSM.addStandard()
+
+
+#class standard:
+	#def __init__(self,type='waveguide',name):
+		#self.type = type
+		#self.name = name
+		#self.sMat = insMat	
