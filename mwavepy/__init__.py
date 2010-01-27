@@ -1039,7 +1039,7 @@ def zinOpen(z0,el):
 
 
 
-## representation conversions
+## network  representation conversions
 def s2abcd(sMat,z0=50):
 	'''
 	converts a 2-port network represented by a  S matrix to a 2-port ABCD matrix
@@ -1105,20 +1105,49 @@ def abcd2y():
 
 ## connections
 def connectionSeries(ntwkA,ntwkB, type='s'):
+	ntwkC = npy.zeros(shape=ntwkA.shape)
 	if type not in 'szyabcd':
 		print( type +' is not a valid Type')
 		return None
 	elif type == 's':
-		return abcd2s(npy.dot(s2abcd(ntwkA),s2abcd(ntwkB)))
+		ntwkC[1,0] = ntwkA[1,0]*ntwkB[1,0] / 1 - ntwkA[1,1]*ntwkB[0,0]
+		ntwkC[0,1] = ntwkA[0,1]*ntwkB[0,1] / 1 - ntwkA[1,1]*ntwkB[0,0]
+		ntwkC[0,0] = ntwkA[0,0]+ntwkA[1,0]*ntwkB[0,0]*ntwkA[0,1] / 1 - ntwkA[1,1]*ntwkB[0,0]
+		ntwkC[1,1] = ntwkB[1,1]+ntwkB[0,1]*ntwkA[1,1]*ntwkB[1,0] / 1 - ntwkA[1,1]*ntwkB[0,0]
 	elif type == 'abcd':
 		return npy.dot(ntwkA,ntwkB)
 	elif type == 'z':
 		raise NotImplementedError
 	elif type == 'y':
 		raise NotImplementedError
+		
+	return ntwkC
 	
 
 ## networks
+class ntwk:
+	def __init__(self, data,f=None, type = 's'):
+		if type not in 'szyabcd':
+			print( type +' is not a valid Type')
+			return None
+		if data.shape[0] != data.shape[1]:
+			print ('ERROR: input data must be a square matrix')
+		
+		
+		self.numPorts = data.shape[]
+		
+		if type == 's':
+			self.s = npy.complex(npy.zeros(shape=(rank,rank, npoints))
+		
+		elif type == 'abcd':
+			raise NotImplementedError
+		elif type == 'z':
+			raise NotImplementedError
+		elif type == 'y':
+			raise NotImplementedError
+			
+		self.f = 
+		
 
 def genWaveguideDelayShort(wg,l,numPoints=201):
 	'''
