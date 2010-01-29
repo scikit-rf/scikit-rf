@@ -867,16 +867,22 @@ def passivityTest(smat):
 ## 
 
 
-
-
-
 #################
+
+def createNtwkFromTouchstone(filename):
+	myntwk = ntwk()
+	myntwk.loadFromTouchstone(filename)
+	return myntwk
+
 class ntwk:
-	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, paramType='s', freqUnit='GHz', z0=50, name = None):
+	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, freqUnit='GHz', freqMultiplier = 1e9, paramType='s',  z0=50, name = ''):
 		## input checking : format, shape, and existence of f
 		if paramType not in 'szyabcd':
-			print( type +' is not a valid Type')
+			print( paramType +' is not a valid parameter type')
 			return None
+		else:
+			self.paramType = paramType
+			
 		if data.shape[1] != data.shape[2]:
 			print ('ERROR: input data must be kxmxm, where k is frequency axis')
 			return None
@@ -885,7 +891,7 @@ class ntwk:
 			self.freqUnit = None
 			self.freqMultiplier=None
 		else:
-			if len(f) != data.shape[0]:
+			if len(freq) != data.shape[0]:
 				print 'Error: length of f must match data.shape[2]. There must be as many frequency points as there are s parameter measurements.'
 				return None
 			else:
@@ -900,16 +906,16 @@ class ntwk:
 		self.rank = data.shape[1]
 		self.length = data.shape[0]
 		## interpret paramType
-		if paramType == 's':
+		if self.paramType == 's':
 			self.s = npy.complex_(data)
 			# this is where we should calculate and assign all the other ntwk formats
 			#npy.zeros(shape=(self.rank,self.rank, self.length)))
 			#	
-		elif paramType == 'abcd':
+		elif self.paramType == 'abcd':
 			raise NotImplementedError
-		elif paramType == 'z':
+		elif self.paramType == 'z':
 			raise NotImplementedError
-		elif paramType == 'y':
+		elif self.paramType == 'y':
 			raise NotImplementedError
 			
 			
@@ -923,7 +929,8 @@ class ntwk:
 		
 
 	def plotdB(self, m,n, ax=None, **kwargs):
-		paramString = ', S'+repr(m+1) + repr(n+1)
+		
+		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
 			ax1 = plb.gca()
 		else:
@@ -931,17 +938,56 @@ class ntwk:
 		
 		if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
-			ax1.plot(self.sdB[:,m,n],label=self.name+paramString,**kwargs)
+			ax1.plot(self.sdB[:,m,n],label=labelString,**kwargs)
 		else:
-			ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,m,n],label=self.name+paramString,**kwargs)
+			ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,m,n],label=labelString,**kwargs)
 		
 		
 		plb.axis('tight')
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
 		plb.ylabel('Magnitude (dB)')
-		plb.xlim([ self.f[0]/self.freqMultiplier, self.f[-1]/self.freqMultiplier])
+		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
+		plb.grid(1)
+		
+		
+	def plotSmith(self, m,n, smithRadius = 1, ax=None, **kwargs):
+		
+		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+		
+		ax1.plot(npy.real(self.s[:,m,n]), npy.imag(self.s[:,m,n]) ,label=labelString,**kwargs)
+		smith(smithRadius)
+		
+		plb.axis('tight')
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Magnitude (dB)')
+		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		plb.grid(1)
 	
+	def plotPhase(self, m,n, ax=None, **kwargs):
+		
+		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+		
+		if self.freq == None:
+			# this network doesnt have a frequency axis, just plot it  
+			ax1.plot(self.sdeg[:,m,n],label=labelString,**kwargs)
+		else:
+			ax1.plot(self.freq/self.freqMultiplier, self.sdeg[:,m,n],label=labelString,**kwargs)
+		
+		
+		plb.axis('tight')
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Phase (deg)')
+		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
+		plb.grid(1)
+
 	def loadFromTouchstone(self,filename):
 		touchstoneFile = touch(filename)
 		
@@ -980,19 +1026,22 @@ class ntwk:
 		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
 		
 		#TODO check format string for acceptable values and do somthing with it
-		outputFile.write("# " + self.fUnit.upper() +' '+ self.paramType.upper() + ' '+'RI' + " R " + str(self.z0) +" \n")
+		outputFile.write("# " + self.freqUnit.upper() +' '+ self.paramType.upper() + ' '+'RI' + " R " + str(self.z0) +" \n")
 		
 		#write comment line for users
 		outputFile.write ("!freq\t")
 		for q in range(self.rank):
 			for p in range(self.rank):
 				outputFile.write("Re" +'S'+`p+1`+ `q+1`+  "\tIm"+'S'+`p+1`+ `q+1`+'\t')
-				
-		# write out data 
+		outputFile.write('\n')		
+		
+		# write out data, note: this could be done with matrix manipulations, but its more readable to me this way
 		for k in range(len(self.freq)):
+			outputFile.write(str(self.freq[k]/self.freqMultiplier)+'\t')
 			for q in range(self.rank):
 				for p in range(self.rank):
-					outputFile.write( npy.real(self.s[k,p,q]) )
+					outputFile.write( str(npy.real(self.s[k,p,q])) + '\t' + str(npy.imag(self.s[k,p,q])) +'\t')
+			outputFile.write('\n')
 
 class transmissionLine:
 	'''

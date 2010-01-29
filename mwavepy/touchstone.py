@@ -188,23 +188,23 @@ class touchstone():
                 values[:,1::2] = 10**(values[:,1::2]/20.0)
             elif (self.format == 'db') and (format == 'ri'):
                 v_complex = ((10**values[:,1::2]/20.0) 
-                             * numpy.exp(1j*numpy.pi/360 * values[:,2::2]))
+                             * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
                 values[:,1::2] = numpy.real(v_complex)
                 values[:,2::2] = numpy.imag(v_complex)
             elif (self.format == 'ma') and (format == 'db'):
                 values[:,1::2] = 20*numpy.log10(values[:,1::2])
             elif (self.format == 'ma') and (format == 'ri'):
-                v_complex = (values[:,1::2] * numpy.exp(1j*numpy.pi/360 * values[:,2::2]))
+                v_complex = (values[:,1::2] * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
                 values[:,1::2] = numpy.real(v_complex)
                 values[:,2::2] = numpy.imag(v_complex)
             elif (self.format == 'ri') and (format == 'ma'):
                 v_complex = numpy.absolute(values[:,1::2] + 1j* self.sparameters[:,2::2])
                 values[:,1::2] = numpy.absolute(v_complex)
-                values[:,2::2] = numpy.angle(v_complex)*(360/numpy.pi)
+                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
             elif (self.format == 'ri') and (format == 'db'):
                 v_complex = numpy.absolute(values[:,1::2] + 1j* self.sparameters[:,2::2])
                 values[:,1::2] = 20*numpy.log10(numpy.absolute(v_complex))
-                values[:,2::2] = numpy.angle(v_complex)*(360/numpy.pi)
+                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
         
         for i,n in enumerate(self.get_sparameter_names(format=format)):
             ret[n] = values[:,i]
@@ -224,12 +224,13 @@ class touchstone():
         if self.format == 'ri':
             v_complex = v[:,1::2] + 1j* v[:,2::2]
         elif self.format == 'ma':
-            v_complex = (v[:,1::2] * numpy.exp(1j*numpy.pi/360 * v[:,2::2]))
+            v_complex = (v[:,1::2] * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
         elif self.format == 'db':
-            v_complex = ((10**v[:,1::2]/20.0) * numpy.exp(1j*numpy.pi/360 * v[:,2::2]))
-
+            v_complex = ((10**v[:,1::2]/20.0) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
+        
+        # this return is tricky its do the stupid way the touchtone lines are in order like s11,s21, etc. because of this we need the transpose command, and axes specifier
         return (v[:,0] * self.frequency_mult,
-                v_complex.reshape((-1, self.rank, self.rank)))
+                numpy.transpose(v_complex.reshape((-1, self.rank, self.rank)),axes=(0,2,1)))
 
     def get_noise_names(self):
         """
