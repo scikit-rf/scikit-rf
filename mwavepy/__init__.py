@@ -960,12 +960,6 @@ class ntwk:
 		
 		ax1.plot(npy.real(self.s[:,m,n]), npy.imag(self.s[:,m,n]) ,label=labelString,**kwargs)
 		smith(smithRadius)
-		
-		plb.axis('tight')
-		plb.xlabel('Frequency (' + self.freqUnit +')') 
-		plb.ylabel('Magnitude (dB)')
-		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
-		plb.grid(1)
 	
 	def plotPhase(self, m,n, ax=None, **kwargs):
 		
@@ -987,7 +981,50 @@ class ntwk:
 		plb.ylabel('Phase (deg)')
 		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		plb.grid(1)
-
+	
+	def plotReturnLossDb(self, ax= None, **kwargs):
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+			
+		for p in range(self.rank):
+			labelString  = self.name+', S'+repr(p+1) + repr(p+1)
+			if self.freq == None:
+			# this network doesnt have a frequency axis, just plot it  
+				ax1.plot(self.sdB[:,p,p],label=labelString,**kwargs)
+			else:
+				ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,p],label=labelString,**kwargs)
+		plb.legend(loc='best')	
+		plb.axis('tight')
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Magnitude (dB)')
+		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
+		plb.grid(1)
+	
+	def plotInsertionLossDb(self, ax = None, **kwargs):
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+			
+		for p in range(self.rank):
+			for q in range(self.rank):
+				if p!=q:
+					labelString  = self.name+', S'+repr(p+1) + repr(q+1)
+					if self.freq == None:
+					# this network doesnt have a frequency axis, just plot it  
+						ax1.plot(self.sdB[:,p,q],label=labelString,**kwargs)
+					else:
+						ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,q],label=labelString,**kwargs)
+		plb.legend(loc='best')				
+		plb.axis('tight')
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Magnitude (dB)')
+		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
+		plb.grid(1)
+	
+	
 	def loadFromTouchstone(self,filename):
 		touchstoneFile = touch(filename)
 		
