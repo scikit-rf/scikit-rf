@@ -875,6 +875,9 @@ def createNtwkFromTouchstone(filename):
 	return myntwk
 
 class ntwk:
+	'''
+	
+	'''
 	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, freqUnit='GHz', freqMultiplier = 1e9, paramType='s',  z0=50, name = ''):
 		## input checking : format, shape, and existence of f
 		if paramType not in 'szyabcd':
@@ -928,7 +931,7 @@ class ntwk:
 		
 		
 
-	def plotdB(self, m,n, ax=None, **kwargs):
+	def plotdB(self, m,n, ax=None,**kwargs):
 		
 		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
@@ -948,7 +951,8 @@ class ntwk:
 		plb.ylabel('Magnitude (dB)')
 		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		plb.grid(1)
-		
+		plb.legend(loc='best')
+		plb.draw()
 		
 	def plotSmith(self, m,n, smithRadius = 1, ax=None, **kwargs):
 		
@@ -960,6 +964,9 @@ class ntwk:
 		
 		ax1.plot(npy.real(self.s[:,m,n]), npy.imag(self.s[:,m,n]) ,label=labelString,**kwargs)
 		smith(smithRadius)
+		plb.legend(loc='best')
+		plb.draw()
+		
 	
 	def plotPhase(self, m,n, ax=None, **kwargs):
 		
@@ -981,8 +988,10 @@ class ntwk:
 		plb.ylabel('Phase (deg)')
 		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		plb.grid(1)
+		plb.legend(loc='best')
+		plb.draw()
 	
-	def plotReturnLossDb(self, ax= None, **kwargs):
+	def plotAllReturnLossDb(self, ax= None, **kwargs):
 		if ax == None:
 			ax1 = plb.gca()
 		else:
@@ -1001,8 +1010,12 @@ class ntwk:
 		plb.ylabel('Magnitude (dB)')
 		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		plb.grid(1)
+		plb.draw()
 	
-	def plotInsertionLossDb(self, ax = None, **kwargs):
+	def plotAllInsertionLossDb(self, ax = None, **kwargs):
+		if self.rank == 1:
+			print 'one port networks dont have insertion loss dummy.'
+			return None
 		if ax == None:
 			ax1 = plb.gca()
 		else:
@@ -1023,7 +1036,51 @@ class ntwk:
 		plb.ylabel('Magnitude (dB)')
 		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		plb.grid(1)
+		plb.draw()
 	
+	def plotAllDb(self, ax = None, twinAxis = True, **kwargs):
+		'''
+		has a bug with the legend , when using twinx 
+		'''
+		if self.rank == 1:
+			print 'one port networks dont have insertion loss dummy.'
+			return None
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+			
+		for p in range(self.rank):
+			for q in range(self.rank):
+				if p!=q:
+					labelString  = self.name+', S'+repr(p+1) + repr(q+1)
+					if self.freq == None:
+					# this network doesnt have a frequency axis, just plot it  
+						ax1.plot(self.sdB[:,p,q],label=labelString,**kwargs)
+					else:
+						ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,q],label=labelString,**kwargs)
+					
+		if twinAxis == True:
+			plb.legend(loc='best')	
+			plb.twinx()
+			ax1 = plb.gca()
+			
+		for p in range(self.rank):
+			labelString  = self.name+', S'+repr(p+1) + repr(p+1)
+			if self.freq == None:
+			# this network doesnt have a frequency axis, just plot it  
+				ax1.plot(self.sdB[:,p,p],label=labelString,**kwargs)
+			else:
+				ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,p],label=labelString,**kwargs)
+		
+		
+		plb.legend(loc='best')				
+		plb.axis('tight')
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Magnitude (dB)')
+		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
+		plb.grid(1)
+		plb.draw()
 	
 	def loadFromTouchstone(self,filename):
 		touchstoneFile = touch(filename)
