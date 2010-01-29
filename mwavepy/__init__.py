@@ -23,7 +23,7 @@
 
 import numpy as npy
 from numpy import sqrt, exp, array,tan,sin,cos,inf
-import pylab as p
+import pylab as plb
 from scipy import constants as const
 from scipy.constants import  epsilon_0, mu_0, c,pi
 from scipy import signal
@@ -33,18 +33,19 @@ import os # for fileIO
 # for drawing smith chart
 from matplotlib.patches import Circle
 from matplotlib.lines import Line2D
-	
+
+from touchstone import touchstone as touch
 
 #TODO: this could be structured as a generic 2-port to n-port, with type of S, Z, Y, or ABCD
 # each netowrk could have difference function depending on the type. as of now it is still structured
 # around s-parameter as the base type
 #
 # to make ploting faster there should be 
-#	if p.isinteractive()
-#		p.ioff()
+#	if plb.isinteractive()
+#		plb.ioff()
 #		do the ploting
-#		p.draw()
-#		p.ion()
+#		plb.draw()
+#		plb.ion()
 
 
 ############# CONSTANTS ##################
@@ -109,39 +110,39 @@ class s:
 	def plotdB(self):
 		''' Plot the S-parameter mag in log mode. 
 		'''
-		p.plot(self.freq, self.dB)
-		p.xlabel('Frequency (' + self.freqUnit +')') 
-		p.ylabel('Magnitude (dB)')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
+		plb.plot(self.freq, self.dB)
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Magnitude (dB)')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
 		
 	def plotPhase(self):
 		''' Plot the S-parameters phase mode. 
 		'''
-		p.plot(self.freq, self.deg)
-		p.xlabel('Frequency (' + self.freqUnit +')') 
-		p.ylabel('Phase (deg)')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
+		plb.plot(self.freq, self.deg)
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Phase (deg)')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
 	
 	def plotSmith(self, radius=1):
 		''' Plot the S-parameters on a smith chart.
 		can be passed the smith radius and resolution of smith chart circles 
 		'''
-		p.hold(1)
+		plb.hold(1)
 		smith(radius)
-		p.plot(self.re, self.im)
-		p.axis(radius*npy.array([-1., 1., -1., 1.]))
+		plb.plot(self.re, self.im)
+		plb.axis(radius*npy.array([-1., 1., -1., 1.]))
 		
 	
 	def plotZ0(self):
 		# could check for complex port impedance
-		p.plot(self.freq, self.z0)
-		p.xlabel('Frequency (' + self.freqUnit +')') 
-		p.ylabel('Impedance (Ohms)')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
-		p.title('Characterisctic Impedance')
+		plb.plot(self.freq, self.z0)
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Impedance (Ohms)')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
+		plb.title('Characterisctic Impedance')
 
 		
 	
@@ -197,12 +198,12 @@ class z:
 	def plotReIm(self):
 		''' Plot the real and imaginary parts of Z-parameters 
 		'''
-		p.plot(self.freq, self.re)
-		p.plot(self.freq, self.im)
-		p.xlabel('Frequency (' + self.freqUnit +')')
-		p.ylabel('Impedance')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
+		plb.plot(self.freq, self.re)
+		plb.plot(self.freq, self.im)
+		plb.xlabel('Frequency (' + self.freqUnit +')')
+		plb.ylabel('Impedance')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
 
 
 class twoPort:
@@ -261,16 +262,16 @@ class twoPort:
 	def plotReturnLoss(self):
 		self.s11.plotdB()
 		self.s22.plotdB()
-		p.legend(('S11','S22'))
-		p.title('Return Loss')
-		p.xlabel('Frequency (' + self.freqUnit +')')
+		plb.legend(('S11','S22'))
+		plb.title('Return Loss')
+		plb.xlabel('Frequency (' + self.freqUnit +')')
 		
 	def plotTransmission(self):
 		self.s12.plotdB()
 		self.s21.plotdB()
-		p.legend(('S12','S21'))
-		p.title('Transmission')
-		p.xlabel('Frequency (' + self.freqUnit +')')
+		plb.legend(('S12','S21'))
+		plb.title('Transmission')
+		plb.xlabel('Frequency (' + self.freqUnit +')')
 	
 	def plotAllS(self):
 		
@@ -278,43 +279,43 @@ class twoPort:
 		self.s12.plotdB()
 		self.s21.plotdB()
 		self.s22.plotdB()
-		p.legend(('S11','S12','S21','S22'))
-		p.xlabel('Frequency (' + self.freqUnit +')')
+		plb.legend(('S11','S12','S21','S22'))
+		plb.xlabel('Frequency (' + self.freqUnit +')')
 		
 		
 	def plotZin1(self):
-		p.plot(self.freq, npy.real(self.zin1), label='Real')
-		p.plot(self.freq, npy.imag(self.zin1), label='Imaginary')
-		p.xlabel('Frequency (' + self.freqUnit +')')
-		p.ylabel('Impedance (Ohms)')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
-		p.title('Input Impedance, Port 1')
+		plb.plot(self.freq, npy.real(self.zin1), label='Real')
+		plb.plot(self.freq, npy.imag(self.zin1), label='Imaginary')
+		plb.xlabel('Frequency (' + self.freqUnit +')')
+		plb.ylabel('Impedance (Ohms)')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
+		plb.title('Input Impedance, Port 1')
 		
 	def plotZin2(self):
-		p.plot(self.freq, npy.real(self.zin2),label='Real')
-		p.plot(self.freq, npy.imag(self.zin2), label='Imaginary')
-		p.xlabel('Frequency (' + self.freqUnit +')')
-		p.ylabel('Impedance (Ohms)')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
-		p.title('Input Impedance, Port 1')
+		plb.plot(self.freq, npy.real(self.zin2),label='Real')
+		plb.plot(self.freq, npy.imag(self.zin2), label='Imaginary')
+		plb.xlabel('Frequency (' + self.freqUnit +')')
+		plb.ylabel('Impedance (Ohms)')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
+		plb.title('Input Impedance, Port 1')
 	
 	def plotSwr1(self):
-		p.plot(self.freq, self.swr1)
-		p.xlabel('Frequency (' + self.freqUnit +')') 
-		p.ylabel('SWR')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
-		p.title('SWR, Port 1')
+		plb.plot(self.freq, self.swr1)
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('SWR')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
+		plb.title('SWR, Port 1')
 	
 	def plotSwr2(self):
-		p.plot(self.freq, self.swr2)
-		p.xlabel('Frequency (' + self.freqUnit +')') 
-		p.ylabel('SWR')
-		p.grid(1)
-		p.xlim([ self.freq[0], self.freq[-1]])
-		p.title('SWR, Port 1')
+		plb.plot(self.freq, self.swr2)
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('SWR')
+		plb.grid(1)
+		plb.xlim([ self.freq[0], self.freq[-1]])
+		plb.title('SWR, Port 1')
 
 	def plotZ01(self):
 		self.s11.plotZ0()
@@ -384,8 +385,8 @@ class onePort:
 
 	def plotReturnLoss(self):
 		self.s11.plotdB()
-		p.title('Return Loss')
-		p.xlabel('Frequency (' + self.freqUnit +')')
+		plb.title('Return Loss')
+		plb.xlabel('Frequency (' + self.freqUnit +')')
 	def writeTouchtonnae(fileName='myonePort.s1p'):
 		'''
 		write onePort network to a file in touchtone format. 
@@ -486,7 +487,7 @@ def deg2rad(deg):
 
 ##------ ploting --------
 def plotOnSmith(complexData,**kwargs):
-	p.plot(npy.real(complexData), npy.imag(complexData), **kwargs)
+	plb.plot(npy.real(complexData), npy.imag(complexData), **kwargs)
 	smith(1)
 
 def smith(smithR=1):
@@ -496,7 +497,7 @@ def smith(smithR=1):
 		smithR - radius of smith chart
 	'''
 	#TODO: fix this so that an axes object may be passed as argument
-	ax = p.gca()
+	ax = plb.gca()
 	# contour holds matplotlib instances of: pathes.Circle, and lines.Line2D, which 
 	# are the contours on the smith chart 
 	contour = []
@@ -506,13 +507,13 @@ def smith(smithR=1):
 	xHeavyList = [1,-1]
 	
 	# these could be dynamically coded in the future, but work good'nuff for now 
-	rLightList = p.logspace(3,-5,9,base=.5)
-	xLightList = p.hstack([p.logspace(2,-5,8,base=.5), -1*p.logspace(2,-5,8,base=.5)]) 
+	rLightList = plb.logspace(3,-5,9,base=.5)
+	xLightList = plb.hstack([plb.logspace(2,-5,8,base=.5), -1*plb.logspace(2,-5,8,base=.5)]) 
 	
 	# cheap way to make a ok-looking smith chart at larger than 1 radii
 	if smithR > 1:
 		rMax = (1.+smithR)/(1.-smithR)
-		rLightList = p.hstack([ p.linspace(0,rMax,11)  , rLightList ])
+		rLightList = plb.hstack([ plb.linspace(0,rMax,11)  , rLightList ])
 		
 	
 	# loops through Light and Heavy lists and draws circles using patches
@@ -758,10 +759,10 @@ def plotCsv(filename,rowsToSkip=1,delim=','):
 	'''plots columns from csv file. plots all columns against the first
 	see pylab.loadtxt for more information
 	'''
-	data = p.loadtxt(filename,skiprows=rowsToSkip,delimiter=delim)
-	p.plot(data[:,0], data[:,1:])
-	p.grid(1)
-	p.title(filename)
+	data = plb.loadtxt(filename,skiprows=rowsToSkip,delimiter=delim)
+	plb.plot(data[:,0], data[:,1:])
+	plb.grid(1)
+	plb.title(filename)
 
 
 
@@ -794,7 +795,7 @@ def psd2TimeDomain(f,y, windowType='rect'):
 	df = abs(f[1]-f[0])
 	T = 1./df
 	timeVector = npy.linspace(0,T,2*len(f)-1)	
-	signalVector = p.ifft(p.ifftshift(spectrum))
+	signalVector = plb.ifft(plb.ifftshift(spectrum))
 	
 	#the imaginary part of this signal should be from fft errors only,
 	signalVector= npy.real(signalVector)
@@ -827,7 +828,7 @@ def timeDomain2Psd(t,y, windowType='rect'):
 	numPoints = len(t)
 	f = npy.linspace(-fs/2,fs/2,numPoints)
 
-	Y = 1./len(y)* p.fftshift(p.fft(y))
+	Y = 1./len(y)* plb.fftshift(plb.fft(y))
 	spectrumVector = Y[len(Y)/2:]
 	freqVector = f[len(f)/2:]
 	return [freqVector,spectrumVector]
@@ -870,25 +871,148 @@ def passivityTest(smat):
 
 
 #################
-class transmissionLine():
+class ntwk:
+	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, paramType='s', freqUnit='GHz', z0=50, name = None):
+		## input checking : format, shape, and existence of f
+		if paramType not in 'szyabcd':
+			print( type +' is not a valid Type')
+			return None
+		if data.shape[1] != data.shape[2]:
+			print ('ERROR: input data must be kxmxm, where k is frequency axis')
+			return None
+		if freq == None:
+			self.freq = freq #None
+			self.freqUnit = None
+			self.freqMultiplier=None
+		else:
+			if len(f) != data.shape[0]:
+				print 'Error: length of f must match data.shape[2]. There must be as many frequency points as there are s parameter measurements.'
+				return None
+			else:
+				#they passed a valid f vector
+				self.freq = freq
+				self.freqUnit = freqUnit
+				#TODO:  handle this 
+				self.freqMultiplier =1 
+				
+		self.name = name
+		self.z0 = z0
+		self.rank = data.shape[1]
+		self.length = data.shape[0]
+		## interpret paramType
+		if paramType == 's':
+			self.s = npy.complex_(data)
+			# this is where we should calculate and assign all the other ntwk formats
+			#npy.zeros(shape=(self.rank,self.rank, self.length)))
+			#	
+		elif paramType == 'abcd':
+			raise NotImplementedError
+		elif paramType == 'z':
+			raise NotImplementedError
+		elif paramType == 'y':
+			raise NotImplementedError
+			
+			
+		#convinience	
+		self.smag = abs(self.s)
+		self.sdB = mag2dB( self.smag )
+		self.sdeg = npy.angle(self.s, deg=True)
+		self.srad = npy.angle(self.s)
+		
+		
+		
+
+	def plotdB(self, m,n, ax=None, **kwargs):
+		paramString = ', S'+repr(m+1) + repr(n+1)
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+		
+		if self.freq == None:
+			# this network doesnt have a frequency axis, just plot it  
+			ax1.plot(self.sdB[:,m,n],label=self.name+paramString,**kwargs)
+		else:
+			ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,m,n],label=self.name+paramString,**kwargs)
+		
+		
+		plb.axis('tight')
+		plb.xlabel('Frequency (' + self.freqUnit +')') 
+		plb.ylabel('Magnitude (dB)')
+		plb.xlim([ self.f[0]/self.freqMultiplier, self.f[-1]/self.freqMultiplier])
+		plb.grid(1)
+	
+	def loadFromTouchstone(self,filename):
+		touchstoneFile = touch(filename)
+		
+		self.paramType=touchstoneFile.get_format().split()[1]
+		self.rank = touchstoneFile.rank
+		self.z0 = float(touchstoneFile.resistance)
+		self.freqUnit = touchstoneFile.frequency_unit
+		self.freqMultiplier = touchstoneFile.frequency_mult
+		self.name=touchstoneFile.filename.split('/')[-1].split('.')[-2]
+		self.freq, self.s = touchstoneFile.get_sparameter_arrays()
+		
+		#convinience	
+		self.smag = abs(self.s)
+		self.sdB = mag2dB( self.smag )
+		self.sdeg = npy.angle(self.s, deg=True)
+		self.srad = npy.angle(self.s)
+		
+		
+		
+	def writeToTouchstone(self,filename, format = 'ri'):
+		'''
+		in the future could make possible use of the touchtone class, but at the moment this would not provide any benefit as it has not set_ functions. 
+		'''
+		format = format.upper()
+		if format not in 'RI':
+			print 'ERROR:format not acceptable. only ri is supported at this time'
+			return None
+		
+		if os.access(filename,1):
+			# TODO: prompt for file removal
+			os.remove(filename)
+		outputFile=open(filename,"w")
+		
+		# write header file. note: the #  line is NOT a comment it is 
+		#essential and it must be exactly this format, to work
+		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
+		
+		#TODO check format string for acceptable values and do somthing with it
+		outputFile.write("# " + self.fUnit.upper() +' '+ self.paramType.upper() + ' '+'RI' + " R " + str(self.z0) +" \n")
+		
+		#write comment line for users
+		outputFile.write ("!freq\t")
+		for q in range(self.rank):
+			for p in range(self.rank):
+				outputFile.write("Re" +'S'+`p+1`+ `q+1`+  "\tIm"+'S'+`p+1`+ `q+1`+'\t')
+				
+		# write out data 
+		for k in range(len(self.freq)):
+			for q in range(self.rank):
+				for p in range(self.rank):
+					outputFile.write( npy.real(self.s[k,p,q]) )
+
+class transmissionLine:
 	'''
 	should be main class, which all transmission line sub-classes inhereit
 	'''
 	def __init__(self):
 		raise NotImplementedError
 		return None
-class coax():
+class coax:
 	def __init__(self):
 		raise NotImplementedError
 		return None
 
-class microstrip():
+class microstrip:
 	def __init__(self):
 		raise NotImplementedError
 		return None
 	def eEffMicrostrip(w,h,epR):
 		'''
-		The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pp. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pp. 1422-1444, 1969.
+		The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pplb. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pplb. 1422-1444, 1969.
 		'''
 		
 		if w < h:
@@ -915,7 +1039,7 @@ class microstrip():
 		else:
 			return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
 
-class coplanar():
+class coplanar:
 	def __init__(self):
 		raise NotImplementedError
 		return None
@@ -969,8 +1093,6 @@ class waveguide:
 class wr(waveguide):
 	'''
 	class which represents defined rectangular waveguide band. 
-	
-	constructor takes 
 	'''
 	def __init__(self, number):
 		waveguide.__init__(self,number*10*const.mil ,.5 * number*10*const.mil  )
@@ -1125,29 +1247,9 @@ def connectionSeries(ntwkA,ntwkB, type='s'):
 	
 
 ## networks
-class ntwk:
-	def __init__(self, data,f=None, type = 's'):
-		if type not in 'szyabcd':
-			print( type +' is not a valid Type')
-			return None
-		if data.shape[0] != data.shape[1]:
-			print ('ERROR: input data must be a square matrix')
+
 		
-		
-		self.numPorts = data.shape[]
-		
-		if type == 's':
-			self.s = npy.complex(npy.zeros(shape=(rank,rank, npoints))
-		
-		elif type == 'abcd':
-			raise NotImplementedError
-		elif type == 'z':
-			raise NotImplementedError
-		elif type == 'y':
-			raise NotImplementedError
 			
-		self.f = 
-		
 
 def genWaveguideDelayShort(wg,l,numPoints=201):
 	'''
