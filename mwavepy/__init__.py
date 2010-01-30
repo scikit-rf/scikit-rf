@@ -31,8 +31,16 @@ from matplotlib.patches import Circle 	# for drawing smith chart
 from matplotlib.lines import Line2D		# for drawing smith chart
 from touchstone import touchstone as touch	# for loading data from touchstone files
 
+#TODO LIST
+'''
+other network types z,y,abcd
+network conversions
+network connections (parrallel, series)
+tranmission line classes
+de-embeding 
 
-# TODO: 
+calkits?
+
 # to make ploting faster there should be 
 #	if plb.isinteractive()
 #		plb.ioff()
@@ -41,398 +49,11 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 #		plb.ion()
 
 
-
-
-##------- objects ---------
-class s:
-	''' represents a s-parameter. has the following fields:
-			freq, freqUnit, re, im, dB, mag, deg, complex, z0
-	 	TODO: fix constructor to allow more versitile input - by using keywork arguments check for
-			vectors being the same length
-	'''	
-	def __init__(self, format=None, freq=[],freqUnit='GHz', input1=[],input2=[], z0=50):
-		''' The format variable, is a string which determines what the
-			input vectors are assigned to. Values for format:
-			'dB' - input1 = mag(dB) , input2 = phase(degrees)
-			're' - input1 = real, input2 = imaginary 
-			
-			note: dB is 20*log10(mag)
-		'''
-		
-		if format == 'db':
-			self.freq= freq
-			self.freqUnit = freqUnit
-			self.dB = input1
-			self.deg = input2
-			self.re, self.im  = dBDeg2ReIm(self.dB,self.deg)
-			self.mag = dB2Mag(self.dB)
-			self.complex = self.re + 1j*self.im
-			self.z0 = z0
-		elif format == 'ma':
-			self.freq= freq
-			self.freqUnit = freqUnit
-			self.mag = input1
-			self.deg = input2
-			self.dB = mag2dB(self.mag)
-			self.re, self.im  = magDeg2ReIm(self.mag,self.deg)
-			self.complex = self.re + 1j*self.im
-			self.z0 = z0	
-		elif ( (format == 're') or (format == 'ri')):
-			self.freq= freq
-			self.freqUnit = freqUnit
-			self.re = input1
-			self.im = input2
-			self.dB, self.deg = reIm2dBDeg(self.re,self.im)
-			self.mag = dB2Mag(self.dB)
-			self.complex = self.re + 1j*self.im
-			self.z0 = z0
-		else:
-			# not type passed we dont know what to do
-			self.freq = freq
-			self.freqUnit = freqUnit
-			self.re = input1
-			self.im = input1
-			self.dB = input1
-			self.mag = input1
-			self.deg = input1
-			self.complex = input1
-			self.z0 = z0
-			
-	
-	def plotdB(self):
-		''' Plot the S-parameter mag in log mode. 
-		'''
-		plb.plot(self.freq, self.dB)
-		plb.xlabel('Frequency (' + self.freqUnit +')') 
-		plb.ylabel('Magnitude (dB)')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-		
-	def plotPhase(self):
-		''' Plot the S-parameters phase mode. 
-		'''
-		plb.plot(self.freq, self.deg)
-		plb.xlabel('Frequency (' + self.freqUnit +')') 
-		plb.ylabel('Phase (deg)')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-	
-	def plotSmith(self, radius=1):
-		''' Plot the S-parameters on a smith chart.
-		can be passed the smith radius and resolution of smith chart circles 
-		'''
-		plb.hold(1)
-		smith(radius)
-		plb.plot(self.re, self.im)
-		plb.axis(radius*npy.array([-1., 1., -1., 1.]))
-		
-	
-	def plotZ0(self):
-		# could check for complex port impedance
-		plb.plot(self.freq, self.z0)
-		plb.xlabel('Frequency (' + self.freqUnit +')') 
-		plb.ylabel('Impedance (Ohms)')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-		plb.title('Characterisctic Impedance')
-
-		
-	
-class z:
-	''' represents a z-parameter. has the following fields:
-			freq, re, im, mag, deg, z0
-	 	TODO: fix constructor to allow more versitile input check for
-			vectors being the same length
-	'''	
-	def __init__(self, format=None, freq=[], freqUnit='GHz', input1=[],input2=[], z0=50):
-		''' The format variable, is a string which determines what the
-			input vectors are assigned to. Values for format:
-				're' - input1 = real, input2 = imaginary 
-
-		'''
-		# TODO: do this with a case 
-		if format == 'db':
-			print('ERROR: this format is not supported for a parameter of this type, defaulting to MA format.') 
-			self.freq= freq
-			self.freqUnit = freqUnit
-			self.mag = input1
-			self.deg = input2
-			self.re, self.im  = magDeg2ReIm(self.mag,self.deg)
-			self.complex = self.re + 1j*self.im
-			self.z0 = z0	
-		elif format == 'ma':
-			self.freq= freq
-			self.freqUnit = freqUnit
-			self.mag = input1
-			self.deg = input2
-			self.re, self.im  = magDeg2ReIm(self.mag,self.deg)
-			self.complex = self.re + 1j*self.im
-			self.z0 = z0	
-		elif format == 're':
-			self.freq= freq
-			self.freqUnit = freqUnit
-			self.re = input1
-			self.im = input2
-			self.mag, self.deg = reIm2MagPhase(self.re,self.im)
-			self.complex = self.re + 1j*self.im
-			self.z0 = z0
-		else:
-			# no type passed we dont know what to do
-			self.freq = freq
-			self.freqUnit = freqUnit
-			self.re = input1
-			self.im = input1
-			self.mag = input1
-			self.deg = input1
-			self.complex = input1
-			self.z0 = z0
-		
-	def plotReIm(self):
-		''' Plot the real and imaginary parts of Z-parameters 
-		'''
-		plb.plot(self.freq, self.re)
-		plb.plot(self.freq, self.im)
-		plb.xlabel('Frequency (' + self.freqUnit +')')
-		plb.ylabel('Impedance')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-
-
-class twoPort:
-	''' represents a two port network characterized by its s-parameters
-		has the following fields:
-			freq, 	s11, s12, s21, s22, z11, z12, z21, z22, zin1, zin2, swr1, swr2
-		and the folling functions:
-			plotAllS, plotReturnLoss, plotTransmission, plotSwr1, plotSwr2, plotZin1, 
-			plotZin2, plotZ01, plotZ02
-		note:
-			the s-parameter fields and z-parameter fields have their own functions as well.
-			many of twoPorts functions just calls these.  
-	'''
-	#TODO: generalize this constructor so we can call it from S, Z,Y, or ABCD
-	def __init__ (self, s11=s(), s21=s(), s12= s(), s22 = s()):
-		self.freq = s11.freq # frequencies must be same for all s-param
-		self.freqUnit = s11.freqUnit
-		self.s11 = s11	
-		self.s12 = s12
-		self.s21 = s21
-		self.s22 = s22
-		
-		#this will be index as [i,j,f], meaning S_ij at frequency f
-		self.sMat = npy.array([[self.s11.complex, self.s12.complex],\
-						[self.s21.complex,self.s22.complex]])
-
-		
-		# set the z-parameters, see 'Microwave Engineering'  by Pozar, section 4.4 for details
-		# BUG: i dont know what to do for the z0 when translating to z-parameters, i just guessed
-		z11Complex = s11.z0 *( (1+s11.complex)*(1-s22.complex) + s12.complex*s21.complex) / \
-							( (1-s11.complex)*(1-s22.complex) - s12.complex*s21.complex)
-		z12Complex = s12.z0 *			(2*s12.complex) / \
-								( (1-s11.complex)*(1-s22.complex) - s12.complex*s21.complex)
-		z21Complex = s21.z0 *			(2*s21.complex) / \
-								( (1-s11.complex)*(1-s22.complex) - s12.complex*s21.complex)
-		
-		z22Complex = s22.z0 *	( (1-s11.complex)*(1+s22.complex) + s12.complex*s21.complex) / \
-								( (1-s11.complex)*(1-s22.complex) - s12.complex*s21.complex)
-		
-		self.z11 = z('re', self.freq, npy.real(z11Complex), npy.imag(z11Complex), s11.z0)
-		self.z12 = z('re', self.freq, npy.real(z12Complex), npy.imag(z12Complex), s12.z0)
-		self.z21 = z('re', self.freq, npy.real(z21Complex), npy.imag(z21Complex), s21.z0)
-		self.z22 = z('re', self.freq, npy.real(z22Complex), npy.imag(z22Complex), s22.z0)
-		#TODO: self.y's and self.abcd's
-		
-		
-		# these might be better as a property of the s-parameters
-		# input impedance (NOT z11 of impedance matrix) of the 2 ports
-		self.zin1 = s11.z0 * (1 + s11.complex) / (1 - s11.complex)
-		self.zin2 = s22.z0 * (1 + s22.complex) / (1 - s22.complex)
-		
-		# standing wave ratio
-		self.swr1 = (1 + npy.abs(s11.complex)) / (1 - npy.abs(s11.complex))
-		self.swr2 = (1 + npy.abs(s22.complex)) / (1 - npy.abs(s22.complex))
-				
-	def plotReturnLoss(self):
-		self.s11.plotdB()
-		self.s22.plotdB()
-		plb.legend(('S11','S22'))
-		plb.title('Return Loss')
-		plb.xlabel('Frequency (' + self.freqUnit +')')
-		
-	def plotTransmission(self):
-		self.s12.plotdB()
-		self.s21.plotdB()
-		plb.legend(('S12','S21'))
-		plb.title('Transmission')
-		plb.xlabel('Frequency (' + self.freqUnit +')')
-	
-	def plotAllS(self):
-		
-		self.s11.plotdB()
-		self.s12.plotdB()
-		self.s21.plotdB()
-		self.s22.plotdB()
-		plb.legend(('S11','S12','S21','S22'))
-		plb.xlabel('Frequency (' + self.freqUnit +')')
-		
-		
-	def plotZin1(self):
-		plb.plot(self.freq, npy.real(self.zin1), label='Real')
-		plb.plot(self.freq, npy.imag(self.zin1), label='Imaginary')
-		plb.xlabel('Frequency (' + self.freqUnit +')')
-		plb.ylabel('Impedance (Ohms)')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-		plb.title('Input Impedance, Port 1')
-		
-	def plotZin2(self):
-		plb.plot(self.freq, npy.real(self.zin2),label='Real')
-		plb.plot(self.freq, npy.imag(self.zin2), label='Imaginary')
-		plb.xlabel('Frequency (' + self.freqUnit +')')
-		plb.ylabel('Impedance (Ohms)')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-		plb.title('Input Impedance, Port 1')
-	
-	def plotSwr1(self):
-		plb.plot(self.freq, self.swr1)
-		plb.xlabel('Frequency (' + self.freqUnit +')') 
-		plb.ylabel('SWR')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-		plb.title('SWR, Port 1')
-	
-	def plotSwr2(self):
-		plb.plot(self.freq, self.swr2)
-		plb.xlabel('Frequency (' + self.freqUnit +')') 
-		plb.ylabel('SWR')
-		plb.grid(1)
-		plb.xlim([ self.freq[0], self.freq[-1]])
-		plb.title('SWR, Port 1')
-
-	def plotZ01(self):
-		self.s11.plotZ0()
-		
-	def plotZ02(self):
-		self.s22.plotZ0()
-		
-	def writeTouchtone(self, fileName='mytwoPort.s2p'):
-		'''
-		write twoPort network to a file in touchtone format. 
-		
-		takes 1 argument, the filename (as a string)
-		
-		
-		the line starting with # holds import information about the data
-		the lines starting with ! are just comments for the user
-		this only write in mag-angle format for now. 
-		'''
-		#TODO:  maybe some exception handling
-		#	allow for other formats instead of just mag angle (MA)
-		format = 'MA'
-		
-		if os.access(fileName,1):
-			# TODO: prompt for file removal
-			os.remove(fileName)
-		f=open(fileName,"w")
-		
-
-		# write header file. note: the #  line is NOT a comment it is 
-		#essential and it must be exactly this format, to work
-		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-		
-		#TODO check format string for acceptable values and do somthing with it
-		f.write("# " + self.s11.freqUnit+ " S " + format + " R " + str(self.s11.z0) +" \n")
-		
-		#write comment line for users
-		f.write ("!freq\t")
-		for p in ['S11','S21','S12','S22']:
-			f.write( p + "Mag\t" + p + "Phase\t")
-		
-		# loop through frequency points and write out s-parmeter info in Mag Phase
-		for k in range(len(self.s11.freq)):	
-			f.write("\n"+repr(self.s11.freq[k]))
-			for kk in self.s11, self.s21,self.s12,self.s22:
-				f.write("\t"+repr( kk.mag[k]) +"\t" + repr(kk.deg[k]))
-			
-		
-		f.close()
+'''
 
 
 
-
-class onePort:
-	''' represents a one port network characterized by its s-parameters
-		has the following fields:
-			freq, s11 
-	'''
-	def __init__ (self, s11=s()):
-		self.freq = s11.freq
-		self.freqUnit = s11.freqUnit
-		self.s11 = s11	
-		
-		# these might be better as a property of the s-parameters
-		# input impedance (NOT z11 of impedance matrix) of the 2 ports
-		self.zin = s11.z0 * (1 + s11.complex) / (1 - s11.complex)
-
-
-	def plotReturnLoss(self):
-		self.s11.plotdB()
-		plb.title('Return Loss')
-		plb.xlabel('Frequency (' + self.freqUnit +')')
-	def writeTouchtonnae(fileName='myonePort.s1p'):
-		'''
-		write onePort network to a file in touchtone format. 
-		
-		takes 1 argument, the filename (as a string)
-		
-		
-		the line starting with # holds import information about the data
-		the lines starting with ! are just comments for the user
-		this only write in mag-angle format for now. 
-		'''
-		#TODO:  maybe some exception handling
-		#	allow for other formats instead of just mag angle (MA)
-		if os.access(fileName,1):
-			# TODO: prompt for file removal
-			os.remove(fileName)
-		f=open(fileName,"w")
-		
-
-		# write header file. note: the #  line is NOT a comment it is 
-		#essential and it must be exactly this format, to work
-		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-		
-		#TODO check format string for acceptable values and do somthing with it
-		f.write("# " + self.s11.freqUnit+ " S " + format + " R " + str(self.s11.z0) +" \n")
-		
-		#write comment line for users
-		f.write ("!freq\tS11Mag\tS11Phase\t")
-		
-		# loop through frequency points and write out s-parmeter info in Mag Phase
-		for k in range(len(self.s11.freq)):	
-			f.write("\n"+repr(self.s11.freq[k]))
-			for kk in self.s11:
-				f.write("\t"+repr( kk.mag[k]) +"\t" + repr(kk.deg[k]))
-			
-		
-		f.close()
-
-
-##------- networks --------
-def seriesTwoPort(twoPortA ,twoPortB):
-	''' returns twoPort representing the series combination of twoPortA
- 		 and twoPortB. twoPortA and twoPortB are type twoPort.   
-	'''
-	s21 = twoPortA.s21 * twoPortB.s21 / (1-twoPortA.s22*twoPortB.s11)
-	s12 = twoPortA.s12*twoPortB.s12 / (1-twoPortA.s22*twoPortB.s11);
-	s11 = twoPortA.s11 + twoPortA.s21*twoPortB.s11*twoPortA.s12 / (1-twoPortA.s22*twoPortB.s11);
-	s22 = twoPortB.s22 + twoPortB.s12*twoPortA.s22*twoPortB.s21 / (1-twoPortA.s22*twoPortB.s11);
-	
-	return twoPort(s11,s21,s12,s22)
-	
-
-
-##----- conversion utilities ----
+###############  mathematical conversions ############### 
 def magPhase2ReIm( mag, phase):
 	re = npy.real(mag*exp(1j*(phase)))
 	im = npy.imag(mag*exp(1j*(phase)))
@@ -476,7 +97,7 @@ def deg2rad(deg):
 
 
 
-##------ ploting --------
+############### Ploting ############### 
 def plotOnSmith(complexData,**kwargs):
 	plb.plot(npy.real(complexData), npy.imag(complexData), **kwargs)
 	smith(1)
@@ -543,338 +164,11 @@ def smith(smithR=1):
 			ax.add_line(currentContour)
 
 
-# TODO: all of these updatePlot?? utilities could be incorperated into
-# 		the s-parameters functions with a try except like 
-#		s.plotdB(mpl_plot):
-#			try:
-#				mpl_plot
-#				#assert mpl_plot exists so update it 
-#			except:
-#				mpl_plot was not passed/doesnt exist so make a new plot
-def updatePlotDb(inputS,mpl_plot):
-	''' Plot the S-parameter mag in log mode. given an already existing 
-	axes 'mplplot'
-	'''
-	mpl_plot.plot(inputS.freq, inputS.dB)
-	mpl_plot.set_xlabel('Frequency (' + inputS.freqUnit +')') 
-	mpl_plot.set_ylabel('Magnitude (dB)')
-	mpl_plot.grid(1)
-	mpl_plot.set_xlim([ inputS.freq[0], inputS.freq[-1]])
-
-def updatePlotPhase(inputS,mpl_plot):
-	''' Plot the S-parameter phase mode. given an already existing 
-	axes 'mplplot'
-	'''
-	mpl_plot.plot(inputS.freq, inputS.deg)
-	mpl_plot.set_xlabel('Frequency (' + inputS.freqUnit +')') 
-	mpl_plot.set_ylabel('Phase (deg)')
-	mpl_plot.grid(1)
-	mpl_plot.set_xlim([ inputS.freq[0], inputS.freq[-1]])
-
-def updatePlotSmith(inputS, mpl_plot):
-	''' Plot the S-parameters on a smith chart.given an already existing 
-	axes 'mplplot'
-	can be passed the smith radius and resolution of smith chart circles 
-	'''
-	mpl_plot.plot(inputS.re, inputS.im)
-	
-def updateSmithChart(mpl_plot, smithRadius=1, res=1000 ):
-	# smith(res=1000, smithRadius=1)
-	#	plots a smith chart with radius given by smithRadius and 
-	#	point density resolution given by res. 
-	#TODO: this could be plotted more efficiently if all data was ploted
-	#	at once. cirlces could be computer analytically, contour density
-	#	could be configurable
-	def circle(offset,r, numPoints ):
-		circleVector = r*exp(1j* npy.linspace(0,2*pi,numPoints))+ offset
-		return circleVector
-				
-	# generate complex pairs of [center, radius] for smith chart contours
-	# TODO: generate this by logical algorithm
-	heavyContour = [[0,1],[1+1j,1],[1-1j,1],[.5,.5]]
-	lightContour = [[1+4j,4],[1-4j,4],[1+.5j,.5],[1-.5j,.5],[1+.25j,.25],[1-.25j,.25],[1+2j,2],[1-2j,2],[.25,.75],[.75,.25],[-1,2]]
-
-	# verticle and horizontal axis
-	mpl_plot.axvline(x=1,color='k')
-	mpl_plot.axhline(y=0,color='k')
-	
-	
-	# loop through countour vectors and plot the circles with appropriate 
-	# clipping at smithRadius
-	for contour in heavyContour:	
-		currentCirle= circle(contour[0],contour[1], res)
-		currentCirle[abs(currentCirle)>smithRadius] = npy.nan
-		mpl_plot.plot(npy.real(currentCirle), npy.imag(currentCirle),'k', linewidth=1)
-		
-	for contour in lightContour:	
-		currentCirle= circle(contour[0],contour[1], res)
-		currentCirle[abs(currentCirle)>smithRadius] = npy.nan
-		mpl_plot.plot(npy.real(currentCirle), npy.imag(currentCirle),'gray', linewidth=1)
-	
-
-
-##------ File import -----
-
-def loadTouchtone(inputFileName):
-	
-	
-	''' Takes the full pathname of a touchtone plain-text file.
-	Returns a network object representing its contents (1 or 2-port).
-	touchtone files usually have extension of .s1p, .s2p, .s1,.s2.
-	
-	example:
-	myTwoPort = mwavepy.loadTouchTone('inputFile.s1p') 
-	'''
-	
-	#BUG: error while reading empty header line, see line  while line.split()[0] != '#': 
-	#TODO: use the freqUnit, and paramTypes
-	#	check the header, hfss does not produce correct header
-	f = file(inputFileName)
-
-	
-	# ignore comments lines up untill the header line
-	line = f.readline()
-	while line.split()[0] != '#':
-		line = f.readline()
-
-	headerInfo = line.split()
-	data = npy.loadtxt(f, comments='!')
-
-	
-	
-	
-	# the header file contains information regarding what data lines mean
-	# the format is 
-	#	# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-
-	freqUnit = headerInfo[1]
-	freqUnit = freqUnit[:-1]+freqUnit[-1].lower() # format string nicely
-	paramType = headerInfo[2].lower()
-	format = headerInfo[3].lower()
-	
-	# try to assign a normalizing impedance.
-	if (len(headerInfo) == 6):
-		port1Z0 = port2Z0 = float(headerInfo[5])
-		
-	else:
-		# BUG: i dont know how to apply which port impedance to which parameters. 
-		# this possible error is compounded in the z-parameter initialization (see twoPort)
-		print ('WARNING: this file does not contain a single normalizing impedance, using HFSS inserted Zo comments, if they exist.')
-		port1Z0, port2Z0 = loadPortImpedanceFromTouchtone(inputFileName)
-		if len(port1Z0) == 0:
-			print ('Did not find any normalizing impedance defaulting to 50 Ohms')
-			port1Z0 = port2Z0 = 50.0
-	
-	
-	if ( data.shape[1] == 9 ):
-		# we have a 2-port netowork 
-		s11 = s(format,data[:,0],freqUnit,data[:,1],data[:,2],port1Z0)
-		s21 = s(format,data[:,0],freqUnit,data[:,3],data[:,4],port1Z0)
-		s12 = s(format,data[:,0],freqUnit,data[:,5],data[:,6],port2Z0)
-		s22 = s(format,data[:,0],freqUnit,data[:,7],data[:,8],port2Z0)
-		return twoPort(s11,s21,s12,s22)
-
-	elif ( data.shape[1] == 3):
-		# we have a 1-port
-		s11 = s(format, data[:,0], freqUnit,data[:,1],data[:,2],port1Z0)
-		return onePort(s11)
-
-	else:
-		# TODO: handle errors correctly
-		print('ERROR: file doesnt contain expected number of fields')
-		return -1
-
-	
 
 
 
-def loadPortImpedanceFromTouchtone(inputFileName):
-	'''Takes the name of a HFSS formated touchtone file, which has frequency 
-	dependent port impendance, such as the case for waveguide. 
-	Returns	two arrays representing the port impedances in complex format. 
-	NOTE: this only supports twoPorts. needs to be generalized
-	'''
-	f = file(inputFileName)
-	port1Z0r=[]
-	port1Z0i=[]
-	port2Z0r=[]
-	port2Z0i=[]
-
-	listOfLines  = f.readlines()
-
-	for line in listOfLines:
-		splitLine = line.split()
-		if len(splitLine)>3 and splitLine[0] =='!' and splitLine[1] == 'Port':
-			port1Z0r.append(splitLine[3])
-			port1Z0i.append(splitLine[4])
-			port2Z0r.append(splitLine[5])
-			port2Z0i.append(splitLine[6])
-		
-	port1Z0 = npy.array(port1Z0r,dtype=float) + 1j*npy.array(port1Z0i,dtype=float)
-	port2Z0 = npy.array(port2Z0r,dtype=float) + 1j*npy.array(port2Z0i,dtype=float)
-
-	return port1Z0,port2Z0
-	
-
-
-
-def loadAllTouchtonesInDir(dir = '.'):
-	'''
-	loads all touchtone files in a given dir 
-	
-	takes:
-		dir  - the path to the dir, passed as a string (defalut is cwd)
-	returns:
-		(nameList, ntwkList)  - lists holding basenames of the files loaded, and a list of mwavepy networks. If you are using pylab you can plot these easily like so: 
-	
-	example usage:
-		import mwavepy as m
-		nameList, ntwkList = m.loadAllTouchtonesInDir()
-		for n in ntwkList:
-			npy.plotReturnLoss()
-		legend(nameList)
-	'''
-	ntwkList=[]
-	nameList=[]
-	
-	for f in os.listdir (dir):
-		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
-			nameList.append(f[:-4]) #strips of extension
-			ntwkList.append(loadTouchtone(f))
-		
-	return (nameList, ntwkList)
-
-
-
-def plotCsv(filename,rowsToSkip=1,delim=','):
-	'''plots columns from csv file. plots all columns against the first
-	see pylab.loadtxt for more information
-	'''
-	data = plb.loadtxt(filename,skiprows=rowsToSkip,delimiter=delim)
-	plb.plot(data[:,0], data[:,1:])
-	plb.grid(1)
-	plb.title(filename)
-
-
-
-##------ other functions ---
-def psd2TimeDomain(f,y, windowType='rect'):
-	'''convert a one sided complex spectrum into a real time-signal.
-	takes 
-		f: frequency array, 
-		y: complex PSD arary 
-		windowType: windowing function, defaults to rect
-	
-	returns in the form:
-		[timeVector, signalVector]
-	timeVector is in inverse units of the input variable f,
-	if spectrum is not baseband then, timeSignal is modulated by 
-		exp(t*2*pi*f[0])
-	so keep in mind units, also due to this f must be increasing left to right'''
-	
-	
-	# apply window function
-	#TODO: make sure windowType exists in scipy.signal
-	if (windowType != 'rect' ):
-		exec "window = signal.%s(%i)" % (windowType,len(f))
-		y = y * window
-	
-	#create other half of spectrum
-	spectrum = (npy.hstack([npy.real(y[:0:-1]),npy.real(y)])) + 1j*(npy.hstack([-npy.imag(y[:0:-1]),npy.imag(y)]))
-	
-	# do the transform 
-	df = abs(f[1]-f[0])
-	T = 1./df
-	timeVector = npy.linspace(0,T,2*len(f)-1)	
-	signalVector = plb.ifft(plb.ifftshift(spectrum))
-	
-	#the imaginary part of this signal should be from fft errors only,
-	signalVector= npy.real(signalVector)
-	# the response of frequency shifting is 
-	# exp(1j*2*pi*timeVector*f[0])
-	# but i would have to manually undo this for the inverse, which is just 
-	# another  variable to require. the reason you need this is because 
-	# you canttransform to a bandpass signal, only a lowpass. 
-	# 
-	return timeVector, signalVector
-
-
-def timeDomain2Psd(t,y, windowType='rect'):
-	''' returns the positive baseband PSD for a real-valued signal
-	returns in the form:
-		[freqVector,spectrumVector]
-	freq has inverse units of t's units. also, sampling frequency is 
-	fs = 1/abs(t[1]-t[0])
-	the result is scaled by 1/length(n), where n is number of samples
-	to attain the original spectrum you must shift the freqVector appropriatly
-	'''
-	# apply window function
-	#TODO: make sure windowType exists in scipy.signal
-	if (windowType != 'rect' ):
-		exec "window = signal.%s(%i)" % (windowType,len(f))
-		spectrum = spectrum * window
-	
-	dt = abs(t[1]-t[0])
-	fs = 1./dt
-	numPoints = len(t)
-	f = npy.linspace(-fs/2,fs/2,numPoints)
-
-	Y = 1./len(y)* plb.fftshift(plb.fft(y))
-	spectrumVector = Y[len(Y)/2:]
-	freqVector = f[len(f)/2:]
-	return [freqVector,spectrumVector]
-
-def cutOff(a):
-	'''returns the cutoff frequency (in Hz) for first  resonance of a
-	waveguide with major dimension given by a. a is in meters'''
-	
-	return sqrt((pi/a)**2 *1/(epsilon_0*mu_0))/(2*pi)
-
-
-def passivityTest(smat):
-	'''
-	check that the network represented by scattering parameter matrix (smat) is passive. returns a matrix the kxnxn, of which each k-slice is  I-smat*conj(traspose(S))
-	takes:
-		smat - scattering  matrix, numpy.array in shape of kxnxn.
-	returns:
-		passivity - matrix containing I-smat*conj(tra,spose(S))
-		
-		note: to be considered passive the elements allong the diagonal should be <= zero
-	'''
-	passivity = npy.zeros(smat.shape)
-	
-	for f in range(smat.shape[2]):
-		passivity[f,:,:] = npy.eye(smat.shape[1]) - npy.dot(smat[f,:,:],smat[f,:,:].conj().transpose())
-			#for tmp in  eigvals(passivity[:,:,f]):
-				#if real(tmp) < 0:
-					#if abs(tmp) < tol:
-						## structure fails the passivity test
-						#return False
-			#return True
-	return passivity
-
-
-
-
-############### transmission lines ################
-## 
-
-
-#################
-
-def createNtwkFromTouchstone(filename):
-	'''
-	creates a ntwk object from a given touchstone file
-	
-	takes:
-		filename - touchstone file to read, string.
-	returns:
-		mwavepy.ntwk onbject representing the network contained in the touchstone file. 
-	'''
-	myntwk = ntwk()
-	myntwk.loadFromTouchstone(filename)
-	return myntwk
-
+############### network theory  ################
+## base network class.
 class ntwk:
 	'''
 	class represents a generic n-port network. 
@@ -1224,6 +518,118 @@ class ntwk:
 					outputFile.write( str(npy.real(self.s[k,p,q])) + '\t' + str(npy.imag(self.s[k,p,q])) +'\t')
 			outputFile.write('\n')
 
+
+def createNtwkFromTouchstone(filename):
+	'''
+	creates a ntwk object from a given touchstone file
+	
+	takes:
+		filename - touchstone file to read, string.
+	returns:
+		mwavepy.ntwk onbject representing the network contained in the touchstone file. 
+	'''
+	myntwk = ntwk()
+	myntwk.loadFromTouchstone(filename)
+	return myntwk	
+	
+def passivityTest(smat):
+	'''
+	check that the network represented by scattering parameter matrix (smat) is passive. returns a matrix the kxnxn, of which each k-slice is  I-smat*conj(traspose(S))
+	takes:
+		smat - scattering  matrix, numpy.array in shape of kxnxn.
+	returns:
+		passivity - matrix containing I-smat*conj(tra,spose(S))
+		
+		note: to be considered passive the elements allong the diagonal should be <= zero
+	'''
+	passivity = npy.zeros(smat.shape)
+	
+	for f in range(smat.shape[2]):
+		passivity[f,:,:] = npy.eye(smat.shape[1]) - npy.dot(smat[f,:,:],smat[f,:,:].conj().transpose())
+			#for tmp in  eigvals(passivity[:,:,f]):
+				#if real(tmp) < 0:
+					#if abs(tmp) < tol:
+						## structure fails the passivity test
+						#return False
+			#return True
+	return passivity
+
+
+
+
+
+
+
+
+
+## network representation conversions
+# these conversions where taken from Pozar. Microwave Engineering sec 5.6
+def s2abcd(sMat,z0=50):
+	'''
+	converts a 2-port network represented by a  S matrix to a 2-port ABCD matrix
+	takes:
+		s - 2x2 complex matrix, representing a Scattering matrix for some network.
+		z0 - characteristic impedance
+	returns: 
+		abcd - 2x2 complex matrix, representing a ABCD matrix for some network.
+		
+	
+	there might be a matrix implementation which is more concise but i dont know it 
+	'''
+	a = 		( (1+sMat[0,0]) * (1-sMat[1,1]) + sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	b = z0 * 	( (1+sMat[0,0]) * (1+sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	c = 1./z0 *	( (1-sMat[0,0]) * (1-sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	d = 		( (1-sMat[0,0]) * (1+sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
+	return array([[a,b],[c,d]])
+
+def s2z():
+	raise NotImplementedError
+def s2y():
+	raise NotImplementedError
+def z2s():
+	raise NotImplementedError
+def z2y():
+	raise NotImplementedError
+def z2abcd():
+	raise NotImplementedError
+def y2s():
+	raise NotImplementedError
+def y2z():
+	raise NotImplementedError
+def y2abcd():
+	raise NotImplementedError
+def abcd2s(abcdMat,z0=50):
+	'''
+	converts a 2-port network represented by a  ABCD matrix to a 2-port S matrix
+	takes:
+		abcdMat - 2x2 complex matrix, representing a Scattering matrix for some network
+		z0 - characteristic impedance
+	returns: 
+		abcd - 2x2 complex matrix, representing a ABCD matrix for some network.
+		
+	
+	there might be a matrix implementation which is more concise but i dont know it 
+	'''
+	a = abcdMat[0,0]
+	b = abcdMat[0,1]
+	c = abcdMat[1,0]
+	d = abcdMat[1,1]
+	
+	s11 = (a + b/z0 - c*z0 - d) / ( a + b/z0 + c*z0 + d )
+	s12 = 2.*( a*d-b*c) / (a + b/z0 + c*z0 + d) 
+	s21 = 2./(a + b/z0 + c*z0 + d)
+	s22 =  (-1*a + b/z0 - c*z0 + d)/(a + b/z0 + c*z0 + d)
+	
+	return array([[s11, s12],[s21,s22]])
+	
+def abcd2z():
+	raise NotImplementedError
+def abcd2y():
+	raise NotImplementedError
+
+
+
+############### transmission lines   ################
 class transmissionLine:
 	'''
 	should be main class, which all transmission line sub-classes inhereit
@@ -1445,12 +851,8 @@ WR5 = wr(5.1)
 WR4 = wr(4.3)
 WR3 = wr(3.4)
 WR1p5 = wr(1.5)		
-		
-############# two-port structures ########################
-
-
-
-#---------- transmission line theory ---------
+	
+## transmission line functions
 def betaPlaneWave(omega,epsilonR = 1, muR = 1):
 	'''
 	propagation constant of a plane wave in given  material.
@@ -1558,82 +960,7 @@ def zinOpen(z0,theta):
 	convinience function. see zin()
 	'''
 	return zin(inf,z0,theta)
-	
-
-
-
-
-
-
-
-
-## network representation conversions
-# these conversions where taken from Pozar. Microwave Engineering sec 5.6
-
-def s2abcd(sMat,z0=50):
-	'''
-	converts a 2-port network represented by a  S matrix to a 2-port ABCD matrix
-	takes:
-		s - 2x2 complex matrix, representing a Scattering matrix for some network.
-		z0 - characteristic impedance
-	returns: 
-		abcd - 2x2 complex matrix, representing a ABCD matrix for some network.
-		
-	
-	there might be a matrix implementation which is more concise but i dont know it 
-	'''
-	a = 		( (1+sMat[0,0]) * (1-sMat[1,1]) + sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
-	b = z0 * 	( (1+sMat[0,0]) * (1+sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
-	c = 1./z0 *	( (1-sMat[0,0]) * (1-sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
-	d = 		( (1-sMat[0,0]) * (1+sMat[1,1]) - sMat[0,1] * sMat[1,0] )/(2*sMat[1,0])
-	return array([[a,b],[c,d]])
-
-def s2z():
-	raise NotImplementedError
-def s2y():
-	raise NotImplementedError
-def z2s():
-	raise NotImplementedError
-def z2y():
-	raise NotImplementedError
-def z2abcd():
-	raise NotImplementedError
-def y2s():
-	raise NotImplementedError
-def y2z():
-	raise NotImplementedError
-def y2abcd():
-	raise NotImplementedError
-def abcd2s(abcdMat,z0=50):
-	'''
-	converts a 2-port network represented by a  ABCD matrix to a 2-port S matrix
-	takes:
-		abcdMat - 2x2 complex matrix, representing a Scattering matrix for some network
-		z0 - characteristic impedance
-	returns: 
-		abcd - 2x2 complex matrix, representing a ABCD matrix for some network.
-		
-	
-	there might be a matrix implementation which is more concise but i dont know it 
-	'''
-	a = abcdMat[0,0]
-	b = abcdMat[0,1]
-	c = abcdMat[1,0]
-	d = abcdMat[1,1]
-	
-	s11 = (a + b/z0 - c*z0 - d) / ( a + b/z0 + c*z0 + d )
-	s12 = 2.*( a*d-b*c) / (a + b/z0 + c*z0 + d) 
-	s21 = 2./(a + b/z0 + c*z0 + d)
-	s22 =  (-1*a + b/z0 - c*z0 + d)/(a + b/z0 + c*z0 + d)
-	
-	return array([[s11, s12],[s21,s22]])
-	
-def abcd2z():
-	raise NotImplementedError
-def abcd2y():
-	raise NotImplementedError
-
-## connections
+	## connections
 def connectionSeries(ntwkA,ntwkB, type='s'):
 	ntwkC = npy.zeros(shape=ntwkA.shape)
 	if type not in 'szyabcd':
@@ -1656,7 +983,8 @@ def connectionSeries(ntwkA,ntwkB, type='s'):
 		
 		
 
-## general Standards
+
+## Theoretically derived Networks
 # one-port
 def createShort(numPoints):
 	'''
@@ -1720,19 +1048,8 @@ def createDelay(freqVector, l,beta = beta0 ):
 
 
 
-############## general EM ##########################
-
-
-
-
 	
-	
-
-
-
-
-
-############### calibration ##############
+############## calibration ##############
 ## one port
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	'''
@@ -1825,3 +1142,223 @@ def applyABC( gamma, abc):
 		#self.type = type
 		#self.name = name
 		#self.sMat = insMat	
+
+
+
+
+## Old /unsorted
+def loadTouchtone(inputFileName):
+	
+	
+	''' Takes the full pathname of a touchtone plain-text file.
+	Returns a network object representing its contents (1 or 2-port).
+	touchtone files usually have extension of .s1p, .s2p, .s1,.s2.
+	
+	example:
+	myTwoPort = mwavepy.loadTouchTone('inputFile.s1p') 
+	'''
+	
+	#BUG: error while reading empty header line, see line  while line.split()[0] != '#': 
+	#TODO: use the freqUnit, and paramTypes
+	#	check the header, hfss does not produce correct header
+	f = file(inputFileName)
+
+	
+	# ignore comments lines up untill the header line
+	line = f.readline()
+	while line.split()[0] != '#':
+		line = f.readline()
+
+	headerInfo = line.split()
+	data = npy.loadtxt(f, comments='!')
+
+	
+	
+	
+	# the header file contains information regarding what data lines mean
+	# the format is 
+	#	# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
+
+	freqUnit = headerInfo[1]
+	freqUnit = freqUnit[:-1]+freqUnit[-1].lower() # format string nicely
+	paramType = headerInfo[2].lower()
+	format = headerInfo[3].lower()
+	
+	# try to assign a normalizing impedance.
+	if (len(headerInfo) == 6):
+		port1Z0 = port2Z0 = float(headerInfo[5])
+		
+	else:
+		# BUG: i dont know how to apply which port impedance to which parameters. 
+		# this possible error is compounded in the z-parameter initialization (see twoPort)
+		print ('WARNING: this file does not contain a single normalizing impedance, using HFSS inserted Zo comments, if they exist.')
+		port1Z0, port2Z0 = loadPortImpedanceFromTouchtone(inputFileName)
+		if len(port1Z0) == 0:
+			print ('Did not find any normalizing impedance defaulting to 50 Ohms')
+			port1Z0 = port2Z0 = 50.0
+	
+	
+	if ( data.shape[1] == 9 ):
+		# we have a 2-port netowork 
+		s11 = s(format,data[:,0],freqUnit,data[:,1],data[:,2],port1Z0)
+		s21 = s(format,data[:,0],freqUnit,data[:,3],data[:,4],port1Z0)
+		s12 = s(format,data[:,0],freqUnit,data[:,5],data[:,6],port2Z0)
+		s22 = s(format,data[:,0],freqUnit,data[:,7],data[:,8],port2Z0)
+		return twoPort(s11,s21,s12,s22)
+
+	elif ( data.shape[1] == 3):
+		# we have a 1-port
+		s11 = s(format, data[:,0], freqUnit,data[:,1],data[:,2],port1Z0)
+		return onePort(s11)
+
+	else:
+		# TODO: handle errors correctly
+		print('ERROR: file doesnt contain expected number of fields')
+		return -1
+
+	
+
+
+
+def loadPortImpedanceFromTouchtone(inputFileName):
+	'''Takes the name of a HFSS formated touchtone file, which has frequency 
+	dependent port impendance, such as the case for waveguide. 
+	Returns	two arrays representing the port impedances in complex format. 
+	NOTE: this only supports twoPorts. needs to be generalized
+	'''
+	f = file(inputFileName)
+	port1Z0r=[]
+	port1Z0i=[]
+	port2Z0r=[]
+	port2Z0i=[]
+
+	listOfLines  = f.readlines()
+
+	for line in listOfLines:
+		splitLine = line.split()
+		if len(splitLine)>3 and splitLine[0] =='!' and splitLine[1] == 'Port':
+			port1Z0r.append(splitLine[3])
+			port1Z0i.append(splitLine[4])
+			port2Z0r.append(splitLine[5])
+			port2Z0i.append(splitLine[6])
+		
+	port1Z0 = npy.array(port1Z0r,dtype=float) + 1j*npy.array(port1Z0i,dtype=float)
+	port2Z0 = npy.array(port2Z0r,dtype=float) + 1j*npy.array(port2Z0i,dtype=float)
+
+	return port1Z0,port2Z0
+	
+
+
+
+def loadAllTouchtonesInDir(dir = '.'):
+	'''
+	loads all touchtone files in a given dir 
+	
+	takes:
+		dir  - the path to the dir, passed as a string (defalut is cwd)
+	returns:
+		(nameList, ntwkList)  - lists holding basenames of the files loaded, and a list of mwavepy networks. If you are using pylab you can plot these easily like so: 
+	
+	example usage:
+		import mwavepy as m
+		nameList, ntwkList = m.loadAllTouchtonesInDir()
+		for n in ntwkList:
+			npy.plotReturnLoss()
+		legend(nameList)
+	'''
+	ntwkList=[]
+	nameList=[]
+	
+	for f in os.listdir (dir):
+		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
+			nameList.append(f[:-4]) #strips of extension
+			ntwkList.append(loadTouchtone(f))
+		
+	return (nameList, ntwkList)
+
+
+
+def plotCsv(filename,rowsToSkip=1,delim=','):
+	'''plots columns from csv file. plots all columns against the first
+	see pylab.loadtxt for more information
+	'''
+	data = plb.loadtxt(filename,skiprows=rowsToSkip,delimiter=delim)
+	plb.plot(data[:,0], data[:,1:])
+	plb.grid(1)
+	plb.title(filename)
+
+
+
+##------ other functions ---
+def psd2TimeDomain(f,y, windowType='rect'):
+	'''convert a one sided complex spectrum into a real time-signal.
+	takes 
+		f: frequency array, 
+		y: complex PSD arary 
+		windowType: windowing function, defaults to rect
+	
+	returns in the form:
+		[timeVector, signalVector]
+	timeVector is in inverse units of the input variable f,
+	if spectrum is not baseband then, timeSignal is modulated by 
+		exp(t*2*pi*f[0])
+	so keep in mind units, also due to this f must be increasing left to right'''
+	
+	
+	# apply window function
+	#TODO: make sure windowType exists in scipy.signal
+	if (windowType != 'rect' ):
+		exec "window = signal.%s(%i)" % (windowType,len(f))
+		y = y * window
+	
+	#create other half of spectrum
+	spectrum = (npy.hstack([npy.real(y[:0:-1]),npy.real(y)])) + 1j*(npy.hstack([-npy.imag(y[:0:-1]),npy.imag(y)]))
+	
+	# do the transform 
+	df = abs(f[1]-f[0])
+	T = 1./df
+	timeVector = npy.linspace(0,T,2*len(f)-1)	
+	signalVector = plb.ifft(plb.ifftshift(spectrum))
+	
+	#the imaginary part of this signal should be from fft errors only,
+	signalVector= npy.real(signalVector)
+	# the response of frequency shifting is 
+	# exp(1j*2*pi*timeVector*f[0])
+	# but i would have to manually undo this for the inverse, which is just 
+	# another  variable to require. the reason you need this is because 
+	# you canttransform to a bandpass signal, only a lowpass. 
+	# 
+	return timeVector, signalVector
+
+
+def timeDomain2Psd(t,y, windowType='rect'):
+	''' returns the positive baseband PSD for a real-valued signal
+	returns in the form:
+		[freqVector,spectrumVector]
+	freq has inverse units of t's units. also, sampling frequency is 
+	fs = 1/abs(t[1]-t[0])
+	the result is scaled by 1/length(n), where n is number of samples
+	to attain the original spectrum you must shift the freqVector appropriatly
+	'''
+	# apply window function
+	#TODO: make sure windowType exists in scipy.signal
+	if (windowType != 'rect' ):
+		exec "window = signal.%s(%i)" % (windowType,len(f))
+		spectrum = spectrum * window
+	
+	dt = abs(t[1]-t[0])
+	fs = 1./dt
+	numPoints = len(t)
+	f = npy.linspace(-fs/2,fs/2,numPoints)
+
+	Y = 1./len(y)* plb.fftshift(plb.fft(y))
+	spectrumVector = Y[len(Y)/2:]
+	freqVector = f[len(f)/2:]
+	return [freqVector,spectrumVector]
+
+def cutOff(a):
+	'''returns the cutoff frequency (in Hz) for first  resonance of a
+	waveguide with major dimension given by a. a is in meters'''
+	
+	return sqrt((pi/a)**2 *1/(epsilon_0*mu_0))/(2*pi)
+
