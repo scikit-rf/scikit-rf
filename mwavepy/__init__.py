@@ -22,24 +22,17 @@
 #	Most of these functions have not been rigidly tested. use with caution!!
 
 import numpy as npy
-from numpy import sqrt, exp, array,tan,sin,cos,inf
 import pylab as plb
-from scipy import constants as const
-from scipy.constants import  epsilon_0, mu_0, c,pi
+from numpy import sqrt, exp, array,tan,sin,cos,inf
+from scipy.constants import  epsilon_0, mu_0, c,pi, mil
 from scipy import signal
-
 import os # for fileIO
+from matplotlib.patches import Circle 	# for drawing smith chart
+from matplotlib.lines import Line2D		# for drawing smith chart
+from touchstone import touchstone as touch	# for loading data from touchstone files
 
-# for drawing smith chart
-from matplotlib.patches import Circle
-from matplotlib.lines import Line2D
 
-from touchstone import touchstone as touch
-
-#TODO: this could be structured as a generic 2-port to n-port, with type of S, Z, Y, or ABCD
-# each netowrk could have difference function depending on the type. as of now it is still structured
-# around s-parameter as the base type
-#
+# TODO: 
 # to make ploting faster there should be 
 #	if plb.isinteractive()
 #		plb.ioff()
@@ -48,7 +41,6 @@ from touchstone import touchstone as touch
 #		plb.ion()
 
 
-############# CONSTANTS ##################
 
 
 ##------- objects ---------
@@ -441,7 +433,6 @@ def seriesTwoPort(twoPortA ,twoPortB):
 
 
 ##----- conversion utilities ----
-# TODO: explicitly call j from numpy
 def magPhase2ReIm( mag, phase):
 	re = npy.real(mag*exp(1j*(phase)))
 	im = npy.imag(mag*exp(1j*(phase)))
@@ -837,21 +828,23 @@ def cutOff(a):
 	'''returns the cutoff frequency (in Hz) for first  resonance of a
 	waveguide with major dimension given by a. a is in meters'''
 	
-	return sqrt((pi/a)**2 *1/(epsilon_0*const.mu_0))/(2*pi)
+	return sqrt((pi/a)**2 *1/(epsilon_0*mu_0))/(2*pi)
 
 
 def passivityTest(smat):
 	'''
-	check that the network represented by S matrix (smat) is passive. I-S*conj(traspose(S))
+	check that the network represented by scattering parameter matrix (smat) is passive. returns a matrix the kxnxn, of which each k-slice is  I-smat*conj(traspose(S))
 	takes:
-		smat - S matrix 
+		smat - scattering  matrix, numpy.array in shape of kxnxn.
 	returns:
-		passivity - matrix containing I-S*conj(traspose(S))
+		passivity - matrix containing I-smat*conj(tra,spose(S))
+		
+		note: to be considered passive the elements allong the diagonal should be <= zero
 	'''
-	#TODO: it probably would be better to structure this to take a 2D matrix, then have a twoPort function which itterates over all frequencies
 	passivity = npy.zeros(smat.shape)
+	
 	for f in range(smat.shape[2]):
-		passivity[:,:,f] = npy.eye(smat.shape[1]) - npy.dot(smat[:,:,f],smat[:,:,f].conj().transpose())
+		passivity[f,:,:] = npy.eye(smat.shape[1]) - npy.dot(smat[f,:,:],smat[f,:,:].conj().transpose())
 			#for tmp in  eigvals(passivity[:,:,f]):
 				#if real(tmp) < 0:
 					#if abs(tmp) < tol:
@@ -874,7 +867,7 @@ def createNtwkFromTouchstone(filename):
 	creates a ntwk object from a given touchstone file
 	
 	takes:
-		filename - touchstone file to read.
+		filename - touchstone file to read, string.
 	returns:
 		mwavepy.ntwk onbject representing the network contained in the touchstone file. 
 	'''
@@ -899,6 +892,10 @@ class ntwk:
 		sdB - kxnxn array representing magnitude of s-parameters in decibel (20*npy.log10(mag)) scale, ndarray
 		sdeg - kxnxn array representing phase of s-parameters in deg, ndarray
 		srad - kxnxn array representing phase of s-parameters in radians, ndarray
+		
+		
+		
+		note: these matricies may be re-shaped if one wants the frequency index to come last, like  myntwk.s.transpose().reshape(2,2,-1)
 	'''
 	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, freqUnit='GHz', freqMultiplier = 1e9, paramType='s',  z0=50, name = ''):
 		'''
@@ -1383,6 +1380,49 @@ class waveguide:
 	def zTM(self, omega,m=1,n=0):
 		return eta0 * self.beta(omega,m,n)/beta0(omega)
 
+	## standard creation
+	# one-port 
+	def createDelayShort(self,l,numPoints):
+		'''
+		generate the reflection coefficient for a waveguide delayed short of length l 
+		
+		takes:
+			l - length of thru, in meters
+			numPoints - number of points to produce
+		returns:
+			two port S matrix for a waveguide thru section of length l 
+		'''
+
+		return createDelayShort(self.band[0],self.band[1],numPoints,l, self.beta)
+			
+	def createShort(self, numPoints):
+		'''
+		generate the reflection coefficient for a waveguide short.
+		convinience function, see mwavepy.createShort()
+		'''
+		return createShort(numPoints)
+		
+	def createMatch(self,numPoints):
+		'''
+		generate the reflection coefficient for a waveguide Match.
+		convinience function, see mwavepy.createShort()
+		'''
+		return createMatch(numPoints)
+	# two-port 
+	def createDelay(self,l,numPoints):
+		'''
+		generate the two port S matrix for a waveguide thru section of length l 
+		
+		takes:
+			l - length of thru, in meters
+			numPoints - number of points to produce
+		returns:
+			two port S matrix for a waveguide thru section of length l 
+		'''
+		return createDelay(self.band[0],self.band[1],numPoints,l, self.beta)		
+		
+		
+		
 class wr(waveguide):
 	'''
 	class which represents a standard rectangular waveguide band.
@@ -1395,7 +1435,7 @@ class wr(waveguide):
 		returns:
 			mwavepy.waveguide object representing the given band
 		'''
-		waveguide.__init__(self,number*10*const.mil ,.5 * number*10*const.mil  )
+		waveguide.__init__(self,number*10*mil ,.5 * number*10*mil  )
 # standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
 # info taken from Virginia Diodes Inc. Waveguide Band Designations
 WR10 = wr(10)
@@ -1407,9 +1447,129 @@ WR3 = wr(3.4)
 WR1p5 = wr(1.5)		
 		
 ############# two-port structures ########################
+
+
+
+#---------- transmission line theory ---------
+def betaPlaneWave(omega,epsilonR = 1, muR = 1):
+	'''
+	propagation constant of a plane wave in given  material.
+	takes:
+		omega - radian angular frequency (rad/s)
+		epsilonR - relative permativity (default = 1) 
+		muR -  relative permiability (default = 1)
+	returns:
+		omega/c = omega*sqrt(epsilon*mu)
+	'''
+	return omega* sqrt((const.mu_0*muR)*(epsilonR*epsilon_0))
+
+def beta0(omega):
+	'''
+	propagation constant of a free space.
+	takes:
+		omega - radian angular frequency (rad/s)
+	returns:
+		omega/c = omega*sqrt(epsilon*mu)
+	'''
+	return betaPlaneWave(omega,1,1)
+
+
+	
+def eta(epsilonR = 1, muR = 1):
+	'''
+	characteristic impedance of a material.
+	takes:
+		epsilonR - relative permativity (default = 1) 
+		muR -  relative permiability (default = 1)
+	'''
+	return sqrt((const.mu_0*muR)/(epsilonR*epsilon_0))
+def eta0(omega):
+	'''
+	characteristic impedance of free space. see eta().
+	'''
+	return eta(omega, 1,1)
+	
+def electricalLength( l , f0, beta=beta0):
+	'''
+	calculates the electrical length of a section of transmission line.
+	
+	takes:
+		l - length of line in meters
+		f0 - frequency at which to calculate 
+		beta - propagation constant, which is a function of angular frequency (omega), and returns a value with units radian/m.  can pass a function on the fly, like  electricalLength(freqVector, l, beta = lambda omega: omega/c )
+		
+		note: beta defaults to lossless free-space propagation constant mwavepy.beta0() = omega/c = omega*sqrt(epsilon_0*mu_0)
+	returns:
+		electrical length of tline, at f0 in radians
+	'''
+	if deg==False:
+		return  beta(2*pi*f0 ) *l 
+	elif deg ==True:
+		return  rad2deg(beta(2*pi*f0 ) *l )
+
+def gamma(zl,z0=50.0, theta=0):
+	'''
+	calculates the reflection coefficient for a given load and characteristic impedance
+	takes:
+		zl - load impedance
+		z0 - characteristic impedance
+		theta - distance from load, given in electrical length  (rad)
+	'''
+	# this way of type casting allows for arrays to be passed, but does floating points arrimetic
+	zl = 1.0*(zl)
+	z0 = 1.0*(z0)
+	theta = 1.0* (theta)
+	# handle the limit of open circuit
+	if zl == inf:
+		gammaAt0 = 1
+	else: 
+		gammaAt0 = (zl-z0)/(zl+z0)
+	return gammaAt0 * npy.exp(-2j*theta)
+
+
+def zin(zl,z0,theta):
+	'''
+	returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
+	takes:
+		zl - load impedance 
+		z0 - characteristic impedance of tline
+		theta - distance from load, given in electrical length  (rad)
+	returns:
+		input impedance ( in general complex)
+	'''
+	if zl == inf:
+		return -1j*z0*1./(tan(theta))
+	elif zl == 0:
+		return 1j*z0*tan(theta)
+	else:
+		return z0 *	(zl + 1j*z0 * tan(theta)) /\
+					(z0 + 1j*zl * tan(theta))
+
+def zinShort (z0,theta):
+	'''
+	calculates input impedance of a short.
+	convinience function. see zin()
+	'''
+	return zin(0,z0,theta)
+	
+def zinOpen(z0,theta):
+	'''
+	calculates input impedance of a open. 
+	convinience function. see zin()
+	'''
+	return zin(inf,z0,theta)
+	
+
+
+
+
+
+
+
+
+## network representation conversions
 # these conversions where taken from Pozar. Microwave Engineering sec 5.6
 
-## network  representation conversions
 def s2abcd(sMat,z0=50):
 	'''
 	converts a 2-port network represented by a  S matrix to a 2-port ABCD matrix
@@ -1489,54 +1649,15 @@ def connectionSeries(ntwkA,ntwkB, type='s'):
 	elif type == 'z':
 		raise NotImplementedError
 	elif type == 'y':
-		raise NotImplementedError
-		
+		raise NotImplementedError	
 	return ntwkC
 	
 
-## networks
+		
+		
 
-		
-			
-
-def genWaveguideDelayShort(wg,l,numPoints=201):
-	'''
-	generate the two port S matrix for a waveguide delayed short of length l 
-	
-	takes:
-		wg - wr type representing a waveguide band 
-		l - length of thru, in meters
-		numPoints - number of points to produce
-	returns:
-		two port S matrix for a waveguide thru section of length l 
-	'''
-	if isinstance(wg,waveguide):
-		return genDelayShort(wg.band[0],wg.band[1],numPoints,l, lambda omega:wg.beta(omega))
-	else:
-		print 'ERROR: first argument must be of waveguide type'
-		return None	
-		
-def genWaveguideThru(wg,l,numPoints=201):
-	'''
-	generate the two port S matrix for a waveguide thru section of length l 
-	
-	takes:
-		wg - wr type representing a waveguide band 
-		l - length of thru, in meters
-		numPoints - number of points to produce
-	returns:
-		two port S matrix for a waveguide thru section of length l 
-	'''
-	if isinstance(wg,waveguide):
-		return genThru(wg.band[0],wg.band[1],numPoints,l, lambda omega:wg.beta(omega))
-	else:
-		print 'ERROR: first argument must be of waveguide type'
-		return None		
-		
-		
-# note: these S matricies may be re-shaped if one wants the frequency index to come first, like  S = S.transpose().reshape(-1,2,2)
-
-## one port standards
+## general Standards
+# one-port
 def createShort(numPoints):
 	'''
 	generates the two port S matrix for a Short. 
@@ -1567,14 +1688,14 @@ def createMatch(numPoints):
 
 	
 
-def createDelayShort(freqVector, l, beta = lambda omega: omega/c ):
+def createDelayShort(freqVector, l, beta=beta0 ):
 	'''
 	calculates the reflection coef of  a delayed short. 
 	'''
 	return  -1*exp(-1j* 2*electricalLength(l,freqVector,beta))	
 	
-## two port standards
-def createThru(freqVector, l, beta = lambda omega: omega/c ):
+# two-port
+def createDelay(freqVector, l,beta = beta0 ):
 	'''
 	generates the two port S matrix for a matched Delay line of length l. 
 	
@@ -1602,116 +1723,13 @@ def createThru(freqVector, l, beta = lambda omega: omega/c ):
 ############## general EM ##########################
 
 
-# relationships
-def gammaOfZl(zl,z0, theta=0):
-	'''
-	calculates the reflection coefficient for a given load and characteristic impedance
-	takes:
-		zl - load impedance
-		z0 - characteristic impedance
-		theta - distance from load, given in electrical length  (rad)
-	'''
-	gammaAt0 = (zl-z0)/(zl+z0)
-	return gammaAt0 * npy.exp(-2j*theta)
 
-def zl2T(zl,z0):
-	return 1 + gammaOfZl(zl,z0)
-
-def zin(zl,z0,theta):
-	'''
-	returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
-	takes:
-		zl - load impedance 
-		z0 - characteristic impedance of tline
-		theta - distance from load, given in electrical length  (rad)
-	returns:
-		input impedance ( in general complex)
-	'''
-	if zl == inf:
-		return -1j*z0*1./(tan(theta))
-	elif zl == 0:
-		return 1j*z0*tan(theta)
-	else:
-		return z0 *	(zl + 1j*z0 * tan(theta)) /\
-					(z0 + 1j*zl * tan(theta))
-
-def zinShort (z0,theta):
-	'''
-	calculates input impedance of a short.
-	convinience function. see zin()
-	'''
-	return zin(0,z0,theta)
-	
-def zinOpen(z0,theta):
-	'''
-	calculates input impedance of a open. 
-	convinience function. see zin()
-	'''
-	return zin(inf,z0,theta)
-	
-
-
-def betaSpace(omega,epsilonR = 1, muR = 1):
-	'''
-	propagation constant of a material.
-	takes:
-		omega - radian angular frequency (rad/s)
-		epsilonR - relative permativity (default = 1) 
-		muR -  relative permiability (default = 1)
-	returns:
-		omega/c = omega*sqrt(epsilon*mu)
-	'''
-	return omega* sqrt((const.mu_0*muR)*(epsilonR*epsilon_0))
-
-def beta0(omega):
-	'''
-	propagation constant of a free space.
-	takes:
-		omega - radian angular frequency (rad/s)
-	returns:
-		omega/c = omega*sqrt(epsilon*mu)
-	'''
-	return betaSpace(omega,1,1)
-
-
-	
-def eta(epsilonR = 1, muR = 1):
-	'''
-	characteristic impedance of a material.
-	takes:
-		epsilonR - relative permativity (default = 1) 
-		muR -  relative permiability (default = 1)
-	'''
-	return sqrt((const.mu_0*muR)/(epsilonR*epsilon_0))
-def eta0(omega):
-	'''
-	characteristic impedance of free space. see eta().
-	'''
-	return eta(omega, 1,1)
-	
 
 	
 	
 
 
 
-def electricalLength( l , f0, beta=lambda omega: omega/c,deg=False):
-	'''
-	calculates the electrical length of a section of transmission line.
-	
-	takes:
-		l - length of line in meters
-		f0 - frequency at which to calculate 
-		beta - propagation constant, which is a function of angular frequency (omega), and returns a value with units radian/m. 
-		
-		note: defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0)
-	returns:
-		electrical length of tline, at f0 in radians
-	'''
-	if deg==False:
-		return  beta(2*pi*f0 ) *l 
-	elif deg ==True:
-		return  rad2deg(beta(2*pi*f0 ) *l )
 
 
 ############### calibration ##############
