@@ -876,9 +876,19 @@ def createNtwkFromTouchstone(filename):
 
 class ntwk:
 	'''
-	
+	class represents a generic n-port network. 
 	'''
 	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, freqUnit='GHz', freqMultiplier = 1e9, paramType='s',  z0=50, name = ''):
+		'''
+		takes:
+			data - a kxnxn matrix of complex values representing a n-port network over a given frequency range, numpy.ndarray
+			freq - 1D frequency vector,  numpy.ndarray
+			freqUnit - meaning frequency vector, string, ( MHz, GHz, etc)
+			freqMultiplier - scale of frequency vector to 1Hz, string.  ( ie, 1e9 for freqUnit of 'GHz'
+			paramType - parameter types  ( 's','z','y','abcd') , string
+			z0 - characteristic impedance of network
+			name - name of network, string. used in legend for plotting.
+		'''
 		## input checking : format, shape, and existence of f
 		if paramType not in 'szyabcd':
 			print( paramType +' is not a valid parameter type')
@@ -932,7 +942,15 @@ class ntwk:
 		
 
 	def plotdB(self, m,n, ax=None,**kwargs):
+		'''
+		plots a given parameter in log mag mode. (20*npy.log10(mag))
 		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
 		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
 			ax1 = plb.gca()
@@ -955,7 +973,16 @@ class ntwk:
 		plb.draw()
 		
 	def plotSmith(self, m,n, smithRadius = 1, ax=None, **kwargs):
-		
+		'''
+		plots a given parameter in polar mode on a smith chart.
+				
+		takes:
+			m - first index, int
+			n - second indext, int
+			smithRadius - radius of smith chart
+			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
 		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
 			ax1 = plb.gca()
@@ -969,7 +996,15 @@ class ntwk:
 		
 	
 	def plotPhase(self, m,n, ax=None, **kwargs):
+		'''
+		plots a given parameter in phase (deg) mode. 
 		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
 		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
 			ax1 = plb.gca()
@@ -992,6 +1027,13 @@ class ntwk:
 		plb.draw()
 	
 	def plotAllReturnLossDb(self, ax= None, **kwargs):
+		'''
+		plots all return loss parameters in log mag mode. meaning all parameters such with matching indecies, m=n.  
+		
+		takes:
+			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
 		if ax == None:
 			ax1 = plb.gca()
 		else:
@@ -1013,6 +1055,13 @@ class ntwk:
 		plb.draw()
 	
 	def plotAllInsertionLossDb(self, ax = None, **kwargs):
+		'''
+		plots all Insertion loss parameters in log mag mode. meaning all parameters such with matching indecies, m!=n.  
+		
+		takes:
+			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
 		if self.rank == 1:
 			print 'one port networks dont have insertion loss dummy.'
 			return None
@@ -1040,7 +1089,14 @@ class ntwk:
 	
 	def plotAllDb(self, ax = None, twinAxis = True, **kwargs):
 		'''
-		has a bug with the legend , when using twinx 
+		plots all parameters in log mag mode. 
+		
+		takes:
+			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
+			twinAxis - plot on one or two y-axis, boolean. 
+			**kwargs - passed to the matplotlib.plot command
+		
+		note: has a bug with the legend , when using twinx 
 		'''
 		if self.rank == 1:
 			print 'one port networks dont have insertion loss dummy.'
@@ -1083,6 +1139,13 @@ class ntwk:
 		plb.draw()
 	
 	def loadFromTouchstone(self,filename):
+		'''
+		loads relevent values from a touchstone file. 
+		takes:
+			filename - touchstone file name, string. 
+		
+		note: all work is tone in the touchstone class
+		'''
 		touchstoneFile = touch(filename)
 		
 		self.paramType=touchstoneFile.get_format().split()[1]
@@ -1103,7 +1166,12 @@ class ntwk:
 		
 	def writeToTouchstone(self,filename, format = 'ri'):
 		'''
-		in the future could make possible use of the touchtone class, but at the moment this would not provide any benefit as it has not set_ functions. 
+		write a touchstone file representing this network. 
+		
+		takes: 
+			filename - filename to save to , string
+			format - format to save in, string. ['ri']
+		note:in the future could make possible use of the touchtone class, but at the moment this would not provide any benefit as it has not set_ functions. 
 		'''
 		format = format.upper()
 		if format not in 'RI':
