@@ -39,6 +39,12 @@ network connections (parrallel, series)
 tranmission line classes
 de-embeding 
 
+
+does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz 
+and have an option to the plot command for GHz, which is the only time we would want it
+
+freqUnit and freqMultiplier are redundant. 
+
 calkits?
 
 # to make ploting faster there should be 
@@ -98,18 +104,27 @@ def deg2rad(deg):
 
 
 ############### Ploting ############### 
-def plotOnSmith(complexData,**kwargs):
-	plb.plot(npy.real(complexData), npy.imag(complexData), **kwargs)
-	smith(1)
+def plotOnSmith(complexData,ax=None,**kwargs):
+	if ax == None:
+		ax1 = plb.gca()
+	else:
+		ax1 = ax
+		
+	ax1.plot(npy.real(complexData), npy.imag(complexData), **kwargs)
+	smith(1,ax1)
 
-def smith(smithR=1):
+def smith(smithR=1,ax=None):
 	'''
 	plots the smith chart of a given radius
 	takes:
 		smithR - radius of smith chart
 	'''
-	#TODO: fix this so that an axes object may be passed as argument
-	ax = plb.gca()
+	
+	if ax == None:
+		ax1 = plb.gca()
+	else:
+		ax1 = ax
+
 	# contour holds matplotlib instances of: pathes.Circle, and lines.Line2D, which 
 	# are the contours on the smith chart 
 	contour = []
@@ -153,15 +168,15 @@ def smith(smithR=1):
 	contour.append(Line2D([1,1],[-smithR,smithR],color='black'))
 	
 	#set axis limits
-	ax.axis('equal')
-	ax.axis(smithR*npy.array([-1., 1., -1., 1.]))
+	ax1.axis('equal')
+	ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))
 	
 	# loop though contours and draw them on the given axes
 	for currentContour in contour:
 		if isinstance(currentContour, Circle):
-			ax.add_patch(currentContour)
+			ax1.add_patch(currentContour)
 		elif isinstance(currentContour, Line2D):
-			ax.add_line(currentContour)
+			ax1.add_line(currentContour)
 
 
 
@@ -260,7 +275,7 @@ class ntwk:
 		
 		
 
-	def plotdB(self, m,n, ax=None,**kwargs):
+	def plotdB(self, m=None,n=None, ax=None,**kwargs):
 		'''
 		plots a given parameter in log mag mode. (20*npy.log10(mag))
 		
@@ -270,6 +285,13 @@ class ntwk:
 			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
 			**kwargs - passed to the matplotlib.plot command
 		'''
+		if ( m==None or n==None) and (self.rank > 1):
+			# if this ntwk is not a 1-port and they did not pass indecies raise error
+			print 'Error: please specify indecies.'
+		elif ( m==None or n==None) and (self.rank == 1):
+			m = 0
+			n = 0
+			
 		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
 			ax1 = plb.gca()
@@ -291,7 +313,7 @@ class ntwk:
 		plb.legend(loc='best')
 		plb.draw()
 		
-	def plotSmith(self, m,n, smithRadius = 1, ax=None, **kwargs):
+	def plotSmith(self, m=None,n=None, smithRadius = 1, ax=None, **kwargs):
 		'''
 		plots a given parameter in polar mode on a smith chart.
 				
@@ -302,6 +324,13 @@ class ntwk:
 			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
 			**kwargs - passed to the matplotlib.plot command
 		'''
+		if ( m==None or n==None) and (self.rank > 1):
+			# if this ntwk is not a 1-port and they did not pass indecies raise error
+			print 'Error: please specify indecies.'
+		elif ( m==None or n==None) and (self.rank == 1):
+			m = 0
+			n = 0
+			
 		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
 			ax1 = plb.gca()
@@ -314,7 +343,7 @@ class ntwk:
 		plb.draw()
 		
 	
-	def plotPhase(self, m,n, ax=None, **kwargs):
+	def plotPhase(self, m=None,n=None, ax=None, **kwargs):
 		'''
 		plots a given parameter in phase (deg) mode. 
 		
@@ -324,6 +353,12 @@ class ntwk:
 			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
 			**kwargs - passed to the matplotlib.plot command
 		'''
+		if ( m==None or n==None) and (self.rank > 1):
+			# if this ntwk is not a 1-port and they did not pass indecies raise error
+			print 'Error: please specify indecies.'
+		elif ( m==None or n==None) and (self.rank == 1):
+			m = 0
+			n = 0
 		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
 		if ax == None:
 			ax1 = plb.gca()
@@ -806,21 +841,28 @@ class waveguide:
 		'''
 
 		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		return createDelayShort(freq,l ,self.beta)
+		s=createDelayShort(freq,l ,self.beta)
+		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
+
 			
 	def createShort(self, numPoints):
 		'''
 		generate the reflection coefficient for a waveguide short.
 		convinience function, see mwavepy.createShort()
 		'''
-		return createShort(numPoints)
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s = createShort(numPoints)
+		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
 		
 	def createMatch(self,numPoints):
 		'''
 		generate the reflection coefficient for a waveguide Match.
 		convinience function, see mwavepy.createShort()
 		'''
-		return createMatch(numPoints)
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s = createMatch(numPoints)
+		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
+		
 	# two-port 
 	def createDelay(self,l,numPoints):
 		'''
@@ -832,7 +874,10 @@ class waveguide:
 		returns:
 			two port S matrix for a waveguide thru section of length l 
 		'''
-		return createDelay(self.band[0],self.band[1],numPoints,l, self.beta)		
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s = createDelay(self.band[0],self.band[1],numPoints,l, self.beta)		
+		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
+		
 		
 		
 		
@@ -995,7 +1040,7 @@ def connectionSeries(ntwkA,ntwkB, type='s'):
 # one-port
 def createShort(numPoints):
 	'''
-	generates the two port S matrix for a Short. 
+	generates the one port S matrix for a Short. 
 	
 	takes:
 		numPoints - number of points
