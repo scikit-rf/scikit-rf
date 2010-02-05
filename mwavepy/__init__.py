@@ -36,7 +36,7 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 other network types z,y,abcd
 network conversions
 network connections (parrallel, series)
-tranmission line classes
+tranmission line classes ( what properties do all transmission lines share)
 de-embeding 
 
 
@@ -44,6 +44,8 @@ does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz
 and have an option to the plot command for GHz, which is the only time we would want it
 
 freqUnit and freqMultiplier are redundant. 
+
+fix frequency unit abiquity. shhould ntwk.freq dependent on ntwk.freqMultiplier or is that just for plotting ? need to tell the user either way.
 
 calkits?
 
@@ -246,7 +248,7 @@ class ntwk:
 				self.freq = freq
 				self.freqUnit = freqUnit
 				#TODO:  handle this 
-				self.freqMultiplier =1 
+				self.freqMultiplier = freqMultiplier
 				
 		self.name = name
 		self.z0 = z0
@@ -380,7 +382,7 @@ class ntwk:
 		plb.legend(loc='best')
 		plb.draw()
 	
-	def plotAllReturnLossDb(self, ax= None, **kwargs):
+	def plotReturnLossDb(self, ax= None, **kwargs):
 		'''
 		plots all return loss parameters in log mag mode. meaning all parameters such with matching indecies, m=n.  
 		
@@ -408,7 +410,7 @@ class ntwk:
 		plb.grid(1)
 		plb.draw()
 	
-	def plotAllInsertionLossDb(self, ax = None, **kwargs):
+	def plotInsertionLossDb(self, ax = None, **kwargs):
 		'''
 		plots all Insertion loss parameters in log mag mode. meaning all parameters such with matching indecies, m!=n.  
 		
@@ -508,7 +510,8 @@ class ntwk:
 		self.freqUnit = touchstoneFile.frequency_unit
 		self.freqMultiplier = touchstoneFile.frequency_mult
 		self.name=touchstoneFile.filename.split('/')[-1].split('.')[-2]
-		self.freq, self.s = touchstoneFile.get_sparameter_arrays()
+		self.freq, self.s = touchstoneFile.get_sparameter_arrays() # note freq in Hz
+		#self.freq = self.freq /self.freqMultiplier
 		self.length = len(self.freq)
 		#convinience	
 		self.smag = abs(self.s)
@@ -1013,7 +1016,7 @@ def zinOpen(z0,theta):
 	'''
 	return zin(inf,z0,theta)
 	## connections
-def connectionSeries(ntwkA,ntwkB, type='s'):
+def connectionSeriees(ntwkA,ntwkB, type='s'):
 	ntwkC = npy.zeros(shape=ntwkA.shape)
 	if type not in 'szyabcd':
 		print( type +' is not a valid Type')
@@ -1114,7 +1117,7 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	
 	 takes:
 		 mOpen, mShort, and mMatch are 1xN complex ndarrays representing the 
-		measured reflection coefficients off the corresponding standards.
+		measured reflection coefficients off the corresponding standards OR can  be 1-port mwavepy.ntwk() types. 
 			
 	 	aOpen, aShort, and aMatch are 1xN complex ndarrays representing the
 	 	assumed reflection coefficients off the corresponding standards. 
@@ -1124,6 +1127,22 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	  an open, short, and match. they are arbitrary but should provide
 	  good seperation on teh smith chart for good accuracy 
 	'''
+	if isinstance(mOpen,ntwk):	
+		# they passed us ntwk types, so lets get the relevent parameter
+		#make sure its a 1-port
+		if mOpen.rank >1:
+			print 'ERROR: this takes a 1-port'
+			return None
+		else:
+			# there might be a more elegant way to do this
+			mOpen = mOpen.s[:,0,0]
+			mShort = mShort.s[:,0,0]
+			mMatch = mMatch.s[:,0,0]
+			aOpen = aOpen.s[:,0,0]
+			aShort = aShort.s[:,0,0]
+			aMatch = aMatch.s[:,0,0]
+		
+
 	
 	# loop through all frequencies and solve for the calibration coefficients.
 	# note: abc are related to error terms with:
@@ -1133,7 +1152,8 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	
 	for k in range(len(mOpen)):
 		
-		Y = npy.vstack( [	mShort[k],\
+		Y = npy.vstack( [\
+						mShort[k],\
 						mOpen[k],\
 						mMatch[k]\
 						] )
@@ -1149,19 +1169,41 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 		
 	return abc
 
-def applyABC( gamma, abc):
+def applyABC( gammaRaw, abc):
 	'''
 	takes a complex array of uncalibrated reflection coefficient and applies
 	the one-port OSM callibration, using the coefficients abc. 
 
 	takes:
-		gamma - complex reflection coefficient
+		gamma - complex reflection coefficient OR can  be 1-port mwavepy.ntwk() type.
 		abc - Nx3 OSM calibration coefficients. 
+	returns:
+		either a complex reflection coefficient, or a 1-port mwavepy.ntwk() instance, depending on input
+		
 	'''
-	# for clarity this is same as:
-	# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
-	gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
-	return gammaCal
+	#TODO: re-write this so the variables make more sense to a reader
+	# type test
+	if isinstance(gammaRaw,ntwk):
+		# they passed us ntwk types, so lets get the relevent parameter
+		#make sure its a 1-port
+		if gammaRaw.rank >1:
+			print 'ERROR: this takes a 1-port'
+			return None
+		else:
+			gamma = gammaRaw.s[:,0,0]
+			gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
+			gammaRaw.s = gammaCal
+			return gammaRaw
+	else:
+		gamma = gammaRaw
+		# for clarity this is same as:
+		# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
+		gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
+		return gammaCal
+	
+	
+
+
 ## two port 
 
 ## calibrations should be classed and handled somthing like this 
@@ -1309,24 +1351,23 @@ def loadAllTouchtonesInDir(dir = '.'):
 	takes:
 		dir  - the path to the dir, passed as a string (defalut is cwd)
 	returns:
-		(nameList, ntwkList)  - lists holding basenames of the files loaded, and a list of mwavepy networks. If you are using pylab you can plot these easily like so: 
+		ntwkList  - lists holding basenames of the files loaded, and a list of mwavepy networks. If you are using pylab you can plot these easily like so: 
 	
 	example usage:
 		import mwavepy as m
 		nameList, ntwkList = m.loadAllTouchtonesInDir()
 		for n in ntwkList:
 			npy.plotReturnLoss()
-		legend(nameList)
+		
 	'''
 	ntwkList=[]
-	nameList=[]
-	
+
 	for f in os.listdir (dir):
+		# TODO: make this s?p with reg ex
 		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
-			nameList.append(f[:-4]) #strips of extension
-			ntwkList.append(loadTouchtone(f))
+			ntwkList.append(createNtwkFromTouchstone(f))
 		
-	return (nameList, ntwkList)
+	return ntwkList
 
 
 

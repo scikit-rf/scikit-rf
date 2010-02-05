@@ -66,23 +66,34 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 		data = n.array(self.ask_for_values("OUTPDATA;"))
 		return data
 		
-	def getS(self, freqArray=[],z0=50):
+	def getS(self,sParam=None):
 		'''
 		returns an s-parameter type, which represents current S-param data,
 		
 		freqArray - is the frequency array assigned to the s-parameter
 		z0 - is the characteristic impedance to assign to the s-parameter
 		'''
+		if sParam != None:
+			setS(sParam)
 		# Long sweeps may create time outs, see pyvisa page for solving this
 		# using contructor  options
 		data = self.getData()
 		#seperate into real and imageinary parts
 		sReal = data[0:len(data):2]
 		sImag = data[1:len(data):2]
-		# call s-parameter constructor
-		return m.s('re',freqArray,'GHz', sReal,sImag,z0)
 		
-	def getTwoPort(self, freqArray=[],z0=50):
+		s = sReal +1j*sImag
+		return s
+	
+	def getOnePort(self):
+		'''
+		TODO: could ask for current s-param and put it in the name field. 
+		'''
+		freq= getFrequencyAxis()
+		s = getS()
+		return m.ntwk(data=s, paramType='s',freq=freq)
+		
+	def getTwoPort(self):
 		'''
 		returns an two-port type, which represents current DUT
 		
@@ -106,6 +117,7 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 		'''
 		returns the current frequency axis.
 		optionally scales freq by 1/freqUnit
+		TODO: should ask vna for freqUnit
 		'''
 		fStart = float(self.ask("star?"))/freqUnit
 		fStop = float(self.ask("stop?"))/freqUnit
