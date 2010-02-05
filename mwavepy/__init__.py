@@ -21,6 +21,7 @@
 
 #	Most of these functions have not been rigidly tested. use with caution!!
 
+
 import numpy as npy
 import pylab as plb
 from numpy import sqrt, exp, array,tan,sin,cos,inf
@@ -30,6 +31,7 @@ import os # for fileIO
 from matplotlib.patches import Circle 	# for drawing smith chart
 from matplotlib.lines import Line2D		# for drawing smith chart
 from touchstone import touchstone as touch	# for loading data from touchstone files
+from copy import copy
 
 #TODO LIST
 '''
@@ -276,6 +278,27 @@ class ntwk:
 		
 		
 		
+
+	def __sets__(self, sMatrix):
+		'''
+		update a ntwk's sparameters. ntwk.s effects other object within the ntwk class, so this function is needed.
+		'''
+		
+		data = npy.array(sMatrix) 
+		if len(data.shape) == 1:
+			# they gave us 1D array
+			data = data.reshape(-1,1,1)
+		if data.shape[1] != data.shape[2]:
+			print ('ERROR: input data must be kxmxm, where k is frequency axis')
+			return None
+		self.s = data
+		self.rank = data.shape[1]
+		self.smag = abs(self.s)
+		self.sdB = mag2dB( self.smag )
+		self.sdeg = npy.angle(self.s, deg=True)
+		self.srad = npy.angle(self.s)
+
+
 
 	def plotdB(self, m=None,n=None, ax=None,**kwargs):
 		'''
@@ -1169,7 +1192,7 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 		
 	return abc
 
-def applyABC( gammaRaw, abc):
+def applyABC( gamma, abc):
 	'''
 	takes a complex array of uncalibrated reflection coefficient and applies
 	the one-port OSM callibration, using the coefficients abc. 
@@ -1181,21 +1204,22 @@ def applyABC( gammaRaw, abc):
 		either a complex reflection coefficient, or a 1-port mwavepy.ntwk() instance, depending on input
 		
 	'''
+	
 	#TODO: re-write this so the variables make more sense to a reader
 	# type test
-	if isinstance(gammaRaw,ntwk):
+	if isinstance(gamma,ntwk):
 		# they passed us ntwk types, so lets get the relevent parameter
 		#make sure its a 1-port
-		if gammaRaw.rank >1:
+		if gamma.rank >1:
 			print 'ERROR: this takes a 1-port'
 			return None
 		else:
-			gamma = gammaRaw.s[:,0,0]
-			gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
-			gammaRaw.s = gammaCal
-			return gammaRaw
+			newNtwk = copy(gamma)
+			gamma = gamma.s[:,0,0]
+			gammaCal= ((gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2]))
+			newNtwk.__sets__(gammaCal)
+			return  newNtwk
 	else:
-		gamma = gammaRaw
 		# for clarity this is same as:
 		# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
 		gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
