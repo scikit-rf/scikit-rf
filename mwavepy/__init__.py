@@ -855,7 +855,7 @@ class waveguide:
 
 	## standard creation
 	# one-port 
-	def createDelayShort(self,l,numPoints):
+	def createDelayShort(self,l,numPoints, **kwargs):
 		'''
 		generate the reflection coefficient for a waveguide delayed short of length l 
 		
@@ -868,29 +868,29 @@ class waveguide:
 
 		freq = npy.linspace(self.band[0],self.band[1],numPoints)
 		s=createDelayShort(freq,l ,self.beta)
-		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 
 			
-	def createShort(self, numPoints):
+	def createShort(self, numPoints,**kwargs):
 		'''
 		generate the reflection coefficient for a waveguide short.
 		convinience function, see mwavepy.createShort()
 		'''
 		freq = npy.linspace(self.band[0],self.band[1],numPoints)
 		s = createShort(numPoints)
-		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 		
-	def createMatch(self,numPoints):
+	def createMatch(self,numPoints,**kwargs):
 		'''
 		generate the reflection coefficient for a waveguide Match.
 		convinience function, see mwavepy.createShort()
 		'''
 		freq = npy.linspace(self.band[0],self.band[1],numPoints)
 		s = createMatch(numPoints)
-		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 		
 	# two-port 
-	def createDelay(self,l,numPoints):
+	def createDelay(self,l,numPoints,**kwargs):
 		'''
 		generate the two port S matrix for a waveguide thru section of length l 
 		
@@ -902,7 +902,7 @@ class waveguide:
 		'''
 		freq = npy.linspace(self.band[0],self.band[1],numPoints)
 		s = createDelay(self.band[0],self.band[1],numPoints,l, self.beta)		
-		return ntwk(data=s,paramType='s',freq=freq,freqUnit='Hz',freqMultiplier=1)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 		
 		
 		
