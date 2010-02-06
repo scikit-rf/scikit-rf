@@ -25,6 +25,7 @@
 import numpy as npy
 import pylab as plb
 from numpy import sqrt, exp, array,tan,sin,cos,inf
+
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil
 from scipy import signal
 import os # for fileIO
@@ -1194,6 +1195,93 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 		abc[k,:] = npy.dot(npy.linalg.inv(X), Y).flatten()
 		
 	return abc
+	
+def getABCLeastSquares(gammaMList, gammaAList):
+	'''
+	calculates calibration coefficients for a one port OSM calibration
+	 
+	 returns:
+		abc is a Nx3 ndarray containing the complex calibrations coefficients,
+		where N is the number of frequency points in the standards that where 
+		givenpy.
+	
+	 takes:
+		 mOpen, mShort, and mMatch are 1xN complex ndarrays representing the 
+		measured reflection coefficients off the corresponding standards OR can  be 1-port mwavepy.ntwk() types. 
+			
+	 	aOpen, aShort, and aMatch are 1xN complex ndarrays representing the
+	 	assumed reflection coefficients off the corresponding standards. 
+	 	
+	 note:
+	  the standards used in OSM calibration dont actually have to be 
+	  an open, short, and match. they are arbitrary but should provide
+	  good seperation on teh smith chart for good accuracy 
+	'''
+	# find shapes of vectors/matricies
+	
+	numStds = len(gammaMList)
+	numCoefs = 3
+	
+	#if isinstance(gammaMList[0], ntwk):
+	for k in range(numStds):
+		gammaMList[k] = gammaMList[k].s
+		gammaAList[k] = gammaAList[k].s
+		
+	fLength = len(gammaMList[0])
+	# initialize vector/matricies
+	#gammaM = npy.zeros(shape=(numStds,1,fLength))
+	#gammaA = npy.zeros(shape=(numStds,1,fLength))
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
+	#M = npy.zeros(shape=(numStds, numCoefs,fLength))
+	
+	
+	## fill vector/matricies with values
+	#for k in range(numStds):
+		#gammaM[k,0,:] = gammaMList[k]
+		#gammaA[k,0,:] = gammaAList[k]
+		  
+	
+	for f in range(fLength):
+		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
+		gammaA = npy.zeros(shape=(numStds,1),dtype=complex)
+		one = npy.ones(shape=(numStds,1),dtype=complex)
+		M = npy.zeros(shape=(numStds, numCoefs),dtype=complex) 
+		
+		for k in range(0,numStds):
+			gammaM[k] = gammaMList[k][f]
+			gammaA[k] = gammaMList[k][f]
+			
+		M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
+		
+		MT = M.transpose()
+		abc[f,:] = npy.dot(npy.dot(npy.linalg.inv(npy.dot(MT,M)),MT),gammaM).squeeze()
+	return abc 
+	
+	# loop through all frequencies and solve for the calibration coefficients.
+	# note: abc are related to error terms with:
+	# a = e10*e01-e00*e11, b=e00, c=e11  
+	#TODO: check to make sure all arrays are same length
+	#abc= npy.complex_(npy.zeros([len(mOpen),3]))
+	
+	#for k in range(len(mOpen)):
+		
+		#Y = npy.vstack( [\
+						#mShort[k],\
+						#mOpen[k],\
+						#mMatch[k]\
+						#] )
+		
+		#X = npy.vstack([ \
+					#npy.hstack([aShort[k], 	1, aShort[k]*mShort[k] ]),\
+					#npy.hstack([aOpen[k],	1, aOpen[k] *mOpen[k] ]),\
+					#npy.hstack([aMatch[k], 	1, aMatch[k]*mMatch[k] ])\
+					#])
+		
+		##matrix of correction coefficients
+		#abc[k,:] = npy.dot(npy.linalg.inv(X), Y).flatten()
+		
+	#return abc
+	return None
 
 def applyABC( gamma, abc):
 	'''
@@ -1205,6 +1293,9 @@ def applyABC( gamma, abc):
 		abc - Nx3 OSM calibration coefficients. 
 	returns:
 		either a complex reflection coefficient, or a 1-port mwavepy.ntwk() instance, depending on input
+		
+	note: this is a simple calculation, 
+	gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
 		
 	'''
 	
