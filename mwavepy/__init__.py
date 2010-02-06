@@ -330,6 +330,7 @@ class ntwk:
 			ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,m,n],label=labelString,**kwargs)
 		
 		
+		ax1.axhline(0,color='black')
 		plb.axis('tight')
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
 		plb.ylabel('Magnitude (dB)')
@@ -425,6 +426,7 @@ class ntwk:
 				ax1.plot(self.sdB[:,p,p],label=labelString,**kwargs)
 			else:
 				ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,p],label=labelString,**kwargs)
+		ax1.axhline(0,color='black')
 		plb.legend(loc='best')	
 		plb.axis('tight')
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
@@ -458,6 +460,7 @@ class ntwk:
 						ax1.plot(self.sdB[:,p,q],label=labelString,**kwargs)
 					else:
 						ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,q],label=labelString,**kwargs)
+		ax1.axhline(0,color='black')
 		plb.legend(loc='best')				
 		plb.axis('tight')
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
