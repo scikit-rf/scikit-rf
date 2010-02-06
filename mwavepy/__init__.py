@@ -1206,12 +1206,7 @@ def getABCLeastSquares(gammaMList, gammaAList):
 		givenpy.
 	
 	 takes:
-		 mOpen, mShort, and mMatch are 1xN complex ndarrays representing the 
-		measured reflection coefficients off the corresponding standards OR can  be 1-port mwavepy.ntwk() types. 
-			
-	 	aOpen, aShort, and aMatch are 1xN complex ndarrays representing the
-	 	assumed reflection coefficients off the corresponding standards. 
-	 	
+		
 	 note:
 	  the standards used in OSM calibration dont actually have to be 
 	  an open, short, and match. they are arbitrary but should provide
@@ -1223,9 +1218,9 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	numCoefs = 3
 	
 	#if isinstance(gammaMList[0], ntwk):
-	for k in range(numStds):
-		gammaMList[k] = gammaMList[k].s
-		gammaAList[k] = gammaAList[k].s
+	#for k in range(numStds):
+		#gammaMList[k] = gammaMList[k].s
+		#gammaAList[k] = gammaAList[k].s
 		
 	fLength = len(gammaMList[0])
 	# initialize vector/matricies
@@ -1241,7 +1236,7 @@ def getABCLeastSquares(gammaMList, gammaAList):
 		#gammaA[k,0,:] = gammaAList[k]
 		  
 	
-	for f in range(fLength):
+	for f in range(1):
 		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
 		gammaA = npy.zeros(shape=(numStds,1),dtype=complex)
 		one = npy.ones(shape=(numStds,1),dtype=complex)
@@ -1249,12 +1244,18 @@ def getABCLeastSquares(gammaMList, gammaAList):
 		
 		for k in range(0,numStds):
 			gammaM[k] = gammaMList[k][f]
-			gammaA[k] = gammaMList[k][f]
+			gammaA[k] = gammaAList[k][f]
 			
 		M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
 		
-		MT = M.transpose()
-		abc[f,:] = npy.dot(npy.dot(npy.linalg.inv(npy.dot(MT,M)),MT),gammaM).squeeze()
+		print gammaM 
+		print gammaA
+		print M
+		MT = M.conj().transpose()
+		# hard to read, it is 
+		# ( MT * M)^-1 * MT * gammaM
+		abc[f,:] = npy.dot(npy.linalg.inv(M), gammaM).flatten()
+		#npy.dot(npy.dot(npy.linalg.inv(npy.dot(MT,M)),MT),gammaM).squeeze()
 	return abc 
 	
 	# loop through all frequencies and solve for the calibration coefficients.
