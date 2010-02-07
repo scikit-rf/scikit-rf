@@ -65,6 +65,9 @@ calkits?
 
 
 ###############  mathematical conversions ############### 
+def complex2dB(complx):
+	dB = 20 * npy.log10(npy.abs( (npy.real(complx) + 1j*npy.imag(complx) )))
+	return dB
 def magPhase2ReIm( mag, phase):
 	re = npy.real(mag*exp(1j*(phase)))
 	im = npy.imag(mag*exp(1j*(phase)))
@@ -237,6 +240,7 @@ class ntwk:
 			data = data.reshape(-1,1,1)
 		if data.shape[1] != data.shape[2]:
 			print ('ERROR: input data must be kxmxm, where k is frequency axis')
+			raise RuntimeError
 			return None
 		if freq == None:
 			self.freq = freq #None
@@ -245,6 +249,7 @@ class ntwk:
 		else:
 			if len(freq) != data.shape[0]:
 				print 'Error: length of f must match data.shape[2]. There must be as many frequency points as there are s parameter measurements.'
+				raise RuntimeError
 				return None
 			else:
 				#they passed a valid f vector
@@ -273,7 +278,7 @@ class ntwk:
 			
 		#convinience	
 		self.smag = abs(self.s)
-		self.sdB = mag2dB( self.smag )
+		self.sdB = complex2dB( self.s )
 		self.sdeg = npy.angle(self.s, deg=True)
 		self.srad = npy.angle(self.s)
 		
@@ -291,6 +296,7 @@ class ntwk:
 			data = data.reshape(-1,1,1)
 		if data.shape[1] != data.shape[2]:
 			print ('ERROR: input data must be kxmxm, where k is frequency axis')
+			raise RuntimeError
 			return None
 		self.s = data
 		self.rank = data.shape[1]
@@ -383,6 +389,7 @@ class ntwk:
 		if ( m==None or n==None) and (self.rank > 1):
 			# if this ntwk is not a 1-port and they did not pass indecies raise error
 			print 'Error: please specify indecies.'
+			raise RuntimeError
 		elif ( m==None or n==None) and (self.rank == 1):
 			m = 0
 			n = 0
@@ -560,6 +567,7 @@ class ntwk:
 		format = format.upper()
 		if format not in 'RI':
 			print 'ERROR:format not acceptable. only ri is supported at this time'
+			raise NotImplementedError
 			return None
 		
 		if os.access(filename,1):
@@ -1217,6 +1225,7 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	numStds = len(gammaMList)
 	numCoefs = 3
 	
+	# why doesnt this work?
 	#if isinstance(gammaMList[0], ntwk):
 	#for k in range(numStds):
 		#gammaMList[k] = gammaMList[k].s
@@ -1307,6 +1316,7 @@ def applyABC( gamma, abc):
 		#make sure its a 1-port
 		if gamma.rank >1:
 			print 'ERROR: this takes a 1-port'
+			raise RuntimeError
 			return None
 		else:
 			newNtwk = copy(gamma)
@@ -1427,6 +1437,7 @@ def loadTouchtone(inputFileName):
 	else:
 		# TODO: handle errors correctly
 		print('ERROR: file doesnt contain expected number of fields')
+		raise RuntimeError
 		return -1
 
 	
