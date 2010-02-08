@@ -64,6 +64,18 @@ calkits?
 
 
 
+
+## constants
+# standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
+# info taken from Virginia Diodes Inc. Waveguide Band Designations
+WR10 = wr(10)
+WR8 = wr(8)
+WR6 = wr(6.5)
+WR5 = wr(5.1)
+WR4 = wr(4.3)
+WR3 = wr(3.4)
+WR1p5 = wr(1.5)		
+
 ###############  mathematical conversions ############### 
 def complex2dB(complx):
 	dB = 20 * npy.log10(npy.abs( (npy.real(complx) + 1j*npy.imag(complx) )))
@@ -708,7 +720,7 @@ def abcd2y():
 
 
 
-############### transmission lines   ################
+############### transmission line class   ################
 class transmissionLine:
 	'''
 	should be main class, which all transmission line sub-classes inhereit
@@ -919,6 +931,8 @@ class waveguide:
 		
 		
 		
+
+## subclasses
 class wr(waveguide):
 	'''
 	class which represents a standard rectangular waveguide band.
@@ -932,15 +946,7 @@ class wr(waveguide):
 			mwavepy.waveguide object representing the given band
 		'''
 		waveguide.__init__(self,number*10*mil ,.5 * number*10*mil  )
-# standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
-# info taken from Virginia Diodes Inc. Waveguide Band Designations
-WR10 = wr(10)
-WR8 = wr(8)
-WR6 = wr(6.5)
-WR5 = wr(5.1)
-WR4 = wr(4.3)
-WR3 = wr(3.4)
-WR1p5 = wr(1.5)		
+
 	
 ## transmission line functions
 def betaPlaneWave(omega,epsilonR = 1, muR = 1):
@@ -1057,8 +1063,10 @@ def zinOpen(z0,theta):
 	convinience function. see zin()
 	'''
 	return zin(inf,z0,theta)
-	## connections
-def connectionSeriees(ntwkA,ntwkB, type='s'):
+
+
+## connections
+def connectionSeries(ntwkA,ntwkB, type='s'):
 	ntwkC = npy.zeros(shape=ntwkA.shape)
 	if type not in 'szyabcd':
 		print( type +' is not a valid Type')
@@ -1081,7 +1089,8 @@ def connectionSeriees(ntwkA,ntwkB, type='s'):
 		
 
 
-## Theoretically derived Networks
+## S-parameter Network Creation
+#TODO: should name these more logically. like createSMatrix_Short()
 # one-port
 def createShort(numPoints):
 	'''
@@ -1131,6 +1140,7 @@ def createDelay(freqVector, l,beta = beta0 ):
 		
 		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave	
 	'''
+	numPoints = len(freqVector)
 	s11 = npy.complex_( npy.zeros(numPoints))
 	s12 = npy.complex_( npy.zeros(numPoints))
 	s21 = npy.complex_( npy.zeros(numPoints))
@@ -1141,11 +1151,20 @@ def createDelay(freqVector, l,beta = beta0 ):
 	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
-def createMistMatch(zl,z0):
+
+def createImpedanceStep(z1,z2,numPoints):
 	'''
-	two port model of a 
+	two port model of a impedance mismatch where port 1 is terminated with z1 and port 2 is terminated with z2
 	'''
-	s11 = gamma()
+	s11 = npy.ndarray(gamma(zl=z2,z0=z1,theta=0))
+	s21 = npy.ones(numPoints)+s11
+	s22 = npy.ndarray(gamma(zl=z2,z0=z1,theta=0))
+	s12 = npy.ones(numPoints) + s22
+	
+	print s11
+	print s21
+	print s12
+	print s22
 	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
@@ -1153,6 +1172,7 @@ def createMistMatch(zl,z0):
 
 
 	
+
 ############## calibration ##############
 ## one port
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
@@ -1383,7 +1403,9 @@ def applyABC( gamma, abc):
 
 
 
-## Old /unsorted
+
+
+############ DEPRICATED/UNSORTED#####################
 def loadTouchtone(inputFileName):
 	
 	
