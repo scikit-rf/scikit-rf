@@ -1003,19 +1003,26 @@ def gamma(zl,z0=50.0, theta=0):
 	'''
 	calculates the reflection coefficient for a given load and characteristic impedance
 	takes:
-		zl - load impedance
-		z0 - characteristic impedance
+		zl - load impedance (can be numpy array or float)
+		z0 - characteristic impedance ( can be numpy array or float)
 		theta - distance from load, given in electrical length  (rad)
 	'''
 	# this way of type casting allows for arrays to be passed, but does floating points arrimetic
+	#TODO: if arrays test for matching lengths of zl and z0
+	
 	zl = 1.0*(zl)
 	z0 = 1.0*(z0)
 	theta = 1.0* (theta)
-	# handle the limit of open circuit
-	if zl == inf:
-		gammaAt0 = 1
-	else: 
+	
+	if isinstance(zl,npy.ndarray):
+		# handle the limit of open circuit. for arrays
+		zl[(zl==npy.inf)]=1e100
 		gammaAt0 = (zl-z0)/(zl+z0)
+	else:
+		if zl == inf:
+			gammaAt0 = 1
+		else: 
+			gammaAt0 = (zl-z0)/(zl+z0)
 	return gammaAt0 * npy.exp(-2j*theta)
 
 
@@ -1134,6 +1141,13 @@ def createDelay(freqVector, l,beta = beta0 ):
 	return npy.array([[s11, s12],\
 					[s21, s22] ])
 
+def createMistMatch(zl,z0):
+	'''
+	two port model of a 
+	'''
+	s11 = gamma()
+	return npy.array([[s11, s12],\
+					[s21, s22] ])
 
 
 
