@@ -209,22 +209,30 @@ class ntwk:
 	class represents a generic n-port network. 
 	
 	provides:
-		s - a kxnxn matrix of complex values representing a n-port network over a given frequency range, numpy.ndarray
+		s - a kxnxn matrix of complex values representing a n-port 
+			network over a given frequency range of len k, numpy.ndarray
 		freq - 1D frequency vector,  numpy.ndarray
 		freqUnit - meaning frequency vector, string, ( MHz, GHz, etc)
-		freqMultiplier - scale of frequency vector to 1Hz, string.  ( ie, 1e9 for freqUnit of 'GHz'
+		freqMultiplier - scale of frequency vector to 1Hz, string.
+			( ie, 1e9 for freqUnit of 'GHz'
 		paramType - parameter types  ( 's','z','y','abcd') , string
 		z0 - characteristic impedance of network
 		name - name of network, string. used in legend for plotting.
 		
-		smag - kxnxn array representing magnitude of s-parameters in decimal, ndarray 
-		sdB - kxnxn array representing magnitude of s-parameters in decibel (20*npy.log10(mag)) scale, ndarray
-		sdeg - kxnxn array representing phase of s-parameters in deg, ndarray
-		srad - kxnxn array representing phase of s-parameters in radians, ndarray
+		smag - kxnxn array representing magnitude of s-parameters in 
+			decimal, ndarray 
+		sdB - kxnxn array representing magnitude of s-parameters in
+			decibel (20*npy.log10(mag)) scale, ndarray
+		sdeg - kxnxn array representing phase of s-parameters in deg,
+			ndarray
+		srad - kxnxn array representing phase of s-parameters in radians, 
+			ndarray
 		
 		
 		
-		note: these matricies may be re-shaped if one wants the frequency index to come last, like  myntwk.s.transpose().reshape(2,2,-1)
+		note: these matricies may be re-shaped if one wants the 
+			frequency index to come last, like  
+			myntwk.s.transpose().reshape(2,2,-1)
 	'''
 	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, freqUnit='GHz', freqMultiplier = 1e9, paramType='s',  z0=50, name = ''):
 		'''
@@ -959,7 +967,7 @@ def betaPlaneWave(omega,epsilonR = 1, muR = 1):
 	returns:
 		omega/c = omega*sqrt(epsilon*mu)
 	'''
-	return omega* sqrt((const.mu_0*muR)*(epsilonR*epsilon_0))
+	return omega* sqrt((mu_0*muR)*(epsilonR*epsilon_0))
 
 def beta0(omega):
 	'''
@@ -980,7 +988,7 @@ def eta(epsilonR = 1, muR = 1):
 		epsilonR - relative permativity (default = 1) 
 		muR -  relative permiability (default = 1)
 	'''
-	return sqrt((const.mu_0*muR)/(epsilonR*epsilon_0))
+	return sqrt((mu_0*muR)/(epsilonR*epsilon_0))
 def eta0(omega):
 	'''
 	characteristic impedance of free space. see eta().
@@ -1066,27 +1074,55 @@ def zinOpen(z0,theta):
 
 
 ## connections
-def connectionSeries(ntwkA,ntwkB, type='s'):
-	ntwkC = npy.zeros(shape=ntwkA.shape)
-	if type not in 'szyabcd':
-		print( type +' is not a valid Type')
-		return None
-	elif type == 's':
-		ntwkC[1,0] = ntwkA[1,0]*ntwkB[1,0] / 1 - ntwkA[1,1]*ntwkB[0,0]
-		ntwkC[0,1] = ntwkA[0,1]*ntwkB[0,1] / 1 - ntwkA[1,1]*ntwkB[0,0]
-		ntwkC[0,0] = ntwkA[0,0]+ntwkA[1,0]*ntwkB[0,0]*ntwkA[0,1] / 1 - ntwkA[1,1]*ntwkB[0,0]
-		ntwkC[1,1] = ntwkB[1,1]+ntwkB[0,1]*ntwkA[1,1]*ntwkB[1,0] / 1 - ntwkA[1,1]*ntwkB[0,0]
-	elif type == 'abcd':
-		return npy.dot(ntwkA,ntwkB)
-	elif type == 'z':
+def connectionSeries(ntwkA,ntwkB):
+	'''
+	cascades two 2-port networks together, and returns resultant network
+	
+	takes:
+		ntwkA - network at port 1. can be a mwavepy.ntwk type  or a 
+			kxnxn numpy.ndarray representing an S-matrix. 
+		ntwkA - network at port 2. can be a mwavepy.ntwk type  or a 
+			kxnxn numpy.ndarray representing an S-matrix	
+		
+	returns: 
+		ntwkC - resultant network, of cascaded ntwkA, ntwkB. type is the
+			same as the type passed. 
+	
+	
+	'''
+	
+	if isinstance(ntwkA, ntwk) and isinstance(ntwkB, ntwk):
 		raise NotImplementedError
-	elif type == 'y':
-		raise NotImplementedError	
-	return ntwkC
+	elif isinstance(ntwkA, npy.ndarray) and isinstance(ntwkB, npy.ndarray):
+		if ntwkA.shape != ntwkB.shape:
+			# ntwks must be same shape
+			raise ValueError
+		# TODO: add some  shape checking	
+		
+		ntwkC = npy.zeros(shape=ntwkA.shape)
+		for k in range(ntwkA.shape[0]):
+			ntwkC[k,1,0] = 	ntwkA[k,1,0]*ntwkB[k,1,0] /\
+							1 - ntwkA[k,1,1]*ntwkB[k,0,0]
+			ntwkC[k,0,1] = 	ntwkA[k,0,1]*ntwkB[k,0,1] /\
+							1 - ntwkA[k,1,1]*ntwkB[k,0,0]
+			ntwkC[k,0,0] = ntwkA[k,0,0]+ntwkA[k,1,0]*ntwkB[k,0,0]*ntwkA[k,0,1] /\
+								1 - ntwkA[k,1,1]*ntwkB[k,0,0]
+			ntwkC[k,1,1] = ntwkB[k,1,1]+ntwkB[k,0,1]*ntwkA[k,1,1]*ntwkB[k,1,0] /\
+								1 - ntwkA[k,1,1]*ntwkB[k,0,0]
+		return ntwkC
+	else:
+		# ntwkA and ntwkB must be either mwavepy.ntwk or numpy.ndarry 
+		# types
+		raise TypeError
+		
+	
+	
 	
 
 		
-		
+	
+
+
 
 
 ## S-parameter Network Creation
@@ -1131,42 +1167,65 @@ def createDelayShort(freqVector, l, beta=beta0 ):
 # two-port
 def createDelay(freqVector, l,beta = beta0 ):
 	'''
-	generates the two port S matrix for a matched Delay line of length l. 
+	generates the 2-port S-matrix for a matched Delay line of length l. 
 	
 	takes:
-		freqVector -1D  array corresponding to the frequency band over which to calculate. ( in Hz)
-		l - length of delay in units of m 
-		beta - propagation constant function. this is a function which is a function of angular frequency (omega), and returns a value with units radian/m. 
+		freqVector -1D  array corresponding to the frequency band over 
+			which to calculate. ( in Hz)
+		l - length of delay (in m )
+		beta - propagation constant function. this is a function which 
+			is a function of angular frequency (omega), and returns a 
+			value with units radian/m. 
 		
-		note: beta defaults to lossless free-space propagation constant beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave	
+	returns:
+		kx2x2 S-parameter matrix for a ideal delay.
+		
+	
+	note: beta defaults to lossless free-space propagation constant 
+		beta = omega/c = omega*sqrt(epsilon_0*mu_0), which assumes a TEM wave	
 	'''
 	numPoints = len(freqVector)
-	s11 = npy.complex_( npy.zeros(numPoints))
-	s12 = npy.complex_( npy.zeros(numPoints))
-	s21 = npy.complex_( npy.zeros(numPoints))
-	s22 = npy.complex_( npy.zeros(numPoints))
+	s11 =  npy.zeros(numPoints,dtype=complex)
+	s12 =  npy.zeros(numPoints,dtype=complex)
+	s21 =  npy.zeros(numPoints,dtype=complex)
+	s22 =  npy.zeros(numPoints,dtype=complex)
 	
 	s12 = s21=  exp(-1j*electricalLength(l,freqVector,beta) )
 	
 	return npy.array([[s11, s12],\
-					[s21, s22] ])
+					[s21, s22] ]).transpose().reshape(-1,2,2)
 
 
-def createImpedanceStep(z1,z2,numPoints):
+def createImpedanceStep(z1,z2,numPoints=1):
 	'''
-	two port model of a impedance mismatch where port 1 is terminated with z1 and port 2 is terminated with z2
-	'''
-	s11 = npy.ndarray(gamma(zl=z2,z0=z1,theta=0))
-	s21 = npy.ones(numPoints)+s11
-	s22 = npy.ndarray(gamma(zl=z2,z0=z1,theta=0))
-	s12 = npy.ones(numPoints) + s22
+	creates a 2-port S-matrix of an impedance mismatch where port 1 is 
+	terminated 	with impedance z1, and port 2 is terminated with 
+	impedance z2.
 	
-	print s11
-	print s21
-	print s12
-	print s22
+	takes:
+		z1 - impedance at port 1. (can be a single complex value ,
+			or a numpy.array)
+		z2 - impedance at port 2 ((can be a single complex value ,
+			or a numpy.array)
+		numPoints - number of points to generate this S-matrix. This is 
+			not used if z1 and z2 are arrays.
+	'''
+	if isinstance(z1, npy.ndarray):
+		if len(z1) != len(z2):
+			# z1 must be length of z2
+			raise ValueError
+		numPoints = len(z1)
+	else:
+		# assume they passed us a single value,
+		numPoints = numPoints
+			
+	s11 = npy.ones(numPoints,dtype=complex)*gamma(zl=z2,z0=z1,theta=0)
+	s21 = npy.ones(numPoints,dtype=complex)+s11
+	s22 = npy.ones(numPoints,dtype=complex)*gamma(zl=z2,z0=z1,theta=0)
+	s12 = npy.ones(numPoints,dtype=complex) + s22
+
 	return npy.array([[s11, s12],\
-					[s21, s22] ])
+					[s21, s22] ]).transpose().reshape(-1,2,2)
 
 
 
