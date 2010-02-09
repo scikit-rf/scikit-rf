@@ -348,6 +348,7 @@ class ntwk:
 		if ( m==None or n==None) and (self.rank > 1):
 			# if this ntwk is not a 1-port and they did not pass indecies raise error
 			print 'Error: please specify indecies.'
+			raise RuntimeError
 		elif ( m==None or n==None) and (self.rank == 1):
 			m = 0
 			n = 0
@@ -1494,6 +1495,7 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	fLength = len(gammaMList[0])
 	#initialize abc matrix
 	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
 
 	# loop through frequencies and form gammaM, gammaA vectors and 
 	# the matrix M. where M = 	gammaA_1, 1, gammA_1*gammaM_1
@@ -1516,7 +1518,9 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	return abc
 def getABLeastSquares(gammaMList, gammaAList):
 	'''
-	calculates calibration coefficients for a one port calibration. 
+	calculates calibration coefficients for a one port calibration with
+	the assumption that the error network is reciprical and syemetric. 
+	a = s21^2 - s12^2, b = s11 = s22
 	 
 	takes: 
 		gammaMList - list of measured reflection coefficients. can be 
@@ -1527,9 +1531,12 @@ def getABLeastSquares(gammaMList, gammaAList):
 			s-matrix or a 1-port mwavepy.ntwk types. 
 	
 	returns:
-		abc is a Nx3 ndarray containing the complex calibrations coefficients,
-		where N is the number of frequency points in the standards that where 
-		givenpy.
+		
+		ab - is a kx2 ndarray containing the complex calibrations 
+			coefficients, where k is the number of frequency points in 
+			the	standards that where givens.
+		residues - kxp, where p is difference between number of 
+			coefficients and number of standards.
 	
 	 
 		
@@ -1638,7 +1645,7 @@ def deEmbed1Port(gammaM, ntwkB):
 	if isinstance(gammaM,ntwk):
 		# they passed us ntwk types, so lets get the relevent parameter
 		#make sure its a 1-port
-		if gamma.rank >1:
+		if gammaM.rank >1:
 			print 'ERROR: this takes a 1-port'
 			raise RuntimeError
 			return None
@@ -1667,7 +1674,7 @@ def deEmbed1Port(gammaM, ntwkB):
 		
 			
 		gammaCal = 	((gammaM - s11) /\
-					(s21*s12-s11*s22 + gamma*s22))
+					(s21*s12-s11*s22 + gammaM*s22))
 			
 		return gammaCal
 	
