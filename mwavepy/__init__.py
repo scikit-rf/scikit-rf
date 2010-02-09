@@ -83,6 +83,8 @@ WR1p5 = wr(1.5)
 def complex2dB(complx):
 	dB = 20 * npy.log10(npy.abs( (npy.real(complx) + 1j*npy.imag(complx) )))
 	return dB
+def complex2ReIm(complx):
+	return npy.real(complx), npy.imag(complx)
 def magPhase2ReIm( mag, phase):
 	re = npy.real(mag*exp(1j*(phase)))
 	im = npy.imag(mag*exp(1j*(phase)))
@@ -127,6 +129,10 @@ def deg2rad(deg):
 
 
 ############### Ploting ############### 
+def plotComplex(complexData,ax=None,**kwargs):
+	plb.plot(npy.real(complexData),label='Real',**kwargs)
+	plb.plot(npy.imag(complexData),label='Imag',**kwargs)
+	plb.legend(loc='best')
 def plotOnSmith(complexData,ax=None,**kwargs):
 	if ax == None:
 		ax1 = plb.gca()
@@ -971,6 +977,98 @@ class wr(waveguide):
 		waveguide.__init__(self,number*10*mil ,.5 * number*10*mil  )
 
 	
+
+## lumped elements
+def zCapacitor(capacitance,frequency):
+	'''
+	calculates the impedance of a capacitor.
+	
+	takes:
+		capacitance - capacitance, in Farads. can be a single value or 
+			numpy.ndarray
+		frequency - frequency at which to calculate capacitance. can be 
+			a single value or a numpy.ndarray()
+			
+	returns:
+		impedance - impedance of capacitor at given frequency. type 
+			depends on input
+	'''
+	return 1/(1j*2*npy.pi*frequency*capacitance)
+
+def zInductor(inductance,frequency):
+	'''
+	calculates the impedance of an inductor.
+	
+	takes:
+		inductance - capacitance, in Henrys. can be a single value or 
+			numpy.ndarray.
+		frequency - frequency at which to calculate capacitance. can be 
+			a single value or a numpy.ndarray()
+			
+	returns:
+		impedance - impedance of inductor at given frequency. type 
+			depends on input
+	'''
+	return (1j*2*npy.pi*frequency*inductance)
+
+def seriesZ(z1, z2):
+	'''
+	calculates series connection of impedances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		z1+z2
+	'''
+	return z1 + z2
+	
+def seriesY(y1,y2):
+	'''
+	calculates series connection of 2 admitances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		z1+z2
+	'''
+	# TODO: fix this. it wont work for arrays	
+	#if y1==0:
+		#return y2
+	#elif y2==0:
+		#return y1
+	#else:
+	return parallel(1./y1,1./y2)	
+
+def parallelY(y1,y2):
+	'''
+	calculates parallel connection of impedances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		1/(1/z1+1/z2)
+	'''
+	return y1 + y2
+	
+	
+def parallelZ(z1,z2):
+	'''
+	calculates parallel connection of impedances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		1/(1/z1+1/z2)
+	'''
+	if z1 == 0 or z2==0:
+		return 0
+	else:
+		return 1/(1./z1+1./z2)
+
 ## transmission line functions
 def betaPlaneWave(omega,epsilonR = 1, muR = 1):
 	'''
@@ -1247,94 +1345,6 @@ def createImpedanceStep(z1,z2,numPoints=1):
 
 	
 
-def zCapacitor(capacitance,frequency):
-	'''
-	calculates the impedance of a capacitor.
-	
-	takes:
-		capacitance - capacitance, in Farads. can be a single value or 
-			numpy.ndarray
-		frequency - frequency at which to calculate capacitance. can be 
-			a single value or a numpy.ndarray()
-			
-	returns:
-		impedance - impedance of capacitor at given frequency. type 
-			depends on input
-	'''
-	return 1/(1j*2*npy.pi*frequency*capacitance)
-
-def zInductor(inductance,frequency):
-	'''
-	calculates the impedance of an inductor.
-	
-	takes:
-		inductance - capacitance, in Henrys. can be a single value or 
-			numpy.ndarray.
-		frequency - frequency at which to calculate capacitance. can be 
-			a single value or a numpy.ndarray()
-			
-	returns:
-		impedance - impedance of inductor at given frequency. type 
-			depends on input
-	'''
-	return (1j*2*npy.pi*frequency*inductance)
-
-def seriesZ(z1, z2):
-	'''
-	calculates series connection of impedances.
-	
-	takes: 
-		z1 - impedance 1.
-		z2 - impedance 2
-	returns:
-		z1+z2
-	'''
-	return z1 + z2
-	
-def seriesY(y1,y2):
-	'''
-	calculates series connection of 2 admitances.
-	
-	takes: 
-		z1 - impedance 1.
-		z2 - impedance 2
-	returns:
-		z1+z2
-	'''
-	if y1==0:
-		return y2
-	elif y2==0:
-		return y1
-	else:
-		return parallel(1./y1,1./y2)	
-
-def parallelY(y1,y2):
-	'''
-	calculates parallel connection of impedances.
-	
-	takes: 
-		z1 - impedance 1.
-		z2 - impedance 2
-	returns:
-		1/(1/z1+1/z2)
-	'''
-	return y1 + y2
-	
-	
-def parallelZ(z1,z2):
-	'''
-	calculates parallel connection of impedances.
-	
-	takes: 
-		z1 - impedance 1.
-		z2 - impedance 2
-	returns:
-		1/(1/z1+1/z2)
-	'''
-	if z1 == 0 or z2==0:
-		return 0
-	else:
-		return 1/(1./z1+1./z2)
 
 def createShuntAdmittance(y,z0=50,numPoints=1):
 	'''
@@ -1442,46 +1452,53 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	
 def getABCLeastSquares(gammaMList, gammaAList):
 	'''
-	calculates calibration coefficients for a one port OSM calibration
+	calculates calibration coefficients for a one port calibration. 
 	 
-	 returns:
+	takes: 
+		gammaMList - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or a 1-port mwavepy.ntwk types. 
+		gammaAList - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or a 1-port mwavepy.ntwk types. 
+	
+	returns:
 		abc is a Nx3 ndarray containing the complex calibrations coefficients,
 		where N is the number of frequency points in the standards that where 
 		givenpy.
 	
-	 takes:
+	 
 		
 	 note:
-	  the standards used in OSM calibration dont actually have to be 
-	  an open, short, and match. they are arbitrary but should provide
-	  good seperation on teh smith chart for good accuracy 
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for good accuracy .
 	'''
-	# find shapes of vectors/matricies
 	
+	
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
 	numStds = len(gammaMList)
 	numCoefs = 3
 	
-	# why doesnt this work?
-	#if isinstance(gammaMList[0], ntwk):
-	#for k in range(numStds):
-		#gammaMList[k] = gammaMList[k].s
-		#gammaAList[k] = gammaAList[k].s
+	# test for type, 
+	if isinstance(gammaMList[0], ntwk):
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
 		
 	fLength = len(gammaMList[0])
-	# initialize vector/matricies
-	#gammaM = npy.zeros(shape=(numStds,1,fLength))
-	#gammaA = npy.zeros(shape=(numStds,1,fLength))
-	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
-	#M = npy.zeros(shape=(numStds, numCoefs,fLength))
-	
-	
-	## fill vector/matricies with values
-	#for k in range(numStds):
-		#gammaM[k,0,:] = gammaMList[k]
-		#gammaA[k,0,:] = gammaAList[k]
-		  
-	
-	for f in range(1):
+	#initialize abc matrix
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+
+	# loop through frequencies and form gammaM, gammaA vectors and 
+	# the matrix M. where M = 	gammaA_1, 1, gammA_1*gammaM_1
+	#							gammaA_2, 1, gammA_2*gammaM_2 
+	#									...etc
+	for f in range(fLength):
+		# intialize
 		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
 		gammaA = npy.zeros(shape=(numStds,1),dtype=complex)
 		one = npy.ones(shape=(numStds,1),dtype=complex)
@@ -1492,42 +1509,12 @@ def getABCLeastSquares(gammaMList, gammaAList):
 			gammaA[k] = gammaAList[k][f]
 			
 		M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
+		abc[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
 		
-		print gammaM 
-		print gammaA
-		print M
-		MT = M.conj().transpose()
-		# hard to read, it is 
-		# ( MT * M)^-1 * MT * gammaM
-		abc[f,:] = npy.dot(npy.linalg.inv(M), gammaM).flatten()
-		#npy.dot(npy.dot(npy.linalg.inv(npy.dot(MT,M)),MT),gammaM).squeeze()
-	return abc 
-	
-	# loop through all frequencies and solve for the calibration coefficients.
-	# note: abc are related to error terms with:
-	# a = e10*e01-e00*e11, b=e00, c=e11  
-	#TODO: check to make sure all arrays are same length
-	#abc= npy.complex_(npy.zeros([len(mOpen),3]))
-	
-	#for k in range(len(mOpen)):
-		
-		#Y = npy.vstack( [\
-						#mShort[k],\
-						#mOpen[k],\
-						#mMatch[k]\
-						#] )
-		
-		#X = npy.vstack([ \
-					#npy.hstack([aShort[k], 	1, aShort[k]*mShort[k] ]),\
-					#npy.hstack([aOpen[k],	1, aOpen[k] *mOpen[k] ]),\
-					#npy.hstack([aMatch[k], 	1, aMatch[k]*mMatch[k] ])\
-					#])
-		
-		##matrix of correction coefficients
-		#abc[k,:] = npy.dot(npy.linalg.inv(X), Y).flatten()
-		
-	#return abc
-	return None
+	return abc
+
+
+
 
 def applyABC( gamma, abc):
 	'''
