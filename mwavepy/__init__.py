@@ -69,15 +69,6 @@ calkits?
 
 
 ## constants
-# standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
-# info taken from Virginia Diodes Inc. Waveguide Band Designations
-WR10 = wr(10)
-WR8 = wr(8)
-WR6 = wr(6.5)
-WR5 = wr(5.1)
-WR4 = wr(4.3)
-WR3 = wr(3.4)
-WR1p5 = wr(1.5)		
 
 ###############  mathematical conversions ############### 
 def complex2dB(complx):
@@ -978,6 +969,17 @@ class wr(waveguide):
 
 	
 
+# standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
+# info taken from Virginia Diodes Inc. Waveguide Band Designations
+WR10 = wr(10)
+WR8 = wr(8)
+WR6 = wr(6.5)
+WR5 = wr(5.1)
+WR4 = wr(4.3)
+WR3 = wr(3.4)
+WR1p5 = wr(1.5)		
+
+
 ## lumped elements
 def zCapacitor(capacitance,frequency):
 	'''
@@ -1512,6 +1514,70 @@ def getABCLeastSquares(gammaMList, gammaAList):
 		abc[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
 		
 	return abc
+def getABLeastSquares(gammaMList, gammaAList):
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		gammaMList - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or a 1-port mwavepy.ntwk types. 
+		gammaAList - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or a 1-port mwavepy.ntwk types. 
+	
+	returns:
+		abc is a Nx3 ndarray containing the complex calibrations coefficients,
+		where N is the number of frequency points in the standards that where 
+		givenpy.
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for good accuracy .
+	'''
+	
+	
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
+	numStds = len(gammaMList)
+	numCoefs = 2
+	
+	# test for type, 
+	if isinstance(gammaMList[0], ntwk):
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
+		
+	fLength = len(gammaMList[0])
+	#initialize abc matrix
+	ab = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+
+	# loop through frequencies and form gammaM, gammaA vectors and 
+	# the matrix M. where M = 	gammaA_1, 1, gammA_1*gammaM_1
+	#							gammaA_2, 1, gammA_2*gammaM_2 
+	#									...etc
+	for f in range(fLength):
+		# intialize
+		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
+		gammaA = npy.zeros(shape=(numStds,1),dtype=complex)
+		one = npy.ones(shape=(numStds,1),dtype=complex)
+		M = npy.zeros(shape=(numStds, numCoefs),dtype=complex) 
+		
+		for k in range(0,numStds):
+			gammaM[k] = gammaMList[k][f]
+			gammaA[k] = gammaAList[k][f]
+			
+		M = npy.hstack([gammaA, one+gammaA*gammaM ])
+		ab[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
+		residues[f,:] = npy.linalg.lstsq(M, gammaM)[1]
+		
+	return ab,residues
 
 
 
