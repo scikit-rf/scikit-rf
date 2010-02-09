@@ -1553,6 +1553,59 @@ def applyABC( gamma, abc):
 		gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
 		return gammaCal
 	
+def deEmbed1Port(gammaM, ntwkB):
+	'''
+	calculates the de-embed one port of ntwkA  embeded behind ntwkB, 
+	from measurement gammaM.
+	
+	takes:
+		gammaM - the 1-port measured data. a 1-port mwavepy.ntwk type 
+			or a 1D numpy.ndarray 
+		ntwkB - the 2-port network embeding the network desired. a
+			2-port mwavepy.ntwk type or a kx2x2 numpy.ndarray
+	
+	returns:
+		ntwkB - the unembeded network behind ntwkB. type depends on 
+			input.
+	
+	'''
+	if isinstance(gammaM,ntwk):
+		# they passed us ntwk types, so lets get the relevent parameter
+		#make sure its a 1-port
+		if gamma.rank >1:
+			print 'ERROR: this takes a 1-port'
+			raise RuntimeError
+			return None
+		else:
+			s11 = ntwkB.s[:,0,0]
+			s21 = ntwkB.s[:,1,0]
+			s12 = ntwkB.s[:,0,1]
+			s22 = ntwkB.s[:,1,1]
+			gamma = gammaM.s[:,0,0]
+			
+			gammaCal = 	((gamma - s11) /\
+						(s21*s12-s11*s22 + gamma*s22))
+			
+			newNtwk = copy(gammaM)
+			newNtwk.__sets__(gammaCal)
+			return  newNtwk
+	else:
+		#TODO: probably could handle input dimensions more flexibly if
+		# used map() function somehow. 
+		# for clarity this is same as:
+		# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
+		s11 = ntwkB[:,0,0]
+		s21 = ntwkB[:,1,0]
+		s12 = ntwkB[:,0,1]
+		s22 = ntwkB[:,1,1]
+		
+			
+		gammaCal = 	((gammaM - s11) /\
+					(s21*s12-s11*s22 + gamma*s22))
+			
+		return gammaCal
+	
+	
 	
 
 
