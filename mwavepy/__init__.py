@@ -36,13 +36,16 @@ from copy import copy
 
 #TODO LIST
 '''
-other network types z,y,abcd
+TBD:
+generate other network types z,y,abcd from any given parameter
+allow constructor to call using any parameter
 network conversions
 network connections (parrallel, series)
 tranmission line classes ( what properties do all transmission lines share)
 de-embeding 
 
 
+POSSIBLE CHANGES:
 does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz 
 and have an option to the plot command for GHz, which is the only time we would want it
 
@@ -325,7 +328,15 @@ class ntwk:
 		self.sdeg = npy.angle(self.s, deg=True)
 		self.srad = npy.angle(self.s)
 
-
+	#def __copy__(self):
+		#'''
+		#returns a copy of this ntwk. 
+		
+		#this is needed for initializing ntwks which you dont want pointing to the original. 
+		#see  copy.copy() for more info
+		#'''
+		#temp =  copy(self)
+		#return None
 
 	def plotdB(self, m=None,n=None, ax=None,**kwargs):
 		'''
@@ -350,6 +361,9 @@ class ntwk:
 		else:
 			ax1 = ax
 		
+		
+		ax1.axhline(0,color='black')
+		
 		if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
 			ax1.plot(self.sdB[:,m,n],label=labelString,**kwargs)
@@ -357,7 +371,7 @@ class ntwk:
 			ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,m,n],label=labelString,**kwargs)
 		
 		
-		ax1.axhline(0,color='black')
+		
 		plb.axis('tight')
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
 		plb.ylabel('Magnitude (dB)')
@@ -418,7 +432,8 @@ class ntwk:
 			ax1 = plb.gca()
 		else:
 			ax1 = ax
-		
+			
+		ax1.axhline(0,color='black')
 		if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
 			ax1.plot(self.sdeg[:,m,n],label=labelString,**kwargs)
@@ -1231,6 +1246,134 @@ def createImpedanceStep(z1,z2,numPoints=1):
 
 
 	
+
+def zCapacitor(capacitance,frequency):
+	'''
+	calculates the impedance of a capacitor.
+	
+	takes:
+		capacitance - capacitance, in Farads. can be a single value or 
+			numpy.ndarray
+		frequency - frequency at which to calculate capacitance. can be 
+			a single value or a numpy.ndarray()
+			
+	returns:
+		impedance - impedance of capacitor at given frequency. type 
+			depends on input
+	'''
+	return 1/(1j*2*npy.pi*frequency*capacitance)
+
+def zInductor(inductance,frequency):
+	'''
+	calculates the impedance of an inductor.
+	
+	takes:
+		inductance - capacitance, in Henrys. can be a single value or 
+			numpy.ndarray.
+		frequency - frequency at which to calculate capacitance. can be 
+			a single value or a numpy.ndarray()
+			
+	returns:
+		impedance - impedance of inductor at given frequency. type 
+			depends on input
+	'''
+	return (1j*2*npy.pi*frequency*inductance)
+
+def seriesZ(z1, z2):
+	'''
+	calculates series connection of impedances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		z1+z2
+	'''
+	return z1 + z2
+	
+def seriesY(y1,y2):
+	'''
+	calculates series connection of 2 admitances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		z1+z2
+	'''
+	if y1==0:
+		return y2
+	elif y2==0:
+		return y1
+	else:
+		return parallel(1./y1,1./y2)	
+
+def parallelY(y1,y2):
+	'''
+	calculates parallel connection of impedances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		1/(1/z1+1/z2)
+	'''
+	return y1 + y2
+	
+	
+def parallelZ(z1,z2):
+	'''
+	calculates parallel connection of impedances.
+	
+	takes: 
+		z1 - impedance 1.
+		z2 - impedance 2
+	returns:
+		1/(1/z1+1/z2)
+	'''
+	if z1 == 0 or z2==0:
+		return 0
+	else:
+		return 1/(1./z1+1./z2)
+
+def createShuntAdmittance(y,z0=50,numPoints=1):
+	'''
+	creates a 2-port S-matrix of an impedance mismatch where port 1 is 
+	terminated 	with impedance z1, and port 2 is terminated with 
+	impedance z2.
+	
+	takes:
+		z1 - impedance at port 1. (can be a single complex value ,
+			or a numpy.array)
+		z2 - impedance at port 2 ((can be a single complex value ,
+			or a numpy.array)
+		numPoints - number of points to generate this S-matrix. This is 
+			not used if z1 and z2 are arrays.
+	'''
+	if isinstance(y, npy.ndarray):
+		numPoints = len(y)
+		if z0 == 50:
+			z0 = npy.ones(numPoints)*z0
+	else:
+		# assume they passed us a single value,
+		numPoints = numPoints
+	
+	zl =1./(y + 1./z0) 
+	s11 = npy.ones(numPoints,dtype=complex)*gamma(zl,z0)
+	s21 = npy.ones(numPoints,dtype=complex)+s11
+	s22 = s11
+	s12 = s21
+
+	return npy.array([[s11, s12],\
+					[s21, s22] ]).transpose().reshape(-1,2,2)
+
+
+
+
+	
+
+
+
 
 ############## calibration ##############
 ## one port
