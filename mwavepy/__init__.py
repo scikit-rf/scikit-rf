@@ -22,17 +22,37 @@
 #	Most of these functions have not been rigidly tested. use with caution!!
 
 
-import numpy as npy
-import pylab as plb
-from numpy import sqrt, exp, array,tan,sin,cos,inf
-
-from scipy.constants import  epsilon_0, mu_0, c,pi, mil
-from scipy import signal
+## imports
+# Builtin  libs
 import os # for fileIO
-from matplotlib.patches import Circle 	# for drawing smith chart
-from matplotlib.lines import Line2D		# for drawing smith chart
-from touchstone import touchstone as touch	# for loading data from touchstone files
 from copy import copy
+
+# Dependencies
+try:
+	import numpy as npy
+	from numpy import sqrt, exp, array,tan,sin,cos,inf
+except:
+	raise ImportError ('Depedent Packages not found. Please install: numpy')
+try:
+	import pylab as plb
+	from matplotlib.patches import Circle 	# for drawing smith chart
+	from matplotlib.lines import Line2D		# for drawing smith chart
+except:
+	raise ImportError ('Depedent Packages not found. Please install: matplotlib')
+try:
+	from scipy.constants import  epsilon_0, mu_0, c,pi, mil
+	from scipy import signal
+except:
+	raise ImportError ('Depedent Packages not found. Please install: scipy')
+	
+#Optional
+try: 
+	import sympy as sym
+except:
+	print ('Import Warning: sympy not available.')
+
+# Internal 
+from touchstone import touchstone as touch	# for loading data from touchstone files
 
 #TODO LIST
 '''
@@ -1190,15 +1210,15 @@ def zinOpen(z0,theta):
 
 
 ## connections
-def connectionSeries(ntwkA,ntwkB):
+def connectionSeries(A,B):
 	'''
 	cascades two 2-port networks together, and returns resultant network
 	
 	takes:
-		ntwkA - network at port 1. can be a mwavepy.ntwk type  or a 
-			kxnxn numpy.ndarray representing an S-matrix. 
-		ntwkA - network at port 2. can be a mwavepy.ntwk type  or a 
-			kxnxn numpy.ndarray representing an S-matrix	
+		A - network at port 1. can be a mwavepy.ntwk type  or a 
+			2x2, or kx2x2 numpy.ndarray representing an S-matrix. 
+		B - network at port 2. can be a mwavepy.ntwk type  or a 
+			2x2, or kx2x2 numpy.ndarray representing an S-matrix. 
 		
 	returns: 
 		ntwkC - resultant network, of cascaded ntwkA, ntwkB. type is the
@@ -1207,39 +1227,50 @@ def connectionSeries(ntwkA,ntwkB):
 	
 	'''
 	
-	if isinstance(ntwkA, ntwk) and isinstance(ntwkB, ntwk):
-		raise NotImplementedError
-	elif isinstance(ntwkA, npy.ndarray) and isinstance(ntwkB, npy.ndarray):
-		if ntwkA.shape != ntwkB.shape:
-			# ntwks must be same shape
-			raise ValueError
-		# TODO: add some  shape checking	
+	if isinstance(A, ntwk) and isinstance(B, ntwk):
+		raise NotImplementedError('sorry!')
+		return None
+	elif isinstance(A, sym.Matrix) and isinstance(B, sym.Matrix):
+		# just typecast to ndarray, calculate series network then 
+		# re-cast into sym.Matrix
+		A = npy.array(A)
+		B = npy.array(B)
+		C = connectionSeries(A,B)
+		return sym.Matrix(C)
 		
-		ntwkC = npy.zeros(shape=ntwkA.shape)
-		for k in range(ntwkA.shape[0]):
-			ntwkC[k,1,0] = 	ntwkA[k,1,0]*ntwkB[k,1,0] /\
-							1 - ntwkA[k,1,1]*ntwkB[k,0,0]
-			ntwkC[k,0,1] = 	ntwkA[k,0,1]*ntwkB[k,0,1] /\
-							1 - ntwkA[k,1,1]*ntwkB[k,0,0]
-			ntwkC[k,0,0] = ntwkA[k,0,0]+ntwkA[k,1,0]*ntwkB[k,0,0]*ntwkA[k,0,1] /\
-								1 - ntwkA[k,1,1]*ntwkB[k,0,0]
-			ntwkC[k,1,1] = ntwkB[k,1,1]+ntwkB[k,0,1]*ntwkA[k,1,1]*ntwkB[k,1,0] /\
-								1 - ntwkA[k,1,1]*ntwkB[k,0,0]
-		return ntwkC
+	elif isinstance(A, npy.ndarray) and isinstance(B, npy.ndarray):
+		if A.shape != B.shape:
+			raise ValueError('A and B must be same shape')
+			return None
+		elif A.shape != (2,2):
+			# A and B are not a 2x2 array
+			if len(A.shape) == 3 and A.shape[1:3] == (2,2):
+				#A and B are kx2x2 matrix's we can handle it 
+				C = npy.zeros(shape=A.shape)
+				for k in range(A.shape[0]):
+					C[k,:,:] = connectionSeries(A[k,:,:],B[k,:,:])
+				return C
+			else:
+				raise IndexError('invalid shapes of A or B, must be 2x2\
+					or kx2x2, where k is arbitrary')
+				return None
+		else:
+			assert  A.shape == B.shape == (2,2)
+			C = npy.zeros(shape=(2,2))
+			
+			C[1,0] = (A[1,0]*B[1,0]) /\
+					(1 - A[1,1]*B[0,0])
+			C[0,1] = (A[0,1]*B[0,1]) /\
+					(1 - A[1,1]*B[0,0])
+			
+			C[0,0] = A[0,0]+(A[1,0]*B[0,0]*A[0,1] )/\
+					(1 - A[1,1]*B[0,0])
+			C[1,1] = B[1,1]+(B[0,1]*A[1,1]*B[1,0] )/\
+					(1 - A[1,1]*B[0,0])
+		return C
 	else:
-		# ntwkA and ntwkB must be either mwavepy.ntwk or numpy.ndarry 
-		# types
-		raise TypeError
+		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
 		
-	
-	
-	
-
-		
-	
-
-
-
 
 ## S-parameter Network Creation
 #TODO: should name these more logically. like createSMatrix_Short()
