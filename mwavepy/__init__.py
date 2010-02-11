@@ -141,9 +141,13 @@ def deg2rad(deg):
 
 ############### Ploting ############### 
 def plotComplex(complexData,ax=None,**kwargs):
+	# TODO: doc this and handle ax input
 	plb.plot(npy.real(complexData),label='Real',**kwargs)
 	plb.plot(npy.imag(complexData),label='Imag',**kwargs)
 	plb.legend(loc='best')
+def plotReVsIm(complexData,ax = None, **kwargs):
+	plb.plot(npy.real(complexData), npy.imag(complexData),**kwargs)
+	
 def plotOnSmith(complexData,ax=None,**kwargs):
 	if ax == None:
 		ax1 = plb.gca()
@@ -1330,7 +1334,20 @@ def deEmbed1Port(gammaM, ntwkB):
 					(s21*s12-s11*s22 + gammaM*s22))
 			
 		return gammaCal
+def terminate(A,B):
+	'''
+	returns the resultant 1-port of network A terminated at port 2
+	with B. 
 	
+	takes:
+		A - 
+		B - 
+	returns:
+		C - 
+	'''
+	
+	raise NotImplementedError
+	return None
 			
 
 ## S-parameter Network Creation
