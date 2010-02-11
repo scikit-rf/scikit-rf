@@ -1210,18 +1210,25 @@ def zinOpen(z0,theta):
 
 
 ## connections
-def connectionSeries(A,B):
+def cascade(A,B):
 	'''
 	cascades two 2-port networks together, and returns resultant network
 	
 	takes:
-		A - network at port 1. can be a mwavepy.ntwk type  or a 
-			2x2, or kx2x2 numpy.ndarray representing an S-matrix. 
-		B - network at port 2. can be a mwavepy.ntwk type  or a 
-			2x2, or kx2x2 numpy.ndarray representing an S-matrix. 
+		A - network at port 1. can be:
+				mwavepy.ntwk
+				2x2, or kx2x2 numpy.ndarray 
+				sympy.Matrix
+			all which represent an S-matrix. 
+		
+		B - network at port 1. can be:
+				mwavepy.ntwk
+				2x2, or kx2x2 numpy.ndarray 
+				sympy.Matrix
+			all which represent an S-matrix. 
 		
 	returns: 
-		ntwkC - resultant network, of cascaded ntwkA, ntwkB. type is the
+		C - resultant network, of cascaded ntwkA, ntwkB. type is the
 			same as the type passed. 
 	
 	
@@ -1235,7 +1242,7 @@ def connectionSeries(A,B):
 		# re-cast into sym.Matrix
 		A = npy.array(A)
 		B = npy.array(B)
-		C = connectionSeries(A,B)
+		C = cascade(A,B)
 		return sym.Matrix(C)
 		
 	elif isinstance(A, npy.ndarray) and isinstance(B, npy.ndarray):
@@ -1246,9 +1253,9 @@ def connectionSeries(A,B):
 			# A and B are not a 2x2 array
 			if len(A.shape) == 3 and A.shape[1:3] == (2,2):
 				#A and B are kx2x2 matrix's we can handle it 
-				C = npy.zeros(shape=A.shape)
+				C = A.copy()
 				for k in range(A.shape[0]):
-					C[k,:,:] = connectionSeries(A[k,:,:],B[k,:,:])
+					C[k,:,:] = cascade(A[k,:,:],B[k,:,:])
 				return C
 			else:
 				raise IndexError('invalid shapes of A or B, must be 2x2\
@@ -1256,7 +1263,7 @@ def connectionSeries(A,B):
 				return None
 		else:
 			assert  A.shape == B.shape == (2,2)
-			C = npy.zeros(shape=(2,2))
+			C = A.copy()
 			
 			C[1,0] = (A[1,0]*B[1,0]) /\
 					(1 - A[1,1]*B[0,0])
@@ -1270,7 +1277,61 @@ def connectionSeries(A,B):
 		return C
 	else:
 		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
+
+
+def deEmbed1Port(gammaM, ntwkB):
+	'''
+	calculates the de-embed one port of ntwkA  embeded behind ntwkB, 
+	from measurement gammaM.
+	
+	takes:
+		gammaM - the 1-port measured data. a 1-port mwavepy.ntwk type 
+			or a 1D numpy.ndarray 
+		ntwkB - the 2-port network embeding the network desired. a
+			2-port mwavepy.ntwk type or a kx2x2 numpy.ndarray
+	
+	returns:
+		ntwkB - the unembeded network behind ntwkB. type depends on 
+			input.
+	
+	'''
+	if isinstance(gammaM,ntwk):
+		# they passed us ntwk types, so lets get the relevent parameter
+		#make sure its a 1-port
+		if gammaM.rank >1:
+			print 'ERROR: this takes a 1-port'
+			raise RuntimeError
+			return None
+		else:
+			s11 = ntwkB.s[:,0,0]
+			s21 = ntwkB.s[:,1,0]
+			s12 = ntwkB.s[:,0,1]
+			s22 = ntwkB.s[:,1,1]
+			gamma = gammaM.s[:,0,0]
+			
+			gammaCal = 	((gamma - s11) /\
+						(s21*s12-s11*s22 + gamma*s22))
+			
+			newNtwk = copy(gammaM)
+			newNtwk.__sets__(gammaCal)
+			return  newNtwk
+	else:
+		#TODO: probably could handle input dimensions more flexibly if
+		# used map() function somehow. 
+		# for clarity this is same as:
+		# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
+		s11 = ntwkB[:,0,0]
+		s21 = ntwkB[:,1,0]
+		s12 = ntwkB[:,0,1]
+		s22 = ntwkB[:,1,1]
 		
+			
+		gammaCal = 	((gammaM - s11) /\
+					(s21*s12-s11*s22 + gammaM*s22))
+			
+		return gammaCal
+	
+			
 
 ## S-parameter Network Creation
 #TODO: should name these more logically. like createSMatrix_Short()
@@ -1342,6 +1403,11 @@ def createDelay(freqVector, l,beta = beta0 ):
 	return npy.array([[s11, s12],\
 					[s21, s22] ]).transpose().reshape(-1,2,2)
 
+
+def createThru(numpPoints):
+	thru = npy.zeroes(shape=(numPoints,2,2))
+	thru[:,0,1] = thru[:,1,0]=1
+	return thru
 
 def createImpedanceStep(z1,z2,numPoints=1):
 	'''
@@ -1657,59 +1723,7 @@ def applyABC( gamma, abc):
 		gammaCal = (gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2])
 		return gammaCal
 	
-def deEmbed1Port(gammaM, ntwkB):
-	'''
-	calculates the de-embed one port of ntwkA  embeded behind ntwkB, 
-	from measurement gammaM.
-	
-	takes:
-		gammaM - the 1-port measured data. a 1-port mwavepy.ntwk type 
-			or a 1D numpy.ndarray 
-		ntwkB - the 2-port network embeding the network desired. a
-			2-port mwavepy.ntwk type or a kx2x2 numpy.ndarray
-	
-	returns:
-		ntwkB - the unembeded network behind ntwkB. type depends on 
-			input.
-	
-	'''
-	if isinstance(gammaM,ntwk):
-		# they passed us ntwk types, so lets get the relevent parameter
-		#make sure its a 1-port
-		if gammaM.rank >1:
-			print 'ERROR: this takes a 1-port'
-			raise RuntimeError
-			return None
-		else:
-			s11 = ntwkB.s[:,0,0]
-			s21 = ntwkB.s[:,1,0]
-			s12 = ntwkB.s[:,0,1]
-			s22 = ntwkB.s[:,1,1]
-			gamma = gammaM.s[:,0,0]
-			
-			gammaCal = 	((gamma - s11) /\
-						(s21*s12-s11*s22 + gamma*s22))
-			
-			newNtwk = copy(gammaM)
-			newNtwk.__sets__(gammaCal)
-			return  newNtwk
-	else:
-		#TODO: probably could handle input dimensions more flexibly if
-		# used map() function somehow. 
-		# for clarity this is same as:
-		# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
-		s11 = ntwkB[:,0,0]
-		s21 = ntwkB[:,1,0]
-		s12 = ntwkB[:,0,1]
-		s22 = ntwkB[:,1,1]
-		
-			
-		gammaCal = 	((gammaM - s11) /\
-					(s21*s12-s11*s22 + gammaM*s22))
-			
-		return gammaCal
-	
-	
+
 	
 
 
