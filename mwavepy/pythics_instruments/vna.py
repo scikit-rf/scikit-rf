@@ -61,11 +61,10 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 		'''
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
 	
-	
 		
 	def setS(self, sParam):
 		'''
-		makes the vna measure the desiredS s-parameterS.
+		makes the vna switch the active s-parameter to  the desiredS s-parameterS.
 		
 		sParam- a string. may be either s11,s12,s21, or s22
 		

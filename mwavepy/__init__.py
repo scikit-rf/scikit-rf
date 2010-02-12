@@ -970,7 +970,7 @@ class waveguide:
 			two port S matrix for a waveguide thru section of length l 
 		'''
 		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s = createDelay(self.band[0],self.band[1],numPoints,l, self.beta)		
+		s = createDelay(freqVector=freq,l=l, beta=self.beta)		
 		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 		
 		
@@ -1574,21 +1574,26 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	takes: 
 		gammaMList - list of measured reflection coefficients. can be 
 			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or a 1-port mwavepy.ntwk types. 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
 		gammaAList - list of assumed reflection coefficients. can be 
 			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or a 1-port mwavepy.ntwk types. 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
 	
 	returns:
-		abc is a Nx3 ndarray containing the complex calibrations coefficients,
-		where N is the number of frequency points in the standards that where 
-		givenpy.
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given. 
+			residues is a matrix of residues from the least squared 
+			calculation. see numpy.linalg.lstsq() for more info
 	
 	 
 		
 	 note:
 		For calibration of general 2-port error networks, 3 standards 
 		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
 		the standards used in OSM calibration dont actually have to be 
 		an open, short, and match. they are arbitrary but should provide
 		good seperation on teh smith chart for good accuracy .
@@ -1628,8 +1633,11 @@ def getABCLeastSquares(gammaMList, gammaAList):
 			
 		M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
 		abc[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
+		residues[f,:] = npy.linalg.lstsq(M, gammaM)[1]
 		
-	return abc
+	return abc,residues
+	
+	
 def getABLeastSquares(gammaMList, gammaAList):
 	'''
 	calculates calibration coefficients for a one port calibration with
