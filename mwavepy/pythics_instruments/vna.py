@@ -6,7 +6,7 @@
 #       This program is free software; you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
 #       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later version.
+#       (at your option) any later versionpy.
 #       
 #       This program is distributed in the hope that it will be useful,
 #       but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,13 +19,26 @@
 #       MA 02110-1301, USA.
 '''
 
-#import visa
-import pythics.libinstrument
-import mwavepy as m	
-import numpy as n
+# Builtin imports
 from time import sleep 
 
+# Depencies
+try:
+	import pythics.libinstrument
+except:
+	raise ImportError ('Depedent Packages not found. Please install pythics')
+try:
+	import numpy as npy
+except:
+	raise ImportError ('Depedent Packages not found. Please install: numpy')
+	
+# local imports
+import mwavepy as m	
+
+
+
 # see http://pyvisa.sourceforge.net/pyvisa/node10.html for GPIB methods
+# see http://sigma.ucsd.edu/Facilities/manuals/8510C.pdf
 GHz= 1e9
 
 class hp8720c(pythics.libinstrument.GPIBInstrument):
@@ -34,27 +47,30 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 	'''
 	def __init__(self, *args, **kwargs):
 		'''
-		default constructor. common options are 
-			"GPIB::$addressNumber"
-			timeout=$GPIBTimeout
+		default constructor see pyvisa for more info.
 		
+		example:
+			myvna = hp8720c("GPIB::16", timeout=10)
+		where:
+			"GPIB::16", where 16 is the GPIB address number
+			timeout=10, timeout of GPIB commands, in seconds
+		
+		see http://pyvisa.sourceforge.net/pyvisa/node10.html for GPIB 
+		methods
+
 		'''
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
 	
 	
 		
-	def setS(self, input,opc=True):
+	def setS(self, sParam):
 		'''
 		makes the vna measure the desiredS s-parameterS.
-		desiredS - a string. may be either s11,s12,s21, or s22
-		opc=True/False  sends a "OPC?" to vna after setting s-parame, 
-			which waits for it to switch, before continuing (doesnt work on 8510)
+		
+		sParam- a string. may be either s11,s12,s21, or s22
 		
 		'''	
 		self.write(input + ';')
-		if opc:
-			self.ask("OPC?;SING;")
-		
 		# learn how to call these methods from within methodss waitOPC()
 		return None
 				
@@ -63,10 +79,10 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 		'''
 		returns output from 'OUTPDATA' in array format
 		'''
-		data = n.array(self.ask_for_values("OUTPDATA;"))
+		data = npy.array(self.ask_for_values("OUTPDATA;"))
 		return data
 		
-	def getS(self,sParam=None):
+	def getS(self,sParam=None, opc=True):
 		'''
 		returns an s-parameter type, which represents current S-param data,
 		
@@ -74,7 +90,11 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 		z0 - is the characteristic impedance to assign to the s-parameter
 		'''
 		if sParam != None:
-			setS(sParam)
+			self.setS(sParam)
+			
+		if opc:
+			self.ask("OPC?;SING;")
+			
 		# Long sweeps may create time outs, see pyvisa page for solving this
 		# using contructor  options
 		data = self.getData()
@@ -85,45 +105,53 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 		s = sReal +1j*sImag
 		return s
 	
-	def getOnePort(self):
+	def getOnePort(self, sParam=None, opc=True):
 		'''
-		TODO: could ask for current s-param and put it in the name field. 
-		'''
+		gets a 1-port s-parameter ntwk
+		
+		takes: 
+			sParam - string of which s-parameter to get 
+		returns:
+			mwavepy.ntwk 1-port object
+		'''	
 		freq= getFrequencyAxis()
-		s = getS()
+		if sParame != None:
+			s = getS(sParam = sParam, opc=opc)
+		else:
+			s = getS( opc=opc)
 		return m.ntwk(data=s, paramType='s',freq=freq)
 		
 	def getTwoPort(self):
 		'''
-		returns an two-port type, which represents current DUT
-		
-		freqArray - is the frequency array assigned to the s-parameter
-		z0 - is the characteristic impedance to assign to the s-parameter
+		returns an mwavepy.ntwk 2-port type, which represents current 
+		DUT
 		'''
 		# Long sweeps may create time outs, see pyvisa page for solving this
 		# using contructor  options
-		self.setS('s11') 
-		s11 = self.getS(freqArray,z0)	
-		self.setS('s21') 
-		s21 = self.getS(freqArray,z0)
-		self.setS('s12') 
-		s12 = self.getS(freqArray,z0)
-		self.setS('s22') 
-		s22 = self.getS(freqArray,z0)
+		
+		freq = self.getFrequencyAxis()
+		s11 = self.getS('S11')	
+		s21 = self.getS('S21')
+		s12 = self.getS('S12')
+		s22 = self.getS('S22')
+		
+		s = npy.array([[s11, s12],[s21, s22]])
+		# reshape to kx2x2
+		s = s.transpose().reshape(-1,2,2)
 		# call s-parameter constructor
-		return m.twoPort (s11,s12,s21,s22)
+		return m.ntwk(data=s, freq=freq, paramType='s')
 		
 	def getFrequencyAxis(self, freqUnit=1e9):
 		'''
-		returns the current frequency axis.
-		optionally scales freq by 1/freqUnit
+		returns the current frequency axis. optionally scales freq 
+		by 1/freqUnit
 		TODO: should ask vna for freqUnit
 		'''
 		fStart = float(self.ask("star?"))/freqUnit
 		fStop = float(self.ask("stop?"))/freqUnit
 		fPoints = int(float(self.ask("poin?")))
 		# setup frequency list, in units of freqUnit
-		freqs = n.linspace(fStart,fStop,fPoints)
+		freqs = npy.linspace(fStart,fStop,fPoints)
 		return freqs
 	
 	
@@ -177,6 +205,8 @@ class hp8720c(pythics.libinstrument.GPIBInstrument):
 class hp8510c(pythics.libinstrument.GPIBInstrument):
 	'''
 	Virtual Instrument for HP8720C model VNA.
+	
+	see http://sigma.ucsd.edu/Facilities/manuals/8510C.pdf
 	'''
 	def __init__(self, *args, **kwargs):
 		'''
@@ -189,14 +219,18 @@ class hp8510c(pythics.libinstrument.GPIBInstrument):
 	
 	
 		
-	def setS(self, input):
+	def setS(self, sParam):
 		'''
-		makes the vna measure the desiredS s-parameterS.
-		desiredS - a string. may be either s11,s12,s21, or s22
-		uses the a "SING;" command for timing
+		sets the vna to measure the desired s-parameter.
+		
+		takes:
+			sParam - a string. may be either s11,s12,s21, or s22
+			sing - boolean, if true, uses the a "SING;" command for 
+				which waits for 1 sweep to finish before any command can
+				run. 
 		
 		'''	
-		self.write(input + ';sing;')
+		self.write(sParam )
 		
 		# learn how to call these methods from within methodss waitOPC()
 		return None
@@ -206,17 +240,19 @@ class hp8510c(pythics.libinstrument.GPIBInstrument):
 		'''
 		returns output from 'OUTPDATA' in array format
 		'''
-		data = n.array(self.ask_for_values("OUTPDATA;"))
+		data = npy.array(self.ask_for_values("OUTPDATA;"))
 		return data
 		
-	def getS(self, freqArray=[],z0=50):
+	def getS(self, sParam=None, sing=True):
 		'''
-		returns an s-parameter type, which represents current S-param data,
 		
-		freqArray - is the frequency array assigned to the s-parameter
-		z0 - is the characteristic impedance to assign to the s-parameter
+		
 		'''
-		freqArray = self.getFrequencyAxis()
+		freq = self.getFrequencyAxis()
+		if sParam != None:
+			self.setS(sParam)
+		if sing == True:
+			self.write('sing;')
 		# Long sweeps may create time outs, see pyvisa page for solving this
 		# using contructor  options
 		data = self.getData()
@@ -224,7 +260,7 @@ class hp8510c(pythics.libinstrument.GPIBInstrument):
 		sReal = data[0:len(data):2]
 		sImag = data[1:len(data):2]
 		# call s-parameter constructor
-		return m.s('re',freqArray,'GHz', sReal,sImag,z0)
+		return m.ntwk(data=data, freq=freq, paramType='s')
 		
 	def getTwoPort(self, freqArray=[],z0=50):
 		'''
@@ -256,7 +292,7 @@ class hp8510c(pythics.libinstrument.GPIBInstrument):
 		fStop = float(self.ask("stop;outpacti;"))/freqUnit
 		fPoints = int(float(self.ask("poin;outpacti;")))
 		# setup frequency list, in units of freqUnit
-		freqs = n.linspace(fStart,fStop,fPoints)
+		freqs = npy.linspace(fStart,fStop,fPoints)
 		return freqs
 	
 	
