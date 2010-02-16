@@ -46,7 +46,7 @@ backend_fallback: True
 ### LINES
 # See http://matplotlib.sourceforge.net/api/artist_api.html#module-matplotlib.lines for more
 # information on line properties.
-#lines.linewidth   : 1.0     # line width in points
+lines.linewidth   : .750     # line width in points
 #lines.linestyle   : -       # solid line
 #lines.color       : blue
 #lines.marker      : None    # the default marker
@@ -63,7 +63,7 @@ backend_fallback: True
 # circles.  See
 # http://matplotlib.sourceforge.net/api/artist_api.html#module-matplotlib.patches
 # information on patch properties
-#patch.linewidth   	: 1.0     # edge width in points
+patch.linewidth   	: .50     # edge width in points
 #patch.facecolor  	: blue
 #patch.edgecolor  	: black
 #patch.antialiased 	: True    # render patches in antialised (no jaggies)
@@ -113,12 +113,12 @@ font.family         : serif
 # settings for axes and ticks. Special text sizes can be defined
 # relative to font.size, using the following values: xx-small, x-small,
 # small, medium, large, x-large, xx-large, larger, or smaller
-#font.size           : 12.0
-font.serif          : Times, Bitstream Vera Serif, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman,  Palatino, Charter, serif
-font.sans-serif     : Helvetica, Bitstream Vera Sans, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif
-font.cursive        :  Zapf Chancery, Sand, cursive
+font.size           : 10.0
+#font.serif          : Times, Bitstream Vera Serif, New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman,  Palatino, Charter, serif
+#font.sans-serif     : Helvetica, Bitstream Vera Sans, Lucida Grande, Verdana, Geneva, Lucid, Arial, Helvetica, Avant Garde, sans-serif
+#font.cursive        :  Zapf Chancery, Sand, cursive
 #font.fantasy        : Comic Sans MS, Chicago, Charcoal, Impact, Western, fantasy
-font.monospace      : Courier, Bitstream Vera Sans Mono, Andale Mono, Nimbus Mono L, Courier New, Courier, Fixed, Terminal, monospace
+#font.monospace      : Courier, Bitstream Vera Sans Mono, Andale Mono, Nimbus Mono L, Courier New, Courier, Fixed, Terminal, monospace
 
 ### TEXT
 # text properties used by text.Text.  See
@@ -198,8 +198,8 @@ text.usetex         : True  # use latex for all text handling. The following fon
 #axes.edgecolor      : black   # axes edge color
 #axes.linewidth      : 1.0     # edge linewidth
 axes.grid           : True   # display grid or not
-#axes.titlesize      : large   # fontsize of the axes title
-axes.labelsize      : small  # fontsize of the x any y labels
+axes.titlesize      : medium    # fontsize of the axes title
+axes.labelsize      : 8  # fontsize of the x any y labels
 #axes.labelcolor     : black
 #axes.axisbelow      : False   # whether axis gridlines and ticks are below
                               # the axes elements (lines, text, etc)
@@ -219,7 +219,7 @@ axes.labelsize      : small  # fontsize of the x any y labels
 #xtick.major.pad      : 4      # distance to major tick label in points
 #xtick.minor.pad      : 4      # distance to the minor tick label in points
 #xtick.color          : k      # color of the tick labels
-#xtick.labelsize      : medium # fontsize of the tick labels
+xtick.labelsize      :small# fontsize of the tick labels
 #xtick.direction      : in     # direction: in or out
 
 #ytick.major.size     : 4      # major tick size in points
@@ -227,7 +227,7 @@ axes.labelsize      : small  # fontsize of the x any y labels
 #ytick.major.pad      : 4      # distance to major tick label in points
 #ytick.minor.pad      : 4      # distance to the minor tick label in points
 #ytick.color          : k      # color of the tick labels
-#ytick.labelsize      : medium # fontsize of the tick labels
+ytick.labelsize      : small # fontsize of the tick labels
 #ytick.direction      : in     # direction: in or out
 
 
@@ -241,7 +241,7 @@ axes.labelsize      : small  # fontsize of the x any y labels
                                # legend, else a rectangle
 #legend.isaxes        : True
 #legend.numpoints     : 2      # the number of points in the legend line
-legend.fontsize      : medium
+legend.fontsize      : 8  #small
 legend.loc			: best
 #legend.pad           : 0.0    # deprecated; the fractional whitespace inside the legend border
 #legend.borderpad     : 0.5    # border whitspace in fontsize units
@@ -255,16 +255,16 @@ legend.loc			: best
 
 ### FIGURE
 # See http://matplotlib.sourceforge.net/api/figure_api.html#matplotlib.figure.Figure
-figure.figsize   : 6, 4    # figure size in inches
+figure.figsize   : 5.5, 3.5    # figure size in inches
 figure.dpi       : 120      # figure dots per inch
 #figure.facecolor : 0.75    # figure facecolor; 0.75 is scalar gray
 #figure.edgecolor : white   # figure edgecolor
 
 # The figure subplot parameters.  All dimensions are fraction of the
 # figure width or height
-figure.subplot.left	    : 0.1  # the left side of the subplots of the figur
-figure.subplot.right	: 0.93    # the right side of the subplots of the figure
-#figure.subplot.bottom	: 0.1    # the bottom of the subplots of the figure
+figure.subplot.left	    : 0.12  # the left side of the subplots of the figur
+figure.subplot.right	: 0.9    # the right side of the subplots of the figure
+figure.subplot.bottom	: 0.12    # the bottom of the subplots of the figure
 #figure.subplot.top	: 0.9    # the top of the subplots of the figure
 #figure.subplot.wspace	: 0.2    # the amount of width reserved for blank space between subplots
 #figure.subplot.hspace	: 0.2    # the amount of height reserved for white space between subplots

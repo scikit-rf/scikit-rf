@@ -365,8 +365,8 @@ class ntwk:
 
 	def __mul__(self, A):
 		'''
-		the multiply operator is overloaded to use the cascade or 
-		terminate function, depending on the rank of the operands.
+		the multiply operator is overloaded to use the cascade 
+		function,.
 		
 		if both operands, A and B,  are 2-port ntwk's:
 			A * B = cascade(A,B)
@@ -376,11 +376,9 @@ class ntwk:
 			A * B = terminate(A,B), B is attached at port 2
 			B * A = terminate(B,A), B is attached at port 1
 		'''
-		if self.rank == 2 and A.rank == 2:
-			return cascade(self, A)
-		else:
-			return ValueError('operands of incompatable rank. see \
-								help(ntwk.__mul__)')
+
+		return cascade(self, A)
+
 	def __div__(self, A):
 		'''
 		the divide operator is overloaded to use the deEmbed or 
@@ -418,9 +416,9 @@ class ntwk:
 		if self.rank == 1:
 			raise IndexError('how do you flip a 1-port?')
 		elif self.rank == 2: 
-			flippedS = npy.array([ [self.s[:,1,1],self.s[:,1,0]],\
-									[self.s[:,0,1],self.s[:,0,0]] ])
-			self.__sets__(flippledS)
+			flippedS = npy.array([ [self.s[:,1,1],self.s[:,0,1]],\
+									[self.s[:,1,0],self.s[:,0,0]] ]).transpose().reshape(-1,2,2)
+			self.__sets__(flippedS)
 		else:
 			raise NotImplementedError
 			
@@ -1335,13 +1333,13 @@ def cascade(A,B):
 		# most of this code is just dumb shape checking.  the actual
 		# calculation very simple, its at the end
 		
-		if len( A.shape > 2 ) or len( B.shape > 2 ):
+		if len( A.shape ) > 2  or len( B.shape ) > 2 :
 			# we have a multiple frequencies, ie  kxnxn, so we are going
 			# to recursively call ourselves for each freq point
 			if A.shape[0]  == B.shape[0]:
 				# the returned netwok should be a 1-port if either input
 				# is  a 1-port
-				if A.shape(1) > B.shape(1): 
+				if A.shape[1] > B.shape[1]: 
 					C = B.copy()
 				else:
 					#assert: A is a 1-port or A and B are 2-ports
@@ -1523,19 +1521,6 @@ def deEmbed(C, A):
 		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
 			
 	
-def terminate(A,B):
-	'''
-	returns the resultant 1-port of network A terminated at port 2
-	with B. 
-	
-	takes:
-		A - 2-port network
-		B - 1-port network
-	returns:
-		C - 1-port network
-	'''
-	# could use cascade function and return s11
-	return NotImplementedError
 			
 
 ## S-parameter Network Creation
