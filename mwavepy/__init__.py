@@ -64,6 +64,8 @@ network connections (parrallel, series)
 tranmission line classes ( what properties do all transmission lines share)
 de-embeding 
 
+check if they have usetex on and use tex formatting for legend of 
+s-parameters
 
 POSSIBLE CHANGES:
 does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz 
@@ -359,6 +361,27 @@ class ntwk:
 		#temp =  copy(self)
 		#return None
 
+	def __mul__(self, A):
+		'''
+		the multiply operator is overloaded to use the cascade or 
+		terminate function, depending on the rank of the operands.
+		
+		if both operands, A and B,  are 2-port ntwk's:
+			A * B = cascade(A,B)
+			B * A = cascade(B,A)
+		
+		if A 2-port and B is  1-port ntwk:
+			A * B = terminate(A,B), B is attached at port 2
+			B * A = terminate(B,A), B is attached at port 1
+		'''
+		if self.rank == 2 and A.rank == 2:
+			return cascade(self, A)
+			
+		else:
+			return ValueError('operands of incompatable rank. see \
+								help(ntwk.__mul__)')
+								
+		
 	def plotdB(self, m=None,n=None, ax=None,**kwargs):
 		'''
 		plots a given parameter in log mag mode. (20*npy.log10(mag))
@@ -371,8 +394,7 @@ class ntwk:
 		'''
 		if ( m==None or n==None) and (self.rank > 1):
 			# if this ntwk is not a 1-port and they did not pass indecies raise error
-			print 'Error: please specify indecies.'
-			raise RuntimeError
+			raise RuntimeError('Error: please specify indecies.')
 		elif ( m==None or n==None) and (self.rank == 1):
 			m = 0
 			n = 0
@@ -385,19 +407,18 @@ class ntwk:
 		
 		
 		ax1.axhline(0,color='black')
-		
+		print labelString
 		if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
 			ax1.plot(self.sdB[:,m,n],label=labelString,**kwargs)
+			plb.xlabel('Index')
 		else:
 			ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,m,n],label=labelString,**kwargs)
-		
-		
+			plb.xlabel('Frequency (' + self.freqUnit +')') 
+			plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		
 		plb.axis('tight')
-		plb.xlabel('Frequency (' + self.freqUnit +')') 
 		plb.ylabel('Magnitude (dB)')
-		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		plb.grid(1)
 		plb.legend(loc='best')
 		plb.draw()
@@ -444,8 +465,7 @@ class ntwk:
 		'''
 		if ( m==None or n==None) and (self.rank > 1):
 			# if this ntwk is not a 1-port and they did not pass indecies raise error
-			print 'Error: please specify indecies.'
-			raise RuntimeError
+			raise RuntimeError('Error: please specify indecies.')
 		elif ( m==None or n==None) and (self.rank == 1):
 			m = 0
 			n = 0
@@ -680,7 +700,7 @@ def passivityTest(smat):
 	'''
 	passivity = npy.zeros(smat.shape)
 	
-	for f in range(smat.shape[2]):
+	for f in range(smat.shape[0]):
 		passivity[f,:,:] = npy.eye(smat.shape[1]) - npy.dot(smat[f,:,:],smat[f,:,:].conj().transpose())
 			#for tmp in  eigvals(passivity[:,:,f]):
 				#if real(tmp) < 0:
@@ -838,6 +858,9 @@ class waveguide:
 			band - tuple defining max and min frequencies. defaults to (1.25,1.9)*fc10
 			epsilonR - relative permativity of filling material 
 			muR - relative permiability of filling material
+		
+		note: support for dielectrically filled waveguide, ie epsilonR 
+			and muR, is not supported
 		'''
 		self.a = a
 		self.b = b
@@ -1232,15 +1255,20 @@ def cascade(A,B):
 			all which represent an S-matrix. 
 		
 	returns: 
-		C - resultant network, of cascaded ntwkA, ntwkB. type is the
+		C - resultant network, of cascaded A, B. type is the
 			same as the type passed. 
 	
 	
 	'''
 	
 	if isinstance(A, ntwk) and isinstance(B, ntwk):
-		raise NotImplementedError('sorry!')
-		return None
+		if A.rank != 2 or B.rank !=2 :
+			raise ValueError('both networks must be 2-ports')
+		
+		C = copy(A)
+		C.__sets__(cascade(A.s, B.s))
+		C.name = A.name + ' Terminated With ' + B.name
+		return C
 	elif isinstance(A, sym.Matrix) and isinstance(B, sym.Matrix):
 		# just typecast to ndarray, calculate series network then 
 		# re-cast into sym.Matrix
@@ -1283,55 +1311,60 @@ def cascade(A,B):
 		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
 
 
-def deEmbed1Port(gammaM, ntwkB):
+def deEmbed(C, A):
 	'''
-	calculates the de-embed one port of ntwkA  embeded behind ntwkB, 
-	from measurement gammaM.
+	calculates the de-embed one port of ntwkA  embeded behind B, 
+	from measurement C.
 	
 	takes:
-		gammaM - the 1-port measured data. a 1-port mwavepy.ntwk type 
+		C - the 1-port measured data. a 1-port mwavepy.ntwk type 
 			or a 1D numpy.ndarray 
-		ntwkB - the 2-port network embeding the network desired. a
+		B - the 2-port network embeding the network desired. a
 			2-port mwavepy.ntwk type or a kx2x2 numpy.ndarray
 	
 	returns:
-		ntwkB - the unembeded network behind ntwkB. type depends on 
+		B - the unembeded network behind B. type depends on 
 			input.
 	
 	'''
-	if isinstance(gammaM,ntwk):
+	if isinstance(C,ntwk):
 		# they passed us ntwk types, so lets get the relevent parameter
 		#make sure its a 1-port
-		if gammaM.rank >1:
+		if C.rank >1:
 			print 'ERROR: this takes a 1-port'
 			raise RuntimeError
 			return None
+		if C.rank == 2 and A.rank == 2:
+		elif C.rank == 2 and A.rank == 1:
+		elif C.rank == 1 and A.rank == 2:
+		
 		else:
-			s11 = ntwkB.s[:,0,0]
-			s21 = ntwkB.s[:,1,0]
-			s12 = ntwkB.s[:,0,1]
-			s22 = ntwkB.s[:,1,1]
-			gamma = gammaM.s[:,0,0]
-			
-			gammaCal = 	((gamma - s11) /\
-						(s21*s12-s11*s22 + gamma*s22))
-			
-			newNtwk = copy(gammaM)
-			newNtwk.__sets__(gammaCal)
+			B11 =	((C.s[:,0,0] - A.s[:,0,0]) /\
+					(A.s[:,1,0]*A.s[:,0,1]-A.s[:,0,0]*A.s[:,1,1] +\
+					 C.s[:,0,0]*A.s[:,1,1]))
+			B22 = ((C.s[:,0,0] - A.s[:,0,0]) /\
+					(A.s[:,1,0]*A.s[:,0,1]-A.s[:,0,0]*A.s[:,1,1] +\
+					 C.s[:,0,0]*A.s[:,1,1]))
+			B12 = (C.s[:,0,1]-C.s[:,0,1]*A.s[:,1,1]*B.s[:,0,0]) /\
+					
+			B21 = 
+			newNtwk = copy(C)
+			newNtwk.__sets__(C11)
 			return  newNtwk
+			
 	else:
 		#TODO: probably could handle input dimensions more flexibly if
 		# used map() function somehow. 
 		# for clarity this is same as:
 		# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
-		s11 = ntwkB[:,0,0]
-		s21 = ntwkB[:,1,0]
-		s12 = ntwkB[:,0,1]
-		s22 = ntwkB[:,1,1]
+		s11 = A[:,0,0]
+		s21 = A[:,1,0]
+		s12 = A[:,0,1]
+		s22 = A[:,1,1]
 		
 			
-		gammaCal = 	((gammaM - s11) /\
-					(s21*s12-s11*s22 + gammaM*s22))
+		gammaCal = 	((C - s11) /\
+					(s21*s12-s11*s22 + C*s22))
 			
 		return gammaCal
 def terminate(A,B):
@@ -1340,14 +1373,13 @@ def terminate(A,B):
 	with B. 
 	
 	takes:
-		A - 
-		B - 
+		A - 2-port network
+		B - 1-port network
 	returns:
-		C - 
+		C - 1-port network
 	'''
-	
-	raise NotImplementedError
-	return None
+	# could use cascade function and return s11
+	return NotImplementedError
 			
 
 ## S-parameter Network Creation
