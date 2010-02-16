@@ -67,6 +67,8 @@ de-embeding
 check if they have usetex on and use tex formatting for legend of 
 s-parameters
 
+write a flip functions to invert ports, 
+
 POSSIBLE CHANGES:
 does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz 
 and have an option to the plot command for GHz, which is the only time we would want it
@@ -381,7 +383,11 @@ class ntwk:
 			return ValueError('operands of incompatable rank. see \
 								help(ntwk.__mul__)')
 								
-		
+	def flip(self):
+		'''
+		invert the ports of a networks s-matrix, 'flipping' it over
+		'''
+		raise NotImplementedError	
 	def plotdB(self, m=None,n=None, ax=None,**kwargs):
 		'''
 		plots a given parameter in log mag mode. (20*npy.log10(mag))
@@ -1313,60 +1319,107 @@ def cascade(A,B):
 
 def deEmbed(C, A):
 	'''
-	calculates the de-embed one port of ntwkA  embeded behind B, 
-	from measurement C.
+	calculates the de-embed network of A  embeded behind B, 
+	from measurement C. ie C = A * B
 	
 	takes:
-		C - the 1-port measured data. a 1-port mwavepy.ntwk type 
-			or a 1D numpy.ndarray 
-		B - the 2-port network embeding the network desired. a
-			2-port mwavepy.ntwk type or a kx2x2 numpy.ndarray
+		C - cascade(A, B), mwavepy.ntwk type or a numpy.ndarray 
+		A - the 2-port network embeding the network. a 2-port 
+			mwavepy.ntwk type or a kx2x2 numpy.ndarray
 	
 	returns:
 		B - the unembeded network behind B. type depends on 
 			input.
 	
+	note
+	
 	'''
-	if isinstance(C,ntwk):
+	#TODO: look into implementing this with a cascade inverse network. 
+	# so C = A*B , B = A^-1*A*B 
+	
+	
+	if isinstance(C,ntwk) and isinstance(A,ntwk):
 		# they passed us ntwk types, so lets get the relevent parameter
 		#make sure its a 1-port
-		if C.rank >1:
-			print 'ERROR: this takes a 1-port'
-			raise RuntimeError
-			return None
-		if C.rank == 2 and A.rank == 2:
-		elif C.rank == 2 and A.rank == 1:
-		elif C.rank == 1 and A.rank == 2:
-		
+		if ( C.rank == 2 and A.rank == 2) or (C.rank ==1 and A.rank == 2):
+			B = copy(C)
+			B.__sets__(deEmbed(C.s, A.s))
+			B.name = A.name + ' De-Emedded From ' + B.name
+			return B
 		else:
-			B11 =	((C.s[:,0,0] - A.s[:,0,0]) /\
-					(A.s[:,1,0]*A.s[:,0,1]-A.s[:,0,0]*A.s[:,1,1] +\
-					 C.s[:,0,0]*A.s[:,1,1]))
-			B22 = ((C.s[:,0,0] - A.s[:,0,0]) /\
-					(A.s[:,1,0]*A.s[:,0,1]-A.s[:,0,0]*A.s[:,1,1] +\
-					 C.s[:,0,0]*A.s[:,1,1]))
-			B12 = (C.s[:,0,1]-C.s[:,0,1]*A.s[:,1,1]*B.s[:,0,0]) /\
-					
-			B21 = 
-			newNtwk = copy(C)
-			newNtwk.__sets__(C11)
-			return  newNtwk
-			
-	else:
-		#TODO: probably could handle input dimensions more flexibly if
-		# used map() function somehow. 
-		# for clarity this is same as:
-		# gammaCal(k)=(gammaDut(k)-b)/(a+gammaDut(k)*c); for all k 
-		s11 = A[:,0,0]
-		s21 = A[:,1,0]
-		s12 = A[:,0,1]
-		s22 = A[:,1,1]
+			raise IndexError('C and A are or incorrect rank. see help.')
+
+	elif isinstance(C, sym.Matrix) and isinstance(A, sym.Matrix):
+		# just typecast to ndarray, calculate series network then 
+		# re-cast into sym.Matrix
+		A = npy.array(A)
+		C = npy.array(C)
+		B = deEmbed(C,A)
+		return sym.Matrix(B)
 		
+	elif isinstance(C, npy.ndarray) and isinstance(A, npy.ndarray):
+		if A.shape != (2,2):
+			# A is not a 2x2 array.
+			if len(A.shape) == 3 and A.shape[1:3] == (2,2):	
+				# A is kx2x2
+				if len(C.shape) == 3 or len(C.shape) == 2:
+					# is either a kxp or a kxpxq, passing allong
+					#Both A and C are  kx2x2 matrix's we can handle it 
+					if C.shape[0]  == A.shape[0]:
+						B = C.copy()
+						for k in range(C.shape[0]):
+							B[k] = deEmbed(C[k],A[k]) # C[k] = C[k,:,:]
+						return B
+					else:
+						raise IndexError('A.shape[0] ! = C.shape[0], \
+						meaning, they are not the same length along the \
+						frequency axis')
+				else:
+					raise IndexError('invalid shapes of C, must be kx2x2\
+					or kx1x1 or kx1, where k is arbitrary')
+			else:
+				raise IndexError('invalid shapes of A or B, must be 2x2\
+					or kx2x2, where k is arbitrary')
+	
+		else:
+			# A is a 2x2 smat 
+			assert A.shape == (2,2)
+			if C.shape == (2,2):
+				# A is a 2-port and C is a 2-port 
+				assert  A.shape == C.shape == (2,2)
+				
+				B = C.copy()
+				
+				B[0,0] =((C[0,0] - A[0,0]) /\
+					(A[1,0]*A[0,1]-A[0,0]*A[1,1] + C[0,0]*A[1,1]))
+				B[1,1] = ((C[0,0] - A[0,0]) /\
+					(A[1,0]*A[0,1]-A[0,0]*A[1,1] + C[0,0]*A[1,1]))
+				B[0,1] = (C[0,1]-C[0,1]*A[1,1]*B[0,0])/\
+							A[0,1]
+				B[1,0] = (C[1,0]-C[1,0]*A[1,1]*B[0,0])/\
+							A[1,0]
+				return  B
 			
-		gammaCal = 	((C - s11) /\
-					(s21*s12-s11*s22 + C*s22))
+			elif C.shape == (1,):
+				# C is a 1-port and A is a 2-port
+				B = C.copy()
+				B[0] =((C[0] - A[0,0]) /\
+					(A[1,0]*A[0,1]-A[0,0]*A[1,1] + C[0]*A[1,1]))
+				return B					
+			elif C.shape == (1,1):
+				# C is a 1-port, and A is a 2-port
+				B = C.copy()
+				B[0,0] =((C[0,0] - A[0,0]) /\
+					(A[1,0]*A[0,1]-A[0,0]*A[1,1] + C[0,0]*A[1,1]))
+				return B
+			else:
+				raise IndexError ('Input networks have invalid shapes. see\
+				help for more details. ')
+		
+	else:
+		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
 			
-		return gammaCal
+	
 def terminate(A,B):
 	'''
 	returns the resultant 1-port of network A terminated at port 2
