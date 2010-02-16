@@ -1281,36 +1281,48 @@ def zinOpen(z0,theta):
 ## connections
 def cascade(A,B):
 	'''
-	cascades two 2-port networks together, and returns resultant network
+	cascades two  networks together, and returns resultant network
 	
 	takes:
 		A - network at port 1. can be:
-				mwavepy.ntwk
-				2x2, or kx2x2 numpy.ndarray 
+				1-port or 2-port mwavepy.ntwk
+				2x2, kx2x2, 1x1, or kx1x1 numpy.ndarray 
 				sympy.Matrix
 			all which represent an S-matrix. 
 		
-		B - network at port 1. can be:
-				mwavepy.ntwk
-				2x2, or kx2x2 numpy.ndarray 
+		B - network at port 2. can be:
+				1-port or 2-port mwavepy.ntwk
+				2x2, kx2x2, 1x1, or kx1x1 numpy.ndarray 
 				sympy.Matrix
 			all which represent an S-matrix. 
 		
 	returns: 
 		C - resultant network, of cascaded A, B. type is the
 			same as the type passed. 
+			
+	note:
+		A and B can not both be 1-ports, duh.
 	
 	
 	'''
 	
 	if isinstance(A, ntwk) and isinstance(B, ntwk):
-		if A.rank != 2 or B.rank !=2 :
-			raise ValueError('both networks must be 2-ports')
+		if (A.rank == 2 and B.rank == 2) or \
+		(A.rank == 2 or  B.rank == 2) and (A.rank == 1 or B.rank == 1):
+			# this reads: both are 2-port OR  
+			# 		ones a 2-port and one is a 1-port
+			if A.rank > B.rank: 
+				C = copy(B)
+			else:
+				C = copy(A)
+			
+			C.__sets__(cascade(A.s, B.s))
+			C.name = A.name + ' Cascaded With ' + B.name
+			return C
+		else:	
+			raise ValueError('Invalid rank for input ntwk\'s, see help')
 		
-		C = copy(A)
-		C.__sets__(cascade(A.s, B.s))
-		C.name = A.name + ' Terminated With ' + B.name
-		return C
+		
 	elif isinstance(A, sym.Matrix) and isinstance(B, sym.Matrix):
 		# just typecast to ndarray, calculate series network then 
 		# re-cast into sym.Matrix
@@ -1320,38 +1332,81 @@ def cascade(A,B):
 		return sym.Matrix(C)
 		
 	elif isinstance(A, npy.ndarray) and isinstance(B, npy.ndarray):
-		if A.shape != B.shape:
-			raise ValueError('A and B must be same shape')
-			return None
-		elif A.shape != (2,2):
-			# A and B are not a 2x2 array
-			if len(A.shape) == 3 and A.shape[1:3] == (2,2):
-				#A and B are kx2x2 matrix's we can handle it 
-				C = A.copy()
+		# most of this code is just dumb shape checking.  the actual
+		# calculation very simple, its at the end
+		
+		if len( A.shape > 2 ) or len( B.shape > 2 ):
+			# we have a multiple frequencies, ie  kxnxn, so we are going
+			# to recursively call ourselves for each freq point
+			if A.shape[0]  == B.shape[0]:
+				# the returned netwok should be a 1-port if either input
+				# is  a 1-port
+				if A.shape(1) > B.shape(1): 
+					C = B.copy()
+				else:
+					#assert: A is a 1-port or A and B are 2-ports
+					C = A.copy()
+				
 				for k in range(A.shape[0]):
-					C[k,:,:] = cascade(A[k,:,:],B[k,:,:])
+					C[k] = cascade(A[k],B[k]) # C[k] = C[k,:,:]
 				return C
+			
 			else:
-				raise IndexError('invalid shapes of A or B, must be 2x2\
-					or kx2x2, where k is arbitrary')
-				return None
+				raise IndexError('A.shape[0] ! = B.shape[0], \
+				meaning, they are not the same length along the \
+				frequency axis')
+			
 		else:
-			assert  A.shape == B.shape == (2,2)
-			C = A.copy()
+			# we have only 1 frequency point	
+			if A.shape == (2,2) and B.shape == (2,2):
+				# A and B are 2-port s matricies
+				C = A.copy()
+				
+				C[1,0] = (A[1,0]*B[1,0]) /\
+						(1 - A[1,1]*B[0,0])
+				C[0,1] = (A[0,1]*B[0,1]) /\
+						(1 - A[1,1]*B[0,0])
+				
+				C[0,0] = A[0,0]+(A[1,0]*B[0,0]*A[0,1] )/\
+						(1 - A[1,1]*B[0,0])
+				C[1,1] = B[1,1]+(B[0,1]*A[1,1]*B[1,0] )/\
+						(1 - A[1,1]*B[0,0])
+				return C
+				
+			elif A.shape == (2,2) and ( B.shape == (1,1) or B.shape == (1,)):
+				# A is a 2-port B is  a 1-port s-matrix, C will be 1-port
+				if B.shape == (1,1):
+					C = B.copy()	
+					C[0,0] = A[0,0]+(A[1,0]*B[0,0]*A[0,1] )/\
+							(1 - A[1,1]*B[0,0])
+					return C
+				elif B.shape == (1,):
+					C = B.copy()	
+					C[0,0] = A[0,0]+(A[1,0]*B[0]*A[0,1] )/\
+							(1 - A[1,1]*B[0])
+					return C
 			
-			C[1,0] = (A[1,0]*B[1,0]) /\
-					(1 - A[1,1]*B[0,0])
-			C[0,1] = (A[0,1]*B[0,1]) /\
-					(1 - A[1,1]*B[0,0])
-			
-			C[0,0] = A[0,0]+(A[1,0]*B[0,0]*A[0,1] )/\
-					(1 - A[1,1]*B[0,0])
-			C[1,1] = B[1,1]+(B[0,1]*A[1,1]*B[1,0] )/\
-					(1 - A[1,1]*B[0,0])
-		return C
+				
+			elif B.shape == (2,2) and ( A.shape == (1,1) or A.shape == (1,)):
+				# B is a 2-port A is  a 1-port s-matrix, C will be 1-port
+				if A.shape == (1,1):
+					C = A.copy()
+					C[0,0] = B[0,0]+(B[1,0]*A[0,0]*B[0,1] )/\
+							(1 - B[1,1]*A[0,0])
+					return C
+				elif A.shape == (1,):
+					C = A.copy()
+					C[0,0] = B[0,0]+(B[1,0]*A[0]*B[0,1] )/\
+							(1 - B[1,1]*A[0])
+					return C	
+					
+			else:
+				raise IndexError('invalid shapes of A or B,see help')
+		
+		
 	else:
 		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
-
+		
 
 def deEmbed(C, A):
 	'''
