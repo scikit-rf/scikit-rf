@@ -378,16 +378,52 @@ class ntwk:
 		'''
 		if self.rank == 2 and A.rank == 2:
 			return cascade(self, A)
-			
 		else:
 			return ValueError('operands of incompatable rank. see \
 								help(ntwk.__mul__)')
-								
+	def __div__(self, A):
+		'''
+		the divide operator is overloaded to use the deEmbed or 
+		function.
+				
+		C/A = deEmbed(C,A)
+		
+		note:
+		this function has a directionality assumption. C must be a 
+		cascaded connection of A.port2 = B.port1, for B to be de-embeded
+		by passing C, and A for example, 
+		
+		assume * corresponds to cascade function, and / the deEmbed()
+		if C = A*B
+			C/ A = B 
+			C/B != A
+		if C = B*A
+			C/B = A
+			C/A != B 
+			
+		if you wish to deEmbed from port 2, see ntwk.flip
+		'''
+		return deEmbed(self,A)
+									
 	def flip(self):
 		'''
 		invert the ports of a networks s-matrix, 'flipping' it over
+		
+		note:
+			only works for 2-ports at the moment
+		
+		there is probably a good matrix implementation of this i dont 
+		know it. 
 		'''
-		raise NotImplementedError	
+		if self.rank == 1:
+			raise IndexError('how do you flip a 1-port?')
+		elif self.rank == 2: 
+			flippedS = npy.array([ [self.s[:,1,1],self.s[:,1,0]],\
+									[self.s[:,0,1],self.s[:,0,0]] ])
+			self.__sets__(flippledS)
+		else:
+			raise NotImplementedError
+			
 	def plotdB(self, m=None,n=None, ax=None,**kwargs):
 		'''
 		plots a given parameter in log mag mode. (20*npy.log10(mag))
@@ -1331,7 +1367,18 @@ def deEmbed(C, A):
 		B - the unembeded network behind B. type depends on 
 			input.
 	
-	note
+	note:
+		this function has a directionality assumption. C must be a 
+		cascaded connection of A.port2 = B.port1, for B to be de-embeded
+		by passing C, and A for example, 
+		
+		assume * corresponds to cascade function, and / the deEmbed()
+		if C = A*B
+			C/ A = B 
+			C/B != A
+		if C = B*A
+			C/B = A
+			C/A != B 
 	
 	'''
 	#TODO: look into implementing this with a cascade inverse network. 
