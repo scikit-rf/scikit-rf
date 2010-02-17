@@ -1912,7 +1912,8 @@ def getABLeastSquares(gammaMList, gammaAList):
 def applyABC( gamma, abc):
 	'''
 	takes a complex array of uncalibrated reflection coefficient and applies
-	the one-port OSM callibration, using the coefficients abc. 
+	the one-port OSM callibration, using the coefficients abc.  
+	instead of this function, you could use abc2ntwk, and then deEmbed. 
 
 	takes:
 		gamma - complex reflection coefficient OR can  be 1-port mwavepy.ntwk() type.
