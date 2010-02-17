@@ -67,7 +67,8 @@ de-embeding
 check if they have usetex on and use tex formatting for legend of 
 s-parameters
 
-write a flip functions to invert ports, 
+rewrite the getABC functions to recursivly call itself instead of just
+looping over frequencies, like we do for casacde, deEmbed
 
 POSSIBLE CHANGES:
 does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz 
@@ -402,7 +403,19 @@ class ntwk:
 		if you wish to deEmbed from port 2, see ntwk.flip
 		'''
 		return deEmbed(self,A)
-									
+	#def __repr__(self):
+		#'''
+		#overloaded for printing of summary, 
+		
+		#note:
+			#this is not finished
+		#'''								
+		#outString =	'Name:\t' + self.name +'\n' + \
+				#'#OfPorts:\t' + repr(self.rank)+'\n'+\
+				#'Type :\t' + self.paramType +'\n' +\
+				#'Frequency Span:\t' + repr(self.freq[0])+ '\t'+repr(self.freq[-1])+'\n' +\
+				#'z0:\t' + repr(self.z0) 
+		#return None
 	def flip(self):
 		'''
 		invert the ports of a networks s-matrix, 'flipping' it over
@@ -447,7 +460,7 @@ class ntwk:
 		
 		
 		ax1.axhline(0,color='black')
-		print labelString
+		
 		if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
 			ax1.plot(self.sdB[:,m,n],label=labelString,**kwargs)
@@ -457,7 +470,7 @@ class ntwk:
 			plb.xlabel('Frequency (' + self.freqUnit +')') 
 			plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		
-		plb.axis('tight')
+		#plb.axis('tight')
 		plb.ylabel('Magnitude (dB)')
 		plb.grid(1)
 		plb.legend(loc='best')
@@ -1433,6 +1446,7 @@ def deEmbed(C, A):
 			C/B = A
 			C/A != B 
 	
+	see ntwk.flip
 	'''
 	#TODO: look into implementing this with a cascade inverse network. 
 	# so C = A*B , B = A^-1*A*B 
@@ -1755,9 +1769,20 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	returns:
 		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
 			complex calibrations coefficients,where N is the number 
-			of frequency points in the standards that where given. 
-			residues is a matrix of residues from the least squared 
-			calculation. see numpy.linalg.lstsq() for more info
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
 	
 	 
 		
@@ -1963,6 +1988,48 @@ def applyABC( gamma, abc):
 
 
 
+
+def abc2Ntwk(abc):
+	'''
+	returns a 2-port ntwk for a given set of calibration coefficients
+	represented by Nx3 matrix abc
+	
+	takes:
+		abc :  
+	returns:
+		eNtwk : 
+	
+	note:
+		s21 = 1
+		s12 = a+b*c ( which  is s21*s12)
+		s11 = b
+		s22 = c
+		
+		This abstract ntwk should only be used for de-embeding 1-port 
+		measurements.
+	'''
+	
+	if len(abc.shape) == 1:
+		# this is abc at one frequency
+		return npy.array([[abc[1], 1],\
+			[abc[0]+abc[1]*abc[2], abc[2]]],\
+			dtype=complex)
+					
+	elif len(abc.shape) == 2:
+		# this is an array of abc's at many frequencies
+		eNtwkS = npy.zeros(shape=(abc.shape[0],2,2),dtype=complex)
+		
+		for k in range(abc.shape[0]):
+			eNtwkS[k]=abc2Ntwk(abc[k])
+		
+		eNtwk = ntwk(data=eNtwkS, paramType='s')
+		return eNtwk
+	else:
+		raise IndexError('shape of input is incorrect')
+			
+	
+	
+	
 ############ DEPRICATED/UNSORTED#####################
 def loadTouchtone(inputFileName):
 	
