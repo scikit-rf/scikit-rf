@@ -924,6 +924,7 @@ class waveguide:
 			self.band= band
 		self.fStart = self.band[0]
 		self.fStop = self.band[1]
+		self.fCenter = (self.band[1]-self.band[0])/2. + self.band[0]
 		#all for dominant mode
 	
 	def fc(self,m=1,n=0):
