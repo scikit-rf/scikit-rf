@@ -928,7 +928,11 @@ def deEmbed(C, A):
 	takes:
 		C - cascade(A, B), mwavepy.ntwk type or a numpy.ndarray 
 		A - the 2-port network embeding the network. a 2-port 
-			mwavepy.ntwk type or a kx2x2 numpy.ndarray
+			mwavepy.ntwk type or a kx2x2 numpy.ndarray.
+			
+			can also be a tuple of the above mentioned types. In this 
+			case, A[0] is deEmbeded on port 1, and A[1] is deEmbeded
+			on port2.
 	
 	returns:
 		B - the unembeded network behind B. type depends on 
@@ -946,6 +950,11 @@ def deEmbed(C, A):
 		if C = B*A
 			C/B = A
 			C/A != B 
+	
+		
+		if a tuple is passed for A then what you get is
+			A[0].inv * C * A[1].inv
+		where .inv is the inverse cascading network.  
 	
 	see ntwk.flip
 	'''
@@ -1378,9 +1387,9 @@ class waveguide:
 		return 2*pi*f / self.beta(2*pi*f,m,n)
 		
 	def zTE(self, omega,m=1,n=0):
-		return eta0 * beta0(omega)/self.beta(omega,m,n)
+		return eta0() * beta0(omega)/self.beta(omega,m,n)
 	def zTM(self, omega,m=1,n=0):
-		return eta0 * self.beta(omega,m,n)/beta0(omega)
+		return eta0() * self.beta(omega,m,n)/beta0(omega)
 
 	## standard creation
 	# one-port 
@@ -1589,11 +1598,11 @@ def eta(epsilonR = 1, muR = 1):
 		muR -  relative permiability (default = 1)
 	'''
 	return sqrt((mu_0*muR)/(epsilonR*epsilon_0))
-def eta0(omega):
+def eta0():
 	'''
 	characteristic impedance of free space. see eta().
 	'''
-	return eta(omega, 1,1)
+	return eta( 1,1)
 	
 def electricalLength( l , f0, beta=beta0,deg=False):
 	'''
@@ -2300,15 +2309,60 @@ def loadAllTouchtonesInDir(dir = '.'):
 
 
 
-def plotCsv(filename,rowsToSkip=1,delim=','):
+
+def grepLegendFromHfssCsv(hfssCsvFile,startOfString):
+	'''
+	produces a list which can be used as a legend info from an hfss 
+	commented .csv file.
+	
+	takes:
+		hfssCsvFile - string of filename
+		startOfString - string to pull out of hfss inserted comments
+	returns:
+		legendList: list of strings which start with startOfString
+	'''
+	hfssCsvFile = open(hfssCsvFile)
+	legendList=[]
+	for k in hfssCsvFile.readlines()[0].split():
+		if k.startswith(startOfString):
+			legendList.append(k)
+	return legendList
+	
+def getHfssLegendAndXaxis(hfssCsvFileName):
+	'''
+	produces the same x-axis label and legend list which is shown in 
+	hfss plotter
+	
+	takes:
+		hfssCsvFileName: string, the filename 
+	returns:
+		(hfssLegendList, hfssXlabel)
+			hfssLegendList: list of strings which can be passed to legend 
+			command
+			hfssXlabel: string which is the Xlabel
+		
+	
+	'''
+	hfssCsvFile = open(hfssCsvFileName)
+	commentLine = hfssCsvFile.readlines()[0]
+	hfssXLabel = commentLine.split(',\"')[0]
+	hfssLegendList = commentLine.split(',\"')[1:-1]
+	return hfssLegendList, hfssXLabel
+
+def plotCsv(filename,**kwargs):
 	'''plots columns from csv file. plots all columns against the first
 	see pylab.loadtxt for more information
 	'''
-	data = plb.loadtxt(filename,skiprows=rowsToSkip,delimiter=delim)
+	data = plb.loadtxt(filename,**kwargs)
 	plb.plot(data[:,0], data[:,1:])
 	plb.grid(1)
 	plb.title(filename)
 
+def plotHfssCsv(filename,**kwargs):
+	plotCsv(filename,skiprows=1, delimiter=',',**kwargs)
+	plb.xlabel (getHfssLegendAndXaxis(filename)[1])
+	plb.legend (getHfssLegendAndXaxis(filename)[0])
+	
 
 
 ##------ other functions ---
