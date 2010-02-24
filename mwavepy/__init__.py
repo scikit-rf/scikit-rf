@@ -2353,18 +2353,69 @@ def plotCsv(filename,**kwargs):
 	'''plots columns from csv file. plots all columns against the first
 	see pylab.loadtxt for more information
 	'''
-	data = plb.loadtxt(filename,**kwargs)
+	data = plb.loadtxt(filename,skiprows=1, delimiter=',',**kwargs)
 	plb.plot(data[:,0], data[:,1:])
 	plb.grid(1)
 	plb.title(filename)
 
 def plotHfssCsv(filename,**kwargs):
-	plotCsv(filename,skiprows=1, delimiter=',',**kwargs)
+	plotCsv(filename,**kwargs)
 	plb.xlabel (getHfssLegendAndXaxis(filename)[1])
 	plb.legend (getHfssLegendAndXaxis(filename)[0])
 	
 
 
+def hfssComment2Dict(hfssCsvFileName):
+	'''
+	converts a hfss exported csv file's comment line into a list of 
+	dictionaries corresponding to parameter
+	'''
+	import re
+	remove_non_digits = re.compile(r'[^\d.]+')
+	
+	hfssFile = open(hfssCsvFileName)
+	commentLine = hfssFile.readline()
+	
+	#convert quoted commas to quotes, so we can split on it
+	commentLineList= commentLine.replace('\",\"','"').split('\"')
+	xAxisLabel = commentLineList[0]
+	yAxisLabel = commentLineList[1][:commentLineList[1].find(' - ')]
+	# split on the double-quotes, ignore first and last entry, they are 
+	# the x-axis label and a newlien character 
+	
+	# the parameter list actually starts after a ' - ', before that is 
+	# the y-axis.
+	for k in range(1,len(commentLineList)):
+		commentLineList[k] = commentLineList[k][commentLineList[k].find(' - ')+3:]
+		
+	
+	inputList = commentLineList[1:]
+	
+	
+	#remove empty strings
+	flag = True
+	while flag:
+	    try:
+	        inputList.remove('')
+	    except ValueError:
+	        flag=False
+	
+	outputList = []
+	
+	for varString in inputList:
+	    varStringList = varString.split()
+	    varDict = {}
+	    for aVar in varStringList:
+	        varList = aVar.split('=')
+	        varDict[varList[0]] = varList[1]
+	    outputList.append(varDict)
+	
+	for aDict in outputList:
+	    for aKey in aDict:
+	        aDict[aKey] = aDict[aKey].replace("'","") #remove quote chars
+	        aDict[aKey] = float(remove_non_digits.sub('', aDict[aKey]))
+	
+	return xAxisLabel, yAxisLabel, outputList
 ##------ other functions ---
 def psd2TimeDomain(f,y, windowType='rect'):
 	'''convert a one sided complex spectrum into a real time-signal.
