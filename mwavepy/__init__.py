@@ -1465,13 +1465,13 @@ class wr(waveguide):
 
 # standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
 # info taken from Virginia Diodes Inc. Waveguide Band Designations
-WR10 = wr(10)
+WR10 = wr(10,band=(75e9,110e9))
 WR8 = wr(8)
 WR6 = wr(6.5)
 WR5 = wr(5.1)
-WR4 = wr(4.3)
-WR3 = wr(3.4)
-WR1p5 = wr(1.5)		
+WR4 = wr(4.3, band = (170e9,260e9))
+WR3 = wr(3.4, band=(220e9,325e9))
+WR1p5 = wr(1.5, band =(500e9,750e9))		
 
 
 ## lumped elements
