@@ -58,11 +58,53 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		'''
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
 
-	def getData(self, dataFormat = ):
-		self.ask_for_values('CALCulate:DATA? sData')
+	
+	def getSParameter(self):
+		
+	
+	
+	
+	
+	def getData(self, dataFormat='sData',Ch=1):
+		'''
+		takes:
+			dataFormat can be ['SDAT','FDAT','MDAT']:
+		returns:
+			data
+			
+		note:
+			FDATa: Formatted trace data, according to the selected trace
+			format (CALCulate<Chn>:FORMat). 1 value per trace point for
+			Cartesian diagrams, 2 values for polar diagrams.
+			
+			sDATa: Unformatted trace data: Real and imaginary part of 
+			each measurement point. 2 values per trace point 
+			irrespective of the selected trace format. The trace 
+			mathematics is not taken into account.
+			
+			MDATa: Unformatted trace data (see SDATa) after evaluation
+			of the trace mathematics.
+
+		'''
+		
+		if dataFormat[:4].upper() not in ['SDAT','FDAT','MDAT']:
+			raise ValueError('dataFormat not acceptable. see help')
+		else:
+			return self.ask_for_values('CALCulate'+repr(Ch)+':DATA? '+dataFormat[:4])
 	
 	
 	def changeFormat(self, newFormat=None, Ch=1):
+		'''
+		changes format type of active data trace.
+		
+		takes:
+			newFormat: SCPI command for new format type. can be any one
+				in formatsList  = ['MLIN','MLOG','PHAS','UPH','POL','SMIT',
+				'ISM','GDEL','REAL','IMAG','SWR']
+		returns:
+			None:
+			
+		'''
 		formatsList  = ['MLIN','MLOG','PHAS','UPH','POL','SMIT','ISM','GDEL','REAL','IMAG','SWR']
 		if newFormat == None:
 			return self.ask('CALCulate' + repr(Ch)+':FORM?')
@@ -114,6 +156,24 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		else:
 			raise ValueError('bad value: see help for acceptable values ')
 		return None
+		
+	def startSweep(self,Ch=1,wait=True,opc=False):
+		if wait == True and opc==False:
+			self.write('INITiate'+repr(Ch)+':IMMediate; *WAIt')
+		
+		elif wait == False and opc==True:
+			if not self.ask('INITiate'+repr(Ch)+':IMMediate; *OPC'):
+				raise GeneralError('didnt recieve OPC answer')
+			
+		elif wait == False and opc==False:
+			self.write('INITiate'+repr(Ch)+':IMMediate;')
+		
+		else:
+			raise ValueError('cant do both wait and opc. or bad input.')
+		
+		return None	
+		
+		
 	
 class hp8720c(pythics.libinstrument.GPIBInstrument):
 	'''
