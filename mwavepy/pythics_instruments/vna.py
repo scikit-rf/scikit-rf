@@ -41,6 +41,80 @@ import mwavepy as m
 # see http://sigma.ucsd.edu/Facilities/manuals/8510C.pdf
 GHz= 1e9
 
+class rszva40(pythics.libinstrument.GPIBInstrument):
+	def __init__(self, *args, **kwargs):
+		'''
+		default constructor see pyvisa for more info.
+		
+		example:
+			myvna = rszva("GPIB::20", timeout=10)
+		where:
+			"GPIB::20", where 16 is the GPIB address number
+			timeout=10, timeout of GPIB commands, in seconds
+		
+		see http://pyvisa.sourceforge.net/pyvisa/node10.html for GPIB 
+		methods
+
+		'''
+		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
+
+	def getData(self, dataFormat = ):
+		self.ask_for_values('CALCulate:DATA? sData')
+	
+	
+	def changeFormat(self, newFormat=None, Ch=1):
+		formatsList  = ['MLIN','MLOG','PHAS','UPH','POL','SMIT','ISM','GDEL','REAL','IMAG','SWR']
+		if newFormat == None:
+			return self.ask('CALCulate' + repr(Ch)+':FORM?')
+		else:
+			self.write('CALCulate' + repr(Ch) +':FORM ' + newFormat)
+		return None
+		
+	
+		
+	def reset(self):
+		self.write('*RST')	 
+		return None
+		
+	def wait(self):
+		'''
+		Wait to continue;
+		WAIt to continue prevents servicing of the subsequent commands
+		no query until all preceding commands have been executed and all
+		signals have settled (see also command synchronization and *OPC).
+
+		'''
+		self.write('*WAIt')	 
+		return None
+		
+	def opc(self):
+		return self.ask('*OPC')
+		
+	def setSweepType(self, continousOn=True,Ch=1):
+		if continousOn == True:
+			self.write('INITiate'+repr(ch)+':CONTinuous ON')
+		elif continousOn == False:
+			self.write('INITiate'+repr(ch)+':CONTinuous OFF')	
+		else:
+			raise ValueError('continousOn must be a boolean.')
+		return None
+	
+	def setSweepScope(self,value,Ch=1):
+		'''
+		takes:
+			value: scope type for sweep [acceptable values:
+			'ALL','SING','SINGLE']
+		returns:
+			None
+		
+		
+		'''
+		if value in ['ALL','SING','SINGLE']:
+			self.write('INITiate'+repr(Ch)+':SCOPe ' + value)
+		else:
+			raise ValueError('bad value: see help for acceptable values ')
+		return None
+	
 class hp8720c(pythics.libinstrument.GPIBInstrument):
 	'''
 	Virtual Instrument for HP8720C model VNA.
