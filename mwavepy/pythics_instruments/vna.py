@@ -36,6 +36,19 @@ except:
 import mwavepy as m	
 
 
+def realTimeDb():
+	clf()
+	myvna.getNtwk().plotdB()
+	ax = gca()
+	trace = ax.get_lines()[1]
+	
+	myvna.setSweepType(continuousOn =False)
+		
+	for k in range(2):
+		myvna.startSweep(wait=False, opc=True)
+		aNtwk = myvna.getNtwk()
+		trace.set_ydata(aNtwk.sdB)
+		draw()
 
 # see http://pyvisa.sourceforge.net/pyvisa/node10.html for GPIB methods
 # see http://sigma.ucsd.edu/Facilities/manuals/8510C.pdf
@@ -59,10 +72,21 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
 
 	
-	def getSParameter(self):
+	
+	def getNtwk(self, nPorts=1, Ch=1, **kwargs):
+		frequencyAxis = self.getFrequencyAxis(Ch=Ch)
+
+		sParameter = self.getSParameter()
+
+		return m.ntwk(data=sParameter, paramType='s', freq = frequencyAxis,\
+			freqMultiplier=1e9, freqUnit='GHz',**kwargs)
+	
+	def getSParameter(self,param=None,Ch=1, **kwargs):
+		# use param input to possibly change s-parameter
+		rawData = npy.array(self.getData(dataFormat='SData',Ch=Ch),dtype=complex)
+		complexData = rawData[0::2]  + 1j*rawData[1::2]
+		return complexData
 		
-	
-	
 	
 	
 	def getData(self, dataFormat='sData',Ch=1):
@@ -92,6 +116,9 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		else:
 			return self.ask_for_values('CALCulate'+repr(Ch)+':DATA? '+dataFormat[:4])
 	
+	def getFrequencyAxis(self,Ch=1):
+		return npy.array(self.ask_for_values('CALCulate'+repr(Ch)+':DATA:STIMulus?'))
+		
 	
 	def changeFormat(self, newFormat=None, Ch=1):
 		'''
@@ -131,12 +158,14 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		
 	def opc(self):
 		return self.ask('*OPC')
-		
-	def setSweepType(self, continousOn=True,Ch=1):
-		if continousOn == True:
-			self.write('INITiate'+repr(ch)+':CONTinuous ON')
-		elif continousOn == False:
-			self.write('INITiate'+repr(ch)+':CONTinuous OFF')	
+	def clear(self):
+		self.write('*CLS')
+	
+	def setSweepType(self, continuousOn=True,Ch=1):
+		if continuousOn == True:
+			self.write('INITiate'+repr(Ch)+':CONTinuous ON')
+		elif continuousOn == False:
+			self.write('INITiate'+repr(Ch)+':CONTinuous OFF')	
 		else:
 			raise ValueError('continousOn must be a boolean.')
 		return None
@@ -157,12 +186,12 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 			raise ValueError('bad value: see help for acceptable values ')
 		return None
 		
-	def startSweep(self,Ch=1,wait=True,opc=False):
+	def startSweep(self,Ch=1,wait=False,opc=True):
 		if wait == True and opc==False:
 			self.write('INITiate'+repr(Ch)+':IMMediate; *WAIt')
 		
 		elif wait == False and opc==True:
-			if not self.ask('INITiate'+repr(Ch)+':IMMediate; *OPC'):
+			if not self.ask('INITiate'+repr(Ch)+':IMMediate; *OPC?'):
 				raise GeneralError('didnt recieve OPC answer')
 			
 		elif wait == False and opc==False:
