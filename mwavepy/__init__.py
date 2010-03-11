@@ -758,7 +758,7 @@ def createNtwkFromTouchstone(filename):
 	myntwk = ntwk()
 	myntwk.loadFromTouchstone(filename)
 	return myntwk	
-def loadAllTouchtonesInDir(dir = '.'):
+def loadAllTouchstonesInDir(dir = '.'):
 	'''
 	loads all touchtone files in a given dir 
 	
