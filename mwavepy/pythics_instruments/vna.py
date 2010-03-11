@@ -36,6 +36,8 @@ except:
 import mwavepy as m	
 
 
+
+	
 def realTimeDb():
 	clf()
 	myvna.getNtwk().plotdB()
@@ -73,6 +75,19 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 
 	
 	
+	
+	def getAFewNtwks(self,fileNamePrefix, numNtwks):
+		self.setSweepType(continuousOn=False)
+		for k in range(numNtwks):
+			print ('sweep #' + repr(k)+ ' started')
+			self.startSweep(opc=True)
+			aNtwk =self.getNtwk()
+			aNtwk.writeToTouchstone(fileNamePrefix+repr(k)+'.s1p')
+	def ask_for_values_workarround(self, message):
+		values = npy.array( self.ask(message).split(','),dtype=float)
+		complexData = values[0::2]  + 1j*values[1::2]
+		return complexData
+		
 	def getNtwk(self, nPorts=1, Ch=1, calOff = False,**kwargs):
 		if calOff:
 			self.correctionOn(False)
@@ -94,8 +109,6 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		
 	def getCalCoefs(self):
 		'''
-		
-		
 		returns: 
 			abc: 
 			the components of abc are 
@@ -110,16 +123,21 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 
 		'''
 		self.setSweepType(continuousOn=False)
-		e00 = npy.array(self.ask_for_values('SENS1:DATA? \'SCORR1\''),dtype=complex)
-		e11 = npy.array(self.ask_for_values('SENS1:DATA? \'SCORR2\''),dtype=complex)
-		e10e01 = npy.array(self.ask_for_values('SENS1:DATA? \'SCORR3\''),dtype=complex)
+		e00 = npy.array(self.ask_for_values_workarround(\
+			'SENS1:CORR:DATA? \'SCORR1\''),dtype=complex)
+		e11 = npy.array(self.ask_for_values_workarround(\
+			'SENS1:CORR:DATA? \'SCORR2\''),dtype=complex)
+		e10e01 = npy.array(self.ask_for_values_workarround(\
+			'SENS1:CORR:DATA? \'SCORR3\''),dtype=complex)
 		
 		a = e10e01-e00*e11
 		b = e00
 		c = e11
-		
+		a = a.reshape(-1,1)
+		b = b.reshape(-1,1)
+		c = c.reshape(-1,1)
 		abc = npy.hstack((a,b,c))
-		
+		return abc
 	
 	def getSParameter(self,param=None,Ch=1, **kwargs):
 		# use param input to possibly change s-parameter
