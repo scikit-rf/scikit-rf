@@ -73,13 +73,53 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 
 	
 	
-	def getNtwk(self, nPorts=1, Ch=1, **kwargs):
+	def getNtwk(self, nPorts=1, Ch=1, calOff = False,**kwargs):
+		if calOff:
+			self.correctionOn(False)
+		else:
+			self.correctionOn(True)
+			
 		frequencyAxis = self.getFrequencyAxis(Ch=Ch)
-
 		sParameter = self.getSParameter()
-
 		return m.ntwk(data=sParameter, paramType='s', freq = frequencyAxis,\
 			freqMultiplier=1e9, freqUnit='GHz',**kwargs)
+	
+	
+	def correctionOn(self,value = True,Ch=1):
+		if value:
+			self.write('SENS'+repr(Ch)+':CORR ON')
+		else:
+			self.write('SENS'+repr(Ch)+':CORR OFF')
+		return None
+		
+	def getCalCoefs(self):
+		'''
+		
+		
+		returns: 
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+				
+
+		'''
+		self.setSweepType(continuousOn=False)
+		e00 = npy.array(self.ask_for_values('SENS1:DATA? \'SCORR1\''),dtype=complex)
+		e11 = npy.array(self.ask_for_values('SENS1:DATA? \'SCORR2\''),dtype=complex)
+		e10e01 = npy.array(self.ask_for_values('SENS1:DATA? \'SCORR3\''),dtype=complex)
+		
+		a = e10e01-e00*e11
+		b = e00
+		c = e11
+		
+		abc = npy.hstack((a,b,c))
+		
 	
 	def getSParameter(self,param=None,Ch=1, **kwargs):
 		# use param input to possibly change s-parameter
