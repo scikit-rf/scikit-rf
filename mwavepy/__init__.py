@@ -758,7 +758,28 @@ def createNtwkFromTouchstone(filename):
 	myntwk = ntwk()
 	myntwk.loadFromTouchstone(filename)
 	return myntwk	
+def loadAllTouchtonesInDir(dir = '.'):
+	'''
+	loads all touchtone files in a given dir 
 	
+	takes:
+		dir  - the path to the dir, passed as a string (defalut is cwd)
+	returns:
+		ntwkDict - a Dictonary with keys equal to the file name (without
+			a suffix), and values equal to the corresponding ntwk types
+	
+		
+	'''
+	ntwkDict = {}
+
+	for f in os.listdir (dir):
+		# TODO: make this s?p with reg ex
+		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
+			name = f[:-4]
+			ntwkDict[name]=(createNtwkFromTouchstone(f))
+			
+		
+	return ntwkDict	
 def passivityTest(smat):
 	'''
 	check that the network represented by scattering parameter matrix (smat) is passive. returns a matrix the kxnxn, of which each k-slice is  I-smat*conj(traspose(S))
@@ -2282,30 +2303,7 @@ def loadPortImpedanceFromTouchtone(inputFileName):
 
 
 
-def loadAllTouchtonesInDir(dir = '.'):
-	'''
-	loads all touchtone files in a given dir 
-	
-	takes:
-		dir  - the path to the dir, passed as a string (defalut is cwd)
-	returns:
-		ntwkList  - lists holding basenames of the files loaded, and a list of mwavepy networks. If you are using pylab you can plot these easily like so: 
-	
-	example usage:
-		import mwavepy as m
-		nameList, ntwkList = m.loadAllTouchtonesInDir()
-		for n in ntwkList:
-			npy.plotReturnLoss()
-		
-	'''
-	ntwkList=[]
 
-	for f in os.listdir (dir):
-		# TODO: make this s?p with reg ex
-		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
-			ntwkList.append(createNtwkFromTouchstone(f))
-		
-	return ntwkList
 
 
 
