@@ -57,6 +57,11 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 #TODO LIST
 '''
 TBD:
+use get/set for states like .s and .freq (to simultaneously update 
+.freqMultiplier, etc)
+
+add a assumeReciprocity=True/False option to abc2Ntwk (to break up S12*S21)
+
 generate other network types z,y,abcd from any given parameter
 allow constructor to call using any parameter
 network conversions
@@ -73,6 +78,7 @@ looping over frequencies, like we do for casacde, deEmbed
 POSSIBLE CHANGES:
 does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz 
 and have an option to the plot command for GHz, which is the only time we would want it
+
 
 freqUnit and freqMultiplier are redundant. 
 
@@ -235,6 +241,14 @@ def smith(smithR=1,ax=None):
 
 
 
+
+def saveAllFigs(dir = './', format=['eps','png']):
+	for fignum in plb.get_fignums():
+		plb.figure(fignum)
+		fileName = plb.gca().get_title()
+		for fmt in format:
+			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
+		
 ############### network theory  ################
 ## base network class.
 class ntwk:
@@ -2157,19 +2171,20 @@ def applyABC( gamma, abc):
 
 
 
-def abc2Ntwk(abc):
+def abc2Ntwk(abc, **kwargs):
 	'''
 	returns a 2-port ntwk for a given set of calibration coefficients
 	represented by Nx3 matrix abc
 	
 	takes:
-		abc :  
+		abc : 
+		**kwargs: passed to mwavepy.ntwk 
 	returns:
 		eNtwk : 
 	
 	note:
-		s21 = 1
-		s12 = a+b*c ( which  is s21*s12)
+		s21 = a+b*c ( which  is s21*s12)
+		s12 = 1
 		s11 = b
 		s22 = c
 		
@@ -2190,7 +2205,7 @@ def abc2Ntwk(abc):
 		for k in range(abc.shape[0]):
 			eNtwkS[k]=abc2Ntwk(abc[k])
 		
-		eNtwk = ntwk(data=eNtwkS, paramType='s')
+		eNtwk = ntwk(data=eNtwkS, paramType='s',**kwargs)
 		return eNtwk
 	else:
 		raise IndexError('shape of input is incorrect')
