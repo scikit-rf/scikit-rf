@@ -249,6 +249,24 @@ def saveAllFigs(dir = './', format=['eps','png']):
 		for fmt in format:
 			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
 		
+
+def plotErrorCoefsFromDict(errorDict,freq= None,ax = None, **kwargs):
+	if not ax:
+		ax = plb.gca()
+	
+	if freq == None:	
+		for k in errorDict.keys():
+			ax.plot(complex2dB(errorDict[k]),label=k,**kwargs) 
+	else:
+		for k in errorDict.keys():
+			ax.plot(freq, complex2dB(errorDict[k]),label=k,**kwargs) 
+	ax.axhline(0,color='black')		
+	plb.axis('tight')
+	plb.legend(loc='best')
+	plb.xlabel('Frequency (GHz)') 
+	plb.ylabel('Magnitude (dB)')
+	plb.grid(1)
+	plb.draw()
 ############### network theory  ################
 ## base network class.
 class ntwk:
@@ -690,6 +708,32 @@ class ntwk:
 		plb.grid(1)
 		plb.draw()
 	
+	def plotPassivityMetric(self,ax = None, **kwargs):
+		labelString = self.name
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+			
+		if self.freq == None:
+			# this network doesnt have a frequency axis, just plot it  
+			ax1.plot(self.passivityMetric()[0],label=labelString+ 'at port 1',**kwargs)
+			ax1.plot( self.passivityMetric()[1],label=labelString+ 'at port 2',**kwargs)
+			plb.xlabel('Index')
+		else:
+			ax1.plot(self.freq/self.freqMultiplier, self.passivityMetric()[0],label=labelString+ ', $|S_{11}|^{2} +|S_{21}|^{2}$',**kwargs)
+			ax1.plot(self.freq/self.freqMultiplier, self.passivityMetric()[1],label=labelString+ ', $|S_{22}|^{2} +|S_{12}|^{2}$',**kwargs)
+			plb.xlabel('Frequency (' + self.freqUnit +')') 
+			plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
+		
+		#plb.axis('tight')
+		plb.ylabel('Magnitude')
+		plb.grid(1)
+		plb.legend(loc='best')
+		plb.title(self.name + ', Passivity Metric')
+		plb.draw()
+		
+		
 	def loadFromTouchstone(self,filename):
 		'''
 		loads relevent values from a touchstone file. 
@@ -759,7 +803,21 @@ class ntwk:
 					outputFile.write( str(npy.real(self.s[k,p,q])) + '\t' + str(npy.imag(self.s[k,p,q])) +'\t')
 			outputFile.write('\n')
 
-
+	def passivityMetric(self):
+		'''
+		takes:
+			na
+		returns:
+			port1Power, port2Power : tuple containing total Power
+				associated with each port
+		'''
+		if self.rank == 2:
+			port1Power = npy.abs(self.s[:,0,0])**2+npy.abs(self.s[:,1,0])**2
+			port2Power = npy.abs(self.s[:,1,1])**2+npy.abs(self.s[:,0,1])**2
+			return port1Power, port2Power
+		else:
+			raise IndexError('only 2-ports suported for now')
+			return None
 def createNtwkFromTouchstone(filename):
 	'''
 	creates a ntwk object from a given touchstone file
@@ -1010,7 +1068,7 @@ def deEmbed(C, A):
 		if ( C.rank == 2 and A.rank == 2) or (C.rank ==1 and A.rank == 2):
 			B = copy(C)
 			B.__sets__(deEmbed(C.s, A.s))
-			B.name = A.name + ' De-Emedded From ' + B.name
+			#B.name = A.name + ' De-Emedded From ' + B.name
 			return B
 		else:
 			raise IndexError('C and A are or incorrect rank. see help.')
@@ -1975,7 +2033,7 @@ def getABCLeastSquares(gammaMList, gammaAList):
 		measurements. see mwavepy.getABLeastSquares
 		the standards used in OSM calibration dont actually have to be 
 		an open, short, and match. they are arbitrary but should provide
-		good seperation on teh smith chart for good accuracy .
+		good seperation on teh smith chart for better accuracy .
 	'''
 	
 	
@@ -2171,39 +2229,51 @@ def applyABC( gamma, abc):
 
 
 
-def abc2Ntwk(abc, **kwargs):
+def abc2Ntwk(abc, isReciprocal = False, **kwargs):
 	'''
 	returns a 2-port ntwk for a given set of calibration coefficients
-	represented by Nx3 matrix abc
+	represented by a Nx3 matrix of one port coefficients, (abc)
 	
 	takes:
-		abc : 
-		**kwargs: passed to mwavepy.ntwk 
+		abc : Nx3 numpy.ndarray, which holds the complex calibration 
+			coefficients. the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+		**kwargs: passed to mwavepy.ntwk constructor
 	returns:
 		eNtwk : 
 	
 	note:
-		s21 = a+b*c ( which  is s21*s12)
+		s21 = a+b*c ( which  is  e01*e10)
 		s12 = 1
 		s11 = b
 		s22 = c
 		
 		This abstract ntwk should only be used for de-embeding 1-port 
-		measurements.
+		measurements, as e01*e10 cannot be seperated
 	'''
 	
 	if len(abc.shape) == 1:
-		# this is abc at one frequency
-		return npy.array([[abc[1], 1],\
-			[abc[0]+abc[1]*abc[2], abc[2]]],\
-			dtype=complex)
+		#assert: this is abc at one frequency
+		a,b,c = abc[0], abc[1],abc[2]
+		if isReciprocal:
+			return npy.array([	[b, npy.sqrt(a+b*c)],\
+								[npy.sqrt(a+b*c), c]], dtype=complex)
+		else:
+			return npy.array([	[b, 1],\
+								[a+b*c, c]], dtype=complex)
 					
 	elif len(abc.shape) == 2:
-		# this is an array of abc's at many frequencies
+		#assert: this is an array of abc's at many frequencies
 		eNtwkS = npy.zeros(shape=(abc.shape[0],2,2),dtype=complex)
 		
 		for k in range(abc.shape[0]):
-			eNtwkS[k]=abc2Ntwk(abc[k])
+			eNtwkS[k]=abc2Ntwk(abc[k],isReciprocal)
 		
 		eNtwk = ntwk(data=eNtwkS, paramType='s',**kwargs)
 		return eNtwk
@@ -2212,6 +2282,40 @@ def abc2Ntwk(abc, **kwargs):
 			
 	
 	
+	
+
+def abc2CoefsDict(abc):
+	'''
+	converts an abc ndarry to a dictionarry containing the error 
+	coefficients.
+	
+	takes: 
+		abc : Nx3 numpy.ndarray, which holds the complex calibration 
+			coefficients. the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+	returns:
+		coefsDict: dictionary containing the following
+			'directivity':e00
+			'reflection tracking':e01e10
+			'source match':e11
+	note: 
+		e00 = directivity error
+		e10e01 = reflection tracking error
+		e11 = source match error	
+	'''
+	a,b,c = abc[:,0], abc[:,1],abc[:,2]
+	e01e10 = a-b*c
+	e00 = b
+	e11 = c
+	coefsDict = {'directivity':e00, 'reflection tracking':e01e10, \
+		'source match':e11}
+	return coefsDict
 	
 ############ DEPRICATED/UNSORTED#####################
 def loadTouchtone(inputFileName):
