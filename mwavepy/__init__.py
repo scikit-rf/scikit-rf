@@ -57,8 +57,13 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 #TODO LIST
 '''
 TBD:
+
+
 use get/set for states like .s and .freq (to simultaneously update 
 .freqMultiplier, etc)
+
+have plotting functions build off simpler ones to re-use code. so 
+plotPhase(complexData), then ntwk.plotPhase() could call this
 
 add a assumeReciprocity=True/False option to abc2Ntwk (to break up S12*S21)
 
@@ -250,7 +255,7 @@ def saveAllFigs(dir = './', format=['eps','png']):
 			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
 		
 
-def plotErrorCoefsFromDict(errorDict,freq= None,ax = None, **kwargs):
+def plotErrorCoefsFromDictDb(errorDict,freq= None,ax = None, **kwargs):
 	if not ax:
 		ax = plb.gca()
 	
@@ -263,13 +268,41 @@ def plotErrorCoefsFromDict(errorDict,freq= None,ax = None, **kwargs):
 	ax.axhline(0,color='black')		
 	plb.axis('tight')
 	plb.legend(loc='best')
+	plb.xlabel('Frequency (GHz)')  # this shouldnt be hard coded
+	plb.ylabel('Magnitude (dB)')
+	plb.grid(1)
+	plb.draw()
+	
+def plotErrorCoefsFromDictPhase(errorDict,freq= None,ax = None,unwrap=False, **kwargs):
+	if not ax:
+		ax = plb.gca()
+	
+	if freq == None:	
+		for k in errorDict.keys():
+			if unwrap:
+				ax.plot(npy.unwrap(npy.angle(errorDict[k],deg=True),\
+					discont=180),label=k,**kwargs) 
+			else:
+				ax.plot(npy.angle(errorDict[k],deg=True),label=k,**kwargs) 
+	else:
+		for k in errorDict.keys():
+			if unwrap:
+				ax.plot(freq,npy.unwrap(npy.angle(errorDict[k],deg=True),\
+					discont=180),label=k,**kwargs) 
+			else:
+				ax.plot(freq,npy.angle(errorDict[k],deg=True),label=k,**kwargs) 
+			 
+			
+	ax.axhline(0,color='black')		
+	plb.axis('tight')
+	plb.legend(loc='best')
 	plb.xlabel('Frequency (GHz)') 
 	plb.ylabel('Magnitude (dB)')
 	plb.grid(1)
 	plb.draw()
 ############### network theory  ################
 ## base network class.
-class ntwk:
+class ntwk(object):
 	'''
 	class represents a generic n-port network. 
 	
@@ -299,6 +332,31 @@ class ntwk:
 			frequency index to come last, like  
 			myntwk.s.transpose().reshape(2,2,-1)
 	'''
+	def __set_s(self,sMatrix):
+		'''
+		TODO make this work so that __set_s is called when s is assinged
+		update a ntwk's sparameters. ntwk.s effects other object within 
+		the ntwk class, so this function is needed.
+		'''
+		print '__set_s called'
+		data = npy.array(sMatrix) 
+		if len(data.shape) == 1:
+			# they gave us 1D array
+			data = data.reshape(-1,1,1)
+		if data.shape[1] != data.shape[2]:
+			print ('ERROR: input data must be kxmxm, where k is frequency axis')
+			raise RuntimeError
+			return None
+		self._s = data
+		self.rank = data.shape[1]
+		self.smag = abs(self._s)
+		self.sdB = mag2dB( self.smag )
+		self.sdeg = npy.angle(self._s, deg=True)
+		self.srad = npy.angle(self._s)
+	def __get_s(self):
+		return self._s	
+	s = property(__get_s, __set_s)
+	
 	def __init__(self, data=npy.zeros(shape=(1,2,2)), freq=None, freqUnit='GHz', freqMultiplier = 1e9, paramType='s',  z0=50, name = ''):
 		'''
 		takes:
@@ -349,7 +407,7 @@ class ntwk:
 		self.length = data.shape[0]
 		## interpret paramType
 		if self.paramType == 's':
-			self.s = npy.complex_(data)
+			self.s = (npy.complex_(data))
 			# this is where we should calculate and assign all the other ntwk formats
 			#npy.zeros(shape=(self.rank,self.rank, self.length)))
 			#	
@@ -361,45 +419,34 @@ class ntwk:
 			raise NotImplementedError
 			
 			
-		#convinience	
-		self.smag = abs(self.s)
-		self.sdB = complex2dB( self.s )
-		self.sdeg = npy.angle(self.s, deg=True)
-		self.srad = npy.angle(self.s)
+	
 		
-		
-		
+	
+	
 
-	def __sets__(self, sMatrix):
+	def __sub__(self,A):
 		'''
-		update a ntwk's sparameters. ntwk.s effects other object within the ntwk class, so this function is needed.
+		B = self - A
 		'''
-		
-		data = npy.array(sMatrix) 
-		if len(data.shape) == 1:
-			# they gave us 1D array
-			data = data.reshape(-1,1,1)
-		if data.shape[1] != data.shape[2]:
-			print ('ERROR: input data must be kxmxm, where k is frequency axis')
-			raise RuntimeError
-			return None
-		self.s = data
-		self.rank = data.shape[1]
-		self.smag = abs(self.s)
-		self.sdB = mag2dB( self.smag )
-		self.sdeg = npy.angle(self.s, deg=True)
-		self.srad = npy.angle(self.s)
+		if A.rank != self.rank:
+			raise IndexError('ntwks must be of the same rank')
+		else:
+			B = copy(self)
+			B.s =(self.s - A.s)
+			return B
 
-	#def __copy__(self):
-		#'''
-		#returns a copy of this ntwk. 
+	def __add__(self,A):
+		'''
+		B = self - A
+		'''
+		if A.rank != self.rank:
+			raise IndexError('ntwks must be of the same rank')
+		else:
+			B = copy(self)
+			B.s= (self.s + A.s)
+			return B	
 		
-		#this is needed for initializing ntwks which you dont want pointing to the original. 
-		#see  copy.copy() for more info
-		#'''
-		#temp =  copy(self)
-		#return None
-
+	
 	def __mul__(self, A):
 		'''
 		the multiply operator is overloaded to use the cascade 
@@ -477,7 +524,7 @@ class ntwk:
 			flippedS = npy.array([ [self.s[:,1,1],self.s[:,0,1]],\
 									[self.s[:,1,0],self.s[:,0,0]] ]).transpose().reshape(-1,2,2)
 			flipNtwk = copy(self)
-			flipNtwk.__sets__(flippedS)
+			flipNtwk.s=(flippedS)
 			return flipNtwk
 		else:
 			raise NotImplementedError
@@ -522,7 +569,46 @@ class ntwk:
 		plb.grid(1)
 		plb.legend(loc='best')
 		plb.draw()
+	def plotMag(self, m=None,n=None, ax=None,**kwargs):
+		'''
+		plots a given parameter in log mag mode. (20*npy.log10(mag))
 		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		if ( m==None or n==None) and (self.rank > 1):
+			# if this ntwk is not a 1-port and they did not pass indecies raise error
+			raise RuntimeError('Error: please specify indecies.')
+		elif ( m==None or n==None) and (self.rank == 1):
+			m = 0
+			n = 0
+			
+		labelString  = self.name+', S'+repr(m+1) + repr(n+1)
+		if ax == None:
+			ax1 = plb.gca()
+		else:
+			ax1 = ax
+		
+		
+		ax1.axhline(0,color='black')
+		
+		if self.freq == None:
+			# this network doesnt have a frequency axis, just plot it  
+			ax1.plot(self.smag[:,m,n],label=labelString,**kwargs)
+			plb.xlabel('Index')
+		else:
+			ax1.plot(self.freq/self.freqMultiplier, self.smag[:,m,n],label=labelString,**kwargs)
+			plb.xlabel('Frequency (' + self.freqUnit +')') 
+			plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
+		
+		#plb.axis('tight')
+		plb.ylabel('Magnitude (dB)')
+		plb.grid(1)
+		plb.legend(loc='best')
+		plb.draw()	
 	def plotSmith(self, m=None,n=None, smithRadius = 1, ax=None, **kwargs):
 		'''
 		plots a given parameter in polar mode on a smith chart.
@@ -818,6 +904,12 @@ class ntwk:
 		else:
 			raise IndexError('only 2-ports suported for now')
 			return None
+	def transform2TimeDomain(self, **kwargs):
+		B = copy(self)
+		#TODO: should loop and do this for all s-parameters, not just s11
+		timeAxis, newS = psd2TimeDomain(self.freq, self.s[:,0,0], **kwargs)
+		B.s= newS
+		
 def createNtwkFromTouchstone(filename):
 	'''
 	creates a ntwk object from a given touchstone file
@@ -921,20 +1013,13 @@ def cascade(A,B):
 			else:
 				C = copy(A)
 			
-			C.__sets__(cascade(A.s, B.s))
+			C.s=(cascade(A.s, B.s))
 			C.name = A.name + ' Cascaded With ' + B.name
 			return C
 		else:	
 			raise ValueError('Invalid rank for input ntwk\'s, see help')
 		
-		
-	elif isinstance(A, sym.Matrix) and isinstance(B, sym.Matrix):
-		# just typecast to ndarray, calculate series network then 
-		# re-cast into sym.Matrix
-		A = npy.array(A)
-		B = npy.array(B)
-		C = cascade(A,B)
-		return sym.Matrix(C)
+
 		
 	elif isinstance(A, npy.ndarray) and isinstance(B, npy.ndarray):
 		# most of this code is just dumb shape checking.  the actual
@@ -1008,7 +1093,14 @@ def cascade(A,B):
 			else:
 				raise IndexError('invalid shapes of A or B,see help')
 		
-		
+	
+	elif isinstance(A, sym.Matrix) and isinstance(B, sym.Matrix):
+		# just typecast to ndarray, calculate series network then 
+		# re-cast into sym.Matrix
+		A = npy.array(A)
+		B = npy.array(B)
+		C = cascade(A,B)
+		return sym.Matrix(C)	
 	else:
 		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
 		
@@ -1060,27 +1152,20 @@ def deEmbed(C, A):
 		A = A[0]
 		return deEmbed( deEmbed(C,A).flip(),B).flip()
 	
-	if isinstance(C,ntwk) and isinstance(A,ntwk):
+	elif isinstance(C,ntwk) and isinstance(A,ntwk):
 		
 			
 		# they passed us ntwk types, so lets get the relevent parameter
 		#make sure its a 1-port
 		if ( C.rank == 2 and A.rank == 2) or (C.rank ==1 and A.rank == 2):
 			B = copy(C)
-			B.__sets__(deEmbed(C.s, A.s))
+			B.s=(deEmbed(C.s, A.s))
 			#B.name = A.name + ' De-Emedded From ' + B.name
 			return B
 		else:
 			raise IndexError('C and A are or incorrect rank. see help.')
 
-	elif isinstance(C, sym.Matrix) and isinstance(A, sym.Matrix):
-		# just typecast to ndarray, calculate series network then 
-		# re-cast into sym.Matrix
-		A = npy.array(A)
-		C = npy.array(C)
-		B = deEmbed(C,A)
-		return sym.Matrix(B)
-		
+	
 	elif isinstance(C, npy.ndarray) and isinstance(A, npy.ndarray):
 		if A.shape != (2,2):
 			# A is not a 2x2 array.
@@ -1140,7 +1225,14 @@ def deEmbed(C, A):
 			else:
 				raise IndexError ('Input networks have invalid shapes. see\
 				help for more details. ')
-		
+	elif isinstance(C, sym.Matrix) and isinstance(A, sym.Matrix):
+		# just typecast to ndarray, calculate series network then 
+		# re-cast into sym.Matrix
+		A = npy.array(A)
+		C = npy.array(C)
+		B = deEmbed(C,A)
+		return sym.Matrix(B)
+			
 	else:
 		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
 			
@@ -2178,7 +2270,7 @@ def applyABC( gamma, abc):
 			newNtwk = copy(gamma)
 			gamma = gamma.s[:,0,0]
 			gammaCal= ((gamma-abc[:,1]) / (abc[:,0]+ gamma*abc[:,2]))
-			newNtwk.__sets__(gammaCal)
+			newNtwk.s=(gammaCal)
 			return  newNtwk
 	else:
 		# for clarity this is same as:
