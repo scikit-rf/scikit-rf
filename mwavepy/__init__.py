@@ -338,7 +338,7 @@ class ntwk(object):
 		update a ntwk's sparameters. ntwk.s effects other object within 
 		the ntwk class, so this function is needed.
 		'''
-		print '__set_s called'
+
 		data = npy.array(sMatrix) 
 		if len(data.shape) == 1:
 			# they gave us 1D array
@@ -605,11 +605,11 @@ class ntwk(object):
 			plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 		
 		#plb.axis('tight')
-		plb.ylabel('Magnitude (dB)')
+		plb.ylabel('Magnitude (not dB)')
 		plb.grid(1)
 		plb.legend(loc='best')
 		plb.draw()	
-	def plotSmith(self, m=None,n=None, smithRadius = 1, ax=None, **kwargs):
+	def plotSmith(self, m=None,n=None, smithRadius = 1, ax=None,  **kwargs):
 		'''
 		plots a given parameter in polar mode on a smith chart.
 				
@@ -639,7 +639,7 @@ class ntwk(object):
 		plb.draw()
 		
 	
-	def plotPhase(self, m=None,n=None, ax=None, **kwargs):
+	def plotPhase(self, m=None,n=None, ax=None,unwrap=False, **kwargs):
 		'''
 		plots a given parameter in phase (deg) mode. 
 		
@@ -664,9 +664,20 @@ class ntwk(object):
 		ax1.axhline(0,color='black')
 		if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
-			ax1.plot(self.sdeg[:,m,n],label=labelString,**kwargs)
+			if unwrap:
+				ax1.plot(npy.unwrap(self.sdeg[:,m,n],discont=180),\
+					label=labelString,**kwargs)
+			else:
+				ax1.plot(self.sdeg[:,m,n],label=labelString,**kwargs)
 		else:
-			ax1.plot(self.freq/self.freqMultiplier, self.sdeg[:,m,n],label=labelString,**kwargs)
+			if unwrap:
+				ax1.plot(self.freq/self.freqMultiplier, \
+					npy.unwrap(self.sdeg[:,m,n],discont=180),\
+					label=labelString,**kwargs)
+		
+			else:
+				ax1.plot(self.freq/self.freqMultiplier, self.sdeg[:,m,n],\
+					label=labelString,**kwargs)
 		
 		
 		plb.axis('tight')
@@ -904,11 +915,35 @@ class ntwk(object):
 		else:
 			raise IndexError('only 2-ports suported for now')
 			return None
-	def transform2TimeDomain(self, **kwargs):
+	def transform2TimeDomain(self,timeMultiplier = 1e-12, timeUnit='ps', **kwargs):
 		B = copy(self)
 		#TODO: should loop and do this for all s-parameters, not just s11
 		timeAxis, newS = psd2TimeDomain(self.freq, self.s[:,0,0], **kwargs)
-		B.s= newS
+		B = ntwk(data = newS,freq=timeAxis, name= self.name, \
+			freqMultiplier = timeMultiplier, freqUnit=timeUnit)
+		return B
+		
+	def changeFreqUnit(self, newUnit='GHz'):
+		freqUnitDict = {\
+			'hz':'Hz',\
+			'mhz':'MHz',\
+			'ghz':'GHz'\
+			}
+		freqMultiplierDict={
+			'hz':1,\
+			'mhz':1e6,\
+			'ghz':1e9\
+			}
+			
+		newUnit = newUnit.lower()
+		if freqUnitDict.get(newUnit,False):
+			self.freqUnit = freqUnitDict.get(newUnit)
+			self.freqMultiplier = freqMultiplierDict.get(newUnit)
+		else:
+			raise ValueError('new freq unit invalid')
+		
+		
+		
 		
 def createNtwkFromTouchstone(filename):
 	'''
@@ -940,7 +975,7 @@ def loadAllTouchstonesInDir(dir = '.'):
 		# TODO: make this s?p with reg ex
 		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
 			name = f[:-4]
-			ntwkDict[name]=(createNtwkFromTouchstone(f))
+			ntwkDict[name]=(createNtwkFromTouchstone(dir +'/'+f))
 			
 		
 	return ntwkDict	
