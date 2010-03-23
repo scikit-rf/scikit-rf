@@ -251,8 +251,11 @@ def saveAllFigs(dir = './', format=['eps','png']):
 	for fignum in plb.get_fignums():
 		plb.figure(fignum)
 		fileName = plb.gca().get_title()
+		if fileName == '':
+				fileName = 'unamedPlot'
 		for fmt in format:
 			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
+			print (dir+fileName+'.'+fmt)
 		
 
 def plotErrorCoefsFromDictDb(errorDict,freq= None,ax = None, **kwargs):
@@ -280,15 +283,13 @@ def plotErrorCoefsFromDictPhase(errorDict,freq= None,ax = None,unwrap=False, **k
 	if freq == None:	
 		for k in errorDict.keys():
 			if unwrap:
-				ax.plot(npy.unwrap(npy.angle(errorDict[k],deg=True),\
-					discont=180),label=k,**kwargs) 
+				ax.plot(rad2deg(npy.unwrap(npy.angle(errorDict[k]))),label=k,**kwargs) 
 			else:
 				ax.plot(npy.angle(errorDict[k],deg=True),label=k,**kwargs) 
 	else:
 		for k in errorDict.keys():
 			if unwrap:
-				ax.plot(freq,npy.unwrap(npy.angle(errorDict[k],deg=True),\
-					discont=180),label=k,**kwargs) 
+				ax.plot(freq,rad2deg(npy.unwrap(npy.angle(errorDict[k]))),label=k,**kwargs) 
 			else:
 				ax.plot(freq,npy.angle(errorDict[k],deg=True),label=k,**kwargs) 
 			 
@@ -433,6 +434,7 @@ class ntwk(object):
 		else:
 			B = copy(self)
 			B.s =(self.s - A.s)
+			B.name = self.name+'-'+A.name
 			return B
 
 	def __add__(self,A):
@@ -502,7 +504,15 @@ class ntwk(object):
 				#'Type :\t' + self.paramType +'\n' +\
 				#'Frequency Span:\t' + repr(self.freq[0])+ '\t'+repr(self.freq[-1])+'\n' +\
 				#'z0:\t' + repr(self.z0) 
-		#return None
+		#return Non
+	def divide(self,A):
+		if A.rank != self.rank:
+			raise IndexError('ntwks must be of the same rank')
+		else:
+			B = copy(self)
+			B.s =(self.s/ A.s)
+			B.name = self.name+'/'+A.name
+			return B
 	def flip(self):
 		'''
 		invert the ports of a networks s-matrix, 'flipping' it over
@@ -665,14 +675,14 @@ class ntwk(object):
 		if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
 			if unwrap:
-				ax1.plot(npy.unwrap(self.sdeg[:,m,n],discont=180),\
+				ax1.plot(rad2deg(npy.unwrap(self.srad[:,m,n])),\
 					label=labelString,**kwargs)
 			else:
 				ax1.plot(self.sdeg[:,m,n],label=labelString,**kwargs)
 		else:
 			if unwrap:
 				ax1.plot(self.freq/self.freqMultiplier, \
-					npy.unwrap(self.sdeg[:,m,n],discont=180),\
+					rad2deg(npy.unwrap(self.srad[:,m,n])),\
 					label=labelString,**kwargs)
 		
 			else:
@@ -1099,7 +1109,7 @@ def cascade(A,B):
 				return C
 				
 			elif A.shape == (2,2) and ( B.shape == (1,1) or B.shape == (1,)):
-				# A is a 2-port B is  a 1-port s-matrix, C will be 1-port
+				# A is a 2-port and B is  a 1-port s-matrix, C will be 1-port
 				if B.shape == (1,1):
 					C = B.copy()	
 					C[0,0] = A[0,0]+(A[1,0]*B[0,0]*A[0,1] )/\
@@ -1107,9 +1117,12 @@ def cascade(A,B):
 					return C
 				elif B.shape == (1,):
 					C = B.copy()	
-					C[0,0] = A[0,0]+(A[1,0]*B[0]*A[0,1] )/\
+					C[0] = A[0,0]+(A[1,0]*B[0]*A[0,1] )/\
 							(1 - A[1,1]*B[0])
 					return C
+				else:
+					raise IndexError('bad shape. this is a coding error.')
+					
 			
 				
 			elif B.shape == (2,2) and ( A.shape == (1,1) or A.shape == (1,)):
@@ -1515,7 +1528,42 @@ class waveguide:
 		muR - relative permiability of filling material
 	TODO: implement different filling materials, and wall material losses
 	'''
-	def __init__(self, a,b,band=None, epsilonR=1, muR=1):
+	def alphaC(self, omega,conductivity, m=1,n=0):
+		'''
+		calculates waveguide attenuation due to conductor loss
+		
+		takes:
+			omega: angular frequency (rad/s)
+			conductivity: surface material conductivity (usually 
+				written as sigma)
+			m: mode number along wide dimension  
+			n: mode number along height dimmension
+		
+		returns:
+			alphaC = attenuation in dB/m. 
+			
+			
+		note: only dominant mode (TE01)  is  supported at the moment
+		'''
+		if m != 1 or n != 0:
+			raise NotImplementedError('only dominant mode (TE01)  is  \
+				supported at the moment')
+		
+		print type(pi)
+		print type(omega)		
+		f = 2*pi * omega
+		Rs = npy.real( surfaceImpedance(omega=omega, \
+			conductivity=conductivity, epsilon=self.epsilon,\
+			mu=self.mu))
+		
+		
+		return Rs/(self.eta*self.b) * (1+ 2*self.b/self.a *(self.fc(m,n)/(f))**2)/\
+			sqrt(1-(self.fc(m,n)/(f))**2)
+	
+
+		
+	
+	def __init__(self, a,b,band=None, epsilonR=1, muR=1, surfaceConductivity=None):
 		'''
 		takes: 
 			a - width  in meters, float
@@ -1523,6 +1571,8 @@ class waveguide:
 			band - tuple defining max and min frequencies. defaults to (1.25,1.9)*fc10
 			epsilonR - relative permativity of filling material 
 			muR - relative permiability of filling material
+			surfaceConductivity - the conductivity of the waveguide 
+				interior surface. (S/m)
 		
 		note: support for dielectrically filled waveguide, ie epsilonR 
 			and muR, is not supported
@@ -1537,6 +1587,10 @@ class waveguide:
 		self.fStart = self.band[0]
 		self.fStop = self.band[1]
 		self.fCenter = (self.band[1]-self.band[0])/2. + self.band[0]
+		
+		self.epsilon = epsilonR * epsilon_0
+		self.mu = muR * mu_0 
+		self.eta = eta(epsilonR= epsilonR, muR= muR)
 		#all for dominant mode
 	
 	def fc(self,m=1,n=0):
@@ -1902,6 +1956,23 @@ def zinOpen(z0,theta):
 	return zin(inf,z0,theta)
 
 
+
+
+def surfaceImpedance(omega, conductivity, epsilon=epsilon_0, mu=mu_0):
+	'''
+	calculates the surface impedance of a material defined by its 
+	permativity, permiablit,  and conductivity.
+	
+	takes:
+		omega: angular frequency (rad/s)
+		conductivity: conductivity, ussually denoted by sigma (S/m)
+		epsilon: permitivity (F/m)
+		mu: permiability (H/m)
+	
+	returns:
+		surfaceImpedance: complex surface impedance
+	'''
+	return sqrt((1j*omega*mu)/(conductivity + 1j*omega*epsilon))
 
 ## S-parameter Network Creation
 #TODO: should name these more logically. like createSMatrix_Short()
