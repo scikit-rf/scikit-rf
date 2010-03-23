@@ -1459,293 +1459,8 @@ def abcd2s(abcdMat,z0=50):
 def abcd2z():
 	raise NotImplementedError
 def abcd2y():
+	
 	raise NotImplementedError
-
-
-
-############### transmission line class   ################
-class transmissionLine:
-	'''
-	should be main class, which all transmission line sub-classes inhereit
-	'''
-	def __init__(self):
-		raise NotImplementedError
-		return None
-class coax:
-	def __init__(self):
-		raise NotImplementedError
-		return None
-
-class microstrip:
-	def __init__(self):
-		raise NotImplementedError
-		return None
-	def eEffMicrostrip(w,h,epR):
-		'''
-		The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pplb. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pplb. 1422-1444, 1969.
-		'''
-		
-		if w < h:
-			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w) + .04*(1-w/h)**2)
-		else:
-			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w))
-		
-		
-		
-	
-	def betaMicrostrip(w,h,epR):
-		return lambda omega: omega/c * sqrt(eEffMicrostrip(w,h,epR))
-		
-		
-	def impedanceMicrostrip(w,h,epR):
-		'''
-		
-		
-		taken from pozar
-		'''
-		eEff = eEffMicrostrip(w,h,epR)
-		if w/h < 1:
-			return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
-		else:
-			return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
-
-class coplanar:
-	def __init__(self):
-		raise NotImplementedError
-		return None
-class waveguide:
-	'''
-	class which represents a rectangular waveguide . 
-	
-	provides:
-		a - width  in meters, float
-		b - height in meters, float. 
-		band - tuple defining max and min frequencies. defaults to (1.25,1.9)*fc10
-		fStart - start of frequency band. ( = band[0] )
-		fStop - stop of frequency band ( = band[1] )
-		fc10 - first mode cut on frequency ( == fc(1,0)
-		epsilonR - relative permativity of filling material 
-		muR - relative permiability of filling material
-	TODO: implement different filling materials, and wall material losses
-	'''
-	def alphaC(self, omega,conductivity, m=1,n=0):
-		'''
-		calculates waveguide attenuation due to conductor loss
-		
-		takes:
-			omega: angular frequency (rad/s)
-			conductivity: surface material conductivity (usually 
-				written as sigma)
-			m: mode number along wide dimension  
-			n: mode number along height dimmension
-		
-		returns:
-			alphaC = attenuation in dB/m. 
-			
-			
-		note: only dominant mode (TE01)  is  supported at the moment
-		'''
-		if m != 1 or n != 0:
-			raise NotImplementedError('only dominant mode (TE01)  is  \
-				supported at the moment')
-		
-		print type(pi)
-		print type(omega)		
-		f = 2*pi * omega
-		Rs = npy.real( surfaceImpedance(omega=omega, \
-			conductivity=conductivity, epsilon=self.epsilon,\
-			mu=self.mu))
-		
-		
-		return Rs/(self.eta*self.b) * (1+ 2*self.b/self.a *(self.fc(m,n)/(f))**2)/\
-			sqrt(1-(self.fc(m,n)/(f))**2)
-	
-
-		
-	
-	def __init__(self, a,b,band=None, epsilonR=1, muR=1, surfaceConductivity=None):
-		'''
-		takes: 
-			a - width  in meters, float
-			b - height in meters, float. 
-			band - tuple defining max and min frequencies. defaults to (1.25,1.9)*fc10
-			epsilonR - relative permativity of filling material 
-			muR - relative permiability of filling material
-			surfaceConductivity - the conductivity of the waveguide 
-				interior surface. (S/m)
-		
-		note: support for dielectrically filled waveguide, ie epsilonR 
-			and muR, is not supported
-		'''
-		self.a = a
-		self.b = b
-		self.fc10 = self.fc(1,0)
-		if band == None: 
-			self.band = npy.array([1.25*self.fc10 , 1.9 * self.fc10]) 
-		else:
-			self.band= band
-		self.fStart = self.band[0]
-		self.fStop = self.band[1]
-		self.fCenter = (self.band[1]-self.band[0])/2. + self.band[0]
-		
-		self.epsilon = epsilonR * epsilon_0
-		self.mu = muR * mu_0 
-		self.eta = eta(epsilonR= epsilonR, muR= muR)
-		#all for dominant mode
-	
-	def fc(self,m=1,n=0):
-		'''
-		calculates cut-on frequency of a given mode
-		takes:
-			m - mode indecie for width dimension, int
-			n - mode indecie for height dimension, int
-		returns:
-			cut of frequency in Hz, float. 
-			
-		'''
-		return c/(2*pi)*sqrt( (m*pi/self.a)**2 +(n*pi/self.b)**2)
-
-	def beta(self, omega,m=1,n=0):
-		'''
-		calculates the propagation constant of given mode 
-		takes:
-			omega - angular frequency (rad/s)
-			m - mode indecie for width dimension, int
-			n - mode indecie for height dimension, int
-		returns:
-			propagation constant (rad/m)
-		
-		TODO: should do a test below cutoff and handle imaginary sign
-		the beta here is just the space beta, which should be a method of mwavepy
-		'''
-		k = omega/c
-		return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2)
-	
-	def beta_f(self,f,m=1,n=0):
-		'''
-		convinience function. see beta()
-		'''
-		return self.beta(2*pi*f,m,n)
-		
-	def lambdaG(self,omega,m=1,n=0):
-		'''
-		calculates the guide wavelength  of a given mode
-		takes:
-			omega - angular frequency (rad/s)
-			m - mode indecie for width dimension, int
-			n - mode indecie for height dimension, int
-		returns:
-			guide wavelength (m)
-		'''
-		return (2*pi / self.beta(omega,m,n))
-	
-	def lambdaG_f(self,f,m=1,n=0):
-		'''
-		convinience function. see lambdaG()
-		'''
-		return self.lambdaG(2*pi *f,m,n)
-	
-	def vp(self, omega,m=1,n=0):
-		'''
-		calculates the phase velocity of a given mode
-		takes:
-			omega - angular frequency (rad/s)
-			m - mode indecie for width dimension, int
-			n - mode indecie for height dimension, int
-		returns:
-			phase velocity of mode (m/s)
-		'''
-		return omega / self.beta(omega,m,n)
-	
-	def vp_f(self, f,m=1,n=0):
-		return 2*pi*f / self.beta(2*pi*f,m,n)
-		
-	def zTE(self, omega,m=1,n=0):
-		return eta0() * beta0(omega)/self.beta(omega,m,n)
-	def zTM(self, omega,m=1,n=0):
-		return eta0() * self.beta(omega,m,n)/beta0(omega)
-
-	## standard creation
-	# one-port 
-	def createDelayShort(self,l,numPoints, **kwargs):
-		'''
-		generate the reflection coefficient for a waveguide delayed short of length l 
-		
-		takes:
-			l - length of thru, in meters
-			numPoints - number of points to produce
-		returns:
-			two port S matrix for a waveguide thru section of length l 
-		'''
-
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s=createDelayShort(freq,l ,self.beta)
-		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
-
-			
-	def createShort(self, numPoints,**kwargs):
-		'''
-		generate the reflection coefficient for a waveguide short.
-		convinience function, see mwavepy.createShort()
-		'''
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s = createShort(numPoints)
-		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
-		
-	def createMatch(self,numPoints,**kwargs):
-		'''
-		generate the reflection coefficient for a waveguide Match.
-		convinience function, see mwavepy.createShort()
-		'''
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s = createMatch(numPoints)
-		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
-		
-	# two-port 
-	def createDelay(self,l,numPoints,**kwargs):
-		'''
-		generate the two port S matrix for a waveguide thru section of length l 
-		
-		takes:
-			l - length of thru, in meters
-			numPoints - number of points to produce
-		returns:
-			two port S matrix for a waveguide thru section of length l 
-		'''
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s = createDelay(freqVector=freq,l=l, beta=self.beta)		
-		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
-		
-		
-		
-		
-
-## subclasses
-class wr(waveguide):
-	'''
-	class which represents a standard rectangular waveguide band.
-	inherits mwavepy.waveguide type 
-	'''
-	def __init__(self, number, **kwargs):
-		'''
-		takes:
-			number - waveguide designator number ( ie WR10, the number is 10)
-		returns:
-			mwavepy.waveguide object representing the given band
-		'''
-		waveguide.__init__(self,number*10*mil ,.5 * number*10*mil, **kwargs )
-
-	
-
-# standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
-# info taken from Virginia Diodes Inc. Waveguide Band Designations
-WR10 = wr(10,band=(75e9,110e9))
-WR8 = wr(8)
-WR6 = wr(6.5)
-WR5 = wr(5.1)
-WR4 = wr(4.3, band = (170e9,260e9))
-WR3 = wr(3.4, band=(220e9,325e9))
-WR1p5 = wr(1.5, band =(500e9,750e9))		
 
 
 ## lumped elements
@@ -1973,6 +1688,305 @@ def surfaceImpedance(omega, conductivity, epsilon=epsilon_0, mu=mu_0):
 		surfaceImpedance: complex surface impedance
 	'''
 	return sqrt((1j*omega*mu)/(conductivity + 1j*omega*epsilon))
+
+
+
+
+############### transmission line class   ################
+class transmissionLine:
+	'''
+	should be main class, which all transmission line sub-classes inhereit
+	'''
+	def __init__(self):
+		raise NotImplementedError
+		return None
+class coax:
+	def __init__(self):
+		raise NotImplementedError
+		return None
+
+class microstrip:
+	def __init__(self):
+		raise NotImplementedError
+		return None
+	def eEffMicrostrip(w,h,epR):
+		'''
+		The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pplb. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pplb. 1422-1444, 1969.
+		'''
+		
+		if w < h:
+			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w) + .04*(1-w/h)**2)
+		else:
+			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w))
+		
+		
+		
+	
+	def betaMicrostrip(w,h,epR):
+		return lambda omega: omega/c * sqrt(eEffMicrostrip(w,h,epR))
+		
+		
+	def impedanceMicrostrip(w,h,epR):
+		'''
+		
+		
+		taken from pozar
+		'''
+		eEff = eEffMicrostrip(w,h,epR)
+		if w/h < 1:
+			return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
+		else:
+			return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
+
+class coplanar:
+	def __init__(self):
+		raise NotImplementedError
+		return None
+class waveguide:
+	'''
+	class which represents a rectangular waveguide . 
+	
+	provides:
+		a - width  in meters, float
+		b - height in meters, float. 
+		band - tuple defining max and min frequencies. defaults to (1.25,1.9)*fc10
+		fStart - start of frequency band. ( = band[0] )
+		fStop - stop of frequency band ( = band[1] )
+		fc10 - first mode cut on frequency ( == fc(1,0)
+		epsilonR - relative permativity of filling material 
+		muR - relative permiability of filling material
+	TODO: implement different filling materials, and wall material losses
+	'''
+	def alphaC(self, omega,conductivity, m=1,n=0):
+		'''
+		calculates waveguide attenuation due to conductor loss
+		
+		takes:
+			omega: angular frequency (rad/s)
+			conductivity: surface material conductivity (usually 
+				written as sigma)
+			m: mode number along wide dimension  
+			n: mode number along height dimmension
+		
+		returns:
+			alphaC = attenuation in dB/m. 
+			
+			
+		note: only dominant mode (TE01)  is  supported at the moment.
+		This equation and a derivation can be found in:
+		
+		harrington: time harmonic electromagnetic fields 
+		balanis: advanced engineering electromagnectics
+		'''
+		if m != 1 or n != 0:
+			raise NotImplementedError('only dominant mode (TE01)  is  \
+				supported at the moment')
+		
+		f = omega/(2.*pi)
+		
+		Rs = npy.real( surfaceImpedance(omega=omega, \
+			conductivity=conductivity, epsilon=self.epsilon,\
+			mu=self.mu))
+		
+		
+		return Rs/(self.eta*self.b) * (1+ 2*self.b/self.a *(self.fc(m,n)/(f))**2)/\
+			sqrt(1-(self.fc(m,n)/(f))**2)
+	
+
+		
+	
+	def __init__(self, a, b, band=None, epsilonR=1, muR=1, surfaceConductivity=None, name = None):
+		'''
+		takes: 
+			a - width  in meters, float
+			b - height in meters, float. 
+			band - tuple defining max and min frequencies. defaults to (1.25,1.9)*fc10
+			epsilonR - relative permativity of filling material 
+			muR - relative permiability of filling material
+			surfaceConductivity - the conductivity of the waveguide 
+				interior surface. (S/m)
+		
+		note: support for dielectrically filled waveguide, ie epsilonR 
+			and muR, is not supported
+		'''
+		if name == None:
+			self.name = 'waveguide,a='+ repr(a) + 'b='+repr(b)
+		else:
+			self.name = name
+		self.a = a
+		self.b = b
+		
+		self.fc10 = self.fc(1,0)
+		if band == None: 
+			self.band = npy.array([1.25*self.fc10 , 1.9 * self.fc10]) 
+		else:
+			self.band= band
+		self.fStart = self.band[0]
+		self.fStop = self.band[1]
+		self.fCenter = (self.band[1]-self.band[0])/2. + self.band[0]
+		
+		self.epsilon = epsilonR * epsilon_0
+		self.mu = muR * mu_0 
+		self.eta = eta(epsilonR= epsilonR, muR= muR)
+		
+		self.freqAxis = npy.linspace(self.fStart,self.fStop,201)
+		
+		#all for dominant mode
+	
+	def fc(self,m=1,n=0):
+		'''
+		calculates cut-on frequency of a given mode
+		takes:
+			m - mode indecie for width dimension, int
+			n - mode indecie for height dimension, int
+		returns:
+			cut of frequency in Hz, float. 
+			
+		'''
+		return c/(2*pi)*sqrt( (m*pi/self.a)**2 +(n*pi/self.b)**2)
+
+	def beta(self, omega,m=1,n=0):
+		'''
+		calculates the propagation constant of given mode 
+		takes:
+			omega - angular frequency (rad/s)
+			m - mode indecie for width dimension, int
+			n - mode indecie for height dimension, int
+		returns:
+			propagation constant (rad/m)
+		
+		TODO: should do a test below cutoff and handle imaginary sign
+		the beta here is just the space beta, which should be a method of mwavepy
+		'''
+		k = omega/c
+		return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2)
+	
+	def beta_f(self,f,m=1,n=0):
+		'''
+		convinience function. see beta()
+		'''
+		return self.beta(2*pi*f,m,n)
+		
+	def lambdaG(self,omega,m=1,n=0):
+		'''
+		calculates the guide wavelength  of a given mode
+		takes:
+			omega - angular frequency (rad/s)
+			m - mode indecie for width dimension, int
+			n - mode indecie for height dimension, int
+		returns:
+			guide wavelength (m)
+		'''
+		return (2*pi / self.beta(omega,m,n))
+	
+	def lambdaG_f(self,f,m=1,n=0):
+		'''
+		convinience function. see lambdaG()
+		'''
+		return self.lambdaG(2*pi *f,m,n)
+	
+	def vp(self, omega,m=1,n=0):
+		'''
+		calculates the phase velocity of a given mode
+		takes:
+			omega - angular frequency (rad/s)
+			m - mode indecie for width dimension, int
+			n - mode indecie for height dimension, int
+		returns:
+			phase velocity of mode (m/s)
+		'''
+		return omega / self.beta(omega,m,n)
+	
+	def vp_f(self, f,m=1,n=0):
+		return 2*pi*f / self.beta(2*pi*f,m,n)
+		
+	def zTE(self, omega,m=1,n=0):
+		return eta0() * beta0(omega)/self.beta(omega,m,n)
+	def zTM(self, omega,m=1,n=0):
+		return eta0() * self.beta(omega,m,n)/beta0(omega)
+
+	## standard creation
+	# one-port 
+	def createDelayShort(self,l,numPoints, **kwargs):
+		'''
+		generate the reflection coefficient for a waveguide delayed short of length l 
+		
+		takes:
+			l - length of thru, in meters
+			numPoints - number of points to produce
+		returns:
+			two port S matrix for a waveguide thru section of length l 
+		'''
+
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s=createDelayShort(freq,l ,self.beta)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
+
+			
+	def createShort(self, numPoints,**kwargs):
+		'''
+		generate the reflection coefficient for a waveguide short.
+		convinience function, see mwavepy.createShort()
+		'''
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s = createShort(numPoints)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
+		
+	def createMatch(self,numPoints,**kwargs):
+		'''
+		generate the reflection coefficient for a waveguide Match.
+		convinience function, see mwavepy.createShort()
+		'''
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s = createMatch(numPoints)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
+		
+	# two-port 
+	def createDelay(self,l,numPoints,**kwargs):
+		'''
+		generate the two port S matrix for a waveguide thru section of length l 
+		
+		takes:
+			l - length of thru, in meters
+			numPoints - number of points to produce
+		returns:
+			two port S matrix for a waveguide thru section of length l 
+		'''
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s = createDelay(freqVector=freq,l=l, beta=self.beta)		
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
+		
+		
+		
+		
+
+## subclasses
+class wr(waveguide):
+	'''
+	class which represents a standard rectangular waveguide band.
+	inherits mwavepy.waveguide type 
+	'''
+	def __init__(self, number, **kwargs):
+		'''
+		takes:
+			number - waveguide designator number ( ie WR10, the number is 10)
+		returns:
+			mwavepy.waveguide object representing the given band
+		'''
+		waveguide.__init__(self,number*10*mil ,.5 * number*10*mil, \
+			name='WR'+repr(number), **kwargs )
+
+	
+
+# standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
+# info taken from Virginia Diodes Inc. Waveguide Band Designations
+WR10 = wr(10,band=(75e9,110e9))
+WR8 = wr(8)
+WR6 = wr(6.5)
+WR5 = wr(5.1)
+WR4 = wr(4.3, band = (170e9,260e9))
+WR3 = wr(3.4, band=(220e9,325e9))
+WR1p5 = wr(1.5, band =(500e9,750e9))		
 
 ## S-parameter Network Creation
 #TODO: should name these more logically. like createSMatrix_Short()
