@@ -2,7 +2,7 @@
 
 from distutils.core import setup
 setup(name='mwavepy',
-	version='0.35',
+	version='0.111',
 	description='Microwave Engineering Functions for python',
 	author='Alex Arsenovic',
 	author_email='arsenovic@virginia.edu',
