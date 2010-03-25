@@ -30,7 +30,7 @@ from copy import copy
 # Dependencies
 try:
 	import numpy as npy
-	from numpy import sqrt, exp, array,tan,sin,cos,inf
+	from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real
 except:
 	raise ImportError ('Depedent Packages not found. Please install: numpy')
 try:
@@ -54,9 +54,13 @@ except:
 # Internal 
 from touchstone import touchstone as touch	# for loading data from touchstone files
 
-#TODO LIST
+################# TODO LIST (so i dont forget)
 '''
 TBD:
+
+distiguish between the complex and real part of the propagation constant
+ussually denoted gamma = beta + i alpha. this effecte waveguide.lambdaG,
+and waveguide.vp
 
 
 use get/set for states like .s and .freq (to simultaneously update 
@@ -78,7 +82,8 @@ check if they have usetex on and use tex formatting for legend of
 s-parameters
 
 rewrite the getABC functions to recursivly call itself instead of just
-looping over frequencies, like we do for casacde, deEmbed
+looping over frequencies, like we do for casacde, deEmbed. (in hindsight 
+im not sure i like this )
 
 POSSIBLE CHANGES:
 does ntwk need freqUnit and freqMultiplier? why not just do it all in Hz 
@@ -90,8 +95,6 @@ freqUnit and freqMultiplier are redundant.
 fix frequency unit abiquity. shhould ntwk.freq dependent on ntwk.freqMultiplier or is that just for plotting ? need to tell the user either way.
 
 
-giving the waveguide class a freq vector would be usefule, although 
-kind of breaks its form
 
 calkits?
 
@@ -109,6 +112,9 @@ calkits?
 
 
 ## constants
+# electrical conductivity in S/m
+conductivityDict = {'aluminium':3.8e7,'gold':4.1e7}
+
 
 ###############  mathematical conversions ############### 
 def complex2dB(complx):
@@ -144,7 +150,18 @@ def mag2dB(mag):
 	
 def dB2Mag(dB):
 	return 10**((dB)/20.)
-	
+
+def dB2np(x):
+	'''
+	converts a value in nepers to dB
+	'''	
+	return (log(10)/20) * x
+def np2dB(x):
+	'''
+	converts a value in dB to neper's
+	'''
+	return 20/log(10) * x
+
 def rad2deg(rad):
 	return (rad)*180/pi
 	
@@ -1757,45 +1774,11 @@ class waveguide:
 		muR - relative permiability of filling material
 	TODO: implement different filling materials, and wall material losses
 	'''
-	def alphaC(self, omega,conductivity, m=1,n=0):
-		'''
-		calculates waveguide attenuation due to conductor loss
-		
-		takes:
-			omega: angular frequency (rad/s)
-			conductivity: surface material conductivity (usually 
-				written as sigma)
-			m: mode number along wide dimension  
-			n: mode number along height dimmension
-		
-		returns:
-			alphaC = attenuation in dB/m. 
-			
-			
-		note: only dominant mode (TE01)  is  supported at the moment.
-		This equation and a derivation can be found in:
-		
-		harrington: time harmonic electromagnetic fields 
-		balanis: advanced engineering electromagnectics
-		'''
-		if m != 1 or n != 0:
-			raise NotImplementedError('only dominant mode (TE01)  is  \
-				supported at the moment')
-		
-		f = omega/(2.*pi)
-		
-		Rs = npy.real( surfaceImpedance(omega=omega, \
-			conductivity=conductivity, epsilon=self.epsilon,\
-			mu=self.mu))
-		
-		
-		return Rs/(self.eta*self.b) * (1+ 2*self.b/self.a *(self.fc(m,n)/(f))**2)/\
-			sqrt(1-(self.fc(m,n)/(f))**2)
 	
 
 		
 	
-	def __init__(self, a, b, band=None, epsilonR=1, muR=1, surfaceConductivity=None, name = None):
+	def __init__(self, a, b, band=None, epsilonR=1, muR=1, surfaceConductivity=None, name = None, points = 201):
 		'''
 		takes: 
 			a - width  in meters, float
@@ -1813,6 +1796,7 @@ class waveguide:
 			self.name = 'waveguide,a='+ repr(a) + 'b='+repr(b)
 		else:
 			self.name = name
+		
 		self.a = a
 		self.b = b
 		
@@ -1829,8 +1813,8 @@ class waveguide:
 		self.mu = muR * mu_0 
 		self.eta = eta(epsilonR= epsilonR, muR= muR)
 		
-		self.freqAxis = npy.linspace(self.fStart,self.fStop,201)
-		
+		self.freqAxis = npy.linspace(self.fStart,self.fStop,points)
+		self.surfaceConductivity= surfaceConductivity
 		#all for dominant mode
 	
 	def fc(self,m=1,n=0):
@@ -1845,6 +1829,44 @@ class waveguide:
 		'''
 		return c/(2*pi)*sqrt( (m*pi/self.a)**2 +(n*pi/self.b)**2)
 
+	
+	def alphaC(self, omega, m=1,n=0):
+		'''
+		calculates waveguide attenuation due to conductor loss
+		
+		takes:
+			omega: angular frequency (rad/s)
+			conductivity: surface material conductivity (usually 
+				written as sigma)
+			m: mode number along wide dimension  
+			n: mode number along height dimmension
+		
+		returns:
+			alphaC = attenuation in np/m.  ( neper/meter)
+			
+			
+		note: only dominant mode (TE01)  is  supported at the moment.
+		This equation and a derivation can be found in:
+		
+		harrington: time harmonic electromagnetic fields 
+		balanis: advanced engineering electromagnectics
+		'''
+		if m != 1 or n != 0:
+			raise NotImplementedError('only dominant mode (TE01)  is  \
+				supported at the moment')
+		
+		f = omega/(2.*pi)
+		
+		Rs = npy.real( surfaceImpedance(omega=omega, \
+			conductivity=self.surfaceConductivity, epsilon=self.epsilon,\
+			mu=self.mu))
+		
+		
+		return Rs/(self.eta*self.b) * (1+ 2*self.b/self.a *(self.fc(m,n)/(f))**2)/\
+			sqrt(1-(self.fc(m,n)/(f))**2)
+	
+	
+	
 	def beta(self, omega,m=1,n=0):
 		'''
 		calculates the propagation constant of given mode 
@@ -1856,11 +1878,16 @@ class waveguide:
 			propagation constant (rad/m)
 		
 		TODO: should do a test below cutoff and handle imaginary sign
-		the beta here is just the space beta, which should be a method of mwavepy
+		
 		'''
 		k = omega/c
-		return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2)
-	
+		if self.surfaceConductivity == None:
+			return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2)
+		else:
+			# include  the conductor loss associated with the surface
+			# conductivity
+			return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2) - \
+				1j*self.alphaC(omega=omega,m=m,n=n)
 	def beta_f(self,f,m=1,n=0):
 		'''
 		convinience function. see beta()
@@ -1877,7 +1904,7 @@ class waveguide:
 		returns:
 			guide wavelength (m)
 		'''
-		return (2*pi / self.beta(omega,m,n))
+		return real(2*pi / self.beta(omega,m,n))
 	
 	def lambdaG_f(self,f,m=1,n=0):
 		'''
@@ -1895,7 +1922,7 @@ class waveguide:
 		returns:
 			phase velocity of mode (m/s)
 		'''
-		return omega / self.beta(omega,m,n)
+		return real(omega / self.beta(omega,m,n))
 	
 	def vp_f(self, f,m=1,n=0):
 		return 2*pi*f / self.beta(2*pi*f,m,n)
@@ -1919,7 +1946,7 @@ class waveguide:
 		'''
 
 		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s=createDelayShort(freq,l ,self.beta)
+		s = createDelayShort(freq,l ,self.beta)
 		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 
 			

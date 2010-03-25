@@ -7,12 +7,23 @@ import pylab
 conductivityCopper=5.7e7 #S/m
 
 pylab.figure()
+
 # loops through waveguide types, and plots the conductor loss (alphaC) 
 # vs frequency
+listOfWaveguides = [ \
+	m.wr(90,surfaceConductivity=conductivityCopper),\
+	m.wr(62,surfaceConductivity=conductivityCopper),\
+	m.wr(42,surfaceConductivity=conductivityCopper),\
+	m.wr(28,surfaceConductivity=conductivityCopper),\
+	m.wr(19,surfaceConductivity=conductivityCopper),\
+	m.wr(15,surfaceConductivity=conductivityCopper),\
+	m.wr(10,surfaceConductivity=conductivityCopper)\
+	]
 
-for k in [m.wr(90), m.wr(62), m.wr(42),m.wr(28), m.wr(19),m.wr(15)]:
-	pylab.plot(k.freqAxis/1e9, k.alphaC(k.freqAxis*(2*pylab.pi), \
-		conductivity =conductivityCopper), label= k.name) 
+for k in listOfWaveguides:
+	loss = m.np2dB(k.alphaC(k.freqAxis*(2*pylab.pi))) # loss in dB/m
+	freq = k.freqAxis/1e9 # frequency in GHz
+	pylab.plot(freq, loss, label= k.name) 
 
 pylab.legend()
 pylab.xlabel('Frequenc (GHz)')
