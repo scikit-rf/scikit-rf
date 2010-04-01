@@ -400,8 +400,7 @@ class ntwk(object):
 			# they gave us 1D array
 			data = data.reshape(-1,1,1)
 		if data.shape[1] != data.shape[2]:
-			print ('ERROR: input data must be kxmxm, where k is frequency axis')
-			raise RuntimeError
+			raise IndexError('input data must be kxmxm, where k is frequency axis')
 			return None
 		if freq == None:
 			self.freq = freq #None
@@ -409,8 +408,7 @@ class ntwk(object):
 			self.freqMultiplier=None
 		else:
 			if len(freq) != data.shape[0]:
-				print 'Error: length of f must match data.shape[2]. There must be as many frequency points as there are s parameter measurements.'
-				raise RuntimeError
+				raise IndexError('length of f must match data.shape[2]. There must be as many frequency points as there are	s parameter measurements.')
 				return None
 			else:
 				#they passed a valid f vector
@@ -968,6 +966,16 @@ class ntwk(object):
 			self.freqMultiplier = freqMultiplierDict.get(newUnit)
 		else:
 			raise ValueError('new freq unit invalid')
+	
+	def attenuate(self,attenuation):
+		'''
+		attentuates the network by some amount given in dB
+		'''	
+		if self.rank != 1:
+			raise NotImplementedError('you are attenuating >1port, ntwk. not sure exactly where to put attenuator.')
+		else:
+			attenuation = dB2Mag(attenuation)
+			self.s = attenuation* self.s
 		
 		
 		
@@ -1927,6 +1935,20 @@ class waveguide:
 	def vp_f(self, f,m=1,n=0):
 		return 2*pi*f / self.beta(2*pi*f,m,n)
 		
+	
+	def electricalLength(self,l, deg = False):
+		'''
+		calculates the electrical length in radians for a waveguide of 
+		length l, at band center. 
+		
+		takes:
+			l: length of wavegumide section in meters
+			deg: return in degrees (True, False)
+		returns:
+			theta: electrical length in radians, or degrees
+		'''
+		return electricalLength(l=l, f0 = self.fCenter, beta = self.beta, deg=deg)
+		
 	def zTE(self, omega,m=1,n=0):
 		return eta0() * beta0(omega)/self.beta(omega,m,n)
 	def zTM(self, omega,m=1,n=0):
@@ -2773,7 +2795,7 @@ def hfssComment2Dict(hfssCsvFileName):
 	
 	return xAxisLabel, yAxisLabel, outputList
 ##------ other functions ---
-def psd2TimeDomain(f,y, windowType='rect'):
+def psd2TimeDomain(f,y, windowType='hamming'):
 	'''convert a one sided complex spectrum into a real time-signal.
 	takes 
 		f: frequency array, 
@@ -2814,7 +2836,7 @@ def psd2TimeDomain(f,y, windowType='rect'):
 	return timeVector, signalVector
 
 
-def timeDomain2Psd(t,y, windowType='rect'):
+def timeDomain2Psd(t,y, windowType='hamming'):
 	''' returns the positive baseband PSD for a real-valued signal
 	returns in the form:
 		[freqVector,spectrumVector]
