@@ -58,6 +58,9 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 '''
 TBD:
 
+calibration.plotCoefs... need to pass a freq multiplier 
+
+
 distiguish between the complex and real part of the propagation constant
 ussually denoted gamma = beta + i alpha. this effecte waveguide.lambdaG,
 and waveguide.vp
@@ -2584,6 +2587,21 @@ def abc2CoefsDict(abc):
 
 
 class calibration(object):
+	'''
+	reprents a calibration instance.
+	
+	you give it a frequency axis, and two lists of mwavepy.ntwk's: 
+		ideal standards list 
+		measured standards list.
+		
+	 
+	
+	coefficients are calibrated, automatically when the coefficients, or 
+	their related quantities ( abc, error_ntwk, etc) the FIRST time only.  
+	once they exist, the function calculateCoefs() must be called to 
+	re-calculate coefs.
+	'''
+	
 	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = ''):
 		self.name  = name
 		self.ideals = ideals
@@ -2650,7 +2668,10 @@ class calibration(object):
 	
 	residuals = property(__get_residuals, __set_residuals)	
 	
-	
+	def plotCoefsDb(self, ax = None,**kwargs):
+		plotErrorCoefsFromDictDb (self.coefs,freq= self.freq/1e9, ax = ax, **kwargs)
+	def plotCoefsPhase(self, ax = None,**kwargs):
+		plotErrorCoefsFromDictPhase (self.coefs,freq= self.freq/1e9, ax = ax, **kwargs)
 ############ DEPRICATED/UNSORTED#####################
 def loadTouchtone(inputFileName):
 	
