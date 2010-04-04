@@ -2578,6 +2578,58 @@ def abc2CoefsDict(abc):
 		'source match':e11}
 	return coefsDict
 	
+
+
+class calKit(object):
+	def __init__(self,ideals=[],measured =[], name = ''):
+		self.name  = name
+		self.ideals = ideals
+		self.measured = measured
+	
+	
+	def calculateCoefs(self):
+		self.abc, self.residuals = getABCLeastSquares(gammaMList = self.measured, gammaAList = self.ideal)
+		self._error_ntwk = abc2Ntwk(self.abc)
+		self._coefs = abc2CoefsDict(self.abc)
+		return None
+		
+	def __get_coefs(self):
+		self.calculateCoefs()
+		return self._coefs
+	
+	def __set_coefs(self):
+		raise TypeError('you cant set coefficients, they are calculated')
+	
+	coefs = property(__get_coefs, __set_coefs)
+	
+	def __get_error_ntwk(self):
+		self.calculateCoefs()
+		return self._error_ntwk
+	
+	def __set_error_ntwk(self):
+		raise TypeError('you cant set error ntwk, it is calculated')
+	
+	error_ntwk = property(__get_error_ntwk, __set_error_ntwk)
+	
+	def __get_abc(self):
+		self.calculateCoefs()
+		return self._abc
+	
+	def __set_abc(self):
+		raise TypeError('you cant set abc, they are calculated')
+	
+	abc = property(__get_abc, __set_abc)
+		
+	def __get_residuals(self):
+		self.calculateCoefs()
+		return self._residuals
+	
+	def __set_residuals(self):
+		raise TypeError('you cant set residuals, they are calculated')
+	
+	residuals = property(__get_residuals, __set_residuals)	
+	
+	
 ############ DEPRICATED/UNSORTED#####################
 def loadTouchtone(inputFileName):
 	
