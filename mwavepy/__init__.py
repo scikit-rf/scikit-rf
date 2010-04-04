@@ -2304,11 +2304,14 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	numCoefs = 3
 	
 	# test for type, 
-	if isinstance(gammaMList[0], ntwk):
+	try:
 		for k in range(numStds):
 			gammaMList[k] = gammaMList[k].s
 			gammaAList[k] = gammaAList[k].s
-		
+	
+	except:
+		pass	
+	
 	fLength = len(gammaMList[0])
 	#initialize abc matrix
 	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
@@ -2580,31 +2583,43 @@ def abc2CoefsDict(abc):
 	
 
 
-class calKit(object):
-	def __init__(self,ideals=[],measured =[], name = ''):
+class calibration(object):
+	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = ''):
 		self.name  = name
 		self.ideals = ideals
 		self.measured = measured
+		self.freq = freq
+		self.freqMultiplier = freqMultiplier
 	
 	
 	def calculateCoefs(self):
-		self.abc, self.residuals = getABCLeastSquares(gammaMList = self.measured, gammaAList = self.ideal)
-		self._error_ntwk = abc2Ntwk(self.abc)
-		self._coefs = abc2CoefsDict(self.abc)
+		if len(self.ideals) != len(self.measured):
+			raise IndexError('you need the same number of ideals as measurements. ')
+		self._abc, self._residuals = getABCLeastSquares(gammaMList = self.measured, gammaAList = self.ideals)
+		self._error_ntwk = abc2Ntwk(self._abc, name = self.name,freq = self.freq, freqMultiplier= self.freqMultiplier)
+		self._coefs = abc2CoefsDict(self._abc)
 		return None
 		
 	def __get_coefs(self):
-		self.calculateCoefs()
-		return self._coefs
+		try:
+			return self._coefs
+		except(AttributeError):
+			self.calculateCoefs()
+			return self._coefs
+		
 	
-	def __set_coefs(self):
+	def __set_coefs(self,x):
 		raise TypeError('you cant set coefficients, they are calculated')
 	
 	coefs = property(__get_coefs, __set_coefs)
 	
 	def __get_error_ntwk(self):
-		self.calculateCoefs()
-		return self._error_ntwk
+		try:
+			return self._error_ntwk
+		except(AttributeError):
+			self.calculateCoefs()
+			return self._error_ntwk
+		
 	
 	def __set_error_ntwk(self):
 		raise TypeError('you cant set error ntwk, it is calculated')
@@ -2612,8 +2627,11 @@ class calKit(object):
 	error_ntwk = property(__get_error_ntwk, __set_error_ntwk)
 	
 	def __get_abc(self):
-		self.calculateCoefs()
-		return self._abc
+		try:
+			return self._abc
+		except(AttributeError):
+			self.calculateCoefs()
+			return self._abc
 	
 	def __set_abc(self):
 		raise TypeError('you cant set abc, they are calculated')
@@ -2621,8 +2639,11 @@ class calKit(object):
 	abc = property(__get_abc, __set_abc)
 		
 	def __get_residuals(self):
-		self.calculateCoefs()
-		return self._residuals
+		try:
+			return self._residuals
+		except(AttributeError):
+			self.calculateCoefs()
+			return self._residuals
 	
 	def __set_residuals(self):
 		raise TypeError('you cant set residuals, they are calculated')
