@@ -531,6 +531,14 @@ class ntwk(object):
 			B.s =(self.s/ A.s)
 			B.name = self.name+'/'+A.name
 			return B
+	def multiply(self,A):
+		if A.rank != self.rank:
+			raise IndexError('ntwks must be of the same rank')
+		else:
+			B = copy(self)
+			B.s =(self.s * A.s)
+			B.name = self.name+'*'+A.name
+			return B
 	def flip(self):
 		'''
 		invert the ports of a networks s-matrix, 'flipping' it over
@@ -2306,7 +2314,8 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	numStds = len(gammaMList)
 	numCoefs = 3
 	
-	# test for type, 
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
 	try:
 		for k in range(numStds):
 			gammaMList[k] = gammaMList[k].s
@@ -2588,21 +2597,45 @@ def abc2CoefsDict(abc):
 
 class calibration(object):
 	'''
-	reprents a calibration instance.
+	represents a calibration instance.
 	
 	you give it a frequency axis, and two lists of mwavepy.ntwk's: 
 		ideal standards list 
 		measured standards list.
-		
+	and it calculates the calbration coeffficients, and produces an 
+	error ntwk for de-embeding. 	
 	 
-	
-	coefficients are calibrated, automatically when the coefficients, or 
-	their related quantities ( abc, error_ntwk, etc) the FIRST time only.  
-	once they exist, the function calculateCoefs() must be called to 
-	re-calculate coefs.
+	NOTE:
+		only works for one-port at the moment
+		
+		coefficients are calculated automatically when they, or 
+		their related quantities ( abc, error_ntwk, etc) are referenced,
+		the FIRST time only.  once they exist, the function 
+		calculateCoefs() must be called if you want to re-calculate coefs.
 	'''
 	
 	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = ''):
+		'''
+		calibration constructor. 
+		
+		takes:
+			freq: frequency axis over which the cal exists, a numpy.array
+				[in hz]
+			freqMultiplier: a multiplier to scale plot axis,  a float.
+			ideals: a list of ntwk() types, which are the actual 
+				response of the standards used
+			measured: a list of ntwk() types, which are the measured 
+				responses of the actual standards cascaded behind some 
+				unkown 2-port error network.
+			name: a name for the calibration, a string.
+		
+		returns:
+			None
+			
+		Note: 
+			only available for one-port at the moment
+		'''
+		
 		self.name  = name
 		self.ideals = ideals
 		self.measured = measured
@@ -2611,6 +2644,26 @@ class calibration(object):
 	
 	
 	def calculateCoefs(self):
+		'''
+		calculates the calibration coefficients for the calibration instance.
+		
+		This is called the first time any of the calibration related 
+		quantities are referenced, and thats it. so if you update the list
+		of ideals, or measured  standards, then you must call this 
+		explicitly for the new coefficients to be calculated.
+		
+		specifically, this calculates:
+			coefs: a dictionary holding the calibration coefficients
+			abc: an Nx3 numpy.array holdin the a, b,c values. 
+			error_ntwk: a fictional 2-port network representing the 
+				error network. this should only be used to de-Embed 1-port
+				responses.
+		
+		takes:
+			na
+		returns:
+			na
+		'''
 		if len(self.ideals) != len(self.measured):
 			raise IndexError('you need the same number of ideals as measurements. ')
 		self._abc, self._residuals = getABCLeastSquares(gammaMList = self.measured, gammaAList = self.ideals)
@@ -2619,6 +2672,10 @@ class calibration(object):
 		return None
 		
 	def __get_coefs(self):
+		'''
+		coefs: a dictionary holding the calibration coefficients
+		'''
+		
 		try:
 			return self._coefs
 		except(AttributeError):
