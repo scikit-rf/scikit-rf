@@ -2202,6 +2202,99 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 
 ############## calibration ##############
 ## one port
+def alexCal(measured, actual):
+	'''
+	alternative one-port calibration algorithm. Based off taking the 
+	complex difference between the ratios of measured and actual responses.
+	
+	takes:	
+		measured: a list of ntwk objects, representing the measured
+			responses. 
+		actual: a list of ntwk objects, representing the actual (aka ideal)
+		 standards.
+		
+	returns:
+		(coefsDict, residuals): a tuple containing:
+			coefsDict: dictionary containing the following keys
+				'directivity':e00
+				'reflection tracking':e01e10
+				'source match':e11
+			residuals: a f x numStds-1 array of sum of the norms of the \
+				residuals, where f is number of frequency points, and 
+				numStds is number of Standards given
+	
+	
+	'''
+	
+	# convert s-parameters to arrays, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			measured[k] = measured[k].s
+			actual[k] = actual[k].s
+	except:
+		pass	
+	
+	
+	numStds = len(measured)
+	fLength = len(measured[0])
+	# needed, because i use more complicated  slicing.
+	measured = npy.array(measured) 
+	actual = npy.array(actual)
+	
+	# pre-allocate output calibration coefficient vectors, and residues
+	e11 = npy.zeros(shape=(fLength,1),dtype=complex) 
+	e00 = npy.zeros(shape=(fLength,1),dtype=complex) 
+	e10e01 = npy.zeros(shape=(fLength,1),dtype=complex) 
+
+	residues =npy.zeros(shape=(fLength,numStds-2),dtype=complex) 
+	
+	# calibrate at each frequency point
+	for f in range(fLength):
+		m = measured[:,f] # 1xnumStds
+		a = actual[:,f]
+			
+		P,Q,R = [],[],[]
+		
+		
+		if numStds==4:
+			permutations  = ([0,1],[0,2],[0,3],[1,2],[1,3],[2,3])
+		
+		elif numStds ==3 :
+			permutations = ([0,1],[1,2],[2,0])
+		
+		for x,y in permutations:
+			P.append( m[x]/a[x] - m[y]/a[y])
+			Q.append( m[x]-m[y])
+			R.append(1/(a[x]) -1/a[y])
+			
+		
+		P = npy.array(P).reshape(-1,1)
+		Q = npy.array(Q).reshape(-1,1)
+		R = npy.array(R).reshape(-1,1)
+			
+		# form matrix
+		QR = npy.hstack((Q,R))
+		
+		
+		e11[f],e00[f] = npy.linalg.lstsq(QR,P)[0]#.flatten()
+		residues[f,:] =  (npy.linalg.lstsq(QR,P)[1])
+		
+		# evaluate relation to find reflection tracking term, can use 
+		# any pair of standards so  0 < k < numStds, they all produce same
+		# values for e10e01
+		for k =[0]: 
+			e10e01[f] = m[k]/a[k]-m[k]*e11[f]-e00[f]/a[k]+e00[f]*e11[f]
+				
+		
+	
+	# make dictionary from calibration coefficients
+	coefsDict = {'directivity':e00, 'reflection tracking':e10e01, \
+		'source match':e11}
+	return coefsDict, residues
+	
+
+	
 def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 	'''
 	calculates calibration coefficients for a one port OSM calibration
