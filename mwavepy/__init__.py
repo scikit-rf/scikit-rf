@@ -2202,6 +2202,113 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 
 ############## calibration ##############
 ## one port
+def sddlCal(gammaMList, gammaAList):
+	
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		gammaMList - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		gammaAList - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	'''
+	
+	
+	from scipy.optimize import fmin
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
+	numStds = len(gammaMList)
+	numCoefs = 3
+	
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
+	
+	except:
+		pass	
+	
+	fLength = len(gammaMList[0])
+	#initialize abc matrix
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+
+	# loop through frequencies and form gammaM, gammaA vectors and 
+	# the matrix M. where M = 	gammaA_1, 1, gammA_1*gammaM_1
+	#							gammaA_2, 1, gammA_2*gammaM_2 
+	#									...etc
+	for f in range(fLength):
+		print 'f=%i'%f
+		
+		# intialize
+		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
+		gammaA = npy.zeros(shape=(numStds,1),dtype=complex)
+		one = npy.ones(shape=(numStds,1),dtype=complex)
+		M = npy.zeros(shape=(numStds, numCoefs),dtype=complex) 
+		
+		for k in range(0,numStds):
+			gammaM[k] = gammaMList[k][f]
+			gammaA[k] = gammaAList[k][f]
+		
+		def iterativeCal(thetaTuple, gammaM, gammaA):
+			theta1, theta2 = thetaTuple
+			gammaA[1], gammaA[2] = exp(1j*theta1),exp(1j*theta2)
+			M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
+			residues = npy.linalg.lstsq(M, gammaM)[1]
+			return sum(abs(residues))
+		
+		theta1Start = npy.angle(gammaA[1])
+		theta2Start = npy.angle(gammaA[2])
+		
+		theta1,theta2 = fmin (iterativeCal, [theta1Start,theta2Start],args=(gammaM,gammaA))
+		
+		print theta1Start, theta1
+		print theta2Start, theta2
+		
+		gammaA[1], gammaA[2] = exp(1j*theta1),exp(1j*theta2)
+		
+		M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
+			
+		residues[f,:] = npy.linalg.lstsq(M, gammaM)[1]
+		abc[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
+		
+		
+	return abc,residues
 def alexCal(measured, actual):
 	'''
 	alternative one-port calibration algorithm. Based off taking the 
@@ -2226,6 +2333,7 @@ def alexCal(measured, actual):
 	
 	'''
 	
+	numStds = len(measured)
 	# convert s-parameters to arrays, in case its a ntwk type, other wise 
 	# just keep on rollin 
 	try:
@@ -2236,7 +2344,7 @@ def alexCal(measured, actual):
 		pass	
 	
 	
-	numStds = len(measured)
+	
 	fLength = len(measured[0])
 	# needed, because i use more complicated  slicing.
 	measured = npy.array(measured) 
@@ -2246,8 +2354,7 @@ def alexCal(measured, actual):
 	e11 = npy.zeros(shape=(fLength,1),dtype=complex) 
 	e00 = npy.zeros(shape=(fLength,1),dtype=complex) 
 	e10e01 = npy.zeros(shape=(fLength,1),dtype=complex) 
-
-	residues =npy.zeros(shape=(fLength,numStds-2),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,2*numStds),dtype=complex) 
 	
 	# calibrate at each frequency point
 	for f in range(fLength):
@@ -2262,6 +2369,7 @@ def alexCal(measured, actual):
 		
 		elif numStds ==3 :
 			permutations = ([0,1],[1,2],[2,0])
+			#=[ (x,y) for x in range(numStds) for y in range(numStds) if y !=x ]#
 		
 		for x,y in permutations:
 			P.append( m[x]/a[x] - m[y]/a[y])
@@ -2278,12 +2386,13 @@ def alexCal(measured, actual):
 		
 		
 		e11[f],e00[f] = npy.linalg.lstsq(QR,P)[0]#.flatten()
+		
 		residues[f,:] =  (npy.linalg.lstsq(QR,P)[1])
 		
 		# evaluate relation to find reflection tracking term, can use 
 		# any pair of standards so  0 < k < numStds, they all produce same
 		# values for e10e01
-		for k =[0]: 
+		for k in [0]: 
 			e10e01[f] = m[k]/a[k]-m[k]*e11[f]-e00[f]/a[k]+e00[f]*e11[f]
 				
 		
@@ -2699,7 +2808,7 @@ class calibration(object):
 	error ntwk for de-embeding. 	
 	 
 	NOTE:
-		only works for one-port at the moment
+		only works for one port at the moment
 		
 		coefficients are calculated automatically when they, or 
 		their related quantities ( abc, error_ntwk, etc) are referenced,
@@ -2707,7 +2816,7 @@ class calibration(object):
 		calculateCoefs() must be called if you want to re-calculate coefs.
 	'''
 	
-	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = ''):
+	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port'):
 		'''
 		calibration constructor. 
 		
@@ -2720,6 +2829,13 @@ class calibration(object):
 			measured: a list of ntwk() types, which are the measured 
 				responses of the actual standards cascaded behind some 
 				unkown 2-port error network.
+			type: the type of calibration to perform, a string. can be:
+				'one port': standard one port calibration algorithm. if
+					more than 3 standards are given, it uses least squares. 
+				'alex one port' ; alternative to the standard one-port 
+					algorithm. only inverts a Nx2 matrix, where N is the
+					number of standards.
+				
 			name: a name for the calibration, a string.
 		
 		returns:
