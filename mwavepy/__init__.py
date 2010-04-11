@@ -2202,7 +2202,7 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 
 ############## calibration ##############
 ## one port
-def sddlCal(gammaMList, gammaAList):
+def sddlCal(measured, actual):
 	
 	'''
 	calculates calibration coefficients for a one port calibration. 
@@ -2248,6 +2248,10 @@ def sddlCal(gammaMList, gammaAList):
 	
 	
 	from scipy.optimize import fmin
+	
+	#make deep copies so list entities are not changed
+	gammaMList = copy(measured)
+	gammaAList = copy(actual)
 	# find number of standards given, set numberCoefs. Used for matrix 
 	# dimensions
 	numStds = len(gammaMList)
@@ -2267,11 +2271,15 @@ def sddlCal(gammaMList, gammaAList):
 	#initialize abc matrix
 	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
 	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	d1 = npy.zeros(fLength,dtype=complex) 
+	d2 = npy.zeros(fLength,dtype=complex) 
+
 
 	# loop through frequencies and form gammaM, gammaA vectors and 
 	# the matrix M. where M = 	gammaA_1, 1, gammA_1*gammaM_1
 	#							gammaA_2, 1, gammA_2*gammaM_2 
 	#									...etc
+	
 	for f in range(fLength):
 		print 'f=%i'%f
 		
@@ -2292,13 +2300,13 @@ def sddlCal(gammaMList, gammaAList):
 			residues = npy.linalg.lstsq(M, gammaM)[1]
 			return sum(abs(residues))
 		
+		# starting point for iterative least squares loop is whatever 
+		# the user has submitted
 		theta1Start = npy.angle(gammaA[1])
 		theta2Start = npy.angle(gammaA[2])
 		
-		theta1,theta2 = fmin (iterativeCal, [theta1Start,theta2Start],args=(gammaM,gammaA))
+		theta1,theta2 = fmin (iterativeCal, [theta1Start,theta2Start],args=(gammaM,gammaA), disp=False)
 		
-		print theta1Start, theta1
-		print theta2Start, theta2
 		
 		gammaA[1], gammaA[2] = exp(1j*theta1),exp(1j*theta2)
 		
@@ -2307,8 +2315,10 @@ def sddlCal(gammaMList, gammaAList):
 		residues[f,:] = npy.linalg.lstsq(M, gammaM)[1]
 		abc[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
 		
+		d1[f],d2[f] = gammaA[1,0],gammaA[2,0]
 		
-	return abc,residues
+		
+	return abc,residues,d1,d2
 def alexCal(measured, actual):
 	'''
 	alternative one-port calibration algorithm. Based off taking the 
