@@ -23,6 +23,7 @@
 from time import sleep 
 
 # Depencies
+from time import sleep
 try:
 	import pythics.libinstrument
 except:
@@ -36,7 +37,7 @@ except:
 import mwavepy as m	
 
 
-
+from datetime import datetime
 	
 def realTimeDb():
 	clf()
@@ -73,16 +74,28 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		'''
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
 
+	def getAFewNtwks2(self,fileNamePrefix, numNtwks, delay=None):
+		self.setSweepType(continuousOn=False)
+		for k in range(numNtwks):
+			print ('sweep #' + repr(k)+ ' started')
+			self.startSweep(opc=True)
+			aNtwk =self.getNtwk()
+			theTime =str(datetime.now().time()).replace(':','.').replace('.',' ')
+			aNtwk.writeToTouchstone(fileNamePrefix+theTime+'.s1p')
+			
+			if delay:
+				sleep(delay)
 	
 	
-	
-	def getAFewNtwks(self,fileNamePrefix, numNtwks):
+	def getAFewNtwks(self,fileNamePrefix, numNtwks, delay=None):
 		self.setSweepType(continuousOn=False)
 		for k in range(numNtwks):
 			print ('sweep #' + repr(k)+ ' started')
 			self.startSweep(opc=True)
 			aNtwk =self.getNtwk()
 			aNtwk.writeToTouchstone(fileNamePrefix+repr(k)+'.s1p')
+			if delay:
+				sleep(delay)
 	def ask_for_values_workarround(self, message):
 		values = npy.array( self.ask(message).split(','),dtype=float)
 		complexData = values[0::2]  + 1j*values[1::2]
