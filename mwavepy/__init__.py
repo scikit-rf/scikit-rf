@@ -58,6 +58,8 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 '''
 TBD:
 
+re-write deEmbed and cascade with try/excepts instead of isinstances()
+
 calibration.plotCoefs... need to pass a freq multiplier 
 
 
@@ -1084,7 +1086,7 @@ def cascade(A,B):
 	
 	'''
 	
-	if isinstance(A, ntwk) and isinstance(B, ntwk):
+	try:
 		if (A.rank == 2 and B.rank == 2) or \
 		(A.rank == 2 or  B.rank == 2) and (A.rank == 1 or B.rank == 1):
 			# this reads: both are 2-port OR  
@@ -1101,8 +1103,10 @@ def cascade(A,B):
 			raise ValueError('Invalid rank for input ntwk\'s, see help')
 		
 
-		
-	elif isinstance(A, npy.ndarray) and isinstance(B, npy.ndarray):
+	
+	except:
+		pass	
+	if isinstance(A, npy.ndarray) and isinstance(B, npy.ndarray):
 		# most of this code is just dumb shape checking.  the actual
 		# calculation very simple, its at the end
 		
@@ -1227,19 +1231,9 @@ def deEmbed(C, A):
 	
 	see ntwk.flip
 	'''
-	#TODO: look into implementing this with a cascade inverse network. 
-	# so C = A*B , B = A^-1*A*B 
-	if isinstance(C,ntwk) and isinstance(A,tuple):
-		# if they passed 1 ntwks and a tuple of ntwks, 
-		# then deEmbed like A.inv*C*B.inv
-		B = A[1]
-		A = A[0]
-		return deEmbed( deEmbed(C,A).flip(),B).flip()
 	
-	elif isinstance(C,ntwk) and isinstance(A,ntwk):
-		
-			
-		# they passed us ntwk types, so lets get the relevent parameter
+	try:
+		# they may  have passed us ntwk types, so lets get the relevent parameter
 		#make sure its a 1-port
 		if ( C.rank == 2 and A.rank == 2) or (C.rank ==1 and A.rank == 2):
 			B = copy(C)
@@ -1249,6 +1243,18 @@ def deEmbed(C, A):
 		else:
 			raise IndexError('C and A are or incorrect rank. see help.')
 
+	except:
+		pass
+	#TODO: look into implementing this with a cascade inverse network. 
+	# so C = A*B , B = A^-1*A*B 
+	if isinstance(C,ntwk) and isinstance(A,tuple):
+		# if they passed 1 ntwks and a tuple of ntwks, 
+		# then deEmbed like A.inv*C*B.inv
+		B = A[1]
+		A = A[0]
+		return deEmbed( deEmbed(C,A).flip(),B).flip()
+	
+	
 	
 	elif isinstance(C, npy.ndarray) and isinstance(A, npy.ndarray):
 		if A.shape != (2,2):
@@ -1318,6 +1324,8 @@ def deEmbed(C, A):
 		return sym.Matrix(B)
 			
 	else:
+		print 'type(A)= ',type(A)
+		print 'type(C)=',type(C)
 		raise TypeError('A and B must be mwavepy.ntwk or numpy.ndarray')
 			
 	
@@ -2202,7 +2210,7 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 
 ############## calibration ##############
 ## one port
-def sddlCal(measured, actual):
+def sddl1Cal(measured, actual):
 	
 	'''
 	calculates calibration coefficients for a one port calibration. 
@@ -2271,8 +2279,8 @@ def sddlCal(measured, actual):
 	#initialize abc matrix
 	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
 	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
-	d1 = npy.zeros(fLength,dtype=complex) 
-	d2 = npy.zeros(fLength,dtype=complex) 
+	gammaD1 = npy.zeros(fLength,dtype=complex) 
+	gammaD2 = npy.zeros(fLength,dtype=complex) 
 
 
 	# loop through frequencies and form gammaM, gammaA vectors and 
@@ -2281,7 +2289,7 @@ def sddlCal(measured, actual):
 	#									...etc
 	
 	for f in range(fLength):
-		print 'f=%i'%f
+		#print 'f=%i'%f
 		
 		# intialize
 		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
@@ -2315,10 +2323,103 @@ def sddlCal(measured, actual):
 		residues[f,:] = npy.linalg.lstsq(M, gammaM)[1]
 		abc[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
 		
-		d1[f],d2[f] = gammaA[1,0],gammaA[2,0]
+		gammaD1[f],gammaD2[f] = gammaA[1,0],gammaA[2,0]
 		
 		
-	return abc,residues,d1,d2
+	return abc,residues,gammaD1,gammaD2
+	
+	
+
+
+def sddl2Cal(measured, actual, wg, d1, d2):
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		gammaMList - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		gammaAList - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	'''
+	
+	
+	from scipy.optimize import fmin
+	
+	#make deep copies so list entities are not changed
+	gammaMList = copy(measured)
+	gammaAList = copy(actual)
+	
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
+	numStds = len(gammaMList)
+	numCoefs = 3
+	
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
+	
+	except:
+		pass	
+	
+	
+	fLength = len(gammaMList[0])
+	#initialize abc matrix
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+
+	d1Start, d2Start = d1,d2
+	
+	def iterativeCal(d, gammaMList, gammaAList):
+		d1,d2=d[0],d[1]
+		gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength).s
+		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
+		
+		abc, residues = getABCLeastSquares(gammaMList, gammaAList)
+		return sum(abs(residues))
+	
+	
+	d1,d2 = fmin (iterativeCal, [d1Start,d2Start],args=(gammaMList,gammaAList), disp=False)
+	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
+	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
+		
+	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
+	return abc, residues, d1,d2
+
 def alexCal(measured, actual):
 	'''
 	alternative one-port calibration algorithm. Based off taking the 
@@ -2477,15 +2578,15 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
 		
 	return abc
 	
-def getABCLeastSquares(gammaMList, gammaAList):
+def getABCLeastSquares(measured, actual):
 	'''
 	calculates calibration coefficients for a one port calibration. 
 	 
 	takes: 
-		gammaMList - list of measured reflection coefficients. can be 
+		measured - list of measured reflection coefficients. can be 
 			lists of either a kxnxn numpy.ndarray, representing a 
 			s-matrix or list of  1-port mwavepy.ntwk types. 
-		gammaAList - list of assumed reflection coefficients. can be 
+		actual - list of assumed reflection coefficients. can be 
 			lists of either a kxnxn numpy.ndarray, representing a 
 			s-matrix or list of  1-port mwavepy.ntwk types. 
 	
@@ -2521,6 +2622,9 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	'''
 	
 	
+	#make  copies so list entities are not changed
+	gammaMList = copy(measured)
+	gammaAList = copy(actual)
 	# find number of standards given, set numberCoefs. Used for matrix 
 	# dimensions
 	numStds = len(gammaMList)
@@ -2535,6 +2639,8 @@ def getABCLeastSquares(gammaMList, gammaAList):
 	
 	except:
 		pass	
+	
+	
 	
 	fLength = len(gammaMList[0])
 	#initialize abc matrix
@@ -2826,7 +2932,7 @@ class calibration(object):
 		calculateCoefs() must be called if you want to re-calculate coefs.
 	'''
 	
-	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port'):
+	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None ):
 		'''
 		calibration constructor. 
 		
@@ -2860,6 +2966,9 @@ class calibration(object):
 		self.measured = measured
 		self.freq = freq
 		self.freqMultiplier = freqMultiplier
+		self.type = type
+		self.d = d
+		self.wg = wg
 	
 	
 	def calculateCoefs(self):
@@ -2885,7 +2994,21 @@ class calibration(object):
 		'''
 		if len(self.ideals) != len(self.measured):
 			raise IndexError('you need the same number of ideals as measurements. ')
-		self._abc, self._residuals = getABCLeastSquares(gammaMList = self.measured, gammaAList = self.ideals)
+		
+		# call appropriate call type
+		if self.type == 'one port':
+			self._abc, self._residuals = getABCLeastSquares(\
+				measured = self.measured, actual = self.ideals)
+		elif self.type == 'sddl1':
+			self._abc, self._residuals, self.gammaD1, self.gammaD2 \
+				= sddl1Cal(	measured = self.measured, actual = self.ideals)
+		elif self.type == 'sddl2':
+			self._abc, self._residuals, self.d1Calcd, self.d2Calcd = \
+				sddl2Cal(measured = self.measured, actual = self.ideals, \
+				wg = self.wg, d1 = self.d[0], d2 = self.d[1])
+		else:
+			raise ValueError('Bad cal type.')
+			
 		self._error_ntwk = abc2Ntwk(self._abc, name = self.name,freq = self.freq, freqMultiplier= self.freqMultiplier)
 		self._coefs = abc2CoefsDict(self._abc)
 		return None
