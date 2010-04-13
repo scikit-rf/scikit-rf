@@ -26,7 +26,7 @@
 # Builtin  libs
 import os # for fileIO
 from copy import copy
-
+from time import time
 # Dependencies
 try:
 	import numpy as npy
@@ -752,11 +752,13 @@ class ntwk(object):
 				plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 
 		ax1.axhline(0,color='black')
+		plb.title(self.name + 'Return Loss')
 		plb.legend(loc='best')	
 		plb.axis('tight')
 		plb.ylabel('Magnitude (dB)')
 		plb.grid(1)
 		plb.draw()
+		
 	
 	def plotInsertionLossDb(self, ax = None, **kwargs):
 		'''
@@ -784,6 +786,7 @@ class ntwk(object):
 					else:
 						ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,q],label=labelString,**kwargs)
 		ax1.axhline(0,color='black')
+		plb.title(self.name + 'Insertion Loss')
 		plb.legend(loc='best')				
 		plb.axis('tight')
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
@@ -826,6 +829,7 @@ class ntwk(object):
 			plb.twinx()
 			ax1 = plb.gca()
 			
+			
 		for p in range(self.rank):
 			labelString  = self.name+', S'+repr(p+1) + repr(p+1)
 			if self.freq == None:
@@ -840,7 +844,7 @@ class ntwk(object):
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
 		plb.ylabel('Magnitude (dB)')
 		plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
-		plb.grid(1)
+		plb.grid(0)
 		plb.draw()
 	
 	def plotPassivityMetric(self,ax = None, **kwargs):
@@ -2999,17 +3003,34 @@ class calibration(object):
 		if self.type == 'one port':
 			self._abc, self._residuals = getABCLeastSquares(\
 				measured = self.measured, actual = self.ideals)
+		
 		elif self.type == 'sddl1':
-			self._abc, self._residuals, self.gammaD1, self.gammaD2 \
-				= sddl1Cal(	measured = self.measured, actual = self.ideals)
+			t0 = time()
+			
+			self._abc, self._residuals, gammaD1, gammaD2 =\
+				sddl1Cal(	measured = self.measured, actual = self.ideals)
+			self.delay1 = ntwk(data = gammaD1, freq=self.freq, \
+				name = self.ideals[1].name+' adjusted')
+			self.delay2 = ntwk(data = gammaD2, freq=self.freq, \
+				name = self.ideals[2].name+' adjusted')
+			
+			print '%s took %i s' %(self.name, time()-t0)	
+			
 		elif self.type == 'sddl2':
-			self._abc, self._residuals, self.d1Calcd, self.d2Calcd = \
+			t0 = time()
+			self._abc, self._residuals, self.d1FromCal, self.d2FromCal = \
 				sddl2Cal(measured = self.measured, actual = self.ideals, \
 				wg = self.wg, d1 = self.d[0], d2 = self.d[1])
+			self.delay1 = self.wg.createDelayShort(self.d1FromCal, \
+				len(self.freq), name=self.ideals[1].name+' adjusted')
+			self.delay2 = self.wg.createDelayShort(self.d2FromCal, \
+				len(self.freq), name=self.ideals[2].name+' adjusted')
+			print '%s took %i s' %(self.name, time()-t0)
+		
 		else:
 			raise ValueError('Bad cal type.')
 			
-		self._error_ntwk = abc2Ntwk(self._abc, name = self.name,freq = self.freq, freqMultiplier= self.freqMultiplier)
+		self._error_ntwk = abc2Ntwk(self._abc, name = self.name,freq = self.freq, freqMultiplier= self.freqMultiplier, isReciprocal=True)
 		self._coefs = abc2CoefsDict(self._abc)
 		return None
 		
