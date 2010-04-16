@@ -58,6 +58,9 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 '''
 TBD:
 
+possible bug found in deEmbed function: when a ntwk is deEmbed 
+with different ntwk from which it was cascaded with, a 
+
 use try/excepts in plotting functions to label title and legend, this 
 way if the name is None we dont crash. and the default value for a ntwk's
 name can be changed to None
@@ -2343,7 +2346,7 @@ def sddl1Cal(measured, actual):
 		theta1Start = npy.angle(gammaA[1])
 		theta2Start = npy.angle(gammaA[2])
 		
-		theta1,theta2 = fmin (iterativeCal, [theta1Start,theta2Start],args=(gammaM,gammaA), disp=False)
+		theta1,theta2 = fmin (iterativeCal, [theta1Start,theta2Start],args=(gammaM,gammaA), disp=False,ftol=1e-2)
 		
 		
 		gammaA[1], gammaA[2] = exp(1j*theta1),exp(1j*theta2)
@@ -2429,8 +2432,8 @@ def sddl2Cal(measured, actual, wg, d1, d2):
 	
 	fLength = len(gammaMList[0])
 	#initialize abc matrix
-	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	#abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	#residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
 
 	d1Start, d2Start = d1,d2
 	
@@ -2450,6 +2453,135 @@ def sddl2Cal(measured, actual, wg, d1, d2):
 		
 	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
 	return abc, residues, d1,d2
+
+
+def sdddd1Cal(measured, actual):
+	
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		gammaMList - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		gammaAList - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	'''
+	
+	
+	from scipy.optimize import fmin
+	
+	#make deep copies so list entities are not changed
+	gammaMList = copy(measured)
+	gammaAList = copy(actual)
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
+	numStds = len(gammaMList)
+	numCoefs = 3
+	
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
+	
+	except:
+		pass	
+	
+	fLength = len(gammaMList[0])
+	#initialize abc matrix
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	gammaD1 = npy.zeros(fLength,dtype=complex) 
+	gammaD2 = npy.zeros(fLength,dtype=complex) 
+	gammaD3 = npy.zeros(fLength,dtype=complex) 
+	gammaD4 = npy.zeros(fLength,dtype=complex) 
+
+
+	# loop through frequencies and form gammaM, gammaA vectors and 
+	# the matrix M. where M = 	gammaA_1, 1, gammA_1*gammaM_1
+	#							gammaA_2, 1, gammA_2*gammaM_2 
+	#									...etc
+	
+	for f in range(fLength):
+		print 'f=%i'%f
+		
+		# intialize
+		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
+		gammaA = npy.zeros(shape=(numStds,1),dtype=complex)
+		one = npy.ones(shape=(numStds,1),dtype=complex)
+		M = npy.zeros(shape=(numStds, numCoefs),dtype=complex) 
+		
+		for k in range(0,numStds):
+			gammaM[k] = gammaMList[k][f]
+			gammaA[k] = gammaAList[k][f]
+		
+		def iterativeCal(theta, gammaM, gammaA):
+			theta1, theta2,theta3,theta4 = theta
+			gammaA[1], gammaA[2],gammaA[3],gammaA[4] = \
+				exp(1j*theta1),exp(1j*theta2),exp(1j*theta3),exp(1j*theta4)
+			M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
+			residues = npy.linalg.lstsq(M, gammaM)[1]
+			#print npy.sum(abs(residues))
+			return npy.sum(abs(residues))
+		
+		# starting point for iterative least squares loop is whatever 
+		# the user has submitted
+		theta1Start = npy.angle(gammaA[1])
+		theta2Start = npy.angle(gammaA[2])
+		theta3Start = npy.angle(gammaA[3])
+		theta4Start = npy.angle(gammaA[4])
+		thetaStart = npy.array([theta1Start,theta2Start,theta3Start,theta4Start])
+		
+		theta1,theta2,theta3,theta4 = fmin (iterativeCal, thetaStart,\
+			args=(gammaM,gammaA), disp=False,ftol=1e-2)
+		
+		
+		gammaA[1], gammaA[2],gammaA[3],gammaA[4] = \
+			exp(1j*theta1),exp(1j*theta2),exp(1j*theta3),exp(1j*theta4)
+		
+		M = npy.hstack([gammaA, one  ,gammaA*gammaM ])
+			
+		residues[f,:] = npy.linalg.lstsq(M, gammaM)[1]
+		abc[f,:]= npy.linalg.lstsq(M, gammaM)[0].flatten()
+		
+		gammaD1[f],gammaD2[f],gammaD3[f],gammaD4[f] = \
+			gammaA[1,0],gammaA[2,0],gammaA[3,0],gammaA[4,0]
+		
+		
+	return abc,residues,gammaD1,gammaD2,gammaD3, gammaD4
 
 def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4):
 	'''
@@ -2534,12 +2666,10 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4):
 		gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength).s
 		
 		
-		abc, residues = getABCLeastSquares(gammaMList, gammaAList)
+		abc, residues= getABCLeastSquares(gammaMList, gammaAList)
 		print npy.sum(abs(residues))
 		return npy.sum(abs(residues))
 		
-	iterativeCal(dStart, gammaMList, gammaAList)
-	
 	
 	d1,d2,d3,d4 = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=True,ftol=1e-2)
 	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
@@ -3173,7 +3303,26 @@ class calibration(object):
 			
 			
 			print '%s took %i s' %(self.name, time()-t0)
-		
+		elif self.type == 'sdddd1':
+			
+			t0 = time()
+			self._abc, self._residuals, gammaD1, gammaD2,\
+			gammaD3,gammaD4 = \
+			sdddd1Cal(measured = self.measured, actual = self.ideals)
+			
+			
+			self.delay1 = ntwk(data = gammaD1, freq=self.freq, \
+				name = self.ideals[1].name+' adjusted')
+			self.delay2 = ntwk(data = gammaD2, freq=self.freq, \
+				name = self.ideals[2].name+' adjusted')
+			self.delay3 = ntwk(data = gammaD3, freq=self.freq, \
+				name = self.ideals[3].name+' adjusted')
+			self.delay4 = ntwk(data = gammaD4, freq=self.freq, \
+				name = self.ideals[4].name+' adjusted')
+			
+			
+			
+			print '%s took %i s' %(self.name, time()-t0)
 		else:
 			raise ValueError('Bad cal type.')
 			
