@@ -126,7 +126,7 @@ calkits?
 ## constants
 # electrical conductivity in S/m
 conductivityDict = {'aluminium':3.8e7,'gold':4.1e7}
-
+lengthDict ={'m':1,'mm':1e-3,'um':1e-6}
 
 ###############  mathematical conversions ############### 
 def complex2dB(complx):
@@ -2243,7 +2243,7 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 
 ############## calibration ##############
 ## one port
-def sddl1Cal(measured, actual):
+def sddl1Cal(measured, actual, ftol=1e-2):
 	
 	'''
 	calculates calibration coefficients for a one port calibration. 
@@ -2346,7 +2346,7 @@ def sddl1Cal(measured, actual):
 		theta1Start = npy.angle(gammaA[1])
 		theta2Start = npy.angle(gammaA[2])
 		
-		theta1,theta2 = fmin (iterativeCal, [theta1Start,theta2Start],args=(gammaM,gammaA), disp=False,ftol=1e-2)
+		theta1,theta2 = fmin (iterativeCal, [theta1Start,theta2Start],args=(gammaM,gammaA), disp=False,ftol=ftol)
 		
 		
 		gammaA[1], gammaA[2] = exp(1j*theta1),exp(1j*theta2)
@@ -2359,12 +2359,12 @@ def sddl1Cal(measured, actual):
 		gammaD1[f],gammaD2[f] = gammaA[1,0],gammaA[2,0]
 		
 		
-	return abc,residues,gammaD1,gammaD2
+	return abc,residues,gammaD1,gammaD2 
 	
 	
 
 
-def sddl2Cal(measured, actual, wg, d1, d2):
+def sddl2Cal(measured, actual, wg, d1, d2, ftol= 1e-2):
 	'''
 	calculates calibration coefficients for a one port calibration. 
 	 
@@ -2435,24 +2435,28 @@ def sddl2Cal(measured, actual, wg, d1, d2):
 	#abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
 	#residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
 
-	d1Start, d2Start = d1,d2
+	dStart = [d1,d2]
+	sumResidualList = []
 	
-	def iterativeCal(d, gammaMList, gammaAList):
+	def iterativeCal(d, gammaMList, gammaAList, sumResidualList):
 		d1,d2=d[0],d[1]
 		gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength).s
 		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
 		
 		abc, residues = getABCLeastSquares(gammaMList, gammaAList)
+		sumResidualList.append(npy.sum(abs(residues)))
 		print sum(abs(residues))
 		return sum(abs(residues))
 	
 	
-	d1,d2 = fmin (iterativeCal, [d1Start,d2Start],args=(gammaMList,gammaAList), disp=False,ftol=1e-2)
+	d,dList = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList, sumResidualList),\
+		disp=False,retall=True,ftol=ftol)
+	d1,d2=d
 	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
 	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
 		
 	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
-	return abc, residues, d1,d2
+	return abc, residues, d1,d2, sumResidualList, dList
 
 
 def sdddd1Cal(measured, actual):
@@ -3275,13 +3279,16 @@ class calibration(object):
 			
 		elif self.type == 'sddl2':
 			t0 = time()
-			self._abc, self._residuals, self.d1FromCal, self.d2FromCal = \
+			self._abc, self._residuals, self.d1FromCal, self.d2FromCal,\
+				 self.allResidueSums,self.dList = \
 				sddl2Cal(measured = self.measured, actual = self.ideals, \
 				wg = self.wg, d1 = self.d[0], d2 = self.d[1])
 			self.delay1 = self.wg.createDelayShort(self.d1FromCal, \
 				len(self.freq), name=self.ideals[1].name+' adjusted')
 			self.delay2 = self.wg.createDelayShort(self.d2FromCal, \
 				len(self.freq), name=self.ideals[2].name+' adjusted')
+			self.d1Evolution = npy.array(self.dList)[:,0]
+			self.d2Evolution = npy.array(self.dList)[:,1]
 			print '%s took %i s' %(self.name, time()-t0)
 		
 		elif self.type == 'sdddd2':
@@ -3388,6 +3395,42 @@ class calibration(object):
 		plotErrorCoefsFromDictDb (self.coefs,freq= self.freq/1e9, ax = ax, **kwargs)
 	def plotCoefsPhase(self, ax = None,**kwargs):
 		plotErrorCoefsFromDictPhase (self.coefs,freq= self.freq/1e9, ax = ax, **kwargs)
+
+	def plotD1Evolution(self,ax=None,lengthUnit='um',**kwargs):
+		
+		try:
+			plb.plot(self.d1Evolution/lengthDict[lengthUnit], label= self.name+': d1',**kwargs)
+			#plb.axhline(self.d1FromCal/lengthDict[lengthUnit], label=self.name+': d1 End Value')
+			plb.legend()
+			plb.xlabel('Iteration')
+			plb.ylabel('Length of d1 ('+lengthUnit+')')
+			plb.title(self.name + ': Evolution of Delay Line 1')
+		except(AttributeError):
+			raise TypeError('only available for sddl2 type, after coefs calculated')
+	
+	def plotD2Evolution(self,ax=None,lengthUnit='um',**kwargs):
+		
+		try:
+			plb.plot(self.d2Evolution/lengthDict[lengthUnit], label= self.name+': d2',**kwargs)
+			#plb.axhline(self.d2FromCal/lengthDict[lengthUnit], label=self.name+': d2 End Value')
+			plb.legend()
+			plb.xlabel('Iteration')
+			plb.ylabel('Length of d2 ('+lengthUnit+')')
+			plb.title(self.name + ': Evolution of Delay Line 2')
+		except(AttributeError):
+			raise TypeError('only available for sddl2 type, after coefs calculated')
+					
+	def plotResidualEvolution(self,ax=None,**kwargs):
+		
+		try:
+			plb.plot(self.allResidueSums, label= self.name+': Sum(Residues)',**kwargs)
+			plb.legend()
+			plb.xlabel('Iteration')
+			plb.ylabel('Sum(Residues)')
+			plb.title(self.name + ': Evolution of Sum of Residues Accross Band')
+		except(AttributeError):
+			raise TypeError('only available for sddl2 type, after coefs calculated')
+					
 ############ DEPRICATED/UNSORTED#####################
 def loadTouchtone(inputFileName):
 	
