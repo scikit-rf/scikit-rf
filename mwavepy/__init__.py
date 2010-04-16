@@ -58,6 +58,10 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 '''
 TBD:
 
+use try/excepts in plotting functions to label title and legend, this 
+way if the name is None we dont crash. and the default value for a ntwk's
+name can be changed to None
+
 re-write deEmbed and cascade with try/excepts instead of isinstances()
 
 calibration.plotCoefs... need to pass a freq multiplier 
@@ -469,28 +473,29 @@ class ntwk(object):
 			return B	
 		
 	
-	def __mul__(self, A):
+	
+	def __pow__(self, A):
 		'''
-		the multiply operator is overloaded to use the cascade 
+		the power operator is overloaded to use the cascade 
 		function,.
 		
 		if both operands, A and B,  are 2-port ntwk's:
-			A * B = cascade(A,B)
-			B * A = cascade(B,A)
+			A ** B = cascade(A,B)
+			B ** A = cascade(B,A)
 		
 		if A 2-port and B is  1-port ntwk:
-			A * B = terminate(A,B), B is attached at port 2
-			B * A = terminate(B,A), B is attached at port 1
+			A ** B = terminate(A,B), B is attached at port 2
+			B ** A = terminate(B,A), B is attached at port 1
 		'''
 
 		return cascade(self, A)
 
-	def __div__(self, A):
+	def __floordiv__(self, A):
 		'''
 		the divide operator is overloaded to use the deEmbed or 
 		function.
 				
-		C/A = deEmbed(C,A)
+		C//A = deEmbed(C,A)
 		
 		note:
 			this function is not a direct mapping to the division 
@@ -503,11 +508,11 @@ class ntwk(object):
 			deEmbed() function, then 
 			
 			if C = A*B
-				C/ A = A^-1 * C = A^-1 * A*B = B
-				C/B != A
+				C// A = A^-1 * C = A^-1 * A*B = B
+				C//B != A
 			if C = B*A
-				C/B = A
-				C/A != B 
+				C//B = A
+				C//A != B 
 				
 		if you wish to deEmbed from port 2, see ntwk.flip
 		'''
@@ -525,6 +530,18 @@ class ntwk(object):
 				#'Frequency Span:\t' + repr(self.freq[0])+ '\t'+repr(self.freq[-1])+'\n' +\
 				#'z0:\t' + repr(self.z0) 
 		#return Non
+	def __mul__(self,A):
+		'''
+		see multiply
+		'''
+		return self.multiply(self,A)
+	
+	def __div__(self,A):
+		'''
+		see divide
+		'''
+		return self.divide(A)
+	
 	def divide(self,A):
 		if A.rank != self.rank:
 			raise IndexError('ntwks must be of the same rank')
@@ -741,7 +758,10 @@ class ntwk(object):
 			ax1 = ax
 			
 		for p in range(self.rank):
-			labelString  = self.name+', S'+repr(p+1) + repr(p+1)
+			try :
+				labelString  = self.name+', S'+repr(p+1) + repr(p+1)
+			except (TypeError):
+				labelString  = 'S'+repr(p+1) + repr(p+1)
 			if self.freq == None:
 			# this network doesnt have a frequency axis, just plot it  
 				ax1.plot(self.sdB[:,p,p],label=labelString,**kwargs)
@@ -752,7 +772,10 @@ class ntwk(object):
 				plb.xlim([ self.freq[0]/self.freqMultiplier, self.freq[-1]/self.freqMultiplier])
 
 		ax1.axhline(0,color='black')
-		plb.title(self.name + 'Return Loss')
+		try:
+			plb.title(self.name + ', Return Loss')
+		except(TypeError):
+			plb.title('Return Loss')
 		plb.legend(loc='best')	
 		plb.axis('tight')
 		plb.ylabel('Magnitude (dB)')
@@ -786,7 +809,10 @@ class ntwk(object):
 					else:
 						ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,q],label=labelString,**kwargs)
 		ax1.axhline(0,color='black')
-		plb.title(self.name + 'Insertion Loss')
+		try:
+			plb.title(self.name + ', Insertion Loss')
+		except(TypeError):
+			plb.title('Insertion Loss')
 		plb.legend(loc='best')				
 		plb.axis('tight')
 		plb.xlabel('Frequency (' + self.freqUnit +')') 
@@ -2414,15 +2440,116 @@ def sddl2Cal(measured, actual, wg, d1, d2):
 		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
 		
 		abc, residues = getABCLeastSquares(gammaMList, gammaAList)
+		print sum(abs(residues))
 		return sum(abs(residues))
 	
 	
-	d1,d2 = fmin (iterativeCal, [d1Start,d2Start],args=(gammaMList,gammaAList), disp=False)
+	d1,d2 = fmin (iterativeCal, [d1Start,d2Start],args=(gammaMList,gammaAList), disp=False,ftol=1e-2)
 	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
 	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
 		
 	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
 	return abc, residues, d1,d2
+
+def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4):
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		gammaMList - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		gammaAList - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	'''
+	
+	
+	from scipy.optimize import fmin
+	
+	#make deep copies so list entities are not changed
+	gammaMList = copy(measured)
+	gammaAList = copy(actual)
+	
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
+	numStds = len(gammaMList)
+	numCoefs = 3
+	
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
+	
+	except:
+		pass	
+	
+	
+	fLength = len(gammaMList[0])
+	#initialize abc matrix
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+
+	
+	dStart =npy.array([d1, d2,d3,d4])
+	
+	
+	def iterativeCal(d, gammaMList, gammaAList):
+		d1,d2,d3,d4=d[0],d[1],d[2],d[3]
+		gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength).s
+		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
+		gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength).s
+		gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength).s
+		
+		
+		abc, residues = getABCLeastSquares(gammaMList, gammaAList)
+		print npy.sum(abs(residues))
+		return npy.sum(abs(residues))
+		
+	iterativeCal(dStart, gammaMList, gammaAList)
+	
+	
+	d1,d2,d3,d4 = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=True,ftol=1e-2)
+	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
+	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
+	gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength, name='ideal delay').s 
+	gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength, name='ideal delay').s 
+		
+	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
+	return abc, residues, d1,d2,d3,d4
+
 
 def alexCal(measured, actual):
 	'''
@@ -3025,6 +3152,26 @@ class calibration(object):
 				len(self.freq), name=self.ideals[1].name+' adjusted')
 			self.delay2 = self.wg.createDelayShort(self.d2FromCal, \
 				len(self.freq), name=self.ideals[2].name+' adjusted')
+			print '%s took %i s' %(self.name, time()-t0)
+		
+		elif self.type == 'sdddd2':
+			
+			t0 = time()
+			self._abc, self._residuals, self.d1FromCal, self.d2FromCal,\
+			self.d3FromCal,self.d4FromCal = \
+			sdddd2Cal(measured = self.measured, actual = self.ideals, \
+				wg = self.wg, d1 = self.d[0], d2 = self.d[1],d3 = self.d[2], d4 = self.d[3])
+			
+			self.delay1 = self.wg.createDelayShort(self.d1FromCal, \
+				len(self.freq), name=self.ideals[1].name+' adjusted')
+			self.delay2 = self.wg.createDelayShort(self.d2FromCal, \
+				len(self.freq), name=self.ideals[2].name+' adjusted')
+			self.delay3 = self.wg.createDelayShort(self.d3FromCal, \
+				len(self.freq), name=self.ideals[3].name+' adjusted')
+			self.delay4 = self.wg.createDelayShort(self.d4FromCal, \
+				len(self.freq), name=self.ideals[4].name+' adjusted')
+			
+			
 			print '%s took %i s' %(self.name, time()-t0)
 		
 		else:
