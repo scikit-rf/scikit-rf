@@ -75,11 +75,13 @@ class rszva40(pythics.libinstrument.GPIBInstrument):
 		pythics.libinstrument.GPIBInstrument.__init__(self, *args, **kwargs)
 
 	def getAFewNtwks2(self,fileNamePrefix, numNtwks, delay=None):
-		self.setSweepType(continuousOn=False)
+		
 		for k in range(numNtwks):
 			print ('sweep #' + repr(k)+ ' started')
+			self.setSweepType(continuousOn=False)
 			self.startSweep(opc=True)
 			aNtwk =self.getNtwk()
+			self.setSweepType(continuousOn=True)
 			theTime =str(datetime.now().time()).replace(':','.').replace('.',' ')
 			aNtwk.writeToTouchstone(fileNamePrefix+theTime+'.s1p')
 			
