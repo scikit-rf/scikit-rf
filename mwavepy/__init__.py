@@ -561,6 +561,17 @@ class ntwk(object):
 			B.s =(self.s * A.s)
 			B.name = self.name+'*'+A.name
 			return B
+	@classmethod
+	def average(self, listOfNtwks):
+		numNtwks = len(listOfNtwks)
+		sumNtwks  = copy (listOfNtwks[0])
+		for aNtwk in listOfNtwks[1:]:
+			sumNtwks += aNtwk
+		
+		sumNtwks.s = sumNtwks.s/numNtwks
+		return sumNtwks
+		
+		  
 	def flip(self):
 		'''
 		invert the ports of a networks s-matrix, 'flipping' it over
@@ -2246,20 +2257,28 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 def sddl1Cal(measured, actual, ftol=1e-2):
 	
 	'''
-	calculates calibration coefficients for a one port calibration. 
+	calculates calibration coefficients for a one port calibration using 
+	the auto-calibration method SDDL- algorithm 1. 
 	 
+	NOTE:
+		for both of the input lists, ORDER MATTERS. it must be *,D1,D2,*
+		meaning the two standards at indecies 1, and 2, are the two which
+		are optimized, so they  must be offset shorts.
+		 
 	takes: 
-		gammaMList - list of measured reflection coefficients. can be 
+		measured - list of measured reflection coefficients. can be 
 			lists of either a kxnxn numpy.ndarray, representing a 
 			s-matrix or list of  1-port mwavepy.ntwk types. 
-		gammaAList - list of assumed reflection coefficients. can be 
+		actual - list of assumed reflection coefficients. can be 
 			lists of either a kxnxn numpy.ndarray, representing a 
 			s-matrix or list of  1-port mwavepy.ntwk types. 
+		
+		
 	
 	returns:
-		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
-			complex calibrations coefficients,where N is the number 
-			of frequency points in the standards that where given.
+		(abc, residues, gammaD1, gammaD2) - a list. abc is a Nx3 ndarray
+			containing the complex calibrations coefficients,where N
+			is the number of frequency points in the standards that where given.
 			
 			abc: 
 			the components of abc are 
@@ -2273,18 +2292,13 @@ def sddl1Cal(measured, actual, ftol=1e-2):
 			
 			residues: a matrix of residues from the least squared 
 				calculation. see numpy.linalg.lstsq() for more info
+			
+			gammaD1: calculated response of delay 1, a mwavepy.ntwk type
+			gammaD2: calculated response of delay 2, a mwavepy.ntwk type
 	
 	 
+	
 		
-	 note:
-		For calibration of general 2-port error networks, 3 standards 
-		are required. 
-		If one makes the assumption of the error network being 
-		reciprical or symmetric or both, the correction requires less 
-		measurements. see mwavepy.getABLeastSquares
-		the standards used in OSM calibration dont actually have to be 
-		an open, short, and match. they are arbitrary but should provide
-		good seperation on teh smith chart for better accuracy .
 	'''
 	
 	
@@ -3210,14 +3224,27 @@ class calibration(object):
 			measured: a list of ntwk() types, which are the measured 
 				responses of the actual standards cascaded behind some 
 				unkown 2-port error network.
+			name: a name, which may be used in plots and such, a string
 			type: the type of calibration to perform, a string. can be:
 				'one port': standard one port calibration algorithm. if
 					more than 3 standards are given, it uses least squares. 
 				'alex one port' ; alternative to the standard one-port 
 					algorithm. only inverts a Nx2 matrix, where N is the
 					number of standards.
-				
-			name: a name for the calibration, a string.
+				'sddl1':  stands for Short,Delay,Delay Load, and the 
+					ntwk lists must be given in that order. Asumes that 
+					the magnitude of both delays is 1, and will determine
+					the phase by minimized the resdiual error, iteratively.
+				'sddl2':
+				'sdddd1':
+				'sdddd2':
+			d: only used in sddl2 or sdddd2. d an array holds
+				the 'guess' lengths for the delays in meters. 
+				order matters. 	delay 1 length = d[0], delay 2 length = d[1]
+			wg: only used in sddl2, sdddd2. a mavepy.waveguide instance 
+				used to generate a predicted response of the offset short,
+				which's length is adjusted  iteractively.
+			
 		
 		returns:
 			None
