@@ -2254,7 +2254,7 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 
 ############## calibration ##############
 ## one port
-def sddl1Cal(measured, actual, ftol=1e-2):
+def sddl1Cal(measured, actual, ftol=1e-3):
 	
 	'''
 	calculates calibration coefficients for a one port calibration using 
@@ -2378,7 +2378,7 @@ def sddl1Cal(measured, actual, ftol=1e-2):
 	
 
 
-def sddl2Cal(measured, actual, wg, d1, d2, ftol= 1e-2):
+def sddl2Cal(measured, actual, wg, d1, d2, ftol= 1e-3):
 	'''
 	calculates calibration coefficients for a one port calibration. 
 	 
@@ -2459,7 +2459,7 @@ def sddl2Cal(measured, actual, wg, d1, d2, ftol= 1e-2):
 		
 		abc, residues = getABCLeastSquares(gammaMList, gammaAList)
 		sumResidualList.append(npy.sum(abs(residues)))
-		print sum(abs(residues))
+		#print sum(abs(residues))
 		return sum(abs(residues))
 	
 	
@@ -2473,7 +2473,7 @@ def sddl2Cal(measured, actual, wg, d1, d2, ftol= 1e-2):
 	return abc, residues, d1,d2, sumResidualList, dList
 
 
-def sdddd1Cal(measured, actual):
+def sdddd1Cal(measured, actual,ftol=1e-3):
 	
 	'''
 	calculates calibration coefficients for a one port calibration. 
@@ -2554,7 +2554,7 @@ def sdddd1Cal(measured, actual):
 	#									...etc
 	
 	for f in range(fLength):
-		print 'f=%i'%f
+		#print 'f=%i'%f
 		
 		# intialize
 		gammaM = npy.zeros(shape=(numStds,1),dtype=complex)
@@ -2584,7 +2584,7 @@ def sdddd1Cal(measured, actual):
 		thetaStart = npy.array([theta1Start,theta2Start,theta3Start,theta4Start])
 		
 		theta1,theta2,theta3,theta4 = fmin (iterativeCal, thetaStart,\
-			args=(gammaM,gammaA), disp=False,ftol=1e-2)
+			args=(gammaM,gammaA), disp=False,ftol=ftol)
 		
 		
 		gammaA[1], gammaA[2],gammaA[3],gammaA[4] = \
@@ -2601,7 +2601,7 @@ def sdddd1Cal(measured, actual):
 		
 	return abc,residues,gammaD1,gammaD2,gammaD3, gammaD4
 
-def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4):
+def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 	'''
 	calculates calibration coefficients for a one port calibration. 
 	 
@@ -2685,11 +2685,11 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4):
 		
 		
 		abc, residues= getABCLeastSquares(gammaMList, gammaAList)
-		print npy.sum(abs(residues))
+		#print npy.sum(abs(residues))
 		return npy.sum(abs(residues))
 		
 	
-	d1,d2,d3,d4 = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=True,ftol=1e-2)
+	d1,d2,d3,d4 = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=False,ftol=ftol)
 	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
 	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
 	gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength, name='ideal delay').s 
@@ -3211,7 +3211,7 @@ class calibration(object):
 		calculateCoefs() must be called if you want to re-calculate coefs.
 	'''
 	
-	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None ):
+	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None, ftol=None ):
 		'''
 		calibration constructor. 
 		
@@ -3261,6 +3261,7 @@ class calibration(object):
 		self.type = type
 		self.d = d
 		self.wg = wg
+		self.ftol=ftol
 	
 	
 	def calculateCoefs(self):
@@ -3289,14 +3290,15 @@ class calibration(object):
 		
 		# call appropriate call type
 		if self.type == 'one port':
+			t0 = time()
 			self._abc, self._residuals = getABCLeastSquares(\
 				measured = self.measured, actual = self.ideals)
-		
+			print '%s took %i s' %(self.name, time()-t0)
 		elif self.type == 'sddl1':
 			t0 = time()
 			
 			self._abc, self._residuals, gammaD1, gammaD2 =\
-				sddl1Cal(	measured = self.measured, actual = self.ideals)
+				sddl1Cal(	measured = self.measured, actual = self.ideals,ftol=self.ftol)
 			self.delay1 = ntwk(data = gammaD1, freq=self.freq, \
 				name = self.ideals[1].name+' adjusted')
 			self.delay2 = ntwk(data = gammaD2, freq=self.freq, \
@@ -3309,7 +3311,7 @@ class calibration(object):
 			self._abc, self._residuals, self.d1FromCal, self.d2FromCal,\
 				 self.allResidueSums,self.dList = \
 				sddl2Cal(measured = self.measured, actual = self.ideals, \
-				wg = self.wg, d1 = self.d[0], d2 = self.d[1])
+				wg = self.wg, d1 = self.d[0], d2 = self.d[1],ftol=self.ftol)
 			self.delay1 = self.wg.createDelayShort(self.d1FromCal, \
 				len(self.freq), name=self.ideals[1].name+' adjusted')
 			self.delay2 = self.wg.createDelayShort(self.d2FromCal, \
@@ -3324,7 +3326,7 @@ class calibration(object):
 			self._abc, self._residuals, self.d1FromCal, self.d2FromCal,\
 			self.d3FromCal,self.d4FromCal = \
 			sdddd2Cal(measured = self.measured, actual = self.ideals, \
-				wg = self.wg, d1 = self.d[0], d2 = self.d[1],d3 = self.d[2], d4 = self.d[3])
+				wg = self.wg, d1 = self.d[0], d2 = self.d[1],d3 = self.d[2], d4 = self.d[3],ftol=self.ftol)
 			
 			self.delay1 = self.wg.createDelayShort(self.d1FromCal, \
 				len(self.freq), name=self.ideals[1].name+' adjusted')
@@ -3342,7 +3344,7 @@ class calibration(object):
 			t0 = time()
 			self._abc, self._residuals, gammaD1, gammaD2,\
 			gammaD3,gammaD4 = \
-			sdddd1Cal(measured = self.measured, actual = self.ideals)
+			sdddd1Cal(measured = self.measured, actual = self.ideals,ftol=self.ftol)
 			
 			
 			self.delay1 = ntwk(data = gammaD1, freq=self.freq, \
@@ -3450,7 +3452,7 @@ class calibration(object):
 	def plotResidualEvolution(self,ax=None,**kwargs):
 		
 		try:
-			plb.plot(self.allResidueSums, label= self.name+': Sum(Residues)',**kwargs)
+			plb.semilogy(self.allResidueSums, label= self.name+': Sum(Residues)',**kwargs)
 			plb.legend()
 			plb.xlabel('Iteration')
 			plb.ylabel('Sum(Residues)')
