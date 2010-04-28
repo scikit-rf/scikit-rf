@@ -2673,7 +2673,7 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 
 	
 	dStart =npy.array([d1, d2,d3,d4])
-	
+	sumResidualList = []
 	
 	def iterativeCal(d, gammaMList, gammaAList):
 		d1,d2,d3,d4=d[0],d[1],d[2],d[3]
@@ -2684,7 +2684,9 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 		
 		
 		abc, residues= getABCLeastSquares(gammaMList, gammaAList)
+		sumResidualList.append(npy.sum(abs(residues)))
 		#print npy.sum(abs(residues))
+		print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
 		return npy.sum(abs(residues))
 		
 	
@@ -2695,7 +2697,7 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 	gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength, name='ideal delay').s 
 		
 	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
-	return abc, residues, d1,d2,d3,d4
+	return abc, residues, d1,d2,d3,d4, sumResidualList
 
 def sdddd2CalUnknownLoss(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3,xtol=1e-3):
 	'''
@@ -2767,20 +2769,20 @@ def sdddd2CalUnknownLoss(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3,xtol=1e-3
 	#initialize abc matrix
 	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
 	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	sumResidualList = []
 	
-	condMultiplier=1e-12
 	if not wg.surfaceConductivity:
 		# they did not give us a surface conductivity to start with
 		wg.surfaceConductvity =  m.conductivityDict('alumninium')
 	
-	conductivityStart = wg.surfaceConductivity *condMultiplier
+	conductivityStart = wg.surfaceConductivity 
 	# this is a misnomer, because its got conductivity in it
 	dStart = npy.array([d1, d2,d3,d4, conductivityStart])
 	
 	
 	def iterativeCal(d, gammaMList, gammaAList):
 		d1,d2,d3,d4, conductivity=d[0],d[1],d[2],d[3],d[4]
-		wg.surfaceConductivity = conductivity/condMultiplier
+		wg.surfaceConductivity = conductivity
 		gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength).s
 		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
 		gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength).s
@@ -2788,20 +2790,21 @@ def sdddd2CalUnknownLoss(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3,xtol=1e-3
 		
 		
 		abc, residues= getABCLeastSquares(gammaMList, gammaAList)
-		print npy.sum(abs(residues)),'==>',d
+		sumResidualList.append(npy.sum(abs(residues)))
+		print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
 		return npy.sum(abs(residues))
 		
 	
 	d1,d2,d3,d4, conductivity = fmin (iterativeCal, dStart,\
 		args=(gammaMList,gammaAList), disp=False,ftol=ftol,xtol=xtol)
-	wg.surfaceConductivity = conductivity/condMultiplier
+	wg.surfaceConductivity = conductivity
 	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
 	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
 	gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength, name='ideal delay').s 
 	gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength, name='ideal delay').s 
 		
 	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
-	return abc, residues, d1,d2,d3,d4, wg
+	return abc, residues, d1,d2,d3,d4, wg,sumResidualList
 
 def alexCal(measured, actual):
 	'''
@@ -3452,7 +3455,7 @@ class calibration(object):
 			
 			t0 = time()
 			self._abc, self._residuals, self.d1FromCal, self.d2FromCal,\
-			self.d3FromCal,self.d4FromCal = \
+			self.d3FromCal,self.d4FromCal,self.allResidueSums = \
 			sdddd2Cal(measured = self.measured, actual = self.ideals, \
 				wg = self.wg, d1 = self.d[0], d2 = self.d[1],d3 = self.d[2], d4 = self.d[3],ftol=self.ftol)
 			
@@ -3471,7 +3474,7 @@ class calibration(object):
 			
 			t0 = time()
 			self._abc, self._residuals, self.d1FromCal, self.d2FromCal,\
-			self.d3FromCal,self.d4FromCal, self.wg = \
+			self.d3FromCal,self.d4FromCal, self.wg, self.allResidueSums= \
 			sdddd2CalUnknownLoss(measured = self.measured, actual = self.ideals, \
 				wg = self.wg, d1 = self.d[0], d2 = self.d[1],d3 = self.d[2],\
 				d4 = self.d[3],ftol=self.ftol,xtol=self.xtol)
