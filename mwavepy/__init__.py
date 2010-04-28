@@ -330,6 +330,9 @@ def plotErrorCoefsFromDictPhase(errorDict,freq= None,ax = None,unwrap=False, **k
 	plb.ylabel('Magnitude (dB)')
 	plb.grid(1)
 	plb.draw()
+def turnLegendOff(): 
+	plb.gca().legend_.set_visible(0)
+	plb.draw()
 ############### network theory  ################
 ## base network class.
 class ntwk(object):
@@ -2577,11 +2580,7 @@ def sdddd1Cal(measured, actual,ftol=1e-3):
 		
 		# starting point for iterative least squares loop is whatever 
 		# the user has submitted
-		theta1Start = npy.angle(gammaA[1])
-		theta2Start = npy.angle(gammaA[2])
-		theta3Start = npy.angle(gammaA[3])
-		theta4Start = npy.angle(gammaA[4])
-		thetaStart = npy.array([theta1Start,theta2Start,theta3Start,theta4Start])
+		thetaStart = npy.angle(gammaA[1:])
 		
 		theta1,theta2,theta3,theta4 = fmin (iterativeCal, thetaStart,\
 			args=(gammaM,gammaA), disp=False,ftol=ftol)
@@ -2698,6 +2697,111 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
 	return abc, residues, d1,d2,d3,d4
 
+def sdddd2CalUnknownLoss(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3,xtol=1e-3):
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		gammaMList - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		gammaAList - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	'''
+	
+	
+	from scipy.optimize import fmin
+	
+	#make deep copies so list entities are not changed
+	gammaMList = copy(measured)
+	gammaAList = copy(actual)
+	wg = copy(wg)
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
+	numStds = len(gammaMList)
+	numCoefs = 3
+	
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
+	
+	except:
+		pass	
+	
+	
+	fLength = len(gammaMList[0])
+	#initialize abc matrix
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	
+	condMultiplier=1e-12
+	if not wg.surfaceConductivity:
+		# they did not give us a surface conductivity to start with
+		wg.surfaceConductvity =  m.conductivityDict('alumninium')
+	
+	conductivityStart = wg.surfaceConductivity *condMultiplier
+	# this is a misnomer, because its got conductivity in it
+	dStart = npy.array([d1, d2,d3,d4, conductivityStart])
+	
+	
+	def iterativeCal(d, gammaMList, gammaAList):
+		d1,d2,d3,d4, conductivity=d[0],d[1],d[2],d[3],d[4]
+		wg.surfaceConductivity = conductivity/condMultiplier
+		gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength).s
+		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
+		gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength).s
+		gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength).s
+		
+		
+		abc, residues= getABCLeastSquares(gammaMList, gammaAList)
+		print npy.sum(abs(residues)),'==>',d
+		return npy.sum(abs(residues))
+		
+	
+	d1,d2,d3,d4, conductivity = fmin (iterativeCal, dStart,\
+		args=(gammaMList,gammaAList), disp=False,ftol=ftol,xtol=xtol)
+	wg.surfaceConductivity = conductivity/condMultiplier
+	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
+	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
+	gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength, name='ideal delay').s 
+	gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength, name='ideal delay').s 
+		
+	abc, residues =  getABCLeastSquares(measured = gammaMList, actual=gammaAList)
+	return abc, residues, d1,d2,d3,d4, wg
 
 def alexCal(measured, actual):
 	'''
@@ -2794,7 +2898,30 @@ def alexCal(measured, actual):
 	
 
 	
-def getABC(mOpen,mShort,mMatch,aOpen,aShort,aMatch):
+
+def mobiusTransform(m, a):
+	'''
+	returns the unique maping function between m and a planes which are
+	related through	the mobius transform.
+	
+	takes:
+		m: list containing 2 points in m plane m0,m1,m2
+		a: list containing 2 points in a plane a0,a1,a2
+	
+	returns:
+		a (m) : function of variable in m plane, which returns a value
+			in the a-plane
+	'''
+	m0,m1,m2 = m
+	a0,a1,a2 = a
+	return lambda m: (a0*a1*m*m0 + a0*a1*m1*m2 + a0*a2*m*m2 + a0*a2*m0*m1 +\
+	 a1*a2*m*m1 + a1*a2*m0*m2 - a0*a1*m*m1 - a0*a1*m0*m2 - a0*a2*m*m0 -\
+	 a0*a2*m1*m2 - a1*a2*m*m2 - a1*a2*m0*m1)/(a0*m*m2 + a0*m0*m1 + a1*m*m0\
+	  + a1*m1*m2 + a2*m*m1 + a2*m0*m2 - a0*m*m1 - a0*m0*m2 - a1*m*m2 - \
+	  a1*m0*m1 - a2*m*m0 - a2*m1*m2)
+	
+	
+def getABC(mOpen,mShort,mMatch,aOpen,aShorat,aMatch):
 	'''
 	calculates calibration coefficients for a one port OSM calibration
 	 
@@ -3211,7 +3338,7 @@ class calibration(object):
 		calculateCoefs() must be called if you want to re-calculate coefs.
 	'''
 	
-	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None, ftol=None ):
+	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None, ftol=1e-3,xtol=1e-3 ):
 		'''
 		calibration constructor. 
 		
@@ -3254,14 +3381,15 @@ class calibration(object):
 		'''
 		
 		self.name  = name
-		self.ideals = ideals
-		self.measured = measured
-		self.freq = freq
+		self.ideals = copy(ideals)
+		self.measured = copy(measured)
+		self.freq = copy(freq)
 		self.freqMultiplier = freqMultiplier
 		self.type = type
-		self.d = d
-		self.wg = wg
+		self.d = copy(d)
+		self.wg = copy(wg)
 		self.ftol=ftol
+		self.xtol=xtol
 	
 	
 	def calculateCoefs(self):
@@ -3327,6 +3455,26 @@ class calibration(object):
 			self.d3FromCal,self.d4FromCal = \
 			sdddd2Cal(measured = self.measured, actual = self.ideals, \
 				wg = self.wg, d1 = self.d[0], d2 = self.d[1],d3 = self.d[2], d4 = self.d[3],ftol=self.ftol)
+			
+			self.delay1 = self.wg.createDelayShort(self.d1FromCal, \
+				len(self.freq), name=self.ideals[1].name+' adjusted')
+			self.delay2 = self.wg.createDelayShort(self.d2FromCal, \
+				len(self.freq), name=self.ideals[2].name+' adjusted')
+			self.delay3 = self.wg.createDelayShort(self.d3FromCal, \
+				len(self.freq), name=self.ideals[3].name+' adjusted')
+			self.delay4 = self.wg.createDelayShort(self.d4FromCal, \
+				len(self.freq), name=self.ideals[4].name+' adjusted')
+			
+			
+			print '%s took %i s' %(self.name, time()-t0)
+		elif self.type == 'sdddd2UnkownLoss':
+			
+			t0 = time()
+			self._abc, self._residuals, self.d1FromCal, self.d2FromCal,\
+			self.d3FromCal,self.d4FromCal, self.wg = \
+			sdddd2CalUnknownLoss(measured = self.measured, actual = self.ideals, \
+				wg = self.wg, d1 = self.d[0], d2 = self.d[1],d3 = self.d[2],\
+				d4 = self.d[3],ftol=self.ftol,xtol=self.xtol)
 			
 			self.delay1 = self.wg.createDelayShort(self.d1FromCal, \
 				len(self.freq), name=self.ideals[1].name+' adjusted')
