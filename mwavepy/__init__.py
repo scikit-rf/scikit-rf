@@ -594,6 +594,7 @@ class ntwk(object):
 			None
 		
 		'''
+		raise NotImplimentedError
 		newFreq = linspace(self.freq[0],self.freq[-1],numPoints)
 		newS = zeros(shape=(numPoints, self.rank, self.rank))
 		
