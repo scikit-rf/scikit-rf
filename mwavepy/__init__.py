@@ -30,7 +30,7 @@ from time import time
 # Dependencies
 try:
 	import numpy as npy
-	from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real
+	from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag, interp, linspace, shape,zeros
 except:
 	raise ImportError ('Depedent Packages not found. Please install: numpy')
 try:
@@ -42,6 +42,7 @@ except:
 try:
 	from scipy.constants import  epsilon_0, mu_0, c,pi, mil
 	from scipy import signal
+	
 except:
 	raise ImportError ('Depedent Packages not found. Please install: scipy')
 	
@@ -58,9 +59,12 @@ from touchstone import touchstone as touch	# for loading data from touchstone fi
 '''
 TBD:
 
+# HIGH PRIORITY
 possible bug found in deEmbed function: when a ntwk is deEmbed 
-with different ntwk from which it was cascaded with, a 
+with different ntwk from which it was cascaded with, the phase looks 
+like it has a modulo error. 
 
+# LOW PRIOTITY
 use try/excepts in plotting functions to label title and legend, this 
 way if the name is None we dont crash. and the default value for a ntwk's
 name can be changed to None
@@ -575,6 +579,32 @@ class ntwk(object):
 		return sumNtwks
 		
 		  
+	def resizeFreq(self, numPoints):
+		'''
+		WARNING: DOES NOT WORK YET!!
+		changes the number of points for the ntwk. this alters the 
+		frequency axis, and uses linear piece-wise interpolation on the 
+		real and imaginary parts of the s-parameters.
+		see	numpy.interp for details.
+		
+		takes:
+			numPoints: the number of points, desired for the ntwk
+		
+		returns:
+			None
+		
+		'''
+		newFreq = linspace(self.freq[0],self.freq[-1],numPoints)
+		newS = zeros(shape=(numPoints, self.rank, self.rank))
+		
+		for m in range(self.rank):
+			for n in range(self.rank):
+				newS[:,m,n] = interp(newFreq, self.freq, real(self.s[:,m,n]))+\
+					1j*interp(newFreq, self.freq, imag(self.s[:,m,n]))
+				
+		self.s = newS
+		self.freq = newFreq		
+	
 	def flip(self):
 		'''
 		invert the ports of a networks s-matrix, 'flipping' it over
@@ -1317,9 +1347,10 @@ def deEmbed(C, A):
 							B[k] = deEmbed(C[k],A[k]) # C[k] = C[k,:,:]
 						return B
 					else:
-						raise IndexError('A.shape[0] ! = C.shape[0], \
-						meaning, they are not the same length along the \
-						frequency axis')
+						print 'ntwk length error'
+						raise IndexError('A.shape[0] ! = C.shape[0], '+\
+						'meaning, they are not the same length along the '+\
+						'frequency axis')
 				else:
 					raise IndexError('invalid shapes of C, must be kx2x2\
 					or kx1x1 or kx1, where k is arbitrary')
