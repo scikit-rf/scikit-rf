@@ -2289,6 +2289,93 @@ def createShuntAdmittance(y,z0=50,numPoints=1):
 
 ############## calibration ##############
 ## one port
+def onePortCal(measured, ideals):
+	
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		measured - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		ideals - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	 
+	
+		
+	'''
+	#make  copies so list entities are not changed, when we typecast 
+	mList = copy(measured)
+	iList = copy(ideals)
+	
+	numStds = len(mList)# find number of standards given, for dimensions
+	numCoefs=3
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			mList[k] = mList[k].s.reshape((-1,1))
+			iList[k] = iList[k].s.reshape((-1,1))
+	
+	except:
+		pass	
+	
+	# ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
+	fLength = len(mList[0])
+	
+	#initialize outputs 
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	
+	# loop through frequencies and form m, a vectors and 
+	# the matrix M. where M = 	i1, 1, i1*m1 
+	#							i2, 1, i2*m2
+	#									...etc
+	for f in range(fLength):
+		# vectors
+		one = npy.ones(shape=(numStds,1))
+		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
+		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
+		# construct the matrix 
+		Q = npy.hstack([i, one, i*m])
+		# calculate least squares
+		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
+		abc[f,:]=abcTmp.flatten()
+		residuals[f,:]=residualsTmp
+		
+	return abc, residuals
+
 def sddl1Cal(measured, actual, ftol=1e-3):
 	
 	'''
@@ -3019,7 +3106,7 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShorat,aMatch):
 		
 	return abc
 	
-def getABCLeastSquares(measured, actual):
+def getABCLeastSquaresOld(measured, actual):
 	'''
 	calculates calibration coefficients for a one port calibration. 
 	 
@@ -3592,6 +3679,10 @@ class calibration(object):
 	abc = property(__get_abc, __set_abc)
 		
 	def __get_residuals(self):
+		'''
+		array of residuals. shape depends on calibration type and number
+		of standards
+		'''
 		try:
 			return self._residuals
 		except(AttributeError):
