@@ -2309,15 +2309,11 @@ def onePortCal(measured, ideals):
 			
 			abc: 
 			the components of abc are 
-				a[:] = abc[:,0]
-				b[:] = abc[:,1]
-				c[:] = abc[:,2],
-			a, b and c are related to the error network by 
-				a = e01*e10 - e00*e11 
-				b = e00 
-				c = e11
+				a = abc[:,0] = e01*e10 - e00*e11
+				b = abc[:,1] = e00
+				c = abc[:,2] = e11
 			
-			residues: a matrix of residues from the least squared 
+			residuals: a matrix of residuals from the least squared 
 				calculation. see numpy.linalg.lstsq() for more info
 	
 	 
@@ -2347,7 +2343,6 @@ def onePortCal(measured, ideals):
 		for k in range(numStds):
 			mList[k] = mList[k].s.reshape((-1,1))
 			iList[k] = iList[k].s.reshape((-1,1))
-	
 	except:
 		pass	
 	
@@ -2375,6 +2370,134 @@ def onePortCal(measured, ideals):
 		residuals[f,:]=residualsTmp
 		
 	return abc, residuals
+	
+def onePortCalNLS(measured, ideals):
+	
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		measured - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		ideals - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a = abc[:,0] = e01*e10 - e00*e11
+				b = abc[:,1] = e00
+				c = abc[:,2] = e11
+			
+			residuals: a matrix of residuals from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	 
+	
+		
+	'''
+	#make  copies so list entities are not changed, when we typecast 
+	mList = copy(measured)
+	iList = copy(ideals)
+	
+	numStds = len(mList)# find number of standards given, for dimensions
+	numCoefs=3
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			mList[k] = mList[k].s.reshape((-1,1))
+			iList[k] = iList[k].s.reshape((-1,1))
+	except:
+		pass	
+	
+	# ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
+	fLength = len(mList[0])
+	
+	#initialize outputs 
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	output=[]
+	# loop through frequencies and form m, a vectors and 
+	# the matrix M. where M = 	i1, 1, i1*m1 
+	#							i2, 1, i2*m2
+	#									...etc
+	
+	
+	from scipy.optimize import leastsq 
+	
+	def residualFuncR(p,m,i):
+		#one = npy.ones(shape=(numStds,1))
+		A,B,C,theta1, theta2 = p
+		
+		i[1], i[2] = real(exp(1j*theta1)), real(exp(1j*theta2))
+		
+		i.transpose()
+		m.transpose()
+		err = m - (A*i+B*one+C*m*i) 		
+		#print err
+		return err.flatten()
+	def residualFuncI(p,m,i):
+		#one = npy.ones(shape=(numStds,1))
+		A,B,C,theta1, theta2 = p
+		
+		i[1], i[2] = imag(exp(1j*theta1)), imag(exp(1j*theta2))
+		
+		i.transpose()
+		m.transpose()
+		err = m - (A*i+B*one+C*m*i) 		
+		#print err
+		return err.flatten()
+		
+		
+	for f in range(fLength):
+		# vectors
+		one = npy.ones(shape=(numStds,1))
+		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
+		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
+		# construct the matrix 
+		Q = npy.hstack([i, one, i*m])		# calculate least squares
+		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
+		abc[f,:] = abcTmp.flatten()
+		residuals[f,:] = residualsTmp
+		
+		A,B,C = abcTmp
+		theta1, theta2 = npy.angle([i[1], i[2]])
+		p0 = array((A,B,C,theta1,theta2))
+		
+		p0R,p0I= real(p0).flatten(), imag(p0).flatten()
+		p0I[3],p0I[4]=0,0
+		mR,mI = real(m).flatten(),imag(m).flatten()
+		iR,iI = real(i).flatten(),imag(i).flatten()
+		
+		#print shape(p0R)
+		#print shape((mR,iR))
+		
+		output.append(leastsq(func=residualFuncR, x0= p0R, args=(mR,iR) )[0]+\
+		1j*leastsq(func=residualFuncI, x0= p0I, args=(mI,iI) )[0])
+		
+		
+	output = array(output)
+	abc = output[:,:3]
+	theta1,theta2 = output[:,3],output[:,4]
+	return abc, theta1,theta2
 
 def sddl1Cal(measured, actual, ftol=1e-3):
 	
@@ -3027,8 +3150,8 @@ def mobiusTransform(m, a):
 	related through	the mobius transform.
 	
 	takes:
-		m: list containing 2 points in m plane m0,m1,m2
-		a: list containing 2 points in a plane a0,a1,a2
+		m: list containing the triplet of points in m plane m0,m1,m2
+		a: list containing the triplet of points in a plane a0,a1,a2
 	
 	returns:
 		a (m) : function of variable in m plane, which returns a value
@@ -3541,8 +3664,8 @@ class calibration(object):
 		# call appropriate call type
 		if self.type == 'one port':
 			t0 = time()
-			self._abc, self._residuals = getABCLeastSquares(\
-				measured = self.measured, actual = self.ideals)
+			self._abc, self._residuals = onePortCal(\
+				measured = self.measured, ideals = self.ideals)
 			print '%s took %i s' %(self.name, time()-t0)
 		elif self.type == 'sddl1':
 			t0 = time()
