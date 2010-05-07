@@ -1734,7 +1734,7 @@ def electricalLength( l , f0, beta=beta0,deg=False):
 	elif deg ==True:
 		return  rad2deg(beta(2*pi*f0 ) *l )
 
-def gamma(zl,z0=50.0, theta=0):
+def Gamma(zl,z0=50.0, theta=0):
 	'''
 	calculates the reflection coefficient for a given load and characteristic impedance
 	takes:
@@ -1818,11 +1818,46 @@ def surfaceImpedance(omega, conductivity, epsilon=epsilon_0, mu=mu_0):
 ############### transmission line class   ################
 class transmissionLine:
 	'''
-	should be main class, which all transmission line sub-classes inhereit
+	general super-class for TEM transmission lines
 	'''
-	def __init__(self):
-		raise NotImplementedError
-		return None
+	def __init__(self, \
+		distributedCapacitance,	distributedInductance,\
+		distributedResistance, distributedConductance ):
+		
+		self.distributedCapacitance = distributedCapacitance
+		self.distributedInductance = distributedInductance
+		self.distributedResistance = distributedResistance
+		self.distributedConductance = distributedConductance
+		
+	
+	def distributedImpedance(self,omega):
+		return self.distributedResistance+1j*omega*self.distributedInductance
+	
+	def distributedAdmittance(self,omega):
+		return self.distributedConductance+1j*omega*self.distributedCapacitance
+	# could put a test for losslessness here and choose whether to make this
+	# a funtion of omega or not.
+	def characteristicImpedance(self,omega):
+		return self.distributedImpedance(omega)/self.distributedAdmittance(omega)
+	
+	def propagationConstant(self,omega):
+		return sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
+		
+
+
+class freespace(transmissionLine):
+	'''
+	represents freespace, defined by [possibly complex] values of relative 
+	permativity and relative permeability
+	'''
+	def __init__(self, relativePermativity=1, relativePermeability=1):
+		transmissionLine.__init__(self,\
+			distributedCapacitance = real(epsilon_0*relativePermativity),\
+			distributedResistance = imag(epsilon_0*relativePermativity),\
+			distributedInductance = real(mu_0*relativePermeability),\
+			distributedConductance = imag(mu_0*relativePermeability),\
+			)
+		
 class coax:
 	def __init__(self):
 		raise NotImplementedError
