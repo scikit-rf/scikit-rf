@@ -1838,12 +1838,140 @@ class transmissionLine:
 	# could put a test for losslessness here and choose whether to make this
 	# a funtion of omega or not.
 	def characteristicImpedance(self,omega):
-		return self.distributedImpedance(omega)/self.distributedAdmittance(omega)
+		return sqrt(self.distributedImpedance(omega)/self.distributedAdmittance(omega))
 	
 	def propagationConstant(self,omega):
 		return sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
+	
+	
+	def electricalLength(self, l , f, gamma=None,deg=False):
+		'''
+		calculates the electrical length of a section of transmission line.
+	
+		takes:
+			l - length of line in meters
+			f - frequency at which to calculate 
+			gamma: propagationConstant a function of angular frequency (omega), 
+				and returns a value with units radian/m.  
+			
+		returns:
+			electricalLength: electrical length in radians or degrees, 
+				if deg =True
+		note:
+			you can pass a function on the fly, like  
+			electricalLength(freqVector, l, beta = lambda omega: omega/c )
+		'''
+		if gamma is None:
+			gamma = self.propagationConstant
+			
+		if deg==False:
+			return  gamma(2*pi*f ) *l 
+		elif deg ==True:
+			return  rad2deg(gamma(2*pi*f ) *l )
+	
+	
+	
+	def reflectionCoefficient(self, l,f,zl,z0=None, gamma=None):
+		'''
+		calculates the reflection coefficient for a given load 
+		takes:
+			l: distance of transmission line to load, in meters (float)
+			f: frequency at which to calculate, array-like or float
+			zl: load impedance. may be a function of f, or a number 
+			z0 - characteristic impedance may be a function of f, or a number 
+		'''
+		if gamma is None:
+			gamma = self.propagationConstant
+		if z0 is None:
+			z0 = self.characteristicImpedance
 		
+		try:
+			zl = zl(f)
+		except TypeError:
+			pass
+		try:
+			z0 = z0(f)
+		except TypeError:
+			pass
+		
+		if len(z0) != len(zl): raise IndexError('len(zl) != len(z0)')
+			
+		# flexible way to typecast ints, or arrays
+		zl = 1.0*(zl)
+		z0 = 1.0*(z0)
+		l = 1.0* (l)
+		
+		theta = self.electricalLength(l,f)
+		
+		if isinstance(zl,npy.ndarray):
+			# handle the limit of open circuit. for arrays
+			zl[(zl==npy.inf)]=1e100
+			gammaAt0 = (zl-z0)/(zl+z0)
+		else:
+			if zl == inf:
+				gammaAt0 = 1
+			else: 
+				gammaAt0 = (zl-z0)/(zl+z0)
+		
+		gammaAtL =gammaAt0 * npy.exp(-2j*theta)
+		return gammaAtL
+	
+	
+	def inputImpedance(self, l,f, zl,z0=self.characteristicImpedance,\
+		gamma=self.propagationConstant):
+		'''
+		returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
+		takes:
+			zl - load impedance 
+			z0 - characteristic impedance of tline
+			theta - distance from load, given in electrical length  (rad)
+		returns:
+			input impedance ( in general complex)
+			
+		note:
+			this can also be calculated in terms of reflectionCoefficient
+		'''
 
+		
+		try:
+			zl = zl(f)
+		except TypeError:
+			pass
+		try:
+			z0 = z0(f)
+		except TypeError:
+			pass
+		
+		theta = propagationConstant(l,f)
+		
+		if zl == inf:
+			return -1j*z0*1./(tan(theta))
+		elif zl == 0:
+			return 1j*z0*tan(theta)
+		else:
+			return z0 *	(zl + 1j*z0 * tan(theta)) /\
+						(z0 + 1j*zl * tan(theta))
+	
+
+	
+	
+	
+	def createNtwk_DelayShort(self,l,numPoints, propagationConstant=self.propagationConstant ):
+		'''
+		generate the reflection coefficient for a  delayed short of length l 
+		
+		takes:
+			l - length of delay, in meters
+			numPoints - number of points to produce
+		returns:
+			two port S matrix for a waveguide thru section of length l 
+		'''
+
+		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		s = createDelayShort(freq,l ,self.beta)
+		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
+		return  -1*exp(-1j* 2*electricalLength(l=l,f=f,\
+			propagationConstant=propagationConstant))
 
 class freespace(transmissionLine):
 	'''
