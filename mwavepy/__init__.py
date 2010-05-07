@@ -1818,6 +1818,13 @@ def surfaceImpedance(omega, conductivity, epsilon=epsilon_0, mu=mu_0):
 
 ############### transmission line class   ################
 class frequencyBand:
+	'''
+	represents a frequency band. 
+	
+	usually we are doign calcluations in a given band , so this class 
+	used in other classes so user doesnt have to continually supply 
+	frequency info.
+	'''
 	freqUnitDict = {\
 		'hz':'Hz',\
 		'mhz':'MHz',\
@@ -1829,6 +1836,18 @@ class frequencyBand:
 		'ghz':1e9\
 		}
 	def __init__(self,start, stop, npoints, unit='hz'):
+		'''
+		takes:
+			start: start of band.  in Hz
+			stop: end of band. in Hz
+			npoints: number of points in the band. 
+			unit: unit you want the band in for plots. a string. can be:
+				'hz', 'mhz','ghz', 
+			
+		note: unit sets the property freqMultiplier, which is used 
+		to scale the frequncy when formatedAxis is referenced.
+			
+		'''
 		self.start = start
 		self.stop = stop
 		self.npoints = npoints
@@ -1838,6 +1857,13 @@ class frequencyBand:
 	@property
 	def multiplier(self):
 		return self.freqMultiplierDict[self.unit.lower()]
+	@property
+	def	axis(self):
+		'''
+		returns a frequency axis scaled to the correct units
+		the unit is stored in freqDict['freqUnit']
+		'''
+		return linspace(self.start,self.stop,self.npoints)
 	@property
 	def	formatedAxis(self):
 		'''
@@ -1876,7 +1902,7 @@ class transmissionLine:
 		return sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
 	
 	@classmethod
-	def electricalLength(self, l , f, gamma=None,deg=False):
+	def electricalLength(self, l , f=None, gamma=None,deg=False):
 		'''
 		calculates the electrical length of a section of transmission line.
 	
@@ -1895,6 +1921,13 @@ class transmissionLine:
 		'''
 		if gamma is None:
 			gamma = self.propagationConstant
+		if f is None:
+			
+			if self.frequencyBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				f = self.frequencyBand.axis
+				
 			
 		if deg==False:
 			return  gamma(2*pi*f ) *l 
@@ -1999,37 +2032,37 @@ class transmissionLine:
 	
 	
 	
-	def createNtwk_delayShort(self,l,numPoints, gamma=None ):
+	def createNtwk_delayShort(self,l,f=None, gamma=None, **kwargs ):
 		'''
 		generate the reflection coefficient for a  delayed short of length l 
 		
 		takes:
 			l - length of delay, in meters
-			numPoints - number of points to produce
+			f: frequency axis. if self.frequencyBand exists then this 
+				can left as None
 			gamma: propagationConstant a function of angular frequency (omega), 
-				and returns a value with units radian/m.
+				and returns a value with units radian/m. can be omited.
+			kwargs: passed to ntwk constructor
 		returns:
 			two port S matrix for a waveguide thru section of length l 
 		'''
 		
-
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s = createDelayShort(freq,l ,self.beta)
-		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
-		return  -1*exp(-1j* 2*electricalLength(l=l,f=f,\
-			propagationConstant=propagationConstant))
+		s = -1*exp(-1j* 2*self.electricalLength(l,f,gamma))
+		return ntwk(data=s,paramType='s',freq=f,**kwargs)
+		
 
 class freespace(transmissionLine):
 	'''
 	represents freespace, defined by [possibly complex] values of relative 
 	permativity and relative permeability
 	'''
-	def __init__(self, relativePermativity=1, relativePermeability=1):
+	def __init__(self, relativePermativity=1, relativePermeability=1,frequencyBand=None):
 		transmissionLine.__init__(self,\
 			distributedCapacitance = real(epsilon_0*relativePermativity),\
 			distributedResistance = imag(epsilon_0*relativePermativity),\
 			distributedInductance = real(mu_0*relativePermeability),\
 			distributedConductance = imag(mu_0*relativePermeability),\
+			frequencyBand = frequencyBand
 			)
 		
 class coax:
