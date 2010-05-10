@@ -2106,6 +2106,9 @@ class coplanar:
 	def __init__(self):
 		raise NotImplementedError
 		return None
+
+		
+	
 class waveguide:
 	'''
 	class which represents a rectangular waveguide . 
