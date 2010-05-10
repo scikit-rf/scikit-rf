@@ -2675,67 +2675,37 @@ def onePortCalNLS(measured, ideals):
 	# ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
 	fLength = len(mList[0])
 	
-	#initialize outputs 
-	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
-	output=[]
-	# loop through frequencies and form m, a vectors and 
-	# the matrix M. where M = 	i1, 1, i1*m1 
-	#							i2, 1, i2*m2
-	#									...etc
 	
 	
 	from scipy.optimize import leastsq 
 	
-	def residualFuncR(p,m,i):
-		#one = npy.ones(shape=(numStds,1))
-		A,B,C,theta1, theta2 = p
+	def residualFunc(e,m,i):
+		e00,e01,e10,e11 = e 
+		E = array([[e00,e01],[e10, e11]])
+		print shape(E), shape(i)
+		return m - cascade(E, i)
+	
 		
-		i[1], i[2] = real(exp(1j*theta1)), real(exp(1j*theta2))
-		
-		i.transpose()
-		m.transpose()
-		err = m - (A*i+B*one+C*m*i) 		
-		#print err
-		return err.flatten()
-	def residualFuncI(p,m,i):
-		#one = npy.ones(shape=(numStds,1))
-		A,B,C,theta1, theta2 = p
-		
-		i[1], i[2] = imag(exp(1j*theta1)), imag(exp(1j*theta2))
-		
-		i.transpose()
-		m.transpose()
-		err = m - (A*i+B*one+C*m*i) 		
-		#print err
-		return err.flatten()
-		
-		
+	abc, residuals = onePortCal(measured = measured, ideals=ideals)
+	E0 = abc2Ntwk(abc).s
+	output=[]
 	for f in range(fLength):
 		# vectors
-		one = npy.ones(shape=(numStds,1))
 		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
 		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
-		# construct the matrix 
-		Q = npy.hstack([i, one, i*m])		# calculate least squares
-		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
-		abc[f,:] = abcTmp.flatten()
-		residuals[f,:] = residualsTmp
 		
-		A,B,C = abcTmp
-		theta1, theta2 = npy.angle([i[1], i[2]])
-		p0 = array((A,B,C,theta1,theta2))
 		
-		p0R,p0I= real(p0).flatten(), imag(p0).flatten()
-		p0I[3],p0I[4]=0,0
+		
+		E0R,E0I= real(E0[f,:,:]).flatten(), imag(E0[f,:,:]).flatten()
+		
 		mR,mI = real(m).flatten(),imag(m).flatten()
 		iR,iI = real(i).flatten(),imag(i).flatten()
 		
 		#print shape(p0R)
 		#print shape((mR,iR))
 		
-		output.append(leastsq(func=residualFuncR, x0= p0R, args=(mR,iR) )[0]+\
-		1j*leastsq(func=residualFuncI, x0= p0I, args=(mI,iI) )[0])
+		output.append(leastsq(func=residualFunc, x0=E0R, args=(mR,iR) )[0]+\
+		1j*leastsq(func=residualFuncI, x0= E0I, args=(mI,iI) )[0])
 		
 		
 	output = array(output)
