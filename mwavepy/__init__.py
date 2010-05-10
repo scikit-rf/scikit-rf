@@ -1886,6 +1886,7 @@ class transmissionLine:
 		self.distributedInductance = distributedInductance
 		self.distributedResistance = distributedResistance
 		self.distributedConductance = distributedConductance
+
 		self.frequencyBand = frequencyBand
 		
 	def distributedImpedance(self,omega):
@@ -1901,7 +1902,7 @@ class transmissionLine:
 	def propagationConstant(self,omega):
 		return sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
 	
-	@classmethod
+	#@classmethod
 	def electricalLength(self, l , f=None, gamma=None,deg=False):
 		'''
 		calculates the electrical length of a section of transmission line.
@@ -1922,20 +1923,18 @@ class transmissionLine:
 		if gamma is None:
 			gamma = self.propagationConstant
 		if f is None:
-			
-			if self.frequencyBand is None:
+			if  self.frequencyBand is None:
 				raise ValueError('please supply frequency information')
 			else:
 				f = self.frequencyBand.axis
 				
-			
 		if deg==False:
 			return  gamma(2*pi*f ) *l 
 		elif deg ==True:
 			return  rad2deg(gamma(2*pi*f ) *l )
 	
 	
-	@classmethod
+	#@classmethod
 	def reflectionCoefficient(self, l,f,zl,z0=None, gamma=None):
 		'''
 		calculates the reflection coefficient for a given load 
@@ -1985,7 +1984,7 @@ class transmissionLine:
 		gammaAtL =gammaAt0 * npy.exp(-2j*theta)
 		return gammaAtL
 	
-	@classmethod
+	#@classmethod
 	def inputImpedance(self, l,f, zl,z0=None,gamma=None):
 		'''
 		returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
