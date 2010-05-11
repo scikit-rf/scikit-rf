@@ -30,7 +30,8 @@ from time import time
 # Dependencies
 try:
 	import numpy as npy
-	from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag, interp, linspace, shape,zeros
+	from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
+	 interp, linspace, shape,zeros, reshape
 except:
 	raise ImportError ('Depedent Packages not found. Please install: numpy')
 try:
@@ -1183,7 +1184,7 @@ def cascade(A,B):
 		
 
 	
-	except:
+	except(AttributeError):
 		pass	
 	if isinstance(A, npy.ndarray) and isinstance(B, npy.ndarray):
 		# most of this code is just dumb shape checking.  the actual
@@ -1821,8 +1822,15 @@ class frequencyBand:
 	'''
 	represents a frequency band. 
 	
-	usually we are doign calcluations in a given band , so this class 
-	used in other classes so user doesnt have to continually supply 
+	attributes:
+		start: starting frequency  (in Hz)
+		stop: stoping frequency  (in Hz)
+		npoints: number of points, an int
+		unit: unit which to scale a formated axis, when accesssed. see
+			formattedAxis
+		
+	frequently many calcluations are made in a given band , so this class 
+	is used in other classes so user doesnt have to continually supply 
 	frequency info.
 	'''
 	freqUnitDict = {\
@@ -1838,24 +1846,31 @@ class frequencyBand:
 	def __init__(self,start, stop, npoints, unit='hz'):
 		'''
 		takes:
-			start: start of band.  in Hz
-			stop: end of band. in Hz
+			start: start of band.  units of unit, defaults is  Hz
+			stop: end of band. units of unit, defaults is  Hz
 			npoints: number of points in the band. 
 			unit: unit you want the band in for plots. a string. can be:
 				'hz', 'mhz','ghz', 
+		
+		example:
+			wr1p5band = frequencyBand(500,750,401, 'ghz')
 			
 		note: unit sets the property freqMultiplier, which is used 
 		to scale the frequncy when formatedAxis is referenced.
 			
 		'''
-		self.start = start
-		self.stop = stop
-		self.npoints = npoints
 		self.unit = unit
+		self.start =  self.multiplier * start
+		self.stop = self.multiplier * stop
+		self.npoints = npoints
+		
 		
 	
 	@property
 	def multiplier(self):
+		'''
+		multiplier for formating axis
+		'''
 		return self.freqMultiplierDict[self.unit.lower()]
 	@property
 	def	axis(self):
@@ -1871,23 +1886,24 @@ class frequencyBand:
 		the unit is stored in freqDict['freqUnit']
 		'''
 		return linspace(self.start,self.stop,self.npoints)\
-			/self.freqMultiplier
+			/self.multiplier
 	
 
 class transmissionLine:
 	'''
 	general super-class for TEM transmission lines
 	'''
+	fBand = None
 	def __init__(self, \
 		distributedCapacitance,	distributedInductance,\
-		distributedResistance, distributedConductance, frequencyBand=None ):
+		distributedResistance, distributedConductance, fBand=None ):
 		
 		self.distributedCapacitance = distributedCapacitance
 		self.distributedInductance = distributedInductance
 		self.distributedResistance = distributedResistance
 		self.distributedConductance = distributedConductance
 
-		self.frequencyBand = frequencyBand
+		self.fBand = fBand
 		
 	def distributedImpedance(self,omega):
 		return self.distributedResistance+1j*omega*self.distributedInductance
@@ -1902,7 +1918,7 @@ class transmissionLine:
 	def propagationConstant(self,omega):
 		return sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
 	
-	#@classmethod
+	@classmethod
 	def electricalLength(self, l , f=None, gamma=None,deg=False):
 		'''
 		calculates the electrical length of a section of transmission line.
@@ -1923,10 +1939,10 @@ class transmissionLine:
 		if gamma is None:
 			gamma = self.propagationConstant
 		if f is None:
-			if  self.frequencyBand is None:
+			if  self.fBand is None:
 				raise ValueError('please supply frequency information')
 			else:
-				f = self.frequencyBand.axis
+				f = self.fBand.axis
 				
 		if deg==False:
 			return  gamma(2*pi*f ) *l 
@@ -1934,7 +1950,7 @@ class transmissionLine:
 			return  rad2deg(gamma(2*pi*f ) *l )
 	
 	
-	#@classmethod
+	@classmethod
 	def reflectionCoefficient(self, l,f,zl,z0=None, gamma=None):
 		'''
 		calculates the reflection coefficient for a given load 
@@ -1962,8 +1978,12 @@ class transmissionLine:
 		except TypeError:
 			pass
 		
-		if len(z0) != len(zl): raise IndexError('len(zl) != len(z0)')
-			
+		try : 
+			if len(z0) != len(zl): 
+				raise IndexError('len(zl) != len(z0)')
+		except (TypeError):
+			# zl and z0 might just be numbers, which dont have len
+			pass
 		# flexible way to typecast ints, or arrays
 		zl = 1.0*(zl)
 		z0 = 1.0*(z0)
@@ -1984,7 +2004,7 @@ class transmissionLine:
 		gammaAtL =gammaAt0 * npy.exp(-2j*theta)
 		return gammaAtL
 	
-	#@classmethod
+	@classmethod
 	def inputImpedance(self, l,f, zl,z0=None,gamma=None):
 		'''
 		returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
@@ -2016,6 +2036,15 @@ class transmissionLine:
 			z0 = z0(2*pi*f)
 		except TypeError:
 			pass
+			
+		try : 
+			if len(z0) != len(zl): 
+				raise IndexError('len(zl) != len(z0)')
+		except (TypeError):
+			# zl and z0 might just be numbers, which dont have len
+			pass
+		
+		
 		
 		theta = propagationConstant(l,2*pi*f, gamma=gamma)
 		
@@ -2037,7 +2066,7 @@ class transmissionLine:
 		
 		takes:
 			l - length of delay, in meters
-			f: frequency axis. if self.frequencyBand exists then this 
+			f: frequency axis. if self.fBand exists then this 
 				can left as None
 			gamma: propagationConstant a function of angular frequency (omega), 
 				and returns a value with units radian/m. can be omited.
@@ -2052,22 +2081,35 @@ class transmissionLine:
 
 class freespace(transmissionLine):
 	'''
-	represents freespace, defined by [possibly complex] values of relative 
-	permativity and relative permeability
+	represents a plane-wave in freespace, defined by [possibly complex]
+	values of relative permativity and relative permeability
 	'''
-	def __init__(self, relativePermativity=1, relativePermeability=1,frequencyBand=None):
+	def __init__(self, relativePermativity=1, relativePermeability=1,fBand=None):
 		transmissionLine.__init__(self,\
 			distributedCapacitance = real(epsilon_0*relativePermativity),\
 			distributedResistance = imag(epsilon_0*relativePermativity),\
 			distributedInductance = real(mu_0*relativePermeability),\
 			distributedConductance = imag(mu_0*relativePermeability),\
-			frequencyBand = frequencyBand
+			fBand = fBand
 			)
 		
-class coax:
-	def __init__(self):
-		raise NotImplementedError
-		return None
+class coax(transmissionLine):
+	def __init__(self, innerRadius, outerRadius, surfaceResistance=0, relativePermativity=1, relativePermeability=1,fBand=None):
+		# changing variables just for readablility
+		a = innerRadius
+		b = outerRadius
+		eR = relativePermativity
+		uR = relativePermeability
+		Rs = surfaceResistance
+		
+		transmissionLine.__init__(self,\
+			distributedCapacitance = 2*pi*real(epsilon_0*eR)/log(b/a),\
+			distributedResistance = Rs/(2*pi) * (1/a + 1/b),\
+			distributedInductance = muR*mu_0/(2*pi) * log(b/a),\
+			distributedConductance = 2*pi*omega*imag(epsilon_0*eR)/log(b/a),\
+			fBand = fBand
+			)
+
 
 class microstrip:
 	def __init__(self):
@@ -2092,8 +2134,6 @@ class microstrip:
 		
 	def impedanceMicrostrip(w,h,epR):
 		'''
-		
-		
 		taken from pozar
 		'''
 		eEff = eEffMicrostrip(w,h,epR)
@@ -2602,7 +2642,7 @@ def onePortCal(measured, ideals):
 	#							i2, 1, i2*m2
 	#									...etc
 	for f in range(fLength):
-		# vectors
+		#create  m, i, and 1 vectors
 		one = npy.ones(shape=(numStds,1))
 		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
 		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
@@ -2610,13 +2650,13 @@ def onePortCal(measured, ideals):
 		Q = npy.hstack([i, one, i*m])
 		# calculate least squares
 		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
-		abc[f,:]=abcTmp.flatten()
-		residuals[f,:]=residualsTmp
+		abc[f,:] = abcTmp.flatten()
+		residuals[f,:] = residualsTmp
 		
 	return abc, residuals
 	
 def onePortCalNLS(measured, ideals):
-	
+	print 'NOT WORKING'
 	'''
 	calculates calibration coefficients for a one port calibration. 
 	 
@@ -2680,38 +2720,48 @@ def onePortCalNLS(measured, ideals):
 	from scipy.optimize import leastsq 
 	
 	def residualFunc(e,m,i):
-		e00,e01,e10,e11 = e 
-		E = array([[e00,e01],[e10, e11]])
-		print shape(E), shape(i)
-		return m - cascade(E, i)
+		e00,e11,e10e01 = e
+		E = array([[e00,1],[e10e01,e11]])
+		er=[]
+		for k in range(len(i)):
+			er.append ((m[k] - cascade(E, i[k].reshape(1)))[0])
+		return (er)
 	
 		
 	abc, residuals = onePortCal(measured = measured, ideals=ideals)
 	E0 = abc2Ntwk(abc).s
-	output=[]
+	print (E0[0,:,:,])
+	E=[]
 	for f in range(fLength):
 		# vectors
 		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
 		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
 		
-		
-		
 		E0R,E0I= real(E0[f,:,:]).flatten(), imag(E0[f,:,:]).flatten()
-		
 		mR,mI = real(m).flatten(),imag(m).flatten()
 		iR,iI = real(i).flatten(),imag(i).flatten()
 		
-		#print shape(p0R)
-		#print shape((mR,iR))
 		
-		output.append(leastsq(func=residualFunc, x0=E0R, args=(mR,iR) )[0]+\
-		1j*leastsq(func=residualFuncI, x0= E0I, args=(mI,iI) )[0])
+		E0R= [E0R[0],E0R[2],E0R[3]]
+		E0I= [E0I[0],E0I[2],E0I[3]]
+		print E0R 
+		return 0
+		E.append(\
+		leastsq(residualFunc, E0R, args=(mR,iR) )[0]+\
+		1j*leastsq(func=residualFunc, x0= E0I, args=(mI,iI) )[0] )
 		
 		
-	output = array(output)
-	abc = output[:,:3]
-	theta1,theta2 = output[:,3],output[:,4]
-	return abc, theta1,theta2
+		#e00,e11,e10e01 = E
+		#output.append( array([[e00,1],[e10e01,e11]]))
+		print f
+	
+		
+	E = array(E)
+	
+	coefsDict = {'directivity':E[:,0], 'reflection tracking':E[:,2], \
+		'source match':E[:,1]}
+	return coefsDict
+
 
 def sddl1Cal(measured, actual, ftol=1e-3):
 	
@@ -3445,6 +3495,8 @@ def getABC(mOpen,mShort,mMatch,aOpen,aShorat,aMatch):
 	
 def getABCLeastSquaresOld(measured, actual):
 	'''
+	DEPRECATED: USE  onePortCal
+	
 	calculates calibration coefficients for a one port calibration. 
 	 
 	takes: 
