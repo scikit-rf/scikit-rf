@@ -138,6 +138,22 @@ lengthDict ={'m':1,'mm':1e-3,'um':1e-6}
 
 
 ###############  mathematical conversions ############### 
+def complex2Scalar(input):
+	input= array(input)
+	output = []
+	for k in input:
+		output.append(real(k))
+		output.append(imag(k))
+	return array(output).flatten()
+	
+def scalar2Complex(input):
+	input= array(input)
+	output = []
+	
+	for k in range(0,len(input),2):
+		output.append(input[k] + 1j*input[k+1])
+	return array(output).flatten()
+
 def complex2dB(complx):
 	dB = 20 * npy.log10(npy.abs( (npy.real(complx) + 1j*npy.imag(complx) )))
 	return dB
@@ -2395,36 +2411,44 @@ def onePortCalNLS(measured, ideals):
 	
 	from scipy.optimize import leastsq 
 	
+	
+		
 	def residualFunc(e,m,i):
-		e00,e11,e10e01 = e
+		
+		e00,e11,e10e01= scalar2Complex(e)
+		m = scalar2Complex(m)
+		i = scalar2Complex(i)
+		
 		E = array([[e00,1],[e10e01,e11]])
 		er=[]
 		for k in range(len(i)):
 			er.append ((m[k] - cascade(E, i[k].reshape(1)))[0])
+		er= complex2Scalar(er)
 		return (er)
 	
 		
 	abc, residuals = onePortCal(measured = measured, ideals=ideals)
 	E0 = abc2Ntwk(abc).s
-	print (E0[0,:,:,])
+	
 	E=[]
 	for f in range(fLength):
 		# vectors
 		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
 		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
 		
-		E0R,E0I= real(E0[f,:,:]).flatten(), imag(E0[f,:,:]).flatten()
-		mR,mI = real(m).flatten(),imag(m).flatten()
-		iR,iI = real(i).flatten(),imag(i).flatten()
+		mScalar = complex2Scalar(m)
+		iScalar = complex2Scalar(i)
 		
 		
-		E0R= [E0R[0],E0R[2],E0R[3]]
-		E0I= [E0I[0],E0I[2],E0I[3]]
-		print E0R 
-		return 0
+		
+		E0flat = E0[f,:,:].flatten()
+		E0flat = E0flat[0], E0flat[2],E0flat[3]
+		E0Scalar = complex2Scalar(E0flat)
+		
+		
+				
 		E.append(\
-		leastsq(residualFunc, E0R, args=(mR,iR) )[0]+\
-		1j*leastsq(func=residualFunc, x0= E0I, args=(mI,iI) )[0] )
+		scalar2Complex(leastsq(residualFunc, E0Scalar, args=(mScalar,iScalar) )[0]))
 		
 		
 		#e00,e11,e10e01 = E
