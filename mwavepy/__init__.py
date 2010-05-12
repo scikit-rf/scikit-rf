@@ -58,6 +58,7 @@ from mwavepy.touchstone import touchstone as touch	# for loading data from touch
 
 from mwavepy import frequencyBand as fb
 from mwavepy import transmissionLine as tl
+from mwavepy import mobius as mb
 ################# TODO LIST (so i dont forget)
 '''
 TBD:
@@ -3032,40 +3033,39 @@ def alexCal(measured, actual):
 	e11 = npy.zeros(shape=(fLength,1),dtype=complex) 
 	e00 = npy.zeros(shape=(fLength,1),dtype=complex) 
 	e10e01 = npy.zeros(shape=(fLength,1),dtype=complex) 
-	residues =npy.zeros(shape=(fLength,2*numStds),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-3),dtype=complex) 
 	
 	# calibrate at each frequency point
 	for f in range(fLength):
 		m = measured[:,f] # 1xnumStds
 		a = actual[:,f]
 			
+		
 		P,Q,R = [],[],[]
-		
-		
-		if numStds==4:
-			permutations  = ([0,1],[0,2],[0,3],[1,2],[1,3],[2,3])
-		
-		elif numStds ==3 :
-			permutations = ([0,1],[1,2],[2,0])
-			#=[ (x,y) for x in range(numStds) for y in range(numStds) if y !=x ]#
+		permutations = [(k,k+1) for k in range(numStds-1)]
 		
 		for x,y in permutations:
+			if a[x] == 0: a[x]=1e-30
+			if a[y] == 0: a[y]=1e-30
 			P.append( m[x]/a[x] - m[y]/a[y])
 			Q.append( m[x]-m[y])
-			R.append(1/(a[x]) -1/a[y])
+			R.append(1./(a[x]) -1./a[y])
 			
 		
 		P = npy.array(P).reshape(-1,1)
 		Q = npy.array(Q).reshape(-1,1)
 		R = npy.array(R).reshape(-1,1)
-			
+					
 		# form matrix
 		QR = npy.hstack((Q,R))
+		return  (QR)
 		
 		
-		e11[f],e00[f] = npy.linalg.lstsq(QR,P)[0]#.flatten()
 		
-		residues[f,:] =  (npy.linalg.lstsq(QR,P)[1])
+		solution, residuals, rank, s = npy.linalg.lstsq(QR,P)#.flatten()
+		
+		e11[f],e00[f] = solution[0]
+		residues[f,:] = residuals
 		
 		# evaluate relation to find reflection tracking term, can use 
 		# any pair of standards so  0 < k < numStds, they all produce same
@@ -3083,27 +3083,6 @@ def alexCal(measured, actual):
 
 	
 
-def mobiusTransform(m, a):
-	'''
-	returns the unique maping function between m and a planes which are
-	related through	the mobius transform.
-	
-	takes:
-		m: list containing the triplet of points in m plane m0,m1,m2
-		a: list containing the triplet of points in a plane a0,a1,a2
-	
-	returns:
-		a (m) : function of variable in m plane, which returns a value
-			in the a-plane
-	'''
-	m0,m1,m2 = m
-	a0,a1,a2 = a
-	return lambda m: (a0*a1*m*m0 + a0*a1*m1*m2 + a0*a2*m*m2 + a0*a2*m0*m1 +\
-	 a1*a2*m*m1 + a1*a2*m0*m2 - a0*a1*m*m1 - a0*a1*m0*m2 - a0*a2*m*m0 -\
-	 a0*a2*m1*m2 - a1*a2*m*m2 - a1*a2*m0*m1)/(a0*m*m2 + a0*m0*m1 + a1*m*m0\
-	  + a1*m1*m2 + a2*m*m1 + a2*m0*m2 - a0*m*m1 - a0*m0*m2 - a1*m*m2 - \
-	  a1*m0*m1 - a2*m*m0 - a2*m1*m2)
-	
 	
 def getABC(mOpen,mShort,mMatch,aOpen,aShorat,aMatch):
 	'''

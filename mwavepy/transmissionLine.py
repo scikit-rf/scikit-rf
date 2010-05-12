@@ -315,9 +315,9 @@ class freespacePointSource( freespace):
 				f = self.fBand.axis
 				
 		if deg==False:
-			return  gamma(2*pi*f)*l + 1j*log(1./l**2) 
+			return  gamma(2*pi*f)*l + 1j*log(1./(1-l)**2) 
 		elif deg ==True:
-			return  rad2deg(gamma(2*pi*f )*l + 1j*log(1./l**2)  )		
+			return  rad2deg(gamma(2*pi*f )*l + 1j*log(1./(1-l)**2)  )		
 class coax(transmissionLine):
 	def __init__(self, innerRadius, outerRadius, surfaceResistance=0, relativePermativity=1, relativePermeability=1,fBand=None):
 		# changing variables just for readablility
