@@ -1822,44 +1822,6 @@ def surfaceImpedance(omega, conductivity, epsilon=epsilon_0, mu=mu_0):
 
 ############### transmission line class   ################
 
-
-class microstrip:
-	def __init__(self):
-		raise NotImplementedError
-		return None
-	def eEffMicrostrip(w,h,epR):
-		'''
-		The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pplb. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pplb. 1422-1444, 1969.
-		'''
-		
-		if w < h:
-			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w) + .04*(1-w/h)**2)
-		else:
-			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w))
-		
-		
-		
-	
-	def betaMicrostrip(w,h,epR):
-		return lambda omega: omega/c * sqrt(eEffMicrostrip(w,h,epR))
-		
-		
-	def impedanceMicrostrip(w,h,epR):
-		'''
-		taken from pozar
-		'''
-		eEff = eEffMicrostrip(w,h,epR)
-		if w/h < 1:
-			return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
-		else:
-			return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
-
-class coplanar:
-	def __init__(self):
-		raise NotImplementedError
-		return None
-
-		
 	
 class waveguide:
 	'''

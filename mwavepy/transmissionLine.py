@@ -20,7 +20,7 @@
 '''
 try:
 	from scipy.constants import  epsilon_0, mu_0, c,pi, mil
-	from scipy import signal
+	#from scipy import signal
 	
 except:
 	raise ImportError ('Depedent Packages not found. Please install: scipy')
@@ -34,8 +34,8 @@ except:
 import mwavepy as mv
 	
 
-
-class transmissionLine:
+# TEM transmission lines
+class transmissionLine(object):
 	'''
 	general super-class for TEM transmission lines
 	'''
@@ -51,21 +51,46 @@ class transmissionLine:
 
 		self.fBand = fBand
 		
-	def distributedImpedance(self,omega):
-		omega = array(omega)
+	def distributedImpedance(self,omega=None):
+		if omega is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				omega = 2*pi*self.fBand.axis
+		else:
+			omega = array(omega)
 		return self.distributedResistance+1j*omega*self.distributedInductance
 	
-	def distributedAdmittance(self,omega):
-		omega= array(omega)
+	def distributedAdmittance(self,omega=None):
+		if omega is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				omega = 2*pi*self.fBand.axis
+		else:
+			omega = array(omega)
 		return self.distributedConductance+1j*omega*self.distributedCapacitance
 	# could put a test for losslessness here and choose whether to make this
 	# a funtion of omega or not.
-	def characteristicImpedance(self,omega):
+	def characteristicImpedance(self,omega=None):
+		if omega is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				omega = 2*pi*self.fBand.axis
+		else:
+			omega = array(omega)
 		return sqrt(self.distributedImpedance(omega)/self.distributedAdmittance(omega))
 	
-	def propagationConstant(self,omega):
-		
-		return sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
+	def propagationConstant(self,omega=None):
+		if omega is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				omega = 2*pi*self.fBand.axis
+		else:
+			omega = array(omega)
+		return 1j*sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
 	
 	@classmethod
 	def electricalLength(self, l , f=None, gamma=None,deg=False):
@@ -94,12 +119,12 @@ class transmissionLine:
 				f = self.fBand.axis
 				
 		if deg==False:
-			return  gamma(2*pi*f ) *l 
+			return  gamma(2*pi*f )*l 
 		elif deg ==True:
 			return  rad2deg(gamma(2*pi*f ) *l )
 	
 	
-	@classmethod
+	#@classmethod
 	def reflectionCoefficient(self, l,f,zl,z0=None, gamma=None):
 		'''
 		calculates the reflection coefficient for a given load 
@@ -113,11 +138,17 @@ class transmissionLine:
 			gamma: propagationConstant a function of angular frequency (omega), 
 				and returns a value with units radian/m.
 		'''
+		
+		if f is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				f = self.fBand.axis
+				
+		if z0 is None:
+			z0 = self.characteristicImpedance( 2*pi*f)
 		if gamma is None:
 			gamma = self.propagationConstant
-		if z0 is None:
-			z0 = self.characteristicImpedance
-		
 		try:
 			zl = zl(2*pi*f)
 		except TypeError:
@@ -251,7 +282,42 @@ class freespace(transmissionLine):
 			distributedConductance = imag(mu_0*relativePermeability),\
 			fBand = fBand
 			)
-		
+class freespacePointSource( freespace):
+	def __init__(self, relativePermativity=1, relativePermeability=1,fBand=None):
+		freespace.__init__(self, \
+			relativePermativity=relativePermativity, \
+			relativePermeability=relativePermeability,\
+			fBand=fBand)
+	
+	def electricalLength(self, l , f=None, gamma=None,deg=False):
+		'''
+		calculates the electrical length of a section of transmission line.
+	
+		takes:
+			l - length of line in meters
+			f: frequency at which to calculate, array-like or float
+			gamma: propagationConstant a function of angular frequency (omega), 
+				and returns a value with units radian/m.  
+			
+		returns:
+			electricalLength: electrical length in radians or degrees, 
+				if deg =True
+		note:
+			you can pass a function on the fly, like  
+			electricalLength(freqVector, l, beta = lambda omega: omega/c )
+		'''
+		if gamma is None:
+			gamma = self.propagationConstant
+		if f is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				f = self.fBand.axis
+				
+		if deg==False:
+			return  gamma(2*pi*f)*l + 1j*log(1./l**2) 
+		elif deg ==True:
+			return  rad2deg(gamma(2*pi*f )*l + 1j*log(1./l**2)  )		
 class coax(transmissionLine):
 	def __init__(self, innerRadius, outerRadius, surfaceResistance=0, relativePermativity=1, relativePermeability=1,fBand=None):
 		# changing variables just for readablility
@@ -269,5 +335,43 @@ class coax(transmissionLine):
 			fBand = fBand
 			)
 
+
+		
+# quasi, or non- TEM lines
+class microstrip:
+	def __init__(self):
+		raise NotImplementedError
+		return None
+	def eEffMicrostrip(w,h,epR):
+		'''
+		The above formulas are in Transmission Line Design Handbook by Brian C Wadell, Artech House 1991. The main formula is attributable to Harold A. Wheeler and was published in, "Transmission-line properties of a strip on a dielectric sheet on a plane", IEEE Tran. Microwave Theory Tech., vol. MTT-25, pplb. 631-647, Aug. 1977. The effective dielectric constant formula is from: M. V. Schneider, "Microstrip lines for microwave integrated circuits," Bell Syst Tech. J., vol. 48, pplb. 1422-1444, 1969.
+		'''
+		
+		if w < h:
+			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w) + .04*(1-w/h)**2)
+		else:
+			return (epR+1.)/2 + (epR-1)/2 *(1/sqrt(1+12*h/w))
+		
+		
+		
+	
+	def betaMicrostrip(w,h,epR):
+		return lambda omega: omega/c * sqrt(eEffMicrostrip(w,h,epR))
+		
+		
+	def impedanceMicrostrip(w,h,epR):
+		'''
+		taken from pozar
+		'''
+		eEff = eEffMicrostrip(w,h,epR)
+		if w/h < 1:
+			return 60/sqrt(eEff) * npy.ln( 8*h/w + w/(4*h))
+		else:
+			return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
+
+class coplanar:
+	def __init__(self):
+		raise NotImplementedError
+		return None
 
 		
