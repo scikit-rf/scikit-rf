@@ -43,7 +43,7 @@ except:
 try:
 	from scipy.constants import  epsilon_0, mu_0, c,pi, mil
 	from scipy import signal
-	
+	from scipy.optimize import leastsq 
 except:
 	raise ImportError ('Depedent Packages not found. Please install: scipy')
 	
@@ -2348,7 +2348,6 @@ def onePortCal(measured, ideals):
 	return abc, residuals
 	
 def onePortCalNLS(measured, ideals):
-	print 'NOT WORKING'
 	'''
 	calculates calibration coefficients for a one port calibration. 
 	 
@@ -2389,6 +2388,18 @@ def onePortCalNLS(measured, ideals):
 	
 		
 	'''
+	def residualFunc(e,m,i):
+		e00,e11,e10e01= scalar2Complex(e)
+		m = scalar2Complex(m)
+		i = scalar2Complex(i)
+		
+		E = array([[e00,1],[e10e01,e11]])
+		er=[]
+		for k in range(len(i)):
+			er.append ((m[k] - cascade(E, i[k].reshape(1)))[0])
+		er= complex2Scalar(er)
+		return (er)
+	
 	#make  copies so list entities are not changed, when we typecast 
 	mList = copy(measured)
 	iList = copy(ideals)
@@ -2407,26 +2418,7 @@ def onePortCalNLS(measured, ideals):
 	# ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
 	fLength = len(mList[0])
 	
-	
-	
-	from scipy.optimize import leastsq 
-	
-	
-		
-	def residualFunc(e,m,i):
-		
-		e00,e11,e10e01= scalar2Complex(e)
-		m = scalar2Complex(m)
-		i = scalar2Complex(i)
-		
-		E = array([[e00,1],[e10e01,e11]])
-		er=[]
-		for k in range(len(i)):
-			er.append ((m[k] - cascade(E, i[k].reshape(1)))[0])
-		er= complex2Scalar(er)
-		return (er)
-	
-		
+	#run the least squares one-port cal to give us a good starting values
 	abc, residuals = onePortCal(measured = measured, ideals=ideals)
 	E0 = abc2Ntwk(abc).s
 	
@@ -2438,23 +2430,12 @@ def onePortCalNLS(measured, ideals):
 		
 		mScalar = complex2Scalar(m)
 		iScalar = complex2Scalar(i)
-		
-		
-		
 		E0flat = E0[f,:,:].flatten()
 		E0flat = E0flat[0], E0flat[2],E0flat[3]
 		E0Scalar = complex2Scalar(E0flat)
-		
-		
-				
+						
 		E.append(\
 		scalar2Complex(leastsq(residualFunc, E0Scalar, args=(mScalar,iScalar) )[0]))
-		
-		
-		#e00,e11,e10e01 = E
-		#output.append( array([[e00,1],[e10e01,e11]]))
-		print f
-	
 		
 	E = array(E)
 	
