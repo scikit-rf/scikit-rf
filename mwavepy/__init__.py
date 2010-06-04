@@ -159,6 +159,9 @@ def complex2dB(complx):
 	return dB
 def complex2ReIm(complx):
 	return npy.real(complx), npy.imag(complx)
+def complex2MagPhase(complx,deg=False):
+	return npy.abs(complx), npy.angle(complx,deg=deg)
+
 def magPhase2ReIm( mag, phase):
 	re = npy.real(mag*exp(1j*(phase)))
 	im = npy.imag(mag*exp(1j*(phase)))
@@ -301,7 +304,9 @@ def smith(smithR=1,ax=None):
 
 
 
-def saveAllFigs(dir = './', format=['eps','png']):
+def saveAllFigs(dir = './', format=['eps','pdf','png']):
+	if dir[-1] != '/':
+		dir = dir + '/'
 	for fignum in plb.get_fignums():
 		plb.figure(fignum)
 		fileName = plb.gca().get_title()
@@ -1105,12 +1110,14 @@ def createNtwkFromTouchstone(filename):
 	myntwk = ntwk()
 	myntwk.loadFromTouchstone(filename)
 	return myntwk	
-def loadAllTouchstonesInDir(dir = '.'):
+def loadAllTouchstonesInDir(dir = '.', contains=None):
 	'''
 	loads all touchtone files in a given dir 
 	
 	takes:
 		dir  - the path to the dir, passed as a string (defalut is cwd)
+		contains - string which filename must contain to be loaded, not 
+			used if None.(default None)
 	returns:
 		ntwkDict - a Dictonary with keys equal to the file name (without
 			a suffix), and values equal to the corresponding ntwk types
@@ -1120,6 +1127,9 @@ def loadAllTouchstonesInDir(dir = '.'):
 	ntwkDict = {}
 
 	for f in os.listdir (dir):
+		if contains is not None and contains not in f:
+			continue
+			
 		# TODO: make this s?p with reg ex
 		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
 			name = f[:-4]
@@ -4052,8 +4062,8 @@ def timeDomain2Psd(t,y, windowType='hamming'):
 	# apply window function
 	#TODO: make sure windowType exists in scipy.signal
 	if (windowType != 'rect' ):
-		exec "window = signal.%s(%i)" % (windowType,len(f))
-		spectrum = spectrum * window
+		exec "window = signal.%s(%i)" % (windowType,len(t))
+		y = y * window
 	
 	dt = abs(t[1]-t[0])
 	fs = 1./dt

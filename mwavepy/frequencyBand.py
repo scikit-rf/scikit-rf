@@ -18,7 +18,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-from pylab import linspace
+from pylab import linspace, gca
 
 
 class frequencyBand:
@@ -98,4 +98,9 @@ class frequencyBand:
 		'''
 		return linspace(self.start,self.stop,self.npoints)\
 			/self.multiplier
+		
+	def labelXAxis(self, ax=None):
+		if ax is None:
+			ax = gca()
+		ax.set_xlabel('Frequency [%s]' % self.unit )
 	
