@@ -31,7 +31,7 @@ from time import time
 try:
 	import numpy as npy
 	from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
-	 interp, linspace, shape,zeros, reshape
+	 interp, linspace, shape,zeros, reshape,resize
 except:
 	raise ImportError ('Depedent Packages not found. Please install: numpy')
 try:
@@ -43,7 +43,7 @@ except:
 try:
 	from scipy.constants import  epsilon_0, mu_0, c,pi, mil
 	from scipy import signal
-	from scipy.optimize import leastsq 
+	from scipy.optimize import leastsq ,fmin
 except:
 	raise ImportError ('Depedent Packages not found. Please install: scipy')
 	
@@ -2454,103 +2454,6 @@ def onePortCalNLS(measured, ideals):
 	return coefsDict
 
 
-def onePortCalNLS2(measured, ideals):
-	'''
-	calculates calibration coefficients for a one port calibration. 
-	 
-	takes: 
-		measured - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or list of  1-port mwavepy.ntwk types. 
-		ideals - list of assumed reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or list of  1-port mwavepy.ntwk types. 
-	
-	returns:
-		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
-			complex calibrations coefficients,where N is the number 
-			of frequency points in the standards that where given.
-			
-			abc: 
-			the components of abc are 
-				a = abc[:,0] = e01*e10 - e00*e11
-				b = abc[:,1] = e00
-				c = abc[:,2] = e11
-			
-			residuals: a matrix of residuals from the least squared 
-				calculation. see numpy.linalg.lstsq() for more info
-	
-	 
-		
-	 note:
-		For calibration of general 2-port error networks, 3 standards 
-		are required. 
-		If one makes the assumption of the error network being 
-		reciprical or symmetric or both, the correction requires less 
-		measurements. see mwavepy.getABLeastSquares
-		the standards used in OSM calibration dont actually have to be 
-		an open, short, and match. they are arbitrary but should provide
-		good seperation on teh smith chart for better accuracy .
-	 
-	
-		
-	'''
-	def residualFunc(e,m,i):
-		e00,e11,e10e01= scalar2Complex(e)
-		m = scalar2Complex(m)
-		i = scalar2Complex(i)
-		
-		E = array([[e00,1],[e10e01,e11]])
-		er=[]
-		for k in range(len(i)):
-			er.append ((m[k] - cascade(E, i[k].reshape(1)))[0])
-		er= complex2Scalar(er)
-		return (er)
-	
-	#make  copies so list entities are not changed, when we typecast 
-	mList = copy(measured)
-	iList = copy(ideals)
-	
-	numStds = len(mList)# find number of standards given, for dimensions
-	numCoefs=3
-	# try to access s-parameters, in case its a ntwk type, other wise 
-	# just keep on rollin 
-	try:
-		for k in range(numStds):
-			mList[k] = mList[k].s.reshape((-1,1))
-			iList[k] = iList[k].s.reshape((-1,1))
-	except:
-		pass	
-	
-	# ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
-	fLength = len(mList[0])
-	
-	#run the least squares one-port cal to give us a good starting values
-	abc, residuals = onePortCal(measured = measured, ideals=ideals)
-	E0 = abc2Ntwk(abc).s
-	
-	E=[]
-	for f in range(fLength):
-		# vectors
-		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
-		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
-		
-		mScalar = complex2Scalar(m)
-		iScalar = complex2Scalar(i)
-		E0flat = E0[f,:,:].flatten()
-		E0flat = E0flat[0], E0flat[2],E0flat[3]
-		E0Scalar = complex2Scalar(E0flat)
-						
-		E.append(\
-		scalar2Complex(leastsq(residualFunc, E0Scalar, args=(mScalar,iScalar) )[0]))
-		
-	E = array(E)
-	
-	coefsDict = {'directivity':E[:,0], 'reflection tracking':E[:,2], \
-		'source match':E[:,1]}
-	return coefsDict
-
-
 
 
 
@@ -2898,13 +2801,16 @@ def sdddd1Cal(measured, actual,ftol=1e-3):
 	return abc,residues,gammaD1,gammaD2,gammaD3, gammaD4
 
 
-def sdx2Cal(measured, actual, wg, d, ftol=1e-3):
+def xdsCal(measured, actual, wg, d, ftol=1e-3, solveForLoss=False):
 	'''
-	calculates calibration coefficients for a one port calibration. 
+	A one port calibration, which can use a redundent number of delayed 
+	shorts to solve	for their unknown lengths.
+	
+	!see note about order!
 	 
 	takes: 
 		measured - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray. see note about order.
+			lists of either a kxnxn numpy.ndarray. 
 		actual - list of measured reflection coefficients. can be 
 			lists of either a kxnxn numpy.ndarray. see note about order.
 		wg - a mwavepy.waveguide type. 
@@ -2940,28 +2846,25 @@ def sdx2Cal(measured, actual, wg, d, ftol=1e-3):
 		m-standards are assumed to be delayed shorts, where m is the
 		 length of d. Any standards after may be anything.
 	
-		For calibration of general 2-port error networks, 3 standards 
-		are required. 
-		If one makes the assumption of the error network being 
-		reciprical or symmetric or both, the correction requires less 
-		measurements. see mwavepy.getABLeastSquares
-		the standards used in OSM calibration dont actually have to be 
-		an open, short, and match. they are arbitrary but should provide
-		good seperation on teh smith chart for better accuracy .
 	'''
 	
 	
-	from scipy.optimize import fmin
+	
 	
 	#make deep copies so list entities are not changed
 	gammaMList = copy(measured)
 	gammaAList = copy(actual)
+	d = copy(d)
 	
 	# find number of standards given, set numberCoefs. Used for matrix 
 	# dimensions
 	numStds = len(gammaMList)
 	numCoefs = 3
-	
+	if solveForLoss == True:
+		numDelays = len(d)-1
+	else:
+		numDelays = len(d)
+		
 	# try to access s-parameters, in case its a ntwk type, other wise 
 	# just keep on rollin 
 	try:
@@ -2974,28 +2877,60 @@ def sdx2Cal(measured, actual, wg, d, ftol=1e-3):
 	
 	
 	fLength = len(gammaMList[0])
-	#initialize abc matrix
+	#initialize output 
 	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	residues = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
 
 	
-	dStart = npy.array(copy(d))
-	sumResidualList = []
 	
-	def iterativeCal(d, gammaMList, gammaAList):
-		for stdNum in range(len(d)):
-			gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum], numPoints = fLength).s
+	if solveForLoss == True:
+		if wg.surfaceConductivity is None:
+			# they have supplied us with a surface Conductivity, default to Al
+			wg.surfaceConductivity = conductivityDict['alumninium']
 		
-		abc, residues = onePortCal(gammaMList, gammaAList)
-		sumResidualList.append(npy.sum(abs(residues)))
-		#print npy.sum(abs(residues))
-		print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
-		return npy.sum(abs(residues))
+		# append conductivity to the d-list, this is sloppy, but i dont
+		# see a way around it
+		d.append(wg.surfaceConductivity)
 		
+		def iterativeCal(d, gammaMList, gammaAList):
+			#TODO:  this function uses sloppy namespace, which limits portability
+			#pick off last element of d, which will hold the conductivity
+			wg.surfaceConductivity = d[-1]
+			numDelays = len(d)-1
+			
+			for stdNum in range(numDelays):
+				gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum], numPoints = fLength).s
+			
+			abc, residues = onePortCal(gammaMList, gammaAList)
+			sumResidualList.append(npy.sum(abs(residues)))
+			#print npy.sum(abs(residues))
+			print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
+			return npy.sum(abs(residues))	
+			
+	else:
+		def iterativeCal(d, gammaMList, gammaAList):
+			#TODO:  this function uses sloppy namespace, which limits portability
+			numDelays=len(d)
+			for stdNum in range(numDelays)):
+				gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum], numPoints = fLength).s
+			
+			abc, residues = onePortCal(gammaMList, gammaAList)
+			sumResidualList.append(npy.sum(abs(residues)))
+			#print npy.sum(abs(residues))
+			print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
+			return npy.sum(abs(residues))
+	
+	
+	dStart = npy.array(d)
+	sumResidualList = []	
 	
 	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=False,ftol=ftol)
 	
-	for stdNum in range(len(d)):
+	if solveForLoss == True:
+		wg.surfaceConductivity = dEnd[-1]
+		
+		
+	for stdNum in range(numDelays):
 			gammaAList[stdNum] = wg.createDelayShort(l = dEnd[stdNum], numPoints = fLength).s
 			
 		
@@ -3176,7 +3111,7 @@ def sdddd2CalUnknownLoss(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3,xtol=1e-3
 	
 	if not wg.surfaceConductivity:
 		# they did not give us a surface conductivity to start with
-		wg.surfaceConductvity =  m.conductivityDict('alumninium')
+		wg.surfaceConductvity =  m.conductivityDict['alumninium']
 	
 	conductivityStart = wg.surfaceConductivity 
 	# this is a misnomer, because its got conductivity in it
@@ -3809,7 +3744,7 @@ class calibration(object):
 				measured = self.measured, ideals = self.ideals)
 			print '%s took %i s' %(self.name, time()-t0)
 		
-		elif self.type == 'sdx2':
+		elif self.type == 'xds2':
 			t0 = time()
 			self._abc, self._residuals, self.dFromCal,self.allResidueSums = \
 				sdx2Cal(measured = self.measured, actual = self.ideals, \
