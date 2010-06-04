@@ -2454,6 +2454,106 @@ def onePortCalNLS(measured, ideals):
 	return coefsDict
 
 
+def onePortCalNLS2(measured, ideals):
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		measured - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		ideals - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a = abc[:,0] = e01*e10 - e00*e11
+				b = abc[:,1] = e00
+				c = abc[:,2] = e11
+			
+			residuals: a matrix of residuals from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	 
+	
+		
+	'''
+	def residualFunc(e,m,i):
+		e00,e11,e10e01= scalar2Complex(e)
+		m = scalar2Complex(m)
+		i = scalar2Complex(i)
+		
+		E = array([[e00,1],[e10e01,e11]])
+		er=[]
+		for k in range(len(i)):
+			er.append ((m[k] - cascade(E, i[k].reshape(1)))[0])
+		er= complex2Scalar(er)
+		return (er)
+	
+	#make  copies so list entities are not changed, when we typecast 
+	mList = copy(measured)
+	iList = copy(ideals)
+	
+	numStds = len(mList)# find number of standards given, for dimensions
+	numCoefs=3
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			mList[k] = mList[k].s.reshape((-1,1))
+			iList[k] = iList[k].s.reshape((-1,1))
+	except:
+		pass	
+	
+	# ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
+	fLength = len(mList[0])
+	
+	#run the least squares one-port cal to give us a good starting values
+	abc, residuals = onePortCal(measured = measured, ideals=ideals)
+	E0 = abc2Ntwk(abc).s
+	
+	E=[]
+	for f in range(fLength):
+		# vectors
+		m = array([ mList[k][f] for k in range(numStds)])# m-vector at f
+		i = array([ iList[k][f] for k in range(numStds)])# i-vector at f			
+		
+		mScalar = complex2Scalar(m)
+		iScalar = complex2Scalar(i)
+		E0flat = E0[f,:,:].flatten()
+		E0flat = E0flat[0], E0flat[2],E0flat[3]
+		E0Scalar = complex2Scalar(E0flat)
+						
+		E.append(\
+		scalar2Complex(leastsq(residualFunc, E0Scalar, args=(mScalar,iScalar) )[0]))
+		
+	E = array(E)
+	
+	coefsDict = {'directivity':E[:,0], 'reflection tracking':E[:,2], \
+		'source match':E[:,1]}
+	return coefsDict
+
+
+
+
+
 def sddl1Cal(measured, actual, ftol=1e-3):
 	
 	'''
@@ -2796,6 +2896,112 @@ def sdddd1Cal(measured, actual,ftol=1e-3):
 		
 		
 	return abc,residues,gammaD1,gammaD2,gammaD3, gammaD4
+
+
+def sdx2Cal(measured, actual, wg, d, ftol=1e-3):
+	'''
+	calculates calibration coefficients for a one port calibration. 
+	 
+	takes: 
+		measured - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray. see note about order.
+		actual - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray. see note about order.
+		wg - a mwavepy.waveguide type. 
+		d - vector containing initial guesses for the delay short lengths
+			see note about order.
+		ftol - functional tolerance, passed to the scipy.optimize.fmin 
+			function
+	
+	returns:
+		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
+			complex calibrations coefficients,where N is the number 
+			of frequency points in the standards that where given.
+			
+			abc: 
+			the components of abc are 
+				a[:] = abc[:,0]
+				b[:] = abc[:,1]
+				c[:] = abc[:,2],
+			a, b and c are related to the error network by 
+				a = e01*e10 - e00*e11 
+				b = e00 
+				c = e11
+			
+			residues: a matrix of residues from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+	
+	 
+		
+	 note:
+		ORDER MATTERS.
+	
+		all standard lists, and d-vector must be in order. The first
+		m-standards are assumed to be delayed shorts, where m is the
+		 length of d. Any standards after may be anything.
+	
+		For calibration of general 2-port error networks, 3 standards 
+		are required. 
+		If one makes the assumption of the error network being 
+		reciprical or symmetric or both, the correction requires less 
+		measurements. see mwavepy.getABLeastSquares
+		the standards used in OSM calibration dont actually have to be 
+		an open, short, and match. they are arbitrary but should provide
+		good seperation on teh smith chart for better accuracy .
+	'''
+	
+	
+	from scipy.optimize import fmin
+	
+	#make deep copies so list entities are not changed
+	gammaMList = copy(measured)
+	gammaAList = copy(actual)
+	
+	# find number of standards given, set numberCoefs. Used for matrix 
+	# dimensions
+	numStds = len(gammaMList)
+	numCoefs = 3
+	
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			gammaMList[k] = gammaMList[k].s
+			gammaAList[k] = gammaAList[k].s
+	
+	except:
+		pass	
+	
+	
+	fLength = len(gammaMList[0])
+	#initialize abc matrix
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residues =npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+
+	
+	dStart = npy.array(copy(d))
+	sumResidualList = []
+	
+	def iterativeCal(d, gammaMList, gammaAList):
+		for stdNum in range(len(d)):
+			gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum], numPoints = fLength).s
+		
+		abc, residues = onePortCal(gammaMList, gammaAList)
+		sumResidualList.append(npy.sum(abs(residues)))
+		#print npy.sum(abs(residues))
+		print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
+		return npy.sum(abs(residues))
+		
+	
+	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=False,ftol=ftol)
+	
+	for stdNum in range(len(d)):
+			gammaAList[stdNum] = wg.createDelayShort(l = dEnd[stdNum], numPoints = fLength).s
+			
+		
+	abc, residues =  onePortCal(measured = gammaMList, ideals=gammaAList)
+	return abc, residues, dEnd, sumResidualList
+
 
 def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 	'''
@@ -3602,6 +3808,17 @@ class calibration(object):
 			self._abc, self._residuals = onePortCal(\
 				measured = self.measured, ideals = self.ideals)
 			print '%s took %i s' %(self.name, time()-t0)
+		
+		elif self.type == 'sdx2':
+			t0 = time()
+			self._abc, self._residuals, self.dFromCal,\
+				 self.allResidueSums,self.dList = \
+				sdx2Cal(measured = self.measured, actual = self.ideals, \
+				wg = self.wg, d=self.d,ftol=self.ftol)
+					
+			
+			print '%s took %i s' %(self.name, time()-t0)
+				
 		elif self.type == 'sddl1':
 			t0 = time()
 			
