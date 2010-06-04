@@ -3811,8 +3811,7 @@ class calibration(object):
 		
 		elif self.type == 'sdx2':
 			t0 = time()
-			self._abc, self._residuals, self.dFromCal,\
-				 self.allResidueSums,self.dList = \
+			self._abc, self._residuals, self.dFromCal,self.allResidueSums = \
 				sdx2Cal(measured = self.measured, actual = self.ideals, \
 				wg = self.wg, d=self.d,ftol=self.ftol)
 					
