@@ -74,6 +74,20 @@ class transmissionLine(object):
 	def __init__(self, \
 		distributedCapacitance,	distributedInductance,\
 		distributedResistance, distributedConductance, fBand=None ):
+		'''
+		constructor.
+		
+		takes:
+			distributedCapacitance, C'
+			distributedInductance, I'
+			distributedResistance, R'
+			distributedConductance, G'
+			fBand: a mwavepy.fb.frequencyBand object. this provides all 
+				the	methods of the transmissionLine, with frequency info.
+				this is solely for convinience, because frequently many
+				calculations are done over a given range of frequencies.
+				
+		'''
 		
 		self.distributedCapacitance = distributedCapacitance
 		self.distributedInductance = distributedInductance
@@ -83,6 +97,10 @@ class transmissionLine(object):
 		self.fBand = fBand
 		
 	def distributedImpedance(self,omega=None):
+		'''
+		distributed Impedance,  Z'(w) = R' + jwI'
+		
+		'''
 		if omega is None:
 			if  self.fBand is None:
 				raise ValueError('please supply frequency information')
@@ -93,6 +111,9 @@ class transmissionLine(object):
 		return self.distributedResistance+1j*omega*self.distributedInductance
 	
 	def distributedAdmittance(self,omega=None):
+		'''
+		distributed Admittance, Y'(w) = G' + jwC'
+		'''
 		if omega is None:
 			if  self.fBand is None:
 				raise ValueError('please supply frequency information')
@@ -105,8 +126,9 @@ class transmissionLine(object):
 	# a funtion of omega or not.
 	def characteristicImpedance(self,omega=None):
 		'''
-		returns the characteristic impedance at a given angular frequency
 		
+		The  characteristic impedance at a given angular frequency.
+			Z0(w) = sqrt(Z'(w)/Y'(w))
 		takes:
 			omega: radian angular frequency
 		returns:
@@ -124,7 +146,8 @@ class transmissionLine(object):
 	
 	def propagationConstant(self,omega=None):
 		'''
-		the propagation constant, (usually represented by gamma)
+		the propagation constant 
+			gamma(w) = sqrt(Z'(w)*Y'(w))
 		
 		takes: 
 			omega
@@ -148,17 +171,22 @@ class transmissionLine(object):
 		calculates the electrical length of a section of transmission line.
 	
 		takes:
-			l - length of line in meters
-			f: frequency at which to calculate, array-like or float
-			gamma: propagationConstant a function of angular frequency (omega), 
-				and returns a value with units radian/m.  
-			
+			l: length of line. in meters
+			f: frequency at which to calculate. array-like or float. if
+				left as None and self.fBand exists, it will use that.
+			gamma: propagationConstant a function of angular frequency 
+				(omega), and returns a value with units radian/m. if 
+				not given, will use self.propagationConstant
+			deg: return in degrees or not. boolean.
+		
 		returns:
-			electricalLength: electrical length in radians or degrees, 
-				if deg =True
+			theta: electrical length in radians or degrees, 
+				depending on  value of deg.
+		
+		
 		note:
 			you can pass a function on the fly, like  
-			electricalLength(freqVector, l, beta = lambda omega: omega/c )
+			electricalLength(l,f, gamma = lambda omega: omega/c )
 		'''
 		if gamma is None:
 			gamma = self.propagationConstant
@@ -180,9 +208,10 @@ class transmissionLine(object):
 		calculates the reflection coefficient for a given load 
 		takes:
 			l: distance of transmission line to load, in meters (float)
-			f: frequency at which to calculate, array-like or float
 			zl: load impedance. may be a function of omega (2*pi*f), or 
 				a number 
+			f: frequency at which to calculate, array-like or float. if
+				left as None, and self.fBand exists, it will use that.
 			z0 - characteristic impedance may be a function of omega 
 				(2*pi*f), or a number 
 			gamma: propagationConstant a function of angular frequency (omega), 
