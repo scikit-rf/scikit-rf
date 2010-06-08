@@ -2911,7 +2911,7 @@ def xdsCal(measured, actual, wg, d, ftol=1e-3, solveForLoss=False):
 		def iterativeCal(d, gammaMList, gammaAList):
 			#TODO:  this function uses sloppy namespace, which limits portability
 			numDelays=len(d)
-			for stdNum in range(numDelays)):
+			for stdNum in range(numDelays):
 				gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum], numPoints = fLength).s
 			
 			abc, residues = onePortCal(gammaMList, gammaAList)

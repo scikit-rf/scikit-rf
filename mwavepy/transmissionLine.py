@@ -37,7 +37,38 @@ import mwavepy as mv
 # TEM transmission lines
 class transmissionLine(object):
 	'''
-	general super-class for TEM transmission lines
+	This is a general super-class for TEM transmission lines. The 
+	structure behind the methods dependencies is a results of the 
+	physics. a brief summary is given below. 
+	
+	
+	
+	a TEM transmission line is defined by its:
+	
+		distributed Capacitance, C'
+		distributed Inductance, I'
+		distributed Resistance, R'
+		distributed Conductance, G'
+		
+	from these the following quantities may be calculated, which
+	are functions of angular frequency (w):
+	
+		distributed Impedance,  Z'(w) = R' + jwI'
+		distributed Admittance, Y'(w) = G' + jwC'
+	
+	from these we can get to properties which define their wave behavoir
+		
+		characteristic Impedance, Z0(w) = sqrt(Z'(w)/Y'(w))		[ohms]
+		propagation Constant,	gamma(w) = sqrt(Z'(w)*Y'(w))	
+		
+	
+	and then finnally produce methods which we use 
+		
+		electrical Length
+		input Impedance
+		relfection Coefficient
+		
+	
 	'''
 	fBand = None
 	def __init__(self, \
@@ -73,6 +104,15 @@ class transmissionLine(object):
 	# could put a test for losslessness here and choose whether to make this
 	# a funtion of omega or not.
 	def characteristicImpedance(self,omega=None):
+		'''
+		returns the characteristic impedance at a given angular frequency
+		
+		takes:
+			omega: radian angular frequency
+		returns:
+			Z0: characteristic impedance  ohms
+		
+		'''
 		if omega is None:
 			if  self.fBand is None:
 				raise ValueError('please supply frequency information')
@@ -83,6 +123,16 @@ class transmissionLine(object):
 		return sqrt(self.distributedImpedance(omega)/self.distributedAdmittance(omega))
 	
 	def propagationConstant(self,omega=None):
+		'''
+		the propagation constant, (usually represented by gamma)
+		
+		takes: 
+			omega
+			
+		returns:
+			gamma: possibly complex propagation constant, [jrad/m+]
+		'''
+		
 		if omega is None:
 			if  self.fBand is None:
 				raise ValueError('please supply frequency information')
@@ -92,7 +142,7 @@ class transmissionLine(object):
 			omega = array(omega)
 		return 1j*sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
 	
-	@classmethod
+	#@classmethod
 	def electricalLength(self, l , f=None, gamma=None,deg=False):
 		'''
 		calculates the electrical length of a section of transmission line.
@@ -121,11 +171,11 @@ class transmissionLine(object):
 		if deg==False:
 			return  gamma(2*pi*f )*l 
 		elif deg ==True:
-			return  rad2deg(gamma(2*pi*f ) *l )
+			return  mv.rad2deg(gamma(2*pi*f ) *l )
 	
 	
 	#@classmethod
-	def reflectionCoefficient(self, l,f,zl,z0=None, gamma=None):
+	def reflectionCoefficient(self, l,zl,f=None,z0=None, gamma=None):
 		'''
 		calculates the reflection coefficient for a given load 
 		takes:
@@ -184,7 +234,7 @@ class transmissionLine(object):
 		gammaAtL =gammaAt0 * npy.exp(-2j*theta)
 		return gammaAtL
 	
-	@classmethod
+	#@classmethod
 	def inputImpedance(self, l,f, zl,z0=None,gamma=None):
 		'''
 		returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
@@ -208,6 +258,12 @@ class transmissionLine(object):
 		if z0 is None:
 			z0 = self.characteristicImpedance
 		
+		if f is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				f = self.fBand.axis
+				
 		try:
 			zl = zl(2*pi*f)
 		except TypeError:
@@ -265,14 +321,24 @@ class transmissionLine(object):
 			
 		
 		s = -1*exp(-1j* 2*self.electricalLength(l,f,gamma))
-		print shape (s)
+		
 		return mv.ntwk(data=s,paramType='s',freq=f,**kwargs)
 
 
 class freespace(transmissionLine):
 	'''
-	represents a plane-wave in freespace, defined by [possibly complex]
-	values of relative permativity and relative permeability
+	Represents a plane-wave in freespace, defined by [possibly complex]
+	values of relative permativity and relative permeability.
+	
+	The field properties of space are related to the transmission line
+	model given in circuit theory by:
+			
+		distributedCapacitance = real(epsilon_0*relativePermativity)
+		distributedResistance = imag(epsilon_0*relativePermativity)
+		distributedInductance = real(mu_0*relativePermeability)
+		distributedConductance = imag(mu_0*relativePermeability)
+	
+	
 	'''
 	def __init__(self, relativePermativity=1, relativePermeability=1,fBand=None):
 		transmissionLine.__init__(self,\
@@ -283,6 +349,18 @@ class freespace(transmissionLine):
 			fBand = fBand
 			)
 class freespacePointSource( freespace):
+	'''
+	represents a point source in freespace, defined by [possibly complex]
+	values of relative permativity and relative permeability.
+	
+	technically this is not a TEM wave, because a point source is an 
+	infinite combination of plane waves. therefore, to simulate a 
+	1/r**2 loss, a trick is included in the electrical length calculation
+	to produce a similar loss characteristic,
+	
+	the actual trick is 
+		exp ( gamma(2*pi*f )*l + 1j*log(1./(1-l)**2 
+	'''
 	def __init__(self, relativePermativity=1, relativePermeability=1,fBand=None):
 		freespace.__init__(self, \
 			relativePermativity=relativePermativity, \
@@ -317,7 +395,7 @@ class freespacePointSource( freespace):
 		if deg==False:
 			return  gamma(2*pi*f)*l + 1j*log(1./(1-l)**2) 
 		elif deg ==True:
-			return  rad2deg(gamma(2*pi*f )*l + 1j*log(1./(1-l)**2)  )		
+			return  mv.rad2deg(gamma(2*pi*f )*l + 1j*log(1./(1-l)**2)  )		
 class coax(transmissionLine):
 	def __init__(self, innerRadius, outerRadius, surfaceResistance=0, relativePermativity=1, relativePermeability=1,fBand=None):
 		# changing variables just for readablility
