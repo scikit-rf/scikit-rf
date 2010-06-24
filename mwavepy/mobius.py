@@ -19,15 +19,20 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-from numpy import array
+from numpy import array, reshape, shape
 class mobius(object):
-	def __init__(self, a,b,c,d):
-		self.a = a
-		self.b = b
-		self.c = c
-		self.d = d
+	def __init__(self, h):
+		h = array(h)
 		
-		self.h = array([[a,b],[c,d]])
+		if len(shape(h)) == 1:
+			h=reshape(h, (2,2))
+		
+		self.a = h[0,0]
+		self.b = h[0,1]
+		self.c = h[1,0]
+		self.d = h[1,1]
+		
+		self.h = h
 	
 	def transform(self,w):
 		return (self.a*w +self.b)/(self.c*w+self.d)

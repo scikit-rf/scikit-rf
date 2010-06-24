@@ -415,6 +415,8 @@ class ntwk(object):
 		self.smag = abs(self._s)
 		self.sdB = mag2dB( self.smag )
 		self.sdeg = npy.angle(self._s, deg=True)
+		#TODO; why doesnt this work?
+		#self.sdegc = rad2deg(npy.unwrap(npy.angle(self._s)))
 		self.srad = npy.angle(self._s)
 	def __get_s(self):
 		return self._s	
@@ -1954,7 +1956,7 @@ class waveguide:
 		
 		
 		return Rs/(self.eta*self.b) * (1+ 2*self.b/self.a *(self.fc(m,n)/(f))**2)/\
-			sqrt(1-(self.fc(m,n)/(f))**2)
+			sqrt(complex(1)-(self.fc(m,n)/(f))**2)
 	
 	
 	
@@ -1968,17 +1970,22 @@ class waveguide:
 		returns:
 			propagation constant (rad/m)
 		
-		TODO: should do a test below cutoff and handle imaginary sign
+		note:
+			any one of the input variables can be and array. but not more 
+			than one.
 		
 		'''
-		k = omega/c
+		k = array(omega,dtype=complex)/c # to force complex arithmetic
 		if self.surfaceConductivity == None:
-			return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2)
+			kz =  sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2)
 		else:
 			# include  the conductor loss associated with the surface
 			# conductivity
-			return sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2) - \
-				1j*self.alphaC(omega=omega,m=m,n=n)
+			kz = sqrt(k**2 - (m*pi/self.a)**2- (n*pi/self.b)**2) - \
+				1j*self.alphaC(omega=omega,m=m,n=n)	
+		return kz
+	
+	
 	def beta_f(self,f,m=1,n=0):
 		'''
 		convinience function. see beta()
@@ -2855,6 +2862,7 @@ def xdsCal(measured, actual, wg, d, ftol=1e-3, solveForLoss=False):
 	gammaMList = copy(measured)
 	gammaAList = copy(actual)
 	d = copy(d)
+	d = list(d)
 	
 	# find number of standards given, set numberCoefs. Used for matrix 
 	# dimensions
@@ -3659,7 +3667,7 @@ class calibration(object):
 		calculateCoefs() must be called if you want to re-calculate coefs.
 	'''
 	
-	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None, ftol=1e-3,xtol=1e-3 ):
+	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None, ftol=1e-3,xtol=1e-3, solveForLoss=False ):
 		'''
 		calibration constructor. 
 		
@@ -3711,6 +3719,7 @@ class calibration(object):
 		self.wg = copy(wg)
 		self.ftol=ftol
 		self.xtol=xtol
+		self.solveForLoss = solveForLoss
 	
 	
 	def calculateCoefs(self):
@@ -3744,11 +3753,11 @@ class calibration(object):
 				measured = self.measured, ideals = self.ideals)
 			print '%s took %i s' %(self.name, time()-t0)
 		
-		elif self.type == 'xds2':
+		elif self.type == 'xds':
 			t0 = time()
 			self._abc, self._residuals, self.dFromCal,self.allResidueSums = \
-				sdx2Cal(measured = self.measured, actual = self.ideals, \
-				wg = self.wg, d=self.d,ftol=self.ftol)
+				xdsCal(measured = self.measured, actual = self.ideals, \
+				wg = self.wg, d=self.d,ftol=self.ftol, solveForLoss=self.solveForLoss)
 					
 			
 			print '%s took %i s' %(self.name, time()-t0)
@@ -3841,7 +3850,7 @@ class calibration(object):
 		else:
 			raise ValueError('Bad cal type.')
 			
-		self._error_ntwk = abc2Ntwk(self._abc, name = self.name,freq = self.freq, freqMultiplier= self.freqMultiplier, isReciprocal=False)
+		self._error_ntwk = abc2Ntwk(self._abc, name = self.name,freq = self.freq, freqMultiplier= self.freqMultiplier, isReciprocal=True)
 		self._coefs = abc2CoefsDict(self._abc)
 		return None
 		
