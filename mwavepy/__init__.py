@@ -64,7 +64,7 @@ from mwavepy import mobius as mb
 TBD:
 
 # HIGH PRIORITY
-possible bug found in deEmbed function: when a ntwk is deEmbed 
+possible bug found in abc2ntwk function: when a ntwk is deEmbed 
 with different ntwk from which it was cascaded with, the phase looks 
 like it has a modulo error. 
 
@@ -928,6 +928,7 @@ class ntwk(object):
 						ax1.plot(self.freq/self.freqMultiplier, self.sdB[:,p,q],label=labelString,**kwargs)
 					
 		if twinAxis == True:
+			plb.grid(0)
 			plb.legend(loc='best')	
 			plb.twinx()
 			ax1 = plb.gca()
@@ -1089,7 +1090,11 @@ class ntwk(object):
 	
 	def attenuate(self,attenuation):
 		'''
-		attentuates the network by some amount given in dB
+		attentuates the network by some amount given in dB. 
+		
+		takes:
+			attenuation: positive amount is gain. negative amount is 
+				attenuation.
 		'''	
 		if self.rank != 1:
 			raise NotImplementedError('you are attenuating >1port, ntwk. not sure exactly where to put attenuator.')
@@ -1099,7 +1104,17 @@ class ntwk(object):
 		
 		
 		
-		
+	def getFBand(self):
+		'''
+		returns a mwavepy.frequencyBand.frequencyBand object from the 
+		given network
+		takes:
+			none
+		returns:
+			frequencyBand object
+		'''
+		return fb.frequencyBand(self.freq[0]/self.freqMultiplier, \
+			self.freq[-1]/self.freqMultiplier,len(self.freq),self.freqUnit)	
 def createNtwkFromTouchstone(filename):
 	'''
 	creates a ntwk object from a given touchstone file
@@ -2127,6 +2142,8 @@ WR4 = wr(4.3, band = (170e9,260e9))
 WR3 = wr(3.4, band=(220e9,325e9))
 WR1p5 = wr(1.5, band =(500e9,750e9))		
 
+fBandWR1p5 = fb.frequencyBand(500,750,201, 'ghz')
+
 ## S-parameter Network Creation
 #TODO: should name these more logically. like createSMatrix_Short()
 # one-port
@@ -2808,7 +2825,7 @@ def sdddd1Cal(measured, actual,ftol=1e-3):
 	return abc,residues,gammaD1,gammaD2,gammaD3, gammaD4
 
 
-def xdsCal(measured, actual, wg, d, ftol=1e-3, solveForLoss=False):
+def xdsCal(measured, actual, wg, d, ftol=1e-3, xtol=1e-3, solveForLoss=False):
 	'''
 	A one port calibration, which can use a redundent number of delayed 
 	shorts to solve	for their unknown lengths.
@@ -2932,7 +2949,7 @@ def xdsCal(measured, actual, wg, d, ftol=1e-3, solveForLoss=False):
 	dStart = npy.array(d)
 	sumResidualList = []	
 	
-	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=False,ftol=ftol)
+	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=False,ftol=ftol, xtol=xtol)
 	
 	if solveForLoss == True:
 		wg.surfaceConductivity = dEnd[-1]
@@ -3558,7 +3575,7 @@ def applyABC( gamma, abc):
 
 
 
-def abc2Ntwk(abc, isReciprocal = False, **kwargs):
+def abc2Ntwk(abc, isReciprocal = False, thruSign = 1, **kwargs):
 	'''
 	returns a 2-port ntwk for a given set of calibration coefficients
 	represented by a Nx3 matrix of one port coefficients, (abc)
@@ -3757,7 +3774,7 @@ class calibration(object):
 			t0 = time()
 			self._abc, self._residuals, self.dFromCal,self.allResidueSums = \
 				xdsCal(measured = self.measured, actual = self.ideals, \
-				wg = self.wg, d=self.d,ftol=self.ftol, solveForLoss=self.solveForLoss)
+				wg = self.wg, d=self.d,ftol=self.ftol, xtol=self.xtol, solveForLoss=self.solveForLoss)
 					
 			
 			print '%s took %i s' %(self.name, time()-t0)

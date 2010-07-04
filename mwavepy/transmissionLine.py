@@ -325,7 +325,7 @@ class transmissionLine(object):
 	
 	
 	
-	def createNtwk_delayShort(self,l,f=None, gamma=None, **kwargs ):
+	def createDelayShort(self,l,f=None, gamma=None, **kwargs ):
 		'''
 		generate the reflection coefficient for a  delayed short of length l 
 		
@@ -377,6 +377,50 @@ class freespace(transmissionLine):
 			distributedConductance = imag(mu_0*relativePermeability),\
 			fBand = fBand
 			)
+
+class freespaceWithAttenuation(freespace):
+	def __init__(self, relativePermativity=1, relativePermeability=1, \
+		loss = None, fBand=None):
+		transmissionLine.__init__(self,\
+			distributedCapacitance = real(epsilon_0*relativePermativity),\
+			distributedResistance = imag(epsilon_0*relativePermativity),\
+			distributedInductance = real(mu_0*relativePermeability),\
+			distributedConductance = imag(mu_0*relativePermeability),\
+			fBand = fBand
+			)
+		self.surfaceConductivity = loss
+	
+	
+	def createDelayShort(self,l,f=None, gamma=None, numPoints = None, **kwargs ):
+		'''
+		generate the reflection coefficient for a  delayed short of length l 
+		
+		takes:
+			l - length of delay, in meters
+			f: frequency axis. if self.fBand exists then this 
+				can left as None
+			gamma: propagationConstant a function of angular frequency (omega), 
+				and returns a value with units radian/m. can be omited.
+			kwargs: passed to ntwk constructor
+		returns:
+			1 port mwavepy.ntwk  instance representing a delay  short of
+			length l 
+		'''
+		if gamma is None:
+			gamma = self.propagationConstant
+		if f is None:
+			if  self.fBand is None:
+				raise ValueError('please supply frequency information')
+			else:
+				f = self.fBand.axis
+		
+			
+		
+		s = -1*exp(-1j* 2*self.electricalLength(l,f,gamma))
+		outputNtwk = mv.ntwk(data=s,paramType='s',freq=f,**kwargs)
+		outputNtwk.attenuate(self.surfaceConductivity*l)
+		return outputNtwk
+
 class freespacePointSource( freespace):
 	'''
 	represents a point source in freespace, defined by [possibly complex]
@@ -422,9 +466,9 @@ class freespacePointSource( freespace):
 				f = self.fBand.axis
 				
 		if deg==False:
-			return  gamma(2*pi*f)*l + 1j*log(1./(1-l)**2) 
+			return  gamma(2*pi*f)*l - 1j*log(1./(1-l)**2) 
 		elif deg ==True:
-			return  mv.rad2deg(gamma(2*pi*f )*l + 1j*log(1./(1-l)**2)  )		
+			return  mv.rad2deg(gamma(2*pi*f )*l - 1j*log(1./(1-l)**2)  )		
 class coax(transmissionLine):
 	def __init__(self, innerRadius, outerRadius, surfaceResistance=0, relativePermativity=1, relativePermeability=1,fBand=None):
 		# changing variables just for readablility
