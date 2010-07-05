@@ -53,10 +53,13 @@ try:
 except:
 	print ('Import Warning: sympy not available.')
 
-# Internal 
-from mwavepy.touchstone import touchstone as touch	# for loading data from touchstone files
+## Internal 
 
-from mwavepy import frequencyBand as fb
+# for loading data from touchstone files
+from mwavepy.touchstone import touchstone as touch	
+# class representing a frequency band
+from mwavepy.frequencyBand import frequencyBand 
+
 from mwavepy import transmissionLine as tl
 from mwavepy import mobius as mb
 ################# TODO LIST (so i dont forget)
@@ -1113,7 +1116,7 @@ class ntwk(object):
 		returns:
 			frequencyBand object
 		'''
-		return fb.frequencyBand(self.freq[0]/self.freqMultiplier, \
+		return frequencyBand(self.freq[0]/self.freqMultiplier, \
 			self.freq[-1]/self.freqMultiplier,len(self.freq),self.freqUnit)	
 def createNtwkFromTouchstone(filename):
 	'''
@@ -1886,7 +1889,7 @@ class waveguide:
 
 		
 	
-	def __init__(self, a, b, band=None, epsilonR=1, muR=1, surfaceConductivity=None, name = None, points = 201):
+	def __init__(self, a, b, fBand=None, epsilonR=1, muR=1, surfaceConductivity=None, name = None):
 		'''
 		takes: 
 			a - width  in meters, float
@@ -1907,21 +1910,20 @@ class waveguide:
 		
 		self.a = a
 		self.b = b
-		
+		#calculation cut-on frequency
 		self.fc10 = self.fc(1,0)
-		if band == None: 
-			self.band = npy.array([1.25*self.fc10 , 1.9 * self.fc10]) 
+		#if frequency band is not given, we can assign it
+		if fBand == None: 
+			self.fBand = frequencyBand((1.25*self.fc10)/1e9 ,\
+				(1.9*self.fc10)/1e9,201,unit='GHz') 
 		else:
-			self.band= band
-		self.fStart = self.band[0]
-		self.fStop = self.band[1]
-		self.fCenter = (self.band[1]-self.band[0])/2. + self.band[0]
+			self.fBand = fBand
 		
 		self.epsilon = epsilonR * epsilon_0
 		self.mu = muR * mu_0 
 		self.eta = eta(epsilonR= epsilonR, muR= muR)
 		
-		self.freqAxis = npy.linspace(self.fStart,self.fStop,points)
+		
 		self.surfaceConductivity= surfaceConductivity
 		#all for dominant mode
 	
@@ -2007,7 +2009,7 @@ class waveguide:
 		'''
 		return self.beta(2*pi*f,m,n)
 		
-	def lambdaG(self,omega,m=1,n=0):
+	def lambdaG(self,omega=None,m=1,n=0):
 		'''
 		calculates the guide wavelength  of a given mode
 		takes:
@@ -2017,12 +2019,16 @@ class waveguide:
 		returns:
 			guide wavelength (m)
 		'''
+		if omega is None:
+			omega = self.fBand.center/(2*pi)
 		return real(2*pi / self.beta(omega,m,n))
 	
-	def lambdaG_f(self,f,m=1,n=0):
+	def lambdaG_f(self,f=None,m=1,n=0):
 		'''
 		convinience function. see lambdaG()
 		'''
+		if f is None:
+			f = self.fBand.center
 		return self.lambdaG(2*pi *f,m,n)
 	
 	def vp(self, omega,m=1,n=0):
@@ -2052,7 +2058,8 @@ class waveguide:
 		returns:
 			theta: electrical length in radians, or degrees
 		'''
-		return electricalLength(l=l, f0 = self.fCenter, beta = self.beta, deg=deg)
+		return electricalLength(l=l, f0 = self.fBand.center,\
+			beta = self.beta, deg=deg)
 		
 	def zTE(self, omega,m=1,n=0):
 		return eta0() * beta0(omega)/self.beta(omega,m,n)
@@ -2134,15 +2141,21 @@ class wr(waveguide):
 
 # standard waveguide bands, note that the names are not perfectly cordinated with guide dims. 
 # info taken from Virginia Diodes Inc. Waveguide Band Designations
-WR10 = wr(10,band=(75e9,110e9))
+fBand_WR10 = frequencyBand(75,110,201, 'ghz')
+fBand_WR4p3 = frequencyBand(170,260,201, 'ghz')
+fBand_WR3p4 = frequencyBand(220,325,201, 'ghz')
+fBand_WR1p5 = frequencyBand(500,750,201, 'ghz')
+
+#waveguide classes covering standard bands
+WR10 = wr(10,fBand=fBand_WR10)
 WR8 = wr(8)
 WR6 = wr(6.5)
 WR5 = wr(5.1)
-WR4 = wr(4.3, band = (170e9,260e9))
-WR3 = wr(3.4, band=(220e9,325e9))
-WR1p5 = wr(1.5, band =(500e9,750e9))		
+WR4 = wr(4.3, fBand=fBand_WR4p3)
+WR3 = wr(3.4, fBand=fBand_WR3p4)
+WR1p5 = wr(1.5, fBand=fBand_WR1p5)		
 
-fBandWR1p5 = fb.frequencyBand(500,750,201, 'ghz')
+
 
 ## S-parameter Network Creation
 #TODO: should name these more logically. like createSMatrix_Short()
@@ -3577,6 +3590,10 @@ def applyABC( gamma, abc):
 
 def abc2Ntwk(abc, isReciprocal = False, thruSign = 1, **kwargs):
 	'''
+	NOTE: isReciprocal does not (as of yet) intelligently solve the phase
+	ambiquity involved in de-Embeding. this means you may see erratic
+	phase response for a network return from this function.
+	
 	returns a 2-port ntwk for a given set of calibration coefficients
 	represented by a Nx3 matrix of one port coefficients, (abc)
 	

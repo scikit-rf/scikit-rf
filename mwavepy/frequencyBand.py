@@ -62,9 +62,10 @@ class frequencyBand:
 		to scale the frequncy when formatedAxis is referenced.
 			
 		'''
-		self._unit = unit
+		self._unit = unit.lower()
 		self.start =  self.multiplier * start
 		self.stop = self.multiplier * stop
+		self.center = self.start + (self.stop-self.start)/2.
 		self.npoints = npoints
 		
 		
