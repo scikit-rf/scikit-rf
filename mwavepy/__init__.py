@@ -67,9 +67,17 @@ from mwavepy import mobius as mb
 TBD:
 
 # HIGH PRIORITY
-possible bug found in abc2ntwk function: when a ntwk is deEmbed 
-with different ntwk from which it was cascaded with, the phase looks 
-like it has a modulo error. 
+
+break up this stupidly huge file in to logic class files and functional 
+groupings 
+
+make ntwk types use frequencyBand types 
+
+need to improve abc2ntwk function so that it intelligently determines
+sign of sqrt function based on a phase continuity accross frequency. 
+possibly ask the user for an electrical length estimate. 
+
+
 
 # LOW PRIOTITY
 use try/excepts in plotting functions to label title and legend, this 
@@ -92,7 +100,7 @@ use get/set for states like .s and .freq (to simultaneously update
 have plotting functions build off simpler ones to re-use code. so 
 plotPhase(complexData), then ntwk.plotPhase() could call this
 
-add a assumeReciprocity=True/False option to abc2Ntwk (to break up S12*S21)
+
 
 generate other network types z,y,abcd from any given parameter
 allow constructor to call using any parameter
@@ -1065,9 +1073,27 @@ class ntwk(object):
 			raise IndexError('only 2-ports suported for now')
 			return None
 	def transform2TimeDomain(self,timeMultiplier = 1e-12, timeUnit='ps', **kwargs):
+		'''
+		NOTE: ONLY S11 is calculated for now!!!
+		
+		calculate the time domain response of a network. 
+		
+		see mwavepy.psd2TimeDomain() for more info
+		'''
 		B = copy(self)
+		
+		
 		#TODO: should loop and do this for all s-parameters, not just s11
-		timeAxis, newS = psd2TimeDomain(self.freq, self.s[:,0,0], **kwargs)
+		'''
+		newS = self.s
+		for m in range(self.rank):
+			for n in range(self.rank):
+				timeAxis, tmpS = psd2TimeDomain(self.freq, self.s[:,m,n], **kwargs)
+				print shape(tmpS)
+				print shape(newS)
+				newS[:,m,n]= tmpS
+		'''		
+		timeAxis, newS = psd2TimeDomain(self.freq, self.s[:,0,0], **kwargs)		
 		B = ntwk(data = newS,freq=timeAxis, name= self.name, \
 			freqMultiplier = timeMultiplier, freqUnit=timeUnit)
 		return B
@@ -1150,7 +1176,7 @@ def loadAllTouchstonesInDir(dir = '.', contains=None):
 		if contains is not None and contains not in f:
 			continue
 			
-		# TODO: make this s?p with reg ex
+		# TODO: make this s?p :with reg ex
 		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
 			name = f[:-4]
 			ntwkDict[name]=(createNtwkFromTouchstone(dir +'/'+f))
@@ -2068,7 +2094,7 @@ class waveguide:
 
 	## standard creation
 	# one-port 
-	def createDelayShort(self,l,numPoints, **kwargs):
+	def createDelayShort(self,l, **kwargs):
 		'''
 		generate the reflection coefficient for a waveguide delayed short of length l 
 		
@@ -2078,32 +2104,31 @@ class waveguide:
 		returns:
 			two port S matrix for a waveguide thru section of length l 
 		'''
-
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		freq = self.fBand.axis
 		s = createDelayShort(freq,l ,self.beta)
 		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 
 			
-	def createShort(self, numPoints,**kwargs):
+	def createShort(self,**kwargs):
 		'''
 		generate the reflection coefficient for a waveguide short.
 		convinience function, see mwavepy.createShort()
 		'''
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s = createShort(numPoints)
+		freq = self.fBand.axis
+		s = createShort(self.fBand.npoints)
 		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 		
-	def createMatch(self,numPoints,**kwargs):
+	def createMatch(self,**kwargs):
 		'''
 		generate the reflection coefficient for a waveguide Match.
 		convinience function, see mwavepy.createShort()
 		'''
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
-		s = createMatch(numPoints)
+		freq = self.fBand.axis
+		s = createMatch(self.fBand.npoints)
 		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 		
 	# two-port 
-	def createDelay(self,l,numPoints,**kwargs):
+	def createDelay(self,l,**kwargs):
 		'''
 		generate the two port S matrix for a waveguide thru section of length l 
 		
@@ -2113,7 +2138,7 @@ class waveguide:
 		returns:
 			two port S matrix for a waveguide thru section of length l 
 		'''
-		freq = npy.linspace(self.band[0],self.band[1],numPoints)
+		freq = self.fBand.axis
 		s = createDelay(freqVector=freq,l=l, beta=self.beta)		
 		return ntwk(data=s,paramType='s',freq=freq,**kwargs)
 		
@@ -2389,6 +2414,12 @@ def onePortCal(measured, ideals):
 		Q = npy.hstack([i, one, i*m])
 		# calculate least squares
 		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
+		if len (residualsTmp )==0:
+			print npy.linalg.lstsq(Q,m)
+			print Q
+			print m
+			raise ValueError( 'matrix has singular values')
+			
 		abc[f,:] = abcTmp.flatten()
 		residuals[f,:] = residualsTmp
 		
@@ -2694,8 +2725,8 @@ def sddl2Cal(measured, actual, wg, d1, d2, ftol= 1e-3):
 	
 	def iterativeCal(d, gammaMList, gammaAList, sumResidualList):
 		d1,d2=d[0],d[1]
-		gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength).s
-		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
+		gammaAList[1] = wg.createDelayShort(l = d1).s
+		gammaAList[2] = wg.createDelayShort(l = d2).s
 		
 		abc, residues = onePortCal(gammaMList, gammaAList)
 		sumResidualList.append(npy.sum(abs(residues)))
@@ -2706,8 +2737,8 @@ def sddl2Cal(measured, actual, wg, d1, d2, ftol= 1e-3):
 	d,dList = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList, sumResidualList),\
 		disp=False,retall=True,ftol=ftol)
 	d1,d2=d
-	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
-	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
+	gammaAList[1] = wg.createDelayShort(l = d1, name='ideal delay').s
+	gammaAList[2] = wg.createDelayShort(l = d2,  name='ideal delay').s 
 		
 	abc, residues =  onePortCal(measured = gammaMList, ideals=gammaAList)
 	return abc, residues, d1,d2, sumResidualList, dList
@@ -2838,7 +2869,7 @@ def sdddd1Cal(measured, actual,ftol=1e-3):
 	return abc,residues,gammaD1,gammaD2,gammaD3, gammaD4
 
 
-def xdsCal(measured, actual, wg, d, ftol=1e-3, xtol=1e-3, solveForLoss=False):
+def xdsCal(measured, actual, wg, d, ftol=1e-3, xtol=1e-3, solveForLoss=False,showProgress= False):
 	'''
 	A one port calibration, which can use a redundent number of delayed 
 	shorts to solve	for their unknown lengths.
@@ -2937,12 +2968,14 @@ def xdsCal(measured, actual, wg, d, ftol=1e-3, xtol=1e-3, solveForLoss=False):
 			numDelays = len(d)-1
 			
 			for stdNum in range(numDelays):
-				gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum], numPoints = fLength).s
+				gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum]).s
 			
 			abc, residues = onePortCal(gammaMList, gammaAList)
 			sumResidualList.append(npy.sum(abs(residues)))
 			#print npy.sum(abs(residues))
-			print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
+			
+			if showProgress == True:
+				print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
 			return npy.sum(abs(residues))	
 			
 	else:
@@ -2950,26 +2983,28 @@ def xdsCal(measured, actual, wg, d, ftol=1e-3, xtol=1e-3, solveForLoss=False):
 			#TODO:  this function uses sloppy namespace, which limits portability
 			numDelays=len(d)
 			for stdNum in range(numDelays):
-				gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum], numPoints = fLength).s
+				gammaAList[stdNum] = wg.createDelayShort(l = d[stdNum]).s
 			
 			abc, residues = onePortCal(gammaMList, gammaAList)
 			sumResidualList.append(npy.sum(abs(residues)))
 			#print npy.sum(abs(residues))
-			print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
+			if showProgress == True:
+				print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
 			return npy.sum(abs(residues))
 	
 	
 	dStart = npy.array(d)
 	sumResidualList = []	
 	
-	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=False,ftol=ftol, xtol=xtol)
+	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), \
+		disp=False,ftol=ftol, xtol=xtol)
 	
 	if solveForLoss == True:
 		wg.surfaceConductivity = dEnd[-1]
 		
 		
 	for stdNum in range(numDelays):
-			gammaAList[stdNum] = wg.createDelayShort(l = dEnd[stdNum], numPoints = fLength).s
+			gammaAList[stdNum] = wg.createDelayShort(l = dEnd[stdNum]).s
 			
 		
 	abc, residues =  onePortCal(measured = gammaMList, ideals=gammaAList)
@@ -3053,10 +3088,10 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 	
 	def iterativeCal(d, gammaMList, gammaAList):
 		d1,d2,d3,d4=d[0],d[1],d[2],d[3]
-		gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength).s
-		gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength).s
-		gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength).s
-		gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength).s
+		gammaAList[1] = wg.createDelayShort(l = d1).s
+		gammaAList[2] = wg.createDelayShort(l = d2).s
+		gammaAList[3] = wg.createDelayShort(l = d3).s
+		gammaAList[4] = wg.createDelayShort(l = d4).s
 		
 		
 		abc, residues= onePortCal(gammaMList, gammaAList)
@@ -3067,10 +3102,10 @@ def sdddd2Cal(measured, actual, wg, d1, d2,d3,d4, ftol=1e-3):
 		
 	
 	d1,d2,d3,d4 = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), disp=False,ftol=ftol)
-	gammaAList[1] = wg.createDelayShort(l = d1, numPoints = fLength, name='ideal delay').s
-	gammaAList[2] = wg.createDelayShort(l = d2, numPoints = fLength, name='ideal delay').s 
-	gammaAList[3] = wg.createDelayShort(l = d3, numPoints = fLength, name='ideal delay').s 
-	gammaAList[4] = wg.createDelayShort(l = d4, numPoints = fLength, name='ideal delay').s 
+	gammaAList[1] = wg.createDelayShort(l = d1, name='ideal delay').s
+	gammaAList[2] = wg.createDelayShort(l = d2, name='ideal delay').s 
+	gammaAList[3] = wg.createDelayShort(l = d3, name='ideal delay').s 
+	gammaAList[4] = wg.createDelayShort(l = d4, name='ideal delay').s 
 		
 	abc, residues =  onePortCal(measured = gammaMList, ideals=gammaAList)
 	return abc, residues, d1,d2,d3,d4, sumResidualList
@@ -3701,7 +3736,7 @@ class calibration(object):
 		calculateCoefs() must be called if you want to re-calculate coefs.
 	'''
 	
-	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None, ftol=1e-3,xtol=1e-3, solveForLoss=False ):
+	def __init__(self,freq=[], freqMultiplier = None, ideals=[],measured =[], name = '',type='one port', d=None, wg=None, ftol=1e-3,xtol=1e-3, solveForLoss=False, showProgress=False ):
 		'''
 		calibration constructor. 
 		
@@ -3754,7 +3789,7 @@ class calibration(object):
 		self.ftol=ftol
 		self.xtol=xtol
 		self.solveForLoss = solveForLoss
-	
+		self.showProgress = showProgress
 	
 	def calculateCoefs(self):
 		'''
@@ -3791,7 +3826,8 @@ class calibration(object):
 			t0 = time()
 			self._abc, self._residuals, self.dFromCal,self.allResidueSums = \
 				xdsCal(measured = self.measured, actual = self.ideals, \
-				wg = self.wg, d=self.d,ftol=self.ftol, xtol=self.xtol, solveForLoss=self.solveForLoss)
+				wg = self.wg, d=self.d,ftol=self.ftol, xtol=self.xtol, \
+				solveForLoss=self.solveForLoss, showProgress = self.showProgress)
 					
 			
 			print '%s took %i s' %(self.name, time()-t0)

@@ -226,7 +226,7 @@ class touchstone():
         elif self.format == 'ma':
             v_complex = (v[:,1::2] * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
         elif self.format == 'db':
-            v_complex = ((10**v[:,1::2]/20.0) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
+            v_complex = ((10**(v[:,1::2]/20.0)) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
         
         # this return is tricky its do the stupid way the touchtone lines are in order like s11,s21, etc. because of this we need the transpose command, and axes specifier
         return (v[:,0] * self.frequency_mult,
