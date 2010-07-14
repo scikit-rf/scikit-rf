@@ -25,14 +25,36 @@ import  mwavepy1.mathFunctions as mf
 import touchstone
 
 import numpy as npy
+import pylab as plb 
 
 class Network(object):
-	def __init__(self, file = None):
-		self.name = None
-		self._s = None
-		self._f = None
-		self._z0 = None
+## CONSTANTS
+	f_unit_dict = {\
+		'hz':'Hz',\
+		'mhz':'MHz',\
+		'ghz':'GHz'\
+		}
+	f_multiplier_dict={
+		'hz':1,\
+		'mhz':1e6,\
+		'ghz':1e9\
+		}
 
+## CONSTRUCTOR
+	def __init__(self, file = None):
+		'''
+		takes:
+			file: if given will load information from touchstone file 
+		'''
+		if file is not None:
+			self.load_touchstone(file)
+		else:
+			self.name = None
+			self.s = None
+			self.f = None
+			self.z0 = 50 
+			self.f_unit = 'hz'
+	
 
 ## PRIMARY PROPERTIES
 	# s-parameter matrix
@@ -79,7 +101,7 @@ class Network(object):
 	
 ## SECONDARY PROPERTIES
 
-# s-parameters convinience properties	
+	# s-parameters convinience properties	
 	@property
 	def s_manitude(self):
 		'''
@@ -132,12 +154,32 @@ class Network(object):
 		the number of ports the network has.
 		'''
 		return npy.shape(self.s)[1]
-
-## CLASS METHODS
-	def method_of_network(self):
-		'''help on this method'''
-		raise NotImplementedError
+	# frequency formating related properties
 	
+	@property
+	def f_unit(self):
+		'''
+		The unit to format the frequency axis in. see formatedAxis
+		'''
+		return self.f_unit_dict[self._f_unit]
+	@f_unit.setter
+	def f_unit(self,f_unit):
+		self._f_unit = f_unit.lower()
+	
+	@property
+	def f_multiplier(self):
+		'''
+		multiplier for formating axis
+		'''
+		return self.f_multiplier_dict[self._f_unit]
+	@property
+	def f_scaled(self):
+		'''
+		The unit to format the frequency axis in. see formatedAxis
+		'''
+		return self.f/self.f_multiplier
+## CLASS METHODS
+	# touchstone file IO
 	def load_touchstone(self, filename):
 		'''
 		loads  values from a touchstone file. 
@@ -156,6 +198,7 @@ class Network(object):
 		
 		self.z0 = float(touchstoneFile.resistance)
 		self.f, self.s = touchstoneFile.get_sparameter_arrays() # note freq in Hz
+		self.f_unit = touchstoneFile.frequency_unit # for formatting plots
 		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
 
 	def write_touchstone(self, filename):
@@ -181,19 +224,20 @@ class Network(object):
 		# the '#'  line is NOT a comment it is essential and it must be 
 		#exactly this format, to work
 		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-		outputFile.write('# HZ S RI R ' + str(self.z0) +" \n")
+		outputFile.write('# ' + self.f_unit + ' S RI R ' + str(self.z0) +" \n")
 		
 		#write comment line for users (optional)
 		outputFile.write ("!freq\t")
 		for n in range(self.number_of_ports):
 			for m in range(self.number_of_ports):
-				outputFile.write("Re" +'S'+`m+1`+ `n+1`+  "\tIm"+'S'+`m+1`+ `n+1`+'\t')
+				outputFile.write("Re" +'S'+`m+1`+ `n+1`+  "\tIm"+\
+				'S'+`m+1`+ `n+1`+'\t')
 		outputFile.write('\n')		
 		
 		# write out data, note: this could be done with matrix 
 		#manipulations, but its more readable to me this way
 		for f in range(len(self.f)):
-			outputFile.write(str(self.f[f])+'\t')
+			outputFile.write(str(self.f_scaled[f])+'\t')
 			
 			for n in range(self.number_of_ports):
 				for m in range(self.number_of_ports):
@@ -203,7 +247,23 @@ class Network(object):
 			outputFile.write('\n')
 		
 		outputFile.close()
-	
+	# ploting 
+	def plot_db(self,m=0, n=0, ax = None, **kwargs):
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+		# set the legend label for this trace to the networks name if it
+		# exists 
+		if self.name is None:
+			label_string = 'S'+repr(m+1) + repr(n+1)
+		else:
+			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+		ax.plot(self.f_scaled, self.s_db[:,m,n],\
+			label=label_string, **kwargs)
+		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.ylabel('Magnitude [dB]')
+		plb.legend()
 ## FUNCTIONS
 def cascade():
 	raise NotImplementedError

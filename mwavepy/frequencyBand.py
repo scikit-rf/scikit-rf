@@ -21,7 +21,7 @@
 from pylab import linspace, gca
 
 
-class frequencyBand:
+class Frequency(object):
 	'''
 	represents a frequency band. 
 	
@@ -36,12 +36,12 @@ class frequencyBand:
 	is used in other classes so user doesnt have to continually supply 
 	frequency info.
 	'''
-	freqUnitDict = {\
+	unit_dict = {\
 		'hz':'Hz',\
 		'mhz':'MHz',\
 		'ghz':'GHz'\
 		}
-	freqMultiplierDict={
+	multiplier_dict={
 		'hz':1,\
 		'mhz':1e6,\
 		'ghz':1e9\
@@ -68,40 +68,40 @@ class frequencyBand:
 		self.center = self.start + (self.stop-self.start)/2.
 		self.npoints = npoints
 		
-		
+	@property
+	def	f(self):
+		'''
+		returns a frequency vector  in Hz 
+		'''
+		return linspace(self.start,self.stop,self.npoints)
+	
+	@property
+	def	f_scaled(self):
+		'''
+		returns a frequency vector in units of self.unit 
+		'''
+		return f/self.multiplier
+				
 	@property
 	def unit(self):
 		'''
 		The unit to format the frequency axis in. see formatedAxis
 		'''
-		return self.freqUnitDict[self._unit]
+		return self.unit_dict[self._unit]
 	@unit.setter
-	def unit(self,newUnit):
-		self._unit = newUnit.lower()
+	def unit(self,unit):
+		self._unit = unit.lower()
+	
 	@property
 	def multiplier(self):
 		'''
 		multiplier for formating axis
 		'''
-		return self.freqMultiplierDict[self.unit.lower()]
-	@property
-	def	axis(self):
-		'''
-		returns a frequency axis scaled to the correct units
-		the unit is stored in freqDict['freqUnit']
-		'''
-		return linspace(self.start,self.stop,self.npoints)
-	@property
-	def	formatedAxis(self):
-		'''
-		returns a frequency axis scaled to the correct units
-		the unit is stored in freqDict['freqUnit']
-		'''
-		return linspace(self.start,self.stop,self.npoints)\
-			/self.multiplier
-		
+		return self.multiplier_dict[self._unit]
+	
+	
 	def labelXAxis(self, ax=None):
 		if ax is None:
 			ax = gca()
-		ax.set_xlabel('Frequency [%s]' % self.unit )
+		ax.set_xlabel('Frequency [%s]' % unit_dict[self.unit] )
 	
