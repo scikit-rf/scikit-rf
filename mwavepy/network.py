@@ -248,7 +248,18 @@ class Network(object):
 		
 		outputFile.close()
 	# ploting 
-	def plot_db(self,m=0, n=0, ax = None, **kwargs):
+	def plot_s_db(self,m=0, n=0, ax = None, **kwargs):
+		'''
+		plots the scattering parameter of  indecie m, n in log magnitude
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		
 		# get current axis if user doesnt supply and axis 
 		if ax is None:
 			ax = plb.gca()
@@ -264,12 +275,217 @@ class Network(object):
 		plb.xlabel('Frequency ['+ self.f_unit +']')
 		plb.ylabel('Magnitude [dB]')
 		plb.legend()
-## FUNCTIONS
-def cascade():
-	raise NotImplementedError
+		
+	def plot_s_mag(self,m=0, n=0, ax = None, **kwargs):
+		'''
+		plots the scattering parameter of  indecie m, n in magnitude
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you 
+				want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+		# set the legend label for this trace to the networks name if it
+		# exists 
+		if self.name is None:
+			label_string = 'S'+repr(m+1) + repr(n+1)
+		else:
+			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+		ax.plot(self.f_scaled, self.s_mag[:,m,n],\
+			label=label_string, **kwargs)
+		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.ylabel('Magnitude')
+		plb.legend()
+				
+	def plot_s_deg(self,m=0, n=0, ax = None, **kwargs):
+		'''
+		plots the scattering parameter of indecie m, n in degrees
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+		# set the legend label for this trace to the networks name if it
+		# exists 
+		if self.name is None:
+			label_string = 'S'+repr(m+1) + repr(n+1)
+		else:
+			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+		ax.plot(self.f_scaled, self.s_deg[:,m,n],\
+			label=label_string, **kwargs)
+		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.ylabel('Phase [deg]')
+		plb.legend()
+		
+	def plot_s_deg_unwrap(self,m=0, n=0, ax = None, **kwargs):
+		'''
+		plots the scattering parameter of  indecie m, n in unwrapped degrees
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you 
+				want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+		# set the legend label for this trace to the networks name if it
+		# exists 
+		if self.name is None:
+			label_string = 'S'+repr(m+1) + repr(n+1)
+		else:
+			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+		ax.plot(self.f_scaled, self.s_deg_unwrap[:,m,n],\
+			label=label_string, **kwargs)
+		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.ylabel('Phase [deg]')
+		plb.legend()
+		
+	def plot_s_rad(self,m=0, n=0, ax = None, **kwargs):
+		'''
+		plots the scattering parameter of  indecie m, n in radians
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you 
+				want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+		# set the legend label for this trace to the networks name if it
+		# exists 
+		if self.name is None:
+			label_string = 'S'+repr(m+1) + repr(n+1)
+		else:
+			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+		ax.plot(self.f_scaled, self.s_rad[:,m,n],\
+			label=label_string, **kwargs)
+		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.ylabel('Phase [deg]')
+		plb.legend()	
+		
+	def plot_s_rad_unwrapped(self,m=0, n=0, ax = None, **kwargs):
+		'''
+		plots the scattering parameter of  indecie m, n in unwrapped radians
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you 
+				want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+		# set the legend label for this trace to the networks name if it
+		# exists 
+		if self.name is None:
+			label_string = 'S'+repr(m+1) + repr(n+1)
+		else:
+			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+		ax.plot(self.f_scaled, self.s_rad_unwrap[:,m,n],\
+			label=label_string, **kwargs)
+		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.ylabel('Phase [deg]')
+		plb.legend()
 
-def de_embed():
-	raise NotImplementedError
+		
+## FUNCTIONS
+# network format conversions
+def s2t(s):
+	'''
+	converts a scattering parameters to 'wave cascading parameters'
+	
+	input matrix shape should be should be 2x2, or kx2x2
+	
+	BUG: if s -matrix has ones for reflection, thsi will produce inf's
+	you cant cascade a matrix like this anyway, but we should handle it 
+	better
+	'''
+	t = npy.copy(s)
+	if len (s.shape) > 2 :
+		for f in range(s.shape[0]):
+			t[f,:,:] = s2t(s[f,:,:])
+	elif s.shape == (2,2):
+		t = npy.array([[-1*npy.linalg.det(s),	s[0,0]],\
+					[-s[1,1],1]]) / s[1,0]
+	else:
+		raise IndexError('matrix should be 2x2, or kx2x2')
+	return t        
+        
+
+def t2s(t):
+	'''
+	converts a 'wave cascading parameters' to scattering parameters 
+	
+	input matrix shape should be should be 2x2, or kx2x2
+	'''
+	s = npy.copy(t)
+	if len (t.shape) > 2 :
+		for f in range(t.shape[0]):
+			s[f,:,:] = t2s(s[f,:,:])
+	
+	elif t.shape== (2,2):
+		s = npy.array([[t[0,1],npy.linalg.det(t)],\
+			[1,-t[1,0]]])/t[1,1]
+	else:
+		raise IndexError('matrix should be 2x2, or kx2x2')
+	return s
+
+
+# network operations
+def cascade(a,b):
+	'''
+	cascade two networks togethers. 
+	'''
+	c = npy.copy(a)
+	
+	if len (a.shape) > 2 :
+		for f in range(a.shape[0]):
+			c[f,:,:] = cascade(a[f,:,:],b[f,:,:])
+	
+	elif a.shape== (2,2):
+		c = t2s(npy.dot (s2t(a) ,s2t(b)))
+	else:
+		raise IndexError('matrix should be 2x2, or kx2x2')
+	return c
+	
+	
+
+def de_embed(a,b):	
+	c = npy.copy(a)
+	
+	if len (a.shape) > 2 :
+		for f in range(a.shape[0]):
+			c[f,:,:] = cascade(a[f,:,:],b[f,:,:])
+	
+	elif a.shape== (2,2):
+		c = t2s(npy.dot (s2t(a) ,s2t(b)))
+	else:
+		raise IndexError('matrix should be 2x2, or kx2x2')
+	return c
 
 def divide():
 	raise NotImplementedError
