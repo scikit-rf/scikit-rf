@@ -22,10 +22,11 @@
 '''
 
 import  mwavepy1.mathFunctions as mf
-
+import touchstone
 
 class Network(object):
-	def __init__(self):
+	def __init__(self, file = None):
+		self.name = None
 		self._s = None
 		self._f = None
 		self._z0 = None
@@ -36,34 +37,43 @@ class Network(object):
 	@property
 	def s(self):
 		'''
-		The scattering parameter matrix 
+		The scattering parameter matrix.
+		
+		s-matrix has shape fxmxn, 
+		where; 
+			f is frequency axis and,
+			m and n are port indicies
 		'''
 		return self._s
 	
 	@s.setter
-	def s(self, input_s_matrix):
-		self._s = input_s_matrix
+	def s(self, s):
+		'''
+		the input s-matrix should be of shape fxmxn, 
+		where f is frequency axis and m and n are port indicies
+		'''
+		self._s = s
 	
 	
 	# frequency information
 	@property
 	def f(self):
 		''' the frequency vector for the network, in Hz. '''
-		raise NotImplementedError
+		return self._f
 		
 	@f.setter
-	def f(self):
-		raise NotImplementedError
+	def f(self,f):
+		self._f = f
 	
 	# characteristic impedance
 	@property
 	def z0(self):
 		''' the characteristic impedance of the network.'''
-		raise NotImplementedError
+		return self._z0
 	
 	@z0.setter
-	def z0(self):
-		raise NotImplementedError
+	def z0(self, z0):
+		self._z0 = z0
 	
 ## SECONDARY PROPERTIES
 
@@ -114,14 +124,37 @@ class Network(object):
 		'''
 		return npy.unwrap(mf.complex_2_radian(self.s))
 
-
+	@property
+	def number_of_ports(self):
+		'''
+		the number of ports the network has.
+		'''
+		return shape(self.s)[0]
 
 ## CLASS METHODS
 	def method_of_network(self):
 		'''help on this method'''
 		raise NotImplementedError
-
-
+	
+	def load_touchstone(self, filename):
+		'''
+		loads  values from a touchstone file. 
+		
+		takes:
+			filename - touchstone file name, string. 
+		
+		note: 
+			ONLY 'S' FORMAT SUPORTED AT THE MOMENT 
+			all work is tone in the touchstone class. 
+		'''
+		touchstoneFile = touchstone.touchstone(filename)
+		
+		if touchstoneFile.get_format().split()[1] != 's':
+			raise NotImplementedError('only s-parameters supported for now.')
+		
+		self.z0 = float(touchstoneFile.resistance)
+		self.f, self.s = touchstoneFile.get_sparameter_arrays() # note freq in Hz
+		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
 
 ## FUNCTIONS
 def cascade():
