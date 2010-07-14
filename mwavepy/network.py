@@ -56,6 +56,30 @@ class Network(object):
 			self.f_unit = 'hz'
 	
 
+## OPERATORS
+	def __pow__(self,a):
+		'''
+		 implements cascading this network with another network
+		'''
+		
+		raise NotImplementedError
+	def __floordiv__(self,a):
+		'''
+		 implements de-embeding another network[s], from this network
+		'''
+		raise NotImplementedError	
+	def __mul__(self,a):
+		'''
+		element-wise complex multiplication  of s-matrix
+		'''
+		raise NotImplementedError
+	def __div__(self,a):
+		'''
+		element-wise complex division  of s-matrix
+		'''
+		raise NotImplementedError
+
+
 ## PRIMARY PROPERTIES
 	# s-parameter matrix
 	@property
@@ -411,7 +435,10 @@ class Network(object):
 		plb.ylabel('Phase [deg]')
 		plb.legend()
 
-		
+	
+	# intrpolating  frequency axis 	
+	def interpolate(self):
+		raise NotImplementedError
 ## FUNCTIONS
 # network format conversions
 def s2t(s):
@@ -455,7 +482,7 @@ def t2s(t):
 	return s
 
 
-# network operations
+# network operations on s-matricies
 def cascade(a,b):
 	'''
 	cascade two 2x2 s-matricies together.
@@ -504,3 +531,11 @@ def de_embed(a,b):
 
 def divide():
 	raise NotImplementedError
+
+def average(list_of_networks):
+	raise NotImplementedError
+
+def ps2_2_time_domain():
+	raise NotImplementedError
+
+
