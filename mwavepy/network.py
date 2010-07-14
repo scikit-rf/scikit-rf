@@ -24,6 +24,8 @@
 import  mwavepy1.mathFunctions as mf
 import touchstone
 
+import numpy as npy
+
 class Network(object):
 	def __init__(self, file = None):
 		self.name = None
@@ -129,7 +131,7 @@ class Network(object):
 		'''
 		the number of ports the network has.
 		'''
-		return shape(self.s)[0]
+		return npy.shape(self.s)[1]
 
 ## CLASS METHODS
 	def method_of_network(self):
@@ -156,6 +158,52 @@ class Network(object):
 		self.f, self.s = touchstoneFile.get_sparameter_arrays() # note freq in Hz
 		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
 
+	def write_touchstone(self, filename):
+		'''
+		write a touchstone file representing this network.  the only 
+		format supported at the moment is :
+			HZ S RI 
+		
+		takes: 
+			filename - filename , duh
+			
+		
+		note:
+			in the future could make possible use of the touchtone 
+			class, but at the moment this would not provide any benefit 
+			as it has not set_ functions. 
+		'''
+
+		
+		outputFile = open(filename,"w")
+		
+		# write header file. 
+		# the '#'  line is NOT a comment it is essential and it must be 
+		#exactly this format, to work
+		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
+		outputFile.write('# HZ S RI R ' + str(self.z0) +" \n")
+		
+		#write comment line for users (optional)
+		outputFile.write ("!freq\t")
+		for n in range(self.number_of_ports):
+			for m in range(self.number_of_ports):
+				outputFile.write("Re" +'S'+`m+1`+ `n+1`+  "\tIm"+'S'+`m+1`+ `n+1`+'\t')
+		outputFile.write('\n')		
+		
+		# write out data, note: this could be done with matrix 
+		#manipulations, but its more readable to me this way
+		for f in range(len(self.f)):
+			outputFile.write(str(self.f[f])+'\t')
+			
+			for n in range(self.number_of_ports):
+				for m in range(self.number_of_ports):
+					outputFile.write( str(npy.real(self.s[f,m,n])) + '\t'\
+					 + str(npy.imag(self.s[f,m,n])) +'\t')
+			
+			outputFile.write('\n')
+		
+		outputFile.close()
+	
 ## FUNCTIONS
 def cascade():
 	raise NotImplementedError
