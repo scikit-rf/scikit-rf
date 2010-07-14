@@ -458,7 +458,13 @@ def t2s(t):
 # network operations
 def cascade(a,b):
 	'''
-	cascade two networks togethers. 
+	cascade two 2x2 s-matricies together.
+	
+	a's port 2 = b's port 1
+	
+	note:
+		BE AWARE! this relies on s2t function which has a inf problem 
+		if s11 or s22 is 1. 
 	'''
 	c = npy.copy(a)
 	
@@ -475,14 +481,23 @@ def cascade(a,b):
 	
 
 def de_embed(a,b):	
+	'''
+	de-embed a 2x2 s-matrix from another 2x2 s-matrix
+	
+	c = b**-1 * a
+	
+	note:
+		BE AWARE! this relies on s2t function which has a inf problem 
+		if s11 or s22 is 1. 
+	'''
 	c = npy.copy(a)
 	
 	if len (a.shape) > 2 :
 		for f in range(a.shape[0]):
-			c[f,:,:] = cascade(a[f,:,:],b[f,:,:])
+			c[f,:,:] = de_embed(a[f,:,:],b[f,:,:])
 	
 	elif a.shape== (2,2):
-		c = t2s(npy.dot (s2t(a) ,s2t(b)))
+		c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), s2t(a)))
 	else:
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return c
