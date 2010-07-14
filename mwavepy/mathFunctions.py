@@ -20,6 +20,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
+import numpy as npy
 
 ## simple conversions
 def complex_2_magnitude(input):
@@ -28,11 +29,29 @@ def complex_2_magnitude(input):
 	'''
 	return abs(input)
 
+def complex_2_db(input):
+	'''
+	returns the magnitude in dB of a complex number. 
+	
+	returns:
+		20*log10(|z|)
+	where z is a complex number
+	'''
+	return 20*npy.log10(npy.abs( input))
 
+def complex_2_radian(input):
+	'''
+	returns the angle complex number in radians. 
 
+	'''
+	return npy.angle(input)
 
+def complex_2_degree(input):
+	'''
+	returns the angle complex number in radians. 
 
-
+	'''
+	return npy.angle(input, deg=True)
 
 
 

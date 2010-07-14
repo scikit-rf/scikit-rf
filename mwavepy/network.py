@@ -31,10 +31,13 @@ class Network(object):
 		self._z0 = None
 
 
-## PROPERTIES
+## PRIMARY PROPERTIES
 	# s-parameter matrix
 	@property
 	def s(self):
+		'''
+		The scattering parameter matrix 
+		'''
 		return self._s
 	
 	@s.setter
@@ -45,7 +48,7 @@ class Network(object):
 	# frequency information
 	@property
 	def f(self):
-		''' this is how to use this'''
+		''' the frequency vector for the network, in Hz. '''
 		raise NotImplementedError
 		
 	@f.setter
@@ -55,26 +58,70 @@ class Network(object):
 	# characteristic impedance
 	@property
 	def z0(self):
-		''' this is how to use this'''
+		''' the characteristic impedance of the network.'''
 		raise NotImplementedError
 	
 	@z0.setter
 	def z0(self):
 		raise NotImplementedError
 	
-	
+## SECONDARY PROPERTIES
+
+# s-parameters convinience properties	
 	@property
 	def s_manitude(self):
 		'''
-		help on s_magnitude
+		returns the magnitude of the s-parameters.
 		'''
 		return mf.complex_2_magnitude(self.s)
 	
+	@property
+	def s_db(self):
+		'''
+		returns the magnitude of the s-parameters, in dB
+		
+		note:
+			dB is calculated by 
+				20*log10(|s|)
+		'''
+		return mf.complex_2_db(self.s)
+		
+	@property
+	def s_deg(self):
+		'''
+		returns the phase of the s-parameters, in radians
+		'''
+		return mf.complex_2_degree(self.s)
+		
+	@property
+	def s_rad(self):
+		'''
+		returns the phase of the s-parameters, in radians.
+		'''
+		return mf.complex_2_radian(self.s)
+	
+	@property
+	def s_deg_unwrap(self):
+		'''
+		returns the unwrapped phase of the s-paramerts, in degrees
+		'''
+		return mf.rad_2_degree(self.s_rad_unwrap)
+	
+	@property
+	def s_rad_unwrap(self):
+		'''
+		returns the unwrapped phase of the s-parameters, in radians.
+		'''
+		return npy.unwrap(mf.complex_2_radian(self.s))
+
+
 
 ## CLASS METHODS
 	def method_of_network(self):
 		'''help on this method'''
 		raise NotImplementedError
+
+
 
 ## FUNCTIONS
 def cascade():
