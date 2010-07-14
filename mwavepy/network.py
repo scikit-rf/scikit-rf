@@ -21,35 +21,55 @@
 #       MA 02110-1301, USA.
 '''
 
+import  mwavepy1.mathFunctions as mf
+
+
 class Network(object):
+	def __init__(self):
+		self._s = None
+		self._f = None
+		self._z0 = None
+
 
 ## PROPERTIES
 	# s-parameter matrix
-	def __set_s(self):
-		raise NotImplementedError
-	def __get_s(self):
-		raise NotImplementedError
-	s = property(__get_s, __set_s,doc =\
-	'''This is how to use this.
-	and there is more info''')
+	@property
+	def s(self):
+		return self._s
+	
+	@s.setter
+	def s(self, input_s_matrix):
+		self._s = input_s_matrix
 	
 	
 	# frequency information
-	def __set_f(self):
+	@property
+	def f(self):
+		''' this is how to use this'''
 		raise NotImplementedError
-	def __get_f(self):
+		
+	@f.setter
+	def f(self):
 		raise NotImplementedError
-	f = property(__get_f, __set_f, doc= \
-	''' this is how to use this''')
+	
+	# characteristic impedance
+	@property
+	def z0(self):
+		''' this is how to use this'''
+		raise NotImplementedError
+	
+	@z0.setter
+	def z0(self):
+		raise NotImplementedError
 	
 	
-	def __set_z0(self):
-		raise NotImplementedError
-	def __get_z0(self):
-		raise NotImplementedError
-	z0 = property(__get_z0, __set_z0, doc= \
-	''' this is how to use this''')
-
+	@property
+	def s_manitude(self):
+		'''
+		help on s_magnitude
+		'''
+		return mf.complex_2_magnitude(self.s)
+	
 
 ## CLASS METHODS
 	def method_of_network(self):
