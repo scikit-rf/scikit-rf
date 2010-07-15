@@ -35,7 +35,7 @@ import mwavepy as mv
 	
 
 # TEM transmission lines
-class transmissionLine(object):
+class TransmissionLine(object):
 	'''
 	This is a general super-class for TEM transmission lines. The 
 	structure behind the methods dependencies is a results of the 
@@ -70,10 +70,9 @@ class transmissionLine(object):
 		
 	
 	'''
-	fBand = None
 	def __init__(self, \
 		distributedCapacitance,	distributedInductance,\
-		distributedResistance, distributedConductance, fBand=None ):
+		distributedResistance, distributedConductance):
 		'''
 		constructor.
 		
@@ -93,38 +92,27 @@ class transmissionLine(object):
 		self.distributedInductance = distributedInductance
 		self.distributedResistance = distributedResistance
 		self.distributedConductance = distributedConductance
-
-		self.fBand = fBand
 		
-	def distributedImpedance(self,omega=None):
+		# for convinience 
+		self.z0 = self.characteristicImpedance
+		self.gamma = self.propagationConstant
+	
+	def distributedImpedance(self,omega):
 		'''
 		distributed Impedance,  Z'(w) = R' + jwI'
 		
 		'''
-		if omega is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				omega = 2*pi*self.fBand.axis
-		else:
-			omega = array(omega)
+		omega = array(omega)
 		return self.distributedResistance+1j*omega*self.distributedInductance
 	
-	def distributedAdmittance(self,omega=None):
+	def distributedAdmittance(self,omega):
 		'''
 		distributed Admittance, Y'(w) = G' + jwC'
 		'''
-		if omega is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				omega = 2*pi*self.fBand.axis
-		else:
-			omega = array(omega)
+		omega = array(omega)
 		return self.distributedConductance+1j*omega*self.distributedCapacitance
-	# could put a test for losslessness here and choose whether to make this
-	# a funtion of omega or not.
-	def characteristicImpedance(self,omega=None):
+	
+	def characteristicImpedance(self,omega):
 		'''
 		
 		The  characteristic impedance at a given angular frequency.
@@ -135,16 +123,11 @@ class transmissionLine(object):
 			Z0: characteristic impedance  ohms
 		
 		'''
-		if omega is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				omega = 2*pi*self.fBand.axis
-		else:
-			omega = array(omega)
-		return sqrt(self.distributedImpedance(omega)/self.distributedAdmittance(omega))
+		omega = array(omega)
+		return sqrt(self.distributedImpedance(omega)/\
+			self.distributedAdmittance(omega))
 	
-	def propagationConstant(self,omega=None):
+	def propagationConstant(self,omega):
 		'''
 		the propagation constant 
 			gamma(w) = sqrt(Z'(w)*Y'(w))
@@ -155,206 +138,112 @@ class transmissionLine(object):
 		returns:
 			gamma: possibly complex propagation constant, [jrad/m+]
 		'''
-		
-		if omega is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				omega = 2*pi*self.fBand.axis
-		else:
-			omega = array(omega)
-		return 1j*sqrt(self.distributedImpedance(omega)*self.distributedAdmittance(omega))
+		omega = array(omega)
+		return 1j*sqrt(self.distributedImpedance(omega)*\
+			self.distributedAdmittance(omega))
 	
-	#@classmethod
-	def electricalLength(self, l , f=None, gamma=None,deg=False):
-		'''
-		calculates the electrical length of a section of transmission line.
-	
-		takes:
-			l: length of line. in meters
-			f: frequency at which to calculate. array-like or float. if
-				left as None and self.fBand exists, it will use that.
-			gamma: propagationConstant a function of angular frequency 
-				(omega), and returns a value with units radian/m. if 
-				not given, will use self.propagationConstant
-			deg: return in degrees or not. boolean.
-		
-		returns:
-			theta: electrical length in radians or degrees, 
-				depending on  value of deg.
-		
-		
-		note:
-			you can pass a function on the fly, like  
-			electricalLength(l,f, gamma = lambda omega: omega/c )
-		'''
-		if gamma is None:
-			gamma = self.propagationConstant
-		if f is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				f = self.fBand.axis
-				
-		if deg==False:
-			return  gamma(2*pi*f )*l 
-		elif deg ==True:
-			return  mv.rad2deg(gamma(2*pi*f ) *l )
-	
-	
-	#@classmethod
-	def reflectionCoefficient(self, l,zl,f=None,z0=None, gamma=None):
-		'''
-		calculates the reflection coefficient for a given load 
-		takes:
-			l: distance of transmission line to load, in meters (float)
-			zl: load impedance. may be a function of omega (2*pi*f), or 
-				a number 
-			f: frequency at which to calculate, array-like or float. if
-				left as None, and self.fBand exists, it will use that.
-			z0 - characteristic impedance may be a function of omega 
-				(2*pi*f), or a number 
-			gamma: propagationConstant a function of angular frequency (omega), 
-				and returns a value with units radian/m.
-		'''
-		
-		if f is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				f = self.fBand.axis
-				
-		if z0 is None:
-			z0 = self.characteristicImpedance( 2*pi*f)
-		if gamma is None:
-			gamma = self.propagationConstant
-		try:
-			zl = zl(2*pi*f)
-		except TypeError:
-			pass
-		try:
-			z0 = z0(2*pi*f)
-		except TypeError:
-			pass
-		
-		try : 
-			if len(z0) != len(zl): 
-				raise IndexError('len(zl) != len(z0)')
-		except (TypeError):
-			# zl and z0 might just be numbers, which dont have len
-			pass
-		# flexible way to typecast ints, or arrays
-		zl = 1.0*(zl)
-		z0 = 1.0*(z0)
-		l = 1.0* (l)
-		
-		theta = self.electricalLength(l,f, gamma=gamma)
-		
-		if isinstance(zl,npy.ndarray):
-			# handle the limit of open circuit. for arrays
-			zl[(zl==npy.inf)]=1e100
-			gammaAt0 = (zl-z0)/(zl+z0)
-		else:
-			if zl == inf:
-				gammaAt0 = 1
-			else: 
-				gammaAt0 = (zl-z0)/(zl+z0)
-		
-		gammaAtL =gammaAt0 * npy.exp(-2j*theta)
-		return gammaAtL
-	
-	#@classmethod
-	def inputImpedance(self, l,f, zl,z0=None,gamma=None):
-		'''
-		returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
-		takes:
-			l: distance from load, in meters
-			f: frequency at which to calculate, array-like or float 
-			zl: load impedance. may be a function of omega (2*pi*f), or 
-				a number 
-			z0 - characteristic impedance may be a function of omega 
-				(2*pi*f), or a number
-			gamma: propagationConstant a function of angular frequency (omega), 
-				and returns a value with units radian/m.
-		returns:
-			input impedance ( in general complex)
-			
-		note:
-			this can also be calculated in terms of reflectionCoefficient
-		'''
-		if gamma is None:
-			gamma = self.propagationConstant
-		if z0 is None:
-			z0 = self.characteristicImpedance
-		
-		if f is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				f = self.fBand.axis
-				
-		try:
-			zl = zl(2*pi*f)
-		except TypeError:
-			pass
-		try:
-			z0 = z0(2*pi*f)
-		except TypeError:
-			pass
-			
-		try : 
-			if len(z0) != len(zl): 
-				raise IndexError('len(zl) != len(z0)')
-		except (TypeError):
-			# zl and z0 might just be numbers, which dont have len
-			pass
-		
-		
-		
-		theta = propagationConstant(l,2*pi*f, gamma=gamma)
-		
-		if zl == inf:
-			return -1j*z0*1./(tan(theta))
-		elif zl == 0:
-			return 1j*z0*tan(theta)
-		else:
-			return z0 *	(zl + 1j*z0 * tan(theta)) /\
-						(z0 + 1j*zl * tan(theta))
-	
+def electricalLength(gamma, l , f, deg=False):
+	'''
+	calculates the electrical length of a section of transmission line.
 
+	takes:
+		gamma: propagation constant, (a function)
+		l: length of line. in meters
+		f: frequency at which to calculate. array-like or float. if
+			left as None and self.fBand exists, it will use that.
+		deg: return in degrees or not. boolean.
 	
+	returns:
+		theta: electrical length in radians or degrees, 
+			depending on  value of deg.
+	'''
 	
-	
-	def createDelayShort(self,l,f=None, gamma=None, **kwargs ):
-		'''
-		generate the reflection coefficient for a  delayed short of length l 
-		
-		takes:
-			l - length of delay, in meters
-			f: frequency axis. if self.fBand exists then this 
-				can left as None
-			gamma: propagationConstant a function of angular frequency (omega), 
-				and returns a value with units radian/m. can be omited.
-			kwargs: passed to ntwk constructor
-		returns:
-			two port S matrix for a waveguide thru section of length l 
-		'''
-		if gamma is None:
-			gamma = self.propagationConstant
-		if f is None:
-			if  self.fBand is None:
-				raise ValueError('please supply frequency information')
-			else:
-				f = self.fBand.axis
-		
+	f = array(f)
+	l = array(l)
 			
-		
-		s = -1*exp(-1j* 2*self.electricalLength(l,f,gamma))
-		
-		return mv.ntwk(data=s,paramType='s',freq=f,**kwargs)
+	if deg==False:
+		return  gamma(2*pi*f )*l 
+	elif deg ==True:
+		return  mf.radian_2_degree(gamma(2*pi*f ) *l )
 
 
-class freespace(transmissionLine):
+def reflectionCoefficient(z0, zl):
+	'''
+	calculates the reflection coefficient for a given load 
+	takes:
+		
+		zl: load impedance.  
+		z0 - characteristic impedance. 
+	'''
+	
+	return ((zl -z0 )/(zl+z0))
+	
+
+
+def inputImpedance(self, l,f, zl):
+	'''
+	returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
+	takes:
+		l: distance from load, in meters
+		f: frequency at which to calculate, array-like or float 
+		zl: load impedance. may be a function of omega (2*pi*f), or 
+			a number 
+		z0 - characteristic impedance may be a function of omega 
+			(2*pi*f), or a number
+		gamma: propagationConstant a function of angular frequency (omega), 
+			and returns a value with units radian/m.
+	returns:
+		input impedance ( in general complex)
+		
+	note:
+		this can also be calculated in terms of reflectionCoefficient
+	'''
+	if gamma is None:
+		gamma = self.propagationConstant
+	if z0 is None:
+		z0 = self.characteristicImpedance
+	
+	if f is None:
+		if  self.fBand is None:
+			raise ValueError('please supply frequency information')
+		else:
+			f = self.fBand.axis
+			
+	try:
+		zl = zl(2*pi*f)
+	except TypeError:
+		pass
+	try:
+		z0 = z0(2*pi*f)
+	except TypeError:
+		pass
+		
+	try : 
+		if len(z0) != len(zl): 
+			raise IndexError('len(zl) != len(z0)')
+	except (TypeError):
+		# zl and z0 might just be numbers, which dont have len
+		pass
+	
+	
+	
+	theta = propagationConstant(l,2*pi*f, gamma=gamma)
+	
+	if zl == inf:
+		return -1j*z0*1./(tan(theta))
+	elif zl == 0:
+		return 1j*z0*tan(theta)
+	else:
+		return z0 *	(zl + 1j*z0 * tan(theta)) /\
+					(z0 + 1j*zl * tan(theta))
+
+
+	
+	
+
+
+
+class Freespace(TransmissionLine):
 	'''
 	Represents a plane-wave in freespace, defined by [possibly complex]
 	values of relative permativity and relative permeability.
@@ -369,16 +258,15 @@ class freespace(transmissionLine):
 	
 	
 	'''
-	def __init__(self, relativePermativity=1, relativePermeability=1,fBand=None):
-		transmissionLine.__init__(self,\
+	def __init__(self, relativePermativity=1, relativePermeability=1):
+		TransmissionLine.__init__(self,\
 			distributedCapacitance = real(epsilon_0*relativePermativity),\
 			distributedResistance = imag(epsilon_0*relativePermativity),\
 			distributedInductance = real(mu_0*relativePermeability),\
 			distributedConductance = imag(mu_0*relativePermeability),\
-			fBand = fBand
 			)
 
-class freespaceWithAttenuation(freespace):
+class FreespaceWithAttenuation(Freespace):
 	def __init__(self, relativePermativity=1, relativePermeability=1, \
 		loss = None, fBand=None):
 		transmissionLine.__init__(self,\
@@ -421,7 +309,7 @@ class freespaceWithAttenuation(freespace):
 		outputNtwk.attenuate(self.surfaceConductivity*l)
 		return outputNtwk
 
-class freespacePointSource( freespace):
+class FreespacePointSource( Freespace):
 	'''
 	represents a point source in freespace, defined by [possibly complex]
 	values of relative permativity and relative permeability.
@@ -469,7 +357,7 @@ class freespacePointSource( freespace):
 			return  gamma(2*pi*f)*l - 1j*log(1./(1-l)**2) 
 		elif deg ==True:
 			return  mv.rad2deg(gamma(2*pi*f )*l - 1j*log(1./(1-l)**2)  )		
-class coax(transmissionLine):
+class Coax(TransmissionLine):
 	def __init__(self, innerRadius, outerRadius, surfaceResistance=0, relativePermativity=1, relativePermeability=1,fBand=None):
 		# changing variables just for readablility
 		a = innerRadius
@@ -489,7 +377,7 @@ class coax(transmissionLine):
 
 		
 # quasi, or non- TEM lines
-class microstrip:
+class Microstrip:
 	def __init__(self):
 		raise NotImplementedError
 		return None
@@ -520,7 +408,7 @@ class microstrip:
 		else:
 			return 120*pi/ ( sqrt(eEff)* w/h+1.393+.667*npy.ln(w/h+1.444) )
 
-class coplanar:
+class CoplanarWaveguide:
 	def __init__(self):
 		raise NotImplementedError
 		return None

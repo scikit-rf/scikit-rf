@@ -37,7 +37,7 @@ def complex_2_db(input):
 		20*log10(|z|)
 	where z is a complex number
 	'''
-	return 20*npy.log10(npy.abs( input))
+	return magnitude_2_db(npy.abs( input))
 
 def complex_2_radian(input):
 	'''
@@ -53,7 +53,43 @@ def complex_2_degree(input):
 	'''
 	return npy.angle(input, deg=True)
 
+def magnitude_2_db(input):
+	'''
+	converts magnitude to db 
+	
+	 db is given by 
+		20*log10(|z|)
+	where z is a complex number
+	'''
+	return  20*npy.log10(input)
+	
+def db_2_magnitude(input):
+	'''
+	converts db to normal magnitude
+	
+	returns:
+		10**((z)/20.)
+	where z is a complex number
+	'''
+	return 10**((input)/20.)
 
+def db_2_np(x):
+	'''
+	converts a value in nepers to dB
+	'''	
+	return (log(10)/20) * x
+def np_2_db(x):
+	'''
+	converts a value in dB to neper's
+	'''
+	return 20/log(10) * x
+
+def radian_2_degree(rad):
+	return (rad)*180/pi
+	
+def degree_2rad_(deg):
+	return (deg)*pi/180
+	
 
 
 
@@ -90,29 +126,7 @@ def complex2MagPhase(complx,deg=False):
 
 
 
-def mag2dB(mag):
-	return  20*npy.log10(mag)
-	
-def dB2Mag(dB):
-	return 10**((dB)/20.)
 
-def dB2np(x):
-	'''
-	converts a value in nepers to dB
-	'''	
-	return (log(10)/20) * x
-def np2dB(x):
-	'''
-	converts a value in dB to neper's
-	'''
-	return 20/log(10) * x
-
-def rad2deg(rad):
-	return (rad)*180/pi
-	
-def deg2rad(deg):
-	return (deg)*pi/180
-	
 
 
 

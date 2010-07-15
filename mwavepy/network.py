@@ -535,7 +535,7 @@ def divide():
 def average(list_of_networks):
 	raise NotImplementedError
 
-def ps2_2_time_domain():
+def psd2_2_time_domain():
 	raise NotImplementedError
 
 
