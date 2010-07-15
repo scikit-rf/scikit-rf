@@ -33,7 +33,9 @@ except:
 
 import mwavepy as mv
 	
-
+# used as substitutes to handle mathematical singularities.
+INF = 1e99
+ONE = 1.0 + 1/1e14
 # TEM transmission lines
 class TransmissionLine(object):
 	'''
@@ -70,6 +72,7 @@ class TransmissionLine(object):
 		
 	
 	'''
+	## CONSTRUCTOR
 	def __init__(self, \
 		distributedCapacitance,	distributedInductance,\
 		distributedResistance, distributedConductance):
@@ -97,6 +100,7 @@ class TransmissionLine(object):
 		self.z0 = self.characteristicImpedance
 		self.gamma = self.propagationConstant
 	
+	## METHODS
 	def distributedImpedance(self,omega):
 		'''
 		distributed Impedance,  Z'(w) = R' + jwI'
@@ -141,8 +145,12 @@ class TransmissionLine(object):
 		omega = array(omega)
 		return 1j*sqrt(self.distributedImpedance(omega)*\
 			self.distributedAdmittance(omega))
+
+
+
 	
-def electricalLength(gamma, l , f, deg=False):
+## FUNCTIONS
+def electricalLength(gamma, f , l, deg=False):
 	'''
 	calculates the electrical length of a section of transmission line.
 
@@ -158,88 +166,115 @@ def electricalLength(gamma, l , f, deg=False):
 			depending on  value of deg.
 	'''
 	
-	f = array(f)
-	l = array(l)
+	# typecast to a 1D array
+	f = array(f, dtype=float).reshape(-1)
+	l = array(l, dtype=float).reshape(-1)
 			
-	if deg==False:
+	if deg == False:
 		return  gamma(2*pi*f )*l 
-	elif deg ==True:
+	elif deg == True:
 		return  mf.radian_2_degree(gamma(2*pi*f ) *l )
 
 
-def reflectionCoefficient(z0, zl):
+def inputImpedance2ReflectionCoefficient(z0, zl):
 	'''
-	calculates the reflection coefficient for a given load 
+	calculates the reflection coefficient for a given input impedance 
 	takes:
 		
-		zl: load impedance.  
+		zl: input (load) impedance.  
 		z0 - characteristic impedance. 
 	'''
+	# typecast to a complex 1D array. this makes everything easier	
+	z0 = array(z0, dtype=complex).reshape(-1)
+	zl = array(zl, dtype=complex).reshape(-1)
 	
+	# handle singularity  by numerically representing inf as big number
+	zl[(zl==npy.inf)] = INF
+
 	return ((zl -z0 )/(zl+z0))
-	
 
-
-def inputImpedance(self, l,f, zl):
+def reflectionCoefficientAtTheta(Gamma0,theta):
 	'''
-	returns the input impedance of a transmission line of character impedance z0 and electrical length el, terminated with a load impedance zl. 
+	reflection coefficient at electrical length theta
 	takes:
-		l: distance from load, in meters
-		f: frequency at which to calculate, array-like or float 
-		zl: load impedance. may be a function of omega (2*pi*f), or 
-			a number 
-		z0 - characteristic impedance may be a function of omega 
-			(2*pi*f), or a number
-		gamma: propagationConstant a function of angular frequency (omega), 
-			and returns a value with units radian/m.
+		Gamma0: reflection coefficient at theta=0
+		theta: electrical length, (may be complex)
 	returns:
-		input impedance ( in general complex)
+		Gamma_in
 		
-	note:
-		this can also be calculated in terms of reflectionCoefficient
+	note: this is just
+		Gamma0 * exp(-2j* theta)
 	'''
-	if gamma is None:
-		gamma = self.propagationConstant
-	if z0 is None:
-		z0 = self.characteristicImpedance
+	Gamma = array(Gamma, dtype=complex).reshape(-1)
+	theta = array(theta, dtype=complex).reshape(-1)
+	return Gamma0 * exp(-2j* theta)
+
+def inputImpedanceAtTheta(z0,zl, theta):
+	'''
+	input impedance of load impedance zl at electrical length theta, 
+	given characteristic impedance z0.
 	
-	if f is None:
-		if  self.fBand is None:
-			raise ValueError('please supply frequency information')
-		else:
-			f = self.fBand.axis
-			
-	try:
-		zl = zl(2*pi*f)
-	except TypeError:
-		pass
-	try:
-		z0 = z0(2*pi*f)
-	except TypeError:
-		pass
+	takes:
+		z0 - characteristic impedance. 
+		zl: load impedance
+		theta: electrical length of the line, (may be complex) 
+	'''
+	Gamma0 = inputImpedance2ReflectionCoefficient(z0=z0,zl=zl)
+	Gamma_in = reflectionCoefficientAtTheta(Gamma0, theta)
+	return reflectionCoefficient2InputImpedance(z0=z0, Gamma_in)
+	
+	
+def reflectionCoefficient2InputImpedance(z0,Gamma):
+	'''
+	calculates the input impedance given a reflection coefficient and 
+	characterisitc impedance of the medium
+	takes:
 		
-	try : 
-		if len(z0) != len(zl): 
-			raise IndexError('len(zl) != len(z0)')
-	except (TypeError):
-		# zl and z0 might just be numbers, which dont have len
-		pass
+		Gamma: reflection coefficient
+		z0 - characteristic impedance. 
+	'''
+	# typecast to a complex 1D array. this makes everything easier	
+	Gamma = array(Gamma, dtype=complex).reshape(-1)
+	z0 = array(z0, dtype=complex).reshape(-1)
 	
+	#handle singularity by numerically representing inf as close to 1
+	Gamma[(Gamma == 1)] = ONE
 	
+	return z0*((1.0+Gamma )/(1.0-Gamma))
+
+def inputImpedance2ReflectionCoefficientAtD(z0, zin, theta):
+	# typecast to a complex 1D array. this makes everything easier	
+	d = array(d, dtype=float).reshape(-1)
+	gamma = array(gamma, dtype=complex).reshape(-1)
 	
-	theta = propagationConstant(l,2*pi*f, gamma=gamma)
+	Gamma0 = inputImpedance2ReflectionCoefficient(z0=z0, zl=zl)
+	return Gamma0 * exp(-2j* theta)
 	
-	if zl == inf:
-		return -1j*z0*1./(tan(theta))
-	elif zl == 0:
-		return 1j*z0*tan(theta)
-	else:
-		return z0 *	(zl + 1j*z0 * tan(theta)) /\
-					(z0 + 1j*zl * tan(theta))
+
+def reflectionCoefficient2InputImpedanceAtD(z0, Gamma0, theta):
+	'''
+	calculates the input impedance at electrical length theta, given a
+	reflection coefficient and characterisitc impedance of the medium
+	takes:
+		z0 - characteristic impedance. 
+		Gamma: reflection coefficient
+		theta: electrical length of the line, (may be complex) 
+	returns 
+		zin: input impedance at theta
+	'''
+	Gamma = Gamma0 * exp(-2j* theta)
+	return reflectionCoefficient2InputImpedance(z0,Gamma)
 
 
-	
-	
+
+# short hand convinience. 
+# admitantly these follow no logical naming scheme, but they closely 
+# correspond to common symbolic conventions
+theta = electricalLength
+Gamma0 = inputImpedance2ReflectionCoefficient
+Gamma_in = inputImpedance2ReflectionCoefficientAtD
+zl = reflectionCoefficient2InputImpedance
+zin = reflectionCoefficient2InputImpedanceAtD
 
 
 
