@@ -1,5 +1,5 @@
 '''
-#       network.py
+#       createNetwork.py
 #       
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -102,3 +102,14 @@ def delay_short(d, tline,frequency, **kwargs):
 	short = short()
 	return line ** short
 	
+
+def impedance_step():
+	raise NotImplementedError
+
+def transformer():
+	raise NotImplementedError
+	
+def shunt_inductance():
+	raise NotImplementedError
+
+

@@ -79,17 +79,36 @@ class Network(object):
 		'''
 		 implements de-embeding another network[s], from this network
 		'''
-		raise NotImplementedError	
+		if self.number_of_ports == 2  and other.number_of_ports == 2:
+			result = copy(self)
+			result.s = de_embed(self.s,other.s)
+			return result
+		elif self.number_of_ports == 1 and other.number_of_ports == 2:
+			result = copy(other)
+			result.s = de_embed(self.s,other.s)
+			return result
+		else:
+			raise IndexError('Incorrect number of ports.')
 	def __mul__(self,a):
 		'''
 		element-wise complex multiplication  of s-matrix
 		'''
 		raise NotImplementedError
-	def __div__(self,a):
+	def __div__(self,other):
 		'''
 		element-wise complex division  of s-matrix
 		'''
-		raise NotImplementedError
+		if other.number_of_ports != self.number_of_ports:
+			raise IndexError('Networks must have same number of ports.')
+		else:
+			result = copy(self)
+			try:
+				result.name = self.name+'/'+other.name
+			except TypeError:
+				pass
+			result.s =(self.s/ other.s)
+			
+			return result
 
 
 ## PRIMARY PROPERTIES
@@ -498,7 +517,7 @@ def t2s(t):
 	return s
 
 
-# network operations on s-matricies
+# network operations  s-matricies
 def cascade(a,b):
 	'''
 	cascade two 2x2 s-matricies together.
@@ -529,7 +548,7 @@ def terminate(a,b):
 	
 	note:
 		BE AWARE! this relies on s2t function which has a inf problem 
-		if s11 or s22 is 1. 
+		if s11 or s22 is 1 or s12 or s21 =0
 	'''
 	#b= b.squeeze() # force this to 1D
 	c = copy(b)
@@ -558,18 +577,22 @@ def de_embed(a,b):
 	'''
 	c = copy(a)
 	
-	if len (a.shape) > 2 :
-		for f in range(a.shape[0]):
-			c[f,:,:] = de_embed(a[f,:,:],b[f,:,:])
+	if len (b.shape) > 2 :
+		for f in range(b.shape[0]):
+			if len(a.shape) == 1:
+				# 'a' is a one-port netowrk
+				c[f] = de_embed(a[f],b[f,:,:])
+			else:
+				c[f,:,:] = de_embed(a[f,:,:],b[f,:,:])
 	
-	elif a.shape== (2,2):
-		c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), s2t(a)))
+	elif b.shape == (2,2):
+		c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), \
+			s2t(npy.array([[a.squeeze(),1.],[1.,0.]]))))[0,0]
 	else:
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return c
 
-def divide():
-	raise NotImplementedError
+
 
 def average(list_of_networks):
 	raise NotImplementedError
