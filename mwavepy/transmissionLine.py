@@ -193,6 +193,24 @@ def inputImpedance2ReflectionCoefficient(z0, zl):
 
 	return ((zl -z0 )/(zl+z0))
 
+def reflectionCoefficient2InputImpedance(z0,Gamma):
+	'''
+	calculates the input impedance given a reflection coefficient and 
+	characterisitc impedance of the medium
+	takes:
+		
+		Gamma: reflection coefficient
+		z0 - characteristic impedance. 
+	'''
+	# typecast to a complex 1D array. this makes everything easier	
+	Gamma = array(Gamma, dtype=complex).reshape(-1)
+	z0 = array(z0, dtype=complex).reshape(-1)
+	
+	#handle singularity by numerically representing inf as close to 1
+	Gamma[(Gamma == 1)] = ONE
+	
+	return z0*((1.0+Gamma )/(1.0-Gamma))
+	
 def reflectionCoefficientAtTheta(Gamma0,theta):
 	'''
 	reflection coefficient at electrical length theta
@@ -202,8 +220,8 @@ def reflectionCoefficientAtTheta(Gamma0,theta):
 	returns:
 		Gamma_in
 		
-	note: this is just
-		Gamma0 * exp(-2j* theta)
+	note: 
+		 = Gamma0 * exp(-2j* theta)
 	'''
 	Gamma = array(Gamma, dtype=complex).reshape(-1)
 	theta = array(theta, dtype=complex).reshape(-1)
@@ -224,32 +242,12 @@ def inputImpedanceAtTheta(z0,zl, theta):
 	return reflectionCoefficient2InputImpedance(z0=z0, Gamma_in)
 	
 	
-def reflectionCoefficient2InputImpedance(z0,Gamma):
-	'''
-	calculates the input impedance given a reflection coefficient and 
-	characterisitc impedance of the medium
-	takes:
-		
-		Gamma: reflection coefficient
-		z0 - characteristic impedance. 
-	'''
-	# typecast to a complex 1D array. this makes everything easier	
-	Gamma = array(Gamma, dtype=complex).reshape(-1)
-	z0 = array(z0, dtype=complex).reshape(-1)
-	
-	#handle singularity by numerically representing inf as close to 1
-	Gamma[(Gamma == 1)] = ONE
-	
-	return z0*((1.0+Gamma )/(1.0-Gamma))
 
-def inputImpedance2ReflectionCoefficientAtD(z0, zin, theta):
-	# typecast to a complex 1D array. this makes everything easier	
-	d = array(d, dtype=float).reshape(-1)
-	gamma = array(gamma, dtype=complex).reshape(-1)
-	
-	Gamma0 = inputImpedance2ReflectionCoefficient(z0=z0, zl=zl)
-	return Gamma0 * exp(-2j* theta)
-	
+
+def inputImpedance2ReflectionCoefficientAtD(z0, zl, theta):
+	Gamma0 = inputImpedance2ReflectionCoefficient(z0=z0,zl=zl)
+	Gamma_in = reflectionCoefficientAtTheta(Gamma0, theta)
+	return Gamma_in
 
 def reflectionCoefficient2InputImpedanceAtD(z0, Gamma0, theta):
 	'''
@@ -262,11 +260,9 @@ def reflectionCoefficient2InputImpedanceAtD(z0, Gamma0, theta):
 	returns 
 		zin: input impedance at theta
 	'''
-	Gamma = Gamma0 * exp(-2j* theta)
-	return reflectionCoefficient2InputImpedance(z0,Gamma)
-
-
-
+	Gamma_in = reflectionCoefficientAtTheta(Gamma0, theta)
+	zin = reflectionCoefficient2InputImpedance(z0,Gamma_in)
+	return zin
 # short hand convinience. 
 # admitantly these follow no logical naming scheme, but they closely 
 # correspond to common symbolic conventions
