@@ -21,7 +21,7 @@
 #       MA 02110-1301, USA.
 '''
 import numpy as npy
-
+from numpy import pi
 ## simple conversions
 def complex_2_magnitude(input):
 	'''

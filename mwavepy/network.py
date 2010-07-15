@@ -26,7 +26,7 @@ import touchstone
 
 import numpy as npy
 import pylab as plb 
-
+from copy import copy
 class Network(object):
 ## CONSTANTS
 	f_unit_dict = {\
@@ -41,28 +41,40 @@ class Network(object):
 		}
 
 ## CONSTRUCTOR
-	def __init__(self, file = None):
+	def __init__(self, touchstone_file = None, name = None ):
 		'''
 		takes:
 			file: if given will load information from touchstone file 
 		'''
-		if file is not None:
-			self.load_touchstone(file)
+		if touchstone_file is not None:
+			self.read_touchstone(touchstone_file)
 		else:
-			self.name = None
-			self.s = None
+			self.name = name
+			#self.s = None
 			self.f = None
 			self.z0 = 50 
-			self.f_unit = 'hz'
+			self.f_unit = 'ghz'
 	
 
 ## OPERATORS
-	def __pow__(self,a):
+	def __pow__(self,other):
 		'''
 		 implements cascading this network with another network
 		'''
-		
-		raise NotImplementedError
+		if self.number_of_ports == 2  and other.number_of_ports == 2:
+			result = copy(self)
+			result.s = cascade(self.s,other.s)
+			return result
+		elif self.number_of_ports == 2 and other.number_of_ports == 1:
+			result = copy(other)
+			result.s = terminate(self.s, other.s)
+			return result
+		elif self.number_of_ports == 1 and other.number_of_ports == 2:
+			result = copy(other)
+			result.s = terminate(other.s,self.s)
+			return result
+		else:
+			raise IndexError('Incorrect number of ports.')
 	def __floordiv__(self,a):
 		'''
 		 implements de-embeding another network[s], from this network
@@ -101,6 +113,7 @@ class Network(object):
 		where f is frequency axis and m and n are port indicies
 		'''
 		self._s = s
+		#s.squeeze()
 	
 	
 	# frequency information
@@ -163,21 +176,24 @@ class Network(object):
 		'''
 		returns the unwrapped phase of the s-paramerts, in degrees
 		'''
-		return mf.rad_2_degree(self.s_rad_unwrap)
+		return mf.radian_2_degree(self.s_rad_unwrap)
 	
 	@property
 	def s_rad_unwrap(self):
 		'''
 		returns the unwrapped phase of the s-parameters, in radians.
 		'''
-		return npy.unwrap(mf.complex_2_radian(self.s))
+		return npy.unwrap(mf.complex_2_radian(self.s),axis=0)
 
 	@property
 	def number_of_ports(self):
 		'''
 		the number of ports the network has.
 		'''
-		return npy.shape(self.s)[1]
+		if len (self.s.shape) > 1:
+			return npy.shape(self.s)[1]
+		else:
+			return 1
 	# frequency formating related properties
 	
 	@property
@@ -204,7 +220,7 @@ class Network(object):
 		return self.f/self.f_multiplier
 ## CLASS METHODS
 	# touchstone file IO
-	def load_touchstone(self, filename):
+	def read_touchstone(self, filename):
 		'''
 		loads  values from a touchstone file. 
 		
@@ -354,7 +370,7 @@ class Network(object):
 		plb.ylabel('Phase [deg]')
 		plb.legend()
 		
-	def plot_s_deg_unwrap(self,m=0, n=0, ax = None, **kwargs):
+	def plot_s_deg_unwrapped(self,m=0, n=0, ax = None, **kwargs):
 		'''
 		plots the scattering parameter of  indecie m, n in unwrapped degrees
 		
@@ -493,19 +509,42 @@ def cascade(a,b):
 		BE AWARE! this relies on s2t function which has a inf problem 
 		if s11 or s22 is 1. 
 	'''
-	c = npy.copy(a)
+	c = copy(a)
 	
 	if len (a.shape) > 2 :
 		for f in range(a.shape[0]):
 			c[f,:,:] = cascade(a[f,:,:],b[f,:,:])
 	
-	elif a.shape== (2,2):
+	elif a.shape == (2,2) and b.shape == (2,2):
 		c = t2s(npy.dot (s2t(a) ,s2t(b)))
 	else:
-		raise IndexError('matrix should be 2x2, or kx2x2')
+		raise IndexError('matricies should be 2x2, or kx2x2')
 	return c
 	
+def terminate(a,b):
+	'''
+	terminate  2x2 s-matrix with a reflectino coeffiecient .
 	
+	a's port 2 = b's port 1
+	
+	note:
+		BE AWARE! this relies on s2t function which has a inf problem 
+		if s11 or s22 is 1. 
+	'''
+	#b= b.squeeze() # force this to 1D
+	c = copy(b)
+	
+	if len (a.shape) > 2 :
+		for f in range(a.shape[0]):
+			c[f] = terminate(a[f,:,:],b[f])
+	
+	elif a.shape == (2,2):
+		# makes b into a two-port s-matrix so taht s2t will work, but the 
+		# end result is still correct
+		c = t2s(npy.dot (s2t(a) ,s2t(npy.array([[b,1.0],[1.0,0.0]]))))[0,0]
+	else:
+		raise IndexError('the \'a\' matrix should be 2x2, or kx2x2 and b should be 1D')
+	return c
 
 def de_embed(a,b):	
 	'''
@@ -517,7 +556,7 @@ def de_embed(a,b):
 		BE AWARE! this relies on s2t function which has a inf problem 
 		if s11 or s22 is 1. 
 	'''
-	c = npy.copy(a)
+	c = copy(a)
 	
 	if len (a.shape) > 2 :
 		for f in range(a.shape[0]):

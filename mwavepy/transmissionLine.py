@@ -149,8 +149,12 @@ class TransmissionLine(object):
 
 
 	
+	def electricalLength(self, f,d,deg=False):
+		return electricalLength( \
+			gamma = self.propagationConstant,f=f,d=d,deg=deg)
+	
 ## FUNCTIONS
-def electricalLength(gamma, f , l, deg=False):
+def electricalLength(gamma, f , d, deg=False):
 	'''
 	calculates the electrical length of a section of transmission line.
 
@@ -168,10 +172,10 @@ def electricalLength(gamma, f , l, deg=False):
 	
 	# typecast to a 1D array
 	f = array(f, dtype=float).reshape(-1)
-	l = array(l, dtype=float).reshape(-1)
+	d = array(d, dtype=float).reshape(-1)
 			
 	if deg == False:
-		return  gamma(2*pi*f )*l 
+		return  gamma(2*pi*f )*d
 	elif deg == True:
 		return  mf.radian_2_degree(gamma(2*pi*f ) *l )
 
