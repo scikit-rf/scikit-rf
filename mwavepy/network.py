@@ -488,6 +488,16 @@ class Network(object):
 	def flip(self):
 		self.s = flip(self.s)
 ## FUNCTIONS
+# functions operating on Network[s]
+def average(list_of_networks):
+	raise NotImplementedError
+
+def psd2_2_time_domain():
+	raise NotImplementedError
+
+# functions not operating on  Network type. 
+#mostly working on  s-matricies
+
 # network format conversions
 def s2t(s):
 	'''
@@ -530,7 +540,7 @@ def t2s(t):
 	return s
 
 
-# network operations  s-matricies
+
 def cascade(a,b):
 	'''
 	cascade two 2x2 s-matricies together.
@@ -628,10 +638,6 @@ def flip(a):
 		raise IndexError('matricies should be 2x2, or kx2x2')
 	return c
 	
-def average(list_of_networks):
-	raise NotImplementedError
 
-def psd2_2_time_domain():
-	raise NotImplementedError
 
 
