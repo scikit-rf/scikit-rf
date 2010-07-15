@@ -75,10 +75,21 @@ class Network(object):
 			return result
 		else:
 			raise IndexError('Incorrect number of ports.')
-	def __floordiv__(self,a):
+	def __floordiv__(self,other):
 		'''
 		 implements de-embeding another network[s], from this network
 		'''
+		try: 	
+			# if they passed 1 ntwks and a tuple of ntwks, 
+			# then deEmbed like A.inv*C*B.inv
+			b = other[1]
+			c = other[0]
+			result =  copy (self)
+			result.s =  flip(de_embed( flip(de_embed(c.s,self.s)),b.s))
+			return result
+		except TypeError:
+			pass
+				
 		if self.number_of_ports == 2  and other.number_of_ports == 2:
 			result = copy(self)
 			result.s = de_embed(self.s,other.s)
@@ -474,6 +485,8 @@ class Network(object):
 	# intrpolating  frequency axis 	
 	def interpolate(self):
 		raise NotImplementedError
+	def flip(self):
+		self.s = flip(self.s)
 ## FUNCTIONS
 # network format conversions
 def s2t(s):
@@ -594,6 +607,27 @@ def de_embed(a,b):
 
 
 
+def flip(a):
+	'''
+	invert the ports of a networks s-matrix, 'flipping' it over
+	
+	note:
+			only works for 2-ports at the moment
+	'''
+	c = copy(a)
+	
+	if len (a.shape) > 2 :
+		for f in range(a.shape[0]):
+			c[f,:,:] = flip(a[f,:,:])
+	elif a.shape == (2,2):
+		c[0,0] = a[1,1]
+		c[1,1] = a[0,0]
+		c[0,1] = a[1,0]
+		c[1,0] = a[0,1]
+	else:
+		raise IndexError('matricies should be 2x2, or kx2x2')
+	return c
+	
 def average(list_of_networks):
 	raise NotImplementedError
 
