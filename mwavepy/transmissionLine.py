@@ -238,18 +238,15 @@ def inputImpedanceAtTheta(z0,zl, theta):
 		theta: electrical length of the line, (may be complex) 
 	'''
 	Gamma0 = inputImpedance2ReflectionCoefficient(z0=z0,zl=zl)
-	Gamma_in = reflectionCoefficientAtTheta(Gamma0, theta)
-	return reflectionCoefficient2InputImpedance(z0=z0, Gamma_in)
+	Gamma_in = reflectionCoefficientAtTheta(Gamma0=Gamma0, theta=theta)
+	return reflectionCoefficient2InputImpedance(z0=z0, Gamma=Gamma_in)
 	
-	
-
-
-def inputImpedance2ReflectionCoefficientAtD(z0, zl, theta):
+def inputImpedance2ReflectionCoefficientAtTheta(z0, zl, theta):
 	Gamma0 = inputImpedance2ReflectionCoefficient(z0=z0,zl=zl)
-	Gamma_in = reflectionCoefficientAtTheta(Gamma0, theta)
+	Gamma_in = reflectionCoefficientAtTheta(Gamma0=Gamma0, theta=theta)
 	return Gamma_in
 
-def reflectionCoefficient2InputImpedanceAtD(z0, Gamma0, theta):
+def reflectionCoefficient2InputImpedanceAtTheta(z0, Gamma0, theta):
 	'''
 	calculates the input impedance at electrical length theta, given a
 	reflection coefficient and characterisitc impedance of the medium
@@ -260,17 +257,22 @@ def reflectionCoefficient2InputImpedanceAtD(z0, Gamma0, theta):
 	returns 
 		zin: input impedance at theta
 	'''
-	Gamma_in = reflectionCoefficientAtTheta(Gamma0, theta)
-	zin = reflectionCoefficient2InputImpedance(z0,Gamma_in)
+	Gamma_in = reflectionCoefficientAtTheta(Gamma0=Gamma0, theta=theta)
+	zin = reflectionCoefficient2InputImpedance(z0=z0,Gamma=Gamma)
 	return zin
 # short hand convinience. 
 # admitantly these follow no logical naming scheme, but they closely 
 # correspond to common symbolic conventions
 theta = electricalLength
-Gamma0 = inputImpedance2ReflectionCoefficient
-Gamma_in = inputImpedance2ReflectionCoefficientAtD
-zl = reflectionCoefficient2InputImpedance
-zin = reflectionCoefficient2InputImpedanceAtD
+
+
+zl_2_Gamma0 = inputImpedance2ReflectionCoefficient
+Gamma0_2_zl = reflectionCoefficient2InputImpedance
+
+zl_2_zin = inputImpedanceAtTheta
+zl_2_Gamma_in = inputImpedance2ReflectionCoefficientAtTheta
+Gamma0_2_Gamma_in = reflectionCoefficientAtTheta
+Gamma0_2_zin = reflectionCoefficient2InputImpedanceAtTheta
 
 
 
