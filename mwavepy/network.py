@@ -67,11 +67,13 @@ class Network(object):
 			return result
 		elif self.number_of_ports == 2 and other.number_of_ports == 1:
 			result = copy(other)
-			result.s = terminate(self.s, other.s)
+			result.s = cascade(self.s, other.s)
 			return result
 		elif self.number_of_ports == 1 and other.number_of_ports == 2:
 			result = copy(other)
-			result.s = terminate(other.s,self.s)
+			# this flip is to make the termination what the syntax
+			# looks like  
+			result.s = cascade(flip(other.s),self.s)
 			return result
 		else:
 			raise IndexError('Incorrect number of ports.')
@@ -142,6 +144,9 @@ class Network(object):
 		the input s-matrix should be of shape fxmxn, 
 		where f is frequency axis and m and n are port indicies
 		'''
+		if len(s.shape) == 1:
+			# reshape to kxmxn, this simplifies indexing in function
+			s = s.reshape(-1,1,1)
 		self._s = s
 		#s.squeeze()
 	
@@ -220,10 +225,7 @@ class Network(object):
 		'''
 		the number of ports the network has.
 		'''
-		if len (self.s.shape) > 1:
-			return npy.shape(self.s)[1]
-		else:
-			return 1
+		return self.s.shape[1]
 	# frequency formating related properties
 	
 	@property
@@ -317,6 +319,17 @@ class Network(object):
 			outputFile.write('\n')
 		
 		outputFile.close()
+	# self-modifications
+	def interpolate(self):
+		raise NotImplementedError
+	def flip(self):
+		'''
+		swaps the ports of a two port 
+		'''
+		if self.number_of_ports == 2:
+			self.s = flip(self.s)
+		else:
+			raise ValueError('you can only flip two-port Networks')
 	# ploting 
 	def plot_s_db(self,m=0, n=0, ax = None, **kwargs):
 		'''
@@ -482,11 +495,7 @@ class Network(object):
 		plb.legend()
 
 	
-	# intrpolating  frequency axis 	
-	def interpolate(self):
-		raise NotImplementedError
-	def flip(self):
-		self.s = flip(self.s)
+	
 ## FUNCTIONS
 # functions operating on Network[s]
 def average(list_of_networks):
@@ -543,50 +552,37 @@ def t2s(t):
 
 def cascade(a,b):
 	'''
-	cascade two 2x2 s-matricies together.
+	cascade two s-matricies together.
 	
-	a's port 2 = b's port 1
+	a's port 2 == b's port 1
 	
+	if you want a different port configuration use the flip() fuction
+	takes:
+		a: a 2x2 or kx2x2 s-matrix
+		b: a 2x2, kx2x2, 1x1, or kx1x1 s-matrix 
 	note:
 		BE AWARE! this relies on s2t function which has a inf problem 
 		if s11 or s22 is 1. 
 	'''
-	c = copy(a)
+	c = copy(b)
 	
 	if len (a.shape) > 2 :
+		# assume this is a kxnxn matrix
 		for f in range(a.shape[0]):
 			c[f,:,:] = cascade(a[f,:,:],b[f,:,:])
 	
 	elif a.shape == (2,2) and b.shape == (2,2):
 		c = t2s(npy.dot (s2t(a) ,s2t(b)))
+	elif a.shape == (2,2) and b.shape == (1,1):
+		# makes b into a two-port s-matrix so that s2t will work, but  
+		# only s11 of the  resultant network is returned
+		c = t2s(npy.dot (s2t(a) , \
+			s2t(npy.array([[b.squeeze(),1.0],[1.0,0.0]]))))[0,0]
 	else:
-		raise IndexError('matricies should be 2x2, or kx2x2')
+		raise IndexError('one of the s-matricies has incorrect shape')
 	return c
 	
-def terminate(a,b):
-	'''
-	terminate  2x2 s-matrix with a reflectino coeffiecient .
-	
-	a's port 2 = b's port 1
-	
-	note:
-		BE AWARE! this relies on s2t function which has a inf problem 
-		if s11 or s22 is 1 or s12 or s21 =0
-	'''
-	#b= b.squeeze() # force this to 1D
-	c = copy(b)
-	
-	if len (a.shape) > 2 :
-		for f in range(a.shape[0]):
-			c[f] = terminate(a[f,:,:],b[f])
-	
-	elif a.shape == (2,2):
-		# makes b into a two-port s-matrix so taht s2t will work, but the 
-		# end result is still correct
-		c = t2s(npy.dot (s2t(a) ,s2t(npy.array([[b,1.0],[1.0,0.0]]))))[0,0]
-	else:
-		raise IndexError('the \'a\' matrix should be 2x2, or kx2x2 and b should be 1D')
-	return c
+
 
 def de_embed(a,b):	
 	'''
