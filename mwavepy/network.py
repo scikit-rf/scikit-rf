@@ -27,6 +27,8 @@ import touchstone
 import numpy as npy
 import pylab as plb 
 from copy import copy
+
+
 class Network(object):
 ## CONSTANTS
 	f_unit_dict = {\

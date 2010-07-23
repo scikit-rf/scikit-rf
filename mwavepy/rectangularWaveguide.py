@@ -21,7 +21,7 @@
 
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil,pi
 import numpy as npy
-
+from numpy import sqrt,array
 # would there be any benefit to structuring modes as objects?
 #def RectangularWaveguideMode(object,m,n):
 	#self.m = m
@@ -31,7 +31,7 @@ import numpy as npy
 	#def cut_off_frequency(self):
 		#return 1./(2*sqrt(self.epsilon*self.mu)) * \
 			#sqrt( (self.m/a)**2 + (self.n/2)**2)
-		
+import pdb		
 class RectangularWaveguide(object):
 	def __init__(self, a,b=None,epsilon_R=1, mu_R=1):
 		self.a = a
@@ -41,23 +41,31 @@ class RectangularWaveguide(object):
 			self.b = b
 		self.epsilon = epsilon_R * epsilon_0
 		self.mu = mu_R*mu_0
-	
-	def k0(self,omega):
+		
+		self.Z0 = self.characteristic_impedance
+		self.Y0 = self.characteristic_admittance
+		self.lambdac = self.cutoff_wavelength
+		self.gamma = self.kz
+	## frequency independent functions
+	def k0(self,f):
 		'''
 		characteristic wave number
 		'''
 		
-		return omega*npy.sqrt(self.epsilon * self.mu)
+		return 2*pi*f*npy.sqrt(self.epsilon * self.mu)
+	
 	def ky(self,n):
 		'''
 		eigen-value in the b direction
 		'''
 		return n*pi/self.b
+	
 	def kx(self,m):
 		'''
 		eigen value in teh a direction
 		'''
 		return m*pi/self.a
+	
 	
 	def kc(self, m,n):
 		'''
@@ -65,21 +73,72 @@ class RectangularWaveguide(object):
 		'''
 		return sqrt( self.kx(m)**2 + self.ky(n)**2)
 	
-	def propagation_constant(self, m ,n , f):
+	def cutoff_wavelength(self, m,n):
+		return 2.*pi/(self.kc(m,n))
+	def cutoff_frequency(self, m,n):
+		return self.kc(m,n)/(2.*pi*sqrt(self.epsilon*self.mu))
+	# frequency dependent functions
+	def kz(self, m ,n , f):
 		'''
-		the propagation constant, which is real for propagating modes, 
-		imaginary for non-propagating modes
-		'''k0 = self.k0(f)
-		kc = self.kc(f,m,n)
-		if k0 > kc:
-			return 1j*sqrt(k0**2-kc**2)
-		elif k0< kc: 
-			return sqrt(kc**2- k0**2)
-		else:
-			return 0
-	
-	
+		the propagation constant, which is:
+			IMAGINARY  for propagating modes, 
+			REAL for non-propagating modes
+		'''
+		
+		k0 = array(self.k0(f),dtype=complex).reshape(-1)
+		kc = array(self.kc(m,n),dtype = complex).reshape(-1)
+		kz = k0.copy()
+		#pdb.set_trace()
+		kz[k0>kc] = sqrt(k0**2-kc**2)	# mode is propagating
+		kz[k0<kc] = 1j*sqrt(kc**2- k0**2)		# mode cut-off
+		kz[k0==kc] = 0.
+		return kz
 	
 
-	def e_t(self,xy):
+	
+	
+	def characteristic_impedance(self, mode_type,m,n,f):
+		'''
+		the characteristic impedance of a given mode
+		
+		takes:
+			mode_type:	describes the mode type (TE,TM) and direction, 
+				possible values are:
+					'tez','tmz'
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			f: frequency [Hz]
+			
+		TODOL: write function for  'tex','tmx','tey','tmy')
+					
+		'''
+		mode_type = mode_type.lower()
+		omega = 2*pi * f
+		impedance_dict = {\
+			'tez':	omega*self.mu/self.kz(m,n,f),\
+			'te':	omega*self.mu/self.kz(m,n,f),\
+			'tmz':	self.kz(m,n,f)/omega*self.epsilon,\
+			'tm':	self.kz(m,n,f)/omega*self.epsilon,\
+			}
+		
+		return impedance_dict[mode_type]
+	
+	def characteristic_admittance(self, mode_type,m,n,f):
+		'''
+		the characteristic admittance of a given mode
+		
+		takes:
+			mode_type:	describes the mode type (TE,TM) and direction, 
+				possible values are:
+					'tez','tmz'
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			f: frequency [Hz]
+			
+		TODOL: write function for  'tex','tmx','tey','tmy')
+					
+		'''
+		return 1./(self.characteristic_impedance(mode_type,m,n,f))
+	
+	#def e_t(self,xy):
 		
