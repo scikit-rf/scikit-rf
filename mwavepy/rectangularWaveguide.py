@@ -42,10 +42,12 @@ class RectangularWaveguide(object):
 		self.epsilon = epsilon_R * epsilon_0
 		self.mu = mu_R*mu_0
 		
-		self.Z0 = self.characteristic_impedance
-		self.Y0 = self.characteristic_admittance
+		self.z0 = self.characteristic_impedance
+		self.y0 = self.characteristic_admittance
 		self.lambdac = self.cutoff_wavelength
+		self.fc = self.cutoff_frequency
 		self.gamma = self.kz
+		
 	## frequency independent functions
 	def k0(self,f):
 		'''
@@ -83,15 +85,19 @@ class RectangularWaveguide(object):
 		the propagation constant, which is:
 			IMAGINARY  for propagating modes, 
 			REAL for non-propagating modes
+		
+		takes:
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			f: frequency [Hz]
 		'''
 		
 		k0 = array(self.k0(f),dtype=complex).reshape(-1)
 		kc = array(self.kc(m,n),dtype = complex).reshape(-1)
 		kz = k0.copy()
 		#pdb.set_trace()
-		kz[k0>kc] = sqrt(k0**2-kc**2)	# mode is propagating
-		kz[k0<kc] = 1j*sqrt(kc**2- k0**2)		# mode cut-off
-		kz[k0==kc] = 0.
+		kz =  sqrt(k0**2-kc**2)*(k0>kc) + 1j*sqrt(kc**2- k0**2)*(k0<kc) \
+			+ 0*(kc==k0)	
 		return kz
 	
 
@@ -113,12 +119,13 @@ class RectangularWaveguide(object):
 					
 		'''
 		mode_type = mode_type.lower()
-		omega = 2*pi * f
+		f = array(f,dtype=complex).reshape(-1)
+		omega = 2*pi *f
 		impedance_dict = {\
 			'tez':	omega*self.mu/self.kz(m,n,f),\
 			'te':	omega*self.mu/self.kz(m,n,f),\
-			'tmz':	self.kz(m,n,f)/omega*self.epsilon,\
-			'tm':	self.kz(m,n,f)/omega*self.epsilon,\
+			'tmz':	self.kz(m,n,f)/(omega*self.epsilon),\
+			'tm':	self.kz(m,n,f)/(omega*self.epsilon),\
 			}
 		
 		return impedance_dict[mode_type]
