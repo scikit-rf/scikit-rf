@@ -96,7 +96,7 @@ class RectangularWaveguide(object):
 		kc = array(self.kc(m,n),dtype = complex).reshape(-1)
 		kz = k0.copy()
 		#pdb.set_trace()
-		kz =  sqrt(k0**2-kc**2)*(k0>kc) + 1j*sqrt(kc**2- k0**2)*(k0<kc) \
+		kz =  1j*sqrt(k0**2-kc**2)*(k0>kc) + sqrt(kc**2- k0**2)*(k0<kc) \
 			+ 0*(kc==k0)	
 		return kz
 	
@@ -122,10 +122,10 @@ class RectangularWaveguide(object):
 		f = array(f,dtype=complex).reshape(-1)
 		omega = 2*pi *f
 		impedance_dict = {\
-			'tez':	omega*self.mu/self.kz(m,n,f),\
-			'te':	omega*self.mu/self.kz(m,n,f),\
-			'tmz':	self.kz(m,n,f)/(omega*self.epsilon),\
-			'tm':	self.kz(m,n,f)/(omega*self.epsilon),\
+			'tez':	1j*omega*self.mu/self.kz(m,n,f),\
+			'te':	1j*omega*self.mu/self.kz(m,n,f),\
+			'tmz':	self.kz(m,n,f)/(1j*omega*self.epsilon),\
+			'tm':	self.kz(m,n,f)/(1j*omega*self.epsilon),\
 			}
 		
 		return impedance_dict[mode_type]
