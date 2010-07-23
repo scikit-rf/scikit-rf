@@ -21,6 +21,11 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
+class a():
+    def __init__(self,**kwargs):
+        self.kwargs = kwargs
+
+
 class Calibration(object):
 	
 	calibration_algorithm_dict={'one port': one_port}
