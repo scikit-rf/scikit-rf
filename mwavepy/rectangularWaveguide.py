@@ -1,5 +1,5 @@
 '''
-#       transmissionLine.py
+#       rectangularWaveguide.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
 #       
@@ -159,7 +159,18 @@ class RectangularWaveguide(object):
 		'''
 		discretized transverse mode functions for the electric field. 
 		
-		usable for numerical evaluation of eigen-space, or field visualization
+		usable for numerical evaluation of eigen-space, or field 
+		visualization.
+		
+		takes:
+		
+		returns:
+			e_t_x: component of field in 'a' direction
+			e_t_y: component of field in 'b' direction
+			e_t_z:component of field in  longitudinal direction
+			
+			NOTE: all vectors returns are in (row, col) format which
+			equates to (y,x). 
 		'''
 		a,b,kx,ky= self.a,self.b,self.kx(m), self.ky(n)
 		#pdb.set_trace()
@@ -177,15 +188,65 @@ class RectangularWaveguide(object):
 				]
 		## TE
 		elif  mode_type == 'tez' or mode_type == 'te':
+			
 			# nuemann numbers
-			ep_m = 2.-1*(m==0)
-			ep_n = 2.-1*(n==0)
+			ep_m = 2. - 1.*(m==0)
+			ep_n = 2. - 1.*(n==0)
 			common_factor = ep_m*ep_n/sqrt(m**2 *(b/a)+ n**2 *(a/b))
 			
 			e_t  = [\
 				n/b *  common_factor * 	cos(kx*x)*sin(ky*y),\
 				-m/a *  common_factor * sin(kx*x)*cos(ky*y),\
-				0\
+				npy.zeros((y_points, x_points))\
 				]	
-				
-		return array(e_t)
+			#pdb.set_trace()
+		return e_t
+
+
+class RectangularWaveguideTE10(RectangularWaveguide):
+	def __init__(self, a,b=None,epsilon_R=1, mu_R=1):
+		RectangularWaveguide.__init__(self, a,b=None,epsilon_R=1, mu_R=1)
+
+	
+	def cutoff_frequency(self):
+		return RectangularWaveguide.cutoff_frequency(self,m=1,n=0)
+	
+	
+	def kc(self, *args):
+		'''
+		cut-off wave number 
+		'''
+		return RectangularWaveguide.kc(self,m=1,n=0)
+	
+	
+	def cutoff_wavelength(self):
+		return RectangularWaveguide.cutoff_wavelength(self, m=1,n=0)
+	
+	def kz(self, f, *args):
+		'''
+		the propagation constant, which is:
+			IMAGINARY  for propagating modes, 
+			REAL for non-propagating modes
+		
+		takes:
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			f: frequency [Hz]
+		'''
+		return RectangularWaveguide.kz(self,m=1,n=0,f=f)
+	def characteristic_impedance(self,f,*args):
+		'''
+		the characteristic impedance of a given mode
+		
+		takes:
+			f: frequency [Hz]		
+		'''
+		return RectangularWaveguide.characteristic_impedance(self, 'tez', m=1,n=0,f=f)
+	def characteristic_admittance(self,f,*args):
+		'''
+		the characteristic admittance of a given mode
+		
+		takes:
+			f: frequency [Hz]	
+		'''
+		return 1./(self.characteristic_impedance(f))

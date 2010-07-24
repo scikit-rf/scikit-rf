@@ -18,19 +18,13 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-try:
-	from scipy.constants import  epsilon_0, mu_0, c,pi, mil
-	#from scipy import signal
-	
-except:
-	raise ImportError ('Depedent Packages not found. Please install: scipy')
-try:
-	import numpy as npy
-	from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
-	 interp, linspace, shape,zeros, reshape
-except:
-	raise ImportError ('Depedent Packages not found. Please install: numpy')	
 
+from scipy.constants import  epsilon_0, mu_0, c,pi, mil
+import numpy as npy
+from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
+	 interp, linspace, shape,zeros, reshape
+
+#internals
 import mwavepy as mv
 	
 # used as substitutes to handle mathematical singularities.
