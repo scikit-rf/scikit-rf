@@ -18,5 +18,12 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-import genericTEM, freeSpace, rectangularWaveguide
-#__all__=['rectangularWaveguide']
+from  genericTEM import GenericTEM
+from freeSpace import FreeSpace
+from rectangularWaveguide import RectangularWaveguide
+from  rectangularWaveguideTE10 import RectangularWaveguideTE10
+
+# for convinience 
+
+wg = RectangularWaveguideTE10
+#__all__=['genericTEM', 'freeSpace','rectangularWaveguide','rectangularWaveguideTE10']

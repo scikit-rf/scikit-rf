@@ -18,9 +18,13 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
+import numpy as npy
+from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
+	 interp, linspace, shape,zeros, reshape
+from scipy.constants import  epsilon_0, mu_0, c,pi, mil,pi
 from  mwavepy1.transmissionLine.genericTEM import GenericTEM
 
-class Freespace(GenericTEM):
+class FreeSpace(GenericTEM):
 	'''
 	Represents a plane-wave in freespace, defined by [possibly complex]
 	values of relative permativity and relative permeability.

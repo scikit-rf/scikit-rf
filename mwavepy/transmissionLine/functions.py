@@ -19,6 +19,9 @@
 #       MA 02110-1301, USA.
 '''
 
+import numpy as npy
+from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
+	 interp, linspace, shape,zeros, reshape
 def electrical_length(gamma, f , d, deg=False):
 	'''
 	calculates the electrical length of a section of transmission line.

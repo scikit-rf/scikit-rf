@@ -22,16 +22,7 @@
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil,pi
 import numpy as npy
 from numpy import sqrt,array, cos, sin, linspace
-# would there be any benefit to structuring modes as objects?
-#def RectangularWaveguideMode(object,m,n):
-	#self.m = m
-	#self.n = n
-	
-	#@property 
-	#def cut_off_frequency(self):
-		#return 1./(2*sqrt(self.epsilon*self.mu)) * \
-			#sqrt( (self.m/a)**2 + (self.n/2)**2)
-import pdb		
+from mwavepy1.transmissionLine.functions import electrical_length
 class RectangularWaveguide(object):
 	'''
 	represents a homogeneously rectangular waveguide.
@@ -55,7 +46,7 @@ class RectangularWaveguide(object):
 		self.lambda_c = self.cutoff_wavelength
 		self.f_c = self.cutoff_frequency
 		self.gamma = self.kz
-		
+		self.propagation_constant = self.kz
 	## frequency independent functions
 	def k0(self,f):
 		'''
@@ -91,8 +82,8 @@ class RectangularWaveguide(object):
 	def kz(self, m ,n , f):
 		'''
 		the propagation constant, which is:
-			IMAGINARY  for propagating modes, 
-			REAL for non-propagating modes
+			REAL  for propagating modes, 
+			IMAGINARY for non-propagating modes
 		
 		takes:
 			m: mode index in the 'a' direction 
@@ -104,7 +95,7 @@ class RectangularWaveguide(object):
 		kc = array(self.kc(m,n),dtype = complex).reshape(-1)
 		kz = k0.copy()
 		#pdb.set_trace()
-		kz =  1j*sqrt(k0**2-kc**2)*(k0>kc) + sqrt(kc**2- k0**2)*(k0<kc) \
+		kz =  -sqrt(k0**2-kc**2)*(k0>kc) +1j*sqrt(kc**2- k0**2)*(k0<kc) \
 			+ 0*(kc==k0)	
 		return kz
 	
@@ -130,10 +121,10 @@ class RectangularWaveguide(object):
 		f = array(f,dtype=complex).reshape(-1)
 		omega = 2*pi *f
 		impedance_dict = {\
-			'tez':	1j*omega*self.mu/self.kz(m,n,f),\
-			'te':	1j*omega*self.mu/self.kz(m,n,f),\
-			'tmz':	self.kz(m,n,f)/(1j*omega*self.epsilon),\
-			'tm':	self.kz(m,n,f)/(1j*omega*self.epsilon),\
+			'tez':	omega*self.mu/(-1*self.kz(m,n,f)),\
+			'te':	omega*self.mu/(-1*self.kz(m,n,f)),\
+			'tmz':	-1*self.kz(m,n,f)/(omega*self.epsilon),\
+			'tm':	-1*self.kz(m,n,f)/(omega*self.epsilon),\
 			}
 		
 		return impedance_dict[mode_type]
@@ -203,50 +194,6 @@ class RectangularWaveguide(object):
 		return e_t
 
 
-class RectangularWaveguideTE10(RectangularWaveguide):
-	def __init__(self, a,b=None,epsilon_R=1, mu_R=1):
-		RectangularWaveguide.__init__(self, a,b=None,epsilon_R=1, mu_R=1)
-
-	
-	def cutoff_frequency(self):
-		return RectangularWaveguide.cutoff_frequency(self,m=1,n=0)
-	
-	
-	def kc(self, *args):
-		'''
-		cut-off wave number 
-		'''
-		return RectangularWaveguide.kc(self,m=1,n=0)
-	
-	
-	def cutoff_wavelength(self):
-		return RectangularWaveguide.cutoff_wavelength(self, m=1,n=0)
-	
-	def kz(self, f, *args):
-		'''
-		the propagation constant, which is:
-			IMAGINARY  for propagating modes, 
-			REAL for non-propagating modes
-		
-		takes:
-			m: mode index in the 'a' direction 
-			n: mode index in the 'b' direction 
-			f: frequency [Hz]
-		'''
-		return RectangularWaveguide.kz(self,m=1,n=0,f=f)
-	def characteristic_impedance(self,f,*args):
-		'''
-		the characteristic impedance of a given mode
-		
-		takes:
-			f: frequency [Hz]		
-		'''
-		return RectangularWaveguide.characteristic_impedance(self, 'tez', m=1,n=0,f=f)
-	def characteristic_admittance(self,f,*args):
-		'''
-		the characteristic admittance of a given mode
-		
-		takes:
-			f: frequency [Hz]	
-		'''
-		return 1./(self.characteristic_impedance(f))
+	def electrical_length(self,m,n,f,d,deg=False):
+		return electrical_length( \
+			gamma = lambda x:self.propagation_constant(m=m,n=n, f=x),f=f,d=d,deg=deg)
