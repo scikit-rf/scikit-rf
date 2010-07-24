@@ -177,7 +177,7 @@ class Network(object):
 
 	# s-parameters convinience properties	
 	@property
-	def s_manitude(self):
+	def s_magnitude(self):
 		'''
 		returns the magnitude of the s-parameters.
 		'''
