@@ -94,50 +94,56 @@ class GenericTEM(object):
 		self.gamma = self.propagation_constant
 	
 	## METHODS
-	def distributed_impedance(self,omega):
+	def distributed_impedance(self,f):
 		'''
 		distributed Impedance,  Z'(w) = R' + jwI'
 		
+		takes:
+			f: frequency [Hz]
 		'''
-		omega = array(omega)
+		omega  = 2*npy.pi * array(f)
 		return self.distributed_resistance+1j*omega*self.distributed_inductance
 	
-	def distributed_admittance(self,omega):
+	def distributed_admittance(self,f):
 		'''
 		distributed Admittance, Y'(w) = G' + jwC'
+		
+		takes:
+			f: frequency [Hz]
 		'''
-		omega = array(omega)
+		omega = 2*npy.pi*array(f)
 		return self.distributed_conductance+1j*omega*self.distributed_capacitance
 	
-	def characteristic_impedance(self,omega):
+	def characteristic_impedance(self,f):
 		'''
 		
 		The  characteristic impedance at a given angular frequency.
 			Z0(w) = sqrt(Z'(w)/Y'(w))
 		takes:
-			omega: radian angular frequency
+			f:  frequency
 		returns:
 			Z0: characteristic impedance  ohms
 		
 		'''
-		omega = array(omega)
-		return sqrt(self.distributed_impedance(omega)/\
-			self.distributed_admittance(omega))
+		f = array(f)
+		return sqrt(self.distributed_impedance(f)/\
+			self.distributed_admittance(f))
 	
-	def propagation_constant(self,omega):
+	def propagation_constant(self,f):
 		'''
 		the propagation constant 
 			gamma(w) = sqrt(Z'(w)*Y'(w))
 		
-		takes: 
-			omega
+		
+		takes:
+			f: frequency [Hz]
 			
 		returns:
 			gamma: possibly complex propagation constant, [jrad/m+]
 		'''
-		omega = array(omega)
-		return 1j*sqrt(self.distributed_impedance(omega)*\
-			self.distributed_admittance(omega))
+		f = array(f)
+		return 1j*sqrt(self.distributed_impedance(f)*\
+			self.distributed_admittance(f))
 
 
 

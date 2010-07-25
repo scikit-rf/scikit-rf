@@ -22,7 +22,11 @@
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil,pi
 import numpy as npy
 from numpy import sqrt,array, cos, sin, linspace
+
 from mwavepy1.transmissionLine.functions import electrical_length
+
+
+
 class RectangularWaveguide(object):
 	'''
 	represents a homogeneously rectangular waveguide.
@@ -93,7 +97,7 @@ class RectangularWaveguide(object):
 		
 		k0 = array(self.k0(f),dtype=complex).reshape(-1)
 		kc = array(self.kc(m,n),dtype = complex).reshape(-1)
-		kz = k0.copy()
+		kz = npy.zeros(shape=k0.shape,dtype=complex)
 		#pdb.set_trace()
 		kz =  -sqrt(k0**2-kc**2)*(k0>kc) +1j*sqrt(kc**2- k0**2)*(k0<kc) \
 			+ 0*(kc==k0)	
