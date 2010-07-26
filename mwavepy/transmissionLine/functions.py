@@ -27,7 +27,8 @@ def electrical_length(gamma, f , d, deg=False):
 	calculates the electrical length of a section of transmission line.
 
 	takes:
-		gamma: propagation constant, (a function)
+		gamma: propagation constant function , (a function which 
+			takes frequency in [hz])
 		l: length of line. in meters
 		f: frequency at which to calculate. array-like or float. if
 			left as None and self.fBand exists, it will use that.
@@ -43,7 +44,7 @@ def electrical_length(gamma, f , d, deg=False):
 	d = array(d, dtype=float).reshape(-1)
 			
 	if deg == False:
-		return  gamma(2*pi*f )*d
+		return  gamma(f )*d
 	elif deg == True:
 		return  mf.radian_2_degree(gamma(2*pi*f ) *l )
 

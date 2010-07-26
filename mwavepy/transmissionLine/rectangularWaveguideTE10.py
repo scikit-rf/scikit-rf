@@ -67,5 +67,13 @@ class RectangularWaveguideTE10(RectangularWaveguide):
 		'''
 		return 1./(self.characteristic_impedance(f))
 	def electrical_length(self, f,d,deg=False):
+		'''
+		calculate electrical length of a section fo waveguide.
+		
+		takes:
+			f: frequency at which to calculate [Hz]
+			d: length fo delay [m]
+			deg: True/False
+		'''
 		return electrical_length( \
 			gamma = self.propagation_constant,f=f,d=d,deg=deg)
