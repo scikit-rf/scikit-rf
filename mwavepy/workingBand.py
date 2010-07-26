@@ -22,22 +22,45 @@
 '''
 #import  mwavepy1 as mv1
 
-from mwavepy1.frequency import Frequency
-import mwavepy1 import createNetwork 
+from frequency import Frequency
+import createNetwork 
 
 class WorkingBand(object):
+	'''
+	A WorkingBand is an high-level object which exists solely to make 
+	 working of Networks more concise and convinient. 
+	
+	A WorkingBand object has two properties: 
+		frequency information (Frequency object)
+		transmission line information	(transmission line-like object)
+		
+	as stated in parenthesis both of these properties are objects 
+	themselves. 
+	
+	
+	'''
 	def __init__(self, frequency, tline):
 		self.frequency = frequency 
 		self.tline = tline
-		self.f = self.frequency.axis
+		self.f = self.frequency.f
 
-	def line(self,d):
-		return createNetwork.delay(d=d, tline=self.tline, \
-			frequency=self.f )
 	def short(self):
+		'''
+		creates a delay short Network object
+		'''
 		return createNetwork.short(self.f)
 		
-	def delay_short(self):
+		
+	def line(self,d):
+		'''
+		creates a line of length 'd' Network object
+		'''
+		return createNetwork.delay(d=d, tline=self.tline, \
+			frequency=self.f )
+	
+	def delay_short(self,d):
+		'''
+		creates a delayed short of length 'd' Network object
+		'''
 		return createNetwork.delay_short(d=d,tline=self.tline, \
 			frequency = self.f)
-	def 

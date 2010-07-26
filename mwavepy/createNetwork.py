@@ -20,7 +20,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-from  mwavepy1.network import Network
+from  network import Network
 import numpy as npy
 def short(frequency, **kwargs):
 	'''

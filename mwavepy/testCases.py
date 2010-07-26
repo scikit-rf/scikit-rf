@@ -17,17 +17,22 @@ def wg_characteristic_impedance():
 	This example was produces same figure 4-3 in Harrington's 
 	Time-Harmonic Electromagnetic Fields
 	'''
-	
+	# create waveguide type
 	wg = mv1.transmissionLine.RectangularWaveguide(a=1)
+	# calculate cut-off frequency
 	fc = wg.f_c(1,0)
+	# create frequency vector
 	f= npy.linspace(0,3*fc,101)
+	# calculate free-space impedance
 	eta = mv1.transmissionLine.FreeSpace().z0(1)	
 	
+	# plot the characteristic impedances
 	plb.plot(f/fc , wg.z0('te',1,0,f)/eta, label= 'R te')
 	plb.plot(f/fc, npy.imag(wg.z0('te',1,0,f))/eta, label='X te')
 	plb.plot(f/fc, wg.z0('tm',1,0,f)/eta, label='R tm')
 	plb.plot(f/fc, -npy.imag(wg.z0('tm',1,0,f))/eta, label = '-X tm')
 	
+	#label and show
 	plb.title('Rectangular Waveguide TE10 Normalized Characterisitic Impedance')
 	plb.ylabel('Normalized Impedance (eta/eta0)')
 	plb.xlabel('Normalized Frequency (f/fc)')

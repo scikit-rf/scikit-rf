@@ -21,9 +21,11 @@
 #       MA 02110-1301, USA.
 '''
 
-import  mwavepy1.mathFunctions as mf
+import  mathFunctions as mf
 import touchstone
+from frequency import Frequency
 
+import os
 import numpy as npy
 import pylab as plb 
 from copy import copy
@@ -252,6 +254,14 @@ class Network(object):
 		The unit to format the frequency axis in. see formatedAxis
 		'''
 		return self.f/self.f_multiplier
+	@property
+	def get_frequency_class(self):
+		'''
+		returns a Frequency object, which is defined in frequency.py
+		
+		'''
+		return Frequency(start = self.f_scaled[0],stop=self.f_scaled[-1],\
+			npoints= len(self.f_scaled), unit=self.f_unit)
 ## CLASS METHODS
 	# touchstone file IO
 	def read_touchstone(self, filename):
@@ -498,6 +508,9 @@ class Network(object):
 
 	
 	
+	
+	
+	
 ## FUNCTIONS
 # functions operating on Network[s]
 def average(list_of_networks):
@@ -639,3 +652,32 @@ def flip(a):
 
 
 
+
+
+def load_all_touchstones(dir = '.', contains=None, f_unit=None):
+	'''
+	loads all touchtone files in a given dir 
+	
+	takes:
+		dir  - the path to the dir, passed as a string (defalut is cwd)
+		contains - string which filename must contain to be loaded, not 
+			used if None.(default None)
+	returns:
+		ntwkDict - a Dictonary with keys equal to the file name (without
+			a suffix), and values equal to the corresponding ntwk types
+	
+		
+	'''
+	ntwkDict = {}
+
+	for f in os.listdir (dir):
+		if contains is not None and contains not in f:
+			continue
+			
+		# TODO: make this s?p with reg ex
+		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
+			name = f[:-4]
+			ntwkDict[name]=(Network(dir +'/'+f))
+			if f_unit is not None: ntwkDict[name].f_unit=f_unit
+		
+	return ntwkDict	

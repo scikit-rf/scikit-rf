@@ -18,12 +18,18 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
+
+from transmissionLine import RectangularWaveguideTE10
+from frequency import Frequency
+from workingBand import WorkingBand
+
 from scipy.constants import mil
-from mwavepy1.transmissionLine import RectangularWaveguideTE10
-from mwavepy1.frequency import Frequency
 
 f_wr1p5 = Frequency(500,750,201, 'ghz')
 #f_wr3 = Frequency(500,750,201, 'ghz')
 
 wg_wr1p5 = RectangularWaveguideTE10(1.5*10*mil)
 wg_wr3 = RectangularWaveguideTE10(3*10*mil)
+
+
+wb_wr1p5 = WorkingBand(frequency = f_wr1p5, tline = wg_wr1p5)

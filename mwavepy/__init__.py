@@ -28,5 +28,7 @@ import frequencyBand
 import transmissionLine	
 import network
 import createNetwork
+import workingBand
+import constants
 
 import testCases
