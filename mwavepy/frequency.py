@@ -1,5 +1,5 @@
 '''
-#       frequencyBand.py
+#       frequency.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
 #       
