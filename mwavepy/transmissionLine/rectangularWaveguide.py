@@ -159,7 +159,8 @@ class RectangularWaveguide(object):
 		
 		takes:
 		
-		returns:
+		returns array of shape 	[3,y_points, x_points]. the three 
+		components are: in order
 			e_t_x: component of field in 'a' direction
 			e_t_y: component of field in 'b' direction
 			e_t_z:component of field in  longitudinal direction
@@ -195,9 +196,10 @@ class RectangularWaveguide(object):
 				npy.zeros((y_points, x_points))\
 				]	
 			#pdb.set_trace()
-		return e_t
+		return array(e_t)
 
 
 	def electrical_length(self,m,n,f,d,deg=False):
 		return electrical_length( \
-			gamma = lambda x:self.propagation_constant(m=m,n=n, f=x),f=f,d=d,deg=deg)
+			gamma = lambda x:self.propagation_constant(m=m,n=n, f=x),\
+			f=f,d=d,deg=deg)
