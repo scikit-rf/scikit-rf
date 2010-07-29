@@ -51,14 +51,18 @@ class RectangularWaveguide(object):
 		self.f_c = self.cutoff_frequency
 		self.gamma = self.kz
 		self.propagation_constant = self.kz
-	## frequency independent functions
-	def k0(self,f):
+
+	## properties
+	@property
+	def intrinsic_phase_velocity(self):
 		'''
-		characteristic wave number
+		the intrinsic phase velocity of the waveguide. depends only on
+		material which fills the waveguide
 		'''
+		return 1./sqrt(self.epsilon * self.mu)
 		
-		return 2*pi*f*npy.sqrt(self.epsilon * self.mu)
-	
+
+	##  frequency independent functions
 	def ky(self,n):
 		'''
 		eigen-value in the b direction
@@ -79,10 +83,29 @@ class RectangularWaveguide(object):
 		return sqrt( self.kx(m)**2 + self.ky(n)**2)
 	
 	def cutoff_wavelength(self, m,n):
+		'''
+		the wavelength at which mode (m,n) is cut-off
+		'''
 		return 2.*pi/(self.kc(m,n))
+		
 	def cutoff_frequency(self, m,n):
-		return self.kc(m,n)/(2.*pi*sqrt(self.epsilon*self.mu))
+		'''
+		the cutoff freqency of mode (m,n)
+		'''
+		return complex(self.kc(m,n)/(2.*pi*sqrt(self.epsilon*self.mu))
 	# frequency dependent functions
+	
+	def intrinsic_wavelength(self,f):
+		'''
+		the intrinisic wavelength of the waveguide at frequency f.
+		(different from the guide_wavelength )
+		'''	
+		return self.intrinsic_phase_velocity/f
+
+	def k0(self,f):
+		'''
+		characteristic wave number
+		'''
 	def kz(self, m ,n , f):
 		'''
 		the propagation constant, which is:
@@ -102,7 +125,23 @@ class RectangularWaveguide(object):
 		kz =  -sqrt(k0**2-kc**2)*(k0>kc) +1j*sqrt(kc**2- k0**2)*(k0<kc) \
 			+ 0*(kc==k0)	
 		return kz
-	
+		return 2*pi*f*npy.sqrt(self.epsilon * self.mu)
+	def guide_wavelength(self,m,n,f):
+		'''
+		the guide wavelength.
+
+		'the distance that the field travels before the phase increases
+		by 2*pi'. 
+		'''
+		fc= self.cutoff_frequency(m,n)
+		lam = self.intrinsic_wavelength(f)
+		return lam/sqrt(1-(fc/f)**2)
+
+	def guide_phase_velocity(self,m,n,f):
+		'''
+		the guide phase velocity at which a mode propagates.  
+		'''
+		self.intrinsic_phase_velocity/sqrt(1-(self.cutoff_frequency(m,n)/f)**2)
 
 	
 	
