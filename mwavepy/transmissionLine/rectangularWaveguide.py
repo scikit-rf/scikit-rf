@@ -47,11 +47,15 @@ class RectangularWaveguide(object):
 		# link function names for convinience
 		self.z0 = self.characteristic_impedance
 		self.y0 = self.characteristic_admittance
-		self.lambda_c = self.cutoff_wavelength
 		self.f_c = self.cutoff_frequency
 		self.gamma = self.kz
 		self.propagation_constant = self.kz
-
+		self.lambda_c = self.cutoff_wavelength
+		self.lambda_g = self.guide_wavelength
+		self.lambda_0 = self.intrinsic_wavelength
+		self.vp_0 = self.intrinsic_phase_velocity
+		self.vp_g = self.guide_phase_velocity
+		self.eta_0 = self.intrinsic_impedance
 	## properties
 	@property
 	def intrinsic_phase_velocity(self):
@@ -61,7 +65,12 @@ class RectangularWaveguide(object):
 		'''
 		return 1./sqrt(self.epsilon * self.mu)
 		
-
+	@property
+	def intrinsic_impedance(self):
+		'''
+		the intrinsic impedance of the filling material
+		'''
+		return sqrt(self.mu/self.epsilon)
 	##  frequency independent functions
 	def ky(self,n):
 		'''
@@ -92,7 +101,7 @@ class RectangularWaveguide(object):
 		'''
 		the cutoff freqency of mode (m,n)
 		'''
-		return complex(self.kc(m,n)/(2.*pi*sqrt(self.epsilon*self.mu))
+		return complex(self.kc(m,n)/(2.*pi*sqrt(self.epsilon*self.mu)))
 	# frequency dependent functions
 	
 	def intrinsic_wavelength(self,f):
