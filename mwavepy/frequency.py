@@ -80,7 +80,7 @@ class Frequency(object):
 		'''
 		returns a frequency vector in units of self.unit 
 		'''
-		return f/self.multiplier
+		return self.f/self.multiplier
 				
 	@property
 	def unit(self):
@@ -103,5 +103,5 @@ class Frequency(object):
 	def labelXAxis(self, ax=None):
 		if ax is None:
 			ax = gca()
-		ax.set_xlabel('Frequency [%s]' % unit_dict[self.unit] )
+		ax.set_xlabel('Frequency [%s]' % self.unit )
 	

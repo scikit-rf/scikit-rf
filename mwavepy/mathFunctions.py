@@ -94,6 +94,17 @@ def degree_2rad_(deg):
 
 
 
+
+# mathematical functions
+def dirac_delta(x):
+	'''
+	the dirac function.
+
+	can take numpy arrays or numbers
+	returns 1 or 0 '''
+	return (x==0)*1.+(x!=0)*0.
+
+
 # old functions just for reference
 def complex2Scalar(input):
 	input= array(input)
@@ -123,6 +134,9 @@ def complex2ReIm(complx):
 
 def complex2MagPhase(complx,deg=False):
 	return npy.abs(complx), npy.angle(complx,deg=deg)
+
+
+
 
 
 

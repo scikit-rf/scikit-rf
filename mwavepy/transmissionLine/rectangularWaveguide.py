@@ -115,6 +115,7 @@ class RectangularWaveguide(object):
 		'''
 		characteristic wave number
 		'''
+		return 2*pi*f*npy.sqrt(self.epsilon * self.mu)
 	def kz(self, m ,n , f):
 		'''
 		the propagation constant, which is:
@@ -134,7 +135,7 @@ class RectangularWaveguide(object):
 		kz =  -sqrt(k0**2-kc**2)*(k0>kc) +1j*sqrt(kc**2- k0**2)*(k0<kc) \
 			+ 0*(kc==k0)	
 		return kz
-		return 2*pi*f*npy.sqrt(self.epsilon * self.mu)
+		
 	def guide_wavelength(self,m,n,f):
 		'''
 		the guide wavelength.
