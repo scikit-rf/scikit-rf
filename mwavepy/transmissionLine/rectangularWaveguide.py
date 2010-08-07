@@ -89,7 +89,16 @@ class RectangularWaveguide(object):
 		'''
 		cut-off wave number 
 		'''
-		return sqrt( self.kx(m)**2 + self.ky(n)**2)
+		try:
+			# if they gave us vectors, then return appropriate matrix
+			kc = npy.zeros((len(m),len(n)),dtype=complex)
+			for m_idx in range(len(m)):
+				for n_idx in range(len(n)):
+					kc[m_idx, n_idx] = self.kc(m[m_idx],n[n_idx])
+			return kc
+			
+		except(TypeError):
+			return sqrt( self.kx(m)**2 + self.ky(n)**2)
 	
 	def cutoff_wavelength(self, m,n):
 		'''
@@ -101,7 +110,7 @@ class RectangularWaveguide(object):
 		'''
 		the cutoff freqency of mode (m,n)
 		'''
-		return complex(self.kc(m,n)/(2.*pi*sqrt(self.epsilon*self.mu)))
+		return self.kc(m,n)/(2.*pi*sqrt(self.epsilon*self.mu))
 	# frequency dependent functions
 	
 	def intrinsic_wavelength(self,f):
@@ -123,17 +132,37 @@ class RectangularWaveguide(object):
 			IMAGINARY for non-propagating modes
 		
 		takes:
-			m: mode index in the 'a' direction 
+			m: mode index in the 'a' direction
 			n: mode index in the 'b' direction 
 			f: frequency [Hz]
-		'''
+
+		output:
+			kz:a complex number, and possibly a fxmxn array, depending
+				on input 
 		
+		NOTE:
+			
+			a note about using arrays for input values:
+			either all inputs, m,n,f can be arrays, 
+			or just f
+			or just m and n
+			but not m or n
+		'''
 		k0 = array(self.k0(f),dtype=complex).reshape(-1)
-		kc = array(self.kc(m,n),dtype = complex).reshape(-1)
-		kz = npy.zeros(shape=k0.shape,dtype=complex)
-		#pdb.set_trace()
-		kz =  -sqrt(k0**2-kc**2)*(k0>kc) +1j*sqrt(kc**2- k0**2)*(k0<kc) \
-			+ 0*(kc==k0)	
+		kc = array(self.kc(m,n),dtype = complex)#.reshape(-1)
+
+		# handle vector values for m, n , and f
+		try:
+			kz = npy.zeros((len(f),len(m),len(n)),dtype=complex)
+			for f_idx in range(len(f)):	
+				kz[f_idx] =  -sqrt(k0[f_idx]**2-kc**2) * (k0[f_idx] > kc) + \
+					1j*sqrt(kc**2- k0[f_idx]**2) * (k0[f_idx]<kc) + 0*(kc==k0[f_idx])
+		
+		except(TypeError):
+			# we have scalars for m, or n
+			kz = npy.zeros(shape=k0.shape,dtype=complex)
+			kz =  -sqrt(k0**2-kc**2)*(k0>kc) +1j*sqrt(kc**2- k0**2)*(k0<kc) \
+				+ 0*(kc==k0)	
 		return kz
 		
 	def guide_wavelength(self,m,n,f):
@@ -173,6 +202,14 @@ class RectangularWaveguide(object):
 		mode_type = mode_type.lower()
 		f = array(f,dtype=complex).reshape(-1)
 		omega = 2*pi *f
+
+		try:
+			# needed in case m, n , and f are arrays
+			omega= omega.reshape(-1,1,1).repeat(len(m),axis=1).repeat(len(n),axis=2)
+		except(TypeError):
+			pass
+		#import pdb
+		#pdb.set_trace()
 		impedance_dict = {\
 			'tez':	omega*self.mu/(-1*self.kz(m,n,f)),\
 			'te':	omega*self.mu/(-1*self.kz(m,n,f)),\
