@@ -25,7 +25,7 @@ from numpy import sqrt,array, cos, sin, linspace
 
 from mwavepy1.transmissionLine.functions import electrical_length
 from mwavepy1.transmissionLine.functions import Gamma0_2_zin
-
+from mwavepy1 import mathFunctions as mf
 
 class RectangularWaveguide(object):
 	'''
@@ -292,9 +292,12 @@ class RectangularWaveguide(object):
 			see transmissionLine.functions for more info.
 		'''
 		return 1./self.input_impedance(d, Gamma0, mode_type, m,n,f)
+	def electrical_length(self,m,n,f,d,deg=False):
+		return electrical_length( \
+			gamma = lambda x:self.propagation_constant(m=m,n=n, f=x),\
+			f=f,d=d,deg=deg)
 
-
-		
+	## Analytical EigenFunctions
 	def e_t(self,mode_type, m,n, x_points=201, y_points = 101):
 		'''
 		discretized transverse mode functions for the electric field. 
@@ -344,7 +347,38 @@ class RectangularWaveguide(object):
 		return array(e_t)
 
 
-	def electrical_length(self,m,n,f,d,deg=False):
-		return electrical_length( \
-			gamma = lambda x:self.propagation_constant(m=m,n=n, f=x),\
-			f=f,d=d,deg=deg)
+	def eigenfunction_normalization(self,mode_type,m,n):
+		'''
+		returns the normalization for a given transverse eigen function,
+		 so that the set is normalized to 1.
+	
+		takes:
+			mode_type:	describes the mode type (TE,TM) and direction, 
+				possible values are:
+					'tez','tmz'
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			
+		note:
+			t-to-z mode normalization can be found in marcuvitz
+		'''
+		a,b= self.a,self.b
+		
+		if m==0  and n==0:
+			return 0
+			
+		if mode_type == 'te' or mode_type == 'tez'  :
+			ep_m = 2. - mf.dirac_delta(m)
+			ep_n = 2. - mf.dirac_delta(n)
+			scaling =  -sqrt(ep_m*ep_n)*m/a * 1/sqrt(m**2 *(b/a)+ n**2 *(a/b)) 
+		
+		elif mode_type == 'tm' or mode_type == 'tmz' :
+			if m==0 or n == 0:
+				return 0 
+			scaling =  -2.*n/b* 1/sqrt(m**2 *(b/a)+ n**2 *(a/b))
+		
+		else:
+			raise(ValueError)
+		
+		return scaling
+	
