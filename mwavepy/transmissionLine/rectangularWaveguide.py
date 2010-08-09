@@ -24,7 +24,7 @@ import numpy as npy
 from numpy import sqrt,array, cos, sin, linspace
 
 from mwavepy1.transmissionLine.functions import electrical_length
-
+from mwavepy1.transmissionLine.functions import Gamma0_2_zin
 
 
 class RectangularWaveguide(object):
@@ -235,7 +235,66 @@ class RectangularWaveguide(object):
 					
 		'''
 		return 1./(self.characteristic_impedance(mode_type,m,n,f))
-	
+
+	def input_impedance(self, d, Gamma0, mode_type, m,n,f):
+		'''
+		calculates the input impedance for a single mode, of reflection
+		coefficient Gamma0, at a specified disatnace d.
+
+		takes:
+			d: distance from load ( in meters)
+			Gamma0: reflection coefficient of termination (@z=0)
+			mode_type:	describes the mode type (TE,TM) and direction, 
+				possible values are:
+					'tez','tmz'
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			f: frequency [Hz]
+
+		returns:
+			zin: input impedance (in ohms)
+
+		note:
+			if you want to specify load in terms of its impedance, you
+			can use the function:
+				transmissionLine.functions.zl_2_Gamma0().
+			
+			see transmissionLine.functions for more info.
+		'''
+		z0 = self.z0( mode_type, m,n,f)
+		theta = self.electrical_length(m,n,f,d)
+		zin = Gamma0_2_zin(z0, Gamma0, theta)
+		return zin
+		
+	def input_admittance(self, d, Gamma0, mode_type, m,n,f):
+		'''
+		calculates the input admitance for a single mode, of reflection
+		coefficient Gamma0, at a specified disatnace d.
+
+		takes:
+			d: distance from load ( in meters)
+			Gamma0: reflection coefficient of termination (@z=0)
+			mode_type:	describes the mode type (TE,TM) and direction, 
+				possible values are:
+					'tez','tmz'
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			f: frequency [Hz]
+
+		returns:
+			zin: input impedance (in 1/ohms)
+
+		note:
+			if you want to specify load in terms of its impedance, you
+			can use the function:
+				transmissionLine.functions.zl_2_Gamma0().
+			
+			see transmissionLine.functions for more info.
+		'''
+		return 1./self.input_impedance(d, Gamma0, mode_type, m,n,f)
+
+
+		
 	def e_t(self,mode_type, m,n, x_points=201, y_points = 101):
 		'''
 		discretized transverse mode functions for the electric field. 

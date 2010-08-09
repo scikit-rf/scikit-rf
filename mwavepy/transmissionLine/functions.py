@@ -22,6 +22,10 @@
 import numpy as npy
 from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
 	 interp, linspace, shape,zeros, reshape
+
+INF = 1e99
+ONE = 1.0 + 1/1e14
+
 def electrical_length(gamma, f , d, deg=False):
 	'''
 	calculates the electrical length of a section of transmission line.
@@ -96,7 +100,7 @@ def reflection_coefficient_at_theta(Gamma0,theta):
 	note: 
 		 = Gamma0 * exp(-2j* theta)
 	'''
-	Gamma = array(Gamma, dtype=complex).reshape(-1)
+	Gamma0 = array(Gamma0, dtype=complex).reshape(-1)
 	theta = array(theta, dtype=complex).reshape(-1)
 	return Gamma0 * exp(-2j* theta)
 
@@ -110,8 +114,8 @@ def input_impedance_at_theta(z0,zl, theta):
 		zl: load impedance
 		theta: electrical length of the line, (may be complex) 
 	'''
-	Gamma0 = input_impedance_2_reflection_coefficient(z0=z0,zl=zl)
-	Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
+	Gamma = input_impedance_2_reflection_coefficient(z0=z0,zl=zl)
+	Gamma_in = reflection_coefficient_at_theta(Gamma=Gamma, theta=theta)
 	return reflection_coefficient_2_input_impedance(z0=z0, Gamma=Gamma_in)
 	
 def input_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
@@ -131,7 +135,7 @@ def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
 		zin: input impedance at theta
 	'''
 	Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
-	zin = reflection_coefficient_2_input_impedance(z0=z0,Gamma=Gamma)
+	zin = reflection_coefficient_2_input_impedance(z0=z0,Gamma=Gamma_in)
 	return zin
 # short hand convinience. 
 # admitantly these follow no logical naming scheme, but they closely 
