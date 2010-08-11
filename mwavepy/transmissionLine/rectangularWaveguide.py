@@ -46,7 +46,9 @@ class RectangularWaveguide(object):
 		
 		# link function names for convinience
 		self.z0 = self.characteristic_impedance
+		self.zin = self.input_impedance
 		self.y0 = self.characteristic_admittance
+		self.yin = self.input_admittance
 		self.f_c = self.cutoff_frequency
 		self.gamma = self.kz
 		self.propagation_constant = self.kz
