@@ -153,8 +153,12 @@ class Network(object):
 			s = s.reshape(-1,1,1)
 		self._s = s
 		#s.squeeze()
-	
-	
+	@property
+	def y(self):
+		if self.number_of_ports == 1:
+			return (1-self.s)/(1+self.s)
+		else:
+			raise(NotImplementedError)
 	# frequency information
 	@property
 	def f(self):

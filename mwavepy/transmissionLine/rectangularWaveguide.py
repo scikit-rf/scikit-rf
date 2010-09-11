@@ -370,8 +370,8 @@ class RectangularWaveguide(object):
 			return 0
 			
 		if mode_type == 'te' or mode_type == 'tez'  :
-			ep_m = 2. - mf.dirac_delta(m)
-			ep_n = 2. - mf.dirac_delta(n)
+			ep_m = mf.neuman(m)
+			ep_n = mf.neuman(n)
 			scaling =  -sqrt(ep_m*ep_n)*m/a * 1/sqrt(m**2 *(b/a)+ n**2 *(a/b)) 
 		
 		elif mode_type == 'tm' or mode_type == 'tmz' :
@@ -383,4 +383,5 @@ class RectangularWaveguide(object):
 			raise(ValueError)
 		
 		return scaling
+	
 	

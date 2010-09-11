@@ -103,7 +103,22 @@ def dirac_delta(x):
 	can take numpy arrays or numbers
 	returns 1 or 0 '''
 	return (x==0)*1.+(x!=0)*0.
+def neuman(x):
+	'''
+	neumans number
 
+	2-dirac_delta(x)
+
+	'''
+	return 2. - dirac_delta(x)
+def null(A, eps=1e-15):
+	'''
+	 calculates the null space of matrix A.
+	i found this on stack overflow.
+	 '''
+	u, s, vh = npy.linalg.svd(A)
+	null_space = npy.compress(s <= eps, vh, axis=0)
+	return null_space.T
 
 # old functions just for reference
 def complex2Scalar(input):
