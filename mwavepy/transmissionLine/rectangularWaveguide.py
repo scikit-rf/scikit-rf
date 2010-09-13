@@ -387,7 +387,7 @@ class RectangularWaveguide(object):
 	
 	def eigenfunction_normalization2(self,field_type,mode_type,m,n,f):
 		'''
-		returns the normalization factor for a given transverse eigenfunction,
+		 returns the normalization factor for a given transverse eigenfunction,
 		 so that the set is normalized to 1.
 	
 		takes:
