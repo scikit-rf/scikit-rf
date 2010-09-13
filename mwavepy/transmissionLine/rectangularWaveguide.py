@@ -385,7 +385,7 @@ class RectangularWaveguide(object):
 		
 		return scaling
 	
-	def eigenfunction_normalization2(self,field_type,mode_type,m,n,f):
+	def eigenfunction_normalization2(self,field_type,mode_type,m,n):
 		'''
 		returns the normalization factor for a given transverse eigenfunction,
 		 so that the set is normalized to 1.
@@ -402,20 +402,20 @@ class RectangularWaveguide(object):
 			t-to-z mode normalization can be found in marcuvitz
 		'''
 		
-		a,b,kx,ky,kc,kz,k0, epsilon,mu = self.a,self.b,self.kx(m),\
-			self.ky(n),self.kc(m,n),self.kz(m,n,f),self.k0(f),\
-			self.epsilon,self.mu
+		a,b,kx,ky,kc, epsilon,mu = self.a,self.b,self.kx(m),\
+			self.ky(n),self.kc(m,n),self.epsilon,self.mu
 		
-		omega= 2*pi*f
-		common_factor = sqrt(mf.neuman(m)*mf.neuman(N)/ (a*b* kc**2))
+		if  (m==0 and n==0):
+			return npy.zeros(3)
+		common_factor = sqrt(mf.neuman(m)*mf.neuman(n)/ (a*b* kc**2))
 		#pdb.set_trace()
 		e_field_dict = {\
 		'te': (m != 0  or n != 0) * common_factor * array([[ky],[-kx],[0]]),\
-		'tm': (m!=0  and n!=0) * common_factor * array([[kx],[ky],[k0**2]])\
+		'tm': (m!=0  and n!=0) * common_factor * array([[kx],[ky],[0]])\
 		}
 		
 		h_field_dict = {\
-		'te': (m!=0  or n!=0) * common_factor *	array([[-kx],[-ky],[k0**2]]),\
+		'te': (m!=0  or n!=0) * common_factor *	array([[-kx],[-ky],[0]]),\
 		'tm': (m!=0  and n!=0) *common_factor *	array([[ky],[-kx],[0]])\
 		}
 		
