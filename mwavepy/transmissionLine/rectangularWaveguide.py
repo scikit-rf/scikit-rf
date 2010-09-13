@@ -27,6 +27,7 @@ from mwavepy1.transmissionLine.functions import electrical_length
 from mwavepy1.transmissionLine.functions import Gamma0_2_zin
 from mwavepy1 import mathFunctions as mf
 
+import pdb
 class RectangularWaveguide(object):
 	'''
 	represents a homogeneously rectangular waveguide.
@@ -384,4 +385,43 @@ class RectangularWaveguide(object):
 		
 		return scaling
 	
+	def eigenfunction_normalization2(self,field_type,mode_type,m,n,f):
+		'''
+		returns the normalization factor for a given transverse eigenfunction,
+		 so that the set is normalized to 1.
+	
+		takes:
+			field_type: 'e' or 'h' field
+			mode_type:	describes the mode type (TE,TM) and direction, 
+				possible values are:
+					'tez','tmz'
+			m: mode index in the 'a' direction 
+			n: mode index in the 'b' direction 
+			
+		note:
+			t-to-z mode normalization can be found in marcuvitz
+		'''
+		
+		a,b,kx,ky,kc,kz,k0, epsilon,mu = self.a,self.b,self.kx(m),\
+			self.ky(n),self.kc(m,n),self.kz(m,n,f),self.k0(f),\
+			self.epsilon,self.mu
+		
+		omega= 2*pi*f
+		common_factor = sqrt(mf.neuman(m)*mf.neuman(N)/ (a*b* kc**2))
+		#pdb.set_trace()
+		e_field_dict = {\
+		'te': (m != 0  or n != 0) * common_factor * array([[ky],[-kx],[0]]),\
+		'tm': (m!=0  and n!=0) * common_factor * array([[kx],[ky],[k0**2]])\
+		}
+		
+		h_field_dict = {\
+		'te': (m!=0  or n!=0) * common_factor *	array([[-kx],[-ky],[k0**2]]),\
+		'tm': (m!=0  and n!=0) *common_factor *	array([[ky],[-kx],[0]])\
+		}
+		
+		eigenfunction_normalization_dict = {
+			'e': e_field_dict,\
+			'h': h_field_dict}
+			
+		return eigenfunction_normalization_dict[field_type][mode_type]
 	
