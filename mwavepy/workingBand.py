@@ -42,8 +42,25 @@ class WorkingBand(object):
 	def __init__(self, frequency, tline):
 		self.frequency = frequency 
 		self.tline = tline
-		self.f = self.frequency.f
+		
+	@property
+	def frequency(self):
+		return self._frequency
+	@frequency.setter
+	def frequency(self,new_frequency):
+		self._frequency= new_frequency
 
+	@property
+	def f(self):
+		return self.frequency.f
+
+	@property
+	def tline(self):
+		return self._tline
+	@tline.setter
+	def tline(self,new_tline):
+		self._tline = new_tline
+		
 	def short(self):
 		'''
 		creates a delay short Network object

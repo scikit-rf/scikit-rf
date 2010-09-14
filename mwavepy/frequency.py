@@ -100,8 +100,11 @@ class Frequency(object):
 		return self.multiplier_dict[self._unit]
 	
 	
+	
 	def labelXAxis(self, ax=None):
 		if ax is None:
 			ax = gca()
 		ax.set_xlabel('Frequency [%s]' % self.unit )
 	
+def f_2_frequency(f):
+	return Frequency(start=f[0], stop=f[-1],npoints = len(f), unit='hz')
