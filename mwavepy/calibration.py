@@ -24,7 +24,9 @@
 from calibrationAlgorithms import *
 from calibrationFunctions import *
 from frequency import *
-
+from network import Network 
+import numpy as npy
+import os 
 class a():
     def __init__(self,**kwargs):
         self.kwargs = kwargs
@@ -34,14 +36,14 @@ class Calibration(object):
 	
 	calibration_algorithm_dict={'one port': one_port}
 	
-	def __init__(self,f , type,  **kwargs):
+	def __init__(self,f , type, name=None,  **kwargs):
 		self.f = f
 		self.frequency = f_2_frequency(f)
 		# a dictionary holding key word arguments to pass to whatever
 		# calibration function we are going to call
 		self.kwargs = kwargs
 		self.type = type
-	
+		self.name = name
 	@property
 	def type (self):
 		return self._type
@@ -50,11 +52,24 @@ class Calibration(object):
 		if new_type not in self.calibration_algorithm_dict.keys():
 			raise ValueError('incorrect calibration type')
 		self._type = new_type
+
+	@property
+	def output_from_cal(self):
+		'''
+		a dictionary holding the output from the calibration algorithm
+		'''
+		
+		return self._output_from_cal
 	
 	@property	
 	def coefs(self):
 		'''
 		coefs: a dictionary holding the calibration coefficients
+
+		for one port 
+			'directivity':e00
+			'reflection tracking':e01e10
+			'source match':e11
 		'''
 		
 		try:
@@ -64,13 +79,41 @@ class Calibration(object):
 			return self._output_from_cal['error coefficients']
 
 	@property
-	def output_from_cal(self):
-		'''
-		a dictionary holding the output from the calibration algorithm
-		'''
-		
-		return self._output_from_cal
-		
+	def error_ntwk(self):
+		if len (self.coefs.keys()) == 3:
+			# ASSERT: we have one port data
+			ntwk = Network()
+			ntwk.f = self.f
+			
+			s12 = npy.ones(len(self.f), dtype=complex)
+			s21 = self.coefs['reflection tracking'] 
+			s11 = self.coefs['directivity'] 
+			s22 = self.coefs['source match']
+			ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
+			return ntwk
+		else:
+			raise NotImplementedError('sorry')
+
+
 	def run(self):
 		self._output_from_cal = self.calibration_algorithm_dict[self.type](**self.kwargs)
 
+	def apply_cal(self,input_ntwk):
+		return input_ntwk//self.error_ntwk 
+
+	def apply_cal_to_all_in_dir(dir, contains=None, f_unit = 'ghz'):
+		ntwkDict = {}
+
+		for f in os.listdir (dir):
+			if contains is not None and contains not in f:
+				continue
+				
+			# TODO: make this s?p with reg ex
+			if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
+				name = f[:-4]
+				ntwkDict[name] = Network(dir +'/'+f)//self.error_ntwk
+				ntwkDict[name].frequency.unit = 'ghz'
+				
+
+	#def plot_error_coefs(self):
+		

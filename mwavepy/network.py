@@ -32,17 +32,7 @@ from copy import copy
 
 
 class Network(object):
-## CONSTANTS
-	f_unit_dict = {\
-		'hz':'Hz',\
-		'mhz':'MHz',\
-		'ghz':'GHz'\
-		}
-	f_multiplier_dict={
-		'hz':1,\
-		'mhz':1e6,\
-		'ghz':1e9\
-		}
+
 
 ## CONSTRUCTOR
 	def __init__(self, touchstone_file = None, name = None ):
@@ -50,14 +40,17 @@ class Network(object):
 		takes:
 			file: if given will load information from touchstone file 
 		'''
+		# although meaningless untill set with real values, this
+		# needs this to exist for dependent properties
+		self.frequency = Frequency(0,0,0)
+		
 		if touchstone_file is not None:
 			self.read_touchstone(touchstone_file)
 		else:
 			self.name = name
 			#self.s = None
-			self.f = None
 			self.z0 = 50 
-			self.f_unit = 'ghz'
+			
 	
 
 ## OPERATORS
@@ -84,6 +77,8 @@ class Network(object):
 	def __floordiv__(self,other):
 		'''
 		 implements de-embeding another network[s], from this network
+
+		see de_embed
 		'''
 		try: 	
 			# if they passed 1 ntwks and a tuple of ntwks, 
@@ -161,13 +156,56 @@ class Network(object):
 			raise(NotImplementedError)
 	# frequency information
 	@property
+	def frequency(self):
+		'''
+		returns a Frequency object, see  frequency.py
+		'''
+		return self._frequency
+
+	@frequency.setter
+	def frequency(self, new_frequency):
+		'''
+		takes a Frequency object, see  frequency.py
+		'''
+		self._frequency= new_frequency
+
+	
+	@property
 	def f(self):
 		''' the frequency vector for the network, in Hz. '''
-		return self._f
+		return self._frequency.f
 		
 	@f.setter
 	def f(self,f):
-		self._f = f
+		tmpUnit = self.frequency.unit
+		self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
+		self._frequency.unit = tmpUnit
+	
+	#@property
+	#def f_unit(self):
+		#'''
+		#The unit to format the frequency axis in. see formatedAxis
+		#'''
+		#return self.frequency.f_unit
+	#@f_unit.setter
+	#def f_unit(self,f_unit):
+		#self._frequency.unit = f_unit
+	
+	#@property
+	#def f_multiplier(self):
+		#'''
+		#multiplier for formating axis
+		#'''
+		#return self.frequency.multiplier
+	#@property
+	#def f_scaled(self):
+		#'''
+		#The unit to format the frequency axis in. see formatedAxis
+		#'''
+		#return self._frequency.f_scaled
+
+
+
 	
 	# characteristic impedance
 	@property
@@ -236,36 +274,7 @@ class Network(object):
 		return self.s.shape[1]
 	# frequency formating related properties
 	
-	@property
-	def f_unit(self):
-		'''
-		The unit to format the frequency axis in. see formatedAxis
-		'''
-		return self.f_unit_dict[self._f_unit]
-	@f_unit.setter
-	def f_unit(self,f_unit):
-		self._f_unit = f_unit.lower()
 	
-	@property
-	def f_multiplier(self):
-		'''
-		multiplier for formating axis
-		'''
-		return self.f_multiplier_dict[self._f_unit]
-	@property
-	def f_scaled(self):
-		'''
-		The unit to format the frequency axis in. see formatedAxis
-		'''
-		return self.f/self.f_multiplier
-	@property
-	def frequency(self):
-		'''
-		returns a Frequency object, which is defined in frequency.py
-		
-		'''
-		return Frequency(start = self.f_scaled[0],stop=self.f_scaled[-1],\
-			npoints= len(self.f_scaled), unit=self.f_unit)
 ## CLASS METHODS
 	# touchstone file IO
 	def read_touchstone(self, filename):
@@ -285,8 +294,8 @@ class Network(object):
 			raise NotImplementedError('only s-parameters supported for now.')
 		
 		self.z0 = float(touchstoneFile.resistance)
-		self.f, self.s = touchstoneFile.get_sparameter_arrays() # note freq in Hz
-		self.f_unit = touchstoneFile.frequency_unit # for formatting plots
+		self.f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
+		self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
 		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
 
 	def write_touchstone(self, filename):
@@ -312,7 +321,7 @@ class Network(object):
 		# the '#'  line is NOT a comment it is essential and it must be 
 		#exactly this format, to work
 		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-		outputFile.write('# ' + self.f_unit + ' S RI R ' + str(self.z0) +" \n")
+		outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0) +" \n")
 		
 		#write comment line for users (optional)
 		outputFile.write ("!freq\t")
@@ -325,7 +334,7 @@ class Network(object):
 		# write out data, note: this could be done with matrix 
 		#manipulations, but its more readable to me this way
 		for f in range(len(self.f)):
-			outputFile.write(str(self.f_scaled[f])+'\t')
+			outputFile.write(str(self.frequency.f_scaled[f])+'\t')
 			
 			for n in range(self.number_of_ports):
 				for m in range(self.number_of_ports):
@@ -369,9 +378,9 @@ class Network(object):
 		else:
 			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
 		
-		ax.plot(self.f_scaled, self.s_db[:,m,n],\
+		ax.plot(self.frequency.f_scaled, self.s_db[:,m,n],\
 			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
 		plb.ylabel('Magnitude [dB]')
 		plb.legend()
 		
@@ -396,9 +405,9 @@ class Network(object):
 		else:
 			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
 		
-		ax.plot(self.f_scaled, self.s_mag[:,m,n],\
+		ax.plot(self.frequency.f_scaled, self.s_mag[:,m,n],\
 			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
 		plb.ylabel('Magnitude')
 		plb.legend()
 				
@@ -423,9 +432,9 @@ class Network(object):
 		else:
 			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
 		
-		ax.plot(self.f_scaled, self.s_deg[:,m,n],\
+		ax.plot(self.frequency.f_scaled, self.s_deg[:,m,n],\
 			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
 		plb.ylabel('Phase [deg]')
 		plb.legend()
 		
@@ -450,9 +459,9 @@ class Network(object):
 		else:
 			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
 		
-		ax.plot(self.f_scaled, self.s_deg_unwrap[:,m,n],\
+		ax.plot(self.frequency.f_scaled, self.s_deg_unwrap[:,m,n],\
 			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
 		plb.ylabel('Phase [deg]')
 		plb.legend()
 		
@@ -477,9 +486,9 @@ class Network(object):
 		else:
 			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
 		
-		ax.plot(self.f_scaled, self.s_rad[:,m,n],\
+		ax.plot(self.frequency.f_scaled, self.s_rad[:,m,n],\
 			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
 		plb.ylabel('Phase [deg]')
 		plb.legend()	
 		
@@ -504,9 +513,9 @@ class Network(object):
 		else:
 			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
 		
-		ax.plot(self.f_scaled, self.s_rad_unwrap[:,m,n],\
+		ax.plot(self.frequency.f_scaled, self.s_rad_unwrap[:,m,n],\
 			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.f_unit +']')
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
 		plb.ylabel('Phase [deg]')
 		plb.legend()
 
@@ -682,6 +691,6 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
 			name = f[:-4]
 			ntwkDict[name]=(Network(dir +'/'+f))
-			if f_unit is not None: ntwkDict[name].f_unit=f_unit
+			if f_unit is not None: ntwkDict[name].frequency.unit=f_unit
 		
 	return ntwkDict	

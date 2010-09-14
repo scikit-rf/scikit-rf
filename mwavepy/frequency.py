@@ -65,16 +65,27 @@ class Frequency(object):
 		self._unit = unit.lower()
 		self.start =  self.multiplier * start
 		self.stop = self.multiplier * stop
-		self.center = self.start + (self.stop-self.start)/2.
 		self.npoints = npoints
 		
+	@property
+	def center(self):
+		return self.start + (self.stop-self.start)/2.
 	@property
 	def	f(self):
 		'''
 		returns a frequency vector  in Hz 
 		'''
 		return linspace(self.start,self.stop,self.npoints)
-	
+	@f.setter
+	def f(self,new_f):
+		'''
+		sets the frequency object by passing a vector in Hz
+		'''
+		
+		self.start = new_f[0]
+		self.stop = new_f[-1]
+		self.npoints = len(new_f)
+		
 	@property
 	def	f_scaled(self):
 		'''
@@ -107,4 +118,8 @@ class Frequency(object):
 		ax.set_xlabel('Frequency [%s]' % self.unit )
 	
 def f_2_frequency(f):
+	'''
+	convienience function
+	converts a frequency vector to a Frequency object 
+	'''
 	return Frequency(start=f[0], stop=f[-1],npoints = len(f), unit='hz')
