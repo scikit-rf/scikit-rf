@@ -49,7 +49,7 @@ def abc_2_coefs_dict(abc):
 		e11 = source match error	
 	'''
 	a,b,c = abc[:,0], abc[:,1],abc[:,2]
-	e01e10 = a-b*c
+	e01e10 = a+b*c
 	e00 = b
 	e11 = c
 	coefsDict = {'directivity':e00, 'reflection tracking':e01e10, \

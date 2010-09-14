@@ -27,18 +27,24 @@ from frequency import *
 from network import Network 
 import numpy as npy
 import os 
-class a():
-    def __init__(self,**kwargs):
-        self.kwargs = kwargs
+
 
 
 class Calibration(object):
-	
+	'''
+	represents a calibration instance.
+
+	a generic class, to hold sets of measurements, ideals, and calibration
+	results.
+
+
+
+	all calibration algorithms are in calibrationAlgorithms.py
+	'''
 	calibration_algorithm_dict={'one port': one_port}
 	
-	def __init__(self,f , type, name=None,  **kwargs):
-		self.f = f
-		self.frequency = f_2_frequency(f)
+	def __init__(self,frequency , type, name=None,  **kwargs):
+		self.frequency = frequency
 		# a dictionary holding key word arguments to pass to whatever
 		# calibration function we are going to call
 		self.kwargs = kwargs
@@ -83,9 +89,9 @@ class Calibration(object):
 		if len (self.coefs.keys()) == 3:
 			# ASSERT: we have one port data
 			ntwk = Network()
-			ntwk.f = self.f
+			ntwk.frequency = self.frequency
 			
-			s12 = npy.ones(len(self.f), dtype=complex)
+			s12 = npy.ones(self.frequency.npoints, dtype=complex)
 			s21 = self.coefs['reflection tracking'] 
 			s11 = self.coefs['directivity'] 
 			s22 = self.coefs['source match']
@@ -99,7 +105,9 @@ class Calibration(object):
 		self._output_from_cal = self.calibration_algorithm_dict[self.type](**self.kwargs)
 
 	def apply_cal(self,input_ntwk):
-		return input_ntwk//self.error_ntwk 
+		caled =  input_ntwk//self.error_ntwk
+		caled.name = input_ntwk.name
+		return caled 
 
 	def apply_cal_to_all_in_dir(dir, contains=None, f_unit = 'ghz'):
 		ntwkDict = {}
@@ -113,7 +121,8 @@ class Calibration(object):
 				name = f[:-4]
 				ntwkDict[name] = Network(dir +'/'+f)//self.error_ntwk
 				ntwkDict[name].frequency.unit = 'ghz'
-				
+
+		return ntwkDict		
 
 	#def plot_error_coefs(self):
 		
