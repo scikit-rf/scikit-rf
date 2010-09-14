@@ -61,23 +61,24 @@ class WorkingBand(object):
 	def tline(self,new_tline):
 		self._tline = new_tline
 		
-	def short(self):
+
+	def short(self,**kwargs):
 		'''
 		creates a delay short Network object
 		'''
-		return createNetwork.short(self.f)
+		return createNetwork.short(self.f,**kwargs)
 		
 		
-	def line(self,d):
+	def line(self,d,**kwargs):
 		'''
 		creates a line of length 'd' Network object
 		'''
 		return createNetwork.delay(d=d, tline=self.tline, \
-			frequency=self.f )
+			frequency=self.f,**kwargs )
 	
-	def delay_short(self,d):
+	def delay_short(self,d,**kwargs):
 		'''
 		creates a delayed short of length 'd' Network object
 		'''
 		return createNetwork.delay_short(d=d,tline=self.tline, \
-			frequency = self.f)
+			frequency = self.f,**kwargs)

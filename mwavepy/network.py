@@ -259,7 +259,7 @@ class Network(object):
 		'''
 		return self.f/self.f_multiplier
 	@property
-	def get_frequency_class(self):
+	def frequency(self):
 		'''
 		returns a Frequency object, which is defined in frequency.py
 		

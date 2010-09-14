@@ -34,11 +34,9 @@ class Calibration(object):
 	
 	calibration_algorithm_dict={'one port': one_port}
 	
-	def __init__(self,f , type, ideals, measured, **kwargs):
+	def __init__(self,f , type,  **kwargs):
 		self.f = f
 		self.frequency = f_2_frequency(f)
-		self.ideals = ideals
-		self.measured = measured
 		# a dictionary holding key word arguments to pass to whatever
 		# calibration function we are going to call
 		self.kwargs = kwargs
@@ -60,12 +58,19 @@ class Calibration(object):
 		'''
 		
 		try:
-			return self._coefs
+			return self._output_from_cal['error coefficients']
 		except(AttributeError):
 			self.run()
-			return self._coefs
-	
+			return self._output_from_cal['error coefficients']
+
+	@property
+	def output_from_cal(self):
+		'''
+		a dictionary holding the output from the calibration algorithm
+		'''
+		
+		return self._output_from_cal
+		
 	def run(self):
-		self.output_from_cal = calibration_algorithm_dict[self.type](**self.kwargs)
-		self._coefs = output_from_cal['error coefficients']
+		self._output_from_cal = self.calibration_algorithm_dict[self.type](**self.kwargs)
 

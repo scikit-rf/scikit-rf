@@ -21,7 +21,9 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
+from copy import copy
 
+import numpy as npy
 
 def one_port(measured, ideals):
 	
@@ -80,15 +82,15 @@ def one_port(measured, ideals):
 	for f in range(fLength):
 		#create  m, i, and 1 vectors
 		one = npy.ones(shape=(numStds,1))
-		m = array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
-		i = array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f			
+		m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
+		i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f			
 		
 		# construct the matrix 
 		Q = npy.hstack([i, one, i*m])
 		# calculate least squares
 		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
-		if len (residualsTmp )==0:
-			raise ValueError( 'matrix has singular values, check standards')
+		#if len (residualsTmp )==0:
+		#	raise ValueError( 'matrix has singular values, check standards')
 			
 		abc[f,:] = abcTmp.flatten()
 		residuals[f,:] = residualsTmp

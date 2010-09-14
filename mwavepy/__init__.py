@@ -24,11 +24,11 @@
 ## Internal imports
 
 import touchstone 	
-import frequencyBand
+import frequency
 import transmissionLine	
 import network
 import createNetwork
 import workingBand
 import constants
-
+import calibration
 import testCases
