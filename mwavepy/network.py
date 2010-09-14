@@ -298,7 +298,7 @@ class Network(object):
 		self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
 		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
 
-	def write_touchstone(self, filename):
+	def write_touchstone(self, filename=None):
 		'''
 		write a touchstone file representing this network.  the only 
 		format supported at the moment is :
@@ -314,6 +314,9 @@ class Network(object):
 			as it has not set_ functions. 
 		'''
 
+		
+		if filename is None and self.name is not None:
+			filename= self.name
 		
 		outputFile = open(filename,"w")
 		
@@ -694,3 +697,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 			if f_unit is not None: ntwkDict[name].frequency.unit=f_unit
 		
 	return ntwkDict	
+
+def write_dict_of_touchstones(ntwkDict, dir):
+	for ntwkKey in ntwkDict:
+		ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)

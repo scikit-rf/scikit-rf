@@ -24,7 +24,7 @@
 from calibrationAlgorithms import *
 from calibrationFunctions import *
 from frequency import *
-from network import Network 
+from network import *
 import numpy as npy
 import os 
 
@@ -86,6 +86,33 @@ class Calibration(object):
 
 	@property
 	def error_ntwk(self):
+		try:
+			return self._error_ntwk
+		except(AttributeError):
+			self.run()
+			return self._error_ntwk
+		
+
+
+	def run(self):
+		self._output_from_cal = self.calibration_algorithm_dict[self.type](**self.kwargs)
+		self._error_ntwk = self.calculate_error_ntwk()
+
+	def apply_cal(self,input_ntwk):
+		caled =  input_ntwk//self.error_ntwk
+		caled.name = input_ntwk.name
+		return caled 
+
+	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
+		ntwkDict = network.load_all_touchstones(dir=dir, \
+			contains=contains, f_unit=f_unit)
+
+		for ntwkKey in ntwkDict:
+			ntwkDict[ntwkKey] = self.apply_cal(ntwkDict[ntwkKey])
+		
+		return ntwkDict
+		
+	def calculate_error_ntwk(self):
 		if len (self.coefs.keys()) == 3:
 			# ASSERT: we have one port data
 			ntwk = Network()
@@ -99,30 +126,5 @@ class Calibration(object):
 			return ntwk
 		else:
 			raise NotImplementedError('sorry')
-
-
-	def run(self):
-		self._output_from_cal = self.calibration_algorithm_dict[self.type](**self.kwargs)
-
-	def apply_cal(self,input_ntwk):
-		caled =  input_ntwk//self.error_ntwk
-		caled.name = input_ntwk.name
-		return caled 
-
-	def apply_cal_to_all_in_dir(dir, contains=None, f_unit = 'ghz'):
-		ntwkDict = {}
-
-		for f in os.listdir (dir):
-			if contains is not None and contains not in f:
-				continue
-				
-			# TODO: make this s?p with reg ex
-			if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
-				name = f[:-4]
-				ntwkDict[name] = Network(dir +'/'+f)//self.error_ntwk
-				ntwkDict[name].frequency.unit = 'ghz'
-
-		return ntwkDict		
-
 	#def plot_error_coefs(self):
 		
