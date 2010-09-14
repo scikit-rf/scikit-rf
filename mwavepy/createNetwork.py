@@ -41,6 +41,25 @@ def short(frequency, **kwargs):
 	
 	return result
 
+def match(frequency, **kwargs):
+	'''
+	creates a Network for a perfect match  transmission line (Gamma0=0) 
+	
+	takes:
+		frequency: frequency vector (in Hz)
+		**kwargs: key word arguments passed to Network Constructor
+	returns:
+		a 1-port Network class, representing a perfect match
+	'''
+	frequency = npy.array(frequency, dtype=float).reshape(-1)
+	
+	npoints = len(frequency)	
+	result = Network(**kwargs)
+	result.f = frequency
+	result.s = npy.zeros(npoints, dtype=complex)
+	
+	return result
+
 def open(frequency, **kwargs):
 	'''
 	creates a Network for a 'open'   transmission line (Gamma0=+1) 

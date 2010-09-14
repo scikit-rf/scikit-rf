@@ -56,17 +56,3 @@ def abc_2_coefs_dict(abc):
 		'source match':e11}
 	return coefsDict
 
-def coefs_dict_2_ntwk(coefs_dict):
-	if len (self.coefs.keys()) == 3:
-			# ASSERT: we have one port data
-			ntwk = Network()
-			ntwk.frequency = self.frequency
-			
-			s12 = npy.ones(self.frequency.npoints, dtype=complex)
-			s21 = self.coefs['reflection tracking'] 
-			s11 = self.coefs['directivity'] 
-			s22 = self.coefs['source match']
-			ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
-			return ntwk
-		else:
-			raise NotImplementedError('sorry')

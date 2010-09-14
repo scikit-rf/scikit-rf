@@ -41,7 +41,10 @@ class Calibration(object):
 
 	all calibration algorithms are in calibrationAlgorithms.py
 	'''
-	calibration_algorithm_dict={'one port': one_port}
+	calibration_algorithm_dict={\
+		'one port': one_port,\
+		'one port xds':xds,\
+		}
 	
 	def __init__(self,frequency , type, name=None,  **kwargs):
 		self.frequency = frequency
@@ -104,7 +107,7 @@ class Calibration(object):
 		return caled 
 
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
-		ntwkDict = network.load_all_touchstones(dir=dir, \
+		ntwkDict = load_all_touchstones(dir=dir, \
 			contains=contains, f_unit=f_unit)
 
 		for ntwkKey in ntwkDict:

@@ -61,14 +61,23 @@ class WorkingBand(object):
 	def tline(self,new_tline):
 		self._tline = new_tline
 		
-
+	# Network creation
 	def short(self,**kwargs):
 		'''
 		creates a delay short Network object
 		'''
 		return createNetwork.short(self.f,**kwargs)
-		
-		
+
+	def match(self,**kwargs):
+		'''
+		creates a perfect match Network object
+		'''
+		return createNetwork.match(self.f,**kwargs)	
+	def open(self,**kwargs):
+		'''
+		creates a open Network object
+		'''
+		return createNetwork.open(self.f,**kwargs)	
 	def line(self,d,**kwargs):
 		'''
 		creates a line of length 'd' Network object
@@ -82,3 +91,26 @@ class WorkingBand(object):
 		'''
 		return createNetwork.delay_short(d=d,tline=self.tline, \
 			frequency = self.f,**kwargs)
+
+	def guess_length_of_delay_short(self, aNtwk):
+		raise NotImplementedError
+		'''
+		guess length of physical length of a Delay Short given by aNtwk
+		
+		takes:
+			aNtwk: a mwavepy.ntwk type . (note: if this is a measurment 
+				it needs to be normalized to the short plane
+			tline: transmission line class of the medium. needed for the 
+				calculation of propagation constant
+				
+		
+		'''
+		beta = real(self.tline.beta())
+		thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
+		
+		A = npy.vstack((-2*beta,npy.ones(len(beta)))).transpose()
+		B = thetaM
+		
+		print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
+		return npy.linalg.lstsq(A, B)[0][0]
+	
