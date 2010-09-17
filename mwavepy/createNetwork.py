@@ -60,6 +60,26 @@ def match(frequency, **kwargs):
 	
 	return result
 
+def load(Gamma0, frequency, **kwargs):
+	'''
+	creates a Network for a simple load termination  
+	
+	takes:
+		Gamma0: reflection coefficient of the load (not in dB)
+		frequency: frequency vector (in Hz)
+		**kwargs: key word arguments passed to Network Constructor
+	returns:
+		a 1-port Network class, representing a perfect match
+	'''
+	frequency = npy.array(frequency, dtype=float).reshape(-1)
+	
+	npoints = len(frequency)	
+	result = Network(**kwargs)
+	result.f = frequency
+	result.s = Gamma0 * -1*npy.ones(npoints, dtype=complex)
+	return result
+
+
 def open(frequency, **kwargs):
 	'''
 	creates a Network for a 'open'   transmission line (Gamma0=+1) 
@@ -114,13 +134,32 @@ def delay_short(d, tline,frequency, **kwargs):
 		frequency: frequency vector (in Hz)
 		**kwargs: key word arguments passed to Network Constructor
 	returns:
-		a 1-port Network class, representing a transmission line of length d
+		a 1-port Network class, representing a shorted transmission
+		line of length d
 	'''
 	frequency = npy.array(frequency, dtype=float)
 	a_line = line(d,tline,frequency,**kwargs)
 	a_short = short(frequency)
 	return a_line ** a_short
+
+def delay_load(d, tline, Gamma0,frequency, **kwargs):
+	'''
+	creates a Network for a delayed short transmission line
 	
+	takes:
+		d: the length (in meters)
+		tline: TransmissionLine class
+		Gamma0: reflection coefficient at load (not in db)
+		frequency: frequency vector (in Hz)
+		**kwargs: key word arguments passed to Network Constructor
+	returns:
+		a 1-port Network class, representing a load terminated
+		transmission line of length d
+	'''
+	frequency = npy.array(frequency, dtype=float)
+	a_line = line(d,tline,frequency,**kwargs)
+	a_short = load(Gamma0,frequency)
+	return a_line ** a_short
 
 def impedance_step():
 	raise NotImplementedError

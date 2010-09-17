@@ -107,8 +107,8 @@ class Calibration(object):
 		return caled 
 
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
-		ntwkDict = load_all_touchstones(dir=dir, \
-			contains=contains, f_unit=f_unit)
+		ntwkDict = load_all_touchstones(dir=dir, contains=contains,\
+			f_unit=f_unit)
 
 		for ntwkKey in ntwkDict:
 			ntwkDict[ntwkKey] = self.apply_cal(ntwkDict[ntwkKey])

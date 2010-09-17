@@ -317,7 +317,8 @@ class Network(object):
 		
 		if filename is None and self.name is not None:
 			filename= self.name
-		
+
+		filename= filename + 's'+str(self.number_of_ports)+'p'
 		outputFile = open(filename,"w")
 		
 		# write header file. 
@@ -526,7 +527,33 @@ class Network(object):
 	
 	
 	
-	
+
+	def plot_s_polar(self,m=0, n=0, ax = None, **kwargs):
+		'''
+		plots the scattering parameter of  indecie m, n in polar
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you 
+				want to update an existing plot. 
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca(polar=True)
+		# set the legend label for this trace to the networks name if it
+		# exists 
+		if self.name is None:
+			label_string = 'S'+repr(m+1) + repr(n+1)
+		else:
+			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		#TODO: fix this to call from ax, if possible
+		plb.polar(self.s_rad[:,m,n],self.s_mag[:,m,n],\
+			label=label_string, **kwargs)
+		plb.legend()
+		
 ## FUNCTIONS
 # functions operating on Network[s]
 def average(list_of_networks):
@@ -670,34 +697,3 @@ def flip(a):
 
 
 
-def load_all_touchstones(dir = '.', contains=None, f_unit=None):
-	'''
-	loads all touchtone files in a given dir 
-	
-	takes:
-		dir  - the path to the dir, passed as a string (defalut is cwd)
-		contains - string which filename must contain to be loaded, not 
-			used if None.(default None)
-	returns:
-		ntwkDict - a Dictonary with keys equal to the file name (without
-			a suffix), and values equal to the corresponding ntwk types
-	
-		
-	'''
-	ntwkDict = {}
-
-	for f in os.listdir (dir):
-		if contains is not None and contains not in f:
-			continue
-			
-		# TODO: make this s?p with reg ex
-		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
-			name = f[:-4]
-			ntwkDict[name]=(Network(dir +'/'+f))
-			if f_unit is not None: ntwkDict[name].frequency.unit=f_unit
-		
-	return ntwkDict	
-
-def write_dict_of_touchstones(ntwkDict, dir):
-	for ntwkKey in ntwkDict:
-		ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
