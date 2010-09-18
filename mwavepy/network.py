@@ -105,7 +105,24 @@ class Network(object):
 		'''
 		element-wise complex multiplication  of s-matrix
 		'''
-		raise NotImplementedError
+		result = copy(self)
+		result.s = result.s * a.s
+		return result
+	def __add__(self,other):
+		'''
+		element-wise addition of s-matrix
+		'''
+		result = copy(self)
+		result.s = result.s + other.s
+		return result
+		
+	def __sub__(self,other):
+		'''
+		element-wise addition of s-matrix
+		'''
+		result = copy(self)
+		result.s = result.s - other.s
+		return result
 	def __div__(self,other):
 		'''
 		element-wise complex division  of s-matrix
@@ -557,7 +574,17 @@ class Network(object):
 ## FUNCTIONS
 # functions operating on Network[s]
 def average(list_of_networks):
-	raise NotImplementedError
+	'''
+	complex average of a list of Networks
+	'''
+	out_ntwk = copy(list_of_networks[0])
+	
+	for a_ntwk in list_of_networks[1:]:
+		out_ntwk += a_ntwk
+
+	out_ntwk.s/(len(list_of_networks))
+
+	return out_ntwk
 
 def psd2_2_time_domain():
 	raise NotImplementedError

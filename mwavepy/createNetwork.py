@@ -158,8 +158,8 @@ def delay_load(d, tline, Gamma0,frequency, **kwargs):
 	'''
 	frequency = npy.array(frequency, dtype=float)
 	a_line = line(d,tline,frequency,**kwargs)
-	a_short = load(Gamma0,frequency)
-	return a_line ** a_short
+	a_load = load(Gamma0,frequency)
+	return a_line ** a_load
 
 def impedance_step():
 	raise NotImplementedError

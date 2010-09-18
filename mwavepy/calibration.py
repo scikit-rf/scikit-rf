@@ -44,6 +44,7 @@ class Calibration(object):
 	calibration_algorithm_dict={\
 		'one port': one_port,\
 		'one port xds':xds,\
+		'one port xds_xdl':xds_xdl,\
 		}
 	
 	def __init__(self,frequency , type, name=None,  **kwargs):

@@ -151,6 +151,7 @@ class RectangularWaveguide(object):
 			or just m and n
 			but not m or n
 		'''
+		## TODO: make this readable or comment more. 
 		k0 = array(self.k0(f),dtype=complex).reshape(-1)
 		kc = array(self.kc(m,n),dtype = complex)#.reshape(-1)
 

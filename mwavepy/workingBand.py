@@ -26,6 +26,7 @@ from frequency import Frequency
 import createNetwork 
 
 class WorkingBand(object):
+	## TODO: put docstrings in standard format of takes/returns
 	'''
 	A WorkingBand is an high-level object which exists solely to make 
 	 working of Networks more concise and convinient. 
@@ -100,6 +101,16 @@ class WorkingBand(object):
 			frequency = self.f,**kwargs)
 		ntwk.frequency = self.frequency
 		return ntwk
+	def delay_load(self,d,Gamma0,**kwargs):
+		'''
+		creates a delayed load of length 'd'  and refelction coefficient
+		Gamma0, Network object
+		'''
+		ntwk = createNetwork.delay_load(d=d,tline=self.tline, \
+			frequency = self.f,Gamma0=Gamma0,**kwargs)
+		ntwk.frequency = self.frequency
+		return ntwk
+
 
 	def guess_length_of_delay_short(self, aNtwk):
 		raise NotImplementedError

@@ -21,7 +21,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-
+import numpy as npy
 
 def abc_2_coefs_dict(abc):
 	'''
@@ -56,3 +56,25 @@ def abc_2_coefs_dict(abc):
 		'source match':e11}
 	return coefsDict
 
+def guess_length_of_delay_short(self, aNtwk,tline):
+		'''
+		guess length of physical length of a Delay Short given by aNtwk
+		
+		takes:
+			aNtwk: a mwavepy.ntwk type . (note: if this is a measurment 
+				it needs to be normalized to the short plane
+			tline: transmission line class of the medium. needed for the 
+				calculation of propagation constant
+				
+		
+		'''
+		#TODO: re-write this and document better
+		
+		beta = real(tline.beta())
+		thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
+		
+		A = npy.vstack((-2*beta,npy.ones(len(beta)))).transpose()
+		B = thetaM
+		
+		#print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
+		return npy.linalg.lstsq(A, B)[0][0]
