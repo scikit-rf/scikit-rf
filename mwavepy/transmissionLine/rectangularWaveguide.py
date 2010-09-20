@@ -25,7 +25,7 @@ from numpy import sqrt,array, cos, sin, linspace
 
 from functions import electrical_length
 from functions import Gamma0_2_zin
-from mwavepy1 import mathFunctions as mf
+from .. import mathFunctions as mf
 
 import pdb
 class RectangularWaveguide(object):
