@@ -27,7 +27,6 @@ import touchstone
 import frequency
 import transmissionLine	
 import network
-import createNetwork
 import workingBand
 import constants
 import calibration
