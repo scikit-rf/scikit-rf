@@ -38,7 +38,8 @@ class Network(object):
 	def __init__(self, touchstone_file = None, name = None ):
 		'''
 		takes:
-			file: if given will load information from touchstone file 
+			file: if given will load information from touchstone file
+			name: name of this network. 
 		'''
 		# although meaningless untill set with real values, this
 		# needs this to exist for dependent properties
