@@ -21,97 +21,184 @@
 #       MA 02110-1301, USA.
 '''
 #import  mwavepy1 as mv1
+from copy import copy
+import numpy as npy
 
 from frequency import Frequency
-import createNetwork 
-
+from network import Network
 class WorkingBand(object):
 	## TODO: put docstrings in standard format of takes/returns
 	'''
 	A WorkingBand is an high-level object which exists solely to make 
-	 working of Networks more concise and convinient. 
+	 working with and creation of Networks within the same band,
+	 more concise and convenient. 
 	
 	A WorkingBand object has two properties: 
 		frequency information (Frequency object)
 		transmission line information	(transmission line-like object)
 		
-	as stated in parenthesis both of these properties are objects 
-	themselves. 
-	
-	
+
+	the methods of WorkingBand simply calls functions from createNetwork,
+	but it saves the user the hassle of repetitously providing a
+	tline and frequency type for every network creation. 	
+
+	note: frequency and tline classes are copied, so they are passed
+	by value and not by-reference.
 	'''
 	def __init__(self, frequency, tline):
 		self.frequency = frequency 
 		self.tline = tline
-		
+
+
+	## PROPERTIES	
 	@property
 	def frequency(self):
 		return self._frequency
 	@frequency.setter
 	def frequency(self,new_frequency):
-		self._frequency= new_frequency
-
-	@property
-	def f(self):
-		return self.frequency.f
-
+		self._frequency= copy( new_frequency)
 	@property
 	def tline(self):
 		return self._tline
 	@tline.setter
 	def tline(self,new_tline):
-		self._tline = new_tline
+		self._tline = copy(new_tline)
 		
-	# Network creation
+
+
+
+
+	## Network creation
 	def short(self,**kwargs):
 		'''
-		creates a delay short Network object
+		creates a Network for a short  transmission line (Gamma0=-1) 
+		
+		takes:
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, a short
 		'''
-		ntwk = createNetwork.short(self.f,**kwargs)
-		ntwk.frequency = self.frequency
-		return ntwk
+		result = Network(**kwargs)
+		result.frequency = self.frequency
+		result.s = -1.0*npy.ones(self.frequency.npoints, dtype=complex)
+		return result
+
+
 	def match(self,**kwargs):
 		'''
-		creates a perfect match Network object
+		creates a Network for a perfect matched transmission line (Gamma0=0) 
+		
+		takes:
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, representing a perfect match
 		'''
-		ntwk = createNetwork.match(self.f,**kwargs)
-		ntwk.frequency = self.frequency
-		return ntwk
+		result = Network(**kwargs)
+		result.frequency = self.frequency
+		result.s =  npy.zeros(self.frequency.npoints, dtype=complex)
+		return result
+
 	def open(self,**kwargs):
 		'''
-		creates a open Network object
+		creates a Network for a 'open' transmission line (Gamma0=1) 
+		
+		takes:
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, an open
 		'''
-		ntwk = createNetwork.open(self.f,**kwargs)
-		ntwk.frequency = self.frequency
-		return ntwk
+		result = Network(**kwargs)
+		result.frequency = self.frequency
+		result.s = 1.0*npy.ones(self.frequency.npoints, dtype=complex)
+		return result
+
+	def load(self,Gamma0,**kwargs):
+		'''
+		creates a Network for a Load termianting a transmission line 
+		
+		takes:
+			Gamma0: reflection coefficient of load (not in db)
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, where  S = Gamma0*ones(...)
+		'''
+		result = Network(**kwargs)
+		result.frequency = self.frequency
+		result.s = Gamma0*npy.ones(self.frequency.npoints, dtype=complex)
+		return result
+	
+
+
 	def line(self,d,**kwargs):
 		'''
-		creates a line of length 'd' Network object
+		creates a Network for a section of transmission line
+		
+		takes:
+			d: the length (in meters)
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 2-port Network class, representing a transmission line of length d
+	
+		note: the only function called from the tline class is
+		electrical_length(f,d), where f is frequency in Hz and d is
+		distance in meters. so you can use any class  which provides this
+		and it  will work .
 		'''
-		ntwk = createNetwork.delay(d=d, tline=self.tline, \
-			frequency=self.f,**kwargs )
-		ntwk.frequency = self.frequency
-		return ntwk
+
+		result = Network(**kwargs)
+		result.frequency = self.frequency
+		s11 = npy.zeros(self.frequency.npoints, dtype=complex)
+		s21 = npy.exp(1j* self.tline.electrical_length(f=self.frequency.f,d=d))
+		result.s = npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+		return result
 	
 	def delay_short(self,d,**kwargs):
 		'''
-		creates a delayed short of length 'd' Network object
+		creates a Network for a delayed short transmission line
+		
+		takes:
+			d: the length (in meters)
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, representing a shorted transmission
+			line of length d
 		'''
-		ntwk = createNetwork.delay_short(d=d,tline=self.tline, \
-			frequency = self.f,**kwargs)
-		ntwk.frequency = self.frequency
-		return ntwk
+		return self.line(d,**kwargs) ** self.short(**kwargs)
+	def delay_load(self,d,Gamma0,**kwargs):
+		'''
+		creates a Network for a delayed short transmission line
+		
+		takes:
+			d: the length (in meters)
+			Gamma0: reflection coefficient of load (not in dB)
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, representing a loaded transmission
+			line of length d
+		'''
+		return line(d,**kwargs) ** load(Gamma0,**kwargs)
+
 	def delay_load(self,d,Gamma0,**kwargs):
 		'''
 		creates a delayed load of length 'd'  and refelction coefficient
 		Gamma0, Network object
+
+		takes:
+			d: length of delay [m]
+			Gamma0: reflection coefficient [not dB]
+		returns:
+			Network object
 		'''
 		ntwk = createNetwork.delay_load(d=d,tline=self.tline, \
-			frequency = self.f,Gamma0=Gamma0,**kwargs)
+			f = self.f,Gamma0=Gamma0,**kwargs)
 		ntwk.frequency = self.frequency
 		return ntwk
 
 
+
+
+
+	## OTHER METHODS
 	def guess_length_of_delay_short(self, aNtwk):
 		raise NotImplementedError
 		'''

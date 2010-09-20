@@ -21,25 +21,25 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
+import numpy as npy
+import os 
+from copy import copy
+
 from calibrationAlgorithms import *
 from calibrationFunctions import *
 from frequency import *
 from network import *
-import numpy as npy
-import os 
 
 
 
 class Calibration(object):
 	'''
-	represents a calibration instance.
+	Represents a calibration instance, a generic class to hold sets
+	of measurements, ideals, and calibration results.
 
-	a generic class, to hold sets of measurements, ideals, and calibration
-	results.
-
-
-
-	all calibration algorithms are in calibrationAlgorithms.py
+	all calibration algorithms are in calibrationAlgorithms.py, and are
+	referenced by the dictionary in this object called
+	'calibration_algorihtm_dict'
 	'''
 	calibration_algorithm_dict={\
 		'one port': one_port,\
@@ -48,15 +48,53 @@ class Calibration(object):
 		}
 	
 	def __init__(self,frequency , type, name=None,  **kwargs):
-		self.frequency = frequency
+		'''
+		Calibration initializer
+		
+		takes:
+			frequency: a Frequency object over which the calibration
+				is defined
+
+			type: string representing what type of calibration is to be
+				performed. supported types at the moment are:
+
+				'one port':	standard one-port cal. if more than
+					2 measurement/ideal pairs are given it will
+					calculate the least squares solution.
+
+				'one port xds': self-calibration of a unknown-length
+					delay-shorts.
+
+			**kwargs: key-word arguments passed to teh calibration
+				algorithm.
+
+			name: name of calibration, just a handy identifing string
+		'''
+		self.frequency = coppy(frequency)
 		# a dictionary holding key word arguments to pass to whatever
 		# calibration function we are going to call
 		self.kwargs = kwargs
 		self.type = type
 		self.name = name
+
 	@property
 	def type (self):
+		'''
+		string representing what type of calibration is to be
+		performed. supported types at the moment are:
+
+		'one port':	standard one-port cal. if more than
+			2 measurement/ideal pairs are given it will
+			calculate the least squares solution.
+
+		'one port xds': self-calibration of a unknown-length
+			delay-shorts.
+
+		note:
+		algorithms referenced by  calibration_algorithm_dict 
+		'''
 		return self._type
+
 	@type.setter
 	def type(self, new_type):
 		if new_type not in self.calibration_algorithm_dict.keys():
@@ -66,7 +104,8 @@ class Calibration(object):
 	@property
 	def output_from_cal(self):
 		'''
-		a dictionary holding the output from the calibration algorithm
+		a dictionary holding all of the output from the calibration
+		algorithm
 		'''
 		
 		return self._output_from_cal
@@ -76,7 +115,7 @@ class Calibration(object):
 		'''
 		coefs: a dictionary holding the calibration coefficients
 
-		for one port 
+		for one port cal's
 			'directivity':e00
 			'reflection tracking':e01e10
 			'source match':e11
@@ -90,6 +129,10 @@ class Calibration(object):
 
 	@property
 	def error_ntwk(self):
+		'''
+		a Network type which represents the error network being
+		calibrated out.
+		'''
 		try:
 			return self._error_ntwk
 		except(AttributeError):
@@ -99,15 +142,46 @@ class Calibration(object):
 
 
 	def run(self):
+		'''
+		runs the calibration algorihtm. this is automatically called the
+		first time	any dependent property is referenced (like error_ntwk)
+		, but only the first time. if you change something and want to
+		re-run the calibration use this.  
+		'''
 		self._output_from_cal = self.calibration_algorithm_dict[self.type](**self.kwargs)
 		self._error_ntwk = self.calculate_error_ntwk()
 
 	def apply_cal(self,input_ntwk):
+		'''
+		apply the current calibration to a measurement.
+
+		takes:
+			input_ntwk: the measurement to apply the calibration to, a
+				Network type.
+		returns:
+			caled: the calibrated measurement, a Network type.
+		'''
 		caled =  input_ntwk//self.error_ntwk
 		caled.name = input_ntwk.name
 		return caled 
 
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
+		'''
+		convience function to apply calibration to an entire directory
+		of measurements, and return a dictionary of the calibrated
+		results, optionally the user can 'grep' the direction
+		by using the contains switch.
+
+		takes:
+			dir: directory of measurements (string)
+			contains: will only load measurements who's filename contains
+				this string.
+			f_unit: frequency unit, to use for all networks. see
+				frequency.Frequency.unit for info.
+		returns:
+			ntwkDict: a dictionary of calibrated measurements, the keys
+				are the filenames.
+		'''
 		ntwkDict = load_all_touchstones(dir=dir, contains=contains,\
 			f_unit=f_unit)
 
@@ -117,6 +191,19 @@ class Calibration(object):
 		return ntwkDict
 		
 	def calculate_error_ntwk(self):
+		'''
+		force the error network to be re-calculated.
+
+		this is usually called by 'run' which is automatically called
+		when the dependent properties of the calibration are referenced.
+		but you can call this manually if you want.
+
+
+		TODO: add a is_reciprocal switch, and an alorithm to guess at the
+		phase sign. 
+
+		'''
+		
 		if len (self.coefs.keys()) == 3:
 			# ASSERT: we have one port data
 			ntwk = Network()

@@ -118,7 +118,7 @@ class Network(object):
 		
 	def __sub__(self,other):
 		'''
-		element-wise addition of s-matrix
+		element-wise subtraction of s-matrix
 		'''
 		result = copy(self)
 		result.s = result.s - other.s
@@ -575,7 +575,7 @@ class Network(object):
 # functions operating on Network[s]
 def average(list_of_networks):
 	'''
-	complex average of a list of Networks
+	complex average of the s-parameters list of Networks
 	'''
 	out_ntwk = copy(list_of_networks[0])
 	
