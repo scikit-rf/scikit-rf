@@ -20,12 +20,15 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-#import  mwavepy1 as mv1
+
 from copy import copy
 import numpy as npy
 
 from frequency import Frequency
 from network import Network
+
+
+
 class WorkingBand(object):
 	## TODO: put docstrings in standard format of takes/returns
 	'''

@@ -18,7 +18,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-from mwavepy1.transmissionLine.genericTEM import GenericTEM
+from genericTEM import GenericTEM
 class Coax(GenericTEM):
 	def __init__(self, innerRadius, outerRadius, surfaceResistance=0, relative_permativity=1, relative_permeability=1):
 		raise(NotImplementedError)

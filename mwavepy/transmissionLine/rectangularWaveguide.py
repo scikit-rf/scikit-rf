@@ -23,8 +23,8 @@ from scipy.constants import  epsilon_0, mu_0, c,pi, mil,pi
 import numpy as npy
 from numpy import sqrt,array, cos, sin, linspace
 
-from mwavepy1.transmissionLine.functions import electrical_length
-from mwavepy1.transmissionLine.functions import Gamma0_2_zin
+from functions import electrical_length
+from functions import Gamma0_2_zin
 from mwavepy1 import mathFunctions as mf
 
 import pdb

@@ -18,8 +18,8 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-from mwavepy1.transmissionLine.rectangularWaveguide import RectangularWaveguide
-from mwavepy1.transmissionLine.functions import electrical_length
+from rectangularWaveguide import RectangularWaveguide
+from functions import electrical_length
 
 class RectangularWaveguideTE10(RectangularWaveguide):
 	def __init__(self, a,b=None,epsilon_R=1, mu_R=1):

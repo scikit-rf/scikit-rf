@@ -22,7 +22,7 @@ import numpy as npy
 from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
 	 interp, linspace, shape,zeros, reshape
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil,pi
-from  mwavepy1.transmissionLine.genericTEM import GenericTEM
+from genericTEM import GenericTEM
 
 class FreeSpace(GenericTEM):
 	'''

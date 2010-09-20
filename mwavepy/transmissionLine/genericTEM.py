@@ -24,7 +24,7 @@ import numpy as npy
 from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
 	 interp, linspace, shape,zeros, reshape
 
-from mwavepy1.transmissionLine.functions import * 
+from functions import * 
 	
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
