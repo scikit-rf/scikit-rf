@@ -43,8 +43,8 @@ class RectangularWaveguideTE10(RectangularWaveguide):
 	def kz(self, f, *args):
 		'''
 		the propagation constant, which is:
-			IMAGINARY  for propagating modes, 
-			REAL for non-propagating modes
+			REAL  for propagating modes, 
+			IMAGINARY for non-propagating modes
 		
 		takes:
 			f: frequency [Hz]
@@ -66,6 +66,7 @@ class RectangularWaveguideTE10(RectangularWaveguide):
 			f: frequency [Hz]	
 		'''
 		return 1./(self.characteristic_impedance(f))
+	
 	def electrical_length(self, f,d,deg=False):
 		'''
 		calculate electrical length of a section fo waveguide.

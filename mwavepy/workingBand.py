@@ -26,7 +26,7 @@ import numpy as npy
 
 from frequency import Frequency
 from network import Network
-
+from transmissionLine.functions import electrical_length
 
 
 class WorkingBand(object):
@@ -143,15 +143,24 @@ class WorkingBand(object):
 			a 2-port Network class, representing a transmission line of length d
 	
 		note: the only function called from the tline class is
-		electrical_length(f,d), where f is frequency in Hz and d is
+		propagation_constant(f,d), where f is frequency in Hz and d is
 		distance in meters. so you can use any class  which provides this
 		and it  will work .
 		'''
 
 		result = Network(**kwargs)
 		result.frequency = self.frequency
+		
+		f= self.frequency.f
+		
+		# calculate a propagation constant
+		gamma = self.tline.propagation_constant(f=f)
+		
+		# calculate the electrical length
+		theta = electrical_length(gamma=gamma, f= f, d = d)
+		
 		s11 = npy.zeros(self.frequency.npoints, dtype=complex)
-		s21 = npy.exp(1j* self.tline.electrical_length(f=self.frequency.f,d=d))
+		s21 = npy.exp(1j* theta)
 		result.s = npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 		return result
 	
@@ -203,19 +212,18 @@ class WorkingBand(object):
 
 	## OTHER METHODS
 	def guess_length_of_delay_short(self, aNtwk):
-		raise NotImplementedError
 		'''
 		guess length of physical length of a Delay Short given by aNtwk
 		
 		takes:
 			aNtwk: a mwavepy.ntwk type . (note: if this is a measurment 
-				it needs to be normalized to the short plane
+				it needs to be normalized to the reference plane)
 			tline: transmission line class of the medium. needed for the 
 				calculation of propagation constant
 				
 		
 		'''
-		beta = real(self.tline.beta())
+		beta = npy.real(self.tline.propagation_constant())
 		thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
 		
 		A = npy.vstack((-2*beta,npy.ones(len(beta)))).transpose()
