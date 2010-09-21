@@ -21,14 +21,16 @@
 #       MA 02110-1301, USA.
 '''
 
+from copy import copy
+import os
+
+import numpy as npy
+import pylab as plb 
+
 import  mathFunctions as mf
 import touchstone
 from frequency import Frequency
 
-import os
-import numpy as npy
-import pylab as plb 
-from copy import copy
 
 
 class Network(object):
@@ -172,6 +174,16 @@ class Network(object):
 			return (1-self.s)/(1+self.s)
 		else:
 			raise(NotImplementedError)
+	
+	# t-parameters
+	@property
+	def t(self):
+		'''
+		returns the t-parameters, which are also known as wave cascading
+		matrix. 
+		'''
+		return s2t(self.s)
+		
 	# frequency information
 	@property
 	def frequency(self):
@@ -185,7 +197,7 @@ class Network(object):
 		'''
 		takes a Frequency object, see  frequency.py
 		'''
-		self._frequency= new_frequency
+		self._frequency= copy(new_frequency)
 
 	
 	@property
@@ -323,7 +335,7 @@ class Network(object):
 			HZ S RI 
 		
 		takes: 
-			filename - filename , duh
+			filename - filename (not including extension)
 			
 		
 		note:
@@ -336,7 +348,7 @@ class Network(object):
 		if filename is None and self.name is not None:
 			filename= self.name
 
-		filename= filename + 's'+str(self.number_of_ports)+'p'
+		filename= filename + '.s'+str(self.number_of_ports)+'p'
 		outputFile = open(filename,"w")
 		
 		# write header file. 
@@ -680,6 +692,7 @@ def de_embed(a,b):
 		BE AWARE! this relies on s2t function which has a inf problem 
 		if s11 or s22 is 1. 
 	'''
+	# TODO: re-write this and make more efficient/concise
 	c = copy(a)
 	
 	if len (b.shape) > 2 :
@@ -691,8 +704,11 @@ def de_embed(a,b):
 				c[f,:,:] = de_embed(a[f,:,:],b[f,:,:])
 	
 	elif b.shape == (2,2):
-		c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), \
-			s2t(npy.array([[a.squeeze(),1.],[1.,0.]]))))[0,0]
+		if a.shape == (2,2):
+			c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), s2t(a)))
+		else:
+			c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), \
+				s2t(npy.array([[a.squeeze(),1.],[1.,0.]]))))[0,0]
 	else:
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return c

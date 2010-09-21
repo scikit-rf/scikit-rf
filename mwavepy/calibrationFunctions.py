@@ -22,7 +22,7 @@
 #       MA 02110-1301, USA.
 '''
 import numpy as npy
-
+from network import Network
 def abc_2_coefs_dict(abc):
 	'''
 	converts an abc ndarry to a dictionarry containing the error 
@@ -56,7 +56,7 @@ def abc_2_coefs_dict(abc):
 		'source match':e11}
 	return coefsDict
 
-def guess_length_of_delay_short(self, aNtwk,tline):
+def guess_length_of_delay_short( aNtwk,tline):
 		'''
 		guess length of physical length of a Delay Short given by aNtwk
 		
@@ -78,3 +78,42 @@ def guess_length_of_delay_short(self, aNtwk,tline):
 		
 		#print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
 		return npy.linalg.lstsq(A, B)[0][0]
+
+
+
+def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
+		'''
+		convert a dictionary holding standard error terms to a Network
+		object. 
+		
+		takes:
+		
+		returns:
+		
+
+		'''
+		
+		if len (coefs.keys()) == 3:
+			# ASSERT: we have one port data
+			ntwk = Network(**kwargs)
+			
+			if frequency is not None:
+				ntwk.frequency = frequency
+				
+			if is_reciprocal:
+				#TODO: make this better and maybe have a phase continuity
+				# functionality
+				tracking  = coefs['reflection tracking'] 
+				s12 = npy.sqrt(tracking)
+				s21 = npy.sqrt(tracking)
+				
+			else:
+				s21 = coefs['reflection tracking'] 
+				s12 = npy.ones(len(s21), dtype=complex)
+			
+			s11 = coefs['directivity'] 
+			s22 = coefs['source match']
+			ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
+			return ntwk
+		else:
+			raise NotImplementedError('sorry')

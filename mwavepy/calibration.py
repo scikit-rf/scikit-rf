@@ -47,7 +47,8 @@ class Calibration(object):
 		'one port xds_xdl':xds_xdl,\
 		}
 	
-	def __init__(self,frequency , type, name=None,  **kwargs):
+	def __init__(self,frequency , type, name=None,is_reciprocal=False,\
+		**kwargs):
 		'''
 		Calibration initializer
 		
@@ -69,14 +70,18 @@ class Calibration(object):
 				algorithm.
 
 			name: name of calibration, just a handy identifing string
+			is_reciprocal: enables the reciprocity assumption on 
+				calculated error network
 		'''
-		self.frequency = coppy(frequency)
+		self.frequency = copy(frequency)
 		# a dictionary holding key word arguments to pass to whatever
 		# calibration function we are going to call
 		self.kwargs = kwargs
 		self.type = type
 		self.name = name
+		self.is_reciprocal = is_reciprocal
 
+	## properties
 	@property
 	def type (self):
 		'''
@@ -138,19 +143,24 @@ class Calibration(object):
 		except(AttributeError):
 			self.run()
 			return self._error_ntwk
-		
 
-
+	##  methods for manual control of internal calculations
 	def run(self):
 		'''
-		runs the calibration algorihtm. this is automatically called the
+		runs the calibration algorihtm.
+		
+		 this is automatically called the
 		first time	any dependent property is referenced (like error_ntwk)
 		, but only the first time. if you change something and want to
 		re-run the calibration use this.  
 		'''
-		self._output_from_cal = self.calibration_algorithm_dict[self.type](**self.kwargs)
-		self._error_ntwk = self.calculate_error_ntwk()
+		self._output_from_cal = self.calibration_algorithm_dict[self.type]\
+			(**self.kwargs)
+		self._error_ntwk = error_dict_2_network(self.coefs, \
+			frequency=self.frequency, is_reciprocal=self.is_reciprocal)
+	
 
+	## methods 
 	def apply_cal(self,input_ntwk):
 		'''
 		apply the current calibration to a measurement.
@@ -190,32 +200,6 @@ class Calibration(object):
 		
 		return ntwkDict
 		
-	def calculate_error_ntwk(self):
-		'''
-		force the error network to be re-calculated.
-
-		this is usually called by 'run' which is automatically called
-		when the dependent properties of the calibration are referenced.
-		but you can call this manually if you want.
-
-
-		TODO: add a is_reciprocal switch, and an alorithm to guess at the
-		phase sign. 
-
-		'''
-		
-		if len (self.coefs.keys()) == 3:
-			# ASSERT: we have one port data
-			ntwk = Network()
-			ntwk.frequency = self.frequency
-			
-			s12 = npy.ones(self.frequency.npoints, dtype=complex)
-			s21 = self.coefs['reflection tracking'] 
-			s11 = self.coefs['directivity'] 
-			s22 = self.coefs['source match']
-			ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
-			return ntwk
-		else:
-			raise NotImplementedError('sorry')
+	
 	#def plot_error_coefs(self):
 		
