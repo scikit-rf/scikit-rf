@@ -153,8 +153,8 @@ class WorkingBand(object):
 		
 		f= self.frequency.f
 		
-		# calculate a propagation constant
-		gamma = self.tline.propagation_constant(f=f)
+		# propagation constant function
+		gamma = self.tline.propagation_constant
 		
 		# calculate the electrical length
 		theta = electrical_length(gamma=gamma, f= f, d = d)
