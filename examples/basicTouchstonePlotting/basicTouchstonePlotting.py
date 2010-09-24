@@ -4,7 +4,7 @@ and then plot some common quantities.
 '''
 import sys
 sys.path.append('../../')
-import mwavepy1 as mvy
+import mwavepy as mvy
 import pylab
 
 
