@@ -33,12 +33,11 @@ In the manual,
 '''
 
 import numpy as np
-
 import visa
 
-class VNA(object):
-	def __init__(self,address='GPIB::20'):
-		self.vna=visa.instrument(address)
+class ZVA40(object):
+	def __init__(self,address=20, **kwargs):
+		self.vna=visa.instrument('GPIB::'+str(address),**kwargs)
 		self.spara=np.array([],dtype=complex)
 		
 	def continuousOFF(self):
