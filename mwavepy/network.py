@@ -34,11 +34,37 @@ from frequency import Frequency
 
 
 class Network(object):
+	'''
+	Represents a n-port microwave network.
 
+	the most fundemental properties are:
+		s: scattering matrix. a kxnxn complex matrix where 'n' is number
+			of ports of network.
+		z0: characteristic impedance
+		f: frequency vector in Hz. see also frequency, which is a
+			Frequency object (see help on this class for more info)
+		
+	
+	The following operators are defined as follows:
+		'+' : element-wise addition of the s-matrix
+		'-' : element-wise subtraction of the s-matrix
+		'*' : element-wise multiplication of the s-matrix
+		'/' : element-wise division of the s-matrix
+		'**': cascading of two networks
+		'//': de-embdeding of one network from the other.
+
+	various other network properties are accesable as well as plotting
+	routines are also defined for convenience, 
+	
+	most properties are derived from the specifications given for
+	touchstone files. 
+	'''
 
 ## CONSTRUCTOR
 	def __init__(self, touchstone_file = None, name = None ):
 		'''
+		constructor.
+		
 		takes:
 			file: if given will load information from touchstone file
 			name: name of this network. 
@@ -77,6 +103,8 @@ class Network(object):
 			return result
 		else:
 			raise IndexError('Incorrect number of ports.')
+
+
 	def __floordiv__(self,other):
 		'''
 		 implements de-embeding another network[s], from this network
@@ -104,6 +132,8 @@ class Network(object):
 			return result
 		else:
 			raise IndexError('Incorrect number of ports.')
+
+
 	def __mul__(self,a):
 		'''
 		element-wise complex multiplication  of s-matrix
@@ -111,6 +141,8 @@ class Network(object):
 		result = copy(self)
 		result.s = result.s * a.s
 		return result
+
+
 	def __add__(self,other):
 		'''
 		element-wise addition of s-matrix
@@ -119,6 +151,7 @@ class Network(object):
 		result.s = result.s + other.s
 		return result
 		
+
 	def __sub__(self,other):
 		'''
 		element-wise subtraction of s-matrix
@@ -126,6 +159,8 @@ class Network(object):
 		result = copy(self)
 		result.s = result.s - other.s
 		return result
+
+
 	def __div__(self,other):
 		'''
 		element-wise complex division  of s-matrix
@@ -211,30 +246,6 @@ class Network(object):
 		self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
 		self._frequency.unit = tmpUnit
 	
-	#@property
-	#def f_unit(self):
-		#'''
-		#The unit to format the frequency axis in. see formatedAxis
-		#'''
-		#return self.frequency.f_unit
-	#@f_unit.setter
-	#def f_unit(self,f_unit):
-		#self._frequency.unit = f_unit
-	
-	#@property
-	#def f_multiplier(self):
-		#'''
-		#multiplier for formating axis
-		#'''
-		#return self.frequency.multiplier
-	#@property
-	#def f_scaled(self):
-		#'''
-		#The unit to format the frequency axis in. see formatedAxis
-		#'''
-		#return self._frequency.f_scaled
-
-
 
 	
 	# characteristic impedance
@@ -378,9 +389,13 @@ class Network(object):
 			outputFile.write('\n')
 		
 		outputFile.close()
+
+
 	# self-modifications
 	def interpolate(self):
 		raise NotImplementedError
+
+
 	def flip(self):
 		'''
 		swaps the ports of a two port 
@@ -389,174 +404,161 @@ class Network(object):
 			self.s = flip(self.s)
 		else:
 			raise ValueError('you can only flip two-port Networks')
-	# ploting 
-	def plot_s_db(self,m=0, n=0, ax = None, **kwargs):
-		'''
-		plots the scattering parameter of  indecie m, n in log magnitude
-		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot. 
-			**kwargs - passed to the matplotlib.plot command
-		'''
-		
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
-		# set the legend label for this trace to the networks name if it
-		# exists 
-		if self.name is None:
-			label_string = 'S'+repr(m+1) + repr(n+1)
-		else:
-			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
-		
-		ax.plot(self.frequency.f_scaled, self.s_db[:,m,n],\
-			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Magnitude [dB]')
-		plb.legend()
-		
-	def plot_s_mag(self,m=0, n=0, ax = None, **kwargs):
-		'''
-		plots the scattering parameter of  indecie m, n in magnitude
-		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you 
-				want to update an existing plot. 
-			**kwargs - passed to the matplotlib.plot command
-		'''
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
-		# set the legend label for this trace to the networks name if it
-		# exists 
-		if self.name is None:
-			label_string = 'S'+repr(m+1) + repr(n+1)
-		else:
-			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
-		
-		ax.plot(self.frequency.f_scaled, self.s_mag[:,m,n],\
-			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Magnitude')
-		plb.legend()
-				
-	def plot_s_deg(self,m=0, n=0, ax = None, **kwargs):
-		'''
-		plots the scattering parameter of indecie m, n in degrees
-		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot. 
-			**kwargs - passed to the matplotlib.plot command
-		'''
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
-		# set the legend label for this trace to the networks name if it
-		# exists 
-		if self.name is None:
-			label_string = 'S'+repr(m+1) + repr(n+1)
-		else:
-			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
-		
-		ax.plot(self.frequency.f_scaled, self.s_deg[:,m,n],\
-			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Phase [deg]')
-		plb.legend()
-		
-	def plot_s_deg_unwrapped(self,m=0, n=0, ax = None, **kwargs):
-		'''
-		plots the scattering parameter of  indecie m, n in unwrapped degrees
-		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you 
-				want to update an existing plot. 
-			**kwargs - passed to the matplotlib.plot command
-		'''
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
-		# set the legend label for this trace to the networks name if it
-		# exists 
-		if self.name is None:
-			label_string = 'S'+repr(m+1) + repr(n+1)
-		else:
-			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
-		
-		ax.plot(self.frequency.f_scaled, self.s_deg_unwrap[:,m,n],\
-			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Phase [deg]')
-		plb.legend()
-		
-	def plot_s_rad(self,m=0, n=0, ax = None, **kwargs):
-		'''
-		plots the scattering parameter of  indecie m, n in radians
-		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you 
-				want to update an existing plot. 
-			**kwargs - passed to the matplotlib.plot command
-		'''
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
-		# set the legend label for this trace to the networks name if it
-		# exists 
-		if self.name is None:
-			label_string = 'S'+repr(m+1) + repr(n+1)
-		else:
-			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
-		
-		ax.plot(self.frequency.f_scaled, self.s_rad[:,m,n],\
-			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Phase [deg]')
-		plb.legend()	
-		
-	def plot_s_rad_unwrapped(self,m=0, n=0, ax = None, **kwargs):
-		'''
-		plots the scattering parameter of  indecie m, n in unwrapped radians
-		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you 
-				want to update an existing plot. 
-			**kwargs - passed to the matplotlib.plot command
-		'''
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
-		# set the legend label for this trace to the networks name if it
-		# exists 
-		if self.name is None:
-			label_string = 'S'+repr(m+1) + repr(n+1)
-		else:
-			 label_string = self.name+', S'+repr(m+1) + repr(n+1)
-		
-		ax.plot(self.frequency.f_scaled, self.s_rad_unwrap[:,m,n],\
-			label=label_string, **kwargs)
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Phase [deg]')
-		plb.legend()
 
-	
-	
-	
-	
+
+	# ploting
+
+	def plot_vs_frequency_generic (self,attribute,y_label=None,\
+		m=0,n=0, ax=None,show_legend=True,**kwargs):
+		'''
+		generic plotting function for plotting a Network's attribute
+		vs frequency.
+		
+
+		takes:
+
+		
+		'''
+
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+			
+		# set the legend label for this trace to the networks name if it
+		# exists, and they didnt pass a name key in the kwargs
+		if 'label'  not in kwargs.keys(): 
+			if self.name is None:
+				if plb.rcParams['text.usetex']:
+					label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
+				else:
+					label_string = 'S'+repr(m+1) + repr(n+1)
+			else:
+				if plb.rcParams['text.usetex']:
+					label_string = self.name+', $S_{'+repr(m+1) + \
+						repr(n+1)+'}$'
+				else:
+					label_string = self.name+', S'+repr(m+1) + repr(n+1)
+
+			kwargs['label'] = label_string
+			
+		# plot the desired attribute vs frequency 
+		ax.plot(self.frequency.f_scaled, getattr(self, attribute)[:,m,n],\
+			 **kwargs)
+
+		# label axis
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
+		plb.ylabel(y_label)
+
+		#draw legend
+		if show_legend:
+			plb.legend()
+		
+		
+	def plot_s_db(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+		'''
+		plots the magnitude of the scattering parameter of indecies m, n
+		in log magnitude
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_db',\
+			y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
+			show_legend = show_legend,**kwargs)
+
+	def plot_s_mag(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+		'''
+		plots the magnitude of a scattering parameter of indecies m, n
+		not in  magnitude
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_mag',\
+			y_label='Magnitude [not dB]', m=m,n=n, ax=ax,\
+			show_legend = show_legend,**kwargs)
+
+	def plot_s_deg(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+		'''
+		plots the phase of a scattering parameter of indecies m, n in
+		degrees
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_deg',\
+			y_label='Phase [deg]', m=m,n=n, ax=ax,\
+			show_legend = show_legend,**kwargs)
+		
+				
+	def plot_s_deg_unwrapped(self,m=0, n=0, ax = None, show_legend=True,\
+		**kwargs):
+		'''
+		plots the phase of a scattering parameter of indecies m, n in
+		unwrapped degrees
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_deg_unwrap',\
+			y_label='Phase [deg]', m=m,n=n, ax=ax,\
+			show_legend = show_legend,**kwargs)
+	def plot_s_rad(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+		'''
+		plots the phase of a scattering parameter of indecies m, n in
+		radians
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_rad',\
+			y_label='Phase [rad]', m=m,n=n, ax=ax,\
+			show_legend = show_legend,**kwargs)
+		
+				
+	def plot_s_rad_unwrapped(self,m=0, n=0, ax = None, show_legend=True,\
+		**kwargs):
+		'''
+		plots the phase of a scattering parameter of indecies m, n in
+		unwrapped radians
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_rad_unwrap',\
+			y_label='Phase [rad]', m=m,n=n, ax=ax,\
+			show_legend = show_legend,**kwargs)	
+
 
 	def plot_s_polar(self,m=0, n=0, ax = None, **kwargs):
 		'''
