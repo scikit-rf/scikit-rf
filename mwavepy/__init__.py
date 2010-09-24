@@ -21,8 +21,7 @@
 #       MA 02110-1301, USA.
 '''
 
-## Internal imports
-
+## Import all  module names for coherent reference of name-space
 import touchstone 	
 import frequency
 import transmissionLine	
@@ -31,4 +30,12 @@ import workingBand
 import constants
 import calibration
 import convenience
-import testCases
+
+# Import contents into current namespace for ease of calling 
+from frequency import * 
+from transmissionLine import * 
+from network import * 
+from workingBand import * 
+from constants import * 
+from calibration import * 
+from convenience import * 
