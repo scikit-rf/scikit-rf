@@ -27,7 +27,6 @@ import frequency
 import transmissionLine	
 import network
 import workingBand
-import constants
 import calibration
 import convenience
 
@@ -36,7 +35,6 @@ from frequency import *
 from transmissionLine import * 
 from network import * 
 from workingBand import * 
-from constants import * 
 from calibration import * 
 from convenience import * 
 
