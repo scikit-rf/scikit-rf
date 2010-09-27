@@ -39,3 +39,11 @@ from workingBand import *
 from constants import * 
 from calibration import * 
 from convenience import * 
+
+
+# Try to import virtualInstruments, but if except if pyvisa not installed
+try:
+	import virtualInstruments
+	from virtualInstruments import *
+except(ImportError):
+	print '\nWARNING: pyvisa not installed, virtual instruments will not be available\n'

@@ -25,5 +25,4 @@ from  rectangularWaveguideTE10 import RectangularWaveguideTE10
 
 # for convinience 
 
-wg = RectangularWaveguideTE10
 #__all__=['genericTEM', 'freeSpace','rectangularWaveguide','rectangularWaveguideTE10']
