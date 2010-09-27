@@ -29,6 +29,7 @@ import network
 import workingBand
 import calibration
 import convenience
+import plotting
 
 # Import contents into current namespace for ease of calling 
 from frequency import * 
@@ -37,7 +38,7 @@ from network import *
 from workingBand import * 
 from calibration import * 
 from convenience import * 
-
+from plotting import  * 
 
 # Try to import virtualInstruments, but if except if pyvisa not installed
 try:

@@ -453,6 +453,46 @@ class Network(object):
 		if show_legend:
 			plb.legend()
 		
+	def plot_polar_generic (self,attribute_r, attribute_theta,	m=0,n=0,\
+		ax=None,show_legend=True,**kwargs):
+		'''
+		generic plotting function for plotting a Network's attribute
+		in polar form
+		
+
+		takes:
+			
+		
+		'''
+
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca(polar=True)
+			
+		# set the legend label for this trace to the networks name if it
+		# exists, and they didnt pass a name key in the kwargs
+		if 'label'  not in kwargs.keys(): 
+			if self.name is None:
+				if plb.rcParams['text.usetex']:
+					label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
+				else:
+					label_string = 'S'+repr(m+1) + repr(n+1)
+			else:
+				if plb.rcParams['text.usetex']:
+					label_string = self.name+', $S_{'+repr(m+1) + \
+						repr(n+1)+'}$'
+				else:
+					label_string = self.name+', S'+repr(m+1) + repr(n+1)
+
+			kwargs['label'] = label_string
+			
+		#TODO: fix this to call from ax, if possible
+		plb.polar(getattr(self, attribute_r)[:,m,n],\
+			getattr(self, attribute_theta)[:,m,n],**kwargs)
+
+		#draw legend
+		if show_legend:
+			plb.legend()	
 		
 	def plot_s_db(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
 		'''
@@ -575,48 +615,21 @@ class Network(object):
 		self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
 			m=m,n=n, ax=ax,	show_legend = show_legend,**kwargs)	
 
-
-
-	def plot_polar_generic (self,attribute_r, attribute_theta,	m=0,n=0,\
-		ax=None,show_legend=True,**kwargs):
+	def plot_s_smith(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
 		'''
-		generic plotting function for plotting a Network's attribute
-		in polar form
+		plots the scattering parameter of indecies m, n on smith chart
 		
-
 		takes:
-			
-		
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command	
 		'''
 
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca(polar=True)
-			
-		# set the legend label for this trace to the networks name if it
-		# exists, and they didnt pass a name key in the kwargs
-		if 'label'  not in kwargs.keys(): 
-			if self.name is None:
-				if plb.rcParams['text.usetex']:
-					label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
-				else:
-					label_string = 'S'+repr(m+1) + repr(n+1)
-			else:
-				if plb.rcParams['text.usetex']:
-					label_string = self.name+', $S_{'+repr(m+1) + \
-						repr(n+1)+'}$'
-				else:
-					label_string = self.name+', S'+repr(m+1) + repr(n+1)
 
-			kwargs['label'] = label_string
-			
-		#TODO: fix this to call from ax, if possible
-		plb.polar(getattr(self, attribute_r)[:,m,n],\
-			getattr(self, attribute_theta)[:,m,n],**kwargs)
 
-		#draw legend
-		if show_legend:
-			plb.legend()	
 ## FUNCTIONS
 # functions operating on Network[s]
 def average(list_of_networks):
