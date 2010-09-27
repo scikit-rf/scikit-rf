@@ -1,5 +1,13 @@
 '''
 #       convenience.py
+#
+#	Holds pre-initialized  class's and functions which provide convience.
+#	Pre-initialized classes include:
+#		Standard waveguide bands
+#			- Freqency Objects (f_*)
+#			- RectangularWaveguideTE10 Objects	(wr_*)
+#			- WorkingBand Objects	(wb_*)
+#
 #       
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -21,10 +29,38 @@
 #       MA 02110-1301, USA.
 '''
 
-import pylab as plb
-import os
-from network import *
 
+
+
+from network import *
+from transmissionLine import RectangularWaveguideTE10
+from frequency import Frequency
+from workingBand import WorkingBand
+
+
+import os
+import pylab as plb
+from scipy.constants import mil
+
+
+## sets of Frequency,RectangularWaveguideTE10, and WorkingBand objects,
+## which correspond to designated waveguide bands
+
+# WR-1.5 
+f_wr1p5 = Frequency(500,750,201, 'ghz')
+wg_wr1p5 = RectangularWaveguideTE10(1.5*10*mil)
+wb_wr1p5 = WorkingBand(frequency = f_wr1p5, tline = wg_wr1p5)
+
+# WR-3
+f_wr3 = Frequency(500,750,201, 'ghz')
+wg_wr3 = RectangularWaveguideTE10(3*10*mil)
+wb_wr1p5 = WorkingBand(frequency = f_wr3, tline = wg_wr3)
+
+
+
+
+## Functions
+# Ploting
 def save_all_figs(dir = './', format=['eps','pdf','png']):
 	if dir[-1] != '/':
 		dir = dir + '/'
@@ -36,7 +72,8 @@ def save_all_figs(dir = './', format=['eps','pdf','png']):
 		for fmt in format:
 			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
 			print (dir+fileName+'.'+fmt)
-		
+
+# Touchstone manipulation	
 def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 	'''
 	loads all touchtone files in a given dir 
