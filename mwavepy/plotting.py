@@ -21,7 +21,7 @@
 import pylab as plb
 import numpy as npy
 from matplotlib.patches import Circle 	# for drawing smith chart
-from matplotlib.lines import Line2D		# for drawing smith chart
+#from matplotlib.lines import Line2D		# for drawing smith chart
 
 
 
@@ -30,8 +30,9 @@ def smith(smithR=1,ax=None):
 	plots the smith chart of a given radius
 	takes:
 		smithR - radius of smith chart
+		ax - matplotlib.axes instance 
 	'''
-	
+	##TODO: fix this function so it doesnt suck
 	if ax == None:
 		ax1 = plb.gca()
 	else:
@@ -77,8 +78,6 @@ def smith(smithR=1,ax=None):
 		contour.append( Circle( center, radius, ec='black',fc = 'none'))
 	
 	#draw x and y axis
-	#contour.append(Line2D([-smithR, smithR],[0,0],color='black'))
-	#contour.append(Line2D([1,1],[-smithR,smithR],color='black'))
 	ax1.axhline(0, color='k')
 	ax1.axvline(1, color='k')
 	ax1.grid(0)
@@ -88,10 +87,8 @@ def smith(smithR=1,ax=None):
 	
 	# loop though contours and draw them on the given axes
 	for currentContour in contour:
-		if isinstance(currentContour, Circle):
-			ax1.add_patch(currentContour)
-		elif isinstance(currentContour, Line2D):
-			ax1.add_line(currentContour)
+		ax1.add_patch(currentContour)
+
 
 
 

@@ -30,7 +30,7 @@ import pylab as plb
 import  mathFunctions as mf
 import touchstone
 from frequency import Frequency
-
+from plotting import smith
 
 
 class Network(object):
@@ -615,18 +615,51 @@ class Network(object):
 		self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
 			m=m,n=n, ax=ax,	show_legend = show_legend,**kwargs)	
 
-	def plot_s_smith(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+	def plot_s_smith(self,m=0, n=0,r=1,ax = None, show_legend=True,**kwargs):
 		'''
 		plots the scattering parameter of indecies m, n on smith chart
 		
 		takes:
 			m - first index, int
 			n - second indext, int
+			r -  radius of smith chart
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command	
+			**kwargs - passed to thematplotlib.plot command	
 		'''
+		# TODO: prevent this from re-drawing smith chart if one alread
+		# exists on current set of axes
+
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+			
+		# set the legend label for this trace to the networks name if it
+		# exists, and they didnt pass a name key in the kwargs
+		if 'label'  not in kwargs.keys(): 
+			if self.name is None:
+				if plb.rcParams['text.usetex']:
+					label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
+				else:
+					label_string = 'S'+repr(m+1) + repr(n+1)
+			else:
+				if plb.rcParams['text.usetex']:
+					label_string = self.name+', $S_{'+repr(m+1) + \
+						repr(n+1)+'}$'
+				else:
+					label_string = self.name+', S'+repr(m+1) + repr(n+1)
+
+			kwargs['label'] = label_string
+			
+		# plot the desired attribute vs frequency 
+		smith(ax=ax, smithR = r)
+		ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
+		
+		#draw legend
+		if show_legend:
+			plb.legend()
+		ax.axis(npy.array([-1,1,-1,1])*r)
 
 
 
