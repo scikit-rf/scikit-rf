@@ -27,7 +27,7 @@ from visa import instrument
 from ..frequency import *
 from ..network import * 
 
-class ZVA40_alex(object, instrument):
+class ZVA40_alex(instrument):
     '''
      zva40
     '''
