@@ -27,90 +27,90 @@ from visa import instrument
 from ..frequency import *
 from ..network import * 
 
-class ZVA40_alex(instrument):
-    '''
-     zva40
-    '''
-    def __init__(self, address=20, channel=1,**kwargs):
-	instrument.__init__('GPIB::'+str(address),**kwargs)
-	self.channel=channel
+#class ZVA40_alex(instrument):
+    #'''
+     #zva40
+    #'''
+    #def __init__(self, address=20, channel=1,**kwargs):
+	#instrument.__init__('GPIB::'+str(address),**kwargs)
+	#self.channel=channel
 
     
-    @property
-    def f(self):
-	return npy.array(self.ask_for_values( \
-	    'CALCulate'+repr(self.channel)+':DATA:STIMulus?'))
+    #@property
+    #def f(self):
+	#return npy.array(self.ask_for_values( \
+	    #'CALCulate'+repr(self.channel)+':DATA:STIMulus?'))
 
-    @property
-    def frequency(self):
-	return f_2_frequency(self.f)
-    @property
-    def s(self):
-	return self.get_s()
+    #@property
+    #def frequency(self):
+	#return f_2_frequency(self.f)
+    #@property
+    #def s(self):
+	#return self.get_s()
 
 
 
-    @property
-    def continuous_sweep(self):
-	raise NotImplementedError
-	#somthing like this
-	return self.ask('initiate:continuous ON')
-    @continuous_sweep.setter
-    def continuous_sweep(self, input):
-	if input==True:
-	    self.write('initiate:continuous ON')
-	elif input==False:
-	    self.write('initiate:continuous OFF')
-	else:
-	    raise ValueError ('input should be True or False')
+    #@property
+    #def continuous_sweep(self):
+	#raise NotImplementedError
+	##somthing like this
+	#return self.ask('initiate:continuous ON')
+    #@continuous_sweep.setter
+    #def continuous_sweep(self, input):
+	#if input==True:
+	    #self.write('initiate:continuous ON')
+	#elif input==False:
+	    #self.write('initiate:continuous OFF')
+	#else:
+	    #raise ValueError ('input should be True or False')
 
-    def get_data(self, dataFormat='sData'):
-	'''
-	takes:
-		dataFormat: possible values are 'SDAT','FDAT','MDAT'
-	returns:
-		data, depends on what you asked for
+    #def get_data(self, dataFormat='sData'):
+	#'''
+	#takes:
+		#dataFormat: possible values are 'SDAT','FDAT','MDAT'
+	#returns:
+		#data, depends on what you asked for
 		
-	note:
-		FDATa: Formatted trace data, according to the selected trace
-		format (CALCulate<Chn>:FORMat). 1 value per trace point for
-		Cartesian diagrams, 2 values for polar diagrams.
+	#note:
+		#FDATa: Formatted trace data, according to the selected trace
+		#format (CALCulate<Chn>:FORMat). 1 value per trace point for
+		#Cartesian diagrams, 2 values for polar diagrams.
 		
-		sDATa: Unformatted trace data: Real and imaginary part of 
-		each measurement point. 2 values per trace point 
-		irrespective of the selected trace format. The trace 
-		mathematics is not taken into account.
+		#sDATa: Unformatted trace data: Real and imaginary part of 
+		#each measurement point. 2 values per trace point 
+		#irrespective of the selected trace format. The trace 
+		#mathematics is not taken into account.
 		
-		MDATa: Unformatted trace data (see SDATa) after evaluation
-		of the trace mathematics.
+		#MDATa: Unformatted trace data (see SDATa) after evaluation
+		#of the trace mathematics.
 
-	'''
+	#'''
 	
-	if dataFormat[:4].upper() not in ['SDAT','FDAT','MDAT']:
-	    raise ValueError('dataFormat not acceptable. see help')
-	else:
-	    return self.ask_for_values('CALCulate'+repr(self.channel)+':DATA? '+dataFormat[:4])
+	#if dataFormat[:4].upper() not in ['SDAT','FDAT','MDAT']:
+	    #raise ValueError('dataFormat not acceptable. see help')
+	#else:
+	    #return self.ask_for_values('CALCulate'+repr(self.channel)+':DATA? '+dataFormat[:4])
     
-    def get_s(self,mn=None):
-	'''
-	    mn: index, like 11, 22, 12, if None then gets current
-	'''
-	# use param input to possibly change s-parameter
-	rawData = npy.array(self.getData(dataFormat='SData',\
-	    Ch=self.channel),dtype=complex)
-	complexData = rawData[0::2]  + 1j*rawData[1::2]
-	return complexData
+    #def get_s(self,mn=None):
+	#'''
+	    #mn: index, like 11, 22, 12, if None then gets current
+	#'''
+	## use param input to possibly change s-parameter
+	#rawData = npy.array(self.getData(dataFormat='SData',\
+	    #Ch=self.channel),dtype=complex)
+	#complexData = rawData[0::2]  + 1j*rawData[1::2]
+	#return complexData
 
-    def get_network(self, number_of_ports=1,**kwargs):
-	'''
-	'''
-	ntwk = Network(**kwargs)
+    #def get_network(self, number_of_ports=1,**kwargs):
+	#'''
+	#'''
+	#ntwk = Network(**kwargs)
 
-	if number_of_ports ==1:
-	    ntwk.s = self.s
-	    ntwk.frequency = self.frequency
-	else:
-	    raise NotImplementedError
+	#if number_of_ports ==1:
+	    #ntwk.s = self.s
+	    #ntwk.frequency = self.frequency
+	#else:
+	    #raise NotImplementedError
 	    
 class ZVA40(object):
     '''
