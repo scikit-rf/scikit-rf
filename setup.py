@@ -6,12 +6,17 @@ ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 setup(name='mwavepy',
 	version='1.0',
+	license='gpl',
 	description='Microwave Engineering Classes and Functions for python',
 	author='Alex Arsenovic, Lihan Chen',
 	author_email='arsenovic@virginia.edu',
 	url='http://code.google.com/p/mwavepy/',
 	packages= find_packages(),
-	install_requires = ['numpy>=1.3.0','scipy>=0.7.1','matplotlib>=1.0.0']
+	install_requires = [
+		'numpy>=1.3.0',
+		'scipy>=0.7.1',
+		'matplotlib>=1.0.0'
+		],
 	)
 
 #from distutils.core import setup
