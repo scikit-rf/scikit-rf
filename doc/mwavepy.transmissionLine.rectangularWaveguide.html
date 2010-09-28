@@ -1,0 +1,343 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.transmissionLine.rectangularWaveguide</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.transmissionLine.html"><font color="#ffffff">transmissionLine</font></a>.rectangularWaveguide</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/transmissionLine/rectangularWaveguide.py">/home/alex/docs/python/path/mwavepy/transmissionLine/rectangularWaveguide.py</a></font></td></tr></table>
+    <p><tt>#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rectangularWaveguide.py<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copyright&nbsp;2010&nbsp;alex&nbsp;arsenovic&nbsp;&lt;arsenovic@virginia.edu&gt;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;free&nbsp;software;&nbsp;you&nbsp;can&nbsp;redistribute&nbsp;it&nbsp;and/or&nbsp;modify<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;as&nbsp;published&nbsp;by<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;Free&nbsp;Software&nbsp;Foundation;&nbsp;either&nbsp;version&nbsp;2&nbsp;of&nbsp;the&nbsp;License,&nbsp;or<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(at&nbsp;your&nbsp;option)&nbsp;any&nbsp;later&nbsp;versionpy.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;distributed&nbsp;in&nbsp;the&nbsp;hope&nbsp;that&nbsp;it&nbsp;will&nbsp;be&nbsp;useful,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;WITHOUT&nbsp;ANY&nbsp;WARRANTY;&nbsp;without&nbsp;even&nbsp;the&nbsp;implied&nbsp;warranty&nbsp;of<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MERCHANTABILITY&nbsp;or&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE.&nbsp;&nbsp;See&nbsp;the<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;for&nbsp;more&nbsp;details.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You&nbsp;should&nbsp;have&nbsp;received&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;along&nbsp;with&nbsp;this&nbsp;program;&nbsp;if&nbsp;not,&nbsp;write&nbsp;to&nbsp;the&nbsp;Free&nbsp;Software<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Foundation,&nbsp;Inc.,&nbsp;51&nbsp;Franklin&nbsp;Street,&nbsp;Fifth&nbsp;Floor,&nbsp;Boston,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MA&nbsp;02110-1301,&nbsp;USA.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.mathFunctions.html">mwavepy.mathFunctions</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="pdb.html">pdb</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.transmissionLine.rectangularWaveguide.html#RectangularWaveguide">RectangularWaveguide</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="RectangularWaveguide">class <strong>RectangularWaveguide</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>represents&nbsp;a&nbsp;homogeneously&nbsp;rectangular&nbsp;waveguide.<br>
+&nbsp;<br>
+cross-section&nbsp;is&nbsp;axb,&nbsp;and&nbsp;it&nbsp;is&nbsp;homogeneously&nbsp;with&nbsp;relative<br>
+permativity&nbsp;and&nbsp;permiabilty,&nbsp;epsilon_R&nbsp;and&nbsp;mu_R&nbsp;respectivly<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="RectangularWaveguide-__init__"><strong>__init__</strong></a>(self, a, b<font color="#909090">=None</font>, epsilon_R<font color="#909090">=1</font>, mu_R<font color="#909090">=1</font>)</dt></dl>
+
+<dl><dt><a name="RectangularWaveguide-characteristic_admittance"><strong>characteristic_admittance</strong></a>(self, mode_type, m, n, f)</dt><dd><tt>the&nbsp;characteristic&nbsp;admittance&nbsp;of&nbsp;a&nbsp;given&nbsp;mode<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;describes&nbsp;the&nbsp;mode&nbsp;type&nbsp;(TE,TM)&nbsp;and&nbsp;direction,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;values&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'tez','tmz'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'a'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'b'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+TODOL:&nbsp;write&nbsp;function&nbsp;for&nbsp;&nbsp;'tex','tmx','tey','tmy')</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-characteristic_impedance"><strong>characteristic_impedance</strong></a>(self, mode_type, m, n, f)</dt><dd><tt>the&nbsp;characteristic&nbsp;impedance&nbsp;of&nbsp;a&nbsp;given&nbsp;mode<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;describes&nbsp;the&nbsp;mode&nbsp;type&nbsp;(TE,TM)&nbsp;and&nbsp;direction,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;values&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'tez','tmz'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'a'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'b'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+TODOL:&nbsp;write&nbsp;function&nbsp;for&nbsp;&nbsp;'tex','tmx','tey','tmy')</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-cutoff_frequency"><strong>cutoff_frequency</strong></a>(self, m, n)</dt><dd><tt>the&nbsp;cutoff&nbsp;freqency&nbsp;of&nbsp;mode&nbsp;(m,n)</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-cutoff_wavelength"><strong>cutoff_wavelength</strong></a>(self, m, n)</dt><dd><tt>the&nbsp;wavelength&nbsp;at&nbsp;which&nbsp;mode&nbsp;(m,n)&nbsp;is&nbsp;cut-off</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-e_t"><strong>e_t</strong></a>(self, mode_type, m, n, x_points<font color="#909090">=201</font>, y_points<font color="#909090">=101</font>)</dt><dd><tt>discretized&nbsp;transverse&nbsp;mode&nbsp;functions&nbsp;for&nbsp;the&nbsp;electric&nbsp;field.&nbsp;<br>
+&nbsp;<br>
+usable&nbsp;for&nbsp;numerical&nbsp;evaluation&nbsp;of&nbsp;eigen-space,&nbsp;or&nbsp;field&nbsp;<br>
+visualization.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;<br>
+returns&nbsp;array&nbsp;of&nbsp;shape&nbsp;&nbsp;[3,y_points,&nbsp;x_points].&nbsp;the&nbsp;three&nbsp;<br>
+components&nbsp;are:&nbsp;in&nbsp;order<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_t_x:&nbsp;component&nbsp;of&nbsp;field&nbsp;in&nbsp;'a'&nbsp;direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_t_y:&nbsp;component&nbsp;of&nbsp;field&nbsp;in&nbsp;'b'&nbsp;direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e_t_z:component&nbsp;of&nbsp;field&nbsp;in&nbsp;&nbsp;longitudinal&nbsp;direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOTE:&nbsp;all&nbsp;vectors&nbsp;returns&nbsp;are&nbsp;in&nbsp;(row,&nbsp;col)&nbsp;format&nbsp;which<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;equates&nbsp;to&nbsp;(y,x).</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-eigenfunction_normalization"><strong>eigenfunction_normalization</strong></a>(self, mode_type, m, n)</dt><dd><tt>returns&nbsp;the&nbsp;normalization&nbsp;for&nbsp;a&nbsp;given&nbsp;transverse&nbsp;eigen&nbsp;function,<br>
+&nbsp;so&nbsp;that&nbsp;the&nbsp;set&nbsp;is&nbsp;normalized&nbsp;to&nbsp;1.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;describes&nbsp;the&nbsp;mode&nbsp;type&nbsp;(TE,TM)&nbsp;and&nbsp;direction,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;values&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'tez','tmz'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'a'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'b'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t-to-z&nbsp;mode&nbsp;normalization&nbsp;can&nbsp;be&nbsp;found&nbsp;in&nbsp;marcuvitz</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-eigenfunction_normalization2"><strong>eigenfunction_normalization2</strong></a>(self, field_type, mode_type, m, n)</dt><dd><tt>returns&nbsp;the&nbsp;normalization&nbsp;factor&nbsp;for&nbsp;a&nbsp;given&nbsp;transverse&nbsp;eigenfunction,<br>
+&nbsp;so&nbsp;that&nbsp;the&nbsp;set&nbsp;is&nbsp;normalized&nbsp;to&nbsp;1.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;field_type:&nbsp;'e'&nbsp;or&nbsp;'h'&nbsp;field<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;describes&nbsp;the&nbsp;mode&nbsp;type&nbsp;(TE,TM)&nbsp;and&nbsp;direction,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;values&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'tez','tmz'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'a'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'b'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t-to-z&nbsp;mode&nbsp;normalization&nbsp;can&nbsp;be&nbsp;found&nbsp;in&nbsp;marcuvitz</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-electrical_length"><strong>electrical_length</strong></a>(self, m, n, f, d, deg<font color="#909090">=False</font>)</dt></dl>
+
+<dl><dt><a name="RectangularWaveguide-guide_phase_velocity"><strong>guide_phase_velocity</strong></a>(self, m, n, f)</dt><dd><tt>the&nbsp;guide&nbsp;phase&nbsp;velocity&nbsp;at&nbsp;which&nbsp;a&nbsp;mode&nbsp;propagates.</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-guide_wavelength"><strong>guide_wavelength</strong></a>(self, m, n, f)</dt><dd><tt>the&nbsp;guide&nbsp;wavelength.<br>
+&nbsp;<br>
+'the&nbsp;distance&nbsp;that&nbsp;the&nbsp;field&nbsp;travels&nbsp;before&nbsp;the&nbsp;phase&nbsp;increases<br>
+by&nbsp;2*pi'.</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-input_admittance"><strong>input_admittance</strong></a>(self, d, Gamma0, mode_type, m, n, f)</dt><dd><tt>calculates&nbsp;the&nbsp;input&nbsp;admitance&nbsp;for&nbsp;a&nbsp;single&nbsp;mode,&nbsp;of&nbsp;reflection<br>
+coefficient&nbsp;Gamma0,&nbsp;at&nbsp;a&nbsp;specified&nbsp;disatnace&nbsp;d.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;from&nbsp;load&nbsp;(&nbsp;in&nbsp;meters)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;termination&nbsp;(@z=0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;describes&nbsp;the&nbsp;mode&nbsp;type&nbsp;(TE,TM)&nbsp;and&nbsp;direction,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;values&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'tez','tmz'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'a'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'b'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zin:&nbsp;input&nbsp;impedance&nbsp;(in&nbsp;1/ohms)<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;you&nbsp;want&nbsp;to&nbsp;specify&nbsp;load&nbsp;in&nbsp;terms&nbsp;of&nbsp;its&nbsp;impedance,&nbsp;you<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;can&nbsp;use&nbsp;the&nbsp;function:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transmissionLine.functions.zl_2_Gamma0().<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;transmissionLine.functions&nbsp;for&nbsp;more&nbsp;info.</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-input_impedance"><strong>input_impedance</strong></a>(self, d, Gamma0, mode_type, m, n, f)</dt><dd><tt>calculates&nbsp;the&nbsp;input&nbsp;impedance&nbsp;for&nbsp;a&nbsp;single&nbsp;mode,&nbsp;of&nbsp;reflection<br>
+coefficient&nbsp;Gamma0,&nbsp;at&nbsp;a&nbsp;specified&nbsp;disatnace&nbsp;d.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;from&nbsp;load&nbsp;(&nbsp;in&nbsp;meters)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;termination&nbsp;(@z=0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;describes&nbsp;the&nbsp;mode&nbsp;type&nbsp;(TE,TM)&nbsp;and&nbsp;direction,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;values&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'tez','tmz'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'a'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'b'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zin:&nbsp;input&nbsp;impedance&nbsp;(in&nbsp;ohms)<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;you&nbsp;want&nbsp;to&nbsp;specify&nbsp;load&nbsp;in&nbsp;terms&nbsp;of&nbsp;its&nbsp;impedance,&nbsp;you<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;can&nbsp;use&nbsp;the&nbsp;function:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transmissionLine.functions.zl_2_Gamma0().<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;transmissionLine.functions&nbsp;for&nbsp;more&nbsp;info.</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-intrinsic_wavelength"><strong>intrinsic_wavelength</strong></a>(self, f)</dt><dd><tt>the&nbsp;intrinisic&nbsp;wavelength&nbsp;of&nbsp;the&nbsp;waveguide&nbsp;at&nbsp;frequency&nbsp;f.<br>
+(different&nbsp;from&nbsp;the&nbsp;guide_wavelength&nbsp;)</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-k0"><strong>k0</strong></a>(self, f)</dt><dd><tt>characteristic&nbsp;wave&nbsp;number</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-kc"><strong>kc</strong></a>(self, m, n)</dt><dd><tt>cut-off&nbsp;wave&nbsp;number</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-kx"><strong>kx</strong></a>(self, m)</dt><dd><tt>eigen&nbsp;value&nbsp;in&nbsp;teh&nbsp;a&nbsp;direction</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-ky"><strong>ky</strong></a>(self, n)</dt><dd><tt>eigen-value&nbsp;in&nbsp;the&nbsp;b&nbsp;direction</tt></dd></dl>
+
+<dl><dt><a name="RectangularWaveguide-kz"><strong>kz</strong></a>(self, m, n, f)</dt><dd><tt>the&nbsp;propagation&nbsp;constant,&nbsp;which&nbsp;is:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;REAL&nbsp;&nbsp;for&nbsp;propagating&nbsp;modes,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IMAGINARY&nbsp;for&nbsp;non-propagating&nbsp;modes<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'a'&nbsp;direction<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;the&nbsp;'b'&nbsp;direction&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
+&nbsp;<br>
+output:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;kz:a&nbsp;complex&nbsp;number,&nbsp;and&nbsp;possibly&nbsp;a&nbsp;fxmxn&nbsp;array,&nbsp;depending<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;on&nbsp;input&nbsp;<br>
+&nbsp;<br>
+NOTE:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;note&nbsp;about&nbsp;using&nbsp;arrays&nbsp;for&nbsp;input&nbsp;values:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;either&nbsp;all&nbsp;inputs,&nbsp;m,n,f&nbsp;can&nbsp;be&nbsp;arrays,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;just&nbsp;f<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;or&nbsp;just&nbsp;m&nbsp;and&nbsp;n<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;not&nbsp;m&nbsp;or&nbsp;n</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>intrinsic_impedance</strong></dt>
+<dd><tt>the&nbsp;intrinsic&nbsp;impedance&nbsp;of&nbsp;the&nbsp;filling&nbsp;material</tt></dd>
+</dl>
+<dl><dt><strong>intrinsic_phase_velocity</strong></dt>
+<dd><tt>the&nbsp;intrinsic&nbsp;phase&nbsp;velocity&nbsp;of&nbsp;the&nbsp;waveguide.&nbsp;depends&nbsp;only&nbsp;on<br>
+material&nbsp;which&nbsp;fills&nbsp;the&nbsp;waveguide</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(<a href="__builtin__.html#object">object</a>,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=True)<br>
+&nbsp;<br>
+Create&nbsp;an&nbsp;array.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+<a href="__builtin__.html#object">object</a>&nbsp;:&nbsp;array_like<br>
+&nbsp;&nbsp;&nbsp;&nbsp;An&nbsp;array,&nbsp;any&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;exposing&nbsp;the&nbsp;array&nbsp;interface,&nbsp;an<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;whose&nbsp;__array__&nbsp;method&nbsp;returns&nbsp;an&nbsp;array,&nbsp;or&nbsp;any<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(nested)&nbsp;sequence.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;not&nbsp;given,&nbsp;then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;type&nbsp;will&nbsp;be&nbsp;determined&nbsp;as&nbsp;the&nbsp;minimum&nbsp;type&nbsp;required<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;hold&nbsp;the&nbsp;objects&nbsp;in&nbsp;the&nbsp;sequence.&nbsp;&nbsp;This&nbsp;argument&nbsp;can&nbsp;only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;used&nbsp;to&nbsp;'upcast'&nbsp;the&nbsp;array.&nbsp;&nbsp;For&nbsp;downcasting,&nbsp;use&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.astype(t)&nbsp;method.<br>
+copy&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;true&nbsp;(default),&nbsp;then&nbsp;the&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;is&nbsp;copied.&nbsp;&nbsp;Otherwise,&nbsp;a&nbsp;copy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;only&nbsp;be&nbsp;made&nbsp;if&nbsp;__array__&nbsp;returns&nbsp;a&nbsp;copy,&nbsp;if&nbsp;obj&nbsp;is&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nested&nbsp;sequence,&nbsp;or&nbsp;if&nbsp;a&nbsp;copy&nbsp;is&nbsp;needed&nbsp;to&nbsp;satisfy&nbsp;any&nbsp;of&nbsp;the&nbsp;other<br>
+&nbsp;&nbsp;&nbsp;&nbsp;requirements&nbsp;(`dtype`,&nbsp;`order`,&nbsp;etc.).<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F',&nbsp;'A'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specify&nbsp;the&nbsp;order&nbsp;of&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'C'&nbsp;(default),&nbsp;then&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;will&nbsp;be&nbsp;in&nbsp;C-contiguous&nbsp;order&nbsp;(last-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'F',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;be&nbsp;in&nbsp;Fortran-contiguous&nbsp;order&nbsp;(first-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'A',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array&nbsp;may<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;in&nbsp;any&nbsp;order&nbsp;(either&nbsp;C-,&nbsp;Fortran-contiguous,&nbsp;or&nbsp;even<br>
+&nbsp;&nbsp;&nbsp;&nbsp;discontiguous).<br>
+subok&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;True,&nbsp;then&nbsp;sub-classes&nbsp;will&nbsp;be&nbsp;passed-through,&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;returned&nbsp;array&nbsp;will&nbsp;be&nbsp;forced&nbsp;to&nbsp;be&nbsp;a&nbsp;base-class&nbsp;array&nbsp;(default).<br>
+ndmin&nbsp;:&nbsp;int,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specifies&nbsp;the&nbsp;minimum&nbsp;number&nbsp;of&nbsp;dimensions&nbsp;that&nbsp;the&nbsp;resulting<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;should&nbsp;have.&nbsp;&nbsp;Ones&nbsp;will&nbsp;be&nbsp;pre-pended&nbsp;to&nbsp;the&nbsp;shape&nbsp;as<br>
+&nbsp;&nbsp;&nbsp;&nbsp;needed&nbsp;to&nbsp;meet&nbsp;this&nbsp;requirement.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+&nbsp;<br>
+Upcasting:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3.0])<br>
+<a href="#-array">array</a>([&nbsp;1.,&nbsp;&nbsp;2.,&nbsp;&nbsp;3.])<br>
+&nbsp;<br>
+More&nbsp;than&nbsp;one&nbsp;dimension:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([[1,&nbsp;2],&nbsp;[3,&nbsp;4]])<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+Minimum&nbsp;dimensions&nbsp;2:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;ndmin=2)<br>
+<a href="#-array">array</a>([[1,&nbsp;2,&nbsp;3]])<br>
+&nbsp;<br>
+Type&nbsp;provided:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;dtype=complex)<br>
+<a href="#-array">array</a>([&nbsp;1.+0.j,&nbsp;&nbsp;2.+0.j,&nbsp;&nbsp;3.+0.j])<br>
+&nbsp;<br>
+Data-type&nbsp;consisting&nbsp;of&nbsp;more&nbsp;than&nbsp;one&nbsp;element:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;x&nbsp;=&nbsp;np.<a href="#-array">array</a>([(1,2),(3,4)],dtype=[('a','&lt;i4'),('b','&lt;i4')])<br>
+&gt;&gt;&gt;&nbsp;x['a']<br>
+<a href="#-array">array</a>([1,&nbsp;3])<br>
+&nbsp;<br>
+Creating&nbsp;an&nbsp;array&nbsp;from&nbsp;sub-classes:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'))<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'),&nbsp;subok=True)<br>
+matrix([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>c</strong> = 299792458.0<br>
+<strong>cos</strong> = &lt;ufunc 'cos'&gt;<br>
+<strong>epsilon_0</strong> = 8.8541878176203892e-12<br>
+<strong>mil</strong> = 2.5399999999999997e-05<br>
+<strong>mu_0</strong> = 1.2566370614359173e-06<br>
+<strong>pi</strong> = 3.1415926535897931<br>
+<strong>sin</strong> = &lt;ufunc 'sin'&gt;<br>
+<strong>sqrt</strong> = &lt;ufunc 'sqrt'&gt;</td></tr></table>
+</body></html>

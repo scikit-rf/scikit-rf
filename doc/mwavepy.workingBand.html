@@ -1,0 +1,162 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.workingBand</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.workingBand</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/workingBand.py">/home/alex/docs/python/path/mwavepy/workingBand.py</a></font></td></tr></table>
+    <p><tt>#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;workingBand.py<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copyright&nbsp;2010&nbsp;alex&nbsp;arsenovic&nbsp;&lt;arsenovic@virginia.edu&gt;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copyright&nbsp;2010&nbsp;lihan&nbsp;chen&nbsp;<br>
+#<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;free&nbsp;software;&nbsp;you&nbsp;can&nbsp;redistribute&nbsp;it&nbsp;and/or&nbsp;modify<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;as&nbsp;published&nbsp;by<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;Free&nbsp;Software&nbsp;Foundation;&nbsp;either&nbsp;version&nbsp;2&nbsp;of&nbsp;the&nbsp;License,&nbsp;or<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(at&nbsp;your&nbsp;option)&nbsp;any&nbsp;later&nbsp;versionpy.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;distributed&nbsp;in&nbsp;the&nbsp;hope&nbsp;that&nbsp;it&nbsp;will&nbsp;be&nbsp;useful,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;WITHOUT&nbsp;ANY&nbsp;WARRANTY;&nbsp;without&nbsp;even&nbsp;the&nbsp;implied&nbsp;warranty&nbsp;of<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MERCHANTABILITY&nbsp;or&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE.&nbsp;&nbsp;See&nbsp;the<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;for&nbsp;more&nbsp;details.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You&nbsp;should&nbsp;have&nbsp;received&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;along&nbsp;with&nbsp;this&nbsp;program;&nbsp;if&nbsp;not,&nbsp;write&nbsp;to&nbsp;the&nbsp;Free&nbsp;Software<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Foundation,&nbsp;Inc.,&nbsp;51&nbsp;Franklin&nbsp;Street,&nbsp;Fifth&nbsp;Floor,&nbsp;Boston,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MA&nbsp;02110-1301,&nbsp;USA.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.workingBand.html#WorkingBand">WorkingBand</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="WorkingBand">class <strong>WorkingBand</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;is&nbsp;an&nbsp;high-level&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;which&nbsp;exists&nbsp;solely&nbsp;to&nbsp;make&nbsp;<br>
+&nbsp;working&nbsp;with&nbsp;and&nbsp;creation&nbsp;of&nbsp;Networks&nbsp;within&nbsp;the&nbsp;same&nbsp;band,<br>
+&nbsp;more&nbsp;concise&nbsp;and&nbsp;convenient.&nbsp;<br>
+&nbsp;<br>
+A&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;has&nbsp;two&nbsp;properties:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;frequency&nbsp;information&nbsp;(Frequency&nbsp;<a href="__builtin__.html#object">object</a>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transmission&nbsp;line&nbsp;information&nbsp;&nbsp;&nbsp;(transmission&nbsp;line-like&nbsp;<a href="__builtin__.html#object">object</a>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+the&nbsp;methods&nbsp;of&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;simply&nbsp;calls&nbsp;functions&nbsp;from&nbsp;createNetwork,<br>
+but&nbsp;it&nbsp;saves&nbsp;the&nbsp;user&nbsp;the&nbsp;hassle&nbsp;of&nbsp;repetitously&nbsp;providing&nbsp;a<br>
+tline&nbsp;and&nbsp;frequency&nbsp;type&nbsp;for&nbsp;every&nbsp;network&nbsp;creation.&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;frequency&nbsp;and&nbsp;tline&nbsp;classes&nbsp;are&nbsp;copied,&nbsp;so&nbsp;they&nbsp;are&nbsp;passed<br>
+by&nbsp;value&nbsp;and&nbsp;not&nbsp;by-reference.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="WorkingBand-__init__"><strong>__init__</strong></a>(self, frequency, tline)</dt></dl>
+
+<dl><dt><a name="WorkingBand-delay_load"><strong>delay_load</strong></a>(self, d, Gamma0, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;delayed&nbsp;load&nbsp;of&nbsp;length&nbsp;'d'&nbsp;&nbsp;and&nbsp;refelction&nbsp;coefficient<br>
+Gamma0,&nbsp;Network&nbsp;<a href="__builtin__.html#object">object</a><br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;length&nbsp;of&nbsp;delay&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;[not&nbsp;dB]<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Network&nbsp;<a href="__builtin__.html#object">object</a></tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-delay_short"><strong>delay_short</strong></a>(self, d, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;short&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(in&nbsp;meters)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;shorted&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-guess_length_of_delay_short"><strong>guess_length_of_delay_short</strong></a>(self, aNtwk)</dt><dd><tt>guess&nbsp;length&nbsp;of&nbsp;physical&nbsp;length&nbsp;of&nbsp;a&nbsp;Delay&nbsp;Short&nbsp;given&nbsp;by&nbsp;aNtwk<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aNtwk:&nbsp;a&nbsp;mwavepy.ntwk&nbsp;type&nbsp;.&nbsp;(note:&nbsp;if&nbsp;this&nbsp;is&nbsp;a&nbsp;measurment&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;needs&nbsp;to&nbsp;be&nbsp;normalized&nbsp;to&nbsp;the&nbsp;reference&nbsp;plane)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tline:&nbsp;transmission&nbsp;line&nbsp;class&nbsp;of&nbsp;the&nbsp;medium.&nbsp;needed&nbsp;for&nbsp;the&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation&nbsp;of&nbsp;propagation&nbsp;constant</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-line"><strong>line</strong></a>(self, d, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;section&nbsp;of&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(in&nbsp;meters)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;transmission&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;<br>
+note:&nbsp;the&nbsp;only&nbsp;function&nbsp;called&nbsp;from&nbsp;the&nbsp;tline&nbsp;class&nbsp;is<br>
+propagation_constant(f,d),&nbsp;where&nbsp;f&nbsp;is&nbsp;frequency&nbsp;in&nbsp;Hz&nbsp;and&nbsp;d&nbsp;is<br>
+distance&nbsp;in&nbsp;meters.&nbsp;so&nbsp;you&nbsp;can&nbsp;use&nbsp;any&nbsp;class&nbsp;&nbsp;which&nbsp;provides&nbsp;this<br>
+and&nbsp;it&nbsp;&nbsp;will&nbsp;work&nbsp;.</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-load"><strong>load</strong></a>(self, Gamma0, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;Load&nbsp;termianting&nbsp;a&nbsp;transmission&nbsp;line&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;load&nbsp;(not&nbsp;in&nbsp;db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;where&nbsp;&nbsp;S&nbsp;=&nbsp;Gamma0*ones(...)</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-match"><strong>match</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;perfect&nbsp;matched&nbsp;transmission&nbsp;line&nbsp;(Gamma0=0)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;perfect&nbsp;match</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-open"><strong>open</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;'open'&nbsp;transmission&nbsp;line&nbsp;(Gamma0=1)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;an&nbsp;open</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-short"><strong>short</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;short&nbsp;&nbsp;transmission&nbsp;line&nbsp;(Gamma0=-1)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;a&nbsp;short</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>frequency</strong></dt>
+</dl>
+<dl><dt><strong>tline</strong></dt>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

@@ -1,0 +1,295 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.transmissionLine.genericTEM</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.transmissionLine.html"><font color="#ffffff">transmissionLine</font></a>.genericTEM</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/transmissionLine/genericTEM.py">/home/alex/docs/python/path/mwavepy/transmissionLine/genericTEM.py</a></font></td></tr></table>
+    <p><tt>#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;genericTEM.py<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Copyright&nbsp;2010&nbsp;alex&nbsp;arsenovic&nbsp;&lt;arsenovic@virginia.edu&gt;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;free&nbsp;software;&nbsp;you&nbsp;can&nbsp;redistribute&nbsp;it&nbsp;and/or&nbsp;modify<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;as&nbsp;published&nbsp;by<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;Free&nbsp;Software&nbsp;Foundation;&nbsp;either&nbsp;version&nbsp;2&nbsp;of&nbsp;the&nbsp;License,&nbsp;or<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(at&nbsp;your&nbsp;option)&nbsp;any&nbsp;later&nbsp;versionpy.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This&nbsp;program&nbsp;is&nbsp;distributed&nbsp;in&nbsp;the&nbsp;hope&nbsp;that&nbsp;it&nbsp;will&nbsp;be&nbsp;useful,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;but&nbsp;WITHOUT&nbsp;ANY&nbsp;WARRANTY;&nbsp;without&nbsp;even&nbsp;the&nbsp;implied&nbsp;warranty&nbsp;of<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MERCHANTABILITY&nbsp;or&nbsp;FITNESS&nbsp;FOR&nbsp;A&nbsp;PARTICULAR&nbsp;PURPOSE.&nbsp;&nbsp;See&nbsp;the<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License&nbsp;for&nbsp;more&nbsp;details.<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You&nbsp;should&nbsp;have&nbsp;received&nbsp;a&nbsp;copy&nbsp;of&nbsp;the&nbsp;GNU&nbsp;General&nbsp;Public&nbsp;License<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;along&nbsp;with&nbsp;this&nbsp;program;&nbsp;if&nbsp;not,&nbsp;write&nbsp;to&nbsp;the&nbsp;Free&nbsp;Software<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Foundation,&nbsp;Inc.,&nbsp;51&nbsp;Franklin&nbsp;Street,&nbsp;Fifth&nbsp;Floor,&nbsp;Boston,<br>
+#&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;MA&nbsp;02110-1301,&nbsp;USA.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">GenericTEM</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="GenericTEM">class <strong>GenericTEM</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>This&nbsp;is&nbsp;a&nbsp;general&nbsp;super-class&nbsp;for&nbsp;TEM&nbsp;transmission&nbsp;lines.&nbsp;The&nbsp;<br>
+structure&nbsp;behind&nbsp;the&nbsp;methods&nbsp;dependencies&nbsp;is&nbsp;a&nbsp;results&nbsp;of&nbsp;the&nbsp;<br>
+physics.&nbsp;a&nbsp;brief&nbsp;summary&nbsp;is&nbsp;given&nbsp;below.&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+a&nbsp;TEM&nbsp;transmission&nbsp;line&nbsp;is&nbsp;defined&nbsp;by&nbsp;its:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Capacitance,&nbsp;C'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Inductance,&nbsp;I'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Resistance,&nbsp;R'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Conductance,&nbsp;G'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+from&nbsp;these&nbsp;the&nbsp;following&nbsp;quantities&nbsp;may&nbsp;be&nbsp;calculated,&nbsp;which<br>
+are&nbsp;functions&nbsp;of&nbsp;angular&nbsp;frequency&nbsp;(w):<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Impedance,&nbsp;&nbsp;Z'(w)&nbsp;=&nbsp;R'&nbsp;+&nbsp;jwI'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;G'&nbsp;+&nbsp;jwC'<br>
+&nbsp;<br>
+from&nbsp;these&nbsp;we&nbsp;can&nbsp;get&nbsp;to&nbsp;properties&nbsp;which&nbsp;define&nbsp;their&nbsp;wave&nbsp;behavoir<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;characteristic&nbsp;Impedance,&nbsp;Z0(w)&nbsp;=&nbsp;sqrt(Z'(w)/Y'(w))&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ohms]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;propagation&nbsp;Constant,&nbsp;&nbsp;&nbsp;gamma(w)&nbsp;=&nbsp;sqrt(Z'(w)*Y'(w))&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+and&nbsp;then&nbsp;finnally&nbsp;produce&nbsp;methods&nbsp;which&nbsp;we&nbsp;use&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;electrical&nbsp;Length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;Impedance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;relfection&nbsp;Coefficient<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="GenericTEM-__init__"><strong>__init__</strong></a>(self, distributed_capacitance, distributed_inductance, distributed_resistance, distributed_conductance)</dt><dd><tt>constructor.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_capacitance,&nbsp;C'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_inductance,&nbsp;I'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_resistance,&nbsp;R'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_conductance,&nbsp;G'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fBand:&nbsp;a&nbsp;mwavepy.fb.frequencyBand&nbsp;<a href="__builtin__.html#object">object</a>.&nbsp;this&nbsp;provides&nbsp;all&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;methods&nbsp;of&nbsp;the&nbsp;transmissionLine,&nbsp;with&nbsp;frequency&nbsp;info.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;is&nbsp;solely&nbsp;for&nbsp;convinience,&nbsp;because&nbsp;frequently&nbsp;many<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculations&nbsp;are&nbsp;done&nbsp;over&nbsp;a&nbsp;given&nbsp;range&nbsp;of&nbsp;frequencies.</tt></dd></dl>
+
+<dl><dt><a name="GenericTEM-characteristic_impedance"><strong>characteristic_impedance</strong></a>(self, f)</dt><dd><tt>The&nbsp;&nbsp;characteristic&nbsp;impedance&nbsp;at&nbsp;a&nbsp;given&nbsp;angular&nbsp;frequency.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0(w)&nbsp;=&nbsp;sqrt(Z'(w)/Y'(w))<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;&nbsp;frequency<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0:&nbsp;characteristic&nbsp;impedance&nbsp;&nbsp;ohms</tt></dd></dl>
+
+<dl><dt><a name="GenericTEM-distributed_admittance"><strong>distributed_admittance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;G'&nbsp;+&nbsp;jwC'<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
+
+<dl><dt><a name="GenericTEM-distributed_impedance"><strong>distributed_impedance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Impedance,&nbsp;&nbsp;Z'(w)&nbsp;=&nbsp;R'&nbsp;+&nbsp;jwI'<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
+
+<dl><dt><a name="GenericTEM-electrical_length"><strong>electrical_length</strong></a>(self, f, d, deg<font color="#909090">=False</font>)</dt></dl>
+
+<dl><dt><a name="GenericTEM-propagation_constant"><strong>propagation_constant</strong></a>(self, f)</dt><dd><tt>the&nbsp;propagation&nbsp;constant&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma(w)&nbsp;=&nbsp;sqrt(Z'(w)*Y'(w))<br>
+&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[jrad/m+]</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(<a href="__builtin__.html#object">object</a>,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=True)<br>
+&nbsp;<br>
+Create&nbsp;an&nbsp;array.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+<a href="__builtin__.html#object">object</a>&nbsp;:&nbsp;array_like<br>
+&nbsp;&nbsp;&nbsp;&nbsp;An&nbsp;array,&nbsp;any&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;exposing&nbsp;the&nbsp;array&nbsp;interface,&nbsp;an<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;whose&nbsp;__array__&nbsp;method&nbsp;returns&nbsp;an&nbsp;array,&nbsp;or&nbsp;any<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(nested)&nbsp;sequence.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;not&nbsp;given,&nbsp;then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;type&nbsp;will&nbsp;be&nbsp;determined&nbsp;as&nbsp;the&nbsp;minimum&nbsp;type&nbsp;required<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;hold&nbsp;the&nbsp;objects&nbsp;in&nbsp;the&nbsp;sequence.&nbsp;&nbsp;This&nbsp;argument&nbsp;can&nbsp;only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;used&nbsp;to&nbsp;'upcast'&nbsp;the&nbsp;array.&nbsp;&nbsp;For&nbsp;downcasting,&nbsp;use&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.astype(t)&nbsp;method.<br>
+copy&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;true&nbsp;(default),&nbsp;then&nbsp;the&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;is&nbsp;copied.&nbsp;&nbsp;Otherwise,&nbsp;a&nbsp;copy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;only&nbsp;be&nbsp;made&nbsp;if&nbsp;__array__&nbsp;returns&nbsp;a&nbsp;copy,&nbsp;if&nbsp;obj&nbsp;is&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nested&nbsp;sequence,&nbsp;or&nbsp;if&nbsp;a&nbsp;copy&nbsp;is&nbsp;needed&nbsp;to&nbsp;satisfy&nbsp;any&nbsp;of&nbsp;the&nbsp;other<br>
+&nbsp;&nbsp;&nbsp;&nbsp;requirements&nbsp;(`dtype`,&nbsp;`order`,&nbsp;etc.).<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F',&nbsp;'A'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specify&nbsp;the&nbsp;order&nbsp;of&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'C'&nbsp;(default),&nbsp;then&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;will&nbsp;be&nbsp;in&nbsp;C-contiguous&nbsp;order&nbsp;(last-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'F',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;be&nbsp;in&nbsp;Fortran-contiguous&nbsp;order&nbsp;(first-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'A',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array&nbsp;may<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;in&nbsp;any&nbsp;order&nbsp;(either&nbsp;C-,&nbsp;Fortran-contiguous,&nbsp;or&nbsp;even<br>
+&nbsp;&nbsp;&nbsp;&nbsp;discontiguous).<br>
+subok&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;True,&nbsp;then&nbsp;sub-classes&nbsp;will&nbsp;be&nbsp;passed-through,&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;returned&nbsp;array&nbsp;will&nbsp;be&nbsp;forced&nbsp;to&nbsp;be&nbsp;a&nbsp;base-class&nbsp;array&nbsp;(default).<br>
+ndmin&nbsp;:&nbsp;int,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specifies&nbsp;the&nbsp;minimum&nbsp;number&nbsp;of&nbsp;dimensions&nbsp;that&nbsp;the&nbsp;resulting<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;should&nbsp;have.&nbsp;&nbsp;Ones&nbsp;will&nbsp;be&nbsp;pre-pended&nbsp;to&nbsp;the&nbsp;shape&nbsp;as<br>
+&nbsp;&nbsp;&nbsp;&nbsp;needed&nbsp;to&nbsp;meet&nbsp;this&nbsp;requirement.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+&nbsp;<br>
+Upcasting:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3.0])<br>
+<a href="#-array">array</a>([&nbsp;1.,&nbsp;&nbsp;2.,&nbsp;&nbsp;3.])<br>
+&nbsp;<br>
+More&nbsp;than&nbsp;one&nbsp;dimension:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([[1,&nbsp;2],&nbsp;[3,&nbsp;4]])<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+Minimum&nbsp;dimensions&nbsp;2:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;ndmin=2)<br>
+<a href="#-array">array</a>([[1,&nbsp;2,&nbsp;3]])<br>
+&nbsp;<br>
+Type&nbsp;provided:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;dtype=complex)<br>
+<a href="#-array">array</a>([&nbsp;1.+0.j,&nbsp;&nbsp;2.+0.j,&nbsp;&nbsp;3.+0.j])<br>
+&nbsp;<br>
+Data-type&nbsp;consisting&nbsp;of&nbsp;more&nbsp;than&nbsp;one&nbsp;element:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;x&nbsp;=&nbsp;np.<a href="#-array">array</a>([(1,2),(3,4)],dtype=[('a','&lt;i4'),('b','&lt;i4')])<br>
+&gt;&gt;&gt;&nbsp;x['a']<br>
+<a href="#-array">array</a>([1,&nbsp;3])<br>
+&nbsp;<br>
+Creating&nbsp;an&nbsp;array&nbsp;from&nbsp;sub-classes:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'))<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'),&nbsp;subok=True)<br>
+matrix([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])</tt></dd></dl>
+ <dl><dt><a name="-zeros"><strong>zeros</strong></a>(...)</dt><dd><tt><a href="#-zeros">zeros</a>(shape,&nbsp;dtype=float,&nbsp;order='C')<br>
+&nbsp;<br>
+Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;type,&nbsp;filled&nbsp;with&nbsp;zeros.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+shape&nbsp;:&nbsp;{tuple&nbsp;of&nbsp;ints,&nbsp;int}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;new&nbsp;array,&nbsp;e.g.,&nbsp;``(2,&nbsp;3)``&nbsp;or&nbsp;``2``.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array,&nbsp;e.g.,&nbsp;`numpy.int8`.&nbsp;&nbsp;Default&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;`numpy.float64`.<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Whether&nbsp;to&nbsp;store&nbsp;multidimensional&nbsp;data&nbsp;in&nbsp;C-&nbsp;or&nbsp;Fortran-contiguous<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(row-&nbsp;or&nbsp;column-wise)&nbsp;order&nbsp;in&nbsp;memory.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+out&nbsp;:&nbsp;ndarray<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;the&nbsp;given&nbsp;shape,&nbsp;dtype,&nbsp;and&nbsp;order.<br>
+&nbsp;<br>
+See&nbsp;Also<br>
+--------<br>
+numpy.zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+numpy.ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+numpy.empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+numpy.ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
+numpy.empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(5)<br>
+<a href="#-array">array</a>([&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((5,),&nbsp;dtype=numpy.int)<br>
+<a href="#-array">array</a>([0,&nbsp;0,&nbsp;0,&nbsp;0,&nbsp;0])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,&nbsp;1))<br>
+<a href="#-array">array</a>([[&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;s&nbsp;=&nbsp;(2,2)<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(s)<br>
+<a href="#-array">array</a>([[&nbsp;0.,&nbsp;&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.,&nbsp;&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])<br>
+<a href="#-array">array</a>([(0,&nbsp;0),&nbsp;(0,&nbsp;0)],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dtype=[('x',&nbsp;'&lt;i4'),&nbsp;('y',&nbsp;'&lt;i4')])</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>INF</strong> = 9.9999999999999997e+98<br>
+<strong>ONE</strong> = 1.00000000000001<br>
+<strong>c</strong> = 299792458.0<br>
+<strong>cos</strong> = &lt;ufunc 'cos'&gt;<br>
+<strong>epsilon_0</strong> = 8.8541878176203892e-12<br>
+<strong>exp</strong> = &lt;ufunc 'exp'&gt;<br>
+<strong>inf</strong> = inf<br>
+<strong>log</strong> = &lt;ufunc 'log'&gt;<br>
+<strong>mil</strong> = 2.5399999999999997e-05<br>
+<strong>mu_0</strong> = 1.2566370614359173e-06<br>
+<strong>pi</strong> = 3.1415926535897931<br>
+<strong>sin</strong> = &lt;ufunc 'sin'&gt;<br>
+<strong>sqrt</strong> = &lt;ufunc 'sqrt'&gt;<br>
+<strong>tan</strong> = &lt;ufunc 'tan'&gt;</td></tr></table>
+</body></html>
