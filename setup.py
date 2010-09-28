@@ -1,13 +1,24 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+import ez_setup
+ez_setup.use_setuptools()
 
-
-
+from setuptools import setup, find_packages
 setup(name='mwavepy',
 	version='1.0',
-	description='Microwave Engineering Functions for python',
+	description='Microwave Engineering Classes and Functions for python',
 	author='Alex Arsenovic, Lihan Chen',
 	author_email='arsenovic@virginia.edu',
 	url='http://code.google.com/p/mwavepy/',
-	packages=['mwavepy','mwavepy.transmissionLine','mwavepy.virtualInstruments'])
+	packages= find_packages(),
+	install_requires = ['numpy>=1.3.0','scipy>=0.7.1','matplotlib>=1.0.0']
+	)
+
+#from distutils.core import setup
+#setup(name='mwavepy',
+	#version='1.0',
+	#description='Microwave Engineering Functions for python',
+	#author='Alex Arsenovic, Lihan Chen',
+	#author_email='arsenovic@virginia.edu',
+	#url='http://code.google.com/p/mwavepy/',
+	#packages=['mwavepy','mwavepy.transmissionLine','mwavepy.virtualInstruments'])
