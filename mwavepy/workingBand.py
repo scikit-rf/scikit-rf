@@ -223,10 +223,10 @@ class WorkingBand(object):
 				
 		
 		'''
-		beta = npy.real(self.tline.propagation_constant())
+		beta = npy.real(self.tline.propagation_constant(self.frequency.f))
 		thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
 		
-		A = npy.vstack((-2*beta,npy.ones(len(beta)))).transpose()
+		A = npy.vstack((2*beta,npy.ones(len(beta)))).transpose()
 		B = thetaM
 		
 		print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)

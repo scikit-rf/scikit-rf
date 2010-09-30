@@ -23,6 +23,8 @@ import numpy as npy
 from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
 	 interp, linspace, shape,zeros, reshape
 
+from .. import mathFunctions as mf
+
 INF = 1e99
 ONE = 1.0 + 1/1e14
 
@@ -50,7 +52,7 @@ def electrical_length(gamma, f , d, deg=False):
 	if deg == False:
 		return  gamma(f )*d
 	elif deg == True:
-		return  mf.radian_2_degree(gamma(2*pi*f ) *l )
+		return  mf.radian_2_degree(gamma(2*pi*f ) *d )
 
 
 def input_impedance_2_reflection_coefficient(z0, zl):

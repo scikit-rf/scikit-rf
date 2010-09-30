@@ -245,7 +245,7 @@ def xds(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
 		#making assumption first non-delay network is teh Short
 		short = gammaMList[numDelays]
 		for k in range(numDelays):
-			d[k] = findPhysicalLengthOfDelayShort(gammaMList[k]/short, wb) 
+			d[k] = wb.guess_length_of_delay_short(gammaMList[k]/gammaMList[len(d)]) 
 		
 		print array(d)/1e-6
 		

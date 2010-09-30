@@ -339,7 +339,7 @@ class Network(object):
 		self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
 		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
 
-	def write_touchstone(self, filename=None):
+	def write_touchstone(self, filename=None,dir ='./'):
 		'''
 		write a touchstone file representing this network.  the only 
 		format supported at the moment is :
@@ -359,7 +359,7 @@ class Network(object):
 		if filename is None and self.name is not None:
 			filename= self.name
 
-		filename= filename + '.s'+str(self.number_of_ports)+'p'
+		filename= dir+filename + '.s'+str(self.number_of_ports)+'p'
 		outputFile = open(filename,"w")
 		
 		# write header file. 
