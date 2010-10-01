@@ -12,11 +12,11 @@ setup(name='mwavepy',
 	author_email='arsenovic@virginia.edu',
 	url='http://code.google.com/p/mwavepy/',
 	packages=find_packages(),
-	install_requires = [
-		'numpy>=1.3.0',
-		'scipy>=0.7.1',
-		'matplotlib>=1.0.0',
-		],
+	#install_requires = [
+	#	'numpy',
+	#	'scipy',
+	#	'matplotlib',
+	#	],
 	)
 
 #from distutils.core import setup
