@@ -1,4 +1,4 @@
 include README.txt INSTALL.txt COPYING.txt
 recursive-include doc * 
 recursive-include examples * 
-recursive-explude dist * 
+
