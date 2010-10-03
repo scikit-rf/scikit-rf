@@ -1,0 +1,1006 @@
+#LyX 1.6.5 created this file. For more info see http://www.lyx.org/
+\lyxformat 345
+\begin_document
+\begin_header
+\textclass scrbook
+\begin_preamble
+\usepackage{amssymb,amsmath}
+\widowpenalty=10000 
+\clubpenalty=10000 
+
+
+\usepackage{listings}
+\usepackage{color}
+\usepackage{textcomp}
+\definecolor{listinggray}{gray}{0.9}
+\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+\lstset{
+backgroundcolor=\color{lbcolor},
+tabsize=4,
+rulecolor=,
+language=Python,
+        basicstyle=\scriptsize,
+        upquote=true,
+        aboveskip={1.5\baselineskip},
+        columns=fixed,
+        showstringspaces=false,
+        extendedchars=true,
+        breaklines=true,
+        prebreak = \raisebox{0ex}[0ex][0ex]{\ensuremath{\hookleftarrow}},
+        frame=single,
+        showtabs=false,
+        showspaces=false,
+        showstringspaces=false,
+        identifierstyle=\ttfamily,
+        keywordstyle=\color[rgb]{0,0,1},
+        commentstyle=\color[rgb]{0.133,0.545,0.133},
+        stringstyle=\color[rgb]{0.627,0.126,0.941},
+}
+\end_preamble
+\use_default_options true
+\language english
+\inputencoding auto
+\font_roman default
+\font_sans default
+\font_typewriter default
+\font_default_family default
+\font_sc false
+\font_osf false
+\font_sf_scale 100
+\font_tt_scale 100
+
+\graphics default
+\float_placement H
+\paperfontsize default
+\spacing single
+\use_hyperref true
+\pdf_bookmarks true
+\pdf_bookmarksnumbered false
+\pdf_bookmarksopen false
+\pdf_bookmarksopenlevel 1
+\pdf_breaklinks false
+\pdf_pdfborder true
+\pdf_colorlinks false
+\pdf_backref false
+\pdf_pdfusetitle true
+\papersize default
+\use_geometry true
+\use_amsmath 1
+\use_esint 1
+\cite_engine basic
+\use_bibtopic false
+\paperorientation portrait
+\topmargin 1in
+\rightmargin 1.25in
+\bottommargin 1in
+\secnumdepth 3
+\tocdepth 3
+\paragraph_separation indent
+\defskip medskip
+\quotes_language english
+\papercolumns 1
+\papersides 1
+\paperpagestyle default
+\tracking_changes false
+\output_changes false
+\author "" 
+\author "" 
+\end_header
+
+\begin_body
+
+\begin_layout Title
+mwavepy Manual
+\end_layout
+
+\begin_layout Author
+Alex Arsenovic
+\end_layout
+
+\begin_layout Date
+10/03/2010
+\end_layout
+
+\begin_layout Standard
+\begin_inset CommandInset toc
+LatexCommand tableofcontents
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+About
+\end_layout
+
+\begin_layout Standard
+
+\series bold
+mwavepy
+\series default
+ is a compilation of functions and class's for microwave/RF engineering
+ written in python.
+ It is useful for things such as touchstone file manipulation, calibration,
+ data analysis, data acquisition, and plotting.
+ The main interface is command line, using the python interpreter.
+ 
+\series bold
+mwavepy
+\series default
+ is also very useful for scripting tasks.
+ Being that it has been built around my specific needs as a graduate student,
+ it is far from complete, but is more of a framework for future development.
+ I've tried to make mwavepy as simple yet flexible as possible.
+ 
+\end_layout
+
+\begin_layout Chapter
+Installation
+\end_layout
+
+\begin_layout Section
+Dependencies
+\end_layout
+
+\begin_layout Standard
+The requirements are basically a python environment setup to do numerical/scient
+ific computing.
+ If you are new to python, you should consider using pythonxy
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://www.pythonxy.com/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+, which provides most everything you need to get started.
+\end_layout
+
+\begin_layout Standard
+Here is a list of the requirements, 
+\end_layout
+
+\begin_layout Paragraph
+
+\series bold
+Necessary
+\end_layout
+
+\begin_layout Itemize
+python (>=2.6) 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://www.python.org/ "
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+matplotlib (aka pylab) 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://matplotlib.sourceforge.net/ "
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+numpy 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://numpy.scipy.org/ "
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Itemize
+scipy 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://www.scipy.org/ "
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Paragraph*
+Recomended
+\end_layout
+
+\begin_layout Itemize
+ipython 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://ipython.scipy.org/moin/"
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+ (for interactive shell) 
+\end_layout
+
+\begin_layout Paragraph
+Optional
+\end_layout
+
+\begin_layout Itemize
+pyvisa 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://pyvisa.sourceforge.net/pyvisa/"
+
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+ - for instrument control 
+\end_layout
+
+\begin_layout Itemize
+pythics 
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://code.google.com/p/pythics"
+
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+ - for VI gui interface design
+\end_layout
+
+\begin_layout Section
+Platform independent
+\end_layout
+
+\begin_layout Standard
+Python has many choices for module installation, listed here are installation
+ instructions using setuptools, distutils.
+ 
+\end_layout
+
+\begin_layout Subsection
+setuptools
+\end_layout
+
+\begin_layout Standard
+Install the dependencies, if you have setuptools
+\begin_inset Foot
+status collapsed
+
+\begin_layout Plain Layout
+\begin_inset CommandInset href
+LatexCommand href
+target "http://pypi.python.org/pypi/setuptools"
+
+\end_inset
+
+ 
+\end_layout
+
+\end_inset
+
+ installed just open a terminal and type:
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python]
+\end_layout
+
+\begin_layout Plain Layout
+easy_install mwavepy
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This should download and install all mwavepy.
+ 
+\end_layout
+
+\begin_layout Subsection
+distutils
+\end_layout
+
+\begin_layout Standard
+If you dont have setuptools installed, either check out the up-to-date svn
+ version by 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python]
+\end_layout
+
+\begin_layout Plain Layout
+
+python setup.py install 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+svn checkout http://mwavepy.googlecode.com/svn/trunk/ mwavepy-read-only svn
+ checkout http://mwavepy.googlecode.com/svn/trunk/ mwavepy-read-onlyytr
+\end_layout
+
+\begin_layout Standard
+or download and extract the source package.
+ Open a terminal and cd into the mwavepy directory, and run
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python]
+\end_layout
+
+\begin_layout Plain Layout
+
+python setup.py install 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Linux¶
+\end_layout
+
+\begin_layout Standard
+For those who want to use their distribution package manager.
+ To install the requirements in a debian-based linux system just type,
+\end_layout
+
+\begin_layout Standard
+sudo apt-get install python-pyvisa python-numpy python-scipy python-matplotlib
+ ipython python
+\end_layout
+
+\begin_layout Standard
+(you will probably have to go fetch pyvisa yourself, or use easy_install.)
+ Then you can checkout the current Source or Download a release.
+ Install of same as described in previous section (and is given in README.txt)
+ 
+\end_layout
+
+\begin_layout Standard
+Windows¶
+\end_layout
+
+\begin_layout Standard
+I recommend using the platform independent instructions, as it will install
+ all dependencies for you.
+ Otherwise, you have to fetch and install all python modules listed under
+ Requirements.
+\end_layout
+
+\begin_layout Standard
+Then you can download mwavepy.
+ There are two choices:
+\end_layout
+
+\begin_layout Standard
+* windows binary (python module only) * platform independent source, has
+ examples and docs 
+\end_layout
+
+\begin_layout Standard
+Both are under the Download tab.
+ 
+\end_layout
+
+\begin_layout Chapter
+Basic Usage
+\end_layout
+
+\begin_layout Section
+Basic Plotting
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+import mwavepy as mvy
+\end_layout
+
+\begin_layout Plain Layout
+
+import pylab
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# create a Network type from a touchstone file of a horn antenna
+\end_layout
+
+\begin_layout Plain Layout
+
+horn = mvy.Network('horn.s2p')
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# plot magnitude of S11
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.figure(1)
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.title('Return Loss (Mag)')	
+\end_layout
+
+\begin_layout Plain Layout
+
+horn.plot_s_db(m=0,n=0)	# m,n are S-Matrix indecies
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# plot phase of S11
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.figure(2)
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.title('Return Loss (Phase)')
+\end_layout
+
+\begin_layout Plain Layout
+
+# all keyword arguments are passed to matplotlib.plot command
+\end_layout
+
+\begin_layout Plain Layout
+
+horn.plot_s_deg(0,0, label='Broadband Horn Antenna', color='r', linewidth=2)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# plot unwrapped phase of S11
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.figure(3)
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.title('Return Loss (Unwrapped Phase)')
+\end_layout
+
+\begin_layout Plain Layout
+
+horn.plot_s_deg_unwrapped(0,0)
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# plot complex S11 on polar grid
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.figure(4)
+\end_layout
+
+\begin_layout Plain Layout
+
+horn.plot_s_polar(0,0, show_legend=False)
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.title('Return Loss')
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# uncomment to save all figures, 
+\end_layout
+
+\begin_layout Plain Layout
+
+#mvy.save_all_figs('.', format = ['png'])
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+# show the plots 
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.show()
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+Advanced Usage
+\end_layout
+
+\begin_layout Chapter
+Architecture
+\end_layout
+
+\begin_layout Section
+Classes, and Their Inheritance
+\end_layout
+
+\begin_layout Standard
+\align left
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename classInheretanceOutline.pdf
+	scale 75
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Main Classes and their inheritance
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Section
+Individual Class Architectures
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+import mwavepy as mv
+\end_layout
+
+\begin_layout Plain Layout
+
+mv.Network('Interface 1/caled/short.s1p').plot_s_deg
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Frequency
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+freq = mv.Frequency(start = 80,stop=120, npoints = 201, unit='ghz') 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+The frequency object was created to make storing and manipulating frequency
+ information easier and more rigid.
+ A major convenience this class provides is the acounting of the frequency
+ vector's unit.
+ Other objects, such as Network, and Calibration require a frequency vector
+ to be meaningful.
+ This vector is commonly referenced when a plot is generated, which one
+ generally doesnt was in units of Hz.
+ If the Frequency object did not exist other objects which require frequency
+ information would have to implement the unit and multiplier bagage.
+ 
+\end_layout
+
+\begin_layout Standard
+\align left
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename frequency.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Frequency class architecture
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Network
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename network.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Network class architecture
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+touchstone
+\end_layout
+
+\begin_layout Subsection
+WorkingBand
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename workingBand.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+WorkingBand class architecture
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Calibration
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename calibration.pdf
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+Calibration class architecture
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Chapter
+Future Work
+\end_layout
+
+\end_body
+\end_document
