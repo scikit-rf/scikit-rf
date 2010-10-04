@@ -4,12 +4,12 @@ and then plot some common quantities.
 '''
 import sys
 sys.path.append('../../')
-import mwavepy as mvy
+import mwavepy as mv
 import pylab
 
 
 # create a Network type from a touchstone file of a horn antenna
-horn = mvy.Network('horn.s2p')
+horn = mv.Network('horn.s2p')
 
 # plot magnitude of S11
 pylab.figure(1)
@@ -33,7 +33,7 @@ horn.plot_s_polar(0,0, show_legend=False)
 pylab.title('Return Loss')
 
 # uncomment to save all figures, 
-#mvy.save_all_figs('.', format = ['png'])
+mv.save_all_figs('.', format = ['png','eps'])
 
 # show the plots 
 pylab.show()
