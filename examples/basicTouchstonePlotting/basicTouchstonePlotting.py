@@ -30,7 +30,12 @@ horn.plot_s_deg_unwrapped(0,0)
 # plot complex S11 on polar grid
 pylab.figure(4)
 horn.plot_s_polar(0,0, show_legend=False)
-pylab.title('Return Loss')
+pylab.title('Return Loss, Polar')
+
+# plot complex S11 on smith chart
+pylab.figure(5)
+horn.plot_s_smith(0,0, show_legend=False)
+pylab.title('Return Loss, Smith')
 
 # uncomment to save all figures, 
 mv.save_all_figs('.', format = ['png','eps'])
