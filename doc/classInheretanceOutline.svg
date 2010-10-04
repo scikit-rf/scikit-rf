@@ -9,12 +9,12 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="765"
-   height="990"
+   width="726.70868"
+   height="674.2077"
    id="svg2"
    version="1.1"
    inkscape:version="0.47 r22583"
-   sodipodi:docname="classInheretanceOutline.svg"
+   sodipodi:docname="classInheretanceOutline.pdf"
    style="display:inline">
   <defs
      id="defs4">
@@ -496,6 +496,13 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_x="0 : 0.5 : 1"
        sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective3891"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
   </defs>
   <sodipodi:namedview
      id="base"
@@ -504,9 +511,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1.4"
-     inkscape:cx="317.69952"
-     inkscape:cy="765.51443"
+     inkscape:zoom="0.7"
+     inkscape:cx="329.38203"
+     inkscape:cy="315.79121"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -516,7 +523,11 @@
      inkscape:window-x="36"
      inkscape:window-y="25"
      inkscape:window-maximized="1"
-     inkscape:snap-page="true" />
+     inkscape:snap-page="false"
+     inkscape:snap-grids="true"
+     inkscape:snap-to-guides="false"
+     showborder="true"
+     borderlayer="false" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -525,15 +536,39 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="0"
+     transform="translate(307.64004,-732.18186)">
+    <rect
+       style="opacity:0.43933058;fill:#000000;fill-opacity:0.34449762;stroke:#000000;stroke-width:1.32000005;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;display:inline"
+       id="rect2948"
+       width="725.38867"
+       height="672.8877"
+       x="-306.98004"
+       y="732.84186"
+       ry="15.152288" />
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;fill:#000000;fill-opacity:1;stroke:none;display:inline;font-family:Century Schoolbook L;-inkscape-font-specification:Century Schoolbook L Medium"
+       x="0.55147237"
+       y="775.58905"
+       id="text3878"><tspan
+         sodipodi:role="line"
+         id="tspan3880"
+         x="0.55147237"
+         y="775.58905">mwavepy</tspan></text>
+  </g>
+  <g
      inkscape:label="flow"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(0,-62.36)"
+     transform="translate(-21.291368,-34.678418)"
      style="display:inline">
     <g
        id="g11730" />
@@ -576,16 +611,16 @@
     <rect
        style="opacity:0.7;fill:#000000;fill-opacity:0.34449762;stroke:#000000;stroke-width:1.32000005;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect5818"
-       width="316.10126"
-       height="533.4444"
+       width="303.24411"
+       height="587.7301"
        x="413.18445"
        y="109.61604"
        ry="20.203051" />
     <rect
        style="opacity:0.7;fill:#000000;fill-opacity:0.34449762;stroke:#000000;stroke-width:1.32000005;stroke-linecap:butt;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
        id="rect9419"
-       width="255.56859"
-       height="292.94421"
+       width="259.85425"
+       height="344.37283"
        x="436.02695"
        y="324.86243"
        ry="20.203051" />
@@ -832,5 +867,15 @@
        d="m 215.71428,38.571442 68.57143,-2.857143"
        id="path2953"
        transform="translate(0,62.36)" />
+    <path
+       style="fill:none;stroke:#fafafa;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0;marker-start:url(#DotM);marker-mid:url(#DotM);marker-end:url(#DotM)"
+       d="m 536.42857,582.77913 0,13.57143 0,15"
+       id="path3911"
+       transform="translate(21.291368,34.678418)" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:0"
+       d="m 320,-18.64944 108.57143,0"
+       id="path4891"
+       transform="translate(21.291368,34.678418)" />
   </g>
 </svg>

@@ -123,16 +123,34 @@ mwavepy
  written in python.
  It is useful for things such as touchstone file manipulation, calibration,
  data analysis, data acquisition, and plotting.
- The main interface is command line, using the python interpreter.
  
+\series bold
+mwavepy 
+\series default
+can be used interactively through the python interpreter, or in scripts.
+ 
+\end_layout
+
+\begin_layout Standard
+
 \series bold
 mwavepy
 \series default
- is also very useful for scripting tasks.
- Being that it has been built around my specific needs as a graduate student,
- it is far from complete, but is more of a framework for future development.
- I've tried to make mwavepy as simple yet flexible as possible.
- 
+ started when I began to compile all of my personal functions into a single
+ program.
+ I then realized that creating some abstract entities such as a n-port network,
+ calibration instance, and virtual instruments, would make a lot of aspects
+ of data analysis faster.
+ It did.
+\end_layout
+
+\begin_layout Standard
+Because I am not a professional developer, I can only implement what is
+ feasible time-wise, which translates into 'things I need immediatly'.
+ But, I have tried to structure everything with scalability in mind, so
+ others can add onto 
+\series bold
+mwavepy.
 \end_layout
 
 \begin_layout Chapter
@@ -146,23 +164,15 @@ Dependencies
 \begin_layout Standard
 The requirements are basically a python environment setup to do numerical/scient
 ific computing.
- If you are new to python, you should consider using pythonxy
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
+ If you are new to python, you should consider using
 \begin_inset CommandInset href
 LatexCommand href
-target "http://www.pythonxy.com/"
+name "pythonxy"
+target "http://www.pythonxy.com/ "
 
 \end_inset
 
-
-\end_layout
-
-\end_inset
-
-, which provides most everything you need to get started.
+, which provides everything you need to get started.
 \end_layout
 
 \begin_layout Standard
@@ -176,13 +186,9 @@ Necessary
 \end_layout
 
 \begin_layout Itemize
-python (>=2.6) 
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
 \begin_inset CommandInset href
 LatexCommand href
+name "Python >= 2.6"
 target "http://www.python.org/ "
 
 \end_inset
@@ -190,19 +196,10 @@ target "http://www.python.org/ "
 
 \end_layout
 
-\end_inset
-
-
-\end_layout
-
 \begin_layout Itemize
-matplotlib (aka pylab) 
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
 \begin_inset CommandInset href
 LatexCommand href
+name "matplotlib"
 target "http://matplotlib.sourceforge.net/ "
 
 \end_inset
@@ -210,19 +207,10 @@ target "http://matplotlib.sourceforge.net/ "
 
 \end_layout
 
-\end_inset
-
-
-\end_layout
-
 \begin_layout Itemize
-numpy 
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
 \begin_inset CommandInset href
 LatexCommand href
+name "numpy"
 target "http://numpy.scipy.org/ "
 
 \end_inset
@@ -230,25 +218,11 @@ target "http://numpy.scipy.org/ "
 
 \end_layout
 
-\end_inset
-
-
-\end_layout
-
 \begin_layout Itemize
-scipy 
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
 \begin_inset CommandInset href
 LatexCommand href
+name "scipy"
 target "http://www.scipy.org/ "
-
-\end_inset
-
-
-\end_layout
 
 \end_inset
 
@@ -260,19 +234,10 @@ Recomended
 \end_layout
 
 \begin_layout Itemize
-ipython 
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
 \begin_inset CommandInset href
 LatexCommand href
+name "ipython"
 target "http://ipython.scipy.org/moin/"
-
-\end_inset
-
-
-\end_layout
 
 \end_inset
 
@@ -284,19 +249,10 @@ Optional
 \end_layout
 
 \begin_layout Itemize
-pyvisa 
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
 \begin_inset CommandInset href
 LatexCommand href
+name "pyvisa"
 target "http://pyvisa.sourceforge.net/pyvisa/"
-
-\end_inset
-
- 
-\end_layout
 
 \end_inset
 
@@ -304,23 +260,14 @@ target "http://pyvisa.sourceforge.net/pyvisa/"
 \end_layout
 
 \begin_layout Itemize
-pythics 
-\begin_inset Foot
-status collapsed
-
-\begin_layout Plain Layout
 \begin_inset CommandInset href
 LatexCommand href
+name "pythics"
 target "http://code.google.com/p/pythics"
 
 \end_inset
 
- 
-\end_layout
-
-\end_inset
-
- - for VI gui interface design
+- for VI gui interface design
 \end_layout
 
 \begin_layout Section
@@ -330,15 +277,86 @@ Platform independent
 \begin_layout Standard
 Python has many choices for module installation, listed here are installation
  instructions using setuptools, distutils.
- 
+ All of these assume you have installed the required dependencies.
 \end_layout
 
 \begin_layout Subsection
-setuptools
+current version, using svn
 \end_layout
 
 \begin_layout Standard
-Install the dependencies, if you have setuptools
+svn will get you the most up-to-date version of the mwavepy, docs, and examples,
+ but may have bugs.
+ Check-out using, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python]
+\end_layout
+
+\begin_layout Plain Layout
+
+svn checkout http://mwavepy.googlecode.com/svn/trunk/ mwavepy-read-only 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Install mwavepy by cd'ing into the mwavepy directory, and running
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python]
+\end_layout
+
+\begin_layout Plain Layout
+
+python setup.py install 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Subsection
+Source Package
+\end_layout
+
+\begin_layout Standard
+There are also pre-made releases available.
+ These can be installed by using setuptools
 \begin_inset Foot
 status collapsed
 
@@ -354,7 +372,16 @@ target "http://pypi.python.org/pypi/setuptools"
 
 \end_inset
 
- installed just open a terminal and type:
+ or distutils.
+ 
+\end_layout
+
+\begin_layout Paragraph
+setuptools
+\end_layout
+
+\begin_layout Standard
+Open a terminal and type:
 \end_layout
 
 \begin_layout Standard
@@ -369,6 +396,7 @@ begin{lstlisting}[language=Python]
 \end_layout
 
 \begin_layout Plain Layout
+
 easy_install mwavepy
 \end_layout
 
@@ -385,17 +413,17 @@ end{lstlisting}
 \end_layout
 
 \begin_layout Standard
-This should download and install all mwavepy.
+This should download and install mwavepy.
  
 \end_layout
 
-\begin_layout Subsection
+\begin_layout Paragraph
 distutils
 \end_layout
 
 \begin_layout Standard
-If you dont have setuptools installed, either check out the up-to-date svn
- version by 
+Download and extract a source package from the mwavepy website.
+ Open up terminal, cd in mwavepy's directory, and type,
 \end_layout
 
 \begin_layout Standard
@@ -426,14 +454,28 @@ end{lstlisting}
 
 \end_layout
 
-\begin_layout Standard
-svn checkout http://mwavepy.googlecode.com/svn/trunk/ mwavepy-read-only svn
- checkout http://mwavepy.googlecode.com/svn/trunk/ mwavepy-read-onlyytr
+\begin_layout Section
+Windows executable
 \end_layout
 
 \begin_layout Standard
-or download and extract the source package.
- Open a terminal and cd into the mwavepy directory, and run
+Although this may be easier than instaling from svn or a source package,
+ the windows executable will not provide the documentation or examples.
+ Either, way Install all python modules listed under Requirements, or install
+ pythonxy.
+ Then you can download and run the windows installer from the mwavepy website
+ 
+\end_layout
+
+\begin_layout Section
+Linux
+\end_layout
+
+\begin_layout Standard
+I have yet to make a package for any specific distribution, so linux users
+ will have to follow the platform independent directions.
+ However, installing the requirements in a debian-based linux system is
+ much easier than with windows, 
 \end_layout
 
 \begin_layout Standard
@@ -449,7 +491,8 @@ begin{lstlisting}[language=Python]
 
 \begin_layout Plain Layout
 
-python setup.py install 
+sudo apt-get install python-numpy python-scipy python-matplotlib ipython
+ python
 \end_layout
 
 \begin_layout Plain Layout
@@ -465,54 +508,330 @@ end{lstlisting}
 \end_layout
 
 \begin_layout Standard
-Linux¶
+You will probably have to go fetch pyvisa yourself, or use easy_install.
+\end_layout
+
+\begin_layout Chapter
+Quick Intro
 \end_layout
 
 \begin_layout Standard
-For those who want to use their distribution package manager.
- To install the requirements in a debian-based linux system just type,
+This is a quick intro to get the reader comfortable working with 
+\series bold
+mwavepy
+\series default
+.
+ 
+\series bold
+mwavepy
+\series default
+, like all of python, can be used in scripts or through the python interpreter.
+ Fire up a python terminal (or IPython), and import the mwavepy module 
 \end_layout
 
 \begin_layout Standard
-sudo apt-get install python-pyvisa python-numpy python-scipy python-matplotlib
- ipython python
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+import mwavepy as mv
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-(you will probably have to go fetch pyvisa yourself, or use easy_install.)
- Then you can checkout the current Source or Download a release.
- Install of same as described in previous section (and is given in README.txt)
+From here all mwavepy's functions can be accessed through the variable 'mv'.
+ In IPython you can use the autocomplete feature to inspect a module by
+ typing mv.[hit tab], and all the classes and functions will be listed.
+ Help for any of the functions can be accessed by typing, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+help mv.function
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting}
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+For our first example, lets load up the data from a touchstone file (default
+ format for VNA's, ie .s2p).
+ Distributed with mwavepy should be a folder called examples.
+ cd into this folder, where you will find an example touchstone file containig
+ data for a calibrated horn antenna.
+ 
+\series bold
+mwavepy
+\series default
+ has a class which represents a n-port network, called Network.
+ It can be initialized from the contents of a touchstone file like so, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+horn = mv.Network('horn.s1p')
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+From here you can tab out the contents of the newly created Network by typing
+ horn.[hit tab].
+ You can get help on the various functions as described above.
+ Some of the plotting functions can are illustrated in chapter 
+\begin_inset CommandInset ref
+LatexCommand ref
+reference "cha:Basic-Usage"
+
+\end_inset
+
+.
+ The base storage format for a Network's data is in scattering parameters,
+ these can be accessed by the property, 's'.
+ Basic element-wise arithmetic can also be done on the scattering parameters,
+ through operations on the Networks themselves.
+ For instance if you want to form the complex division of two Networks scatering
+ matrices, 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+horn2 =  mv.Network('horn.s1p')
+\end_layout
+
+\begin_layout Plain Layout
+
+horn_diff = horn/horn2
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+This can also be used to implement averaging
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+horn_average = (horn+horn2)/2
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+Other non-elementwise operations are also available, such as cascading and
+ de-embeding two-port networks.
+ For instance the composit network of two, two-port networks is formed using
+ the power operator (**), 
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+composit_ntwk = horn ** horn2 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+De-embeding can be accomplished by using the floor division (//) operator
  
 \end_layout
 
 \begin_layout Standard
-Windows¶
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+horn2 = composit_nwtk //horn 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Standard
-I recommend using the platform independent instructions, as it will install
- all dependencies for you.
- Otherwise, you have to fetch and install all python modules listed under
- Requirements.
+When you are done with a network you can save it back to a touchstone, 
 \end_layout
 
 \begin_layout Standard
-Then you can download mwavepy.
- There are two choices:
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
 \end_layout
 
-\begin_layout Standard
-* windows binary (python module only) * platform independent source, has
- examples and docs 
+\begin_layout Plain Layout
+
+horn2.write_to_touchstone('horn2')
 \end_layout
 
-\begin_layout Standard
-Both are under the Download tab.
- 
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Chapter
 Basic Usage
+\begin_inset CommandInset label
+LatexCommand label
+name "cha:Basic-Usage"
+
+\end_inset
+
+
 \end_layout
 
 \begin_layout Section
@@ -532,15 +851,7 @@ begin{lstlisting}[language=Python]
 
 \begin_layout Plain Layout
 
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-import mwavepy as mvy
+import mwavepy as mv
 \end_layout
 
 \begin_layout Plain Layout
@@ -563,7 +874,7 @@ import pylab
 
 \begin_layout Plain Layout
 
-horn = mvy.Network('horn.s2p')
+horn = mv.Network('horn.s2p')
 \end_layout
 
 \begin_layout Plain Layout
@@ -588,6 +899,66 @@ pylab.title('Return Loss (Mag)')
 \begin_layout Plain Layout
 
 horn.plot_s_db(m=0,n=0)	# m,n are S-Matrix indecies
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss (Mag).eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
 \end_layout
 
 \begin_layout Plain Layout
@@ -625,6 +996,62 @@ horn.plot_s_deg(0,0, label='Broadband Horn Antenna', color='r', linewidth=2)
 
 \begin_layout Plain Layout
 
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss (Phase).eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
 # plot unwrapped phase of S11
 \end_layout
 
@@ -645,30 +1072,210 @@ horn.plot_s_deg_unwrapped(0,0)
 
 \begin_layout Plain Layout
 
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss (Unwrapped Phase).eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
 \end_layout
 
 \begin_layout Plain Layout
 
-# plot complex S11 on polar grid
+# plot complex S11 on smith chart
 \end_layout
 
 \begin_layout Plain Layout
 
-pylab.figure(4)
+pylab.figure(5)
 \end_layout
 
 \begin_layout Plain Layout
 
-horn.plot_s_polar(0,0, show_legend=False)
+horn.plot_s_smith(0,0, show_legend=False)
 \end_layout
 
 \begin_layout Plain Layout
 
-pylab.title('Return Loss')
+pylab.title('Return Loss, Smith')
 \end_layout
 
 \begin_layout Plain Layout
 
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss, Polar.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+# plot complex S11 on smith chart
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.figure(5)
+\end_layout
+
+\begin_layout Plain Layout
+
+horn.plot_s_smith(0,0, show_legend=False)
+\end_layout
+
+\begin_layout Plain Layout
+
+pylab.title('Return Loss, Smith')
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset Float figure
+wide false
+sideways false
+status open
+
+\begin_layout Plain Layout
+\align center
+\begin_inset Graphics
+	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss, Smith.eps
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Plain Layout
+\begin_inset Caption
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
 \end_layout
 
 \begin_layout Plain Layout
@@ -678,7 +1285,7 @@ pylab.title('Return Loss')
 
 \begin_layout Plain Layout
 
-#mvy.save_all_figs('.', format = ['png'])
+#mvy.save_all_figs('.', format = ['png','eps'])
 \end_layout
 
 \begin_layout Plain Layout
@@ -711,6 +1318,209 @@ end{lstlisting}
 
 \end_layout
 
+\begin_layout Section
+One-port Calibration
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+import mwavepy as mv
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+dir = '.'
+\end_layout
+
+\begin_layout Plain Layout
+
+raw = mv.load_all_touchstones(dir,f_unit = 'ghz')
+\end_layout
+
+\begin_layout Plain Layout
+
+myfreq = raw[raw.keys()[0]].frequency
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\begin_layout Plain Layout
+
+cal_std = mv.Calibration(  
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	measured = [
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['Cal3_L1'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['Cal3_L2'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['Cal3_L3'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['Cal3_L4'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['Cal3_L5'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		],
+\end_layout
+
+\begin_layout Plain Layout
+
+	ideals =[
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['short'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['delayshort1'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['delayshort2'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['delayshort3'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		raw['delayshort4'],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+		],
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	name='Standard Cal',
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	type='one port',
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	frequency= myfreq,
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	is_reciprocal=True,
+\backslash
+
+\end_layout
+
+\begin_layout Plain Layout
+
+	)
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Chapter
 Advanced Usage
 \end_layout
@@ -720,7 +1530,7 @@ Architecture
 \end_layout
 
 \begin_layout Section
-Classes, and Their Inheritance
+Module Layout and Inheritance
 \end_layout
 
 \begin_layout Standard
@@ -745,7 +1555,7 @@ status open
 \begin_inset Caption
 
 \begin_layout Plain Layout
-Main Classes and their inheritance
+Module Layout and inheritance
 \end_layout
 
 \end_inset
@@ -800,38 +1610,6 @@ Frequency
 \end_layout
 
 \begin_layout Standard
-\begin_inset ERT
-status open
-
-\begin_layout Plain Layout
-
-
-\backslash
-begin{lstlisting}[language=Python] 
-\end_layout
-
-\begin_layout Plain Layout
-
-freq = mv.Frequency(start = 80,stop=120, npoints = 201, unit='ghz') 
-\end_layout
-
-\begin_layout Plain Layout
-
-
-\backslash
-end{lstlisting} 
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\end_inset
-
-
-\end_layout
-
-\begin_layout Standard
 The frequency object was created to make storing and manipulating frequency
  information easier and more rigid.
  A major convenience this class provides is the acounting of the frequency
@@ -879,6 +1657,46 @@ Frequency class architecture
 
 \end_layout
 
+\begin_layout Paragraph
+Example 
+\end_layout
+
+\begin_layout Standard
+
+\end_layout
+
+\begin_layout Standard
+\begin_inset ERT
+status open
+
+\begin_layout Plain Layout
+
+
+\backslash
+begin{lstlisting}[language=Python] 
+\end_layout
+
+\begin_layout Plain Layout
+
+freq = mv.Frequency(start = 80,stop=120, npoints = 201, unit='ghz') 
+\end_layout
+
+\begin_layout Plain Layout
+
+
+\backslash
+end{lstlisting} 
+\end_layout
+
+\begin_layout Plain Layout
+
+\end_layout
+
+\end_inset
+
+
+\end_layout
+
 \begin_layout Subsection
 Network
 \end_layout
@@ -918,6 +1736,13 @@ Network class architecture
 
 \begin_layout Subsection
 touchstone
+\end_layout
+
+\begin_layout Standard
+The standard file format used to store data retrieved from Vector Network
+ Analyzers (VNAs) is the touchstone file format.
+ This file contains all relevent data of a measured network such as frequency
+ info, network parameters (s, y,z, etc), and port impedance.
 \end_layout
 
 \begin_layout Subsection
