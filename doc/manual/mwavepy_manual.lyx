@@ -922,7 +922,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss (Mag).eps
+	filename ../../examples/basicTouchstonePlotting/Return Loss (Mag).eps
 
 \end_inset
 
@@ -1015,7 +1015,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss (Phase).eps
+	filename ../../examples/basicTouchstonePlotting/Return Loss (Phase).eps
 
 \end_inset
 
@@ -1091,7 +1091,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss (Unwrapped Phase).eps
+	filename ../../examples/basicTouchstonePlotting/Return Loss (Unwrapped Phase).eps
 
 \end_inset
 
@@ -1167,7 +1167,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss, Polar.eps
+	filename ../../examples/basicTouchstonePlotting/Return Loss, Polar.eps
 
 \end_inset
 
@@ -1243,7 +1243,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename /home/alex/python/mwavepy/examples/basicTouchstonePlotting/Return Loss, Smith.eps
+	filename ../../examples/basicTouchstonePlotting/Return Loss, Smith.eps
 
 \end_inset
 
@@ -1543,7 +1543,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename classInheretanceOutline.pdf
+	filename pics/classInheretanceOutline.pdf
 	scale 75
 
 \end_inset
@@ -1633,7 +1633,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename frequency.pdf
+	filename pics/frequency.pdf
 
 \end_inset
 
@@ -1657,15 +1657,8 @@ Frequency class architecture
 
 \end_layout
 
-\begin_layout Paragraph
-Example 
-\end_layout
-
 \begin_layout Standard
-
-\end_layout
-
-\begin_layout Standard
+Example:
 \begin_inset ERT
 status open
 
@@ -1710,7 +1703,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename network.pdf
+	filename pics/network.pdf
 
 \end_inset
 
@@ -1758,7 +1751,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename workingBand.pdf
+	filename pics/workingBand.pdf
 
 \end_inset
 
@@ -1795,7 +1788,7 @@ status open
 \begin_layout Plain Layout
 \align center
 \begin_inset Graphics
-	filename calibration.pdf
+	filename pics/calibration.pdf
 
 \end_inset
 

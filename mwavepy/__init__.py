@@ -1,4 +1,4 @@
-'''
+
 #       __init__.py
 #       
 #       
@@ -19,6 +19,16 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+'''
+**mwavepy** is a compilation of functions and class's for microwave/RF
+engineering written in python. It is useful for things such as
+touchstone file manipulation, calibration, data analysis, data
+acquisition, and plotting. mwavepy can be used interactively through
+the python interpreter, or in scripts. 
+
+This is the main module file for mwavepy. it simply imports classes and
+methods. It does this in two ways; import all into the current namespace,
+and import modules themselves for coherent  structured referencing
 '''
 
 ## Import all  module names for coherent reference of name-space

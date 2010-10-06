@@ -1,4 +1,4 @@
-import mwavepy1 as mv1
+import mwavepy as mv
 from scipy.constants import mil
 import pylab as plb
 import numpy as npy
@@ -18,13 +18,13 @@ def wg_characteristic_impedance():
 	Time-Harmonic Electromagnetic Fields
 	'''
 	# create waveguide type
-	wg = mv1.transmissionLine.RectangularWaveguide(a=1)
+	wg = mv.transmissionLine.RectangularWaveguide(a=1)
 	# calculate cut-off frequency
 	fc = wg.f_c(1,0)
 	# create frequency vector
 	f= npy.linspace(0,3*fc,101)
 	# calculate free-space impedance
-	eta = mv1.transmissionLine.FreeSpace().z0(1)	
+	eta = mv.transmissionLine.FreeSpace().z0(1)	
 	
 	# plot the characteristic impedances
 	plb.plot(f/fc , wg.z0('te',1,0,f)/eta, label= 'R te')
@@ -55,8 +55,8 @@ def wg_propagation_constant():
 	This example was produces same figure 2-18 in Harrington's 
 	Time-Harmonic Electromagnetic Fields
 	'''
-	wg = mv1.transmissionLine.RectangularWaveguide(a=1)
-	free_space = mv1.transmissionLine.FreeSpace()
+	wg = mv.transmissionLine.RectangularWaveguide(a=1)
+	free_space = mv.transmissionLine.FreeSpace()
 	#pdb.set_trace()
 	fc = wg.f_c(1,0)
 	f= npy.linspace(0,5*fc,101)
