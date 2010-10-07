@@ -1,3 +1,6 @@
+'''
+initial testcases for some of mwavepy's functionality. 
+'''
 import mwavepy as mv
 from scipy.constants import mil
 import pylab as plb

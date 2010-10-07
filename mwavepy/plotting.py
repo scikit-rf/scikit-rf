@@ -1,4 +1,4 @@
-'''
+
 #       plotting.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -17,6 +17,9 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+
+'''
+provides plotting functions, which dont belong to any class. 
 '''
 import pylab as plb
 import numpy as npy

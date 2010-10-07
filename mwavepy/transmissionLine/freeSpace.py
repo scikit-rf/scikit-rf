@@ -1,4 +1,4 @@
-'''
+
 #       freeSpace.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -17,6 +17,9 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+
+'''
+contains free space class
 '''
 import numpy as npy
 from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\

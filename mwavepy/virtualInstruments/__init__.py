@@ -1,4 +1,4 @@
-'''
+
 #       __init__.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -18,6 +18,9 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
+import virtual instruments
+'''
+
 
 import vna
 

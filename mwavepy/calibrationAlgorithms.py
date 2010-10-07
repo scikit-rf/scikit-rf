@@ -1,5 +1,4 @@
 
-'''
 #       calibrationAlgorithms.py
 #       
 #       
@@ -20,6 +19,8 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+'''
+Contains calibrations algorithms, used in the Calibration class, 
 '''
 from copy import copy
 import numpy as npy

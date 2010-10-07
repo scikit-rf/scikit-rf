@@ -1,14 +1,6 @@
-'''
+
+#
 #       convenience.py
-#
-#	Holds pre-initialized  class's and functions which provide convience.
-#	Pre-initialized classes include:
-#		Standard waveguide bands
-#			- Freqency Objects (f_*)
-#			- RectangularWaveguideTE10 Objects	(wr_*)
-#			- WorkingBand Objects	(wb_*)
-#
-#       
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
 #       Copyright 2010 lihan chen 
@@ -27,9 +19,15 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+
 '''
-
-
+Holds pre-initialized  class's and functions which provide convenience.
+	Pre-initialized classes include:
+		Standard waveguide bands, which are prefixed by, 
+			- Freqency Objects (f_*)
+			- RectangularWaveguideTE10 Objects	(wr_*)
+			- WorkingBand Objects	(wb_*)
+'''
 
 
 from network import *

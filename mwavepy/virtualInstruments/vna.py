@@ -1,4 +1,4 @@
-'''#       vna.py
+#       vna.py
 #
 #	This file holds all VNA models
 #
@@ -18,8 +18,10 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
-'''
 
+'''
+holds class's for VNA virtual instruments
+'''
 import numpy as npy
 import visa
 from visa import instrument

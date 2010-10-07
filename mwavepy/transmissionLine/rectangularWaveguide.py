@@ -1,4 +1,4 @@
-'''
+
 #       rectangularWaveguide.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -17,8 +17,10 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
-'''
 
+'''
+a multimoded rectangular waveguide
+'''
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil,pi
 import numpy as npy
 from numpy import sqrt,array, cos, sin, linspace

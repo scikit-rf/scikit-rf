@@ -1,4 +1,4 @@
-'''
+
 #       rectangularWaveguideTE10.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -17,7 +17,11 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
+
 '''
+a dominant-mode rectangular waveguide 
+'''
+
 from rectangularWaveguide import RectangularWaveguide
 from functions import electrical_length
 
