@@ -78,6 +78,9 @@ class Network(object):
 		
 		if touchstone_file is not None:
 			self.read_touchstone(touchstone_file)
+			if name is not None:
+				self.name = name
+		
 		else:
 			self.name = name
 			#self.s = None

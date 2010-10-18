@@ -31,7 +31,7 @@ from copy import copy
 from calibrationAlgorithms import *
 from frequency import *
 from network import *
-
+from convenience import *
 
 ## main class
 class Calibration(object):

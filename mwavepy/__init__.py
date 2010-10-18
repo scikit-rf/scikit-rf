@@ -40,6 +40,7 @@ import workingBand
 import calibration
 import convenience
 import plotting
+import mathFunctions
 
 # Import contents into current namespace for ease of calling 
 from frequency import * 
@@ -49,6 +50,7 @@ from workingBand import *
 from calibration import * 
 from convenience import * 
 from plotting import  * 
+from mathFunctions import *
 
 # Try to import virtualInstruments, but if except if pyvisa not installed
 try:
@@ -56,3 +58,8 @@ try:
 	from virtualInstruments import *
 except(ImportError):
 	print '\nWARNING: pyvisa not installed, virtual instruments will not be available\n'
+
+
+
+## built-in imports
+from copy import copy
