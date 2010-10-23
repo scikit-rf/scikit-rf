@@ -1,8 +1,8 @@
 import mwavepy as mv
 from mwavepy.mathFunctions import dirac_delta
-from pylab import * 
-from scipy.constants import * 
-
+import pylab as plb
+from numpy import zeros,pi,sinc,sin 
+from scipy.constants import mil, micron 
 ## variational calculations
 def junction_admittance(wg_I, wg_II, V_I, V_II, freq, M,N,\
 	normalizing_mode=('te',1,0),**kwargs):
@@ -241,9 +241,10 @@ def V_offset_dimension_change(mode_type,m,n,wg,x0,y0,a,b ):
 	return  normalization*coupling
 
 ## high level functions for discontinuity modeling
-def translation_offset(freq,wr, delta_a, delta_b, **kwargs):
-	wg_I = mv.RectangularWaveguide(wr*10*mil)
-	wg_II = mv.RectangularWaveguide(wr*10*mil)
+def translation_offset(wg, freq, delta_a, delta_b, **kwargs):
+	wg_I = wg
+	wg_II = wg
+	
 	junction_args = {\
 		'a':abs(wg_I.a -delta_a),\
 		'b': abs(wg_I.b -delta_b),\
@@ -260,6 +261,36 @@ def translation_offset(freq,wr, delta_a, delta_b, **kwargs):
 		**kwargs\
 		)
 	return out['ntwk']
+
+
+def step_up(freq, wr_small, wr_big,  delta_a=0, delta_b=0, **kwargs):
+	a = wr_small*10*mil
+	b = a/2
+	A = wr_big*10*mil +a/1e-6
+	B = A/2
+	x0,y0 = (A-a)/2, (B-b)/2 
+
+	junction_args = {\
+		'a':a,\
+		'b': b,\
+		'A': A,\
+		'B': B,\
+		'x0': x0,\
+		'y0': y0,\
+		}
+	kwargs.update(junction_args)
+	out = converge_junction_admittance(\
+		wg_I = mv.RectangularWaveguide(wr_small*10*mil),\
+		wg_II = mv.RectangularWaveguide(wr_big*10*mil, epsilon_R = 1-.001j),\
+		V_I = dominant_mode,\
+		V_II =offset_dimension_change,\
+		freq = freq,\
+		**kwargs\
+		)
+		
+	return out['ntwk']
+
+
 
 ## OUTPUT
 def show_coupling(out):
