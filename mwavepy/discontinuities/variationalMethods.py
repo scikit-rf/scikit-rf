@@ -242,6 +242,20 @@ def V_offset_dimension_change(mode_type,m,n,wg,x0,y0,a,b ):
 
 ## high level functions for discontinuity modeling
 def translation_offset(wg, freq, delta_a, delta_b, **kwargs):
+	'''
+	calculates the response from a translation offset between two 
+	rectangular waveguides. 
+	
+	takes:
+		wg: RectangularWaveguide Object. 
+		freq:	Frequency Object
+		delta_a: offset in the width dimension [m]
+		delta_b: offset in the height dimension [m]
+		**kwargs: passed to converge_junction_admittance, see its help 
+			for more info
+	returns:
+		ntwk: a Network type representing the junction
+	'''
 	wg_I = wg
 	wg_II = wg
 	

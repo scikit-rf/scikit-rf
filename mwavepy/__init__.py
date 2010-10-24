@@ -37,11 +37,12 @@ import frequency
 import transmissionLine	
 import network
 import workingBand
+import discontinuities
 import calibration
 import convenience
 import plotting
 import mathFunctions
-import discontinuities
+
 
 
 # Import contents into current namespace for ease of calling 

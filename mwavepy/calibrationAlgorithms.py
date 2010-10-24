@@ -25,7 +25,7 @@ Contains calibrations algorithms, used in the Calibration class,
 from copy import copy
 import numpy as npy
 from scipy.optimize import fmin # used for xds
-
+from discontinuities import variationalMethods as vm
 
 ## Supporting Functions
 def abc_2_coefs_dict(abc):
@@ -337,10 +337,11 @@ def xds(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
 	return output
 
 
-from discontinuities import variationalMethods as vm
+
+
 
 def unknown_translation_offset(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
-	guessLength=False,solveForLoss=False,showProgress= False):
+	guessLength=False,solveForLoss=False,showProgress= False, **kwargs):
 	'''
 	A one port calibration, which can use a redundent number of delayed 
 	shorts to solve	for their unknown lengths.
@@ -429,14 +430,15 @@ def unknown_translation_offset(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
 		
 		for stdNum in range(numDelays):
 			gammaAList[stdNum] = vm.translation_offset(wg=wb.tline,
-				freq= wb.frequency, delta_a=d[2*stdNum],delta_b=d[2*stdNum+1]).s
+				freq= wb.frequency, delta_a=d[2*stdNum],\
+				delta_b=d[2*stdNum+1],**kwargs).s
 
 		
 		residues = one_port(gammaMList, gammaAList)['residuals']
 		sumResidualList.append(npy.sum(abs(residues)))
 		#print npy.sum(abs(residues))
 		if showProgress == True:
-			print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
+			print '%3f ==> '%npy.sum(abs(residues)),d
 		return npy.sum(abs(residues))
 	
 	
@@ -449,8 +451,8 @@ def unknown_translation_offset(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
 		
 	for stdNum in range(numDelays):
 			gammaAList[stdNum] = vm.translation_offset(wg=wb.tline,
-				freq= wb.frequency, delta_a=d[2*stdNum],delta_b=d[2*stdNum+1],\
-				M_0=8,N_0=8).s
+				freq= wb.frequency, delta_a=dEnd[2*stdNum],\
+				delta_b=dEnd[2*stdNum+1],**kwargs).s
 				
 			
 		
