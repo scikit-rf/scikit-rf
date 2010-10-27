@@ -22,7 +22,7 @@
 '''
 Contains calibrations algorithms, used in the Calibration class, 
 '''
-from copy import copy
+from copy import copy,deepcopy
 import numpy as npy
 from scipy.optimize import fmin # used for xds
 from discontinuities import variationalMethods as vm
@@ -643,6 +643,59 @@ def xds_xdl(measured, ideals, wb, ds,dl, Gamma0=None, ftol=1e-3, xtol=1e-3, \
 	'sum_residual_list':sumResidualList\
 	})
 	return output
+
+
+def parameterized_self_calibration(measured, ideals_ps, showProgess=True,\
+	**kwargs):
+	'''
+	takes:
+		measured: list of Network types holding actual measurements
+		ideals: list of ParameterizedStandard types
+		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
+	'''
+	#make copies so list entities are not changed
+	measured = copy(measured)
+	#note: ideals are passed by reference (not copied)
+	
+	# create the initial parameter vector 
+	parameter_vector = npy.array(())
+	for a_ps in ideals_ps:
+		parameter_vector = npy.append(parameter_vector, a_ps.parameter_array)
+
+
+	ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
+	sum_residual_list = []	
+
+	def sub_cal(parameter_vector, measured, ideals_ps):
+		#TODO:  this function uses sloppy namespace, which limits portability
+		for stdNum in range(len(ideals_ps)):
+			current_ps = ideals_ps[stdNum]
+			current_ps.parameter_array = \
+				parameter_vector[stdNum:stdNum+current_ps.number_of_parameters]
+			ideals[stdNum]=current_ps.network
+		
+		residues = one_port(measured, ideals)['residuals']
+		sum_residual_list.append(npy.sum(abs(residues)))
+		
+		if showProgress == True:
+			print npy.sum(abs(residues)),'==>',parameter_vector
+		return npy.sum(abs(residues))
+
+	
+	parameter_vector_end = \
+		fmin (sub_cal, parameter_vector,args=(measured,ideals_ps), **kwargs)
+			
+	output = one_port (measured = measured, ideals=ideals)
+	
+	output.update( {\
+	'parameter_vector_final':parameter_vector,\
+	'sum_residual_list':sum_residual_list\
+	})
+	return output
+
+
+
+
 
 ## TWO PORT
 #TODO: This is a big todo!

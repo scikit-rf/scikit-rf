@@ -83,14 +83,18 @@ class ParameterizedStandard(object):
 		return self.function(**tmp_args)
 
 
+# pre-defined parametrized standards
 
-def translation_missalignment(wg, freq):
+def ps_translation_missalignment(wg, freq):
 	parameters = {'delta_a':0, 'delta_b':0}
 	kwargs = {'wg':wg,'freq':freq}
 	function = translation_offset
 	return ParameterizedStandard(function = function, \
 		parameters = parameters, **kwargs)
 
+def ps_parameterless(ideal_network):
+	return ParameterizedStandard(function = lambda: ideal_network) 
+	
 def delay_short_unknown_delay():
 	return 0
 	
