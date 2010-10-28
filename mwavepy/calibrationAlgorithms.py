@@ -677,18 +677,20 @@ def parameterized_self_calibration(measured, ideals_ps, showProgess=True,\
 		residues = one_port(measured, ideals)['residuals']
 		sum_residual_list.append(npy.sum(abs(residues)))
 		
-		if showProgress == True:
-			print npy.sum(abs(residues)),'==>',parameter_vector
+		#if showProgress == True:
+		print '%.3f'%npy.sum(abs(residues)),'==>',parameter_vector
 		return npy.sum(abs(residues))
 
 	
+	print ('| er |',[ k.parameter_keys for k in ideals_ps])
+	print ('==================================================')
 	parameter_vector_end = \
 		fmin (sub_cal, parameter_vector,args=(measured,ideals_ps), **kwargs)
 			
 	output = one_port (measured = measured, ideals=ideals)
 	
 	output.update( {\
-	'parameter_vector_final':parameter_vector,\
+	'parameter_vector_final':parameter_vector_end,\
 	'sum_residual_list':sum_residual_list\
 	})
 	return output

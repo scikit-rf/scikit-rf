@@ -46,7 +46,7 @@ class Calibration(object):
 	calibration_algorithm_dict={\
 		'one port': one_port,\
 		'one port xds':xds,\
-		'one port uto':unknown_translation_offset,\
+		'one port parameterized':parameterized_self_calibration,\
 		}
 	
 	def __init__(self,frequency , type, name=None,is_reciprocal=False,\
