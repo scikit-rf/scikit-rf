@@ -121,29 +121,43 @@ class PS_Parameterless(ParameterizedStandard):
 			function  = lambda: ideal_network)
 		
 	
-class PS_MatchWithTranslationMissalignment(ParameterizedStandard):
+class PS_Match_TranslationMissalignment(ParameterizedStandard):
 	'''
-	A 
+	A match with unknown translation missalignment.
+	the initial guess for missalignment is [a/10,a/10], where a is the 
+	waveguide width
 	'''
-	def __init__(self, wb,**kwargs):
+	def __init__(self, wb, initial_offset= 1./10 , **kwargs):
 		'''
-		
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
 		'''
 		wg = wb.tline
 		kwargs.update({'wg':wg,'freq':wb.frequency})
 		
 		ParameterizedStandard.__init__(self, \
 			function = translation_offset,\
-			parameters = {'delta_a':wg.a/10., 'delta_b':wg.a/10},\
+			parameters = {'delta_a':wg.a*initial_offset, \
+				'delta_b':wg.a*initial_offset},\
 			**kwargs\
 			)
 
-class PS_DelayShortUnknownDelay(ParameterizedStandard):
+class PS_DelayShort_UnknownLength(ParameterizedStandard):
 	'''
+	A delay short of unknown length
 	
+	initial guess for length should be given to constructor
 	'''
 	def __init__(self, wb,d,**kwargs):
 		'''
+		takes:
+			wb: a WorkingBand type
+			d: initial guess for delay short physical length [m]
+			**kwargs: passed to self.function
 		'''
 		ParameterizedStandard.__init__(self, \
 			function = wb.delay_short,\

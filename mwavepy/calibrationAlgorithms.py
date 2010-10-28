@@ -645,13 +645,30 @@ def xds_xdl(measured, ideals, wb, ds,dl, Gamma0=None, ftol=1e-3, xtol=1e-3, \
 	return output
 
 
-def parameterized_self_calibration(measured, ideals_ps, showProgess=True,\
+def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	**kwargs):
 	'''
+	A self-calibration routine which can take any mixture of parameterized
+	standards. The total residual error is minimized by adjusting the 
+	parameters of each standard and re-runing the calibration. 
+	
+	
+	
 	takes:
 		measured: list of Network types holding actual measurements
 		ideals: list of ParameterizedStandard types
+		showProgress: turn printing progress on/off [boolean]
 		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
+	
+	returns:
+		a dictionary holding:
+		'error_coefficients': dictionary of error coefficients
+		'residuals': residual matrix (shape depends on #stds)
+		'parameter_vector_final': final results for parameter vector
+		'mean_residual_list': the mean, magnitude of the residuals at each
+			iteration of calibration. this is the variable being minimized.
+	
+	see  ParameterizedStandard for more info
 	'''
 	#make copies so list entities are not changed
 	measured = copy(measured)
@@ -664,7 +681,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgess=True,\
 
 
 	ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
-	sum_residual_list = []	
+	mean_residual_list = []	
 
 	def sub_cal(parameter_vector, measured, ideals_ps):
 		#TODO:  this function uses sloppy namespace, which limits portability
@@ -675,15 +692,15 @@ def parameterized_self_calibration(measured, ideals_ps, showProgess=True,\
 			ideals[stdNum]=current_ps.network
 		
 		residues = one_port(measured, ideals)['residuals']
-		sum_residual_list.append(npy.sum(abs(residues)))
+		mean_residual_list.append(npy.mean(abs(residues)))
 		
-		#if showProgress == True:
-		print '%.3f'%npy.sum(abs(residues)),'==>',parameter_vector
-		return npy.sum(abs(residues))
+		if showProgress:
+			print '%.3e'%mean_residual_list[-1],'==>',parameter_vector
+		return mean_residual_list[-1]
 
-	
-	print ('| er |',[ k.parameter_keys for k in ideals_ps])
-	print ('==================================================')
+	if showProgress:
+		print ('| er |  ==>',[ k.parameter_keys for k in ideals_ps])
+		print ('==================================================')
 	parameter_vector_end = \
 		fmin (sub_cal, parameter_vector,args=(measured,ideals_ps), **kwargs)
 			
@@ -691,7 +708,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgess=True,\
 	
 	output.update( {\
 	'parameter_vector_final':parameter_vector_end,\
-	'sum_residual_list':sum_residual_list\
+	'mean_residual_list':mean_residual_list\
 	})
 	return output
 
