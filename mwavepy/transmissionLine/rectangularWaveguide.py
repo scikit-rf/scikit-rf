@@ -54,7 +54,10 @@ class RectangularWaveguide(object):
 		self.yin = self.input_admittance
 		self.f_c = self.cutoff_frequency
 		self.gamma = self.kz
-		self.propagation_constant = self.kz
+		##TODO: UNDO THIS HACK HACK
+		# hack so that WorkingBand.delay, can calculate electrical length
+		self.propagation_constant = lambda f: self.kz(1,0,f)
+
 		self.lambda_c = self.cutoff_wavelength
 		self.lambda_g = self.guide_wavelength
 		self.lambda_0 = self.intrinsic_wavelength
