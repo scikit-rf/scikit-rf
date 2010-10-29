@@ -29,6 +29,36 @@ from visa import instrument
 from ..frequency import *
 from ..network import * 
 
+class ZVA40_alex(instrument):
+    def __init__(self, address=20, channel=1,**kwargs):
+	instrument.__init__('GPIB::'+str(address),**kwargs)
+	self.channel=channel
+
+    @property
+    def continuous(self):
+	raise NotImplementedError
+
+    @continuous.setter
+    def continuous(self, mode):
+	self.write('initiate:continuous '+ mode)
+
+    @property
+    def frequency(self):
+	freq=Frequency( self.ask('FREQ:STAR'),self.ask('FREQ:STOP'),\
+	    self.ask('FREQ:POIN'),'hz')
+	freq.unit = 'ghz'
+	return freq
+
+    @property
+    def network(self):
+	self.write('initiate;*WAI')
+	s = npy.array(self.ask_for_values('CALCulate1:DATA? SDATa'))
+	s.shape=(-1,2)
+	s =  s[:,0]+1j*s[:,1]
+	ntwk = Network()
+	ntwk.s = s
+	ntwk.frequency= self.frequency 
+	return ntwk
 #class ZVA40_alex(instrument):
     #'''
      #zva40
