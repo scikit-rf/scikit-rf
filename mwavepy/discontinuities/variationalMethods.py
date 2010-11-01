@@ -33,14 +33,14 @@ from scipy.constants import mil, micron
 def junction_admittance(wg_I, wg_II, V_I, V_II, freq, M,N,\
 	normalizing_mode=('te',1,0),**kwargs):
 	'''
-	calculates the junction admittance, and equivalent network for a
-	discontinuity in a waveguide.
+	calculates the equivalent network for a	discontinuity in a waveguide,
+	by the aperture-field variational method. 
 
 	takes:
-		wg_I:
-		wg_II:
-		V_I:
-		V_II:
+		wg_I: a RectangularWaveguide instance of region I 
+		wg_II: a RectangularWaveguide instance of region II 
+		V_I: mode voltage for region I 
+		V_II: mode voltage for region II 
 		freq:
 		M:
 		N:
@@ -122,7 +122,7 @@ def junction_admittance(wg_I, wg_II, V_I, V_II, freq, M,N,\
 
 def junction_impedance(wg_I, wg_II, I_I, I_II, freq, M,N,\
 	normalizing_mode=('te',1,0),**kwargs):
-
+	raise (NotImplementedError)
 	## INPUTS
 	# create vectors of mode-indecies and frequency
 	m_ary = range(M)
@@ -189,6 +189,96 @@ def junction_impedance(wg_I, wg_II, I_I, I_II, freq, M,N,\
 	return output
 
 
+
+def junction_admittance_with_termination(wg_I, wg_II, V_I, V_II, freq, M,N,\
+	d, Gamma0,normalizing_mode=('te',1,0),**kwargs):
+	'''
+	calculates the equivalent network for a	discontinuity in a waveguide,
+	by the aperture-field variational method. 
+
+	takes:
+		wg_I: a RectangularWaveguide instance of region I 
+		wg_II: a RectangularWaveguide instance of region II 
+		V_I: mode voltage for region I 
+		V_II: mode voltage for region II 
+		freq:
+		M:
+		N:
+		normalzing mode:
+		**kwargs:
+
+	note:
+		mode voltages are called like:
+			V(mode_type,m,n,wg,**kwargs)
+		so whatever you pass for the mode voltage functions must adhere
+		to this convention
+	'''
+	
+
+	## INPUTS
+	# create vectors of mode-indecies and frequency
+	m_ary = range(M)
+	n_ary = range(N)
+	f_ary = freq.f	
+	F = freq.npoints
+
+	
+	# Calculate coupling coefficients. This is done this way, because the
+	#	coupling is frequency independent
+	V_II_mat = {'te':zeros((M,N)),'tm':zeros((M,N))}
+	V_I_mat = {'te':zeros((M,N)),'tm':zeros((M,N))}
+	for m in range(M):
+		for n in range(N):
+			for mode_type in ['te','tm']:
+				V_I_mat[mode_type][m,n] =  V_I(mode_type,m,n,wg_I,**kwargs)
+				V_II_mat[mode_type][m,n] =  V_II(mode_type,m,n,wg_II,**kwargs)
+	
+	
+	# Calculate the admittances and store in array, the shape == FxMxN
+	Y_II_mat = {'te': wg_II.yin(d,Gamma0,'te', m_ary,n_ary, f_ary),\
+		'tm':wg_II.yin(d, Gamma0,'tm', m_ary,n_ary, f_ary)}
+
+	Y_I_mat = {'te':wg_I.yin(d, Gamma0,'te', m_ary,n_ary, f_ary),\
+		'tm':wg_I.yin(d, Gamma0,'tm', m_ary,n_ary, f_ary)}
+
+	# calculate reaction matrix
+	R_II_mat,R_I_mat = {},{}
+	for mode_type in ['te','tm']:
+		R_II_mat[mode_type] = V_II_mat[mode_type]**2 * Y_II_mat[mode_type] 			
+		R_I_mat[mode_type] = V_I_mat[mode_type]**2 * Y_I_mat[mode_type] 			
+
+	# remove normalizing mode frmo sum, but save it because it belongs
+	# in teh denominator
+	R_I_norm = R_I_mat[normalizing_mode[0]][:,normalizing_mode[1],normalizing_mode[2]].copy()
+	R_I_mat[normalizing_mode[0]][:,normalizing_mode[1],normalizing_mode[2]]=0.0
+	
+	
+	# sum total reaction
+	R = R_II_mat['te'].sum(axis=1).sum(axis=1) +\
+		R_II_mat['tm'].sum(axis=1).sum(axis=1) +\
+		R_I_mat['te'].sum(axis=1).sum(axis=1) +\
+		R_I_mat['tm'].sum(axis=1).sum(axis=1)
+
+	
+	# normalize to normalizing mode, usually the dominant mode
+	Y_in_norm = R / R_I_norm
+
+	#create a network type to return
+	Gamma = (1-Y_in_norm)/(1+Y_in_norm)
+	ntwk = mv.network.Network()
+	ntwk.s = Gamma
+	ntwk.frequency = freq
+
+	output = {\
+		'V_I_mat':	V_I_mat,\
+		'V_II_mat':	V_II_mat,\
+		'Y_I_mat':	Y_I_mat,\
+		'Y_II_mat':	Y_II_mat,\
+		'R_I_mat':	R_I_mat,\
+		'R_II_mat':	R_II_mat,\
+		'Y_in_norm':Y_in_norm,\
+		'ntwk':	ntwk}
+	return output
 
 def converge_junction_admittance(y_tol = 1e-3, mode_rate=1, M_0=2,N_0=2,\
 	min_converged=1, output=True, **kwargs):

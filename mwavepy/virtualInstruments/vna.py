@@ -24,125 +24,56 @@ holds class's for VNA virtual instruments
 '''
 import numpy as npy
 import visa
-from visa import instrument
+from visa import GpibInstrument
 
 from ..frequency import *
 from ..network import * 
 
-class ZVA40_alex(instrument):
-    def __init__(self, address=20, channel=1,**kwargs):
-	instrument.__init__('GPIB::'+str(address),**kwargs)
-	self.channel=channel
-
-    @property
-    def continuous(self):
-	raise NotImplementedError
-
-    @continuous.setter
-    def continuous(self, mode):
-	self.write('initiate:continuous '+ mode)
-
-    @property
-    def frequency(self):
-	freq=Frequency( self.ask('FREQ:STAR'),self.ask('FREQ:STOP'),\
-	    self.ask('FREQ:POIN'),'hz')
-	freq.unit = 'ghz'
-	return freq
-
-    @property
-    def network(self):
-	self.write('initiate;*WAI')
-	s = npy.array(self.ask_for_values('CALCulate1:DATA? SDATa'))
-	s.shape=(-1,2)
-	s =  s[:,0]+1j*s[:,1]
-	ntwk = Network()
-	ntwk.s = s
-	ntwk.frequency= self.frequency 
-	return ntwk
-#class ZVA40_alex(instrument):
-    #'''
-     #zva40
-    #'''
-    #def __init__(self, address=20, channel=1,**kwargs):
-	#instrument.__init__('GPIB::'+str(address),**kwargs)
-	#self.channel=channel
-
-    
-    #@property
-    #def f(self):
-	#return npy.array(self.ask_for_values( \
-	    #'CALCulate'+repr(self.channel)+':DATA:STIMulus?'))
-
-    #@property
-    #def frequency(self):
-	#return f_2_frequency(self.f)
-    #@property
-    #def s(self):
-	#return self.get_s()
-
-
-
-    #@property
-    #def continuous_sweep(self):
-	#raise NotImplementedError
-	##somthing like this
-	#return self.ask('initiate:continuous ON')
-    #@continuous_sweep.setter
-    #def continuous_sweep(self, input):
-	#if input==True:
-	    #self.write('initiate:continuous ON')
-	#elif input==False:
-	    #self.write('initiate:continuous OFF')
-	#else:
-	    #raise ValueError ('input should be True or False')
-
-    #def get_data(self, dataFormat='sData'):
-	#'''
-	#takes:
-		#dataFormat: possible values are 'SDAT','FDAT','MDAT'
-	#returns:
-		#data, depends on what you asked for
-		
-	#note:
-		#FDATa: Formatted trace data, according to the selected trace
-		#format (CALCulate<Chn>:FORMat). 1 value per trace point for
-		#Cartesian diagrams, 2 values for polar diagrams.
-		
-		#sDATa: Unformatted trace data: Real and imaginary part of 
-		#each measurement point. 2 values per trace point 
-		#irrespective of the selected trace format. The trace 
-		#mathematics is not taken into account.
-		
-		#MDATa: Unformatted trace data (see SDATa) after evaluation
-		#of the trace mathematics.
-
-	#'''
+class PNAX(GpibInstrument):
+	'''
+	Agilent PNAX
+	'''
+	def __init__(self, address=16, channel=1,**kwargs):
+		GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+		self.channel=channel
+		self.write('calc:par:sel CH1_S11_1')
 	
-	#if dataFormat[:4].upper() not in ['SDAT','FDAT','MDAT']:
-	    #raise ValueError('dataFormat not acceptable. see help')
-	#else:
-	    #return self.ask_for_values('CALCulate'+repr(self.channel)+':DATA? '+dataFormat[:4])
-    
-    #def get_s(self,mn=None):
-	#'''
-	    #mn: index, like 11, 22, 12, if None then gets current
-	#'''
-	## use param input to possibly change s-parameter
-	#rawData = npy.array(self.getData(dataFormat='SData',\
-	    #Ch=self.channel),dtype=complex)
-	#complexData = rawData[0::2]  + 1j*rawData[1::2]
-	#return complexData
-
-    #def get_network(self, number_of_ports=1,**kwargs):
-	#'''
-	#'''
-	#ntwk = Network(**kwargs)
-
-	#if number_of_ports ==1:
-	    #ntwk.s = self.s
-	    #ntwk.frequency = self.frequency
-	#else:
-	    #raise NotImplementedError
+	@property
+	def continuous(self):
+		raise NotImplementedError
+	
+	@continuous.setter
+	def continuous(self, mode):
+		self.write('initiate:continuous '+ mode)
+	
+	@property
+	def frequency(self, unit='ghz'):
+		freq=Frequency( float(self.ask('sens:FREQ:STAR?')),
+			float(self.ask('sens:FREQ:STOP?')),\
+			int(self.ask('sens:sweep:POIN?')),'hz')
+		freq.unit = unit
+		return freq
+	
+	
+	@property
+	def network(self):
+		'''
+		Initiates a sweep and returns a  Network type represting the
+		data.
+		
+		if you are taking multiple sweeps, and want the sweep timing to
+		work, put the turn continuous mode off. like pnax.continuous='off'
+		'''
+		self.write('init:imm')
+		self.write('*wai')
+		s = npy.array(self.ask_for_values('CALCulate1:DATA? SDATa'))
+		s.shape=(-1,2)
+		s =  s[:,0]+1j*s[:,1]
+		ntwk = Network()
+		ntwk.s = s
+		ntwk.frequency= self.frequency 
+		return ntwk
+		
 	    
 class ZVA40(object):
     '''
@@ -153,9 +84,11 @@ class ZVA40(object):
     For detail about visa please refer to:
 	    http://pyvisa.sourceforge.net/
 	    
-    After installing the pyvisa and necessary driver (GPIB to USB driver, for instance), please follow the pyvisa manual to set up the module
+    After installing the pyvisa and necessary driver (GPIB to USB driver,
+     for instance), please follow the pyvisa manual to set up the module
     
-    This class only has several methods. You can add as many methods as possible by reading the Network Analyzer manual
+    This class only has several methods. You can add as many methods
+    as possible by reading the Network Analyzer manual
     Here is an example
     
     In the manual,

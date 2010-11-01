@@ -303,7 +303,7 @@ class RectangularWaveguide(object):
 		return 1./self.input_impedance(d, Gamma0, mode_type, m,n,f)
 	def electrical_length(self,m,n,f,d,deg=False):
 		return electrical_length( \
-			gamma = lambda x:self.propagation_constant(m=m,n=n, f=x),\
+			gamma = lambda x:self.kz(m=m,n=n, f=x),\
 			f=f,d=d,deg=deg)
 
 	## Analytical EigenFunctions
