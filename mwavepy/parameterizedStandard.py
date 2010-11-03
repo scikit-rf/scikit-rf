@@ -25,7 +25,8 @@ provides Parameterized Standard class.
 import numpy as npy
 from copy import copy
 
-from discontinuities.variationalMethods import translation_offset
+from discontinuities.variationalMethods import translation_offset, \
+	translation_offset_with_termination
 
 class ParameterizedStandard(object):
 	'''

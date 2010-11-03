@@ -272,7 +272,14 @@ class RectangularWaveguide(object):
 		'''
 		z0 = self.z0( mode_type, m,n,f)
 		theta = self.electrical_length(m,n,f,d)
-		zin = Gamma0_2_zin(z0, Gamma0, theta)
+
+	
+		# needed in case m, n , and f are arrays
+		#Gamma0= array(Gamma0).reshape(-1,1,1).repeat(len(m),axis=1).repeat(len(n),axis=2)
+		#theta = theta.reshape(-1,1,1).repeat(len(m),axis=1).repeat(len(n),axis=2)
+
+		zin = Gamma0_2_zin(z0, Gamma0, theta).reshape(z0.shape)
+		
 		return zin
 		
 	def input_admittance(self, d, Gamma0, mode_type, m,n,f):
