@@ -281,9 +281,9 @@ def junction_admittance_with_termination(wg_I, wg_II, V_I, V_II, freq, M,N,\
 	return output
 
 def converge_junction_admittance(y_tol = 1e-3, mode_rate=1, M_0=2,N_0=2,\
-	min_converged=1, output=True, **kwargs):
+	min_converged=1, output=True, converge_func= junction_admittance, **kwargs):
 	M,N=M_0,N_0
-	y_old = junction_admittance(M=M, N=N,**kwargs)['ntwk'].y
+	y_old = converge_func(M=M, N=N,**kwargs)['ntwk'].y
 	
 	y_list = []
 	converged_counter =0
@@ -295,7 +295,7 @@ def converge_junction_admittance(y_tol = 1e-3, mode_rate=1, M_0=2,N_0=2,\
 			if output:print '(%i,%i)\t\t%f'%(M,N, y_delta)
 			
 			M,N = int(M+mode_rate), int(N+mode_rate)
-			out = junction_admittance(M=M, N=N,**kwargs)
+			out = converge_func(M=M, N=N,**kwargs)
 			y_delta = abs(y_old-out['ntwk'].y).max()
 			y_list.append(y_delta)
 			y_old = out['ntwk'].y
@@ -388,6 +388,48 @@ def translation_offset(wg, freq, delta_a, delta_b, **kwargs):
 		V_I = V_offset_dimension_change,\
 		V_II = V_offset_dimension_change,\
 		freq = freq,\
+		**kwargs\
+		)
+	return out['ntwk']
+
+def translation_offset_with_termination(wg, freq, delta_a, delta_b, d,\
+	Gamma0,**kwargs):
+	'''
+	calculates the response from a translation offset between two 
+	rectangular waveguides with a simple termination, possbily in the
+	near field, in region II
+	
+	takes:
+		wg: RectangularWaveguide Object. 
+		freq:	Frequency Object
+		delta_a: offset in the width dimension [m]
+		delta_b: offset in the height dimension [m]
+		d: distance to termination [m]
+		Gamma0: reflection coefficient of termination at the termination 
+		**kwargs: passed to converge_junction_admittance, see its help 
+			for more info
+	returns:
+		ntwk: a Network type representing the junction
+	'''
+	wg_I = wg
+	wg_II = wg
+	
+	junction_args = {\
+		'a':wg_I.a -abs(delta_a),\
+		'b': wg_I.b -abs(delta_b),\
+		'x0': 0,\
+		'y0': 0,\
+		}
+	kwargs.update(junction_args)
+	out = converge_junction_admittance(\
+		converge_func = junction_admittance_with_termination,\
+		wg_I = wg_I,\
+		wg_II = wg_II,\
+		V_I = V_offset_dimension_change,\
+		V_II = V_offset_dimension_change,\
+		freq = freq,\
+		d=d,\
+		Gamma0=Gamma0,\
 		**kwargs\
 		)
 	return out['ntwk']

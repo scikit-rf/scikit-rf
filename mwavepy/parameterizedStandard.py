@@ -146,6 +146,62 @@ class PS_Match_TranslationMissalignment(ParameterizedStandard):
 			**kwargs\
 			)
 
+class PS_Delayed_Termination_TranslationMissalignment(ParameterizedStandard):
+	'''
+	A known Delayed Termination with unknown translation missalignment.
+	the initial guess for missalignment defaults to [1/10,1/10]*a,
+	where a is the 	waveguide width
+	'''
+	def __init__(self, wb,d,Gamma0,initial_offset= 1./10, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+				d: distance to termination
+				Gamma0: reflection coefficient off termination at termination
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
+		'''
+		wg = wb.tline
+		kwargs.update({'wg':wg,'freq':wb.frequency,'d':d,'Gamma0':Gamma0})
+		
+		ParameterizedStandard.__init__(self, \
+			function = translation_offset_with_termination,\
+			parameters = {'delta_a':wg.a*initial_offset, \
+						'delta_b':wg.a*initial_offset},\
+			**kwargs\
+			)
+
+class PS_Delayed_Termination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
+	'''
+	A known Delayed Termination with unknown translation missalignment.
+	the initial guess for missalignment defaults to [1/10,1/10]*a,
+	where a is the 	waveguide width
+	'''
+	def __init__(self, wb,d,Gamma0,initial_offset= 1./10, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d: distance to termination
+			Gamma0: reflection coefficient off termination at termination
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
+		'''
+		wg = wb.tline
+		kwargs.update({'wg':wg,'freq':wb.frequency,'Gamma0':Gamma0})
+		
+		ParameterizedStandard.__init__(self, \
+			function = translation_offset_with_termination,\
+			parameters = {'delta_a':wg.a*initial_offset, \
+						'delta_b':wg.a*initial_offset,\
+						'd':d},\
+			**kwargs\
+			)
+
+
 class PS_DelayShort_UnknownLength(ParameterizedStandard):
 	'''
 	A delay short of unknown length
