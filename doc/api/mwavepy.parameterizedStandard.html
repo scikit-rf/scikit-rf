@@ -1,0 +1,367 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.parameterizedStandard</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.parameterizedStandard</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/parameterizedStandard.py">/home/alex/docs/python/path/mwavepy/parameterizedStandard.py</a></font></td></tr></table>
+    <p><tt>provides&nbsp;Parameterized&nbsp;Standard&nbsp;class.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.parameterizedStandard.html#PS_DelayShort_UnknownLength">PS_DelayShort_UnknownLength</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mwavepy.parameterizedStandard.html#PS_Delayed_Termination_TranslationMissalignment">PS_Delayed_Termination_TranslationMissalignment</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mwavepy.parameterizedStandard.html#PS_Delayed_Termination_UnknownLength_TranslationMissalignment">PS_Delayed_Termination_UnknownLength_TranslationMissalignment</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mwavepy.parameterizedStandard.html#PS_Match_TranslationMissalignment">PS_Match_TranslationMissalignment</a>
+</font></dt><dt><font face="helvetica, arial"><a href="mwavepy.parameterizedStandard.html#PS_Parameterless">PS_Parameterless</a>
+</font></dt></dl>
+</dd>
+</dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="PS_DelayShort_UnknownLength">class <strong>PS_DelayShort_UnknownLength</strong></a>(<a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;delay&nbsp;short&nbsp;of&nbsp;unknown&nbsp;length<br>
+&nbsp;<br>
+initial&nbsp;guess&nbsp;for&nbsp;length&nbsp;should&nbsp;be&nbsp;given&nbsp;to&nbsp;constructor<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="mwavepy.parameterizedStandard.html#PS_DelayShort_UnknownLength">PS_DelayShort_UnknownLength</a></dd>
+<dd><a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="PS_DelayShort_UnknownLength-__init__"><strong>__init__</strong></a>(self, wb, d, **kwargs)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb:&nbsp;a&nbsp;WorkingBand&nbsp;type<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;initial&nbsp;guess&nbsp;for&nbsp;delay&nbsp;short&nbsp;physical&nbsp;length&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;self.<strong>function</strong></tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>network</strong></dt>
+<dd><tt>&nbsp;a&nbsp;Networks&nbsp;instance&nbsp;generated&nbsp;by&nbsp;calling&nbsp;function(),&nbsp;for&nbsp;<br>
+the&nbsp;current&nbsp;set&nbsp;of&nbsp;parameters&nbsp;(and&nbsp;kwargs)</tt></dd>
+</dl>
+<dl><dt><strong>number_of_parameters</strong></dt>
+<dd><tt>the&nbsp;number&nbsp;of&nbsp;parameters&nbsp;this&nbsp;standard&nbsp;has</tt></dd>
+</dl>
+<dl><dt><strong>parameter_array</strong></dt>
+<dd><tt>This&nbsp;property&nbsp;provides&nbsp;a&nbsp;1D-array&nbsp;interface&nbsp;to&nbsp;the&nbsp;parameters&nbsp;<br>
+dictionary.&nbsp;This&nbsp;is&nbsp;needed&nbsp;to&nbsp;intereface&nbsp;teh&nbsp;optimizing&nbsp;function<br>
+because&nbsp;it&nbsp;only&nbsp;takes&nbsp;a&nbsp;1D-array.&nbsp;Therefore,&nbsp;order&nbsp;must&nbsp;be&nbsp;<br>
+preserved&nbsp;with&nbsp;accessing&nbsp;and&nbsp;updating&nbsp;the&nbsp;parameters&nbsp;through&nbsp;this<br>
+array.&nbsp;To&nbsp;handle&nbsp;this&nbsp;I&nbsp;make&nbsp;it&nbsp;return&nbsp;and&nbsp;update&nbsp;in&nbsp;alphebetical<br>
+order&nbsp;of&nbsp;the&nbsp;parameters&nbsp;dictionary&nbsp;keys.</tt></dd>
+</dl>
+<dl><dt><strong>parameter_keys</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;list&nbsp;of&nbsp;parameter&nbsp;dictionary&nbsp;keys&nbsp;in&nbsp;alphabetical&nbsp;order</tt></dd>
+</dl>
+<dl><dt><strong>s</strong></dt>
+<dd><tt>a&nbsp;direct&nbsp;access&nbsp;to&nbsp;the&nbsp;calulated&nbsp;networks'&nbsp;s-matrix</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="PS_Delayed_Termination_TranslationMissalignment">class <strong>PS_Delayed_Termination_TranslationMissalignment</strong></a>(<a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;known&nbsp;Delayed&nbsp;Termination&nbsp;with&nbsp;unknown&nbsp;translation&nbsp;missalignment.<br>
+the&nbsp;initial&nbsp;guess&nbsp;for&nbsp;missalignment&nbsp;defaults&nbsp;to&nbsp;[1/10,1/10]*a,<br>
+where&nbsp;a&nbsp;is&nbsp;the&nbsp;&nbsp;waveguide&nbsp;width<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="mwavepy.parameterizedStandard.html#PS_Delayed_Termination_TranslationMissalignment">PS_Delayed_Termination_TranslationMissalignment</a></dd>
+<dd><a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="PS_Delayed_Termination_TranslationMissalignment-__init__"><strong>__init__</strong></a>(self, wb, d, Gamma0, initial_offset<font color="#909090">=0.10000000000000001</font>, **kwargs)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb:&nbsp;a&nbsp;WorkingBand&nbsp;type,&nbsp;with&nbsp;a&nbsp;RectangularWaveguide&nbsp;<a href="__builtin__.html#object">object</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;its&nbsp;tline&nbsp;property.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;to&nbsp;termination<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;off&nbsp;termination&nbsp;at&nbsp;termination<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initial_offset:&nbsp;initial&nbsp;offset&nbsp;guess,&nbsp;as&nbsp;a&nbsp;fraction&nbsp;of&nbsp;a,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(the&nbsp;waveguide&nbsp;width&nbsp;dimension)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;self.<strong>function</strong></tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>network</strong></dt>
+<dd><tt>&nbsp;a&nbsp;Networks&nbsp;instance&nbsp;generated&nbsp;by&nbsp;calling&nbsp;function(),&nbsp;for&nbsp;<br>
+the&nbsp;current&nbsp;set&nbsp;of&nbsp;parameters&nbsp;(and&nbsp;kwargs)</tt></dd>
+</dl>
+<dl><dt><strong>number_of_parameters</strong></dt>
+<dd><tt>the&nbsp;number&nbsp;of&nbsp;parameters&nbsp;this&nbsp;standard&nbsp;has</tt></dd>
+</dl>
+<dl><dt><strong>parameter_array</strong></dt>
+<dd><tt>This&nbsp;property&nbsp;provides&nbsp;a&nbsp;1D-array&nbsp;interface&nbsp;to&nbsp;the&nbsp;parameters&nbsp;<br>
+dictionary.&nbsp;This&nbsp;is&nbsp;needed&nbsp;to&nbsp;intereface&nbsp;teh&nbsp;optimizing&nbsp;function<br>
+because&nbsp;it&nbsp;only&nbsp;takes&nbsp;a&nbsp;1D-array.&nbsp;Therefore,&nbsp;order&nbsp;must&nbsp;be&nbsp;<br>
+preserved&nbsp;with&nbsp;accessing&nbsp;and&nbsp;updating&nbsp;the&nbsp;parameters&nbsp;through&nbsp;this<br>
+array.&nbsp;To&nbsp;handle&nbsp;this&nbsp;I&nbsp;make&nbsp;it&nbsp;return&nbsp;and&nbsp;update&nbsp;in&nbsp;alphebetical<br>
+order&nbsp;of&nbsp;the&nbsp;parameters&nbsp;dictionary&nbsp;keys.</tt></dd>
+</dl>
+<dl><dt><strong>parameter_keys</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;list&nbsp;of&nbsp;parameter&nbsp;dictionary&nbsp;keys&nbsp;in&nbsp;alphabetical&nbsp;order</tt></dd>
+</dl>
+<dl><dt><strong>s</strong></dt>
+<dd><tt>a&nbsp;direct&nbsp;access&nbsp;to&nbsp;the&nbsp;calulated&nbsp;networks'&nbsp;s-matrix</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="PS_Delayed_Termination_UnknownLength_TranslationMissalignment">class <strong>PS_Delayed_Termination_UnknownLength_TranslationMissalignment</strong></a>(<a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;known&nbsp;Delayed&nbsp;Termination&nbsp;with&nbsp;unknown&nbsp;translation&nbsp;missalignment.<br>
+the&nbsp;initial&nbsp;guess&nbsp;for&nbsp;missalignment&nbsp;defaults&nbsp;to&nbsp;[1/10,1/10]*a,<br>
+where&nbsp;a&nbsp;is&nbsp;the&nbsp;&nbsp;waveguide&nbsp;width<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="mwavepy.parameterizedStandard.html#PS_Delayed_Termination_UnknownLength_TranslationMissalignment">PS_Delayed_Termination_UnknownLength_TranslationMissalignment</a></dd>
+<dd><a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="PS_Delayed_Termination_UnknownLength_TranslationMissalignment-__init__"><strong>__init__</strong></a>(self, wb, d, Gamma0, initial_offset<font color="#909090">=0.10000000000000001</font>, **kwargs)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb:&nbsp;a&nbsp;WorkingBand&nbsp;type,&nbsp;with&nbsp;a&nbsp;RectangularWaveguide&nbsp;<a href="__builtin__.html#object">object</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;its&nbsp;tline&nbsp;property.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;to&nbsp;termination<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;off&nbsp;termination&nbsp;at&nbsp;termination<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initial_offset:&nbsp;initial&nbsp;offset&nbsp;guess,&nbsp;as&nbsp;a&nbsp;fraction&nbsp;of&nbsp;a,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(the&nbsp;waveguide&nbsp;width&nbsp;dimension)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;self.<strong>function</strong></tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>network</strong></dt>
+<dd><tt>&nbsp;a&nbsp;Networks&nbsp;instance&nbsp;generated&nbsp;by&nbsp;calling&nbsp;function(),&nbsp;for&nbsp;<br>
+the&nbsp;current&nbsp;set&nbsp;of&nbsp;parameters&nbsp;(and&nbsp;kwargs)</tt></dd>
+</dl>
+<dl><dt><strong>number_of_parameters</strong></dt>
+<dd><tt>the&nbsp;number&nbsp;of&nbsp;parameters&nbsp;this&nbsp;standard&nbsp;has</tt></dd>
+</dl>
+<dl><dt><strong>parameter_array</strong></dt>
+<dd><tt>This&nbsp;property&nbsp;provides&nbsp;a&nbsp;1D-array&nbsp;interface&nbsp;to&nbsp;the&nbsp;parameters&nbsp;<br>
+dictionary.&nbsp;This&nbsp;is&nbsp;needed&nbsp;to&nbsp;intereface&nbsp;teh&nbsp;optimizing&nbsp;function<br>
+because&nbsp;it&nbsp;only&nbsp;takes&nbsp;a&nbsp;1D-array.&nbsp;Therefore,&nbsp;order&nbsp;must&nbsp;be&nbsp;<br>
+preserved&nbsp;with&nbsp;accessing&nbsp;and&nbsp;updating&nbsp;the&nbsp;parameters&nbsp;through&nbsp;this<br>
+array.&nbsp;To&nbsp;handle&nbsp;this&nbsp;I&nbsp;make&nbsp;it&nbsp;return&nbsp;and&nbsp;update&nbsp;in&nbsp;alphebetical<br>
+order&nbsp;of&nbsp;the&nbsp;parameters&nbsp;dictionary&nbsp;keys.</tt></dd>
+</dl>
+<dl><dt><strong>parameter_keys</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;list&nbsp;of&nbsp;parameter&nbsp;dictionary&nbsp;keys&nbsp;in&nbsp;alphabetical&nbsp;order</tt></dd>
+</dl>
+<dl><dt><strong>s</strong></dt>
+<dd><tt>a&nbsp;direct&nbsp;access&nbsp;to&nbsp;the&nbsp;calulated&nbsp;networks'&nbsp;s-matrix</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="PS_Match_TranslationMissalignment">class <strong>PS_Match_TranslationMissalignment</strong></a>(<a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;match&nbsp;with&nbsp;unknown&nbsp;translation&nbsp;missalignment.<br>
+the&nbsp;initial&nbsp;guess&nbsp;for&nbsp;missalignment&nbsp;is&nbsp;[a/10,a/10],&nbsp;where&nbsp;a&nbsp;is&nbsp;the&nbsp;<br>
+waveguide&nbsp;width<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="mwavepy.parameterizedStandard.html#PS_Match_TranslationMissalignment">PS_Match_TranslationMissalignment</a></dd>
+<dd><a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="PS_Match_TranslationMissalignment-__init__"><strong>__init__</strong></a>(self, wb, initial_offset<font color="#909090">=0.10000000000000001</font>, **kwargs)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb:&nbsp;a&nbsp;WorkingBand&nbsp;type,&nbsp;with&nbsp;a&nbsp;RectangularWaveguide&nbsp;<a href="__builtin__.html#object">object</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;its&nbsp;tline&nbsp;property.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;initial_offset:&nbsp;initial&nbsp;offset&nbsp;guess,&nbsp;as&nbsp;a&nbsp;fraction&nbsp;of&nbsp;a,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(the&nbsp;waveguide&nbsp;width&nbsp;dimension)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;self.<strong>function</strong></tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>network</strong></dt>
+<dd><tt>&nbsp;a&nbsp;Networks&nbsp;instance&nbsp;generated&nbsp;by&nbsp;calling&nbsp;function(),&nbsp;for&nbsp;<br>
+the&nbsp;current&nbsp;set&nbsp;of&nbsp;parameters&nbsp;(and&nbsp;kwargs)</tt></dd>
+</dl>
+<dl><dt><strong>number_of_parameters</strong></dt>
+<dd><tt>the&nbsp;number&nbsp;of&nbsp;parameters&nbsp;this&nbsp;standard&nbsp;has</tt></dd>
+</dl>
+<dl><dt><strong>parameter_array</strong></dt>
+<dd><tt>This&nbsp;property&nbsp;provides&nbsp;a&nbsp;1D-array&nbsp;interface&nbsp;to&nbsp;the&nbsp;parameters&nbsp;<br>
+dictionary.&nbsp;This&nbsp;is&nbsp;needed&nbsp;to&nbsp;intereface&nbsp;teh&nbsp;optimizing&nbsp;function<br>
+because&nbsp;it&nbsp;only&nbsp;takes&nbsp;a&nbsp;1D-array.&nbsp;Therefore,&nbsp;order&nbsp;must&nbsp;be&nbsp;<br>
+preserved&nbsp;with&nbsp;accessing&nbsp;and&nbsp;updating&nbsp;the&nbsp;parameters&nbsp;through&nbsp;this<br>
+array.&nbsp;To&nbsp;handle&nbsp;this&nbsp;I&nbsp;make&nbsp;it&nbsp;return&nbsp;and&nbsp;update&nbsp;in&nbsp;alphebetical<br>
+order&nbsp;of&nbsp;the&nbsp;parameters&nbsp;dictionary&nbsp;keys.</tt></dd>
+</dl>
+<dl><dt><strong>parameter_keys</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;list&nbsp;of&nbsp;parameter&nbsp;dictionary&nbsp;keys&nbsp;in&nbsp;alphabetical&nbsp;order</tt></dd>
+</dl>
+<dl><dt><strong>s</strong></dt>
+<dd><tt>a&nbsp;direct&nbsp;access&nbsp;to&nbsp;the&nbsp;calulated&nbsp;networks'&nbsp;s-matrix</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="PS_Parameterless">class <strong>PS_Parameterless</strong></a>(<a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;parameterless&nbsp;standard.&nbsp;<br>
+this&nbsp;is&nbsp;needed&nbsp;so&nbsp;that&nbsp;the&nbsp;calibration&nbsp;algorithm&nbsp;doesnt&nbsp;have&nbsp;to<br>
+handle&nbsp;more&nbsp;than&nbsp;one&nbsp;type&nbsp;of&nbsp;standard<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="mwavepy.parameterizedStandard.html#PS_Parameterless">PS_Parameterless</a></dd>
+<dd><a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="PS_Parameterless-__init__"><strong>__init__</strong></a>(self, ideal_network)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideal_network:&nbsp;a&nbsp;Network&nbsp;instance&nbsp;of&nbsp;the&nbsp;standard</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="mwavepy.parameterizedStandard.html#ParameterizedStandard">ParameterizedStandard</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>network</strong></dt>
+<dd><tt>&nbsp;a&nbsp;Networks&nbsp;instance&nbsp;generated&nbsp;by&nbsp;calling&nbsp;function(),&nbsp;for&nbsp;<br>
+the&nbsp;current&nbsp;set&nbsp;of&nbsp;parameters&nbsp;(and&nbsp;kwargs)</tt></dd>
+</dl>
+<dl><dt><strong>number_of_parameters</strong></dt>
+<dd><tt>the&nbsp;number&nbsp;of&nbsp;parameters&nbsp;this&nbsp;standard&nbsp;has</tt></dd>
+</dl>
+<dl><dt><strong>parameter_array</strong></dt>
+<dd><tt>This&nbsp;property&nbsp;provides&nbsp;a&nbsp;1D-array&nbsp;interface&nbsp;to&nbsp;the&nbsp;parameters&nbsp;<br>
+dictionary.&nbsp;This&nbsp;is&nbsp;needed&nbsp;to&nbsp;intereface&nbsp;teh&nbsp;optimizing&nbsp;function<br>
+because&nbsp;it&nbsp;only&nbsp;takes&nbsp;a&nbsp;1D-array.&nbsp;Therefore,&nbsp;order&nbsp;must&nbsp;be&nbsp;<br>
+preserved&nbsp;with&nbsp;accessing&nbsp;and&nbsp;updating&nbsp;the&nbsp;parameters&nbsp;through&nbsp;this<br>
+array.&nbsp;To&nbsp;handle&nbsp;this&nbsp;I&nbsp;make&nbsp;it&nbsp;return&nbsp;and&nbsp;update&nbsp;in&nbsp;alphebetical<br>
+order&nbsp;of&nbsp;the&nbsp;parameters&nbsp;dictionary&nbsp;keys.</tt></dd>
+</dl>
+<dl><dt><strong>parameter_keys</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;list&nbsp;of&nbsp;parameter&nbsp;dictionary&nbsp;keys&nbsp;in&nbsp;alphabetical&nbsp;order</tt></dd>
+</dl>
+<dl><dt><strong>s</strong></dt>
+<dd><tt>a&nbsp;direct&nbsp;access&nbsp;to&nbsp;the&nbsp;calulated&nbsp;networks'&nbsp;s-matrix</tt></dd>
+</dl>
+</td></tr></table> <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="ParameterizedStandard">class <strong>ParameterizedStandard</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;parameterized&nbsp;standard&nbsp;represents&nbsp;a&nbsp;calibration&nbsp;standard&nbsp;which&nbsp;<br>
+has&nbsp;uncertainty&nbsp;in&nbsp;its&nbsp;response.&nbsp;This&nbsp;uncertainty&nbsp;is&nbsp;functionally&nbsp;<br>
+known,&nbsp;and&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;represented&nbsp;by&nbsp;a&nbsp;parametric&nbsp;function,&nbsp;where&nbsp;the&nbsp;<br>
+uknown&nbsp;quantity&nbsp;is&nbsp;the&nbsp;adjustable&nbsp;parameter.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="ParameterizedStandard-__init__"><strong>__init__</strong></a>(self, function<font color="#909090">=None</font>, parameters<font color="#909090">={}</font>, **kwargs)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function:&nbsp;a&nbsp;function&nbsp;which&nbsp;will&nbsp;be&nbsp;called&nbsp;to&nbsp;generate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;Network&nbsp;type,&nbsp;to&nbsp;be&nbsp;used&nbsp;as&nbsp;a&nbsp;ideal&nbsp;response.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;parameters:&nbsp;an&nbsp;dictionary&nbsp;holding&nbsp;an&nbsp;list&nbsp;of&nbsp;parameters,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;which&nbsp;will&nbsp;be&nbsp;the&nbsp;dependent&nbsp;variables&nbsp;to&nbsp;optimize.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;these&nbsp;are&nbsp;passed&nbsp;to&nbsp;the&nbsp;network&nbsp;creating&nbsp;function.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;keyword&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;the&nbsp;function,&nbsp;but&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;not&nbsp;used&nbsp;in&nbsp;parametric&nbsp;optimization.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>network</strong></dt>
+<dd><tt>&nbsp;a&nbsp;Networks&nbsp;instance&nbsp;generated&nbsp;by&nbsp;calling&nbsp;function(),&nbsp;for&nbsp;<br>
+the&nbsp;current&nbsp;set&nbsp;of&nbsp;parameters&nbsp;(and&nbsp;kwargs)</tt></dd>
+</dl>
+<dl><dt><strong>number_of_parameters</strong></dt>
+<dd><tt>the&nbsp;number&nbsp;of&nbsp;parameters&nbsp;this&nbsp;standard&nbsp;has</tt></dd>
+</dl>
+<dl><dt><strong>parameter_array</strong></dt>
+<dd><tt>This&nbsp;property&nbsp;provides&nbsp;a&nbsp;1D-array&nbsp;interface&nbsp;to&nbsp;the&nbsp;parameters&nbsp;<br>
+dictionary.&nbsp;This&nbsp;is&nbsp;needed&nbsp;to&nbsp;intereface&nbsp;teh&nbsp;optimizing&nbsp;function<br>
+because&nbsp;it&nbsp;only&nbsp;takes&nbsp;a&nbsp;1D-array.&nbsp;Therefore,&nbsp;order&nbsp;must&nbsp;be&nbsp;<br>
+preserved&nbsp;with&nbsp;accessing&nbsp;and&nbsp;updating&nbsp;the&nbsp;parameters&nbsp;through&nbsp;this<br>
+array.&nbsp;To&nbsp;handle&nbsp;this&nbsp;I&nbsp;make&nbsp;it&nbsp;return&nbsp;and&nbsp;update&nbsp;in&nbsp;alphebetical<br>
+order&nbsp;of&nbsp;the&nbsp;parameters&nbsp;dictionary&nbsp;keys.</tt></dd>
+</dl>
+<dl><dt><strong>parameter_keys</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;list&nbsp;of&nbsp;parameter&nbsp;dictionary&nbsp;keys&nbsp;in&nbsp;alphabetical&nbsp;order</tt></dd>
+</dl>
+<dl><dt><strong>s</strong></dt>
+<dd><tt>a&nbsp;direct&nbsp;access&nbsp;to&nbsp;the&nbsp;calulated&nbsp;networks'&nbsp;s-matrix</tt></dd>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

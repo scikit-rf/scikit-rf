@@ -30,9 +30,10 @@ from discontinuities.variationalMethods import translation_offset, \
 
 class ParameterizedStandard(object):
 	'''
-	A parameterized standard represents a calibration standard, which 
+	A parameterized standard represents a calibration standard which 
 	has uncertainty in its response. This uncertainty is functionally 
-	known, and 	represented by an adjustable parameters. 
+	known, and 	represented by a parametric function, where the 
+	uknown quantity is the adjustable parameter. 
 	
 	'''
 	def __init__(self, function=None, parameters={}, **kwargs):

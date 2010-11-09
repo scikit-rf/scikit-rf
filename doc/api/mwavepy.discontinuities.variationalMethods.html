@@ -1,0 +1,187 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.discontinuities.variationalMethods</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.discontinuities.html"><font color="#ffffff">discontinuities</font></a>.variationalMethods</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/discontinuities/variationalMethods.py">/home/alex/docs/python/path/mwavepy/discontinuities/variationalMethods.py</a></font></td></tr></table>
+    <p><tt>variational&nbsp;calculations,&nbsp;for&nbsp;solving&nbsp;equivalent&nbsp;networks&nbsp;of<br>
+discontinuities.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.html">mwavepy</a><br>
+</td><td width="25%" valign=top><a href="pylab.html">pylab</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-V_dominant_mode"><strong>V_dominant_mode</strong></a>(mode_type, m, n, wg, **kwargs)</dt><dd><tt>mode&nbsp;voltage&nbsp;coupling&nbsp;of&nbsp;dominant&nbsp;mode&nbsp;to&nbsp;itself.<br>
+&nbsp;<br>
+assumed&nbsp;field&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sin(pi*x/a)&nbsp;;&nbsp;for&nbsp;0&nbsp;&lt;&nbsp;x&nbsp;&lt;&nbsp;wg.a,&nbsp;0&nbsp;&lt;&nbsp;y&nbsp;&lt;&nbsp;wg.b<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;type&nbsp;of&nbsp;mode,&nbsp;a&nbsp;string,&nbsp;acceptable&nbsp;values&nbsp;are&nbsp;['te','tmz']<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;width&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;heigth&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg:&nbsp;a&nbsp;RectangularWaveguide&nbsp;type</tt></dd></dl>
+ <dl><dt><a name="-V_offset_dimension_change"><strong>V_offset_dimension_change</strong></a>(mode_type, m, n, wg, x0, y0, a, b)</dt><dd><tt>mode&nbsp;voltage&nbsp;coupling&nbsp;for&nbsp;dominant&nbsp;mode&nbsp;field&nbsp;of&nbsp;a&nbsp;rectangular<br>
+aperture&nbsp;of&nbsp;dimension&nbsp;axb,&nbsp;radiating&nbsp;into&nbsp;a&nbsp;larger&nbsp;waveguide&nbsp;of<br>
+dimensions&nbsp;wg.a&nbsp;x&nbsp;wg.b.<br>
+&nbsp;<br>
+assumed&nbsp;field&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sin(pi/a*(x-x0))&nbsp;;&nbsp;for&nbsp;x0&nbsp;&lt;&nbsp;x&nbsp;&lt;&nbsp;x0+a,&nbsp;y0&nbsp;&lt;&nbsp;y&nbsp;&lt;&nbsp;y0+b<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode_type:&nbsp;type&nbsp;of&nbsp;mode,&nbsp;a&nbsp;string,&nbsp;acceptable&nbsp;values&nbsp;are&nbsp;['te','tmz']<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;mode&nbsp;index&nbsp;in&nbsp;width&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;mode&nbsp;index&nbsp;in&nbsp;heigth&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg:&nbsp;a&nbsp;RectangularWaveguide&nbsp;type<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;x0:&nbsp;offset&nbsp;of&nbsp;aperture&nbsp;in&nbsp;width&nbsp;(a)&nbsp;dimension&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y0:&nbsp;offset&nbsp;of&nbsp;aperture&nbsp;in&nbsp;height&nbsp;(b)&nbsp;dimension&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aperture&nbsp;size&nbsp;in&nbsp;width&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aperture&nbsp;size&nbsp;in&nbsp;height&nbsp;dimension<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normalized&nbsp;&nbsp;coupling&nbsp;value,&nbsp;a&nbsp;scalar.</tt></dd></dl>
+ <dl><dt><a name="-converge_junction_admittance"><strong>converge_junction_admittance</strong></a>(y_tol<font color="#909090">=0.001</font>, mode_rate<font color="#909090">=1</font>, M_0<font color="#909090">=2</font>, N_0<font color="#909090">=2</font>, min_converged<font color="#909090">=1</font>, output<font color="#909090">=True</font>, converge_func<font color="#909090">=&lt;function junction_admittance&gt;</font>, **kwargs)</dt></dl>
+ <dl><dt><a name="-junction_admittance"><strong>junction_admittance</strong></a>(wg_I, wg_II, V_I, V_II, freq, M, N, normalizing_mode<font color="#909090">=('te', 1, 0)</font>, **kwargs)</dt><dd><tt>calculates&nbsp;the&nbsp;equivalent&nbsp;network&nbsp;for&nbsp;a&nbsp;discontinuity&nbsp;in&nbsp;a&nbsp;waveguide,<br>
+by&nbsp;the&nbsp;aperture-field&nbsp;variational&nbsp;method.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_I:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;of&nbsp;region&nbsp;I&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_II:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;of&nbsp;region&nbsp;II&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_I:&nbsp;mode&nbsp;voltage&nbsp;for&nbsp;region&nbsp;I&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_II:&nbsp;mode&nbsp;voltage&nbsp;for&nbsp;region&nbsp;II&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;M:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normalzing&nbsp;mode:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode&nbsp;voltages&nbsp;are&nbsp;called&nbsp;like:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V(mode_type,m,n,wg,**kwargs)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;so&nbsp;whatever&nbsp;you&nbsp;pass&nbsp;for&nbsp;the&nbsp;mode&nbsp;voltage&nbsp;functions&nbsp;must&nbsp;adhere<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;this&nbsp;convention</tt></dd></dl>
+ <dl><dt><a name="-junction_admittance_with_termination"><strong>junction_admittance_with_termination</strong></a>(wg_I, wg_II, V_I, V_II, freq, M, N, d, Gamma0, normalizing_mode<font color="#909090">=('te', 1, 0)</font>, **kwargs)</dt><dd><tt>calculates&nbsp;the&nbsp;equivalent&nbsp;network&nbsp;for&nbsp;a&nbsp;discontinuity&nbsp;in&nbsp;a&nbsp;waveguide,<br>
+by&nbsp;the&nbsp;aperture-field&nbsp;variational&nbsp;method.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_I:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;of&nbsp;region&nbsp;I&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_II:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;of&nbsp;region&nbsp;II&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_I:&nbsp;mode&nbsp;voltage&nbsp;for&nbsp;region&nbsp;I&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_II:&nbsp;mode&nbsp;voltage&nbsp;for&nbsp;region&nbsp;II&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;M:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normalzing&nbsp;mode:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode&nbsp;voltages&nbsp;are&nbsp;called&nbsp;like:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V(mode_type,m,n,wg,**kwargs)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;so&nbsp;whatever&nbsp;you&nbsp;pass&nbsp;for&nbsp;the&nbsp;mode&nbsp;voltage&nbsp;functions&nbsp;must&nbsp;adhere<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;this&nbsp;convention</tt></dd></dl>
+ <dl><dt><a name="-junction_impedance"><strong>junction_impedance</strong></a>(wg_I, wg_II, I_I, I_II, freq, M, N, normalizing_mode<font color="#909090">=('te', 1, 0)</font>, **kwargs)</dt></dl>
+ <dl><dt><a name="-plot_mag_phase"><strong>plot_mag_phase</strong></a>(out)</dt></dl>
+ <dl><dt><a name="-show_coupling"><strong>show_coupling</strong></a>(out)</dt><dd><tt>##&nbsp;OUTPUT</tt></dd></dl>
+ <dl><dt><a name="-step_up"><strong>step_up</strong></a>(freq, wr_small, wr_big, delta_a<font color="#909090">=0</font>, delta_b<font color="#909090">=0</font>, **kwargs)</dt></dl>
+ <dl><dt><a name="-translation_offset"><strong>translation_offset</strong></a>(wg, freq, delta_a, delta_b, **kwargs)</dt><dd><tt>calculates&nbsp;the&nbsp;response&nbsp;from&nbsp;a&nbsp;translation&nbsp;offset&nbsp;between&nbsp;two&nbsp;<br>
+rectangular&nbsp;waveguides.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg:&nbsp;RectangularWaveguide&nbsp;Object.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:&nbsp;&nbsp;&nbsp;Frequency&nbsp;Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_a:&nbsp;offset&nbsp;in&nbsp;the&nbsp;width&nbsp;dimension&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_b:&nbsp;offset&nbsp;in&nbsp;the&nbsp;height&nbsp;dimension&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;converge_junction_admittance,&nbsp;see&nbsp;its&nbsp;help&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;more&nbsp;info<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;a&nbsp;Network&nbsp;type&nbsp;representing&nbsp;the&nbsp;junction</tt></dd></dl>
+ <dl><dt><a name="-translation_offset_with_termination"><strong>translation_offset_with_termination</strong></a>(wg, freq, delta_a, delta_b, d, Gamma0, **kwargs)</dt><dd><tt>calculates&nbsp;the&nbsp;response&nbsp;from&nbsp;a&nbsp;translation&nbsp;offset&nbsp;between&nbsp;two&nbsp;<br>
+rectangular&nbsp;waveguides&nbsp;with&nbsp;a&nbsp;simple&nbsp;termination,&nbsp;possbily&nbsp;in&nbsp;the<br>
+near&nbsp;field,&nbsp;in&nbsp;region&nbsp;II<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg:&nbsp;RectangularWaveguide&nbsp;Object.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:&nbsp;&nbsp;&nbsp;Frequency&nbsp;Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_a:&nbsp;offset&nbsp;in&nbsp;the&nbsp;width&nbsp;dimension&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_b:&nbsp;offset&nbsp;in&nbsp;the&nbsp;height&nbsp;dimension&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;to&nbsp;termination&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;termination&nbsp;at&nbsp;the&nbsp;termination&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;converge_junction_admittance,&nbsp;see&nbsp;its&nbsp;help&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;more&nbsp;info<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;a&nbsp;Network&nbsp;type&nbsp;representing&nbsp;the&nbsp;junction</tt></dd></dl>
+ <dl><dt><a name="-zeros"><strong>zeros</strong></a>(...)</dt><dd><tt><a href="#-zeros">zeros</a>(shape,&nbsp;dtype=float,&nbsp;order='C')<br>
+&nbsp;<br>
+Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;type,&nbsp;filled&nbsp;with&nbsp;zeros.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+shape&nbsp;:&nbsp;{tuple&nbsp;of&nbsp;ints,&nbsp;int}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;new&nbsp;array,&nbsp;e.g.,&nbsp;``(2,&nbsp;3)``&nbsp;or&nbsp;``2``.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array,&nbsp;e.g.,&nbsp;`numpy.int8`.&nbsp;&nbsp;Default&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;`numpy.float64`.<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Whether&nbsp;to&nbsp;store&nbsp;multidimensional&nbsp;data&nbsp;in&nbsp;C-&nbsp;or&nbsp;Fortran-contiguous<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(row-&nbsp;or&nbsp;column-wise)&nbsp;order&nbsp;in&nbsp;memory.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+out&nbsp;:&nbsp;ndarray<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;the&nbsp;given&nbsp;shape,&nbsp;dtype,&nbsp;and&nbsp;order.<br>
+&nbsp;<br>
+See&nbsp;Also<br>
+--------<br>
+numpy.zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+numpy.ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+numpy.empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+numpy.ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
+numpy.empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(5)<br>
+array([&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((5,),&nbsp;dtype=numpy.int)<br>
+array([0,&nbsp;0,&nbsp;0,&nbsp;0,&nbsp;0])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,&nbsp;1))<br>
+array([[&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;s&nbsp;=&nbsp;(2,2)<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(s)<br>
+array([[&nbsp;0.,&nbsp;&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.,&nbsp;&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])<br>
+array([(0,&nbsp;0),&nbsp;(0,&nbsp;0)],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dtype=[('x',&nbsp;'&lt;i4'),&nbsp;('y',&nbsp;'&lt;i4')])</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>micron</strong> = 9.9999999999999995e-07<br>
+<strong>mil</strong> = 2.5399999999999997e-05<br>
+<strong>pi</strong> = 3.1415926535897931<br>
+<strong>sin</strong> = &lt;ufunc 'sin'&gt;</td></tr></table>
+</body></html>
