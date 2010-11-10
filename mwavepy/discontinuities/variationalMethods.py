@@ -282,6 +282,115 @@ def junction_admittance_with_termination(wg_I, wg_II, V_I, V_II, freq, M,N,\
 		'ntwk':	ntwk}
 	return output
 
+def aperture_field(wg_I, wg_II, V_I, V_II, freq, M,N, d, Gamma0, \
+	V_I_args={}, V_II_args={}, normalizing_mode=('te',1,0)):
+	'''
+	calculates the equivalent network for a	discontinuity in a waveguide,
+	by the aperture-field variational method. 
+
+	takes:
+		wg_I: a RectangularWaveguide instance of region I 
+		wg_II: a RectangularWaveguide instance of region II 
+		V_I: mode voltage for region I 
+		V_II: mode voltage for region II 
+		freq: Frequency object
+		M: number of modes in 'a' dimension
+		N: number of modes in 'b' dimension
+		d: termination distance for region II
+		Gamma0: terminating reflection coefficient for region II
+		V_I_args: dictionary holding key-word arguments for V_I
+		V_II_args: dictionary holding key-word arguments for V_II
+		normalzing mode: triplet of (mode_type, m,n), designating the
+			mode which the  normalized aperture admittance is normalized
+			to.
+
+	returns: a dictionary holding the following keys
+		'V_I_mat':	V_I_mat,\
+		'V_II_mat':	V_II_mat,\
+		'Y_I_mat':	Y_I_mat,\
+		'Y_II_mat':	Y_II_mat,\
+		'R_I_mat':	R_I_mat,\
+		'R_II_mat':	R_II_mat,\
+		'Y_in_norm':Y_in_norm,\
+		'ntwk':	ntwk
+
+	note:
+		mode voltages are called like:
+			V_I(mode_type,m,n,wg,**V_I_args)
+		so whatever you pass for the mode voltage functions must adhere
+		to this convention
+	'''
+	
+
+	## INPUTS
+	# create vectors of mode-indecies and frequency
+	m_ary = range(M)
+	n_ary = range(N)
+	f_ary = freq.f	
+	F = freq.npoints
+
+	
+	# Calculate coupling coefficients. This is done this way, because the
+	#	coupling is frequency independent
+	V_II_mat = {'te':zeros((M,N)),'tm':zeros((M,N))}
+	V_I_mat = {'te':zeros((M,N)),'tm':zeros((M,N))}
+	for m in range(M):
+		for n in range(N):
+			for mode_type in ['te','tm']:
+				V_I_mat[mode_type][m,n] =  V_I(mode_type,m,n,wg_I,**V_I_args)
+				V_II_mat[mode_type][m,n] =  V_II(mode_type,m,n,wg_II,**V_II_args)
+	
+	
+	# Calculate the admittances and store in array, the shape == FxMxN
+	Y_II_mat = {'te': wg_II.yin(d,Gamma0,'te', m_ary,n_ary, f_ary),\
+		'tm':wg_II.yin(d, Gamma0,'tm', m_ary,n_ary, f_ary)}
+
+	Y_I_mat = {'te':wg_I.y0('te', m_ary,n_ary, f_ary),\
+		'tm':wg_I.y0('tm', m_ary,n_ary, f_ary)}
+
+	# calculate reaction matrix
+	R_II_mat,R_I_mat = {},{}
+	for mode_type in ['te','tm']:
+		R_II_mat[mode_type] = V_II_mat[mode_type]**2 * Y_II_mat[mode_type] 			
+		R_I_mat[mode_type] = V_I_mat[mode_type]**2 * Y_I_mat[mode_type] 			
+
+	# remove normalizing mode frmo sum, but save it because it belongs
+	# in teh denominator
+	R_I_norm = \
+	V_I_mat[normalizing_mode[0]][normalizing_mode[1],normalizing_mode[2]]**2 * \
+		wg_I.y0(normalizing_mode[0],normalizing_mode[1],normalizing_mode[2],f_ary)
+	R_I_mat[normalizing_mode[0]][:,normalizing_mode[1],normalizing_mode[2]]=0.0
+	
+	
+	# sum total reaction (the signs of this addition is due to region I
+	# being matched. 
+	R = (R_II_mat['te'].sum(axis=1).sum(axis=1) +\
+		R_II_mat['tm'].sum(axis=1).sum(axis=1)) +\
+		(R_I_mat['te'].sum(axis=1).sum(axis=1) +\
+		R_I_mat['tm'].sum(axis=1).sum(axis=1))
+
+	
+	# normalize to normalizing mode, usually the dominant mode
+	Y_in_norm = R / R_I_norm
+
+	#create a network type to return
+	Gamma = (1-Y_in_norm)/(1+Y_in_norm)
+	ntwk = mv.network.Network()
+	ntwk.s = Gamma
+	ntwk.frequency = freq
+
+	output = {\
+		'V_I_mat':	V_I_mat,\
+		'V_II_mat':	V_II_mat,\
+		'Y_I_mat':	Y_I_mat,\
+		'Y_II_mat':	Y_II_mat,\
+		'R_I_mat':	R_I_mat,\
+		'R_II_mat':	R_II_mat,\
+		'Y_in_norm':Y_in_norm,\
+		'ntwk':	ntwk}
+	return output
+
+
 def converge_junction_admittance(y_tol = 1e-3, mode_rate=1, M_0=2,N_0=2,\
 	min_converged=1, output=True, converge_func= junction_admittance, **kwargs):
 	M,N=M_0,N_0
@@ -436,6 +545,36 @@ def translation_offset_with_termination(wg, freq, delta_a, delta_b, d,\
 		)
 	return out['ntwk']
 
+def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
+	wg_I = wg
+	wg_II = mv.RectangularWaveguide(a=wg.b,b= wg.a)
+	
+	V_I_args = {\
+		'a':wg_I.a/2.,\
+		'b': wg_I.b,\
+		'x0': wg_I.a/4. + delta_a,\
+		'y0': 0,\
+		}
+	V_II_args = {\
+		'a':wg_II.a,\
+		'b': wg_II.b/2.,\
+		'x0': 0,\
+		'y0': wg_II.b/4.+delta_b,\
+		}	
+	out = converge_junction_admittance(\
+		converge_func = aperture_field,\
+		wg_I = wg_I,\
+		wg_II = wg_II,\
+		V_I = V_offset_dimension_change,\
+		V_I_args = V_I_args,\
+		V_II = V_offset_dimension_change,\
+		V_II_args = V_II_args,\
+		freq = freq,\
+		d=d,\
+		Gamma0=Gamma0,\
+		**kwargs\
+		)
+	return out['ntwk']
 
 def step_up(freq, wr_small, wr_big,  delta_a=0, delta_b=0, **kwargs):
 	a = wr_small*10*mil
