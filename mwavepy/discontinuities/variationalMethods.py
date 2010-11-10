@@ -238,8 +238,8 @@ def junction_admittance_with_termination(wg_I, wg_II, V_I, V_II, freq, M,N,\
 	Y_II_mat = {'te': wg_II.yin(d,Gamma0,'te', m_ary,n_ary, f_ary),\
 		'tm':wg_II.yin(d, Gamma0,'tm', m_ary,n_ary, f_ary)}
 
-	Y_I_mat = {'te':wg_I.yin(d, Gamma0,'te', m_ary,n_ary, f_ary),\
-		'tm':wg_I.yin(d, Gamma0,'tm', m_ary,n_ary, f_ary)}
+	Y_I_mat = {'te':wg_I.y0('te', m_ary,n_ary, f_ary),\
+		'tm':wg_I.y0('tm', m_ary,n_ary, f_ary)}
 
 	# calculate reaction matrix
 	R_II_mat,R_I_mat = {},{}
@@ -257,7 +257,7 @@ def junction_admittance_with_termination(wg_I, wg_II, V_I, V_II, freq, M,N,\
 	
 	# sum total reaction
 	R = (R_II_mat['te'].sum(axis=1).sum(axis=1) +\
-		R_II_mat['tm'].sum(axis=1).sum(axis=1)) -\
+		R_II_mat['tm'].sum(axis=1).sum(axis=1)) +\
 		(R_I_mat['te'].sum(axis=1).sum(axis=1) +\
 		R_I_mat['tm'].sum(axis=1).sum(axis=1))
 
@@ -470,13 +470,13 @@ def step_up(freq, wr_small, wr_big,  delta_a=0, delta_b=0, **kwargs):
 def show_coupling(out):
 	for region in ['I','II']:
 		for mode_type in ['te','tm']:
-			figure()
-			imshow((out['V_'+region+'_mat'][mode_type]**2).transpose(), \
+			plb.figure()
+			plb.imshow((out['V_'+region+'_mat'][mode_type]**2).transpose(), \
 				interpolation='nearest', origin = 'lower')
-			title('Region %s: %s Modes'%(region, mode_type.upper()))
-			xlabel('M-index')
-			ylabel('N-index')
-			colorbar()
+			plb.title('Region %s: %s Modes'%(region, mode_type.upper()))
+			plb.xlabel('M-index')
+			plb.ylabel('N-index')
+			plb.colorbar()
 	
 
 
