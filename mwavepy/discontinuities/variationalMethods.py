@@ -249,15 +249,17 @@ def junction_admittance_with_termination(wg_I, wg_II, V_I, V_II, freq, M,N,\
 
 	# remove normalizing mode frmo sum, but save it because it belongs
 	# in teh denominator
-	R_I_norm = R_I_mat[normalizing_mode[0]][:,normalizing_mode[1],normalizing_mode[2]].copy()
+	R_I_norm = \
+	V_I_mat[normalizing_mode[0]][normalizing_mode[1],normalizing_mode[2]]**2 * \
+		wg_I.y0(normalizing_mode[0],normalizing_mode[1],normalizing_mode[2],f_ary)
 	R_I_mat[normalizing_mode[0]][:,normalizing_mode[1],normalizing_mode[2]]=0.0
 	
 	
 	# sum total reaction
-	R = R_II_mat['te'].sum(axis=1).sum(axis=1) +\
-		R_II_mat['tm'].sum(axis=1).sum(axis=1) +\
-		R_I_mat['te'].sum(axis=1).sum(axis=1) +\
-		R_I_mat['tm'].sum(axis=1).sum(axis=1)
+	R = (R_II_mat['te'].sum(axis=1).sum(axis=1) +\
+		R_II_mat['tm'].sum(axis=1).sum(axis=1)) -\
+		(R_I_mat['te'].sum(axis=1).sum(axis=1) +\
+		R_I_mat['tm'].sum(axis=1).sum(axis=1))
 
 	
 	# normalize to normalizing mode, usually the dominant mode
@@ -348,7 +350,7 @@ def V_offset_dimension_change(mode_type,m,n,wg,x0,y0,a,b ):
 	A,B = wg.a,wg.b	
 	#normalization_ap = 1/a#./A #  arbitrary, but  makes V_'s of reasonable units
 	normalization = wg.eigenfunction_normalization(mode_type,m,n)
-	a = a + 1e-12*a
+	a = a + 1e-12*a# perturbe a, to avoid singularity at int(A/a)
 	c = m*pi/A-pi/a
 	d = m*pi/A+pi/a
 	coupling = ((y0 + b)*sinc((y0 + b)*n/B) - y0*sinc(y0*n/B)) * 1/2.* (\
