@@ -25,8 +25,7 @@ provides Parameterized Standard class.
 import numpy as npy
 from copy import copy
 
-from discontinuities.variationalMethods import translation_offset, \
-	translation_offset_with_termination
+from discontinuities.variationalMethods import *
 
 class ParameterizedStandard(object):
 	'''
@@ -148,7 +147,7 @@ class PS_Match_TranslationMissalignment(ParameterizedStandard):
 			**kwargs\
 			)
 
-class PS_Delayed_Termination_TranslationMissalignment(ParameterizedStandard):
+class PS_DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 	'''
 	A known Delayed Termination with unknown translation missalignment.
 	the initial guess for missalignment defaults to [1/10,1/10]*a,
@@ -169,13 +168,13 @@ class PS_Delayed_Termination_TranslationMissalignment(ParameterizedStandard):
 		kwargs.update({'wg':wg,'freq':wb.frequency,'d':d,'Gamma0':Gamma0})
 		
 		ParameterizedStandard.__init__(self, \
-			function = translation_offset_with_termination,\
+			function = terminated_translation_offset,\
 			parameters = {'delta_a':wg.a*initial_offset, \
 						'delta_b':wg.a*initial_offset},\
 			**kwargs\
 			)
 
-class PS_Delayed_Termination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
+class PS_DelayedTermination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
 	'''
 	A known Delayed Termination with unknown translation missalignment.
 	the initial guess for missalignment defaults to [1/10,1/10]*a,
@@ -196,10 +195,35 @@ class PS_Delayed_Termination_UnknownLength_TranslationMissalignment(Parameterize
 		kwargs.update({'wg':wg,'freq':wb.frequency,'Gamma0':Gamma0})
 		
 		ParameterizedStandard.__init__(self, \
-			function = translation_offset_with_termination,\
+			function = terminated_translation_offset,\
 			parameters = {'delta_a':wg.a*initial_offset, \
 						'delta_b':wg.a*initial_offset,\
 						'd':d},\
+			**kwargs\
+			)
+
+class PS_RotatedWaveguide_UnknownLength(ParameterizedStandard):
+	'''
+	A rotated waveguide of unkown delay length.
+	'''
+	def __init__(self, wb,d,Gamma0, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d: distance to termination
+			Gamma0: reflection coefficient off termination at termination
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
+		'''
+		wg = wb.tline
+		kwargs.update({'wg':wg,'freq':wb.frequency,'delta_a':0,\
+			'delta_b':0,'Gamma0':Gamma0})
+		
+		ParameterizedStandard.__init__(self, \
+			function = rotated_waveguide,\
+			parameters = {'d':d},\
 			**kwargs\
 			)
 
