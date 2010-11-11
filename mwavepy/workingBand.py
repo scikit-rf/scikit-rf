@@ -190,23 +190,8 @@ class WorkingBand(object):
 			a 1-port Network class, representing a loaded transmission
 			line of length d
 		'''
-		return line(d,**kwargs) ** load(Gamma0,**kwargs)
-
-	def delay_load(self,d,Gamma0,**kwargs):
-		'''
-		creates a delayed load of length 'd'  and refelction coefficient
-		Gamma0, Network object
-
-		takes:
-			d: length of delay [m]
-			Gamma0: reflection coefficient [not dB]
-		returns:
-			Network object
-		'''
-		ntwk = createNetwork.delay_load(d=d,tline=self.tline, \
-			f = self.f,Gamma0=Gamma0,**kwargs)
-		ntwk.frequency = self.frequency
-		return ntwk
+		return self.line(d,**kwargs) ** self.load(Gamma0,**kwargs)
+	
 
 
 
