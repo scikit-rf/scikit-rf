@@ -224,6 +224,14 @@ class Network(object):
 		matrix. 
 		'''
 		return s2t(self.s)
+	@property
+	def inv(self):
+		'''
+		a network representing inverse s-parameters, for de-embeding
+		'''
+		out = copy(self)
+		out.s = inv(self.s)
+		return out
 		
 	# frequency information
 	@property
@@ -702,6 +710,7 @@ def s2t(s):
 	better
 	'''
 	t = npy.copy(s)
+
 	if len (s.shape) > 2 :
 		for f in range(s.shape[0]):
 			t[f,:,:] = s2t(s[f,:,:])
@@ -730,8 +739,21 @@ def t2s(t):
 	else:
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return s
-
-
+	
+def inv(s):
+	'''
+	inverse s-parameters, used for de-embeding
+	'''
+	# this idea is from lihan
+	i = npy.copy(s)
+	if len (s.shape) > 2 :
+		for f in range(len(s)):
+			i[f,:,:] = inv(s[f,:,:])
+	elif s.shape == (2,2):
+		i = t2s(npy.linalg.inv(s2t(s)))
+	else:
+		raise IndexError('matrix should be 2x2, or kx2x2')
+	return i
 
 def cascade(a,b):
 	'''
