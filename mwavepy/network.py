@@ -62,7 +62,8 @@ class Network(object):
 	most properties are derived from the specifications given for
 	touchstone files. 
 	'''
-
+	global ALMOST_ZER0
+	ALMOST_ZER0=1e-6
 ## CONSTRUCTOR
 	def __init__(self, touchstone_file = None, name = None ):
 		'''
@@ -120,21 +121,19 @@ class Network(object):
 		try: 	
 			# if they passed 1 ntwks and a tuple of ntwks, 
 			# then deEmbed like A.inv*C*B.inv
-			b = other[1]
-			c = other[0]
+			b = other[0]
+			c = other[1]
 			result =  copy (self)
-			result.s =  flip(de_embed( flip(de_embed(c.s,self.s)),b.s))
+			result.s =  (b.inv**self**c.inv).s
+			#flip(de_embed( flip(de_embed(c.s,self.s)),b.s))
 			return result
 		except TypeError:
 			pass
 				
-		if self.number_of_ports == 2  and other.number_of_ports == 2:
+		if other.number_of_ports == 2:
 			result = copy(self)
-			result.s = de_embed(self.s,other.s)
-			return result
-		elif self.number_of_ports == 1 and other.number_of_ports == 2:
-			result = copy(other)
-			result.s = de_embed(self.s,other.s)
+			result.s = (other.inv**self).s
+			#de_embed(self.s,other.s)
 			return result
 		else:
 			raise IndexError('Incorrect number of ports.')
@@ -184,6 +183,12 @@ class Network(object):
 			return result
 
 
+	def __eq__(self,other):
+		if npy.mean(npy.abs(self.s - other.s)) < ALMOST_ZER0:
+			return True
+		else:
+			return False
+			
 ## PRIMARY PROPERTIES
 	# s-parameter matrix
 	@property
