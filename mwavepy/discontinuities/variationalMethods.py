@@ -548,6 +548,9 @@ def terminated_translation_offset(wg, freq, delta_a, delta_b, d,Gamma0,\
 		)
 	return out['ntwk']
 
+
+
+
 def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
 	'''
 	calculated response of a terminated rotated waveguide, with possible
@@ -595,7 +598,60 @@ def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
 		)
 	return out['ntwk']
 
-def step_up(freq, wr_small, wr_big,  delta_a=0, delta_b=0, **kwargs):
+
+def step_up(wg_small, wg_big, freq, delta_a, delta_b, d,Gamma0,\
+	**kwargs):
+	'''
+	calculates the response from a smaller guide opening into a larger
+	
+	takes:
+		wg_small: RectangularWaveguide Object. 
+		wg_big: RectangularWaveguide Object. 
+		freq:	Frequency Object
+		delta_a: offset in the width dimension [m]
+		delta_b: offset in the height dimension [m]
+		d: distance to termination [m]
+		Gamma0: reflection coefficient of termination at the termination 
+		**kwargs: passed to converge_junction_admittance, see its help 
+			for more info
+	returns:
+		ntwk: a Network type representing the junction
+	'''
+	wg_I = wg_small
+	wg_II = wg_big
+
+	a = wg_small.a
+	b = wg_small.b
+	A = wg_big.a +a/1e-6
+	B = wg_big.b
+	x0,y0 = (A-a)/2.+delta_a, (B-b)/2.+delta_b 
+
+	V_II_args = {\
+		'a':a,\
+		'b': b,\
+		'x0': x0,\
+		'y0': y0,\
+		}
+	
+	V_I_args={}
+	
+	out = converge_junction_admittance(\
+		converge_func = aperture_field,\
+		wg_I = wg_I,\
+		wg_II = wg_II,\
+		V_I = V_dominant_mode,\
+		V_I_args = V_I_args,\
+		V_II = V_offset_dimension_change,\
+		V_II_args = V_II_args,\
+		freq = freq,\
+		d=d,\
+		Gamma0=Gamma0,\
+		**kwargs\
+		)
+	return out['ntwk']
+
+	
+def step_up_old(freq, wr_small, wr_big,  delta_a=0, delta_b=0, **kwargs):
 	a = wr_small*10*mil
 	b = a/2
 	A = wr_big*10*mil +a/1e-6
