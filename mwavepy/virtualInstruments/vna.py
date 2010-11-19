@@ -175,3 +175,99 @@ class ZVA40(object):
 	    fid.write("# GHz S RI R 50\n")
 	    npy.savetxt(fid,formatedData,fmt='%10.5f')
 	    fid.close()
+
+
+class HP8510C(GpibInstrument):
+	'''
+	good ole 8510
+	'''
+	def __init__(self, address=16,**kwargs):
+		GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+		self.write('FORM4;')
+	
+	@property
+	def continuous(self):
+		raise NotImplementedError
+	
+	@continuous.setter
+	def continuous(self, choice):
+		if choice:
+		    self.write('CONT;')
+		elif not choice:
+		    self.write('SING;')
+		else:
+		    raise(ValueError('takes a boolean'))
+		
+	@property
+	def frequency(self, unit='ghz'):
+		freq=Frequency( float(self.ask('star;outpacti;')),
+			float(self.ask('stop;outpacti;')),\
+			int(self.ask('poin;outpacti;')),'hz')
+		freq.unit = unit
+		return freq
+	
+	
+	@property
+	def one_port(self):
+		'''
+		Initiates a sweep and returns a  Network type represting the
+		data.
+		
+		if you are taking multiple sweeps, and want the sweep timing to
+		work, put the turn continuous mode off. like pnax.continuous='off'
+		'''
+		self.continuous = False
+		s = npy.array(self.ask_for_values('OUTPDATA'))
+		s.shape=(-1,2)
+		s =  s[:,0]+1j*s[:,1]
+		ntwk = Network()
+		ntwk.s = s
+		ntwk.frequency= self.frequency 
+		return ntwk
+
+	@property
+	def two_port(self):
+		'''
+		Initiates a sweep and returns a  Network type represting the
+		data.
+		
+		if you are taking multiple sweeps, and want the sweep timing to
+		work, put the turn continuous mode off. like pnax.continuous='off'
+		'''
+		self.continuous = False
+		s_dict={}
+		for param in ['s11','s12','s21','s22']:
+		    self.write(param+';')
+		    s = npy.array(self.ask_for_values('OUTPDATA;'))
+		    s.shape=(-1,2)
+		    s_dict[param] =  s[:,0]+1j*s[:,1]
+		ntwk = Network()
+		ntwk.s = npy.array([[s_dict['s11'], s_dict['s12']],\
+		    [s_dict['s21'], s_dict['s22']]]).transpose().reshape(-1,2,2)
+		ntwk.frequency= self.frequency 
+		return ntwk
+	##properties for the super lazy
+	@property
+	def s11(self):
+	    self.write('s11;')
+	    ntwk =  self.one_port
+	    ntwk.name = 'S11'
+	    return ntwk
+	@property
+	def s22(self):
+	    self.write('s22;')
+	    ntwk =  self.one_port
+	    ntwk.name = 'S22'
+	    return ntwk
+	@property
+	def s12(self):
+	    self.write('s12;')
+	    ntwk =  self.one_port
+	    ntwk.name = 'S12'
+	    return ntwk
+	@property
+	def s21(self):
+	    self.write('s21;')
+	    ntwk =  self.one_port
+	    ntwk.name = 'S21'
+	    return ntwk

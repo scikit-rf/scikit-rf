@@ -393,6 +393,9 @@ def aperture_field(wg_I, wg_II, V_I, V_II, freq, M,N, d, Gamma0, \
 
 def converge_junction_admittance(y_tol = 1e-3, mode_rate=1, M_0=2,N_0=2,\
 	min_converged=1, output=True, converge_func= junction_admittance, **kwargs):
+	'''
+	the design of this function is stupid, it was ad-hoc
+	'''
 	M,N=M_0,N_0
 	y_old = converge_func(M=M, N=N,**kwargs)['ntwk'].y
 	
@@ -468,32 +471,32 @@ def V_offset_dimension_change(mode_type,m,n,wg,x0,y0,a,b ):
 	return  normalization*coupling
 
 ## high level functions for discontinuity modeling
-def rectangular_junction(freq, wg_I, wg_II, xy, d=1, Gamma0=0.,**kwargs):
+def rectangular_junction(freq, wg_I, wg_II, dx,dy, d=1, Gamma0=0.,**kwargs):
 	'''
 	Calcurates the equivalent 1-port network for a generic junction
-	of two rectangular waveguides, with the input guide  assumed to be
-	 matched.
+	of two rectangular waveguides, with the input guide matched.
+
+	the guides are may be offset from lower-left corner alignment, by xy.
 	
 	input guide is wg_I, ouput is wg_II. the assumed field used in the
-	variational expression is the TE10mode of the common cross-section
+	variational expression is the TE10 mode of the common cross-section
 
 	takes:
 		freq: a Frequency Object
 		wg_I: a RectangularWaveguide instance representing input guide
-			( region I )
 		wg_II: a RectangularWaveguide instance. ouput guide.
 		xy: cordinates of lower left corner of wg_II, relative to lower
 			left corner of wg_I
 		d: distance to termination [m]. default is 1m
 		Gamma0: reflectin coefficient at termiantion, default is 0.
-		
+		**kwargs: passed to converge_junction_admittanace(), then
+			aperture_field()
 	returns:
 		ntwk: one-port Network instance, representing junction
 
 
-
-
-	determining aperture is a problem of overlaping rectanglues
+	NOTEL
+		a clarification of geometry:
 	
 	wg_I:
 		lower left corner = (0,0)
@@ -510,7 +513,7 @@ def rectangular_junction(freq, wg_I, wg_II, xy, d=1, Gamma0=0.,**kwargs):
 	width_I, height_I = wg_I.a, wg_I.b
 	width_II, height_II = wg_II.a, wg_II.b	
 	x_I,y_I = (0.,0.)
-	x_II,y_II = xy
+	x_II,y_II = dx,dy
 
 	# The aperture's properties referenced to (0,0) of wg_I
 	ap_xy = (max(0.,x_II), max(0.,y_II))
@@ -557,6 +560,47 @@ def rectangular_junction(freq, wg_I, wg_II, xy, d=1, Gamma0=0.,**kwargs):
 
 
 	
+
+
+
+
+## convience interfaces to rectangular_junction
+def rectangular_junction_centered(freq, wg_I, wg_II, dx,dy, d=1, Gamma0=0.,**kwargs):
+	'''
+	Calcurates the equivalent 1-port network for a junction
+	of two rectangular waveguides, with the input guide matched.
+	
+	the guides are may be offset from ON-CENTER alignment, by xy.
+
+	takes:
+		freq: a Frequency Object
+		wg_I: a RectangularWaveguide instance representing input guide
+		wg_II: a RectangularWaveguide instance. ouput guide.
+		dx:	offset in x (a-dimension),  from on-center alignment
+		dy: offset in y,(b-dimension)  from on-center alignment 
+		d: distance to termination [m]. default is 1m
+		Gamma0: reflectin coefficient at termiantion, default is 0. (match)
+		**kwargs: passed to converge_junction_admittanace(), then
+			aperture_field()
+	returns:
+		ntwk: one-port Network instance, representing junction
+
+	'''
+	
+	# translate the on-center offset to lower-left corner offset
+	xy = ((wg_I.a-wg_II.a)/2. + dx,(wg_I.b-wg_II.b)/2. + dy)
+	return rectangular_junction(\
+		freq= freq,\
+		wg_I=wg_I,\
+		wg_II=wg_II,\
+		dx=dx,\
+		dy=dy,\
+		d=d,\
+		Gamma0=Gamma0,\
+		**kwargs\
+		)
+
+
 def translation_offset(wg, freq, delta_a, delta_b, **kwargs):
 	'''
 	calculates the response from a translation offset between two 
@@ -642,50 +686,35 @@ def terminated_translation_offset(wg, freq, delta_a, delta_b, d,Gamma0,\
 
 def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
 	'''
-	calculated response of a terminated rotated waveguide, with possible
-	offset from on-center alignment
+	calculated response of a terminated rotated waveguide of same
+	cross-section as input guide, with possible	offset from on-center
+	alignment
 
 	takes:
 		wg: RectangularWaveguide Object. 
 		freq:	Frequency Object
-		delta_a: offset in the width dimension [m]
-		delta_b: offset in the height dimension [m]
+		offset: tuple holding 
 		d: distance to termination [m]
 		Gamma0: reflection coefficient of termination at the termination 
 		**kwargs: passed to converge_junction_admittance, see its help 
 			for more info
 	returns:
 		ntwk: a Network type representing the junction
+
+	NOTE: this just formats input and calls rectangular_junction()
 	'''
 	wg_I = wg
 	wg_II = mv.RectangularWaveguide(a=wg.b,b= wg.a)
-	
-	V_I_args = {\
-		'a':wg_I.a/2.,\
-		'b': wg_I.b,\
-		'x0': wg_I.a/4. + delta_a,\
-		'y0': 0,\
-		}
-	V_II_args = {\
-		'a':wg_II.a,\
-		'b': wg_II.b/2.,\
-		'x0': 0,\
-		'y0': wg_II.b/4.+delta_b,\
-		}
-	out = converge_junction_admittance(\
-		converge_func = aperture_field,\
-		wg_I = wg_I,\
-		wg_II = wg_II,\
-		V_I = V_offset_dimension_change,\
-		V_I_args = V_I_args,\
-		V_II = V_offset_dimension_change,\
-		V_II_args = V_II_args,\
-		freq = freq,\
+	xy = (wg_I.a/4. + delta_a, -wg_I.a/4.+delta_b)
+	return rectangular_junction(\
+		freq= freq,\
+		wg_I=wg_I,\
+		wg_II=wg_II,\
+		xy = xy,\
 		d=d,\
 		Gamma0=Gamma0,\
 		**kwargs\
 		)
-	return out['ntwk']
 
 
 def step_up(wg_small, wg_big, freq, delta_a, delta_b, d,Gamma0,\
