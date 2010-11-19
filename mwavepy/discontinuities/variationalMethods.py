@@ -471,8 +471,8 @@ def V_offset_dimension_change(mode_type,m,n,wg,x0,y0,a,b ):
 def rectangular_junction(freq, wg_I, wg_II, xy, d=1, Gamma0=0.,**kwargs):
 	'''
 	Calcurates the equivalent 1-port network for a generic junction
-	of two rectangular waveguides, with possible termination on output
-	waveguide.
+	of two rectangular waveguides, with the input guide  assumed to be
+	 matched.
 	
 	input guide is wg_I, ouput is wg_II. the assumed field used in the
 	variational expression is the TE10mode of the common cross-section
@@ -514,8 +514,15 @@ def rectangular_junction(freq, wg_I, wg_II, xy, d=1, Gamma0=0.,**kwargs):
 
 	# The aperture's properties referenced to (0,0) of wg_I
 	ap_xy = (max(0.,x_II), max(0.,y_II))
-	ap_width = min(width_II, (width_I - x_II))
-	ap_height = min(height_II, (height_I -y_II))
+	# would be nice to get rid of these case statements with clever trick
+	if x_II <= 0:
+		ap_width = min(width_I, (width_II + x_II))
+	elif x_II >0:
+		ap_width = min(width_II, (width_I - x_II))
+	if y_II <= 0:
+		ap_height = min(height_I, (height_II + y_II))
+	elif y_II >0:
+		ap_height = min(height_II, (height_I -y_II))
 
 	
 	V_I_args = {\
@@ -531,7 +538,6 @@ def rectangular_junction(freq, wg_I, wg_II, xy, d=1, Gamma0=0.,**kwargs):
 		'y0': ap_xy[1] - y_II,\
 		}
 		
-	print V_I_args, V_II_args
 	out = converge_junction_admittance(\
 		converge_func = aperture_field,\
 		freq = freq,\
@@ -666,7 +672,6 @@ def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
 		'x0': 0,\
 		'y0': wg_II.b/4.+delta_b,\
 		}
-	print V_I_args, V_II_args	
 	out = converge_junction_admittance(\
 		converge_func = aperture_field,\
 		wg_I = wg_I,\
