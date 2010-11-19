@@ -468,6 +468,89 @@ def V_offset_dimension_change(mode_type,m,n,wg,x0,y0,a,b ):
 	return  normalization*coupling
 
 ## high level functions for discontinuity modeling
+def rectangular_junction(freq, wg_I, wg_II, xy, d=1, Gamma0=0.,**kwargs):
+	'''
+	Calcurates the equivalent 1-port network for a generic junction
+	of two rectangular waveguides, with possible termination on output
+	waveguide.
+	
+	input guide is wg_I, ouput is wg_II. the assumed field used in the
+	variational expression is the TE10mode of the common cross-section
+
+	takes:
+		freq: a Frequency Object
+		wg_I: a RectangularWaveguide instance representing input guide
+			( region I )
+		wg_II: a RectangularWaveguide instance. ouput guide.
+		xy: cordinates of lower left corner of wg_II, relative to lower
+			left corner of wg_I
+		d: distance to termination [m]. default is 1m
+		Gamma0: reflectin coefficient at termiantion, default is 0.
+		
+	returns:
+		ntwk: one-port Network instance, representing junction
+
+
+
+
+	determining aperture is a problem of overlaping rectanglues
+	
+	wg_I:
+		lower left corner = (0,0)
+		width = wg_I.a
+		height= wg_I.b
+	wg_II:
+		lower left corner = (x,y) ( which is xy[0],xy[1])
+		width = wg_I.a
+		height= wg_I.b	
+	
+
+
+	'''
+	width_I, height_I = wg_I.a, wg_I.b
+	width_II, height_II = wg_II.a, wg_II.b	
+	x_I,y_I = (0.,0.)
+	x_II,y_II = xy
+
+	# The aperture's properties referenced to (0,0) of wg_I
+	ap_xy = (max(0.,x_II), max(0.,y_II))
+	ap_width = min(width_II, (width_I - x_II))
+	ap_height = min(height_II, (height_I -y_II))
+
+	
+	V_I_args = {\
+		'a':ap_width,\
+		'b': ap_height,\
+		'x0': ap_xy[0],\
+		'y0': ap_xy[1],\
+		}
+	V_II_args = {\
+		'a': ap_width,\
+		'b': ap_height,\
+		'x0': ap_xy[0]- x_II,\
+		'y0': ap_xy[1] - y_II,\
+		}
+		
+	print V_I_args, V_II_args
+	out = converge_junction_admittance(\
+		converge_func = aperture_field,\
+		freq = freq,\
+		wg_I = wg_I,\
+		wg_II = wg_II,\
+		V_I = V_offset_dimension_change,\
+		V_I_args = V_I_args,\
+		V_II = V_offset_dimension_change,\
+		V_II_args = V_II_args,\
+		d=d,\
+		Gamma0=Gamma0,\
+		**kwargs\
+		)
+	return out['ntwk']
+
+	
+
+
+	
 def translation_offset(wg, freq, delta_a, delta_b, **kwargs):
 	'''
 	calculates the response from a translation offset between two 
@@ -582,7 +665,8 @@ def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
 		'b': wg_II.b/2.,\
 		'x0': 0,\
 		'y0': wg_II.b/4.+delta_b,\
-		}	
+		}
+	print V_I_args, V_II_args	
 	out = converge_junction_admittance(\
 		converge_func = aperture_field,\
 		wg_I = wg_I,\
@@ -650,6 +734,57 @@ def step_up(wg_small, wg_big, freq, delta_a, delta_b, d,Gamma0,\
 		)
 	return out['ntwk']
 
+def step_down(wg_big,wg_small, freq, delta_a, delta_b, d,Gamma0,\
+	**kwargs):
+	'''
+	calculates the response from a larger guide reducing to a smaller one
+	
+	takes:
+		wg_small: RectangularWaveguide Object. 
+		wg_big: RectangularWaveguide Object. 
+		freq:	Frequency Object
+		delta_a: offset in the width dimension [m]
+		delta_b: offset in the height dimension [m]
+		d: distance to termination [m]
+		Gamma0: reflection coefficient of termination at the termination 
+		**kwargs: passed to converge_junction_admittance, see its help 
+			for more info
+	returns:
+		ntwk: a Network type representing the junction
+	'''
+	wg_I = wg_big
+	wg_II = wg_small
+
+	a = wg_small.a
+	b = wg_small.b
+	A = wg_big.a +a/1e-6
+	B = wg_big.b
+	x0,y0 = (A-a)/2.+delta_a, (B-b)/2.+delta_b 
+
+	V_I_args = {\
+		'a':a,\
+		'b': b,\
+		'x0': x0,\
+		'y0': y0,\
+		}
+	
+	V_II_args={}
+	
+	out = converge_junction_admittance(\
+		converge_func = aperture_field,\
+		wg_I = wg_I,\
+		wg_II = wg_II,\
+		V_II = V_dominant_mode,\
+		V_II_args = V_II_args,\
+		V_I = V_offset_dimension_change,\
+		V_I_args = V_I_args,\
+		freq = freq,\
+		d=d,\
+		Gamma0=Gamma0,\
+		**kwargs\
+		)
+	return out['ntwk']
+
 	
 def step_up_old(freq, wr_small, wr_big,  delta_a=0, delta_b=0, **kwargs):
 	a = wr_small*10*mil
@@ -677,6 +812,9 @@ def step_up_old(freq, wr_small, wr_big,  delta_a=0, delta_b=0, **kwargs):
 		)
 		
 	return out['ntwk']
+
+
+
 
 
 
