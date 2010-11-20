@@ -107,11 +107,11 @@ class ParameterizedStandard(object):
 
 ## pre-defined parametrized standard classes
 
-class PS_Parameterless(ParameterizedStandard):
+class Parameterless(ParameterizedStandard):
 	'''
 		A parameterless standard. 
 		this is needed so that the calibration algorithm doesnt have to
-		handle more than one type of standard
+		handle more than one class type for  standards
 		'''
 	def __init__(self, ideal_network):
 		'''
@@ -122,7 +122,7 @@ class PS_Parameterless(ParameterizedStandard):
 			function  = lambda: ideal_network)
 		
 	
-class PS_Match_TranslationMissalignment(ParameterizedStandard):
+class Match_TranslationMissalignment(ParameterizedStandard):
 	'''
 	A match with unknown translation missalignment.
 	the initial guess for missalignment is [a/10,a/10], where a is the 
@@ -147,7 +147,7 @@ class PS_Match_TranslationMissalignment(ParameterizedStandard):
 			**kwargs\
 			)
 
-class PS_DelayedTermination_TranslationMissalignment(ParameterizedStandard):
+class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 	'''
 	A known Delayed Termination with unknown translation missalignment.
 	the initial guess for missalignment defaults to [1/10,1/10]*a,
@@ -168,9 +168,10 @@ class PS_DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 		kwargs.update({'wg':wg,'freq':wb.frequency,'d':d,'Gamma0':Gamma0})
 		
 		ParameterizedStandard.__init__(self, \
-			function = terminated_translation_offset,\
-			parameters = {'delta_a':wg.a*initial_offset, \
-						'delta_b':wg.a*initial_offset},\
+			function = rectangular_junction_centered,\
+			parameters = {\
+				'da':wg.a*initial_offset, \
+				'db':wg.a*initial_offset},\
 			**kwargs\
 			)
 
