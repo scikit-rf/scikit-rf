@@ -684,12 +684,18 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	mean_residual_list = []	
 
 	def sub_cal(parameter_vector, measured, ideals_ps):
+		print parameter_vector
 		#TODO:  this function uses sloppy namespace, which limits portability
+
+		# loop through the parameterized stds and assign the current
+		# parameter vectors' elements to each std. 
+		p_index = 0 # index, of first element of current_ps in parameter vector
 		for stdNum in range(len(ideals_ps)):
 			current_ps = ideals_ps[stdNum]
 			current_ps.parameter_array = \
-				parameter_vector[stdNum:stdNum+current_ps.number_of_parameters]
+				parameter_vector[p_index:p_index+current_ps.number_of_parameters]
 			ideals[stdNum]=current_ps.network
+			p_index +=current_ps.number_of_parameters
 		
 		residues = one_port(measured, ideals)['residuals']
 		mean_residual_list.append(npy.mean(abs(residues)))

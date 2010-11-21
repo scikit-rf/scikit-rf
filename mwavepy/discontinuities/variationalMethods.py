@@ -510,6 +510,7 @@ def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,**kwargs):
 
 
 	'''
+	
 	width_I, height_I = wg_I.a, wg_I.b
 	width_II, height_II = wg_II.a, wg_II.b	
 	x_I,y_I = (0.,0.)
@@ -527,6 +528,14 @@ def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,**kwargs):
 	elif y_II >0:
 		ap_height = min(height_II, (height_I -y_II))
 
+	#TODO: need to make these checks coherent
+	if x_II > width_I or x_II+width_II < 0 or y_II > height_I or y_II+height_II <0:
+		raise(ValueError('da,db too large'))
+	if ap_height*ap_width > height_I*width_I or \
+	ap_height*ap_width > height_II*width_II or\
+	ap_height<0 or ap_width<0:
+		print (ap_height, ap_width,ap_xy)
+		raise(ValueError('aperture dimensions nonsenible') )
 	
 	V_I_args = {\
 		'a':ap_width,\

@@ -165,7 +165,12 @@ class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 			**kwargs: passed to self.function
 		'''
 		wg = wb.tline
-		kwargs.update({'wg':wg,'freq':wb.frequency,'d':d,'Gamma0':Gamma0})
+		kwargs.update({\
+			'wg_I':wg,\
+			'wg_II':wg,\
+			'freq':wb.frequency,\
+			'd':d,\
+			'Gamma0':Gamma0})
 		
 		ParameterizedStandard.__init__(self, \
 			function = rectangular_junction_centered,\
@@ -175,7 +180,7 @@ class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 			**kwargs\
 			)
 
-class PS_DelayedTermination_UnknownLength(ParameterizedStandard):
+class DelayedTermination_UnknownLength(ParameterizedStandard):
 	'''
 	A  Delayed Termination of unknown length, but known termination
 	'''
@@ -197,7 +202,7 @@ class PS_DelayedTermination_UnknownLength(ParameterizedStandard):
 			parameters = {'d':d},\
 			**kwargs\
 			)
-class PS_DelayedTermination_UnknownLength_UnknownTermination(ParameterizedStandard):
+class DelayedTermination_UnknownLength_UnknownTermination(ParameterizedStandard):
 	'''
 	A  Delayed Termination of unknown length or termination
 	'''
@@ -216,7 +221,7 @@ class PS_DelayedTermination_UnknownLength_UnknownTermination(ParameterizedStanda
 			parameters = {'d':d,'Gamma0':Gamma0},\
 			**kwargs\
 			)
-class PS_DelayedTermination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
+class DelayedTermination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
 	'''
 	A known Delayed Termination with unknown translation missalignment.
 	the initial guess for missalignment defaults to [1/10,1/10]*a,
@@ -234,17 +239,21 @@ class PS_DelayedTermination_UnknownLength_TranslationMissalignment(Parameterized
 			**kwargs: passed to self.function
 		'''
 		wg = wb.tline
-		kwargs.update({'wg':wg,'freq':wb.frequency,'Gamma0':Gamma0})
+		kwargs.update({\
+			'wg_I':wg,\
+			'wg_II':wg,\
+			'freq':wb.frequency,\
+			'Gamma0':Gamma0})
 		
 		ParameterizedStandard.__init__(self, \
-			function = terminated_translation_offset,\
-			parameters = {'delta_a':wg.a*initial_offset, \
-						'delta_b':wg.a*initial_offset,\
+			function = rectangular_junction_centered,\
+			parameters = {'da':wg.a*initial_offset, \
+						'db':wg.a*initial_offset,\
 						'd':d},\
 			**kwargs\
 			)
 
-class PS_RotatedWaveguide_UnknownLength(ParameterizedStandard):
+class RotatedWaveguide_UnknownLength(ParameterizedStandard):
 	'''
 	A rotated waveguide of unkown delay length.
 	'''
@@ -270,7 +279,7 @@ class PS_RotatedWaveguide_UnknownLength(ParameterizedStandard):
 			)
 
 
-class PS_DelayShort_UnknownLength(ParameterizedStandard):
+class DelayShort_UnknownLength(ParameterizedStandard):
 	'''
 	A delay short of unknown length
 	
