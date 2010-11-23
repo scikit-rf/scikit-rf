@@ -29,6 +29,7 @@ import os
 
 import numpy as npy
 import pylab as plb 
+from scipy import stats
 
 import  mathFunctions as mf
 import touchstone
@@ -682,6 +683,25 @@ class Network(object):
 
 
 
+	# noise
+	def add_noise_polar(self,mag_dev, phase_dev, **kwargs):
+		'''
+		adds a complex zero-mean gaussian white-noise signal of given
+		standard deviations for magnitude and phase
+
+		takes:
+			mag_mag: standard deviation of magnitude
+			phase_dev: standard deviation of phase [in degrees]
+			n_ports: number of ports. defualt to 1
+		returns:
+			nothing
+		'''
+		phase_rv= stats.norm(loc=0, scale=phase_dev).rvs(size = self.s.shape)
+		mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size = self.s.shape)
+		phase = (self.s_deg+phase_rv)
+		mag = self.s_mag + mag_rv 
+		self.s = mag* npy.exp(1j*npy.pi/180.*phase)
+		
 ## FUNCTIONS
 # functions operating on Network[s]
 def average(list_of_networks):

@@ -25,6 +25,7 @@ Contains WorkingBand class.
 
 from copy import copy
 import numpy as npy
+from scipy import stats
 
 from frequency import Frequency
 from network import Network
@@ -196,6 +197,29 @@ class WorkingBand(object):
 
 
 
+
+	## Noise Networks
+	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
+		'''
+		creates a complex zero-mean gaussian white-noise signal of given
+		standard deviations for phase and magnitude
+
+		takes:
+			phase_mag: standard deviation of magnitude
+			phase_dev: standard deviation of phase
+			n_ports: number of ports. defualt to 1
+			**kwargs: passed to Network() initializer
+		returns:
+			result: Network type 
+		'''
+		shape = (self.frequency.npoints, n_ports,n_ports)
+		phase_rv= stats.norm(loc=0, scale=phase_dev).rvs(size = shape)
+		mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size = shape)
+
+		result = Network(**kwargs)
+		result.frequency = self.frequency
+		result.s = mag_rv*npy.exp(1j*phase_rv)
+		return result
 
 	## OTHER METHODS
 	def guess_length_of_delay_short(self, aNtwk):

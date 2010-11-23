@@ -194,11 +194,11 @@ class DelayedTermination_UnknownLength(ParameterizedStandard):
 			**kwargs: passed to self.function
 		'''
 		wg = wb.tline
-		kwargs.update({'wg':wg,'freq':wb.frequency,'Gamma0':Gamma0,\
-			'delta_a':0, 'delta_b':0})
+		kwargs.update({'wg_I':wg,'wg_II':wg,'freq':wb.frequency,'Gamma0':Gamma0,\
+			'da':0, 'db':0})
 		
 		ParameterizedStandard.__init__(self, \
-			function = terminated_translation_offset,\
+			function = rectangular_junction_centered,\
 			parameters = {'d':d},\
 			**kwargs\
 			)

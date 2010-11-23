@@ -684,7 +684,6 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	mean_residual_list = []	
 
 	def sub_cal(parameter_vector, measured, ideals_ps):
-		print parameter_vector
 		#TODO:  this function uses sloppy namespace, which limits portability
 
 		# loop through the parameterized stds and assign the current
