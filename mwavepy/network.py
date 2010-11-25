@@ -64,7 +64,7 @@ class Network(object):
 	touchstone files. 
 	'''
 	global ALMOST_ZER0
-	ALMOST_ZER0=1e-6
+	ALMOST_ZER0=1e-6 # used for testing s-parameter equivalencee
 ## CONSTRUCTOR
 	def __init__(self, touchstone_file = None, name = None ):
 		'''
@@ -713,7 +713,7 @@ def average(list_of_networks):
 	for a_ntwk in list_of_networks[1:]:
 		out_ntwk += a_ntwk
 
-	out_ntwk.s/(len(list_of_networks))
+	out_ntwk.s = out_ntwk.s/(len(list_of_networks))
 
 	return out_ntwk
 
