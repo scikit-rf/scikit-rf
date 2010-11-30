@@ -530,6 +530,7 @@ def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,**kwargs):
 
 	#TODO: need to make these checks coherent
 	if x_II > width_I or x_II+width_II < 0 or y_II > height_I or y_II+height_II <0:
+		print (da,db)
 		raise(ValueError('da,db too large'))
 	if ap_height*ap_width > height_I*width_I or \
 	ap_height*ap_width > height_II*width_II or\

@@ -75,7 +75,7 @@ def guess_length_of_delay_short( aNtwk,tline):
 		'''
 		#TODO: re-write this and document better
 		
-		beta = real(tline.beta())
+		beta = npy.real(tline.beta())
 		thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
 		
 		A = npy.vstack((-2*beta,npy.ones(len(beta)))).transpose()
