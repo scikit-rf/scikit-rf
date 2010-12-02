@@ -285,3 +285,23 @@ class HP8510C(GpibInstrument):
 		ntwk =  self.one_port
 		ntwk.name = 'S21'
 		return ntwk
+
+
+class HP8720(HP8510C):
+	def __init__(self, address=16,**kwargs):
+		HP8510C.__init__(self,address,**kwargs)
+	@property
+	def averaging(self):
+		raise ( NotImplementedError)
+	@averaging.setter
+	def averaging(self,value):
+		if value:
+			self.write('AVEROON')
+		else:
+			self.write('AVEROFF')
+	@property
+	def ifbw(self):
+		raise ( NotImplementedError)
+	@ifbw.setter
+	def ifbw(self,value):
+		self.write('IFBW %i'%int(value))
