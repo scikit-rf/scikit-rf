@@ -11,7 +11,7 @@ of this sort
 import sys
 sys.path.append('../../')
 import mwavepy as mv
-import pylab
+from pylab import * 
 
 dir = 'touchstoneFiles' # directory of touchstone files
 npoints = 3 # number of frequency points to calculate statistics for

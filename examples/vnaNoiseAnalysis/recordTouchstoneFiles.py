@@ -1,9 +1,8 @@
 '''
 records a series of sweeps from a vna, to touchstone files
 
-this was used to characterize the noise of a vna.
-
-
+this was used to characterize the noise of a vna. see noiseAnalysis.py
+for analysis
 '''
 import sys
 sys.path.append('../../')
