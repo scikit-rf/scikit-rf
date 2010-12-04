@@ -13,7 +13,7 @@ sys.path.append('../../')
 import mwavepy as mv
 from pylab import * 
 
-dir = 'touchstoneFiles' # directory of touchstone files
+dir = '2010-12-03' # directory of touchstone files
 npoints = 3 # number of frequency points to calculate statistics for
 
 

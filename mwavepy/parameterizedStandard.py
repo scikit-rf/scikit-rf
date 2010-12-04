@@ -221,6 +221,25 @@ class DelayedTermination_UnknownLength_UnknownTermination(ParameterizedStandard)
 			parameters = {'d':d,'Gamma0':Gamma0},\
 			**kwargs\
 			)
+class DelayedTermination_UnknownTermination(ParameterizedStandard):
+	'''
+	A  Delayed Termination of unknown length or termination
+	'''
+	def __init__(self, wb,d,Gamma0,**kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d: distance to termination
+			Gamma0: reflection coefficient off termination at termination
+			**kwargs: passed to self.function
+		'''
+		kwargs.update({'d':d})
+		ParameterizedStandard.__init__(self, \
+			function = wb.delay_load,\
+			parameters = {'Gamma0':Gamma0},\
+			**kwargs\
+			)
 class DelayedTermination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
 	'''
 	A known Delayed Termination with unknown translation missalignment.
