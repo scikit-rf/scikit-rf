@@ -316,3 +316,63 @@ class DelayShort_UnknownLength(ParameterizedStandard):
 			parameters = {'d':d},\
 			**kwargs\
 			)
+class DelayShort_Mulipath(ParameterizedStandard):
+	'''
+	A delay short of unknown length
+	
+	initial guess for length should be given to constructor
+	'''
+	def __init__(self, wb,d1,d2,d1_to_d2_power, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type
+			d: initial guess for delay short physical length [m]
+			**kwargs: passed to self.function
+		'''
+		def multipath(d1,d2,d1_to_d2_power):
+			d2_power = 1./(d1_to_d2_power +1)
+			d1_power = 1-d2_power
+			ds1 = wb.delay_short(d1)
+			ds2 = wb.delay_short(d2)
+			ds1.s = ds1.s * d1_power
+			ds2.s = ds2.s * d2_power
+			return ds1+ds2
+		kwargs.update({'d1':d1})
+		ParameterizedStandard.__init__(self, \
+			function = multipath,\
+			parameters = {\
+				'd2':d2,\
+				'd1_to_d2_power':d1_to_d2_power\
+				},\
+			**kwargs\
+			)
+class DelayLoad_Mulipath(ParameterizedStandard):
+	'''
+	A delay short of unknown length
+	
+	initial guess for length should be given to constructor
+	'''
+	def __init__(self, wb,d1,Gamma0, d2,d1_to_d2_power, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type
+			d: initial guess for delay short physical length [m]
+			**kwargs: passed to self.function
+		'''
+		def multipath(d1,d2,Gamma0, d1_to_d2_power):
+			d2_power = 1./(d1_to_d2_power +1)
+			d1_power = 1-d2_power
+			ds1 = wb.delay_load(d1,Gamma0)
+			ds2 = wb.delay_short(d2)
+			ds1.s = ds1.s * d1_power
+			ds2.s = ds2.s * d2_power
+			return ds1+ds2
+		kwargs.update({'d1':d1,'Gamma0':Gamma0})
+		ParameterizedStandard.__init__(self, \
+			function = multipath,\
+			parameters = {\
+				'd2':d2,\
+				'd1_to_d2_power':d1_to_d2_power\
+				},\
+			**kwargs\
+			)
