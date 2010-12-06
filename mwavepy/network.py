@@ -24,7 +24,7 @@
 Provides the Network class and related functions. 
 
 '''
-from copy import copy
+from copy import deepcopy as copy
 import os
 
 import numpy as npy
@@ -333,6 +333,19 @@ class Network(object):
 		the number of ports the network has.
 		'''
 		return self.s.shape[1]
+	@property
+	def passivity(self):
+		'''
+		returns passivity metric for a multi-port network.
+		
+		for two port this is ( S11^2 + S21^2, S22^2+S12^2)
+		'''
+		if self.number_of_ports == 1:
+			raise (ValueError('Doesnt exist for one ports'))
+		elif self.number_of_ports != 2:
+			raise NotImplementedError
+		return ((self.s[:,0,0]**2+self.s[:,1,0]),\
+			(self.s[:,1,1]**2+self.s[:,0,1]))
 	# frequency formating related properties
 	
 	
@@ -683,6 +696,7 @@ class Network(object):
 
 
 
+	
 	# noise
 	def add_noise_polar(self,mag_dev, phase_dev, **kwargs):
 		'''
@@ -706,7 +720,14 @@ class Network(object):
 # functions operating on Network[s]
 def average(list_of_networks):
 	'''
-	complex average of the s-parameters list of Networks
+	calculates the average network from a list of Networks. 
+	this is complex average of the s-parameters for a  list of Networks
+	
+	takes:
+		list_of_networks: a list of Networks
+	returns:
+		ntwk: the resultant averaged Network
+		
 	'''
 	out_ntwk = copy(list_of_networks[0])
 	
@@ -717,7 +738,29 @@ def average(list_of_networks):
 
 	return out_ntwk
 
+def one_port_2_two_port(ntwk):
+	'''
+	calculates the two-port network given a  symetric, reciprocal and 
+	lossless one-port network.
+	
+	takes:
+		ntwk: a symetric, reciprocal and lossless one-port network.
+	returns:
+		ntwk: a two-port Network
+	'''
+	result = copy(ntwk)
+	result.s = npy.zeros((result.frequency.npoints,2,2)) 
+	result.s[:,0,0] = ntwk.s[:,0,0]
+	result.s[:,1,1] = ntwk.s[:,0,0]
+	result.s[:,0,1] = ntwk.s[:,0,0] + 1
+	result.s[:,1,0] = ntwk.s[:,0,0] + 1
+	return result
+	
+	
 def psd2_2_time_domain():
+	'''
+	This would be very useful i need to do this
+	'''
 	raise NotImplementedError
 
 # functions not operating on  Network type. 

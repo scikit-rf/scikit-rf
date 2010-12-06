@@ -66,4 +66,4 @@ except(ImportError):
 
 
 ## built-in imports
-from copy import copy
+from copy import deepcopy as copy
