@@ -723,3 +723,64 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 
 ## TWO PORT
 #TODO: This is a big todo!
+
+def two_port(measured, ideals):
+	
+	'''
+
+	'''
+	#make  copies so list entities are not changed, when we typecast 
+	mList = copy(measured)
+	iList = copy(ideals)
+	numStds = len(mList)# find number of standards given, for dimensions
+	numCoefs = 7
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			mList[k] = mList[k].s
+			iList[k] = iList[k].s
+	except:
+		pass	
+	
+	fLength = len(mList[0])
+	#initialize outputs 
+	error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	Q = npy.zeros((numStds*4, 7),dtype=complex)
+	m = npy.zeros((numStds*4, 1),dtype=complex)
+	# loop through frequencies and form m, a vectors and 
+	# the matrix M. where M = 	e00 + S11i
+	#							i2, 1, i2*m2
+	#									...etc
+	for f in range(fLength):
+		# loop through standards and fill matrix 
+		for k in range(numStds):
+			m,i  = mList[k][f,:,:],iList[k][f][:,:] # 2x2 s-matrices
+			Q[k*4:k*4+4,:] = npy.array([\
+				[ 1, i[0,0]*m[0,0], -i[0,0], 0 , i[1,0]*m[0,1], 	0 ,  	0	 ],\
+				[ 0, i[0,1]*m[0,0], -i[0,1], 0 , i[1,1]*m[0,1], 	0 ,  -m[0,1] ],\
+				[ 0, i[0,0]*m[1,0], 	0, 	 0 , i[1,0]*m[1,1], -i[1,0], 	0	 ],\
+				[ 0, i[0,1]*m[1,0], 	0, 	 1 , i[1,1]*m[1,1], -i[1,1], -m[1,1] ],\
+				])
+			m[k*4:k*4+4,0] = npy.array([\
+				[ m[0,0]],\
+				[ 	0	],\
+				[ m[1,0]],\
+				[	0	],\
+				])
+
+		# calculate least squares
+		error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,m)[0:2]
+		#if len (residualsTmp )==0:
+		#	raise ValueError( 'matrix has singular values, check standards')
+			
+		error_vector[f,:] = error_vector_at_f.flatten()
+		residuals[f,:] = residuals_at_f
+
+	# output is a dictionary of information
+	output = {\
+		'error_vector':error_vector, \
+		'residuals':residuals}
+	
+	return output
