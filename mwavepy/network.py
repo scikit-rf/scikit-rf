@@ -336,16 +336,27 @@ class Network(object):
 	@property
 	def passivity(self):
 		'''
-		returns passivity metric for a multi-port network.
+		returns passivity metric for a multi-port network. mathmatically, 
+		this is a test for unitary-ness. 
 		
-		for two port this is ( S11^2 + S21^2, S22^2+S12^2)
+		for two port this is 
+			( |S11|^2 + |S21|^2, |S22|^2+|S12|^2)
+		in general it is  
+			S.H * S
+		where H is conjugate transpose of S, and * is dot product
+		
+		http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
 		'''
 		if self.number_of_ports == 1:
 			raise (ValueError('Doesnt exist for one ports'))
 		elif self.number_of_ports != 2:
 			raise NotImplementedError
-		return ((self.s[:,0,0]**2+self.s[:,1,0]),\
-			(self.s[:,1,1]**2+self.s[:,0,1]))
+		pas_mat = copy(self.s)
+		for f in range(len(self.s)):
+			pas_mat[f,:,:] = npy.dot(self.s[f,:,:].conj().T, self.s[f,:,:])
+		return pas_mat
+		#return ( npy.abs(self.s[:,0,0])**2 + abs(self.s[:,1,0])**2,\
+		#	npy.abs(self.s[:,1,1])**2 + npy.abs(self.s[:,0,1])**2 )
 	# frequency formating related properties
 	
 	
@@ -696,6 +707,7 @@ class Network(object):
 
 
 
+	
 	
 	# noise
 	def add_noise_polar(self,mag_dev, phase_dev, **kwargs):
