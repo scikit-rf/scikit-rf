@@ -357,6 +357,7 @@ class Network(object):
 		return pas_mat
 		#return ( npy.abs(self.s[:,0,0])**2 + abs(self.s[:,1,0])**2,\
 		#	npy.abs(self.s[:,1,1])**2 + npy.abs(self.s[:,0,1])**2 )
+	
 	# frequency formating related properties
 	
 	
@@ -727,7 +728,16 @@ class Network(object):
 		phase = (self.s_deg+phase_rv)
 		mag = self.s_mag + mag_rv 
 		self.s = mag* npy.exp(1j*npy.pi/180.*phase)
-		
+	def nudge(self, amount=1e-12):
+		'''
+		perturb s-parameters by small amount. this is usefule to work-around
+		numerical bugs.
+		takes:
+			amount: amount to add to s parameters
+		returns:
+			na
+		'''
+		self.s = self.s + 1e-12
 ## FUNCTIONS
 # functions operating on Network[s]
 def average(list_of_networks):

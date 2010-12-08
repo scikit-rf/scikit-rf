@@ -26,7 +26,7 @@ from copy import copy,deepcopy
 import numpy as npy
 from scipy.optimize import fmin # used for xds
 from discontinuities import variationalMethods as vm
-
+import pdb
 ## Supporting Functions
 def abc_2_coefs_dict(abc):
 	'''
@@ -746,9 +746,9 @@ def two_port(measured, ideals):
 	fLength = len(mList[0])
 	#initialize outputs 
 	error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex) 
 	Q = npy.zeros((numStds*4, 7),dtype=complex)
-	m = npy.zeros((numStds*4, 1),dtype=complex)
+	M = npy.zeros((numStds*4, 1),dtype=complex)
 	# loop through frequencies and form m, a vectors and 
 	# the matrix M. where M = 	e00 + S11i
 	#							i2, 1, i2*m2
@@ -756,31 +756,50 @@ def two_port(measured, ideals):
 	for f in range(fLength):
 		# loop through standards and fill matrix 
 		for k in range(numStds):
-			m,i  = mList[k][f,:,:],iList[k][f][:,:] # 2x2 s-matrices
+			m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
 			Q[k*4:k*4+4,:] = npy.array([\
 				[ 1, i[0,0]*m[0,0], -i[0,0], 0 , i[1,0]*m[0,1], 	0 ,  	0	 ],\
 				[ 0, i[0,1]*m[0,0], -i[0,1], 0 , i[1,1]*m[0,1], 	0 ,  -m[0,1] ],\
 				[ 0, i[0,0]*m[1,0], 	0, 	 0 , i[1,0]*m[1,1], -i[1,0], 	0	 ],\
 				[ 0, i[0,1]*m[1,0], 	0, 	 1 , i[1,1]*m[1,1], -i[1,1], -m[1,1] ],\
 				])
-			m[k*4:k*4+4,0] = npy.array([\
+			#pdb.set_trace()
+			M[k*4:k*4+4,:] = npy.array([\
 				[ m[0,0]],\
 				[ 	0	],\
 				[ m[1,0]],\
 				[	0	],\
 				])
-
+		
 		# calculate least squares
-		error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,m)[0:2]
+		error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
 		#if len (residualsTmp )==0:
 		#	raise ValueError( 'matrix has singular values, check standards')
 			
 		error_vector[f,:] = error_vector_at_f.flatten()
 		residuals[f,:] = residuals_at_f
 
+	# put the error vector into human readable dictionary
+	error_coefficients = {\
+		'e00':error_vector[:,0],\
+		'e11':error_vector[:,1],\
+		'det_X':error_vector[:,2],\
+		'e33':error_vector[:,3]/error_vector[:,6],\
+		'e22':error_vector[:,4]/error_vector[:,6],\
+		'det_Y':error_vector[:,5]/error_vector[:,6],\
+		'k':error_vector[:,6],\
+		}
+	#ec = error_coefficients
+	#one = npy.ones(len(error_vector[:,0]))
+	#T_X = npy.array([\
+		#[-1*ec['det_X'], -1*ec['e11']],\
+		#[ec['e00',one],[]]\
+		#]).transpose().reshape(-1,2,2)
 	# output is a dictionary of information
 	output = {\
+		'error coefficients':error_coefficients,\
 		'error_vector':error_vector, \
-		'residuals':residuals}
+		'residuals':residuals\
+		}
 	
 	return output

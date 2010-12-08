@@ -75,22 +75,26 @@ class WorkingBand(object):
 
 
 	## Network creation
-	def short(self,**kwargs):
+	def short(self,nports=1,**kwargs):
 		'''
 		creates a Network for a short  transmission line (Gamma0=-1) 
 		
 		takes:
+			nports: number of ports. creates a short on all ports,
+				default is 1
 			**kwargs: key word arguments passed to Network Constructor
 		returns:
 			a 1-port Network class, a short
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
-		result.s = -1.0*npy.ones(self.frequency.npoints, dtype=complex)
+		result.s = npy.zeros((self.frequency.npoints,nports, nports))
+		for f in range(self.frequency.npoints):
+			result.s[f,:,:] = -1.0*npy.eye(nports, dtype=complex)
 		return result
 
 
-	def match(self,**kwargs):
+	def match(self,nports=1, **kwargs):
 		'''
 		creates a Network for a perfect matched transmission line (Gamma0=0) 
 		
@@ -101,10 +105,11 @@ class WorkingBand(object):
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
-		result.s =  npy.zeros(self.frequency.npoints, dtype=complex)
+		result.s =  npy.zeros((self.frequency.npoints,nports, nports),\
+			dtype=complex)
 		return result
 
-	def open(self,**kwargs):
+	def open(self,nports=1, **kwargs):
 		'''
 		creates a Network for a 'open' transmission line (Gamma0=1) 
 		
@@ -115,7 +120,8 @@ class WorkingBand(object):
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
-		result.s = 1.0*npy.ones(self.frequency.npoints, dtype=complex)
+		result.s = 1.0*npy.ones((self.frequency.npoints,nports, nports),\
+			dtype=complex)
 		return result
 
 	def load(self,Gamma0,**kwargs):
