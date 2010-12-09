@@ -218,7 +218,7 @@ class Calibration(object):
 			for f in range(len(input_ntwk.s)):
 				t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
 					T4[f,:,:],input_ntwk.s[f,:,:]
-				caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(t3,m)+t1),(dot(t4,m)-t2))
+				caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
 			return caled 
 
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
@@ -270,8 +270,8 @@ def two_port_error_vector_2_Ts(error_coefficients):
 		[	-1*ec['e11'], zero	],\
 		[	zero,			-1*ec['k']*ec['e22']]]).transpose().reshape(-1,2,2)
 	T4 = npy.array([\
-		[	-1*one, zero	],\
-		[	zero,			-1*ec['k']]]).transpose().reshape(-1,2,2)
+		[	one, zero	],\
+		[	zero,			ec['k']]]).transpose().reshape(-1,2,2)
 	return T1,T2,T3,T4
 	
 
