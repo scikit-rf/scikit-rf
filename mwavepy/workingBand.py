@@ -88,7 +88,7 @@ class WorkingBand(object):
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
-		result.s = npy.zeros((self.frequency.npoints,nports, nports))
+		result.s = npy.zeros((self.frequency.npoints,nports, nports),dtype=complex)
 		for f in range(self.frequency.npoints):
 			result.s[f,:,:] = -1.0*npy.eye(nports, dtype=complex)
 		return result
@@ -172,7 +172,20 @@ class WorkingBand(object):
 		s21 = npy.exp(1j* theta)
 		result.s = npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 		return result
-	
+	def thru(self, **kwargs):
+		'''
+		creates a Network for a thru
+		
+		takes:
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 2-port Network class, representing a thru
+
+		note:
+			this just calls self.line(0)
+		'''
+		return self.line(0,**kwargs)
+		
 	def delay_short(self,d,**kwargs):
 		'''
 		creates a Network for a delayed short transmission line
@@ -185,6 +198,7 @@ class WorkingBand(object):
 			line of length d
 		'''
 		return self.line(d,**kwargs) ** self.short(**kwargs)
+
 	def delay_load(self,d,Gamma0,**kwargs):
 		'''
 		creates a Network for a delayed short transmission line

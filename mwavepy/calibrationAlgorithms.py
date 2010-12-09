@@ -722,7 +722,6 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 
 
 ## TWO PORT
-#TODO: This is a big todo!
 
 def two_port(measured, ideals):
 	
@@ -789,16 +788,11 @@ def two_port(measured, ideals):
 		'det_Y':error_vector[:,5]/error_vector[:,6],\
 		'k':error_vector[:,6],\
 		}
-	#ec = error_coefficients
-	#one = npy.ones(len(error_vector[:,0]))
-	#T_X = npy.array([\
-		#[-1*ec['det_X'], -1*ec['e11']],\
-		#[ec['e00',one],[]]\
-		#]).transpose().reshape(-1,2,2)
+	
 	# output is a dictionary of information
 	output = {\
 		'error coefficients':error_coefficients,\
-		'error_vector':error_vector, \
+		'error vector':error_vector, \
 		'residuals':residuals\
 		}
 	

@@ -26,7 +26,7 @@ Contains the Calibration class, and supporting functions
 '''
 import numpy as npy
 import os 
-from copy import copy
+from copy import copy #as copy
 
 from calibrationAlgorithms import *
 from frequency import *
@@ -108,6 +108,19 @@ class Calibration(object):
 		if new_type not in self.calibration_algorithm_dict.keys():
 			raise ValueError('incorrect calibration type')
 		self._type = new_type
+		if 'one port' in new_type:
+			self._nports = 1
+		elif 'two port' in new_type:
+			self._nports = 2
+		else:
+			raise NotImplementedError('only one and two ports supported right now')
+
+	@property
+	def nports(self):
+		'''
+		the number of ports in the calibration
+		'''
+		return self._nports
 
 	@property
 	def output_from_cal(self):
@@ -141,11 +154,12 @@ class Calibration(object):
 		a Network type which represents the error network being
 		calibrated out.
 		'''
-		try:
-			return self._error_ntwk
-		except(AttributeError):
-			self.run()
-			return self._error_ntwk
+		if self.nports ==1:
+			try:
+				return self._error_ntwk
+			except(AttributeError):
+				self.run()
+				return self._error_ntwk
 
 	##  methods for manual control of internal calculations
 	def run(self):
@@ -157,11 +171,12 @@ class Calibration(object):
 		, but only the first time. if you change something and want to
 		re-run the calibration use this.  
 		'''
-		self._output_from_cal = self.calibration_algorithm_dict[self.type]\
-			(**self.kwargs)
-		self._error_ntwk = error_dict_2_network(self.coefs, \
-			frequency=self.frequency, is_reciprocal=self.is_reciprocal)
-	
+		self._output_from_cal = \
+			self.calibration_algorithm_dict[self.type](**self.kwargs)
+		if self.nports ==1:
+			self._error_ntwk = error_dict_2_network(self.coefs, \
+				frequency=self.frequency, is_reciprocal=self.is_reciprocal)
+		
 
 	## methods 
 	def apply_cal(self,input_ntwk):
@@ -174,8 +189,11 @@ class Calibration(object):
 		returns:
 			caled: the calibrated measurement, a Network type.
 		'''
-		caled =  input_ntwk//self.error_ntwk
-		caled.name = input_ntwk.name
+		if self.nports ==1:
+			caled =  input_ntwk//self.error_ntwk 
+			caled.name = input_ntwk.name
+		elif self.nports == 2:
+			raise NotImplementedError()
 		return caled 
 
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
@@ -205,9 +223,23 @@ class Calibration(object):
 		
 	
 	#def plot_error_coefs(self):
-		
 
 
+#def error_dict_2_T(error_coefficients):
+	#ec = error_coefficients
+		#one = npy.ones(len(error_vector[:,0]))
+		#T_1 = npy.array([\
+			#[	-1*ec['det_X'], zero	],\
+			#[	zero,			-1*ec['k']*ec['e22']]).transpose().reshape(-1,2,2)
+	#T1 = [-1*det_X]
+
+
+#a = copy(m)
+#for f in len(m):
+	#dot = npy.dot
+	#t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],T4[f,:,:],m[f,:,:]
+	#a[f,:,:] = dot((dot(t4,m)-t2),(-1*dot(t3,m)+t1).inverse())
+	
 
 ## Functions
 def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
