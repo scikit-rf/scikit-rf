@@ -26,7 +26,7 @@ Contains the Calibration class, and supporting functions
 '''
 import numpy as npy
 import os 
-from copy import copy #as copy
+from copy import deepcopy, copy
 
 from calibrationAlgorithms import *
 from frequency import *
@@ -83,6 +83,7 @@ class Calibration(object):
 		self.type = type
 		self.name = name
 		self.is_reciprocal = is_reciprocal
+		self.has_run = False
 
 	## properties
 	@property
@@ -128,8 +129,8 @@ class Calibration(object):
 		a dictionary holding all of the output from the calibration
 		algorithm
 		'''
-		
 		return self._output_from_cal
+
 	
 	@property	
 	def coefs(self):
@@ -142,11 +143,8 @@ class Calibration(object):
 			'source match':e11
 		'''
 		
-		try:
-			return self._output_from_cal['error coefficients']
-		except(AttributeError):
-			self.run()
-			return self._output_from_cal['error coefficients']
+
+		return self.output_from_cal['error coefficients']
 
 	@property
 	def error_ntwk(self):
@@ -154,12 +152,29 @@ class Calibration(object):
 		a Network type which represents the error network being
 		calibrated out.
 		'''
+		if not self.has_run:
+			self.run()
+			
 		if self.nports ==1:
-			try:
-				return self._error_ntwk
-			except(AttributeError):
+			return self._error_ntwk
+
+		elif self.nports == 2:
+			raise NotImplementedError('Not sure what to do yet')
+	@property
+	def Ts(self):
+		'''
+		T-matricies used for de-embeding. 
+		'''
+		
+		if self.nports ==2:
+			if not self.has_run:
 				self.run()
-				return self._error_ntwk
+			return self._Ts
+		elif self.nports ==1:
+			raise AttributeError('Only exists for two-port cals')
+		else:
+			raise NotImplementedError('Not sure what to do yet')
+	##  methods for manual control of internal calculations
 
 	##  methods for manual control of internal calculations
 	def run(self):
@@ -173,10 +188,14 @@ class Calibration(object):
 		'''
 		self._output_from_cal = \
 			self.calibration_algorithm_dict[self.type](**self.kwargs)
+
 		if self.nports ==1:
 			self._error_ntwk = error_dict_2_network(self.coefs, \
 				frequency=self.frequency, is_reciprocal=self.is_reciprocal)
-		
+		elif self.nports ==2:
+			self._Ts = two_port_error_vector_2_Ts(self.coefs)
+
+		self.has_run = True
 
 	## methods 
 	def apply_cal(self,input_ntwk):
@@ -193,8 +212,14 @@ class Calibration(object):
 			caled =  input_ntwk//self.error_ntwk 
 			caled.name = input_ntwk.name
 		elif self.nports == 2:
-			raise NotImplementedError()
-		return caled 
+			caled = deepcopy(input_ntwk)
+			T1,T2,T3,T4 = self.Ts
+			dot = npy.dot
+			for f in range(len(input_ntwk.s)):
+				t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+					T4[f,:,:],input_ntwk.s[f,:,:]
+				caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(t3,m)+t1),(dot(t4,m)-t2))
+			return caled 
 
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
 		'''
@@ -225,21 +250,32 @@ class Calibration(object):
 	#def plot_error_coefs(self):
 
 
-#def error_dict_2_T(error_coefficients):
-	#ec = error_coefficients
-		#one = npy.ones(len(error_vector[:,0]))
-		#T_1 = npy.array([\
-			#[	-1*ec['det_X'], zero	],\
-			#[	zero,			-1*ec['k']*ec['e22']]).transpose().reshape(-1,2,2)
-	#T1 = [-1*det_X]
+def two_port_error_vector_2_Ts(error_coefficients):
+	ec = error_coefficients
+	npoints = len(ec['k'])
+	one = npy.ones(npoints,dtype=complex)
+	zero = npy.zeros(npoints,dtype=complex)
+	#T_1 = npy.zeros((npoints, 2,2),dtype=complex)
+	#T_1[:,0,0],T_1[:,1,1] = -1*ec['det_X'], -1*ec['k']*ec['det_Y']
+	#T_1[:,1,1] = -1*ec['k']*ec['det_Y']
 
 
-#a = copy(m)
-#for f in len(m):
-	#dot = npy.dot
-	#t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],T4[f,:,:],m[f,:,:]
-	#a[f,:,:] = dot((dot(t4,m)-t2),(-1*dot(t3,m)+t1).inverse())
+	T1 = npy.array([\
+		[	-1*ec['det_X'], zero	],\
+		[	zero,		-1*ec['k']*ec['det_Y']]]).transpose().reshape(-1,2,2)
+	T2 = npy.array([\
+		[	ec['e00'], zero	],\
+		[	zero,			ec['k']*ec['e33']]]).transpose().reshape(-1,2,2)
+	T3 = npy.array([\
+		[	-1*ec['e11'], zero	],\
+		[	zero,			-1*ec['k']*ec['e22']]]).transpose().reshape(-1,2,2)
+	T4 = npy.array([\
+		[	-1*one, zero	],\
+		[	zero,			-1*ec['k']]]).transpose().reshape(-1,2,2)
+	return T1,T2,T3,T4
 	
+
+		
 
 ## Functions
 def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
