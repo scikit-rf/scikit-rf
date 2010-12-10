@@ -211,6 +211,7 @@ class Calibration(object):
 		if self.nports ==1:
 			caled =  input_ntwk//self.error_ntwk 
 			caled.name = input_ntwk.name
+			
 		elif self.nports == 2:
 			caled = deepcopy(input_ntwk)
 			T1,T2,T3,T4 = self.Ts
@@ -219,7 +220,7 @@ class Calibration(object):
 				t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
 					T4[f,:,:],input_ntwk.s[f,:,:]
 				caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
-			return caled 
+		return caled 
 
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
 		'''

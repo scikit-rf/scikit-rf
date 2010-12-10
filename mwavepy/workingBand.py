@@ -218,6 +218,8 @@ class WorkingBand(object):
 
 
 
+	
+		
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
 		'''
