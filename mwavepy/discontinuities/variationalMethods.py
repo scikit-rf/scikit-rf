@@ -24,11 +24,13 @@ variational calculations, for solving equivalent networks of
 discontinuities. 
 '''
 
-import mwavepy as mv
-from mwavepy.mathFunctions import dirac_delta
+
+from ..mathFunctions import dirac_delta
+from ..network import one_port_2_two_port, Network
+from ..transmissionLine.rectangularWaveguide import RectangularWaveguide
 import pylab as plb
 from numpy import zeros,pi,sinc,sin 
-from scipy.constants import mil, micron 
+from scipy.constants import mil, micron
 ## variational calculations
 def junction_admittance(wg_I, wg_II, V_I, V_II, freq, M,N,\
 	normalizing_mode=('te',1,0),**kwargs):
@@ -105,7 +107,7 @@ def junction_admittance(wg_I, wg_II, V_I, V_II, freq, M,N,\
 
 	#create a network type to return
 	Gamma = (1-Y_in_norm)/(1+Y_in_norm)
-	ntwk = mv.network.Network()
+	ntwk = Network()
 	ntwk.s = Gamma
 	ntwk.frequency = freq
 
@@ -173,7 +175,7 @@ def junction_impedance(wg_I, wg_II, I_I, I_II, freq, M,N,\
 
 	#create a network type to return
 	Gamma = (Z_in_norm-1)/(Z_in_norm+1)
-	ntwk = mv.network.Network()
+	ntwk = Network()
 	ntwk.s = Gamma
 	ntwk.frequency = freq
 
@@ -267,7 +269,7 @@ def junction_admittance_with_termination(wg_I, wg_II, V_I, V_II, freq, M,N,\
 
 	#create a network type to return
 	Gamma = (1-Y_in_norm)/(1+Y_in_norm)
-	ntwk = mv.network.Network()
+	ntwk = Network()
 	ntwk.s = Gamma
 	ntwk.frequency = freq
 
@@ -375,7 +377,7 @@ def aperture_field(wg_I, wg_II, V_I, V_II, freq, M,N, d, Gamma0, \
 
 	#create a network type to return
 	Gamma = (1-Y_in_norm)/(1+Y_in_norm)
-	ntwk = mv.network.Network()
+	ntwk = Network()
 	ntwk.s = Gamma
 	ntwk.frequency = freq
 
@@ -471,7 +473,7 @@ def V_offset_dimension_change(mode_type,m,n,wg,x0,y0,a,b ):
 	return  normalization*coupling
 
 ## high level functions for discontinuity modeling
-def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,**kwargs):
+def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,nports=1, **kwargs):
 	'''
 	Calcurates the equivalent 1-port network for a generic junction
 	of two rectangular waveguides, with the input guide matched.
@@ -564,8 +566,10 @@ def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,**kwargs):
 		Gamma0=Gamma0,\
 		**kwargs\
 		)
-	return out['ntwk']
-
+	if nports == 1:
+		return out['ntwk']
+	elif nports ==2:
+		return one_port_2_two_port(out['ntwk'])
 	
 
 
@@ -634,7 +638,7 @@ def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
 	NOTE: this just formats input and calls rectangular_junction()
 	'''
 	wg_I = wg
-	wg_II = mv.RectangularWaveguide(a=wg.b,b= wg.a)
+	wg_II = RectangularWaveguide(a=wg.b,b= wg.a)
 	xy = (wg_I.a/4. + delta_a, -wg_I.a/4.+delta_b)
 	return rectangular_junction(\
 		freq= freq,\
