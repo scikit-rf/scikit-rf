@@ -354,10 +354,10 @@ class Network(object):
 		pas_mat = copy(self.s)
 		for f in range(len(self.s)):
 			pas_mat[f,:,:] = npy.dot(self.s[f,:,:].conj().T, self.s[f,:,:])
-		return pas_mat
-		#return ( npy.abs(self.s[:,0,0])**2 + abs(self.s[:,1,0])**2,\
+		
+		#pas_mat2[f,:,:]= ( npy.abs(self.s[:,0,0])**2 + abs(self.s[:,1,0])**2,\
 		#	npy.abs(self.s[:,1,1])**2 + npy.abs(self.s[:,0,1])**2 )
-	
+		return pas_mat
 	# frequency formating related properties
 	
 	
@@ -768,14 +768,15 @@ def one_port_2_two_port(ntwk):
 	takes:
 		ntwk: a symetric, reciprocal and lossless one-port network.
 	returns:
-		ntwk: a two-port Network
+		ntwk: the resultant two-port Network
 	'''
 	result = copy(ntwk)
-	result.s = npy.zeros((result.frequency.npoints,2,2)) 
-	result.s[:,0,0] = ntwk.s[:,0,0]
-	result.s[:,1,1] = ntwk.s[:,0,0]
-	result.s[:,0,1] = ntwk.s[:,0,0] + 1
-	result.s[:,1,0] = ntwk.s[:,0,0] + 1
+	result.s = npy.zeros((result.frequency.npoints,2,2), dtype=complex) 
+	s11 = ntwk.s[:,0,0]
+	result.s[:,0,0] = s11
+	result.s[:,1,1] = s11
+	result.s[:,0,1] = npy.sqrt(1- npy.abs(s11)**2)*npy.exp(1j*(npy.angle(s11)+ npy.pi/2.))
+	result.s[:,1,0] = result.s[:,0,1]
 	return result
 	
 	

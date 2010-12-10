@@ -88,9 +88,7 @@ def guess_length_of_delay_short( aNtwk,tline):
 
 
 ## ONE PORT 
-
 def one_port(measured, ideals):
-	
 	'''
 	standard algorithm for a one port calibration. If more than three 
 	standards are supplied then a least square algorithm is applied.
@@ -104,18 +102,15 @@ def one_port(measured, ideals):
 			s-matrix or list of  1-port mwavepy.ntwk types. 
 	
 	returns:
-		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
-			complex calibrations coefficients,where N is the number 
-			of frequency points in the standards that where given.
-			
-			abc: 
-			the components of abc are 
-				a = abc[:,0] = e01*e10 - e00*e11
-				b = abc[:,1] = e00
-				c = abc[:,2] = e11
-			
-			residuals: a matrix of residuals from the least squared 
-				calculation. see numpy.linalg.lstsq() for more info	
+		a dictionary containing the following keys
+			'error coeffcients': dictionary containing standard error
+			coefficients
+			'residuals': a matrix of residuals from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+
+
+	note:
+		uses numpy.linalg.lstsq() for least squares calculation
 	'''
 	#make  copies so list entities are not changed, when we typecast 
 	mList = copy(measured)
@@ -167,6 +162,184 @@ def one_port(measured, ideals):
 	return output
 
 
+
+## TWO PORT
+def two_port(measured, ideals):
+	'''
+	two port calibration based on the matrical binlear transform
+	formulation.
+
+	takes:
+
+	returns:
+		output: a dictionary containing the follwoing keys
+
+
+
+
+	references
+	
+	Doug Rytting " Network Analyzer Error Models and Calibration Methods"
+	RF 8 Microwave. Measurements for Wireless Applications (ARFTG/NIST)
+	 Short Course ...
+	
+	Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer
+	Calibration Procedure, Covering n-Port Scattering-Parameter
+	Measurements, Affected by Leakage Errors," Microwave Theory and
+	Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115,
+	Dec 1977
+	'''
+	#make  copies so list entities are not changed, when we typecast 
+	mList = copy(measured)
+	iList = copy(ideals)
+	numStds = len(mList)# find number of standards given, for dimensions
+	numCoefs = 7
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			mList[k] = mList[k].s
+			iList[k] = iList[k].s
+	except:
+		pass	
+	
+	fLength = len(mList[0])
+	#initialize outputs 
+	error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex) 
+	Q = npy.zeros((numStds*4, 7),dtype=complex)
+	M = npy.zeros((numStds*4, 1),dtype=complex)
+	# loop through frequencies and form m, a vectors and 
+	# the matrix M. where M = 	e00 + S11i
+	#							i2, 1, i2*m2
+	#									...etc
+	for f in range(fLength):
+		# loop through standards and fill matrix 
+		for k in range(numStds):
+			m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
+			Q[k*4:k*4+4,:] = npy.array([\
+				[ 1, i[0,0]*m[0,0], -i[0,0], 0 , i[1,0]*m[0,1], 	0 ,  	0	 ],\
+				[ 0, i[0,1]*m[0,0], -i[0,1], 0 , i[1,1]*m[0,1], 	0 ,  -m[0,1] ],\
+				[ 0, i[0,0]*m[1,0], 	0, 	 0 , i[1,0]*m[1,1], -i[1,0], 	0	 ],\
+				[ 0, i[0,1]*m[1,0], 	0, 	 1 , i[1,1]*m[1,1], -i[1,1], -m[1,1] ],\
+				])
+			#pdb.set_trace()
+			M[k*4:k*4+4,:] = npy.array([\
+				[ m[0,0]],\
+				[ 	0	],\
+				[ m[1,0]],\
+				[	0	],\
+				])
+		
+		# calculate least squares
+		error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
+		#if len (residualsTmp )==0:
+		#	raise ValueError( 'matrix has singular values, check standards')
+			
+		error_vector[f,:] = error_vector_at_f.flatten()
+		residuals[f,:] = residuals_at_f
+
+	# put the error vector into human readable dictionary
+	error_coefficients = {\
+		'e00':error_vector[:,0],\
+		'e11':error_vector[:,1],\
+		'det_X':error_vector[:,2],\
+		'e33':error_vector[:,3]/error_vector[:,6],\
+		'e22':error_vector[:,4]/error_vector[:,6],\
+		'det_Y':error_vector[:,5]/error_vector[:,6],\
+		'k':error_vector[:,6],\
+		}
+	
+	# output is a dictionary of information
+	output = {\
+		'error coefficients':error_coefficients,\
+		'error vector':error_vector, \
+		'residuals':residuals\
+		}
+	
+	return output
+## SELF CALIBRATION
+def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
+	**kwargs):
+	'''
+	An iterative, general self-calibration routine which can take any
+	mixture of parameterized standards. The correct parameter values
+	are defined as the ones which minimize the mean residual error. 
+	
+	
+	
+	takes:
+		measured: list of Network types holding actual measurements
+		ideals_ps: list of ParameterizedStandard types
+		showProgress: turn printing progress on/off [boolean]
+		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
+	
+	returns:
+		a dictionary holding:
+		'error_coefficients': dictionary of error coefficients
+		'residuals': residual matrix (shape depends on #stds)
+		'parameter_vector_final': final results for parameter vector
+		'mean_residual_list': the mean, magnitude of the residuals at each
+			iteration of calibration. this is the variable being minimized.
+	
+	see  ParameterizedStandard for more info on them
+	'''
+	#make copies so list entities are not changed
+	measured = copy(measured)
+	nports = measured[0].number_of_ports
+	#note: ideals are passed by reference (not copied)
+	
+	# create the initial parameter vector 
+	parameter_vector = npy.array(())
+	for a_ps in ideals_ps:
+		parameter_vector = npy.append(parameter_vector, a_ps.parameter_array)
+
+
+	ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
+	mean_residual_list = []	
+
+	def sub_cal(parameter_vector, measured, ideals_ps):
+		#TODO:  this function uses sloppy namespace, which limits portability
+
+		# loop through the parameterized stds and assign the current
+		# parameter vectors' elements to each std. 
+		p_index = 0 # index, of first element of current_ps in parameter vector
+		for stdNum in range(len(ideals_ps)):
+			current_ps = ideals_ps[stdNum]
+			current_ps.parameter_array = \
+				parameter_vector[p_index:p_index+current_ps.number_of_parameters]
+			ideals[stdNum]=current_ps.network
+			p_index +=current_ps.number_of_parameters
+
+		if nports == 1:
+			residues = one_port(measured, ideals)['residuals']
+		elif nports == 2:
+			residues = one_port(measured, ideals)['residuals']
+		else:
+			raise NotImplmentedError()
+			
+		mean_residual_list.append(npy.mean(abs(residues)))
+		
+		if showProgress:
+			print '%.3e'%mean_residual_list[-1],'==>',parameter_vector
+		return mean_residual_list[-1]
+
+	if showProgress:
+		print ('| er |  ==>',[ k.parameter_keys for k in ideals_ps])
+		print ('==================================================')
+	parameter_vector_end = \
+		fmin (sub_cal, parameter_vector,args=(measured,ideals_ps), **kwargs)
+			
+	output = one_port (measured = measured, ideals=ideals)
+	
+	output.update( {\
+	'parameter_vector_final':parameter_vector_end,\
+	'mean_residual_list':mean_residual_list\
+	})
+	return output
+
+
+## DEPRECATED AWAITING DELETION
 def xds(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
 	guessLength=False,solveForLoss=False,showProgress= False):
 	'''
@@ -644,156 +817,3 @@ def xds_xdl(measured, ideals, wb, ds,dl, Gamma0=None, ftol=1e-3, xtol=1e-3, \
 	})
 	return output
 
-
-def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
-	**kwargs):
-	'''
-	A self-calibration routine which can take any mixture of parameterized
-	standards. The total residual error is minimized by adjusting the 
-	parameters of each standard and re-runing the calibration. 
-	
-	
-	
-	takes:
-		measured: list of Network types holding actual measurements
-		ideals: list of ParameterizedStandard types
-		showProgress: turn printing progress on/off [boolean]
-		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
-	
-	returns:
-		a dictionary holding:
-		'error_coefficients': dictionary of error coefficients
-		'residuals': residual matrix (shape depends on #stds)
-		'parameter_vector_final': final results for parameter vector
-		'mean_residual_list': the mean, magnitude of the residuals at each
-			iteration of calibration. this is the variable being minimized.
-	
-	see  ParameterizedStandard for more info
-	'''
-	#make copies so list entities are not changed
-	measured = copy(measured)
-	#note: ideals are passed by reference (not copied)
-	
-	# create the initial parameter vector 
-	parameter_vector = npy.array(())
-	for a_ps in ideals_ps:
-		parameter_vector = npy.append(parameter_vector, a_ps.parameter_array)
-
-
-	ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
-	mean_residual_list = []	
-
-	def sub_cal(parameter_vector, measured, ideals_ps):
-		#TODO:  this function uses sloppy namespace, which limits portability
-
-		# loop through the parameterized stds and assign the current
-		# parameter vectors' elements to each std. 
-		p_index = 0 # index, of first element of current_ps in parameter vector
-		for stdNum in range(len(ideals_ps)):
-			current_ps = ideals_ps[stdNum]
-			current_ps.parameter_array = \
-				parameter_vector[p_index:p_index+current_ps.number_of_parameters]
-			ideals[stdNum]=current_ps.network
-			p_index +=current_ps.number_of_parameters
-		
-		residues = one_port(measured, ideals)['residuals']
-		mean_residual_list.append(npy.mean(abs(residues)))
-		
-		if showProgress:
-			print '%.3e'%mean_residual_list[-1],'==>',parameter_vector
-		return mean_residual_list[-1]
-
-	if showProgress:
-		print ('| er |  ==>',[ k.parameter_keys for k in ideals_ps])
-		print ('==================================================')
-	parameter_vector_end = \
-		fmin (sub_cal, parameter_vector,args=(measured,ideals_ps), **kwargs)
-			
-	output = one_port (measured = measured, ideals=ideals)
-	
-	output.update( {\
-	'parameter_vector_final':parameter_vector_end,\
-	'mean_residual_list':mean_residual_list\
-	})
-	return output
-
-
-
-
-
-## TWO PORT
-
-def two_port(measured, ideals):
-	
-	'''
-
-	'''
-	#make  copies so list entities are not changed, when we typecast 
-	mList = copy(measured)
-	iList = copy(ideals)
-	numStds = len(mList)# find number of standards given, for dimensions
-	numCoefs = 7
-	# try to access s-parameters, in case its a ntwk type, other wise 
-	# just keep on rollin 
-	try:
-		for k in range(numStds):
-			mList[k] = mList[k].s
-			iList[k] = iList[k].s
-	except:
-		pass	
-	
-	fLength = len(mList[0])
-	#initialize outputs 
-	error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex) 
-	Q = npy.zeros((numStds*4, 7),dtype=complex)
-	M = npy.zeros((numStds*4, 1),dtype=complex)
-	# loop through frequencies and form m, a vectors and 
-	# the matrix M. where M = 	e00 + S11i
-	#							i2, 1, i2*m2
-	#									...etc
-	for f in range(fLength):
-		# loop through standards and fill matrix 
-		for k in range(numStds):
-			m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
-			Q[k*4:k*4+4,:] = npy.array([\
-				[ 1, i[0,0]*m[0,0], -i[0,0], 0 , i[1,0]*m[0,1], 	0 ,  	0	 ],\
-				[ 0, i[0,1]*m[0,0], -i[0,1], 0 , i[1,1]*m[0,1], 	0 ,  -m[0,1] ],\
-				[ 0, i[0,0]*m[1,0], 	0, 	 0 , i[1,0]*m[1,1], -i[1,0], 	0	 ],\
-				[ 0, i[0,1]*m[1,0], 	0, 	 1 , i[1,1]*m[1,1], -i[1,1], -m[1,1] ],\
-				])
-			#pdb.set_trace()
-			M[k*4:k*4+4,:] = npy.array([\
-				[ m[0,0]],\
-				[ 	0	],\
-				[ m[1,0]],\
-				[	0	],\
-				])
-		
-		# calculate least squares
-		error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
-		#if len (residualsTmp )==0:
-		#	raise ValueError( 'matrix has singular values, check standards')
-			
-		error_vector[f,:] = error_vector_at_f.flatten()
-		residuals[f,:] = residuals_at_f
-
-	# put the error vector into human readable dictionary
-	error_coefficients = {\
-		'e00':error_vector[:,0],\
-		'e11':error_vector[:,1],\
-		'det_X':error_vector[:,2],\
-		'e33':error_vector[:,3]/error_vector[:,6],\
-		'e22':error_vector[:,4]/error_vector[:,6],\
-		'det_Y':error_vector[:,5]/error_vector[:,6],\
-		'k':error_vector[:,6],\
-		}
-	
-	# output is a dictionary of information
-	output = {\
-		'error coefficients':error_coefficients,\
-		'error vector':error_vector, \
-		'residuals':residuals\
-		}
-	
-	return output
