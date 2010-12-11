@@ -130,6 +130,24 @@ class Parameterless(ParameterizedStandard):
 		
 
 
+class Line_UnknownLength(ParameterizedStandard):
+	'''
+	A matched delay line of unknown length
+	
+	initial guess for length should be given to constructor
+	'''
+	def __init__(self, wb,d,**kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type
+			d: initial guess for line length [m]
+			**kwargs: passed to self.function
+		'''
+		ParameterizedStandard.__init__(self, \
+			function = wb.line,\
+			parameters = {'d':d},\
+			**kwargs\
+			)
 class DelayedShort_UnknownLength(ParameterizedStandard):
 	'''
 	A delay short of unknown length
@@ -148,6 +166,7 @@ class DelayedShort_UnknownLength(ParameterizedStandard):
 			parameters = {'d':d},\
 			**kwargs\
 			)
+
 class DelayedTermination_UnknownLength(ParameterizedStandard):
 	'''
 	A  Delayed Termination of unknown length, but known termination
@@ -272,7 +291,8 @@ class DelayLoad_Mulipath(ParameterizedStandard):
 ## rectangular waveguide specific
 class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 	'''
-	A known Delayed Termination with unknown flange translation missalignment.
+	A delayed rectangular waveguide termination with unknown flange
+	translation missalignment.
 
 	'''
 	def __init__(self, wb,d,Gamma0,initial_offset= 1./10, **kwargs):
@@ -301,8 +321,144 @@ class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 				'db':wg.a*initial_offset},\
 			**kwargs\
 			)
+class DelayedShort_TranslationMissalignment(ParameterizedStandard):
+	'''
+	A delayed rectangular waveguide termination with unknown flange
+	translation missalignment.
 
+	'''
+	def __init__(self, wb,d,initial_offset= 1./10, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d: distance to termination
+			Gamma0: reflection coefficient off termination at termination
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
+		'''
+		wg = wb.tline
+		kwargs.update({\
+			'wg_I':wg,\
+			'wg_II':wg,\
+			'freq':wb.frequency,\
+			'd':d,\
+			'Gamma0':-1})
+		
+		ParameterizedStandard.__init__(self, \
+			function = rectangular_junction_centered,\
+			parameters = {\
+				'da':wg.a*initial_offset, \
+				'db':wg.a*initial_offset},\
+			**kwargs\
+			)
+class Line_TranslationMissalignment(ParameterizedStandard):
+	'''
+	A  rectangular waveaguide matched line standard with unknown flange
+	translation missalignment.
 
+	'''
+	def __init__(self, wb,d,initial_offset= 1./10, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d: length of line [m]
+			Gamma0: reflection coefficient off termination at termination
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
+		
+		'''
+		wg = wb.tline
+		kwargs.update({\
+			'wg_I':wg,\
+			'wg_II':wg,\
+			'freq':wb.frequency,\
+			'd':d,\
+			'Gamma0':0,\
+			'nports':2,\
+			})
+		
+		ParameterizedStandard.__init__(self, \
+			function = rectangular_junction_centered,\
+			parameters = {\
+				'da':wg.a*initial_offset, \
+				'db':wg.a*initial_offset},\
+			**kwargs\
+			)
+class Line_UnknownLength_TranslationMissalignment(ParameterizedStandard):
+	'''
+	A  rectangular waveaguide matched line standard with unknown flange
+	translation missalignment and unknown length. 
+
+	'''
+	def __init__(self, wb,d,initial_offset= 1./10, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d: guess for length of line [m]
+			Gamma0: reflection coefficient off termination at termination
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
+		
+		'''
+		wg = wb.tline
+		kwargs.update({\
+			'wg_I':wg,\
+			'wg_II':wg,\
+			'freq':wb.frequency,\
+			'Gamma0':0,\
+			'nports':2,\
+			})
+		
+		ParameterizedStandard.__init__(self, \
+			function = rectangular_junction_centered,\
+			parameters = {\
+				'da':wg.a*initial_offset, \
+				'db':wg.a*initial_offset,
+				'd':d
+				},\
+			**kwargs\
+			)
+class Thru_TranslationMissalignment(ParameterizedStandard):
+	'''
+	A  rectangular waveaguide thru standard with unknown flange
+	translation missalignment.
+
+	'''
+	def __init__(self, wb,initial_offset= 1./10, **kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d: distance to termination
+			Gamma0: reflection coefficient off termination at termination
+			initial_offset: initial offset guess, as a fraction of a, 
+				(the waveguide width dimension)
+			**kwargs: passed to self.function
+		
+		'''
+		wg = wb.tline
+		kwargs.update({\
+			'wg_I':wg,\
+			'wg_II':wg,\
+			'freq':wb.frequency,\
+			'd':0,\
+			'Gamma0':0,\
+			'nports':2,\
+			})
+		
+		ParameterizedStandard.__init__(self, \
+			function = rectangular_junction_centered,\
+			parameters = {\
+				'da':wg.a*initial_offset, \
+				'db':wg.a*initial_offset},\
+			**kwargs\
+			)
 class Match_TranslationMissalignment(ParameterizedStandard):
 	'''
 	A match with unknown translation missalignment.

@@ -286,7 +286,12 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	'''
 	#make copies so list entities are not changed
 	measured = copy(measured)
-	nports = measured[0].number_of_ports
+	if measured[0].number_of_ports ==1:
+		cal_function = one_port
+	elif measured[0].number_of_ports ==2:
+		cal_function = two_port
+	else:
+		raise NotImplementedError('only 2 port supported')
 	#note: ideals are passed by reference (not copied)
 	
 	# create the initial parameter vector 
@@ -311,13 +316,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 			ideals[stdNum]=current_ps.network
 			p_index +=current_ps.number_of_parameters
 
-		if nports == 1:
-			residues = one_port(measured, ideals)['residuals']
-		elif nports == 2:
-			residues = one_port(measured, ideals)['residuals']
-		else:
-			raise NotImplmentedError()
-			
+		residues = cal_function(measured, ideals)['residuals']	
 		mean_residual_list.append(npy.mean(abs(residues)))
 		
 		if showProgress:
@@ -330,7 +329,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	parameter_vector_end = \
 		fmin (sub_cal, parameter_vector,args=(measured,ideals_ps), **kwargs)
 			
-	output = one_port (measured = measured, ideals=ideals)
+	output = cal_function(measured = measured, ideals=ideals)
 	
 	output.update( {\
 	'parameter_vector_final':parameter_vector_end,\
