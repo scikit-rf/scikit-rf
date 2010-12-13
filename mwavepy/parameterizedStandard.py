@@ -27,7 +27,10 @@ from copy import copy,deepcopy
 
 from discontinuities.variationalMethods import *
 
+
 class ParameterizedStandard(object):
+	global INF
+	INF=1e12
 	'''
 	A parameterized standard represents a calibration standard which 
 	has uncertainty in its response. This uncertainty is functionally 
@@ -38,7 +41,7 @@ class ParameterizedStandard(object):
 	Standard. Its main purpose is to allow the self calibration routine
 	to be independent of calibration set. 
 	'''
-	def __init__(self, function=None, parameters={}, **kwargs):
+	def __init__(self, function=None, parameters={}, parameter_bounds={},**kwargs):
 		'''
 		takes:
 			function: a function which will be called to generate
@@ -54,7 +57,7 @@ class ParameterizedStandard(object):
 		self.kwargs = kwargs
 		self.parameters = parameters
 		self.function = function
-
+		self.parameter_bounds = parameter_bounds
 	
 	@property
 	def parameter_keys(self):
@@ -83,6 +86,18 @@ class ParameterizedStandard(object):
 		for k in self.parameter_keys:
 			self.parameters[k]= input_array[counter]
 			counter+=1
+
+	@property	
+	def parameter_bounds_array(self):
+		'''
+		This property provides a 1D-array interface to the parameters 
+		bounds dictionary. if key doesnt exist, then i presume the
+		parameter has no bounds. this then returns a tuple of -INF,INF
+		where INF is a global variable in this class. 
+		'''
+		return ([self.parameter_bounds.get(k,(-INF,INF)) for  k in self.parameter_keys])
+
+
 	@property
 	def number_of_parameters(self):
 		'''

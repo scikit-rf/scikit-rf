@@ -24,7 +24,7 @@ Contains calibrations algorithms, used in the Calibration class,
 '''
 from copy import copy,deepcopy
 import numpy as npy
-from scipy.optimize import fmin # used for xds
+from scipy.optimize import fmin_slsqp,fmin,leastsq # used for xds
 from discontinuities import variationalMethods as vm
 import pdb
 ## Supporting Functions
@@ -298,6 +298,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	parameter_vector = npy.array(())
 	for a_ps in ideals_ps:
 		parameter_vector = npy.append(parameter_vector, a_ps.parameter_array)
+		#parameter_bounds = npy.append(parameter_bounds, a_ps.parameter_bounds)
 
 
 	ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
@@ -337,6 +338,176 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	})
 	return output
 
+def parameterized_self_calibration_nls(measured, ideals_ps, showProgress=True,\
+	**kwargs):
+	'''
+	An iterative, general self-calibration routine which can take any
+	mixture of parameterized standards. The correct parameter values
+	are defined as the ones which minimize the mean residual error. 
+	
+	
+	
+	takes:
+		measured: list of Network types holding actual measurements
+		ideals_ps: list of ParameterizedStandard types
+		showProgress: turn printing progress on/off [boolean]
+		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
+	
+	returns:
+		a dictionary holding:
+		'error_coefficients': dictionary of error coefficients
+		'residuals': residual matrix (shape depends on #stds)
+		'parameter_vector_final': final results for parameter vector
+		'mean_residual_list': the mean, magnitude of the residuals at each
+			iteration of calibration. this is the variable being minimized.
+	
+	see  ParameterizedStandard for more info on them
+	'''
+	#make copies so list entities are not changed
+	measured = copy(measured)
+	if measured[0].number_of_ports ==1:
+		cal_function = one_port
+	elif measured[0].number_of_ports ==2:
+		cal_function = two_port
+	else:
+		raise NotImplementedError('only 2 port supported')
+	#note: ideals are passed by reference (not copied)
+	
+	# create the initial parameter vector 
+	parameter_vector = npy.array(())
+	for a_ps in ideals_ps:
+		parameter_vector = npy.append(parameter_vector, a_ps.parameter_array)
+		#parameter_bounds = npy.append(parameter_bounds, a_ps.parameter_bounds)
+
+
+	ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
+	mean_residual_list = []	
+
+	def sub_cal(parameter_vector, measured, ideals_ps):
+		#TODO:  this function uses sloppy namespace, which limits portability
+
+		# loop through the parameterized stds and assign the current
+		# parameter vectors' elements to each std. 
+		p_index = 0 # index, of first element of current_ps in parameter vector
+		for stdNum in range(len(ideals_ps)):
+			current_ps = ideals_ps[stdNum]
+			current_ps.parameter_array = \
+				parameter_vector[p_index:p_index+current_ps.number_of_parameters]
+			ideals[stdNum]=current_ps.network
+			p_index +=current_ps.number_of_parameters
+
+		residues = cal_function(measured, ideals)['residuals']	
+		mean_residual_list.append(npy.mean(abs(residues)))
+		
+		if showProgress:
+			print '%.3e'%mean_residual_list[-1],'==>',parameter_vector
+		return mean_residual_list[-1]
+
+	if showProgress:
+		print ('| er |  ==>',[ k.parameter_keys for k in ideals_ps])
+		print ('==================================================')
+	parameter_vector_end = leastsq (\
+		func=sub_cal,\
+		x0=parameter_vector,\
+		args=(measured,ideals_ps),\
+		**kwargs)
+			
+	output = cal_function(measured = measured, ideals=ideals)
+	
+	output.update( {\
+	'parameter_vector_final':parameter_vector_end,\
+	'mean_residual_list':mean_residual_list\
+	})
+	return output
+
+def parameterized_self_calibration_bounded(measured, ideals_ps, showProgress=True,\
+	**kwargs):
+	'''
+	An iterative, general self-calibration routine which can take any
+	mixture of parameterized standards. The correct parameter values
+	are defined as the ones which minimize the mean residual error. 
+	
+	
+	
+	takes:
+		measured: list of Network types holding actual measurements
+		ideals_ps: list of ParameterizedStandard types
+		showProgress: turn printing progress on/off [boolean]
+		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
+	
+	returns:
+		a dictionary holding:
+		'error_coefficients': dictionary of error coefficients
+		'residuals': residual matrix (shape depends on #stds)
+		'parameter_vector_final': final results for parameter vector
+		'mean_residual_list': the mean, magnitude of the residuals at each
+			iteration of calibration. this is the variable being minimized.
+	
+	see  ParameterizedStandard for more info on them
+	'''
+	if len(measured) != len(ideals_ps):
+		raise(IndexError('Number of ideals and measurements must be equal'))
+	#make copies so list entities are not changed
+	measured = copy(measured)
+	if measured[0].number_of_ports ==1:
+		cal_function = one_port
+	elif measured[0].number_of_ports ==2:
+		cal_function = two_port
+	else:
+		raise NotImplementedError('only 2 port supported')
+	#note: ideals are passed by reference (not copied)
+	
+	# create the initial parameter vector 
+	parameter_vector = npy.array(())
+	parameter_bounds_list = []
+	for a_ps in ideals_ps:
+		parameter_vector = npy.append(parameter_vector, a_ps.parameter_array)
+		if len(a_ps.parameter_bounds_array)!=0:
+			parameter_bounds_list+=( a_ps.parameter_bounds_array)
+	print parameter_bounds_list
+	print parameter_vector
+
+	ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
+	mean_residual_list = []	
+
+	def sub_cal(parameter_vector, measured, ideals_ps):
+		#TODO:  this function uses sloppy namespace, which limits portability
+
+		# loop through the parameterized stds and assign the current
+		# parameter vectors' elements to each std. 
+		p_index = 0 # index, of first element of current_ps in parameter vector
+		for stdNum in range(len(ideals_ps)):
+			current_ps = ideals_ps[stdNum]
+			current_ps.parameter_array = \
+				parameter_vector[p_index:p_index+current_ps.number_of_parameters]
+			ideals[stdNum]=current_ps.network
+			p_index +=current_ps.number_of_parameters
+
+		residues = cal_function(measured, ideals)['residuals']	
+		mean_residual_list.append(npy.mean(abs(residues)))
+		
+		if showProgress:
+			print '%.3e'%mean_residual_list[-1],'==>',parameter_vector
+		return mean_residual_list[-1]
+
+	if showProgress:
+		print ('| er |  ==>',[ k.parameter_keys for k in ideals_ps])
+		print ('==================================================')
+	parameter_vector_end = \
+		fmin_slsqp (\
+			func = sub_cal,\
+			x0 = parameter_vector,\
+			bounds = parameter_bounds_list,\
+			args=(measured,ideals_ps),\
+			**kwargs)
+			
+	output = cal_function(measured = measured, ideals=ideals)
+	
+	output.update( {\
+	'parameter_vector_final':parameter_vector_end,\
+	'mean_residual_list':mean_residual_list\
+	})
+	return output
 
 ## DEPRECATED AWAITING DELETION
 def xds(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \

@@ -532,13 +532,13 @@ def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,nports=1, **kw
 
 	#TODO: need to make these checks coherent
 	if x_II > width_I or x_II+width_II < 0 or y_II > height_I or y_II+height_II <0:
-		print (da,db)
-		raise(ValueError('da,db too large'))
+		print ('ERROR: da,db too large',da,db)
+		#raise(ValueError('da,db too large'))
 	if ap_height*ap_width > height_I*width_I or \
 	ap_height*ap_width > height_II*width_II or\
 	ap_height<0 or ap_width<0:
-		print (ap_height, ap_width,ap_xy)
-		raise(ValueError('aperture dimensions nonsenible') )
+		print ('ERROR: aperture nonsensibel:',ap_height, ap_width,ap_xy)
+		#raise(ValueError('aperture dimensions nonsenible') )
 	
 	V_I_args = {\
 		'a':ap_width,\

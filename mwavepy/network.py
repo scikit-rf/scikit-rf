@@ -775,8 +775,9 @@ def one_port_2_two_port(ntwk):
 	s11 = ntwk.s[:,0,0]
 	result.s[:,0,0] = s11
 	result.s[:,1,1] = s11
-	result.s[:,0,1] = 1j*npy.sqrt(1- npy.abs(s11)**2)*\
-		npy.exp(1j*npy.unwrap(npy.angle(s11)))
+	## HACK: TODO: verify this mathematically
+	result.s[:,0,1] = npy.sqrt(1- npy.abs(s11)**2)*\
+		npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
 	result.s[:,1,0] = result.s[:,0,1]
 	return result
 	
