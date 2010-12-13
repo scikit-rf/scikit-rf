@@ -47,7 +47,7 @@ class Calibration(object):
 		'one port': one_port,\
 		'one port parameterized':parameterized_self_calibration,\
 		'two port': two_port,\
-		'two port parameterized':parameterized_self_calibration,\
+		'two port parameterized':parameterized_self_calibration_bounded,\
 		}
 	
 	def __init__(self,frequency , type, name=None,is_reciprocal=False,\

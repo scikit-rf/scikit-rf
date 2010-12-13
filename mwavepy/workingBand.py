@@ -120,8 +120,9 @@ class WorkingBand(object):
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
-		result.s = 1.0*npy.ones((self.frequency.npoints,nports, nports),\
-			dtype=complex)
+		rresult.s = npy.zeros((self.frequency.npoints,nports, nports),dtype=complex)
+		for f in range(self.frequency.npoints):
+			result.s[f,:,:] = 1.0*npy.eye(nports, dtype=complex)
 		return result
 
 	def load(self,Gamma0,**kwargs):
@@ -139,8 +140,6 @@ class WorkingBand(object):
 		result.s = Gamma0*npy.ones(self.frequency.npoints, dtype=complex)
 		return result
 	
-
-
 	def line(self,d,**kwargs):
 		'''
 		creates a Network for a section of transmission line
@@ -264,4 +263,23 @@ class WorkingBand(object):
 		
 		print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
 		return npy.linalg.lstsq(A, B)[0][0]
-	
+	def two_port_reflect(self, ntwk1, ntwk2, **kwargs):
+		'''
+		generates a two-port reflective (S21=S12=0) network,from the
+		responses of 2 one-port networks
+
+		takes:
+			ntwk1: Network type, seen from port 1
+			ntwk2: Network type, seen from port 2
+		returns:
+			result: two-port reflective Network type
+
+		
+		example:
+			wb.two_port_reflect(wb.short(), wb.match())
+		'''
+		result = self.match(nports=2,**kwargs)
+		for f in range(self.frequency.npoints):
+			result.s[f,0,0] = ntwk1.s[f,0,0]
+			result.s[f,1,1] = ntwk2.s[f,0,0]
+		return result

@@ -327,6 +327,37 @@ class Network(object):
 		'''
 		return npy.unwrap(mf.complex_2_radian(self.s),axis=0)
 
+
+	@property
+	def s11(self):
+		result = Network()
+		result.frequency = self.frequency
+		result.s = self.s[:,0,0]
+		return result
+	@property
+	def s22(self):
+		if self.number_of_ports < 2:
+			raise(IndexError('this network doesn have enough ports'))
+		result = Network()
+		result.frequency = self.frequency
+		result.s = self.s[:,1,1]
+		return result
+	@property
+	def s21(self):
+		if self.number_of_ports < 2:
+			raise(IndexError('this network doesn have enough ports'))
+		result = Network()
+		result.frequency = self.frequency
+		result.s = self.s[:,1,0]
+		return result
+	@property
+	def s12(self):
+		if self.number_of_ports < 2:
+			raise(IndexError('this network doesn have enough ports'))
+		result = Network()
+		result.frequency = self.frequency
+		result.s = self.s[:,0,1]
+		return result
 	@property
 	def number_of_ports(self):
 		'''
