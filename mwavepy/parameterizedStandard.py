@@ -27,6 +27,8 @@ from copy import copy,deepcopy
 
 from discontinuities.variationalMethods import *
 
+class ParameterBoundsError(Exception):
+	pass
 
 class ParameterizedStandard(object):
 	global INF
@@ -120,6 +122,12 @@ class ParameterizedStandard(object):
 		'''
 		tmp_args = copy(self.kwargs)
 		tmp_args.update(self.parameters)
+
+		for k in range( self.number_of_parameters):
+			if not(self.parameter_bounds_array[k][0] < self.parameter_array[k] \
+				<self.parameter_bounds_array[k][1]):			
+				raise ParameterBoundsError('a parameter is out of bounds')
+
 		return self.function(**tmp_args)
 
 

@@ -29,7 +29,7 @@ from ..mathFunctions import dirac_delta
 from ..network import one_port_2_two_port, Network
 from ..transmissionLine.rectangularWaveguide import RectangularWaveguide
 import pylab as plb
-from numpy import zeros,pi,sinc,sin 
+from numpy import zeros,pi,sinc,sin , ones
 from scipy.constants import mil, micron
 ## variational calculations
 def junction_admittance(wg_I, wg_II, V_I, V_II, freq, M,N,\
@@ -394,7 +394,7 @@ def aperture_field(wg_I, wg_II, V_I, V_II, freq, M,N, d, Gamma0, \
 
 
 def converge_junction_admittance(y_tol = 1e-3, mode_rate=1, M_0=2,N_0=2,\
-	min_converged=1, output=True, converge_func= junction_admittance, **kwargs):
+	min_converged=1, max_M_0=100,output=True, converge_func= junction_admittance, **kwargs):
 	'''
 	the design of this function is stupid, it was ad-hoc
 	'''
@@ -405,9 +405,10 @@ def converge_junction_admittance(y_tol = 1e-3, mode_rate=1, M_0=2,N_0=2,\
 	converged_counter =0
 	
 	if output: print '(M,N)\t\tDelta_y'
-	while converged_counter < min_converged:
+	
+	while converged_counter < min_converged :
 		y_delta = 1
-		while (y_delta > y_tol):
+		while (y_delta > y_tol and M < max_M_0 ):
 			if output:print '(%i,%i)\t\t%f'%(M,N, y_delta)
 			
 			M,N = int(M+mode_rate), int(N+mode_rate)
@@ -533,11 +534,31 @@ def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,nports=1, **kw
 	#TODO: need to make these checks coherent
 	if x_II > width_I or x_II+width_II < 0 or y_II > height_I or y_II+height_II <0:
 		print ('ERROR: da,db too large',da,db)
+		if nports == 1:
+			wrong = Network()
+			wrong.frequency = freq
+			wrong.s = 1e12*ones((freq.npoints, 1,1))
+			return wrong
+		elif nports ==2:
+			wrong = Network()
+			wrong.frequency = freq
+			wrong.s = 1e12*ones((freq.npoints, 2,2))
+		return wrong
 		#raise(ValueError('da,db too large'))
 	if ap_height*ap_width > height_I*width_I or \
 	ap_height*ap_width > height_II*width_II or\
 	ap_height<0 or ap_width<0:
 		print ('ERROR: aperture nonsensibel:',ap_height, ap_width,ap_xy)
+		if nports == 1:
+			wrong = Network()
+			wrong.frequency = freq
+			wrong.s = 1e12*ones((freq.npoints, 1,1))
+			return wrong
+		elif nports ==2:
+			wrong = Network()
+			wrong.frequency = freq
+			wrong.s = 1e12*ones((freq.npoints, 2,2))
+		return wrong
 		#raise(ValueError('aperture dimensions nonsenible') )
 	
 	V_I_args = {\

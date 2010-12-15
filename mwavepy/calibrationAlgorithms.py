@@ -24,8 +24,10 @@ Contains calibrations algorithms, used in the Calibration class,
 '''
 from copy import copy,deepcopy
 import numpy as npy
+from scipy import rand
 from scipy.optimize import fmin_slsqp,fmin,leastsq # used for xds
 from discontinuities import variationalMethods as vm
+from parameterizedStandard import ParameterBoundsError
 import pdb
 ## Supporting Functions
 def abc_2_coefs_dict(abc):
@@ -40,7 +42,7 @@ def abc_2_coefs_dict(abc):
 				b[:] = abc[:,1]
 				c[:] = abc[:,2],
 			a, b and c are related to the error network by 
-				a = e01*e10 - e00*e11 
+				a = det(e) = e01*e10 - e00*e11 
 				b = e00 
 				c = e11
 	returns:
@@ -314,7 +316,12 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 			current_ps = ideals_ps[stdNum]
 			current_ps.parameter_array = \
 				parameter_vector[p_index:p_index+current_ps.number_of_parameters]
-			ideals[stdNum]=current_ps.network
+			try:
+				ideals[stdNum]=current_ps.network
+			except (ParameterBoundsError):
+				if showProgress:
+					print 'Bound Error:','==>',parameter_vector
+				return  1e3* rand()
 			p_index +=current_ps.number_of_parameters
 
 		residues = cal_function(measured, ideals)['residuals']	

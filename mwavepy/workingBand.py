@@ -120,7 +120,7 @@ class WorkingBand(object):
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
-		rresult.s = npy.zeros((self.frequency.npoints,nports, nports),dtype=complex)
+		result.s = npy.zeros((self.frequency.npoints,nports, nports),dtype=complex)
 		for f in range(self.frequency.npoints):
 			result.s[f,:,:] = 1.0*npy.eye(nports, dtype=complex)
 		return result
