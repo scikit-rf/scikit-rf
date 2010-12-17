@@ -30,6 +30,7 @@ from discontinuities import variationalMethods as vm
 from parameterizedStandard import ParameterBoundsError
 import pdb
 ## Supporting Functions
+
 def abc_2_coefs_dict(abc):
 	'''
 	converts an abc ndarry to a dictionarry containing the error 
@@ -59,10 +60,24 @@ def abc_2_coefs_dict(abc):
 	e01e10 = a+b*c
 	e00 = b
 	e11 = c
-	coefsDict = {'directivity':e00, 'reflection tracking':e01e10, \
-		'source match':e11}
+	coefsDict = {\
+		'directivity':e00,\
+		'reflection tracking':e01e10, \
+		'source match':e11\
+		}
 	return coefsDict
-
+def eight_term_2_one_port_coefs(coefs):
+	port1_coefs = {\
+		'directivity':coefs['e00'],\
+		'source match':coefs['e11'],\
+		'reflection tracking':coefs['det_X']+ coefs['e00']*coefs['e11'],\
+		}
+	port2_coefs = {\
+		'directivity':coefs['e33'],\
+		'source match':coefs['e22'],\
+		'reflection tracking':coefs['det_Y']+ coefs['e33']*coefs['e22'],\
+		}
+	return port1_coefs, port2_coefs
 def guess_length_of_delay_short( aNtwk,tline):
 		'''
 		guess length of physical length of a Delay Short given by aNtwk
@@ -150,12 +165,14 @@ def one_port(measured, ideals):
 		Q = npy.hstack([i, one, i*m])
 		# calculate least squares
 		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
-		#if len (residualsTmp )==0:
-		#	raise ValueError( 'matrix has singular values, check standards')
-			
+		# indicates singular value of matrix, but also same as having 3-standards
+		#if len (residualsTmp ) == 0:
+		#	raise ValueError( 'matrix has singular values, check complex distance of  standards')
 		abc[f,:] = abcTmp.flatten()
-		residuals[f,:] = residualsTmp
-
+		try:
+			residuals[f,:] = residualsTmp
+		except(ValueError):
+			raise(ValueError('matrix has singular values, ensure standards are far enough away'))
 	
 
 	# output is a dictionary of information
@@ -325,7 +342,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 			p_index +=current_ps.number_of_parameters
 
 		residues = cal_function(measured, ideals)['residuals']	
-		mean_residual_list.append(npy.mean(abs(residues)))
+		mean_residual_list.append((npy.mean(abs(residues))))
 		
 		if showProgress:
 			print '%.3e'%mean_residual_list[-1],'==>',parameter_vector
@@ -491,7 +508,7 @@ def parameterized_self_calibration_bounded(measured, ideals_ps, showProgress=Tru
 			p_index +=current_ps.number_of_parameters
 
 		residues = cal_function(measured, ideals)['residuals']	
-		mean_residual_list.append(npy.mean(abs(residues)))
+		mean_residual_list.append((npy.mean(abs(residues))))
 		
 		if showProgress:
 			print '%.3e'%mean_residual_list[-1],'==>',parameter_vector

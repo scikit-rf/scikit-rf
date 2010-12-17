@@ -530,10 +530,10 @@ def rectangular_junction(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,nports=1, **kw
 		ap_height = min(height_I, (height_II + y_II))
 	elif y_II >0:
 		ap_height = min(height_II, (height_I -y_II))
-
+	
 	#TODO: need to make these checks coherent
 	if x_II > width_I or x_II+width_II < 0 or y_II > height_I or y_II+height_II <0:
-		print ('ERROR: da,db too large',da,db)
+		print ('ERROR: da,db too large, Returning Bogus Network',da,db)
 		if nports == 1:
 			wrong = Network()
 			wrong.frequency = freq

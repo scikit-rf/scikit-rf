@@ -25,9 +25,11 @@
 Contains the Calibration class, and supporting functions
 '''
 import numpy as npy
+import pylab as plb
 import os 
 from copy import deepcopy, copy
 
+from mathFunctions import complex_2_db
 from calibrationAlgorithms import *
 from frequency import *
 from network import *
@@ -46,6 +48,7 @@ class Calibration(object):
 	calibration_algorithm_dict={\
 		'one port': one_port,\
 		'one port parameterized':parameterized_self_calibration,\
+		'one port parameterized bounded':parameterized_self_calibration_bounded,\
 		'two port': two_port,\
 		'two port parameterized':parameterized_self_calibration,\
 		}
@@ -250,7 +253,35 @@ class Calibration(object):
 	
 	#def plot_error_coefs(self):
 
+	## ploting
+	def plot_coefs_db(self,ax=None,show_legend=True,**kwargs):
+		'''
+		plot magnitude of the error coeficient dictionary
+		'''
 
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+
+		
+
+		
+		# plot the desired attribute vs frequency
+		for error_term in self.coefs:
+			error_term_db = complex_2_db(self.coefs[error_term])
+			if plb.rcParams['text.usetex'] and '_' in error_term:
+				error_term = '$'+error_term+'$'
+			ax.plot(self.frequency.f_scaled, error_term_db , label=error_term,**kwargs)
+
+		# label axis
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
+		plb.ylabel('Magnitude [dB]')
+		plb.axis('tight')
+		#draw legend
+		if show_legend:
+			plb.legend()
+		
+	
 def two_port_error_vector_2_Ts(error_coefficients):
 	ec = error_coefficients
 	npoints = len(ec['k'])
