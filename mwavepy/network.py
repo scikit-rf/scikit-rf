@@ -25,11 +25,13 @@ Provides the Network class and related functions.
 
 '''
 from copy import deepcopy as copy
+from copy import deepcopy
 import os
 
 import numpy as npy
 import pylab as plb 
-from scipy import stats
+from scipy import stats		# for Network.add_noise_* 
+from scipy.interpolate import interp1d # for Network.interpolate()
 
 import  mathFunctions as mf
 import touchstone
@@ -468,8 +470,32 @@ class Network(object):
 
 
 	# self-modifications
-	def interpolate(self):
-		raise NotImplementedError
+	def interpolate(self, new_frequency,**kwargs):
+		'''
+		calculates an interpolated network. defualt interpolation type
+		is linear. see notes about other interpolation types
+
+		takes:
+			new_frequency:
+			**kwargs: passed to scipy.interpolate.interp1d initializer.
+				  
+		returns:
+			result: an interpolated Network
+
+		note:
+			usefule keyward for  scipy.interpolate.interp1d:
+			 kind : str or int
+				Specifies the kind of interpolation as a string ('linear',
+				'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or as an integer
+				specifying the order of the spline interpolator to use.
+
+			
+		'''
+		interpolation = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
+		result = deepcopy(self)
+		result.frequency = new_frequency
+		result.s = interpolation(new_frequency.f)
+		return result
 
 
 	def flip(self):
