@@ -311,6 +311,42 @@ class DelayLoad_Mulipath(ParameterizedStandard):
 			)
 				
 
+
+## multi-standards
+class SlidingLoad_UnknownTermination(ParameterizedStandard):
+	'''
+	A set of parametersized standards representing a set of Delayed
+	 Terminations of known length, but unknown termination
+	'''
+	
+	def __init__(self, wb,d_list,Gamma0,**kwargs):
+		'''
+		takes:
+			wb: a WorkingBand type, with a RectangularWaveguide object
+				for its tline property.
+			d_list: list of distances to termination [m]
+			Gamma0: guess for reflection coefficient off termination at
+				termination
+			**kwargs: passed to self.function
+		'''
+		raise (NotImplementedError())
+		kwargs.update({'Gamma0':Gamma0,})
+
+		#def tempfunc(Gamma0,**kwargs):
+		#	
+			#return [wb.delay_load(
+
+
+		parameters = {}
+		#[parameters['d'+str(k)] = d_list[k] for k in range(len(d_list))]
+		ParameterizedStandard.__init__(self, \
+			function = wb.delay_load,\
+			parameters = parameters,\
+			**kwargs\
+			)
+
+
+
 ## rectangular waveguide specific
 class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
 	'''

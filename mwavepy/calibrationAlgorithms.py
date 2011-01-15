@@ -335,6 +335,8 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 				parameter_vector[p_index:p_index+current_ps.number_of_parameters]
 			try:
 				ideals[stdNum]=current_ps.network
+				### HACK for parameterized standard sets.
+				#ideals.append(current_ps.network)
 			except (ParameterBoundsError):
 				if showProgress:
 					print 'Bound Error:','==>',parameter_vector
