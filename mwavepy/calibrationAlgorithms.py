@@ -22,6 +22,7 @@
 '''
 Contains calibrations algorithms, used in the Calibration class, 
 '''
+from matchFunctions import scalar2Complex, complex2Scalar
 from copy import copy,deepcopy
 import numpy as npy
 from scipy import rand
@@ -182,6 +183,65 @@ def one_port(measured, ideals):
 
 
 
+
+def one_port_nls (measured, ideals):
+	#make  copies so list entities are not changed, when we typecast 
+	mList = copy(measured)
+	iList = copy(ideals)
+	
+	numStds = len(mList)# find number of standards given, for dimensions
+	numCoefs=3
+	# try to access s-parameters, in case its a ntwk type, other wise 
+	# just keep on rollin 
+	try:
+		for k in range(numStds):
+			mList[k] = mList[k].s.reshape((-1,1))
+			iList[k] = iList[k].s.reshape((-1,1))
+	except:
+		pass	
+	
+	# ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
+	fLength = len(mList[0])
+	
+	#initialize outputs 
+	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
+	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	
+
+	def residual_func(p, ma):
+		e00,e11,e0110 = scalar2Complex(p)
+		m,a = scalar2Complex(ma)
+		er = m - e00 + e0110*a/(1.0-e11*a)
+		return complex2Scalar(er)
+	# loop through frequencies and form m, a vectors and 
+	# the matrix M. where M = 	i1, 1, i1*m1 
+	#							i2, 1, i2*m2
+	#									...etc
+	for f in range(fLength):
+		#create  m, i, and 1 vectors
+		one = npy.ones(shape=(numStds,1))
+		m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
+		i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f			
+		
+		# construct the matrix 
+		Q = npy.hstack([i, one, i*m])
+		# calculate least squares
+		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
+		# indicates singular value of matrix, but also same as having 3-standards
+		#if len (residualsTmp ) == 0:
+		#	raise ValueError( 'matrix has singular values, check complex distance of  standards')
+		abc[f,:] = abcTmp.flatten()
+		try:
+			residuals[f,:] = residualsTmp
+		except(ValueError):
+			raise(ValueError('matrix has singular values, ensure standards are far enough away'))
+	
+
+	# output is a dictionary of information
+	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals}
+	
+	return output
+
 ## TWO PORT
 def two_port(measured, ideals):
 	'''
@@ -277,6 +337,11 @@ def two_port(measured, ideals):
 		}
 	
 	return output
+
+
+def two_port_twelve_term
+
+	
 ## SELF CALIBRATION
 def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	**kwargs):

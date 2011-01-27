@@ -89,7 +89,8 @@ class Network(object):
 			self.name = name
 			#self.s = None
 			self.z0 = 50 
-			
+
+		
 	
 
 ## OPERATORS
@@ -767,6 +768,21 @@ class Network(object):
 
 	
 	
+	def plot_s_all_db(self,ax = None, show_legend=True,**kwargs):
+		'''
+		plots all s parameters in log magnitude
+
+		takes:
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			**kwargs - passed to the matplotlib.plot command
+		'''
+		for m in range(self.number_of_ports):
+			for n in range(self.number_of_ports):
+				self.plot_vs_frequency_generic(attribute= 's_db',\
+					y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
+					show_legend = show_legend,**kwargs)
 	# noise
 	def add_noise_polar(self,mag_dev, phase_dev, **kwargs):
 		'''
@@ -785,6 +801,7 @@ class Network(object):
 		phase = (self.s_deg+phase_rv)
 		mag = self.s_mag + mag_rv 
 		self.s = mag* npy.exp(1j*npy.pi/180.*phase)
+
 	def nudge(self, amount=1e-12):
 		'''
 		perturb s-parameters by small amount. this is usefule to work-around

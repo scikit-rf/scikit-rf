@@ -639,7 +639,7 @@ def rectangular_junction_centered(freq, wg_I, wg_II, da,db, d=1, Gamma0=0.,**kwa
 
 
 
-def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
+def rotated_waveguide(wg, freq, da, db, d,Gamma0,**kwargs):
 	'''
 	calculated response of a terminated rotated waveguide of same
 	cross-section as input guide, with possible	offset from on-center
@@ -660,12 +660,13 @@ def rotated_waveguide(wg, freq, delta_a, delta_b, d,Gamma0,**kwargs):
 	'''
 	wg_I = wg
 	wg_II = RectangularWaveguide(a=wg.b,b= wg.a)
-	xy = (wg_I.a/4. + delta_a, -wg_I.a/4.+delta_b)
+	da, db = (wg_I.a/4. + da, -wg_I.a/4.+db)
 	return rectangular_junction(\
 		freq= freq,\
 		wg_I=wg_I,\
 		wg_II=wg_II,\
-		xy = xy,\
+		da = da,\
+		db = db,\
 		d=d,\
 		Gamma0=Gamma0,\
 		**kwargs\
