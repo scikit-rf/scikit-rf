@@ -47,6 +47,7 @@ class Calibration(object):
 	'''
 	calibration_algorithm_dict={\
 		'one port': one_port,\
+		'one port nls': one_port_nls,\
 		'one port parameterized':parameterized_self_calibration,\
 		'one port parameterized bounded':parameterized_self_calibration_bounded,\
 		'two port': two_port,\

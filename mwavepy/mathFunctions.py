@@ -125,20 +125,20 @@ def null(A, eps=1e-15):
 
 # old functions just for reference
 def complex2Scalar(input):
-	input= array(input)
+	input= npy.array(input)
 	output = []
 	for k in input:
-		output.append(real(k))
-		output.append(imag(k))
-	return array(output).flatten()
+		output.append(npy.real(k))
+		output.append(npy.imag(k))
+	return npy.array(output).flatten()
 	
 def scalar2Complex(input):
-	input= array(input)
+	input= npy.array(input)
 	output = []
 	
 	for k in range(0,len(input),2):
 		output.append(input[k] + 1j*input[k+1])
-	return array(output).flatten()
+	return npy.array(output).flatten()
 
 
 def complex2dB(complx):

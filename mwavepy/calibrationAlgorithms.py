@@ -22,7 +22,7 @@
 '''
 Contains calibrations algorithms, used in the Calibration class, 
 '''
-from matchFunctions import scalar2Complex, complex2Scalar
+from mathFunctions import scalar2Complex, complex2Scalar
 from copy import copy,deepcopy
 import numpy as npy
 from scipy import rand
@@ -208,35 +208,30 @@ def one_port_nls (measured, ideals):
 	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
 	
 
-	def residual_func(p, ma):
+	def residual_func(p, m,a):
 		e00,e11,e0110 = scalar2Complex(p)
-		m,a = scalar2Complex(ma)
-		er = m - e00 + e0110*a/(1.0-e11*a)
+		m,a = scalar2Complex(m), scalar2Complex(a)
+		er = m - ( e00 + e0110*a/(npy.ones(len(a))-e11*a))
 		return complex2Scalar(er)
 	# loop through frequencies and form m, a vectors and 
 	# the matrix M. where M = 	i1, 1, i1*m1 
 	#							i2, 1, i2*m2
 	#									...etc
 	for f in range(fLength):
+		print f
 		#create  m, i, and 1 vectors
 		one = npy.ones(shape=(numStds,1))
 		m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
 		i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f			
 		
-		# construct the matrix 
-		Q = npy.hstack([i, one, i*m])
-		# calculate least squares
-		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
-		# indicates singular value of matrix, but also same as having 3-standards
-		#if len (residualsTmp ) == 0:
-		#	raise ValueError( 'matrix has singular values, check complex distance of  standards')
-		abc[f,:] = abcTmp.flatten()
-		try:
-			residuals[f,:] = residualsTmp
-		except(ValueError):
-			raise(ValueError('matrix has singular values, ensure standards are far enough away'))
-	
-
+		leastsq_output = leastsq(\
+			func = residual_func, \
+			x0 = [0, 0,0,0,1,0],\
+			args = (complex2Scalar(m), complex2Scalar(i)),\
+			)
+		e00,e11,e0110 = scalar2Complex(leastsq_output[0])
+		abc[f,:] = [e00*e11-e0110, e00,e11]
+		
 	# output is a dictionary of information
 	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals}
 	
@@ -339,7 +334,7 @@ def two_port(measured, ideals):
 	return output
 
 
-def two_port_twelve_term
+
 
 	
 ## SELF CALIBRATION
