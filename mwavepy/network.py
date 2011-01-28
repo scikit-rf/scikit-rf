@@ -718,7 +718,7 @@ class Network(object):
 		self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
 			m=m,n=n, ax=ax,	show_legend = show_legend,**kwargs)	
 
-	def plot_s_smith(self,m=0, n=0,r=1,ax = None, show_legend=True,**kwargs):
+	def plot_s_smith(self,m=0, n=0,r=1,ax = None, show_legend=True,  **kwargs):
 		'''
 		plots the scattering parameter of indecies m, n on smith chart
 		
@@ -729,7 +729,7 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to thematplotlib.plot command	
+			**kwargs - passed to the matplotlib.plot command	
 		'''
 		# TODO: prevent this from re-drawing smith chart if one alread
 		# exists on current set of axes
@@ -756,7 +756,8 @@ class Network(object):
 			kwargs['label'] = label_string
 			
 		# plot the desired attribute vs frequency 
-		smith(ax=ax, smithR = r)
+		if len (ax.patches) == 0:
+			smith(ax=ax, smithR = r)
 		ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
 		
 		#draw legend

@@ -276,17 +276,21 @@ def one_port_nls (measured, ideals):
 ## TWO PORT
 def two_port(measured, ideals):
 	'''
-	two port calibration based on the matrical binlear transform
-	formulation.
+	two port calibration based on the 8-term error model. 
 
-	takes:
+	takes: 
+		measured - list of measured networks. list elements should be
+		 2-port	Network types. 
+		ideals - list of ideal networks. list elements should be
+		 2-port	Network types.
 
 	returns:
-		output: a dictionary containing the follwoing keys
+		output: a dictionary containing the follwoing keys:
+			'error coefficients':
+			'error vector':
+			'residuals':
 
-
-
-
+	
 	references
 	
 	Doug Rytting " Network Analyzer Error Models and Calibration Methods"

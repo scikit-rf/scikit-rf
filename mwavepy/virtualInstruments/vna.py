@@ -248,17 +248,22 @@ class HP8510C(GpibInstrument):
 		if you are taking multiple sweeps, and want the sweep timing to
 		work, put the turn continuous mode off. like pnax.continuous='off'
 		'''
-		self.continuous = False
-		s_dict={}
-		for param in ['s11','s12','s21','s22']:
-			self.write(param+';')
-			s = npy.array(self.ask_for_values('OUTPDATA;'))
-			s.shape=(-1,2)
-			s_dict[param] =  s[:,0]+1j*s[:,1]
+		print ('s11')
+		s11 = self.s11.s[:,0,0]
+		print ('s12')
+		s12 = self.s12.s[:,0,0]
+		print ('s22')
+		s22 = self.s22.s[:,0,0]
+		print ('s21')
+		s21 = self.s21.s[:,0,0]
+		
 		ntwk = Network()
-		ntwk.s = npy.array([[s_dict['s11'], s_dict['s12']],\
-			[s_dict['s21'], s_dict['s22']]]).transpose().reshape(-1,2,2)
+		ntwk.s = npy.array(\
+			[[s11,s21],\
+			[ s12, s22]]\
+			).transpose().reshape(-1,2,2)
 		ntwk.frequency= self.frequency 
+		
 		return ntwk
 	##properties for the super lazy
 	@property
@@ -286,7 +291,35 @@ class HP8510C(GpibInstrument):
 		ntwk.name = 'S21'
 		return ntwk
 
+	@property
+	def switch_terms(self):
+		'''
+		measures forward and reverse switch terms and returns them as a
+		pair of one-port networks.
+		
+		returns:
+			forward, reverse: a tuple of one ports holding forward and 
+				reverse switch terms.
 
+		see also:
+			mwavepy.calibrationAlgorithms.unterminate_switch_terms
+
+		notes:
+			thanks to dylan williams for making me aware of this, and
+			providing the gpib commands in his statistical help
+		
+		'''
+		print('forward')
+		self.write('USER2;DRIVPORT1;LOCKA1;NUMEB2;DENOA2;CONV1S;')
+		forward = self.one_port
+		forward.name = 'forward switch term'
+		
+		print ('reverse')
+		self.write('USER1;DRIVPORT2;LOCKA2;NUMEB1;DENOA1;CONV1S;')
+		reverse = self.one_port
+		reverse.name = 'reverse switch term'
+		
+		return (forward,reverse)
 class HP8720(HP8510C):
 	def __init__(self, address=16,**kwargs):
 		HP8510C.__init__(self,address,**kwargs)
