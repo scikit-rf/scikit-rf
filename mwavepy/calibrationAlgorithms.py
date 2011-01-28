@@ -30,6 +30,8 @@ from scipy.optimize import fmin_slsqp,fmin,leastsq # used for xds
 from discontinuities import variationalMethods as vm
 from parameterizedStandard import ParameterBoundsError
 import pdb
+
+
 ## Supporting Functions
 
 def abc_2_coefs_dict(abc):
@@ -105,6 +107,40 @@ def guess_length_of_delay_short( aNtwk,tline):
 
 
 
+
+def unterminate_switch_terms(two_port, gamma_f, gamma_r):
+	'''
+	unterminates switch terms from raw measurements.
+
+	takes:
+		two_port: the raw measurement, a 2-port Network type. 
+		gamma_f: the measured forward switch term, a 1-port Network type
+		gamma_r: the measured reverse switch term, a 1-port Network type
+
+	returns:
+		un-terminated measurement, a 2-port Network type
+
+	see:
+		'Formulations of the Basic Vector Network Analyzer Error
+		Model including Switch Terms' by Roger B. Marks
+	'''
+	unterminated = copy(two_port)
+
+	# extract scattering matrices 
+	m, gamma_r, gamma_f = two_port.s, gamma_r.s, gamma_f.s
+	u = copy(m)
+
+	one = npy.ones(two_port.frequency.npoints)
+	
+	d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
+	u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+	u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
+	u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+	u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
+	
+	unterminated.s = u
+	return unterminated
+	
 ## ONE PORT 
 def one_port(measured, ideals):
 	'''
