@@ -54,8 +54,8 @@ class Calibration(object):
 		'two port parameterized':parameterized_self_calibration,\
 		}
 	
-	def __init__(self,frequency , type, name=None,is_reciprocal=False,\
-		**kwargs):
+	def __init__(self,frequency , type, is_reciprocal=False,\
+		switch_terms=None, name=None,**kwargs):
 		'''
 		Calibration initializer
 		
@@ -70,15 +70,21 @@ class Calibration(object):
 					2 measurement/ideal pairs are given it will
 					calculate the least squares solution.
 
-				'one port xds': self-calibration of a unknown-length
-					delay-shorts.
-
-			**kwargs: key-word arguments passed to teh calibration
-				algorithm.
-
-			name: name of calibration, just a handy identifing string
+				'two port': standard two-port calibibration based on
+					8-term error model. can take switch-terms into
+					by using the switch_term option.
+				
 			is_reciprocal: enables the reciprocity assumption on 
-				calculated error network
+				the property error_network.
+
+			switch_terms: tuple holding the two measured switch terms in
+				the order (forward, reverse). the tuple elements should
+				be Network types. (only used in two-port calibrations)
+
+			name: string holding the name of calibration, just for your
+				convenience.
+			**kwargs: key-word arguments passed to the calibration
+				algorithm.
 		'''
 		self.frequency = copy(frequency)
 		# a dictionary holding key word arguments to pass to whatever
@@ -87,6 +93,7 @@ class Calibration(object):
 		self.type = type
 		self.name = name
 		self.is_reciprocal = is_reciprocal
+		self.switch_terms = switch_terms
 		self.has_run = False
 
 	## properties

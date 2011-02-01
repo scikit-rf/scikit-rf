@@ -276,13 +276,18 @@ def one_port_nls (measured, ideals):
 ## TWO PORT
 def two_port(measured, ideals):
 	'''
-	two port calibration based on the 8-term error model. 
+	two port calibration based on the 8-term error model.  takes two
+	ordered lists of measured and ideal responses. optionally, switch
+	terms can be taken into account by passing a tuple containing the
+	forward and reverse switch terms as 1-port Networks
 
 	takes: 
-		measured - list of measured networks. list elements should be
-		 2-port	Network types. 
-		ideals - list of ideal networks. list elements should be
-		 2-port	Network types.
+		measured: ordered list of measured networks. list elements should be
+			2-port	Network types. list order must correspond with ideals.  
+		ideals: ordered list of ideal networks. list elements should be
+			2-port	Network types.
+		switch_terms: tuple of 1-port Network types holding switch terms
+			in this order (forward, reverse). 
 
 	returns:
 		output: a dictionary containing the follwoing keys:
@@ -290,6 +295,9 @@ def two_port(measured, ideals):
 			'error vector':
 			'residuals':
 
+	note:
+		support for gathering switch terms on HP8510C  is in
+		mwavepy.virtualInstruments.vna.py
 	
 	references
 	
