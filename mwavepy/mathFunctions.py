@@ -25,6 +25,8 @@ Provides commonly used math functions.
 '''
 import numpy as npy
 from numpy import pi
+from scipy.fftpack import ifft, ifftshift, fftshift	
+from scipy import signal
 ## simple conversions
 def complex_2_magnitude(input):
 	'''
@@ -152,6 +154,50 @@ def complex2ReIm(complx):
 
 def complex2MagPhase(complx,deg=False):
 	return npy.abs(complx), npy.angle(complx,deg=deg)
+
+
+
+
+def psd2TimeDomain(f,y, windowType='hamming'):
+	'''convert a one sided complex spectrum into a real time-signal.
+	takes 
+		f: frequency array, 
+		y: complex PSD arary 
+		windowType: windowing function, defaults to rect
+	
+	returns in the form:
+		[timeVector, signalVector]
+	timeVector is in inverse units of the input variable f,
+	if spectrum is not baseband then, timeSignal is modulated by 
+		exp(t*2*pi*f[0])
+	so keep in mind units, also due to this f must be increasing left to right'''
+	
+	
+	# apply window function
+	#TODO: make sure windowType exists in scipy.signal
+	if (windowType != 'rect' ):
+		exec "window = signal.%s(%i)" % (windowType,len(f))
+		y = y * window
+	
+	#create other half of spectrum
+	spectrum = (npy.hstack([npy.real(y[:0:-1]),npy.real(y)])) + \
+		1j*(npy.hstack([-npy.imag(y[:0:-1]),npy.imag(y)]))
+	
+	# do the transform 
+	df = abs(f[1]-f[0])
+	T = 1./df
+	timeVector = npy.linspace(-T/2.,T/2,2*len(f)-1)	
+	signalVector = ifftshift(ifft(ifftshift(spectrum)))
+	
+	#the imaginary part of this signal should be from fft errors only,
+	signalVector= npy.real(signalVector)
+	# the response of frequency shifting is 
+	# exp(1j*2*pi*timeVector*f[0])
+	# but i would have to manually undo this for the inverse, which is just 
+	# another  variable to require. the reason you need this is because 
+	# you canttransform to a bandpass signal, only a lowpass. 
+	# 
+	return timeVector, signalVector
 
 
 

@@ -70,7 +70,16 @@ def save_all_figs(dir = './', format=['eps','pdf','png']):
 		for fmt in format:
 			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
 			print (dir+fileName+'.'+fmt)
-
+def legend_off(ax=None):
+	'''
+	turn off the legend for a given axes. if no axes is given then 
+	it will use current axes. 
+	'''
+	if ax is None:
+		plb.gca().legend_.set_visible(0)
+	else:
+		ax.lengend_.set_visible(0)
+		
 # Touchstone manipulation	
 def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 	'''

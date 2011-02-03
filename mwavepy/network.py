@@ -392,8 +392,8 @@ class Network(object):
 		#pas_mat2[f,:,:]= ( npy.abs(self.s[:,0,0])**2 + abs(self.s[:,1,0])**2,\
 		#	npy.abs(self.s[:,1,1])**2 + npy.abs(self.s[:,0,1])**2 )
 		return pas_mat
-	# frequency formating related properties
 	
+
 	
 ## CLASS METHODS
 	# touchstone file IO
