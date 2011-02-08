@@ -56,7 +56,7 @@ class ESP300(GpibInstrument):
 	print esp.position
 	'''
 	def __init__(self, address=1, current_axis=1, **kwargs):
-		GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+		GpibInstrument.__init__(self,address,**kwargs)
 		self.current_axis = current_axis
 
 	@property
@@ -105,7 +105,7 @@ class ESP300(GpibInstrument):
 	@property
 	def position(self):
 		command_string = 'TP'
-		return (self.ask('%i%s%f'%(self.current_axis,command_string)))
+		return (self.ask('%i%s'%(self.current_axis,command_string)))
 	@position.setter
 	def position(self,input):
 		'''
@@ -125,9 +125,9 @@ class ESP300(GpibInstrument):
 
 	@property
 	def units(self):
-		raise NotImplementedError
+		raise NotImplementedError('I dont know how to read units')
 	@unit.setter
-	def units(self, input)
+	def units(self, input):
 		'''
 		 set axis units for all commands.
 		 takes:
@@ -148,21 +148,30 @@ class ESP300(GpibInstrument):
 		'''
 		command_string = 'SN'
 		self.write('%i%s%i'%(self.current_axis,command_string, self.UNIT_DICT[input]))
-	@property
-	def wait_for_stop(self):
-		raise NotImplementedError
 
 	@property
 	def error_message(self):
 		return (self.ask('TB?'))
 
-
+	@property
+	def motor_on(self):
+		command_string = 'MO'
+		return (self.ask('%i%s?'%(self.current_axis,command_string)))
+	@motor_on.setter
+	def motor_on(self,input):
+		if input:
+			command_string = 'MO'
+			self.write('%i%s'%(self.current_axis,command_string,input))
+		if not input:
+			command_string = 'MF'
+			self.write('%i%s'%(self.current_axis,command_string,input))
 		
 	def send_stop(self):
 		command_string = 'ST'
 		self.write('%i%s'%(self.current_axis,command_string))
 
-	def wait_for_stop(self, delay=0):
+	def wait_for_stop(self, input=0):
 		command_string = 'WS'
 		self.write('%i%s%i'%(self.current_axis,command_string, input))
 		
+	
