@@ -126,7 +126,7 @@ class ESP300(GpibInstrument):
 	@property
 	def units(self):
 		raise NotImplementedError('I dont know how to read units')
-	@unit.setter
+	@units.setter
 	def units(self, input):
 		'''
 		 set axis units for all commands.
