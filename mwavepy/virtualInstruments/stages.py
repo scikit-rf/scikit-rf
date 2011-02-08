@@ -29,54 +29,125 @@ from visa import GpibInstrument
 
 
 class ESP300(GpibInstrument):
+	UNIT_DICT = {\
+		'enoder count':0,\
+		'motor step':1,\
+		'millimeter':2,\
+		'micrometer':3,\
+		'inches':4,\
+		'milli inches':5,\
+		'micro inches':6,\
+		'degree':7,\
+		'gradient':8,\
+		'radian':9,\
+		'milliradian':10,\
+		'microradian':11,\
+		}
 	'''
 	Newport ESP300 Stage Controller
 	'''
-	def __init__(self, address=1, axis =  **kwargs):
+	def __init__(self, address=1, axes=[1,2,3], **kwargs):
 		GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+		self.current_axis = 1
 
-		axis= 
+	@property
+	def current_axis(self):
+		return self._current_axis
+	@current_axis.setter
+	def current_axis(self, input):
+		self._current_axis = input
 
 
 	@property
-	def velocity():
+	def velocity(self):
 		raise NotImplementedError
 	@velocity.setter
-	def velocity(input):
+	def velocity(self,input):
 		raise NotImplementedError
 
 	@property
-	def acceleration():
+	def acceleration(self):
 		raise NotImplementedError
 	@acceleration.setter
-	def acceleration(input):
+	def acceleration(self,input):
 		raise NotImplementedError
 
 	@property
-	def deceleration():
+	def deceleration(self):
 		raise NotImplementedError
 	@deceleration.setter
-	def deceleration(input):
+	def deceleration(self,input):
 		raise NotImplementedError
 
 	@property
-	def position_relative():
-		raise NotImplementedError
+	def position_relative(self):
+		raise NotImplementedError('See position property')
 	@position_relative.setter
-	def position_relative(input):
+	def position_relative(self,input):
+		command_string = 'PR'
+		self.write('%i%s%f'%(self.current_axis,command_string,input))
+
+	@property
+	def position(self):
+		command_string = 'TP'
+		return (self.ask('%i%s%f'%(self.current_axis,command_string)))
+	@position.setter
+	def position(self,input):
+		'''
+		set the position of current axis to input 
+		'''
+		command_string = 'PA'
+		self.write('%i%s%f'%(self.current_axis,command_string,input))
+
+	@property
+	def home(self):
+		raise NotImplementedError
+	@home.setter
+	def home(self, input):
+		command_string = 'DH'
+		self.write('%i%s%f'%(self.current_axis,command_string,input))
+
+
+	@property
+	def units(self):
+		raise NotImplementedError
+	@unit.setter
+	def units(self, input)
+		'''
+		 set axis units for all commands.
+		 takes:
+			input: a string, describing the units here are a list of
+				possibilities. 
+				 'enoder count'
+				'motor step'
+				'millimeter'
+				'micrometer'
+				'inches'
+				'milli inches'
+				'micro inches'
+				'degree'
+				'gradient'
+				'radian'
+				'milliradian'
+				'microradian'
+		'''
+		command_string = 'SN'
+		self.write('%i%s%i'%(self.current_axis,command_string, self.UNIT_DICT[input]))
+	@property
+	def wait_for_stop(self):
 		raise NotImplementedError
 
 	@property
-	def position_absolute():
-		raise NotImplementedError
-	@position_absolute.setter
-	def position_absolute(input):
-		raise NotImplementedError
+	def error_message(self):
+		return (self.ask('TB?'))
 
-	@property
-	def position():
-		raise NotImplementedError
 
-	@property
-	def wait_for_stop():
-		raise NotImplementedError
+		
+	def send_stop(self):
+		command_string = 'ST'
+		self.write('%i%s'%(self.current_axis,command_string))
+
+	def wait_for_stop(self, delay=0):
+		command_string = 'WS'
+		self.write('%i%s%i'%(self.current_axis,command_string, input))
+		
