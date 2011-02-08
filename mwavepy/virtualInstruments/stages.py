@@ -45,10 +45,19 @@ class ESP300(GpibInstrument):
 		}
 	'''
 	Newport ESP300 Stage Controller
+
+	all axis control commands are sent to the number axis given by the
+	local variable self.current_axis. so here is an example usage
+
+	esp= ESP300()
+	esp.current_axis=1
+	esp.units= 'millimeter'
+	esp.position = 10
+	print esp.position
 	'''
-	def __init__(self, address=1, axes=[1,2,3], **kwargs):
+	def __init__(self, address=1, current_axis=1, **kwargs):
 		GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
-		self.current_axis = 1
+		self.current_axis = current_axis
 
 	@property
 	def current_axis(self):
@@ -60,28 +69,34 @@ class ESP300(GpibInstrument):
 
 	@property
 	def velocity(self):
-		raise NotImplementedError
+		command_string = 'VA'
+		return (self.ask('%i%s?'%(self.current_axis,command_string)))
 	@velocity.setter
 	def velocity(self,input):
-		raise NotImplementedError
+		command_string = 'VA'
+		self.write('%i%s%f'%(self.current_axis,command_string,input))
 
 	@property
 	def acceleration(self):
-		raise NotImplementedError
+		command_string = 'AC'
+		return (self.ask('%i%s?'%(self.current_axis,command_string)))
 	@acceleration.setter
 	def acceleration(self,input):
-		raise NotImplementedError
+		command_string = 'AC'
+		self.write('%i%s%f'%(self.current_axis,command_string,input))
 
 	@property
 	def deceleration(self):
-		raise NotImplementedError
+		command_string = 'AG'
+		return (self.ask('%i%s?'%(self.current_axis,command_string)))
 	@deceleration.setter
 	def deceleration(self,input):
-		raise NotImplementedError
+		command_string = 'AG'
+		self.write('%i%s%f'%(self.current_axis,command_string,input))
 
 	@property
 	def position_relative(self):
-		raise NotImplementedError('See position property')
+		raise NotImplementedError('See position property for reading position')
 	@position_relative.setter
 	def position_relative(self,input):
 		command_string = 'PR'
