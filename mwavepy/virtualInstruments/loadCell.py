@@ -24,6 +24,13 @@ holds class's for load cells
 '''
 
 import ctypes as ctp
-
+try:
+	import d2xx:
+except (ImportError):
+	print ('WARNING: Module d2xx not found, Futek Loadcell VI not available.')
+	
 class Futek(object):
-	ctp.cdll.LoadLibrary('futek.dll')
+	def __init__(self):
+		return 0
+	def read(self):
+		raise (NotImplementedError)
