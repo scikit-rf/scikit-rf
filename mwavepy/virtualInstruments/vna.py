@@ -177,6 +177,74 @@ class ZVA40(object):
 		fid.close()
 
 
+
+class ZVA40_alex(object):
+	'''
+	the rohde Swarz zva40
+	'''
+	class Channel(object):
+		def __init__(self, vna, channel_number):
+			self.number = channel_number
+			self.vna = vna
+			self.traces = {}
+		
+		@property
+		def sdata(self):
+			self.vna.ask_for_values('CALCulate%i:DATA? SDATa'%(self.number))
+		@property
+		def fdata(self):
+			self.vna.ask_for_values('CALCulate%i:DATA? FDATa'%(self.number))
+		@property
+		def continuous(self):
+			raise NotImplementedError()
+		@continuous.setter
+		def continuous(self, value):
+			if value:
+				self.write('INIT%i:CONT ON;'%(self.number))
+			elif not value:
+				self.write('INIT%i:CONT OFF;'%(self.number))
+			else:
+				raise ValueError('takes boolean')
+			
+		def add_trace(self, parameter, name):
+			if parameter in self.parameter_dict:
+				
+			self.write('CALC%i:PAR:SDEF:\'%s\',\'%s\''\
+				%(self.number, name, parameter))
+			self.traces[name] = parameter
+			
+		def select_trace(self, name):
+			if name in self.traces.keys():
+				self.write('CALC%i:PAR:SEL %s'%(self.number,name))
+			else:
+				raise ValueError('trace name does exist')
+
+		
+	def __init__(self, address=16,**kwargs):
+		GpibInstrument.__init__(self,address, **kwargs)
+
+	def _set_property(self, name, value):
+		setattr(self, '_' + name, value)    
+	def _get_property(self, name):
+		return getattr(self, '_' + name)
+
+	def add_channel(self,channel_number):
+		channel = self.Channel(self, channel_number)
+		fget = lambda self: self._get_property(name)
+		setattr(self.__class__,name, property(fget))
+		setattr(self, '_'+name, child)
+
+
+			
+	def wait(self):
+		self.write('*WAIt')
+	def initiate(self):
+		self.write('INITiate')
+	def sweep(self):
+		self.write('INITiate:IMMediate;*WAI')
+
+
+		
 class HP8510C(GpibInstrument):
 	'''
 	good ole 8510
