@@ -190,38 +190,61 @@ class ZVA40_alex(object):
 		
 		@property
 		def sdata(self):
-			self.vna.ask_for_values('CALCulate%i:DATA? SDATa'%(self.number))
+			npy.array(self.vna.ask_for_values('CALCulate%i:DATA? SDATa'%(self.number)))
 		@property
 		def fdata(self):
-			self.vna.ask_for_values('CALCulate%i:DATA? FDATa'%(self.number))
+			npy.array(self.vna.ask_for_values('CALCulate%i:DATA? FDATa'%(self.number)))
 		@property
 		def continuous(self):
 			raise NotImplementedError()
 		@continuous.setter
 		def continuous(self, value):
 			if value:
-				self.write('INIT%i:CONT ON;'%(self.number))
+				self.vna.write('INIT%i:CONT ON;'%(self.number))
 			elif not value:
-				self.write('INIT%i:CONT OFF;'%(self.number))
+				self.vna.write('INIT%i:CONT OFF;'%(self.number))
 			else:
 				raise ValueError('takes boolean')
-			
-		def add_trace(self, parameter, name):
-			if parameter in self.parameter_dict:
-				
-			self.write('CALC%i:PAR:SDEF:\'%s\',\'%s\''\
+
+		def initiate(self):
+			self.vna.write('INITiate%i'%self.number)
+
+		def sweep(self):
+			self.vna.write('INITiate%i:IMMediate;*WAI'%self.number)	
+
+		def add_trace(self, parameter, name):				
+			self.vna.write('CALC%i:PAR:SDEF:\'%s\',\'%s\''\
 				%(self.number, name, parameter))
 			self.traces[name] = parameter
 			
 		def select_trace(self, name):
 			if name in self.traces.keys():
-				self.write('CALC%i:PAR:SEL %s'%(self.number,name))
+				self.vna.write('CALC%i:PAR:SEL %s'%(self.number,name))
 			else:
 				raise ValueError('trace name does exist')
 
+		@property
+		def frequency(self, unit='ghz'):
+			freq=Frequency( \
+				float(self.vna.ask('sens%i:FREQ:STAR?')),
+				float(self.vna.ask('sens%i:FREQ:STOP?')),\
+				int(self.vna.ask('sens%i:sweep:POIN?')),'hz')
+			freq.unit = unit
+			return freq
+		@property
+		def one_port(self):
+			self.sweep()
+			s = self.sdata
+			s.shape=(-1,2)
+			s =  s[:,0]+1j*s[:,1]
+			ntwk = Network()
+			ntwk.s = s
+			ntwk.frequency= self.frequency 
+			return ntwk
 		
 	def __init__(self, address=16,**kwargs):
 		GpibInstrument.__init__(self,address, **kwargs)
+		self.add_channel(1)
 
 	def _set_property(self, name, value):
 		setattr(self, '_' + name, value)    
@@ -238,10 +261,7 @@ class ZVA40_alex(object):
 			
 	def wait(self):
 		self.write('*WAIt')
-	def initiate(self):
-		self.write('INITiate')
-	def sweep(self):
-		self.write('INITiate:IMMediate;*WAI')
+
 
 
 		
