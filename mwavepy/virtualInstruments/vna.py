@@ -178,7 +178,7 @@ class ZVA40(object):
 
 
 
-class ZVA40_alex(object):
+class ZVA40_alex(GpibInstrument):
 	'''
 	the rohde Swarz zva40
 	'''
@@ -190,10 +190,10 @@ class ZVA40_alex(object):
 		
 		@property
 		def sdata(self):
-			npy.array(self.vna.ask_for_values('CALCulate%i:DATA? SDATa'%(self.number)))
+			return npy.array(self.vna.ask_for_values('CALCulate%i:DATA? SDATa'%(self.number)))
 		@property
 		def fdata(self):
-			npy.array(self.vna.ask_for_values('CALCulate%i:DATA? FDATa'%(self.number)))
+			return npy.array(self.vna.ask_for_values('CALCulate%i:DATA? FDATa'%(self.number)))
 		@property
 		def continuous(self):
 			raise NotImplementedError()
@@ -226,9 +226,9 @@ class ZVA40_alex(object):
 		@property
 		def frequency(self, unit='ghz'):
 			freq=Frequency( \
-				float(self.vna.ask('sens%i:FREQ:STAR?')),
-				float(self.vna.ask('sens%i:FREQ:STOP?')),\
-				int(self.vna.ask('sens%i:sweep:POIN?')),'hz')
+				float(self.vna.ask('FREQ:STAR?')),
+				float(self.vna.ask('FREQ:STOP?')),\
+				int(self.vna.ask('sweep:POIN?')),'hz')
 			freq.unit = unit
 			return freq
 		@property
@@ -253,9 +253,9 @@ class ZVA40_alex(object):
 
 	def add_channel(self,channel_number):
 		channel = self.Channel(self, channel_number)
-		fget = lambda self: self._get_property(name)
-		setattr(self.__class__,name, property(fget))
-		setattr(self, '_'+name, child)
+		fget = lambda self: self._get_property('ch'+str(channel_number))
+		setattr(self.__class__,'ch'+str(channel_number), property(fget))
+		setattr(self, '_'+'ch'+str(channel_number), channel)
 
 
 			
