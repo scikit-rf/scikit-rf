@@ -21,7 +21,4 @@
 import virtual instruments
 '''
 
-
-import vna
-
-from vna import ZVA40
+all = ['vna','stages','generalSocketReader']

@@ -27,12 +27,15 @@ class Futek_USB210(object):
 		
 	@property
 	def data(self):
-		stdout, stderr = self.process.communicate('1')
-		if stderr is None:
-			return (float(stdout))
-		else:
-			print ('ERROR from futek:%s'%stderr)
-			return (float(stdout))
+		self.process.write()
+		return float(self.process.read())
+	
+	def write(self,data='iHateDotNet'):
+		self.process.stdin.write(data)
+	
+	def read(self):
+		return (self.process.stdout.readline())
+		
 	def close(self):
 		self.process.terminate()
 	
