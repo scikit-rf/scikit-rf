@@ -20,13 +20,13 @@
 import subprocess as sbp
 import os
 import pylab as plb
-from matplotlib.lines import Line2D
+
 class Futek_USB210(object):
 	'''
 	'''
 	def __init__(self):
 		dir = os.path.dirname(__file__)
-		self.process = sbp.Popen([dir+'/std_in_out_win32'],stdin=sbp.PIPE,\
+		self.process = sbp.Popen([dir+'/test.out'],stdin=sbp.PIPE,\
 			stdout=sbp.PIPE)
 		
 	@property
@@ -45,25 +45,39 @@ class Futek_USB210(object):
 	
 
 class FutekMonitor(object):
-	def __init__(self,ax=None):
-		self.futek = Futek_USB210()
+	def __init__(self,ax=None, window_length = -1, **kwargs):
+		self.futek = Futek_USB210(**kwargs)
 		if ax is None:
 			ax = plb.gca()
 		self.ax = ax
+		self.window_length = window_length
 		self.xdata, self.ydata = [],[]
 
-		poll_data()
-		self.line = Line2D(self.xdata, self.ydata)
-		
+		self.update_data()
+		self.line = ax.plot(self.xdata, self.ydata )[0]
+		self.update_axis_scale()
 
-	def poll_data(self):
+	def get_data_and_plot(self):
+		self.update_data()
+		self.update_line()
+		self.update_axis_scale()
+		self.ax.figure.canvas.draw()
+		
+	def update_data(self):
 		self.ydata.append( self.futek.data)
 		self.xdata.append(len(self.xdata))
-
+		#crop data 
+		if self.window_length >0 and \
+			len(self.xdata) > self.window_length:
+			self.xdata = self.xdata [1:]
+			self.ydata = self.ydata [1:]
+	def update_line(self):
+		self.line.set_data(self.xdata, self.ydata)
 	def update_axis_scale(self):
 		self.ax.axis([\
 			self.line.get_xdata().min(),\
 			self.line.get_xdata().max(),\
 			self.line.get_ydata().min(),\
 			self.line.get_ydata().max(),\
-			 l.get_xdata().max(), l.get_ydata().min(), l.get_ydata().max()])
+			])
+	
