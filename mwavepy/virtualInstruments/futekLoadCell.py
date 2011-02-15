@@ -18,19 +18,23 @@
 #       MA 02110-1301, USA.
 
 import subprocess as sbp
+import os
+import pylab as plb
+from matplotlib.lines import Line2D
 class Futek_USB210(object):
 	'''
 	'''
 	def __init__(self):
-		self.process = sbp.Popen(['futek_usb210.exe'],stdin=sbp.PIPE,\
+		dir = os.path.dirname(__file__)
+		self.process = sbp.Popen([dir+'/std_in_out_win32'],stdin=sbp.PIPE,\
 			stdout=sbp.PIPE)
 		
 	@property
 	def data(self):
-		self.process.write()
-		return float(self.process.read())
+		self.write()
+		return float(self.read())
 	
-	def write(self,data='iHateDotNet'):
+	def write(self,data='44\n'):
 		self.process.stdin.write(data)
 	
 	def read(self):
@@ -39,3 +43,27 @@ class Futek_USB210(object):
 	def close(self):
 		self.process.terminate()
 	
+
+class FutekMonitor(object):
+	def __init__(self,ax=None):
+		self.futek = Futek_USB210()
+		if ax is None:
+			ax = plb.gca()
+		self.ax = ax
+		self.xdata, self.ydata = [],[]
+
+		poll_data()
+		self.line = Line2D(self.xdata, self.ydata)
+		
+
+	def poll_data(self):
+		self.ydata.append( self.futek.data)
+		self.xdata.append(len(self.xdata))
+
+	def update_axis_scale(self):
+		self.ax.axis([\
+			self.line.get_xdata().min(),\
+			self.line.get_xdata().max(),\
+			self.line.get_ydata().min(),\
+			self.line.get_ydata().max(),\
+			 l.get_xdata().max(), l.get_ydata().min(), l.get_ydata().max()])
