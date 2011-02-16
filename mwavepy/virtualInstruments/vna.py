@@ -187,6 +187,7 @@ class ZVA40_alex(GpibInstrument):
 			self.number = channel_number
 			self.vna = vna
 			self.traces = {}
+			self.continuous = True
 		
 		@property
 		def sdata(self):
@@ -196,13 +197,15 @@ class ZVA40_alex(GpibInstrument):
 			return npy.array(self.vna.ask_for_values('CALCulate%i:DATA? FDATa'%(self.number)))
 		@property
 		def continuous(self):
-			raise NotImplementedError()
+			return self._continuous
 		@continuous.setter
 		def continuous(self, value):
 			if value:
 				self.vna.write('INIT%i:CONT ON;'%(self.number))
+				self._continuous = True
 			elif not value:
 				self.vna.write('INIT%i:CONT OFF;'%(self.number))
+				self._continuous = False
 			else:
 				raise ValueError('takes boolean')
 
@@ -210,10 +213,17 @@ class ZVA40_alex(GpibInstrument):
 			self.vna.write('INITiate%i'%self.number)
 
 		def sweep(self):
-			self.vna.write('INITiate%i:IMMediate;*WAI'%self.number)	
-
-		def add_trace(self, parameter, name):				
-			self.vna.write('CALC%i:PAR:SDEF:\'%s\',\'%s\''\
+			if self.continuous:
+				self.continuous = False
+				self.vna.write('INITiate%i:IMMediate;*WAI'%self.number)	
+				self.continuous = True
+			else:
+				self.vna.write('INITiate%i:IMMediate;*WAI'%self.number)
+			
+		def add_trace(self, parameter, name):
+			print ('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
+				%(self.number, name, parameter))				
+			self.vna.write('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
 				%(self.number, name, parameter))
 			self.traces[name] = parameter
 			
@@ -240,15 +250,18 @@ class ZVA40_alex(GpibInstrument):
 			ntwk.frequency= self.frequency 
 			return ntwk
 		
-	def __init__(self, address=16,**kwargs):
+	def __init__(self, address=20,**kwargs):
 		GpibInstrument.__init__(self,address, **kwargs)
 		self.add_channel(1)
-
+	
 	def _set_property(self, name, value):
 		setattr(self, '_' + name, value)    
 	def _get_property(self, name):
 		return getattr(self, '_' + name)
 
+	@property
+	def error(self):
+		return self.ask('OUTPERROR?')
 	def add_channel(self,channel_number):
 		channel = self.Channel(self, channel_number)
 		fget = lambda self: self._get_property('ch'+str(channel_number))
