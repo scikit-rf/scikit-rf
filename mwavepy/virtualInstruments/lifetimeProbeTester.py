@@ -9,6 +9,9 @@ class LifeTimeProbeTester(object):
 		self.vna = ZVA40_alex()
 		self.load_cell = Futek_USB210()
 
+		self.down_direction = -1
+		self.step_increment = .001
+
 	@property
 	def contact_force(self):
 		return self._contact_force
@@ -17,5 +20,7 @@ class LifeTimeProbeTester(object):
 		self._contact_force = value
 
 	def touchdown(self):
+		measured_force = self.load_cell.data
 		while measured_force < contact_force:
-			
+			self.stage.position_relative = self.down_direction*self.step_increment
+			self.measured_force = self.load_cell.data
