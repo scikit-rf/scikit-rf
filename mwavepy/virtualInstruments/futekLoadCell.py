@@ -26,7 +26,7 @@ class Futek_USB210(object):
 	'''
 	def __init__(self):
 		dir = os.path.dirname(__file__)
-		self.process = sbp.Popen([dir+'/test.out'],stdin=sbp.PIPE,\
+		self.process = sbp.Popen([dir+'/std_in_out_win32'],stdin=sbp.PIPE,\
 			stdout=sbp.PIPE)
 		
 	@property

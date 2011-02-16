@@ -225,10 +225,8 @@ class ZVA40_alex(GpibInstrument):
 
 		@property
 		def frequency(self, unit='ghz'):
-			freq=Frequency( \
-				float(self.vna.ask('FREQ:STAR?')),
-				float(self.vna.ask('FREQ:STOP?')),\
-				int(self.vna.ask('sweep:POIN?')),'hz')
+			freq=Frequency(0,0,0)
+			freq.f = self.vna.ask_for_values('CALC%i:DATA:STIMulus?'%self.number)
 			freq.unit = unit
 			return freq
 		@property
