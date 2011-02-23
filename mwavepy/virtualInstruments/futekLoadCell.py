@@ -16,7 +16,7 @@
 #       along with this program; if not, write to the Free Software
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
-
+from time import sleep 
 import subprocess as sbp
 import os
 import pylab as plb
@@ -28,6 +28,14 @@ class Futek_USB210(object):
 		dir = os.path.dirname(__file__)
 		self.process = sbp.Popen([dir+'/futek_pipe.exe'],stdin=sbp.PIPE,\
 			stdout=sbp.PIPE)
+			
+		print ('waiting for stupid futek')
+		sleep(4)
+		done_string = 'getting unit code...unit code = 5\n'
+		poop_over = False
+		while poop_over is False:
+				if self.read() == done_string:
+					poop_over = True
 		
 	@property
 	def data(self):

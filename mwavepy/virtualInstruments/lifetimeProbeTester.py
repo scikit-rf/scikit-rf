@@ -6,8 +6,8 @@ from .vna import ZVA40_alex
 
 class LifeTimeProbeTester(object):
 	def __init__(self, stage=None, vna=None, load_cell=None, \
-		down_direction=-1, step_increment =.001, contact_force=.1,\
-		time_delay=.01,raiseup_overshoot=.1,file_dir = './'):
+		down_direction=1, step_increment =.01, contact_force=.1,\
+		time_delay=.1,raiseup_overshoot=.1,file_dir = './'):
 
 		if stage is None: self.stage = ESP300()
 		else: self.stage = stage
@@ -24,32 +24,35 @@ class LifeTimeProbeTester(object):
 		self.time_delay = time_delay
 		self.raiseup_overshoot = raiseup_overshoot
 		self.file_dir=file_dir
-
-		self.zero_force = self.load_cell_data
 		
-
+		self.zero()
+		self.stage.motor_on = True
+	def zero(self):
+		self.zero_force = self.load_cell.data
 	def touchdown(self):
 		measured_force = self.load_cell.data
 		while measured_force < self.contact_force:
 			self.stage.position_relative = self.down_direction*self.step_increment
-			self.measured_force = self.load_cell.data
-			sleep(time_delay)
+			measured_force = self.load_cell.data
+			sleep(self.time_delay)
+			print measured_force
 
 	def raiseup(self):
 		measured_force = self.load_cell.data
 		while measured_force > self.zero_force:
 			self.stage.position_relative = -1*self.down_direction*self.step_increment
-			self.measured_force = self.load_cell.data
-			sleep(time_delay)
+			measured_force = self.load_cell.data
+			sleep(self.time_delay)
 		self.stage.position_relative = -1*self.down_direction*self.raiseup_overshoot
 	
 	def record_network(self,filename=None):
-		ntwk = self.vna.one_port
+		ntwk = self.vna.ch1.one_port
 		if filename is None:
-			date_string = datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
+			filename = datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
 		ntwk.write_touchstone(self.file_dir+filename)
 	
 	def cycle_and_record_touchstone(self):
-		self.touchown()
+		self.touchdown()
 		self.record_network()
 		self.raiseup()
+		sleep(1)

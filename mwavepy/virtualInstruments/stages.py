@@ -161,10 +161,10 @@ class ESP300(GpibInstrument):
 	def motor_on(self,input):
 		if input:
 			command_string = 'MO'
-			self.write('%i%s'%(self.current_axis,command_string,input))
+			self.write('%i%s'%(self.current_axis,command_string))
 		if not input:
 			command_string = 'MF'
-			self.write('%i%s'%(self.current_axis,command_string,input))
+			self.write('%i%s'%(self.current_axis,command_string))
 		
 	def send_stop(self):
 		command_string = 'ST'
