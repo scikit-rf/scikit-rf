@@ -55,9 +55,12 @@ class ESP300(GpibInstrument):
 	esp.position = 10
 	print esp.position
 	'''
-	def __init__(self, address=1, current_axis=1, **kwargs):
+	def __init__(self, address=1, current_axis=1,\
+		always_wait_for_stop=True,**kwargs):
+
 		GpibInstrument.__init__(self,address,**kwargs)
 		self.current_axis = current_axis
+		self.always_wait_for_stop = always_wait_for_stop
 
 	@property
 	def current_axis(self):
@@ -101,7 +104,8 @@ class ESP300(GpibInstrument):
 	def position_relative(self,input):
 		command_string = 'PR'
 		self.write('%i%s%f'%(self.current_axis,command_string,input))
-
+		if self.always_wait_for_stop:
+			self.wait_for_stop()
 	@property
 	def position(self):
 		command_string = 'TP'
@@ -113,7 +117,8 @@ class ESP300(GpibInstrument):
 		'''
 		command_string = 'PA'
 		self.write('%i%s%f'%(self.current_axis,command_string,input))
-
+		if self.always_wait_for_stop:
+			self.wait_for_stop()
 	@property
 	def home(self):
 		raise NotImplementedError

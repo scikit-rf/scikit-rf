@@ -66,6 +66,6 @@ class generalSocketReader:
 		return data
 	
 	@property
-	def data_point(self):
+	def data(self):
 		self.send(self._query_string)
 		return self.receive()
