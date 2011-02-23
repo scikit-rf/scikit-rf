@@ -20,11 +20,11 @@ from time import sleep
 import subprocess as sbp
 import os
 import pylab as plb
-
+import numpy as npy
 class Futek_USB210(object):
 	'''
 	'''
-	def __init__(self):
+	def __init__(self, sample_rate=2.5, avg_len=1):
 		dir = os.path.dirname(__file__)
 		self.process = sbp.Popen([dir+'/futek_pipe.exe'],stdin=sbp.PIPE,\
 			stdout=sbp.PIPE)
@@ -36,11 +36,17 @@ class Futek_USB210(object):
 		while poop_over is False:
 				if self.read() == done_string:
 					poop_over = True
+		self.sample_rate = sample_rate*1.0
+		self.avg_len = avg_len
 		
 	@property
 	def data(self):
-		self.write()
-		return float(self.read())
+		tmp = []
+		for n in range(self.avg_len):
+			self.write()
+			tmp.append(float(self.read()))
+			sleep(1./self.sample_rate)
+		return npy.mean(tmp)
 	
 	def write(self,data='44\n'):
 		self.process.stdin.write(data)

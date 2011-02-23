@@ -109,7 +109,7 @@ class ESP300(GpibInstrument):
 	@property
 	def position(self):
 		command_string = 'TP'
-		return (self.ask('%i%s'%(self.current_axis,command_string)))
+		return float(self.ask('%i%s'%(self.current_axis,command_string)))
 	@position.setter
 	def position(self,input):
 		'''
