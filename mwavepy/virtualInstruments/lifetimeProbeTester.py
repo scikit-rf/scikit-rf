@@ -1,12 +1,14 @@
 from time import sleep 
 from datetime import datetime
+import pylab as plb
+
 from .futekLoadCell import *
 from .stages import ESP300
 from .vna import ZVA40_alex
 
 class LifeTimeProbeTester(object):
 	def __init__(self, stage=None, vna=None, load_cell=None, \
-		down_direction=1, step_increment =.01, contact_force=.1,\
+		down_direction=-1, step_increment =.01, contact_force=.1,\
 		time_delay=0,raiseup_overshoot=.1,file_dir = './'):
 
 		if stage is None: self.stage = ESP300()
@@ -34,9 +36,20 @@ class LifeTimeProbeTester(object):
 		self.force_history = []
 		self.position_history = []
 
+	@property
+	def data(self):
+		return self.read_loadcell_and_stage_position()
+
+	def move_toward(self,value):
+		self.stage.position_relative = self.down_direction*value
+
+	def move_apart(self,value):
+		self.stage.position_relative = -1*	self.down_direction*value		
+
 	def clear_history(self):
 		self.force_history = []
 		self.position_history = []
+
 	def read_loadcell(self):
 		current_force = self.load_cell.data - self.zero_force 
 		self.force_history.append(current_force)
@@ -53,27 +66,28 @@ class LifeTimeProbeTester(object):
 	def zero(self):
 		self.zero_force = self.load_cell.data
 
-	def touchdown(self):
-		measured_force =  self.read_loadcell_and_stage_position()[0]
+	def contact(self):
+		measured_force =  self.data[0]
 		while measured_force < self.contact_force:
-			self.stage.position_relative = \
-				self.down_direction*self.step_increment
-			measured_force, measured_position = \
-				self.read_loadcell_and_stage_position()
+			self.move_toward(self.step_increment)
+			measured_force, measured_position = self.data
+			print measured_position, measured_force
+			sleep(self.time_delay)
+
+	def uncontact(self):
+		measured_force =  self.data[0]
+		while measured_force > self.zero_force:
+			self.move_apart(self.step_increment)
+			measured_force, measured_position = self.data
 			print measured_position, measured_force
 			sleep(self.time_delay)
 
 	def raiseup(self):
-		measured_force =  self.read_loadcell_and_stage_position()[0]
-		while measured_force > self.zero_force:
-			self.stage.position_relative = \
-				-1*self.down_direction*self.step_increment
-			measured_force, measured_position = \
-				self.read_loadcell_and_stage_position()
-			print measured_position, measured_force
-			sleep(self.time_delay)
 		self.stage.position_relative = -1*self.down_direction*self.raiseup_overshoot
-	
+
+	def lowerdown(self):
+		self.stage.position_relative = self.down_direction*self.raiseup_overshoot*.7
+		
 	def record_network(self,filename=None):
 		ntwk = self.vna.ch1.one_port
 		if filename is None:
@@ -86,3 +100,5 @@ class LifeTimeProbeTester(object):
 		self.record_network()
 		self.raiseup()
 		sleep(1)
+	def plot_data(self,**kwargs):
+		plb.plot(self.position_history, self.force_history,**kwargs)

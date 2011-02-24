@@ -43,12 +43,12 @@ class Futek_USB210(object):
 	def data(self):
 		tmp = []
 		for n in range(self.avg_len):
+			sleep(1./self.sample_rate)
 			self.write()
 			tmp.append(float(self.read()))
-			sleep(1./self.sample_rate)
 		return npy.mean(tmp)
 	
-	def write(self,data='44\n'):
+	def write(self,data='gimme data\n'):
 		self.process.stdin.write(data)
 	
 	def read(self):

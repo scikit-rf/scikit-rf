@@ -178,5 +178,5 @@ class ESP300(GpibInstrument):
 	def wait_for_stop(self, input=0):
 		command_string = 'WS'
 		self.write('%i%s%i'%(self.current_axis,command_string, input))
-		
+		tmp = self.position
 	
