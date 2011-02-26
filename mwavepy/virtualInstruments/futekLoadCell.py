@@ -41,6 +41,8 @@ class Futek_USB210(object):
 		
 	@property
 	def data(self):
+		self.write()
+		self.read()
 		tmp = []
 		for n in range(self.avg_len):
 			sleep(1./self.sample_rate)

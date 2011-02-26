@@ -61,7 +61,7 @@ class LifeTimeProbeTester(object):
 		return current_position
 
 	def read_loadcell_and_stage_position(self):
-		return self.read_loadcell(), self.read_stage_position()
+		return self.read_stage_position(),self.read_loadcell() 
 		
 	def zero(self):
 		self.zero_force = self.load_cell.data
@@ -102,3 +102,6 @@ class LifeTimeProbeTester(object):
 		sleep(1)
 	def plot_data(self,**kwargs):
 		plb.plot(self.position_history, self.force_history,**kwargs)
+	def close(self):
+		for k in [self.vna, self.stage, self.load_cell]:
+			k.close()
