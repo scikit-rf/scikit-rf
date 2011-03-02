@@ -1,0 +1,30 @@
+<html>
+<head><title>VNA</title></head>
+
+<body>
+<object classid='ScriptLoader'>
+	<param name='filename' value='vna'/>
+</object>
+<br/>
+
+<object classid='ChoiceButton' id='choice_vna_model' width='200'>
+	<param name='choices' value='[HP8510C, HP8720C]' />
+</object>
+<br/>
+<p>GpibAdress:</p>
+
+<object classid='TextBox' id='text_gpib_address' width='100'>
+	<param name='label' value='16'/>
+</object>
+<object classid='Button' id='button_load_vna' width='100'>
+	<param name='label' value='Load VNA'/>
+	<param name='action' value='vna.load_vna'/>
+</object>
+<hr/>
+<object classid='Button' id='button_s11' width='100'>
+	<param name='label' value='S11'/>
+	<param name='action' value='vna.get_s11'/>
+</object>
+
+</body>
+</html>
