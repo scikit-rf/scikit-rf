@@ -52,11 +52,11 @@ def get_switch_terms():
 def get_s11(mpl_plot, **kwargs):
 	return get_one_port(1,1,mpl_plot)
 def get_s12(mpl_plot, **kwargs):
-	return get_one_port(1,1,mpl_plot)
+	return get_one_port(1,2,mpl_plot)
 def get_s21(mpl_plot, **kwargs):
-	return get_one_port(1,1,mpl_plot)
+	return get_one_port(2,1,mpl_plot)
 def get_s22(mpl_plot, **kwargs):
-	return get_one_port(1,1,mpl_plot)
+	return get_one_port(2,2,mpl_plot)
 
 def open_file(file_dialog, file_dialog_result,**kwargs):
 	file_dialog_result.value = file_dialog.open()
