@@ -92,16 +92,20 @@
 
 <hr/>
 
-<object classid='RadioButtonBox' id='radio_plot_type'>
-    <param name='action' value='vna.update_plot'/>
+<object classid='RadioButtonBox' id='radio_plot_format'>
+    <param name='action' value='vna.change_plot_format'/>
     <param name='label' value='Plot Format'/>
     <param name='save' value='True'/>
     <param name='columns' value='3'/>
-    <param name='choices' value='[ Magnitude(dB), Phase, Smith ]'/>
+    <param name='choices' value='[ Magnitude[dB], Phase[deg], Smith Chart ]'/>
 </object>
 <object classid='Button' id='button_clear_plot' width='200'>
 	<param name='label' value='Clear Plot'/>
 	<param name='action' value='vna.clear_plot'/>
+</object>
+<object classid='Button' id='button_update_plot' width='200'>
+	<param name='label' value='Update Plot'/>
+	<param name='action' value='vna.update_plot'/>
 </object>
 
 <br/>
