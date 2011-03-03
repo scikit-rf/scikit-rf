@@ -4,12 +4,11 @@
 <body>
 
 <br/>
-
-<object classid='ChoiceButton' id='choice_vna_model' width='200'>
+<p>Model:</p>
+<object classid='ChoiceButton' id='choice_vna_model' width='100'>
 	<param name='choices' value='[HP8510C, HP8720]' />
 </object>
-<br/>
-<p>GpibAdress:</p>
+<p>GPIB Adress:</p>
 <object classid='TextBox' id='text_gpib_address' width='100'>
 	<param name='label' value='16'/>
 </object>
@@ -28,28 +27,79 @@
 <object classid='TextBox' id='file_dialog_result' width='100%'>
 </object>
 <br/>
-<object classid='Button' width='200'>
+<object classid='Button' width='100'>
     <param name='action' value='vna.open_file'/>
     <param name='label' value='Open'/>
 </object>
-<object classid='Button' width='200'>
+<object classid='Button' width='100'>
     <param name='action' value='vna.new_file'/>
     <param name='label' value='New'/>
 </object>
-<object classid='Button' width='200'>
+<object classid='Button' width='100'>
     <param name='action' value='vna.save_file'/>
     <param name='label' value='Save'/>
 </object>
 
 
 <hr/>
-<object classid='Button' id='button_s11' width='100'>
-	<param name='label' value='S11'/>
-	<param name='action' value='vna.get_s11'/>
+<table width='50%' align='center'>
+<tr>
+	<td>
+	<object classid='Button' id='button_s11' width='100'>
+		<param name='label' value='S11'/>
+		<param name='action' value='vna.get_s11'/>
+	</object>
+	</td>
+	<td>
+	<object classid='Button' id='button_s12' width='100'>
+		<param name='label' value='S12'/>
+		<param name='action' value='vna.get_s12'/>
+	</object>
+	</td>
+	<td>
+	<object classid='Button' id='button_two_port' width='200'>
+		<param name='label' value='Full Two Port'/>
+		<param name='action' value='vna.get_two_port'/>
+	</object>
+	</td>
+	
+	
+</tr>
+<tr>
+	<td>
+	<object classid='Button' id='button_s21' width='100'>
+		<param name='label' value='S21'/>
+		<param name='action' value='vna.get_s21'/>
+	</object>
+	</td>
+	<td>
+	<object classid='Button' id='button_s22' width='100'>
+		<param name='label' value='S22'/>
+		<param name='action' value='vna.get_s22'/>
+	</object>
+	</td>
+	<td>
+	<object classid='Button' id='button_switch_terms' width='200'>
+		<param name='label' value='Switch Terms'/>
+		<param name='action' value='vna.get_switch_terms'/>
+	</object>
+	</td>
+</tr>
+</table>
+
+
+
+
+<hr/>
+
+<object classid='RadioButtonBox' id='radio_button_box_plot_type'>
+    <param name='action' value='vna.change_plot_type'/>
+    <param name='label' value='Plot Format'/>
+    <param name='save' value='True'/>
+    <param name='columns' value='3'/>
+    <param name='choices' value='[ Mag(dB), Phase, Smith ]'/>
 </object>
-<br/>
-<object classid='TextBox' id='text_status' width='100'>
-</object>
+
 
 <br/>
 <object classid='MPLPlot' id='mpl_plot'>
