@@ -542,12 +542,12 @@ class Network(object):
 			 **kwargs)
 
 		# label axis
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel(y_label)
-		plb.axis('tight')
+		ax.set_xlabel('Frequency ['+ self.frequency.unit +']')
+		ax.set_ylabel(y_label)
+		ax.axis('tight')
 		#draw legend
 		if show_legend:
-			plb.legend()
+			ax.legend()
 		
 	def plot_polar_generic (self,attribute_r, attribute_theta,	m=0,n=0,\
 		ax=None,show_legend=True,**kwargs):
@@ -755,7 +755,7 @@ class Network(object):
 		
 		#draw legend
 		if show_legend:
-			plb.legend()
+			ax.legend()
 		ax.axis(npy.array([-1,1,-1,1])*r)
 
 
