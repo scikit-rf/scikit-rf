@@ -2,7 +2,10 @@
 from mwavepy.virtualInstruments import vna as mv_vna
 
 
-global vna, network
+class Private():
+	pass
+	
+private = Private()
 
 def load_vna(text_gpib_address,choice_vna_model,**kwargs):
 	
@@ -11,8 +14,8 @@ def load_vna(text_gpib_address,choice_vna_model,**kwargs):
 		'HP8720':mv_vna.HP8720,\
 		}
 	#vna = text_gpib_address.value
-	vna = vna_class_dict[choice_vna_model.value](int(text_gpib_address.value))
+	private.vna = vna_class_dict[choice_vna_model.value](int(text_gpib_address.value))
 
-def get_s11(**kwargs):
-	network = vna.s11
-
+def get_s11(mpl_plot, **kwargs):
+	private.network = private.vna.s11
+	private.network.plot_s_db(1,1)
