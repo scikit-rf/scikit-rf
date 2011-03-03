@@ -115,7 +115,6 @@ class Network(object):
 		else:
 			raise IndexError('Incorrect number of ports.')
 
-
 	def __floordiv__(self,other):
 		'''
 		 implements de-embeding another network[s], from this network
@@ -142,7 +141,6 @@ class Network(object):
 		else:
 			raise IndexError('Incorrect number of ports.')
 
-
 	def __mul__(self,a):
 		'''
 		element-wise complex multiplication  of s-matrix
@@ -150,7 +148,6 @@ class Network(object):
 		result = copy(self)
 		result.s = result.s * a.s
 		return result
-
 
 	def __add__(self,other):
 		'''
@@ -160,7 +157,6 @@ class Network(object):
 		result.s = result.s + other.s
 		return result
 		
-
 	def __sub__(self,other):
 		'''
 		element-wise subtraction of s-matrix
@@ -168,7 +164,6 @@ class Network(object):
 		result = copy(self)
 		result.s = result.s - other.s
 		return result
-
 
 	def __div__(self,other):
 		'''
@@ -185,7 +180,6 @@ class Network(object):
 			result.s =(self.s/ other.s)
 			
 			return result
-
 
 	def __eq__(self,other):
 		if npy.mean(npy.abs(self.s - other.s)) < ALMOST_ZER0:
@@ -418,7 +412,7 @@ class Network(object):
 		self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
 		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
 
-	def write_touchstone(self, filename=None,dir ='./'):
+	def write_touchstone(self, filename=None):
 		'''
 		write a touchstone file representing this network.  the only 
 		format supported at the moment is :
@@ -436,9 +430,8 @@ class Network(object):
 
 		
 		if filename is None and self.name is not None:
-			filename= self.name
-
-		filename= dir+filename + '.s'+str(self.number_of_ports)+'p'
+			filename= './'+self.name + '.s'+str(self.number_of_ports)+\
+			'p'
 		outputFile = open(filename,"w")
 		
 		# write header file. 

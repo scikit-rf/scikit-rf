@@ -2,9 +2,7 @@
 <head><title>VNA</title></head>
 
 <body>
-<object classid='ScriptLoader'>
-	<param name='filename' value='vna'/>
-</object>
+
 <br/>
 
 <object classid='ChoiceButton' id='choice_vna_model' width='200'>
@@ -12,7 +10,6 @@
 </object>
 <br/>
 <p>GpibAdress:</p>
-
 <object classid='TextBox' id='text_gpib_address' width='100'>
 	<param name='label' value='16'/>
 </object>
@@ -20,13 +17,48 @@
 	<param name='label' value='Load VNA'/>
 	<param name='action' value='vna.load_vna'/>
 </object>
+
+<br/>
+
+<hr/>
+<h3>Touchstone File IO</h3>
+<object classid='FileDialog' id='file_dialog' width='100%'>
+</object>
+<br/>
+<object classid='TextBox' id='file_dialog_result' width='100%'>
+</object>
+<br/>
+<object classid='Button' width='200'>
+    <param name='action' value='vna.open_file'/>
+    <param name='label' value='Open'/>
+</object>
+<object classid='Button' width='200'>
+    <param name='action' value='vna.save_file'/>
+    <param name='label' value='Save'/>
+</object>
+
+
 <hr/>
 <object classid='Button' id='button_s11' width='100'>
 	<param name='label' value='S11'/>
 	<param name='action' value='vna.get_s11'/>
 </object>
 <br/>
-<object classid='MPLplot' id='mpl_plot'>
+<object classid='MPLPlot' id='mpl_plot'>
 </object>
+
+
+
+
+
+
+<br/>
+<object classid='ScriptLoader'>
+	<param name='filename' value='vna'/>
+</object>
+<object classid='ParameterLoader' width='100%'>
+    <param name='filename' value='vna_defaults.txt'/>
+</object>
+
 </body>
 </html>

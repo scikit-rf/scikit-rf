@@ -3,7 +3,9 @@ from mwavepy.virtualInstruments import vna as mv_vna
 
 
 class Private():
-	pass
+	def __init__(self):
+		self.network = None
+		self.vna = None
 	
 private = Private()
 
@@ -19,3 +21,11 @@ def load_vna(text_gpib_address,choice_vna_model,**kwargs):
 def get_s11(mpl_plot, **kwargs):
 	private.network = private.vna.s11
 	private.network.plot_s_db(1,1)
+
+def open_file(file_dialog, file_dialog_result,**kwargs):
+	file_dialog_result.value = file_dialog.open()
+	
+def save_file(file_dialog, file_dialog_result,**kwargs):
+	file_dialog_result.value = file_dialog.save()
+	if private.network is not None:
+		private.network.write_touchstone(file_dialog_result.value)
