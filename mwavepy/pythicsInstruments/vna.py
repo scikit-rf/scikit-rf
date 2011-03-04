@@ -14,15 +14,46 @@ class Private():
 private = Private()
 
 
-def load_vna(text_gpib_address,choice_vna_model,**kwargs):
+def connect_to_vna(text_gpib_address,choice_vna_model,\
+	button_connect_to_vna,**kwargs):
 	
 	vna_class_dict = {\
 		'HP8510C':mv_vna.HP8510C,\
 		'HP8720':mv_vna.HP8720,\
 		}
-	#vna = text_gpib_address.value
-	private.vna = vna_class_dict[choice_vna_model.value]\
-			(int(text_gpib_address.value))
+	if private.vna is not None:
+		private.vna.close()
+		private.vna = None
+		button_connect_to_vna.label='Disconnected.'
+		private.logger.error('VNA Disconnected ')
+	else:
+		try:
+			private.vna = vna_class_dict[choice_vna_model.value]\
+				(int(text_gpib_address.value))
+			button_connect_to_vna.label='Connected.'
+			private.logger.info('VNA connected.')
+		except:
+			private.logger.error('VNA failed to load. ')
+			button_connect_to_vna.label='Failed.'
+		
+		
+def open_file(file_dialog, file_dialog_result,mpl_plot, **kwargs):
+	file_dialog_result.value = file_dialog.open()
+	private.network = Network(file_dialog_result.value)
+	update_plot(mpl_plot)
+	
+def clear_file_dialog( file_dialog_result,**kwargs):
+	file_dialog_result.value = ''
+
+def save_file(file_dialog, file_dialog_result,**kwargs):
+	if private.network is not None:
+		if file_dialog_result.value is '':
+			file_dialog_result.value = file_dialog.save()
+		private.network.write_touchstone(file_dialog_result.value)
+		private.logger.info('file: %s written.'%file_dialog_result.value)
+	else:
+		private.logger.error('No Network in memory')
+		 	
 
 
 def get_one_port(m,n, mpl_plot, *args, **kwargs):
@@ -30,6 +61,26 @@ def get_one_port(m,n, mpl_plot, *args, **kwargs):
 	private.network = private.vna.__getattribute__('s%i%i'%(m,n))
 	update_plot(mpl_plot	)
 	
+
+	
+	
+def get_two_port(mpl_plot, **kwargs):
+	private.network = private.vna.two_port
+	update_plot(mpl_plot)
+	
+def get_switch_terms():
+	raise(NotImplementedError)
+
+	
+def get_s11(mpl_plot,  **kwargs):
+	return get_one_port(1,1,mpl_plot)
+def get_s12(mpl_plot, **kwargs):
+	return get_one_port(1,2,mpl_plot)
+def get_s21(mpl_plot, **kwargs):
+	return get_one_port(2,1,mpl_plot)
+def get_s22(mpl_plot, **kwargs):
+	return get_one_port(2,2,mpl_plot)
+
 def clear_plot(mpl_plot, **kwargs):
 	mpl_plot.clear()
 	mpl_plot.show()
@@ -62,33 +113,3 @@ def update_plot(mpl_plot, **kwargs):
 	mpl_plot.legend()
 	mpl_plot.axis('tight')
 	mpl_plot.show()
-	
-	
-def get_two_port(mpl_plot, **kwargs):
-	private.network = private.vna.two_port
-	update_plot(mpl_plot)
-def get_switch_terms():
-	raise(NotImplementedError)
-
-	
-def get_s11(mpl_plot,  **kwargs):
-	return get_one_port(1,1,mpl_plot)
-def get_s12(mpl_plot, **kwargs):
-	return get_one_port(1,2,mpl_plot)
-def get_s21(mpl_plot, **kwargs):
-	return get_one_port(2,1,mpl_plot)
-def get_s22(mpl_plot, **kwargs):
-	return get_one_port(2,2,mpl_plot)
-
-def open_file(file_dialog, file_dialog_result,mpl_plot, **kwargs):
-	file_dialog_result.value = file_dialog.open()
-	private.network = Network(file_dialog_result.value)
-	update_plot(mpl_plot)
-	
-def new_file(file_dialog, file_dialog_result,**kwargs):
-	file_dialog_result.value = file_dialog.save()
-
-def save_file(file_dialog, file_dialog_result,**kwargs):
-	if private.network is not None:
-		private.network.write_touchstone(file_dialog_result.value)
-

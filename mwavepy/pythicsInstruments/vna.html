@@ -12,9 +12,10 @@
 <object classid='TextBox' id='text_gpib_address' width='100'>
 	<param name='label' value='16'/>
 </object>
-<object classid='Button' id='button_load_vna' width='100'>
-	<param name='label' value='Load VNA'/>
-	<param name='action' value='vna.load_vna'/>
+<object classid='Button' id='button_connect_to_vna' width='100' height='20'>
+	<param name='label' value='Connect To VNA'/>
+	<param name='action' value='vna.connect_to_vna'/>
+	<param name='toggle' value='True'/>
 </object>
 
 <br/>
@@ -31,15 +32,15 @@
     <param name='action' value='vna.open_file'/>
     <param name='label' value='Open'/>
 </object>
-<object classid='Button' width='100'>
-    <param name='action' value='vna.new_file'/>
-    <param name='label' value='New'/>
-</object>
+
 <object classid='Button' width='100'>
     <param name='action' value='vna.save_file'/>
     <param name='label' value='Save'/>
 </object>
-
+<object classid='Button' width='100'>
+    <param name='action' value='vna.clear_file_dialog'/>
+    <param name='label' value='Clear'/>
+</object>
 
 <hr/>
 <table width='50%' align='center'>
@@ -56,13 +57,18 @@
 		<param name='action' value='vna.get_s12'/>
 	</object>
 	</td>
-	<td>
+	<td >
 	<object classid='Button' id='button_two_port' width='200'>
 		<param name='label' value='Full Two Port'/>
 		<param name='action' value='vna.get_two_port'/>
 	</object>
 	</td>
-	
+	<td>
+	<object classid='Button' id='button_switch_terms' width='200'>
+		<param name='label' value='Switch Terms'/>
+		<param name='action' value='vna.get_switch_terms'/>
+	</object>
+	</td>
 	
 </tr>
 <tr>
@@ -78,12 +84,7 @@
 		<param name='action' value='vna.get_s22'/>
 	</object>
 	</td>
-	<td>
-	<object classid='Button' id='button_switch_terms' width='200'>
-		<param name='label' value='Switch Terms'/>
-		<param name='action' value='vna.get_switch_terms'/>
-	</object>
-	</td>
+
 </tr>
 </table>
 
@@ -99,14 +100,28 @@
     <param name='columns' value='3'/>
     <param name='choices' value='[ Magnitude[dB], Phase[deg], Smith Chart ]'/>
 </object>
-<object classid='Button' id='button_clear_plot' width='200'>
-	<param name='label' value='Clear Plot'/>
-	<param name='action' value='vna.clear_plot'/>
-</object>
-<object classid='Button' id='button_update_plot' width='200'>
-	<param name='label' value='Update Plot'/>
-	<param name='action' value='vna.update_plot'/>
-</object>
+
+
+<table align = 'right'>
+	<tr>
+		<td>
+		<object classid='Button' id='button_clear_plot' width='200'>
+			<param name='label' value='Clear Plot'/>
+			<param name='action' value='vna.clear_plot'/>
+		</object>
+		 </td>
+	</tr>
+	<tr>
+		 <td>
+		 <object classid='Button' id='button_update_plot' width='200'>
+			<param name='label' value='Update Plot'/>
+			<param name='action' value='vna.update_plot'/>
+		</object>
+		 </td>
+
+	</tr>
+</table>
+
 
 <br/>
 <object classid='MPLPlot' id='mpl_plot'>
