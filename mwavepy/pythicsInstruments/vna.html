@@ -4,19 +4,20 @@
 <body>
 
 <br/>
+<object classid='Button' id='button_connect_to_vna' width='100' height='30'>
+	<param name='label' value='Connect To VNA'/>
+	<param name='action' value='vna.connect_to_vna'/>
+	<param name='toggle' value='True'/>
+</object>
 <p>Model:</p>
 <object classid='ChoiceButton' id='choice_vna_model' width='100'>
 	<param name='choices' value='[HP8510C, HP8720]' />
 </object>
 <p>GPIB Adress:</p>
-<object classid='TextBox' id='text_gpib_address' width='100'>
-	<param name='label' value='16'/>
-</object>
-<object classid='Button' id='button_connect_to_vna' width='100' height='20'>
-	<param name='label' value='Connect To VNA'/>
-	<param name='action' value='vna.connect_to_vna'/>
-	<param name='toggle' value='True'/>
-</object>
+<object classid='TextBox' id='text_gpib_address' width='40'></object>
+<p>GPIB Timeout:</p>
+<object classid='TextBox' id='text_gpib_timeout' width='40'></object>
+
 
 <br/>
 
@@ -46,13 +47,13 @@
 <table width='50%' align='center'>
 <tr>
 	<td>
-	<object classid='Button' id='button_s11' width='100'>
+	<object classid='Button' id='button_s11' width='70'>
 		<param name='label' value='S11'/>
 		<param name='action' value='vna.get_s11'/>
 	</object>
 	</td>
 	<td>
-	<object classid='Button' id='button_s12' width='100'>
+	<object classid='Button' id='button_s12' width='70'>
 		<param name='label' value='S12'/>
 		<param name='action' value='vna.get_s12'/>
 	</object>
@@ -64,22 +65,23 @@
 	</object>
 	</td>
 	<td>
-	<object classid='Button' id='button_switch_terms' width='200'>
-		<param name='label' value='Switch Terms'/>
+	<object classid='Button' id='button_switch_terms' width='150'>
+		<param name='label' value='Save Switch Terms'/>
 		<param name='action' value='vna.get_switch_terms'/>
 	</object>
+	
 	</td>
 	
 </tr>
 <tr>
 	<td>
-	<object classid='Button' id='button_s21' width='100'>
+	<object classid='Button' id='button_s21' width='70'>
 		<param name='label' value='S21'/>
 		<param name='action' value='vna.get_s21'/>
 	</object>
 	</td>
 	<td>
-	<object classid='Button' id='button_s22' width='100'>
+	<object classid='Button' id='button_s22' width='70'>
 		<param name='label' value='S22'/>
 		<param name='action' value='vna.get_s22'/>
 	</object>
@@ -124,7 +126,7 @@
 
 
 <br/>
-<object classid='MPLPlot' id='mpl_plot'>
+<object classid='MPLPlot' id='mpl_plot' width ='100%'>
 </object>
 
 
@@ -133,6 +135,12 @@
 
 
 <br/>
+<object classid='FileDialog' id='file_dialog_forward_switch_terms'>
+		<param name='title' value='Save Forward Switch Term'/>
+</object>
+<object classid='FileDialog' id='file_dialog_reverse_switch_terms'>
+		<param name='title' value='Save Reverse Switch Term'/>
+</object>
 <object classid='ScriptLoader'>
 	<param name='filename' value='vna'/>
 </object>

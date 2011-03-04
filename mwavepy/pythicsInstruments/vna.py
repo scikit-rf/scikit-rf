@@ -14,7 +14,7 @@ class Private():
 private = Private()
 
 
-def connect_to_vna(text_gpib_address,choice_vna_model,\
+def connect_to_vna(text_gpib_address,text_gpib_timeout,choice_vna_model,\
 	button_connect_to_vna,**kwargs):
 	
 	vna_class_dict = {\
@@ -29,7 +29,8 @@ def connect_to_vna(text_gpib_address,choice_vna_model,\
 	else:
 		try:
 			private.vna = vna_class_dict[choice_vna_model.value]\
-				(int(text_gpib_address.value))
+				(int(text_gpib_address.value), \
+				timeout=int(text_gpib_timeout.value))
 			button_connect_to_vna.label='Connected.'
 			private.logger.info('VNA connected.')
 		except:
@@ -58,18 +59,33 @@ def save_file(file_dialog, file_dialog_result,**kwargs):
 
 def get_one_port(m,n, mpl_plot, *args, **kwargs):
 	private.logger.info('Getting S%i%i'%(m,n))
-	private.network = private.vna.__getattribute__('s%i%i'%(m,n))
-	update_plot(mpl_plot	)
+	if private.vna is None:
+		private.logger.error('VNA not connected')
+	else: 
+		private.network = private.vna.__getattribute__('s%i%i'%(m,n))
+		update_plot(mpl_plot	)
 	
 
 	
 	
 def get_two_port(mpl_plot, **kwargs):
-	private.network = private.vna.two_port
-	update_plot(mpl_plot)
+	if private.vna is None:
+		private.logger.error('VNA not connected')
+	else: 
+		private.network = private.vna.two_port
+		update_plot(mpl_plot)
 	
-def get_switch_terms():
-	raise(NotImplementedError)
+def get_switch_terms(file_dialog_forward_switch_terms,\
+	file_dialog_reverse_switch_terms, **kwargs):
+	private.switch_terms = private.vna.switch_terms
+	file_dialog_forward_switch_terms.title = 'Save Forward Switch Term'
+	file_dialog_forward_switch_terms.filename = 'forward_switch_term.s1p'
+	private.switch_terms[0].write_touchstone(\
+		file_dialog_forward_switch_terms.save())
+	file_dialog_reverse_switch_terms.title = 'Save Reverse Switch Term'
+	file_dialog_reverse_switch_terms.filename = 'reverse_switch_term.s1p'
+	private.switch_terms[1].write_touchstone(\
+		file_dialog_reverse_switch_terms.save())
 
 	
 def get_s11(mpl_plot,  **kwargs):
