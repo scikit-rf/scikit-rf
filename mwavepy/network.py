@@ -491,7 +491,11 @@ class Network(object):
 		result.s = interpolation(new_frequency.f)
 		return result
 
-
+	def change_frequency(self, new_frequency, **kwargs):
+		self.frequency.start = new_frequency.start
+		self.frequency.stop = new_frequency.stop
+		self = self.interpolate(new_frequency, **kwargs)
+		
 	def flip(self):
 		'''
 		swaps the ports of a two port 
@@ -583,8 +587,8 @@ class Network(object):
 			kwargs['label'] = label_string
 			
 		#TODO: fix this to call from ax, if possible
-		plb.polar(getattr(self, attribute_r)[:,m,n],\
-			getattr(self, attribute_theta)[:,m,n],**kwargs)
+		plb.polar(getattr(self, attribute_theta)[:,m,n],\
+			getattr(self, attribute_r)[:,m,n],**kwargs)
 
 		#draw legend
 		if show_legend:
