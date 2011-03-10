@@ -410,7 +410,7 @@ class Network(object):
 		self.z0 = float(touchstoneFile.resistance)
 		self.f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
 		self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
-		self.name = touchstoneFile.filename.split('/')[-1].split('.')[-2]
+		self.name = os.path.basename( os.path.splitext(filename)[0])
 
 	def write_touchstone(self, filename=None):
 		'''

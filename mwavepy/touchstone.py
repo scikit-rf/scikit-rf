@@ -60,13 +60,14 @@ class touchstone():
         """
         Load the touchstone file into the interal data structures
         """
+        f = open(filename)
+        
         extention = filename.split('.')[-1].lower()
         self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
         if not self.rank:
-            print "filename does not have a s-parameter extention [%s]" %(extention)
-            return
+            raise (ValueError("filename does not have a s-parameter extention. It has  [%s] instead, and i havent programmed it to inspect the file for number of ports yet. correct the extension." %(extention)))
 
-        f = open(filename)
+        
         linenr = 0
         values = []
         while (1):
