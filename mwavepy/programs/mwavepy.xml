@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="text/touchstone">
+  <comment>touchstone file</comment>
+  <glob pattern="*.s?p"/>
+  </mime-type>
+</mime-info>
