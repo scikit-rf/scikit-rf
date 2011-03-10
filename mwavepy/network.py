@@ -509,7 +509,7 @@ class Network(object):
 	# ploting
 
 	def plot_vs_frequency_generic(self,attribute,y_label=None,\
-		m=0,n=0, ax=None,show_legend=True,**kwargs):
+		m=None,n=None, ax=None,show_legend=True,**kwargs):
 		'''
 		generic plotting function for plotting a Network's attribute
 		vs frequency.
@@ -519,31 +519,49 @@ class Network(object):
 
 		
 		'''
-
 		# get current axis if user doesnt supply and axis 
 		if ax is None:
 			ax = plb.gca()
-			
-		# set the legend label for this trace to the networks name if it
-		# exists, and they didnt pass a name key in the kwargs
-		if 'label'  not in kwargs.keys(): 
-			if self.name is None:
-				if plb.rcParams['text.usetex']:
-					label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
-				else:
-					label_string = 'S'+repr(m+1) + repr(n+1)
-			else:
-				if plb.rcParams['text.usetex']:
-					label_string = self.name+', $S_{'+repr(m+1) + \
-						repr(n+1)+'}$'
-				else:
-					label_string = self.name+', S'+repr(m+1) + repr(n+1)
-
-			kwargs['label'] = label_string
-			
-		# plot the desired attribute vs frequency 
-		ax.plot(self.frequency.f_scaled, getattr(self, attribute)[:,m,n],\
-			 **kwargs)
+		
+		
+		if m is None:
+			M = range(self.number_of_ports)
+		else:
+			M = [m]
+		if n is None:
+			N = range(self.number_of_ports)
+		else:
+			N = [n]
+		
+		if 'label'  not in kwargs.keys():
+			generate_label=True
+		else:
+			generate_label=False
+		
+		for m in M:
+			for n in N:
+				# set the legend label for this trace to the networks
+				# name if it exists, and they didnt pass a name key in
+				# the kwargs
+				if generate_label: 
+					if self.name is None:
+						if plb.rcParams['text.usetex']:
+							label_string = '$S_{'+repr(m+1) + \
+								repr(n+1)+'}$'
+						else:
+							label_string = 'S'+repr(m+1) + repr(n+1)
+					else:
+						if plb.rcParams['text.usetex']:
+							label_string = self.name+', $S_{'+repr(m+1)\
+								+ repr(n+1)+'}$'
+						else:
+							label_string = self.name+', S'+repr(m+1) +\
+								repr(n+1)
+					kwargs['label'] = label_string
+					
+				# plot the desired attribute vs frequency 
+				ax.plot(self.frequency.f_scaled, getattr(self,\
+					attribute)[:,m,n], **kwargs)
 
 		# label axis
 		ax.set_xlabel('Frequency ['+ self.frequency.unit +']')
@@ -594,7 +612,7 @@ class Network(object):
 		if show_legend:
 			plb.legend()	
 		
-	def plot_s_db(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+	def plot_s_db(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
 		'''
 		plots the magnitude of the scattering parameter of indecies m, n
 		in log magnitude
@@ -611,7 +629,7 @@ class Network(object):
 			y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,**kwargs)
 
-	def plot_s_mag(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+	def plot_s_mag(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
 		'''
 		plots the magnitude of a scattering parameter of indecies m, n
 		not in  magnitude
@@ -628,7 +646,7 @@ class Network(object):
 			y_label='Magnitude [not dB]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,**kwargs)
 
-	def plot_s_deg(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+	def plot_s_deg(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
 		degrees
@@ -646,7 +664,7 @@ class Network(object):
 			show_legend = show_legend,**kwargs)
 		
 				
-	def plot_s_deg_unwrapped(self,m=0, n=0, ax = None, show_legend=True,\
+	def plot_s_deg_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
 		**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
@@ -663,7 +681,7 @@ class Network(object):
 		self.plot_vs_frequency_generic(attribute= 's_deg_unwrap',\
 			y_label='Phase [deg]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,**kwargs)
-	def plot_s_rad(self,m=0, n=0, ax = None, show_legend=True,**kwargs):
+	def plot_s_rad(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
 		radians
@@ -681,7 +699,7 @@ class Network(object):
 			show_legend = show_legend,**kwargs)
 		
 				
-	def plot_s_rad_unwrapped(self,m=0, n=0, ax = None, show_legend=True,\
+	def plot_s_rad_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
 		**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
@@ -715,7 +733,7 @@ class Network(object):
 		self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
 			m=m,n=n, ax=ax,	show_legend = show_legend,**kwargs)	
 
-	def plot_s_smith(self,m=0, n=0,r=1,ax = None, show_legend=True,  **kwargs):
+	def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,  **kwargs):
 		'''
 		plots the scattering parameter of indecies m, n on smith chart
 		
@@ -735,27 +753,44 @@ class Network(object):
 		if ax is None:
 			ax = plb.gca()
 			
-		# set the legend label for this trace to the networks name if it
-		# exists, and they didnt pass a name key in the kwargs
-		if 'label'  not in kwargs.keys(): 
-			if self.name is None:
-				if plb.rcParams['text.usetex']:
-					label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
-				else:
-					label_string = 'S'+repr(m+1) + repr(n+1)
-			else:
-				if plb.rcParams['text.usetex']:
-					label_string = self.name+', $S_{'+repr(m+1) + \
-						repr(n+1)+'}$'
-				else:
-					label_string = self.name+', S'+repr(m+1) + repr(n+1)
-
-			kwargs['label'] = label_string
-			
-		# plot the desired attribute vs frequency 
-		if len (ax.patches) == 0:
-			smith(ax=ax, smithR = r)
-		ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
+		
+		if m is None:
+			M = range(self.number_of_ports)
+		else:
+			M = [m]
+		if n is None:
+			N = range(self.number_of_ports)
+		else:
+			N = [n]
+		
+		if 'label'  not in kwargs.keys():
+			generate_label=True
+		else:
+			generate_label=False
+		
+		for m in M:
+			for n in N:
+				# set the legend label for this trace to the networks name if it
+				# exists, and they didnt pass a name key in the kwargs
+				if generate_label: 
+					if self.name is None:
+						if plb.rcParams['text.usetex']:
+							label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
+						else:
+							label_string = 'S'+repr(m+1) + repr(n+1)
+					else:
+						if plb.rcParams['text.usetex']:
+							label_string = self.name+', $S_{'+repr(m+1) + \
+								repr(n+1)+'}$'
+						else:
+							label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+					kwargs['label'] = label_string
+					
+				# plot the desired attribute vs frequency 
+				if len (ax.patches) == 0:
+					smith(ax=ax, smithR = r)
+				ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
 		
 		#draw legend
 		if show_legend:
