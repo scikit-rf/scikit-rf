@@ -761,7 +761,8 @@ class Network(object):
 		if show_legend:
 			ax.legend()
 		ax.axis(npy.array([-1,1,-1,1])*r)
-
+		ax.set_xlabel('Real')
+		ax.set_ylabel('Imaginary')
 
 
 	
