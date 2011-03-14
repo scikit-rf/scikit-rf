@@ -17,7 +17,7 @@ class LifeTimeProbeTester(object):
 		if vna is None: self.vna = ZVA40_alex()
 		else: self.vna = vna
 
-		if load_cell is None: self.load_cell = Futek_USB210()
+		if load_cell is None: self.load_cell = Futek_USB210_socket()
 		else: self.load_cell = load_cell
 		
 		self.down_direction = down_direction
@@ -26,12 +26,8 @@ class LifeTimeProbeTester(object):
 		self.time_delay = time_delay
 		self.raiseup_overshoot = raiseup_overshoot
 		self.file_dir=file_dir
-		try:
-			tmp = self.load_cell.data
-		except (ValueError):
-			pass
-		for tmp in range(10):
-			self.zero()
+		
+		self.zero()
 		self.stage.motor_on = True
 		self.force_history = []
 		self.position_history = []

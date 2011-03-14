@@ -20,8 +20,9 @@
 
 
 import socket
+import numpy as npy
 from time import sleep 
-class generalSocketReader:
+class GeneralSocketReader:
 	'''
 	A general class which wraps a socket and has a simple data query
 	function, implemented by the property data_point.
@@ -35,7 +36,8 @@ class generalSocketReader:
 		gsr.connect('127.0.0.1',1111)
 		gsr.data_point	# implicityly calls send() then receive()
 	'''
-	def __init__(self, sock=None, query_string = '1', msg_len =1e3):
+	def __init__(self, sock=None, sample_rate=2.5, avg_len=1,\
+		query_string = '1', msg_len =1e3):
 		'''
 		takes:
 			sock: socket type (defaults to None and generates a new socket)
@@ -48,9 +50,11 @@ class generalSocketReader:
 				socket.AF_INET, socket.SOCK_STREAM)
 		else:
 			self.sock = sock
-		self._query_string = query_string
-		self._msg_len = int(msg_len)
-		
+		self.query_string = query_string
+		self.msg_len = int(msg_len)
+		self.sample_rate = sample_rate*1.0
+		self.avg_len = avg_len
+
 
 	def connect(self, host, port):
 		self.sock.connect((host, port))
@@ -62,10 +66,15 @@ class generalSocketReader:
 		self.sock.send(data)
 			
 	def receive(self):
-		data = self.sock.recv(self._msg_len)
+		data = self.sock.recv(self.msg_len)
 		return data
 	
 	@property
 	def data(self):
-		self.send(self._query_string)
-		return self.receive()
+		tmp = []
+		for n in range(self.avg_len):
+			sleep(1./self.sample_rate)
+			self.send(self.query_string)
+			tmp.append(float(self.receive()))
+		return npy.mean(tmp)
+		
