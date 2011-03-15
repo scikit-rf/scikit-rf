@@ -71,10 +71,12 @@ class GeneralSocketReader:
 	
 	@property
 	def data(self):
-		tmp = []
+		'''tmp = []
 		for n in range(self.avg_len):
 			sleep(1./self.sample_rate)
 			self.send(self.query_string)
 			tmp.append(float(self.receive()))
 		return npy.mean(tmp)
-		
+		'''
+		self.send(self.query_string)
+		return float(self.receive())

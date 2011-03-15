@@ -7,10 +7,25 @@ from .stages import ESP300
 from .vna import ZVA40_alex
 
 class LifeTimeProbeTester(object):
+	'''
+		Object for CPW probe landing with loadcell force feedback
+		support. 
+	'''
 	def __init__(self, stage=None, vna=None, load_cell=None, \
 		down_direction=-1, step_increment =.01, contact_force=.1,\
 		time_delay=0,raiseup_overshoot=.1,file_dir = './'):
-
+		'''
+		takes:
+			stage: a ESP300 object [None]
+			vna: a ZVA_alex object [None]
+			load_cell: a Futek_USB210_socket object [None]
+			down_direction:
+			step_increment:
+			contact_force:
+			time_delay:
+			raisup_overshoot:
+			file_dir:
+		'''
 		if stage is None: self.stage = ESP300()
 		else: self.stage = stage
 

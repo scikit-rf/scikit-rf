@@ -23,12 +23,24 @@
 '''
 holds class's for objects for stages
 '''
+from time import sleep 
 import numpy as npy
-import visa
 from visa import GpibInstrument
 
 
 class ESP300(GpibInstrument):
+	'''
+	Newport Universal Motion Controller/Driver Model ESP300
+		
+	all axis control commands are sent to the number axis given by the
+	local variable self.current_axis. so here is an example usage
+
+	esp= ESP300()
+	esp.current_axis=1
+	esp.units= 'millimeter'
+	esp.position = 10
+	print esp.position
+	'''
 	UNIT_DICT = {\
 		'enoder count':0,\
 		'motor step':1,\
@@ -43,35 +55,42 @@ class ESP300(GpibInstrument):
 		'milliradian':10,\
 		'microradian':11,\
 		}
-	'''
-	Newport ESP300 Stage Controller
 
-	all axis control commands are sent to the number axis given by the
-	local variable self.current_axis. so here is an example usage
-
-	esp= ESP300()
-	esp.current_axis=1
-	esp.units= 'millimeter'
-	esp.position = 10
-	print esp.position
-	'''
 	def __init__(self, address=1, current_axis=1,\
-		always_wait_for_stop=True,**kwargs):
+		always_wait_for_stop=True,delay=None,**kwargs):
+		'''
+		takes:
+			address:	Gpib address, int [1]
+			current_axis: 	number of current axis, int [1]
+			always_wait_for_stop: 	wait for stage to stop before 
+				returning control to calling program, boolean [True]
+			**kwargs: 	passed to GpibInstrument initializer
+		'''
 
 		GpibInstrument.__init__(self,address,**kwargs)
 		self.current_axis = current_axis
 		self.always_wait_for_stop = always_wait_for_stop
-
+		self.delay=delay
 	@property
 	def current_axis(self):
+		'''
+		current axis used in all subsequent commands
+		'''
 		return self._current_axis
 	@current_axis.setter
 	def current_axis(self, input):
+		'''
+		takes:
+			input: 	desired current axis number, int []
+		'''
 		self._current_axis = input
 
 
 	@property
 	def velocity(self):
+		'''
+		the velocity of current axis
+		'''
 		command_string = 'VA'
 		return (self.ask('%i%s?'%(self.current_axis,command_string)))
 	@velocity.setter
@@ -106,6 +125,8 @@ class ESP300(GpibInstrument):
 		self.write('%i%s%f'%(self.current_axis,command_string,input))
 		if self.always_wait_for_stop:
 			self.wait_for_stop()
+		if self.delay is not None:
+			sleep(self.delay)
 	@property
 	def position(self):
 		command_string = 'TP'
@@ -119,6 +140,8 @@ class ESP300(GpibInstrument):
 		self.write('%i%s%f'%(self.current_axis,command_string,input))
 		if self.always_wait_for_stop:
 			self.wait_for_stop()
+		if self.delay is not None:
+			sleep(self.delay)
 	@property
 	def home(self):
 		raise NotImplementedError
