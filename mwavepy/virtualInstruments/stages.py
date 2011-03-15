@@ -125,8 +125,7 @@ class ESP300(GpibInstrument):
 		self.write('%i%s%f'%(self.current_axis,command_string,input))
 		if self.always_wait_for_stop:
 			self.wait_for_stop()
-		if self.delay is not None:
-			sleep(self.delay)
+
 	@property
 	def position(self):
 		command_string = 'TP'
@@ -140,8 +139,6 @@ class ESP300(GpibInstrument):
 		self.write('%i%s%f'%(self.current_axis,command_string,input))
 		if self.always_wait_for_stop:
 			self.wait_for_stop()
-		if self.delay is not None:
-			sleep(self.delay)
 	@property
 	def home(self):
 		raise NotImplementedError
@@ -198,8 +195,8 @@ class ESP300(GpibInstrument):
 		command_string = 'ST'
 		self.write('%i%s'%(self.current_axis,command_string))
 
-	def wait_for_stop(self, input=0):
+	def wait_for_stop(self):
 		command_string = 'WS'
-		self.write('%i%s%i'%(self.current_axis,command_string, input))
+		self.write('%i%s%i'%(self.current_axis,command_string, self.delay))
 		tmp = self.position
-	
+		

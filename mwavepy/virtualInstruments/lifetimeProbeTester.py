@@ -12,8 +12,8 @@ class LifeTimeProbeTester(object):
 		support. 
 	'''
 	def __init__(self, stage=None, vna=None, load_cell=None, \
-		down_direction=-1, step_increment =.01, contact_force=.1,\
-		time_delay=0,raiseup_overshoot=.1,file_dir = './'):
+		down_direction=-1, step_increment =.001, contact_force=5,\
+		delay=.5,raiseup_overshoot=.1,uncontact_gap = .01,file_dir = './'):
 		'''
 		takes:
 			stage: a ESP300 object [None]
@@ -22,7 +22,7 @@ class LifeTimeProbeTester(object):
 			down_direction:
 			step_increment:
 			contact_force:
-			time_delay:
+			delay: time delay passed to stage object, int[1]
 			raisup_overshoot:
 			file_dir:
 		'''
@@ -38,9 +38,10 @@ class LifeTimeProbeTester(object):
 		self.down_direction = down_direction
 		self.step_increment = step_increment
 		self.contact_force = contact_force
-		self.time_delay = time_delay
+		self.stage.delay = delay
 		self.raiseup_overshoot = raiseup_overshoot
 		self.file_dir=file_dir
+		self.uncontact_gap =uncontact_gap
 		
 		self.zero()
 		self.stage.motor_on = True
@@ -78,39 +79,46 @@ class LifeTimeProbeTester(object):
 		self.zero_force = self.load_cell.data
 
 	def contact(self):
-		measured_force =  self.data[0]
+		print ('position\tforce')
+		measured_force =  self.data[1]
 		while measured_force < self.contact_force:
 			self.move_toward(self.step_increment)
-			measured_force, measured_position = self.data
+			measured_position,measured_force = self.data
 			print measured_position, measured_force
-			sleep(self.time_delay)
 
 	def uncontact(self):
-		measured_force =  self.data[0]
+		measured_force =  self.data[1]
 		while measured_force > self.zero_force:
 			self.move_apart(self.step_increment)
-			measured_force, measured_position = self.data
+			measured_position,measured_force = self.data
 			print measured_position, measured_force
-			sleep(self.time_delay)
-
+		self.move_apart(self.uncontact_gap)
 	def raiseup(self):
-		self.stage.position_relative = -1*self.down_direction*self.raiseup_overshoot
+		self.stage.velocity = 10
+		self.move_apart (self.raiseup_overshoot)
+		self.stage.velocity = .1
 
 	def lowerdown(self):
-		self.stage.position_relative = self.down_direction*self.raiseup_overshoot*.7
+		self.stage.velocity = 10
+		self.move_toward( self.raiseup_overshoot*.9)
+		self.stage.velocity = .1
 		
 	def record_network(self,filename=None):
 		ntwk = self.vna.ch1.one_port
 		if filename is None:
 			filename = datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
-		ntwk.write_touchstone(self.file_dir+filename)
+		print ('writing %s'%filename)
+		ntwk.write_touchstone(self.file_dir+filename+'.s1p')
 
 	
 	def cycle_and_record_touchstone(self):
-		self.touchdown()
-		self.record_network()
 		self.raiseup()
-		sleep(1)
+		self.record_network('up.s1p')
+		self.lowerdown()
+		self.contact()
+		self.record_network('down.s1p')
+		self.uncontact()
+		
 	def plot_data(self,**kwargs):
 		plb.plot(self.position_history, self.force_history,**kwargs)
 	def close(self):
