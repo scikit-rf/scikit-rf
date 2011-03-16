@@ -11,7 +11,7 @@ import mwavepy as mv
 class LifeTimeProbeTester(object):
 	'''
 		Object for CPW probe landing with loadcell force feedback
-		support. 
+		support and VNA data retrieval.
 	'''
 	def __init__(self, stage=None, vna=None, load_cell=None, \
 		down_direction=-1, step_increment =.001, contact_force=5,\
@@ -66,12 +66,15 @@ class LifeTimeProbeTester(object):
 	
 	@property
 	def history(self):
-		return (npy.vstack((self.position_history, self.force_history)).T)
+		return ( self.position_history, self.force_history, \
+			self.ntwk_history)
 	
 	def save_history(self, filename='force_vs_position.txt'):
-		npy.savetxt(filename, self.history)
+		data= (npy.vstack((self.position_history, self.force_history)).T)
+		npy.savetxt(filename, data)
 		for ntwk in self.ntwk_history:
 			ntwk.write_touchstone()
+	
 	def move_toward(self,value):
 		self.stage.position_relative = self.down_direction*value
 
