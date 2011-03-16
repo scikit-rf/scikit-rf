@@ -13,7 +13,8 @@ class LifeTimeProbeTester(object):
 	'''
 	def __init__(self, stage=None, vna=None, load_cell=None, \
 		down_direction=-1, step_increment =.001, contact_force=5,\
-		delay=.5,raiseup_overshoot=.1,uncontact_gap = .01,file_dir = './'):
+		delay=.5,raiseup_overshoot=.1,uncontact_gap = .01,\
+		raiseup_velocity=10, file_dir = './'):
 		'''
 		takes:
 			stage: a ESP300 object [None]
@@ -42,7 +43,7 @@ class LifeTimeProbeTester(object):
 		self.raiseup_overshoot = raiseup_overshoot
 		self.file_dir=file_dir
 		self.uncontact_gap =uncontact_gap
-		
+		self.raiseup_velocity = raiseup_velocity
 		self.zero()
 		self.stage.motor_on = True
 		self.force_history = []
@@ -78,30 +79,34 @@ class LifeTimeProbeTester(object):
 	def zero(self):
 		self.zero_force = self.load_cell.data
 
-	def contact(self):
+	def contact(self, write_network=False):
 		print ('position\tforce')
 		measured_force =  self.data[1]
 		while measured_force < self.contact_force:
 			self.move_toward(self.step_increment)
 			measured_position,measured_force = self.data
 			print measured_position, measured_force
+			if write_network:
+				self.record_network()
 
 	def uncontact(self):
 		measured_force =  self.data[1]
-		while measured_force > self.zero_force:
+		while measured_force  >.05 :
 			self.move_apart(self.step_increment)
 			measured_position,measured_force = self.data
 			print measured_position, measured_force
 		self.move_apart(self.uncontact_gap)
 	def raiseup(self):
-		self.stage.velocity = 10
+		tmp_velocity = self.stage.velocity
+		self.stage.velocity = self.raiseup_velocity
 		self.move_apart (self.raiseup_overshoot)
-		self.stage.velocity = .1
+		self.stage.velocity = tmp_velocity
 
 	def lowerdown(self):
-		self.stage.velocity = 10
+		tmp_velocity = self.stage.velocity
+		self.stage.velocity = self.raiseup_velocity
 		self.move_toward( self.raiseup_overshoot*.9)
-		self.stage.velocity = .1
+		self.stage.velocity = tmp_velocity
 		
 	def record_network(self,filename=None):
 		ntwk = self.vna.ch1.one_port
@@ -113,10 +118,10 @@ class LifeTimeProbeTester(object):
 	
 	def cycle_and_record_touchstone(self):
 		self.raiseup()
-		self.record_network('up.s1p')
+		self.record_network()
 		self.lowerdown()
 		self.contact()
-		self.record_network('down.s1p')
+		self.record_network()
 		self.uncontact()
 		
 	def plot_data(self,**kwargs):
