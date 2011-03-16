@@ -1,10 +1,12 @@
 from time import sleep 
 from datetime import datetime
 import pylab as plb
+import numpy as npy
 
 from .futekLoadCell import *
 from .stages import ESP300
 from .vna import ZVA40_alex
+import mwavepy as mv
 
 class LifeTimeProbeTester(object):
 	'''
@@ -13,8 +15,9 @@ class LifeTimeProbeTester(object):
 	'''
 	def __init__(self, stage=None, vna=None, load_cell=None, \
 		down_direction=-1, step_increment =.001, contact_force=5,\
-		delay=.5,raiseup_overshoot=.1,uncontact_gap = .01,\
-		raiseup_velocity=10, file_dir = './'):
+		delay=.5,raiseup_overshoot=.1,uncontact_gap = .005,\
+		raiseup_velocity=10, zero_force_threshold=.05, \
+		read_networks=False, file_dir = './'):
 		'''
 		takes:
 			stage: a ESP300 object [None]
@@ -44,15 +47,31 @@ class LifeTimeProbeTester(object):
 		self.file_dir=file_dir
 		self.uncontact_gap =uncontact_gap
 		self.raiseup_velocity = raiseup_velocity
-		self.zero()
+		self.zero_force_threshold =zero_force_threshold
+		self.read_networks = read_networks
+		
+		
+		self.zero_force()
+		self.zero_position()
 		self.stage.motor_on = True
 		self.force_history = []
 		self.position_history = []
-
+		self.ntwk_history = []
+	
 	@property
 	def data(self):
+		if self.read_networks:
+			self.read_network()
 		return self.read_loadcell_and_stage_position()
-
+	
+	@property
+	def history(self):
+		return (npy.vstack((self.position_history, self.force_history)).T)
+	
+	def save_history(self, filename='force_vs_position.txt'):
+		npy.savetxt(filename, self.history)
+		for ntwk in self.ntwk_history:
+			ntwk.write_touchstone()
 	def move_toward(self,value):
 		self.stage.position_relative = self.down_direction*value
 
@@ -62,40 +81,59 @@ class LifeTimeProbeTester(object):
 	def clear_history(self):
 		self.force_history = []
 		self.position_history = []
-
+		self.ntwk_history = []
+		
 	def read_loadcell(self):
-		current_force = self.load_cell.data - self.zero_force 
+		current_force = self.load_cell.data - self._zero_force 
 		self.force_history.append(current_force)
 		return current_force
 
 	def read_stage_position(self):
-		current_position = self.stage.position
+		current_position = self.stage.position - self._zero_position
 		self.position_history.append(current_position)
 		return current_position
 
 	def read_loadcell_and_stage_position(self):
 		return self.read_stage_position(),self.read_loadcell() 
-		
+	
+	def read_network(self,name=None):
+		ntwk = self.vna.ch1.one_port
+		if name is None:
+			name = datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
+		print ('reading %s'%name)
+		ntwk.name= name
+		self.ntwk_history.append(ntwk)	
+	def zero_force(self):
+		self._zero_force = self.load_cell.data
+	
+	def zero_position(self):
+		self._zero_position = self.stage.position
+	
 	def zero(self):
-		self.zero_force = self.load_cell.data
-
-	def contact(self, write_network=False):
+		self.zero_force()
+		self.zero_position()
+	
+	def contact(self):
 		print ('position\tforce')
-		measured_force =  self.data[1]
+		measured_position,measured_force = self.data
+		print ('%f\t%f'% (measured_position, measured_force))
 		while measured_force < self.contact_force:
 			self.move_toward(self.step_increment)
 			measured_position,measured_force = self.data
-			print measured_position, measured_force
-			if write_network:
-				self.record_network()
-
+			print ('%f\t%f'% (measured_position, measured_force))
+		print ('Contact!')
+	
 	def uncontact(self):
-		measured_force =  self.data[1]
-		while measured_force  >.05 :
+		print ('position\tforce')
+		measured_position,measured_force = self.data
+		print ('%f\t%f'% (measured_position, measured_force))
+		while measured_force  > self.zero_force_threshold :
 			self.move_apart(self.step_increment)
 			measured_position,measured_force = self.data
-			print measured_position, measured_force
+			print ('%f\t%f'% (measured_position, measured_force))
 		self.move_apart(self.uncontact_gap)
+		print('Un-contacted.')	
+	
 	def raiseup(self):
 		tmp_velocity = self.stage.velocity
 		self.stage.velocity = self.raiseup_velocity
@@ -108,13 +146,8 @@ class LifeTimeProbeTester(object):
 		self.move_toward( self.raiseup_overshoot*.9)
 		self.stage.velocity = tmp_velocity
 		
-	def record_network(self,filename=None):
-		ntwk = self.vna.ch1.one_port
-		if filename is None:
-			filename = datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
-		print ('writing %s'%filename)
-		ntwk.write_touchstone(self.file_dir+filename+'.s1p')
 
+	
 	
 	def cycle_and_record_touchstone(self):
 		self.raiseup()
@@ -126,6 +159,33 @@ class LifeTimeProbeTester(object):
 		
 	def plot_data(self,**kwargs):
 		plb.plot(self.position_history, self.force_history,**kwargs)
+		plb.xlabel('Position [mm]')
+		plb.ylabel('Force[mN]')
+		
+	def plot_electrical_data(self, dir='./',f_index=None, **kwargs):
+		ntwks = mv.load_all_touchstones(dir=dir)
+		keys = ntwks.keys()
+		keys.sort()
+		phase_at_f = [ntwks[key].s_deg[f_index,0,0] for key in keys]
+		freq = ntwks[keys[0]].frequency
+		
+		if f_index is None:
+			f_index = [int(freq.npoints/2)]
+		for a_f_index in f_index:
+			f = freq.f_scaled[a_f_index]
+			f_unit = freq.unit
+			plb.figure()
+			plb.plot(npy.array(self.position_history)*1e3, phase_at_f, label='f=%i%s'%(f,f_unit),**kwargs)
+			plb.xlabel('Position[um]')
+			plb.ylabel('Phase [deg]')
+			plb.legend()
+			
+			plb.figure()
+			plb.plot(self.force_history, phase_at_f,label='f=%i%s'%(f,f_unit),**kwargs)
+			plb.ylabel('Phase [deg]')
+			plb.xlabel('Force[mN]')
+			plb.legend()
+		
 	def close(self):
 		for k in [self.vna, self.stage, self.load_cell]:
 			k.close()

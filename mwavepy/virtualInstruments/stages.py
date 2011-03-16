@@ -92,7 +92,7 @@ class ESP300(GpibInstrument):
 		the velocity of current axis
 		'''
 		command_string = 'VA'
-		return (self.ask('%i%s?'%(self.current_axis,command_string)))
+		return (float(self.ask('%i%s?'%(self.current_axis,command_string))))
 	@velocity.setter
 	def velocity(self,input):
 		command_string = 'VA'
