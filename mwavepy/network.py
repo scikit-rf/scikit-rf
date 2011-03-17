@@ -570,7 +570,7 @@ class Network(object):
 		#draw legend
 		if show_legend:
 			ax.legend()
-		
+		plb.draw()
 	def plot_polar_generic (self,attribute_r, attribute_theta,	m=0,n=0,\
 		ax=None,show_legend=True,**kwargs):
 		'''

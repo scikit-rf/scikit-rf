@@ -77,10 +77,22 @@ class LifeTimeProbeTester(object):
 	
 	def move_toward(self,value):
 		self.stage.position_relative = self.down_direction*value
-
+	
+	def move_toward_fast(self,value):
+		tmp_velocity = self.stage.velocity
+		self.stage.velocity = self.raiseup_velocity
+		self.move_toward( value)
+		self.stage.velocity = tmp_velocity
+		
+		
 	def move_apart(self,value):
 		self.stage.position_relative = -1*	self.down_direction*value		
-
+	def move_apart_fast(self,value):
+		tmp_velocity = self.stage.velocity
+		self.stage.velocity = self.raiseup_velocity
+		self.move_apart( value)
+		self.stage.velocity = tmp_velocity
+	
 	def clear_history(self):
 		self.force_history = []
 		self.position_history = []
@@ -126,6 +138,22 @@ class LifeTimeProbeTester(object):
 			print ('%f\t%f'% (measured_position, measured_force))
 		print ('Contact!')
 	
+	def contact_sloppy(self):
+		print ('position\tforce')
+		tmp_delay = self.stage.delay
+		tmp_step_increment = self.step_increment
+		self.stage.delay = .1
+		self.step_increment = self.step_increment * 2
+		measured_position,measured_force = self.data
+		print ('%f\t%f'% (measured_position, measured_force))
+		while measured_force < self.contact_force:
+			self.move_toward(self.step_increment)
+			measured_position,measured_force = self.data
+			print ('%f\t%f'% (measured_position, measured_force))
+		print ('Contact!')
+		self.stage.delay = tmp_delay
+		self.step_increment = tmp_step_increment
+	
 	def uncontact(self):
 		print ('position\tforce')
 		measured_position,measured_force = self.data
@@ -138,19 +166,10 @@ class LifeTimeProbeTester(object):
 		print('Un-contacted.')	
 	
 	def raiseup(self):
-		tmp_velocity = self.stage.velocity
-		self.stage.velocity = self.raiseup_velocity
-		self.move_apart (self.raiseup_overshoot)
-		self.stage.velocity = tmp_velocity
-
-	def lowerdown(self):
-		tmp_velocity = self.stage.velocity
-		self.stage.velocity = self.raiseup_velocity
-		self.move_toward( self.raiseup_overshoot*.9)
-		self.stage.velocity = tmp_velocity
+		self.move_apart_fast(self.raiseup_overshoot)
 		
-
-	
+	def lowerdown(self):
+		self.move_toward_fast(self.raiseup_overshoot*.9)
 	
 	def cycle_and_record_touchstone(self):
 		self.raiseup()
