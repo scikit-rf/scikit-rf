@@ -17,7 +17,7 @@ class LifeTimeProbeTester(object):
 		down_direction=-1, step_increment =.001, contact_force=5,\
 		delay=.5,raiseup_overshoot=.1,uncontact_gap = .005,\
 		raiseup_velocity=10, zero_force_threshold=.05, \
-		read_networks=False, file_dir = './'):
+		read_networks=False, file_dir = './', position_upper_limit=-2):
 		'''
 		takes:
 			stage: a ESP300 object [None]
@@ -49,7 +49,7 @@ class LifeTimeProbeTester(object):
 		self.raiseup_velocity = raiseup_velocity
 		self.zero_force_threshold =zero_force_threshold
 		self.read_networks = read_networks
-		
+		self.position_upper_limit= position_upper_limit
 		
 		self.zero_force()
 		self.zero_position()
@@ -76,8 +76,20 @@ class LifeTimeProbeTester(object):
 			ntwk.write_touchstone()
 	
 	def move_toward(self,value):
+		value = abs(value)
+		if self.down_direction == 1:
+			if self.stage.position + self.down_direction * value > \
+			self.position_upper_limit:
+				raise(ValueError('Safety Stop: Upper limit reached on stage'))
+		elif self.down_direction == -1:
+			if self.stage.position + self.down_direction * value < \
+			self.position_upper_limit:
+				raise(ValueError('Safety Stop: Upper limit reached on stage'))
+		
+		
+		
 		self.stage.position_relative = self.down_direction*value
-	
+		
 	def move_toward_fast(self,value):
 		tmp_velocity = self.stage.velocity
 		self.stage.velocity = self.raiseup_velocity
@@ -184,17 +196,15 @@ class LifeTimeProbeTester(object):
 		plb.xlabel('Position [mm]')
 		plb.ylabel('Force[mN]')
 		
-	def plot_electrical_data(self, dir='./',f_index=None, **kwargs):
-		ntwks = mv.load_all_touchstones(dir=dir)
-		keys = ntwks.keys()
-		keys.sort()
-		phase_at_f = [ntwks[key].s_deg[f_index,0,0] for key in keys]
-		freq = ntwks[keys[0]].frequency
+	def plot_electrical_data(self,f_index=None, **kwargs):
+		phase_at_f = [ntwk.s_deg[f_index,0,0] for ntwk in self.ntwk_history ]
+		freq = self.ntwk_history[0].frequency
 		
 		if f_index is None:
-			f_index = [int(freq.npoints/2)]
-		for a_f_index in f_index:
-			f = freq.f_scaled[a_f_index]
+			#f_index = [int(freq.npoints/2)]
+			f_index = int(freq.npoints/2)
+			#for a_f_index in f_index:
+			f = freq.f_scaled[f_index]
 			f_unit = freq.unit
 			plb.figure()
 			plb.plot(npy.array(self.position_history)*1e3, phase_at_f, label='f=%i%s'%(f,f_unit),**kwargs)
@@ -208,6 +218,16 @@ class LifeTimeProbeTester(object):
 			plb.xlabel('Force[mN]')
 			plb.legend()
 		
+	def monitor(self):
+		while (1):
+			ax = plb.gca()
+			a.read_loadcell_and_stage_position()
+			ax.clear()
+			ax.plot(range(len(a.force_history)), a.force_history, marker='o')
+			plb.draw()
+			
 	def close(self):
 		for k in [self.vna, self.stage, self.load_cell]:
 			k.close()
+
+	
