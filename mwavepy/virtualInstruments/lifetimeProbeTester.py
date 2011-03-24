@@ -192,32 +192,44 @@ class LifeTimeProbeTester(object):
 		self.uncontact()
 		
 	def plot_data(self,**kwargs):
-		plb.plot(self.position_history, self.force_history,**kwargs)
-		plb.xlabel('Position [mm]')
+		plb.plot(npy.array(self.position_history)*1e3, self.force_history,**kwargs)
+		plb.xlabel('Position [um]')
 		plb.ylabel('Force[mN]')
 		
 	def plot_electrical_data(self,f_index=None, **kwargs):
-		phase_at_f = [ntwk.s_deg[f_index,0,0] for ntwk in self.ntwk_history ]
 		freq = self.ntwk_history[0].frequency
-		
 		if f_index is None:
 			#f_index = [int(freq.npoints/2)]
 			f_index = int(freq.npoints/2)
-			#for a_f_index in f_index:
-			f = freq.f_scaled[f_index]
-			f_unit = freq.unit
-			plb.figure()
-			plb.plot(npy.array(self.position_history)*1e3, phase_at_f, label='f=%i%s'%(f,f_unit),**kwargs)
-			plb.xlabel('Position[um]')
-			plb.ylabel('Phase [deg]')
-			plb.legend()
-			
-			plb.figure()
-			plb.plot(self.force_history, phase_at_f,label='f=%i%s'%(f,f_unit),**kwargs)
-			plb.ylabel('Phase [deg]')
-			plb.xlabel('Force[mN]')
-			plb.legend()
 		
+		phase_at_f = npy.array([ntwk.s_deg[f_index,0,0] for ntwk in self.ntwk_history ])
+		
+		f = freq.f_scaled[f_index]
+		f_unit = freq.unit
+		
+		plb.figure(2)
+		plb.plot(npy.array(self.position_history)*1e3, phase_at_f, label='f=%i%s'%(f,f_unit),**kwargs)
+		plb.xlabel('Position[um]')
+		plb.ylabel('Phase [deg]')
+		plb.legend()
+		
+		plb.figure(3)
+		plb.plot(npy.array(self.position_history[1:])*1e3, npy.diff(phase_at_f), label='f=%i%s'%(f,f_unit),**kwargs)
+		plb.xlabel('Position[um]')
+		plb.ylabel('Phase Difference [deg]')
+		plb.legend()
+		
+		plb.figure(4)
+		plb.plot(self.force_history, phase_at_f,label='f=%i%s'%(f,f_unit),**kwargs)
+		plb.ylabel('Phase [deg]')
+		plb.xlabel('Force[mN]')
+		plb.legend()
+		
+		plb.figure(5)
+		plb.plot(self.force_history[1:], npy.diff(phase_at_f),label='f=%i%s'%(f,f_unit),**kwargs)
+		plb.ylabel('Phase Difference[deg]')
+		plb.xlabel('Force[mN]')
+		plb.legend()
 	def monitor(self):
 		while (1):
 			ax = plb.gca()
