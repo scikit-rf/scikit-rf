@@ -193,6 +193,7 @@ class LifeTimeProbeTester(object):
 		
 	def plot_data(self,**kwargs):
 		plb.plot(npy.array(self.position_history)*1e3, self.force_history,**kwargs)
+		plb.title('Force vs. Position')
 		plb.xlabel('Position [um]')
 		plb.ylabel('Force[mN]')
 		
@@ -208,24 +209,28 @@ class LifeTimeProbeTester(object):
 		f_unit = freq.unit
 		
 		plb.figure(2)
+		plb.title('Phase vs Position')
 		plb.plot(npy.array(self.position_history)*1e3, phase_at_f, label='f=%i%s'%(f,f_unit),**kwargs)
 		plb.xlabel('Position[um]')
 		plb.ylabel('Phase [deg]')
 		plb.legend()
 		
 		plb.figure(3)
+		plb.title('Phase vs Force')
 		plb.plot(npy.array(self.position_history[1:])*1e3, npy.diff(phase_at_f), label='f=%i%s'%(f,f_unit),**kwargs)
 		plb.xlabel('Position[um]')
 		plb.ylabel('Phase Difference [deg]')
 		plb.legend()
 		
 		plb.figure(4)
+		plb.title('Phase Change vs Force')
 		plb.plot(self.force_history, phase_at_f,label='f=%i%s'%(f,f_unit),**kwargs)
 		plb.ylabel('Phase [deg]')
 		plb.xlabel('Force[mN]')
 		plb.legend()
 		
 		plb.figure(5)
+		plb.title('Phase Change vs Position')
 		plb.plot(self.force_history[1:], npy.diff(phase_at_f),label='f=%i%s'%(f,f_unit),**kwargs)
 		plb.ylabel('Phase Difference[deg]')
 		plb.xlabel('Force[mN]')

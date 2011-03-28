@@ -75,7 +75,7 @@ class PNAX(GpibInstrument):
 		return ntwk
 		
 		
-class ZVA40(object):
+class ZVA40_lihan(object):
 	'''
 	Created on Aug 3, 2010
 	@author: Lihan
@@ -176,8 +176,140 @@ class ZVA40(object):
 		npy.savetxt(fid,formatedData,fmt='%10.5f')
 		fid.close()
 
+class ZVA40(GpibInstrument):
+	'''
+	the rohde Swarz ZVA40
+	'''
+	def __init__(self, address=20, active_channel = 1, continuous=True,\
+		**kwargs):
+		GpibInstrument.__init__(self,address, **kwargs)
+		self.active_channel = active_channel
+		self.continuous = continuous
+		self.traces = []
+		#self.update_trace_list()
+		
+	@property
+	def sdata(self):
+		'''
+		unformated s-parameter data [a numpy array]
+		'''
+		return npy.array(self.ask_for_values(\
+			'CALCulate%i:DATA? SDATa'%(self.active_channel)))
+	
+	@property
+	def fdata(self):
+		'''
+		formated s-parameter data [a numpy array]
+		'''
+		return npy.array(self.ask_for_values(\
+			'CALCulate%i:DATA? FDATa'%(self.active_channel)))
+	
+	@property
+	def continuous(self):
+		'''
+		set/get continuous sweep mode on/off [boolean]
+		'''
+		return self._continuous
+		
+	@continuous.setter
+	def continuous(self, value):
+		if value:
+			self.write('INIT%i:CONT ON;'%(self.active_channel))
+			self._continuous = True
+		elif not value:
+			self.write('INIT%i:CONT OFF;'%(self.active_channel))
+			self._continuous = False
+		else:
+			raise ValueError('takes boolean')
 
 
+	@property
+	def frequency(self, unit='ghz'):
+		'''
+		a frequency object, representing the current frequency axis
+		[mwavepy Frequency object]
+		'''
+		freq=Frequency(0,0,0)
+		freq.f = self.ask_for_values(\
+			'CALC%i:DATA:STIMulus?'%self.active_channel)
+		freq.unit = unit
+		return freq
+	
+	@property
+	def one_port(self):
+		'''
+		a network representing the current active trace 
+		[mwavepy Network object]
+		'''
+		self.sweep()
+		s = self.sdata
+		s.shape=(-1,2)
+		s =  s[:,0]+1j*s[:,1]
+		ntwk = Network()
+		ntwk.s = s
+		ntwk.frequency= self.frequency 
+		return ntwk
+	
+	@property 
+	def s11(self):
+		'''
+		this is just for legacy support, there is no gurantee this 
+		will return s11. it just returns active trace
+		'''
+		return self.one_port
+		
+		
+	@property
+	def error(self):
+		'''
+		returns list errors stored on vna 
+		'''
+		return self.ask('OUTPERROR?')
+
+	def initiate(self):
+		'''
+		initiate a sweep on current channel (low level timing)
+		'''
+		self.write('INITiate%i'%self.active_channel)
+
+	def sweep(self):
+		'''
+		initiate a sweep on current channel. if vna is in continous 
+		mode it will put in single sweep mode, then request a sweep, 
+		and then return sweep mode to continous. 
+		'''
+		if self.continuous:
+			self.continuous = False
+			self.write(\
+				'INITiate%i:IMMediate;*WAI'%self.active_channel)	
+			self.continuous = True
+		else:
+			self.write(\
+				'INITiate%i:IMMediate;*WAI'%self.active_channel)
+		
+	def wait(self):
+		'''
+		wait for preceding command to finish before executing subsequent
+		commands
+		'''
+		self.write('*WAIt')
+
+	def add_trace(self, parameter, name):
+		print ('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
+			%(self.active_channel, name, parameter))				
+		self.write('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
+			%(self.active_channel, name, parameter))
+		self.traces[name] = parameter
+		
+	def set_active_trace(self, name):
+		if name in self.traces:
+			self.write('CALC%i:PAR:SEL %s'%(self.active_channel,name))
+		else:
+			raise ValueError('trace name does exist')
+	def update_trace_list(self):
+		raise(NotImplementedError)
+		
+		
 class ZVA40_alex(GpibInstrument):
 	'''
 	the rohde Swarz zva40
