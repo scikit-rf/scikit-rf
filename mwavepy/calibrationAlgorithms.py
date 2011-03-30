@@ -236,8 +236,8 @@ def one_port_nls (measured, ideals):
 	#make  copies so list entities are not changed, when we typecast 
 	mList = copy(measured)
 	iList = copy(ideals)
-	
-	numStds = len(mList)# find number of standards given, for dimensions
+	# find number of standards given, for dimensions
+	numStds = len(mList)
 	numCoefs=3
 	# try to access s-parameters, in case its a ntwk type, other wise 
 	# just keep on rollin 
@@ -253,7 +253,8 @@ def one_port_nls (measured, ideals):
 	
 	#initialize outputs 
 	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
+	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex)
+	cov_x = [] 
 	
 
 	def residual_func(p, m,a):
@@ -278,10 +279,10 @@ def one_port_nls (measured, ideals):
 			args = (complex2Scalar(m), complex2Scalar(i)),\
 			)
 		e00,e11,e0110 = scalar2Complex(leastsq_output[0])
-		abc[f,:] = [e00*e11-e0110, e00,e11]
-		
+		abc[f,:] = [e0110-e00*e11, e00,e11]
+		cov_x.append(leastsq_output[1])
 	# output is a dictionary of information
-	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals}
+	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals, 'cov_x':cov_x}
 	
 	return output
 

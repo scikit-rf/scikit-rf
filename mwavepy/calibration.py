@@ -230,7 +230,7 @@ class Calibration(object):
 			caled: the calibrated measurement, a Network type.
 		'''
 		if self.nports ==1:
-			caled =  input_ntwk//self.error_ntwk 
+			caled =  self.error_ntwk.inv**input_ntwk 
 			caled.name = input_ntwk.name
 			
 		elif self.nports == 2:
