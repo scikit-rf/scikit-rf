@@ -152,11 +152,21 @@ class Calibration(object):
 			'directivity':e00
 			'reflection tracking':e01e10
 			'source match':e11
+		for 7-error term two port cal's
+			TBD
 		'''
-		
-
 		return self.output_from_cal['error coefficients']
-
+	@property
+	def residuals(self):
+		'''
+		from numpy.lstsq:
+			residues:
+			the sum of the residues; squared euclidean norm for 
+			each column vector in b (given ax=b)
+		
+		'''
+		return self.output_from_cal['residuals']
+		
 	@property
 	def error_ntwk(self):
 		'''
@@ -271,9 +281,7 @@ class Calibration(object):
 		if ax is None:
 			ax = plb.gca()
 
-		
-
-		
+				
 		# plot the desired attribute vs frequency
 		for error_term in self.coefs:
 			error_term_db = complex_2_db(self.coefs[error_term])
@@ -284,6 +292,32 @@ class Calibration(object):
 		# label axis
 		plb.xlabel('Frequency ['+ self.frequency.unit +']')
 		plb.ylabel('Magnitude [dB]')
+		plb.axis('tight')
+		#draw legend
+		if show_legend:
+			plb.legend()
+	
+	def plot_residuals_db(self,ax=None,show_legend=True,**kwargs):
+		'''
+		plot magnitude of the resdiues, if calibration is
+		 overdetermined 
+		'''
+
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+
+		if self.name is None:
+			label_string = ''	
+		else:
+			label_string = self.name	
+		ax.plot(self.frequency.f_scaled, \
+			complex_2_db(self.residuals), label=label_string,\
+			**kwargs)
+
+		# label axis
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
+		plb.ylabel('Residual Magnitude [dB]')
 		plb.axis('tight')
 		#draw legend
 		if show_legend:

@@ -185,9 +185,11 @@ def one_port(measured, ideals):
 	fLength = len(mList[0])
 	
 	#initialize outputs 
-	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residuals = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
-	
+	abc = npy.zeros((fLength,numCoefs),dtype=complex) 
+	residuals =	npy.zeros((fLength,\
+		npy.sign(numStds-numCoefs)),dtype=complex) 
+	parameter_variance = npy.zeros((fLength, 3,3),dtype=complex)
+	measurement_variance = npy.zeros((fLength, 1),dtype=complex)
 	# loop through frequencies and form m, a vectors and 
 	# the matrix M. where M = 	i1, 1, i1*m1 
 	#							i2, 1, i2*m2
@@ -202,6 +204,12 @@ def one_port(measured, ideals):
 		Q = npy.hstack([i, one, i*m])
 		# calculate least squares
 		abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
+		if numStds > 3:
+			measurement_variance[f,:]= residualsTmp/(numStds-numCoefs)
+			parameter_variance[f,:] = \
+				abs(measurement_variance[f,:])*\
+				npy.linalg.inv(npy.dot(Q.T,Q))
+				
 		# indicates singular value of matrix, but also same as having 3-standards
 		#if len (residualsTmp ) == 0:
 		#	raise ValueError( 'matrix has singular values, check complex distance of  standards')
@@ -209,11 +217,11 @@ def one_port(measured, ideals):
 		try:
 			residuals[f,:] = residualsTmp
 		except(ValueError):
-			raise(ValueError('matrix has singular values, ensure standards are far enough away'))
+			raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))
 	
 
 	# output is a dictionary of information
-	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals}
+	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals, 'parameter variance':parameter_variance}
 	
 	return output
 
@@ -221,6 +229,10 @@ def one_port(measured, ideals):
 
 
 def one_port_nls (measured, ideals):
+	'''
+	one port non-linear least squares.
+	
+	'''
 	#make  copies so list entities are not changed, when we typecast 
 	mList = copy(measured)
 	iList = copy(ideals)
