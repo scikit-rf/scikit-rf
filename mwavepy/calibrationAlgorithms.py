@@ -277,6 +277,7 @@ def one_port_nls (measured, ideals):
 			func = residual_func, \
 			x0 = [0, 0,0,0,1,0],\
 			args = (complex2Scalar(m), complex2Scalar(i)),\
+			full_output=True,\
 			)
 		e00,e11,e0110 = scalar2Complex(leastsq_output[0])
 		abc[f,:] = [e0110-e00*e11, e00,e11]

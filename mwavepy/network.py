@@ -187,14 +187,14 @@ class Network(object):
 		else:
 			return False
 	
-	#def __getitem__(self,key):
-		#'''
-		#returns a Network object at a given single frequency
-		#'''
-		#output = deepcopy(self)
-		#output.s = output.s[key,:,:]
-		#output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
-		#return output
+	def __getitem__(self,key):
+		'''
+		returns a Network object at a given single frequency
+		'''
+		output = deepcopy(self)
+		output.s = output.s[key,:,:]
+		output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
+		return output
 ## PRIMARY PROPERTIES
 	# s-parameter matrix
 	@property
