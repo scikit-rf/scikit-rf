@@ -260,7 +260,9 @@ def one_port_nls (measured, ideals):
 	def residual_func(p, m,a):
 		e00,e11,e0110 = scalar2Complex(p)
 		m,a = scalar2Complex(m), scalar2Complex(a)
-		er = m - ( e00 + e0110*a/(npy.ones(len(a))-e11*a))
+		m_i = ( e00 + e0110*a/(npy.ones(len(a))-e11*a))	
+		er = m-m_i
+		er = er.real, er.imag#, npy.angle(er), 
 		return complex2Scalar(er)
 	# loop through frequencies and form m, a vectors and 
 	# the matrix M. where M = 	i1, 1, i1*m1 

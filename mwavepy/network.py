@@ -843,7 +843,26 @@ class Network(object):
 		phase = (self.s_deg+phase_rv)
 		mag = self.s_mag + mag_rv 
 		self.s = mag* npy.exp(1j*npy.pi/180.*phase)
-
+	
+	def multiply_noise(self,mag_dev, phase_dev, **kwargs):
+		'''
+		multiplys a complex bivariate gaussian white-noise signal
+		of given standard deviations for magnitude and phase. 	
+		magnitude mean is 1, phase mean is 0 
+		
+		takes:
+			mag_dev: standard deviation of magnitude
+			phase_dev: standard deviation of phase [in degrees]
+			n_ports: number of ports. defualt to 1
+		returns:
+			nothing
+		'''
+		phase_rv = stats.norm(loc=0, scale=phase_dev).rvs(\
+			size = self.s.shape)
+		mag_rv = stats.norm(loc=1, scale=mag_dev).rvs(\
+			size = self.s.shape)
+		self.s = mag_rv*npy.exp(1j*npy.pi/180.*phase_rv)*self.s
+	
 	def nudge(self, amount=1e-12):
 		'''
 		perturb s-parameters by small amount. this is usefule to work-around

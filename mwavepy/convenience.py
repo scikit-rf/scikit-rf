@@ -39,7 +39,7 @@ from workingBand import WorkingBand
 import os
 import pylab as plb
 from scipy.constants import mil
-
+from datetime import datetime
 
 ## sets of Frequency,RectangularWaveguideTE10, and WorkingBand objects,
 ## which correspond to designated waveguide bands
@@ -115,3 +115,6 @@ def write_dict_of_networks(ntwkDict, dir='.'):
 	'''
 	for ntwkKey in ntwkDict:
 		ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
+
+def now_string():
+	return datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')

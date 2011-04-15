@@ -422,8 +422,9 @@ class HP8510C(GpibInstrument):
 	def error(self):
 		return self.ask('OUTPERRO')
 	@property
-	def continuous(self):
-		return self.ask('CONT?')
+	def continuous(self): 
+		answer_dict={'\"HOLD\"':False,'\"CONTINUAL\"':True}
+		return answer_dict[self.ask('GROU?')]
 	
 	@continuous.setter
 	def continuous(self, choice):
