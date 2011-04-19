@@ -290,7 +290,7 @@ def one_port_nls (measured, ideals):
 	return output
 
 ## TWO PORT
-def two_port(measured, ideals):
+def two_port(measured, ideals, switchterms = None):
 	'''
 	two port calibration based on the 8-term error model.  takes two
 	ordered lists of measured and ideal responses. optionally, switch
@@ -298,8 +298,9 @@ def two_port(measured, ideals):
 	forward and reverse switch terms as 1-port Networks
 
 	takes: 
-		measured: ordered list of measured networks. list elements should be
-			2-port	Network types. list order must correspond with ideals.  
+		measured: ordered list of measured networks. list elements
+			should be	2-port	Network types. list order must correspond
+			with ideals.  
 		ideals: ordered list of ideal networks. list elements should be
 			2-port	Network types.
 		switch_terms: tuple of 1-port Network types holding switch terms
@@ -332,6 +333,15 @@ def two_port(measured, ideals):
 	iList = copy(ideals)
 	numStds = len(mList)# find number of standards given, for dimensions
 	numCoefs = 7
+	
+	if switchterms is not None:
+		for ntwk in mList:
+			ntwk = unterminate_switch_terms(\
+				two_port = ntwk,\
+				gamma_f = switchterms[0],\
+				gamma_r = switchterms[1],\
+				)
+	
 	# try to access s-parameters, in case its a ntwk type, other wise 
 	# just keep on rollin 
 	try:
@@ -340,6 +350,10 @@ def two_port(measured, ideals):
 			iList[k] = iList[k].s
 	except:
 		pass	
+	
+
+	
+	
 	
 	fLength = len(mList[0])
 	#initialize outputs 

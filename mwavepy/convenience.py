@@ -79,7 +79,14 @@ def legend_off(ax=None):
 		plb.gca().legend_.set_visible(0)
 	else:
 		ax.lengend_.set_visible(0)
-		
+
+def plot_complex(z,*args, **kwargs):
+	'''
+	plots a complex array or list in real vs imaginary. 
+	'''
+	plb.plot(npy.array(z).real,npy.array(z).imag, *args, **kwargs)
+	
+	
 # Touchstone manipulation	
 def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 	'''
