@@ -17,7 +17,7 @@ class LifeTimeProbeTester(object):
 		down_direction=-1, step_increment =.001, contact_force=5,\
 		delay=.5,raiseup_overshoot=.1,uncontact_gap = .005,\
 		raiseup_velocity=10, zero_force_threshold=.05, \
-		read_networks=False, file_dir = './', position_upper_limit=-2):
+		read_networks=False, file_dir = './', position_upper_limit=-10):
 		'''
 		takes:
 			stage: a ESP300 object [None]
@@ -123,13 +123,16 @@ class LifeTimeProbeTester(object):
 	def read_loadcell_and_stage_position(self):
 		return self.read_stage_position(),self.read_loadcell() 
 	
-	def read_network(self,name=None):
+	def read_network(self,name=None, write=False):
 		ntwk = self.vna.ch1.one_port
 		if name is None:
 			name = datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
 		print ('reading %s'%name)
 		ntwk.name= name
 		self.ntwk_history.append(ntwk)	
+		if write:
+			ntwk.write_touchstone()
+	
 	def zero_force(self):
 		self._zero_force = self.load_cell.data
 	
@@ -139,7 +142,13 @@ class LifeTimeProbeTester(object):
 	def zero(self):
 		self.zero_force()
 		self.zero_position()
-	
+	def set_position_upper_limit(self, distance=.1):
+		self.contact_sloppy()
+		self.position_upper_limit = self.stage.position +\
+			distance*self.down_direction
+		print ('new hardware limit set to %f'%self.position_upper_limit)
+		self.uncontact()
+		
 	def contact(self):
 		print ('position\tforce')
 		measured_position,measured_force = self.data

@@ -334,6 +334,9 @@ def two_port(measured, ideals, switchterms = None):
 	numStds = len(mList)# find number of standards given, for dimensions
 	numCoefs = 7
 	
+	if len (mList) != len(iList):
+		raise ValueError('Number of ideals must == number of measurements')
+	
 	if switchterms is not None:
 		for ntwk in mList:
 			ntwk = unterminate_switch_terms(\
