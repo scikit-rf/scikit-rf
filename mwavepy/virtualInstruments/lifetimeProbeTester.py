@@ -17,7 +17,7 @@ class LifeTimeProbeTester(object):
 		down_direction=-1, step_increment =.001, contact_force=5,\
 		delay=.5,raiseup_overshoot=.1,uncontact_gap = .005,\
 		raiseup_velocity=10, zero_force_threshold=.05, \
-		read_networks=False, file_dir = './', position_upper_limit=-10):
+		read_networks=False, file_dir = './', position_upper_limit=-10,cpw_line_spaceing = .145):
 		'''
 		takes:
 			stage: a ESP300 object [None]
@@ -30,9 +30,13 @@ class LifeTimeProbeTester(object):
 			raisup_overshoot:
 			file_dir:
 		'''
-		if stage is None: self.stage = ESP300()
-		else: self.stage = stage
-
+		if stage is None: 
+			self.stage = ESP300()
+			self.stage2 = ESP300(current_axis=2)
+		else: 
+			self.stage = stage
+		
+		
 		if vna is None: self.vna = ZVA40_alex()
 		else: self.vna = vna
 
@@ -50,6 +54,7 @@ class LifeTimeProbeTester(object):
 		self.zero_force_threshold =zero_force_threshold
 		self.read_networks = read_networks
 		self.position_upper_limit= position_upper_limit
+		self.cpw_line_spaceing = .145# inmm
 		
 		self.zero_force()
 		self.zero_position()
@@ -105,6 +110,10 @@ class LifeTimeProbeTester(object):
 		self.move_apart( value)
 		self.stage.velocity = tmp_velocity
 	
+	def move_left(self):
+		self.stage2.position_relative(self.cpw_line_spacing)
+	def move_right(self):
+		self.stage2.position_relative(-self.cpw_line_spacing)
 	def clear_history(self):
 		self.force_history = []
 		self.position_history = []
@@ -185,6 +194,22 @@ class LifeTimeProbeTester(object):
 			print ('%f\t%f'% (measured_position, measured_force))
 		self.move_apart(self.uncontact_gap)
 		print('Un-contacted.')	
+	
+	def uncontact_sloppy(self):
+		print ('position\tforce')
+		tmp_delay = self.stage.delay
+		tmp_step_increment = self.step_increment
+		self.stage.delay = .1
+		self.step_increment = self.step_increment * 4
+		measured_position,measured_force = self.data
+		print ('%f\t%f'% (measured_position, measured_force))
+		while measured_force  > self.zero_force_threshold :
+			self.move_apart(self.step_increment)
+			measured_position,measured_force = self.data
+			print ('%f\t%f'% (measured_position, measured_force))
+		print ('Un-Contact.')
+		self.stage.delay = tmp_delay
+		self.step_increment = tmp_step_increment
 	
 	def raiseup(self):
 		self.move_apart_fast(self.raiseup_overshoot)
