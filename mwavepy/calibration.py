@@ -311,13 +311,13 @@ class Calibration(object):
 			label_string = ''	
 		else:
 			label_string = self.name	
-		ax.plot(self.frequency.f_scaled, \
-			complex_2_db(self.residuals), label=label_string,\
+		ax.semilogy(self.frequency.f_scaled, \
+			abs(self.residuals), label=label_string,\
 			**kwargs)
 
 		# label axis
 		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Residual Magnitude [dB]')
+		plb.ylabel('Residual Magnitude')
 		plb.axis('tight')
 		#draw legend
 		if show_legend:

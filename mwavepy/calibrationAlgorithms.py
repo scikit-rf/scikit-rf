@@ -283,9 +283,12 @@ def one_port_nls (measured, ideals):
 			)
 		e00,e11,e0110 = scalar2Complex(leastsq_output[0])
 		abc[f,:] = [e0110-e00*e11, e00,e11]
-		cov_x.append(leastsq_output[1])
+		residualsTmp = (residual_func(leastsq_output[0], \
+			complex2Scalar(m),complex2Scalar(i))**2).sum()
+		s_sq = residualsTmp/(numStds*2 - numCoefs*2)
+		cov_x.append(leastsq_output[1]* s_sq)
 	# output is a dictionary of information
-	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals, 'cov_x':cov_x}
+	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals, 'cov_x':npy.array(cov_x)}
 	
 	return output
 

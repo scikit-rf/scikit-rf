@@ -66,5 +66,6 @@ class OnePortStandardCalibration(unittest.TestCase):
 			self.assertEqual(ntwk,  cal.apply_cal(self.embeding_network**ntwk))
 
 	
-if __name__ == "__main__":
-   unittest.main()
+suite = unittest.TestLoader().loadTestsFromTestCase(OnePortStandardCalibration)
+unittest.TextTestRunner(verbosity=2).run(suite)
+
