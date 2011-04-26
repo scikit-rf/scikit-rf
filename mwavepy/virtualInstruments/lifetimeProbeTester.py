@@ -156,7 +156,7 @@ class LifeTimeProbeTester(object):
 		self.position_upper_limit = self.stage.position +\
 			distance*self.down_direction
 		print ('new hardware limit set to %f'%self.position_upper_limit)
-		self.uncontact()
+		self.uncontact_sloppy()
 		
 	def contact(self):
 		print ('position\tforce')
@@ -173,7 +173,7 @@ class LifeTimeProbeTester(object):
 		tmp_delay = self.stage.delay
 		tmp_step_increment = self.step_increment
 		self.stage.delay = .1
-		self.step_increment = self.step_increment * 2
+		self.step_increment =  .004# self.step_increment * 4
 		measured_position,measured_force = self.data
 		print ('%f\t%f'% (measured_position, measured_force))
 		while measured_force < self.contact_force:
@@ -200,14 +200,16 @@ class LifeTimeProbeTester(object):
 		tmp_delay = self.stage.delay
 		tmp_step_increment = self.step_increment
 		self.stage.delay = .1
-		self.step_increment = self.step_increment * 4
+		self.step_increment = .004#self.step_increment * 4
 		measured_position,measured_force = self.data
 		print ('%f\t%f'% (measured_position, measured_force))
 		while measured_force  > self.zero_force_threshold :
 			self.move_apart(self.step_increment)
 			measured_position,measured_force = self.data
 			print ('%f\t%f'% (measured_position, measured_force))
+		self.move_apart(self.uncontact_gap)
 		print ('Un-Contact.')
+		
 		self.stage.delay = tmp_delay
 		self.step_increment = tmp_step_increment
 	
