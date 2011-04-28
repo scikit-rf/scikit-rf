@@ -54,7 +54,7 @@ class LifeTimeProbeTester(object):
 		self.zero_force_threshold =zero_force_threshold
 		self.read_networks = read_networks
 		self.position_upper_limit= position_upper_limit
-		self.cpw_line_spaceing = .145# inmm
+		self.cpw_line_spacing = .145# inmm
 		
 		self.zero_force()
 		self.zero_position()
@@ -110,10 +110,10 @@ class LifeTimeProbeTester(object):
 		self.move_apart( value)
 		self.stage.velocity = tmp_velocity
 	
-	def move_left(self):
-		self.stage2.position_relative(self.cpw_line_spacing)
-	def move_right(self):
-		self.stage2.position_relative(-self.cpw_line_spacing)
+	def move_left(self,n=1):
+		self.stage2.position_relative= n*self.cpw_line_spacing
+	def move_right(self,n=1):
+		self.stage2.position_relative= -n*self.cpw_line_spacing
 	def clear_history(self):
 		self.force_history = []
 		self.position_history = []
@@ -278,7 +278,30 @@ class LifeTimeProbeTester(object):
 			ax.clear()
 			ax.plot(range(len(a.force_history)), a.force_history, marker='o')
 			plb.draw()
-			
+	
+	def beat_probe_up(self,total_beatings=1000, beatings_per_spot=100, go_left=True):
+		slide_counter = 0
+		for current_beating in range(total_beatings):
+			if current_beating%beatings_per_spot == 0:
+				slide_counter+=1
+				if go_left:
+					self.move_left()
+				else:
+					self.move_right()
+			self.contact_force -=5
+			self.contact_sloppy()
+			self.contact_force +=5
+			self.contact()
+			self.uncontact_sloppy()
+			print('landing #%i'%current_beating)
+		
+		
+		if go_left:
+			self.move_right(slide_counter)
+		else:
+			self.move_left(slide_counter)
+		
+		
 	def close(self):
 		for k in [self.vna, self.stage, self.load_cell]:
 			k.close()
