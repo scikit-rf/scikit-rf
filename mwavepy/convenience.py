@@ -38,6 +38,7 @@ from workingBand import WorkingBand
 
 import os
 import pylab as plb
+import numpy as npy
 from scipy.constants import mil
 from datetime import datetime
 
@@ -125,3 +126,33 @@ def write_dict_of_networks(ntwkDict, dir='.'):
 
 def now_string():
 	return datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
+
+
+def csv_2_touchstone(filename):
+	'''
+	converts a csv file saved from a Rhode swarz and possibly other 
+	
+	takes:
+		filename: name of file
+	returns:
+		Network object
+	'''
+		
+	ntwk = Network(name=filename[:-4])
+	try: 
+		data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
+			usecols=range(9))
+		s11 = data[:,1] +1j*data[:,2]	
+		s21 = data[:,3] +1j*data[:,4]	
+		s12 = data[:,5] +1j*data[:,6]	
+		s22 = data[:,7] +1j*data[:,8]	
+		ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
+	except(IndexError):
+		data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
+			usecols=range(3))		
+		ntwk.s = data[:,1] +1j*data[:,2]
+	
+	ntwk.frequency.f = data[:,0]
+	ntwk.frequency.unit='ghz'
+	
+	return ntwk
