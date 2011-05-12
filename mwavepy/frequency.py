@@ -70,6 +70,11 @@ class Frequency(object):
 		self.start =  self.multiplier * start
 		self.stop = self.multiplier * stop
 		self.npoints = npoints
+	
+	def __eq__(self, other):
+		return (list(self.f_scaled) == list(other.f_scaled))	
+	def __ne__(self,other):
+		return (not self.__eq__(other))
 		
 	@property
 	def center(self):

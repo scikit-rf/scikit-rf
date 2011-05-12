@@ -186,7 +186,9 @@ class Network(object):
 			return True
 		else:
 			return False
-	
+	def __ne__(self,other):
+		return (not self.__eq__(other))
+		
 	def __getitem__(self,key):
 		'''
 		returns a Network object at a given single frequency

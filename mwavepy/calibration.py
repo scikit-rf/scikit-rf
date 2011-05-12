@@ -34,7 +34,7 @@ from calibrationAlgorithms import *
 from frequency import *
 from network import *
 from convenience import *
-
+import itertools
 ## main class
 class Calibration(object):
 	'''
@@ -54,8 +54,8 @@ class Calibration(object):
 		'two port parameterized':parameterized_self_calibration,\
 		}
 	
-	def __init__(self,frequency , type, is_reciprocal=False,\
-		switch_terms=None, name=None,**kwargs):
+	def __init__(self,measured, ideals, type=None, frequency=None,\
+		is_reciprocal=False,switch_terms=None, name=None,**kwargs):
 		'''
 		Calibration initializer
 		
@@ -86,17 +86,33 @@ class Calibration(object):
 			**kwargs: key-word arguments passed to the calibration
 				algorithm.
 		'''
-		self.frequency = copy(frequency)
+		
+		self.measured = copy(measured)
+		self.ideals = copy(ideals)
+		self.type = type
+		self.frequency = frequency
 		# a dictionary holding key word arguments to pass to whatever
 		# calibration function we are going to call
 		self.kwargs = kwargs
-		self.type = type
 		self.name = name
 		self.is_reciprocal = is_reciprocal
 		self.switch_terms = switch_terms
 		self.has_run = False
+		
 
 	## properties
+	@property 
+	def frequency(self):
+		return self._frequency
+	
+	@frequency.setter
+	def frequency(self, new_frequency):
+		if new_frequency is None:
+			# they did not supply frequency, so i will try
+			# to inspect a measured ntwk to  get it
+			self._frequency = deepcopy(self.measured[0].frequency) 
+		self._frequency = deepcopy(new_frequency)
+		
 	@property
 	def type (self):
 		'''
@@ -117,9 +133,24 @@ class Calibration(object):
 
 	@type.setter
 	def type(self, new_type):
+		if new_type is None:
+			# they did not supply a calibration type, so i will try
+			# to inspect a measured ntwk to see how many ports it has
+			print ('Calibration type not supplied, inspecting type from measured Networks..'),
+			if self.measured[0].number_of_ports == 1:
+				new_type = 'one port'
+				print (' using \'one port\' calibration')
+			elif self.measured[0].number_of_ports == 2:
+				new_type = 'two port'
+				print (' using \'two port\' calibration')
+		
 		if new_type not in self.calibration_algorithm_dict.keys():
 			raise ValueError('incorrect calibration type')
+		
+		
 		self._type = new_type
+		
+		# set the number of ports of the calibration
 		if 'one port' in new_type:
 			self._nports = 1
 		elif 'two port' in new_type:
@@ -207,8 +238,28 @@ class Calibration(object):
 		, but only the first time. if you change something and want to
 		re-run the calibration use this.  
 		'''
+		# some basic checking to make sure they gave us consistent data
+		if self.type == 'one port' or self.type == 'two port':
+			
+			#1 did they supply the same number of  ideals as measured?
+			if len(self.measured) != len(self.ideals):
+				raise(IndexError(' The length of measured and ideals lists are different. Number of ideals must equal the number of measured. '))
+			
+			#2 are all the networks' frequency's the same? 
+			index_tuple = \
+			list(itertools.permutations(range(len(self.measured)),2))
+			
+			for k in index_tuple:
+				if self.measured[k[0]].frequency != \
+					self.ideals[k[1]].frequency:
+					raise(IndexError('Frequency information doesnt match on measured[%i], ideals[%i]. All networks must have identical frequency information'%(k[0],k[1])))
+#
+		
+		
+		
+		# actually call the algorithm and run the calibration
 		self._output_from_cal = \
-			self.calibration_algorithm_dict[self.type](**self.kwargs)
+			self.calibration_algorithm_dict[self.type](measured = self.measured, ideals = self.ideals,**self.kwargs)
 
 		if self.nports ==1:
 			self._error_ntwk = error_dict_2_network(self.coefs, \
