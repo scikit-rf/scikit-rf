@@ -5,7 +5,7 @@ ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
 setup(name='mwavepy',
-	version='1.0',
+	version='1.1',
 	license='gpl',
 	description='Microwave Engineering Classes and Functions for python',
 	author='Alex Arsenovic, Lihan Chen',
