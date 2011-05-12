@@ -38,9 +38,12 @@ import itertools
 ## main class
 class Calibration(object):
 	'''
-	Represents a calibration instance, a generic class to hold sets
+	Represents a calibration instance, a class to hold sets
 	of measurements, ideals, and calibration results.
-
+	
+	see init for more information on usage. 
+	
+	note:
 	all calibration algorithms are in calibrationAlgorithms.py, and are
 	referenced by the dictionary in this object called
 	'calibration_algorihtm_dict'
@@ -57,14 +60,21 @@ class Calibration(object):
 	def __init__(self,measured, ideals, type=None, frequency=None,\
 		is_reciprocal=False,switch_terms=None, name=None,**kwargs):
 		'''
-		Calibration initializer
+		Calibration initializer.
 		
 		takes:
+			measured: a list of measured Network's (order must align 
+				with 'ideals'
+			ideals: a list of ideal Network's (order must align 
+				with 'measured'
+		
+		[ optional]:		
 			frequency: a Frequency object over which the calibration
-				is defined
+				is defined [None]. if None then will take frequency
+				information	from the first measurement.
 
 			type: string representing what type of calibration is to be
-				performed. supported types at the moment are:
+				performed [None]. supported types at the moment are:
 
 				'one port':	standard one-port cal. if more than
 					2 measurement/ideal pairs are given it will
@@ -74,15 +84,20 @@ class Calibration(object):
 					8-term error model. can take switch-terms into
 					by using the switch_term option.
 				
+				if None, will inspect number of ports on first measured
+				network and choose either 'one port' or 'two port'
+				
 			is_reciprocal: enables the reciprocity assumption on 
-				the property error_network.
+				the property error_network [False].
 
 			switch_terms: tuple holding the two measured switch terms in
-				the order (forward, reverse). the tuple elements should
-				be Network types. (only used in two-port calibrations)
+				the order (forward, reverse) [None]. the tuple elements
+				 should	be Network types. (note: is only used in two-port
+				  calibrations)
 
 			name: string holding the name of calibration, just for your
-				convenience.
+				convenience [None].
+				
 			**kwargs: key-word arguments passed to the calibration
 				algorithm.
 		'''
