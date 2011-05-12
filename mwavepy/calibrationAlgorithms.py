@@ -422,7 +422,7 @@ def two_port(measured, ideals, switchterms = None):
 
 	
 ## SELF CALIBRATION
-def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
+def parameterized_self_calibration(measured, ideals, showProgress=True,\
 	**kwargs):
 	'''
 	An iterative, general self-calibration routine which can take any
@@ -433,7 +433,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	
 	takes:
 		measured: list of Network types holding actual measurements
-		ideals_ps: list of ParameterizedStandard types
+		ideals: list of ParameterizedStandard types
 		showProgress: turn printing progress on/off [boolean]
 		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
 	
@@ -447,6 +447,7 @@ def parameterized_self_calibration(measured, ideals_ps, showProgress=True,\
 	
 	see  ParameterizedStandard for more info on them
 	'''
+	ideals_ps = ideals
 	#make copies so list entities are not changed
 	measured = copy(measured)
 	if measured[0].number_of_ports ==1:

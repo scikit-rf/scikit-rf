@@ -125,7 +125,7 @@ class Calibration(object):
 		if new_frequency is None:
 			# they did not supply frequency, so i will try
 			# to inspect a measured ntwk to  get it
-			self._frequency = deepcopy(self.measured[0].frequency) 
+			new_frequency = self.measured[0].frequency
 		self._frequency = deepcopy(new_frequency)
 		
 	@property
