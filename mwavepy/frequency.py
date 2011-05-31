@@ -72,7 +72,7 @@ class Frequency(object):
 		self.npoints = npoints
 	
 	def __eq__(self, other):
-		return (list(self.f_scaled) == list(other.f_scaled))	
+		return (list(self.f) == list(other.f))	
 	def __ne__(self,other):
 		return (not self.__eq__(other))
 		
