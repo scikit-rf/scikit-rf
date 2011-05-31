@@ -24,7 +24,7 @@
 Provides commonly used math functions. 
 '''
 import numpy as npy
-from numpy import pi
+from numpy import pi,angle
 from scipy.fftpack import ifft, ifftshift, fftshift	
 from scipy import signal
 ## simple conversions
@@ -57,6 +57,26 @@ def complex_2_degree(input):
 
 	'''
 	return npy.angle(input, deg=True)
+
+def complex_2_quadrature(z):
+	'''
+	takes a complex number and returns quadrature, which is (length, arc-length from real axis)
+	'''
+	return ( npy.abs(z), npy.angle(z)*npy.abs(z))
+	
+def complex_components(z):
+	'''
+	break up a complex array into all possible scalar components
+	
+	takes: complex ndarray 
+	return:
+		c_real: real part
+		c_imag:	imaginary part
+		c_angle: angle in degrees
+		c_mag:	magnitude
+		c_arc:	arclength from real axis, angle*magnitude
+	'''
+	return (npy.real(z), npy.imag(z), npy.angle(z,deg=True), complex_2_quadrature(z)[0], complex_2_quadrature(z)[1])
 
 def magnitude_2_db(input):
 	'''
