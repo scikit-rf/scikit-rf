@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.calibrationAlgorithms</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/calibrationAlgorithms.py">/home/alex/docs/python/path/mwavepy/calibrationAlgorithms.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/calibrationAlgorithms.py">/usr/local/lib/python2.6/dist-packages/mwavepy/calibrationAlgorithms.py</a></font></td></tr></table>
     <p><tt>Contains&nbsp;calibrations&nbsp;algorithms,&nbsp;used&nbsp;in&nbsp;the&nbsp;Calibration&nbsp;class,</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -18,8 +18,9 @@
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="pdb.html">pdb</a><br>
 </td><td width="25%" valign=top><a href="mwavepy.discontinuities.variationalMethods.html">mwavepy.discontinuities.variationalMethods</a><br>
-</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#eeaa77">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -36,7 +37,7 @@ takes:&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b[:]&nbsp;=&nbsp;abc[:,1]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c[:]&nbsp;=&nbsp;abc[:,2],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a,&nbsp;b&nbsp;and&nbsp;c&nbsp;are&nbsp;related&nbsp;to&nbsp;the&nbsp;error&nbsp;network&nbsp;by&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;e01*e10&nbsp;-&nbsp;e00*e11&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;det(e)&nbsp;=&nbsp;e01*e10&nbsp;-&nbsp;e00*e11&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;e00&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&nbsp;e11<br>
 returns:<br>
@@ -48,6 +49,7 @@ note:&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e00&nbsp;=&nbsp;directivity&nbsp;error<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e10e01&nbsp;=&nbsp;reflection&nbsp;tracking&nbsp;error<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;e11&nbsp;=&nbsp;source&nbsp;match&nbsp;error</tt></dd></dl>
+ <dl><dt><a name="-eight_term_2_one_port_coefs"><strong>eight_term_2_one_port_coefs</strong></a>(coefs)</dt></dl>
  <dl><dt><a name="-guess_length_of_delay_short"><strong>guess_length_of_delay_short</strong></a>(aNtwk, tline)</dt><dd><tt>guess&nbsp;length&nbsp;of&nbsp;physical&nbsp;length&nbsp;of&nbsp;a&nbsp;Delay&nbsp;Short&nbsp;given&nbsp;by&nbsp;aNtwk<br>
 &nbsp;<br>
 takes:<br>
@@ -67,21 +69,19 @@ takes:&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s-matrix&nbsp;or&nbsp;list&nbsp;of&nbsp;&nbsp;1-port&nbsp;mwavepy.ntwk&nbsp;types.&nbsp;<br>
 &nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(abc,&nbsp;residues)&nbsp;-&nbsp;a&nbsp;tuple.&nbsp;abc&nbsp;is&nbsp;a&nbsp;Nx3&nbsp;ndarray&nbsp;containing&nbsp;the<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complex&nbsp;calibrations&nbsp;coefficients,where&nbsp;N&nbsp;is&nbsp;the&nbsp;number&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;frequency&nbsp;points&nbsp;in&nbsp;the&nbsp;standards&nbsp;that&nbsp;where&nbsp;given.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;abc:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;components&nbsp;of&nbsp;abc&nbsp;are&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;abc[:,0]&nbsp;=&nbsp;e01*e10&nbsp;-&nbsp;e00*e11<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;abc[:,1]&nbsp;=&nbsp;e00<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&nbsp;abc[:,2]&nbsp;=&nbsp;e11<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;residuals:&nbsp;a&nbsp;matrix&nbsp;of&nbsp;residuals&nbsp;from&nbsp;the&nbsp;least&nbsp;squared&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation.&nbsp;see&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;more&nbsp;info</tt></dd></dl>
- <dl><dt><a name="-parameterized_self_calibration"><strong>parameterized_self_calibration</strong></a>(measured, ideals_ps, showProgress<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>A&nbsp;self-calibration&nbsp;routine&nbsp;which&nbsp;can&nbsp;take&nbsp;any&nbsp;mixture&nbsp;of&nbsp;parameterized<br>
-standards.&nbsp;The&nbsp;total&nbsp;residual&nbsp;error&nbsp;is&nbsp;minimized&nbsp;by&nbsp;adjusting&nbsp;the&nbsp;<br>
-parameters&nbsp;of&nbsp;each&nbsp;standard&nbsp;and&nbsp;re-runing&nbsp;the&nbsp;calibration.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;dictionary&nbsp;containing&nbsp;the&nbsp;following&nbsp;keys<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'error&nbsp;coeffcients':&nbsp;dictionary&nbsp;containing&nbsp;standard&nbsp;error<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coefficients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'residuals':&nbsp;a&nbsp;matrix&nbsp;of&nbsp;residuals&nbsp;from&nbsp;the&nbsp;least&nbsp;squared&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation.&nbsp;see&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;more&nbsp;info<br>
+&nbsp;<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uses&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;least&nbsp;squares&nbsp;calculation</tt></dd></dl>
+ <dl><dt><a name="-one_port_nls"><strong>one_port_nls</strong></a>(measured, ideals)</dt><dd><tt>one&nbsp;port&nbsp;non-linear&nbsp;least&nbsp;squares.</tt></dd></dl>
+ <dl><dt><a name="-parameterized_self_calibration"><strong>parameterized_self_calibration</strong></a>(measured, ideals, showProgress<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>An&nbsp;iterative,&nbsp;general&nbsp;self-calibration&nbsp;routine&nbsp;which&nbsp;can&nbsp;take&nbsp;any<br>
+mixture&nbsp;of&nbsp;parameterized&nbsp;standards.&nbsp;The&nbsp;correct&nbsp;parameter&nbsp;values<br>
+are&nbsp;defined&nbsp;as&nbsp;the&nbsp;ones&nbsp;which&nbsp;minimize&nbsp;the&nbsp;mean&nbsp;residual&nbsp;error.&nbsp;<br>
 &nbsp;<br>
 &nbsp;<br>
 &nbsp;<br>
@@ -99,7 +99,118 @@ returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'mean_residual_list':&nbsp;the&nbsp;mean,&nbsp;magnitude&nbsp;of&nbsp;the&nbsp;residuals&nbsp;at&nbsp;each<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iteration&nbsp;of&nbsp;calibration.&nbsp;this&nbsp;is&nbsp;the&nbsp;variable&nbsp;being&nbsp;minimized.<br>
 &nbsp;<br>
-see&nbsp;&nbsp;ParameterizedStandard&nbsp;for&nbsp;more&nbsp;info</tt></dd></dl>
+see&nbsp;&nbsp;ParameterizedStandard&nbsp;for&nbsp;more&nbsp;info&nbsp;on&nbsp;them</tt></dd></dl>
+ <dl><dt><a name="-parameterized_self_calibration_bounded"><strong>parameterized_self_calibration_bounded</strong></a>(measured, ideals_ps, showProgress<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>An&nbsp;iterative,&nbsp;general&nbsp;self-calibration&nbsp;routine&nbsp;which&nbsp;can&nbsp;take&nbsp;any<br>
+mixture&nbsp;of&nbsp;parameterized&nbsp;standards.&nbsp;The&nbsp;correct&nbsp;parameter&nbsp;values<br>
+are&nbsp;defined&nbsp;as&nbsp;the&nbsp;ones&nbsp;which&nbsp;minimize&nbsp;the&nbsp;mean&nbsp;residual&nbsp;error.&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured:&nbsp;list&nbsp;of&nbsp;Network&nbsp;types&nbsp;holding&nbsp;actual&nbsp;measurements<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals_ps:&nbsp;list&nbsp;of&nbsp;ParameterizedStandard&nbsp;types<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showProgress:&nbsp;turn&nbsp;printing&nbsp;progress&nbsp;on/off&nbsp;[boolean]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;minimization&nbsp;algorithm&nbsp;(scipy.optimize.fmin)<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;dictionary&nbsp;holding:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'error_coefficients':&nbsp;dictionary&nbsp;of&nbsp;error&nbsp;coefficients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'residuals':&nbsp;residual&nbsp;matrix&nbsp;(shape&nbsp;depends&nbsp;on&nbsp;#stds)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'parameter_vector_final':&nbsp;final&nbsp;results&nbsp;for&nbsp;parameter&nbsp;vector<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'mean_residual_list':&nbsp;the&nbsp;mean,&nbsp;magnitude&nbsp;of&nbsp;the&nbsp;residuals&nbsp;at&nbsp;each<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iteration&nbsp;of&nbsp;calibration.&nbsp;this&nbsp;is&nbsp;the&nbsp;variable&nbsp;being&nbsp;minimized.<br>
+&nbsp;<br>
+see&nbsp;&nbsp;ParameterizedStandard&nbsp;for&nbsp;more&nbsp;info&nbsp;on&nbsp;them</tt></dd></dl>
+ <dl><dt><a name="-parameterized_self_calibration_nls"><strong>parameterized_self_calibration_nls</strong></a>(measured, ideals_ps, showProgress<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>An&nbsp;iterative,&nbsp;general&nbsp;self-calibration&nbsp;routine&nbsp;which&nbsp;can&nbsp;take&nbsp;any<br>
+mixture&nbsp;of&nbsp;parameterized&nbsp;standards.&nbsp;The&nbsp;correct&nbsp;parameter&nbsp;values<br>
+are&nbsp;defined&nbsp;as&nbsp;the&nbsp;ones&nbsp;which&nbsp;minimize&nbsp;the&nbsp;mean&nbsp;residual&nbsp;error.&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured:&nbsp;list&nbsp;of&nbsp;Network&nbsp;types&nbsp;holding&nbsp;actual&nbsp;measurements<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals_ps:&nbsp;list&nbsp;of&nbsp;ParameterizedStandard&nbsp;types<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showProgress:&nbsp;turn&nbsp;printing&nbsp;progress&nbsp;on/off&nbsp;[boolean]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;minimization&nbsp;algorithm&nbsp;(scipy.optimize.fmin)<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;dictionary&nbsp;holding:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'error_coefficients':&nbsp;dictionary&nbsp;of&nbsp;error&nbsp;coefficients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'residuals':&nbsp;residual&nbsp;matrix&nbsp;(shape&nbsp;depends&nbsp;on&nbsp;#stds)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'parameter_vector_final':&nbsp;final&nbsp;results&nbsp;for&nbsp;parameter&nbsp;vector<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'mean_residual_list':&nbsp;the&nbsp;mean,&nbsp;magnitude&nbsp;of&nbsp;the&nbsp;residuals&nbsp;at&nbsp;each<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;iteration&nbsp;of&nbsp;calibration.&nbsp;this&nbsp;is&nbsp;the&nbsp;variable&nbsp;being&nbsp;minimized.<br>
+&nbsp;<br>
+see&nbsp;&nbsp;ParameterizedStandard&nbsp;for&nbsp;more&nbsp;info&nbsp;on&nbsp;them</tt></dd></dl>
+ <dl><dt><a name="-rand"><strong>rand</strong></a>(...)</dt><dd><tt><a href="#-rand">rand</a>(d0,&nbsp;d1,&nbsp;...,&nbsp;dn)<br>
+&nbsp;<br>
+Random&nbsp;values&nbsp;in&nbsp;a&nbsp;given&nbsp;shape.<br>
+&nbsp;<br>
+Create&nbsp;an&nbsp;array&nbsp;of&nbsp;the&nbsp;given&nbsp;shape&nbsp;and&nbsp;propagate&nbsp;it&nbsp;with<br>
+random&nbsp;samples&nbsp;from&nbsp;a&nbsp;uniform&nbsp;distribution<br>
+over&nbsp;``[0,&nbsp;1)``.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+d0,&nbsp;d1,&nbsp;...,&nbsp;dn&nbsp;:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;output.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+out&nbsp;:&nbsp;ndarray,&nbsp;shape&nbsp;``(d0,&nbsp;d1,&nbsp;...,&nbsp;dn)``<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Random&nbsp;values.<br>
+&nbsp;<br>
+See&nbsp;Also<br>
+--------<br>
+random<br>
+&nbsp;<br>
+Notes<br>
+-----<br>
+This&nbsp;is&nbsp;a&nbsp;convenience&nbsp;function.&nbsp;If&nbsp;you&nbsp;want&nbsp;an&nbsp;interface&nbsp;that<br>
+takes&nbsp;a&nbsp;shape-tuple&nbsp;as&nbsp;the&nbsp;first&nbsp;argument,&nbsp;refer&nbsp;to<br>
+`random`.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.random.<a href="#-rand">rand</a>(3,2)<br>
+array([[&nbsp;0.14022471,&nbsp;&nbsp;0.96360618],&nbsp;&nbsp;#random<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.37601032,&nbsp;&nbsp;0.25528411],&nbsp;&nbsp;#random<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.49313049,&nbsp;&nbsp;0.94909878]])&nbsp;#random</tt></dd></dl>
+ <dl><dt><a name="-two_port"><strong>two_port</strong></a>(measured, ideals, switchterms<font color="#909090">=None</font>)</dt><dd><tt>two&nbsp;port&nbsp;calibration&nbsp;based&nbsp;on&nbsp;the&nbsp;8-term&nbsp;error&nbsp;model.&nbsp;&nbsp;takes&nbsp;two<br>
+ordered&nbsp;lists&nbsp;of&nbsp;measured&nbsp;and&nbsp;ideal&nbsp;responses.&nbsp;optionally,&nbsp;switch<br>
+terms&nbsp;can&nbsp;be&nbsp;taken&nbsp;into&nbsp;account&nbsp;by&nbsp;passing&nbsp;a&nbsp;tuple&nbsp;containing&nbsp;the<br>
+forward&nbsp;and&nbsp;reverse&nbsp;switch&nbsp;terms&nbsp;as&nbsp;1-port&nbsp;Networks<br>
+&nbsp;<br>
+takes:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured:&nbsp;ordered&nbsp;list&nbsp;of&nbsp;measured&nbsp;networks.&nbsp;list&nbsp;elements<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;should&nbsp;be&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-port&nbsp;&nbsp;Network&nbsp;types.&nbsp;list&nbsp;order&nbsp;must&nbsp;correspond<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with&nbsp;ideals.&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals:&nbsp;ordered&nbsp;list&nbsp;of&nbsp;ideal&nbsp;networks.&nbsp;list&nbsp;elements&nbsp;should&nbsp;be<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-port&nbsp;&nbsp;Network&nbsp;types.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch_terms:&nbsp;tuple&nbsp;of&nbsp;1-port&nbsp;Network&nbsp;types&nbsp;holding&nbsp;switch&nbsp;terms<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;this&nbsp;order&nbsp;(forward,&nbsp;reverse).&nbsp;<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;output:&nbsp;a&nbsp;dictionary&nbsp;containing&nbsp;the&nbsp;follwoing&nbsp;keys:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'error&nbsp;coefficients':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'error&nbsp;vector':<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'residuals':<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;support&nbsp;for&nbsp;gathering&nbsp;switch&nbsp;terms&nbsp;on&nbsp;HP8510C&nbsp;&nbsp;is&nbsp;in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.virtualInstruments.vna.py<br>
+&nbsp;<br>
+references<br>
+&nbsp;<br>
+Doug&nbsp;Rytting&nbsp;"&nbsp;Network&nbsp;Analyzer&nbsp;Error&nbsp;Models&nbsp;and&nbsp;Calibration&nbsp;Methods"<br>
+RF&nbsp;8&nbsp;Microwave.&nbsp;Measurements&nbsp;for&nbsp;Wireless&nbsp;Applications&nbsp;(ARFTG/NIST)<br>
+&nbsp;Short&nbsp;Course&nbsp;...<br>
+&nbsp;<br>
+Speciale,&nbsp;R.A.;&nbsp;,&nbsp;"A&nbsp;Generalization&nbsp;of&nbsp;the&nbsp;TSD&nbsp;Network-Analyzer<br>
+Calibration&nbsp;Procedure,&nbsp;Covering&nbsp;n-Port&nbsp;Scattering-Parameter<br>
+Measurements,&nbsp;Affected&nbsp;by&nbsp;Leakage&nbsp;Errors,"&nbsp;Microwave&nbsp;Theory&nbsp;and<br>
+Techniques,&nbsp;IEEE&nbsp;Transactions&nbsp;on&nbsp;,&nbsp;vol.25,&nbsp;no.12,&nbsp;pp.&nbsp;1100-&nbsp;1115,<br>
+Dec&nbsp;1977</tt></dd></dl>
  <dl><dt><a name="-unknown_translation_offset"><strong>unknown_translation_offset</strong></a>(measured, ideals, wb, d, ftol<font color="#909090">=0.001</font>, xtol<font color="#909090">=0.001</font>, guessLength<font color="#909090">=False</font>, solveForLoss<font color="#909090">=False</font>, showProgress<font color="#909090">=False</font>, **kwargs)</dt><dd><tt>A&nbsp;one&nbsp;port&nbsp;calibration,&nbsp;which&nbsp;can&nbsp;use&nbsp;a&nbsp;redundent&nbsp;number&nbsp;of&nbsp;delayed&nbsp;<br>
 shorts&nbsp;to&nbsp;solve&nbsp;for&nbsp;their&nbsp;unknown&nbsp;lengths.<br>
 &nbsp;<br>
@@ -145,6 +256,19 @@ returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;all&nbsp;standard&nbsp;lists,&nbsp;and&nbsp;d-vector&nbsp;must&nbsp;be&nbsp;in&nbsp;order.&nbsp;The&nbsp;first<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m-standards&nbsp;are&nbsp;assumed&nbsp;to&nbsp;be&nbsp;delayed&nbsp;shorts,&nbsp;where&nbsp;m&nbsp;is&nbsp;the<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;of&nbsp;d.&nbsp;Any&nbsp;standards&nbsp;after&nbsp;may&nbsp;be&nbsp;anything.</tt></dd></dl>
+ <dl><dt><a name="-unterminate_switch_terms"><strong>unterminate_switch_terms</strong></a>(two_port, gamma_f, gamma_r)</dt><dd><tt>unterminates&nbsp;switch&nbsp;terms&nbsp;from&nbsp;raw&nbsp;measurements.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;two_port:&nbsp;the&nbsp;raw&nbsp;measurement,&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;type.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma_f:&nbsp;the&nbsp;measured&nbsp;forward&nbsp;switch&nbsp;term,&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;type<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma_r:&nbsp;the&nbsp;measured&nbsp;reverse&nbsp;switch&nbsp;term,&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;type<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;un-terminated&nbsp;measurement,&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;type<br>
+&nbsp;<br>
+see:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Formulations&nbsp;of&nbsp;the&nbsp;Basic&nbsp;Vector&nbsp;Network&nbsp;Analyzer&nbsp;Error<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Model&nbsp;including&nbsp;Switch&nbsp;Terms'&nbsp;by&nbsp;Roger&nbsp;B.&nbsp;Marks</tt></dd></dl>
  <dl><dt><a name="-xds"><strong>xds</strong></a>(measured, ideals, wb, d, ftol<font color="#909090">=0.001</font>, xtol<font color="#909090">=0.001</font>, guessLength<font color="#909090">=False</font>, solveForLoss<font color="#909090">=False</font>, showProgress<font color="#909090">=False</font>)</dt><dd><tt>A&nbsp;one&nbsp;port&nbsp;calibration,&nbsp;which&nbsp;can&nbsp;use&nbsp;a&nbsp;redundent&nbsp;number&nbsp;of&nbsp;delayed&nbsp;<br>
 shorts&nbsp;to&nbsp;solve&nbsp;for&nbsp;their&nbsp;unknown&nbsp;lengths.<br>
 &nbsp;<br>

@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.discontinuities.html"><font color="#ffffff">discontinuities</font></a>.variationalMethods</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/discontinuities/variationalMethods.py">/home/alex/docs/python/path/mwavepy/discontinuities/variationalMethods.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/discontinuities/variationalMethods.py">/usr/local/lib/python2.6/dist-packages/mwavepy/discontinuities/variationalMethods.py</a></font></td></tr></table>
     <p><tt>variational&nbsp;calculations,&nbsp;for&nbsp;solving&nbsp;equivalent&nbsp;networks&nbsp;of<br>
 discontinuities.</tt></p>
 <p>
@@ -18,9 +18,8 @@ discontinuities.</tt></p>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.html">mwavepy</a><br>
-</td><td width="25%" valign=top><a href="pylab.html">pylab</a><br>
-</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="pylab.html">pylab</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#eeaa77">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -55,7 +54,34 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aperture&nbsp;size&nbsp;in&nbsp;height&nbsp;dimension<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normalized&nbsp;&nbsp;coupling&nbsp;value,&nbsp;a&nbsp;scalar.</tt></dd></dl>
- <dl><dt><a name="-converge_junction_admittance"><strong>converge_junction_admittance</strong></a>(y_tol<font color="#909090">=0.001</font>, mode_rate<font color="#909090">=1</font>, M_0<font color="#909090">=2</font>, N_0<font color="#909090">=2</font>, min_converged<font color="#909090">=1</font>, output<font color="#909090">=True</font>, converge_func<font color="#909090">=&lt;function junction_admittance&gt;</font>, **kwargs)</dt></dl>
+ <dl><dt><a name="-aperture_field"><strong>aperture_field</strong></a>(wg_I, wg_II, V_I, V_II, freq, M, N, d, Gamma0, V_I_args<font color="#909090">={}</font>, V_II_args<font color="#909090">={}</font>, normalizing_mode<font color="#909090">=('te', 1, 0)</font>)</dt><dd><tt>calculates&nbsp;the&nbsp;equivalent&nbsp;network&nbsp;for&nbsp;a&nbsp;discontinuity&nbsp;in&nbsp;a&nbsp;waveguide,<br>
+by&nbsp;the&nbsp;aperture-field&nbsp;variational&nbsp;method.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_I:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;of&nbsp;region&nbsp;I&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_II:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;of&nbsp;region&nbsp;II&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_I:&nbsp;mode&nbsp;voltage&nbsp;for&nbsp;region&nbsp;I&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_II:&nbsp;mode&nbsp;voltage&nbsp;for&nbsp;region&nbsp;II&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:&nbsp;Frequency&nbsp;object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;M:&nbsp;number&nbsp;of&nbsp;modes&nbsp;in&nbsp;'a'&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;N:&nbsp;number&nbsp;of&nbsp;modes&nbsp;in&nbsp;'b'&nbsp;dimension<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;termination&nbsp;distance&nbsp;for&nbsp;region&nbsp;II<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;terminating&nbsp;reflection&nbsp;coefficient&nbsp;for&nbsp;region&nbsp;II<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_I_args:&nbsp;dictionary&nbsp;holding&nbsp;key-word&nbsp;arguments&nbsp;for&nbsp;V_I<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_II_args:&nbsp;dictionary&nbsp;holding&nbsp;key-word&nbsp;arguments&nbsp;for&nbsp;V_II<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;normalzing&nbsp;mode:&nbsp;triplet&nbsp;of&nbsp;(mode_type,&nbsp;m,n),&nbsp;designating&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode&nbsp;which&nbsp;the&nbsp;&nbsp;normalized&nbsp;aperture&nbsp;admittance&nbsp;is&nbsp;normalized<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to.<br>
+&nbsp;<br>
+returns:&nbsp;a&nbsp;dictionary&nbsp;holding&nbsp;the&nbsp;following&nbsp;keys<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'V_I_mat':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_I_mat,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'V_II_mat':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_II_mat,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Y_I_mat':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y_I_mat,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Y_II_mat':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y_II_mat,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'R_I_mat':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R_I_mat,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'R_II_mat':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R_II_mat,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Y_in_norm':Y_in_norm,&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'ntwk':&nbsp;ntwk<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mode&nbsp;voltages&nbsp;are&nbsp;called&nbsp;like:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;V_I(mode_type,m,n,wg,**V_I_args)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;so&nbsp;whatever&nbsp;you&nbsp;pass&nbsp;for&nbsp;the&nbsp;mode&nbsp;voltage&nbsp;functions&nbsp;must&nbsp;adhere<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;this&nbsp;convention</tt></dd></dl>
+ <dl><dt><a name="-converge_junction_admittance"><strong>converge_junction_admittance</strong></a>(y_tol<font color="#909090">=0.001</font>, mode_rate<font color="#909090">=1</font>, M_0<font color="#909090">=2</font>, N_0<font color="#909090">=2</font>, min_converged<font color="#909090">=1</font>, max_M_0<font color="#909090">=100</font>, output<font color="#909090">=True</font>, converge_func<font color="#909090">=&lt;function junction_admittance&gt;</font>, **kwargs)</dt><dd><tt>the&nbsp;design&nbsp;of&nbsp;this&nbsp;function&nbsp;is&nbsp;stupid,&nbsp;it&nbsp;was&nbsp;ad-hoc</tt></dd></dl>
  <dl><dt><a name="-junction_admittance"><strong>junction_admittance</strong></a>(wg_I, wg_II, V_I, V_II, freq, M, N, normalizing_mode<font color="#909090">=('te', 1, 0)</font>, **kwargs)</dt><dd><tt>calculates&nbsp;the&nbsp;equivalent&nbsp;network&nbsp;for&nbsp;a&nbsp;discontinuity&nbsp;in&nbsp;a&nbsp;waveguide,<br>
 by&nbsp;the&nbsp;aperture-field&nbsp;variational&nbsp;method.&nbsp;<br>
 &nbsp;<br>
@@ -96,35 +122,73 @@ note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;this&nbsp;convention</tt></dd></dl>
  <dl><dt><a name="-junction_impedance"><strong>junction_impedance</strong></a>(wg_I, wg_II, I_I, I_II, freq, M, N, normalizing_mode<font color="#909090">=('te', 1, 0)</font>, **kwargs)</dt></dl>
  <dl><dt><a name="-plot_mag_phase"><strong>plot_mag_phase</strong></a>(out)</dt></dl>
- <dl><dt><a name="-show_coupling"><strong>show_coupling</strong></a>(out)</dt><dd><tt>##&nbsp;OUTPUT</tt></dd></dl>
- <dl><dt><a name="-step_up"><strong>step_up</strong></a>(freq, wr_small, wr_big, delta_a<font color="#909090">=0</font>, delta_b<font color="#909090">=0</font>, **kwargs)</dt></dl>
- <dl><dt><a name="-translation_offset"><strong>translation_offset</strong></a>(wg, freq, delta_a, delta_b, **kwargs)</dt><dd><tt>calculates&nbsp;the&nbsp;response&nbsp;from&nbsp;a&nbsp;translation&nbsp;offset&nbsp;between&nbsp;two&nbsp;<br>
-rectangular&nbsp;waveguides.&nbsp;<br>
+ <dl><dt><a name="-rectangular_junction"><strong>rectangular_junction</strong></a>(freq, wg_I, wg_II, da, db, d<font color="#909090">=1</font>, Gamma0<font color="#909090">=0.0</font>, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>Calcurates&nbsp;the&nbsp;equivalent&nbsp;1-port&nbsp;network&nbsp;for&nbsp;a&nbsp;generic&nbsp;junction<br>
+of&nbsp;two&nbsp;rectangular&nbsp;waveguides,&nbsp;with&nbsp;the&nbsp;input&nbsp;guide&nbsp;matched.<br>
+&nbsp;<br>
+the&nbsp;guides&nbsp;are&nbsp;may&nbsp;be&nbsp;offset&nbsp;from&nbsp;lower-left&nbsp;corner&nbsp;alignment,&nbsp;by&nbsp;xy.<br>
+&nbsp;<br>
+input&nbsp;guide&nbsp;is&nbsp;wg_I,&nbsp;ouput&nbsp;is&nbsp;wg_II.&nbsp;the&nbsp;assumed&nbsp;field&nbsp;used&nbsp;in&nbsp;the<br>
+variational&nbsp;expression&nbsp;is&nbsp;the&nbsp;TE10&nbsp;mode&nbsp;of&nbsp;the&nbsp;common&nbsp;cross-section<br>
 &nbsp;<br>
 takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg:&nbsp;RectangularWaveguide&nbsp;Object.&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:&nbsp;&nbsp;&nbsp;Frequency&nbsp;Object<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_a:&nbsp;offset&nbsp;in&nbsp;the&nbsp;width&nbsp;dimension&nbsp;[m]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_b:&nbsp;offset&nbsp;in&nbsp;the&nbsp;height&nbsp;dimension&nbsp;[m]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;converge_junction_admittance,&nbsp;see&nbsp;its&nbsp;help&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;more&nbsp;info<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:&nbsp;a&nbsp;Frequency&nbsp;Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_I:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;representing&nbsp;input&nbsp;guide<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_II:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance.&nbsp;ouput&nbsp;guide.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;da:&nbsp;offset&nbsp;in&nbsp;teh&nbsp;'a'&nbsp;dimension&nbsp;from&nbsp;lower&nbsp;left&nbsp;corner&nbsp;alignment<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db:&nbsp;offset&nbsp;in&nbsp;teh&nbsp;'a'&nbsp;dimension&nbsp;from&nbsp;lower&nbsp;left&nbsp;corner&nbsp;alignment<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;to&nbsp;termination&nbsp;[m].&nbsp;default&nbsp;is&nbsp;1m<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflectin&nbsp;coefficient&nbsp;at&nbsp;termiantion,&nbsp;default&nbsp;is&nbsp;0.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;converge_junction_admittanace(),&nbsp;then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-aperture_field">aperture_field</a>()<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;a&nbsp;Network&nbsp;type&nbsp;representing&nbsp;the&nbsp;junction</tt></dd></dl>
- <dl><dt><a name="-translation_offset_with_termination"><strong>translation_offset_with_termination</strong></a>(wg, freq, delta_a, delta_b, d, Gamma0, **kwargs)</dt><dd><tt>calculates&nbsp;the&nbsp;response&nbsp;from&nbsp;a&nbsp;translation&nbsp;offset&nbsp;between&nbsp;two&nbsp;<br>
-rectangular&nbsp;waveguides&nbsp;with&nbsp;a&nbsp;simple&nbsp;termination,&nbsp;possbily&nbsp;in&nbsp;the<br>
-near&nbsp;field,&nbsp;in&nbsp;region&nbsp;II<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;one-port&nbsp;Network&nbsp;instance,&nbsp;representing&nbsp;junction<br>
+&nbsp;<br>
+&nbsp;<br>
+NOTEL<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;clarification&nbsp;of&nbsp;geometry:<br>
+&nbsp;<br>
+wg_I:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower&nbsp;left&nbsp;corner&nbsp;=&nbsp;(0,0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;width&nbsp;=&nbsp;wg_I.a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;height=&nbsp;wg_I.b<br>
+wg_II:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lower&nbsp;left&nbsp;corner&nbsp;=&nbsp;(x,y)&nbsp;(&nbsp;which&nbsp;is&nbsp;xy[0],xy[1])<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;width&nbsp;=&nbsp;wg_I.a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;height=&nbsp;wg_I.b</tt></dd></dl>
+ <dl><dt><a name="-rectangular_junction_centered"><strong>rectangular_junction_centered</strong></a>(freq, wg_I, wg_II, da, db, d<font color="#909090">=1</font>, Gamma0<font color="#909090">=0.0</font>, **kwargs)</dt><dd><tt>Calcurates&nbsp;the&nbsp;equivalent&nbsp;1-port&nbsp;network&nbsp;for&nbsp;a&nbsp;junction<br>
+of&nbsp;two&nbsp;rectangular&nbsp;waveguides,&nbsp;with&nbsp;the&nbsp;input&nbsp;guide&nbsp;matched.<br>
+&nbsp;<br>
+the&nbsp;guides&nbsp;are&nbsp;may&nbsp;be&nbsp;offset&nbsp;from&nbsp;ON-CENTER&nbsp;alignment,&nbsp;by&nbsp;xy.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:&nbsp;a&nbsp;Frequency&nbsp;Object<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_I:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance&nbsp;representing&nbsp;input&nbsp;guide<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg_II:&nbsp;a&nbsp;RectangularWaveguide&nbsp;instance.&nbsp;ouput&nbsp;guide.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;da:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;offset&nbsp;in&nbsp;a-dimension,&nbsp;&nbsp;from&nbsp;on-center&nbsp;alignment<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;db:&nbsp;offset&nbsp;in&nbsp;b-dimension&nbsp;&nbsp;from&nbsp;on-center&nbsp;alignment&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;to&nbsp;termination&nbsp;[m].&nbsp;default&nbsp;is&nbsp;1m<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflectin&nbsp;coefficient&nbsp;at&nbsp;termiantion,&nbsp;default&nbsp;is&nbsp;0.&nbsp;(match)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;converge_junction_admittanace(),&nbsp;then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-aperture_field">aperture_field</a>()<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;one-port&nbsp;Network&nbsp;instance,&nbsp;representing&nbsp;junction</tt></dd></dl>
+ <dl><dt><a name="-rotated_waveguide"><strong>rotated_waveguide</strong></a>(wg, freq, da, db, d, Gamma0, **kwargs)</dt><dd><tt>calculated&nbsp;response&nbsp;of&nbsp;a&nbsp;terminated&nbsp;rotated&nbsp;waveguide&nbsp;of&nbsp;same<br>
+cross-section&nbsp;as&nbsp;input&nbsp;guide,&nbsp;with&nbsp;possible&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;offset&nbsp;from&nbsp;on-center<br>
+alignment<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wg:&nbsp;RectangularWaveguide&nbsp;Object.&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;freq:&nbsp;&nbsp;&nbsp;Frequency&nbsp;Object<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_a:&nbsp;offset&nbsp;in&nbsp;the&nbsp;width&nbsp;dimension&nbsp;[m]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delta_b:&nbsp;offset&nbsp;in&nbsp;the&nbsp;height&nbsp;dimension&nbsp;[m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;offset:&nbsp;tuple&nbsp;holding&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance&nbsp;to&nbsp;termination&nbsp;[m]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;termination&nbsp;at&nbsp;the&nbsp;termination&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;converge_junction_admittance,&nbsp;see&nbsp;its&nbsp;help&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;for&nbsp;more&nbsp;info<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;a&nbsp;Network&nbsp;type&nbsp;representing&nbsp;the&nbsp;junction</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;a&nbsp;Network&nbsp;type&nbsp;representing&nbsp;the&nbsp;junction<br>
+&nbsp;<br>
+NOTE:&nbsp;this&nbsp;just&nbsp;formats&nbsp;input&nbsp;and&nbsp;calls&nbsp;<a href="#-rectangular_junction">rectangular_junction</a>()</tt></dd></dl>
+ <dl><dt><a name="-show_coupling"><strong>show_coupling</strong></a>(out)</dt><dd><tt>##&nbsp;OUTPUT</tt></dd></dl>
  <dl><dt><a name="-zeros"><strong>zeros</strong></a>(...)</dt><dd><tt><a href="#-zeros">zeros</a>(shape,&nbsp;dtype=float,&nbsp;order='C')<br>
 &nbsp;<br>
 Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;type,&nbsp;filled&nbsp;with&nbsp;zeros.<br>

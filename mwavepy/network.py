@@ -422,14 +422,18 @@ class Network(object):
 		self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
 		self.name = os.path.basename( os.path.splitext(filename)[0])
 
-	def write_touchstone(self, filename=None):
+	def write_touchstone(self, filename=None, dir = './'):
 		'''
 		write a touchstone file representing this network.  the only 
 		format supported at the moment is :
 			HZ S RI 
 		
 		takes: 
-			filename - filename (not including extension)
+			filename: a string containing filename without 
+				extension[None]. if 'None', then will use the network's 
+				name. if this is empty, then throws an error.
+			dir: the directory to save the file in. [string]. Defaults 
+				to './'
 			
 		
 		note:
@@ -437,12 +441,15 @@ class Network(object):
 			class, but at the moment this would not provide any benefit 
 			as it has not set_ functions. 
 		'''
-
+		if filename is None:
+			if self.name is not None:
+				filename= self.name
+			else:
+				raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 		
-		if filename is None and self.name is not None:
-			filename= './'+self.name + '.s'+str(self.number_of_ports)+\
-			'p'
-		outputFile = open(filename,"w")
+		extension = '.s%ip'%self.number_of_ports
+		
+		outputFile = open(dir+'/'+filename+extension,"w")
 		
 		# write header file. 
 		# the '#'  line is NOT a comment it is essential and it must be 

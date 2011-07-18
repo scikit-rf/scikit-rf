@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.workingBand</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/workingBand.py">/home/alex/docs/python/path/mwavepy/workingBand.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/workingBand.py">/usr/local/lib/python2.6/dist-packages/mwavepy/workingBand.py</a></font></td></tr></table>
     <p><tt>Contains&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;class.</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -18,7 +18,8 @@
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
-</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+</td><td width="25%" valign=top><a href="scipy.stats.html">scipy.stats</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#ee77aa">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -59,14 +60,15 @@ by&nbsp;value&nbsp;and&nbsp;not&nbsp;by-reference.<br>&nbsp;</tt></td></tr>
 <td width="100%">Methods defined here:<br>
 <dl><dt><a name="WorkingBand-__init__"><strong>__init__</strong></a>(self, frequency, tline)</dt></dl>
 
-<dl><dt><a name="WorkingBand-delay_load"><strong>delay_load</strong></a>(self, d, Gamma0, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;delayed&nbsp;load&nbsp;of&nbsp;length&nbsp;'d'&nbsp;&nbsp;and&nbsp;refelction&nbsp;coefficient<br>
-Gamma0,&nbsp;Network&nbsp;<a href="__builtin__.html#object">object</a><br>
+<dl><dt><a name="WorkingBand-delay_load"><strong>delay_load</strong></a>(self, d, Gamma0, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;short&nbsp;transmission&nbsp;line<br>
 &nbsp;<br>
 takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;length&nbsp;of&nbsp;delay&nbsp;[m]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;[not&nbsp;dB]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(in&nbsp;meters)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;load&nbsp;(not&nbsp;in&nbsp;dB)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Network&nbsp;<a href="__builtin__.html#object">object</a></tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;loaded&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d</tt></dd></dl>
 
 <dl><dt><a name="WorkingBand-delay_short"><strong>delay_short</strong></a>(self, d, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;short&nbsp;transmission&nbsp;line<br>
 &nbsp;<br>
@@ -106,26 +108,62 @@ takes:<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;where&nbsp;&nbsp;S&nbsp;=&nbsp;Gamma0*ones(...)</tt></dd></dl>
 
-<dl><dt><a name="WorkingBand-match"><strong>match</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;perfect&nbsp;matched&nbsp;transmission&nbsp;line&nbsp;(Gamma0=0)&nbsp;<br>
+<dl><dt><a name="WorkingBand-match"><strong>match</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;perfect&nbsp;matched&nbsp;transmission&nbsp;line&nbsp;(Gamma0=0)&nbsp;<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;perfect&nbsp;match</tt></dd></dl>
 
-<dl><dt><a name="WorkingBand-open"><strong>open</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;'open'&nbsp;transmission&nbsp;line&nbsp;(Gamma0=1)&nbsp;<br>
+<dl><dt><a name="WorkingBand-open"><strong>open</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;'open'&nbsp;transmission&nbsp;line&nbsp;(Gamma0=1)&nbsp;<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;an&nbsp;open</tt></dd></dl>
 
-<dl><dt><a name="WorkingBand-short"><strong>short</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;short&nbsp;&nbsp;transmission&nbsp;line&nbsp;(Gamma0=-1)&nbsp;<br>
+<dl><dt><a name="WorkingBand-short"><strong>short</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;short&nbsp;&nbsp;transmission&nbsp;line&nbsp;(Gamma0=-1)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;a&nbsp;short</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-thru"><strong>thru</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;thru<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;a&nbsp;short</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;thru<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;just&nbsp;calls&nbsp;<a href="#WorkingBand-line">line</a>(0)</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-two_port_reflect"><strong>two_port_reflect</strong></a>(self, ntwk1, ntwk2, **kwargs)</dt><dd><tt>generates&nbsp;a&nbsp;two-port&nbsp;reflective&nbsp;(S21=S12=0)&nbsp;network,from&nbsp;the<br>
+responses&nbsp;of&nbsp;2&nbsp;one-port&nbsp;networks<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk1:&nbsp;Network&nbsp;type,&nbsp;seen&nbsp;from&nbsp;port&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk2:&nbsp;Network&nbsp;type,&nbsp;seen&nbsp;from&nbsp;port&nbsp;2<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result:&nbsp;two-port&nbsp;reflective&nbsp;Network&nbsp;type<br>
+&nbsp;<br>
+&nbsp;<br>
+example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb.<a href="#WorkingBand-two_port_reflect">two_port_reflect</a>(wb.<a href="#WorkingBand-short">short</a>(),&nbsp;wb.<a href="#WorkingBand-match">match</a>())</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-white_gaussian_polar"><strong>white_gaussian_polar</strong></a>(self, phase_dev, mag_dev, n_ports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;complex&nbsp;zero-mean&nbsp;gaussian&nbsp;white-noise&nbsp;signal&nbsp;of&nbsp;given<br>
+standard&nbsp;deviations&nbsp;for&nbsp;phase&nbsp;and&nbsp;magnitude<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phase_mag:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;magnitude<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phase_dev:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;phase<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_ports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;defualt&nbsp;to&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;Network()&nbsp;initializer<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result:&nbsp;Network&nbsp;type</tt></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>
