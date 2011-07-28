@@ -77,14 +77,11 @@ class GenericTEM(object):
 		constructor.
 		
 		takes:
-			distributed_capacitance, C'
-			distributed_inductance, I'
-			distributed_resistance, R'
-			distributed_conductance, G'
-			fBand: a mwavepy.fb.frequencyBand object. this provides all 
-				the	methods of the transmissionLine, with frequency info.
-				this is solely for convinience, because frequently many
-				calculations are done over a given range of frequencies.
+			distributed_capacitance: C'
+			distributed_inductance: I'
+			distributed_resistance: R'
+			distributed_conductance: G'
+			
 				
 		'''
 		

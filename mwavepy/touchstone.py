@@ -63,9 +63,11 @@ class touchstone():
         f = open(filename)
         
         extention = filename.split('.')[-1].lower()
-        self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
-        if not self.rank:
-            raise (ValueError("filename does not have a s-parameter extention. It has  [%s] instead, and i havent programmed it to inspect the file for number of ports yet. correct the extension." %(extention)))
+        #self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
+        try:
+            self.rank = int(extention[1:-1])
+        except (ValueError):
+            raise (ValueError("filename does not have a s-parameter extention. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
 
         
         linenr = 0

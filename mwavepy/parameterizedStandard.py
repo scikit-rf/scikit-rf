@@ -20,7 +20,9 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-provides Parameterized Standard class.  
+Provides Parameterized Standard class, and some specific instances. The 
+specific instances are named as follows
+	StandardType_UnknownQuantity
 '''
 import numpy as npy
 from copy import copy,deepcopy
@@ -42,6 +44,9 @@ class ParameterizedStandard(object):
 	This class presents an abstract interface to a general Parametric
 	Standard. Its main purpose is to allow the self calibration routine
 	to be independent of calibration set. 
+	
+	See initializer for more 
+	details. 
 	'''
 	def __init__(self, function=None, parameters={}, parameter_bounds={},**kwargs):
 		'''
@@ -151,8 +156,6 @@ class Parameterless(ParameterizedStandard):
 		ParameterizedStandard.__init__(self, \
 			function  = lambda: ideal_network)
 		
-
-
 class Line_UnknownLength(ParameterizedStandard):
 	'''
 	A matched delay line of unknown length
