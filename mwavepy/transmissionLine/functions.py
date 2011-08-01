@@ -38,8 +38,7 @@ def electrical_length(gamma, f , d, deg=False):
 		gamma: propagation constant function , (a function which 
 			takes frequency in [hz])
 		l: length of line. in meters
-		f: frequency at which to calculate. array-like or float. if
-			left as None and self.fBand exists, it will use that.
+		f: frequency at which to calculate. array-like or float. 
 		deg: return in degrees or not. boolean.
 	
 	returns:
@@ -54,7 +53,7 @@ def electrical_length(gamma, f , d, deg=False):
 	if deg == False:
 		return  gamma(f )*d
 	elif deg == True:
-		return  mf.radian_2_degree(gamma(2*pi*f ) *d )
+		return  mf.radian_2_degree(gamma(f ) *d )
 
 
 def input_impedance_2_reflection_coefficient(z0, zl):
