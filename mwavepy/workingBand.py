@@ -163,7 +163,7 @@ class WorkingBand(object):
 		theta = electrical_length(gamma=gamma, f= f, d = d)
 		
 		s11 = npy.zeros(self.frequency.npoints, dtype=complex)
-		s21 = npy.exp(1j* theta)
+		s21 = npy.exp(-1*theta)
 		result.s = npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 		return result
 	def thru(self, **kwargs):

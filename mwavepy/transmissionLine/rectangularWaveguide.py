@@ -136,8 +136,9 @@ class RectangularWaveguide(object):
 	def kz(self, m ,n , f):
 		'''
 		the propagation constant, which is:
-			REAL  for propagating modes, 
-			IMAGINARY for non-propagating modes
+			IMAGINARY for propagating modes
+			REAL  for non-propagating modes, 
+			
 		
 		takes:
 			m: mode index in the 'a' direction
@@ -164,14 +165,18 @@ class RectangularWaveguide(object):
 		try:
 			kz = npy.zeros((len(f),len(m),len(n)),dtype=complex)
 			for f_idx in range(len(f)):	
-				kz[f_idx] =  -sqrt(k0[f_idx]**2-kc**2) * (k0[f_idx] > kc) + \
-					1j*sqrt(kc**2- k0[f_idx]**2) * (k0[f_idx]<kc) + 0*(kc==k0[f_idx])
+				kz[f_idx] = \
+					1j*sqrt(k0[f_idx]**2-kc**2)*(k0[f_idx] > kc) + \
+					sqrt(kc**2- k0[f_idx]**2) * (k0[f_idx]<kc) + \
+					0*(kc==k0[f_idx]) 
 		
 		except(TypeError):
 			# we have scalars for m, or n
 			kz = npy.zeros(shape=k0.shape,dtype=complex)
-			kz =  -sqrt(k0**2-kc**2)*(k0>kc) +1j*sqrt(kc**2- k0**2)*(k0<kc) \
-				+ 0*(kc==k0)	
+			kz = \
+				1j*sqrt(k0**2 - kc**2) * (k0>kc) +\
+				sqrt(kc**2- k0**2)*(k0<kc) + \
+				0*(kc==k0)		
 		return kz
 		
 	def guide_wavelength(self,m,n,f):

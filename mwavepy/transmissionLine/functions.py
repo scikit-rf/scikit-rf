@@ -51,9 +51,9 @@ def electrical_length(gamma, f , d, deg=False):
 	d = array(d, dtype=float).reshape(-1)
 			
 	if deg == False:
-		return  gamma(f )*d
+		return  gamma(f)*d
 	elif deg == True:
-		return  mf.radian_2_degree(gamma(f ) *d )
+		return  mf.radian_2_degree(gamma(f)*d )
 
 
 def input_impedance_2_reflection_coefficient(z0, zl):

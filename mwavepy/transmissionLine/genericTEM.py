@@ -37,9 +37,8 @@ ONE = 1.0 + 1/1e14
 class GenericTEM(object):
 	'''
 	This is a general super-class for TEM transmission lines. The 
-	structure behind the methods dependencies is a results of the 
+	structure behind the methods dependencies is a results of  
 	physics. a brief summary is given below. 
-	
 	
 	
 	a TEM transmission line is defined by its:
@@ -52,18 +51,24 @@ class GenericTEM(object):
 	from these the following quantities may be calculated, which
 	are functions of angular frequency (w):
 	
-		distributed Impedance,  Z'(w) = R' + jwI'
-		distributed Admittance, Y'(w) = G' + jwC'
+		distributed Impedance,  Z'(w) = wR' + jwI'
+		distributed Admittance, Y'(w) = wG' + jwC'
 	
-	from these we can get to properties which define their wave behavoir
+	from these we can calculate properties which define their wave 
+	behavior:
 		
 		characteristic Impedance, Z0(w) = sqrt(Z'(w)/Y'(w))		[ohms]
-		propagation Constant,	gamma(w) = sqrt(Z'(w)*Y'(w))	
+		propagation Constant,	gamma(w) = sqrt(Z'(w)*Y'(w))	[none]
 		
+	given the following definitions, the components of propagation 
+	constant are interpreted as follows:
+		
+		positive real(gamma) = attenuation
+		positive imag(gamma) = forward propagation 
 	
-	and then finnally produce methods which we use 
+	and then finally these all produce methods which we use 
 		
-		electrical Length
+		electrical Length (theta) 
 		input Impedance
 		relfection Coefficient
 		
@@ -97,23 +102,25 @@ class GenericTEM(object):
 	## METHODS
 	def distributed_impedance(self,f):
 		'''
-		distributed Impedance,  Z'(w) = R' + jwI'
+		distributed Impedance,  Z'(w) = wR' + jwI'
 		
 		takes:
 			f: frequency [Hz]
 		'''
 		omega  = 2*npy.pi * array(f)
-		return self.distributed_resistance+1j*omega*self.distributed_inductance
+		return omega*self.distributed_resistance + \
+			1j*omega*self.distributed_inductance
 	
 	def distributed_admittance(self,f):
 		'''
-		distributed Admittance, Y'(w) = G' + jwC'
+		distributed Admittance, Y'(w) = wG' + jwC'
 		
 		takes:
 			f: frequency [Hz]
 		'''
 		omega = 2*npy.pi*array(f)
-		return self.distributed_conductance+1j*omega*self.distributed_capacitance
+		return omega*self.distributed_conductance + \
+			1j*omega*self.distributed_capacitance
 	
 	def characteristic_impedance(self,f):
 		'''
@@ -143,7 +150,7 @@ class GenericTEM(object):
 			gamma: possibly complex propagation constant, [jrad/m+]
 		'''
 		f = array(f)
-		return 1j*sqrt(self.distributed_impedance(f)*\
+		return sqrt(self.distributed_impedance(f)*\
 			self.distributed_admittance(f))
 
 	def electrical_length(self, f,d,deg=False):
