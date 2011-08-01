@@ -44,9 +44,8 @@ class WorkingBand(object):
 		transmission line information	(transmission line-like object)
 		
 
-	the methods of WorkingBand simply calls functions from createNetwork,
-	but it saves the user the hassle of repetitously providing a
-	tline and frequency type for every network creation. 	
+	the methods of WorkingBand saves the user the hassle of repetitously
+	 providing a tline and frequency type for every network creation. 	
 
 	note: frequency and tline classes are copied, so they are passed
 	by value and not by-reference.
@@ -71,9 +70,6 @@ class WorkingBand(object):
 		self._tline = copy(new_tline)
 		
 
-
-
-
 	## Network creation
 	def short(self,nports=1,**kwargs):
 		'''
@@ -92,7 +88,6 @@ class WorkingBand(object):
 		for f in range(self.frequency.npoints):
 			result.s[f,:,:] = -1.0*npy.eye(nports, dtype=complex)
 		return result
-
 
 	def match(self,nports=1, **kwargs):
 		'''
@@ -211,12 +206,6 @@ class WorkingBand(object):
 			line of length d
 		'''
 		return self.line(d,**kwargs) ** self.load(Gamma0,**kwargs)
-	
-
-
-
-
-
 	
 		
 	## Noise Networks

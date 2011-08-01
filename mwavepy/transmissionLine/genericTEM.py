@@ -146,9 +146,6 @@ class GenericTEM(object):
 		return 1j*sqrt(self.distributed_impedance(f)*\
 			self.distributed_admittance(f))
 
-
-
-	
 	def electrical_length(self, f,d,deg=False):
 		return electrical_length( \
 			gamma = self.propagation_constant,f=f,d=d,deg=deg)
