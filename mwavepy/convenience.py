@@ -31,7 +31,7 @@ Holds pre-initialized  class's and functions which provide convenience.
 
 
 from network import *
-from transmissionLine import RectangularWaveguideTE10
+from transmissionLine import RectangularWaveguideTE10,RectangularWaveguide
 from frequency import Frequency
 from workingBand import WorkingBand
 
@@ -53,9 +53,12 @@ wb_wr1p5 = WorkingBand(frequency = f_wr1p5, tline = wg_wr1p5)
 # WR-3
 f_wr3 = Frequency(500,750,201, 'ghz')
 wg_wr3 = RectangularWaveguideTE10(3*10*mil)
-wb_wr1p5 = WorkingBand(frequency = f_wr3, tline = wg_wr3)
+wb_wr3 = WorkingBand(frequency = f_wr3, tline = wg_wr3)
 
-
+# WR-10
+f_wr10 = Frequency(75,110,201, 'ghz')
+wg_wr10 = RectangularWaveguide(10*10*mil)
+wb_wr10 = WorkingBand(frequency = f_wr10, tline = wg_wr10)
 
 
 ## Functions

@@ -27,7 +27,7 @@ from functions import electrical_length
 
 class RectangularWaveguideTE10(RectangularWaveguide):
 	def __init__(self, a,b=None,epsilon_R=1, mu_R=1):
-		RectangularWaveguide.__init__(self, a,b=None,epsilon_R=1, mu_R=1)
+		RectangularWaveguide.__init__(self, a,b=b,epsilon_R=1, mu_R=1)
 		
 	
 	def cutoff_frequency(self):

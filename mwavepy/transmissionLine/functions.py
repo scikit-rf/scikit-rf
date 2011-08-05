@@ -30,16 +30,57 @@ from .. import mathFunctions as mf
 INF = 1e99
 ONE = 1.0 + 1/1e14
 
+
+
+def distributed_circuit_2_propagation_impedance( distributed_admittance,\
+	distributed_impedance):
+	'''
+	
+	converts complex distributed impedance and admittance to propagation 
+	constant and characteristic impedance.
+	
+	takes:
+		distributed_admittance: what it says [complex number or array]
+		distributed_impedance: what it says [complex number or array]
+	
+	returns:
+		propagation_constant: what it says [complex number or array]
+		characteristic_impedance: what it says [complex number or array]
+	'''
+	propagation_constant = \
+		sqrt(distributed_impedance*distributed_admittance)
+	characteristic_impedance = \
+		sqrt(distributed_impedance/distributed_admittance)
+	return (propagation_constant, characteristic_impedance)
+
+def propagation_impedance_2_distributed_circuit(propagation_constant, \
+	characteristic_impedance):
+	'''
+	converts complex propagation constant and characteristic impedance 
+	to distributed impedance and admittance.
+	
+	takes:
+		propagation_constant: what it says [complex number or array]
+		characteristic_impedance: what it says [complex number or array]
+			
+	returns:
+		distributed_admittance: what it says [complex number or array]
+		distributed_impedance: what it says [complex number or array]
+	'''
+	distributed_admittance = propagation_constant/characteristic_impedance
+	distributed_impedance = propagation_constant*characteristic_impedance
+	return (distributed_admittance,distributed_impedance)
+
 def electrical_length(gamma, f , d, deg=False):
 	'''
 	calculates the electrical length of a section of transmission line.
 
 	takes:
-		gamma: propagation constant function , (a function which 
-			takes frequency in [hz])
+		gamma: propagation constant function [function], 
+			(a function which takes frequency in hz )
 		l: length of line. in meters
-		f: frequency at which to calculate. array-like or float. 
-		deg: return in degrees or not. boolean.
+		f: frequency at which to calculate. [array-like or float]. 
+		deg: return in degrees or not. [boolean].
 	
 	returns:
 		theta: electrical length in radians or degrees, 
@@ -61,8 +102,11 @@ def input_impedance_2_reflection_coefficient(z0, zl):
 	calculates the reflection coefficient for a given input impedance 
 	takes:
 		
-		zl: input (load) impedance.  
-		z0 - characteristic impedance. 
+		zl: input (load) impedance [number of array].  
+		z0 - characteristic impedance[number of array].
+		
+	note:
+		input data is typecasted to 1D complex array
 	'''
 	# typecast to a complex 1D array. this makes everything easier	
 	z0 = array(z0, dtype=complex).reshape(-1)
@@ -151,6 +195,7 @@ Gamma0_2_zl = reflection_coefficient_2_input_impedance
 
 zl_2_zin = input_impedance_at_theta
 zl_2_Gamma_in = input_impedance_2_reflection_coefficient_at_theta
+
 Gamma0_2_Gamma_in = reflection_coefficient_at_theta
 Gamma0_2_zin = reflection_coefficient_2_input_impedance_at_theta
 

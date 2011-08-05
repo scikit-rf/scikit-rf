@@ -154,6 +154,10 @@ class GenericTEM(object):
 			self.distributed_admittance(f))
 
 	def electrical_length(self, f,d,deg=False):
+		'''
+		convinience function for this class. the real function for this 
+		is defined in transmissionLine.functions, under the same name.
+		'''
 		return electrical_length( \
 			gamma = self.propagation_constant,f=f,d=d,deg=deg)
 
