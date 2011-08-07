@@ -114,7 +114,7 @@ class GenericTEM(object):
 		self.distributed_conductance = distributed_conductance
 		
 		# for convenience 
-		self.z0 = self.characteristic_impedance
+		self.Z0 = self.characteristic_impedance
 		self.gamma = self.propagation_constant
 	
 	## METHODS
@@ -145,8 +145,10 @@ class GenericTEM(object):
 		
 		The  characteristic impedance at a given angular frequency.
 			Z0(w) = sqrt(Z'(w)/Y'(w))
+		
 		takes:
 			f:  frequency
+		
 		returns:
 			Z0: characteristic impedance  in ohms
 		
@@ -159,7 +161,6 @@ class GenericTEM(object):
 		'''
 		the propagation constant 
 			gamma(w) = sqrt(Z'(w)*Y'(w))
-		
 		
 		takes:
 			f: frequency [Hz]
