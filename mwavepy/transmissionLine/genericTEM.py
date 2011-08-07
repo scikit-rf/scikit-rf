@@ -41,7 +41,10 @@ class GenericTEM(object):
 	physics. a brief summary is given below. 
 	
 	
-	a TEM transmission line is defined by its:
+	A TEM transmission line can be described by a characterisitc 
+	impedance and propagation constant, or by distributed impedance and 
+	admittance. This description will be in terms of distributed 
+	circuit quantities, given:
 	
 		distributed Capacitance, C'
 		distributed Inductance, I'
@@ -66,6 +69,11 @@ class GenericTEM(object):
 		positive real(gamma) = attenuation
 		positive imag(gamma) = forward propagation 
 	
+	this sign convention means that the transmission gain through a
+	distance, d, is given by, 
+		
+		S21 = exp(-gamma*d)
+		
 	and then finally these all produce methods which we use 
 		
 		electrical Length (theta) 
@@ -82,10 +90,20 @@ class GenericTEM(object):
 		constructor.
 		
 		takes:
-			distributed_capacitance: C'
-			distributed_inductance: I'
-			distributed_resistance: R'
-			distributed_conductance: G'
+			distributed_capacitance: C' [real float]
+			distributed_inductance: I' [real float]
+			distributed_resistance: R' [real float]
+			distributed_conductance: G' [real float]
+			
+		note:
+			see class help for details on the class structure.
+			
+			if you want to initialize this class in terms of propagation
+		constant and characteristic impedance, instead of distributed 
+		circuit quantities, then use the conversion function provided
+		in 	transmissionLine.functions. its confusingly called, 
+			propagation_impedance_2_distributed_circuit()
+			
 			
 				
 		'''
@@ -95,7 +113,7 @@ class GenericTEM(object):
 		self.distributed_resistance = distributed_resistance
 		self.distributed_conductance = distributed_conductance
 		
-		# for convinience 
+		# for convenience 
 		self.z0 = self.characteristic_impedance
 		self.gamma = self.propagation_constant
 	
@@ -130,7 +148,7 @@ class GenericTEM(object):
 		takes:
 			f:  frequency
 		returns:
-			Z0: characteristic impedance  ohms
+			Z0: characteristic impedance  in ohms
 		
 		'''
 		f = array(f)
@@ -147,7 +165,7 @@ class GenericTEM(object):
 			f: frequency [Hz]
 			
 		returns:
-			gamma: possibly complex propagation constant, [jrad/m+]
+			gamma: possibly complex propagation constant, [rad/m]
 		'''
 		f = array(f)
 		return sqrt(self.distributed_impedance(f)*\
@@ -155,7 +173,7 @@ class GenericTEM(object):
 
 	def electrical_length(self, f,d,deg=False):
 		'''
-		convinience function for this class. the real function for this 
+		convenience function for this class. the real function for this 
 		is defined in transmissionLine.functions, under the same name.
 		'''
 		return electrical_length( \
