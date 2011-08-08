@@ -33,6 +33,7 @@ from functions import *
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
 ONE = 1.0 + 1/1e14
+
 # TEM transmission lines
 class GenericTEM(object):
 	'''
@@ -46,22 +47,22 @@ class GenericTEM(object):
 	admittance. This description will be in terms of distributed 
 	circuit quantities, given:
 	
-		distributed Capacitance, C'
-		distributed Inductance, I'
-		distributed Resistance, R'
-		distributed Conductance, G'
+		distributed Capacitance, C
+		distributed Inductance, I
+		distributed Resistance, R
+		distributed Conductance, G
 		
 	from these the following quantities may be calculated, which
 	are functions of angular frequency (w):
 	
-		distributed Impedance,  Z'(w) = wR' + jwI'
-		distributed Admittance, Y'(w) = wG' + jwC'
+		distributed Impedance,  Z(w) = wR + jwI
+		distributed Admittance, Y'(w) = wG + jwC
 	
 	from these we can calculate properties which define their wave 
 	behavior:
 		
-		characteristic Impedance, Z0(w) = sqrt(Z'(w)/Y'(w))		[ohms]
-		propagation Constant,	gamma(w) = sqrt(Z'(w)*Y'(w))	[none]
+		characteristic Impedance, Z0(w) = sqrt(Z(w)/Y'(w))		[ohms]
+		propagation Constant,	gamma(w) = sqrt(Z(w)*Y'(w))	[none]
 		
 	given the following definitions, the components of propagation 
 	constant are interpreted as follows:
@@ -83,17 +84,15 @@ class GenericTEM(object):
 	
 	'''
 	## CONSTRUCTOR
-	def __init__(self, \
-		distributed_capacitance,	distributed_inductance,\
-		distributed_resistance, distributed_conductance):
+	def __init__(self, C, I, R, G, f=None):
 		'''
 		constructor.
 		
 		takes:
-			distributed_capacitance: C' [real float]
-			distributed_inductance: I' [real float]
-			distributed_resistance: R' [real float]
-			distributed_conductance: G' [real float]
+			C: distributed_capacitance [real float]
+			I: distributed_inductance [real float]
+			R: distributed_resistance [real float]
+			G: distributed_conductance [real float]
 			
 		note:
 			see class help for details on the class structure.
@@ -107,44 +106,62 @@ class GenericTEM(object):
 			
 				
 		'''
+		self.C, self.I, self.R, self.G, self.f = C,I,R,G,f
+
 		
-		self.distributed_capacitance = distributed_capacitance
-		self.distributed_inductance = distributed_inductance
-		self.distributed_resistance = distributed_resistance
-		self.distributed_conductance = distributed_conductance
+		# for clarity  
+		self.characteristic_impedance = self.Z0
+		self.propagation_constant = self.gamma
+		self.distributed_resistance = self.R
+		self.distributed_capacitance = self.C
+		self.distributed_inductance = self.I
+		self.distributed_conductance = self.G
 		
-		# for convenience 
-		self.Z0 = self.characteristic_impedance
-		self.gamma = self.propagation_constant
+	@classmethod
+	def from_gamma_eta0(cls, gamma, eta_0,f):
+		w  = 2*npy.pi * array(f)
+		Y = gamma/eta_0
+		Z = gamma*eta_0
+		G,C = real(Y)/w, imag(Y)/w
+		R,I = real(Z)/w, imag(Z)/w
+		return cls(C=C, I=I, R=R,G=G, f=f)
 	
 	## METHODS
-	def distributed_impedance(self,f):
+	def Z(self,f=None):
 		'''
-		distributed Impedance,  Z'(w) = wR' + jwI'
+		distributed Impedance,  Z(w) = wR + jwI
+		
+		takes:
+			f: frequency [Hz]. if None given will use self.f if exists
+		'''
+		if f is None:
+			if self.f is None:
+				raise(ValueError('must provide frequency data'))
+			else:
+				f=self.f
+		
+		w  = 2*npy.pi * array(f)
+		return w*self.R + \
+			1j*w*self.I
+	
+	def Y(self,f):
+		'''
+		distributed Admittance, Y'(w) = wG + jwC
 		
 		takes:
 			f: frequency [Hz]
 		'''
-		omega  = 2*npy.pi * array(f)
-		return omega*self.distributed_resistance + \
-			1j*omega*self.distributed_inductance
-	
-	def distributed_admittance(self,f):
-		'''
-		distributed Admittance, Y'(w) = wG' + jwC'
 		
-		takes:
-			f: frequency [Hz]
-		'''
-		omega = 2*npy.pi*array(f)
-		return omega*self.distributed_conductance + \
-			1j*omega*self.distributed_capacitance
+		
+		w = 2*npy.pi*array(f)
+		return w*self.G + \
+			1j*w*self.C
 	
-	def characteristic_impedance(self,f):
+	def Z0(self,f):
 		'''
 		
 		The  characteristic impedance at a given angular frequency.
-			Z0(w) = sqrt(Z'(w)/Y'(w))
+			Z0(w) = sqrt(Z(w)/Y'(w))
 		
 		takes:
 			f:  frequency
@@ -154,13 +171,13 @@ class GenericTEM(object):
 		
 		'''
 		f = array(f)
-		return sqrt(self.distributed_impedance(f)/\
-			self.distributed_admittance(f))
+		return sqrt(self.Z(f)/\
+			self.Y(f))
 	
-	def propagation_constant(self,f):
+	def gamma(self,f):
 		'''
 		the propagation constant 
-			gamma(w) = sqrt(Z'(w)*Y'(w))
+			gamma(w) = sqrt(Z(w)*Y'(w))
 		
 		takes:
 			f: frequency [Hz]
@@ -169,15 +186,14 @@ class GenericTEM(object):
 			gamma: possibly complex propagation constant, [rad/m]
 		'''
 		f = array(f)
-		return sqrt(self.distributed_impedance(f)*\
-			self.distributed_admittance(f))
+		return sqrt(self.Z(f)*\
+			self.Y(f))
 
 	def electrical_length(self, f,d,deg=False):
 		'''
 		convenience function for this class. the real function for this 
 		is defined in transmissionLine.functions, under the same name.
 		'''
-		return electrical_length( \
-			gamma = self.propagation_constant,f=f,d=d,deg=deg)
+		return electrical_length(gamma = self.gamma,f=f,d=d,deg=deg)
 
 

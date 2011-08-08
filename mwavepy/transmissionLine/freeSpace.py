@@ -44,9 +44,9 @@ class FreeSpace(GenericTEM):
 	'''
 	def __init__(self, relative_permativity=1, relative_permeability=1):
 		GenericTEM.__init__(self,\
-			distributed_capacitance = real(epsilon_0*relative_permativity),\
-			distributed_conductance = imag(epsilon_0*relative_permativity),\
-			distributed_inductance = real(mu_0*relative_permeability),\
-			distributed_resistance = imag(mu_0*relative_permeability),\
+			C = real(epsilon_0*relative_permativity),\
+			G = imag(epsilon_0*relative_permativity),\
+			I = real(mu_0*relative_permeability),\
+			R = imag(mu_0*relative_permeability),\
 			
 			)
