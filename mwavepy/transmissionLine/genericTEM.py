@@ -37,11 +37,29 @@ ONE = 1.0 + 1/1e14
 # TEM transmission lines
 class GenericTEM(object):
 	'''
+	== Intro ==
 	This is a general super-class for TEM transmission lines. The 
-	structure behind the methods dependencies is a results of  
+	structure behind the methods dependencies is a result of  
 	physics. a brief summary is given below. 
 	
+	== Class Structure ==
+	This class can support two models for TEM transmission lines:
+		1)simple media: in which the distributed circuit quantities are 
+			NOT functions of frequency,
+		2)not-simple media:  in which the distributed circuit quantities
+			ART functions of frequency
 	
+	1) The simple media can be constructed with scalar values for the 
+	distributed circuit quantities. then all methods for transmission
+	line properties( Z0, gamma) will take frequency as an argument. 
+	
+	2) The not-simple media must be constructed with array's for 
+	distributed circuit quanties and a frequency array. alternativly, 
+	you can construct this type of tline from propagation constant,  
+	characterisitc impedance, and frequency information, through use of
+	the class method; from_gamma_Z0().
+	
+	== Physics ==
 	A TEM transmission line can be described by a characterisitc 
 	impedance and propagation constant, or by distributed impedance and 
 	admittance. This description will be in terms of distributed 
@@ -86,7 +104,7 @@ class GenericTEM(object):
 	## CONSTRUCTOR
 	def __init__(self, C, I, R, G, f=None):
 		'''
-		constructor.
+		TEM transmission line constructor.
 		
 		takes:
 			C: distributed_capacitance [real float]
@@ -94,17 +112,14 @@ class GenericTEM(object):
 			R: distributed_resistance [real float]
 			G: distributed_conductance [real float]
 			
-		note:
+		
+		notes:
+			can be constructed from propagation constant, and 
+		characteristic impedance as well, through the class method; 
+		from_gamma_Z0. this requires frequency information.
+		
 			see class help for details on the class structure.
-			
-			if you want to initialize this class in terms of propagation
-		constant and characteristic impedance, instead of distributed 
-		circuit quantities, then use the conversion function provided
-		in 	transmissionLine.functions. its confusingly called, 
-			propagation_impedance_2_distributed_circuit()
-			
-			
-				
+	
 		'''
 		self.C, self.I, self.R, self.G, self.f = C,I,R,G,f
 
@@ -118,48 +133,58 @@ class GenericTEM(object):
 		self.distributed_conductance = self.G
 		
 	@classmethod
-	def from_gamma_eta0(cls, gamma, eta_0,f):
+	def from_gamma_Z0(cls, gamma, Z0,f):
 		w  = 2*npy.pi * array(f)
-		Y = gamma/eta_0
-		Z = gamma*eta_0
+		Y = gamma/Z0
+		Z = gamma*Z0
 		G,C = real(Y)/w, imag(Y)/w
 		R,I = real(Z)/w, imag(Z)/w
 		return cls(C=C, I=I, R=R,G=G, f=f)
 	
 	## METHODS
-	def Z(self,f=None):
+	def _get_f(self,f):
 		'''
-		distributed Impedance,  Z(w) = wR + jwI
-		
-		takes:
-			f: frequency [Hz]. if None given will use self.f if exists
+		an internal function to make code more concise
 		'''
 		if f is None:
 			if self.f is None:
 				raise(ValueError('must provide frequency data'))
 			else:
 				f=self.f
+		return (f)
+		
+	def Z(self,f=None):
+		'''
+		distributed Impedance,  Z(w) = wR + jwI
+		
+		takes:
+			f: frequency in Hz. if None, will use self.f if exists
+		
+		returns:
+			Z: distributed impedance in ohms/m.
+		'''
+		f=self._get_f(f)
 		
 		w  = 2*npy.pi * array(f)
-		return w*self.R + \
-			1j*w*self.I
+		return w*self.R + 1j*w*self.I
 	
-	def Y(self,f):
+	def Y(self,f=None):
 		'''
 		distributed Admittance, Y'(w) = wG + jwC
 		
 		takes:
-			f: frequency [Hz]
+			f: frequency [Hz]. if None, will use self.f if exists
+			
+		returns:
+			Y: distributed admittance in ohms^-1 /m
 		'''
-		
+		f=self._get_f(f)
 		
 		w = 2*npy.pi*array(f)
-		return w*self.G + \
-			1j*w*self.C
+		return w*self.G + 1j*w*self.C
 	
-	def Z0(self,f):
+	def Z0(self,f=None):
 		'''
-		
 		The  characteristic impedance at a given angular frequency.
 			Z0(w) = sqrt(Z(w)/Y'(w))
 		
@@ -170,9 +195,10 @@ class GenericTEM(object):
 			Z0: characteristic impedance  in ohms
 		
 		'''
+		f=self._get_f(f)
+		
 		f = array(f)
-		return sqrt(self.Z(f)/\
-			self.Y(f))
+		return sqrt(self.Z(f)/self.Y(f))
 	
 	def gamma(self,f):
 		'''
@@ -185,9 +211,9 @@ class GenericTEM(object):
 		returns:
 			gamma: possibly complex propagation constant, [rad/m]
 		'''
+		f=self._get_f(f)
 		f = array(f)
-		return sqrt(self.Z(f)*\
-			self.Y(f))
+		return sqrt(self.Z(f)*self.Y(f))
 
 	def electrical_length(self, f,d,deg=False):
 		'''
