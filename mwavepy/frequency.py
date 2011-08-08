@@ -63,13 +63,23 @@ class Frequency(object):
 			wr1p5band = frequencyBand(500,750,401, 'ghz')
 			
 		note: unit sets the property freqMultiplier, which is used 
-		to scale the frequncy when formatedAxis is referenced.
+		to scale the frequency when f_scaled is referenced.
 			
 		'''
 		self._unit = unit.lower()
 		self.start =  self.multiplier * start
 		self.stop = self.multiplier * stop
 		self.npoints = npoints
+	
+	@classmethod
+	def from_f(cls,f):
+		'''
+		alternative constructor from a frequency vector, in Hz
+		takes:
+			f: frequency array in Hz
+		'''
+		return cls(start=f[0], stop=f[-1],npoints = len(f), unit='hz')
+	
 	
 	def __eq__(self, other):
 		return (list(self.f) == list(other.f))	
@@ -130,5 +140,7 @@ def f_2_frequency(f):
 	'''
 	convienience function
 	converts a frequency vector to a Frequency object 
+	
+	!depricated, use classmethod from_f instead. 
 	'''
 	return Frequency(start=f[0], stop=f[-1],npoints = len(f), unit='hz')

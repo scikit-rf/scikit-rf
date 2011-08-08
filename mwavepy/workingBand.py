@@ -50,11 +50,17 @@ class WorkingBand(object):
 	note: frequency and tline classes are copied, so they are passed
 	by value and not by-reference.
 	'''
-	def __init__(self, frequency, tline):
-		self.frequency = frequency 
+	def __init__(self, tline, frequency=None):
 		self.tline = tline
-
-
+		if frequency is None:
+			try:
+				frequency = Frequency.from_f(tline.f)
+			except(AttributeError):
+				raise(AttributeError('must provide frequency information'))
+		self.frequency = frequency 
+	
+		#convenience
+		self.delay = self.line
 	## PROPERTIES	
 	@property
 	def frequency(self):

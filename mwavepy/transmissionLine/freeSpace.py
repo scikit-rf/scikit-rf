@@ -42,11 +42,12 @@ class FreeSpace(GenericTEM):
 	
 	
 	'''
-	def __init__(self, relative_permativity=1, relative_permeability=1):
+	def __init__(self, relative_permativity=1, relative_permeability=1, \
+		**kwargs):
 		GenericTEM.__init__(self,\
 			C = real(epsilon_0*relative_permativity),\
 			G = imag(epsilon_0*relative_permativity),\
 			I = real(mu_0*relative_permeability),\
 			R = imag(mu_0*relative_permeability),\
-			
+			**kwargs
 			)

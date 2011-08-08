@@ -116,7 +116,9 @@ class GenericTEM(object):
 		notes:
 			can be constructed from propagation constant, and 
 		characteristic impedance as well, through the class method; 
-		from_gamma_Z0. this requires frequency information.
+		from_gamma_Z0, like so,
+			my_tline = GenericTEM.from_gamma_Z0(....)
+		note that this requires frequency information.
 		
 			see class help for details on the class structure.
 	
@@ -124,7 +126,7 @@ class GenericTEM(object):
 		self.C, self.I, self.R, self.G, self.f = C,I,R,G,f
 
 		
-		# for clarity  
+		# for unambiguousness  
 		self.characteristic_impedance = self.Z0
 		self.propagation_constant = self.gamma
 		self.distributed_resistance = self.R
@@ -200,7 +202,7 @@ class GenericTEM(object):
 		f = array(f)
 		return sqrt(self.Z(f)/self.Y(f))
 	
-	def gamma(self,f):
+	def gamma(self,f=None):
 		'''
 		the propagation constant 
 			gamma(w) = sqrt(Z(w)*Y'(w))
