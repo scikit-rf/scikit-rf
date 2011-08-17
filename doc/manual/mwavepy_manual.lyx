@@ -1,5 +1,5 @@
-#LyX 1.6.5 created this file. For more info see http://www.lyx.org/
-\lyxformat 345
+#LyX 2.0 created this file. For more info see http://www.lyx.org/
+\lyxformat 413
 \begin_document
 \begin_header
 \textclass scrbook
@@ -38,18 +38,26 @@ language=Python,
 }
 \end_preamble
 \use_default_options true
+\maintain_unincluded_children false
 \language english
+\language_package default
 \inputencoding auto
+\fontencoding global
 \font_roman default
 \font_sans default
 \font_typewriter default
 \font_default_family default
+\use_non_tex_fonts false
 \font_sc false
 \font_osf false
 \font_sf_scale 100
 \font_tt_scale 100
 
 \graphics default
+\default_output_format default
+\output_sync 0
+\bibtex_command default
+\index_command default
 \float_placement H
 \paperfontsize default
 \spacing single
@@ -67,24 +75,34 @@ language=Python,
 \use_geometry true
 \use_amsmath 1
 \use_esint 1
+\use_mhchem 1
+\use_mathdots 1
 \cite_engine basic
 \use_bibtopic false
+\use_indices false
 \paperorientation portrait
+\suppress_date false
+\use_refstyle 0
+\index Index
+\shortcut idx
+\color #008000
+\end_index
 \topmargin 1in
 \rightmargin 1.25in
 \bottommargin 1in
 \secnumdepth 3
 \tocdepth 3
 \paragraph_separation indent
-\defskip medskip
+\paragraph_indentation default
 \quotes_language english
 \papercolumns 1
 \papersides 1
 \paperpagestyle default
 \tracking_changes false
 \output_changes false
-\author "" 
-\author "" 
+\html_math_output 0
+\html_css_as_file 0
+\html_be_strict false
 \end_header
 
 \begin_body
@@ -1318,8 +1336,97 @@ end{lstlisting}
 
 \end_layout
 
+\begin_layout Chapter
+Calibration
+\end_layout
+
 \begin_layout Section
-One-port Calibration
+Introduction
+\end_layout
+
+\begin_layout Standard
+This section describes how to use mwavepy to calibrate data taken from a
+ VNA.
+ The explanation of calibration theory and calibration kit design is beyond
+ the scope of this document.
+ This page describes how to calibrate a device under test (DUT), assuming
+ you have measured an acceptable set of standards.
+\end_layout
+
+\begin_layout Standard
+*mwavepy*'s calibration algorithm is generic, in that it will work with
+ any set of standards.
+ If you supply more calibration standards than is needed, *mwavepy* will
+ implement a simple least-squares solution.
+ 
+\end_layout
+
+\begin_layout Standard
+Calibrations are performed through a Calibration class, which makes creating
+ and working with calibrations easy.
+ Since *mwavepy-1.2* the Calibration class only requires two pieces of informatio
+n: 
+\end_layout
+
+\begin_layout Itemize
+a list of measured Networks 
+\end_layout
+
+\begin_layout Itemize
+a list of ideal Networks
+\end_layout
+
+\begin_layout Standard
+The Network elements in each list must all be similar, (same #ports, same
+ frequency info, etc) and must be aligned to each other, meaning the first
+ element of ideals list must correspond to the first element of measured
+ list.
+ 
+\end_layout
+
+\begin_layout Standard
+Optionally, other information can be provided for explicitness, such as,
+ 
+\end_layout
+
+\begin_layout Itemize
+calibration type 
+\end_layout
+
+\begin_layout Itemize
+frequency information
+\end_layout
+
+\begin_layout Itemize
+reciprocity of embedding networks 
+\end_layout
+
+\begin_layout Itemize
+etc
+\end_layout
+
+\begin_layout Standard
+When this information is not provided *mwavepy* will determine it through
+ inspection.
+ 
+\end_layout
+
+\begin_layout Section
+One-Port
+\end_layout
+
+\begin_layout Standard
+Below are (hopefully) self-explanatory examples of increasing complexity,
+ which should illustrate, by example, how to make a calibration.
+\end_layout
+
+\begin_layout Subsection
+Simple One-port 
+\end_layout
+
+\begin_layout Standard
+This example is written to be instructive, not concise.
+ 
 \end_layout
 
 \begin_layout Standard
@@ -1330,11 +1437,7 @@ status open
 
 
 \backslash
-begin{lstlisting}
-\end_layout
-
-\begin_layout Plain Layout
-
+begin{lstlisting}[language=Python] 
 \end_layout
 
 \begin_layout Plain Layout
@@ -1344,169 +1447,106 @@ import mwavepy as mv
 
 \begin_layout Plain Layout
 
+## created necessary data for Calibration class
 \end_layout
 
 \begin_layout Plain Layout
 
+# a list of Network types, holding 'ideal' responses 
 \end_layout
 
 \begin_layout Plain Layout
 
-dir = '.'
-\end_layout
-
-\begin_layout Plain Layout
-
-raw = mv.load_all_touchstones(dir,f_unit = 'ghz')
-\end_layout
-
-\begin_layout Plain Layout
-
-myfreq = raw[raw.keys()[0]].frequency
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-\end_layout
-
-\begin_layout Plain Layout
-
-cal_std = mv.Calibration(  
+my_ideals = [
 \backslash
-
+ 
 \end_layout
 
 \begin_layout Plain Layout
 
-	measured = [
+	mv.Network('ideal/short.s1p'), 
+\end_layout
+
+\begin_layout Plain Layout
+
+	mv.Network('ideal/open.s1p'), 
+\end_layout
+
+\begin_layout Plain Layout
+
+	mv.Network('ideal/load.s1p'), ]
+\end_layout
+
+\begin_layout Plain Layout
+
+# a list of Network types, holding 'measured' responses 
+\end_layout
+
+\begin_layout Plain Layout
+
+my_measured = [
 \backslash
-
+ 
 \end_layout
 
 \begin_layout Plain Layout
 
-		raw['Cal3_L1'],
+	mv.Network('measured/short.s1p'), 	mv.Network('measured/open.s1p'), 	mv.Network('mea
+sured/load.s1p'), ]
+\end_layout
+
+\begin_layout Plain Layout
+
+## create a Calibration instance cal = mv.Calibration(
 \backslash
-
+ ideals = my_ideals, measured = my_measured, )
 \end_layout
 
 \begin_layout Plain Layout
 
-		raw['Cal3_L2'],
+## run, and apply calibration to a DUT
+\end_layout
+
+\begin_layout Plain Layout
+
+# run calibration algorithm cal.run() 
+\end_layout
+
+\begin_layout Plain Layout
+
+# apply it to a dut dut = mv.Network('my_dut.s1p') dut_caled = cal.apply_cal(dut)
+\end_layout
+
+\begin_layout Plain Layout
+
+# plot results dut_caled.plot_s_db() # save results dut_caled.write_touchstone()
+ }}}
+\end_layout
+
+\begin_layout Plain Layout
+
+== Concise One-port == This example is meant to be the same as the first
+ except more concise.
+ {{{ import mwavepy as mv
+\end_layout
+
+\begin_layout Plain Layout
+
+my_ideals = mv.load_all_touchstones_in_dir('ideals/') my_measured = mv.load_all_to
+uchstones_in_dir('measured/')
+\end_layout
+
+\begin_layout Plain Layout
+
+## create a Calibration instance cal = mv.Calibration(
 \backslash
-
+ ideals = [my_ideals[k] for k in ['short','open','load']], measured = [my_measur
+ed[k] for k in ['short','open','load']], )
 \end_layout
 
 \begin_layout Plain Layout
 
-		raw['Cal3_L3'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		raw['Cal3_L4'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		raw['Cal3_L5'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		],
-\end_layout
-
-\begin_layout Plain Layout
-
-	ideals =[
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		raw['short'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		raw['delayshort1'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		raw['delayshort2'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		raw['delayshort3'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		raw['delayshort4'],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-		],
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-	name='Standard Cal',
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-	type='one port',
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-	frequency= myfreq,
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-	is_reciprocal=True,
-\backslash
-
-\end_layout
-
-\begin_layout Plain Layout
-
-	)
+## what you do with 'cal' may may be similar to above example }}}
 \end_layout
 
 \begin_layout Plain Layout
@@ -1518,7 +1558,152 @@ end{lstlisting}
 
 \end_inset
 
+{{{
+\end_layout
 
+\begin_layout Standard
+= Two-port = Two-port calibration is more involved than one-port.
+ *mwavepy* supports two-port calibration using a 8-term error model based
+ on the algorithm described in "A Generalization of the TSD Network-Analyzer
+ Calibration Procedure, Covering n-Port Scattering-Parameter Measurements,
+ Affected by Leakage Errors" by R.A.
+ Speciale [http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282
+ here].
+ 
+\end_layout
+
+\begin_layout Standard
+Like the one-port algorithm, the two-port calibration can handle any number
+ of standards, providing that some fundamental constraints are met.
+ In short, you need three two-port standards; one must be transmissive,
+ and one must provide a known impedance and be reflective.
+ 
+\end_layout
+
+\begin_layout Standard
+One draw-back of using the 8-term error model formulation (which is the
+ same formulation used in TRL) is that switch-terms may need to be measured
+ in order to achieve a high quality calibration (this was pointed out to
+ me by Dylan Williams).
+ 
+\end_layout
+
+\begin_layout Standard
+== A note on switch-terms == Switch-terms are explained in Roger Marks's
+ paper titled 'Formulations of the Basic Vector Network Analyzer Error Model
+ including Switch-Terms' [http://www.google.com/url?sa=t&source=web&cd=1&ved=0CBYQ
+FjAA&url=http%3A%2F%2Fieeexplore.ieee.org%2Fiel5%2F4119930%2F4119931%2F04119948.pdf
+%3F...&rct=j&q=marks%20switch%20terms&ei=Yj_JTaK-EsHIgQeLxsyOBg&usg=AFQjCNHvady0wYH
+dJjRmNns33nUPC2b1LA&cad=rja here].
+ Basically, switch-terms account for the fact that the error networks change
+ slightly depending on which port is being excited.
+ This is due to the hardware of the VNA.
+ 
+\end_layout
+
+\begin_layout Standard
+So how do you measure switch terms? With a custom measurement configuration
+ on the VNA itself.
+ I have support for switch terms in my HP8510C class [http://code.google.com/p/mwa
+vepy/source/browse/trunk/mwavepy/virtualInstruments/vna.py#532 here], which
+ you can use or extend to different VNA.
+ Without switch-term measurements, your calibration quality will vary depending
+ on properties of you VNA.
+ 
+\end_layout
+
+\begin_layout Standard
+== Simple Two Port == 
+\end_layout
+
+\begin_layout Standard
+Two-port calibration is accomplished in an identical way to one-port, except
+ all the standards are two-port networks.
+ This is even true of reflective standards (S21=S12=0).
+ So if you measure reflective standards you must measure two of them simultaneou
+sly, and store information in a two-port.
+ For example, connect a short to port-1 and a load to port-2, and save a
+ two-port measurement as 'short,load.s2p' or similar.
+ 
+\end_layout
+
+\begin_layout Standard
+{{{
+\end_layout
+
+\begin_layout Standard
+import mwavepy as mv
+\end_layout
+
+\begin_layout Standard
+## created necessary data for Calibration class
+\end_layout
+
+\begin_layout Standard
+# a list of Network types, holding 'ideal' responses my_ideals = [
+\backslash
+ mv.Network('ideal/thru.s2p'), mv.Network('ideal/line.s2p'), mv.Network('ideal/short,
+ short.s2p'), ]
+\end_layout
+
+\begin_layout Standard
+# a list of Network types, holding 'measured' responses my_measured = [
+\backslash
+ mv.Network('measured/thru.s2p'), mv.Network('measured/line.s2p'), mv.Network('measur
+ed/short, short.s2p'), ]
+\end_layout
+
+\begin_layout Standard
+## create a Calibration instance cal = mv.Calibration(
+\backslash
+ ideals = my_ideals, measured = my_measured, )
+\end_layout
+
+\begin_layout Standard
+## run, and apply calibration to a DUT
+\end_layout
+
+\begin_layout Standard
+# run calibration algorithm cal.run() 
+\end_layout
+
+\begin_layout Standard
+# apply it to a dut dut = mv.Network('my_dut.s2p') dut_caled = cal.apply_cal(dut)
+\end_layout
+
+\begin_layout Standard
+# plot results dut_caled.plot_s_db() # save results dut_caled.write_touchstone()
+ }}}
+\end_layout
+
+\begin_layout Standard
+== Using s1p ideals in two-port calibration == Commonly, you have data for
+ ideal data for reflective standards in the form of one-port touchstone
+ files (ie s1p).
+ To use this with mwavepy's two-port calibration method you need to create
+ a two-port network that is a composite of the two networks.
+ There is a function in the WorkingBand Class which will do this for you,
+ called two_port_reflect.
+ {{{ short = mv.Network('ideals/short.s1p') load = mv.Network('ideals/load.s1p')
+ short_load = wb.two_port_reflect(short, load)
+\end_layout
+
+\begin_layout Standard
+}}}
+\end_layout
+
+\begin_layout Standard
+= Using mwavepy to create ideal responses=
+\end_layout
+
+\begin_layout Standard
+*mavepy* also has basic support for creation of simple standards.
+ This is accomplished through the sub-module transmissionLine.
+ 
+\end_layout
+
+\begin_layout Standard
+= Parameterized Self-calibration = == One-Port == == Two-Port ==
 \end_layout
 
 \begin_layout Chapter

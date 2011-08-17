@@ -958,7 +958,6 @@ def s2t(s):
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return t        
         
-
 def t2s(t):
 	'''
 	converts a 'wave cascading parameters' to scattering parameters 
@@ -1024,8 +1023,6 @@ def cascade(a,b):
 		raise IndexError('one of the s-matricies has incorrect shape')
 	return c
 	
-
-
 def de_embed(a,b):	
 	'''
 	de-embed a 2x2 s-matrix from another 2x2 s-matrix
@@ -1057,7 +1054,29 @@ def de_embed(a,b):
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return c
 
-
+def connect(S,k,T,l):
+	'''
+	connect two n-port networks together. specifically, connect port 'k'
+	on network 'S' to port 'l' on network'T'. 
+	'''
+	return 0
+	
+def innerconnect(S, k, l):
+	'''
+	connect (short) two ports of a n-port network, resulting in a n-2
+	port network.
+	 
+	'''
+	
+	n = S.shape[0] -2
+	Z = npy.zeros([n,n],dtype='complex')
+	for i in range(n):
+		for j in range(n):
+			Z[i,j] = S[i,j] +  \
+				( S[k,j]*S[i,l]*(1-S[l,k]) + S[l,j]*S[i,k]*(1-S[k,l]) +\
+				S[k,j]*S[l,l]*S[i,k] + S[l,j]*S[k,k]*S[i,l])/\
+				( (1-S[k,l])*(1-S[l,k]) - S[k,k]*S[l,l] )
+	return Z
 
 def flip(a):
 	'''

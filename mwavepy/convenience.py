@@ -47,12 +47,12 @@ from datetime import datetime
 
 # WR-1.5 
 f_wr1p5 = Frequency(500,750,201, 'ghz')
-wg_wr1p5 = RectangularWaveguideTE10(1.5*10*mil)
+wg_wr1p5 = RectangularWaveguide(1.5*10*mil)
 wb_wr1p5 = WorkingBand(frequency = f_wr1p5, tline = wg_wr1p5)
 
 # WR-3
 f_wr3 = Frequency(500,750,201, 'ghz')
-wg_wr3 = RectangularWaveguideTE10(3*10*mil)
+wg_wr3 = RectangularWaveguide(3*10*mil)
 wb_wr3 = WorkingBand(frequency = f_wr3, tline = wg_wr3)
 
 # WR-10
