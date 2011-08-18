@@ -89,7 +89,9 @@ class Network(object):
 			self.name = name
 			#self.s = None
 			self.z0 = 50 
-
+		
+		#convenience 
+		self.nports = self.number_of_ports
 		
 	
 
@@ -816,9 +818,6 @@ class Network(object):
 		ax.set_xlabel('Real')
 		ax.set_ylabel('Imaginary')
 
-
-	
-	
 	def plot_s_all_db(self,ax = None, show_legend=True,**kwargs):
 		'''
 		plots all s parameters in log magnitude
@@ -935,7 +934,7 @@ def psd2_2_time_domain():
 # functions not operating on  Network type. 
 #mostly working on  s-matricies
 
-# network format conversions
+# network matrix functions
 def s2t(s):
 	'''
 	converts a scattering parameters to 'wave cascading parameters'
@@ -1054,29 +1053,131 @@ def de_embed(a,b):
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return c
 
-def connect(S,k,T,l):
+def connect(ntwkA, k, ntwkB,l):
 	'''
 	connect two n-port networks together. specifically, connect port 'k'
-	on network 'S' to port 'l' on network'T'. 
-	'''
-	return 0
+	on ntwkA to port 'l' on ntwkB. The resultant network has
+	(ntwkA.nports+ntwkB.nports -2)-ports
 	
-def innerconnect(S, k, l):
-	'''
-	connect (short) two ports of a n-port network, resulting in a n-2
-	port network.
-	 
-	'''
+	takes:
+		ntwkA: network 'A', [mwavepy.Network]
+		k: port index on ntwkA [int]
+		ntwkA: network 'B', [mwavepy.Network]
+		l: port index on ntwkB [int]
 	
-	n = S.shape[0] -2
-	Z = npy.zeros([n,n],dtype='complex')
-	for i in range(n):
-		for j in range(n):
-			Z[i,j] = S[i,j] +  \
-				( S[k,j]*S[i,l]*(1-S[l,k]) + S[l,j]*S[i,k]*(1-S[k,l]) +\
-				S[k,j]*S[l,l]*S[i,k] + S[l,j]*S[k,k]*S[i,l])/\
-				( (1-S[k,l])*(1-S[l,k]) - S[k,k]*S[l,l] )
-	return Z
+	returns:
+		ntwkC': new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+	
+	note:
+		see functions connect_s() and innerconnect_s() for actual 
+	S-parameter connection algorithm. 
+	'''
+	ntwkC = deepcopy(ntwkA)
+	ntwkC.s = connect_s(ntwkA.s,k,ntwkB.s,l)
+	return ntwkC
+
+def innerconnect_s(ntwk, k, l):
+	'''
+	connect two ports of a single n-port network, resulting in a 
+	(n-2)-port network.
+	
+	takes:
+		ntwk: the network. [mwavepy.Network]
+		k: port index [int]
+		l: port index [int]
+	returns:
+		ntwk': new network of with n-2 ports. [mwavepy.Network]
+		
+	note:
+		see functions connect_s() and innerconnect_s() for actual 
+	S-parameter connection algorithm. 
+
+
+	'''
+
+def connect_s(S,k,T,l):
+	'''
+	connect two n-port networks together. specifically, connect port 'k'
+	on network 'S' to port 'l' on network 'T'. The resultant network has
+	(S.rank + T.rank-2)-ports
+	
+	takes:
+		S: S-parameter matrix [numpy.ndarray].
+		k: port index on S [int]
+		T: S-parameter matrix [numpy.ndarray]
+		l: port index on T [int]
+	returns:
+		S': new S-parameter matrix [numpy.ndarry]
+		
+	
+	note: 
+		shape of S-parameter matrices can be either nxn, or fxnxn, where
+	f is the frequency axis. 
+		internally, this function creates a larger composite network 
+	and calls the  innerconnect() function. see that function for more 
+	details about the implementation
+	
+	'''
+	if k > S.shape[-1] or l>T.shape[-1]:
+		raise(ValueError('port indecies are out of range'))
+	
+	if len (S.shape) > 2:
+		# assume this is a kxnxn matrix
+		n = S.shape[-1]+T.shape[-1]-2 # nports of output Matrix
+		Sp = npy.zeros((S.shape[0], n,n), dtype='complex')
+		
+		for f in range(S.shape[0]):
+			Sp[f,:,:] = connect(S[f,:,:],k,T[f,:,:],l)
+		return Sp
+	else:		
+		filler = npy.zeros((S.shape[0],T.shape[1]))
+		#create composite matrix, appending  sub-matrices diagonally
+		Sp= npy.vstack( [npy.hstack([S,filler]),npy.hstack([filler.T,T])])
+		return innerconnect(Sp, k,l)
+	
+	
+def innerconnect_s(S, k, l):
+	'''
+	connect two ports of a single n-port network, resulting in a 
+	(n-2)-port network.
+	
+	takes:
+		S: S-parameter matrix [numpy.ndarray] 
+		k: port index [int]
+		l: port index [int]
+	returns:
+		S': new S-parameter matrix [numpy.ndarry]
+		
+	This function is based on the algorithm presented in the paper:
+		'Perspectives in Microwave Circuit Analysis' by R. C. Compton
+		 and D. B. Rutledge
+	The original algorithm is given in 
+		'A NEW GENERAL COMPUTER ALGORITHM FOR S-MATRIX CALCULATION OF
+		INTERCONNECTED MULTIPORTS' by Gunnar Filipsson
+
+
+	'''
+	if k > S.shape[-1] or l>S.shape[-1]:
+		raise(ValueError('port indecies are out of range'))
+	
+	if len (S.shape) > 2:
+		# assume this is a kxnxn matrix
+		n = S.shape[-1]-2 # nports of output Matrix
+		Sp = npy.zeros((S.shape[0], n,n), dtype='complex')
+		
+		for f in range(S.shape[0]):
+			Sp[f,:,:] = innerconnect(S[f,:,:],k,l)
+		return Sp
+	else:
+		n = S.shape[0] -2
+		Sp = npy.zeros([n,n],dtype='complex')
+		for i in range(n):
+			for j in range(n):
+				Sp[i,j] = S[i,j] +  \
+					( S[k,j]*S[i,l]*(1-S[l,k]) + S[l,j]*S[i,k]*(1-S[k,l]) +\
+					S[k,j]*S[l,l]*S[i,k] + S[l,j]*S[k,k]*S[i,l])/\
+					( (1-S[k,l])*(1-S[l,k]) - S[k,k]*S[l,l] )
+		return Sp
 
 def flip(a):
 	'''
