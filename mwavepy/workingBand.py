@@ -100,9 +100,10 @@ class WorkingBand(object):
 		creates a Network for a perfect matched transmission line (Gamma0=0) 
 		
 		takes:
+			nports: number of ports [int]
 			**kwargs: key word arguments passed to Network Constructor
 		returns:
-			a 1-port Network class, representing a perfect match
+			a n-port Network [mwavepy.Network]
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
@@ -213,6 +214,35 @@ class WorkingBand(object):
 		'''
 		return self.line(d,**kwargs) ** self.load(Gamma0,**kwargs)
 	
+	def tee(self,**kwargs):
+		'''
+		makes a ideal, lossless tee. (aka three port splitter)
+		
+		takes:
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 3-port Network [mwavepy.Network]
+		'''
+		return self.splitter(3,**kwargs)
+		
+	def splitter(self, nports=3,**kwargs):
+		'''
+		returns an ideal, lossless n-way splitter.
+		
+		takes:
+			nports: number of ports [int]
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a n-port Network [mwavepy.Network]
+		'''
+		n=nports
+		result = self.match(n, **kwargs)
+		
+		for f in range(self.frequency.npoints):
+			result.s[f,:,:] =  (2*1./n-1)*npy.eye(n) + \
+				npy.sqrt((1-((2.-n)/n)**2)/(n-1))*\
+				(npy.ones((n,n))-npy.eye(n))
+		return result
 		
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):

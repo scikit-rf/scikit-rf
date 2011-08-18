@@ -91,7 +91,7 @@ class Network(object):
 			self.z0 = 50 
 		
 		#convenience 
-		self.nports = self.number_of_ports
+		#self.nports = self.number_of_ports
 		
 	
 
@@ -376,8 +376,13 @@ class Network(object):
 	@property
 	def passivity(self):
 		'''
-		returns passivity metric for a multi-port network. mathmatically, 
-		this is a test for unitary-ness. 
+		 passivity metric for a multi-port network. It returns
+		a matrix who's diagonals are equal to the total power 
+		received at all ports, normalized to the power at a single
+		excitement  port.
+		
+		mathmatically, this is a test for unitary-ness of the 
+		s-parameter matrix. 
 		
 		for two port this is 
 			( |S11|^2 + |S21|^2, |S22|^2+|S12|^2)
@@ -385,18 +390,17 @@ class Network(object):
 			S.H * S
 		where H is conjugate transpose of S, and * is dot product
 		
+		note:
+		see more at,
 		http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
 		'''
 		if self.number_of_ports == 1:
 			raise (ValueError('Doesnt exist for one ports'))
-		elif self.number_of_ports != 2:
-			raise NotImplementedError
+		
 		pas_mat = copy(self.s)
 		for f in range(len(self.s)):
 			pas_mat[f,:,:] = npy.dot(self.s[f,:,:].conj().T, self.s[f,:,:])
 		
-		#pas_mat2[f,:,:]= ( npy.abs(self.s[:,0,0])**2 + abs(self.s[:,1,0])**2,\
-		#	npy.abs(self.s[:,1,1])**2 + npy.abs(self.s[:,0,1])**2 )
 		return pas_mat
 	
 
@@ -1156,9 +1160,11 @@ def innerconnect_s(S, k, l):
 	The original algorithm is given in 
 		'A NEW GENERAL COMPUTER ALGORITHM FOR S-MATRIX CALCULATION OF
 		INTERCONNECTED MULTIPORTS' by Gunnar Filipsson
-
-
 	'''
+	
+	# TODO: this algorithm is a bit wasteful in that it calculates the 
+	# scattering parameters for a network of rank S.rank+T.rank and 
+	# then deletes the ports which are 'connected' 
 	if k > S.shape[-1] -1 or l>S.shape[-1]-1:
 		raise(ValueError('port indecies are out of range'))
 	
