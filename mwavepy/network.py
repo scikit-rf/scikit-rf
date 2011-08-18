@@ -1061,7 +1061,7 @@ def connect(ntwkA, k, ntwkB,l):
 	
 	takes:
 		ntwkA: network 'A', [mwavepy.Network]
-		k: port index on ntwkA [int]
+		k: port index on ntwkA [int] ( port indecies start from 0 )
 		ntwkA: network 'B', [mwavepy.Network]
 		l: port index on ntwkB [int]
 	
@@ -1076,14 +1076,14 @@ def connect(ntwkA, k, ntwkB,l):
 	ntwkC.s = connect_s(ntwkA.s,k,ntwkB.s,l)
 	return ntwkC
 
-def innerconnect_s(ntwk, k, l):
+def innerconnect(ntwk, k, l):
 	'''
 	connect two ports of a single n-port network, resulting in a 
 	(n-2)-port network.
 	
 	takes:
 		ntwk: the network. [mwavepy.Network]
-		k: port index [int]
+		k: port index [int] (port indecies start from 0)
 		l: port index [int]
 	returns:
 		ntwk': new network of with n-2 ports. [mwavepy.Network]
@@ -1091,9 +1091,10 @@ def innerconnect_s(ntwk, k, l):
 	note:
 		see functions connect_s() and innerconnect_s() for actual 
 	S-parameter connection algorithm. 
-
-
 	'''
+	ntwkC = deepcopy(ntwk)
+	ntwkC.s = innerconnect_s(ntwk.s,k,l)
+	return ntwkC
 
 def connect_s(S,k,T,l):
 	'''
@@ -1103,7 +1104,7 @@ def connect_s(S,k,T,l):
 	
 	takes:
 		S: S-parameter matrix [numpy.ndarray].
-		k: port index on S [int]
+		k: port index on S (port indecies start from 0) [int]
 		T: S-parameter matrix [numpy.ndarray]
 		l: port index on T [int]
 	returns:
@@ -1118,7 +1119,7 @@ def connect_s(S,k,T,l):
 	details about the implementation
 	
 	'''
-	if k > S.shape[-1] or l>T.shape[-1]:
+	if k > S.shape[-1]-1 or l>T.shape[-1]-1:
 		raise(ValueError('port indecies are out of range'))
 	
 	if len (S.shape) > 2:
@@ -1127,13 +1128,14 @@ def connect_s(S,k,T,l):
 		Sp = npy.zeros((S.shape[0], n,n), dtype='complex')
 		
 		for f in range(S.shape[0]):
-			Sp[f,:,:] = connect(S[f,:,:],k,T[f,:,:],l)
+			Sp[f,:,:] = connect_s(S[f,:,:],k,T[f,:,:],l)
 		return Sp
 	else:		
 		filler = npy.zeros((S.shape[0],T.shape[1]))
-		#create composite matrix, appending  sub-matrices diagonally
+		#create composite matrix, appending each sub-matrix diagonally
 		Sp= npy.vstack( [npy.hstack([S,filler]),npy.hstack([filler.T,T])])
-		return innerconnect(Sp, k,l)
+		
+		return innerconnect_s(Sp, k,S.shape[-1]+l)
 	
 	
 def innerconnect_s(S, k, l):
@@ -1157,7 +1159,7 @@ def innerconnect_s(S, k, l):
 
 
 	'''
-	if k > S.shape[-1] or l>S.shape[-1]:
+	if k > S.shape[-1] -1 or l>S.shape[-1]-1:
 		raise(ValueError('port indecies are out of range'))
 	
 	if len (S.shape) > 2:
@@ -1166,10 +1168,10 @@ def innerconnect_s(S, k, l):
 		Sp = npy.zeros((S.shape[0], n,n), dtype='complex')
 		
 		for f in range(S.shape[0]):
-			Sp[f,:,:] = innerconnect(S[f,:,:],k,l)
+			Sp[f,:,:] = innerconnect_s(S[f,:,:],k,l)
 		return Sp
 	else:
-		n = S.shape[0] -2
+		n = S.shape[0]
 		Sp = npy.zeros([n,n],dtype='complex')
 		for i in range(n):
 			for j in range(n):
@@ -1177,6 +1179,8 @@ def innerconnect_s(S, k, l):
 					( S[k,j]*S[i,l]*(1-S[l,k]) + S[l,j]*S[i,k]*(1-S[k,l]) +\
 					S[k,j]*S[l,l]*S[i,k] + S[l,j]*S[k,k]*S[i,l])/\
 					( (1-S[k,l])*(1-S[l,k]) - S[k,k]*S[l,l] )
+		Sp = npy.delete(Sp,(k,l),0)
+		Sp = npy.delete(Sp,(k,l),1)
 		return Sp
 
 def flip(a):

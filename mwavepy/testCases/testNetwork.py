@@ -23,12 +23,16 @@ class NetworkTestCase(unittest.TestCase):
 	
 	
 	def test_open_saved_touchstone(self):
-		self.ntwk1.write_touchstone('ntwk1Saved.s2p')
+		self.ntwk1.write_touchstone('ntwk1Saved')
 		ntwk1Saved = mv.Network('ntwk1Saved.s2p')
 		self.assertEqual(self.ntwk1, ntwk1Saved)
 		
 	def test_cascade(self):
 		self.assertEqual(self.ntwk1**self.ntwk2, self.ntwk3)
+		
+	def test_connect(self):
+		self.assertEqual(mv.connect(self.ntwk1,1,self.ntwk2,0), \
+			self.ntwk3)
 
 	def test_de_embed_by_inv(self):
 		self.assertEqual(self.ntwk1.inv**self.ntwk3,self.ntwk2)
