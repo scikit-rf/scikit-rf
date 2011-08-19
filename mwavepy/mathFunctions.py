@@ -114,10 +114,6 @@ def radian_2_degree(rad):
 	
 def degree_2rad_(deg):
 	return (deg)*pi/180
-	
-
-
-
 
 
 # mathematical functions
@@ -162,12 +158,9 @@ def scalar2Complex(input):
 		output.append(input[k] + 1j*input[k+1])
 	return npy.array(output).flatten()
 
-
 def complex2dB(complx):
 	dB = 20 * npy.log10(npy.abs( (npy.real(complx) + 1j*npy.imag(complx) )))
 	return dB
-
-
 
 def complex2ReIm(complx):
 	return npy.real(complx), npy.imag(complx)
@@ -219,18 +212,3 @@ def psd2TimeDomain(f,y, windowType='hamming'):
 	# 
 	return timeVector, signalVector
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-############### Ploting ############### 

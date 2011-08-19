@@ -93,7 +93,6 @@ class Network(object):
 		#convenience 
 		#self.nports = self.number_of_ports
 		
-	
 
 ## OPERATORS
 	def __pow__(self,other):
@@ -199,6 +198,18 @@ class Network(object):
 		output.s = output.s[key,:,:]
 		output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
 		return output
+	
+	def __str__(self):
+		'''
+		'''
+		f=self.frequency
+		output =  \
+			'%i-Port Network.  %i-%i %s.  %i points'% \
+			(self.number_of_ports,f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)
+
+		return output
+	def __repr__(self):
+		return self.__str__()
 ## PRIMARY PROPERTIES
 	# s-parameter matrix
 	@property
@@ -895,7 +906,7 @@ def average(list_of_networks):
 	takes:
 		list_of_networks: a list of Networks
 	returns:
-		ntwk: the resultant averaged Network
+		ntwk: the resultant averaged Network [mwavepy.Network]
 		
 	'''
 	out_ntwk = copy(list_of_networks[0])
@@ -928,12 +939,74 @@ def one_port_2_two_port(ntwk):
 	result.s[:,1,0] = result.s[:,0,1]
 	return result
 	
+def two_port_reflect(ntwk1, ntwk2, **kwargs):
+	'''
+	generates a two-port reflective (S21=S12=0) network, from the
+	 2 one-port networks
+
+	takes:
+		ntwk1: Network on  port 1 [mwavepy.Network]
+		ntwk2: Network on  port 2 [mwavepy.Network]
 	
-def psd2_2_time_domain():
+	returns:
+		result: two-port reflective network, S12=S21=0 [mwavepy.Network]
+
+	
+	example:
+	to use a working band to create a two-port reflective standard from
+	two one-port standards
+		wb= WorkingBand(....)
+		two_port_reflect(wb.short(), wb.match())
 	'''
-	This would be very useful i need to do this
+	result = deepcopy(ntwk1)
+	result.s = npy.zeros((ntwk1.frequency.npoints,2,2), dtype='complex')
+	for f in range(ntwk1.frequency.npoints):
+		result.s[f,0,0] = ntwk1.s[f,0,0]
+		result.s[f,1,1] = ntwk2.s[f,0,0]
+	return result	
+def connect(ntwkA, k, ntwkB,l):
 	'''
-	raise NotImplementedError
+	connect two n-port networks together. specifically, connect port 'k'
+	on ntwkA to port 'l' on ntwkB. The resultant network has
+	(ntwkA.nports+ntwkB.nports -2)-ports
+	
+	takes:
+		ntwkA: network 'A', [mwavepy.Network]
+		k: port index on ntwkA [int] ( port indecies start from 0 )
+		ntwkA: network 'B', [mwavepy.Network]
+		l: port index on ntwkB [int]
+	
+	returns:
+		ntwkC': new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+	
+	note:
+		see functions connect_s() and innerconnect_s() for actual 
+	S-parameter connection algorithm. 
+	'''
+	ntwkC = deepcopy(ntwkA)
+	ntwkC.s = connect_s(ntwkA.s,k,ntwkB.s,l)
+	return ntwkC
+
+def innerconnect(ntwk, k, l):
+	'''
+	connect two ports of a single n-port network, resulting in a 
+	(n-2)-port network.
+	
+	takes:
+		ntwk: the network. [mwavepy.Network]
+		k: port index [int] (port indecies start from 0)
+		l: port index [int]
+	returns:
+		ntwk': new network of with n-2 ports. [mwavepy.Network]
+		
+	note:
+		see functions connect_s() and innerconnect_s() for actual 
+	S-parameter connection algorithm. 
+	'''
+	ntwkC = deepcopy(ntwk)
+	ntwkC.s = innerconnect_s(ntwk.s,k,l)
+	return ntwkC
+	
 
 # functions not operating on  Network type. 
 #mostly working on  s-matricies
@@ -1057,48 +1130,6 @@ def de_embed(a,b):
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return c
 
-def connect(ntwkA, k, ntwkB,l):
-	'''
-	connect two n-port networks together. specifically, connect port 'k'
-	on ntwkA to port 'l' on ntwkB. The resultant network has
-	(ntwkA.nports+ntwkB.nports -2)-ports
-	
-	takes:
-		ntwkA: network 'A', [mwavepy.Network]
-		k: port index on ntwkA [int] ( port indecies start from 0 )
-		ntwkA: network 'B', [mwavepy.Network]
-		l: port index on ntwkB [int]
-	
-	returns:
-		ntwkC': new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
-	
-	note:
-		see functions connect_s() and innerconnect_s() for actual 
-	S-parameter connection algorithm. 
-	'''
-	ntwkC = deepcopy(ntwkA)
-	ntwkC.s = connect_s(ntwkA.s,k,ntwkB.s,l)
-	return ntwkC
-
-def innerconnect(ntwk, k, l):
-	'''
-	connect two ports of a single n-port network, resulting in a 
-	(n-2)-port network.
-	
-	takes:
-		ntwk: the network. [mwavepy.Network]
-		k: port index [int] (port indecies start from 0)
-		l: port index [int]
-	returns:
-		ntwk': new network of with n-2 ports. [mwavepy.Network]
-		
-	note:
-		see functions connect_s() and innerconnect_s() for actual 
-	S-parameter connection algorithm. 
-	'''
-	ntwkC = deepcopy(ntwk)
-	ntwkC.s = innerconnect_s(ntwk.s,k,l)
-	return ntwkC
 
 def connect_s(S,k,T,l):
 	'''

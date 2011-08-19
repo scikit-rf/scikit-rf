@@ -29,7 +29,7 @@ from scipy import stats
 
 from frequency import Frequency
 from network import Network
-from transmissionLine.functions import electrical_length
+from transmissionLine.functions import electrical_length, zl_2_Gamma0
 
 
 class WorkingBand(object):
@@ -77,24 +77,6 @@ class WorkingBand(object):
 		
 
 	## Network creation
-	def short(self,nports=1,**kwargs):
-		'''
-		creates a Network for a short  transmission line (Gamma0=-1) 
-		
-		takes:
-			nports: number of ports. creates a short on all ports,
-				default is 1
-			**kwargs: key word arguments passed to Network Constructor
-		returns:
-			a 1-port Network class, a short
-		'''
-		result = Network(**kwargs)
-		result.frequency = self.frequency
-		result.s = npy.zeros((self.frequency.npoints,nports, nports),dtype=complex)
-		for f in range(self.frequency.npoints):
-			result.s[f,:,:] = -1.0*npy.eye(nports, dtype=complex)
-		return result
-
 	def match(self,nports=1, **kwargs):
 		'''
 		creates a Network for a perfect matched transmission line (Gamma0=0) 
@@ -110,36 +92,57 @@ class WorkingBand(object):
 		result.s =  npy.zeros((self.frequency.npoints,nports, nports),\
 			dtype=complex)
 		return result
+		
+	def short(self,nports=1,**kwargs):
+		'''
+		creates a Network for a short  transmission line (Gamma0=-1) 
+		
+		takes:
+			nports: number of ports. creates a short on all ports,
+				default is 1 [int]
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a n-port Network [mwavepy.Network]
+		'''
+		result = match(nports,**kwargs)
+		for f in range(self.frequency.npoints):
+			result.s[f,:,:] = -1.0*npy.eye(nports, dtype=complex)
+		return result
+
+	
 
 	def open(self,nports=1, **kwargs):
 		'''
 		creates a Network for a 'open' transmission line (Gamma0=1) 
 		
 		takes:
+			nports: number of ports. creates a short on all ports,
+				default is 1 [int]
 			**kwargs: key word arguments passed to Network Constructor
 		returns:
-			a 1-port Network class, an open
+			a n-port Network [mwavepy.Network]
 		'''
-		result = Network(**kwargs)
-		result.frequency = self.frequency
-		result.s = npy.zeros((self.frequency.npoints,nports, nports),dtype=complex)
+		result = match(nports,**kwargs)
 		for f in range(self.frequency.npoints):
 			result.s[f,:,:] = 1.0*npy.eye(nports, dtype=complex)
 		return result
 
-	def load(self,Gamma0,**kwargs):
+	def load(self,Gamma0,nports=1,**kwargs):
 		'''
 		creates a Network for a Load termianting a transmission line 
 		
 		takes:
 			Gamma0: reflection coefficient of load (not in db)
+			nports: number of ports. creates a short on all ports,
+				default is 1 [int]
 			**kwargs: key word arguments passed to Network Constructor
 		returns:
 			a 1-port Network class, where  S = Gamma0*ones(...)
 		'''
-		result = Network(**kwargs)
-		result.frequency = self.frequency
-		result.s = Gamma0*npy.ones(self.frequency.npoints, dtype=complex)
+		result = match(nports,**kwargs)
+		for f in range(self.frequency.npoints):
+			result.s[f,:,:] = Gamma0*npy.eye(nports, dtype=complex)
+		
 		return result
 	
 	def line(self,d,**kwargs):
@@ -243,7 +246,18 @@ class WorkingBand(object):
 				npy.sqrt((1-((2.-n)/n)**2)/(n-1))*\
 				(npy.ones((n,n))-npy.eye(n))
 		return result
+	
+	def impedance_mismatch(self, z1, z2, **kwargs):
+		'''
+		returns a two-port network for a impedance mis-match
+		'''	
+		result = self.match(nports=2, **kwargs)
+		result.s[:,0,0] = zl_2_Gamma0(z1,z2)
+		result.s[:,1,1] = zl_2_Gamma0(z2,z1)
+		result.s[:,1,0] = 1-zl_2_Gamma0(z1,z2)
+		result.s[:,0,1] = 1-zl_2_Gamma0(z2,z1)
 		
+		return result
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
 		'''
