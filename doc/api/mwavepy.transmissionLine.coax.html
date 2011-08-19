@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.transmissionLine.html"><font color="#ffffff">transmissionLine</font></a>.coax</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/transmissionLine/coax.py">/usr/local/lib/python2.6/dist-packages/mwavepy/transmissionLine/coax.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/transmissionLine/coax.py">/home/alex/docs/python/path/mwavepy/transmissionLine/coax.py</a></font></td></tr></table>
     <p><tt>contains&nbsp;coaxial&nbsp;cable&nbsp;transmission&nbsp;line&nbsp;class</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -43,34 +43,46 @@ Methods defined here:<br>
 
 <hr>
 Methods inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>
-<dl><dt><a name="Coax-characteristic_impedance"><strong>characteristic_impedance</strong></a>(self, f)</dt><dd><tt>The&nbsp;&nbsp;characteristic&nbsp;impedance&nbsp;at&nbsp;a&nbsp;given&nbsp;angular&nbsp;frequency.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0(w)&nbsp;=&nbsp;sqrt(Z'(w)/Y'(w))<br>
+<dl><dt><a name="Coax-Y"><strong>Y</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;wG&nbsp;+&nbsp;jwC<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz].&nbsp;if&nbsp;None,&nbsp;will&nbsp;use&nbsp;self.<strong>f</strong>&nbsp;if&nbsp;exists<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y:&nbsp;distributed&nbsp;admittance&nbsp;in&nbsp;ohms^-1&nbsp;/m</tt></dd></dl>
+
+<dl><dt><a name="Coax-Z"><strong>Z</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>distributed&nbsp;Impedance,&nbsp;&nbsp;<a href="#Coax-Z">Z</a>(w)&nbsp;=&nbsp;wR&nbsp;+&nbsp;jwI<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;in&nbsp;Hz.&nbsp;if&nbsp;None,&nbsp;will&nbsp;use&nbsp;self.<strong>f</strong>&nbsp;if&nbsp;exists<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z:&nbsp;distributed&nbsp;impedance&nbsp;in&nbsp;ohms/m.</tt></dd></dl>
+
+<dl><dt><a name="Coax-Z0"><strong>Z0</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>The&nbsp;&nbsp;characteristic&nbsp;impedance&nbsp;at&nbsp;a&nbsp;given&nbsp;angular&nbsp;frequency.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Coax-Z0">Z0</a>(w)&nbsp;=&nbsp;sqrt(<a href="#Coax-Z">Z</a>(w)/Y'(w))<br>
+&nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;&nbsp;frequency<br>
+&nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0:&nbsp;characteristic&nbsp;impedance&nbsp;&nbsp;ohms</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0:&nbsp;characteristic&nbsp;impedance&nbsp;&nbsp;in&nbsp;ohms</tt></dd></dl>
 
-<dl><dt><a name="Coax-distributed_admittance"><strong>distributed_admittance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;G'&nbsp;+&nbsp;jwC'<br>
-&nbsp;<br>
-takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
+<dl><dt><a name="Coax-electrical_length"><strong>electrical_length</strong></a>(self, f, d, deg<font color="#909090">=False</font>)</dt><dd><tt>convenience&nbsp;function&nbsp;for&nbsp;this&nbsp;class.&nbsp;the&nbsp;real&nbsp;function&nbsp;for&nbsp;this&nbsp;<br>
+is&nbsp;defined&nbsp;in&nbsp;transmissionLine.functions,&nbsp;under&nbsp;the&nbsp;same&nbsp;name.</tt></dd></dl>
 
-<dl><dt><a name="Coax-distributed_impedance"><strong>distributed_impedance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Impedance,&nbsp;&nbsp;Z'(w)&nbsp;=&nbsp;R'&nbsp;+&nbsp;jwI'<br>
-&nbsp;<br>
-takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
-
-<dl><dt><a name="Coax-electrical_length"><strong>electrical_length</strong></a>(self, f, d, deg<font color="#909090">=False</font>)</dt></dl>
-
-<dl><dt><a name="Coax-propagation_constant"><strong>propagation_constant</strong></a>(self, f)</dt><dd><tt>the&nbsp;propagation&nbsp;constant&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma(w)&nbsp;=&nbsp;sqrt(Z'(w)*Y'(w))<br>
-&nbsp;<br>
+<dl><dt><a name="Coax-gamma"><strong>gamma</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>the&nbsp;propagation&nbsp;constant&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Coax-gamma">gamma</a>(w)&nbsp;=&nbsp;sqrt(<a href="#Coax-Z">Z</a>(w)*Y'(w))<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[jrad/m+]</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[rad/m]</tt></dd></dl>
+
+<hr>
+Class methods inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>
+<dl><dt><a name="Coax-from_gamma_Z0"><strong>from_gamma_Z0</strong></a>(cls, gamma, Z0, f)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt></dl>
 
 <hr>
 Data descriptors inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>

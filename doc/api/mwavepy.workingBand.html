@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.workingBand</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/workingBand.py">/usr/local/lib/python2.6/dist-packages/mwavepy/workingBand.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/workingBand.py">/home/alex/docs/python/path/mwavepy/workingBand.py</a></font></td></tr></table>
     <p><tt>Contains&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;class.</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -50,17 +50,16 @@ A&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;<a href="__builtin__.html#obj
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transmission&nbsp;line&nbsp;information&nbsp;&nbsp;&nbsp;(transmission&nbsp;line-like&nbsp;<a href="__builtin__.html#object">object</a>)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 &nbsp;<br>
-the&nbsp;methods&nbsp;of&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;simply&nbsp;calls&nbsp;functions&nbsp;from&nbsp;createNetwork,<br>
-but&nbsp;it&nbsp;saves&nbsp;the&nbsp;user&nbsp;the&nbsp;hassle&nbsp;of&nbsp;repetitously&nbsp;providing&nbsp;a<br>
-tline&nbsp;and&nbsp;frequency&nbsp;type&nbsp;for&nbsp;every&nbsp;network&nbsp;creation.&nbsp;&nbsp;&nbsp;&nbsp;<br>
+the&nbsp;methods&nbsp;of&nbsp;<a href="#WorkingBand">WorkingBand</a>&nbsp;saves&nbsp;the&nbsp;user&nbsp;the&nbsp;hassle&nbsp;of&nbsp;repetitously<br>
+&nbsp;providing&nbsp;a&nbsp;tline&nbsp;and&nbsp;frequency&nbsp;type&nbsp;for&nbsp;every&nbsp;network&nbsp;creation.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 &nbsp;<br>
 note:&nbsp;frequency&nbsp;and&nbsp;tline&nbsp;classes&nbsp;are&nbsp;copied,&nbsp;so&nbsp;they&nbsp;are&nbsp;passed<br>
 by&nbsp;value&nbsp;and&nbsp;not&nbsp;by-reference.<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="WorkingBand-__init__"><strong>__init__</strong></a>(self, frequency, tline)</dt></dl>
+<dl><dt><a name="WorkingBand-__init__"><strong>__init__</strong></a>(self, tline, frequency<font color="#909090">=None</font>)</dt></dl>
 
-<dl><dt><a name="WorkingBand-delay_load"><strong>delay_load</strong></a>(self, d, Gamma0, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;short&nbsp;transmission&nbsp;line<br>
+<dl><dt><a name="WorkingBand-delay_load"><strong>delay_load</strong></a>(self, d, Gamma0, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;load&nbsp;transmission&nbsp;line<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(in&nbsp;meters)<br>
@@ -68,7 +67,24 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;loaded&nbsp;transmission<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#WorkingBand-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#WorkingBand-load">load</a>(**kwargs)</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-delay_open"><strong>delay_open</strong></a>(self, d, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;open&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(in&nbsp;meters)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;shorted&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#WorkingBand-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#WorkingBand-open">open</a>(**kwargs)</tt></dd></dl>
 
 <dl><dt><a name="WorkingBand-delay_short"><strong>delay_short</strong></a>(self, d, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;short&nbsp;transmission&nbsp;line<br>
 &nbsp;<br>
@@ -77,7 +93,11 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;shorted&nbsp;transmission<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#WorkingBand-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#WorkingBand-short">short</a>(**kwargs)</tt></dd></dl>
 
 <dl><dt><a name="WorkingBand-guess_length_of_delay_short"><strong>guess_length_of_delay_short</strong></a>(self, aNtwk)</dt><dd><tt>guess&nbsp;length&nbsp;of&nbsp;physical&nbsp;length&nbsp;of&nbsp;a&nbsp;Delay&nbsp;Short&nbsp;given&nbsp;by&nbsp;aNtwk<br>
 &nbsp;<br>
@@ -87,23 +107,35 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tline:&nbsp;transmission&nbsp;line&nbsp;class&nbsp;of&nbsp;the&nbsp;medium.&nbsp;needed&nbsp;for&nbsp;the&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation&nbsp;of&nbsp;propagation&nbsp;constant</tt></dd></dl>
 
-<dl><dt><a name="WorkingBand-line"><strong>line</strong></a>(self, d, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;section&nbsp;of&nbsp;transmission&nbsp;line<br>
+<dl><dt><a name="WorkingBand-impedance_mismatch"><strong>impedance_mismatch</strong></a>(self, z1, z2, **kwargs)</dt><dd><tt>returns&nbsp;a&nbsp;two-port&nbsp;network&nbsp;for&nbsp;a&nbsp;impedance&nbsp;mis-match<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z1:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;1&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z1:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;2&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;mwavepy.Network&nbsp;constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-line"><strong>line</strong></a>(self, d, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;section&nbsp;of&nbsp;matched&nbsp;transmission&nbsp;line<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(in&nbsp;meters)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;transmission&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;transmission&nbsp;line&nbsp;of&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;d<br>
 &nbsp;<br>
 note:&nbsp;the&nbsp;only&nbsp;function&nbsp;called&nbsp;from&nbsp;the&nbsp;tline&nbsp;class&nbsp;is<br>
 propagation_constant(f,d),&nbsp;where&nbsp;f&nbsp;is&nbsp;frequency&nbsp;in&nbsp;Hz&nbsp;and&nbsp;d&nbsp;is<br>
 distance&nbsp;in&nbsp;meters.&nbsp;so&nbsp;you&nbsp;can&nbsp;use&nbsp;any&nbsp;class&nbsp;&nbsp;which&nbsp;provides&nbsp;this<br>
 and&nbsp;it&nbsp;&nbsp;will&nbsp;work&nbsp;.</tt></dd></dl>
 
-<dl><dt><a name="WorkingBand-load"><strong>load</strong></a>(self, Gamma0, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;Load&nbsp;termianting&nbsp;a&nbsp;transmission&nbsp;line&nbsp;<br>
+<dl><dt><a name="WorkingBand-load"><strong>load</strong></a>(self, Gamma0, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;Load&nbsp;termianting&nbsp;a&nbsp;transmission&nbsp;line&nbsp;<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;load&nbsp;(not&nbsp;in&nbsp;db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;where&nbsp;&nbsp;S&nbsp;=&nbsp;Gamma0*ones(...)</tt></dd></dl>
@@ -111,25 +143,48 @@ returns:<br>
 <dl><dt><a name="WorkingBand-match"><strong>match</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;perfect&nbsp;matched&nbsp;transmission&nbsp;line&nbsp;(Gamma0=0)&nbsp;<br>
 &nbsp;<br>
 takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports&nbsp;[int]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;perfect&nbsp;match</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-mismatch_line"><strong>mismatch_line</strong></a>(self, z0, zline, d, **kwargs)</dt><dd><tt>a&nbsp;2-port&nbsp;network&nbsp;for&nbsp;a&nbsp;mis-matched&nbsp;transmission&nbsp;line.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0:&nbsp;characteristic&nbsp;impedance&nbsp;of&nbsp;the&nbsp;terminations</tt></dd></dl>
 
 <dl><dt><a name="WorkingBand-open"><strong>open</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;'open'&nbsp;transmission&nbsp;line&nbsp;(Gamma0=1)&nbsp;<br>
 &nbsp;<br>
 takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;an&nbsp;open</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
 
 <dl><dt><a name="WorkingBand-short"><strong>short</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;short&nbsp;&nbsp;transmission&nbsp;line&nbsp;(Gamma0=-1)&nbsp;<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;a&nbsp;short</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-splitter"><strong>splitter</strong></a>(self, nports<font color="#909090">=3</font>, **kwargs)</dt><dd><tt>returns&nbsp;an&nbsp;ideal,&nbsp;lossless&nbsp;n-way&nbsp;splitter.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="WorkingBand-tee"><strong>tee</strong></a>(self, **kwargs)</dt><dd><tt>makes&nbsp;a&nbsp;ideal,&nbsp;lossless&nbsp;tee.&nbsp;(aka&nbsp;three&nbsp;port&nbsp;splitter)<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;3-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
 
 <dl><dt><a name="WorkingBand-thru"><strong>thru</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;thru<br>
 &nbsp;<br>

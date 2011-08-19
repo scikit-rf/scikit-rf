@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.transmissionLine.html"><font color="#ffffff">transmissionLine</font></a>.genericTEM</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/transmissionLine/genericTEM.py">/usr/local/lib/python2.6/dist-packages/mwavepy/transmissionLine/genericTEM.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/transmissionLine/genericTEM.py">/home/alex/docs/python/path/mwavepy/transmissionLine/genericTEM.py</a></font></td></tr></table>
     <p><tt>general&nbsp;class&nbsp;for&nbsp;TEM&nbsp;transmission&nbsp;lines</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -41,78 +41,127 @@
 <font color="#000000" face="helvetica, arial"><a name="GenericTEM">class <strong>GenericTEM</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
     
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
-<td colspan=2><tt>This&nbsp;is&nbsp;a&nbsp;general&nbsp;super-class&nbsp;for&nbsp;TEM&nbsp;transmission&nbsp;lines.&nbsp;The&nbsp;<br>
-structure&nbsp;behind&nbsp;the&nbsp;methods&nbsp;dependencies&nbsp;is&nbsp;a&nbsp;results&nbsp;of&nbsp;the&nbsp;<br>
+<td colspan=2><tt>==&nbsp;Intro&nbsp;==<br>
+This&nbsp;is&nbsp;a&nbsp;general&nbsp;super-class&nbsp;for&nbsp;TEM&nbsp;transmission&nbsp;lines.&nbsp;The&nbsp;<br>
+structure&nbsp;behind&nbsp;the&nbsp;methods&nbsp;dependencies&nbsp;is&nbsp;a&nbsp;result&nbsp;of&nbsp;&nbsp;<br>
 physics.&nbsp;a&nbsp;brief&nbsp;summary&nbsp;is&nbsp;given&nbsp;below.&nbsp;<br>
 &nbsp;<br>
+==&nbsp;Class&nbsp;Structure&nbsp;==<br>
+This&nbsp;class&nbsp;can&nbsp;support&nbsp;two&nbsp;models&nbsp;for&nbsp;TEM&nbsp;transmission&nbsp;lines:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1)simple&nbsp;media:&nbsp;in&nbsp;which&nbsp;the&nbsp;distributed&nbsp;circuit&nbsp;quantities&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOT&nbsp;functions&nbsp;of&nbsp;frequency,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2)not-simple&nbsp;media:&nbsp;&nbsp;in&nbsp;which&nbsp;the&nbsp;distributed&nbsp;circuit&nbsp;quantities<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ART&nbsp;functions&nbsp;of&nbsp;frequency<br>
 &nbsp;<br>
+1)&nbsp;The&nbsp;simple&nbsp;media&nbsp;can&nbsp;be&nbsp;constructed&nbsp;with&nbsp;scalar&nbsp;values&nbsp;for&nbsp;the&nbsp;<br>
+distributed&nbsp;circuit&nbsp;quantities.&nbsp;then&nbsp;all&nbsp;methods&nbsp;for&nbsp;transmission<br>
+line&nbsp;properties(&nbsp;Z0,&nbsp;gamma)&nbsp;will&nbsp;take&nbsp;frequency&nbsp;as&nbsp;an&nbsp;argument.&nbsp;<br>
 &nbsp;<br>
-a&nbsp;TEM&nbsp;transmission&nbsp;line&nbsp;is&nbsp;defined&nbsp;by&nbsp;its:<br>
+2)&nbsp;The&nbsp;not-simple&nbsp;media&nbsp;must&nbsp;be&nbsp;constructed&nbsp;with&nbsp;array's&nbsp;for&nbsp;<br>
+distributed&nbsp;circuit&nbsp;quanties&nbsp;and&nbsp;a&nbsp;frequency&nbsp;array.&nbsp;alternativly,&nbsp;<br>
+you&nbsp;can&nbsp;construct&nbsp;this&nbsp;type&nbsp;of&nbsp;tline&nbsp;from&nbsp;propagation&nbsp;constant,&nbsp;&nbsp;<br>
+characterisitc&nbsp;impedance,&nbsp;and&nbsp;frequency&nbsp;information,&nbsp;through&nbsp;use&nbsp;of<br>
+the&nbsp;class&nbsp;method;&nbsp;<a href="#GenericTEM-from_gamma_Z0">from_gamma_Z0</a>().<br>
 &nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Capacitance,&nbsp;C'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Inductance,&nbsp;I'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Resistance,&nbsp;R'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Conductance,&nbsp;G'<br>
+==&nbsp;Physics&nbsp;==<br>
+A&nbsp;TEM&nbsp;transmission&nbsp;line&nbsp;can&nbsp;be&nbsp;described&nbsp;by&nbsp;a&nbsp;characterisitc&nbsp;<br>
+impedance&nbsp;and&nbsp;propagation&nbsp;constant,&nbsp;or&nbsp;by&nbsp;distributed&nbsp;impedance&nbsp;and&nbsp;<br>
+admittance.&nbsp;This&nbsp;description&nbsp;will&nbsp;be&nbsp;in&nbsp;terms&nbsp;of&nbsp;distributed&nbsp;<br>
+circuit&nbsp;quantities,&nbsp;given:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Capacitance,&nbsp;C<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Inductance,&nbsp;I<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Resistance,&nbsp;R<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Conductance,&nbsp;G<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 from&nbsp;these&nbsp;the&nbsp;following&nbsp;quantities&nbsp;may&nbsp;be&nbsp;calculated,&nbsp;which<br>
 are&nbsp;functions&nbsp;of&nbsp;angular&nbsp;frequency&nbsp;(w):<br>
 &nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Impedance,&nbsp;&nbsp;Z'(w)&nbsp;=&nbsp;R'&nbsp;+&nbsp;jwI'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;G'&nbsp;+&nbsp;jwC'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Impedance,&nbsp;&nbsp;<a href="#GenericTEM-Z">Z</a>(w)&nbsp;=&nbsp;wR&nbsp;+&nbsp;jwI<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;wG&nbsp;+&nbsp;jwC<br>
 &nbsp;<br>
-from&nbsp;these&nbsp;we&nbsp;can&nbsp;get&nbsp;to&nbsp;properties&nbsp;which&nbsp;define&nbsp;their&nbsp;wave&nbsp;behavoir<br>
+from&nbsp;these&nbsp;we&nbsp;can&nbsp;calculate&nbsp;properties&nbsp;which&nbsp;define&nbsp;their&nbsp;wave&nbsp;<br>
+behavior:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;characteristic&nbsp;Impedance,&nbsp;Z0(w)&nbsp;=&nbsp;sqrt(Z'(w)/Y'(w))&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ohms]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;propagation&nbsp;Constant,&nbsp;&nbsp;&nbsp;gamma(w)&nbsp;=&nbsp;sqrt(Z'(w)*Y'(w))&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;characteristic&nbsp;Impedance,&nbsp;<a href="#GenericTEM-Z0">Z0</a>(w)&nbsp;=&nbsp;sqrt(<a href="#GenericTEM-Z">Z</a>(w)/Y'(w))&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ohms]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;propagation&nbsp;Constant,&nbsp;&nbsp;&nbsp;<a href="#GenericTEM-gamma">gamma</a>(w)&nbsp;=&nbsp;sqrt(<a href="#GenericTEM-Z">Z</a>(w)*Y'(w))&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[none]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+given&nbsp;the&nbsp;following&nbsp;definitions,&nbsp;the&nbsp;components&nbsp;of&nbsp;propagation&nbsp;<br>
+constant&nbsp;are&nbsp;interpreted&nbsp;as&nbsp;follows:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;positive&nbsp;real(gamma)&nbsp;=&nbsp;attenuation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;positive&nbsp;imag(gamma)&nbsp;=&nbsp;forward&nbsp;propagation&nbsp;<br>
 &nbsp;<br>
-and&nbsp;then&nbsp;finnally&nbsp;produce&nbsp;methods&nbsp;which&nbsp;we&nbsp;use&nbsp;<br>
+this&nbsp;sign&nbsp;convention&nbsp;means&nbsp;that&nbsp;the&nbsp;transmission&nbsp;gain&nbsp;through&nbsp;a<br>
+distance,&nbsp;d,&nbsp;is&nbsp;given&nbsp;by,&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;electrical&nbsp;Length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S21&nbsp;=&nbsp;exp(-gamma*d)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+and&nbsp;then&nbsp;finally&nbsp;these&nbsp;all&nbsp;produce&nbsp;methods&nbsp;which&nbsp;we&nbsp;use&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;electrical&nbsp;Length&nbsp;(theta)&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;Impedance<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;relfection&nbsp;Coefficient<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="GenericTEM-__init__"><strong>__init__</strong></a>(self, distributed_capacitance, distributed_inductance, distributed_resistance, distributed_conductance)</dt><dd><tt>constructor.<br>
+<dl><dt><a name="GenericTEM-Y"><strong>Y</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;wG&nbsp;+&nbsp;jwC<br>
 &nbsp;<br>
 takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_capacitance,&nbsp;C'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_inductance,&nbsp;I'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_resistance,&nbsp;R'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_conductance,&nbsp;G'<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fBand:&nbsp;a&nbsp;mwavepy.fb.frequencyBand&nbsp;<a href="__builtin__.html#object">object</a>.&nbsp;this&nbsp;provides&nbsp;all&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;methods&nbsp;of&nbsp;the&nbsp;transmissionLine,&nbsp;with&nbsp;frequency&nbsp;info.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;is&nbsp;solely&nbsp;for&nbsp;convinience,&nbsp;because&nbsp;frequently&nbsp;many<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculations&nbsp;are&nbsp;done&nbsp;over&nbsp;a&nbsp;given&nbsp;range&nbsp;of&nbsp;frequencies.</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz].&nbsp;if&nbsp;None,&nbsp;will&nbsp;use&nbsp;self.<strong>f</strong>&nbsp;if&nbsp;exists<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y:&nbsp;distributed&nbsp;admittance&nbsp;in&nbsp;ohms^-1&nbsp;/m</tt></dd></dl>
 
-<dl><dt><a name="GenericTEM-characteristic_impedance"><strong>characteristic_impedance</strong></a>(self, f)</dt><dd><tt>The&nbsp;&nbsp;characteristic&nbsp;impedance&nbsp;at&nbsp;a&nbsp;given&nbsp;angular&nbsp;frequency.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0(w)&nbsp;=&nbsp;sqrt(Z'(w)/Y'(w))<br>
+<dl><dt><a name="GenericTEM-Z"><strong>Z</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>distributed&nbsp;Impedance,&nbsp;&nbsp;<a href="#GenericTEM-Z">Z</a>(w)&nbsp;=&nbsp;wR&nbsp;+&nbsp;jwI<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;in&nbsp;Hz.&nbsp;if&nbsp;None,&nbsp;will&nbsp;use&nbsp;self.<strong>f</strong>&nbsp;if&nbsp;exists<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z:&nbsp;distributed&nbsp;impedance&nbsp;in&nbsp;ohms/m.</tt></dd></dl>
+
+<dl><dt><a name="GenericTEM-Z0"><strong>Z0</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>The&nbsp;&nbsp;characteristic&nbsp;impedance&nbsp;at&nbsp;a&nbsp;given&nbsp;angular&nbsp;frequency.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#GenericTEM-Z0">Z0</a>(w)&nbsp;=&nbsp;sqrt(<a href="#GenericTEM-Z">Z</a>(w)/Y'(w))<br>
+&nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;&nbsp;frequency<br>
+&nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0:&nbsp;characteristic&nbsp;impedance&nbsp;&nbsp;ohms</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0:&nbsp;characteristic&nbsp;impedance&nbsp;&nbsp;in&nbsp;ohms</tt></dd></dl>
 
-<dl><dt><a name="GenericTEM-distributed_admittance"><strong>distributed_admittance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;G'&nbsp;+&nbsp;jwC'<br>
+<dl><dt><a name="GenericTEM-__init__"><strong>__init__</strong></a>(self, C, I, R, G, f<font color="#909090">=None</font>)</dt><dd><tt>TEM&nbsp;transmission&nbsp;line&nbsp;constructor.<br>
 &nbsp;<br>
 takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
-
-<dl><dt><a name="GenericTEM-distributed_impedance"><strong>distributed_impedance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Impedance,&nbsp;&nbsp;Z'(w)&nbsp;=&nbsp;R'&nbsp;+&nbsp;jwI'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;distributed_capacitance&nbsp;[real&nbsp;float]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;I:&nbsp;distributed_inductance&nbsp;[real&nbsp;float]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;R:&nbsp;distributed_resistance&nbsp;[real&nbsp;float]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;G:&nbsp;distributed_conductance&nbsp;[real&nbsp;float]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 &nbsp;<br>
-takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
-
-<dl><dt><a name="GenericTEM-electrical_length"><strong>electrical_length</strong></a>(self, f, d, deg<font color="#909090">=False</font>)</dt></dl>
-
-<dl><dt><a name="GenericTEM-propagation_constant"><strong>propagation_constant</strong></a>(self, f)</dt><dd><tt>the&nbsp;propagation&nbsp;constant&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma(w)&nbsp;=&nbsp;sqrt(Z'(w)*Y'(w))<br>
+notes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;can&nbsp;be&nbsp;constructed&nbsp;from&nbsp;propagation&nbsp;constant,&nbsp;and&nbsp;<br>
+characteristic&nbsp;impedance&nbsp;as&nbsp;well,&nbsp;through&nbsp;the&nbsp;class&nbsp;method;&nbsp;<br>
+from_gamma_Z0,&nbsp;like&nbsp;so,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my_tline&nbsp;=&nbsp;<a href="#GenericTEM">GenericTEM</a>.<a href="#GenericTEM-from_gamma_Z0">from_gamma_Z0</a>(....)<br>
+note&nbsp;that&nbsp;this&nbsp;requires&nbsp;frequency&nbsp;information.<br>
 &nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;class&nbsp;help&nbsp;for&nbsp;details&nbsp;on&nbsp;the&nbsp;class&nbsp;structure.</tt></dd></dl>
+
+<dl><dt><a name="GenericTEM-electrical_length"><strong>electrical_length</strong></a>(self, f, d, deg<font color="#909090">=False</font>)</dt><dd><tt>convenience&nbsp;function&nbsp;for&nbsp;this&nbsp;class.&nbsp;the&nbsp;real&nbsp;function&nbsp;for&nbsp;this&nbsp;<br>
+is&nbsp;defined&nbsp;in&nbsp;transmissionLine.functions,&nbsp;under&nbsp;the&nbsp;same&nbsp;name.</tt></dd></dl>
+
+<dl><dt><a name="GenericTEM-gamma"><strong>gamma</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>the&nbsp;propagation&nbsp;constant&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#GenericTEM-gamma">gamma</a>(w)&nbsp;=&nbsp;sqrt(<a href="#GenericTEM-Z">Z</a>(w)*Y'(w))<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[jrad/m+]</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[rad/m]</tt></dd></dl>
+
+<hr>
+Class methods defined here:<br>
+<dl><dt><a name="GenericTEM-from_gamma_Z0"><strong>from_gamma_Z0</strong></a>(cls, gamma, Z0, f)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt></dl>
 
 <hr>
 Data descriptors defined here:<br>
@@ -129,7 +178,7 @@ Data descriptors defined here:<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
     
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(<a href="__builtin__.html#object">object</a>,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=True)<br>
+<td width="100%"><dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(<a href="__builtin__.html#object">object</a>,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=0)<br>
 &nbsp;<br>
 Create&nbsp;an&nbsp;array.<br>
 &nbsp;<br>
@@ -213,7 +262,7 @@ Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;ty
 &nbsp;<br>
 Parameters<br>
 ----------<br>
-shape&nbsp;:&nbsp;{tuple&nbsp;of&nbsp;ints,&nbsp;int}<br>
+shape&nbsp;:&nbsp;int&nbsp;or&nbsp;sequence&nbsp;of&nbsp;ints<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;new&nbsp;array,&nbsp;e.g.,&nbsp;``(2,&nbsp;3)``&nbsp;or&nbsp;``2``.<br>
 dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array,&nbsp;e.g.,&nbsp;`numpy.int8`.&nbsp;&nbsp;Default&nbsp;is<br>
@@ -229,11 +278,11 @@ out&nbsp;:&nbsp;ndarray<br>
 &nbsp;<br>
 See&nbsp;Also<br>
 --------<br>
-numpy.zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
-numpy.ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
-numpy.empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
-numpy.ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
-numpy.empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
+zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
+empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
 &nbsp;<br>
 Examples<br>
 --------<br>
@@ -252,7 +301,7 @@ Examples<br>
 <a href="#-array">array</a>([[&nbsp;0.,&nbsp;&nbsp;0.],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.,&nbsp;&nbsp;0.]])<br>
 &nbsp;<br>
-&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])&nbsp;#&nbsp;custom&nbsp;dtype<br>
 <a href="#-array">array</a>([(0,&nbsp;0),&nbsp;(0,&nbsp;0)],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dtype=[('x',&nbsp;'&lt;i4'),&nbsp;('y',&nbsp;'&lt;i4')])</tt></dd></dl>
 </td></tr></table><p>
@@ -262,17 +311,17 @@ Examples<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>INF</strong> = 9.9999999999999997e+98<br>
+<td width="100%"><strong>INF</strong> = 1e+99<br>
 <strong>ONE</strong> = 1.00000000000001<br>
 <strong>c</strong> = 299792458.0<br>
 <strong>cos</strong> = &lt;ufunc 'cos'&gt;<br>
-<strong>epsilon_0</strong> = 8.8541878176203892e-12<br>
+<strong>epsilon_0</strong> = 8.854187817620389e-12<br>
 <strong>exp</strong> = &lt;ufunc 'exp'&gt;<br>
 <strong>inf</strong> = inf<br>
 <strong>log</strong> = &lt;ufunc 'log'&gt;<br>
 <strong>mil</strong> = 2.5399999999999997e-05<br>
 <strong>mu_0</strong> = 1.2566370614359173e-06<br>
-<strong>pi</strong> = 3.1415926535897931<br>
+<strong>pi</strong> = 3.141592653589793<br>
 <strong>sin</strong> = &lt;ufunc 'sin'&gt;<br>
 <strong>sqrt</strong> = &lt;ufunc 'sqrt'&gt;<br>
 <strong>tan</strong> = &lt;ufunc 'tan'&gt;</td></tr></table>

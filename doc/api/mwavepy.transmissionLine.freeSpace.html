@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.transmissionLine.html"><font color="#ffffff">transmissionLine</font></a>.freeSpace</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/transmissionLine/freeSpace.py">/usr/local/lib/python2.6/dist-packages/mwavepy/transmissionLine/freeSpace.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/transmissionLine/freeSpace.py">/home/alex/docs/python/path/mwavepy/transmissionLine/freeSpace.py</a></font></td></tr></table>
     <p><tt>contains&nbsp;free&nbsp;space&nbsp;class</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -58,38 +58,50 @@ model&nbsp;given&nbsp;in&nbsp;circuit&nbsp;theory&nbsp;by:<br>
 </dl>
 <hr>
 Methods defined here:<br>
-<dl><dt><a name="FreeSpace-__init__"><strong>__init__</strong></a>(self, relative_permativity<font color="#909090">=1</font>, relative_permeability<font color="#909090">=1</font>)</dt></dl>
+<dl><dt><a name="FreeSpace-__init__"><strong>__init__</strong></a>(self, relative_permativity<font color="#909090">=1</font>, relative_permeability<font color="#909090">=1</font>, **kwargs)</dt></dl>
 
 <hr>
 Methods inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>
-<dl><dt><a name="FreeSpace-characteristic_impedance"><strong>characteristic_impedance</strong></a>(self, f)</dt><dd><tt>The&nbsp;&nbsp;characteristic&nbsp;impedance&nbsp;at&nbsp;a&nbsp;given&nbsp;angular&nbsp;frequency.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0(w)&nbsp;=&nbsp;sqrt(Z'(w)/Y'(w))<br>
+<dl><dt><a name="FreeSpace-Y"><strong>Y</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;wG&nbsp;+&nbsp;jwC<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz].&nbsp;if&nbsp;None,&nbsp;will&nbsp;use&nbsp;self.<strong>f</strong>&nbsp;if&nbsp;exists<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Y:&nbsp;distributed&nbsp;admittance&nbsp;in&nbsp;ohms^-1&nbsp;/m</tt></dd></dl>
+
+<dl><dt><a name="FreeSpace-Z"><strong>Z</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>distributed&nbsp;Impedance,&nbsp;&nbsp;<a href="#FreeSpace-Z">Z</a>(w)&nbsp;=&nbsp;wR&nbsp;+&nbsp;jwI<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;in&nbsp;Hz.&nbsp;if&nbsp;None,&nbsp;will&nbsp;use&nbsp;self.<strong>f</strong>&nbsp;if&nbsp;exists<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z:&nbsp;distributed&nbsp;impedance&nbsp;in&nbsp;ohms/m.</tt></dd></dl>
+
+<dl><dt><a name="FreeSpace-Z0"><strong>Z0</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>The&nbsp;&nbsp;characteristic&nbsp;impedance&nbsp;at&nbsp;a&nbsp;given&nbsp;angular&nbsp;frequency.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#FreeSpace-Z0">Z0</a>(w)&nbsp;=&nbsp;sqrt(<a href="#FreeSpace-Z">Z</a>(w)/Y'(w))<br>
+&nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;&nbsp;frequency<br>
+&nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0:&nbsp;characteristic&nbsp;impedance&nbsp;&nbsp;ohms</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z0:&nbsp;characteristic&nbsp;impedance&nbsp;&nbsp;in&nbsp;ohms</tt></dd></dl>
 
-<dl><dt><a name="FreeSpace-distributed_admittance"><strong>distributed_admittance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Admittance,&nbsp;Y'(w)&nbsp;=&nbsp;G'&nbsp;+&nbsp;jwC'<br>
-&nbsp;<br>
-takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
+<dl><dt><a name="FreeSpace-electrical_length"><strong>electrical_length</strong></a>(self, f, d, deg<font color="#909090">=False</font>)</dt><dd><tt>convenience&nbsp;function&nbsp;for&nbsp;this&nbsp;class.&nbsp;the&nbsp;real&nbsp;function&nbsp;for&nbsp;this&nbsp;<br>
+is&nbsp;defined&nbsp;in&nbsp;transmissionLine.functions,&nbsp;under&nbsp;the&nbsp;same&nbsp;name.</tt></dd></dl>
 
-<dl><dt><a name="FreeSpace-distributed_impedance"><strong>distributed_impedance</strong></a>(self, f)</dt><dd><tt>distributed&nbsp;Impedance,&nbsp;&nbsp;Z'(w)&nbsp;=&nbsp;R'&nbsp;+&nbsp;jwI'<br>
-&nbsp;<br>
-takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]</tt></dd></dl>
-
-<dl><dt><a name="FreeSpace-electrical_length"><strong>electrical_length</strong></a>(self, f, d, deg<font color="#909090">=False</font>)</dt></dl>
-
-<dl><dt><a name="FreeSpace-propagation_constant"><strong>propagation_constant</strong></a>(self, f)</dt><dd><tt>the&nbsp;propagation&nbsp;constant&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma(w)&nbsp;=&nbsp;sqrt(Z'(w)*Y'(w))<br>
-&nbsp;<br>
+<dl><dt><a name="FreeSpace-gamma"><strong>gamma</strong></a>(self, f<font color="#909090">=None</font>)</dt><dd><tt>the&nbsp;propagation&nbsp;constant&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#FreeSpace-gamma">gamma</a>(w)&nbsp;=&nbsp;sqrt(<a href="#FreeSpace-Z">Z</a>(w)*Y'(w))<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[jrad/m+]</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[rad/m]</tt></dd></dl>
+
+<hr>
+Class methods inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>
+<dl><dt><a name="FreeSpace-from_gamma_Z0"><strong>from_gamma_Z0</strong></a>(cls, gamma, Z0, f)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt></dl>
 
 <hr>
 Data descriptors inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>
@@ -106,7 +118,7 @@ Data descriptors inherited from <a href="mwavepy.transmissionLine.genericTEM.htm
 <font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
     
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(object,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=True)<br>
+<td width="100%"><dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(object,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=0)<br>
 &nbsp;<br>
 Create&nbsp;an&nbsp;array.<br>
 &nbsp;<br>
@@ -190,7 +202,7 @@ Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;ty
 &nbsp;<br>
 Parameters<br>
 ----------<br>
-shape&nbsp;:&nbsp;{tuple&nbsp;of&nbsp;ints,&nbsp;int}<br>
+shape&nbsp;:&nbsp;int&nbsp;or&nbsp;sequence&nbsp;of&nbsp;ints<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;new&nbsp;array,&nbsp;e.g.,&nbsp;``(2,&nbsp;3)``&nbsp;or&nbsp;``2``.<br>
 dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
 &nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array,&nbsp;e.g.,&nbsp;`numpy.int8`.&nbsp;&nbsp;Default&nbsp;is<br>
@@ -206,11 +218,11 @@ out&nbsp;:&nbsp;ndarray<br>
 &nbsp;<br>
 See&nbsp;Also<br>
 --------<br>
-numpy.zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
-numpy.ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
-numpy.empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
-numpy.ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
-numpy.empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
+zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
+empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
 &nbsp;<br>
 Examples<br>
 --------<br>
@@ -229,7 +241,7 @@ Examples<br>
 <a href="#-array">array</a>([[&nbsp;0.,&nbsp;&nbsp;0.],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.,&nbsp;&nbsp;0.]])<br>
 &nbsp;<br>
-&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])&nbsp;#&nbsp;custom&nbsp;dtype<br>
 <a href="#-array">array</a>([(0,&nbsp;0),&nbsp;(0,&nbsp;0)],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dtype=[('x',&nbsp;'&lt;i4'),&nbsp;('y',&nbsp;'&lt;i4')])</tt></dd></dl>
 </td></tr></table><p>
@@ -241,13 +253,13 @@ Examples<br>
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><strong>c</strong> = 299792458.0<br>
 <strong>cos</strong> = &lt;ufunc 'cos'&gt;<br>
-<strong>epsilon_0</strong> = 8.8541878176203892e-12<br>
+<strong>epsilon_0</strong> = 8.854187817620389e-12<br>
 <strong>exp</strong> = &lt;ufunc 'exp'&gt;<br>
 <strong>inf</strong> = inf<br>
 <strong>log</strong> = &lt;ufunc 'log'&gt;<br>
 <strong>mil</strong> = 2.5399999999999997e-05<br>
 <strong>mu_0</strong> = 1.2566370614359173e-06<br>
-<strong>pi</strong> = 3.1415926535897931<br>
+<strong>pi</strong> = 3.141592653589793<br>
 <strong>sin</strong> = &lt;ufunc 'sin'&gt;<br>
 <strong>sqrt</strong> = &lt;ufunc 'sqrt'&gt;<br>
 <strong>tan</strong> = &lt;ufunc 'tan'&gt;</td></tr></table>

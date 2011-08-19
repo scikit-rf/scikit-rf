@@ -8,7 +8,7 @@
 <td valign=bottom>&nbsp;<br>
 <font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.network</strong></big></big></font></td
 ><td align=right valign=bottom
-><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/usr/local/lib/python2.6/dist-packages/mwavepy/network.py">/usr/local/lib/python2.6/dist-packages/mwavepy/network.py</a></font></td></tr></table>
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/network.py">/home/alex/docs/python/path/mwavepy/network.py</a></font></td></tr></table>
     <p><tt>Provides&nbsp;the&nbsp;<a href="#Network">Network</a>&nbsp;class&nbsp;and&nbsp;related&nbsp;functions.</tt></p>
 <p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -94,6 +94,10 @@ takes:<br>
 
 <dl><dt><a name="Network-__pow__"><strong>__pow__</strong></a>(self, other)</dt><dd><tt>implements&nbsp;cascading&nbsp;this&nbsp;network&nbsp;with&nbsp;another&nbsp;network</tt></dd></dl>
 
+<dl><dt><a name="Network-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Network-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
 <dl><dt><a name="Network-__sub__"><strong>__sub__</strong></a>(self, other)</dt><dd><tt>element-wise&nbsp;subtraction&nbsp;of&nbsp;s-matrix</tt></dd></dl>
 
 <dl><dt><a name="Network-add_noise_polar"><strong>add_noise_polar</strong></a>(self, mag_dev, phase_dev, **kwargs)</dt><dd><tt>adds&nbsp;a&nbsp;complex&nbsp;zero-mean&nbsp;gaussian&nbsp;white-noise&nbsp;signal&nbsp;of&nbsp;given<br>
@@ -138,7 +142,7 @@ takes:<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nothing</tt></dd></dl>
 
-<dl><dt><a name="Network-nudge"><strong>nudge</strong></a>(self, amount<font color="#909090">=9.9999999999999998e-13</font>)</dt><dd><tt>perturb&nbsp;s-parameters&nbsp;by&nbsp;small&nbsp;amount.&nbsp;this&nbsp;is&nbsp;usefule&nbsp;to&nbsp;work-around<br>
+<dl><dt><a name="Network-nudge"><strong>nudge</strong></a>(self, amount<font color="#909090">=1e-12</font>)</dt><dd><tt>perturb&nbsp;s-parameters&nbsp;by&nbsp;small&nbsp;amount.&nbsp;this&nbsp;is&nbsp;usefule&nbsp;to&nbsp;work-around<br>
 numerical&nbsp;bugs.<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;amount:&nbsp;amount&nbsp;to&nbsp;add&nbsp;to&nbsp;s&nbsp;parameters<br>
@@ -261,12 +265,16 @@ note:&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ONLY&nbsp;'S'&nbsp;FORMAT&nbsp;SUPORTED&nbsp;AT&nbsp;THE&nbsp;MOMENT&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;all&nbsp;work&nbsp;is&nbsp;tone&nbsp;in&nbsp;the&nbsp;touchstone&nbsp;class.</tt></dd></dl>
 
-<dl><dt><a name="Network-write_touchstone"><strong>write_touchstone</strong></a>(self, filename<font color="#909090">=None</font>)</dt><dd><tt>write&nbsp;a&nbsp;touchstone&nbsp;file&nbsp;representing&nbsp;this&nbsp;network.&nbsp;&nbsp;the&nbsp;only&nbsp;<br>
+<dl><dt><a name="Network-write_touchstone"><strong>write_touchstone</strong></a>(self, filename<font color="#909090">=None</font>, dir<font color="#909090">='./'</font>)</dt><dd><tt>write&nbsp;a&nbsp;touchstone&nbsp;file&nbsp;representing&nbsp;this&nbsp;network.&nbsp;&nbsp;the&nbsp;only&nbsp;<br>
 format&nbsp;supported&nbsp;at&nbsp;the&nbsp;moment&nbsp;is&nbsp;:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HZ&nbsp;S&nbsp;RI&nbsp;<br>
 &nbsp;<br>
 takes:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filename&nbsp;-&nbsp;filename&nbsp;(not&nbsp;including&nbsp;extension)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filename:&nbsp;a&nbsp;string&nbsp;containing&nbsp;filename&nbsp;without&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;extension[None].&nbsp;if&nbsp;'None',&nbsp;then&nbsp;will&nbsp;use&nbsp;the&nbsp;network's&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name.&nbsp;if&nbsp;this&nbsp;is&nbsp;empty,&nbsp;then&nbsp;throws&nbsp;an&nbsp;error.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dir:&nbsp;the&nbsp;directory&nbsp;to&nbsp;save&nbsp;the&nbsp;file&nbsp;in.&nbsp;[string].&nbsp;Defaults&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;'./'<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 &nbsp;<br>
 note:<br>
@@ -295,8 +303,13 @@ Data descriptors defined here:<br>
 <dd><tt>the&nbsp;number&nbsp;of&nbsp;ports&nbsp;the&nbsp;network&nbsp;has.</tt></dd>
 </dl>
 <dl><dt><strong>passivity</strong></dt>
-<dd><tt>returns&nbsp;passivity&nbsp;metric&nbsp;for&nbsp;a&nbsp;multi-port&nbsp;network.&nbsp;mathmatically,&nbsp;<br>
-this&nbsp;is&nbsp;a&nbsp;test&nbsp;for&nbsp;unitary-ness.&nbsp;<br>
+<dd><tt>&nbsp;passivity&nbsp;metric&nbsp;for&nbsp;a&nbsp;multi-port&nbsp;network.&nbsp;It&nbsp;returns<br>
+a&nbsp;matrix&nbsp;who's&nbsp;diagonals&nbsp;are&nbsp;equal&nbsp;to&nbsp;the&nbsp;total&nbsp;power&nbsp;<br>
+received&nbsp;at&nbsp;all&nbsp;ports,&nbsp;normalized&nbsp;to&nbsp;the&nbsp;power&nbsp;at&nbsp;a&nbsp;single<br>
+excitement&nbsp;&nbsp;port.<br>
+&nbsp;<br>
+mathmatically,&nbsp;this&nbsp;is&nbsp;a&nbsp;test&nbsp;for&nbsp;unitary-ness&nbsp;of&nbsp;the&nbsp;<br>
+s-parameter&nbsp;matrix.&nbsp;<br>
 &nbsp;<br>
 for&nbsp;two&nbsp;port&nbsp;this&nbsp;is&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(&nbsp;|S11|^2&nbsp;+&nbsp;|S21|^2,&nbsp;|S22|^2+|S12|^2)<br>
@@ -304,6 +317,8 @@ in&nbsp;general&nbsp;it&nbsp;is&nbsp;&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S.H&nbsp;*&nbsp;S<br>
 where&nbsp;H&nbsp;is&nbsp;conjugate&nbsp;transpose&nbsp;of&nbsp;S,&nbsp;and&nbsp;*&nbsp;is&nbsp;dot&nbsp;product<br>
 &nbsp;<br>
+note:<br>
+see&nbsp;more&nbsp;at,<br>
 <a href="http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks">http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks</a></tt></dd>
 </dl>
 <dl><dt><strong>s</strong></dt>
@@ -366,7 +381,7 @@ this&nbsp;is&nbsp;complex&nbsp;average&nbsp;of&nbsp;the&nbsp;s-parameters&nbsp;f
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list_of_networks:&nbsp;a&nbsp;list&nbsp;of&nbsp;Networks<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;resultant&nbsp;averaged&nbsp;<a href="#Network">Network</a></tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;resultant&nbsp;averaged&nbsp;<a href="#Network">Network</a>&nbsp;[mwavepy.<a href="#Network">Network</a>]</tt></dd></dl>
  <dl><dt><a name="-cascade"><strong>cascade</strong></a>(a, b)</dt><dd><tt>cascade&nbsp;two&nbsp;s-matricies&nbsp;together.<br>
 &nbsp;<br>
 a's&nbsp;port&nbsp;2&nbsp;==&nbsp;b's&nbsp;port&nbsp;1<br>
@@ -378,6 +393,41 @@ takes:<br>
 note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;BE&nbsp;AWARE!&nbsp;this&nbsp;relies&nbsp;on&nbsp;s2t&nbsp;function&nbsp;which&nbsp;has&nbsp;a&nbsp;inf&nbsp;problem&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;s11&nbsp;or&nbsp;s22&nbsp;is&nbsp;1.</tt></dd></dl>
+ <dl><dt><a name="-connect"><strong>connect</strong></a>(ntwkA, k, ntwkB, l)</dt><dd><tt>connect&nbsp;two&nbsp;n-port&nbsp;networks&nbsp;together.&nbsp;specifically,&nbsp;connect&nbsp;port&nbsp;'k'<br>
+on&nbsp;ntwkA&nbsp;to&nbsp;port&nbsp;'l'&nbsp;on&nbsp;ntwkB.&nbsp;The&nbsp;resultant&nbsp;network&nbsp;has<br>
+(ntwkA.nports+ntwkB.nports&nbsp;-2)-ports<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkA:&nbsp;network&nbsp;'A',&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k:&nbsp;port&nbsp;index&nbsp;on&nbsp;ntwkA&nbsp;[int]&nbsp;(&nbsp;port&nbsp;indecies&nbsp;start&nbsp;from&nbsp;0&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkA:&nbsp;network&nbsp;'B',&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;port&nbsp;index&nbsp;on&nbsp;ntwkB&nbsp;[int]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkC':&nbsp;new&nbsp;network&nbsp;of&nbsp;rank&nbsp;(ntwkA.nports+ntwkB.nports&nbsp;-2)-ports<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;functions&nbsp;<a href="#-connect_s">connect_s</a>()&nbsp;and&nbsp;<a href="#-innerconnect_s">innerconnect_s</a>()&nbsp;for&nbsp;actual&nbsp;<br>
+S-parameter&nbsp;connection&nbsp;algorithm.</tt></dd></dl>
+ <dl><dt><a name="-connect_s"><strong>connect_s</strong></a>(S, k, T, l)</dt><dd><tt>connect&nbsp;two&nbsp;n-port&nbsp;networks&nbsp;together.&nbsp;specifically,&nbsp;connect&nbsp;port&nbsp;'k'<br>
+on&nbsp;network&nbsp;'S'&nbsp;to&nbsp;port&nbsp;'l'&nbsp;on&nbsp;network&nbsp;'T'.&nbsp;The&nbsp;resultant&nbsp;network&nbsp;has<br>
+(S.rank&nbsp;+&nbsp;T.rank-2)-ports<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S:&nbsp;S-parameter&nbsp;matrix&nbsp;[numpy.ndarray].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k:&nbsp;port&nbsp;index&nbsp;on&nbsp;S&nbsp;(port&nbsp;indecies&nbsp;start&nbsp;from&nbsp;0)&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;T:&nbsp;S-parameter&nbsp;matrix&nbsp;[numpy.ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;port&nbsp;index&nbsp;on&nbsp;T&nbsp;[int]<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S':&nbsp;new&nbsp;S-parameter&nbsp;matrix&nbsp;[numpy.ndarry]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;shape&nbsp;of&nbsp;S-parameter&nbsp;matrices&nbsp;can&nbsp;be&nbsp;either&nbsp;nxn,&nbsp;or&nbsp;fxnxn,&nbsp;where<br>
+f&nbsp;is&nbsp;the&nbsp;frequency&nbsp;axis.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;internally,&nbsp;this&nbsp;function&nbsp;creates&nbsp;a&nbsp;larger&nbsp;composite&nbsp;network&nbsp;<br>
+and&nbsp;calls&nbsp;the&nbsp;&nbsp;<a href="#-innerconnect">innerconnect</a>()&nbsp;function.&nbsp;see&nbsp;that&nbsp;function&nbsp;for&nbsp;more&nbsp;<br>
+details&nbsp;about&nbsp;the&nbsp;implementation</tt></dd></dl>
  <dl><dt><a name="-de_embed"><strong>de_embed</strong></a>(a, b)</dt><dd><tt>de-embed&nbsp;a&nbsp;2x2&nbsp;s-matrix&nbsp;from&nbsp;another&nbsp;2x2&nbsp;s-matrix<br>
 &nbsp;<br>
 c&nbsp;=&nbsp;b**-1&nbsp;*&nbsp;a<br>
@@ -389,6 +439,35 @@ note:<br>
 &nbsp;<br>
 note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;only&nbsp;works&nbsp;for&nbsp;2-ports&nbsp;at&nbsp;the&nbsp;moment</tt></dd></dl>
+ <dl><dt><a name="-innerconnect"><strong>innerconnect</strong></a>(ntwk, k, l)</dt><dd><tt>connect&nbsp;two&nbsp;ports&nbsp;of&nbsp;a&nbsp;single&nbsp;n-port&nbsp;network,&nbsp;resulting&nbsp;in&nbsp;a&nbsp;<br>
+(n-2)-port&nbsp;network.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;network.&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k:&nbsp;port&nbsp;index&nbsp;[int]&nbsp;(port&nbsp;indecies&nbsp;start&nbsp;from&nbsp;0)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;port&nbsp;index&nbsp;[int]<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk':&nbsp;new&nbsp;network&nbsp;of&nbsp;with&nbsp;n-2&nbsp;ports.&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;functions&nbsp;<a href="#-connect_s">connect_s</a>()&nbsp;and&nbsp;<a href="#-innerconnect_s">innerconnect_s</a>()&nbsp;for&nbsp;actual&nbsp;<br>
+S-parameter&nbsp;connection&nbsp;algorithm.</tt></dd></dl>
+ <dl><dt><a name="-innerconnect_s"><strong>innerconnect_s</strong></a>(S, k, l)</dt><dd><tt>connect&nbsp;two&nbsp;ports&nbsp;of&nbsp;a&nbsp;single&nbsp;n-port&nbsp;network,&nbsp;resulting&nbsp;in&nbsp;a&nbsp;<br>
+(n-2)-port&nbsp;network.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S:&nbsp;S-parameter&nbsp;matrix&nbsp;[numpy.ndarray]&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k:&nbsp;port&nbsp;index&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;port&nbsp;index&nbsp;[int]<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;S':&nbsp;new&nbsp;S-parameter&nbsp;matrix&nbsp;[numpy.ndarry]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+This&nbsp;function&nbsp;is&nbsp;based&nbsp;on&nbsp;the&nbsp;algorithm&nbsp;presented&nbsp;in&nbsp;the&nbsp;paper:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Perspectives&nbsp;in&nbsp;Microwave&nbsp;Circuit&nbsp;Analysis'&nbsp;by&nbsp;R.&nbsp;C.&nbsp;Compton<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;D.&nbsp;B.&nbsp;Rutledge<br>
+The&nbsp;original&nbsp;algorithm&nbsp;is&nbsp;given&nbsp;in&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'A&nbsp;NEW&nbsp;GENERAL&nbsp;COMPUTER&nbsp;ALGORITHM&nbsp;FOR&nbsp;S-MATRIX&nbsp;CALCULATION&nbsp;OF<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTERCONNECTED&nbsp;MULTIPORTS'&nbsp;by&nbsp;Gunnar&nbsp;Filipsson</tt></dd></dl>
  <dl><dt><a name="-inv"><strong>inv</strong></a>(s)</dt><dd><tt>inverse&nbsp;s-parameters,&nbsp;used&nbsp;for&nbsp;de-embeding</tt></dd></dl>
  <dl><dt><a name="-one_port_2_two_port"><strong>one_port_2_two_port</strong></a>(ntwk)</dt><dd><tt>calculates&nbsp;the&nbsp;two-port&nbsp;network&nbsp;given&nbsp;a&nbsp;&nbsp;symetric,&nbsp;reciprocal&nbsp;and&nbsp;<br>
 lossless&nbsp;one-port&nbsp;network.<br>
@@ -397,7 +476,6 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;a&nbsp;symetric,&nbsp;reciprocal&nbsp;and&nbsp;lossless&nbsp;one-port&nbsp;network.<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;resultant&nbsp;two-port&nbsp;<a href="#Network">Network</a></tt></dd></dl>
- <dl><dt><a name="-psd2_2_time_domain"><strong>psd2_2_time_domain</strong></a>()</dt><dd><tt>This&nbsp;would&nbsp;be&nbsp;very&nbsp;useful&nbsp;i&nbsp;need&nbsp;to&nbsp;do&nbsp;this</tt></dd></dl>
  <dl><dt><a name="-s2t"><strong>s2t</strong></a>(s)</dt><dd><tt>converts&nbsp;a&nbsp;scattering&nbsp;parameters&nbsp;to&nbsp;'wave&nbsp;cascading&nbsp;parameters'<br>
 &nbsp;<br>
 input&nbsp;matrix&nbsp;shape&nbsp;should&nbsp;be&nbsp;should&nbsp;be&nbsp;2x2,&nbsp;or&nbsp;kx2x2<br>
@@ -408,6 +486,22 @@ better</tt></dd></dl>
  <dl><dt><a name="-t2s"><strong>t2s</strong></a>(t)</dt><dd><tt>converts&nbsp;a&nbsp;'wave&nbsp;cascading&nbsp;parameters'&nbsp;to&nbsp;scattering&nbsp;parameters&nbsp;<br>
 &nbsp;<br>
 input&nbsp;matrix&nbsp;shape&nbsp;should&nbsp;be&nbsp;should&nbsp;be&nbsp;2x2,&nbsp;or&nbsp;kx2x2</tt></dd></dl>
+ <dl><dt><a name="-two_port_reflect"><strong>two_port_reflect</strong></a>(ntwk1, ntwk2, **kwargs)</dt><dd><tt>generates&nbsp;a&nbsp;two-port&nbsp;reflective&nbsp;(S21=S12=0)&nbsp;network,&nbsp;from&nbsp;the<br>
+&nbsp;2&nbsp;one-port&nbsp;networks<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk1:&nbsp;<a href="#Network">Network</a>&nbsp;on&nbsp;&nbsp;port&nbsp;1&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk2:&nbsp;<a href="#Network">Network</a>&nbsp;on&nbsp;&nbsp;port&nbsp;2&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result:&nbsp;two-port&nbsp;reflective&nbsp;network,&nbsp;S12=S21=0&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;<br>
+&nbsp;<br>
+example:<br>
+to&nbsp;use&nbsp;a&nbsp;working&nbsp;band&nbsp;to&nbsp;create&nbsp;a&nbsp;two-port&nbsp;reflective&nbsp;standard&nbsp;from<br>
+two&nbsp;one-port&nbsp;standards<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb=&nbsp;WorkingBand(....)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-two_port_reflect">two_port_reflect</a>(wb.short(),&nbsp;wb.match())</tt></dd></dl>
 </td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#55aa55">
@@ -415,5 +509,5 @@ input&nbsp;matrix&nbsp;shape&nbsp;should&nbsp;be&nbsp;should&nbsp;be&nbsp;2x2,&n
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>ALMOST_ZER0</strong> = 9.9999999999999995e-07</td></tr></table>
+<td width="100%"><strong>ALMOST_ZER0</strong> = 1e-06</td></tr></table>
 </body></html>
