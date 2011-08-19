@@ -92,7 +92,24 @@ class WorkingBand(object):
 		result.s =  npy.zeros((self.frequency.npoints,nports, nports),\
 			dtype=complex)
 		return result
+	
+	def load(self,Gamma0,nports=1,**kwargs):
+		'''
+		creates a Network for a Load termianting a transmission line 
 		
+		takes:
+			Gamma0: reflection coefficient of load (not in db)
+			nports: number of ports. creates a short on all ports,
+				default is 1 [int]
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, where  S = Gamma0*ones(...)
+		'''
+		result = self.match(nports,**kwargs)
+		for f in range(self.frequency.npoints):
+			result.s[f,:,:] = Gamma0*npy.eye(nports, dtype=complex)
+		
+		return result		
 	def short(self,nports=1,**kwargs):
 		'''
 		creates a Network for a short  transmission line (Gamma0=-1) 
@@ -104,10 +121,7 @@ class WorkingBand(object):
 		returns:
 			a n-port Network [mwavepy.Network]
 		'''
-		result = match(nports,**kwargs)
-		for f in range(self.frequency.npoints):
-			result.s[f,:,:] = -1.0*npy.eye(nports, dtype=complex)
-		return result
+		return self.load(-1., nports, **kwargs)
 
 	
 
@@ -122,38 +136,21 @@ class WorkingBand(object):
 		returns:
 			a n-port Network [mwavepy.Network]
 		'''
-		result = match(nports,**kwargs)
-		for f in range(self.frequency.npoints):
-			result.s[f,:,:] = 1.0*npy.eye(nports, dtype=complex)
-		return result
+		
+		return self.load(1., nports, **kwargs)
 
-	def load(self,Gamma0,nports=1,**kwargs):
-		'''
-		creates a Network for a Load termianting a transmission line 
-		
-		takes:
-			Gamma0: reflection coefficient of load (not in db)
-			nports: number of ports. creates a short on all ports,
-				default is 1 [int]
-			**kwargs: key word arguments passed to Network Constructor
-		returns:
-			a 1-port Network class, where  S = Gamma0*ones(...)
-		'''
-		result = match(nports,**kwargs)
-		for f in range(self.frequency.npoints):
-			result.s[f,:,:] = Gamma0*npy.eye(nports, dtype=complex)
-		
-		return result
+
 	
 	def line(self,d,**kwargs):
 		'''
-		creates a Network for a section of transmission line
+		creates a Network for a section of matched transmission line
 		
 		takes:
 			d: the length (in meters)
 			**kwargs: key word arguments passed to Network Constructor
 		returns:
-			a 2-port Network class, representing a transmission line of length d
+			a 2-port Network class, representing a transmission line of 
+			length d
 	
 		note: the only function called from the tline class is
 		propagation_constant(f,d), where f is frequency in Hz and d is
@@ -174,8 +171,10 @@ class WorkingBand(object):
 		
 		s11 = npy.zeros(self.frequency.npoints, dtype=complex)
 		s21 = npy.exp(-1*theta)
-		result.s = npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+		result.s = \
+			npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 		return result
+		
 	def thru(self, **kwargs):
 		'''
 		creates a Network for a thru
@@ -200,12 +199,33 @@ class WorkingBand(object):
 		returns:
 			a 1-port Network class, representing a shorted transmission
 			line of length d
+			
+		
+		note: this just calls,
+		self.line(d,**kwargs) ** self.short(**kwargs)
 		'''
 		return self.line(d,**kwargs) ** self.short(**kwargs)
-
+	
+	def delay_open(self,d,**kwargs):
+		'''
+		creates a Network for a delayed open transmission line
+		
+		takes:
+			d: the length (in meters)
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, representing a shorted transmission
+			line of length d
+			
+		
+		note: this just calls,
+		self.line(d,**kwargs) ** self.open(**kwargs)
+		'''
+		return self.line(d,**kwargs) ** self.open(**kwargs)
+	
 	def delay_load(self,d,Gamma0,**kwargs):
 		'''
-		creates a Network for a delayed short transmission line
+		creates a Network for a delayed load transmission line
 		
 		takes:
 			d: the length (in meters)
@@ -214,6 +234,10 @@ class WorkingBand(object):
 		returns:
 			a 1-port Network class, representing a loaded transmission
 			line of length d
+			
+		
+		note: this just calls,
+		self.line(d,**kwargs) ** self.load(**kwargs)
 		'''
 		return self.line(d,**kwargs) ** self.load(Gamma0,**kwargs)
 	
@@ -250,14 +274,28 @@ class WorkingBand(object):
 	def impedance_mismatch(self, z1, z2, **kwargs):
 		'''
 		returns a two-port network for a impedance mis-match
+		
+		takes:
+			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
+			z1: complex impedance of port 2 [ number, list, or 1D ndarray]
+			**kwargs: passed to mwavepy.Network constructor
+		returns:
+			a 2-port network [mwavepy.Network]
 		'''	
 		result = self.match(nports=2, **kwargs)
-		result.s[:,0,0] = zl_2_Gamma0(z1,z2)
-		result.s[:,1,1] = zl_2_Gamma0(z2,z1)
-		result.s[:,1,0] = 1-zl_2_Gamma0(z1,z2)
-		result.s[:,0,1] = 1-zl_2_Gamma0(z2,z1)
-		
+		gamma = zl_2_Gamma0(z1,z2)
+		result.s[:,0,0] = gamma
+		result.s[:,1,1] = -gamma
+		result.s[:,1,0] = 1+gamma
+		result.s[:,0,1] = 1-gamma
 		return result
+	def mismatch_line(self,z0,zline,d,**kwargs):
+		'''
+		a 2-port network for a mis-matched transmission line.
+		
+		takes:
+			z0: characteristic impedance of the terminations
+		'''	
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
 		'''
