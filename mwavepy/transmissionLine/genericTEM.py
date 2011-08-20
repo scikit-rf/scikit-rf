@@ -212,6 +212,13 @@ class GenericTEM(object):
 			
 		returns:
 			gamma: possibly complex propagation constant, [rad/m]
+			
+			
+		note:
+		the components of propagation constant are interpreted as follows:
+		
+		positive real(gamma) = attenuation
+		positive imag(gamma) = forward propagation 
 		'''
 		f=self._get_f(f)
 		f = array(f)

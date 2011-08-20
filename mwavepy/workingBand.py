@@ -29,11 +29,11 @@ from scipy import stats
 
 from frequency import Frequency
 from network import Network
-from transmissionLine.functions import electrical_length, zl_2_Gamma0
+from transmissionLine.functions import electrical_length, zl_2_Gamma0,\
+	electrical_length_2_distance
 
 
 class WorkingBand(object):
-	## TODO: put docstrings in standard format of takes/returns
 	'''
 	A WorkingBand is an high-level object which exists solely to make 
 	 working with and creation of Networks within the same band,
@@ -41,7 +41,7 @@ class WorkingBand(object):
 	
 	A WorkingBand object has two properties: 
 		frequency information (Frequency object)
-		transmission line information	(transmission line-like object)
+		transmission line information	(transmission line object)
 		
 
 	the methods of WorkingBand saves the user the hassle of repetitously
@@ -61,6 +61,8 @@ class WorkingBand(object):
 	
 		#convenience
 		self.delay = self.line
+
+
 	## PROPERTIES	
 	@property
 	def frequency(self):
@@ -75,7 +77,15 @@ class WorkingBand(object):
 	def tline(self,new_tline):
 		self._tline = copy(new_tline)
 		
-
+	## Functions
+	def theta_2_d(self,theta,deg=True):
+		'''
+		'''
+		return electrical_length_2_distance(\
+			theta=theta,\
+			gamma = self.tline.propagation_constant,\
+			f0 = self.frequency.center,\
+			deg=deg)
 	## Network creation
 	def match(self,nports=1, **kwargs):
 		'''
@@ -110,6 +120,7 @@ class WorkingBand(object):
 			result.s[f,:,:] = Gamma0*npy.eye(nports, dtype=complex)
 		
 		return result		
+	
 	def short(self,nports=1,**kwargs):
 		'''
 		creates a Network for a short  transmission line (Gamma0=-1) 
@@ -122,8 +133,6 @@ class WorkingBand(object):
 			a n-port Network [mwavepy.Network]
 		'''
 		return self.load(-1., nports, **kwargs)
-
-	
 
 	def open(self,nports=1, **kwargs):
 		'''
@@ -139,25 +148,31 @@ class WorkingBand(object):
 		
 		return self.load(1., nports, **kwargs)
 
-
-	
-	def line(self,d,**kwargs):
+	def line(self,d, unit='m', **kwargs):
 		'''
 		creates a Network for a section of matched transmission line
 		
 		takes:
-			d: the length (in meters)
+			d: the length (see unit argument) [number]
+			unit: string specifying the units of d. possible options are 
+				'm': meters, physical length in meters (default)
+				'deg':degrees, electrical length in degrees
+				'rad':radians, electrical length in radians
 			**kwargs: key word arguments passed to Network Constructor
+		
 		returns:
 			a 2-port Network class, representing a transmission line of 
 			length d
 	
+		
 		note: the only function called from the tline class is
 		propagation_constant(f,d), where f is frequency in Hz and d is
 		distance in meters. so you can use any class  which provides this
 		and it  will work .
 		'''
-
+		if unit not in ['m','deg','rad']:
+			raise (ValueError('unit must be one of the following:\'m\',\'rad\',\'deg\''))
+		
 		result = Network(**kwargs)
 		result.frequency = self.frequency
 		
@@ -167,6 +182,10 @@ class WorkingBand(object):
 		gamma = self.tline.propagation_constant
 		
 		# calculate the electrical length
+		if unit == 'deg':
+			d = self.theta_2_d(d,deg=True)
+		elif unit == 'rad':
+			d = self.theta_2_d(d,deg=False)
 		theta = electrical_length(gamma=gamma, f= f, d = d)
 		
 		s11 = npy.zeros(self.frequency.npoints, dtype=complex)
@@ -188,13 +207,40 @@ class WorkingBand(object):
 			this just calls self.line(0)
 		'''
 		return self.line(0,**kwargs)
+	
+	def delay_load(self,Gamma0,d,unit='m',**kwargs):
+		'''
+		creates a Network for a delayed load transmission line
 		
-	def delay_short(self,d,**kwargs):
+		takes:
+			Gamma0: reflection coefficient of load (not in dB)
+			d: the length (see unit argument) [number]
+			unit: string specifying the units of d. possible options are 
+				'm': meters, physical length in meters (default)
+				'deg':degrees, electrical length in degrees
+				'rad':radians, electrical length in radians
+			
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 1-port Network class, representing a loaded transmission
+			line of length d
+			
+		
+		note: this just calls,
+		self.line(d,**kwargs) ** self.load(Gamma0, **kwargs)
+		'''
+		return self.line(d=d, unit=unit,**kwargs)**\
+			self.load(Gamma0=Gamma0,**kwargs)	
+	def delay_short(self,d,unit='m',**kwargs):
 		'''
 		creates a Network for a delayed short transmission line
 		
 		takes:
-			d: the length (in meters)
+			d: the length (see unit argument) [number]
+			unit: string specifying the units of d. possible options are 
+				'm': meters, physical length in meters (default)
+				'deg':degrees, electrical length in degrees
+				'rad':radians, electrical length in radians
 			**kwargs: key word arguments passed to Network Constructor
 		returns:
 			a 1-port Network class, representing a shorted transmission
@@ -204,14 +250,18 @@ class WorkingBand(object):
 		note: this just calls,
 		self.line(d,**kwargs) ** self.short(**kwargs)
 		'''
-		return self.line(d,**kwargs) ** self.short(**kwargs)
+		return self.delay_load(Gamma0=-1., d=d, unit=unit, **kwargs)
 	
-	def delay_open(self,d,**kwargs):
+	def delay_open(self,d,unit='m',**kwargs):
 		'''
 		creates a Network for a delayed open transmission line
 		
 		takes:
-			d: the length (in meters)
+			d: the length (see unit argument) [number]
+			unit: string specifying the units of d. possible options are 
+				'm': meters, physical length in meters (default)
+				'deg':degrees, electrical length in degrees
+				'rad':radians, electrical length in radians
 			**kwargs: key word arguments passed to Network Constructor
 		returns:
 			a 1-port Network class, representing a shorted transmission
@@ -221,25 +271,9 @@ class WorkingBand(object):
 		note: this just calls,
 		self.line(d,**kwargs) ** self.open(**kwargs)
 		'''
-		return self.line(d,**kwargs) ** self.open(**kwargs)
+		return self.delay_load(Gamma0=1., d=d, unit=unit,**kwargs)
 	
-	def delay_load(self,d,Gamma0,**kwargs):
-		'''
-		creates a Network for a delayed load transmission line
-		
-		takes:
-			d: the length (in meters)
-			Gamma0: reflection coefficient of load (not in dB)
-			**kwargs: key word arguments passed to Network Constructor
-		returns:
-			a 1-port Network class, representing a loaded transmission
-			line of length d
-			
-		
-		note: this just calls,
-		self.line(d,**kwargs) ** self.load(**kwargs)
-		'''
-		return self.line(d,**kwargs) ** self.load(Gamma0,**kwargs)
+	
 	
 	def tee(self,**kwargs):
 		'''
@@ -289,6 +323,7 @@ class WorkingBand(object):
 		result.s[:,1,0] = 1+gamma
 		result.s[:,0,1] = 1-gamma
 		return result
+
 	def mismatch_line(self,z0,zline,d,**kwargs):
 		'''
 		a 2-port network for a mis-matched transmission line.
@@ -296,6 +331,9 @@ class WorkingBand(object):
 		takes:
 			z0: characteristic impedance of the terminations
 		'''	
+		raise NotImplementedError()
+
+
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
 		'''
@@ -318,6 +356,7 @@ class WorkingBand(object):
 		result.frequency = self.frequency
 		result.s = mag_rv*npy.exp(1j*phase_rv)
 		return result
+
 
 	## OTHER METHODS
 	def guess_length_of_delay_short(self, aNtwk):

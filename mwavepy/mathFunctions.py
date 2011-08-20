@@ -112,8 +112,8 @@ def np_2_db(x):
 def radian_2_degree(rad):
 	return (rad)*180/pi
 	
-def degree_2rad_(deg):
-	return (deg)*pi/180
+def degree_2_radian(deg):
+	return (deg)*pi/180.
 
 
 # mathematical functions

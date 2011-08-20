@@ -96,6 +96,25 @@ def electrical_length(gamma, f , d, deg=False):
 	elif deg == True:
 		return  mf.radian_2_degree(gamma(f)*d )
 
+def electrical_length_2_distance(theta, gamma, f0,deg=True):
+	'''
+	convert electrical length to a physical distance.
+	
+	takes:
+		theta: electrical length
+		gamma: propagation constant function [function]
+		f0:	frequency of interest [number]
+		deg: is theta in degrees [Boolean]
+	returns:
+		d: physical distance
+		
+	note: the gamma function must take a single variable, that is 
+	frequency and return complex propagation constant such that the 
+	propagating part is positive imag part.  
+	'''
+	if deg == True:
+		theta = mf.degree_2_radian(theta)
+	return theta/imag(gamma(f0))
 
 def input_impedance_2_reflection_coefficient(z0, zl):
 	'''
@@ -186,9 +205,9 @@ def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
 	return zin
 # short hand convinience. 
 # admitantly these follow no logical naming scheme, but they closely 
-# correspond to common symbolic conventions
+# correspond to common symbolic conventions, and are convenient
 theta = electrical_length
-
+distance_2_electrical_length = electrical_length
 
 zl_2_Gamma0 = input_impedance_2_reflection_coefficient
 Gamma0_2_zl = reflection_coefficient_2_input_impedance
