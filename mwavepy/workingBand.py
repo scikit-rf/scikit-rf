@@ -80,6 +80,18 @@ class WorkingBand(object):
 	## Functions
 	def theta_2_d(self,theta,deg=True):
 		'''
+		converts electrical length to physical distance
+		
+		takes:
+			theta: electrical length, (see deg for unit)[number]
+			deg: is theta in degrees? [boolean]
+			
+		returns:
+			d: physical distance in meters
+			
+		note:
+			this calls the function electrical_length_2_distance which
+		is provided by transmissionLine.functions.py
 		'''
 		return electrical_length_2_distance(\
 			theta=theta,\
@@ -148,6 +160,20 @@ class WorkingBand(object):
 		
 		return self.load(1., nports, **kwargs)
 
+	def thru(self, **kwargs):
+		'''
+		creates a Network for a thru
+		
+		takes:
+			**kwargs: key word arguments passed to Network Constructor
+		returns:
+			a 2-port Network class, representing a thru
+
+		note:
+			this just calls self.line(0)
+		'''
+		return self.line(0,**kwargs)
+	
 	def line(self,d, unit='m', **kwargs):
 		'''
 		creates a Network for a section of matched transmission line
@@ -193,21 +219,7 @@ class WorkingBand(object):
 		result.s = \
 			npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 		return result
-		
-	def thru(self, **kwargs):
-		'''
-		creates a Network for a thru
-		
-		takes:
-			**kwargs: key word arguments passed to Network Constructor
-		returns:
-			a 2-port Network class, representing a thru
 
-		note:
-			this just calls self.line(0)
-		'''
-		return self.line(0,**kwargs)
-	
 	def delay_load(self,Gamma0,d,unit='m',**kwargs):
 		'''
 		creates a Network for a delayed load transmission line
@@ -231,6 +243,7 @@ class WorkingBand(object):
 		'''
 		return self.line(d=d, unit=unit,**kwargs)**\
 			self.load(Gamma0=Gamma0,**kwargs)	
+
 	def delay_short(self,d,unit='m',**kwargs):
 		'''
 		creates a Network for a delayed short transmission line
