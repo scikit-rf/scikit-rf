@@ -945,7 +945,7 @@ def connect(ntwkA, k, ntwkB,l):
 	ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
 	return ntwkC
 
-def innerconnect(ntwk, k, l):
+def innerconnect(ntwkA, k, l):
 	'''
 	connect two ports of a single n-port network, resulting in a 
 	(n-2)-port network.
@@ -961,8 +961,12 @@ def innerconnect(ntwk, k, l):
 		see functions connect_s() and innerconnect_s() for actual 
 	S-parameter connection algorithm. 
 	'''
-	ntwkC = deepcopy(ntwk)
-	ntwkC.s = innerconnect_s(ntwk.s,k,l)
+	ntwkC = deepcopy(ntwkA)
+	ntwkC.s = connect_s(\
+		ntwkA.s,k, \
+		impedance_mismatch(ntwkA.z0[:,k],ntwkA.z0[:,l]),0)
+	ntwkC.s = innerconnect_s(ntwkC.s,k,l)
+	ntwkC.z0=npy.delete(ntwkC.z0,[l,k],1)
 	return ntwkC
 
 def average(list_of_networks):
