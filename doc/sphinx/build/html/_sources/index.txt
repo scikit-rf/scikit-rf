@@ -9,11 +9,14 @@ mwavepy's documentation
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
-   basics
+   quick_intro
+   slow_intro
+   
+   examples
    api
-   example_basic_plotting
+   
     
 Indices and tables
 ==================
