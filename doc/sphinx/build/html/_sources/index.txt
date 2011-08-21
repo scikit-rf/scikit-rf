@@ -13,8 +13,11 @@ Contents:
    
    quick_intro
    slow_intro
+   calibration
    
    examples
+   
+   architecture
    api
    
     

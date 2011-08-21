@@ -4,35 +4,17 @@ API
 ***********
 
 
-Descriptions of major classes
+Major classes
 
 
-Frequency
------------------
-.. autoclass:: mwavepy.Frequency
-   :members:
-   :undoc-members:
-   :inherited-members:
+.. toctree::
+   :maxdepth: 1
+   
+   auto_frequency
+   auto_touchstone
+   auto_network
+   auto_workingband
+   auto_calibration
+   
 
-Network
------------------
-.. autoclass:: mwavepy.Network
-   :members:
-   :undoc-members:
-   :inherited-members:
-
-
-
-WorkingBand
------------------
-.. autoclass:: mwavepy.WorkingBand
-   :members:
-   :undoc-members:
-   :inherited-members:
-
-Calibration
------------------
-.. autoclass:: mwavepy.Calibration
-   :members:
-   :undoc-members:
-   :inherited-members:
+   
