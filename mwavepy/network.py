@@ -56,7 +56,7 @@ class Network(object):
 		'-' : element-wise subtraction of the s-matrix
 		'*' : element-wise multiplication of the s-matrix
 		'/' : element-wise division of the s-matrix
-		'**': cascading of two networks
+		'**': cascading of 2-port networks
 		'//': de-embdeding of one network from the other.
 
 	various other network properties are accesable as well as plotting
@@ -78,7 +78,7 @@ class Network(object):
 		'''
 		# although meaningless untill set with real values, this
 		# needs this to exist for dependent properties
-		self.frequency = Frequency(0,0,0)
+		#self.frequency = Frequency(0,0,0)
 		
 		if touchstone_file is not None:
 			self.read_touchstone(touchstone_file)
@@ -88,7 +88,7 @@ class Network(object):
 		else:
 			self.name = name
 			#self.s = None
-			self.z0 = 50 
+			#self.z0 = 50 
 		
 		#convenience 
 		#self.nports = self.number_of_ports
@@ -217,18 +217,18 @@ class Network(object):
 		'''
 		The scattering parameter matrix.
 		
-		s-matrix has shape fxmxn, 
+		s-matrix has shape fxnxn, 
 		where; 
 			f is frequency axis and,
-			m and n are port indicies
+			n's are port indicies
 		'''
 		return self._s
 	
 	@s.setter
 	def s(self, s):
 		'''
-		the input s-matrix should be of shape fxmxn, 
-		where f is frequency axis and m and n are port indicies
+		the input s-matrix should be of shape fxnxn, 
+		where f is frequency axis and n is number of ports
 		'''
 		if len(s.shape) == 1:
 			# reshape to kxmxn, this simplifies indexing in function
@@ -265,8 +265,11 @@ class Network(object):
 		'''
 		returns a Frequency object, see  frequency.py
 		'''
-		return self._frequency
-
+		try:
+			return self._frequency
+		except (AttributeError):
+			self.frequency = Frequency(0,0,0)
+			return self._frequency
 	@frequency.setter
 	def frequency(self, new_frequency):
 		'''
@@ -291,11 +294,24 @@ class Network(object):
 	# characteristic impedance
 	@property
 	def z0(self):
-		''' the characteristic impedance of the network.'''
-		return self._z0
-	
+		''' the characteristic impedance of the network.
+		
+		z0 can be may be a number, or numpy.ndarray of shape n or fxn. 
+		
+			
+		'''
+		try:
+			return self._z0
+		except(AttributeError):
+			print 'Warning: z0 is undefined. Defaulting to 1.'
+			self.z0 =1
+			return self._z0
 	@z0.setter
 	def z0(self, z0):
+		z0=npy.array(z0)
+		if len(z0.shape) < 2:
+			z0=z0*npy.ones(self.s.shape[:-1])
+		
 		self._z0 = z0
 	
 ## SECONDARY PROPERTIES
@@ -898,6 +914,56 @@ class Network(object):
 		self.s = self.s + 1e-12
 ## FUNCTIONS
 # functions operating on Network[s]
+def connect(ntwkA, k, ntwkB,l):
+	'''
+	connect two n-port networks together. specifically, connect port 'k'
+	on ntwkA to port 'l' on ntwkB. The resultant network has
+	(ntwkA.nports+ntwkB.nports -2)-ports
+	
+	takes:
+		ntwkA: network 'A', [mwavepy.Network]
+		k: port index on ntwkA [int] ( port indecies start from 0 )
+		ntwkA: network 'B', [mwavepy.Network]
+		l: port index on ntwkB [int]
+	
+	returns:
+		ntwkC': new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+	
+	note:
+		see functions connect_s() and innerconnect_s() for actual 
+	S-parameter connection algorithm. 
+	'''
+	ntwkC = deepcopy(ntwkA)
+	# account for port impedance mis-match by inserting a two-port 
+	# network at the connection. if ports are matched this becomes a 
+	# thru
+	ntwkC = connect_s(\
+		ntwkA.s,k, \
+		impedance_mismatch(ntwkA.z0[f,k],ntwkB.z0[f,l]),0)
+			
+	ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
+	return ntwkC
+
+def innerconnect(ntwk, k, l):
+	'''
+	connect two ports of a single n-port network, resulting in a 
+	(n-2)-port network.
+	
+	takes:
+		ntwk: the network. [mwavepy.Network]
+		k: port index [int] (port indecies start from 0)
+		l: port index [int]
+	returns:
+		ntwk': new network of with n-2 ports. [mwavepy.Network]
+		
+	note:
+		see functions connect_s() and innerconnect_s() for actual 
+	S-parameter connection algorithm. 
+	'''
+	ntwkC = deepcopy(ntwk)
+	ntwkC.s = innerconnect_s(ntwk.s,k,l)
+	return ntwkC
+
 def average(list_of_networks):
 	'''
 	calculates the average network from a list of Networks. 
@@ -964,49 +1030,7 @@ def two_port_reflect(ntwk1, ntwk2, **kwargs):
 		result.s[f,0,0] = ntwk1.s[f,0,0]
 		result.s[f,1,1] = ntwk2.s[f,0,0]
 	return result	
-def connect(ntwkA, k, ntwkB,l):
-	'''
-	connect two n-port networks together. specifically, connect port 'k'
-	on ntwkA to port 'l' on ntwkB. The resultant network has
-	(ntwkA.nports+ntwkB.nports -2)-ports
-	
-	takes:
-		ntwkA: network 'A', [mwavepy.Network]
-		k: port index on ntwkA [int] ( port indecies start from 0 )
-		ntwkA: network 'B', [mwavepy.Network]
-		l: port index on ntwkB [int]
-	
-	returns:
-		ntwkC': new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
-	
-	note:
-		see functions connect_s() and innerconnect_s() for actual 
-	S-parameter connection algorithm. 
-	'''
-	ntwkC = deepcopy(ntwkA)
-	ntwkC.s = connect_s(ntwkA.s,k,ntwkB.s,l)
-	return ntwkC
 
-def innerconnect(ntwk, k, l):
-	'''
-	connect two ports of a single n-port network, resulting in a 
-	(n-2)-port network.
-	
-	takes:
-		ntwk: the network. [mwavepy.Network]
-		k: port index [int] (port indecies start from 0)
-		l: port index [int]
-	returns:
-		ntwk': new network of with n-2 ports. [mwavepy.Network]
-		
-	note:
-		see functions connect_s() and innerconnect_s() for actual 
-	S-parameter connection algorithm. 
-	'''
-	ntwkC = deepcopy(ntwk)
-	ntwkC.s = innerconnect_s(ntwk.s,k,l)
-	return ntwkC
-	
 
 # functions not operating on  Network type. 
 #mostly working on  s-matricies
@@ -1241,8 +1265,24 @@ def flip(a):
 		raise IndexError('matricies should be 2x2, or kx2x2')
 	return c
 	
-
-
+# dont belong here
+def impedance_mismatch(z1, z2):
+		'''
+		returns a two-port network for a impedance mis-match
+		
+		takes:
+			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
+			z1: complex impedance of port 2 [ number, list, or 1D ndarray]
+		returns:
+		'''	
+		gamma = zl_2_Gamma0(z1,z2)
+		result = npy.zeros(shape=(len(gamma),2,2), dtype='complex')
+		
+		result.s[:,0,0] = gamma
+		result.s[:,1,1] = -gamma
+		result.s[:,1,0] = 1+gamma
+		result.s[:,0,1] = 1-gamma
+		return result
 
 
 

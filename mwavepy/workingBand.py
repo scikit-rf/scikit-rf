@@ -98,6 +98,7 @@ class WorkingBand(object):
 			gamma = self.tline.propagation_constant,\
 			f0 = self.frequency.center,\
 			deg=deg)
+	
 	## Network creation
 	def match(self,nports=1, **kwargs):
 		'''
