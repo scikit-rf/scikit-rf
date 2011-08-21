@@ -37,7 +37,7 @@ import  mathFunctions as mf
 import touchstone
 from frequency import Frequency
 from plotting import smith
-
+from transmissionLine.functions import zl_2_Gamma0
 
 class Network(object):
 	'''
@@ -937,11 +937,12 @@ def connect(ntwkA, k, ntwkB,l):
 	# account for port impedance mis-match by inserting a two-port 
 	# network at the connection. if ports are matched this becomes a 
 	# thru
-	ntwkC = connect_s(\
+	ntwkC.s = connect_s(\
 		ntwkA.s,k, \
-		impedance_mismatch(ntwkA.z0[f,k],ntwkB.z0[f,l]),0)
+		impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
 			
 	ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
+	ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
 	return ntwkC
 
 def innerconnect(ntwk, k, l):
@@ -1272,16 +1273,17 @@ def impedance_mismatch(z1, z2):
 		
 		takes:
 			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
-			z1: complex impedance of port 2 [ number, list, or 1D ndarray]
+			z2: complex impedance of port 2 [ number, list, or 1D ndarray]
 		returns:
+			2-port s-matrix for the impedance mis-match
 		'''	
 		gamma = zl_2_Gamma0(z1,z2)
 		result = npy.zeros(shape=(len(gamma),2,2), dtype='complex')
 		
-		result.s[:,0,0] = gamma
-		result.s[:,1,1] = -gamma
-		result.s[:,1,0] = 1+gamma
-		result.s[:,0,1] = 1-gamma
+		result[:,0,0] = gamma
+		result[:,1,1] = -gamma
+		result[:,1,0] = 1+gamma
+		result[:,0,1] = 1-gamma
 		return result
 
 
