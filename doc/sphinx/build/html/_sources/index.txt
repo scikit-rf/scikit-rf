@@ -11,6 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 1
    
+   installation
    quick_intro
    slow_intro
    calibration
