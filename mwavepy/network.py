@@ -99,7 +99,9 @@ class Network(object):
 		'''
 		 implements cascading this network with another network
 		'''
-		if self.number_of_ports == 2  and other.number_of_ports == 2:
+		
+		# this is the old algorithm
+		'''if self.number_of_ports == 2  and other.number_of_ports == 2:
 			result = copy(self)
 			result.s = cascade(self.s,other.s)
 			return result
@@ -115,6 +117,8 @@ class Network(object):
 			return result
 		else:
 			raise IndexError('Incorrect number of ports.')
+			'''
+		return connect(self,1,other,0)
 
 	def __floordiv__(self,other):
 		'''
@@ -918,12 +922,13 @@ def connect(ntwkA, k, ntwkB,l):
 	'''
 	connect two n-port networks together. specifically, connect port 'k'
 	on ntwkA to port 'l' on ntwkB. The resultant network has
-	(ntwkA.nports+ntwkB.nports -2)-ports
+	(ntwkA.nports+ntwkB.nports -2)-ports. Port impedances are taken 
+	into account.
 	
 	takes:
 		ntwkA: network 'A', [mwavepy.Network]
 		k: port index on ntwkA [int] ( port indecies start from 0 )
-		ntwkA: network 'B', [mwavepy.Network]
+		ntwkB: network 'B', [mwavepy.Network]
 		l: port index on ntwkB [int]
 	
 	returns:
@@ -931,7 +936,10 @@ def connect(ntwkA, k, ntwkB,l):
 	
 	note:
 		see functions connect_s() and innerconnect_s() for actual 
-	S-parameter connection algorithm. 
+	S-parameter connection algorithm.
+		
+		the effect of mis-matched port impedances is handled by inserting
+	a 2-port 'mismatch' network between the two connected ports. 
 	'''
 	ntwkC = deepcopy(ntwkA)
 	# account for port impedance mis-match by inserting a two-port 

@@ -39,10 +39,10 @@ class WorkingBand(object):
 	 working with and creation of Networks within the same band,
 	 more concise and convenient. 
 	
-	A WorkingBand object has two properties: 
+	A WorkingBand object has three properties: 
 		frequency information (Frequency object)
 		transmission line information	(transmission line object)
-		
+		character impedance of medium
 
 	the methods of WorkingBand saves the user the hassle of repetitously
 	 providing a tline and frequency type for every network creation. 	
@@ -50,7 +50,7 @@ class WorkingBand(object):
 	note: frequency and tline classes are copied, so they are passed
 	by value and not by-reference.
 	'''
-	def __init__(self, tline, frequency=None):
+	def __init__(self, tline, frequency=None, z0=1):
 		self.tline = tline
 		if frequency is None:
 			try:
@@ -58,9 +58,11 @@ class WorkingBand(object):
 			except(AttributeError):
 				raise(AttributeError('must provide frequency information'))
 		self.frequency = frequency 
-	
+		
+		self.z0=z0
 		#convenience
 		self.delay = self.line
+		
 
 
 	## PROPERTIES	
@@ -100,7 +102,7 @@ class WorkingBand(object):
 			deg=deg)
 	
 	## Network creation
-	def match(self,nports=1, **kwargs):
+	def match(self,nports=1, z0=None, **kwargs):
 		'''
 		creates a Network for a perfect matched transmission line (Gamma0=0) 
 		
@@ -114,6 +116,9 @@ class WorkingBand(object):
 		result.frequency = self.frequency
 		result.s =  npy.zeros((self.frequency.npoints,nports, nports),\
 			dtype=complex)
+		if z0 is None:
+			z0 = self.z0
+		result.z0=z0
 		return result
 	
 	def load(self,Gamma0,nports=1,**kwargs):
@@ -175,7 +180,7 @@ class WorkingBand(object):
 		'''
 		return self.line(0,**kwargs)
 	
-	def line(self,d, unit='m', **kwargs):
+	def line(self,d, unit='m',**kwargs):
 		'''
 		creates a Network for a section of matched transmission line
 		
@@ -200,8 +205,7 @@ class WorkingBand(object):
 		if unit not in ['m','deg','rad']:
 			raise (ValueError('unit must be one of the following:\'m\',\'rad\',\'deg\''))
 		
-		result = Network(**kwargs)
-		result.frequency = self.frequency
+		result = self.match(nports=2,**kwargs)
 		
 		f= self.frequency.f
 		
