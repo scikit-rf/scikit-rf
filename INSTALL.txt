@@ -2,8 +2,7 @@ How To Install mwavepy
 ======================
 
 mwavepy uses Python Distutils for installation. Installers are available for 
-some platforms. 
-
+some platforms. See the Installation page, which can be found in docs/mwavepy.html
 
 you can install from a source distribution (.tar.gz or .zip) by:
 
