@@ -1,0 +1,255 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Calibration &mdash; mwavepy v1.3 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.3 documentation" href="index.html" />
+    <link rel="up" title="API" href="api.html" />
+    <link rel="prev" title="WorkingBand" href="auto_workingband.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="auto_workingband.html" title="WorkingBand"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
+          <li><a href="api.html" accesskey="U">API</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="calibration">
+<h1>Calibration<a class="headerlink" href="#calibration" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="mwavepy.Calibration">
+<em class="property">class </em><tt class="descclassname">mwavepy.</tt><tt class="descname">Calibration</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>type=None</em>, <em>frequency=None</em>, <em>is_reciprocal=False</em>, <em>switch_terms=None</em>, <em>name=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a calibration instance, a class to hold sets
+of measurements, ideals, and calibration results.</p>
+<p>see init for more information on usage.</p>
+<p>note:
+all calibration algorithms are in calibrationAlgorithms.py, and are
+referenced by the dictionary in this object called
+&#8216;calibration_algorihtm_dict&#8217;</p>
+<dl class="attribute">
+<dt id="mwavepy.Calibration.Ts">
+<tt class="descname">Ts</tt><a class="headerlink" href="#mwavepy.Calibration.Ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>T-matricies used for de-embeding.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.apply_cal">
+<tt class="descname">apply_cal</tt><big>(</big><em>input_ntwk</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.apply_cal" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply the current calibration to a measurement.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>input_ntwk: the measurement to apply the calibration to, a</dt>
+<dd>Network type.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>caled: the calibrated measurement, a Network type.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.apply_cal_to_all_in_dir">
+<tt class="descname">apply_cal_to_all_in_dir</tt><big>(</big><em>dir</em>, <em>contains=None</em>, <em>f_unit='ghz'</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.apply_cal_to_all_in_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>convience function to apply calibration to an entire directory
+of measurements, and return a dictionary of the calibrated
+results, optionally the user can &#8216;grep&#8217; the direction
+by using the contains switch.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">dir: directory of measurements (string)
+contains: will only load measurements who&#8217;s filename contains</p>
+<blockquote>
+this string.</blockquote>
+<dl class="last docutils">
+<dt>f_unit: frequency unit, to use for all networks. see</dt>
+<dd>frequency.Frequency.unit for info.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>ntwkDict: a dictionary of calibrated measurements, the keys</dt>
+<dd>are the filenames.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.coefs">
+<tt class="descname">coefs</tt><a class="headerlink" href="#mwavepy.Calibration.coefs" title="Permalink to this definition">¶</a></dt>
+<dd><p>coefs: a dictionary holding the calibration coefficients</p>
+<dl class="docutils">
+<dt>for one port cal&#8217;s</dt>
+<dd>&#8216;directivity&#8217;:e00
+&#8216;reflection tracking&#8217;:e01e10
+&#8216;source match&#8217;:e11</dd>
+<dt>for 7-error term two port cal&#8217;s</dt>
+<dd>TBD</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.error_ntwk">
+<tt class="descname">error_ntwk</tt><a class="headerlink" href="#mwavepy.Calibration.error_ntwk" title="Permalink to this definition">¶</a></dt>
+<dd><p>a Network type which represents the error network being
+calibrated out.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.frequency">
+<tt class="descname">frequency</tt><a class="headerlink" href="#mwavepy.Calibration.frequency" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.nports">
+<tt class="descname">nports</tt><a class="headerlink" href="#mwavepy.Calibration.nports" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of ports in the calibration</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.output_from_cal">
+<tt class="descname">output_from_cal</tt><a class="headerlink" href="#mwavepy.Calibration.output_from_cal" title="Permalink to this definition">¶</a></dt>
+<dd><p>a dictionary holding all of the output from the calibration
+algorithm</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.plot_coefs_db">
+<tt class="descname">plot_coefs_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.plot_coefs_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot magnitude of the error coeficient dictionary</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.plot_residuals_db">
+<tt class="descname">plot_residuals_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.plot_residuals_db" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>plot magnitude of the resdiues, if calibration is</dt>
+<dd>overdetermined</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.residuals">
+<tt class="descname">residuals</tt><a class="headerlink" href="#mwavepy.Calibration.residuals" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>from numpy.lstsq:</dt>
+<dd>residues:
+the sum of the residues; squared euclidean norm for 
+each column vector in b (given ax=b)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.Calibration.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>runs the calibration algorihtm.</p>
+<blockquote>
+this is automatically called the</blockquote>
+<p>first time      any dependent property is referenced (like error_ntwk)
+, but only the first time. if you change something and want to
+re-run the calibration use this.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.type">
+<tt class="descname">type</tt><a class="headerlink" href="#mwavepy.Calibration.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>string representing what type of calibration is to be
+performed. supported types at the moment are:</p>
+<dl class="docutils">
+<dt>&#8216;one port&#8217;:     standard one-port cal. if more than</dt>
+<dd>2 measurement/ideal pairs are given it will
+calculate the least squares solution.</dd>
+<dt>&#8216;one port xds&#8217;: self-calibration of a unknown-length</dt>
+<dd>delay-shorts.</dd>
+</dl>
+<p>note:
+algorithms referenced by  calibration_algorithm_dict</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="auto_workingband.html"
+                        title="previous chapter">WorkingBand</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/auto_calibration.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="auto_workingband.html" title="WorkingBand"
+             >previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
+          <li><a href="api.html" >API</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

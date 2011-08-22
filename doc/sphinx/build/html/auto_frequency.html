@@ -1,0 +1,174 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Frequency &mdash; mwavepy v1.3 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.3 documentation" href="index.html" />
+    <link rel="up" title="API" href="api.html" />
+    <link rel="next" title="touchstone" href="auto_touchstone.html" />
+    <link rel="prev" title="API" href="api.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="auto_touchstone.html" title="touchstone"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
+          <li><a href="api.html" accesskey="U">API</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="frequency">
+<h1>Frequency<a class="headerlink" href="#frequency" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="mwavepy.Frequency">
+<em class="property">class </em><tt class="descclassname">mwavepy.</tt><tt class="descname">Frequency</tt><big>(</big><em>start</em>, <em>stop</em>, <em>npoints</em>, <em>unit='hz'</em><big>)</big><a class="headerlink" href="#mwavepy.Frequency" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents a frequency band.</p>
+<dl class="docutils">
+<dt>attributes:</dt>
+<dd><p class="first">start: starting frequency  (in Hz)
+stop: stoping frequency  (in Hz)
+npoints: number of points, an int
+unit: unit which to scale a formated axis, when accesssed. see</p>
+<blockquote class="last">
+formattedAxis</blockquote>
+</dd>
+</dl>
+<p>frequently many calcluations are made in a given band , so this class 
+is used in other classes so user doesnt have to continually supply 
+frequency info.</p>
+<dl class="attribute">
+<dt id="mwavepy.Frequency.center">
+<tt class="descname">center</tt><a class="headerlink" href="#mwavepy.Frequency.center" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Frequency.f">
+<tt class="descname">f</tt><a class="headerlink" href="#mwavepy.Frequency.f" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a frequency vector  in Hz</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Frequency.f_scaled">
+<tt class="descname">f_scaled</tt><a class="headerlink" href="#mwavepy.Frequency.f_scaled" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a frequency vector in units of self.unit</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mwavepy.Frequency.from_f">
+<em class="property">classmethod </em><tt class="descname">from_f</tt><big>(</big><em>f</em><big>)</big><a class="headerlink" href="#mwavepy.Frequency.from_f" title="Permalink to this definition">¶</a></dt>
+<dd><p>alternative constructor from a frequency vector, in Hz
+takes:</p>
+<blockquote>
+f: frequency array in Hz</blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Frequency.labelXAxis">
+<tt class="descname">labelXAxis</tt><big>(</big><em>ax=None</em><big>)</big><a class="headerlink" href="#mwavepy.Frequency.labelXAxis" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Frequency.multiplier">
+<tt class="descname">multiplier</tt><a class="headerlink" href="#mwavepy.Frequency.multiplier" title="Permalink to this definition">¶</a></dt>
+<dd><p>multiplier for formating axis</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Frequency.unit">
+<tt class="descname">unit</tt><a class="headerlink" href="#mwavepy.Frequency.unit" title="Permalink to this definition">¶</a></dt>
+<dd><p>The unit to format the frequency axis in. see formatedAxis</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="api.html"
+                        title="previous chapter">API</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="auto_touchstone.html"
+                        title="next chapter">touchstone</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/auto_frequency.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="auto_touchstone.html" title="touchstone"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="api.html" title="API"
+             >previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
+          <li><a href="api.html" >API</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

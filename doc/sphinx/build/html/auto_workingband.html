@@ -1,0 +1,452 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>WorkingBand &mdash; mwavepy v1.3 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.3 documentation" href="index.html" />
+    <link rel="up" title="API" href="api.html" />
+    <link rel="next" title="Calibration" href="auto_calibration.html" />
+    <link rel="prev" title="Network" href="auto_network.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="auto_calibration.html" title="Calibration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="auto_network.html" title="Network"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
+          <li><a href="api.html" accesskey="U">API</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="workingband">
+<h1>WorkingBand<a class="headerlink" href="#workingband" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="mwavepy.WorkingBand">
+<em class="property">class </em><tt class="descclassname">mwavepy.</tt><tt class="descname">WorkingBand</tt><big>(</big><em>tline</em>, <em>frequency=None</em>, <em>z0=1</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>A WorkingBand is an high-level object which exists solely to make </dt>
+<dd>working with and creation of Networks within the same band,
+more concise and convenient.</dd>
+<dt>A WorkingBand object has three properties: </dt>
+<dd>frequency information (Frequency object)
+transmission line information   (transmission line object)
+character impedance of medium</dd>
+<dt>the methods of WorkingBand saves the user the hassle of repetitously</dt>
+<dd>providing a tline and frequency type for every network creation.</dd>
+</dl>
+<p>note: frequency and tline classes are copied, so they are passed
+by value and not by-reference.</p>
+<dl class="method">
+<dt id="mwavepy.WorkingBand.delay_load">
+<tt class="descname">delay_load</tt><big>(</big><em>Gamma0</em>, <em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.delay_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a delayed load transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">Gamma0: reflection coefficient of load (not in dB)
+d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 1-port Network class, representing a loaded transmission
+line of length d</dd>
+</dl>
+<p>note: this just calls,
+self.line(d,**kwargs) ** self.load(Gamma0, <a href="#id3"><span class="problematic" id="id4">**</span></a>kwargs)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.delay_open">
+<tt class="descname">delay_open</tt><big>(</big><em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.delay_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a delayed open transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id5"><span class="problematic" id="id6">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 1-port Network class, representing a shorted transmission
+line of length d</dd>
+</dl>
+<p>note: this just calls,
+self.line(d,**kwargs) ** self.open(<a href="#id7"><span class="problematic" id="id8">**</span></a>kwargs)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.delay_short">
+<tt class="descname">delay_short</tt><big>(</big><em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.delay_short" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a delayed short transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id9"><span class="problematic" id="id10">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 1-port Network class, representing a shorted transmission
+line of length d</dd>
+</dl>
+<p>note: this just calls,
+self.line(d,**kwargs) ** self.short(<a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.WorkingBand.frequency">
+<tt class="descname">frequency</tt><a class="headerlink" href="#mwavepy.WorkingBand.frequency" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.guess_length_of_delay_short">
+<tt class="descname">guess_length_of_delay_short</tt><big>(</big><em>aNtwk</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.guess_length_of_delay_short" title="Permalink to this definition">¶</a></dt>
+<dd><p>guess length of physical length of a Delay Short given by aNtwk</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>aNtwk: a mwavepy.ntwk type . (note: if this is a measurment </dt>
+<dd>it needs to be normalized to the reference plane)</dd>
+<dt>tline: transmission line class of the medium. needed for the </dt>
+<dd>calculation of propagation constant</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.impedance_mismatch">
+<tt class="descname">impedance_mismatch</tt><big>(</big><em>z1</em>, <em>z2</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.impedance_mismatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a two-port network for a impedance mis-match</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>z1: complex impedance of port 1 [ number, list, or 1D ndarray]
+z2: complex impedance of port 2 [ number, list, or 1D ndarray]
+<a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs: passed to mwavepy.Network constructor</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.line">
+<tt class="descname">line</tt><big>(</big><em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.line" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a section of matched transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 2-port Network class, representing a transmission line of 
+length d</dd>
+<dt>note: </dt>
+<dd>the only function called from the tline class is</dd>
+</dl>
+<p>propagation_constant(f,d), where f is frequency in Hz and d is
+distance in meters. so you can use any class  which provides this
+and it  will work .</p>
+<dl class="docutils">
+<dt>example:</dt>
+<dd>wb = WorkingBand(...) # create a working band object
+wb.line(90, &#8216;deg&#8217;, z0=50)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.load">
+<tt class="descname">load</tt><big>(</big><em>Gamma0</em>, <em>nports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a Load termianting a transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">Gamma0: reflection coefficient of load (not in db)
+nports: number of ports. creates a short on all ports,</p>
+<blockquote>
+default is 1 [int]</blockquote>
+<dl class="last docutils">
+<dt><a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 1-port Network class, where  S = Gamma0*ones(...)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.match">
+<tt class="descname">match</tt><big>(</big><em>nports=1</em>, <em>z0=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.match" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a perfect matched transmission line (Gamma0=0)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>nports: number of ports [int]
+<a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs: key word arguments passed to Network Constructor</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.open">
+<tt class="descname">open</tt><big>(</big><em>nports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a &#8216;open&#8217; transmission line (Gamma0=1)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>nports: number of ports. creates a short on all ports,</dt>
+<dd>default is 1 [int]</dd>
+<dt><a href="#id21"><span class="problematic" id="id22">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.short">
+<tt class="descname">short</tt><big>(</big><em>nports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.short" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a short  transmission line (Gamma0=-1)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>nports: number of ports. creates a short on all ports,</dt>
+<dd>default is 1 [int]</dd>
+<dt><a href="#id23"><span class="problematic" id="id24">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.splitter">
+<tt class="descname">splitter</tt><big>(</big><em>nports=3</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.splitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns an ideal, lossless n-way splitter.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">nports: number of ports [int]
+<a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs: key word arguments passed to match(), which is</p>
+<blockquote class="last">
+called initially to create a &#8216;blank&#8217; network.</blockquote>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.tee">
+<tt class="descname">tee</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.tee" title="Permalink to this definition">¶</a></dt>
+<dd><p>makes a ideal, lossless tee. (aka three port splitter)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt><a href="#id27"><span class="problematic" id="id28">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 3-port Network [mwavepy.Network]</dd>
+<dt>note:</dt>
+<dd>this just calls splitter(3)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.theta_2_d">
+<tt class="descname">theta_2_d</tt><big>(</big><em>theta</em>, <em>deg=True</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.theta_2_d" title="Permalink to this definition">¶</a></dt>
+<dd><p>converts electrical length to physical distance</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>theta: electrical length, (see deg for unit)[number]
+deg: is theta in degrees? [boolean]</dd>
+<dt>returns:</dt>
+<dd>d: physical distance in meters</dd>
+<dt>note:</dt>
+<dd>this calls the function electrical_length_2_distance which</dd>
+</dl>
+<p>is provided by transmissionLine.functions.py</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.thru">
+<tt class="descname">thru</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.thru" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a thru</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt><a href="#id29"><span class="problematic" id="id30">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 2-port Network class, representing a thru</dd>
+<dt>note:</dt>
+<dd>this just calls self.line(0)</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.WorkingBand.tline">
+<tt class="descname">tline</tt><a class="headerlink" href="#mwavepy.WorkingBand.tline" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.two_port_reflect">
+<tt class="descname">two_port_reflect</tt><big>(</big><em>ntwk1</em>, <em>ntwk2</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.two_port_reflect" title="Permalink to this definition">¶</a></dt>
+<dd><p>generates a two-port reflective (S21=S12=0) network,from the
+responses of 2 one-port networks</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>ntwk1: Network type, seen from port 1
+ntwk2: Network type, seen from port 2</dd>
+<dt>returns:</dt>
+<dd>result: two-port reflective Network type</dd>
+<dt>example:</dt>
+<dd>wb.two_port_reflect(wb.short(), wb.match())</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.white_gaussian_polar">
+<tt class="descname">white_gaussian_polar</tt><big>(</big><em>phase_dev</em>, <em>mag_dev</em>, <em>n_ports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.white_gaussian_polar" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a complex zero-mean gaussian white-noise signal of given
+standard deviations for phase and magnitude</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>phase_mag: standard deviation of magnitude
+phase_dev: standard deviation of phase
+n_ports: number of ports. defualt to 1
+<a href="#id31"><span class="problematic" id="id32">**</span></a>kwargs: passed to Network() initializer</dd>
+<dt>returns:</dt>
+<dd>result: Network type</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="auto_network.html"
+                        title="previous chapter">Network</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="auto_calibration.html"
+                        title="next chapter">Calibration</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/auto_workingband.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="auto_calibration.html" title="Calibration"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="auto_network.html" title="Network"
+             >previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
+          <li><a href="api.html" >API</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>
