@@ -234,9 +234,9 @@ class Network(object):
 		the input s-matrix should be of shape fxnxn, 
 		where f is frequency axis and n is number of ports
 		'''
-		if len(s.shape) == 1:
+		if len(npy.shape(s)) <2:
 			# reshape to kxmxn, this simplifies indexing in function
-			s = s.reshape(-1,1,1)
+			s = npy.reshape(s,(-1,1,1))
 		self._s = s
 		#s.squeeze()
 	@property
@@ -272,7 +272,7 @@ class Network(object):
 		try:
 			return self._frequency
 		except (AttributeError):
-			self.frequency = Frequency(0,0,0)
+			self._frequency = Frequency(0,0,0)
 			return self._frequency
 	@frequency.setter
 	def frequency(self, new_frequency):
@@ -285,7 +285,7 @@ class Network(object):
 	@property
 	def f(self):
 		''' the frequency vector for the network, in Hz. '''
-		return self._frequency.f
+		return self.frequency.f
 		
 	@f.setter
 	def f(self,f):
@@ -305,17 +305,32 @@ class Network(object):
 			
 		'''
 		try:
+			if len(npy.shape(self._z0)) < 2:
+				try:
+					#try and re-shape z0 to match s
+					self._z0=self._z0*npy.ones(self.s.shape[:-1])
+					
+				except(AttributeError):
+					print ('Warning: Network has improper \'z0\' shape')
+				#they have yet to set s .
+					pass
 			return self._z0
+		
 		except(AttributeError):
-			print 'Warning: z0 is undefined. Defaulting to 1.'
-			self.z0 =1
+			print 'Warning: z0 is undefined. Defaulting to 50.'
+			self.z0 =50
 			return self._z0
 	@z0.setter
 	def z0(self, z0):
 		z0=npy.array(z0)
 		if len(z0.shape) < 2:
-			z0=z0*npy.ones(self.s.shape[:-1])
-		
+			try:
+				#try and re-shape z0 to match s
+				z0=z0*npy.ones(self.s.shape[:-1])
+			except(AttributeError):
+				print ('Warning: you should store a Network\'s \'s\' matrix before its \'z0\'')
+				#they have yet to set s .
+				pass
 		self._z0 = z0
 	
 ## SECONDARY PROPERTIES
@@ -454,8 +469,9 @@ class Network(object):
 		if touchstoneFile.get_format().split()[1] != 's':
 			raise NotImplementedError('only s-parameters supported for now.')
 		
-		self.z0 = float(touchstoneFile.resistance)
+		
 		self.f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
+		self.z0 = float(touchstoneFile.resistance)
 		self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
 		self.name = os.path.basename( os.path.splitext(filename)[0])
 
@@ -492,7 +508,8 @@ class Network(object):
 		# the '#'  line is NOT a comment it is essential and it must be 
 		#exactly this format, to work
 		# [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-		outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0) +" \n")
+		outputFile.write('!Created with mwavepy.\n')
+		outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
 		
 		#write comment line for users (optional)
 		outputFile.write ("!freq\t")

@@ -129,7 +129,8 @@ class WorkingBand(object):
 			Gamma0: reflection coefficient of load (not in db)
 			nports: number of ports. creates a short on all ports,
 				default is 1 [int]
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network
 		returns:
 			a 1-port Network class, where  S = Gamma0*ones(...)
 		'''
@@ -146,7 +147,8 @@ class WorkingBand(object):
 		takes:
 			nports: number of ports. creates a short on all ports,
 				default is 1 [int]
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network
 		returns:
 			a n-port Network [mwavepy.Network]
 		'''
@@ -159,7 +161,8 @@ class WorkingBand(object):
 		takes:
 			nports: number of ports. creates a short on all ports,
 				default is 1 [int]
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network
 		returns:
 			a n-port Network [mwavepy.Network]
 		'''
@@ -171,7 +174,8 @@ class WorkingBand(object):
 		creates a Network for a thru
 		
 		takes:
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network
 		returns:
 			a 2-port Network class, representing a thru
 
@@ -190,17 +194,25 @@ class WorkingBand(object):
 				'm': meters, physical length in meters (default)
 				'deg':degrees, electrical length in degrees
 				'rad':radians, electrical length in radians
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. the kwarg
+				'z0' can be used to create a line of a given impedance
 		
 		returns:
 			a 2-port Network class, representing a transmission line of 
 			length d
 	
 		
-		note: the only function called from the tline class is
+		note: 
+			the only function called from the tline class is
 		propagation_constant(f,d), where f is frequency in Hz and d is
 		distance in meters. so you can use any class  which provides this
 		and it  will work .
+		
+		example:
+			wb = WorkingBand(...) # create a working band object
+			wb.line(90, 'deg', z0=50) 
+		
 		'''
 		if unit not in ['m','deg','rad']:
 			raise (ValueError('unit must be one of the following:\'m\',\'rad\',\'deg\''))
@@ -235,9 +247,11 @@ class WorkingBand(object):
 			unit: string specifying the units of d. possible options are 
 				'm': meters, physical length in meters (default)
 				'deg':degrees, electrical length in degrees
-				'rad':radians, electrical length in radians
-			
-			**kwargs: key word arguments passed to Network Constructor
+				'rad':radians, electrical length in radians	
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. the kwarg
+				'z0' can be used to create a line of a given impedance
+		
 		returns:
 			a 1-port Network class, representing a loaded transmission
 			line of length d
@@ -259,7 +273,9 @@ class WorkingBand(object):
 				'm': meters, physical length in meters (default)
 				'deg':degrees, electrical length in degrees
 				'rad':radians, electrical length in radians
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. the kwarg
+				'z0' can be used to create a line of a given impedance
 		returns:
 			a 1-port Network class, representing a shorted transmission
 			line of length d
@@ -280,7 +296,9 @@ class WorkingBand(object):
 				'm': meters, physical length in meters (default)
 				'deg':degrees, electrical length in degrees
 				'rad':radians, electrical length in radians
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. the kwarg
+				'z0' can be used to create a line of a given impedance
 		returns:
 			a 1-port Network class, representing a shorted transmission
 			line of length d
@@ -298,9 +316,13 @@ class WorkingBand(object):
 		makes a ideal, lossless tee. (aka three port splitter)
 		
 		takes:
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. 
 		returns:
 			a 3-port Network [mwavepy.Network]
+		
+		note:
+			this just calls splitter(3)
 		'''
 		return self.splitter(3,**kwargs)
 		
@@ -310,7 +332,8 @@ class WorkingBand(object):
 		
 		takes:
 			nports: number of ports [int]
-			**kwargs: key word arguments passed to Network Constructor
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. 
 		returns:
 			a n-port Network [mwavepy.Network]
 		'''
@@ -329,7 +352,7 @@ class WorkingBand(object):
 		
 		takes:
 			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
-			z1: complex impedance of port 2 [ number, list, or 1D ndarray]
+			z2: complex impedance of port 2 [ number, list, or 1D ndarray]
 			**kwargs: passed to mwavepy.Network constructor
 		returns:
 			a 2-port network [mwavepy.Network]
@@ -342,14 +365,7 @@ class WorkingBand(object):
 		result.s[:,0,1] = 1-gamma
 		return result
 
-	def mismatch_line(self,z0,zline,d,**kwargs):
-		'''
-		a 2-port network for a mis-matched transmission line.
-		
-		takes:
-			z0: characteristic impedance of the terminations
-		'''	
-		raise NotImplementedError()
+
 
 
 	## Noise Networks
