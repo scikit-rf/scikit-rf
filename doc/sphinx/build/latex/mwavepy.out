@@ -1,0 +1,34 @@
+\BOOKMARK [0][-]{chapter.1}{Installation}{}
+\BOOKMARK [1][-]{section.1.1}{Requirements}{chapter.1}
+\BOOKMARK [1][-]{section.1.2}{Install mwavepy}{chapter.1}
+\BOOKMARK [1][-]{section.1.3}{Linux-Specific}{chapter.1}
+\BOOKMARK [1][-]{section.1.4}{List of Requirements}{chapter.1}
+\BOOKMARK [0][-]{chapter.2}{Quick Introduction}{}
+\BOOKMARK [1][-]{section.2.1}{Loading Touchstone Files}{chapter.2}
+\BOOKMARK [1][-]{section.2.2}{Important Properties}{chapter.2}
+\BOOKMARK [1][-]{section.2.3}{Element-wise Operations}{chapter.2}
+\BOOKMARK [1][-]{section.2.4}{Cascading and Embeding Operations}{chapter.2}
+\BOOKMARK [1][-]{section.2.5}{Sub Networks}{chapter.2}
+\BOOKMARK [1][-]{section.2.6}{Connecting Multi-ports}{chapter.2}
+\BOOKMARK [0][-]{chapter.3}{Slow Introduction}{}
+\BOOKMARK [0][-]{chapter.4}{Calibration}{}
+\BOOKMARK [1][-]{section.4.1}{Intro}{chapter.4}
+\BOOKMARK [1][-]{section.4.2}{One-Port}{chapter.4}
+\BOOKMARK [1][-]{section.4.3}{Two-port}{chapter.4}
+\BOOKMARK [1][-]{section.4.4}{Simple Two Port}{chapter.4}
+\BOOKMARK [1][-]{section.4.5}{Using s1p ideals in two-port calibration}{chapter.4}
+\BOOKMARK [0][-]{chapter.5}{Examples}{}
+\BOOKMARK [1][-]{section.5.1}{Basic Plotting}{chapter.5}
+\BOOKMARK [1][-]{section.5.2}{One-Port Calibration}{chapter.5}
+\BOOKMARK [1][-]{section.5.3}{Two-Port Calibration}{chapter.5}
+\BOOKMARK [0][-]{chapter.6}{Architecture}{}
+\BOOKMARK [1][-]{section.6.1}{Module Layout and Inheritance}{chapter.6}
+\BOOKMARK [1][-]{section.6.2}{Individual Class Architectures}{chapter.6}
+\BOOKMARK [0][-]{chapter.7}{API}{}
+\BOOKMARK [1][-]{section.7.1}{Frequency}{chapter.7}
+\BOOKMARK [1][-]{section.7.2}{touchstone}{chapter.7}
+\BOOKMARK [1][-]{section.7.3}{Network}{chapter.7}
+\BOOKMARK [1][-]{section.7.4}{WorkingBand}{chapter.7}
+\BOOKMARK [1][-]{section.7.5}{Calibration}{chapter.7}
+\BOOKMARK [0][-]{chapter.8}{Indices and tables}{}
+\BOOKMARK [0][-]{section*.84}{Index}{}

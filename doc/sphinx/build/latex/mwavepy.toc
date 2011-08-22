@@ -1,0 +1,42 @@
+\select@language {english}
+\contentsline {chapter}{\numberline {1}Installation}{3}{chapter.1}
+\contentsline {section}{\numberline {1.1}Requirements}{3}{section.1.1}
+\contentsline {section}{\numberline {1.2}Install mwavepy}{3}{section.1.2}
+\contentsline {section}{\numberline {1.3}Linux-Specific}{3}{section.1.3}
+\contentsline {section}{\numberline {1.4}List of Requirements}{4}{section.1.4}
+\contentsline {chapter}{\numberline {2}Quick Introduction}{5}{chapter.2}
+\contentsline {section}{\numberline {2.1}Loading Touchstone Files}{5}{section.2.1}
+\contentsline {section}{\numberline {2.2}Important Properties}{5}{section.2.2}
+\contentsline {section}{\numberline {2.3}Element-wise Operations}{5}{section.2.3}
+\contentsline {section}{\numberline {2.4}Cascading and Embeding Operations}{6}{section.2.4}
+\contentsline {section}{\numberline {2.5}Sub Networks}{6}{section.2.5}
+\contentsline {section}{\numberline {2.6}Connecting Multi-ports}{6}{section.2.6}
+\contentsline {chapter}{\numberline {3}Slow Introduction}{9}{chapter.3}
+\contentsline {chapter}{\numberline {4}Calibration}{11}{chapter.4}
+\contentsline {section}{\numberline {4.1}Intro}{11}{section.4.1}
+\contentsline {section}{\numberline {4.2}One-Port}{11}{section.4.2}
+\contentsline {section}{\numberline {4.3}Two-port}{12}{section.4.3}
+\contentsline {section}{\numberline {4.4}Simple Two Port}{13}{section.4.4}
+\contentsline {section}{\numberline {4.5}Using s1p ideals in two-port calibration}{14}{section.4.5}
+\contentsline {chapter}{\numberline {5}Examples}{15}{chapter.5}
+\contentsline {section}{\numberline {5.1}Basic Plotting}{15}{section.5.1}
+\contentsline {section}{\numberline {5.2}One-Port Calibration}{18}{section.5.2}
+\contentsline {subsection}{\numberline {5.2.1}Instructive}{18}{subsection.5.2.1}
+\contentsline {subsection}{\numberline {5.2.2}Concise}{19}{subsection.5.2.2}
+\contentsline {section}{\numberline {5.3}Two-Port Calibration}{19}{section.5.3}
+\contentsline {chapter}{\numberline {6}Architecture}{21}{chapter.6}
+\contentsline {section}{\numberline {6.1}Module Layout and Inheritance}{21}{section.6.1}
+\contentsline {section}{\numberline {6.2}Individual Class Architectures}{21}{section.6.2}
+\contentsline {subsection}{\numberline {6.2.1}Frequency}{21}{subsection.6.2.1}
+\contentsline {subsection}{\numberline {6.2.2}Network}{21}{subsection.6.2.2}
+\contentsline {subsection}{\numberline {6.2.3}touchstone}{21}{subsection.6.2.3}
+\contentsline {subsection}{\numberline {6.2.4}WorkingBand}{21}{subsection.6.2.4}
+\contentsline {subsection}{\numberline {6.2.5}Calibration}{21}{subsection.6.2.5}
+\contentsline {chapter}{\numberline {7}API}{27}{chapter.7}
+\contentsline {section}{\numberline {7.1}Frequency}{27}{section.7.1}
+\contentsline {section}{\numberline {7.2}touchstone}{27}{section.7.2}
+\contentsline {section}{\numberline {7.3}Network}{28}{section.7.3}
+\contentsline {section}{\numberline {7.4}WorkingBand}{32}{section.7.4}
+\contentsline {section}{\numberline {7.5}Calibration}{35}{section.7.5}
+\contentsline {chapter}{\numberline {8}Indices and tables}{37}{chapter.8}
+\contentsline {chapter}{Index}{39}{section*.84}
