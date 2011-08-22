@@ -1,7 +1,7 @@
 mwavepy's documentation
 ===================================
 
-Contents:
+Tutorials:
 
 .. toctree::
    :maxdepth: 1
@@ -10,7 +10,20 @@ Contents:
    quick_intro
    slow_intro
    calibration
+
+Examples:
+
+.. toctree::
+   :maxdepth: 2
+  
    examples
+
+
+Reference:
+
+.. toctree::
+   :maxdepth: 1
+   
    architecture
    api
     
