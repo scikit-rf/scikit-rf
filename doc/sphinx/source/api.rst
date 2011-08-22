@@ -3,9 +3,7 @@
 API
 ***********
 
-
 Major classes
-
 
 .. toctree::
    :maxdepth: 1

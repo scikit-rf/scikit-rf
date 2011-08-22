@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Slow Introduction &mdash; mwavepy v1.3 documentation</title>
+    <title>Basic Usage &mdash; mwavepy v1.3 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -40,20 +40,17 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="slow-introduction">
-<h1>Slow Introduction<a class="headerlink" href="#slow-introduction" title="Permalink to this headline">¶</a></h1>
-<p>This is a slow  intro to get readers who arent especially familiar with python comfortable working with <strong>mwavepy</strong>. If you are familiar with python, or are impatient see the <em class="xref std std-ref">fast-intro</em></p>
-<p><strong>mwavepy</strong>, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don&#8217;t understand anything on this page, please see the Install page first.
+  <div class="section" id="basic-usage">
+<h1>Basic Usage<a class="headerlink" href="#basic-usage" title="Permalink to this headline">¶</a></h1>
+<p>This is a quick intro to get the reader comfortable working with <strong>mwavepy</strong>. <strong>mwavepy</strong>, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don&#8217;t understand anything on this page, please see the Install page first.
 From a python shell or similar (ie IPython),  the <strong>mwavepy</strong> module can be imported like so:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 </pre></div>
 </div>
 <p>From here all <strong>mwavepy</strong>&#8216;s functions can be accessed through the variable &#8216;mv&#8217;. Help can be accessed through pythons help command. For example, to get help with the Network class</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">help</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">)</span>
-</pre></div>
+<div class="highlight-python"><pre>help mv.Network</pre>
 </div>
-<p>The Network class is a representation of a n-port network. The most common way to initialize a Network is by loading data saved in a touchstone file. Touchstone files have the extension &#8216;.sNp&#8217;, where N is the number of ports of the network.
-To create a Network from the touchstone file &#8216;horn.s1p&#8217;:</p>
+<p>The Network class is a representation of a n-port network. The standard file format for such data is the touchstone format. Touchstone files have the extension &#8216;.sNp&#8217;, where N is the number of ports of the network.</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">horn</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;horn.s1p&#39;</span><span class="p">)</span>
 </pre></div>
 </div>

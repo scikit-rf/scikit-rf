@@ -8,13 +8,13 @@ Architecture
 
 Module Layout and Inheritance
 ------------------------------
-.. figure::  images/classInheretanceOutline.svg
+.. figure::  images/classInheretanceOutline.eps
    :align:   center
    :width:	800
 
 Individual Class Architectures
 -------------------------------
-.. figure::  images/classOutline.svg
+.. figure::  images/classOutline.eps
    :align:   center
    :width:	800
 
@@ -23,7 +23,7 @@ Frequency
 
 The frequency object was created to make storing and manipulating frequency information easier and more rigid. A major convenience this class provides is the acounting of the frequency vector's unit. Other objects, such as Network, and Calibration require a frequency vector to be meaningful. This vector is commonly referenced when a plot is generated, which one generally doesnt was in units of Hz. If the Frequency object did not exist other objects which require frequency information would have to implement the unit and multiplier bagage. 
 
-.. figure::  images/frequency.svg
+.. figure::  images/frequency.eps
    :align:   center
    :width:	800
 
@@ -31,7 +31,7 @@ The frequency object was created to make storing and manipulating frequency info
 
 Network
 ++++++++++
-.. figure::  images/network.svg
+.. figure::  images/network.eps
    :align:   center
    :width:	800
 
@@ -44,14 +44,14 @@ The standard file format used to store data retrieved from Vector Network Analyz
 WorkingBand
 +++++++++++++
 
-.. figure::  images/workingBand.svg
+.. figure::  images/workingBand.eps
    :align:   center
    :width:	800
 
 
 Calibration
 +++++++++++++
-.. figure::  images/calibration.svg
+.. figure::  images/calibration.eps
    :align:   center
    :width:	800
 

@@ -1,13 +1,11 @@
-.. _slow-intro:
-******************
-Slow Introduction
-******************
+.. _basics:
+*************
+Basic Usage 
+*************
 
 
 
-This is a slow  intro to get readers who arent especially familiar with python comfortable working with **mwavepy**. If you are familiar with python, or are impatient see the :ref:`fast-intro`
-
-**mwavepy**, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don't understand anything on this page, please see the Install page first.
+This is a quick intro to get the reader comfortable working with **mwavepy**. **mwavepy**, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don't understand anything on this page, please see the Install page first.
 From a python shell or similar (ie IPython),  the **mwavepy** module can be imported like so::
 
 	import mwavepy as mv
@@ -15,10 +13,9 @@ From a python shell or similar (ie IPython),  the **mwavepy** module can be impo
 
 From here all **mwavepy**'s functions can be accessed through the variable 'mv'. Help can be accessed through pythons help command. For example, to get help with the Network class ::
 	
-	help(mv.Network) 
+	help mv.Network 
 
-The Network class is a representation of a n-port network. The most common way to initialize a Network is by loading data saved in a touchstone file. Touchstone files have the extension '.sNp', where N is the number of ports of the network. 
-To create a Network from the touchstone file 'horn.s1p'::
+The Network class is a representation of a n-port network. The standard file format for such data is the touchstone format. Touchstone files have the extension '.sNp', where N is the number of ports of the network. ::
 	
 	horn = mv.Network('horn.s1p')
 

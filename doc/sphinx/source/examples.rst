@@ -3,8 +3,6 @@
 Examples
 *************
 
-
-
 Contents:
 
 .. toctree::
