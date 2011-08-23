@@ -305,24 +305,38 @@ class Network(object):
 			
 		'''
 		try:
-			if len(npy.shape(self._z0)) < 2:
+			if len(npy.shape(self._z0)) ==0:
 				try:
 					#try and re-shape z0 to match s
 					self._z0=self._z0*npy.ones(self.s.shape[:-1])
-					
 				except(AttributeError):
-					print ('Warning: Network has improper \'z0\' shape')
-				#they have yet to set s .
+					print ('Warning: Network has improper \'z0\' shape.')
+					#they have yet to set s .
 					pass
+			elif len(npy.shape(self._z0)) ==1:
+				try:
+					if len(self._z0) == self.frequency.npoints:
+						# this z0 is for a 1-port
+						self._z0 = 
+					elif len(self._z0) == self.number_of_ports:
+						# this z0 is for a n-port, with a frequency
+						# independent z0
+					else:
+						
+				except(AttributeError):
+					# there is no self.frequency, or self.number_of_ports
+					raise(AttributeError('Error: i cant reshape z0 through inspection. you must provide correctly shaped z0, or s-matrix first.'))
+			
 			return self._z0
 		
 		except(AttributeError):
 			print 'Warning: z0 is undefined. Defaulting to 50.'
-			self.z0 =50
-			return self._z0
+			self.z0=50
+			return self.z0 #this is not an error, its a recursive call
+		
 	@z0.setter
 	def z0(self, z0):
-		z0=npy.array(z0)
+		'''z0=npy.array(z0)
 		if len(z0.shape) < 2:
 			try:
 				#try and re-shape z0 to match s
@@ -331,6 +345,7 @@ class Network(object):
 				print ('Warning: you should store a Network\'s \'s\' matrix before its \'z0\'')
 				#they have yet to set s .
 				pass
+		'''
 		self._z0 = z0
 	
 ## SECONDARY PROPERTIES
