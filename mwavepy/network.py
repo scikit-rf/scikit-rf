@@ -550,6 +550,10 @@ class Network(object):
 					 + str(npy.imag(self.s[f,m,n])) +'\t')
 			
 			outputFile.write('\n')
+			outputFile.write('! Port Impedance\t' )
+			for n in range(self.number_of_ports):
+				outputFile.write('%.14f\t%.14f\t'%(self.z0[f,n].real, self.z0[f,n].imag))
+			outputFile.write('\n')
 		
 		outputFile.close()
 
