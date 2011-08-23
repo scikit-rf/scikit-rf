@@ -302,8 +302,8 @@ class Network(object):
 		
 		z0 can be may be a number, or numpy.ndarray of shape n or fxn. 
 		
-			
 		'''
+		# i hate this function
 		try:
 			if len(npy.shape(self._z0)) ==0:
 				try:
@@ -312,16 +312,21 @@ class Network(object):
 				except(AttributeError):
 					print ('Warning: Network has improper \'z0\' shape.')
 					#they have yet to set s .
-					pass
+
 			elif len(npy.shape(self._z0)) ==1:
 				try:
 					if len(self._z0) == self.frequency.npoints:
-						# this z0 is for a 1-port
-						self._z0 = 
+						# this z0 is frequency dependent but no port dependent
+						self._z0 = \
+							npy.repeat(npy.reshape(self._z0,(-1,1)),self.number_of_ports,1)
+
 					elif len(self._z0) == self.number_of_ports:
-						# this z0 is for a n-port, with a frequency
-						# independent z0
+						# this z0 is port dependent but not frequency dependent
+						self._z0 = self._z0*npy.ones(\
+							(self.frequency.npoints,self.number_of_ports))
+						
 					else:
+						raise(IndexError('z0 has bad shape'))
 						
 				except(AttributeError):
 					# there is no self.frequency, or self.number_of_ports

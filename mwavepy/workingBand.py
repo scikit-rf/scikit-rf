@@ -357,7 +357,7 @@ class WorkingBand(object):
 		'''
 		return self.splitter(3,**kwargs)
 		
-	def splitter(self, nports=3,**kwargs):
+	def splitter(self, nports,**kwargs):
 		'''
 		returns an ideal, lossless n-way splitter.
 		
