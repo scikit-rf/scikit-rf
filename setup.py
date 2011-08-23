@@ -5,7 +5,7 @@ ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
 setup(name='mwavepy',
-	version='1.2',
+	version='1.3',
 	license='gpl',
 	description='Object Oriented Microwave Engineering',
 	author='Alex Arsenovic, Lihan Chen',

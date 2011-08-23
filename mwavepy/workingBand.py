@@ -50,8 +50,29 @@ class WorkingBand(object):
 	note: frequency and tline classes are copied, so they are passed
 	by value and not by-reference.
 	'''
-	def __init__(self, tline, frequency=None, z0=1):
+	def __init__(self, tline, frequency=None, z0=None):
+		'''
+		WorkingBand constructor 
+		
+		
+		takes:
+			tline: a transmission line class [see note]
+			frequency: frequency class [mwavepy.Frequency]
+			z0: characteristic impedance [number, of ndarray]
+		
+		returns:
+			mwavepy.WorkingBand class
+		
+		
+		note: frequency and tline classes are copied, so they are passed
+		by value and not by-reference.
+		
+		'''
+		# they must provide this
 		self.tline = tline
+		
+		# if they dont provide a frequency, try to generate it from the
+		# tline class, which may have a frequency vector
 		if frequency is None:
 			try:
 				frequency = Frequency.from_f(tline.f)
@@ -59,7 +80,17 @@ class WorkingBand(object):
 				raise(AttributeError('must provide frequency information'))
 		self.frequency = frequency 
 		
+		# if they dont provide a z0, try to generate it from the tline 
+		# class, otherwise default to 50ohm
+		if z0 is None:
+			try:
+				z0 = tline.Z0(self.frequency.f)
+			except:
+				z0=50
+				print ('Warning: No z0 provided, defaulting to 50ohm.')
+				
 		self.z0=z0
+		
 		#convenience
 		self.delay = self.line
 		

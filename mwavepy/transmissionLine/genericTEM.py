@@ -136,6 +136,10 @@ class GenericTEM(object):
 		
 	@classmethod
 	def from_gamma_Z0(cls, gamma, Z0,f):
+		'''
+		initializer which creates a transmission line from propagation 
+		constant, characteristic impedance, and frequency information
+		'''
 		w  = 2*npy.pi * array(f)
 		Y = gamma/Z0
 		Z = gamma*Z0
