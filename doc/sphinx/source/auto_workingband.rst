@@ -1,3 +1,4 @@
+.. _auto_workingband:
 
 WorkingBand
 -----------------

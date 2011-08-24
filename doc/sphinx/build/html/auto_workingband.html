@@ -51,10 +51,10 @@
           <div class="body">
             
   <div class="section" id="workingband">
-<h1>WorkingBand<a class="headerlink" href="#workingband" title="Permalink to this headline">¶</a></h1>
+<span id="auto-workingband"></span><h1>WorkingBand<a class="headerlink" href="#workingband" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mwavepy.WorkingBand">
-<em class="property">class </em><tt class="descclassname">mwavepy.</tt><tt class="descname">WorkingBand</tt><big>(</big><em>tline</em>, <em>frequency=None</em>, <em>z0=1</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">mwavepy.</tt><tt class="descname">WorkingBand</tt><big>(</big><em>tline</em>, <em>frequency=None</em>, <em>z0=None</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="docutils">
 <dt>A WorkingBand is an high-level object which exists solely to make </dt>
 <dd>working with and creation of Networks within the same band,
@@ -286,8 +286,30 @@ default is 1 [int]</blockquote>
 </dd></dl>
 
 <dl class="method">
+<dt id="mwavepy.WorkingBand.shunt">
+<tt class="descname">shunt</tt><big>(</big><em>ntwk</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a shunted ntwk. this creates a &#8216;tee&#8217;, connects 
+&#8216;ntwk&#8217; to port 1, and returns the result</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.shunt_delay_load">
+<tt class="descname">shunt_delay_load</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt_delay_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.shunt_delay_open">
+<tt class="descname">shunt_delay_open</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt_delay_open" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.WorkingBand.shunt_delay_short">
+<tt class="descname">shunt_delay_short</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt_delay_short" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
 <dt id="mwavepy.WorkingBand.splitter">
-<tt class="descname">splitter</tt><big>(</big><em>nports=3</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.splitter" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">splitter</tt><big>(</big><em>nports</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.splitter" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns an ideal, lossless n-way splitter.</p>
 <dl class="docutils">
 <dt>takes:</dt>

@@ -10,6 +10,7 @@ Tutorials:
    quick_intro
    slow_intro
    calibration
+   circuit_design
 
 Examples:
 
