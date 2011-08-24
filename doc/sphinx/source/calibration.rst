@@ -29,7 +29,8 @@ When this information is not provided mwavepy will determine it through inspecti
 One-Port
 --------------
 
-See :doc:`example_oneport_calibration` for examples
+See :doc:`example_oneport_calibration` for examples.
+
 Below are (hopefully) self-explanatory examples of increasing complexity, which should illustrate, by example, how to make a calibration.
 Simple One-port
 
@@ -96,18 +97,20 @@ This example is meant to be the same as the first except more concise.::
 Two-port
 ---------
 
-Two-port calibration is more involved than one-port. mwavepy supports two-port calibration using a 8-term error model based on the algorithm described in "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors" by R.A. Speciale here.
+Two-port calibration is more involved than one-port. mwavepy supports two-port calibration using a 8-term error model based on the algorithm described in *"A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors"* by R.A. Speciale.
 
 Like the one-port algorithm, the two-port calibration can handle any number of standards, providing that some fundamental constraints are met. In short, you need three two-port standards; one must be transmissive, and one must provide a known impedance and be reflective.
 
 One draw-back of using the 8-term error model formulation (which is the same formulation used in TRL) is that switch-terms may need to be measured in order to achieve a high quality calibration (this was pointed out to me by Dylan Williams).
+
 A note on switch-terms
+++++++++++++++++++++++++
 
-Switch-terms are explained in Roger Marks's paper titled 'Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms' here. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.
+Switch-terms are explained in Roger Marks's paper titled *'Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms'*. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.
 
-So how do you measure switch terms? With a custom measurement configuration on the VNA itself. I have support for switch terms in my HP8510C class here, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.
+So how do you measure switch terms? With a custom measurement configuration on the VNA itself. mwavpey has support for switch terms for the HP8510C class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.
 
-See :doc:`example_twoport_calibration` for examples
+See :doc:`example_twoport_calibration` for and example
 
 Simple Two Port
 -------------------
@@ -156,11 +159,11 @@ Two-port calibration is accomplished in an identical way to one-port, except all
     dut_caled.write_touchstone()
 
 Using s1p ideals in two-port calibration
----------------------------------------------
+++++++++++++++++++++++++++++++++++++++++++
 
 Commonly, you have data for ideal data for reflective standards in the form of one-port touchstone files (ie s1p). To use this with mwavepy's two-port calibration method you need to create a two-port network that is a composite of the two networks. There is a function in the WorkingBand Class which will do this for you, called two_port_reflect.::
     
     short = mv.Network('ideals/short.s1p')
     load = mv.Network('ideals/load.s1p')
-    short_load = wb.two_port_reflect(short, load)
+    short_load = mv.two_port_reflect(short, load)
 
