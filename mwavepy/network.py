@@ -234,7 +234,7 @@ class Network(object):
 		the input s-matrix should be of shape fxnxn, 
 		where f is frequency axis and n is number of ports
 		'''
-		if len(npy.shape(s)) <2:
+		if len(npy.shape(s)) <3:
 			# reshape to kxmxn, this simplifies indexing in function
 			s = npy.reshape(s,(-1,1,1))
 		self._s = s

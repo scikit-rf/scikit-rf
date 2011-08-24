@@ -28,7 +28,7 @@ import numpy as npy
 from scipy import stats
 
 from frequency import Frequency
-from network import Network
+from network import Network,connect
 from transmissionLine.functions import electrical_length, zl_2_Gamma0,\
 	electrical_length_2_distance
 
@@ -395,10 +395,22 @@ class WorkingBand(object):
 		result.s[:,1,0] = 1+gamma
 		result.s[:,0,1] = 1-gamma
 		return result
-
-
-
-
+	
+	def shunt(self,ntwk):
+		'''
+		returns a shunted ntwk. this creates a 'tee', connects 
+		'ntwk' to port 1, and returns the result
+		'''
+		return connect(self.tee(),1,ntwk,0)
+		
+	def shunt_delay_load(self,*args, **kwargs):
+		return connect(self.tee(),1,self.delay_load(*args, **kwargs),0)
+		
+	def shunt_delay_open(self,*args,**kwargs):	
+		return connect(self.tee(),1,self.delay_open(*args, **kwargs),0)
+	
+	def shunt_delay_short(self,*args,**kwargs):	
+		return connect(self.tee(),1,self.delay_short(*args, **kwargs),0)
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
 		'''
