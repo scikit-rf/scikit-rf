@@ -580,10 +580,12 @@ class Network(object):
 
 			
 		'''
-		interpolation = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
+		interpolation_s = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
+		interpolation_z0 = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
 		result = deepcopy(self)
 		result.frequency = new_frequency
-		result.s = interpolation(new_frequency.f)
+		result.s = interpolation_s(new_frequency.f)
+		result.z0 = interpolation_z0(new_frequency.f)
 		return result
 
 	def change_frequency(self, new_frequency, **kwargs):

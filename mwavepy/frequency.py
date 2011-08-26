@@ -50,7 +50,7 @@ class Frequency(object):
 		'mhz':1e6,\
 		'ghz':1e9\
 		}
-	def __init__(self,start, stop, npoints, unit='hz'):
+	def __init__(self,start, stop, npoints, unit='hz', sweep_type='lin'):
 		'''
 		takes:
 			start: start of band.  units of unit, defaults is  Hz
@@ -70,7 +70,8 @@ class Frequency(object):
 		self.start =  self.multiplier * start
 		self.stop = self.multiplier * stop
 		self.npoints = npoints
-	
+		self.sweep_type = sweep_type
+		
 	@classmethod
 	def from_f(cls,f):
 		'''
@@ -95,12 +96,13 @@ class Frequency(object):
 		returns a frequency vector  in Hz 
 		'''
 		return linspace(self.start,self.stop,self.npoints)
+		#return self._f
 	@f.setter
 	def f(self,new_f):
 		'''
 		sets the frequency object by passing a vector in Hz
 		'''
-		
+		#self._f = new_f
 		self.start = new_f[0]
 		self.stop = new_f[-1]
 		self.npoints = len(new_f)
