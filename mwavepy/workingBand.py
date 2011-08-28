@@ -22,6 +22,7 @@
 '''
 Contains WorkingBand class. 
 '''
+import warnings 
 
 from copy import copy
 import numpy as npy
@@ -74,10 +75,12 @@ class WorkingBand(object):
 		# if they dont provide a frequency, try to generate it from the
 		# tline class, which may have a frequency vector
 		if frequency is None:
+			if tline.f is None:
+				raise(AttributeError('Error: Must provide frequency information to WorkingBand() or it must exist in the transmissionline'))
 			try:
 				frequency = Frequency.from_f(tline.f)
 			except(AttributeError):
-				raise(AttributeError('must provide frequency information'))
+				raise(AttributeError('Error: Must provide frequency information to WorkingBand() or it must exist in the transmissionline'))
 		self.frequency = frequency 
 		
 		# if they dont provide a z0, try to generate it from the tline 
@@ -87,7 +90,7 @@ class WorkingBand(object):
 				z0 = tline.Z0(self.frequency.f)
 			except:
 				z0=50
-				print ('Warning: No z0 provided, defaulting to 50ohm.')
+				warning.warn(Warning('No z0 provided, defaulting to 50ohm.'))
 				
 		self.z0=z0
 		
@@ -139,9 +142,19 @@ class WorkingBand(object):
 		
 		takes:
 			nports: number of ports [int]
+			z0: characterisitc impedance [number of array]. defaults is 
+				None, in which case the WorkingBand's z0 is used. 
+				Otherwise this sets the resultant network's z0. See
+				Network.z0 property for more info
 			**kwargs: key word arguments passed to Network Constructor
+		
 		returns:
 			a n-port Network [mwavepy.Network]
+		
+		
+		example:
+			mymatch = wb.match(2,z0 = 50, name='Super Awesome Match')
+		
 		'''
 		result = Network(**kwargs)
 		result.frequency = self.frequency
@@ -233,12 +246,6 @@ class WorkingBand(object):
 			a 2-port Network class, representing a transmission line of 
 			length d
 	
-		
-		note: 
-			the only function called from the tline class is
-		propagation_constant(f,d), where f is frequency in Hz and d is
-		distance in meters. so you can use any class  which provides this
-		and it  will work .
 		
 		example:
 			wb = WorkingBand(...) # create a working band object
@@ -387,6 +394,10 @@ class WorkingBand(object):
 			**kwargs: passed to mwavepy.Network constructor
 		returns:
 			a 2-port network [mwavepy.Network]
+			
+		note:
+			if z1 and z2 are arrays or lists, they must be of same length
+			as the frequency for this working band(WorkBand.frequency.f)
 		'''	
 		result = self.match(nports=2, **kwargs)
 		gamma = zl_2_Gamma0(z1,z2)
@@ -396,21 +407,56 @@ class WorkingBand(object):
 		result.s[:,0,1] = 1-gamma
 		return result
 	
-	def shunt(self,ntwk):
+	def shunt(self,ntwk, **kwargs):
 		'''
 		returns a shunted ntwk. this creates a 'tee', connects 
 		'ntwk' to port 1, and returns the result
+		
+		takes:
+			ntwk: the network to be shunted. [mwavepy.Network]
+			**kwargs: passed to the self.tee() function
+			
+		returns:
+			a 2-port network [mwavepy.Network]
 		'''
-		return connect(self.tee(),1,ntwk,0)
+		return connect(self.tee(**kwargs),1,ntwk,0)
 		
 	def shunt_delay_load(self,*args, **kwargs):
-		return connect(self.tee(),1,self.delay_load(*args, **kwargs),0)
+		'''
+		a shunted delayed load:
+		
+		takes:
+			*args: passed to self.delay_load
+			**kwargs:passed to self.delay_load
+		returns:
+			a 2-port network [mwavepy.Network]
+		'''
+		return self.shunt(self.delay_load(*args, **kwargs))
 		
 	def shunt_delay_open(self,*args,**kwargs):	
-		return connect(self.tee(),1,self.delay_open(*args, **kwargs),0)
+		'''
+		a shunted delayed open:
+		
+		takes:
+			*args: passed to self.delay_load
+			**kwargs:passed to self.delay_load
+		returns:
+			a 2-port network [mwavepy.Network]
+		'''
+		return self.shunt(self.delay_open(*args, **kwargs))
 	
 	def shunt_delay_short(self,*args,**kwargs):	
-		return connect(self.tee(),1,self.delay_short(*args, **kwargs),0)
+		'''
+		a shunted delayed short:
+		
+		takes:
+			*args: passed to self.delay_load
+			**kwargs:passed to self.delay_load
+		returns:
+			a 2-port network [mwavepy.Network]
+		'''
+		return self.shunt(self.delay_short(*args, **kwargs))
+	
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
 		'''
@@ -471,6 +517,7 @@ class WorkingBand(object):
 		example:
 			wb.two_port_reflect(wb.short(), wb.match())
 		'''
+		warnings.warn(DeprecationWarning('Use the two_port_reflect from mwavepy.network'))
 		result = self.match(nports=2,**kwargs)
 		for f in range(self.frequency.npoints):
 			result.s[f,0,0] = ntwk1.s[f,0,0]

@@ -304,6 +304,11 @@ class Network(object):
 		
 		'''
 		# i hate this function
+		# it was written this way because id like to allow the user to
+		# set the z0 before the s-parameters are set. However, in this 
+		# case we dont know how to re-shape the z0 to fxn. to solve this
+		# i attempt to do the re-shaping when z0 is accessed, not when 
+		# it is set. this is what makes this function confusing. 
 		try:
 			if len(npy.shape(self._z0)) ==0:
 				try:
