@@ -64,7 +64,6 @@ def smith(smithR=1, chart_type = 'z',ax=None):
 		
 	if chart_type is 'y':
 		y_flip_sign = -1
-		print 'y-chart'
 	else:
 		y_flip_sign = 1
 	# loops through Light and Heavy lists and draws circles using patches

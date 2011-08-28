@@ -835,7 +835,8 @@ class Network(object):
 		self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
 			m=m,n=n, ax=ax,	show_legend = show_legend,**kwargs)	
 
-	def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,  **kwargs):
+	def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
+		chart_type='z', **kwargs):
 		'''
 		plots the scattering parameter of indecies m, n on smith chart
 		
@@ -843,6 +844,74 @@ class Network(object):
 			m - first index, int
 			n - second indext, int
 			r -  radius of smith chart
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			chart_type: string determining countour type. options are:
+				'z': impedance contours (default)
+				'y': admittance contours
+			**kwargs - passed to the matplotlib.plot command	
+		'''
+		# TODO: prevent this from re-drawing smith chart if one alread
+		# exists on current set of axes
+
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+			
+		
+		if m is None:
+			M = range(self.number_of_ports)
+		else:
+			M = [m]
+		if n is None:
+			N = range(self.number_of_ports)
+		else:
+			N = [n]
+		
+		if 'label'  not in kwargs.keys():
+			generate_label=True
+		else:
+			generate_label=False
+		
+		for m in M:
+			for n in N:
+				# set the legend label for this trace to the networks name if it
+				# exists, and they didnt pass a name key in the kwargs
+				if generate_label: 
+					if self.name is None:
+						if plb.rcParams['text.usetex']:
+							label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
+						else:
+							label_string = 'S'+repr(m+1) + repr(n+1)
+					else:
+						if plb.rcParams['text.usetex']:
+							label_string = self.name+', $S_{'+repr(m+1) + \
+								repr(n+1)+'}$'
+						else:
+							label_string = self.name+', S'+repr(m+1) + repr(n+1)
+		
+					kwargs['label'] = label_string
+					
+				# plot the desired attribute vs frequency 
+				if len (ax.patches) == 0:
+					smith(ax=ax, smithR = r, chart_type=chart_type)
+				ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
+		
+		#draw legend
+		if show_legend:
+			ax.legend()
+		ax.axis(npy.array([-1,1,-1,1])*r)
+		ax.set_xlabel('Real')
+		ax.set_ylabel('Imaginary')
+	def plot_s_complex(self,m=None, n=None,ax = None, show_legend=True,\
+		**kwargs):
+		'''
+		plots the scattering parameter of indecies m, n on complex plane
+		
+		takes:
+			m - first index, int
+			n - second indext, int
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
@@ -890,17 +959,14 @@ class Network(object):
 					kwargs['label'] = label_string
 					
 				# plot the desired attribute vs frequency 
-				if len (ax.patches) == 0:
-					smith(ax=ax, smithR = r)
 				ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
 		
 		#draw legend
 		if show_legend:
 			ax.legend()
-		ax.axis(npy.array([-1,1,-1,1])*r)
+		ax.axis('equal')
 		ax.set_xlabel('Real')
 		ax.set_ylabel('Imaginary')
-
 	def plot_s_all_db(self,ax = None, show_legend=True,**kwargs):
 		'''
 		plots all s parameters in log magnitude
