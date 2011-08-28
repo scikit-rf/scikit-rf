@@ -28,11 +28,14 @@ from matplotlib.patches import Circle 	# for drawing smith chart
 
 
 
-def smith(smithR=1,ax=None):
-	'''
+def smith(smithR=1, chart_type = 'z',ax=None):
+	''' 
 	plots the smith chart of a given radius
 	takes:
 		smithR - radius of smith chart
+		chart_type: string representing contour type: acceptable values are 
+			'z': lines of constant impedance
+			'y': lines of constant admittance
 		ax - matplotlib.axes instance 
 	'''
 	##TODO: fix this function so it doesnt suck
@@ -59,30 +62,34 @@ def smith(smithR=1,ax=None):
 		rMax = (1.+smithR)/(1.-smithR)
 		rLightList = plb.hstack([ plb.linspace(0,rMax,11)  , rLightList ])
 		
-	
+	if chart_type is 'y':
+		y_flip_sign = -1
+		print 'y-chart'
+	else:
+		y_flip_sign = 1
 	# loops through Light and Heavy lists and draws circles using patches
 	# for analysis of this see R.M. Weikles Microwave II notes (from uva)
 	for r in rLightList:
-		center = (r/(1.+r),0 )
+		center = (r/(1.+r)*y_flip_sign,0 ) 
 		radius = 1./(1+r)
 		contour.append( Circle( center, radius, ec='grey',fc = 'none'))
 	for x in xLightList:
-		center = (1,1./x)
+		center = (1*y_flip_sign,1./x)
 		radius = 1./x
 		contour.append( Circle( center, radius, ec='grey',fc = 'none'))
 			
 	for r in rHeavyList:
-		center = (r/(1.+r),0 )
+		center = (r/(1.+r)*y_flip_sign,0 )
 		radius = 1./(1+r)
 		contour.append( Circle( center, radius, ec= 'black', fc = 'none'))	
 	for x in xHeavyList:
-		center = (1,1./x)
+		center = (1*y_flip_sign,1./x)
 		radius = 1./x	
 		contour.append( Circle( center, radius, ec='black',fc = 'none'))
 	
 	#draw x and y axis
 	ax1.axhline(0, color='k')
-	ax1.axvline(1, color='k')
+	ax1.axvline(1*y_flip_sign, color='k')
 	ax1.grid(0)
 	#set axis limits
 	ax1.axis('equal')
