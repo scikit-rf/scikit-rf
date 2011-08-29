@@ -34,7 +34,7 @@ from transmissionLine.functions import electrical_length, zl_2_Gamma0,\
 	electrical_length_2_distance
 
 
-class WorkingBand(object):
+class Media(object):
 	'''
 	A WorkingBand is an high-level object which exists solely to make 
 	 working with and creation of Networks within the same band,
@@ -51,7 +51,7 @@ class WorkingBand(object):
 	note: frequency and tline classes are copied, so they are passed
 	by value and not by-reference.
 	'''
-	def __init__(self, tline, frequency=None, z0=None):
+	def __init__(self, frequency):
 		'''
 		WorkingBand constructor 
 		
@@ -70,35 +70,15 @@ class WorkingBand(object):
 		
 		'''
 		# they must provide this
-		self.tline = tline
-		
-		# if they dont provide a frequency, try to generate it from the
-		# tline class, which may have a frequency vector
-		if frequency is None:
-			if tline.f is None:
-				raise(AttributeError('Error: Must provide frequency information to WorkingBand() or it must exist in the transmissionline'))
-			try:
-				frequency = Frequency.from_f(tline.f)
-			except(AttributeError):
-				raise(AttributeError('Error: Must provide frequency information to WorkingBand() or it must exist in the transmissionline'))
 		self.frequency = frequency 
 		
-		# if they dont provide a z0, try to generate it from the tline 
-		# class, otherwise default to 50ohm
-		if z0 is None:
-			try:
-				z0 = tline.Z0(self.frequency.f)
-			except:
-				z0=50
-				warnings.warn(Warning('No z0 provided, defaulting to 50ohm.'))
-				
-		self.z0=z0
-		
 		#convenience
+		self.gamma = self.propagation_constant
+		self.Z0 = self.characteristic_impedance
 		self.delay = self.line
 		
 
-
+	
 	## PROPERTIES	
 	@property
 	def frequency(self):
@@ -106,14 +86,18 @@ class WorkingBand(object):
 	@frequency.setter
 	def frequency(self,new_frequency):
 		self._frequency= copy( new_frequency)
+	
 	@property
-	def tline(self):
-		return self._tline
-	@tline.setter
-	def tline(self,new_tline):
-		self._tline = copy(new_tline)
-		
-	## Functions
+	def z0(self):
+		return self.characteristic_impedance(self.frequency.f)
+	
+	## Neccesary Functions
+	def propagation_constant(self,f):
+		return 1j*npy.ones(len(npy.array(f).reshape(-1)))
+	def characteristic_impedance(self,f):
+		return npy.ones(len(npy.array(f).reshape(-1)))
+	
+	## Other Functions
 	def theta_2_d(self,theta,deg=True):
 		'''
 		converts electrical length to physical distance
@@ -131,7 +115,7 @@ class WorkingBand(object):
 		'''
 		return electrical_length_2_distance(\
 			theta=theta,\
-			gamma = self.tline.propagation_constant,\
+			gamma = self.propagation_constant,\
 			f0 = self.frequency.center,\
 			deg=deg)
 	
@@ -260,7 +244,7 @@ class WorkingBand(object):
 		f= self.frequency.f
 		
 		# propagation constant function
-		gamma = self.tline.propagation_constant
+		gamma = self.propagation_constant
 		
 		# calculate the electrical length
 		if unit == 'deg':
@@ -346,8 +330,6 @@ class WorkingBand(object):
 		self.line(d,**kwargs) ** self.open(**kwargs)
 		'''
 		return self.delay_load(Gamma0=1., d=d, unit=unit,**kwargs)
-	
-	
 	
 	def tee(self,**kwargs):
 		'''
@@ -494,7 +476,7 @@ class WorkingBand(object):
 				
 		
 		'''
-		beta = npy.real(self.tline.propagation_constant(self.frequency.f))
+		beta = npy.real(self.propagation_constant(self.frequency.f))
 		thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
 		
 		A = npy.vstack((2*beta,npy.ones(len(beta)))).transpose()
