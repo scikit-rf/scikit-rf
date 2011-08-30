@@ -586,7 +586,7 @@ class Network(object):
 			
 		'''
 		interpolation_s = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
-		interpolation_z0 = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
+		interpolation_z0 = interp1d(self.frequency.f,self.z0,axis=0,**kwargs)
 		result = deepcopy(self)
 		result.frequency = new_frequency
 		result.s = interpolation_s(new_frequency.f)
