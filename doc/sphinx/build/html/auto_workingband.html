@@ -179,6 +179,9 @@ z2: complex impedance of port 2 [ number, list, or 1D ndarray]
 <a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs: passed to mwavepy.Network constructor</dd>
 <dt>returns:</dt>
 <dd>a 2-port network [mwavepy.Network]</dd>
+<dt>note:</dt>
+<dd>if z1 and z2 are arrays or lists, they must be of same length
+as the frequency for this working band(WorkBand.frequency.f)</dd>
 </dl>
 </dd></dl>
 
@@ -203,13 +206,6 @@ unit: string specifying the units of d. possible options are</p>
 <dt>returns:</dt>
 <dd>a 2-port Network class, representing a transmission line of 
 length d</dd>
-<dt>note: </dt>
-<dd>the only function called from the tline class is</dd>
-</dl>
-<p>propagation_constant(f,d), where f is frequency in Hz and d is
-distance in meters. so you can use any class  which provides this
-and it  will work .</p>
-<dl class="docutils">
 <dt>example:</dt>
 <dd>wb = WorkingBand(...) # create a working band object
 wb.line(90, &#8216;deg&#8217;, z0=50)</dd>
@@ -242,10 +238,18 @@ default is 1 [int]</blockquote>
 <dd><p>creates a Network for a perfect matched transmission line (Gamma0=0)</p>
 <dl class="docutils">
 <dt>takes:</dt>
-<dd>nports: number of ports [int]
-<a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs: key word arguments passed to Network Constructor</dd>
+<dd><p class="first">nports: number of ports [int]
+z0: characterisitc impedance [number of array]. defaults is</p>
+<blockquote>
+None, in which case the WorkingBand&#8217;s z0 is used. 
+Otherwise this sets the resultant network&#8217;s z0. See
+Network.z0 property for more info</blockquote>
+<p class="last"><a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs: key word arguments passed to Network Constructor</p>
+</dd>
 <dt>returns:</dt>
 <dd>a n-port Network [mwavepy.Network]</dd>
+<dt>example:</dt>
+<dd>mymatch = wb.match(2,z0 = 50, name=&#8217;Super Awesome Match&#8217;)</dd>
 </dl>
 </dd></dl>
 
@@ -287,25 +291,56 @@ default is 1 [int]</blockquote>
 
 <dl class="method">
 <dt id="mwavepy.WorkingBand.shunt">
-<tt class="descname">shunt</tt><big>(</big><em>ntwk</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">shunt</tt><big>(</big><em>ntwk</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns a shunted ntwk. this creates a &#8216;tee&#8217;, connects 
 &#8216;ntwk&#8217; to port 1, and returns the result</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>ntwk: the network to be shunted. [mwavepy.Network]
+<a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs: passed to the self.tee() function</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.WorkingBand.shunt_delay_load">
 <tt class="descname">shunt_delay_load</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt_delay_load" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>a shunted delayed load:</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><a href="#id27"><span class="problematic" id="id28">*</span></a>args: passed to self.delay_load
+<a href="#id29"><span class="problematic" id="id30">**</span></a>kwargs:passed to self.delay_load</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.WorkingBand.shunt_delay_open">
 <tt class="descname">shunt_delay_open</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt_delay_open" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>a shunted delayed open:</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><a href="#id31"><span class="problematic" id="id32">*</span></a>args: passed to self.delay_load
+<a href="#id33"><span class="problematic" id="id34">**</span></a>kwargs:passed to self.delay_load</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.WorkingBand.shunt_delay_short">
 <tt class="descname">shunt_delay_short</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.WorkingBand.shunt_delay_short" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>a shunted delayed short:</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><a href="#id35"><span class="problematic" id="id36">*</span></a>args: passed to self.delay_load
+<a href="#id37"><span class="problematic" id="id38">**</span></a>kwargs:passed to self.delay_load</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.WorkingBand.splitter">
@@ -314,7 +349,7 @@ default is 1 [int]</blockquote>
 <dl class="docutils">
 <dt>takes:</dt>
 <dd><p class="first">nports: number of ports [int]
-<a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs: key word arguments passed to match(), which is</p>
+<a href="#id39"><span class="problematic" id="id40">**</span></a>kwargs: key word arguments passed to match(), which is</p>
 <blockquote class="last">
 called initially to create a &#8216;blank&#8217; network.</blockquote>
 </dd>
@@ -330,7 +365,7 @@ called initially to create a &#8216;blank&#8217; network.</blockquote>
 <dl class="docutils">
 <dt>takes:</dt>
 <dd><dl class="first last docutils">
-<dt><a href="#id27"><span class="problematic" id="id28">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dt><a href="#id41"><span class="problematic" id="id42">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
 <dd>called initially to create a &#8216;blank&#8217; network.</dd>
 </dl>
 </dd>
@@ -364,7 +399,7 @@ deg: is theta in degrees? [boolean]</dd>
 <dl class="docutils">
 <dt>takes:</dt>
 <dd><dl class="first last docutils">
-<dt><a href="#id29"><span class="problematic" id="id30">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dt><a href="#id43"><span class="problematic" id="id44">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
 <dd>called initially to create a &#8216;blank&#8217; network</dd>
 </dl>
 </dd>
@@ -406,7 +441,7 @@ standard deviations for phase and magnitude</p>
 <dd>phase_mag: standard deviation of magnitude
 phase_dev: standard deviation of phase
 n_ports: number of ports. defualt to 1
-<a href="#id31"><span class="problematic" id="id32">**</span></a>kwargs: passed to Network() initializer</dd>
+<a href="#id45"><span class="problematic" id="id46">**</span></a>kwargs: passed to Network() initializer</dd>
 <dt>returns:</dt>
 <dd>result: Network type</dd>
 </dl>

@@ -232,6 +232,23 @@ in polar form</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mwavepy.Network.plot_s_complex">
+<tt class="descname">plot_s_complex</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_complex" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots the scattering parameter of indecies m, n on complex plane</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">m - first index, int
+n - second indext, int
+ax - matplotlib.axes object to plot on, used in case you</p>
+<blockquote>
+want to update an existing plot.</blockquote>
+<p class="last">show_legend: boolean, to turn legend show legend of not
+<a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="mwavepy.Network.plot_s_db">
 <tt class="descname">plot_s_db</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the magnitude of the scattering parameter of indecies m, n
@@ -244,7 +261,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -262,7 +279,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -280,7 +297,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -298,7 +315,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -315,7 +332,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id21"><span class="problematic" id="id22">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -333,7 +350,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id21"><span class="problematic" id="id22">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id23"><span class="problematic" id="id24">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -351,14 +368,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id23"><span class="problematic" id="id24">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_smith">
-<tt class="descname">plot_s_smith</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>r=1</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_smith" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_smith</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>r=1</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>chart_type='z'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_smith" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the scattering parameter of indecies m, n on smith chart</p>
 <dl class="docutils">
 <dt>takes:</dt>
@@ -368,8 +385,12 @@ r -  radius of smith chart
 ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<p>show_legend: boolean, to turn legend show legend of not
+chart_type: string determining countour type. options are:</p>
+<blockquote>
+&#8216;z&#8217;: impedance contours (default)
+&#8216;y&#8217;: admittance contours</blockquote>
+<p class="last"><a href="#id27"><span class="problematic" id="id28">**</span></a>kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -434,7 +455,7 @@ n&#8217;s are port indicies</blockquote>
 <dt>note:</dt>
 <dd><dl class="first last docutils">
 <dt>dB is calculated by </dt>
-<dd>20*log10(<a href="#id27"><span class="problematic" id="id28">|s|</span></a>)</dd>
+<dd>20*log10(<a href="#id29"><span class="problematic" id="id30">|s|</span></a>)</dd>
 </dl>
 </dd>
 </dl>
@@ -497,7 +518,7 @@ name. if this is empty, then throws an error.</dd>
 <dt>note:</dt>
 <dd>in the future could make possible use of the touchtone 
 class, but at the moment this would not provide any benefit 
-as it has not <a href="#id29"><span class="problematic" id="id30">set_</span></a> functions.</dd>
+as it has not <a href="#id31"><span class="problematic" id="id32">set_</span></a> functions.</dd>
 </dl>
 </dd></dl>
 
