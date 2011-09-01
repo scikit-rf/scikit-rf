@@ -20,7 +20,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-Contains WorkingBand class. 
+Contains Media class. 
 '''
 import warnings 
 
@@ -28,11 +28,10 @@ from copy import copy
 import numpy as npy
 from scipy import stats
 
-from frequency import Frequency
-from network import Network,connect
-from transmissionLine.functions import electrical_length, zl_2_Gamma0,\
-	electrical_length_2_distance
-
+from ..frequency import Frequency
+from ..network import Network, connect
+from ..transmissionLine import functions as tlinefunctions
+from .. import mathFunctions as mf
 
 class Media(object):
 	'''
@@ -51,7 +50,7 @@ class Media(object):
 	note: frequency and tline classes are copied, so they are passed
 	by value and not by-reference.
 	'''
-	def __init__(self, frequency):
+	def __init__(self, frequency, z0=None):
 		'''
 		WorkingBand constructor 
 		
@@ -72,10 +71,18 @@ class Media(object):
 		# they must provide this
 		self.frequency = frequency 
 		
+		if z0 is not None:
+			try:
+				z0 = self.characteristic_impedance
+			except(AttributeError):
+				raise AttributeError('z0 is not inspectable. please provide one.')
+				
+		self.z0 = z0
+		
 		#convenience
-		self.gamma = self.propagation_constant
-		self.Z0 = self.characteristic_impedance
-		self.delay = self.line
+		#self.gamma = self.propagation_constant
+		#self.Z0 = self.characteristic_impedance
+		#self.delay = self.line
 		
 
 	
@@ -87,15 +94,43 @@ class Media(object):
 	def frequency(self,new_frequency):
 		self._frequency= copy( new_frequency)
 	
-	@property
+	'''@property
 	def z0(self):
 		return self.characteristic_impedance(self.frequency.f)
+	'''
 	
-	## Neccesary Functions
-	def propagation_constant(self,f):
-		return 1j*npy.ones(len(npy.array(f).reshape(-1)))
-	def characteristic_impedance(self,f):
-		return npy.ones(len(npy.array(f).reshape(-1)))
+	## Stubbed out Functions
+	#@property
+	#def propagation_constant(self):
+		#'''
+		#this is a dummy function to be fufilled by an actual instance
+		#of a media. 
+		
+		
+		#returns:
+			#propagation_constant:  in radian/m [complex number or array]
+			
+			
+		#note:
+			#the components of propagation constant are interpreted as 
+			#follows:
+		
+			#positive real = attenuation
+			#positive imag = forward propagation 
+		#'''
+		#raise NotImplementedError('This must be implemented by media instance')
+	#@property
+	#def characteristic_impedance(self):
+		#'''
+		#this is a dummy function to be fufilled by an actual instance
+		#of a media
+		
+		
+		#returns:
+			#characteristic_impedance: of the media in ohms 
+				#[complex number or array]
+		#'''
+		#raise NotImplementedError('This must be implemented by media instance')
 	
 	## Other Functions
 	def theta_2_d(self,theta,deg=True):
@@ -113,12 +148,26 @@ class Media(object):
 			this calls the function electrical_length_2_distance which
 		is provided by transmissionLine.functions.py
 		'''
-		return electrical_length_2_distance(\
+		return tlinefunctions.electrical_length_2_distance(\
 			theta=theta,\
-			gamma = self.propagation_constant,\
+			gamma = lambda x:self.propagation_constant,\
 			f0 = self.frequency.center,\
 			deg=deg)
 	
+	def electrical_length(self, d,deg=False):
+		'''
+		takes:
+			d: distance, in meters
+		
+		returns:
+			theta: electrical length in radians or degrees, 
+				depending on  value of deg.
+		'''
+		if deg == False:
+			return  self.gamma*d
+		elif deg == True:
+			return  mf.radian_2_degree(self.gamma*d )
+		
 	## Network creation
 	def match(self,nports=1, z0=None, **kwargs):
 		'''
@@ -241,17 +290,13 @@ class Media(object):
 		
 		result = self.match(nports=2,**kwargs)
 		
-		f= self.frequency.f
+		d_dict ={\
+			'deg':self.theta_2_d(d,deg=True),\
+			'rad':self.theta_2_d(d,deg=False),\
+			'm':d\
+			}
 		
-		# propagation constant function
-		gamma = self.propagation_constant
-		
-		# calculate the electrical length
-		if unit == 'deg':
-			d = self.theta_2_d(d,deg=True)
-		elif unit == 'rad':
-			d = self.theta_2_d(d,deg=False)
-		theta = electrical_length(gamma=gamma, f= f, d = d)
+		theta = self.electrical_length(d_dict[unit])
 		
 		s11 = npy.zeros(self.frequency.npoints, dtype=complex)
 		s21 = npy.exp(-1*theta)
