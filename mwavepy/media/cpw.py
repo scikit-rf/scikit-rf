@@ -22,39 +22,42 @@
 contains free space class
 '''
 from scipy.constants import  epsilon_0, mu_0
-from numpy import real, imag
-from .generic import Generic
-
-class Freespace(Generic):
+from numpy import real, imag,pi,sqrt,log
+from .media import Media	
+class CPW(Media):
 	'''
-	Represents a plane-wave in freespace, defined by [possibly complex]
-	values of relative permativity and relative permeability.
-	
-	The field properties of space are related to the transmission line
-	model given in circuit theory by:
-			
-		distributed_capacitance = real(ep_0*ep_r)
-		distributed_resistance = imag(ep_0*ep_r)
-		distributed_inductance = real(mu_0*mu_r)
-		distributed_conductance = imag(mu_0*mu_r)
-	
-	note: this class's inhereitence is;
-		Media->Generic->FreeSpace
 	
 	'''
-	def __init__(self, frequency,  ep_r=1, mu_r=1, 	*args, **kwargs):
+	def __init__(self, frequency, w , s, ep_r,*args, **kwargs):
 		'''
 		takes:
-			ep_r: possibly complex, relative permativity [number or array]  
-			mu_r:possibly complex, relative permiability [number or array]
+
 		returns:
 			mwavepy.Media object 
 		'''
-		Generic.__init__(self,\
-			frequency = frequency, \
-			C = real(epsilon_0*ep_r),\
-			G = imag(epsilon_0*ep_r),\
-			I = real(mu_0*mu_r),\
-			R = imag(mu_0*mu_r),\
-			*args, **kwargs
-			)
+		self.frequency, self.w, self.s, self.ep_r = frequency, w, s,ep_r
+		self.propagation_constant = self.gamma
+		self.characteristic_impedance = self.Z0
+		Media.__init__(self, *args, **kwargs)
+	
+	@property
+	def ep_re(self):
+		return (self.ep_r+1)/2.
+	
+	@property 
+	def K_ratio(self):
+		
+		K = self.w/(self.w +2*self.s)
+		
+		if (0 <= K <= 1/sqrt(2)):
+			return pi/(log(2*(1+sqrt(K))/(1-sqrt(K)) ))
+		elif (1/sqrt(2) < K <= 1):
+			return (log(2*(1+sqrt(K))/(1-sqrt(K)) ))/pi
+			
+	@property
+	def Z0(self):
+		30.*pi / sqrt(self.ep_re) * self.K_ratio
+	
+	@property 
+	def gamma(self):
+		return 1j*2*pi*self.frequency.f*sqrt(self.ep_re*epsilon_0*mu_0)

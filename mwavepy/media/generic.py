@@ -104,7 +104,7 @@ class Generic(Media):
 	## CONSTRUCTOR
 	def __init__(self, frequency,  C, I, R, G,*args, **kwargs):
 		'''
-		TEM transmission line constructor.
+		generic, distributed circuit model transmission line constructor.
 		
 		takes:
 			frequency: [mwavepy.Frequency object]
@@ -118,7 +118,7 @@ class Generic(Media):
 			can be constructed from propagation constant, and 
 		characteristic impedance as well, through the class method; 
 		from_gamma_Z0, like so,
-			my_tline = GenericTEM.from_gamma_Z0(....)
+			my_tline = Generic.from_gamma_Z0(....)
 		note that this requires frequency information.
 		
 			see class help for details on the class structure.

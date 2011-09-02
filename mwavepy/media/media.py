@@ -34,40 +34,53 @@ from .. import mathFunctions as mf
 
 class Media(object):
 	'''
-	This is the super-class for all transmission line media. It provides
-	methods to produce general network components for any transmision 
-	line medium, such as line, delay short, etc. These methods in turn 
-	rely on the properties:
-		propgation_constant
-		characteristic_impedance
+	This is the super-class for all transmission line media.
+	
+	It provides methods to produce general network components for any
+	transmision line medium, such as line, delay_short, etc. 
+	These methods in turn rely on the properties:
+		propagation_constant*
+		characteristic_impedance**
+		
 	Implementation of propagation_constant and characteristic_impedance 
-	must be implemented in the instances of this class.
+	must be implemented in the instances of this class. 
+	
+	Network Components specific to an instance of Media, such as 
+	cpw_short, microstrip_bend, are implemented within the instances 
+	themselves. 
+	
+	
+	*note: propagation_constant must adhere to the following convention,
+		positive real(gamma) = attenuation
+		positive imag(gamma) = forward propagation 
+	
+	**note: characteristic_impedance is only needed if one is not 
+	explicitly passed to the Media constructor through variable 'z0'
 	'''
 	def __init__(self, z0=None):
 		'''
-		
+		takes:
+			z0: characteristic_impedance for media [None]
+			
+		returns:
+			Media Object
 		
 		'''
 		
-		
+		try:
+			a=self.propagation_constant
+		except(AttributeError):
+			raise NotImplementedError('Media instance must implement the property: propagation_constant')
+			
 		if z0 is None:
 			try:
 				z0 = self.characteristic_impedance
 			except(AttributeError):
 				raise AttributeError('z0 is not inspectable. please provide one.')
 		self.z0 = z0
-		self.delay = self.line
 		
-		try:
-			a=self.propagation_constant
-		except(AttributeError):
-			raise NotImplementedError('media instance must implement the property: propagation_constant')
-		try:
-			a=self.characteristic_impedance
-		except(AttributeError):
-			raise NotImplementedError('media instance must implement the property: characteristic_impedance')
 			
-	
+		self.delay = self.line
 	
 	## Other Functions
 	def theta_2_d(self,theta,deg=True):
