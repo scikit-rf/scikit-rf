@@ -22,7 +22,7 @@
 general class for TEM transmission lines
 '''
 
-
+from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil
 import numpy as npy
 from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
@@ -38,7 +38,7 @@ ONE = 1.0 + 1/1e14
 class Generic(Media):
 	'''
 	== Intro ==
-	This is a general super-class for TEM transmission lines. The 
+	This is a general super-class for transmission lines. The 
 	structure behind the methods dependencies is a result of  
 	physics. a brief summary is given below. 
 	
@@ -102,7 +102,7 @@ class Generic(Media):
 	
 	'''
 	## CONSTRUCTOR
-	def __init__(self, frequency,  C, I, R, G):
+	def __init__(self, frequency,  C, I, R, G,*args, **kwargs):
 		'''
 		TEM transmission line constructor.
 		
@@ -125,6 +125,7 @@ class Generic(Media):
 	
 		'''
 		
+		self.frequency = frequency
 		self.C, self.I, self.R, self.G = C,I,R,G
 
 		
@@ -133,10 +134,11 @@ class Generic(Media):
 		self.distributed_capacitance = self.C
 		self.distributed_inductance = self.I
 		self.distributed_conductance = self.G
-		Media.__init__(self, frequency)
 		
 		self.propagation_constant = self.gamma
 		self.characteristic_impedance = self.Z0
+		Media.__init__(self, *args, **kwargs)
+	
 	@classmethod
 	def from_gamma_Z0(cls, frequency, gamma, Z0):
 		'''
@@ -150,6 +152,14 @@ class Generic(Media):
 		R,I = real(Z)/w, imag(Z)/w
 		return cls(frequency, C=C, I=I, R=R,G=G)
 	
+	## PROPERTIES	
+	@property
+	def frequency(self):
+		return self._frequency
+	
+	@frequency.setter
+	def frequency(self,new_frequency):
+		self._frequency= deepcopy( new_frequency)
 	
 	@property	
 	def Z(self):
@@ -159,8 +169,9 @@ class Generic(Media):
 		 Z'(w) = wR + jwI
 		
 		'''
-		w  = 2*npy.pi * array(self.frequency.f)
+		w  = 2*npy.pi * self.frequency.f
 		return w*self.R + 1j*w*self.I
+	
 	@property
 	def Y(self):
 		'''
@@ -170,8 +181,9 @@ class Generic(Media):
 		
 		'''
 		
-		w = 2*npy.pi*array(self.frequency.f)
+		w = 2*npy.pi*self.frequency.f
 		return w*self.G + 1j*w*self.C
+	
 	@property
 	def Z0(self):
 		'''
@@ -180,6 +192,7 @@ class Generic(Media):
 		'''
 		
 		return sqrt(self.Z/self.Y)
+	
 	@property
 	def gamma(self):
 		'''

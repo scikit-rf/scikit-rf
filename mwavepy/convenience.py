@@ -159,3 +159,20 @@ def csv_2_touchstone(filename):
 	ntwk.frequency.unit='ghz'
 	
 	return ntwk
+
+def find_nearest(array,value):
+	'''
+	find nearest value in array.
+	taken from  http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
+	
+	'''
+	idx=(npy.abs(array-value)).argmin()
+	return array[idx]
+
+def find_nearest_index(array,value):
+	'''
+	find nearest value in array.
+	taken from  http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
+	
+	'''
+	return (npy.abs(array-value)).argmin()

@@ -3,7 +3,7 @@
 #       
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#       Copyright 2010 lihan chen 
+#       
 #
 #       This program is free software; you can redistribute it and/or modify
 #       it under the terms of the GNU General Public License as published by
@@ -28,109 +28,46 @@ from copy import copy
 import numpy as npy
 from scipy import stats
 
-from ..frequency import Frequency
 from ..network import Network, connect
 from ..transmissionLine import functions as tlinefunctions
 from .. import mathFunctions as mf
 
 class Media(object):
 	'''
-	A WorkingBand is an high-level object which exists solely to make 
-	 working with and creation of Networks within the same band,
-	 more concise and convenient. 
-	
-	A WorkingBand object has three properties: 
-		frequency information (Frequency object)
-		transmission line information	(transmission line object)
-		character impedance of medium
-
-	the methods of WorkingBand saves the user the hassle of repetitously
-	 providing a tline and frequency type for every network creation. 	
-
-	note: frequency and tline classes are copied, so they are passed
-	by value and not by-reference.
+	This is the super-class for all transmission line media. It provides
+	methods to produce general network components for any transmision 
+	line medium, such as line, delay short, etc. These methods in turn 
+	rely on the properties:
+		propgation_constant
+		characteristic_impedance
+	Implementation of propagation_constant and characteristic_impedance 
+	must be implemented in the instances of this class.
 	'''
-	def __init__(self, frequency, z0=None):
+	def __init__(self, z0=None):
 		'''
-		WorkingBand constructor 
 		
-		
-		takes:
-			tline: a transmission line class [see note]
-			frequency: frequency class [mwavepy.Frequency]
-			z0: characteristic impedance [number, of ndarray]
-		
-		returns:
-			mwavepy.WorkingBand class
-		
-		
-		note: frequency and tline classes are copied, so they are passed
-		by value and not by-reference.
 		
 		'''
-		# they must provide this
-		self.frequency = frequency 
 		
-		if z0 is not None:
+		
+		if z0 is None:
 			try:
 				z0 = self.characteristic_impedance
 			except(AttributeError):
 				raise AttributeError('z0 is not inspectable. please provide one.')
-				
 		self.z0 = z0
+		self.delay = self.line
 		
-		#convenience
-		#self.gamma = self.propagation_constant
-		#self.Z0 = self.characteristic_impedance
-		#self.delay = self.line
-		
-
-	
-	## PROPERTIES	
-	@property
-	def frequency(self):
-		return self._frequency
-	@frequency.setter
-	def frequency(self,new_frequency):
-		self._frequency= copy( new_frequency)
-	
-	'''@property
-	def z0(self):
-		return self.characteristic_impedance(self.frequency.f)
-	'''
-	
-	## Stubbed out Functions
-	#@property
-	#def propagation_constant(self):
-		#'''
-		#this is a dummy function to be fufilled by an actual instance
-		#of a media. 
-		
-		
-		#returns:
-			#propagation_constant:  in radian/m [complex number or array]
+		try:
+			a=self.propagation_constant
+		except(AttributeError):
+			raise NotImplementedError('media instance must implement the property: propagation_constant')
+		try:
+			a=self.characteristic_impedance
+		except(AttributeError):
+			raise NotImplementedError('media instance must implement the property: characteristic_impedance')
 			
-			
-		#note:
-			#the components of propagation constant are interpreted as 
-			#follows:
-		
-			#positive real = attenuation
-			#positive imag = forward propagation 
-		#'''
-		#raise NotImplementedError('This must be implemented by media instance')
-	#@property
-	#def characteristic_impedance(self):
-		#'''
-		#this is a dummy function to be fufilled by an actual instance
-		#of a media
-		
-		
-		#returns:
-			#characteristic_impedance: of the media in ohms 
-				#[complex number or array]
-		#'''
-		#raise NotImplementedError('This must be implemented by media instance')
+	
 	
 	## Other Functions
 	def theta_2_d(self,theta,deg=True):
@@ -138,21 +75,19 @@ class Media(object):
 		converts electrical length to physical distance
 		
 		takes:
-			theta: electrical length, (see deg for unit)[number]
+			theta: electrical length, at band center (see deg for unit)[number]
 			deg: is theta in degrees? [boolean]
 			
 		returns:
 			d: physical distance in meters
 			
-		note:
-			this calls the function electrical_length_2_distance which
-		is provided by transmissionLine.functions.py
+		
 		'''
-		return tlinefunctions.electrical_length_2_distance(\
-			theta=theta,\
-			gamma = lambda x:self.propagation_constant,\
-			f0 = self.frequency.center,\
-			deg=deg)
+		if deg == True:
+			theta = mf.degree_2_radian(theta)
+		
+		gamma = self.propagation_constant
+		return 1.0*theta/npy.imag(gamma[gamma.size/2])
 	
 	def electrical_length(self, d,deg=False):
 		'''
@@ -163,10 +98,12 @@ class Media(object):
 			theta: electrical length in radians or degrees, 
 				depending on  value of deg.
 		'''
+		gamma = self.propagation_constant
+		
 		if deg == False:
-			return  self.gamma*d
+			return  gamma*d
 		elif deg == True:
-			return  mf.radian_2_degree(self.gamma*d )
+			return  mf.radian_2_degree(gamma*d )
 		
 	## Network creation
 	def match(self,nports=1, z0=None, **kwargs):
@@ -427,7 +364,7 @@ class Media(object):
 			as the frequency for this working band(WorkBand.frequency.f)
 		'''	
 		result = self.match(nports=2, **kwargs)
-		gamma = zl_2_Gamma0(z1,z2)
+		gamma = tlinefunctions.zl_2_Gamma0(z1,z2)
 		result.s[:,0,0] = gamma
 		result.s[:,1,1] = -gamma
 		result.s[:,1,0] = 1+gamma
@@ -529,24 +466,4 @@ class Media(object):
 		
 		print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
 		return npy.linalg.lstsq(A, B)[0][0]
-	def two_port_reflect(self, ntwk1, ntwk2, **kwargs):
-		'''
-		generates a two-port reflective (S21=S12=0) network,from the
-		responses of 2 one-port networks
-
-		takes:
-			ntwk1: Network type, seen from port 1
-			ntwk2: Network type, seen from port 2
-		returns:
-			result: two-port reflective Network type
-
-		
-		example:
-			wb.two_port_reflect(wb.short(), wb.match())
-		'''
-		warnings.warn(DeprecationWarning('Use the two_port_reflect from mwavepy.network'))
-		result = self.match(nports=2,**kwargs)
-		for f in range(self.frequency.npoints):
-			result.s[f,0,0] = ntwk1.s[f,0,0]
-			result.s[f,1,1] = ntwk2.s[f,0,0]
-		return result
+	
