@@ -38,15 +38,14 @@ class Media(object):
 	It provides methods to produce general network components for any
 	transmision line medium, such as line, delay_short, etc. 
 	
-	Network Components specific to an instance of Media, such as 
-	cpw_short, microstrip_bend, are implemented within the instances 
-	themselves. 
-	
+	Network Components specific to an instance of the Media, super-class
+	such as cpw_short, microstrip_bend, are implemented within the 
+	instances themselves. 
 	
 	
 	'''
-	def __init__(self, frequency,  propagation_constant, characteristic_impedance,\
-		z0=None):
+	def __init__(self, frequency,  propagation_constant,
+		characteristic_impedance, z0=None):
 		'''
 		takes:
 			frequency: mwavepy.Frequency object
@@ -58,7 +57,7 @@ class Media(object):
 				if z0= None then will set to characterisitc_impedance
 			
 		returns:
-			Media Object
+			mwavepy.Media Object
 			
 		*note:
 			propagation_constant must adhere to the following convention,
@@ -76,17 +75,18 @@ class Media(object):
 			z0=characteristic_impedance
 		self.z0 = z0
 		
-		
-			
+		# convinience names
 		self.delay = self.line
 	
 	## Other Functions
 	def theta_2_d(self,theta,deg=True):
 		'''
-		converts electrical length to physical distance
+		converts electrical length to physical distance. The electrical
+		length is given at center frequency of self.frequency 
 		
 		takes:
-			theta: electrical length, at band center (see deg for unit)[number]
+			theta: electrical length, at band center (see deg for unit)
+				[number]
 			deg: is theta in degrees? [boolean]
 			
 		returns:
@@ -102,6 +102,9 @@ class Media(object):
 	
 	def electrical_length(self, d,deg=False):
 		'''
+		calculates the electrical length for a given distance, at 
+		the center frequency. 
+		
 		takes:
 			d: distance, in meters 
 			deg: is d in deg?[Boolean]
@@ -118,6 +121,8 @@ class Media(object):
 			return  mf.radian_2_degree(gamma*d )
 		
 	## Network creation
+	
+	# lumped elements
 	def match(self,nports=1, z0=None, **kwargs):
 		'''
 		creates a Network for a perfect matched transmission line (Gamma0=0) 
@@ -194,7 +199,95 @@ class Media(object):
 		'''
 		
 		return self.load(1., nports, **kwargs)
+	
+	def capacitor(self, C, **kwargs):
+		'''
+		A lumped capacitor
+		
+		takes:
+			C: capacitance, in Farads, [number]
+		
+		returns:
+			mwavepy.Network 
+		'''
+		Gamma0 = tlinefunctions.zl_2_Gamma0(-1j/(self.frequency.w*c))
+		return self.load(Gamma0=Gamma0, **kargs)
 
+	def inductor(self, L, **kwargs):
+		'''
+		A lumped inductor
+		
+		takes:
+			L: inductance in Henrys [number]
+		
+		returns:
+			mwavepy.Network 
+		'''
+		Gamma0 = tlinefunctions.zl_2_Gamma0(-1j*(self.frequency.w*I))
+		return self.load(Gamma0=Gamma0, **kargs)
+
+	def impedance_mismatch(self, z1, z2, **kwargs):
+		'''
+		returns a two-port network for a impedance mis-match
+		
+		takes:
+			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
+			z2: complex impedance of port 2 [ number, list, or 1D ndarray]
+			**kwargs: passed to mwavepy.Network constructor
+		returns:
+			a 2-port network [mwavepy.Network]
+			
+		note:
+			if z1 and z2 are arrays or lists, they must be of same length
+			as the self.frequency.npoints
+		'''	
+		result = self.match(nports=2, **kwargs)
+		gamma = tlinefunctions.zl_2_Gamma0(z1,z2)
+		result.s[:,0,0] = gamma
+		result.s[:,1,1] = -gamma
+		result.s[:,1,0] = 1+gamma
+		result.s[:,0,1] = 1-gamma
+		return result
+	
+		
+	# splitter/couplers
+	def tee(self,**kwargs):
+		'''
+		makes a ideal, lossless tee. (aka three port splitter)
+		
+		takes:
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. 
+		returns:
+			a 3-port Network [mwavepy.Network]
+		
+		note:
+			this just calls splitter(3)
+		'''
+		return self.splitter(3,**kwargs)
+		
+	def splitter(self, nports,**kwargs):
+		'''
+		returns an ideal, lossless n-way splitter.
+		
+		takes:
+			nports: number of ports [int]
+			**kwargs: key word arguments passed to match(), which is 
+				called initially to create a 'blank' network. 
+		returns:
+			a n-port Network [mwavepy.Network]
+		'''
+		n=nports
+		result = self.match(n, **kwargs)
+		
+		for f in range(self.frequency.npoints):
+			result.s[f,:,:] =  (2*1./n-1)*npy.eye(n) + \
+				npy.sqrt((1-((2.-n)/n)**2)/(n-1))*\
+				(npy.ones((n,n))-npy.eye(n))
+		return result
+	
+
+	# transmission line
 	def thru(self, **kwargs):
 		'''
 		creates a Network for a thru
@@ -324,65 +417,7 @@ class Media(object):
 		self.line(d,**kwargs) ** self.open(**kwargs)
 		'''
 		return self.delay_load(Gamma0=1., d=d, unit=unit,**kwargs)
-	
-	def tee(self,**kwargs):
-		'''
-		makes a ideal, lossless tee. (aka three port splitter)
-		
-		takes:
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network. 
-		returns:
-			a 3-port Network [mwavepy.Network]
-		
-		note:
-			this just calls splitter(3)
-		'''
-		return self.splitter(3,**kwargs)
-		
-	def splitter(self, nports,**kwargs):
-		'''
-		returns an ideal, lossless n-way splitter.
-		
-		takes:
-			nports: number of ports [int]
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network. 
-		returns:
-			a n-port Network [mwavepy.Network]
-		'''
-		n=nports
-		result = self.match(n, **kwargs)
-		
-		for f in range(self.frequency.npoints):
-			result.s[f,:,:] =  (2*1./n-1)*npy.eye(n) + \
-				npy.sqrt((1-((2.-n)/n)**2)/(n-1))*\
-				(npy.ones((n,n))-npy.eye(n))
-		return result
-	
-	def impedance_mismatch(self, z1, z2, **kwargs):
-		'''
-		returns a two-port network for a impedance mis-match
-		
-		takes:
-			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
-			z2: complex impedance of port 2 [ number, list, or 1D ndarray]
-			**kwargs: passed to mwavepy.Network constructor
-		returns:
-			a 2-port network [mwavepy.Network]
-			
-		note:
-			if z1 and z2 are arrays or lists, they must be of same length
-			as the self.frequency.npoints
-		'''	
-		result = self.match(nports=2, **kwargs)
-		gamma = tlinefunctions.zl_2_Gamma0(z1,z2)
-		result.s[:,0,0] = gamma
-		result.s[:,1,1] = -gamma
-		result.s[:,1,0] = 1+gamma
-		result.s[:,0,1] = 1-gamma
-		return result
-	
+
 	def shunt(self,ntwk, **kwargs):
 		'''
 		returns a shunted ntwk. this creates a 'tee', connects 
@@ -470,6 +505,7 @@ class Media(object):
 				
 		
 		'''
+		warnings.warn(DeprecationWarning('I have yet to update this for Media class'))
 		beta = npy.real(self.propagation_constant(self.frequency.f))
 		thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
 		
