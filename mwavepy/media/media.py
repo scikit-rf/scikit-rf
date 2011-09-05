@@ -76,19 +76,7 @@ class Media(object):
 			z0=characteristic_impedance
 		self.z0 = z0
 		
-		'''
-		try:
-			a=self.propagation_constant
-		except(AttributeError):
-			raise NotImplementedError('Media instance must implement the property: propagation_constant')
-			
-		if z0 is None:
-			try:
-				z0 = self.characteristic_impedance
-			except(AttributeError):
-				raise AttributeError('z0 is not inspectable. please provide one.')
-		self.z0 = z0
-		'''
+		
 			
 		self.delay = self.line
 	
