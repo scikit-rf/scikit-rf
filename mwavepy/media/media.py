@@ -28,7 +28,7 @@ import numpy as npy
 from scipy import stats
 
 from ..network import Network, connect
-from ..transmissionLine import functions as tlinefunctions
+from .. import tf as tf
 from .. import mathFunctions as mf
 
 class Media(object):
@@ -210,7 +210,7 @@ class Media(object):
 		returns:
 			mwavepy.Network 
 		'''
-		Gamma0 = tlinefunctions.zl_2_Gamma0(-1j/(self.frequency.w*c))
+		Gamma0 = tf.zl_2_Gamma0(-1j/(self.frequency.w*c))
 		return self.load(Gamma0=Gamma0, **kargs)
 
 	def inductor(self, L, **kwargs):
@@ -223,7 +223,7 @@ class Media(object):
 		returns:
 			mwavepy.Network 
 		'''
-		Gamma0 = tlinefunctions.zl_2_Gamma0(-1j*(self.frequency.w*I))
+		Gamma0 = tf.zl_2_Gamma0(-1j*(self.frequency.w*I))
 		return self.load(Gamma0=Gamma0, **kargs)
 
 	def impedance_mismatch(self, z1, z2, **kwargs):
@@ -242,7 +242,7 @@ class Media(object):
 			as the self.frequency.npoints
 		'''	
 		result = self.match(nports=2, **kwargs)
-		gamma = tlinefunctions.zl_2_Gamma0(z1,z2)
+		gamma = tf.zl_2_Gamma0(z1,z2)
 		result.s[:,0,0] = gamma
 		result.s[:,1,1] = -gamma
 		result.s[:,1,0] = 1+gamma
