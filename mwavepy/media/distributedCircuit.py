@@ -35,7 +35,7 @@ INF = 1e99
 ONE = 1.0 + 1/1e14
 
 
-class Generic(Media):
+class DistributedCircuit(Media):
 	'''
 	== Intro ==
 	This is a general super-class for distributed circuit transmission lines. The 
@@ -115,17 +115,14 @@ class Generic(Media):
 			
 		
 		notes:
-			can be constructed from propagation constant, and 
-		characteristic impedance as well, through the class method; 
-		from_gamma_Z0, like so,
-			my_tline = Generic.from_gamma_Z0(....)
-		note that this requires frequency information.
+			can be constructed from a Media instance too, see the 
+			classmethod from_Media()
 		
 			see class help for details on the class structure.
 	
 		'''
 		
-		self.frequency = frequency
+		self.frequency = deepcopy(frequency)
 		self.C, self.I, self.R, self.G = C,I,R,G
 
 		
@@ -135,35 +132,42 @@ class Generic(Media):
 		self.distributed_inductance = self.I
 		self.distributed_conductance = self.G
 		
-		#self.propagation_constant = self.gamma
-		#self.characteristic_impedance = self.Z0
 		Media.__init__(self,\
 			frequency = frequency,\
 			propagation_constant = self.gamma, \
-			characterisitc_impedance = self.Z0,\
+			characteristic_impedance = self.Z0,\
 			*args, **kwargs)
 	
+	def __str__(self):
+		f=self.frequency
+		output =  \
+			'Distributed Circuit Media.  %i-%i %s.  %i points'%\
+			(f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
+			'\nI\'= %.2f, C\'= %.2f,R\'= %.2f, G\'= %.2f, '% \
+			(self.I, self.C,self.R, self.G)
+		return output
+		
+	def __repr__(self):
+		return self.__str__()
+	
+	
 	@classmethod
-	def from_gamma_Z0(cls, frequency, gamma, Z0):
+	def from_Media(cls, my_media, *args, **kwargs):
 		'''
-		initializer which creates a transmission line from propagation 
-		constant, characteristic impedance, and frequency information
+		initializer which creates  DistributedCircuit from a Media 
+		instance
 		'''
-		w  = 2*npy.pi * array(frequency.f)
+		
+		w  =  my_media.frequency.w
+		gamma = my_media.propagation_constant
+		Z0 = my_media.characteristic_impedance
+		
 		Y = gamma/Z0
 		Z = gamma*Z0
 		G,C = real(Y)/w, imag(Y)/w
 		R,I = real(Z)/w, imag(Z)/w
-		return cls(frequency, C=C, I=I, R=R,G=G)
+		return cls(my_media.frequency, C=C, I=I, R=R, G=G, *args, **kwargs)
 	
-	## PROPERTIES	
-	#@property
-	#def frequency(self):
-	#	return self._frequency
-	
-	#@frequency.setter
-	#def frequency(self,new_frequency):
-	#	self._frequency= deepcopy( new_frequency)
 	
 	@property	
 	def Z(self):
