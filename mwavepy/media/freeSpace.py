@@ -23,23 +23,23 @@ contains free space class
 '''
 from scipy.constants import  epsilon_0, mu_0
 from numpy import real, imag
-from .generic import Generic
+from .distributedCircuit import DistributedCircuit
 
-class Freespace(Generic):
+class Freespace(DistributedCircuit):
 	'''
 	Represents a plane-wave in freespace, defined by [possibly complex]
 	values of relative permativity and relative permeability.
 	
-	The field properties of space are related to the transmission line
-	model given in circuit theory by:
+	The field properties of space are related to a disctributed 
+	circuit transmission line model given in circuit theory by:
 			
 		distributed_capacitance = real(ep_0*ep_r)
 		distributed_resistance = imag(ep_0*ep_r)
 		distributed_inductance = real(mu_0*mu_r)
 		distributed_conductance = imag(mu_0*mu_r)
 	
-	note: this class's inhereitence is;
-		Media->Generic->FreeSpace
+	note: this class's inheritence is;
+		Media->DistributedCircuit->FreeSpace
 	
 	'''
 	def __init__(self, frequency,  ep_r=1, mu_r=1, 	*args, **kwargs):
@@ -47,10 +47,11 @@ class Freespace(Generic):
 		takes:
 			ep_r: possibly complex, relative permativity [number or array]  
 			mu_r:possibly complex, relative permiability [number or array]
+		
 		returns:
 			mwavepy.Media object 
 		'''
-		Generic.__init__(self,\
+		DistributedCircuit.__init__(self,\
 			frequency = frequency, \
 			C = real(epsilon_0*ep_r),\
 			G = imag(epsilon_0*ep_r),\
@@ -58,3 +59,14 @@ class Freespace(Generic):
 			R = imag(mu_0*mu_r),\
 			*args, **kwargs
 			)
+	
+	def __str__(self):
+		f=self.frequency
+		output =  \
+			'Freespace  Media.  %i-%i %s.  %i points'%\
+			(f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)
+		return output
+		
+	def __repr__(self):
+		return self.__str__()
+	

@@ -38,7 +38,7 @@ ONE = 1.0 + 1/1e14
 class Generic(Media):
 	'''
 	== Intro ==
-	This is a general super-class for transmission lines. The 
+	This is a general super-class for distributed circuit transmission lines. The 
 	structure behind the methods dependencies is a result of  
 	physics. a brief summary is given below. 
 	
@@ -135,9 +135,13 @@ class Generic(Media):
 		self.distributed_inductance = self.I
 		self.distributed_conductance = self.G
 		
-		self.propagation_constant = self.gamma
-		self.characteristic_impedance = self.Z0
-		Media.__init__(self, *args, **kwargs)
+		#self.propagation_constant = self.gamma
+		#self.characteristic_impedance = self.Z0
+		Media.__init__(self,\
+			frequency = frequency,\
+			propagation_constant = self.gamma, \
+			characterisitc_impedance = self.Z0,\
+			*args, **kwargs)
 	
 	@classmethod
 	def from_gamma_Z0(cls, frequency, gamma, Z0):
@@ -153,13 +157,13 @@ class Generic(Media):
 		return cls(frequency, C=C, I=I, R=R,G=G)
 	
 	## PROPERTIES	
-	@property
-	def frequency(self):
-		return self._frequency
+	#@property
+	#def frequency(self):
+	#	return self._frequency
 	
-	@frequency.setter
-	def frequency(self,new_frequency):
-		self._frequency= deepcopy( new_frequency)
+	#@frequency.setter
+	#def frequency(self,new_frequency):
+	#	self._frequency= deepcopy( new_frequency)
 	
 	@property	
 	def Z(self):

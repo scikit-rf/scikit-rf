@@ -26,7 +26,7 @@ from numpy import real, imag,pi,sqrt,log
 from .media import Media	
 class CPW(Media):
 	'''
-	
+	Coplanar waveguide class
 	'''
 	def __init__(self, frequency, w , s, ep_r,*args, **kwargs):
 		'''
@@ -36,10 +36,25 @@ class CPW(Media):
 			mwavepy.Media object 
 		'''
 		self.frequency, self.w, self.s, self.ep_r = frequency, w, s,ep_r
-		self.propagation_constant = self.gamma
-		self.characteristic_impedance = self.Z0
-		Media.__init__(self, *args, **kwargs)
-	
+		
+		Media.__init__(self,\
+			frequency = frequency,\
+			propagation_constant = self.gamma, \
+			characteristic_impedance = self.Z0,\
+			*args, **kwargs)
+		
+	def __str__(self):
+		f=self.frequency
+		output =  \
+			'Coplanar Waveguide Media.  %i-%i %s.  %i points'%\
+			(f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
+			'\n W= %.2em, S= %.2em'% \
+			(self.w,self.s)
+		return output
+		
+	def __repr__(self):
+		return self.__str__()
+		
 	@property
 	def ep_re(self):
 		return (self.ep_r+1)/2.
@@ -56,7 +71,7 @@ class CPW(Media):
 			
 	@property
 	def Z0(self):
-		30.*pi / sqrt(self.ep_re) * self.K_ratio
+		return 30.*pi / sqrt(self.ep_re) * self.K_ratio
 	
 	@property 
 	def gamma(self):

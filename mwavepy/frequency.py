@@ -23,7 +23,7 @@ Provides the Frequency class, and related functions
 '''
 
 from pylab import linspace, gca
-
+from numpy import pi
 
 class Frequency(object):
 	'''
@@ -113,7 +113,12 @@ class Frequency(object):
 		returns a frequency vector in units of self.unit 
 		'''
 		return self.f/self.multiplier
-				
+	@property
+	def w(self):
+		'''
+		angular frequency in radians
+		'''
+		return 2*pi*self.f
 	@property
 	def unit(self):
 		'''

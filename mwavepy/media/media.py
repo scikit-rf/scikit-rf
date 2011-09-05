@@ -1,5 +1,5 @@
 
-#       workingBand.py
+#       media.py
 #       
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
@@ -24,7 +24,6 @@ Contains Media class.
 '''
 import warnings 
 
-from copy import copy
 import numpy as npy
 from scipy import stats
 
@@ -38,35 +37,46 @@ class Media(object):
 	
 	It provides methods to produce general network components for any
 	transmision line medium, such as line, delay_short, etc. 
-	These methods in turn rely on the properties:
-		propagation_constant*
-		characteristic_impedance**
-		
-	Implementation of propagation_constant and characteristic_impedance 
-	must be implemented in the instances of this class. 
 	
 	Network Components specific to an instance of Media, such as 
 	cpw_short, microstrip_bend, are implemented within the instances 
 	themselves. 
 	
 	
-	*note: propagation_constant must adhere to the following convention,
-		positive real(gamma) = attenuation
-		positive imag(gamma) = forward propagation 
 	
-	**note: characteristic_impedance is only needed if one is not 
-	explicitly passed to the Media constructor through variable 'z0'
 	'''
-	def __init__(self, z0=None):
+	def __init__(self, frequency,  propagation_constant, characteristic_impedance,\
+		z0=None):
 		'''
 		takes:
-			z0: characteristic_impedance for media [None]
+			frequency: mwavepy.Frequency object
+			propagation_constant*: [complex number of 1D array]
+			characteristic_impedance: [complex number of 1D array]
+			z0**: characteristic_impedance for media , if its different
+				from the characterisitc impedance of teh transmission 
+				line medium  (None) [a number].
+				if z0= None then will set to characterisitc_impedance
 			
 		returns:
 			Media Object
+			
+		*note:
+			propagation_constant must adhere to the following convention,
+				positive real(gamma) = attenuation
+				positive imag(gamma) = forward propagation 
+		**note:
+			 waveguide is an example  where you may need this, because
+			 a characteristic impedance is variable but the touchstone's
+			 from most VNA's have z0=1	
+		'''
+		self.frequency = frequency
+		self.propagation_constant = propagation_constant
+		self.characteristic_impedance = characteristic_impedance
+		if z0 is None:
+			z0=characteristic_impedance
+		self.z0 = z0
 		
 		'''
-		
 		try:
 			a=self.propagation_constant
 		except(AttributeError):
@@ -78,7 +88,7 @@ class Media(object):
 			except(AttributeError):
 				raise AttributeError('z0 is not inspectable. please provide one.')
 		self.z0 = z0
-		
+		'''
 			
 		self.delay = self.line
 	
@@ -105,7 +115,8 @@ class Media(object):
 	def electrical_length(self, d,deg=False):
 		'''
 		takes:
-			d: distance, in meters
+			d: distance, in meters 
+			deg: is d in deg?[Boolean]
 		
 		returns:
 			theta: electrical length in radians or degrees, 
@@ -126,7 +137,7 @@ class Media(object):
 		takes:
 			nports: number of ports [int]
 			z0: characterisitc impedance [number of array]. defaults is 
-				None, in which case the WorkingBand's z0 is used. 
+				None, in which case the Media's z0 is used. 
 				Otherwise this sets the resultant network's z0. See
 				Network.z0 property for more info
 			**kwargs: key word arguments passed to Network Constructor
@@ -231,8 +242,8 @@ class Media(object):
 	
 		
 		example:
-			wb = WorkingBand(...) # create a working band object
-			wb.line(90, 'deg', z0=50) 
+			my_media = mwavepy.Freespace(...)
+			my_media.line(90, 'deg', z0=50) 
 		
 		'''
 		if unit not in ['m','deg','rad']:
@@ -374,7 +385,7 @@ class Media(object):
 			
 		note:
 			if z1 and z2 are arrays or lists, they must be of same length
-			as the frequency for this working band(WorkBand.frequency.f)
+			as the self.frequency.npoints
 		'''	
 		result = self.match(nports=2, **kwargs)
 		gamma = tlinefunctions.zl_2_Gamma0(z1,z2)
