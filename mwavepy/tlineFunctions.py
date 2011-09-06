@@ -32,7 +32,7 @@ INF = 1e99
 ONE = 1.0 + 1/1e14
 
 
-def skin_depth(rho, f, mu_r):
+def skin_depth(f,rho, mu_r):
 	'''
 	the skin depth for a material. see microwaves101.com for more info. 
 	
@@ -46,7 +46,12 @@ def skin_depth(rho, f, mu_r):
 	'''
 	return sqrt(rho/(pi*f*mu_r*mu_0))
 
-
+def surface_resistivity(f,rho,mu_r):
+	'''
+	surface resistivity 
+	'''
+	return rho/skin_depth(rho=rho,f = f, mu_r=mu_r)
+	
 def distributed_circuit_2_propagation_impedance( distributed_admittance,\
 	distributed_impedance):
 	'''

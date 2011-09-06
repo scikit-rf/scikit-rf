@@ -25,6 +25,8 @@ from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
 from numpy import real, imag,pi,sqrt,log,zeros
 from .media import Media	
+from ..tlineFunctions import skin_depth, surface_resistivity
+
 class CPW(Media):
 	'''
 	Coplanar waveguide class
@@ -33,19 +35,20 @@ class CPW(Media):
 	qucs project ( qucs.sourceforge.net/ ).
 	
 	'''
-	def __init__(self, frequency, w , s, ep_r, t=None, r_s=None, \
+	def __init__(self, frequency, w , s, ep_r, t=None, rho=None, \
 		*args, **kwargs):
 		'''
 		takes:
 			w: width of center conductor, in m. 
 			s: width of gap, in m. 
 			ep_r: relative permativity of substrate
-			r_s: surface resistivity of conductor (None)
+			rho: resistivity of conductor (None)
 			t: conductor thickness, in m.
 		returns:
 			mwavepy.Media object 
 		'''
-		self.frequency, self.w, self.s, self.ep_r = frequency, w, s,ep_r
+		self.frequency, self.w, self.s, self.ep_r, self.t, self.rho =\
+			frequency, w, s, ep_r, t, rho
 		
 		Media.__init__(self,\
 			frequency = frequency,\
@@ -89,18 +92,25 @@ class CPW(Media):
 		elif (1/sqrt(2) < k1 <= 1):
 			return (log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))/pi
 	
+	
+	
+		
 	@property
 	def alpha_conductor(self):
 		'''
 		losses due to conductor resistivity
 		'''
-		t, k1, ep_re, r_s = self.t, self.k1,self.ep_re,self.r_s
+		if self.rho is None or self.t is None:
+			raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
+		t, k1, ep_re = self.t, self.k1,self.ep_re
+		r_s = surface_resistivity(f=self.frequency.f, rho=self.rho, \
+			mu_r=1)
 		a = self.w/2.
 		b = self.s+self.w/2.
 		K = ellipk	# complete elliptical integral of first kind
 		K_p = lambda x: ellipk(sqrt(1-x**2)) # ellipk's compliment
 		
-		return ((r_s * sqrt(ep_re)/(480*pi*K(k1)*K_p(k1)*(1-k_1**2) ))*\
+		return ((r_s * sqrt(ep_re)/(480*pi*K(k1)*K_p(k1)*(1-k1**2) ))*\
 			(1./a * (pi+log((8*pi*a*(1-k1))/(t*(1+k1)))) +\
 			 1./b * (pi+log((8*pi*b*(1-k1))/(t*(1+k1))))))
 			
@@ -120,10 +130,7 @@ class CPW(Media):
 		'''
 		beta = 1j*2*pi*self.frequency.f*sqrt(self.ep_re*epsilon_0*mu_0)
 		alpha = zeros(len(beta))
-		try:
+		if self.rho is not None and self.t is not None:
 			alpha = self.alpha_conductor 
-		except(AttributeError):
-			# they didnt set surface resistivity and conductor thickness
-			pass
 		
 		return beta+alpha
