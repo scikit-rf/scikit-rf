@@ -74,12 +74,14 @@ class CPW(Media):
 		intermediary parameter. see qucs docs on cpw lines.
 		'''
 		return (self.ep_r+1)/2.
+	
 	@property
 	def k1(self):
 		'''
 		intermediary parameter. see qucs docs on cpw lines.
 		'''
 		return self.w/(self.w +2*self.s)
+	
 	@property 
 	def K_ratio(self):
 		'''

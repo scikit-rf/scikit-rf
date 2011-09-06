@@ -34,21 +34,33 @@ ONE = 1.0 + 1/1e14
 
 def skin_depth(f,rho, mu_r):
 	'''
-	the skin depth for a material. see microwaves101.com for more info. 
+	
+	the skin depth for a material. see www.microwaves101.com for more info. 
 	
 	takes:
-		rho: bulk resistivity of material, in ohm/m
-		mu_r: relative permiability of material
 		f: frequency, in Hz
-	
+		rho: bulk resistivity of material, in ohm*m
+		mu_r: relative permiability of material
+		
 	returns:
-		skin depth, 
+		skin depth: in m
+	
 	'''
 	return sqrt(rho/(pi*f*mu_r*mu_0))
 
 def surface_resistivity(f,rho,mu_r):
 	'''
-	surface resistivity 
+	surface resistivity. see www.microwaves101.com for more info. 
+	
+	takes:
+		f: frequency, in Hz
+		rho: bulk resistivity of material, in ohm*m
+		mu_r: relative permiability of material
+	
+	returns:
+		surface resistivity: ohms/square
+		
+		
 	'''
 	return rho/skin_depth(rho=rho,f = f, mu_r=mu_r)
 	
