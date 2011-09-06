@@ -127,6 +127,18 @@ Creating&nbsp;an&nbsp;array&nbsp;from&nbsp;sub-classes:<br>
 &gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'),&nbsp;subok=True)<br>
 matrix([[1,&nbsp;2],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])</tt></dd></dl>
+ <dl><dt><a name="-distance_2_electrical_length"><strong>distance_2_electrical_length</strong></a> = electrical_length(gamma, f, d, deg<font color="#909090">=False</font>)</dt><dd><tt>calculates&nbsp;the&nbsp;electrical&nbsp;length&nbsp;of&nbsp;a&nbsp;section&nbsp;of&nbsp;transmission&nbsp;line.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;propagation&nbsp;constant&nbsp;function&nbsp;[function],&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(a&nbsp;function&nbsp;which&nbsp;takes&nbsp;frequency&nbsp;in&nbsp;hz&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;length&nbsp;of&nbsp;line.&nbsp;in&nbsp;meters<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;at&nbsp;which&nbsp;to&nbsp;calculate.&nbsp;[array-like&nbsp;or&nbsp;float].&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;return&nbsp;in&nbsp;degrees&nbsp;or&nbsp;not.&nbsp;[boolean].<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;or&nbsp;degrees,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depending&nbsp;on&nbsp;&nbsp;value&nbsp;of&nbsp;deg.</tt></dd></dl>
  <dl><dt><a name="-distributed_circuit_2_propagation_impedance"><strong>distributed_circuit_2_propagation_impedance</strong></a>(distributed_admittance, distributed_impedance)</dt><dd><tt>converts&nbsp;complex&nbsp;distributed&nbsp;impedance&nbsp;and&nbsp;admittance&nbsp;to&nbsp;propagation&nbsp;<br>
 constant&nbsp;and&nbsp;characteristic&nbsp;impedance.<br>
 &nbsp;<br>
@@ -149,6 +161,19 @@ takes:<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;or&nbsp;degrees,&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depending&nbsp;on&nbsp;&nbsp;value&nbsp;of&nbsp;deg.</tt></dd></dl>
+ <dl><dt><a name="-electrical_length_2_distance"><strong>electrical_length_2_distance</strong></a>(theta, gamma, f0, deg<font color="#909090">=True</font>)</dt><dd><tt>convert&nbsp;electrical&nbsp;length&nbsp;to&nbsp;a&nbsp;physical&nbsp;distance.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;propagation&nbsp;constant&nbsp;function&nbsp;[function]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f0:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;frequency&nbsp;of&nbsp;interest&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;is&nbsp;theta&nbsp;in&nbsp;degrees&nbsp;[Boolean]<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;physical&nbsp;distance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:&nbsp;the&nbsp;gamma&nbsp;function&nbsp;must&nbsp;take&nbsp;a&nbsp;single&nbsp;variable,&nbsp;that&nbsp;is&nbsp;<br>
+frequency&nbsp;and&nbsp;return&nbsp;complex&nbsp;propagation&nbsp;constant&nbsp;such&nbsp;that&nbsp;the&nbsp;<br>
+propagating&nbsp;part&nbsp;is&nbsp;positive&nbsp;imag&nbsp;part.</tt></dd></dl>
  <dl><dt><a name="-input_impedance_2_reflection_coefficient"><strong>input_impedance_2_reflection_coefficient</strong></a>(z0, zl)</dt><dd><tt>calculates&nbsp;the&nbsp;reflection&nbsp;coefficient&nbsp;for&nbsp;a&nbsp;given&nbsp;input&nbsp;impedance&nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>

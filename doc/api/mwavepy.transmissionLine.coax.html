@@ -78,11 +78,19 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;[Hz]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[rad/m]</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;possibly&nbsp;complex&nbsp;propagation&nbsp;constant,&nbsp;[rad/m]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+the&nbsp;components&nbsp;of&nbsp;propagation&nbsp;constant&nbsp;are&nbsp;interpreted&nbsp;as&nbsp;follows:<br>
+&nbsp;<br>
+positive&nbsp;real(gamma)&nbsp;=&nbsp;attenuation<br>
+positive&nbsp;imag(gamma)&nbsp;=&nbsp;forward&nbsp;propagation</tt></dd></dl>
 
 <hr>
 Class methods inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>
-<dl><dt><a name="Coax-from_gamma_Z0"><strong>from_gamma_Z0</strong></a>(cls, gamma, Z0, f)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt></dl>
+<dl><dt><a name="Coax-from_gamma_Z0"><strong>from_gamma_Z0</strong></a>(cls, gamma, Z0, f)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt><dd><tt>initializer&nbsp;which&nbsp;creates&nbsp;a&nbsp;transmission&nbsp;line&nbsp;from&nbsp;propagation&nbsp;<br>
+constant,&nbsp;characteristic&nbsp;impedance,&nbsp;and&nbsp;frequency&nbsp;information</tt></dd></dl>
 
 <hr>
 Data descriptors inherited from <a href="mwavepy.transmissionLine.genericTEM.html#GenericTEM">mwavepy.transmissionLine.genericTEM.GenericTEM</a>:<br>

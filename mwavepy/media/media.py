@@ -28,7 +28,7 @@ import numpy as npy
 from scipy import stats
 
 from ..network import Network, connect
-from .. import tf as tf
+from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
 
 class Media(object):

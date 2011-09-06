@@ -25,11 +25,26 @@ import numpy as npy
 from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
 	 interp, linspace, shape,zeros, reshape
 
+from scipy.constants import mu_0
 import mathFunctions as mf
 
 INF = 1e99
 ONE = 1.0 + 1/1e14
 
+
+def skin_depth(rho, f, mu_r):
+	'''
+	the skin depth for a material. see microwaves101.com for more info. 
+	
+	takes:
+		rho: bulk resistivity of material, in ohm/m
+		mu_r: relative permiability of material
+		f: frequency, in Hz
+	
+	returns:
+		skin depth, 
+	'''
+	return sqrt(rho/(pi*f*mu_r*mu_0))
 
 
 def distributed_circuit_2_propagation_impedance( distributed_admittance,\

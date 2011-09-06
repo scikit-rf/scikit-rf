@@ -60,7 +60,7 @@ The&nbsp;following&nbsp;operators&nbsp;are&nbsp;defined&nbsp;as&nbsp;follows:<br
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'-'&nbsp;:&nbsp;element-wise&nbsp;subtraction&nbsp;of&nbsp;the&nbsp;s-matrix<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'*'&nbsp;:&nbsp;element-wise&nbsp;multiplication&nbsp;of&nbsp;the&nbsp;s-matrix<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'/'&nbsp;:&nbsp;element-wise&nbsp;division&nbsp;of&nbsp;the&nbsp;s-matrix<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'**':&nbsp;cascading&nbsp;of&nbsp;two&nbsp;networks<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'**':&nbsp;cascading&nbsp;of&nbsp;2-port&nbsp;networks<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'//':&nbsp;de-embdeding&nbsp;of&nbsp;one&nbsp;network&nbsp;from&nbsp;the&nbsp;other.<br>
 &nbsp;<br>
 various&nbsp;other&nbsp;network&nbsp;properties&nbsp;are&nbsp;accesable&nbsp;as&nbsp;well&nbsp;as&nbsp;plotting<br>
@@ -163,6 +163,16 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
 
+<dl><dt><a name="Network-plot_s_complex"><strong>plot_s_complex</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n&nbsp;on&nbsp;complex&nbsp;plane<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m&nbsp;-&nbsp;first&nbsp;index,&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;-&nbsp;second&nbsp;indext,&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;-&nbsp;matplotlib.axes&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;to&nbsp;plot&nbsp;on,&nbsp;used&nbsp;in&nbsp;case&nbsp;you<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;want&nbsp;to&nbsp;update&nbsp;an&nbsp;existing&nbsp;plot.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
+
 <dl><dt><a name="Network-plot_s_db"><strong>plot_s_db</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;magnitude&nbsp;of&nbsp;the&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n<br>
 in&nbsp;log&nbsp;magnitude<br>
 &nbsp;<br>
@@ -239,7 +249,7 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
 
-<dl><dt><a name="Network-plot_s_smith"><strong>plot_s_smith</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, r<font color="#909090">=1</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n&nbsp;on&nbsp;smith&nbsp;chart<br>
+<dl><dt><a name="Network-plot_s_smith"><strong>plot_s_smith</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, r<font color="#909090">=1</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, chart_type<font color="#909090">='z'</font>, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n&nbsp;on&nbsp;smith&nbsp;chart<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m&nbsp;-&nbsp;first&nbsp;index,&nbsp;int<br>
@@ -248,6 +258,9 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;-&nbsp;matplotlib.axes&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;to&nbsp;plot&nbsp;on,&nbsp;used&nbsp;in&nbsp;case&nbsp;you<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;want&nbsp;to&nbsp;update&nbsp;an&nbsp;existing&nbsp;plot.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;chart_type:&nbsp;string&nbsp;determining&nbsp;countour&nbsp;type.&nbsp;options&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z':&nbsp;impedance&nbsp;contours&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'y':&nbsp;admittance&nbsp;contours<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
 
 <dl><dt><a name="Network-plot_vs_frequency_generic"><strong>plot_vs_frequency_generic</strong></a>(self, attribute, y_label<font color="#909090">=None</font>, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>generic&nbsp;plotting&nbsp;function&nbsp;for&nbsp;plotting&nbsp;a&nbsp;<a href="#Network">Network</a>'s&nbsp;attribute<br>
@@ -324,10 +337,10 @@ see&nbsp;more&nbsp;at,<br>
 <dl><dt><strong>s</strong></dt>
 <dd><tt>The&nbsp;scattering&nbsp;parameter&nbsp;matrix.<br>
 &nbsp;<br>
-s-matrix&nbsp;has&nbsp;shape&nbsp;fxmxn,&nbsp;<br>
+s-matrix&nbsp;has&nbsp;shape&nbsp;fxnxn,&nbsp;<br>
 where;&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f&nbsp;is&nbsp;frequency&nbsp;axis&nbsp;and,<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m&nbsp;and&nbsp;n&nbsp;are&nbsp;port&nbsp;indicies</tt></dd>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n's&nbsp;are&nbsp;port&nbsp;indicies</tt></dd>
 </dl>
 <dl><dt><strong>s11</strong></dt>
 </dl>
@@ -366,7 +379,9 @@ matrix.</tt></dd>
 <dl><dt><strong>y</strong></dt>
 </dl>
 <dl><dt><strong>z0</strong></dt>
-<dd><tt>the&nbsp;characteristic&nbsp;impedance&nbsp;of&nbsp;the&nbsp;network.</tt></dd>
+<dd><tt>the&nbsp;characteristic&nbsp;impedance&nbsp;of&nbsp;the&nbsp;network.<br>
+&nbsp;<br>
+z0&nbsp;can&nbsp;be&nbsp;may&nbsp;be&nbsp;a&nbsp;number,&nbsp;or&nbsp;numpy.ndarray&nbsp;of&nbsp;shape&nbsp;n&nbsp;or&nbsp;fxn.</tt></dd>
 </dl>
 </td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -382,7 +397,9 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list_of_networks:&nbsp;a&nbsp;list&nbsp;of&nbsp;Networks<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;resultant&nbsp;averaged&nbsp;<a href="#Network">Network</a>&nbsp;[mwavepy.<a href="#Network">Network</a>]</tt></dd></dl>
- <dl><dt><a name="-cascade"><strong>cascade</strong></a>(a, b)</dt><dd><tt>cascade&nbsp;two&nbsp;s-matricies&nbsp;together.<br>
+ <dl><dt><a name="-cascade"><strong>cascade</strong></a>(a, b)</dt><dd><tt>DEPRECATED.&nbsp;see&nbsp;<a href="#-connect_s">connect_s</a>()&nbsp;instead.<br>
+&nbsp;<br>
+cascade&nbsp;two&nbsp;s-matricies&nbsp;together.<br>
 &nbsp;<br>
 a's&nbsp;port&nbsp;2&nbsp;==&nbsp;b's&nbsp;port&nbsp;1<br>
 &nbsp;<br>
@@ -395,20 +412,25 @@ note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;s11&nbsp;or&nbsp;s22&nbsp;is&nbsp;1.</tt></dd></dl>
  <dl><dt><a name="-connect"><strong>connect</strong></a>(ntwkA, k, ntwkB, l)</dt><dd><tt>connect&nbsp;two&nbsp;n-port&nbsp;networks&nbsp;together.&nbsp;specifically,&nbsp;connect&nbsp;port&nbsp;'k'<br>
 on&nbsp;ntwkA&nbsp;to&nbsp;port&nbsp;'l'&nbsp;on&nbsp;ntwkB.&nbsp;The&nbsp;resultant&nbsp;network&nbsp;has<br>
-(ntwkA.nports+ntwkB.nports&nbsp;-2)-ports<br>
+(ntwkA.nports+ntwkB.nports&nbsp;-2)&nbsp;ports.&nbsp;The&nbsp;port&nbsp;index's&nbsp;('k','l')&nbsp;<br>
+start&nbsp;from&nbsp;0.&nbsp;Port&nbsp;impedances&nbsp;are&nbsp;taken&nbsp;into&nbsp;account.<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkA:&nbsp;network&nbsp;'A',&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;k:&nbsp;port&nbsp;index&nbsp;on&nbsp;ntwkA&nbsp;[int]&nbsp;(&nbsp;port&nbsp;indecies&nbsp;start&nbsp;from&nbsp;0&nbsp;)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkA:&nbsp;network&nbsp;'B',&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkB:&nbsp;network&nbsp;'B',&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;port&nbsp;index&nbsp;on&nbsp;ntwkB&nbsp;[int]<br>
 &nbsp;<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkC':&nbsp;new&nbsp;network&nbsp;of&nbsp;rank&nbsp;(ntwkA.nports+ntwkB.nports&nbsp;-2)-ports<br>
 &nbsp;<br>
+&nbsp;<br>
 note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;functions&nbsp;<a href="#-connect_s">connect_s</a>()&nbsp;and&nbsp;<a href="#-innerconnect_s">innerconnect_s</a>()&nbsp;for&nbsp;actual&nbsp;<br>
-S-parameter&nbsp;connection&nbsp;algorithm.</tt></dd></dl>
+S-parameter&nbsp;connection&nbsp;algorithm.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;effect&nbsp;of&nbsp;mis-matched&nbsp;port&nbsp;impedances&nbsp;is&nbsp;handled&nbsp;by&nbsp;inserting<br>
+a&nbsp;2-port&nbsp;'mismatch'&nbsp;network&nbsp;between&nbsp;the&nbsp;two&nbsp;connected&nbsp;ports.</tt></dd></dl>
  <dl><dt><a name="-connect_s"><strong>connect_s</strong></a>(S, k, T, l)</dt><dd><tt>connect&nbsp;two&nbsp;n-port&nbsp;networks&nbsp;together.&nbsp;specifically,&nbsp;connect&nbsp;port&nbsp;'k'<br>
 on&nbsp;network&nbsp;'S'&nbsp;to&nbsp;port&nbsp;'l'&nbsp;on&nbsp;network&nbsp;'T'.&nbsp;The&nbsp;resultant&nbsp;network&nbsp;has<br>
 (S.rank&nbsp;+&nbsp;T.rank-2)-ports<br>
@@ -439,8 +461,15 @@ note:<br>
 &nbsp;<br>
 note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;only&nbsp;works&nbsp;for&nbsp;2-ports&nbsp;at&nbsp;the&nbsp;moment</tt></dd></dl>
- <dl><dt><a name="-innerconnect"><strong>innerconnect</strong></a>(ntwk, k, l)</dt><dd><tt>connect&nbsp;two&nbsp;ports&nbsp;of&nbsp;a&nbsp;single&nbsp;n-port&nbsp;network,&nbsp;resulting&nbsp;in&nbsp;a&nbsp;<br>
-(n-2)-port&nbsp;network.<br>
+ <dl><dt><a name="-impedance_mismatch"><strong>impedance_mismatch</strong></a>(z1, z2)</dt><dd><tt>returns&nbsp;a&nbsp;two-port&nbsp;network&nbsp;for&nbsp;a&nbsp;impedance&nbsp;mis-match<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z1:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;1&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z2:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;2&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2-port&nbsp;s-matrix&nbsp;for&nbsp;the&nbsp;impedance&nbsp;mis-match</tt></dd></dl>
+ <dl><dt><a name="-innerconnect"><strong>innerconnect</strong></a>(ntwkA, k, l)</dt><dd><tt>connect&nbsp;two&nbsp;ports&nbsp;of&nbsp;a&nbsp;single&nbsp;n-port&nbsp;network,&nbsp;resulting&nbsp;in&nbsp;a&nbsp;<br>
+(n-2)-port&nbsp;network.&nbsp;port&nbsp;indecies&nbsp;start&nbsp;from&nbsp;0.<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;network.&nbsp;[mwavepy.<a href="#Network">Network</a>]<br>

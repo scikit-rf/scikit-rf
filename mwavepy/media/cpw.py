@@ -19,19 +19,29 @@
 #       MA 02110-1301, USA.
 
 '''
-contains free space class
+contains CPW class
 '''
 from scipy.constants import  epsilon_0, mu_0
-from numpy import real, imag,pi,sqrt,log
+from scipy.special import ellipk
+from numpy import real, imag,pi,sqrt,log,zeros
 from .media import Media	
 class CPW(Media):
 	'''
 	Coplanar waveguide class
+	
+	This class was made based off the the documentation from the
+	qucs project ( qucs.sourceforge.net/ ).
+	
 	'''
-	def __init__(self, frequency, w , s, ep_r,*args, **kwargs):
+	def __init__(self, frequency, w , s, ep_r, t=None, r_s=None, \
+		*args, **kwargs):
 		'''
 		takes:
-
+			w: width of center conductor, in m. 
+			s: width of gap, in m. 
+			ep_r: relative permativity of substrate
+			r_s: surface resistivity of conductor (None)
+			t: conductor thickness, in m.
 		returns:
 			mwavepy.Media object 
 		'''
@@ -57,22 +67,63 @@ class CPW(Media):
 		
 	@property
 	def ep_re(self):
+		'''
+		intermediary parameter. see qucs docs on cpw lines.
+		'''
 		return (self.ep_r+1)/2.
-	
+	@property
+	def k1(self):
+		'''
+		intermediary parameter. see qucs docs on cpw lines.
+		'''
+		return self.w/(self.w +2*self.s)
 	@property 
 	def K_ratio(self):
+		'''
+		intermediary parameter. see qucs docs on cpw lines.
+		'''
+		k1 = self.k1
 		
-		K = self.w/(self.w +2*self.s)
+		if (0 <= k1 <= 1/sqrt(2)):
+			return pi/(log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))
+		elif (1/sqrt(2) < k1 <= 1):
+			return (log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))/pi
+	
+	@property
+	def alpha_conductor(self):
+		'''
+		losses due to conductor resistivity
+		'''
+		t, k1, ep_re, r_s = self.t, self.k1,self.ep_re,self.r_s
+		a = self.w/2.
+		b = self.s+self.w/2.
+		K = ellipk	# complete elliptical integral of first kind
+		K_p = lambda x: ellipk(sqrt(1-x**2)) # ellipk's compliment
 		
-		if (0 <= K <= 1/sqrt(2)):
-			return pi/(log(2*(1+sqrt(K))/(1-sqrt(K)) ))
-		elif (1/sqrt(2) < K <= 1):
-			return (log(2*(1+sqrt(K))/(1-sqrt(K)) ))/pi
+		return ((r_s * sqrt(ep_re)/(480*pi*K(k1)*K_p(k1)*(1-k_1**2) ))*\
+			(1./a * (pi+log((8*pi*a*(1-k1))/(t*(1+k1)))) +\
+			 1./b * (pi+log((8*pi*b*(1-k1))/(t*(1+k1))))))
 			
+
+
 	@property
 	def Z0(self):
+		'''
+		characterisitc impedance
+		'''
 		return 30.*pi / sqrt(self.ep_re) * self.K_ratio
 	
 	@property 
 	def gamma(self):
-		return 1j*2*pi*self.frequency.f*sqrt(self.ep_re*epsilon_0*mu_0)
+		'''
+		propagation constant
+		'''
+		beta = 1j*2*pi*self.frequency.f*sqrt(self.ep_re*epsilon_0*mu_0)
+		alpha = zeros(len(beta))
+		try:
+			alpha = self.alpha_conductor 
+		except(AttributeError):
+			# they didnt set surface resistivity and conductor thickness
+			pass
+		
+		return beta+alpha

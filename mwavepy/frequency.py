@@ -73,13 +73,15 @@ class Frequency(object):
 		self.sweep_type = sweep_type
 		
 	@classmethod
-	def from_f(cls,f):
+	def from_f(cls,f, *args,**kwargs):
 		'''
-		alternative constructor from a frequency vector, in Hz
+		alternative constructor from a frequency vector,
 		takes:
-			f: frequency array in Hz
+			f: frequency array (default in Hz) 
+		returns:
+			mwavepy.Frequency object
 		'''
-		return cls(start=f[0], stop=f[-1],npoints = len(f), unit='hz')
+		return cls(start=f[0], stop=f[-1],npoints = len(f), *args, **kwargs)
 	
 	
 	def __eq__(self, other):
