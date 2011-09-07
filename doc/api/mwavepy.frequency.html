@@ -67,9 +67,11 @@ to&nbsp;scale&nbsp;the&nbsp;frequency&nbsp;when&nbsp;f_scaled&nbsp;is&nbsp;refer
 
 <hr>
 Class methods defined here:<br>
-<dl><dt><a name="Frequency-from_f"><strong>from_f</strong></a>(cls, f)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt><dd><tt>alternative&nbsp;constructor&nbsp;from&nbsp;a&nbsp;frequency&nbsp;vector,&nbsp;in&nbsp;Hz<br>
+<dl><dt><a name="Frequency-from_f"><strong>from_f</strong></a>(cls, f, *args, **kwargs)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt><dd><tt>alternative&nbsp;constructor&nbsp;from&nbsp;a&nbsp;frequency&nbsp;vector,<br>
 takes:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;array&nbsp;in&nbsp;Hz</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;array&nbsp;(default&nbsp;in&nbsp;Hz)&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.<a href="#Frequency">Frequency</a>&nbsp;<a href="__builtin__.html#object">object</a></tt></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>
@@ -98,8 +100,6 @@ Data descriptors defined here:<br>
 </dl>
 <hr>
 Data and other attributes defined here:<br>
-<dl><dt><strong>__slotnames__</strong> = []</dl>
-
 <dl><dt><strong>multiplier_dict</strong> = {'ghz': 1000000000.0, 'hz': 1, 'mhz': 1000000.0}</dl>
 
 <dl><dt><strong>unit_dict</strong> = {'ghz': 'GHz', 'hz': 'Hz', 'mhz': 'MHz'}</dl>

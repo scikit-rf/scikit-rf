@@ -18,9 +18,7 @@
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
-</td><td width="25%" valign=top><a href="pdb.html">pdb</a><br>
-</td><td width="25%" valign=top><a href="mwavepy.discontinuities.variationalMethods.html">mwavepy.discontinuities.variationalMethods</a><br>
-</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#eeaa77">
 <td colspan=3 valign=bottom>&nbsp;<br>
@@ -77,8 +75,29 @@ returns:<br>
 &nbsp;<br>
 &nbsp;<br>
 note:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uses&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;least&nbsp;squares&nbsp;calculation</tt></dd></dl>
- <dl><dt><a name="-one_port_nls"><strong>one_port_nls</strong></a>(measured, ideals)</dt><dd><tt>one&nbsp;port&nbsp;non-linear&nbsp;least&nbsp;squares.</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uses&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;least&nbsp;squares&nbsp;calculation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;one_port_nls&nbsp;for&nbsp;a&nbsp;non-linear&nbsp;least&nbsp;square&nbsp;implementation</tt></dd></dl>
+ <dl><dt><a name="-one_port_nls"><strong>one_port_nls</strong></a>(measured, ideals)</dt><dd><tt>one&nbsp;port&nbsp;non-linear&nbsp;least&nbsp;squares.<br>
+&nbsp;<br>
+takes:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured&nbsp;-&nbsp;list&nbsp;of&nbsp;measured&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray,&nbsp;representing&nbsp;a&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s-matrix&nbsp;or&nbsp;list&nbsp;of&nbsp;&nbsp;1-port&nbsp;mwavepy.ntwk&nbsp;types.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals&nbsp;-&nbsp;list&nbsp;of&nbsp;assumed&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray,&nbsp;representing&nbsp;a&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s-matrix&nbsp;or&nbsp;list&nbsp;of&nbsp;&nbsp;1-port&nbsp;mwavepy.ntwk&nbsp;types.&nbsp;<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;dictionary&nbsp;containing&nbsp;the&nbsp;following&nbsp;keys:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'error&nbsp;coeffcients':&nbsp;dictionary&nbsp;containing&nbsp;standard&nbsp;error<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;coefficients<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'residuals':&nbsp;a&nbsp;matrix&nbsp;of&nbsp;residuals&nbsp;from&nbsp;the&nbsp;least&nbsp;squared&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation.&nbsp;see&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;more&nbsp;info<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'cov_x':&nbsp;covariance&nbsp;matrix<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uses&nbsp;scipy.optmize.leastsq&nbsp;for&nbsp;non-linear&nbsp;least&nbsp;squares&nbsp;calculation</tt></dd></dl>
  <dl><dt><a name="-parameterized_self_calibration"><strong>parameterized_self_calibration</strong></a>(measured, ideals, showProgress<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>An&nbsp;iterative,&nbsp;general&nbsp;self-calibration&nbsp;routine&nbsp;which&nbsp;can&nbsp;take&nbsp;any<br>
 mixture&nbsp;of&nbsp;parameterized&nbsp;standards.&nbsp;The&nbsp;correct&nbsp;parameter&nbsp;values<br>
 are&nbsp;defined&nbsp;as&nbsp;the&nbsp;ones&nbsp;which&nbsp;minimize&nbsp;the&nbsp;mean&nbsp;residual&nbsp;error.&nbsp;<br>
@@ -211,51 +230,6 @@ Calibration&nbsp;Procedure,&nbsp;Covering&nbsp;n-Port&nbsp;Scattering-Parameter<
 Measurements,&nbsp;Affected&nbsp;by&nbsp;Leakage&nbsp;Errors,"&nbsp;Microwave&nbsp;Theory&nbsp;and<br>
 Techniques,&nbsp;IEEE&nbsp;Transactions&nbsp;on&nbsp;,&nbsp;vol.25,&nbsp;no.12,&nbsp;pp.&nbsp;1100-&nbsp;1115,<br>
 Dec&nbsp;1977</tt></dd></dl>
- <dl><dt><a name="-unknown_translation_offset"><strong>unknown_translation_offset</strong></a>(measured, ideals, wb, d, ftol<font color="#909090">=0.001</font>, xtol<font color="#909090">=0.001</font>, guessLength<font color="#909090">=False</font>, solveForLoss<font color="#909090">=False</font>, showProgress<font color="#909090">=False</font>, **kwargs)</dt><dd><tt>A&nbsp;one&nbsp;port&nbsp;calibration,&nbsp;which&nbsp;can&nbsp;use&nbsp;a&nbsp;redundent&nbsp;number&nbsp;of&nbsp;delayed&nbsp;<br>
-shorts&nbsp;to&nbsp;solve&nbsp;for&nbsp;their&nbsp;unknown&nbsp;lengths.<br>
-&nbsp;<br>
-!see&nbsp;note&nbsp;at&nbsp;bottom&nbsp;about&nbsp;order!<br>
-&nbsp;<br>
-takes:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured&nbsp;-&nbsp;list&nbsp;of&nbsp;measured&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray.&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals&nbsp;-&nbsp;list&nbsp;of&nbsp;measured&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray.&nbsp;see&nbsp;note&nbsp;about&nbsp;order.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb&nbsp;-&nbsp;a&nbsp;mwavepy.workingBand.WorkingBand&nbsp;type.&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d&nbsp;-&nbsp;vector&nbsp;containing&nbsp;initial&nbsp;guesses&nbsp;for&nbsp;the&nbsp;delay&nbsp;short&nbsp;lengths<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;note&nbsp;about&nbsp;order.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ftol&nbsp;-&nbsp;functional&nbsp;tolerance,&nbsp;passed&nbsp;to&nbsp;the&nbsp;scipy.optimize.fmin&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;solveForLoss&nbsp;-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;guessLength&nbsp;-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showProgress&nbsp;-&nbsp;<br>
-&nbsp;<br>
-returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(abc,&nbsp;residues)&nbsp;-&nbsp;a&nbsp;tuple.&nbsp;abc&nbsp;is&nbsp;a&nbsp;Nx3&nbsp;ndarray&nbsp;containing&nbsp;the<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complex&nbsp;calibrations&nbsp;coefficients,where&nbsp;N&nbsp;is&nbsp;the&nbsp;number&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;frequency&nbsp;points&nbsp;in&nbsp;the&nbsp;standards&nbsp;that&nbsp;where&nbsp;given.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;abc:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;components&nbsp;of&nbsp;abc&nbsp;are&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a[:]&nbsp;=&nbsp;abc[:,0]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b[:]&nbsp;=&nbsp;abc[:,1]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c[:]&nbsp;=&nbsp;abc[:,2],<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a,&nbsp;b&nbsp;and&nbsp;c&nbsp;are&nbsp;related&nbsp;to&nbsp;the&nbsp;error&nbsp;network&nbsp;by&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;e01*e10&nbsp;-&nbsp;e00*e11&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;e00&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&nbsp;e11<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;residues:&nbsp;a&nbsp;matrix&nbsp;of&nbsp;residues&nbsp;from&nbsp;the&nbsp;least&nbsp;squared&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation.&nbsp;see&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;more&nbsp;info<br>
-&nbsp;<br>
-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;note:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ORDER&nbsp;MATTERS.<br>
-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;all&nbsp;standard&nbsp;lists,&nbsp;and&nbsp;d-vector&nbsp;must&nbsp;be&nbsp;in&nbsp;order.&nbsp;The&nbsp;first<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m-standards&nbsp;are&nbsp;assumed&nbsp;to&nbsp;be&nbsp;delayed&nbsp;shorts,&nbsp;where&nbsp;m&nbsp;is&nbsp;the<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;of&nbsp;d.&nbsp;Any&nbsp;standards&nbsp;after&nbsp;may&nbsp;be&nbsp;anything.</tt></dd></dl>
  <dl><dt><a name="-unterminate_switch_terms"><strong>unterminate_switch_terms</strong></a>(two_port, gamma_f, gamma_r)</dt><dd><tt>unterminates&nbsp;switch&nbsp;terms&nbsp;from&nbsp;raw&nbsp;measurements.<br>
 &nbsp;<br>
 takes:<br>
@@ -269,95 +243,5 @@ returns:<br>
 see:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'Formulations&nbsp;of&nbsp;the&nbsp;Basic&nbsp;Vector&nbsp;Network&nbsp;Analyzer&nbsp;Error<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Model&nbsp;including&nbsp;Switch&nbsp;Terms'&nbsp;by&nbsp;Roger&nbsp;B.&nbsp;Marks</tt></dd></dl>
- <dl><dt><a name="-xds"><strong>xds</strong></a>(measured, ideals, wb, d, ftol<font color="#909090">=0.001</font>, xtol<font color="#909090">=0.001</font>, guessLength<font color="#909090">=False</font>, solveForLoss<font color="#909090">=False</font>, showProgress<font color="#909090">=False</font>)</dt><dd><tt>A&nbsp;one&nbsp;port&nbsp;calibration,&nbsp;which&nbsp;can&nbsp;use&nbsp;a&nbsp;redundent&nbsp;number&nbsp;of&nbsp;delayed&nbsp;<br>
-shorts&nbsp;to&nbsp;solve&nbsp;for&nbsp;their&nbsp;unknown&nbsp;lengths.<br>
-&nbsp;<br>
-!see&nbsp;note&nbsp;at&nbsp;bottom&nbsp;about&nbsp;order!<br>
-&nbsp;<br>
-takes:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured&nbsp;-&nbsp;list&nbsp;of&nbsp;measured&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray.&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals&nbsp;-&nbsp;list&nbsp;of&nbsp;measured&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray.&nbsp;see&nbsp;note&nbsp;about&nbsp;order.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb&nbsp;-&nbsp;a&nbsp;mwavepy.workingBand.WorkingBand&nbsp;type.&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d&nbsp;-&nbsp;vector&nbsp;containing&nbsp;initial&nbsp;guesses&nbsp;for&nbsp;the&nbsp;delay&nbsp;short&nbsp;lengths<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;note&nbsp;about&nbsp;order.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ftol&nbsp;-&nbsp;functional&nbsp;tolerance,&nbsp;passed&nbsp;to&nbsp;the&nbsp;scipy.optimize.fmin&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;solveForLoss&nbsp;-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;guessLength&nbsp;-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showProgress&nbsp;-&nbsp;<br>
-&nbsp;<br>
-returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(abc,&nbsp;residues)&nbsp;-&nbsp;a&nbsp;tuple.&nbsp;abc&nbsp;is&nbsp;a&nbsp;Nx3&nbsp;ndarray&nbsp;containing&nbsp;the<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complex&nbsp;calibrations&nbsp;coefficients,where&nbsp;N&nbsp;is&nbsp;the&nbsp;number&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;frequency&nbsp;points&nbsp;in&nbsp;the&nbsp;standards&nbsp;that&nbsp;where&nbsp;given.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;abc:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;components&nbsp;of&nbsp;abc&nbsp;are&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a[:]&nbsp;=&nbsp;abc[:,0]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b[:]&nbsp;=&nbsp;abc[:,1]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c[:]&nbsp;=&nbsp;abc[:,2],<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a,&nbsp;b&nbsp;and&nbsp;c&nbsp;are&nbsp;related&nbsp;to&nbsp;the&nbsp;error&nbsp;network&nbsp;by&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;e01*e10&nbsp;-&nbsp;e00*e11&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;e00&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&nbsp;e11<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;residues:&nbsp;a&nbsp;matrix&nbsp;of&nbsp;residues&nbsp;from&nbsp;the&nbsp;least&nbsp;squared&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation.&nbsp;see&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;more&nbsp;info<br>
-&nbsp;<br>
-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;note:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ORDER&nbsp;MATTERS.<br>
-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;all&nbsp;standard&nbsp;lists,&nbsp;and&nbsp;d-vector&nbsp;must&nbsp;be&nbsp;in&nbsp;order.&nbsp;The&nbsp;first<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m-standards&nbsp;are&nbsp;assumed&nbsp;to&nbsp;be&nbsp;delayed&nbsp;shorts,&nbsp;where&nbsp;m&nbsp;is&nbsp;the<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;of&nbsp;d.&nbsp;Any&nbsp;standards&nbsp;after&nbsp;may&nbsp;be&nbsp;anything.</tt></dd></dl>
- <dl><dt><a name="-xds_xdl"><strong>xds_xdl</strong></a>(measured, ideals, wb, ds, dl, Gamma0<font color="#909090">=None</font>, ftol<font color="#909090">=0.001</font>, xtol<font color="#909090">=0.001</font>, guessLength<font color="#909090">=False</font>, solveForLoss<font color="#909090">=False</font>, solveForLoad<font color="#909090">=False</font>, showProgress<font color="#909090">=False</font>)</dt><dd><tt>A&nbsp;one&nbsp;port&nbsp;calibration,&nbsp;which&nbsp;can&nbsp;use&nbsp;a&nbsp;redundent&nbsp;number&nbsp;of&nbsp;delayed&nbsp;<br>
-shorts&nbsp;to&nbsp;solve&nbsp;for&nbsp;their&nbsp;unknown&nbsp;lengths.<br>
-&nbsp;<br>
-!see&nbsp;note&nbsp;at&nbsp;bottom&nbsp;about&nbsp;order!<br>
-&nbsp;<br>
-takes:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured&nbsp;-&nbsp;list&nbsp;of&nbsp;measured&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray.&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals&nbsp;-&nbsp;list&nbsp;of&nbsp;measured&nbsp;reflection&nbsp;coefficients.&nbsp;can&nbsp;be&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;lists&nbsp;of&nbsp;either&nbsp;a&nbsp;kxnxn&nbsp;numpy.ndarray.&nbsp;see&nbsp;note&nbsp;about&nbsp;order.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb&nbsp;-&nbsp;a&nbsp;mwavepy.workingBand.WorkingBand&nbsp;type.&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d&nbsp;-&nbsp;vector&nbsp;containing&nbsp;initial&nbsp;guesses&nbsp;for&nbsp;the&nbsp;delay&nbsp;short&nbsp;lengths<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;see&nbsp;note&nbsp;about&nbsp;order.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ftol&nbsp;-&nbsp;functional&nbsp;tolerance,&nbsp;passed&nbsp;to&nbsp;the&nbsp;scipy.optimize.fmin&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;function<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;solveForLoss&nbsp;-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;guessLength&nbsp;-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;showProgress&nbsp;-&nbsp;<br>
-&nbsp;<br>
-returns:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(abc,&nbsp;residues)&nbsp;-&nbsp;a&nbsp;tuple.&nbsp;abc&nbsp;is&nbsp;a&nbsp;Nx3&nbsp;ndarray&nbsp;containing&nbsp;the<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;complex&nbsp;calibrations&nbsp;coefficients,where&nbsp;N&nbsp;is&nbsp;the&nbsp;number&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;of&nbsp;frequency&nbsp;points&nbsp;in&nbsp;the&nbsp;standards&nbsp;that&nbsp;where&nbsp;given.<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;abc:&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;components&nbsp;of&nbsp;abc&nbsp;are&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a[:]&nbsp;=&nbsp;abc[:,0]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b[:]&nbsp;=&nbsp;abc[:,1]<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c[:]&nbsp;=&nbsp;abc[:,2],<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a,&nbsp;b&nbsp;and&nbsp;c&nbsp;are&nbsp;related&nbsp;to&nbsp;the&nbsp;error&nbsp;network&nbsp;by&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;=&nbsp;e01*e10&nbsp;-&nbsp;e00*e11&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b&nbsp;=&nbsp;e00&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c&nbsp;=&nbsp;e11<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;residues:&nbsp;a&nbsp;matrix&nbsp;of&nbsp;residues&nbsp;from&nbsp;the&nbsp;least&nbsp;squared&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation.&nbsp;see&nbsp;numpy.linalg.lstsq()&nbsp;for&nbsp;more&nbsp;info<br>
-&nbsp;<br>
-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
-&nbsp;note:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ORDER&nbsp;MATTERS.<br>
-&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;all&nbsp;standard&nbsp;lists,&nbsp;and&nbsp;d-vector&nbsp;must&nbsp;be&nbsp;in&nbsp;order.&nbsp;The&nbsp;first<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m-standards&nbsp;are&nbsp;assumed&nbsp;to&nbsp;be&nbsp;delayed&nbsp;shorts,&nbsp;where&nbsp;m&nbsp;is&nbsp;the<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;of&nbsp;d.&nbsp;Any&nbsp;standards&nbsp;after&nbsp;may&nbsp;be&nbsp;anything.</tt></dd></dl>
 </td></tr></table>
 </body></html>

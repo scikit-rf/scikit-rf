@@ -450,6 +450,12 @@ f&nbsp;is&nbsp;the&nbsp;frequency&nbsp;axis.&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;internally,&nbsp;this&nbsp;function&nbsp;creates&nbsp;a&nbsp;larger&nbsp;composite&nbsp;network&nbsp;<br>
 and&nbsp;calls&nbsp;the&nbsp;&nbsp;<a href="#-innerconnect">innerconnect</a>()&nbsp;function.&nbsp;see&nbsp;that&nbsp;function&nbsp;for&nbsp;more&nbsp;<br>
 details&nbsp;about&nbsp;the&nbsp;implementation</tt></dd></dl>
+ <dl><dt><a name="-csv_2_touchstone"><strong>csv_2_touchstone</strong></a>(filename)</dt><dd><tt>converts&nbsp;a&nbsp;csv&nbsp;file&nbsp;saved&nbsp;from&nbsp;a&nbsp;Rhode&nbsp;swarz&nbsp;and&nbsp;possibly&nbsp;other&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;filename:&nbsp;name&nbsp;of&nbsp;file<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#Network">Network</a>&nbsp;<a href="__builtin__.html#object">object</a></tt></dd></dl>
  <dl><dt><a name="-de_embed"><strong>de_embed</strong></a>(a, b)</dt><dd><tt>de-embed&nbsp;a&nbsp;2x2&nbsp;s-matrix&nbsp;from&nbsp;another&nbsp;2x2&nbsp;s-matrix<br>
 &nbsp;<br>
 c&nbsp;=&nbsp;b**-1&nbsp;*&nbsp;a<br>
@@ -498,6 +504,15 @@ The&nbsp;original&nbsp;algorithm&nbsp;is&nbsp;given&nbsp;in&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'A&nbsp;NEW&nbsp;GENERAL&nbsp;COMPUTER&nbsp;ALGORITHM&nbsp;FOR&nbsp;S-MATRIX&nbsp;CALCULATION&nbsp;OF<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;INTERCONNECTED&nbsp;MULTIPORTS'&nbsp;by&nbsp;Gunnar&nbsp;Filipsson</tt></dd></dl>
  <dl><dt><a name="-inv"><strong>inv</strong></a>(s)</dt><dd><tt>inverse&nbsp;s-parameters,&nbsp;used&nbsp;for&nbsp;de-embeding</tt></dd></dl>
+ <dl><dt><a name="-load_all_touchstones"><strong>load_all_touchstones</strong></a>(dir<font color="#909090">='.'</font>, contains<font color="#909090">=None</font>, f_unit<font color="#909090">=None</font>)</dt><dd><tt>loads&nbsp;all&nbsp;touchtone&nbsp;files&nbsp;in&nbsp;a&nbsp;given&nbsp;dir&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dir&nbsp;&nbsp;-&nbsp;the&nbsp;path&nbsp;to&nbsp;the&nbsp;dir,&nbsp;passed&nbsp;as&nbsp;a&nbsp;string&nbsp;(defalut&nbsp;is&nbsp;cwd)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;contains&nbsp;-&nbsp;string&nbsp;which&nbsp;filename&nbsp;must&nbsp;contain&nbsp;to&nbsp;be&nbsp;loaded,&nbsp;not&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;used&nbsp;if&nbsp;None.(default&nbsp;None)<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkDict&nbsp;-&nbsp;a&nbsp;Dictonary&nbsp;with&nbsp;keys&nbsp;equal&nbsp;to&nbsp;the&nbsp;file&nbsp;name&nbsp;(without<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;suffix),&nbsp;and&nbsp;values&nbsp;equal&nbsp;to&nbsp;the&nbsp;corresponding&nbsp;ntwk&nbsp;types</tt></dd></dl>
  <dl><dt><a name="-one_port_2_two_port"><strong>one_port_2_two_port</strong></a>(ntwk)</dt><dd><tt>calculates&nbsp;the&nbsp;two-port&nbsp;network&nbsp;given&nbsp;a&nbsp;&nbsp;symetric,&nbsp;reciprocal&nbsp;and&nbsp;<br>
 lossless&nbsp;one-port&nbsp;network.<br>
 &nbsp;<br>
@@ -529,8 +544,9 @@ returns:<br>
 example:<br>
 to&nbsp;use&nbsp;a&nbsp;working&nbsp;band&nbsp;to&nbsp;create&nbsp;a&nbsp;two-port&nbsp;reflective&nbsp;standard&nbsp;from<br>
 two&nbsp;one-port&nbsp;standards<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wb=&nbsp;WorkingBand(....)<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-two_port_reflect">two_port_reflect</a>(wb.short(),&nbsp;wb.match())</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my_media=&nbsp;...<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-two_port_reflect">two_port_reflect</a>(my_media.short(),&nbsp;my_media.match())</tt></dd></dl>
+ <dl><dt><a name="-write_dict_of_networks"><strong>write_dict_of_networks</strong></a>(ntwkDict, dir<font color="#909090">='.'</font>)</dt><dd><tt>writes&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;networks&nbsp;to&nbsp;a&nbsp;given&nbsp;directory</tt></dd></dl>
 </td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#55aa55">

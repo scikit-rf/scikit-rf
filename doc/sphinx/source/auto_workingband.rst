@@ -1,8 +1,8 @@
-.. _auto_workingband:
+.. _auto_media:
 
 WorkingBand
 -----------------
-.. autoclass:: mwavepy.WorkingBand
+.. autoclass:: mwavepy.Media
    :members:
    :undoc-members:
    :inherited-members:

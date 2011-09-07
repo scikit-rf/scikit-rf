@@ -11,7 +11,7 @@ Major classes
    auto_frequency
    auto_touchstone
    auto_network
-   auto_workingband
+   auto_media
    auto_calibration
    
 

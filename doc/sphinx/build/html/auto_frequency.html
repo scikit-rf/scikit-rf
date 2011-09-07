@@ -88,11 +88,15 @@ frequency info.</p>
 
 <dl class="classmethod">
 <dt id="mwavepy.Frequency.from_f">
-<em class="property">classmethod </em><tt class="descname">from_f</tt><big>(</big><em>f</em><big>)</big><a class="headerlink" href="#mwavepy.Frequency.from_f" title="Permalink to this definition">¶</a></dt>
-<dd><p>alternative constructor from a frequency vector, in Hz
+<em class="property">classmethod </em><tt class="descname">from_f</tt><big>(</big><em>f</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Frequency.from_f" title="Permalink to this definition">¶</a></dt>
+<dd><p>alternative constructor from a frequency vector,
 takes:</p>
 <blockquote>
-f: frequency array in Hz</blockquote>
+f: frequency array (default in Hz)</blockquote>
+<dl class="docutils">
+<dt>returns:</dt>
+<dd>mwavepy.Frequency object</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -110,6 +114,12 @@ f: frequency array in Hz</blockquote>
 <dt id="mwavepy.Frequency.unit">
 <tt class="descname">unit</tt><a class="headerlink" href="#mwavepy.Frequency.unit" title="Permalink to this definition">¶</a></dt>
 <dd><p>The unit to format the frequency axis in. see formatedAxis</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Frequency.w">
+<tt class="descname">w</tt><a class="headerlink" href="#mwavepy.Frequency.w" title="Permalink to this definition">¶</a></dt>
+<dd><p>angular frequency in radians</p>
 </dd></dl>
 
 </dd></dl>
