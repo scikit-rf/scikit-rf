@@ -32,8 +32,6 @@ import media
 import touchstone 	
 import frequency
 import network
-import workingBand
-import discontinuities
 import calibration
 import convenience
 import plotting
@@ -44,7 +42,6 @@ import tlineFunctions
 # Import contents into current namespace for ease of calling 
 from frequency import * 
 from network import * 
-from workingBand import * 
 from calibration import * 
 from convenience import * 
 from plotting import  * 

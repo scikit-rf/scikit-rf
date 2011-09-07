@@ -27,7 +27,6 @@ specific instances are named as follows
 import numpy as npy
 from copy import copy,deepcopy
 
-from discontinuities.variationalMethods import *
 
 class ParameterBoundsError(Exception):
 	pass
