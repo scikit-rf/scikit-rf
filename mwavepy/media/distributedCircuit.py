@@ -28,7 +28,7 @@ import numpy as npy
 from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
 	 interp, linspace, shape,zeros, reshape
 
-from ..transmissionLine.functions import electrical_length
+from ..tlineFunctions import electrical_length
 from .media import Media	
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
