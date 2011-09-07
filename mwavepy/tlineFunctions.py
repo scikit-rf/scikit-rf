@@ -1,5 +1,5 @@
 
-#       functions.py
+#       tlinefunctions.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
 #       

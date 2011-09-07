@@ -27,9 +27,7 @@ from copy import copy,deepcopy
 import numpy as npy
 from scipy import rand
 from scipy.optimize import fmin_slsqp,fmin,leastsq # used for xds
-from discontinuities import variationalMethods as vm
 from parameterizedStandard import ParameterBoundsError
-import pdb
 
 
 ## Supporting Functions
@@ -69,6 +67,7 @@ def abc_2_coefs_dict(abc):
 		'source match':e11\
 		}
 	return coefsDict
+
 def eight_term_2_one_port_coefs(coefs):
 	port1_coefs = {\
 		'directivity':coefs['e00'],\
@@ -81,6 +80,7 @@ def eight_term_2_one_port_coefs(coefs):
 		'reflection tracking':coefs['det_Y']+ coefs['e33']*coefs['e22'],\
 		}
 	return port1_coefs, port2_coefs
+
 def guess_length_of_delay_short( aNtwk,tline):
 		'''
 		guess length of physical length of a Delay Short given by aNtwk
@@ -103,10 +103,6 @@ def guess_length_of_delay_short( aNtwk,tline):
 		
 		#print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
 		return npy.linalg.lstsq(A, B)[0][0]
-
-
-
-
 
 def unterminate_switch_terms(two_port, gamma_f, gamma_r):
 	'''
@@ -140,6 +136,7 @@ def unterminate_switch_terms(two_port, gamma_f, gamma_r):
 	
 	unterminated.s = u
 	return unterminated
+
 	
 ## ONE PORT 
 def one_port(measured, ideals):
@@ -165,6 +162,8 @@ def one_port(measured, ideals):
 
 	note:
 		uses numpy.linalg.lstsq() for least squares calculation
+		
+		see one_port_nls for a non-linear least square implementation
 	'''
 	#make  copies so list entities are not changed, when we typecast 
 	mList = copy(measured)
@@ -225,12 +224,28 @@ def one_port(measured, ideals):
 	
 	return output
 
-
-
-
 def one_port_nls (measured, ideals):
 	'''
 	one port non-linear least squares.
+	
+	takes: 
+		measured - list of measured reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+		ideals - list of assumed reflection coefficients. can be 
+			lists of either a kxnxn numpy.ndarray, representing a 
+			s-matrix or list of  1-port mwavepy.ntwk types. 
+	
+	returns:
+		a dictionary containing the following keys:
+			'error coeffcients': dictionary containing standard error
+			coefficients
+			'residuals': a matrix of residuals from the least squared 
+				calculation. see numpy.linalg.lstsq() for more info
+			'cov_x': covariance matrix
+
+	note:
+		uses scipy.optmize.leastsq for non-linear least squares calculation
 	
 	'''
 	#make  copies so list entities are not changed, when we typecast 
@@ -291,6 +306,7 @@ def one_port_nls (measured, ideals):
 	output = {'error coefficients':abc_2_coefs_dict(abc), 'residuals':residuals, 'cov_x':npy.array(cov_x)}
 	
 	return output
+
 
 ## TWO PORT
 def two_port(measured, ideals, switchterms = None):
@@ -416,9 +432,6 @@ def two_port(measured, ideals, switchterms = None):
 		}
 	
 	return output
-
-
-
 
 	
 ## SELF CALIBRATION
@@ -677,484 +690,6 @@ def parameterized_self_calibration_bounded(measured, ideals_ps, showProgress=Tru
 	output.update( {\
 	'parameter_vector_final':parameter_vector_end,\
 	'mean_residual_list':mean_residual_list\
-	})
-	return output
-
-## DEPRECATED AWAITING DELETION
-def xds(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
-	guessLength=False,solveForLoss=False,showProgress= False):
-	'''
-	A one port calibration, which can use a redundent number of delayed 
-	shorts to solve	for their unknown lengths.
-	
-	!see note at bottom about order!
-	 
-	takes: 
-		measured - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray. 
-		ideals - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray. see note about order.
-		wb - a mwavepy.workingBand.WorkingBand type. 
-		d - vector containing initial guesses for the delay short lengths
-			see note about order.
-		ftol - functional tolerance, passed to the scipy.optimize.fmin 
-			function
-		solveForLoss - 
-		guessLength - 
-		showProgress - 
-	
-	returns:
-		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
-			complex calibrations coefficients,where N is the number 
-			of frequency points in the standards that where given.
-			
-			abc: 
-			the components of abc are 
-				a[:] = abc[:,0]
-				b[:] = abc[:,1]
-				c[:] = abc[:,2],
-			a, b and c are related to the error network by 
-				a = e01*e10 - e00*e11 
-				b = e00 
-				c = e11
-			
-			residues: a matrix of residues from the least squared 
-				calculation. see numpy.linalg.lstsq() for more info
-	
-	 
-		
-	 note:
-		ORDER MATTERS.
-	
-		all standard lists, and d-vector must be in order. The first
-		m-standards are assumed to be delayed shorts, where m is the
-		 length of d. Any standards after may be anything.
-	
-	'''
-	
-	
-	
-	
-
-	## TODO: major re-write
-	
-	#make deep copies so list entities are not changed
-	gammaMList = copy(measured)
-	gammaAList = copy(ideals)
-	d = copy(d)
-	d = list(d)
-	
-	
-		
-	# find number of standards given, set numberCoefs. Used for matrix 
-	# dimensions
-	numStds = len(gammaMList)
-	numCoefs = 3
-	if solveForLoss == True:
-		numDelays = len(d)-1
-	else:
-		numDelays = len(d)
-		
-	
-	if guessLength == True:
-		#making assumption first non-delay network is teh Short
-		short = gammaMList[numDelays]
-		for k in range(numDelays):
-			d[k] = wb.guess_length_of_delay_short(gammaMList[k]/gammaMList[len(d)]) 
-		
-		print array(d)/1e-6
-		
-		
-	# try to access s-parameters, in case its a ntwk type, other wise 
-	# just keep on rollin 
-	try:
-		for k in range(numStds):
-			gammaMList[k] = gammaMList[k].s
-			gammaAList[k] = gammaAList[k].s
-	
-	except:
-		pass	
-	
-	
-	
-	fLength = len(gammaMList[0])
-	#initialize output 
-	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residues = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
-
-	
-	
-	if solveForLoss == True:
-		if wb.surfaceConductivity is None:
-			# they have supplied us with a surface Conductivity, default to Al
-			wb.surfaceConductivity = conductivityDict['alumninium']
-		
-		# append conductivity to the d-list, this is sloppy, but i dont
-		# see a way around it
-		d.append(wb.surfaceConductivity)
-		
-		def iterativeCal(d, gammaMList, gammaAList):
-			#TODO:  this function uses sloppy namespace, which limits portability
-			#pick off last element of d, which will hold the conductivity
-			wb.surfaceConductivity = d[-1]
-			numDelays = len(d)-1
-			
-			for stdNum in range(numDelays):
-				gammaAList[stdNum] = wb.delay_short(d = d[stdNum]).s
-			
-			abc, residues = one_port(gammaMList, gammaAList)
-			sumResidualList.append(npy.sum(abs(residues)))
-			#print npy.sum(abs(residues))
-			
-			if showProgress == True:
-				print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
-			return npy.sum(abs(residues))	
-			
-	else:
-		def iterativeCal(d, gammaMList, gammaAList):
-			#TODO:  this function uses sloppy namespace, which limits portability
-			numDelays=len(d)
-			for stdNum in range(numDelays):
-				gammaAList[stdNum] = wb.delay_short(d = d[stdNum]).s
-
-			
-			residues = one_port(gammaMList, gammaAList)['residuals']
-			sumResidualList.append(npy.sum(abs(residues)))
-			#print npy.sum(abs(residues))
-			if showProgress == True:
-				print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
-			return npy.sum(abs(residues))
-	
-	
-	dStart = npy.array(d)
-	sumResidualList = []	
-	
-	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), \
-		disp=False,ftol=ftol, xtol=xtol)
-	
-	if solveForLoss == True:
-		wb.surfaceConductivity = dEnd[-1]
-		
-		
-	for stdNum in range(numDelays):
-			gammaAList[stdNum] = wb.delay_short(d = dEnd[stdNum]).s
-			
-		
-
-	output = one_port (measured = gammaMList, ideals=gammaAList)
-
-
-	output.update( {\
-	'd_end':dEnd,\
-	'sum_residual_list':sumResidualList\
-	})
-	return output
-
-
-
-
-
-def unknown_translation_offset(measured, ideals, wb, d, ftol=1e-3, xtol=1e-3, \
-	guessLength=False,solveForLoss=False,showProgress= False, **kwargs):
-	'''
-	A one port calibration, which can use a redundent number of delayed 
-	shorts to solve	for their unknown lengths.
-	
-	!see note at bottom about order!
-	 
-	takes: 
-		measured - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray. 
-		ideals - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray. see note about order.
-		wb - a mwavepy.workingBand.WorkingBand type. 
-		d - vector containing initial guesses for the delay short lengths
-			see note about order.
-		ftol - functional tolerance, passed to the scipy.optimize.fmin 
-			function
-		solveForLoss - 
-		guessLength - 
-		showProgress - 
-	
-	returns:
-		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
-			complex calibrations coefficients,where N is the number 
-			of frequency points in the standards that where given.
-			
-			abc: 
-			the components of abc are 
-				a[:] = abc[:,0]
-				b[:] = abc[:,1]
-				c[:] = abc[:,2],
-			a, b and c are related to the error network by 
-				a = e01*e10 - e00*e11 
-				b = e00 
-				c = e11
-			
-			residues: a matrix of residues from the least squared 
-				calculation. see numpy.linalg.lstsq() for more info
-	
-	 
-		
-	 note:
-		ORDER MATTERS.
-	
-		all standard lists, and d-vector must be in order. The first
-		m-standards are assumed to be delayed shorts, where m is the
-		 length of d. Any standards after may be anything.
-	
-	'''
-	
-	
-	
-	
-
-	## TODO: major re-write
-	
-	#make deep copies so list entities are not changed
-	gammaMList = copy(measured)
-	gammaAList = copy(ideals)
-	d = copy(d)
-	d = list(d)
-		
-	# find number of standards given, set numberCoefs. Used for matrix 
-	# dimensions
-	numStds = len(gammaMList)
-	numCoefs = 3
-	numDelays = len(d)/2
-			
-	# try to access s-parameters, in case its a ntwk type, other wise 
-	# just keep on rollin 
-	try:
-		for k in range(numStds):
-			gammaMList[k] = gammaMList[k].s
-			gammaAList[k] = gammaAList[k].s
-	
-	except:
-		pass	
-	
-	fLength = len(gammaMList[0])
-	#initialize output 
-	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residues = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
-
-	def iterativeCal(d, gammaMList, gammaAList):
-		#TODO:  this function uses sloppy namespace, which limits portability
-		numDelays=len(d)/2
-		
-		for stdNum in range(numDelays):
-			gammaAList[stdNum] = vm.translation_offset(wg=wb.tline,
-				freq= wb.frequency, delta_a=d[2*stdNum],\
-				delta_b=d[2*stdNum+1],**kwargs).s
-
-		
-		residues = one_port(gammaMList, gammaAList)['residuals']
-		sumResidualList.append(npy.sum(abs(residues)))
-		#print npy.sum(abs(residues))
-		if showProgress == True:
-			print '%3f ==> '%npy.sum(abs(residues)),d
-		return npy.sum(abs(residues))
-	
-	
-	dStart = npy.array(d)
-	sumResidualList = []	
-	
-	dEnd = fmin (iterativeCal, dStart,args=(gammaMList,gammaAList), \
-		disp=False,ftol=ftol, xtol=xtol)
-		
-		
-	for stdNum in range(numDelays):
-			gammaAList[stdNum] = vm.translation_offset(wg=wb.tline,
-				freq= wb.frequency, delta_a=dEnd[2*stdNum],\
-				delta_b=dEnd[2*stdNum+1],**kwargs).s
-				
-			
-		
-
-	output = one_port (measured = gammaMList, ideals=gammaAList)
-
-
-	output.update( {\
-	'd_end':dEnd,\
-	'sum_residual_list':sumResidualList\
-	})
-	return output
-
-
-def xds_xdl(measured, ideals, wb, ds,dl, Gamma0=None, ftol=1e-3, xtol=1e-3, \
-	guessLength=False,solveForLoss=False,solveForLoad=False, showProgress= False):
-	'''
-	A one port calibration, which can use a redundent number of delayed 
-	shorts to solve	for their unknown lengths.
-	
-	!see note at bottom about order!
-	 
-	takes: 
-		measured - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray. 
-		ideals - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray. see note about order.
-		wb - a mwavepy.workingBand.WorkingBand type. 
-		d - vector containing initial guesses for the delay short lengths
-			see note about order.
-		ftol - functional tolerance, passed to the scipy.optimize.fmin 
-			function
-		solveForLoss - 
-		guessLength - 
-		showProgress - 
-	
-	returns:
-		(abc, residues) - a tuple. abc is a Nx3 ndarray containing the
-			complex calibrations coefficients,where N is the number 
-			of frequency points in the standards that where given.
-			
-			abc: 
-			the components of abc are 
-				a[:] = abc[:,0]
-				b[:] = abc[:,1]
-				c[:] = abc[:,2],
-			a, b and c are related to the error network by 
-				a = e01*e10 - e00*e11 
-				b = e00 
-				c = e11
-			
-			residues: a matrix of residues from the least squared 
-				calculation. see numpy.linalg.lstsq() for more info
-	
-	 
-		
-	 note:
-		ORDER MATTERS.
-	
-		all standard lists, and d-vector must be in order. The first
-		m-standards are assumed to be delayed shorts, where m is the
-		 length of d. Any standards after may be anything.
-	
-	'''
-	
-	
-	
-	
-	#make deep copies so list entities are not changed
-	gammaMList = copy(measured)
-	gammaAList = copy(ideals)
-
-	# make a single vector of all parameters
-	x = list(ds)+list(dl)+[Gamma0]
-	
-	
-	
-	# find number of standards given, set numberCoefs. Used for matrix 
-	# dimensions
-	numStds = len(gammaMList)
-	numCoefs = 3
-	if solveForLoss == True:
-		numDelays = len(d)-1
-	else:
-		numDelayShorts = len(ds)
-		numDelayLoads = len(dl)
-		numDelays = numDelayLoads+numDelayShorts
-		
-	
-	if guessLength == True:
-		#making assumption first non-delay network is teh Short
-		short = gammaMList[numDelays]
-		for k in range(numDelays):
-			d[k] = guess_length_of_delay_short(gammaMList[k]/short, wb.tline) 
-		
-		
-		
-	# try to access s-parameters, in case its a ntwk type, other wise 
-	# just keep on rollin 
-	try:
-		for k in range(numStds):
-			gammaMList[k] = gammaMList[k].s
-			gammaAList[k] = gammaAList[k].s
-	
-	except:
-		pass	
-	
-	
-	
-	fLength = len(gammaMList[0])
-	#initialize output 
-	abc = npy.zeros(shape=(fLength,numCoefs),dtype=complex) 
-	residues = npy.zeros(shape=(fLength,numStds-numCoefs),dtype=complex) 
-
-	
-	
-	if solveForLoss == True:
-		if wb.surfaceConductivity is None:
-			# they have supplied us with a surface Conductivity, default to Al
-			wb.surfaceConductivity = conductivityDict['alumninium']
-		
-		# append conductivity to the d-list, this is sloppy, but i dont
-		# see a way around it
-		d.append(wb.surfaceConductivity)
-		
-		def iterativeCal(d, gammaMList, gammaAList):
-			#TODO:  this function uses sloppy namespace, which limits portability
-			#pick off last element of d, which will hold the conductivity
-			wb.surfaceConductivity = d[-1]
-			numDelays = len(d)-1
-			
-			for stdNum in range(numDelays):
-				gammaAList[stdNum] = wb.delay_short(d = d[stdNum]).s
-			
-			abc, residues = one_port(gammaMList, gammaAList)
-			sumResidualList.append(npy.sum(abs(residues)))
-			#print npy.sum(abs(residues))
-			
-			if showProgress == True:
-				print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(d),d
-			return npy.sum(abs(residues))	
-			
-	else:
-		def iterativeCal(x,numDelayShorts, numDelayLoads, gammaMList, gammaAList):
-			#TODO:  this function uses sloppy namespace, which limits portability
-			Gamma0 = x[-1]
-			numDelays=len(x)-1
-			
-			for stdNum in range(numDelays):
-				if stdNum < numDelayLoads:
-					gammaAList[stdNum] = wb.delay_short(d = x[stdNum]).s
-				else:
-					gammaAList[stdNum] = wb.delay_load(d = x[stdNum],Gamma0=Gamma0).s
-
-			
-			residues = one_port(gammaMList, gammaAList)['residuals']
-			sumResidualList.append(npy.sum(abs(residues)))
-			#print npy.sum(abs(residues))
-			if showProgress == True:
-				print npy.sum(abs(residues)),'==>',npy.linalg.linalg.norm(x),x
-			return npy.sum(abs(residues))
-	
-	
-	xStart = npy.array(x)
-	sumResidualList = []	
-	
-	xEnd = fmin (iterativeCal, xStart,args=(numDelayShorts, numDelayLoads, \
-		gammaMList,gammaAList),	disp=False,ftol=ftol, xtol=xtol)
-	
-	if solveForLoss == True:
-		wb.surfaceConductivity = dEnd[-1]
-		
-
-	for stdNum in range(numDelays):
-		if stdNum < numDelayLoads:
-			gammaAList[stdNum] = wb.delay_short(d = x[stdNum]).s
-		else:
-			gammaAList[stdNum] = wb.delay_load(d = x[stdNum],Gamma0=Gamma0).s
-
-			
-		
-
-	output = one_port (measured = gammaMList, ideals=gammaAList)
-
-
-	output.update( {\
-	'x_end':xEnd,\
-	'sum_residual_list':sumResidualList\
 	})
 	return output
 

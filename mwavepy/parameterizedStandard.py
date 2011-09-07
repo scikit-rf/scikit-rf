@@ -162,15 +162,15 @@ class Line_UnknownLength(ParameterizedStandard):
 	
 	initial guess for length should be given to constructor
 	'''
-	def __init__(self, wb,d,**kwargs):
+	def __init__(self, media, d,**kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type
+			media: a Mwedia type
 			d: initial guess for line length [m]
 			**kwargs: passed to self.function
 		'''
 		ParameterizedStandard.__init__(self, \
-			function = wb.line,\
+			function = media.line,\
 			parameters = {'d':d},\
 			**kwargs\
 			)
@@ -180,15 +180,15 @@ class DelayedShort_UnknownLength(ParameterizedStandard):
 	
 	initial guess for length should be given to constructor
 	'''
-	def __init__(self, wb,d,**kwargs):
+	def __init__(self, media,d,**kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type
+			media: a Media type
 			d: initial guess for delay short physical length [m]
 			**kwargs: passed to self.function
 		'''
 		ParameterizedStandard.__init__(self, \
-			function = wb.delay_short,\
+			function = media.delay_short,\
 			parameters = {'d':d},\
 			**kwargs\
 			)
@@ -197,10 +197,10 @@ class DelayedTermination_UnknownLength(ParameterizedStandard):
 	'''
 	A  Delayed Termination of unknown length, but known termination
 	'''
-	def __init__(self, wb,d,Gamma0,**kwargs):
+	def __init__(self, media,d,Gamma0,**kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
+			media: a Media type, with a RectangularWaveguide object
 				for its tline property.
 			d: distance to termination
 			Gamma0: reflection coefficient off termination at termination
@@ -209,7 +209,7 @@ class DelayedTermination_UnknownLength(ParameterizedStandard):
 		kwargs.update({'Gamma0':Gamma0,})
 		
 		ParameterizedStandard.__init__(self, \
-			function = wb.delay_load,\
+			function = media.delay_load,\
 			parameters = {'d':d},\
 			**kwargs\
 			)
@@ -218,10 +218,10 @@ class DelayedTermination_UnknownTermination(ParameterizedStandard):
 	'''
 	A  Delayed Termination of unknown length or termination
 	'''
-	def __init__(self, wb,d,Gamma0,**kwargs):
+	def __init__(self, media,d,Gamma0,**kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
+			media: a Media type, with a RectangularWaveguide object
 				for its tline property.
 			d: distance to termination
 			Gamma0: reflection coefficient off termination at termination
@@ -229,7 +229,7 @@ class DelayedTermination_UnknownTermination(ParameterizedStandard):
 		'''
 		kwargs.update({'d':d})
 		ParameterizedStandard.__init__(self, \
-			function = wb.delay_load,\
+			function = media.delay_load,\
 			parameters = {'Gamma0':Gamma0},\
 			**kwargs\
 			)
@@ -237,10 +237,10 @@ class DelayedTermination_UnknownLength_UnknownTermination(ParameterizedStandard)
 	'''
 	A  Delayed Termination of unknown length or termination
 	'''
-	def __init__(self, wb,d,Gamma0,**kwargs):
+	def __init__(self, media,d,Gamma0,**kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
+			media: a Media type, with a RectangularWaveguide object
 				for its tline property.
 			d: distance to termination
 			Gamma0: reflection coefficient off termination at termination
@@ -248,7 +248,7 @@ class DelayedTermination_UnknownLength_UnknownTermination(ParameterizedStandard)
 		'''
 		
 		ParameterizedStandard.__init__(self, \
-			function = wb.delay_load,\
+			function = media.delay_load,\
 			parameters = {'d':d,'Gamma0':Gamma0},\
 			**kwargs\
 			)
@@ -258,18 +258,18 @@ class DelayShort_Mulipath(ParameterizedStandard):
 	
 	initial guess for length should be given to constructor
 	'''
-	def __init__(self, wb,d1,d2,d1_to_d2_power, **kwargs):
+	def __init__(self, media,d1,d2,d1_to_d2_power, **kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type
+			media: a Media type
 			d: initial guess for delay short physical length [m]
 			**kwargs: passed to self.function
 		'''
 		def multipath(d1,d2,d1_to_d2_power):
 			d2_power = 1./(d1_to_d2_power +1)
 			d1_power = 1-d2_power
-			ds1 = wb.delay_short(d1)
-			ds2 = wb.delay_short(d2)
+			ds1 = media.delay_short(d1)
+			ds2 = media.delay_short(d2)
 			ds1.s = ds1.s * d1_power
 			ds2.s = ds2.s * d2_power
 			return ds1+ds2
@@ -288,18 +288,18 @@ class DelayLoad_Mulipath(ParameterizedStandard):
 	
 	initial guess for length should be given to constructor
 	'''
-	def __init__(self, wb,d1,Gamma0, d2,d1_to_d2_power, **kwargs):
+	def __init__(self, media,d1,Gamma0, d2,d1_to_d2_power, **kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type
+			media: a Media type
 			d: initial guess for delay short physical length [m]
 			**kwargs: passed to self.function
 		'''
 		def multipath(d1,d2,Gamma0, d1_to_d2_power):
 			d2_power = 1./(d1_to_d2_power +1)
 			d1_power = 1-d2_power
-			ds1 = wb.delay_load(d1,Gamma0)
-			ds2 = wb.delay_short(d2)
+			ds1 = media.delay_load(d1,Gamma0)
+			ds2 = media.delay_short(d2)
 			ds1.s = ds1.s * d1_power
 			ds2.s = ds2.s * d2_power
 			return ds1+ds2
@@ -322,10 +322,10 @@ class SlidingLoad_UnknownTermination(ParameterizedStandard):
 	 Terminations of known length, but unknown termination
 	'''
 	
-	def __init__(self, wb,d_list,Gamma0,**kwargs):
+	def __init__(self, media,d_list,Gamma0,**kwargs):
 		'''
 		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
+			media: a Media type, with a RectangularWaveguide object
 				for its tline property.
 			d_list: list of distances to termination [m]
 			Gamma0: guess for reflection coefficient off termination at
@@ -337,13 +337,13 @@ class SlidingLoad_UnknownTermination(ParameterizedStandard):
 
 		#def tempfunc(Gamma0,**kwargs):
 		#	
-			#return [wb.delay_load(
+			#return [media.delay_load(
 
 
 		parameters = {}
 		#[parameters['d'+str(k)] = d_list[k] for k in range(len(d_list))]
 		ParameterizedStandard.__init__(self, \
-			function = wb.delay_load,\
+			function = media.delay_load,\
 			parameters = parameters,\
 			**kwargs\
 			)
@@ -351,268 +351,268 @@ class SlidingLoad_UnknownTermination(ParameterizedStandard):
 
 
 ## rectangular waveguide specific
-class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
-	'''
-	A delayed rectangular waveguide termination with unknown flange
-	translation missalignment.
+#class DelayedTermination_TranslationMissalignment(ParameterizedStandard):
+	#'''
+	#A delayed rectangular waveguide termination with unknown flange
+	#translation missalignment.
 
-	'''
-	def __init__(self, wb,d,Gamma0,initial_offset= 1./10, **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
-		'''
-		wg = wb.tline
-		kwargs.update({\
-			'wg_I':wg,\
-			'wg_II':wg,\
-			'freq':wb.frequency,\
-			'd':d,\
-			'Gamma0':Gamma0})
+	#'''
+	#def __init__(self, media,d,Gamma0,initial_offset= 1./10, **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#d: distance to termination
+			#Gamma0: reflection coefficient off termination at termination
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
+		#'''
+		#wg = media.tline
+		#kwargs.update({\
+			#'wg_I':wg,\
+			#'wg_II':wg,\
+			#'freq':media.frequency,\
+			#'d':d,\
+			#'Gamma0':Gamma0})
 		
-		ParameterizedStandard.__init__(self, \
-			function = rectangular_junction_centered,\
-			parameters = {\
-				'da':wg.a*initial_offset, \
-				'db':wg.a*initial_offset},\
-			**kwargs\
-			)
-class DelayedShort_TranslationMissalignment(ParameterizedStandard):
-	'''
-	A delayed rectangular waveguide termination with unknown flange
-	translation missalignment.
+		#ParameterizedStandard.__init__(self, \
+			#function = rectangular_junction_centered,\
+			#parameters = {\
+				#'da':wg.a*initial_offset, \
+				#'db':wg.a*initial_offset},\
+			#**kwargs\
+			#)
+#class DelayedShort_TranslationMissalignment(ParameterizedStandard):
+	#'''
+	#A delayed rectangular waveguide termination with unknown flange
+	#translation missalignment.
 
-	'''
-	def __init__(self, wb,d,initial_offset= 1./10, **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
-		'''
-		wg = wb.tline
-		kwargs.update({\
-			'wg_I':wg,\
-			'wg_II':wg,\
-			'freq':wb.frequency,\
-			'd':d,\
-			'Gamma0':-1})
+	#'''
+	#def __init__(self, media,d,initial_offset= 1./10, **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#d: distance to termination
+			#Gamma0: reflection coefficient off termination at termination
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
+		#'''
+		#wg = media.tline
+		#kwargs.update({\
+			#'wg_I':wg,\
+			#'wg_II':wg,\
+			#'freq':media.frequency,\
+			#'d':d,\
+			#'Gamma0':-1})
 		
-		ParameterizedStandard.__init__(self, \
-			function = rectangular_junction_centered,\
-			parameters = {\
-				'da':wg.a*initial_offset, \
-				'db':wg.a*initial_offset},\
-			**kwargs\
-			)
-class Line_TranslationMissalignment(ParameterizedStandard):
-	'''
-	A  rectangular waveaguide matched line standard with unknown flange
-	translation missalignment.
+		#ParameterizedStandard.__init__(self, \
+			#function = rectangular_junction_centered,\
+			#parameters = {\
+				#'da':wg.a*initial_offset, \
+				#'db':wg.a*initial_offset},\
+			#**kwargs\
+			#)
+#class Line_TranslationMissalignment(ParameterizedStandard):
+	#'''
+	#A  rectangular waveaguide matched line standard with unknown flange
+	#translation missalignment.
 
-	'''
-	def __init__(self, wb,d,initial_offset= 1./10, **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			d: length of line [m]
-			Gamma0: reflection coefficient off termination at termination
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
+	#'''
+	#def __init__(self, media,d,initial_offset= 1./10, **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#d: length of line [m]
+			#Gamma0: reflection coefficient off termination at termination
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
 		
-		'''
-		wg = wb.tline
-		kwargs.update({\
-			'wg_I':wg,\
-			'wg_II':wg,\
-			'freq':wb.frequency,\
-			'd':d,\
-			'Gamma0':0,\
-			'nports':2,\
-			})
+		#'''
+		#wg = media.tline
+		#kwargs.update({\
+			#'wg_I':wg,\
+			#'wg_II':wg,\
+			#'freq':media.frequency,\
+			#'d':d,\
+			#'Gamma0':0,\
+			#'nports':2,\
+			#})
 		
-		ParameterizedStandard.__init__(self, \
-			function = rectangular_junction_centered,\
-			parameters = {\
-				'da':wg.a*initial_offset, \
-				'db':wg.a*initial_offset},\
-			**kwargs\
-			)
-class Line_UnknownLength_TranslationMissalignment(ParameterizedStandard):
-	'''
-	A  rectangular waveaguide matched line standard with unknown flange
-	translation missalignment and unknown length. 
+		#ParameterizedStandard.__init__(self, \
+			#function = rectangular_junction_centered,\
+			#parameters = {\
+				#'da':wg.a*initial_offset, \
+				#'db':wg.a*initial_offset},\
+			#**kwargs\
+			#)
+#class Line_UnknownLength_TranslationMissalignment(ParameterizedStandard):
+	#'''
+	#A  rectangular waveaguide matched line standard with unknown flange
+	#translation missalignment and unknown length. 
 
-	'''
-	def __init__(self, wb,d,initial_offset= 1./10, **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			d: guess for length of line [m]
-			Gamma0: reflection coefficient off termination at termination
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
+	#'''
+	#def __init__(self, media,d,initial_offset= 1./10, **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#d: guess for length of line [m]
+			#Gamma0: reflection coefficient off termination at termination
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
 		
-		'''
-		wg = wb.tline
-		kwargs.update({\
-			'wg_I':wg,\
-			'wg_II':wg,\
-			'freq':wb.frequency,\
-			'Gamma0':0,\
-			'nports':2,\
-			})
+		#'''
+		#wg = media.tline
+		#kwargs.update({\
+			#'wg_I':wg,\
+			#'wg_II':wg,\
+			#'freq':media.frequency,\
+			#'Gamma0':0,\
+			#'nports':2,\
+			#})
 		
-		ParameterizedStandard.__init__(self, \
-			function = rectangular_junction_centered,\
-			parameters = {\
-				'da':wg.a*initial_offset, \
-				'db':wg.a*initial_offset,
-				'd':d
-				},\
-			**kwargs\
-			)
-class Thru_TranslationMissalignment(ParameterizedStandard):
-	'''
-	A  rectangular waveaguide thru standard with unknown flange
-	translation missalignment.
+		#ParameterizedStandard.__init__(self, \
+			#function = rectangular_junction_centered,\
+			#parameters = {\
+				#'da':wg.a*initial_offset, \
+				#'db':wg.a*initial_offset,
+				#'d':d
+				#},\
+			#**kwargs\
+			#)
+#class Thru_TranslationMissalignment(ParameterizedStandard):
+	#'''
+	#A  rectangular waveaguide thru standard with unknown flange
+	#translation missalignment.
 
-	'''
-	def __init__(self, wb,initial_offset= 1./10, **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
+	#'''
+	#def __init__(self, media,initial_offset= 1./10, **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#d: distance to termination
+			#Gamma0: reflection coefficient off termination at termination
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
 		
-		'''
-		wg = wb.tline
-		kwargs.update({\
-			'wg_I':wg,\
-			'wg_II':wg,\
-			'freq':wb.frequency,\
-			'd':0,\
-			'Gamma0':0,\
-			'nports':2,\
-			})
+		#'''
+		#wg = media.tline
+		#kwargs.update({\
+			#'wg_I':wg,\
+			#'wg_II':wg,\
+			#'freq':media.frequency,\
+			#'d':0,\
+			#'Gamma0':0,\
+			#'nports':2,\
+			#})
 		
-		ParameterizedStandard.__init__(self, \
-			function = rectangular_junction_centered,\
-			parameters = {\
-				'da':wg.a*initial_offset, \
-				'db':wg.a*initial_offset},\
-			**kwargs\
-			)
-class Match_TranslationMissalignment(ParameterizedStandard):
-	'''
-	A match with unknown translation missalignment.
-	the initial guess for missalignment is [a/10,a/10], where a is the 
-	waveguide width
-	'''
-	def __init__(self, wb, initial_offset= 1./10 , **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
-		'''
-		wg = wb.tline
-		kwargs.update({'wg':wg,'freq':wb.frequency})
+		#ParameterizedStandard.__init__(self, \
+			#function = rectangular_junction_centered,\
+			#parameters = {\
+				#'da':wg.a*initial_offset, \
+				#'db':wg.a*initial_offset},\
+			#**kwargs\
+			#)
+#class Match_TranslationMissalignment(ParameterizedStandard):
+	#'''
+	#A match with unknown translation missalignment.
+	#the initial guess for missalignment is [a/10,a/10], where a is the 
+	#waveguide width
+	#'''
+	#def __init__(self, media, initial_offset= 1./10 , **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
+		#'''
+		#wg = media.tline
+		#kwargs.update({'wg':wg,'freq':media.frequency})
 		
-		ParameterizedStandard.__init__(self, \
-			function = translation_offset,\
-			parameters = {'delta_a':wg.a*initial_offset, \
-				'delta_b':wg.a*initial_offset},\
-			**kwargs\
-			)
-
-
+		#ParameterizedStandard.__init__(self, \
+			#function = translation_offset,\
+			#parameters = {'delta_a':wg.a*initial_offset, \
+				#'delta_b':wg.a*initial_offset},\
+			#**kwargs\
+			#)
 
 
-class DelayedTermination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
-	'''
-	A known Delayed Termination with unknown translation missalignment.
-	the initial guess for missalignment defaults to [1/10,1/10]*a,
-	where a is the 	waveguide width
-	'''
-	def __init__(self, wb,d,Gamma0,initial_offset= 1./10, **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
-		'''
-		wg = wb.tline
-		kwargs.update({\
-			'wg_I':wg,\
-			'wg_II':wg,\
-			'freq':wb.frequency,\
-			'Gamma0':Gamma0})
-		
-		ParameterizedStandard.__init__(self, \
-			function = rectangular_junction_centered,\
-			parameters = {'da':wg.a*initial_offset, \
-						'db':wg.a*initial_offset,\
-						'd':d},\
-			**kwargs\
-			)
 
-class RotatedWaveguide_UnknownLength(ParameterizedStandard):
-	'''
-	A rotated waveguide of unkown delay length.
-	'''
-	def __init__(self, wb,d,Gamma0, **kwargs):
-		'''
-		takes:
-			wb: a WorkingBand type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
-			initial_offset: initial offset guess, as a fraction of a, 
-				(the waveguide width dimension)
-			**kwargs: passed to self.function
-		'''
-		wg_I = wb.tline
-		wg_II = deepcopy(wb.tline)
-		wg_II.a , wg_II.b = wg_I.b,wg_I.a
+
+#class DelayedTermination_UnknownLength_TranslationMissalignment(ParameterizedStandard):
+	#'''
+	#A known Delayed Termination with unknown translation missalignment.
+	#the initial guess for missalignment defaults to [1/10,1/10]*a,
+	#where a is the 	waveguide width
+	#'''
+	#def __init__(self, media,d,Gamma0,initial_offset= 1./10, **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#d: distance to termination
+			#Gamma0: reflection coefficient off termination at termination
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
+		#'''
+		#wg = media.tline
+		#kwargs.update({\
+			#'wg_I':wg,\
+			#'wg_II':wg,\
+			#'freq':media.frequency,\
+			#'Gamma0':Gamma0})
 		
-		kwargs.update({\
-			'wg_I':wg,\
-			'wg_II':wg,\
-			'freq':wb.frequency,\
-			'da':0,\
-			'db':0,\
-			'Gamma0':Gamma0})
+		#ParameterizedStandard.__init__(self, \
+			#function = rectangular_junction_centered,\
+			#parameters = {'da':wg.a*initial_offset, \
+						#'db':wg.a*initial_offset,\
+						#'d':d},\
+			#**kwargs\
+			#)
+
+#class RotatedWaveguide_UnknownLength(ParameterizedStandard):
+	#'''
+	#A rotated waveguide of unkown delay length.
+	#'''
+	#def __init__(self, media,d,Gamma0, **kwargs):
+		#'''
+		#takes:
+			#media: a Media type, with a RectangularWaveguide object
+				#for its tline property.
+			#d: distance to termination
+			#Gamma0: reflection coefficient off termination at termination
+			#initial_offset: initial offset guess, as a fraction of a, 
+				#(the waveguide width dimension)
+			#**kwargs: passed to self.function
+		#'''
+		#wg_I = media.tline
+		#wg_II = deepcopy(media.tline)
+		#wg_II.a , wg_II.b = wg_I.b,wg_I.a
 		
-		ParameterizedStandard.__init__(self, \
-			function = rectangular_junction_centered,\
-			parameters = {'d':d},\
-			**kwargs\
-			)
+		#kwargs.update({\
+			#'wg_I':wg,\
+			#'wg_II':wg,\
+			#'freq':media.frequency,\
+			#'da':0,\
+			#'db':0,\
+			#'Gamma0':Gamma0})
+		
+		#ParameterizedStandard.__init__(self, \
+			#function = rectangular_junction_centered,\
+			#parameters = {'d':d},\
+			#**kwargs\
+			#)
 
 
 

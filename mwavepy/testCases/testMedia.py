@@ -1,6 +1,6 @@
 import unittest
 import mwavepy as mv
-
+from scipy.constants import *
 
 
 		
@@ -41,6 +41,31 @@ class MediaTestCase(unittest.TestCase):
 	def test_splitter(self):
 		self.media.splitter(4)
 	
+	def test_thru(self):
+		self.media.thru()
+	
+	def test_line(self):
+		self.media.line(1)
+	
+	def test_delay_load(self):
+		self.media.delay_load(1,2)
+	
+	def test_delay_short(self):
+		self.media.delay_short(1)
+	
+	def test_delay_open(self):
+		self.media.delay_open(1)
+	
+	def test_shunt_delay_load(self):
+		self.media.shunt_delay_load(1,1)
+	
+	
+	def test_shunt_delay_short(self):
+		self.media.shunt_delay_short(1)
+	
+	def test_shunt_delay_open(self):
+		self.media.shunt_delay_open(1)
+	
 	
 	
 
@@ -50,13 +75,50 @@ class FreespaceTestCase(MediaTestCase):
 		self.media = mv.media.Freespace(self.frequency)
 	
 	def test_characterisitc_impedance_value(self):
-		self.assertEqual(round(self.media.characteristic_impedance[0]) , 377)
+		self.assertEqual(round(self.media.characteristic_impedance[0].real) , 377)
+
+
+class CPWTestCase(MediaTestCase):
+	def setUp(self):
+		self.frequency = mv.Frequency(75,110,101,'ghz')
+		self.media = mv.media.CPW(\
+			frequency=self.frequency,
+			w=10e-6,
+			s=5e-6,
+			ep_r=11.7,
+			t=1e-6,
+			rho=22e-9)
+
+class RectangularWaveguideTestCase(MediaTestCase):
+	def setUp(self):
+		self.frequency = mv.Frequency(75,110,101,'ghz')
+		self.media = mv.media.RectangularWaveguide(\
+			frequency=self.frequency,
+			a=100*mil,
+			)
+
+class DistributedCircuitTestCase(MediaTestCase):
+	def setUp(self):
+		self.frequency = mv.Frequency(75,110,101,'ghz')
+		self.media = mv.media.DistributedCircuit(\
+			frequency=self.frequency,
+			I=1,C=1,R=0,G=0
+			)
 
 
 
 
+suite = unittest.TestSuite()
+loader = unittest.TestLoader()
 
 
+suite.addTests([\
+	loader.loadTestsFromTestCase(FreespaceTestCase),
+	loader.loadTestsFromTestCase(CPWTestCase),
+	loader.loadTestsFromTestCase(RectangularWaveguideTestCase),
+	loader.loadTestsFromTestCase(DistributedCircuitTestCase),
+	
+	])
 
-suite = unittest.TestLoader().loadTestsFromTestCase(FreespaceTestCase)
+#suite = unittest.TestLoader().loadTestsFromTestCase(FreespaceTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

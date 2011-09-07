@@ -17,14 +17,14 @@ class NetworkTestCase(unittest.TestCase):
 		this also tests the ability to read touchstone files
 		without an error
 		'''
-		self.ntwk1 =mv.Network('ntwk1.s2p')
-		self.ntwk2 =mv.Network('ntwk2.s2p')
-		self.ntwk3 =mv.Network('ntwk3.s2p')
+		self.ntwk1 =mv.Network('./ntwk1.s2p')
+		self.ntwk2 =mv.Network('./ntwk2.s2p')
+		self.ntwk3 =mv.Network('./ntwk3.s2p')
 	
 	
 	def test_open_saved_touchstone(self):
-		self.ntwk1.write_touchstone('ntwk1Saved')
-		ntwk1Saved = mv.Network('ntwk1Saved.s2p')
+		self.ntwk1.write_touchstone('./ntwk1Saved')
+		ntwk1Saved = mv.Network('./ntwk1Saved.s2p')
 		self.assertEqual(self.ntwk1, ntwk1Saved)
 		
 	def test_cascade(self):

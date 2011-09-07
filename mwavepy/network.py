@@ -1149,8 +1149,8 @@ def two_port_reflect(ntwk1, ntwk2, **kwargs):
 	example:
 	to use a working band to create a two-port reflective standard from
 	two one-port standards
-		wb= WorkingBand(....)
-		two_port_reflect(wb.short(), wb.match())
+		my_media= ...
+		two_port_reflect(my_media.short(), my_media.match())
 	'''
 	result = deepcopy(ntwk1)
 	result.s = npy.zeros((ntwk1.frequency.npoints,2,2), dtype='complex')
@@ -1414,4 +1414,68 @@ def impedance_mismatch(z1, z2):
 		return result
 
 
+# Touchstone manipulation	
+def load_all_touchstones(dir = '.', contains=None, f_unit=None):
+	'''
+	loads all touchtone files in a given dir 
+	
+	takes:
+		dir  - the path to the dir, passed as a string (defalut is cwd)
+		contains - string which filename must contain to be loaded, not 
+			used if None.(default None)
+	returns:
+		ntwkDict - a Dictonary with keys equal to the file name (without
+			a suffix), and values equal to the corresponding ntwk types
+	
+		
+	'''
+	ntwkDict = {}
+
+	for f in os.listdir (dir):
+		if contains is not None and contains not in f:
+			continue
+			
+		# TODO: make this s?p with reg ex
+		if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
+			name = f[:-4]
+			ntwkDict[name]=(Network(dir +'/'+f))
+			if f_unit is not None: ntwkDict[name].frequency.unit=f_unit
+		
+	return ntwkDict	
+
+def write_dict_of_networks(ntwkDict, dir='.'):
+	'''
+	writes a dictionary of networks to a given directory
+	'''
+	for ntwkKey in ntwkDict:
+		ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
+
+def csv_2_touchstone(filename):
+	'''
+	converts a csv file saved from a Rhode swarz and possibly other 
+	
+	takes:
+		filename: name of file
+	returns:
+		Network object
+	'''
+		
+	ntwk = Network(name=filename[:-4])
+	try: 
+		data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
+			usecols=range(9))
+		s11 = data[:,1] +1j*data[:,2]	
+		s21 = data[:,3] +1j*data[:,4]	
+		s12 = data[:,5] +1j*data[:,6]	
+		s22 = data[:,7] +1j*data[:,8]	
+		ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
+	except(IndexError):
+		data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
+			usecols=range(3))		
+		ntwk.s = data[:,1] +1j*data[:,2]
+	
+	ntwk.frequency.f = data[:,0]
+	ntwk.frequency.unit='ghz'
+	
+	return ntwk
 
