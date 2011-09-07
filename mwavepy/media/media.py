@@ -163,11 +163,15 @@ class Media(object):
 			**kwargs: key word arguments passed to match(), which is 
 				called initially to create a 'blank' network
 		returns:
-			a 1-port Network class, where  S = Gamma0*ones(...)
+			a n-port Network class, where  S = Gamma0*eye(...)
 		'''
 		result = self.match(nports,**kwargs)
-		for f in range(self.frequency.npoints):
-			result.s[f,:,:] = Gamma0*npy.eye(nports, dtype=complex)
+		try:
+			result.s = Gamma0 * npy.eye(nports,dtype=complex).\
+			reshape((-1,nports,nports)).repeat(self.frequency.npoints,0)
+		except(ValueError):
+			for f in range(self.frequency.npoints):
+				result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
 		
 		return result		
 	
@@ -210,8 +214,8 @@ class Media(object):
 		returns:
 			mwavepy.Network 
 		'''
-		Gamma0 = tf.zl_2_Gamma0(-1j/(self.frequency.w*c))
-		return self.load(Gamma0=Gamma0, **kargs)
+		Gamma0 = tf.zl_2_Gamma0(self.z0, -1j/(self.frequency.w*C))
+		return self.load(Gamma0=Gamma0, **kwargs)
 
 	def inductor(self, L, **kwargs):
 		'''
@@ -223,8 +227,8 @@ class Media(object):
 		returns:
 			mwavepy.Network 
 		'''
-		Gamma0 = tf.zl_2_Gamma0(-1j*(self.frequency.w*I))
-		return self.load(Gamma0=Gamma0, **kargs)
+		Gamma0 = tf.zl_2_Gamma0(self.z0,-1j*(self.frequency.w*L))
+		return self.load(Gamma0=Gamma0, **kwargs)
 
 	def impedance_mismatch(self, z1, z2, **kwargs):
 		'''

@@ -31,7 +31,8 @@ class CPW(Media):
 	'''
 	Coplanar waveguide class
 	
-	This class was made based off the the documentation from the
+	
+	This class was made from the the documentation from the
 	qucs project ( qucs.sourceforge.net/ ).
 	
 	'''
@@ -42,8 +43,9 @@ class CPW(Media):
 			w: width of center conductor, in m. 
 			s: width of gap, in m. 
 			ep_r: relative permativity of substrate
-			rho: resistivity of conductor (None)
 			t: conductor thickness, in m.
+			rho: resistivity of conductor (None)
+			
 		returns:
 			mwavepy.Media object 
 		'''
@@ -104,6 +106,7 @@ class CPW(Media):
 		'''
 		if self.rho is None or self.t is None:
 			raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
+		
 		t, k1, ep_re = self.t, self.k1,self.ep_re
 		r_s = surface_resistivity(f=self.frequency.f, rho=self.rho, \
 			mu_r=1)
