@@ -37,7 +37,7 @@ import  mathFunctions as mf
 import touchstone
 from frequency import Frequency
 from plotting import smith
-from transmissionLine.functions import zl_2_Gamma0
+from tlineFunctions import zl_2_Gamma0
 
 class Network(object):
 	'''

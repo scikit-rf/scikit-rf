@@ -31,7 +31,6 @@ and import modules themselves for coherent  structured referencing
 import media
 import touchstone 	
 import frequency
-import transmissionLine	
 import network
 import workingBand
 import discontinuities
@@ -44,7 +43,6 @@ import tlineFunctions
 
 # Import contents into current namespace for ease of calling 
 from frequency import * 
-from transmissionLine import * 
 from network import * 
 from workingBand import * 
 from calibration import * 
