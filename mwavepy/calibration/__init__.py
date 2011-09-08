@@ -21,5 +21,7 @@ Provides high-leve Calibration class as well as calibration algorithms
 and parametric standards 
 '''
 
+import parametricStandard
+from parametricStandard import * 
 from calibration import Calibration 
 

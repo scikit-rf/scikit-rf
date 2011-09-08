@@ -28,7 +28,7 @@ import numpy as npy
 from scipy import rand
 from scipy.optimize import fmin_slsqp,fmin,leastsq # used for xds
 
-from parametricStandard import ParameterBoundsError
+from parametricStandard.parametricStandard import ParameterBoundsError
 from ..mathFunctions import scalar2Complex, complex2Scalar
 
 ## Supporting Functions

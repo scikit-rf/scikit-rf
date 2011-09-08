@@ -67,7 +67,7 @@ class Line_UnknownLength(ParametricStandard):
 			**kwargs\
 			)
 
-class DelayedLoad_UnknownLength(ParametricStandard):
+class DelayLoad_UnknownLength(ParametricStandard):
 	'''
 	A  Delayed Termination of unknown length, but known termination
 	'''
@@ -76,15 +76,15 @@ class DelayedLoad_UnknownLength(ParametricStandard):
 		takes:
 			media: a mwavepy.Media type
 			d: initial guess for distance to termination (in m)*
-			Gamma0: complex reflection coefficient off termination at
-				termination
+			Gamma0: complex reflection coefficient off load 
+				[complex number of array]
 			**kwargs: passed to self.function
 		
 		*note: 
 			the Media.line function can take the kwarg 'unit', in case 
 			you want to specify the line length in electrical length 
 		'''
-		kwargs.update({'Gamma0':Gamma0,})
+		kwargs.update({'Gamma0':Gamma0})
 		
 		ParametricStandard.__init__(self, \
 			function = media.delay_load,\
@@ -92,58 +92,58 @@ class DelayedLoad_UnknownLength(ParametricStandard):
 			**kwargs\
 			)
 			
-class DelayedShort_UnknownLength(ParametricStandard):
+class DelayShort_UnknownLength(ParametricStandard):
 	'''
 	A delay short of unknown length
 
 	'''
 	def __init__(self, media,d,**kwargs):
 		'''
-		This cales DelayedLoad_UnknownLength. 
+		This calls DelayLoad_UnknownLength. see that class for more info.
 		
 		takes:
 			media: a Media type
 			d: initial guess for delay short physical length [m]
 			**kwargs: passed to self.function
 		'''
-		DelayedLoad_UnknownLength.__init__(self,\
+		DelayLoad_UnknownLength.__init__(self,\
 			media= media,
 			d=d, 
 			Gamma0=-1, 
 			**kwargs)
 
-class DelayedShort_UnknownLength(ParametricStandard):
+class DelayOpen_UnknownLength(ParametricStandard):
 	'''
-	A delay short of unknown length
+	A delay open of unknown length
 
 	'''
 	def __init__(self, media,d,**kwargs):
 		'''
-		This cales DelayedLoad_UnknownLength. 
+		This calls DelayLoad_UnknownLength. see that class for more info.
 		
 		takes:
 			media: a Media type
 			d: initial guess for delay short physical length [m]
 			**kwargs: passed to self.function
 		'''
-		DelayedLoad_UnknownLength.__init__(self,\
+		DelayLoad_UnknownLength.__init__(self,\
 			media= media,
 			d=d, 
-			Gamma0=-1, 
+			Gamma0=1, 
 			**kwargs)
 
 
-class DelayedTermination_UnknownTermination(ParametricStandard):
+class DelayLoad_UnknownLoad(ParametricStandard):
 	'''
-	A  Delayed Termination of unknown length or termination
+	A  Delayed Load of unknown Load. Assumes load is frequency independent 
 	'''
 	def __init__(self, media,d,Gamma0,**kwargs):
 		'''
 		takes:
-			media: a Media type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
+			media: a Media type
+			d: distance to termination, in m.
+			Gamma0: initial guess for complex reflection coefficient
+				of load. [complex number]
 			**kwargs: passed to self.function
 		'''
 		kwargs.update({'d':d})
@@ -152,17 +152,18 @@ class DelayedTermination_UnknownTermination(ParametricStandard):
 			parameters = {'Gamma0':Gamma0},\
 			**kwargs\
 			)
-class DelayedTermination_UnknownLength_UnknownTermination(ParametricStandard):
+class DelayLoad_UnknownLength_UnknownLoad(ParametricStandard):
 	'''
-	A  Delayed Termination of unknown length or termination
+	A  Delayed load of unknown length or reflection coefficient. 
+	Assumes the load is frequency independent
 	'''
 	def __init__(self, media,d,Gamma0,**kwargs):
 		'''
 		takes:
-			media: a Media type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
+			media: a Media type
+			d: initial guess distance to termination, in m.
+			Gamma0: initial guess for complex reflection coefficient
+				of load. [complex number]
 			**kwargs: passed to self.function
 		'''
 		
@@ -171,64 +172,4 @@ class DelayedTermination_UnknownLength_UnknownTermination(ParametricStandard):
 			parameters = {'d':d,'Gamma0':Gamma0},\
 			**kwargs\
 			)
-class DelayShort_Mulipath(ParametricStandard):
-	'''
-	A delay short of unknown length
-	
-	initial guess for length should be given to constructor
-	'''
-	def __init__(self, media,d1,d2,d1_to_d2_power, **kwargs):
-		'''
-		takes:
-			media: a Media type
-			d: initial guess for delay short physical length [m]
-			**kwargs: passed to self.function
-		'''
-		def multipath(d1,d2,d1_to_d2_power):
-			d2_power = 1./(d1_to_d2_power +1)
-			d1_power = 1-d2_power
-			ds1 = media.delay_short(d1)
-			ds2 = media.delay_short(d2)
-			ds1.s = ds1.s * d1_power
-			ds2.s = ds2.s * d2_power
-			return ds1+ds2
-		kwargs.update({'d1':d1})
-		ParametricStandard.__init__(self, \
-			function = multipath,\
-			parameters = {\
-				'd2':d2,\
-				'd1_to_d2_power':d1_to_d2_power\
-				},\
-			**kwargs\
-			)
-class DelayLoad_Mulipath(ParametricStandard):
-	'''
-	A delay short of unknown length
-	
-	initial guess for length should be given to constructor
-	'''
-	def __init__(self, media,d1,Gamma0, d2,d1_to_d2_power, **kwargs):
-		'''
-		takes:
-			media: a Media type
-			d: initial guess for delay short physical length [m]
-			**kwargs: passed to self.function
-		'''
-		def multipath(d1,d2,Gamma0, d1_to_d2_power):
-			d2_power = 1./(d1_to_d2_power +1)
-			d1_power = 1-d2_power
-			ds1 = media.delay_load(d1,Gamma0)
-			ds2 = media.delay_short(d2)
-			ds1.s = ds1.s * d1_power
-			ds2.s = ds2.s * d2_power
-			return ds1+ds2
-		kwargs.update({'d1':d1,'Gamma0':Gamma0})
-		ParametricStandard.__init__(self, \
-			function = multipath,\
-			parameters = {\
-				'd2':d2,\
-				'd1_to_d2_power':d1_to_d2_power\
-				},\
-			**kwargs\
-			)
-				
+
