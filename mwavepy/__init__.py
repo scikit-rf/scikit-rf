@@ -52,6 +52,7 @@ from convenience import *
 from plotting import  * 
 from mathFunctions import *
 from tlineFunctions import * 
+
 # Try to import virtualInstruments, but if except if pyvisa not installed
 try:
 	import virtualInstruments
