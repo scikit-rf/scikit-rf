@@ -18,15 +18,14 @@
 #       MA 02110-1301, USA.from media import Media
 '''
 Provides  generic parametric standards which dont depend on any 
-specific properties of the a given media
+specific properties of a given media
 
+The naming convention for these classes is 
+	Standard_UnknownQuantity
 '''
 
 from parametricStandard import ParametricStandard
 
-
-
-## General tline mediums
 class Parameterless(ParametricStandard):
 	'''
 		A parameterless standard. 
@@ -132,7 +131,6 @@ class DelayOpen_UnknownLength(ParametricStandard):
 			Gamma0=1, 
 			**kwargs)
 
-
 class DelayLoad_UnknownLoad(ParametricStandard):
 	'''
 	A  Delayed Load of unknown Load. Assumes load is frequency independent 
@@ -152,6 +150,7 @@ class DelayLoad_UnknownLoad(ParametricStandard):
 			parameters = {'Gamma0':Gamma0},\
 			**kwargs\
 			)
+
 class DelayLoad_UnknownLength_UnknownLoad(ParametricStandard):
 	'''
 	A  Delayed load of unknown length or reflection coefficient. 
