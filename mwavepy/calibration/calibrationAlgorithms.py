@@ -447,7 +447,7 @@ def parameterized_self_calibration(measured, ideals, showProgress=True,\
 	
 	takes:
 		measured: list of Network types holding actual measurements
-		ideals: list of ParameterizedStandard types
+		ideals: list of ParametricStandard types
 		showProgress: turn printing progress on/off [boolean]
 		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
 	
@@ -459,7 +459,7 @@ def parameterized_self_calibration(measured, ideals, showProgress=True,\
 		'mean_residual_list': the mean, magnitude of the residuals at each
 			iteration of calibration. this is the variable being minimized.
 	
-	see  ParameterizedStandard for more info on them
+	see  parametricStandard sub-module for more info on them
 	'''
 	ideals_ps = ideals
 	#make copies so list entities are not changed
@@ -527,14 +527,14 @@ def parameterized_self_calibration_nls(measured, ideals_ps, showProgress=True,\
 	**kwargs):
 	'''
 	An iterative, general self-calibration routine which can take any
-	mixture of parameterized standards. The correct parameter values
+	mixture of parametric standards. The correct parameter values
 	are defined as the ones which minimize the mean residual error. 
 	
 	
 	
 	takes:
 		measured: list of Network types holding actual measurements
-		ideals_ps: list of ParameterizedStandard types
+		ideals_ps: list of ParametricStandard types
 		showProgress: turn printing progress on/off [boolean]
 		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
 	
@@ -546,7 +546,7 @@ def parameterized_self_calibration_nls(measured, ideals_ps, showProgress=True,\
 		'mean_residual_list': the mean, magnitude of the residuals at each
 			iteration of calibration. this is the variable being minimized.
 	
-	see  ParameterizedStandard for more info on them
+	see  ParametricStandard for more info on them
 	'''
 	#make copies so list entities are not changed
 	measured = copy(measured)

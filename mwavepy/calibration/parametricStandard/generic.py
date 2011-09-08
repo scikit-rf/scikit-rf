@@ -52,46 +52,37 @@ class Line_UnknownLength(ParametricStandard):
 	def __init__(self, media, d,**kwargs):
 		'''
 		takes:
-			media: a Mwedia type
-			d: initial guess for line length [m]
+			media: a mwavepy.Media type
+			d: initial guess for line length [m]*
 			**kwargs: passed to self.function
+		
+		*note: 
+			the Media.line function can take the kwarg 'unit', in case 
+			you want to specify the line length in electrical length 
+			
 		'''
 		ParametricStandard.__init__(self, \
 			function = media.line,\
 			parameters = {'d':d},\
 			**kwargs\
 			)
-class DelayedShort_UnknownLength(ParametricStandard):
-	'''
-	A delay short of unknown length
-	
-	initial guess for length should be given to constructor
-	'''
-	def __init__(self, media,d,**kwargs):
-		'''
-		takes:
-			media: a Media type
-			d: initial guess for delay short physical length [m]
-			**kwargs: passed to self.function
-		'''
-		ParametricStandard.__init__(self, \
-			function = media.delay_short,\
-			parameters = {'d':d},\
-			**kwargs\
-			)
 
-class DelayedTermination_UnknownLength(ParametricStandard):
+class DelayedLoad_UnknownLength(ParametricStandard):
 	'''
 	A  Delayed Termination of unknown length, but known termination
 	'''
 	def __init__(self, media,d,Gamma0,**kwargs):
 		'''
 		takes:
-			media: a Media type, with a RectangularWaveguide object
-				for its tline property.
-			d: distance to termination
-			Gamma0: reflection coefficient off termination at termination
+			media: a mwavepy.Media type
+			d: initial guess for distance to termination (in m)*
+			Gamma0: complex reflection coefficient off termination at
+				termination
 			**kwargs: passed to self.function
+		
+		*note: 
+			the Media.line function can take the kwarg 'unit', in case 
+			you want to specify the line length in electrical length 
 		'''
 		kwargs.update({'Gamma0':Gamma0,})
 		
@@ -100,6 +91,47 @@ class DelayedTermination_UnknownLength(ParametricStandard):
 			parameters = {'d':d},\
 			**kwargs\
 			)
+			
+class DelayedShort_UnknownLength(ParametricStandard):
+	'''
+	A delay short of unknown length
+
+	'''
+	def __init__(self, media,d,**kwargs):
+		'''
+		This cales DelayedLoad_UnknownLength. 
+		
+		takes:
+			media: a Media type
+			d: initial guess for delay short physical length [m]
+			**kwargs: passed to self.function
+		'''
+		DelayedLoad_UnknownLength.__init__(self,\
+			media= media,
+			d=d, 
+			Gamma0=-1, 
+			**kwargs)
+
+class DelayedShort_UnknownLength(ParametricStandard):
+	'''
+	A delay short of unknown length
+
+	'''
+	def __init__(self, media,d,**kwargs):
+		'''
+		This cales DelayedLoad_UnknownLength. 
+		
+		takes:
+			media: a Media type
+			d: initial guess for delay short physical length [m]
+			**kwargs: passed to self.function
+		'''
+		DelayedLoad_UnknownLength.__init__(self,\
+			media= media,
+			d=d, 
+			Gamma0=-1, 
+			**kwargs)
+
 
 class DelayedTermination_UnknownTermination(ParametricStandard):
 	'''
