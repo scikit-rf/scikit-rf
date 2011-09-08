@@ -47,18 +47,33 @@ class Media(object):
 	def __init__(self, frequency,  propagation_constant,
 		characteristic_impedance, z0=None):
 		'''
+		The Media initializer. This initializer has flexible argument 
+		types, which deserves some explaination.
+		
+		propagation_constant, characterisitc_impedance and z0 can all be
+		either 
+			functions which take no arguments or 
+			values (numbers or arrays)
+		
+		in the case where the media's propagation constant may change 
+		after initialization, because you adjusted a parameter, then 
+		passing the propagation_constant as a function can allow 
+		for the properties in this Class to reflect that change.
+		
 		takes:
 			frequency: mwavepy.Frequency object
-			propagation_constant*: [complex number of 1D array]
-			characteristic_impedance: [complex number of 1D array]
-			z0**: characteristic_impedance for media , if its different
-				from the characterisitc impedance of teh transmission 
+			propagation_constant*: propagation constant for the medium. 
+			characteristic_impedance: characteristic impedance of 
+				transmission line medium.
+			z0**: characteristic impedance for media , IF its different
+				from the characterisitc impedance of the transmission 
 				line medium  (None) [a number].
 				if z0= None then will set to characterisitc_impedance
 			
 		returns:
 			mwavepy.Media Object
-			
+		
+				
 		*note:
 			propagation_constant must adhere to the following convention,
 				positive real(gamma) = attenuation
@@ -69,14 +84,53 @@ class Media(object):
 			 from most VNA's have z0=1	
 		'''
 		self.frequency = frequency
+		
 		self.propagation_constant = propagation_constant
 		self.characteristic_impedance = characteristic_impedance
+		
 		if z0 is None:
-			z0=characteristic_impedance
+			z0 = characteristic_impedance
 		self.z0 = z0
 		
 		# convinience names
 		self.delay = self.line
+	
+	## Properties
+	# note these are made so that a Media type can be constructed with 
+	# propagation_constant, characteristic_impedance, and z0 either as:
+	#	dynamic properties (if they pass a function) 
+	#	static ( if they pass values)
+	@property
+	def propagation_constant(self):
+		try:
+			return self._propagation_constant()
+		except(TypeError):
+			return self._propagation_constant
+	@propagation_constant.setter
+	def propagation_constant(self, new_propagation_constant):
+		self._propagation_constant = new_propagation_constant
+	
+	@property
+	def characteristic_impedance(self):
+		try:
+			return self._characteristic_impedance()
+		except(TypeError):
+			return self._characteristic_impedance
+	@characteristic_impedance.setter
+	def characteristic_impedance(self, new_characteristic_impedance):
+		self._characteristic_impedance = new_characteristic_impedance
+	
+	@property
+	def z0(self):
+		try:
+			return self._z0()
+		except(TypeError):
+			return self._z0
+	@z0.setter
+	def z0(self, new_z0):
+		self._z0 = new_z0
+	
+	
 	
 	## Other Functions
 	def theta_2_d(self,theta,deg=True):

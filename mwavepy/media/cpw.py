@@ -121,14 +121,14 @@ class CPW(Media):
 			
 
 
-	@property
+	
 	def Z0(self):
 		'''
 		characterisitc impedance
 		'''
 		return 30.*pi / sqrt(self.ep_re) * self.K_ratio
 	
-	@property 
+	
 	def gamma(self):
 		'''
 		propagation constant

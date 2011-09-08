@@ -126,7 +126,7 @@ class RectangularWaveguide(Media):
 		'''
 		return sqrt( self.kx**2 + self.ky**2)
 	
-	@property
+	
 	def kz(self):
 		'''
 		the propagation constant, which is:
@@ -139,17 +139,17 @@ class RectangularWaveguide(Media):
 			sqrt(abs(kc**2- k0**2))*(k0<kc) + \
 			0*(kc==k0)	
 	
-	@property
+	
 	def Z0(self):
 		'''
 		the characteristic impedance of a given mode
 		'''
 		omega = self.frequency.w
 		impedance_dict = {\
-			'tez':	omega*self.mu/(-1*self.kz),\
-			'te':	omega*self.mu/(-1*self.kz),\
-			'tmz':	-1*self.kz/(omega*self.ep),\
-			'tm':	-1*self.kz/(omega*self.ep),\
+			'tez':	omega*self.mu/(-1*self.kz()),\
+			'te':	omega*self.mu/(-1*self.kz()),\
+			'tmz':	-1*self.kz()/(omega*self.ep),\
+			'tm':	-1*self.kz()/(omega*self.ep),\
 			}
 		
 		return impedance_dict[self.mode_type]

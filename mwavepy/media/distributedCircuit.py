@@ -192,7 +192,7 @@ class DistributedCircuit(Media):
 		w = 2*npy.pi*self.frequency.f
 		return w*self.G + 1j*w*self.C
 	
-	@property
+	
 	def Z0(self):
 		'''
 		The  characteristic impedance in ohms
@@ -201,7 +201,7 @@ class DistributedCircuit(Media):
 		
 		return sqrt(self.Z/self.Y)
 	
-	@property
+	
 	def gamma(self):
 		'''
 		possibly complex propagation constant, [rad/m]
