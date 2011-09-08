@@ -22,13 +22,14 @@
 '''
 Contains calibrations algorithms, used in the Calibration class, 
 '''
-from mathFunctions import scalar2Complex, complex2Scalar
+
 from copy import copy,deepcopy
 import numpy as npy
 from scipy import rand
 from scipy.optimize import fmin_slsqp,fmin,leastsq # used for xds
-from parameterizedStandard import ParameterBoundsError
 
+from parametricStandard import ParameterBoundsError
+from ..mathFunctions import scalar2Complex, complex2Scalar
 
 ## Supporting Functions
 

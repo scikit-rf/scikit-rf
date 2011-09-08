@@ -1,4 +1,4 @@
-#       calibration sub-module
+#       parametricStandard sub-module
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
 #       
@@ -17,9 +17,11 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.from media import Media
 '''
-Provides high-leve Calibration class as well as calibration algorithms
-and parametric standards 
+Provides  parametric standards used in self-calibration routines
+
 '''
+import generic
 
-from calibration import Calibration 
 
+from parametricStandard import ParametricStandard
+from generic import * 

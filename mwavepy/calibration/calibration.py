@@ -28,13 +28,15 @@ import numpy as npy
 import pylab as plb
 import os 
 from copy import deepcopy, copy
-
-from mathFunctions import complex_2_db
-from calibrationAlgorithms import *
-from frequency import *
-from network import *
-from convenience import *
 import itertools
+
+from calibrationAlgorithms import *
+from ..mathFunctions import complex_2_db
+from ..frequency import *
+from ..network import *
+from ..convenience import *
+
+
 ## main class
 class Calibration(object):
 	'''
@@ -389,7 +391,7 @@ class Calibration(object):
 		if show_legend:
 			plb.legend()
 		
-	
+## Functions	
 def two_port_error_vector_2_Ts(error_coefficients):
 	ec = error_coefficients
 	npoints = len(ec['k'])
@@ -414,10 +416,6 @@ def two_port_error_vector_2_Ts(error_coefficients):
 		[	zero,			ec['k']]]).transpose().reshape(-1,2,2)
 	return T1,T2,T3,T4
 	
-
-		
-
-## Functions
 def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
 		'''
 		convert a dictionary holding standard error terms to a Network
