@@ -527,6 +527,35 @@ class Media(object):
 		'''
 		return self.shunt(self.delay_short(*args, **kwargs))
 	
+	def shunt_capacitor(self,C,*args,**kwargs):
+		'''
+		a shunt capacitor
+		
+		takes:
+			C: capacitance in farads
+			*args: passed to self.capacitor
+			**kwargs:passed to self.capacitor
+		returns:
+			a 2-port mwavepy.Network
+		
+		'''
+		return self.shunt(self.capacitor(C=C,*args,**kwargs))
+	
+	def shunt_inductor(self,L,*args,**kwargs):
+		'''
+		a shunt inductor
+		
+		takes:
+			L: inductance in henrys
+			*args: passed to self.inductor
+			**kwargs:passed to self.inductor
+		returns:
+			a 2-port mwavepy.Network
+		
+		'''
+		return self.shunt(self.inductor(L=L,*args,**kwargs))
+		
+	
 	## Noise Networks
 	def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
 		'''

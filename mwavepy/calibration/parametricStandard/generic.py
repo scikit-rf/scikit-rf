@@ -172,3 +172,83 @@ class DelayLoad_UnknownLength_UnknownLoad(ParametricStandard):
 			**kwargs\
 			)
 
+
+
+class UnknownShuntCapacitance(ParametricStandard):
+	'''
+	A Network with unknown connector capacitance
+	'''
+	def __init__(self, media,C,ntwk,**kwargs):
+		'''
+		takes:
+			media: a mwavepy.Media type
+			C: initial guess at connector capacitance, in farads
+			ntwk: network type, representing the standard after the 
+				unknown capacitor
+			**kwargs: passed to self.function
+		
+		*note: 
+			the Media.line function can take the kwarg 'unit', in case 
+			you want to specify the line length in electrical length 
+		'''
+		def func(*args, **kwargs):
+			return media.shunt_capacitor(*args, **kwargs)**ntwk
+		
+		ParametricStandard.__init__(self, \
+			function = func,\
+			parameters = {'C':C},\
+			**kwargs\
+			)
+class UnknownShuntInductance(ParametricStandard):
+	'''
+	A Network with unknown connector inductance
+	'''
+	def __init__(self, media,L,ntwk,**kwargs):
+		'''
+		takes:
+			media: a mwavepy.Media type
+			L: initial guess at connector inductance, in henrys
+			ntwk: network type, representing the standard after the 
+				unknown capacitor
+			**kwargs: passed to self.function
+		
+		*note: 
+			the Media.line function can take the kwarg 'unit', in case 
+			you want to specify the line length in electrical length 
+		'''
+		def func(*args, **kwargs):
+			return media.shunt_inductor(*args, **kwargs)**ntwk
+		
+		ParametricStandard.__init__(self, \
+			function = func,\
+			parameters = {'L':L},\
+			**kwargs\
+			)		
+			
+class UnknownShuntCapacitanceInductance(ParametricStandard):
+	'''
+	A Network with unknown connector inductance and capacitance
+	'''
+	def __init__(self, media,C,L,ntwk,**kwargs):
+		'''
+		takes:
+			media: a mwavepy.Media type
+			C: initial guess at connector capacitance, in farads
+			L: initial guess at connector inductance, in henrys
+			ntwk: network type, representing the standard after the 
+				unknown capacitor
+			**kwargs: passed to self.function
+		
+		*note: 
+			the Media.line function can take the kwarg 'unit', in case 
+			you want to specify the line length in electrical length 
+		'''
+		def func(L,C, **kwargs):
+			return media.shunt_inductor(L, **kwargs)**\
+				media.shunt_capacitor(C, **kwargs)**ntwk
+		
+		ParametricStandard.__init__(self, \
+			function = func,\
+			parameters = {'C':C,'L':L},\
+			**kwargs\
+			)		
