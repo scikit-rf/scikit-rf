@@ -54,11 +54,11 @@ f_wr1p5 = Frequency(500,750,201, 'ghz')
 f_wr1	= Frequency(750,1100,201, 'ghz')
 
 # rectangular waveguides
-wr10 	= RectangularWaveguide(Frequency(75,110,201, 'ghz'), 100*mil)
-wr3 	= RectangularWaveguide(Frequency(220,325,201, 'ghz'), 30*mil)
-wr2p2	= RectangularWaveguide(Frequency(330,500,201, 'ghz'), 22*mil)
-wr1p5 	= RectangularWaveguide(Frequency(500,750,201, 'ghz'), 15*mil)
-wr1 	= RectangularWaveguide(Frequency(750,1100,201, 'ghz'), 10*mil)
+wr10 	= RectangularWaveguide(Frequency(75,110,201, 'ghz'), 100*mil,z0=1)
+wr3 	= RectangularWaveguide(Frequency(220,325,201, 'ghz'), 30*mil,z0=1)
+wr2p2	= RectangularWaveguide(Frequency(330,500,201, 'ghz'), 22*mil,z0=1)
+wr1p5 	= RectangularWaveguide(Frequency(500,750,201, 'ghz'), 15*mil,z0=1)
+wr1 	= RectangularWaveguide(Frequency(750,1100,201, 'ghz'), 10*mil,z0=1)
 
 
 

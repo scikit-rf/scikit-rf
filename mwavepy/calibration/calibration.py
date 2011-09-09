@@ -53,10 +53,10 @@ class Calibration(object):
 	calibration_algorithm_dict={\
 		'one port': one_port,\
 		'one port nls': one_port_nls,\
-		'one port parameterized':parameterized_self_calibration,\
-		'one port parameterized bounded':parameterized_self_calibration_bounded,\
+		'one port parametric':parameterized_self_calibration,\
+		'one port parametric bounded':parameterized_self_calibration_bounded,\
 		'two port': two_port,\
-		'two port parameterized':parameterized_self_calibration,\
+		'two port parametric':parameterized_self_calibration,\
 		}
 	
 	def __init__(self,measured, ideals, type=None, frequency=None,\

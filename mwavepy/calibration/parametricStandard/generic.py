@@ -91,7 +91,7 @@ class DelayLoad_UnknownLength(ParametricStandard):
 			**kwargs\
 			)
 			
-class DelayShort_UnknownLength(ParametricStandard):
+class DelayShort_UnknownLength(DelayLoad_UnknownLength):
 	'''
 	A delay short of unknown length
 
@@ -111,7 +111,7 @@ class DelayShort_UnknownLength(ParametricStandard):
 			Gamma0=-1, 
 			**kwargs)
 
-class DelayOpen_UnknownLength(ParametricStandard):
+class DelayOpen_UnknownLength(DelayLoad_UnknownLength):
 	'''
 	A delay open of unknown length
 

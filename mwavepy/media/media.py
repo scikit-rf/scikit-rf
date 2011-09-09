@@ -221,8 +221,9 @@ class Media(object):
 		'''
 		result = self.match(nports,**kwargs)
 		try:
-			result.s = Gamma0 * npy.eye(nports,dtype=complex).\
-			reshape((-1,nports,nports)).repeat(self.frequency.npoints,0)
+			result.s = npy.reshape(Gamma0,(-1,nports,nports)) * \
+				npy.eye(nports,dtype=complex).reshape((-1,nports,nports)).\
+				repeat(self.frequency.npoints,0)
 		except(ValueError):
 			for f in range(self.frequency.npoints):
 				result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
