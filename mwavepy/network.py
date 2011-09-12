@@ -1159,6 +1159,35 @@ def two_port_reflect(ntwk1, ntwk2, **kwargs):
 		result.s[f,1,1] = ntwk2.s[f,0,0]
 	return result	
 
+def func_on_networks(ntwk_list, func, attribute='s',*args, **kwargs):
+	'''
+	Applies a function to some attribute of aa list of networks, and 
+	returns the result in the form of a Network. This means information 
+	that may not be s-parameters is stored in the s-matrix of the
+	returned Network.
+	
+	takes:
+		ntwk_list: list of mwavepy.Network types
+		func: function to operate on ntwk_list s-matrices
+		attribute: attribute of Network's  in ntwk_list for func to act on
+		*args: passed to func
+		**kwargs: passed to func
+	
+	returns:
+		mwavepy.Network type, with s-matrix the result of func, 
+			operating on ntwk_list's s-matrices
+
+	
+	example:
+		averaging can be implemented with func_on_networks by 
+			func_on_networks(ntwk_list,mean)
+	'''
+	data_matrix = \
+		npy.array([ntwk.__getattribute__(attribute) for ntwk in ntwk_list])
+	
+	new_ntwk = deepcopy(ntwk_list[0])
+	new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
+	return new_ntwk
 
 ## Functions operating on s-parameter matrices
 def connect_s(S,k,T,l):
@@ -1369,7 +1398,6 @@ def de_embed(a,b):
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return c
 
-
 def flip(a):
 	'''
 	invert the ports of a networks s-matrix, 'flipping' it over
@@ -1390,6 +1418,9 @@ def flip(a):
 	else:
 		raise IndexError('matricies should be 2x2, or kx2x2')
 	return c
+
+
+
 
 ## Other	
 # dont belong here, but i needed them quickly
