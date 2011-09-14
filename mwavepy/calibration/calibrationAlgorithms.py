@@ -461,7 +461,7 @@ def parameterized_self_calibration(measured, ideals, showProgress=True,\
 	
 	see  parametricStandard sub-module for more info on them
 	'''
-	ideals_ps = ideals
+	ideals_ps = copy(ideals)
 	#make copies so list entities are not changed
 	measured = copy(measured)
 	if measured[0].number_of_ports ==1:

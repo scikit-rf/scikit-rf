@@ -714,7 +714,7 @@ class Network(object):
 		if show_legend:
 			plb.legend()	
 		
-	def plot_s_db(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
+	def plot_s_db(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
 		plots the magnitude of the scattering parameter of indecies m, n
 		in log magnitude
@@ -725,13 +725,13 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_db',\
 			y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
-			show_legend = show_legend,**kwargs)
+			show_legend = show_legend,*args,**kwargs)
 
-	def plot_s_mag(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
+	def plot_s_mag(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
 		plots the magnitude of a scattering parameter of indecies m, n
 		not in  magnitude
@@ -742,13 +742,13 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_mag',\
 			y_label='Magnitude [not dB]', m=m,n=n, ax=ax,\
-			show_legend = show_legend,**kwargs)
+			show_legend = show_legend,*args,**kwargs)
 
-	def plot_s_deg(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
+	def plot_s_deg(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
 		degrees
@@ -759,15 +759,15 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_deg',\
 			y_label='Phase [deg]', m=m,n=n, ax=ax,\
-			show_legend = show_legend,**kwargs)
+			show_legend = show_legend,*args,**kwargs)
 		
 				
 	def plot_s_deg_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
-		**kwargs):
+		*args,**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
 		unwrapped degrees
@@ -778,12 +778,15 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_deg_unwrap',\
 			y_label='Phase [deg]', m=m,n=n, ax=ax,\
-			show_legend = show_legend,**kwargs)
-	def plot_s_rad(self,m=None, n=None, ax = None, show_legend=True,**kwargs):
+			show_legend = show_legend,*args,**kwargs)
+	
+	plot_s_deg_unwrap = plot_s_deg_unwrapped
+	
+	def plot_s_rad(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
 		radians
@@ -794,15 +797,15 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_rad',\
 			y_label='Phase [rad]', m=m,n=n, ax=ax,\
-			show_legend = show_legend,**kwargs)
+			show_legend = show_legend,*args,**kwargs)
 		
 				
 	def plot_s_rad_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
-		**kwargs):
+		*args,**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
 		unwrapped radians
@@ -813,14 +816,14 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_rad_unwrap',\
 			y_label='Phase [rad]', m=m,n=n, ax=ax,\
-			show_legend = show_legend,**kwargs)	
+			show_legend = show_legend,*args,**kwargs)	
 
 	def plot_s_polar(self,m=0, n=0, ax = None, show_legend=True,\
-		**kwargs):
+		*args,**kwargs):
 		'''
 		plots the scattering parameter of indecies m, n in polar form
 		
@@ -830,13 +833,13 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
-			m=m,n=n, ax=ax,	show_legend = show_legend,**kwargs)	
+			m=m,n=n, ax=ax,	show_legend = show_legend,*args,**kwargs)	
 
 	def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
-		chart_type='z', **kwargs):
+		chart_type='z', *args,**kwargs):
 		'''
 		plots the scattering parameter of indecies m, n on smith chart
 		
@@ -850,7 +853,7 @@ class Network(object):
 			chart_type: string determining countour type. options are:
 				'z': impedance contours (default)
 				'y': admittance contours
-			**kwargs - passed to the matplotlib.plot command	
+			*args,**kwargs - passed to the matplotlib.plot command	
 		'''
 		# TODO: prevent this from re-drawing smith chart if one alread
 		# exists on current set of axes
@@ -896,7 +899,7 @@ class Network(object):
 				# plot the desired attribute vs frequency 
 				if len (ax.patches) == 0:
 					smith(ax=ax, smithR = r, chart_type=chart_type)
-				ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
+				ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, *args,**kwargs)
 		
 		#draw legend
 		if show_legend:
@@ -905,7 +908,7 @@ class Network(object):
 		ax.set_xlabel('Real')
 		ax.set_ylabel('Imaginary')
 	def plot_s_complex(self,m=None, n=None,ax = None, show_legend=True,\
-		**kwargs):
+		*args,**kwargs):
 		'''
 		plots the scattering parameter of indecies m, n on complex plane
 		
@@ -915,7 +918,7 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command	
+			*args,**kwargs - passed to the matplotlib.plot command	
 		'''
 		# TODO: prevent this from re-drawing smith chart if one alread
 		# exists on current set of axes
@@ -959,7 +962,7 @@ class Network(object):
 					kwargs['label'] = label_string
 					
 				# plot the desired attribute vs frequency 
-				ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, **kwargs)
+				ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, *args,**kwargs)
 		
 		#draw legend
 		if show_legend:
@@ -967,7 +970,7 @@ class Network(object):
 		ax.axis('equal')
 		ax.set_xlabel('Real')
 		ax.set_ylabel('Imaginary')
-	def plot_s_all_db(self,ax = None, show_legend=True,**kwargs):
+	def plot_s_all_db(self,ax = None, show_legend=True,*args,**kwargs):
 		'''
 		plots all s parameters in log magnitude
 
@@ -975,15 +978,15 @@ class Network(object):
 			ax - matplotlib.axes object to plot on, used in case you
 				want to update an existing plot.
 			show_legend: boolean, to turn legend show legend of not
-			**kwargs - passed to the matplotlib.plot command
+			*args,**kwargs - passed to the matplotlib.plot command
 		'''
 		for m in range(self.number_of_ports):
 			for n in range(self.number_of_ports):
 				self.plot_vs_frequency_generic(attribute= 's_db',\
 					y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
-					show_legend = show_legend,**kwargs)
+					show_legend = show_legend,*args,**kwargs)
 	# noise
-	def add_noise_polar(self,mag_dev, phase_dev, **kwargs):
+	def add_noise_polar(self,mag_dev, phase_dev,**kwargs):
 		'''
 		adds a complex zero-mean gaussian white-noise signal of given
 		standard deviations for magnitude and phase
@@ -1188,6 +1191,77 @@ def func_on_networks(ntwk_list, func, attribute='s',*args, **kwargs):
 	new_ntwk = deepcopy(ntwk_list[0])
 	new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
 	return new_ntwk
+
+def plot_uncertainty_bounds_s_mag(*args, **kwargs):
+	'''
+	this just calls 
+		plot_uncertainty_bounds(attribute= 's_mag',*args,**kwargs)
+	see plot_uncertainty_bounds for help
+	
+	'''
+	kwargs.update({'attribute':'s_mag'})
+	plot_uncertainty_bounds(*args,**kwargs)
+
+def plot_uncertainty_bounds_s_deg(*args, **kwargs):
+	'''
+	this just calls 
+		plot_uncertainty_bounds(attribute= 's_deg',*args,**kwargs)
+	see plot_uncertainty_bounds for help
+	
+	'''
+	kwargs.update({'attribute':'s_deg'})
+	plot_uncertainty_bounds(*args,**kwargs)
+	
+def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
+	n_deviations=1, alpha=.1,*args,**kwargs):
+	'''
+	plots mean value with +- uncertainty bounds in an Network attribute,
+	for a list of Networks. 
+	
+	takes:
+		ntwk_list: list of Netmwork types [list]
+		attribute: attribute of Network type to analyze [string] 
+		m: first index of attribute matrix [int]
+		n: second index of attribute matrix [int]
+		n_deviations: number of std deviations to plot as bounds [number]
+		alpha: passed to matplotlib.fill_between() command. [number, 0-1]
+		*args,**kwargs: passed to Network.plot_'attribute' command
+		
+	returns:
+		None
+		
+	
+	Caution:
+		 if your list_of_networks is for a calibrated short, then the 
+		std dev of deg_unwrap might blow up, because even though each
+		network is unwrapped, they may fall on either side fo the pi 
+		relative to one another.
+	'''
+	# calculate mean response, and std dev of given attribute
+	ntwk_mean = average(ntwk_list)
+	ntwk_std = func_on_networks(ntwk_list,npy.std, attribute=attribute)
+	
+	# pull out port of interest
+	ntwk_mean.s = ntwk_mean.s[:,m,n]
+	ntwk_std.s = ntwk_std.s[:,m,n]
+	
+	# create bounds (the s_mag here is confusing but is realy in units
+	# of whatever 'attribute' is. read the func_on_networks call to understand
+	upper_bound =  ntwk_mean.__getattribute__(attribute) +\
+		ntwk_std.s_mag*n_deviations
+	lower_bound =   ntwk_mean.__getattribute__(attribute) -\
+		ntwk_std.s_mag*n_deviations
+	
+	# find the correct ploting method
+	plot_func = ntwk_mean.__getattribute__('plot_'+attribute)
+	
+	#plot mean response
+	plot_func(*args,**kwargs)
+	
+	#plot bounds
+	plb.fill_between(ntwk_mean.frequency.f_scaled, \
+		lower_bound.squeeze(),upper_bound.squeeze(), alpha=alpha)
+	plb.draw()
 
 ## Functions operating on s-parameter matrices
 def connect_s(S,k,T,l):

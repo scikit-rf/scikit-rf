@@ -390,7 +390,23 @@ class Calibration(object):
 		#draw legend
 		if show_legend:
 			plb.legend()
+	
+	def plot_residuals_smith(self,*args,**kwargs):
+		'''
+		plots the complex residual errors on teh smith chart.
 		
+		takes:
+			*args,**kwargs: passed to plot_s_smith()
+			
+		
+		note:
+		the residuals are calculated by:
+			(self.error_ntwk.inv**self.measured[k])-self.ideals[k])
+			
+		'''
+		for k in range(len(self.ideals)):
+			((self.error_ntwk.inv**self.measured[k])-self.ideals[k]).\
+				plot_s_smith(*args,**kwargs)
 ## Functions	
 def two_port_error_vector_2_Ts(error_coefficients):
 	ec = error_coefficients
