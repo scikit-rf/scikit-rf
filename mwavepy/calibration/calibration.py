@@ -29,6 +29,7 @@ import pylab as plb
 import os 
 from copy import deepcopy, copy
 import itertools
+import warnings
 
 from calibrationAlgorithms import *
 from ..mathFunctions import complex_2_db
@@ -182,6 +183,12 @@ class Calibration(object):
 		'''
 		return self._nports
 
+	@property
+	def nstandards(self):
+		if len(self.ideals) != len(self.measured):
+			warnings.warn('number of ideals and measured dont agree')
+		return len(self.ideals)
+		
 	@property
 	def output_from_cal(self):
 		'''
@@ -391,12 +398,17 @@ class Calibration(object):
 		if show_legend:
 			plb.legend()
 	
-	def plot_residuals_smith(self,*args,**kwargs):
+	
+	
+	def plot_residuals(self,attribute='smith',*args,**kwargs):
 		'''
-		plots the complex residual errors on teh smith chart.
+		plots a component of the residual errors on the  Calibration-plane.
 		
 		takes:
-			*args,**kwargs: passed to plot_s_smith()
+			attribute: name of ploting method of Network class to call
+				possible options are:
+					'mag', 'db', 'smith', 'deg', etc
+			*args,**kwargs: passed to plot_s_'atttribute'()
 			
 		
 		note:
@@ -404,9 +416,55 @@ class Calibration(object):
 			(self.error_ntwk.inv**self.measured[k])-self.ideals[k])
 			
 		'''
-		for k in range(len(self.ideals)):
-			((self.error_ntwk.inv**self.measured[k])-self.ideals[k]).\
-				plot_s_smith(*args,**kwargs)
+		for ntwk in self.residual_ntwks:
+			ntwk.__getattribute__('plot_s_'+attribute)(*args,**kwargs)
+				
+	def plot_residuals_smith(self,*args,**kwargs):
+		'''
+		see plot_residuals
+		'''
+		self.plot_residuals(self,attribute='smith',*args,**kwargs)	
+	
+	def plot_residuals_mag(self,*args,**kwargs):
+		'''
+		see plot_residuals
+		'''
+		self.plot_residuals(self,attribute='mag',*args,**kwargs)	
+	
+	def plot_residuals_db(self,*args,**kwargs):
+		'''
+		see plot_residuals
+		'''
+		self.plot_residuals(self,attribute='db',*args,**kwargs)	
+
+	@property
+	def residual_ntwks(self):
+		'''
+		returns a the residuals for each calibration standard in the 
+		form of a list of Network types
+		'''
+		ntwk_list=\
+			[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \
+				for k in range(len(self.ideals))]
+		
+		for k in range(len(ntwk_list)):
+			if self.ideals[k].name  is not None:
+				name = self.ideals[k].name
+			else:
+				name='std# %i'%k
+			
+			ntwk_list[k].name = self.ideals[k].name 
+		
+		return ntwk_list 
+	
+		
+	def mean_residuals(self):
+		ntwk_list=\
+			[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \
+				for k in range(len(self.ideals))]
+				
+		return func_on_networks(ntwk_list, mean, 's_mag')
+			
 ## Functions	
 def two_port_error_vector_2_Ts(error_coefficients):
 	ec = error_coefficients

@@ -198,9 +198,12 @@ class Network(object):
 		'''
 		returns a Network object at a given single frequency
 		'''
+		a= self.z0# hack to force getter for z0 to re-shape it
 		output = deepcopy(self)
 		output.s = output.s[key,:,:]
+		output.z0 = output.z0[key,:]
 		output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
+		
 		return output
 	
 	def __str__(self):
@@ -208,8 +211,8 @@ class Network(object):
 		'''
 		f=self.frequency
 		output =  \
-			'%i-Port Network.  %i-%i %s.  %i points'% \
-			(self.number_of_ports,f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)
+			'%i-Port Network.  %i-%i %s.  %i points. z0='% \
+			(self.number_of_ports,f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
 
 		return output
 	def __repr__(self):
@@ -234,9 +237,10 @@ class Network(object):
 		the input s-matrix should be of shape fxnxn, 
 		where f is frequency axis and n is number of ports
 		'''
-		if len(npy.shape(s)) <3:
-			# reshape to kxmxn, this simplifies indexing in function
-			s = npy.reshape(s,(-1,1,1))
+		s_shape= npy.shape(s)
+		if len(s_shape) <3:
+			# reshape to kx1x1, this simplifies indexing in function
+			s = npy.reshape(s,(-1,s_shape[0],s_shape[0]))
 		self._s = s
 		#s.squeeze()
 	@property
