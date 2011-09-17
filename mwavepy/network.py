@@ -239,8 +239,11 @@ class Network(object):
 		'''
 		s_shape= npy.shape(s)
 		if len(s_shape) <3:
-			# reshape to kx1x1, this simplifies indexing in function
-			s = npy.reshape(s,(-1,s_shape[0],s_shape[0]))
+			if len(s_shape)==2:
+				# reshape to kx1x1, this simplifies indexing in function
+				s = npy.reshape(s,(-1,s_shape[0],s_shape[0]))
+			elif len(s_shape)==1:
+				 s = npy.reshape(s,(-1,1,1))
 		self._s = s
 		#s.squeeze()
 	@property

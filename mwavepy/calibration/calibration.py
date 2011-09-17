@@ -400,7 +400,7 @@ class Calibration(object):
 	
 	
 	
-	def plot_residuals(self,attribute='smith',*args,**kwargs):
+	def plot_residuals(self,attribute,*args,**kwargs):
 		'''
 		plots a component of the residual errors on the  Calibration-plane.
 		
