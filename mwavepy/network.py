@@ -1220,7 +1220,7 @@ def plot_uncertainty_bounds_s_deg(*args, **kwargs):
 	plot_uncertainty_bounds(*args,**kwargs)
 	
 def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
-	n_deviations=1, alpha=.1,*args,**kwargs):
+	n_deviations=3, alpha=.3,*args,**kwargs):
 	'''
 	plots mean value with +- uncertainty bounds in an Network attribute,
 	for a list of Networks. 
@@ -1268,6 +1268,7 @@ def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
 	#plot bounds
 	plb.fill_between(ntwk_mean.frequency.f_scaled, \
 		lower_bound.squeeze(),upper_bound.squeeze(), alpha=alpha)
+	plb.axis('tight')
 	plb.draw()
 
 ## Functions operating on s-parameter matrices
