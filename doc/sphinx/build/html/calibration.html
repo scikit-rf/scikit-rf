@@ -7,13 +7,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Calibration &mdash; mwavepy v1.3 documentation</title>
+    <title>Calibration &mdash; mwavepy v1.4 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '1.3',
+        VERSION:     '1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="mwavepy v1.3 documentation" href="index.html" />
+    <link rel="top" title="mwavepy v1.4 documentation" href="index.html" />
     <link rel="next" title="Circuit Design" href="circuit_design.html" />
     <link rel="prev" title="Slow Introduction" href="slow_intro.html" /> 
   </head>
@@ -34,12 +34,15 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="circuit_design.html" title="Circuit Design"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="slow_intro.html" title="Slow Introduction"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -71,7 +74,7 @@
 </div>
 <div class="section" id="one-port">
 <h2>One-Port<a class="headerlink" href="#one-port" title="Permalink to this headline">¶</a></h2>
-<p>See <a class="reference internal" href="example_oneport_calibration.html"><em>One-Port Calibration</em></a> for examples.</p>
+<p>See <tt class="xref doc docutils literal"><span class="pre">example_oneport_calibration</span></tt> for examples.</p>
 <p>Below are (hopefully) self-explanatory examples of increasing complexity, which should illustrate, by example, how to make a calibration.
 Simple One-port</p>
 <p>This example is written to be instructive, not concise.:</p>
@@ -143,7 +146,7 @@ Simple One-port</p>
 <h3>A note on switch-terms<a class="headerlink" href="#a-note-on-switch-terms" title="Permalink to this headline">¶</a></h3>
 <p>Switch-terms are explained in Roger Marks&#8217;s paper titled <em>&#8216;Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms&#8217;</em>. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.</p>
 <p>So how do you measure switch terms? With a custom measurement configuration on the VNA itself. mwavpey has support for switch terms for the HP8510C class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.</p>
-<p>See <a class="reference internal" href="example_twoport_calibration.html"><em>Two-Port Calibration</em></a> for and example</p>
+<p>See <tt class="xref doc docutils literal"><span class="pre">example_twoport_calibration</span></tt> for and example</p>
 </div>
 </div>
 <div class="section" id="simple-two-port">
@@ -261,12 +264,15 @@ Simple One-port</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="circuit_design.html" title="Circuit Design"
              >next</a> |</li>
         <li class="right" >
           <a href="slow_intro.html" title="Slow Introduction"
              >previous</a> |</li>
-        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

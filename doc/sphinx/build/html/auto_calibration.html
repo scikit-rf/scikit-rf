@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="mwavepy v1.3 documentation" href="index.html" />
     <link rel="up" title="API" href="api.html" />
-    <link rel="prev" title="WorkingBand" href="auto_workingband.html" /> 
+    <link rel="prev" title="Network" href="auto_network.html" /> 
   </head>
   <body>
     <div class="related">
@@ -34,7 +34,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="auto_workingband.html" title="WorkingBand"
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="auto_network.html" title="Network"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
           <li><a href="api.html" accesskey="U">API</a> &raquo;</li> 
@@ -133,11 +136,21 @@ calibrated out.</p>
 <tt class="descname">frequency</tt><a class="headerlink" href="#mwavepy.Calibration.frequency" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="method">
+<dt id="mwavepy.Calibration.mean_residuals">
+<tt class="descname">mean_residuals</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.Calibration.mean_residuals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 <dl class="attribute">
 <dt id="mwavepy.Calibration.nports">
 <tt class="descname">nports</tt><a class="headerlink" href="#mwavepy.Calibration.nports" title="Permalink to this definition">¶</a></dt>
 <dd><p>the number of ports in the calibration</p>
 </dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.nstandards">
+<tt class="descname">nstandards</tt><a class="headerlink" href="#mwavepy.Calibration.nstandards" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="attribute">
 <dt id="mwavepy.Calibration.output_from_cal">
@@ -153,12 +166,51 @@ algorithm</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mwavepy.Calibration.plot_residuals_db">
-<tt class="descname">plot_residuals_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.plot_residuals_db" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>plot magnitude of the resdiues, if calibration is</dt>
-<dd>overdetermined</dd>
+<dt id="mwavepy.Calibration.plot_residuals">
+<tt class="descname">plot_residuals</tt><big>(</big><em>attribute</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.plot_residuals" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots a component of the residual errors on the  Calibration-plane.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first docutils">
+<dt>attribute: name of ploting method of Network class to call</dt>
+<dd><dl class="first last docutils">
+<dt>possible options are:</dt>
+<dd>&#8216;mag&#8217;, &#8216;db&#8217;, &#8216;smith&#8217;, &#8216;deg&#8217;, etc</dd>
 </dl>
+</dd>
+</dl>
+<p class="last"><a href="#id1"><span class="problematic" id="id2">*</span></a>args,**kwargs: passed to <a href="#id3"><span class="problematic" id="id4">plot_s_</span></a>&#8216;atttribute&#8217;()</p>
+</dd>
+</dl>
+<p>note:
+the residuals are calculated by:</p>
+<blockquote>
+(self.error_ntwk.inv**self.measured[k])-self.ideals[k])</blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.plot_residuals_db">
+<tt class="descname">plot_residuals_db</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.plot_residuals_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>see plot_residuals</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.plot_residuals_mag">
+<tt class="descname">plot_residuals_mag</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.plot_residuals_mag" title="Permalink to this definition">¶</a></dt>
+<dd><p>see plot_residuals</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Calibration.plot_residuals_smith">
+<tt class="descname">plot_residuals_smith</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Calibration.plot_residuals_smith" title="Permalink to this definition">¶</a></dt>
+<dd><p>see plot_residuals</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.Calibration.residual_ntwks">
+<tt class="descname">residual_ntwks</tt><a class="headerlink" href="#mwavepy.Calibration.residual_ntwks" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a the residuals for each calibration standard in the 
+form of a list of Network types</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -210,8 +262,8 @@ algorithms referenced by  calibration_algorithm_dict</p>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
   <h4>Previous topic</h4>
-  <p class="topless"><a href="auto_workingband.html"
-                        title="previous chapter">WorkingBand</a></p>
+  <p class="topless"><a href="auto_network.html"
+                        title="previous chapter">Network</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/auto_calibration.txt"
@@ -241,7 +293,10 @@ algorithms referenced by  calibration_algorithm_dict</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="auto_workingband.html" title="WorkingBand"
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="auto_network.html" title="Network"
              >previous</a> |</li>
         <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li>
           <li><a href="api.html" >API</a> &raquo;</li> 

@@ -7,13 +7,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Quick Introduction &mdash; mwavepy v1.3 documentation</title>
+    <title>Quick Introduction &mdash; mwavepy v1.4 documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '1.3',
+        VERSION:     '1.4',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
-    <link rel="top" title="mwavepy v1.3 documentation" href="index.html" />
+    <link rel="top" title="mwavepy v1.4 documentation" href="index.html" />
     <link rel="next" title="Slow Introduction" href="slow_intro.html" />
     <link rel="prev" title="Installation" href="installation.html" /> 
   </head>
@@ -34,12 +34,15 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="slow_intro.html" title="Slow Introduction"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="installation.html" title="Installation"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -50,14 +53,14 @@
             
   <div class="section" id="quick-introduction">
 <span id="quick-intro"></span><h1>Quick Introduction<a class="headerlink" href="#quick-introduction" title="Permalink to this headline">¶</a></h1>
-<p>This quick intro is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the <a class="reference internal" href="slow_intro.html"><em>Slow Introduction</em></a>.</p>
+<p>This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the <a class="reference internal" href="slow_intro.html"><em>Slow Introduction</em></a>.</p>
 <div class="section" id="loading-touchstone-files">
 <h2>Loading Touchstone Files<a class="headerlink" href="#loading-touchstone-files" title="Permalink to this headline">¶</a></h2>
 <p>First, import mwavepy and name it something short, like &#8216;&#8217;mv&#8217;&#8216;:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 </pre></div>
 </div>
-<p>Create a few <em>Network&#8217;s</em> from touchstone files:</p>
+<p>The most fundamental object mwavpey is a n-port <em>Network</em>. Commonly a Network is constructed from data stored in a touchstone files, like so.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span> <span class="p">(</span><span class="s">&#39;short.s1p&#39;</span><span class="p">)</span>
 <span class="n">delay_short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span> <span class="p">(</span><span class="s">&#39;delay_short.s1p&#39;</span><span class="p">)</span>
 </pre></div>
@@ -65,15 +68,15 @@
 </div>
 <div class="section" id="important-properties">
 <h2>Important Properties<a class="headerlink" href="#important-properties" title="Permalink to this headline">¶</a></h2>
-<p>The important qualities of a network are the  which is referenced by the properties:</p>
+<p>The important qualities of a <em>Network</em> are provided by the properties:</p>
 <ul class="simple">
 <li><strong>s</strong>: Scattering Parameter matrix.</li>
 <li><strong>frequency</strong>: Frequency Object.</li>
 <li><strong>z0</strong>: Characterisic Impedance matrix.</li>
 </ul>
 </div>
-<div class="section" id="element-wise-operations">
-<h2>Element-wise Operations<a class="headerlink" href="#element-wise-operations" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="element-wise-operations-linear">
+<h2>Element-wise Operations (Linear)<a class="headerlink" href="#element-wise-operations-linear" title="Permalink to this headline">¶</a></h2>
 <p>Simple element-wise mathematical operations on the scattering parameter matrices are accesable through overloaded operators:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">short</span> <span class="o">+</span> <span class="n">delay_short</span>
 <span class="n">short</span> <span class="o">-</span> <span class="n">delay_short</span>
@@ -95,8 +98,8 @@
 </pre></div>
 </div>
 </div>
-<div class="section" id="cascading-and-embeding-operations">
-<h2>Cascading and Embeding Operations<a class="headerlink" href="#cascading-and-embeding-operations" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="cascading-and-embeding-operations-non-linear">
+<h2>Cascading and Embeding Operations (Non-linear)<a class="headerlink" href="#cascading-and-embeding-operations-non-linear" title="Permalink to this headline">¶</a></h2>
 <p>Cascading and de-embeding 2-port Networks is done so frequently, that it can also be done though operators. The cascade function is called by the power operator,  <tt class="docutils literal"><span class="pre">**</span></tt>, and the de-embed function is done by cascading the inverse of a network, which is implemented by the property <tt class="docutils literal"><span class="pre">inv</span></tt>. Given the following Networks:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">cable</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;cable.s2p&#39;</span><span class="p">)</span>
 <span class="n">dut</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;dut.s1p&#39;</span><span class="p">)</span>
@@ -153,8 +156,8 @@ Terminating one port of a ideal 3-way splitter can be done like so:</p>
 <li><a class="reference internal" href="#">Quick Introduction</a><ul>
 <li><a class="reference internal" href="#loading-touchstone-files">Loading Touchstone Files</a></li>
 <li><a class="reference internal" href="#important-properties">Important Properties</a></li>
-<li><a class="reference internal" href="#element-wise-operations">Element-wise Operations</a></li>
-<li><a class="reference internal" href="#cascading-and-embeding-operations">Cascading and Embeding Operations</a></li>
+<li><a class="reference internal" href="#element-wise-operations-linear">Element-wise Operations (Linear)</a></li>
+<li><a class="reference internal" href="#cascading-and-embeding-operations-non-linear">Cascading and Embeding Operations (Non-linear)</a></li>
 <li><a class="reference internal" href="#sub-networks">Sub Networks</a></li>
 <li><a class="reference internal" href="#connecting-multi-ports">Connecting Multi-ports</a></li>
 </ul>
@@ -196,12 +199,15 @@ Terminating one port of a ideal 3-way splitter can be done like so:</p>
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="slow_intro.html" title="Slow Introduction"
              >next</a> |</li>
         <li class="right" >
           <a href="installation.html" title="Installation"
              >previous</a> |</li>
-        <li><a href="index.html">mwavepy v1.3 documentation</a> &raquo;</li> 
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

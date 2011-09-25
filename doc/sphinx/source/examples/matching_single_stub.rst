@@ -29,17 +29,17 @@ Script
 	
 	
 	# Inputs
-	wb = mv.wb_wr10 # The WorkingBand
+	wg = mv.wr10 # The Media class
 	f0 = 90 		# Design Frequency in GHz
 	d_start, d_stop = 0,180 # span of tline lengths [degrees]
 	n = 51 			# number of points
 	Gamma0 = .5 	# the reflection coefficient off the load we are matching
 
 	
-	# change wb.frequency so we only simulat at f0
-	wb.frequency = mv.Frequency(f0,f0,1,'ghz')
+	# change wg.frequency so we only simulat at f0
+	wg.frequency = mv.Frequency(f0,f0,1,'ghz')
 	# create load network 
-	load = wb.load(.5) 
+	load = wg.load(.5) 
 	# the vector of possible line-lengths to simulate at 
 	d_range = linspace(d_start,d_stop,n)
 	
@@ -48,7 +48,7 @@ Script
 		function to return series-shunt stub matching network, given a 
 		WorkingBand and the electrical lengths of the stubs
 		'''
-		return wb.shunt_delay_open(d[1],'deg') ** wb.line(d[0],'deg')
+		return wg.shunt_delay_open(d[1],'deg') ** wg.line(d[0],'deg')
 	
 	# loop through all line-lengths for series and shunt tlines, and store
 	# reflection coefficient magnitude in array

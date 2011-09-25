@@ -24,7 +24,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="mwavepy v1.3 documentation" href="index.html" />
     <link rel="up" title="API" href="api.html" />
-    <link rel="next" title="WorkingBand" href="auto_workingband.html" />
+    <link rel="next" title="Calibration" href="auto_calibration.html" />
     <link rel="prev" title="touchstone" href="auto_touchstone.html" /> 
   </head>
   <body>
@@ -35,7 +35,10 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="auto_workingband.html" title="WorkingBand"
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="auto_calibration.html" title="Calibration"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="auto_touchstone.html" title="touchstone"
@@ -217,7 +220,7 @@ in polar form</p>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_all_db">
-<tt class="descname">plot_s_all_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_all_db" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_all_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_all_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots all s parameters in log magnitude</p>
 <dl class="docutils">
 <dt>takes:</dt>
@@ -226,14 +229,14 @@ in polar form</p>
 <dd>want to update an existing plot.</dd>
 </dl>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id9"><span class="problematic" id="id10">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id9"><span class="problematic" id="id10">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_complex">
-<tt class="descname">plot_s_complex</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_complex" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_complex</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_complex" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the scattering parameter of indecies m, n on complex plane</p>
 <dl class="docutils">
 <dt>takes:</dt>
@@ -243,14 +246,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id11"><span class="problematic" id="id12">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id11"><span class="problematic" id="id12">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_db">
-<tt class="descname">plot_s_db</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_db" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_db</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the magnitude of the scattering parameter of indecies m, n
 in log magnitude</p>
 <dl class="docutils">
@@ -261,14 +264,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id13"><span class="problematic" id="id14">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id13"><span class="problematic" id="id14">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_deg">
-<tt class="descname">plot_s_deg</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_deg" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_deg</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_deg" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the phase of a scattering parameter of indecies m, n in
 degrees</p>
 <dl class="docutils">
@@ -279,14 +282,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id15"><span class="problematic" id="id16">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id15"><span class="problematic" id="id16">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="mwavepy.Network.plot_s_deg_unwrapped">
-<tt class="descname">plot_s_deg_unwrapped</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_deg_unwrapped" title="Permalink to this definition">¶</a></dt>
+<dt id="mwavepy.Network.plot_s_deg_unwrap">
+<tt class="descname">plot_s_deg_unwrap</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_deg_unwrap" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the phase of a scattering parameter of indecies m, n in
 unwrapped degrees</p>
 <dl class="docutils">
@@ -297,14 +300,32 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id17"><span class="problematic" id="id18">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id17"><span class="problematic" id="id18">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.Network.plot_s_deg_unwrapped">
+<tt class="descname">plot_s_deg_unwrapped</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_deg_unwrapped" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots the phase of a scattering parameter of indecies m, n in
+unwrapped degrees</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">m - first index, int
+n - second indext, int
+ax - matplotlib.axes object to plot on, used in case you</p>
+<blockquote>
+want to update an existing plot.</blockquote>
+<p class="last">show_legend: boolean, to turn legend show legend of not
+<a href="#id19"><span class="problematic" id="id20">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_mag">
-<tt class="descname">plot_s_mag</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_mag" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_mag</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_mag" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the magnitude of a scattering parameter of indecies m, n
 not in  magnitude</p>
 <dl class="docutils">
@@ -315,14 +336,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id19"><span class="problematic" id="id20">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id21"><span class="problematic" id="id22">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_polar">
-<tt class="descname">plot_s_polar</tt><big>(</big><em>m=0</em>, <em>n=0</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_polar" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_polar</tt><big>(</big><em>m=0</em>, <em>n=0</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_polar" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the scattering parameter of indecies m, n in polar form</p>
 <dl class="docutils">
 <dt>takes:</dt>
@@ -332,14 +353,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id21"><span class="problematic" id="id22">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id23"><span class="problematic" id="id24">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_rad">
-<tt class="descname">plot_s_rad</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_rad" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_rad</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_rad" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the phase of a scattering parameter of indecies m, n in
 radians</p>
 <dl class="docutils">
@@ -350,14 +371,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id23"><span class="problematic" id="id24">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id25"><span class="problematic" id="id26">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_rad_unwrapped">
-<tt class="descname">plot_s_rad_unwrapped</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_rad_unwrapped" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_rad_unwrapped</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_rad_unwrapped" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the phase of a scattering parameter of indecies m, n in
 unwrapped radians</p>
 <dl class="docutils">
@@ -368,14 +389,14 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id25"><span class="problematic" id="id26">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<a href="#id27"><span class="problematic" id="id28">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.Network.plot_s_smith">
-<tt class="descname">plot_s_smith</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>r=1</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>chart_type='z'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_smith" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">plot_s_smith</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>r=1</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>chart_type='z'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.Network.plot_s_smith" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the scattering parameter of indecies m, n on smith chart</p>
 <dl class="docutils">
 <dt>takes:</dt>
@@ -390,7 +411,7 @@ chart_type: string determining countour type. options are:</p>
 <blockquote>
 &#8216;z&#8217;: impedance contours (default)
 &#8216;y&#8217;: admittance contours</blockquote>
-<p class="last"><a href="#id27"><span class="problematic" id="id28">**</span></a>kwargs - passed to the matplotlib.plot command</p>
+<p class="last"><a href="#id29"><span class="problematic" id="id30">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -455,7 +476,7 @@ n&#8217;s are port indicies</blockquote>
 <dt>note:</dt>
 <dd><dl class="first last docutils">
 <dt>dB is calculated by </dt>
-<dd>20*log10(<a href="#id29"><span class="problematic" id="id30">|s|</span></a>)</dd>
+<dd>20*log10(<a href="#id31"><span class="problematic" id="id32">|s|</span></a>)</dd>
 </dl>
 </dd>
 </dl>
@@ -518,7 +539,7 @@ name. if this is empty, then throws an error.</dd>
 <dt>note:</dt>
 <dd>in the future could make possible use of the touchtone 
 class, but at the moment this would not provide any benefit 
-as it has not <a href="#id31"><span class="problematic" id="id32">set_</span></a> functions.</dd>
+as it has not <a href="#id33"><span class="problematic" id="id34">set_</span></a> functions.</dd>
 </dl>
 </dd></dl>
 
@@ -548,8 +569,8 @@ as it has not <a href="#id31"><span class="problematic" id="id32">set_</span></a
   <p class="topless"><a href="auto_touchstone.html"
                         title="previous chapter">touchstone</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="auto_workingband.html"
-                        title="next chapter">WorkingBand</a></p>
+  <p class="topless"><a href="auto_calibration.html"
+                        title="next chapter">Calibration</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/auto_network.txt"
@@ -579,7 +600,10 @@ as it has not <a href="#id31"><span class="problematic" id="id32">set_</span></a
           <a href="genindex.html" title="General Index"
              >index</a></li>
         <li class="right" >
-          <a href="auto_workingband.html" title="WorkingBand"
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="auto_calibration.html" title="Calibration"
              >next</a> |</li>
         <li class="right" >
           <a href="auto_touchstone.html" title="touchstone"
