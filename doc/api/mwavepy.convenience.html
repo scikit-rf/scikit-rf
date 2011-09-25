@@ -1,0 +1,73 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.convenience</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.convenience</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/convenience.py">/home/alex/docs/python/path/mwavepy/convenience.py</a></font></td></tr></table>
+    <p><tt>Holds&nbsp;pre-initialized&nbsp;&nbsp;class's&nbsp;to&nbsp;provide&nbsp;convenience.&nbsp;Also&nbsp;provides<br>
+some&nbsp;functions,&nbsp;which&nbsp;cant&nbsp;be&nbsp;categorized&nbsp;as&nbsp;anything&nbsp;better&nbsp;than&nbsp;<br>
+general&nbsp;conviniencies.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Pre-initialized&nbsp;classes&nbsp;include:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Frequency&nbsp;Objects&nbsp;for&nbsp;standard&nbsp;frequency&nbsp;bands<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Media&nbsp;objects&nbsp;for&nbsp;standard&nbsp;waveguide&nbsp;bands,</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.mathFunctions.html">mwavepy.mathFunctions</a><br>
+<a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="os.html">os</a><br>
+<a href="pylab.html">pylab</a><br>
+</td><td width="25%" valign=top><a href="scipy.stats.html">scipy.stats</a><br>
+<a href="mwavepy.touchstone.html">mwavepy.touchstone</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-find_nearest"><strong>find_nearest</strong></a>(array, value)</dt><dd><tt>find&nbsp;nearest&nbsp;value&nbsp;in&nbsp;array.<br>
+taken&nbsp;from&nbsp;&nbsp;<a href="http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array">http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array</a></tt></dd></dl>
+ <dl><dt><a name="-find_nearest_index"><strong>find_nearest_index</strong></a>(array, value)</dt><dd><tt>find&nbsp;nearest&nbsp;value&nbsp;in&nbsp;array.<br>
+taken&nbsp;from&nbsp;&nbsp;<a href="http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array">http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array</a></tt></dd></dl>
+ <dl><dt><a name="-legend_off"><strong>legend_off</strong></a>(ax<font color="#909090">=None</font>)</dt><dd><tt>turn&nbsp;off&nbsp;the&nbsp;legend&nbsp;for&nbsp;a&nbsp;given&nbsp;axes.&nbsp;if&nbsp;no&nbsp;axes&nbsp;is&nbsp;given&nbsp;then&nbsp;<br>
+it&nbsp;will&nbsp;use&nbsp;current&nbsp;axes.</tt></dd></dl>
+ <dl><dt><a name="-now_string"><strong>now_string</strong></a>()</dt><dd><tt>#&nbsp;other</tt></dd></dl>
+ <dl><dt><a name="-plot_complex"><strong>plot_complex</strong></a>(z, *args, **kwargs)</dt><dd><tt>plots&nbsp;a&nbsp;complex&nbsp;array&nbsp;or&nbsp;list&nbsp;in&nbsp;real&nbsp;vs&nbsp;imaginary.</tt></dd></dl>
+ <dl><dt><a name="-save_all_figs"><strong>save_all_figs</strong></a>(dir<font color="#909090">='./'</font>, format<font color="#909090">=['eps', 'pdf', 'png']</font>)</dt><dd><tt>##&nbsp;Functions<br>
+#&nbsp;Ploting</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>ALMOST_ZER0</strong> = 1e-06<br>
+<strong>f_wr1</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr10</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr1p5</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr2p2</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr3</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>mil</strong> = 2.5399999999999997e-05<br>
+<strong>wr1</strong> = Rectangular Waveguide Media.  750-1100 GHz.  201 points
+ a= 2.54e-04m, b= 1.27e-04m<br>
+<strong>wr10</strong> = Rectangular Waveguide Media.  75-110 GHz.  201 points
+ a= 2.54e-03m, b= 1.27e-03m<br>
+<strong>wr1p5</strong> = Rectangular Waveguide Media.  500-750 GHz.  201 points
+ a= 3.81e-04m, b= 1.90e-04m<br>
+<strong>wr2p2</strong> = Rectangular Waveguide Media.  330-500 GHz.  201 points
+ a= 5.59e-04m, b= 2.79e-04m<br>
+<strong>wr3</strong> = Rectangular Waveguide Media.  220-325 GHz.  201 points
+ a= 7.62e-04m, b= 3.81e-04m</td></tr></table>
+</body></html>

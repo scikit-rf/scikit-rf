@@ -1,0 +1,209 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: package mwavepy</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong>mwavepy</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/__init__.py">/home/alex/docs/python/path/mwavepy/__init__.py</a></font></td></tr></table>
+    <p><tt>mwavepy&nbsp;is&nbsp;an&nbsp;object-oriented&nbsp;approach&nbsp;to&nbsp;microwave&nbsp;engineering,&nbsp;<br>
+implemented&nbsp;in&nbsp;the&nbsp;Python&nbsp;programming&nbsp;language.&nbsp;It&nbsp;provides&nbsp;a&nbsp;set&nbsp;of&nbsp;<br>
+objects&nbsp;and&nbsp;features&nbsp;which&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;build&nbsp;powerful&nbsp;solutions&nbsp;to&nbsp;<br>
+specific&nbsp;problems.&nbsp;mwavepy's&nbsp;abilities&nbsp;are;&nbsp;touchstone&nbsp;file&nbsp;manipulation,<br>
+calibration,&nbsp;VNA&nbsp;data&nbsp;acquisition,&nbsp;circuit&nbsp;design&nbsp;and&nbsp;much&nbsp;more.&nbsp;<br>
+&nbsp;<br>
+This&nbsp;is&nbsp;the&nbsp;main&nbsp;module&nbsp;file&nbsp;for&nbsp;mwavepy.&nbsp;it&nbsp;simply&nbsp;imports&nbsp;classes&nbsp;and<br>
+methods.&nbsp;It&nbsp;does&nbsp;this&nbsp;in&nbsp;two&nbsp;ways;&nbsp;import&nbsp;all&nbsp;into&nbsp;the&nbsp;current&nbsp;namespace,<br>
+and&nbsp;import&nbsp;modules&nbsp;themselves&nbsp;for&nbsp;coherent&nbsp;&nbsp;structured&nbsp;referencing</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Package Contents</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.beta.html"><strong>beta</strong>&nbsp;(package)</a><br>
+<a href="mwavepy.calibration.html"><strong>calibration</strong>&nbsp;(package)</a><br>
+<a href="mwavepy.convenience.html">convenience</a><br>
+</td><td width="25%" valign=top><a href="mwavepy.frequency.html">frequency</a><br>
+<a href="mwavepy.mathFunctions.html">mathFunctions</a><br>
+<a href="mwavepy.media.html"><strong>media</strong>&nbsp;(package)</a><br>
+</td><td width="25%" valign=top><a href="mwavepy.network.html">network</a><br>
+<a href="mwavepy.plotting.html">plotting</a><br>
+<a href="mwavepy.testCases.html"><strong>testCases</strong>&nbsp;(package)</a><br>
+</td><td width="25%" valign=top><a href="mwavepy.tlineFunctions.html">tlineFunctions</a><br>
+<a href="mwavepy.touchstone.html">touchstone</a><br>
+<a href="mwavepy.virtualInstruments.html"><strong>virtualInstruments</strong>&nbsp;(package)</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(object,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=0)<br>
+&nbsp;<br>
+Create&nbsp;an&nbsp;array.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+object&nbsp;:&nbsp;array_like<br>
+&nbsp;&nbsp;&nbsp;&nbsp;An&nbsp;array,&nbsp;any&nbsp;object&nbsp;exposing&nbsp;the&nbsp;array&nbsp;interface,&nbsp;an<br>
+&nbsp;&nbsp;&nbsp;&nbsp;object&nbsp;whose&nbsp;__array__&nbsp;method&nbsp;returns&nbsp;an&nbsp;array,&nbsp;or&nbsp;any<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(nested)&nbsp;sequence.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;not&nbsp;given,&nbsp;then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;type&nbsp;will&nbsp;be&nbsp;determined&nbsp;as&nbsp;the&nbsp;minimum&nbsp;type&nbsp;required<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;hold&nbsp;the&nbsp;objects&nbsp;in&nbsp;the&nbsp;sequence.&nbsp;&nbsp;This&nbsp;argument&nbsp;can&nbsp;only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;used&nbsp;to&nbsp;'upcast'&nbsp;the&nbsp;array.&nbsp;&nbsp;For&nbsp;downcasting,&nbsp;use&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.astype(t)&nbsp;method.<br>
+copy&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;true&nbsp;(default),&nbsp;then&nbsp;the&nbsp;object&nbsp;is&nbsp;copied.&nbsp;&nbsp;Otherwise,&nbsp;a&nbsp;copy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;only&nbsp;be&nbsp;made&nbsp;if&nbsp;__array__&nbsp;returns&nbsp;a&nbsp;copy,&nbsp;if&nbsp;obj&nbsp;is&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nested&nbsp;sequence,&nbsp;or&nbsp;if&nbsp;a&nbsp;copy&nbsp;is&nbsp;needed&nbsp;to&nbsp;satisfy&nbsp;any&nbsp;of&nbsp;the&nbsp;other<br>
+&nbsp;&nbsp;&nbsp;&nbsp;requirements&nbsp;(`dtype`,&nbsp;`order`,&nbsp;etc.).<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F',&nbsp;'A'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specify&nbsp;the&nbsp;order&nbsp;of&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'C'&nbsp;(default),&nbsp;then&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;will&nbsp;be&nbsp;in&nbsp;C-contiguous&nbsp;order&nbsp;(last-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'F',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;be&nbsp;in&nbsp;Fortran-contiguous&nbsp;order&nbsp;(first-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'A',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array&nbsp;may<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;in&nbsp;any&nbsp;order&nbsp;(either&nbsp;C-,&nbsp;Fortran-contiguous,&nbsp;or&nbsp;even<br>
+&nbsp;&nbsp;&nbsp;&nbsp;discontiguous).<br>
+subok&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;True,&nbsp;then&nbsp;sub-classes&nbsp;will&nbsp;be&nbsp;passed-through,&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;returned&nbsp;array&nbsp;will&nbsp;be&nbsp;forced&nbsp;to&nbsp;be&nbsp;a&nbsp;base-class&nbsp;array&nbsp;(default).<br>
+ndmin&nbsp;:&nbsp;int,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specifies&nbsp;the&nbsp;minimum&nbsp;number&nbsp;of&nbsp;dimensions&nbsp;that&nbsp;the&nbsp;resulting<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;should&nbsp;have.&nbsp;&nbsp;Ones&nbsp;will&nbsp;be&nbsp;pre-pended&nbsp;to&nbsp;the&nbsp;shape&nbsp;as<br>
+&nbsp;&nbsp;&nbsp;&nbsp;needed&nbsp;to&nbsp;meet&nbsp;this&nbsp;requirement.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+&nbsp;<br>
+Upcasting:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3.0])<br>
+<a href="#-array">array</a>([&nbsp;1.,&nbsp;&nbsp;2.,&nbsp;&nbsp;3.])<br>
+&nbsp;<br>
+More&nbsp;than&nbsp;one&nbsp;dimension:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([[1,&nbsp;2],&nbsp;[3,&nbsp;4]])<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+Minimum&nbsp;dimensions&nbsp;2:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;ndmin=2)<br>
+<a href="#-array">array</a>([[1,&nbsp;2,&nbsp;3]])<br>
+&nbsp;<br>
+Type&nbsp;provided:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;dtype=complex)<br>
+<a href="#-array">array</a>([&nbsp;1.+0.j,&nbsp;&nbsp;2.+0.j,&nbsp;&nbsp;3.+0.j])<br>
+&nbsp;<br>
+Data-type&nbsp;consisting&nbsp;of&nbsp;more&nbsp;than&nbsp;one&nbsp;element:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;x&nbsp;=&nbsp;np.<a href="#-array">array</a>([(1,2),(3,4)],dtype=[('a','&lt;i4'),('b','&lt;i4')])<br>
+&gt;&gt;&gt;&nbsp;x['a']<br>
+<a href="#-array">array</a>([1,&nbsp;3])<br>
+&nbsp;<br>
+Creating&nbsp;an&nbsp;array&nbsp;from&nbsp;sub-classes:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'))<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'),&nbsp;subok=True)<br>
+matrix([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])</tt></dd></dl>
+ <dl><dt><a name="-zeros"><strong>zeros</strong></a>(...)</dt><dd><tt><a href="#-zeros">zeros</a>(shape,&nbsp;dtype=float,&nbsp;order='C')<br>
+&nbsp;<br>
+Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;type,&nbsp;filled&nbsp;with&nbsp;zeros.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+shape&nbsp;:&nbsp;int&nbsp;or&nbsp;sequence&nbsp;of&nbsp;ints<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;new&nbsp;array,&nbsp;e.g.,&nbsp;``(2,&nbsp;3)``&nbsp;or&nbsp;``2``.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array,&nbsp;e.g.,&nbsp;`numpy.int8`.&nbsp;&nbsp;Default&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;`numpy.float64`.<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Whether&nbsp;to&nbsp;store&nbsp;multidimensional&nbsp;data&nbsp;in&nbsp;C-&nbsp;or&nbsp;Fortran-contiguous<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(row-&nbsp;or&nbsp;column-wise)&nbsp;order&nbsp;in&nbsp;memory.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+out&nbsp;:&nbsp;ndarray<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;the&nbsp;given&nbsp;shape,&nbsp;dtype,&nbsp;and&nbsp;order.<br>
+&nbsp;<br>
+See&nbsp;Also<br>
+--------<br>
+zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
+empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(5)<br>
+<a href="#-array">array</a>([&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((5,),&nbsp;dtype=numpy.int)<br>
+<a href="#-array">array</a>([0,&nbsp;0,&nbsp;0,&nbsp;0,&nbsp;0])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,&nbsp;1))<br>
+<a href="#-array">array</a>([[&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;s&nbsp;=&nbsp;(2,2)<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(s)<br>
+<a href="#-array">array</a>([[&nbsp;0.,&nbsp;&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.,&nbsp;&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])&nbsp;#&nbsp;custom&nbsp;dtype<br>
+<a href="#-array">array</a>([(0,&nbsp;0),&nbsp;(0,&nbsp;0)],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dtype=[('x',&nbsp;'&lt;i4'),&nbsp;('y',&nbsp;'&lt;i4')])</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>ALMOST_ZER0</strong> = 1e-06<br>
+<strong>INF</strong> = 1e+99<br>
+<strong>ONE</strong> = 1.00000000000001<br>
+<strong>all</strong> = ['vna', 'stages', 'generalSocketReader']<br>
+<strong>cos</strong> = &lt;ufunc 'cos'&gt;<br>
+<strong>exp</strong> = &lt;ufunc 'exp'&gt;<br>
+<strong>f_wr1</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr10</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr1p5</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr2p2</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr3</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>inf</strong> = inf<br>
+<strong>log</strong> = &lt;ufunc 'log'&gt;<br>
+<strong>mil</strong> = 2.5399999999999997e-05<br>
+<strong>mu_0</strong> = 1.2566370614359173e-06<br>
+<strong>pi</strong> = 3.141592653589793<br>
+<strong>sin</strong> = &lt;ufunc 'sin'&gt;<br>
+<strong>sqrt</strong> = &lt;ufunc 'sqrt'&gt;<br>
+<strong>tan</strong> = &lt;ufunc 'tan'&gt;<br>
+<strong>wr1</strong> = Rectangular Waveguide Media.  750-1100 GHz.  201 points
+ a= 2.54e-04m, b= 1.27e-04m<br>
+<strong>wr10</strong> = Rectangular Waveguide Media.  75-110 GHz.  201 points
+ a= 2.54e-03m, b= 1.27e-03m<br>
+<strong>wr1p5</strong> = Rectangular Waveguide Media.  500-750 GHz.  201 points
+ a= 3.81e-04m, b= 1.90e-04m<br>
+<strong>wr2p2</strong> = Rectangular Waveguide Media.  330-500 GHz.  201 points
+ a= 5.59e-04m, b= 2.79e-04m<br>
+<strong>wr3</strong> = Rectangular Waveguide Media.  220-325 GHz.  201 points
+ a= 7.62e-04m, b= 3.81e-04m</td></tr></table>
+</body></html>

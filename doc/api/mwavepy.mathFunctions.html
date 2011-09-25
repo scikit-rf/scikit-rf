@@ -1,0 +1,95 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.mathFunctions</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.mathFunctions</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/mathFunctions.py">/home/alex/docs/python/path/mwavepy/mathFunctions.py</a></font></td></tr></table>
+    <p><tt>Provides&nbsp;commonly&nbsp;used&nbsp;math&nbsp;functions.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="scipy.signal.html">scipy.signal</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-complex2MagPhase"><strong>complex2MagPhase</strong></a>(complx, deg<font color="#909090">=False</font>)</dt></dl>
+ <dl><dt><a name="-complex2ReIm"><strong>complex2ReIm</strong></a>(complx)</dt></dl>
+ <dl><dt><a name="-complex2Scalar"><strong>complex2Scalar</strong></a>(input)</dt><dd><tt>#&nbsp;old&nbsp;functions&nbsp;just&nbsp;for&nbsp;reference</tt></dd></dl>
+ <dl><dt><a name="-complex2dB"><strong>complex2dB</strong></a>(complx)</dt></dl>
+ <dl><dt><a name="-complex_2_db"><strong>complex_2_db</strong></a>(input)</dt><dd><tt>returns&nbsp;the&nbsp;magnitude&nbsp;in&nbsp;dB&nbsp;of&nbsp;a&nbsp;complex&nbsp;number.&nbsp;<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;20*log10(|z|)<br>
+where&nbsp;z&nbsp;is&nbsp;a&nbsp;complex&nbsp;number</tt></dd></dl>
+ <dl><dt><a name="-complex_2_degree"><strong>complex_2_degree</strong></a>(input)</dt><dd><tt>returns&nbsp;the&nbsp;angle&nbsp;complex&nbsp;number&nbsp;in&nbsp;radians.</tt></dd></dl>
+ <dl><dt><a name="-complex_2_magnitude"><strong>complex_2_magnitude</strong></a>(input)</dt><dd><tt>returns&nbsp;the&nbsp;magnitude&nbsp;of&nbsp;a&nbsp;complex&nbsp;number.</tt></dd></dl>
+ <dl><dt><a name="-complex_2_quadrature"><strong>complex_2_quadrature</strong></a>(z)</dt><dd><tt>takes&nbsp;a&nbsp;complex&nbsp;number&nbsp;and&nbsp;returns&nbsp;quadrature,&nbsp;which&nbsp;is&nbsp;(length,&nbsp;arc-length&nbsp;from&nbsp;real&nbsp;axis)</tt></dd></dl>
+ <dl><dt><a name="-complex_2_radian"><strong>complex_2_radian</strong></a>(input)</dt><dd><tt>returns&nbsp;the&nbsp;angle&nbsp;complex&nbsp;number&nbsp;in&nbsp;radians.</tt></dd></dl>
+ <dl><dt><a name="-complex_components"><strong>complex_components</strong></a>(z)</dt><dd><tt>break&nbsp;up&nbsp;a&nbsp;complex&nbsp;array&nbsp;into&nbsp;all&nbsp;possible&nbsp;scalar&nbsp;components<br>
+&nbsp;<br>
+takes:&nbsp;complex&nbsp;ndarray&nbsp;<br>
+return:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c_real:&nbsp;real&nbsp;part<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c_imag:&nbsp;imaginary&nbsp;part<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c_angle:&nbsp;angle&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c_mag:&nbsp;&nbsp;magnitude<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;c_arc:&nbsp;&nbsp;arclength&nbsp;from&nbsp;real&nbsp;axis,&nbsp;angle*magnitude</tt></dd></dl>
+ <dl><dt><a name="-db_2_magnitude"><strong>db_2_magnitude</strong></a>(input)</dt><dd><tt>converts&nbsp;db&nbsp;to&nbsp;normal&nbsp;magnitude<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;10**((z)/20.)<br>
+where&nbsp;z&nbsp;is&nbsp;a&nbsp;complex&nbsp;number</tt></dd></dl>
+ <dl><dt><a name="-db_2_np"><strong>db_2_np</strong></a>(x)</dt><dd><tt>converts&nbsp;a&nbsp;value&nbsp;in&nbsp;nepers&nbsp;to&nbsp;dB</tt></dd></dl>
+ <dl><dt><a name="-degree_2_radian"><strong>degree_2_radian</strong></a>(deg)</dt></dl>
+ <dl><dt><a name="-dirac_delta"><strong>dirac_delta</strong></a>(x)</dt><dd><tt>the&nbsp;dirac&nbsp;function.<br>
+&nbsp;<br>
+can&nbsp;take&nbsp;numpy&nbsp;arrays&nbsp;or&nbsp;numbers<br>
+returns&nbsp;1&nbsp;or&nbsp;0</tt></dd></dl>
+ <dl><dt><a name="-magnitude_2_db"><strong>magnitude_2_db</strong></a>(input)</dt><dd><tt>converts&nbsp;magnitude&nbsp;to&nbsp;db&nbsp;<br>
+&nbsp;<br>
+&nbsp;db&nbsp;is&nbsp;given&nbsp;by&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;20*log10(|z|)<br>
+where&nbsp;z&nbsp;is&nbsp;a&nbsp;complex&nbsp;number</tt></dd></dl>
+ <dl><dt><a name="-neuman"><strong>neuman</strong></a>(x)</dt><dd><tt>neumans&nbsp;number<br>
+&nbsp;<br>
+2-<a href="#-dirac_delta">dirac_delta</a>(x)</tt></dd></dl>
+ <dl><dt><a name="-np_2_db"><strong>np_2_db</strong></a>(x)</dt><dd><tt>converts&nbsp;a&nbsp;value&nbsp;in&nbsp;dB&nbsp;to&nbsp;neper's</tt></dd></dl>
+ <dl><dt><a name="-null"><strong>null</strong></a>(A, eps<font color="#909090">=1e-15</font>)</dt><dd><tt>&nbsp;calculates&nbsp;the&nbsp;null&nbsp;space&nbsp;of&nbsp;matrix&nbsp;A.<br>
+i&nbsp;found&nbsp;this&nbsp;on&nbsp;stack&nbsp;overflow.</tt></dd></dl>
+ <dl><dt><a name="-psd2TimeDomain"><strong>psd2TimeDomain</strong></a>(f, y, windowType<font color="#909090">='hamming'</font>)</dt><dd><tt>convert&nbsp;a&nbsp;one&nbsp;sided&nbsp;complex&nbsp;spectrum&nbsp;into&nbsp;a&nbsp;real&nbsp;time-signal.<br>
+takes&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;array,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;y:&nbsp;complex&nbsp;PSD&nbsp;arary&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;windowType:&nbsp;windowing&nbsp;function,&nbsp;defaults&nbsp;to&nbsp;rect<br>
+&nbsp;<br>
+returns&nbsp;in&nbsp;the&nbsp;form:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[timeVector,&nbsp;signalVector]<br>
+timeVector&nbsp;is&nbsp;in&nbsp;inverse&nbsp;units&nbsp;of&nbsp;the&nbsp;input&nbsp;variable&nbsp;f,<br>
+if&nbsp;spectrum&nbsp;is&nbsp;not&nbsp;baseband&nbsp;then,&nbsp;timeSignal&nbsp;is&nbsp;modulated&nbsp;by&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;exp(t*2*pi*f[0])<br>
+so&nbsp;keep&nbsp;in&nbsp;mind&nbsp;units,&nbsp;also&nbsp;due&nbsp;to&nbsp;this&nbsp;f&nbsp;must&nbsp;be&nbsp;increasing&nbsp;left&nbsp;to&nbsp;right</tt></dd></dl>
+ <dl><dt><a name="-radian_2_degree"><strong>radian_2_degree</strong></a>(rad)</dt></dl>
+ <dl><dt><a name="-scalar2Complex"><strong>scalar2Complex</strong></a>(input)</dt></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>pi</strong> = 3.141592653589793</td></tr></table>
+</body></html>

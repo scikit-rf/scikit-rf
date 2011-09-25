@@ -1,0 +1,390 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.media.media</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.media.html"><font color="#ffffff">media</font></a>.media</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/media/media.py">/home/alex/docs/python/path/mwavepy/media/media.py</a></font></td></tr></table>
+    <p><tt>Contains&nbsp;<a href="#Media">Media</a>&nbsp;class.</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.mathFunctions.html">mwavepy.mathFunctions</a><br>
+<a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top><a href="scipy.stats.html">scipy.stats</a><br>
+<a href="mwavepy.tlineFunctions.html">mwavepy.tlineFunctions</a><br>
+</td><td width="25%" valign=top><a href="warnings.html">warnings</a><br>
+</td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.media.media.html#Media">Media</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Media">class <strong>Media</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>The&nbsp;super-class&nbsp;for&nbsp;all&nbsp;transmission&nbsp;line&nbsp;media.<br>
+&nbsp;<br>
+It&nbsp;provides&nbsp;methods&nbsp;to&nbsp;produce&nbsp;generic&nbsp;network&nbsp;components&nbsp;for&nbsp;any<br>
+transmision&nbsp;line&nbsp;medium,&nbsp;such&nbsp;as&nbsp;line,&nbsp;delay_short,&nbsp;etc.&nbsp;<br>
+&nbsp;<br>
+Network&nbsp;Components&nbsp;specific&nbsp;to&nbsp;an&nbsp;instance&nbsp;of&nbsp;the&nbsp;<a href="#Media">Media</a>&nbsp;super-class<br>
+such&nbsp;as&nbsp;cpw_short,&nbsp;microstrip_bend,&nbsp;are&nbsp;implemented&nbsp;within&nbsp;the&nbsp;<br>
+<a href="#Media">Media</a>&nbsp;instances&nbsp;themselves.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Media-__init__"><strong>__init__</strong></a>(self, frequency, propagation_constant, characteristic_impedance, z0<font color="#909090">=None</font>)</dt><dd><tt>The&nbsp;<a href="#Media">Media</a>&nbsp;initializer.&nbsp;This&nbsp;initializer&nbsp;has&nbsp;flexible&nbsp;argument&nbsp;<br>
+types,&nbsp;which&nbsp;deserves&nbsp;some&nbsp;explaination.<br>
+&nbsp;<br>
+'propagation_constant',&nbsp;'characterisitc_impedance'&nbsp;and&nbsp;'z0'&nbsp;can&nbsp;<br>
+all&nbsp;be&nbsp;&nbsp;either&nbsp;static&nbsp;or&nbsp;dynamic.&nbsp;This&nbsp;is&nbsp;achieved&nbsp;by&nbsp;allowing&nbsp;<br>
+all&nbsp;those&nbsp;arguments&nbsp;to&nbsp;be&nbsp;either;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;functions&nbsp;which&nbsp;take&nbsp;no&nbsp;arguments&nbsp;or&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;values&nbsp;(numbers&nbsp;or&nbsp;arrays)<br>
+&nbsp;<br>
+in&nbsp;the&nbsp;case&nbsp;where&nbsp;the&nbsp;media's&nbsp;propagation&nbsp;constant&nbsp;may&nbsp;change&nbsp;<br>
+after&nbsp;initialization,&nbsp;because&nbsp;you&nbsp;adjusted&nbsp;a&nbsp;parameter,&nbsp;then&nbsp;<br>
+passing&nbsp;the&nbsp;propagation_constant&nbsp;as&nbsp;a&nbsp;function&nbsp;can&nbsp;allow&nbsp;<br>
+for&nbsp;the&nbsp;properties&nbsp;in&nbsp;this&nbsp;Class&nbsp;to&nbsp;reflect&nbsp;that&nbsp;change.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;frequency:&nbsp;mwavepy.Frequency&nbsp;<a href="__builtin__.html#object">object</a><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;propagation_constant*:&nbsp;propagation&nbsp;constant&nbsp;for&nbsp;the&nbsp;medium.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;characteristic_impedance:&nbsp;characteristic&nbsp;impedance&nbsp;of&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;transmission&nbsp;line&nbsp;medium.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0**:&nbsp;characteristic&nbsp;impedance&nbsp;for&nbsp;media&nbsp;,&nbsp;IF&nbsp;its&nbsp;different<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from&nbsp;the&nbsp;characterisitc&nbsp;impedance&nbsp;of&nbsp;the&nbsp;transmission&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;medium&nbsp;&nbsp;(None)&nbsp;[a&nbsp;number].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;z0=&nbsp;None&nbsp;then&nbsp;will&nbsp;set&nbsp;to&nbsp;characterisitc_impedance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.<a href="#Media">Media</a>&nbsp;Object<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+*note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;propagation_constant&nbsp;must&nbsp;adhere&nbsp;to&nbsp;the&nbsp;following&nbsp;convention,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;positive&nbsp;real(gamma)&nbsp;=&nbsp;attenuation<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;positive&nbsp;imag(gamma)&nbsp;=&nbsp;forward&nbsp;propagation&nbsp;<br>
+**note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;waveguide&nbsp;is&nbsp;an&nbsp;example&nbsp;&nbsp;where&nbsp;you&nbsp;may&nbsp;need&nbsp;this,&nbsp;because<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;characteristic&nbsp;impedance&nbsp;is&nbsp;variable&nbsp;but&nbsp;the&nbsp;touchstone's<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from&nbsp;most&nbsp;VNA's&nbsp;have&nbsp;z0=1</tt></dd></dl>
+
+<dl><dt><a name="Media-capacitor"><strong>capacitor</strong></a>(self, C, **kwargs)</dt><dd><tt>A&nbsp;lumped&nbsp;capacitor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;capacitance,&nbsp;in&nbsp;Farads,&nbsp;[number]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="Media-delay_load"><strong>delay_load</strong></a>(self, Gamma0, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;load&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;load&nbsp;(not&nbsp;in&nbsp;dB)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;loaded&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#Media-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#Media-load">load</a>(Gamma0,&nbsp;**kwargs)</tt></dd></dl>
+
+<dl><dt><a name="Media-delay_open"><strong>delay_open</strong></a>(self, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;open&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;shorted&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#Media-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#Media-open">open</a>(**kwargs)</tt></dd></dl>
+
+<dl><dt><a name="Media-delay_short"><strong>delay_short</strong></a>(self, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;short&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;shorted&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#Media-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#Media-short">short</a>(**kwargs)</tt></dd></dl>
+
+<dl><dt><a name="Media-electrical_length"><strong>electrical_length</strong></a>(self, d, deg<font color="#909090">=False</font>)</dt><dd><tt>calculates&nbsp;the&nbsp;electrical&nbsp;length&nbsp;for&nbsp;a&nbsp;given&nbsp;distance,&nbsp;at&nbsp;<br>
+the&nbsp;center&nbsp;frequency.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance,&nbsp;in&nbsp;meters&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;is&nbsp;d&nbsp;in&nbsp;deg?[Boolean]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;or&nbsp;degrees,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depending&nbsp;on&nbsp;&nbsp;value&nbsp;of&nbsp;deg.</tt></dd></dl>
+
+<dl><dt><a name="Media-guess_length_of_delay_short"><strong>guess_length_of_delay_short</strong></a>(self, aNtwk)</dt><dd><tt>guess&nbsp;length&nbsp;of&nbsp;physical&nbsp;length&nbsp;of&nbsp;a&nbsp;Delay&nbsp;Short&nbsp;given&nbsp;by&nbsp;aNtwk<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aNtwk:&nbsp;a&nbsp;mwavepy.ntwk&nbsp;type&nbsp;.&nbsp;(note:&nbsp;if&nbsp;this&nbsp;is&nbsp;a&nbsp;measurment&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;needs&nbsp;to&nbsp;be&nbsp;normalized&nbsp;to&nbsp;the&nbsp;reference&nbsp;plane)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tline:&nbsp;transmission&nbsp;line&nbsp;class&nbsp;of&nbsp;the&nbsp;medium.&nbsp;needed&nbsp;for&nbsp;the&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation&nbsp;of&nbsp;propagation&nbsp;constant</tt></dd></dl>
+
+<dl><dt><a name="Media-impedance_mismatch"><strong>impedance_mismatch</strong></a>(self, z1, z2, **kwargs)</dt><dd><tt>returns&nbsp;a&nbsp;two-port&nbsp;network&nbsp;for&nbsp;a&nbsp;impedance&nbsp;mis-match<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z1:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;1&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z2:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;2&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;mwavepy.Network&nbsp;constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;z1&nbsp;and&nbsp;z2&nbsp;are&nbsp;arrays&nbsp;or&nbsp;lists,&nbsp;they&nbsp;must&nbsp;be&nbsp;of&nbsp;same&nbsp;length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;the&nbsp;self.<strong>frequency</strong>.npoints</tt></dd></dl>
+
+<dl><dt><a name="Media-inductor"><strong>inductor</strong></a>(self, L, **kwargs)</dt><dd><tt>A&nbsp;lumped&nbsp;inductor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L:&nbsp;inductance&nbsp;in&nbsp;Henrys&nbsp;[number]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="Media-line"><strong>line</strong></a>(self, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;section&nbsp;of&nbsp;matched&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;transmission&nbsp;line&nbsp;of&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;d<br>
+&nbsp;<br>
+&nbsp;<br>
+example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my_media&nbsp;=&nbsp;mwavepy.Freespace(...)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my_media.<a href="#Media-line">line</a>(90,&nbsp;'deg',&nbsp;z0=50)</tt></dd></dl>
+
+<dl><dt><a name="Media-load"><strong>load</strong></a>(self, Gamma0, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;Load&nbsp;termianting&nbsp;a&nbsp;transmission&nbsp;line&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;load&nbsp;(not&nbsp;in&nbsp;db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;class,&nbsp;where&nbsp;&nbsp;S&nbsp;=&nbsp;Gamma0*eye(...)</tt></dd></dl>
+
+<dl><dt><a name="Media-match"><strong>match</strong></a>(self, nports<font color="#909090">=1</font>, z0<font color="#909090">=None</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;perfect&nbsp;matched&nbsp;transmission&nbsp;line&nbsp;(Gamma0=0)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0:&nbsp;characterisitc&nbsp;impedance&nbsp;[number&nbsp;of&nbsp;array].&nbsp;defaults&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;None,&nbsp;in&nbsp;which&nbsp;case&nbsp;the&nbsp;<a href="#Media">Media</a>'s&nbsp;z0&nbsp;is&nbsp;used.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Otherwise&nbsp;this&nbsp;sets&nbsp;the&nbsp;resultant&nbsp;network's&nbsp;z0.&nbsp;See<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Network.z0&nbsp;property&nbsp;for&nbsp;more&nbsp;info<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]<br>
+&nbsp;<br>
+&nbsp;<br>
+example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mymatch&nbsp;=&nbsp;wb.<a href="#Media-match">match</a>(2,z0&nbsp;=&nbsp;50,&nbsp;name='Super&nbsp;Awesome&nbsp;Match')</tt></dd></dl>
+
+<dl><dt><a name="Media-open"><strong>open</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;'open'&nbsp;transmission&nbsp;line&nbsp;(Gamma0=1)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="Media-short"><strong>short</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;short&nbsp;&nbsp;transmission&nbsp;line&nbsp;(Gamma0=-1)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="Media-shunt"><strong>shunt</strong></a>(self, ntwk, **kwargs)</dt><dd><tt>returns&nbsp;a&nbsp;shunted&nbsp;ntwk.&nbsp;this&nbsp;creates&nbsp;a&nbsp;'tee',&nbsp;connects&nbsp;<br>
+'ntwk'&nbsp;to&nbsp;port&nbsp;1,&nbsp;and&nbsp;returns&nbsp;the&nbsp;result<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;network&nbsp;to&nbsp;be&nbsp;shunted.&nbsp;[mwavepy.Network]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;the&nbsp;<a href="#Media-tee">tee</a>()&nbsp;function<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="Media-shunt_capacitor"><strong>shunt_capacitor</strong></a>(self, C, *args, **kwargs)</dt><dd><tt>a&nbsp;shunt&nbsp;capacitor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;capacitance&nbsp;in&nbsp;farads<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>capacitor</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>capacitor</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="Media-shunt_delay_load"><strong>shunt_delay_load</strong></a>(self, *args, **kwargs)</dt><dd><tt>a&nbsp;shunted&nbsp;delayed&nbsp;load:<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="Media-shunt_delay_open"><strong>shunt_delay_open</strong></a>(self, *args, **kwargs)</dt><dd><tt>a&nbsp;shunted&nbsp;delayed&nbsp;open:<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="Media-shunt_delay_short"><strong>shunt_delay_short</strong></a>(self, *args, **kwargs)</dt><dd><tt>a&nbsp;shunted&nbsp;delayed&nbsp;short:<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="Media-shunt_inductor"><strong>shunt_inductor</strong></a>(self, L, *args, **kwargs)</dt><dd><tt>a&nbsp;shunt&nbsp;inductor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L:&nbsp;inductance&nbsp;in&nbsp;henrys<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>inductor</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>inductor</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="Media-splitter"><strong>splitter</strong></a>(self, nports, **kwargs)</dt><dd><tt>returns&nbsp;an&nbsp;ideal,&nbsp;lossless&nbsp;n-way&nbsp;splitter.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="Media-tee"><strong>tee</strong></a>(self, **kwargs)</dt><dd><tt>makes&nbsp;a&nbsp;ideal,&nbsp;lossless&nbsp;tee.&nbsp;(aka&nbsp;three&nbsp;port&nbsp;splitter)<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;3-port&nbsp;Network&nbsp;[mwavepy.Network]<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;just&nbsp;calls&nbsp;<a href="#Media-splitter">splitter</a>(3)</tt></dd></dl>
+
+<dl><dt><a name="Media-theta_2_d"><strong>theta_2_d</strong></a>(self, theta, deg<font color="#909090">=True</font>)</dt><dd><tt>converts&nbsp;electrical&nbsp;length&nbsp;to&nbsp;physical&nbsp;distance.&nbsp;The&nbsp;electrical<br>
+length&nbsp;is&nbsp;given&nbsp;at&nbsp;center&nbsp;frequency&nbsp;of&nbsp;self.<strong>frequency</strong>&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length,&nbsp;at&nbsp;band&nbsp;center&nbsp;(see&nbsp;deg&nbsp;for&nbsp;unit)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;is&nbsp;theta&nbsp;in&nbsp;degrees?&nbsp;[boolean]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;physical&nbsp;distance&nbsp;in&nbsp;meters</tt></dd></dl>
+
+<dl><dt><a name="Media-thru"><strong>thru</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;thru<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#Media-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;thru<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;just&nbsp;calls&nbsp;<a href="#Media-line">line</a>(0)</tt></dd></dl>
+
+<dl><dt><a name="Media-white_gaussian_polar"><strong>white_gaussian_polar</strong></a>(self, phase_dev, mag_dev, n_ports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;complex&nbsp;zero-mean&nbsp;gaussian&nbsp;white-noise&nbsp;signal&nbsp;of&nbsp;given<br>
+standard&nbsp;deviations&nbsp;for&nbsp;phase&nbsp;and&nbsp;magnitude<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phase_mag:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;magnitude<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phase_dev:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;phase<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_ports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;defualt&nbsp;to&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;Network()&nbsp;initializer<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result:&nbsp;Network&nbsp;type</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>characteristic_impedance</strong></dt>
+</dl>
+<dl><dt><strong>propagation_constant</strong></dt>
+</dl>
+<dl><dt><strong>z0</strong></dt>
+</dl>
+</td></tr></table></td></tr></table>
+</body></html>

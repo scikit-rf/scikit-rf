@@ -1,0 +1,292 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.calibration.calibration</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.calibration.html"><font color="#ffffff">calibration</font></a>.calibration</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/calibration/calibration.py">/home/alex/docs/python/path/mwavepy/calibration/calibration.py</a></font></td></tr></table>
+    <p><tt>Contains&nbsp;the&nbsp;<a href="#Calibration">Calibration</a>&nbsp;class,&nbsp;and&nbsp;supporting&nbsp;functions</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="itertools.html">itertools</a><br>
+<a href="mwavepy.mathFunctions.html">mwavepy.mathFunctions</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+<a href="os.html">os</a><br>
+</td><td width="25%" valign=top><a href="pylab.html">pylab</a><br>
+<a href="scipy.stats.html">scipy.stats</a><br>
+</td><td width="25%" valign=top><a href="mwavepy.touchstone.html">mwavepy.touchstone</a><br>
+<a href="warnings.html">warnings</a><br>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.calibration.calibration.html#Calibration">Calibration</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Calibration">class <strong>Calibration</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Represents&nbsp;a&nbsp;calibration&nbsp;instance,&nbsp;a&nbsp;class&nbsp;to&nbsp;hold&nbsp;sets<br>
+of&nbsp;measurements,&nbsp;ideals,&nbsp;and&nbsp;calibration&nbsp;results.<br>
+&nbsp;<br>
+see&nbsp;init&nbsp;for&nbsp;more&nbsp;information&nbsp;on&nbsp;usage.&nbsp;<br>
+&nbsp;<br>
+note:<br>
+all&nbsp;calibration&nbsp;algorithms&nbsp;are&nbsp;in&nbsp;calibrationAlgorithms.py,&nbsp;and&nbsp;are<br>
+referenced&nbsp;by&nbsp;the&nbsp;dictionary&nbsp;in&nbsp;this&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;called<br>
+'calibration_algorihtm_dict'<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Calibration-__init__"><strong>__init__</strong></a>(self, measured, ideals, type<font color="#909090">=None</font>, frequency<font color="#909090">=None</font>, is_reciprocal<font color="#909090">=False</font>, switch_terms<font color="#909090">=None</font>, name<font color="#909090">=None</font>, **kwargs)</dt><dd><tt><a href="#Calibration">Calibration</a>&nbsp;initializer.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured:&nbsp;a&nbsp;list&nbsp;of&nbsp;measured&nbsp;Network's&nbsp;(order&nbsp;must&nbsp;align&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with&nbsp;'ideals'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ideals:&nbsp;a&nbsp;list&nbsp;of&nbsp;ideal&nbsp;Network's&nbsp;(order&nbsp;must&nbsp;align&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;with&nbsp;'measured'<br>
+&nbsp;<br>
+[&nbsp;optional]:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;frequency:&nbsp;a&nbsp;Frequency&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;over&nbsp;which&nbsp;the&nbsp;calibration<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is&nbsp;defined&nbsp;[None].&nbsp;if&nbsp;None&nbsp;then&nbsp;will&nbsp;take&nbsp;frequency<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;information&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from&nbsp;the&nbsp;first&nbsp;measurement.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;type:&nbsp;string&nbsp;representing&nbsp;what&nbsp;type&nbsp;of&nbsp;calibration&nbsp;is&nbsp;to&nbsp;be<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;performed&nbsp;[None].&nbsp;supported&nbsp;types&nbsp;at&nbsp;the&nbsp;moment&nbsp;are:<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'one&nbsp;port':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;standard&nbsp;one-port&nbsp;cal.&nbsp;if&nbsp;more&nbsp;than<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;measurement/ideal&nbsp;pairs&nbsp;are&nbsp;given&nbsp;it&nbsp;will<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculate&nbsp;the&nbsp;least&nbsp;squares&nbsp;solution.<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'two&nbsp;port':&nbsp;standard&nbsp;two-port&nbsp;calibibration&nbsp;based&nbsp;on<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;8-term&nbsp;error&nbsp;model.&nbsp;can&nbsp;take&nbsp;switch-terms&nbsp;into<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;by&nbsp;using&nbsp;the&nbsp;switch_term&nbsp;option.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;None,&nbsp;will&nbsp;inspect&nbsp;number&nbsp;of&nbsp;ports&nbsp;on&nbsp;first&nbsp;measured<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;network&nbsp;and&nbsp;choose&nbsp;either&nbsp;'one&nbsp;port'&nbsp;or&nbsp;'two&nbsp;port'<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;is_reciprocal:&nbsp;enables&nbsp;the&nbsp;reciprocity&nbsp;assumption&nbsp;on&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;property&nbsp;error_network&nbsp;[False].<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch_terms:&nbsp;tuple&nbsp;holding&nbsp;the&nbsp;two&nbsp;measured&nbsp;switch&nbsp;terms&nbsp;in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;order&nbsp;(forward,&nbsp;reverse)&nbsp;[None].&nbsp;the&nbsp;tuple&nbsp;elements<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;should&nbsp;be&nbsp;Network&nbsp;types.&nbsp;(note:&nbsp;is&nbsp;only&nbsp;used&nbsp;in&nbsp;two-port<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calibrations)<br>
+&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string&nbsp;holding&nbsp;the&nbsp;name&nbsp;of&nbsp;calibration,&nbsp;just&nbsp;for&nbsp;your<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convenience&nbsp;[None].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key-word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;the&nbsp;calibration<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm.</tt></dd></dl>
+
+<dl><dt><a name="Calibration-apply_cal"><strong>apply_cal</strong></a>(self, input_ntwk)</dt><dd><tt>apply&nbsp;the&nbsp;current&nbsp;calibration&nbsp;to&nbsp;a&nbsp;measurement.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input_ntwk:&nbsp;the&nbsp;measurement&nbsp;to&nbsp;apply&nbsp;the&nbsp;calibration&nbsp;to,&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Network&nbsp;type.<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;caled:&nbsp;the&nbsp;calibrated&nbsp;measurement,&nbsp;a&nbsp;Network&nbsp;type.</tt></dd></dl>
+
+<dl><dt><a name="Calibration-apply_cal_to_all_in_dir"><strong>apply_cal_to_all_in_dir</strong></a>(self, dir, contains<font color="#909090">=None</font>, f_unit<font color="#909090">='ghz'</font>)</dt><dd><tt>convience&nbsp;function&nbsp;to&nbsp;apply&nbsp;calibration&nbsp;to&nbsp;an&nbsp;entire&nbsp;directory<br>
+of&nbsp;measurements,&nbsp;and&nbsp;return&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;the&nbsp;calibrated<br>
+results,&nbsp;optionally&nbsp;the&nbsp;user&nbsp;can&nbsp;'grep'&nbsp;the&nbsp;direction<br>
+by&nbsp;using&nbsp;the&nbsp;contains&nbsp;switch.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dir:&nbsp;directory&nbsp;of&nbsp;measurements&nbsp;(string)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;contains:&nbsp;will&nbsp;only&nbsp;load&nbsp;measurements&nbsp;who's&nbsp;filename&nbsp;contains<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;string.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f_unit:&nbsp;frequency&nbsp;unit,&nbsp;to&nbsp;use&nbsp;for&nbsp;all&nbsp;networks.&nbsp;see<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;frequency.Frequency.unit&nbsp;for&nbsp;info.<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkDict:&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;calibrated&nbsp;measurements,&nbsp;the&nbsp;keys<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;are&nbsp;the&nbsp;filenames.</tt></dd></dl>
+
+<dl><dt><a name="Calibration-mean_residuals"><strong>mean_residuals</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Calibration-plot_coefs_db"><strong>plot_coefs_db</strong></a>(self, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>plot&nbsp;magnitude&nbsp;of&nbsp;the&nbsp;error&nbsp;coeficient&nbsp;dictionary</tt></dd></dl>
+
+<dl><dt><a name="Calibration-plot_residuals"><strong>plot_residuals</strong></a>(self, attribute, *args, **kwargs)</dt><dd><tt>plots&nbsp;a&nbsp;component&nbsp;of&nbsp;the&nbsp;residual&nbsp;errors&nbsp;on&nbsp;the&nbsp;&nbsp;<a href="#Calibration">Calibration</a>-plane.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attribute:&nbsp;name&nbsp;of&nbsp;ploting&nbsp;method&nbsp;of&nbsp;Network&nbsp;class&nbsp;to&nbsp;call<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;possible&nbsp;options&nbsp;are:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'mag',&nbsp;'db',&nbsp;'smith',&nbsp;'deg',&nbsp;etc<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args,**kwargs:&nbsp;passed&nbsp;to&nbsp;plot_s_'atttribute'()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:<br>
+the&nbsp;residuals&nbsp;are&nbsp;calculated&nbsp;by:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(self.<strong>error_ntwk</strong>.inv**self.<strong>measured</strong>[k])-self.<strong>ideals</strong>[k])</tt></dd></dl>
+
+<dl><dt><a name="Calibration-plot_residuals_db"><strong>plot_residuals_db</strong></a>(self, *args, **kwargs)</dt><dd><tt>see&nbsp;plot_residuals</tt></dd></dl>
+
+<dl><dt><a name="Calibration-plot_residuals_mag"><strong>plot_residuals_mag</strong></a>(self, *args, **kwargs)</dt><dd><tt>see&nbsp;plot_residuals</tt></dd></dl>
+
+<dl><dt><a name="Calibration-plot_residuals_smith"><strong>plot_residuals_smith</strong></a>(self, *args, **kwargs)</dt><dd><tt>see&nbsp;plot_residuals</tt></dd></dl>
+
+<dl><dt><a name="Calibration-run"><strong>run</strong></a>(self)</dt><dd><tt>runs&nbsp;the&nbsp;calibration&nbsp;algorihtm.<br>
+&nbsp;<br>
+&nbsp;this&nbsp;is&nbsp;automatically&nbsp;called&nbsp;the<br>
+first&nbsp;time&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;any&nbsp;dependent&nbsp;property&nbsp;is&nbsp;referenced&nbsp;(like&nbsp;error_ntwk)<br>
+,&nbsp;but&nbsp;only&nbsp;the&nbsp;first&nbsp;time.&nbsp;if&nbsp;you&nbsp;change&nbsp;something&nbsp;and&nbsp;want&nbsp;to<br>
+re-run&nbsp;the&nbsp;calibration&nbsp;use&nbsp;this.</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>Ts</strong></dt>
+<dd><tt>T-matricies&nbsp;used&nbsp;for&nbsp;de-embeding.</tt></dd>
+</dl>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>coefs</strong></dt>
+<dd><tt>coefs:&nbsp;a&nbsp;dictionary&nbsp;holding&nbsp;the&nbsp;calibration&nbsp;coefficients<br>
+&nbsp;<br>
+for&nbsp;one&nbsp;port&nbsp;cal's<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'directivity':e00<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'reflection&nbsp;tracking':e01e10<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'source&nbsp;match':e11<br>
+for&nbsp;7-error&nbsp;term&nbsp;two&nbsp;port&nbsp;cal's<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TBD</tt></dd>
+</dl>
+<dl><dt><strong>error_ntwk</strong></dt>
+<dd><tt>a&nbsp;Network&nbsp;type&nbsp;which&nbsp;represents&nbsp;the&nbsp;error&nbsp;network&nbsp;being<br>
+calibrated&nbsp;out.</tt></dd>
+</dl>
+<dl><dt><strong>frequency</strong></dt>
+</dl>
+<dl><dt><strong>nports</strong></dt>
+<dd><tt>the&nbsp;number&nbsp;of&nbsp;ports&nbsp;in&nbsp;the&nbsp;calibration</tt></dd>
+</dl>
+<dl><dt><strong>nstandards</strong></dt>
+</dl>
+<dl><dt><strong>output_from_cal</strong></dt>
+<dd><tt>a&nbsp;dictionary&nbsp;holding&nbsp;all&nbsp;of&nbsp;the&nbsp;output&nbsp;from&nbsp;the&nbsp;calibration<br>
+algorithm</tt></dd>
+</dl>
+<dl><dt><strong>residual_ntwks</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;the&nbsp;residuals&nbsp;for&nbsp;each&nbsp;calibration&nbsp;standard&nbsp;in&nbsp;the&nbsp;<br>
+form&nbsp;of&nbsp;a&nbsp;list&nbsp;of&nbsp;Network&nbsp;types</tt></dd>
+</dl>
+<dl><dt><strong>residuals</strong></dt>
+<dd><tt>from&nbsp;numpy.lstsq:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;residues:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;sum&nbsp;of&nbsp;the&nbsp;residues;&nbsp;squared&nbsp;euclidean&nbsp;norm&nbsp;for&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;each&nbsp;column&nbsp;vector&nbsp;in&nbsp;b&nbsp;(given&nbsp;ax=b)</tt></dd>
+</dl>
+<dl><dt><strong>type</strong></dt>
+<dd><tt>string&nbsp;representing&nbsp;what&nbsp;type&nbsp;of&nbsp;calibration&nbsp;is&nbsp;to&nbsp;be<br>
+performed.&nbsp;supported&nbsp;types&nbsp;at&nbsp;the&nbsp;moment&nbsp;are:<br>
+&nbsp;<br>
+'one&nbsp;port':&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;standard&nbsp;one-port&nbsp;cal.&nbsp;if&nbsp;more&nbsp;than<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;measurement/ideal&nbsp;pairs&nbsp;are&nbsp;given&nbsp;it&nbsp;will<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculate&nbsp;the&nbsp;least&nbsp;squares&nbsp;solution.<br>
+&nbsp;<br>
+'one&nbsp;port&nbsp;xds':&nbsp;self-calibration&nbsp;of&nbsp;a&nbsp;unknown-length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delay-shorts.<br>
+&nbsp;<br>
+note:<br>
+algorithms&nbsp;referenced&nbsp;by&nbsp;&nbsp;calibration_algorithm_dict</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>calibration_algorithm_dict</strong> = {'one port': &lt;function one_port&gt;, 'one port nls': &lt;function one_port_nls&gt;, 'one port parametric': &lt;function parameterized_self_calibration&gt;, 'one port parametric bounded': &lt;function parameterized_self_calibration_bounded&gt;, 'two port': &lt;function two_port&gt;, 'two port parametric': &lt;function parameterized_self_calibration&gt;}</dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-error_dict_2_network"><strong>error_dict_2_network</strong></a>(coefs, frequency<font color="#909090">=None</font>, is_reciprocal<font color="#909090">=False</font>, **kwargs)</dt><dd><tt>convert&nbsp;a&nbsp;dictionary&nbsp;holding&nbsp;standard&nbsp;error&nbsp;terms&nbsp;to&nbsp;a&nbsp;Network<br>
+<a href="__builtin__.html#object">object</a>.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;<br>
+returns:</tt></dd></dl>
+ <dl><dt><a name="-rand"><strong>rand</strong></a>(...)</dt><dd><tt><a href="#-rand">rand</a>(d0,&nbsp;d1,&nbsp;...,&nbsp;dn)<br>
+&nbsp;<br>
+Random&nbsp;values&nbsp;in&nbsp;a&nbsp;given&nbsp;shape.<br>
+&nbsp;<br>
+Create&nbsp;an&nbsp;array&nbsp;of&nbsp;the&nbsp;given&nbsp;shape&nbsp;and&nbsp;propagate&nbsp;it&nbsp;with<br>
+random&nbsp;samples&nbsp;from&nbsp;a&nbsp;uniform&nbsp;distribution<br>
+over&nbsp;``[0,&nbsp;1)``.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+d0,&nbsp;d1,&nbsp;...,&nbsp;dn&nbsp;:&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;output.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+out&nbsp;:&nbsp;ndarray,&nbsp;shape&nbsp;``(d0,&nbsp;d1,&nbsp;...,&nbsp;dn)``<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Random&nbsp;values.<br>
+&nbsp;<br>
+See&nbsp;Also<br>
+--------<br>
+random<br>
+&nbsp;<br>
+Notes<br>
+-----<br>
+This&nbsp;is&nbsp;a&nbsp;convenience&nbsp;function.&nbsp;If&nbsp;you&nbsp;want&nbsp;an&nbsp;interface&nbsp;that<br>
+takes&nbsp;a&nbsp;shape-tuple&nbsp;as&nbsp;the&nbsp;first&nbsp;argument,&nbsp;refer&nbsp;to<br>
+`random`.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.random.<a href="#-rand">rand</a>(3,2)<br>
+array([[&nbsp;0.14022471,&nbsp;&nbsp;0.96360618],&nbsp;&nbsp;#random<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.37601032,&nbsp;&nbsp;0.25528411],&nbsp;&nbsp;#random<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.49313049,&nbsp;&nbsp;0.94909878]])&nbsp;#random</tt></dd></dl>
+ <dl><dt><a name="-two_port_error_vector_2_Ts"><strong>two_port_error_vector_2_Ts</strong></a>(error_coefficients)</dt><dd><tt>##&nbsp;Functions</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>ALMOST_ZER0</strong> = 1e-06<br>
+<strong>f_wr1</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr10</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr1p5</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr2p2</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>f_wr3</strong> = &lt;mwavepy.frequency.Frequency object&gt;<br>
+<strong>mil</strong> = 2.5399999999999997e-05<br>
+<strong>pi</strong> = 3.141592653589793<br>
+<strong>wr1</strong> = Rectangular Waveguide Media.  750-1100 GHz.  201 points
+ a= 2.54e-04m, b= 1.27e-04m<br>
+<strong>wr10</strong> = Rectangular Waveguide Media.  75-110 GHz.  201 points
+ a= 2.54e-03m, b= 1.27e-03m<br>
+<strong>wr1p5</strong> = Rectangular Waveguide Media.  500-750 GHz.  201 points
+ a= 3.81e-04m, b= 1.90e-04m<br>
+<strong>wr2p2</strong> = Rectangular Waveguide Media.  330-500 GHz.  201 points
+ a= 5.59e-04m, b= 2.79e-04m<br>
+<strong>wr3</strong> = Rectangular Waveguide Media.  220-325 GHz.  201 points
+ a= 7.62e-04m, b= 3.81e-04m</td></tr></table>
+</body></html>

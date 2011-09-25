@@ -1,0 +1,126 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.frequency</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.frequency</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/frequency.py">/home/alex/docs/python/path/mwavepy/frequency.py</a></font></td></tr></table>
+    <p><tt>Provides&nbsp;the&nbsp;<a href="#Frequency">Frequency</a>&nbsp;class,&nbsp;and&nbsp;related&nbsp;functions</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="__builtin__.html#object">__builtin__.object</a>
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.frequency.html#Frequency">Frequency</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="Frequency">class <strong>Frequency</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>represents&nbsp;a&nbsp;frequency&nbsp;band.&nbsp;<br>
+&nbsp;<br>
+attributes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start:&nbsp;starting&nbsp;frequency&nbsp;&nbsp;(in&nbsp;Hz)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop:&nbsp;stoping&nbsp;frequency&nbsp;&nbsp;(in&nbsp;Hz)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;npoints:&nbsp;number&nbsp;of&nbsp;points,&nbsp;an&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;unit&nbsp;which&nbsp;to&nbsp;scale&nbsp;a&nbsp;formated&nbsp;axis,&nbsp;when&nbsp;accesssed.&nbsp;see<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;formattedAxis<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+frequently&nbsp;many&nbsp;calcluations&nbsp;are&nbsp;made&nbsp;in&nbsp;a&nbsp;given&nbsp;band&nbsp;,&nbsp;so&nbsp;this&nbsp;class&nbsp;<br>
+is&nbsp;used&nbsp;in&nbsp;other&nbsp;classes&nbsp;so&nbsp;user&nbsp;doesnt&nbsp;have&nbsp;to&nbsp;continually&nbsp;supply&nbsp;<br>
+frequency&nbsp;info.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%">Methods defined here:<br>
+<dl><dt><a name="Frequency-__eq__"><strong>__eq__</strong></a>(self, other)</dt></dl>
+
+<dl><dt><a name="Frequency-__init__"><strong>__init__</strong></a>(self, start, stop, npoints, unit<font color="#909090">='hz'</font>, sweep_type<font color="#909090">='lin'</font>)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;start:&nbsp;start&nbsp;of&nbsp;band.&nbsp;&nbsp;units&nbsp;of&nbsp;unit,&nbsp;defaults&nbsp;is&nbsp;&nbsp;Hz<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stop:&nbsp;end&nbsp;of&nbsp;band.&nbsp;units&nbsp;of&nbsp;unit,&nbsp;defaults&nbsp;is&nbsp;&nbsp;Hz<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;npoints:&nbsp;number&nbsp;of&nbsp;points&nbsp;in&nbsp;the&nbsp;band.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;unit&nbsp;you&nbsp;want&nbsp;the&nbsp;band&nbsp;in&nbsp;for&nbsp;plots.&nbsp;a&nbsp;string.&nbsp;can&nbsp;be:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'hz',&nbsp;'mhz','ghz',&nbsp;<br>
+&nbsp;<br>
+example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;wr1p5band&nbsp;=&nbsp;frequencyBand(500,750,401,&nbsp;'ghz')<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:&nbsp;unit&nbsp;sets&nbsp;the&nbsp;property&nbsp;freqMultiplier,&nbsp;which&nbsp;is&nbsp;used&nbsp;<br>
+to&nbsp;scale&nbsp;the&nbsp;frequency&nbsp;when&nbsp;f_scaled&nbsp;is&nbsp;referenced.</tt></dd></dl>
+
+<dl><dt><a name="Frequency-__ne__"><strong>__ne__</strong></a>(self, other)</dt></dl>
+
+<dl><dt><a name="Frequency-labelXAxis"><strong>labelXAxis</strong></a>(self, ax<font color="#909090">=None</font>)</dt></dl>
+
+<hr>
+Class methods defined here:<br>
+<dl><dt><a name="Frequency-from_f"><strong>from_f</strong></a>(cls, f, *args, **kwargs)<font color="#909090"><font face="helvetica, arial"> from <a href="__builtin__.html#type">__builtin__.type</a></font></font></dt><dd><tt>alternative&nbsp;constructor&nbsp;from&nbsp;a&nbsp;frequency&nbsp;vector,<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;array&nbsp;(default&nbsp;in&nbsp;Hz)&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.<a href="#Frequency">Frequency</a>&nbsp;<a href="__builtin__.html#object">object</a></tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>center</strong></dt>
+</dl>
+<dl><dt><strong>f</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;frequency&nbsp;vector&nbsp;&nbsp;in&nbsp;Hz</tt></dd>
+</dl>
+<dl><dt><strong>f_scaled</strong></dt>
+<dd><tt>returns&nbsp;a&nbsp;frequency&nbsp;vector&nbsp;in&nbsp;units&nbsp;of&nbsp;self.<strong>unit</strong></tt></dd>
+</dl>
+<dl><dt><strong>multiplier</strong></dt>
+<dd><tt>multiplier&nbsp;for&nbsp;formating&nbsp;axis</tt></dd>
+</dl>
+<dl><dt><strong>unit</strong></dt>
+<dd><tt>The&nbsp;unit&nbsp;to&nbsp;format&nbsp;the&nbsp;frequency&nbsp;axis&nbsp;in.&nbsp;see&nbsp;formatedAxis</tt></dd>
+</dl>
+<dl><dt><strong>w</strong></dt>
+<dd><tt>angular&nbsp;frequency&nbsp;in&nbsp;radians</tt></dd>
+</dl>
+<hr>
+Data and other attributes defined here:<br>
+<dl><dt><strong>multiplier_dict</strong> = {'ghz': 1000000000.0, 'hz': 1, 'mhz': 1000000.0}</dl>
+
+<dl><dt><strong>unit_dict</strong> = {'ghz': 'GHz', 'hz': 'Hz', 'mhz': 'MHz'}</dl>
+
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-f_2_frequency"><strong>f_2_frequency</strong></a>(f)</dt><dd><tt>convienience&nbsp;function<br>
+converts&nbsp;a&nbsp;frequency&nbsp;vector&nbsp;to&nbsp;a&nbsp;<a href="#Frequency">Frequency</a>&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;<br>
+&nbsp;<br>
+!depricated,&nbsp;use&nbsp;classmethod&nbsp;from_f&nbsp;instead.</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>pi</strong> = 3.141592653589793</td></tr></table>
+</body></html>
