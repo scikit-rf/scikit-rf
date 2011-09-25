@@ -25,8 +25,7 @@ Reference:
 .. toctree::
    :maxdepth: 1
    
-   architecture
-   api
+   api/modules
     
 Indices and tables
 ==================
