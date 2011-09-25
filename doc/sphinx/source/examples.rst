@@ -8,8 +8,8 @@ Contents:
 .. toctree::
    :maxdepth: 1
    
-   example_basic_plotting
-   example_oneport_calibration
-   example_twoport_calibration
-   example_vna_noise_analysis
-   example_matching_single_stub
+   examples/basic_plotting
+   example/oneport_calibration
+   example/twoport_calibration
+   example/vna_noise_analysis
+   example/matching_single_stub
