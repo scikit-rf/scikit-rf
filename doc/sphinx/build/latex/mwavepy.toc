@@ -7,36 +7,74 @@
 \contentsline {chapter}{\numberline {2}Quick Introduction}{5}{chapter.2}
 \contentsline {section}{\numberline {2.1}Loading Touchstone Files}{5}{section.2.1}
 \contentsline {section}{\numberline {2.2}Important Properties}{5}{section.2.2}
-\contentsline {section}{\numberline {2.3}Element-wise Operations}{5}{section.2.3}
-\contentsline {section}{\numberline {2.4}Cascading and Embeding Operations}{6}{section.2.4}
+\contentsline {section}{\numberline {2.3}Element-wise Operations (Linear)}{5}{section.2.3}
+\contentsline {section}{\numberline {2.4}Cascading and Embeding Operations (Non-linear)}{6}{section.2.4}
 \contentsline {section}{\numberline {2.5}Sub Networks}{6}{section.2.5}
 \contentsline {section}{\numberline {2.6}Connecting Multi-ports}{6}{section.2.6}
 \contentsline {chapter}{\numberline {3}Slow Introduction}{9}{chapter.3}
 \contentsline {chapter}{\numberline {4}Calibration}{11}{chapter.4}
 \contentsline {section}{\numberline {4.1}Intro}{11}{section.4.1}
 \contentsline {section}{\numberline {4.2}One-Port}{11}{section.4.2}
-\contentsline {section}{\numberline {4.3}Two-port}{12}{section.4.3}
+\contentsline {section}{\numberline {4.3}Two-port}{13}{section.4.3}
+\contentsline {subsection}{\numberline {4.3.1}A note on switch-terms}{13}{subsection.4.3.1}
 \contentsline {section}{\numberline {4.4}Simple Two Port}{13}{section.4.4}
-\contentsline {section}{\numberline {4.5}Using s1p ideals in two-port calibration}{14}{section.4.5}
-\contentsline {chapter}{\numberline {5}Examples}{15}{chapter.5}
-\contentsline {section}{\numberline {5.1}Basic Plotting}{15}{section.5.1}
-\contentsline {section}{\numberline {5.2}One-Port Calibration}{18}{section.5.2}
-\contentsline {subsection}{\numberline {5.2.1}Instructive}{18}{subsection.5.2.1}
-\contentsline {subsection}{\numberline {5.2.2}Concise}{19}{subsection.5.2.2}
-\contentsline {section}{\numberline {5.3}Two-Port Calibration}{19}{section.5.3}
-\contentsline {chapter}{\numberline {6}Architecture}{21}{chapter.6}
-\contentsline {section}{\numberline {6.1}Module Layout and Inheritance}{21}{section.6.1}
-\contentsline {section}{\numberline {6.2}Individual Class Architectures}{21}{section.6.2}
-\contentsline {subsection}{\numberline {6.2.1}Frequency}{21}{subsection.6.2.1}
-\contentsline {subsection}{\numberline {6.2.2}Network}{21}{subsection.6.2.2}
-\contentsline {subsection}{\numberline {6.2.3}touchstone}{21}{subsection.6.2.3}
-\contentsline {subsection}{\numberline {6.2.4}WorkingBand}{21}{subsection.6.2.4}
-\contentsline {subsection}{\numberline {6.2.5}Calibration}{21}{subsection.6.2.5}
-\contentsline {chapter}{\numberline {7}API}{27}{chapter.7}
-\contentsline {section}{\numberline {7.1}Frequency}{27}{section.7.1}
-\contentsline {section}{\numberline {7.2}touchstone}{27}{section.7.2}
-\contentsline {section}{\numberline {7.3}Network}{28}{section.7.3}
-\contentsline {section}{\numberline {7.4}WorkingBand}{32}{section.7.4}
-\contentsline {section}{\numberline {7.5}Calibration}{35}{section.7.5}
-\contentsline {chapter}{\numberline {8}Indices and tables}{37}{chapter.8}
-\contentsline {chapter}{Index}{39}{section*.84}
+\contentsline {subsection}{\numberline {4.4.1}Using s1p ideals in two-port calibration}{14}{subsection.4.4.1}
+\contentsline {chapter}{\numberline {5}Circuit Design}{15}{chapter.5}
+\contentsline {section}{\numberline {5.1}Intro}{15}{section.5.1}
+\contentsline {section}{\numberline {5.2}Media's Supported by mwavepy}{15}{section.5.2}
+\contentsline {section}{\numberline {5.3}Creating Individual Networks}{16}{section.5.3}
+\contentsline {section}{\numberline {5.4}Building Cicuits}{16}{section.5.4}
+\contentsline {section}{\numberline {5.5}Single Stub Tuner}{17}{section.5.5}
+\contentsline {section}{\numberline {5.6}Optimizing Designs}{17}{section.5.6}
+\contentsline {chapter}{\numberline {6}Examples}{19}{chapter.6}
+\contentsline {section}{\numberline {6.1}Basic Plotting}{19}{section.6.1}
+\contentsline {section}{\numberline {6.2}One-Port Calibration}{22}{section.6.2}
+\contentsline {subsection}{\numberline {6.2.1}Instructive}{22}{subsection.6.2.1}
+\contentsline {subsection}{\numberline {6.2.2}Concise}{23}{subsection.6.2.2}
+\contentsline {section}{\numberline {6.3}Two-Port Calibration}{23}{section.6.3}
+\contentsline {section}{\numberline {6.4}VNA Noise Analysis}{24}{section.6.4}
+\contentsline {subsection}{\numberline {6.4.1}Touchstone File Retrieval}{24}{subsection.6.4.1}
+\contentsline {subsection}{\numberline {6.4.2}Noise Analysis}{24}{subsection.6.4.2}
+\contentsline {section}{\numberline {6.5}Circuit Design: Single Stub Matching Network}{28}{section.6.5}
+\contentsline {subsection}{\numberline {6.5.1}Introduction}{28}{subsection.6.5.1}
+\contentsline {subsection}{\numberline {6.5.2}Script}{29}{subsection.6.5.2}
+\contentsline {subsection}{\numberline {6.5.3}Output}{30}{subsection.6.5.3}
+\contentsline {chapter}{\numberline {7}mwavepy API}{33}{chapter.7}
+\contentsline {section}{\numberline {7.1}mwavepy Package}{33}{section.7.1}
+\contentsline {subsection}{\numberline {7.1.1}\texttt {mwavepy} Package}{33}{subsection.7.1.1}
+\contentsline {subsection}{\numberline {7.1.2}\texttt {convenience} Module}{33}{subsection.7.1.2}
+\contentsline {subsection}{\numberline {7.1.3}\texttt {frequency} Module}{33}{subsection.7.1.3}
+\contentsline {subsection}{\numberline {7.1.4}\texttt {mathFunctions} Module}{34}{subsection.7.1.4}
+\contentsline {subsection}{\numberline {7.1.5}\texttt {network} Module}{36}{subsection.7.1.5}
+\contentsline {subsection}{\numberline {7.1.6}\texttt {plotting} Module}{43}{subsection.7.1.6}
+\contentsline {subsection}{\numberline {7.1.7}\texttt {tlineFunctions} Module}{43}{subsection.7.1.7}
+\contentsline {subsection}{\numberline {7.1.8}\texttt {touchstone} Module}{46}{subsection.7.1.8}
+\contentsline {subsection}{\numberline {7.1.9}Subpackages}{47}{subsection.7.1.9}
+\contentsline {subsubsection}{media Package}{47}{subsubsection*.132}
+\contentsline {paragraph}{\texttt {media} Package}{47}{paragraph*.133}
+\contentsline {paragraph}{\texttt {cpw} Module}{47}{paragraph*.135}
+\contentsline {paragraph}{\texttt {distributedCircuit} Module}{47}{paragraph*.143}
+\contentsline {paragraph}{\texttt {freespace} Module}{48}{paragraph*.150}
+\contentsline {paragraph}{\texttt {media} Module}{49}{paragraph*.152}
+\contentsline {paragraph}{\texttt {rectangularWaveguide} Module}{53}{paragraph*.181}
+\contentsline {subsubsection}{calibration Package}{54}{subsubsection*.191}
+\contentsline {paragraph}{\texttt {calibration} Package}{54}{paragraph*.192}
+\contentsline {paragraph}{\texttt {calibration} Module}{54}{paragraph*.194}
+\contentsline {paragraph}{\texttt {calibrationAlgorithms} Module}{56}{paragraph*.218}
+\contentsline {paragraph}{Subpackages}{59}{paragraph*.230}
+\contentsline {subparagraph}{parametricStandard Package}{59}{subparagraph*.231}
+\contentsline {subparagraph}{\texttt {parametricStandard} Package}{59}{subparagraph*.232}
+\contentsline {subparagraph}{\texttt {generic} Module}{59}{subparagraph*.234}
+\contentsline {subparagraph}{\texttt {parametricStandard} Module}{61}{subparagraph*.245}
+\contentsline {subparagraph}{\texttt {rectangularWaveguide} Module}{62}{subparagraph*.256}
+\contentsline {subsubsection}{virtualInstruments Package}{62}{subsubsection*.257}
+\contentsline {paragraph}{\texttt {virtualInstruments} Package}{62}{paragraph*.258}
+\contentsline {paragraph}{\texttt {futekLoadCell} Module}{62}{paragraph*.260}
+\contentsline {paragraph}{\texttt {generalSocketReader} Module}{63}{paragraph*.272}
+\contentsline {paragraph}{\texttt {lifetimeProbeTester} Module}{63}{paragraph*.279}
+\contentsline {paragraph}{\texttt {lifetimeProbeTesterFunctions} Module}{63}{paragraph*.280}
+\contentsline {paragraph}{\texttt {stages} Module}{63}{paragraph*.281}
+\contentsline {paragraph}{\texttt {vna} Module}{63}{paragraph*.282}
+\contentsline {chapter}{\numberline {8}Indices and tables}{65}{chapter.8}
+\contentsline {chapter}{Python Module Index}{67}{section*.283}
+\contentsline {chapter}{Index}{69}{section*.284}
