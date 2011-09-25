@@ -3,7 +3,7 @@
 Quick Introduction
 *********************
 
-This quick intro is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the :doc:`slow_intro`.
+This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the :doc:`slow_intro`.
 
 Loading Touchstone Files
 ++++++++++++++++++++++++++
@@ -12,7 +12,7 @@ First, import mwavepy and name it something short, like ''mv''::
 
 	import mwavepy as mv
 
-Create a few *Network's* from touchstone files::
+The most fundamental object mwavpey is a n-port *Network*. Commonly a Network is constructed from data stored in a touchstone files, like so.::
 	
 	short = mv.Network ('short.s1p')
 	delay_short = mv.Network ('delay_short.s1p')
@@ -20,14 +20,14 @@ Create a few *Network's* from touchstone files::
 Important Properties
 +++++++++++++++++++++++++
 	
-The important qualities of a network are the  which is referenced by the properties:
+The important qualities of a *Network* are provided by the properties:
 
 * **s**: Scattering Parameter matrix. 
 * **frequency**: Frequency Object. 
 * **z0**: Characterisic Impedance matrix.
 
-Element-wise Operations
-++++++++++++++++++++++++++
+Element-wise Operations (Linear)
+++++++++++++++++++++++++++++++++
 	
 Simple element-wise mathematical operations on the scattering parameter matrices are accesable through overloaded operators::
 
@@ -50,8 +50,8 @@ Another use is calculating or plotting de-trended phase using the division opera
 	(delay_short/short).plot_s_deg()
 	
 	
-Cascading and Embeding Operations
-+++++++++++++++++++++++++++++++++++
+Cascading and Embeding Operations (Non-linear)
+++++++++++++++++++++++++++++++++++++++++++++++++
 Cascading and de-embeding 2-port Networks is done so frequently, that it can also be done though operators. The cascade function is called by the power operator,  ``**``, and the de-embed function is done by cascading the inverse of a network, which is implemented by the property ``inv``. Given the following Networks::
 
 	cable = mv.Network('cable.s2p')

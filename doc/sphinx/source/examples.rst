@@ -9,7 +9,7 @@ Contents:
    :maxdepth: 1
    
    examples/basic_plotting
-   example/oneport_calibration
-   example/twoport_calibration
-   example/vna_noise_analysis
-   example/matching_single_stub
+   examples/oneport_calibration
+   examples/twoport_calibration
+   examples/vna_noise_analysis
+   examples/matching_single_stub

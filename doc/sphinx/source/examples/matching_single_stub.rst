@@ -7,7 +7,7 @@ Introduction
 --------
 This example illustrates a way to visualize the design space for a single stub matching network. The matching Network consists of a shunt and series stub arranged as shown below, (image taken from R.M. Weikle's Notes)
 
-.. figure::  images/single_stub_matching_diagram.png
+.. figure::  ../images/single_stub_matching_diagram.png
    :align:   center
    :width:	400
    
@@ -84,12 +84,12 @@ Script
 Output 
 ------------
 
-.. figure::  images/Series-Shunt_Stub_Matching_2D.png
+.. figure::  ../images/Series-Shunt_Stub_Matching_2D.png
    :align:   center
    :width:	800
 
 
-.. figure::  images/Series-Shunt_Stub_Matching_3D.png
+.. figure::  ../images/Series-Shunt_Stub_Matching_3D.png
    :align:   center
    :width:	800
 

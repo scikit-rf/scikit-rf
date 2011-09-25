@@ -19,7 +19,7 @@ This example illustrates how to create common plots::
 	# show the plots (only needed if you dont have interactive set on ipython)
 	pylab.show()
 
-.. figure::  images/Return_Loss(Mag).png
+.. figure::  ../images/Return_Loss(Mag).png
    :align:   center
    :width:	800
 
@@ -31,7 +31,7 @@ This example illustrates how to create common plots::
 	# all keyword arguments are passed to matplotlib.plot command
 	horn.plot_s_deg(0,0, label='Broadband Horn Antenna', color='r', linewidth=2)
 
-.. figure::  images/Return_Loss(Phase).png
+.. figure::  ../images/Return_Loss(Phase).png
    :align:   center
    :width:	800
 
@@ -42,7 +42,7 @@ This example illustrates how to create common plots::
 	pylab.title('Return Loss (Unwrapped Phase)')
 	horn.plot_s_deg_unwrapped(0,0)
 	
-.. figure::  images/Return_Loss(Unwrapped_Phase).png
+.. figure::  ../images/Return_Loss(Unwrapped_Phase).png
    :align:   center
    :width:	800
 
@@ -53,7 +53,7 @@ This example illustrates how to create common plots::
 	horn.plot_s_smith(0,0, show_legend=False)
 	pylab.title('Return Loss, Smith')
 
-.. figure::  images/Return_Loss(Smith).png
+.. figure::  ../images/Return_Loss(Smith).png
    :align:   center
    :width:	800
 
@@ -64,7 +64,7 @@ This example illustrates how to create common plots::
 	horn.plot_s_polar(0,0, show_legend=False)
 	pylab.title('Return Loss, Polar')
 
-.. figure::  images/Return_Loss(Polar).png
+.. figure::  ../images/Return_Loss(Polar).png
    :align:   center
    :width:	800
 

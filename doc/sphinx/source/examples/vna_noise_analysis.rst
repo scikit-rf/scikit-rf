@@ -92,19 +92,19 @@ touchstones files, as would be created from the previous script
     
     draw();show();
     
-.. figure::  images/ComplexDrift.png
+.. figure::  ../images/ComplexDrift.png
    :align:   center
    :width:	800
 
-.. figure::  images/PhaseDriftvsTime.png
+.. figure::  ../images/PhaseDriftvsTime.png
    :align:   center
    :width:	800
 
-.. figure::  images/PhaseDriftDistrobution.png
+.. figure::  ../images/PhaseDriftDistrobution.png
    :align:   center
    :width:	800
 
-.. figure::  images/FFTofPhaseDrift.png
+.. figure::  ../images/FFTofPhaseDrift.png
    :align:   center
    :width:	800
 
