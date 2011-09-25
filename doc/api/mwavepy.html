@@ -26,18 +26,16 @@ and&nbsp;import&nbsp;modules&nbsp;themselves&nbsp;for&nbsp;coherent&nbsp;&nbsp;s
     
 <tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.beta.html"><strong>beta</strong>&nbsp;(package)</a><br>
-<a href="mwavepy.calibration.html">calibration</a><br>
-<a href="mwavepy.calibrationAlgorithms.html">calibrationAlgorithms</a><br>
+<a href="mwavepy.calibration.html"><strong>calibration</strong>&nbsp;(package)</a><br>
 <a href="mwavepy.convenience.html">convenience</a><br>
 </td><td width="25%" valign=top><a href="mwavepy.frequency.html">frequency</a><br>
 <a href="mwavepy.mathFunctions.html">mathFunctions</a><br>
 <a href="mwavepy.media.html"><strong>media</strong>&nbsp;(package)</a><br>
-<a href="mwavepy.network.html">network</a><br>
-</td><td width="25%" valign=top><a href="mwavepy.parameterizedStandard.html">parameterizedStandard</a><br>
+</td><td width="25%" valign=top><a href="mwavepy.network.html">network</a><br>
 <a href="mwavepy.plotting.html">plotting</a><br>
 <a href="mwavepy.testCases.html"><strong>testCases</strong>&nbsp;(package)</a><br>
-<a href="mwavepy.tlineFunctions.html">tlineFunctions</a><br>
-</td><td width="25%" valign=top><a href="mwavepy.touchstone.html">touchstone</a><br>
+</td><td width="25%" valign=top><a href="mwavepy.tlineFunctions.html">tlineFunctions</a><br>
+<a href="mwavepy.touchstone.html">touchstone</a><br>
 <a href="mwavepy.virtualInstruments.html"><strong>virtualInstruments</strong>&nbsp;(package)</a><br>
 </td></tr></table></td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
@@ -124,40 +122,6 @@ Creating&nbsp;an&nbsp;array&nbsp;from&nbsp;sub-classes:<br>
 &gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'),&nbsp;subok=True)<br>
 matrix([[1,&nbsp;2],<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])</tt></dd></dl>
- <dl><dt><a name="-rand"><strong>rand</strong></a>(...)</dt><dd><tt><a href="#-rand">rand</a>(d0,&nbsp;d1,&nbsp;...,&nbsp;dn)<br>
-&nbsp;<br>
-Random&nbsp;values&nbsp;in&nbsp;a&nbsp;given&nbsp;shape.<br>
-&nbsp;<br>
-Create&nbsp;an&nbsp;array&nbsp;of&nbsp;the&nbsp;given&nbsp;shape&nbsp;and&nbsp;propagate&nbsp;it&nbsp;with<br>
-random&nbsp;samples&nbsp;from&nbsp;a&nbsp;uniform&nbsp;distribution<br>
-over&nbsp;``[0,&nbsp;1)``.<br>
-&nbsp;<br>
-Parameters<br>
-----------<br>
-d0,&nbsp;d1,&nbsp;...,&nbsp;dn&nbsp;:&nbsp;int<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;output.<br>
-&nbsp;<br>
-Returns<br>
--------<br>
-out&nbsp;:&nbsp;ndarray,&nbsp;shape&nbsp;``(d0,&nbsp;d1,&nbsp;...,&nbsp;dn)``<br>
-&nbsp;&nbsp;&nbsp;&nbsp;Random&nbsp;values.<br>
-&nbsp;<br>
-See&nbsp;Also<br>
---------<br>
-random<br>
-&nbsp;<br>
-Notes<br>
------<br>
-This&nbsp;is&nbsp;a&nbsp;convenience&nbsp;function.&nbsp;If&nbsp;you&nbsp;want&nbsp;an&nbsp;interface&nbsp;that<br>
-takes&nbsp;a&nbsp;shape-tuple&nbsp;as&nbsp;the&nbsp;first&nbsp;argument,&nbsp;refer&nbsp;to<br>
-`random`.<br>
-&nbsp;<br>
-Examples<br>
---------<br>
-&gt;&gt;&gt;&nbsp;np.random.<a href="#-rand">rand</a>(3,2)<br>
-<a href="#-array">array</a>([[&nbsp;0.14022471,&nbsp;&nbsp;0.96360618],&nbsp;&nbsp;#random<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.37601032,&nbsp;&nbsp;0.25528411],&nbsp;&nbsp;#random<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.49313049,&nbsp;&nbsp;0.94909878]])&nbsp;#random</tt></dd></dl>
  <dl><dt><a name="-zeros"><strong>zeros</strong></a>(...)</dt><dd><tt><a href="#-zeros">zeros</a>(shape,&nbsp;dtype=float,&nbsp;order='C')<br>
 &nbsp;<br>
 Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;type,&nbsp;filled&nbsp;with&nbsp;zeros.<br>
