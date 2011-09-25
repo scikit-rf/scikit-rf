@@ -1,0 +1,445 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.media.cpw</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.<a href="mwavepy.media.html"><font color="#ffffff">media</font></a>.cpw</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/media/cpw.py">/home/alex/docs/python/path/mwavepy/media/cpw.py</a></font></td></tr></table>
+    <p><tt>contains&nbsp;<a href="#CPW">CPW</a>&nbsp;class</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ee77aa">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Classes</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#ee77aa"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.media.media.html#Media">mwavepy.media.media.Media</a>(<a href="__builtin__.html#object">__builtin__.object</a>)
+</font></dt><dd>
+<dl>
+<dt><font face="helvetica, arial"><a href="mwavepy.media.cpw.html#CPW">CPW</a>
+</font></dt></dl>
+</dd>
+</dl>
+ <p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><a name="CPW">class <strong>CPW</strong></a>(<a href="mwavepy.media.media.html#Media">mwavepy.media.media.Media</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>Coplanar&nbsp;waveguide&nbsp;class<br>
+&nbsp;<br>
+&nbsp;<br>
+This&nbsp;class&nbsp;was&nbsp;made&nbsp;from&nbsp;the&nbsp;the&nbsp;documentation&nbsp;from&nbsp;the<br>
+qucs&nbsp;project&nbsp;(&nbsp;qucs.sourceforge.net/&nbsp;).<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="mwavepy.media.cpw.html#CPW">CPW</a></dd>
+<dd><a href="mwavepy.media.media.html#Media">mwavepy.media.media.Media</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="CPW-Z0"><strong>Z0</strong></a>(self)</dt><dd><tt>characterisitc&nbsp;impedance</tt></dd></dl>
+
+<dl><dt><a name="CPW-__init__"><strong>__init__</strong></a>(self, frequency, w, s, ep_r, t<font color="#909090">=None</font>, rho<font color="#909090">=None</font>, *args, **kwargs)</dt><dd><tt>takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;w:&nbsp;width&nbsp;of&nbsp;center&nbsp;conductor,&nbsp;in&nbsp;m.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;s:&nbsp;width&nbsp;of&nbsp;gap,&nbsp;in&nbsp;m.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ep_r:&nbsp;relative&nbsp;permativity&nbsp;of&nbsp;substrate<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;t:&nbsp;conductor&nbsp;thickness,&nbsp;in&nbsp;m.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rho:&nbsp;resistivity&nbsp;of&nbsp;conductor&nbsp;(None)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.<a href="mwavepy.media.media.html#Media">Media</a>&nbsp;object</tt></dd></dl>
+
+<dl><dt><a name="CPW-__repr__"><strong>__repr__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="CPW-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="CPW-gamma"><strong>gamma</strong></a>(self)</dt><dd><tt>propagation&nbsp;constant</tt></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>K_ratio</strong></dt>
+<dd><tt>intermediary&nbsp;parameter.&nbsp;see&nbsp;qucs&nbsp;docs&nbsp;on&nbsp;cpw&nbsp;lines.</tt></dd>
+</dl>
+<dl><dt><strong>alpha_conductor</strong></dt>
+<dd><tt>losses&nbsp;due&nbsp;to&nbsp;conductor&nbsp;resistivity</tt></dd>
+</dl>
+<dl><dt><strong>ep_re</strong></dt>
+<dd><tt>intermediary&nbsp;parameter.&nbsp;see&nbsp;qucs&nbsp;docs&nbsp;on&nbsp;cpw&nbsp;lines.</tt></dd>
+</dl>
+<dl><dt><strong>k1</strong></dt>
+<dd><tt>intermediary&nbsp;parameter.&nbsp;see&nbsp;qucs&nbsp;docs&nbsp;on&nbsp;cpw&nbsp;lines.</tt></dd>
+</dl>
+<hr>
+Methods inherited from <a href="mwavepy.media.media.html#Media">mwavepy.media.media.Media</a>:<br>
+<dl><dt><a name="CPW-capacitor"><strong>capacitor</strong></a>(self, C, **kwargs)</dt><dd><tt>A&nbsp;lumped&nbsp;capacitor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;capacitance,&nbsp;in&nbsp;Farads,&nbsp;[number]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="CPW-delay_load"><strong>delay_load</strong></a>(self, Gamma0, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;load&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;load&nbsp;(not&nbsp;in&nbsp;dB)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;loaded&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#CPW-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#CPW-load">load</a>(Gamma0,&nbsp;**kwargs)</tt></dd></dl>
+
+<dl><dt><a name="CPW-delay_open"><strong>delay_open</strong></a>(self, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;open&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;shorted&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#CPW-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#CPW-open">open</a>(**kwargs)</tt></dd></dl>
+
+<dl><dt><a name="CPW-delay_short"><strong>delay_short</strong></a>(self, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;delayed&nbsp;short&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;1-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;shorted&nbsp;transmission<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;line&nbsp;of&nbsp;length&nbsp;d<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+note:&nbsp;this&nbsp;just&nbsp;calls,<br>
+<a href="#CPW-line">line</a>(d,**kwargs)&nbsp;**&nbsp;<a href="#CPW-short">short</a>(**kwargs)</tt></dd></dl>
+
+<dl><dt><a name="CPW-electrical_length"><strong>electrical_length</strong></a>(self, d, deg<font color="#909090">=False</font>)</dt><dd><tt>calculates&nbsp;the&nbsp;electrical&nbsp;length&nbsp;for&nbsp;a&nbsp;given&nbsp;distance,&nbsp;at&nbsp;<br>
+the&nbsp;center&nbsp;frequency.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;distance,&nbsp;in&nbsp;meters&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;is&nbsp;d&nbsp;in&nbsp;deg?[Boolean]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;or&nbsp;degrees,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depending&nbsp;on&nbsp;&nbsp;value&nbsp;of&nbsp;deg.</tt></dd></dl>
+
+<dl><dt><a name="CPW-guess_length_of_delay_short"><strong>guess_length_of_delay_short</strong></a>(self, aNtwk)</dt><dd><tt>guess&nbsp;length&nbsp;of&nbsp;physical&nbsp;length&nbsp;of&nbsp;a&nbsp;Delay&nbsp;Short&nbsp;given&nbsp;by&nbsp;aNtwk<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;aNtwk:&nbsp;a&nbsp;mwavepy.ntwk&nbsp;type&nbsp;.&nbsp;(note:&nbsp;if&nbsp;this&nbsp;is&nbsp;a&nbsp;measurment&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;it&nbsp;needs&nbsp;to&nbsp;be&nbsp;normalized&nbsp;to&nbsp;the&nbsp;reference&nbsp;plane)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tline:&nbsp;transmission&nbsp;line&nbsp;class&nbsp;of&nbsp;the&nbsp;medium.&nbsp;needed&nbsp;for&nbsp;the&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculation&nbsp;of&nbsp;propagation&nbsp;constant</tt></dd></dl>
+
+<dl><dt><a name="CPW-impedance_mismatch"><strong>impedance_mismatch</strong></a>(self, z1, z2, **kwargs)</dt><dd><tt>returns&nbsp;a&nbsp;two-port&nbsp;network&nbsp;for&nbsp;a&nbsp;impedance&nbsp;mis-match<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z1:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;1&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z2:&nbsp;complex&nbsp;impedance&nbsp;of&nbsp;port&nbsp;2&nbsp;[&nbsp;number,&nbsp;list,&nbsp;or&nbsp;1D&nbsp;ndarray]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;mwavepy.Network&nbsp;constructor<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;z1&nbsp;and&nbsp;z2&nbsp;are&nbsp;arrays&nbsp;or&nbsp;lists,&nbsp;they&nbsp;must&nbsp;be&nbsp;of&nbsp;same&nbsp;length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;as&nbsp;the&nbsp;self.<strong>frequency</strong>.npoints</tt></dd></dl>
+
+<dl><dt><a name="CPW-inductor"><strong>inductor</strong></a>(self, L, **kwargs)</dt><dd><tt>A&nbsp;lumped&nbsp;inductor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L:&nbsp;inductance&nbsp;in&nbsp;Henrys&nbsp;[number]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="CPW-line"><strong>line</strong></a>(self, d, unit<font color="#909090">='m'</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;section&nbsp;of&nbsp;matched&nbsp;transmission&nbsp;line<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;the&nbsp;length&nbsp;(see&nbsp;unit&nbsp;argument)&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;unit:&nbsp;string&nbsp;specifying&nbsp;the&nbsp;units&nbsp;of&nbsp;d.&nbsp;possible&nbsp;options&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'m':&nbsp;meters,&nbsp;physical&nbsp;length&nbsp;in&nbsp;meters&nbsp;(default)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'deg':degrees,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;degrees<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'rad':radians,&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;the&nbsp;kwarg<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'z0'&nbsp;can&nbsp;be&nbsp;used&nbsp;to&nbsp;create&nbsp;a&nbsp;line&nbsp;of&nbsp;a&nbsp;given&nbsp;impedance<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;transmission&nbsp;line&nbsp;of&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;length&nbsp;d<br>
+&nbsp;<br>
+&nbsp;<br>
+example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my_media&nbsp;=&nbsp;mwavepy.Freespace(...)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;my_media.<a href="#CPW-line">line</a>(90,&nbsp;'deg',&nbsp;z0=50)</tt></dd></dl>
+
+<dl><dt><a name="CPW-load"><strong>load</strong></a>(self, Gamma0, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;Load&nbsp;termianting&nbsp;a&nbsp;transmission&nbsp;line&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;of&nbsp;load&nbsp;(not&nbsp;in&nbsp;db)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;class,&nbsp;where&nbsp;&nbsp;S&nbsp;=&nbsp;Gamma0*eye(...)</tt></dd></dl>
+
+<dl><dt><a name="CPW-match"><strong>match</strong></a>(self, nports<font color="#909090">=1</font>, z0<font color="#909090">=None</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;perfect&nbsp;matched&nbsp;transmission&nbsp;line&nbsp;(Gamma0=0)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0:&nbsp;characterisitc&nbsp;impedance&nbsp;[number&nbsp;of&nbsp;array].&nbsp;defaults&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;None,&nbsp;in&nbsp;which&nbsp;case&nbsp;the&nbsp;<a href="mwavepy.media.media.html#Media">Media</a>'s&nbsp;z0&nbsp;is&nbsp;used.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Otherwise&nbsp;this&nbsp;sets&nbsp;the&nbsp;resultant&nbsp;network's&nbsp;z0.&nbsp;See<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Network.z0&nbsp;property&nbsp;for&nbsp;more&nbsp;info<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;Network&nbsp;Constructor<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]<br>
+&nbsp;<br>
+&nbsp;<br>
+example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mymatch&nbsp;=&nbsp;wb.<a href="#CPW-match">match</a>(2,z0&nbsp;=&nbsp;50,&nbsp;name='Super&nbsp;Awesome&nbsp;Match')</tt></dd></dl>
+
+<dl><dt><a name="CPW-open"><strong>open</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;'open'&nbsp;transmission&nbsp;line&nbsp;(Gamma0=1)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="CPW-short"><strong>short</strong></a>(self, nports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;short&nbsp;&nbsp;transmission&nbsp;line&nbsp;(Gamma0=-1)&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;creates&nbsp;a&nbsp;short&nbsp;on&nbsp;all&nbsp;ports,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;default&nbsp;is&nbsp;1&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="CPW-shunt"><strong>shunt</strong></a>(self, ntwk, **kwargs)</dt><dd><tt>returns&nbsp;a&nbsp;shunted&nbsp;ntwk.&nbsp;this&nbsp;creates&nbsp;a&nbsp;'tee',&nbsp;connects&nbsp;<br>
+'ntwk'&nbsp;to&nbsp;port&nbsp;1,&nbsp;and&nbsp;returns&nbsp;the&nbsp;result<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;network&nbsp;to&nbsp;be&nbsp;shunted.&nbsp;[mwavepy.Network]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;the&nbsp;<a href="#CPW-tee">tee</a>()&nbsp;function<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="CPW-shunt_capacitor"><strong>shunt_capacitor</strong></a>(self, C, *args, **kwargs)</dt><dd><tt>a&nbsp;shunt&nbsp;capacitor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C:&nbsp;capacitance&nbsp;in&nbsp;farads<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>capacitor</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>capacitor</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="CPW-shunt_delay_load"><strong>shunt_delay_load</strong></a>(self, *args, **kwargs)</dt><dd><tt>a&nbsp;shunted&nbsp;delayed&nbsp;load:<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="CPW-shunt_delay_open"><strong>shunt_delay_open</strong></a>(self, *args, **kwargs)</dt><dd><tt>a&nbsp;shunted&nbsp;delayed&nbsp;open:<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="CPW-shunt_delay_short"><strong>shunt_delay_short</strong></a>(self, *args, **kwargs)</dt><dd><tt>a&nbsp;shunted&nbsp;delayed&nbsp;short:<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>delay_load</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="CPW-shunt_inductor"><strong>shunt_inductor</strong></a>(self, L, *args, **kwargs)</dt><dd><tt>a&nbsp;shunt&nbsp;inductor<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;L:&nbsp;inductance&nbsp;in&nbsp;henrys<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;self.<strong>inductor</strong><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:passed&nbsp;to&nbsp;self.<strong>inductor</strong><br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;mwavepy.Network</tt></dd></dl>
+
+<dl><dt><a name="CPW-splitter"><strong>splitter</strong></a>(self, nports, **kwargs)</dt><dd><tt>returns&nbsp;an&nbsp;ideal,&nbsp;lossless&nbsp;n-way&nbsp;splitter.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nports:&nbsp;number&nbsp;of&nbsp;ports&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;n-port&nbsp;Network&nbsp;[mwavepy.Network]</tt></dd></dl>
+
+<dl><dt><a name="CPW-tee"><strong>tee</strong></a>(self, **kwargs)</dt><dd><tt>makes&nbsp;a&nbsp;ideal,&nbsp;lossless&nbsp;tee.&nbsp;(aka&nbsp;three&nbsp;port&nbsp;splitter)<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network.&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;3-port&nbsp;Network&nbsp;[mwavepy.Network]<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;just&nbsp;calls&nbsp;<a href="#CPW-splitter">splitter</a>(3)</tt></dd></dl>
+
+<dl><dt><a name="CPW-theta_2_d"><strong>theta_2_d</strong></a>(self, theta, deg<font color="#909090">=True</font>)</dt><dd><tt>converts&nbsp;electrical&nbsp;length&nbsp;to&nbsp;physical&nbsp;distance.&nbsp;The&nbsp;electrical<br>
+length&nbsp;is&nbsp;given&nbsp;at&nbsp;center&nbsp;frequency&nbsp;of&nbsp;self.<strong>frequency</strong>&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length,&nbsp;at&nbsp;band&nbsp;center&nbsp;(see&nbsp;deg&nbsp;for&nbsp;unit)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;is&nbsp;theta&nbsp;in&nbsp;degrees?&nbsp;[boolean]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;physical&nbsp;distance&nbsp;in&nbsp;meters</tt></dd></dl>
+
+<dl><dt><a name="CPW-thru"><strong>thru</strong></a>(self, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;Network&nbsp;for&nbsp;a&nbsp;thru<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key&nbsp;word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;<a href="#CPW-match">match</a>(),&nbsp;which&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;called&nbsp;initially&nbsp;to&nbsp;create&nbsp;a&nbsp;'blank'&nbsp;network<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;2-port&nbsp;Network&nbsp;class,&nbsp;representing&nbsp;a&nbsp;thru<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;this&nbsp;just&nbsp;calls&nbsp;<a href="#CPW-line">line</a>(0)</tt></dd></dl>
+
+<dl><dt><a name="CPW-white_gaussian_polar"><strong>white_gaussian_polar</strong></a>(self, phase_dev, mag_dev, n_ports<font color="#909090">=1</font>, **kwargs)</dt><dd><tt>creates&nbsp;a&nbsp;complex&nbsp;zero-mean&nbsp;gaussian&nbsp;white-noise&nbsp;signal&nbsp;of&nbsp;given<br>
+standard&nbsp;deviations&nbsp;for&nbsp;phase&nbsp;and&nbsp;magnitude<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phase_mag:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;magnitude<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phase_dev:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;phase<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_ports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;defualt&nbsp;to&nbsp;1<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;Network()&nbsp;initializer<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;result:&nbsp;Network&nbsp;type</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="mwavepy.media.media.html#Media">mwavepy.media.media.Media</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>characteristic_impedance</strong></dt>
+</dl>
+<dl><dt><strong>propagation_constant</strong></dt>
+</dl>
+<dl><dt><strong>z0</strong></dt>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-zeros"><strong>zeros</strong></a>(...)</dt><dd><tt><a href="#-zeros">zeros</a>(shape,&nbsp;dtype=float,&nbsp;order='C')<br>
+&nbsp;<br>
+Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;type,&nbsp;filled&nbsp;with&nbsp;zeros.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+shape&nbsp;:&nbsp;int&nbsp;or&nbsp;sequence&nbsp;of&nbsp;ints<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;new&nbsp;array,&nbsp;e.g.,&nbsp;``(2,&nbsp;3)``&nbsp;or&nbsp;``2``.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array,&nbsp;e.g.,&nbsp;`numpy.int8`.&nbsp;&nbsp;Default&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;`numpy.float64`.<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Whether&nbsp;to&nbsp;store&nbsp;multidimensional&nbsp;data&nbsp;in&nbsp;C-&nbsp;or&nbsp;Fortran-contiguous<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(row-&nbsp;or&nbsp;column-wise)&nbsp;order&nbsp;in&nbsp;memory.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+out&nbsp;:&nbsp;ndarray<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;the&nbsp;given&nbsp;shape,&nbsp;dtype,&nbsp;and&nbsp;order.<br>
+&nbsp;<br>
+See&nbsp;Also<br>
+--------<br>
+zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
+empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(5)<br>
+array([&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((5,),&nbsp;dtype=numpy.int)<br>
+array([0,&nbsp;0,&nbsp;0,&nbsp;0,&nbsp;0])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,&nbsp;1))<br>
+array([[&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;s&nbsp;=&nbsp;(2,2)<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(s)<br>
+array([[&nbsp;0.,&nbsp;&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.,&nbsp;&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])&nbsp;#&nbsp;custom&nbsp;dtype<br>
+array([(0,&nbsp;0),&nbsp;(0,&nbsp;0)],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dtype=[('x',&nbsp;'&lt;i4'),&nbsp;('y',&nbsp;'&lt;i4')])</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>ellipk</strong> = &lt;ufunc 'ellipk'&gt;<br>
+<strong>epsilon_0</strong> = 8.854187817620389e-12<br>
+<strong>log</strong> = &lt;ufunc 'log'&gt;<br>
+<strong>mu_0</strong> = 1.2566370614359173e-06<br>
+<strong>pi</strong> = 3.141592653589793<br>
+<strong>sqrt</strong> = &lt;ufunc 'sqrt'&gt;</td></tr></table>
+</body></html>

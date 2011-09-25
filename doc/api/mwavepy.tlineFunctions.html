@@ -1,0 +1,338 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: module mwavepy.tlineFunctions</title>
+</head><body bgcolor="#f0f0f8">
+
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="heading">
+<tr bgcolor="#7799ee">
+<td valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial">&nbsp;<br><big><big><strong><a href="mwavepy.html"><font color="#ffffff">mwavepy</font></a>.tlineFunctions</strong></big></big></font></td
+><td align=right valign=bottom
+><font color="#ffffff" face="helvetica, arial"><a href=".">index</a><br><a href="file:/home/alex/docs/python/path/mwavepy/tlineFunctions.py">/home/alex/docs/python/path/mwavepy/tlineFunctions.py</a></font></td></tr></table>
+    <p><tt>transmission&nbsp;line&nbsp;theory&nbsp;related&nbsp;functions</tt></p>
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#aa55cc">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Modules</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#aa55cc"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><table width="100%" summary="list"><tr><td width="25%" valign=top><a href="mwavepy.mathFunctions.html">mwavepy.mathFunctions</a><br>
+</td><td width="25%" valign=top><a href="numpy.html">numpy</a><br>
+</td><td width="25%" valign=top></td><td width="25%" valign=top></td></tr></table></td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#eeaa77">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Functions</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><dl><dt><a name="-Gamma0_2_Gamma_in"><strong>Gamma0_2_Gamma_in</strong></a> = reflection_coefficient_at_theta(Gamma0, theta)</dt><dd><tt>reflection&nbsp;coefficient&nbsp;at&nbsp;electrical&nbsp;length&nbsp;theta<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;at&nbsp;theta=0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length,&nbsp;(may&nbsp;be&nbsp;complex)<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma_in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;Gamma0&nbsp;*&nbsp;exp(-2j*&nbsp;theta)</tt></dd></dl>
+ <dl><dt><a name="-Gamma0_2_zin"><strong>Gamma0_2_zin</strong></a> = reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta)</dt><dd><tt>calculates&nbsp;the&nbsp;input&nbsp;impedance&nbsp;at&nbsp;electrical&nbsp;length&nbsp;theta,&nbsp;given&nbsp;a<br>
+reflection&nbsp;coefficient&nbsp;and&nbsp;characterisitc&nbsp;impedance&nbsp;of&nbsp;the&nbsp;medium<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma:&nbsp;reflection&nbsp;coefficient<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;of&nbsp;the&nbsp;line,&nbsp;(may&nbsp;be&nbsp;complex)&nbsp;<br>
+returns&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zin:&nbsp;input&nbsp;impedance&nbsp;at&nbsp;theta</tt></dd></dl>
+ <dl><dt><a name="-Gamma0_2_zl"><strong>Gamma0_2_zl</strong></a> = reflection_coefficient_2_input_impedance(z0, Gamma)</dt><dd><tt>calculates&nbsp;the&nbsp;input&nbsp;impedance&nbsp;given&nbsp;a&nbsp;reflection&nbsp;coefficient&nbsp;and&nbsp;<br>
+characterisitc&nbsp;impedance&nbsp;of&nbsp;the&nbsp;medium<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma:&nbsp;reflection&nbsp;coefficient<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance.</tt></dd></dl>
+ <dl><dt><a name="-array"><strong>array</strong></a>(...)</dt><dd><tt><a href="#-array">array</a>(object,&nbsp;dtype=None,&nbsp;copy=True,&nbsp;order=None,&nbsp;subok=False,&nbsp;ndmin=0)<br>
+&nbsp;<br>
+Create&nbsp;an&nbsp;array.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+object&nbsp;:&nbsp;array_like<br>
+&nbsp;&nbsp;&nbsp;&nbsp;An&nbsp;array,&nbsp;any&nbsp;object&nbsp;exposing&nbsp;the&nbsp;array&nbsp;interface,&nbsp;an<br>
+&nbsp;&nbsp;&nbsp;&nbsp;object&nbsp;whose&nbsp;__array__&nbsp;method&nbsp;returns&nbsp;an&nbsp;array,&nbsp;or&nbsp;any<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(nested)&nbsp;sequence.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;not&nbsp;given,&nbsp;then<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;type&nbsp;will&nbsp;be&nbsp;determined&nbsp;as&nbsp;the&nbsp;minimum&nbsp;type&nbsp;required<br>
+&nbsp;&nbsp;&nbsp;&nbsp;to&nbsp;hold&nbsp;the&nbsp;objects&nbsp;in&nbsp;the&nbsp;sequence.&nbsp;&nbsp;This&nbsp;argument&nbsp;can&nbsp;only<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;used&nbsp;to&nbsp;'upcast'&nbsp;the&nbsp;array.&nbsp;&nbsp;For&nbsp;downcasting,&nbsp;use&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;.astype(t)&nbsp;method.<br>
+copy&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;true&nbsp;(default),&nbsp;then&nbsp;the&nbsp;object&nbsp;is&nbsp;copied.&nbsp;&nbsp;Otherwise,&nbsp;a&nbsp;copy<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;only&nbsp;be&nbsp;made&nbsp;if&nbsp;__array__&nbsp;returns&nbsp;a&nbsp;copy,&nbsp;if&nbsp;obj&nbsp;is&nbsp;a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;nested&nbsp;sequence,&nbsp;or&nbsp;if&nbsp;a&nbsp;copy&nbsp;is&nbsp;needed&nbsp;to&nbsp;satisfy&nbsp;any&nbsp;of&nbsp;the&nbsp;other<br>
+&nbsp;&nbsp;&nbsp;&nbsp;requirements&nbsp;(`dtype`,&nbsp;`order`,&nbsp;etc.).<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F',&nbsp;'A'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specify&nbsp;the&nbsp;order&nbsp;of&nbsp;the&nbsp;array.&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'C'&nbsp;(default),&nbsp;then&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;will&nbsp;be&nbsp;in&nbsp;C-contiguous&nbsp;order&nbsp;(last-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'F',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array<br>
+&nbsp;&nbsp;&nbsp;&nbsp;will&nbsp;be&nbsp;in&nbsp;Fortran-contiguous&nbsp;order&nbsp;(first-index&nbsp;varies&nbsp;the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;fastest).&nbsp;&nbsp;If&nbsp;order&nbsp;is&nbsp;'A',&nbsp;then&nbsp;the&nbsp;returned&nbsp;array&nbsp;may<br>
+&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;in&nbsp;any&nbsp;order&nbsp;(either&nbsp;C-,&nbsp;Fortran-contiguous,&nbsp;or&nbsp;even<br>
+&nbsp;&nbsp;&nbsp;&nbsp;discontiguous).<br>
+subok&nbsp;:&nbsp;bool,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;If&nbsp;True,&nbsp;then&nbsp;sub-classes&nbsp;will&nbsp;be&nbsp;passed-through,&nbsp;otherwise<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;returned&nbsp;array&nbsp;will&nbsp;be&nbsp;forced&nbsp;to&nbsp;be&nbsp;a&nbsp;base-class&nbsp;array&nbsp;(default).<br>
+ndmin&nbsp;:&nbsp;int,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specifies&nbsp;the&nbsp;minimum&nbsp;number&nbsp;of&nbsp;dimensions&nbsp;that&nbsp;the&nbsp;resulting<br>
+&nbsp;&nbsp;&nbsp;&nbsp;array&nbsp;should&nbsp;have.&nbsp;&nbsp;Ones&nbsp;will&nbsp;be&nbsp;pre-pended&nbsp;to&nbsp;the&nbsp;shape&nbsp;as<br>
+&nbsp;&nbsp;&nbsp;&nbsp;needed&nbsp;to&nbsp;meet&nbsp;this&nbsp;requirement.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3])<br>
+&nbsp;<br>
+Upcasting:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3.0])<br>
+<a href="#-array">array</a>([&nbsp;1.,&nbsp;&nbsp;2.,&nbsp;&nbsp;3.])<br>
+&nbsp;<br>
+More&nbsp;than&nbsp;one&nbsp;dimension:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([[1,&nbsp;2],&nbsp;[3,&nbsp;4]])<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+Minimum&nbsp;dimensions&nbsp;2:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;ndmin=2)<br>
+<a href="#-array">array</a>([[1,&nbsp;2,&nbsp;3]])<br>
+&nbsp;<br>
+Type&nbsp;provided:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>([1,&nbsp;2,&nbsp;3],&nbsp;dtype=complex)<br>
+<a href="#-array">array</a>([&nbsp;1.+0.j,&nbsp;&nbsp;2.+0.j,&nbsp;&nbsp;3.+0.j])<br>
+&nbsp;<br>
+Data-type&nbsp;consisting&nbsp;of&nbsp;more&nbsp;than&nbsp;one&nbsp;element:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;x&nbsp;=&nbsp;np.<a href="#-array">array</a>([(1,2),(3,4)],dtype=[('a','&lt;i4'),('b','&lt;i4')])<br>
+&gt;&gt;&gt;&nbsp;x['a']<br>
+<a href="#-array">array</a>([1,&nbsp;3])<br>
+&nbsp;<br>
+Creating&nbsp;an&nbsp;array&nbsp;from&nbsp;sub-classes:<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'))<br>
+<a href="#-array">array</a>([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-array">array</a>(np.mat('1&nbsp;2;&nbsp;3&nbsp;4'),&nbsp;subok=True)<br>
+matrix([[1,&nbsp;2],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[3,&nbsp;4]])</tt></dd></dl>
+ <dl><dt><a name="-distance_2_electrical_length"><strong>distance_2_electrical_length</strong></a> = electrical_length(gamma, f, d, deg<font color="#909090">=False</font>)</dt><dd><tt>calculates&nbsp;the&nbsp;electrical&nbsp;length&nbsp;of&nbsp;a&nbsp;section&nbsp;of&nbsp;transmission&nbsp;line.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;propagation&nbsp;constant&nbsp;function&nbsp;[function],&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(a&nbsp;function&nbsp;which&nbsp;takes&nbsp;frequency&nbsp;in&nbsp;hz&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;length&nbsp;of&nbsp;line.&nbsp;in&nbsp;meters<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;at&nbsp;which&nbsp;to&nbsp;calculate.&nbsp;[array-like&nbsp;or&nbsp;float].&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;return&nbsp;in&nbsp;degrees&nbsp;or&nbsp;not.&nbsp;[boolean].<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;or&nbsp;degrees,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depending&nbsp;on&nbsp;&nbsp;value&nbsp;of&nbsp;deg.</tt></dd></dl>
+ <dl><dt><a name="-distributed_circuit_2_propagation_impedance"><strong>distributed_circuit_2_propagation_impedance</strong></a>(distributed_admittance, distributed_impedance)</dt><dd><tt>converts&nbsp;complex&nbsp;distributed&nbsp;impedance&nbsp;and&nbsp;admittance&nbsp;to&nbsp;propagation&nbsp;<br>
+constant&nbsp;and&nbsp;characteristic&nbsp;impedance.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_admittance:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_impedance:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;propagation_constant:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;characteristic_impedance:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]</tt></dd></dl>
+ <dl><dt><a name="-electrical_length"><strong>electrical_length</strong></a>(gamma, f, d, deg<font color="#909090">=False</font>)</dt><dd><tt>calculates&nbsp;the&nbsp;electrical&nbsp;length&nbsp;of&nbsp;a&nbsp;section&nbsp;of&nbsp;transmission&nbsp;line.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;propagation&nbsp;constant&nbsp;function&nbsp;[function],&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(a&nbsp;function&nbsp;which&nbsp;takes&nbsp;frequency&nbsp;in&nbsp;hz&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;length&nbsp;of&nbsp;line.&nbsp;in&nbsp;meters<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;at&nbsp;which&nbsp;to&nbsp;calculate.&nbsp;[array-like&nbsp;or&nbsp;float].&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;return&nbsp;in&nbsp;degrees&nbsp;or&nbsp;not.&nbsp;[boolean].<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;or&nbsp;degrees,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depending&nbsp;on&nbsp;&nbsp;value&nbsp;of&nbsp;deg.</tt></dd></dl>
+ <dl><dt><a name="-electrical_length_2_distance"><strong>electrical_length_2_distance</strong></a>(theta, gamma, f0, deg<font color="#909090">=True</font>)</dt><dd><tt>convert&nbsp;electrical&nbsp;length&nbsp;to&nbsp;a&nbsp;physical&nbsp;distance.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;propagation&nbsp;constant&nbsp;function&nbsp;[function]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f0:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;frequency&nbsp;of&nbsp;interest&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;is&nbsp;theta&nbsp;in&nbsp;degrees&nbsp;[Boolean]<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;d:&nbsp;physical&nbsp;distance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:&nbsp;the&nbsp;gamma&nbsp;function&nbsp;must&nbsp;take&nbsp;a&nbsp;single&nbsp;variable,&nbsp;that&nbsp;is&nbsp;<br>
+frequency&nbsp;and&nbsp;return&nbsp;complex&nbsp;propagation&nbsp;constant&nbsp;such&nbsp;that&nbsp;the&nbsp;<br>
+propagating&nbsp;part&nbsp;is&nbsp;positive&nbsp;imag&nbsp;part.</tt></dd></dl>
+ <dl><dt><a name="-input_impedance_2_reflection_coefficient"><strong>input_impedance_2_reflection_coefficient</strong></a>(z0, zl)</dt><dd><tt>calculates&nbsp;the&nbsp;reflection&nbsp;coefficient&nbsp;for&nbsp;a&nbsp;given&nbsp;input&nbsp;impedance&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zl:&nbsp;input&nbsp;(load)&nbsp;impedance&nbsp;[number&nbsp;of&nbsp;array].&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance[number&nbsp;of&nbsp;array].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;data&nbsp;is&nbsp;typecasted&nbsp;to&nbsp;1D&nbsp;complex&nbsp;array</tt></dd></dl>
+ <dl><dt><a name="-input_impedance_2_reflection_coefficient_at_theta"><strong>input_impedance_2_reflection_coefficient_at_theta</strong></a>(z0, zl, theta)</dt></dl>
+ <dl><dt><a name="-input_impedance_at_theta"><strong>input_impedance_at_theta</strong></a>(z0, zl, theta)</dt><dd><tt>input&nbsp;impedance&nbsp;of&nbsp;load&nbsp;impedance&nbsp;zl&nbsp;at&nbsp;electrical&nbsp;length&nbsp;theta,&nbsp;<br>
+given&nbsp;characteristic&nbsp;impedance&nbsp;z0.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zl:&nbsp;load&nbsp;impedance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;of&nbsp;the&nbsp;line,&nbsp;(may&nbsp;be&nbsp;complex)</tt></dd></dl>
+ <dl><dt><a name="-propagation_impedance_2_distributed_circuit"><strong>propagation_impedance_2_distributed_circuit</strong></a>(propagation_constant, characteristic_impedance)</dt><dd><tt>converts&nbsp;complex&nbsp;propagation&nbsp;constant&nbsp;and&nbsp;characteristic&nbsp;impedance&nbsp;<br>
+to&nbsp;distributed&nbsp;impedance&nbsp;and&nbsp;admittance.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;propagation_constant:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;characteristic_impedance:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_admittance:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;distributed_impedance:&nbsp;what&nbsp;it&nbsp;says&nbsp;[complex&nbsp;number&nbsp;or&nbsp;array]</tt></dd></dl>
+ <dl><dt><a name="-reflection_coefficient_2_input_impedance"><strong>reflection_coefficient_2_input_impedance</strong></a>(z0, Gamma)</dt><dd><tt>calculates&nbsp;the&nbsp;input&nbsp;impedance&nbsp;given&nbsp;a&nbsp;reflection&nbsp;coefficient&nbsp;and&nbsp;<br>
+characterisitc&nbsp;impedance&nbsp;of&nbsp;the&nbsp;medium<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma:&nbsp;reflection&nbsp;coefficient<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance.</tt></dd></dl>
+ <dl><dt><a name="-reflection_coefficient_2_input_impedance_at_theta"><strong>reflection_coefficient_2_input_impedance_at_theta</strong></a>(z0, Gamma0, theta)</dt><dd><tt>calculates&nbsp;the&nbsp;input&nbsp;impedance&nbsp;at&nbsp;electrical&nbsp;length&nbsp;theta,&nbsp;given&nbsp;a<br>
+reflection&nbsp;coefficient&nbsp;and&nbsp;characterisitc&nbsp;impedance&nbsp;of&nbsp;the&nbsp;medium<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma:&nbsp;reflection&nbsp;coefficient<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;of&nbsp;the&nbsp;line,&nbsp;(may&nbsp;be&nbsp;complex)&nbsp;<br>
+returns&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zin:&nbsp;input&nbsp;impedance&nbsp;at&nbsp;theta</tt></dd></dl>
+ <dl><dt><a name="-reflection_coefficient_at_theta"><strong>reflection_coefficient_at_theta</strong></a>(Gamma0, theta)</dt><dd><tt>reflection&nbsp;coefficient&nbsp;at&nbsp;electrical&nbsp;length&nbsp;theta<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma0:&nbsp;reflection&nbsp;coefficient&nbsp;at&nbsp;theta=0<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length,&nbsp;(may&nbsp;be&nbsp;complex)<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Gamma_in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;Gamma0&nbsp;*&nbsp;exp(-2j*&nbsp;theta)</tt></dd></dl>
+ <dl><dt><a name="-skin_depth"><strong>skin_depth</strong></a>(f, rho, mu_r)</dt><dd><tt>the&nbsp;skin&nbsp;depth&nbsp;for&nbsp;a&nbsp;material.&nbsp;see&nbsp;www.microwaves101.com&nbsp;for&nbsp;more&nbsp;info.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency,&nbsp;in&nbsp;Hz<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rho:&nbsp;bulk&nbsp;resistivity&nbsp;of&nbsp;material,&nbsp;in&nbsp;ohm*m<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mu_r:&nbsp;relative&nbsp;permiability&nbsp;of&nbsp;material<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;skin&nbsp;depth:&nbsp;in&nbsp;m</tt></dd></dl>
+ <dl><dt><a name="-surface_resistivity"><strong>surface_resistivity</strong></a>(f, rho, mu_r)</dt><dd><tt>surface&nbsp;resistivity.&nbsp;see&nbsp;www.microwaves101.com&nbsp;for&nbsp;more&nbsp;info.&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency,&nbsp;in&nbsp;Hz<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;rho:&nbsp;bulk&nbsp;resistivity&nbsp;of&nbsp;material,&nbsp;in&nbsp;ohm*m<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mu_r:&nbsp;relative&nbsp;permiability&nbsp;of&nbsp;material<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;surface&nbsp;resistivity:&nbsp;ohms/square</tt></dd></dl>
+ <dl><dt><a name="-theta"><strong>theta</strong></a> = electrical_length(gamma, f, d, deg<font color="#909090">=False</font>)</dt><dd><tt>calculates&nbsp;the&nbsp;electrical&nbsp;length&nbsp;of&nbsp;a&nbsp;section&nbsp;of&nbsp;transmission&nbsp;line.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;gamma:&nbsp;propagation&nbsp;constant&nbsp;function&nbsp;[function],&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(a&nbsp;function&nbsp;which&nbsp;takes&nbsp;frequency&nbsp;in&nbsp;hz&nbsp;)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;l:&nbsp;length&nbsp;of&nbsp;line.&nbsp;in&nbsp;meters<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;f:&nbsp;frequency&nbsp;at&nbsp;which&nbsp;to&nbsp;calculate.&nbsp;[array-like&nbsp;or&nbsp;float].&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;deg:&nbsp;return&nbsp;in&nbsp;degrees&nbsp;or&nbsp;not.&nbsp;[boolean].<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;in&nbsp;radians&nbsp;or&nbsp;degrees,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;depending&nbsp;on&nbsp;&nbsp;value&nbsp;of&nbsp;deg.</tt></dd></dl>
+ <dl><dt><a name="-zeros"><strong>zeros</strong></a>(...)</dt><dd><tt><a href="#-zeros">zeros</a>(shape,&nbsp;dtype=float,&nbsp;order='C')<br>
+&nbsp;<br>
+Return&nbsp;a&nbsp;new&nbsp;array&nbsp;of&nbsp;given&nbsp;shape&nbsp;and&nbsp;type,&nbsp;filled&nbsp;with&nbsp;zeros.<br>
+&nbsp;<br>
+Parameters<br>
+----------<br>
+shape&nbsp;:&nbsp;int&nbsp;or&nbsp;sequence&nbsp;of&nbsp;ints<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Shape&nbsp;of&nbsp;the&nbsp;new&nbsp;array,&nbsp;e.g.,&nbsp;``(2,&nbsp;3)``&nbsp;or&nbsp;``2``.<br>
+dtype&nbsp;:&nbsp;data-type,&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;desired&nbsp;data-type&nbsp;for&nbsp;the&nbsp;array,&nbsp;e.g.,&nbsp;`numpy.int8`.&nbsp;&nbsp;Default&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;`numpy.float64`.<br>
+order&nbsp;:&nbsp;{'C',&nbsp;'F'},&nbsp;optional<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Whether&nbsp;to&nbsp;store&nbsp;multidimensional&nbsp;data&nbsp;in&nbsp;C-&nbsp;or&nbsp;Fortran-contiguous<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(row-&nbsp;or&nbsp;column-wise)&nbsp;order&nbsp;in&nbsp;memory.<br>
+&nbsp;<br>
+Returns<br>
+-------<br>
+out&nbsp;:&nbsp;ndarray<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;the&nbsp;given&nbsp;shape,&nbsp;dtype,&nbsp;and&nbsp;order.<br>
+&nbsp;<br>
+See&nbsp;Also<br>
+--------<br>
+zeros_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;zeros&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;array&nbsp;of&nbsp;ones&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+empty_like&nbsp;:&nbsp;Return&nbsp;an&nbsp;empty&nbsp;array&nbsp;with&nbsp;shape&nbsp;and&nbsp;type&nbsp;of&nbsp;input.<br>
+ones&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;array&nbsp;setting&nbsp;values&nbsp;to&nbsp;one.<br>
+empty&nbsp;:&nbsp;Return&nbsp;a&nbsp;new&nbsp;uninitialized&nbsp;array.<br>
+&nbsp;<br>
+Examples<br>
+--------<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(5)<br>
+<a href="#-array">array</a>([&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.,&nbsp;&nbsp;0.])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((5,),&nbsp;dtype=numpy.int)<br>
+<a href="#-array">array</a>([0,&nbsp;0,&nbsp;0,&nbsp;0,&nbsp;0])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,&nbsp;1))<br>
+<a href="#-array">array</a>([[&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;s&nbsp;=&nbsp;(2,2)<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>(s)<br>
+<a href="#-array">array</a>([[&nbsp;0.,&nbsp;&nbsp;0.],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[&nbsp;0.,&nbsp;&nbsp;0.]])<br>
+&nbsp;<br>
+&gt;&gt;&gt;&nbsp;np.<a href="#-zeros">zeros</a>((2,),&nbsp;dtype=[('x',&nbsp;'i4'),&nbsp;('y',&nbsp;'i4')])&nbsp;#&nbsp;custom&nbsp;dtype<br>
+<a href="#-array">array</a>([(0,&nbsp;0),&nbsp;(0,&nbsp;0)],<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;dtype=[('x',&nbsp;'&lt;i4'),&nbsp;('y',&nbsp;'&lt;i4')])</tt></dd></dl>
+ <dl><dt><a name="-zl_2_Gamma0"><strong>zl_2_Gamma0</strong></a> = input_impedance_2_reflection_coefficient(z0, zl)</dt><dd><tt>calculates&nbsp;the&nbsp;reflection&nbsp;coefficient&nbsp;for&nbsp;a&nbsp;given&nbsp;input&nbsp;impedance&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zl:&nbsp;input&nbsp;(load)&nbsp;impedance&nbsp;[number&nbsp;of&nbsp;array].&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance[number&nbsp;of&nbsp;array].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;input&nbsp;data&nbsp;is&nbsp;typecasted&nbsp;to&nbsp;1D&nbsp;complex&nbsp;array</tt></dd></dl>
+ <dl><dt><a name="-zl_2_Gamma_in"><strong>zl_2_Gamma_in</strong></a> = input_impedance_2_reflection_coefficient_at_theta(z0, zl, theta)</dt></dl>
+ <dl><dt><a name="-zl_2_zin"><strong>zl_2_zin</strong></a> = input_impedance_at_theta(z0, zl, theta)</dt><dd><tt>input&nbsp;impedance&nbsp;of&nbsp;load&nbsp;impedance&nbsp;zl&nbsp;at&nbsp;electrical&nbsp;length&nbsp;theta,&nbsp;<br>
+given&nbsp;characteristic&nbsp;impedance&nbsp;z0.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;z0&nbsp;-&nbsp;characteristic&nbsp;impedance.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;zl:&nbsp;load&nbsp;impedance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;theta:&nbsp;electrical&nbsp;length&nbsp;of&nbsp;the&nbsp;line,&nbsp;(may&nbsp;be&nbsp;complex)</tt></dd></dl>
+</td></tr></table><p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#55aa55">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
+    
+<tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
+<td width="100%"><strong>INF</strong> = 1e+99<br>
+<strong>ONE</strong> = 1.00000000000001<br>
+<strong>cos</strong> = &lt;ufunc 'cos'&gt;<br>
+<strong>exp</strong> = &lt;ufunc 'exp'&gt;<br>
+<strong>inf</strong> = inf<br>
+<strong>log</strong> = &lt;ufunc 'log'&gt;<br>
+<strong>mu_0</strong> = 1.2566370614359173e-06<br>
+<strong>pi</strong> = 3.141592653589793<br>
+<strong>sin</strong> = &lt;ufunc 'sin'&gt;<br>
+<strong>sqrt</strong> = &lt;ufunc 'sqrt'&gt;<br>
+<strong>tan</strong> = &lt;ufunc 'tan'&gt;</td></tr></table>
+</body></html>
