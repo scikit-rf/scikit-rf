@@ -17,7 +17,11 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.from media import Media
 '''
-provides transmission line classes for different media
+Provides Media super-Class and instances of Media Class's for various 
+transmission-line mediums.
+
+Instances of the Media Class are objects which provide methods to
+create network objects. See media for more detailed information.
 '''
 
 from media import Media

@@ -33,16 +33,14 @@ from .. import mathFunctions as mf
 
 class Media(object):
 	'''
-	This is the super-class for all transmission line media.
+	The super-class for all transmission line media.
 	
-	It provides methods to produce general network components for any
+	It provides methods to produce generic network components for any
 	transmision line medium, such as line, delay_short, etc. 
 	
-	Network Components specific to an instance of the Media, super-class
+	Network Components specific to an instance of the Media super-class
 	such as cpw_short, microstrip_bend, are implemented within the 
-	instances themselves. 
-	
-	
+	Media instances themselves. 
 	'''
 	def __init__(self, frequency,  propagation_constant,
 		characteristic_impedance, z0=None):
@@ -50,8 +48,9 @@ class Media(object):
 		The Media initializer. This initializer has flexible argument 
 		types, which deserves some explaination.
 		
-		propagation_constant, characterisitc_impedance and z0 can all be
-		either 
+		'propagation_constant', 'characterisitc_impedance' and 'z0' can 
+		all be	either static or dynamic. This is achieved by allowing 
+		all those arguments to be either; 
 			functions which take no arguments or 
 			values (numbers or arrays)
 		
@@ -116,6 +115,7 @@ class Media(object):
 			return self._characteristic_impedance()
 		except(TypeError):
 			return self._characteristic_impedance
+	
 	@characteristic_impedance.setter
 	def characteristic_impedance(self, new_characteristic_impedance):
 		self._characteristic_impedance = new_characteristic_impedance

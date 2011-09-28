@@ -115,6 +115,7 @@ class Calibration(object):
 		self.name = name
 		self.is_reciprocal = is_reciprocal
 		self.switch_terms = switch_terms
+		self._residuals = None
 		self.has_run = False
 		
 
@@ -250,6 +251,36 @@ class Calibration(object):
 			raise AttributeError('Only exists for two-port cals')
 		else:
 			raise NotImplementedError('Not sure what to do yet')
+	
+	@property
+	def residual_ntwks(self):
+		'''
+		returns a the residuals for each calibration standard in the 
+		form of a list of Network types.
+		
+		note:
+			the residuals are only calculated if they are not existent.
+		so, if you want to re-calculate the residual networks then 
+		you delete the property '_residual_ntwks'. 
+		'''
+		if self._residual_ntwks is not None:
+			return self._residual_ntwks
+		else:
+			ntwk_list=\
+				[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \
+					for k in range(len(self.ideals))]
+			
+			for k in range(len(ntwk_list)):
+				if self.ideals[k].name  is not None:
+					name = self.ideals[k].name
+				else:
+					name='std# %i'%k
+				
+				ntwk_list[k].name = self.ideals[k].name 
+			
+			self._residual_ntwks = ntwk_list
+		return ntwk_list 
+	
 	##  methods for manual control of internal calculations
 
 	##  methods for manual control of internal calculations
@@ -290,7 +321,10 @@ class Calibration(object):
 				frequency=self.frequency, is_reciprocal=self.is_reciprocal)
 		elif self.nports ==2:
 			self._Ts = two_port_error_vector_2_Ts(self.coefs)
-
+		
+		#reset the residuals
+		self._residual_ntwks = None
+		
 		self.has_run = True
 
 	## methods 
@@ -437,27 +471,7 @@ class Calibration(object):
 		'''
 		self.plot_residuals(self,attribute='db',*args,**kwargs)	
 
-	@property
-	def residual_ntwks(self):
-		'''
-		returns a the residuals for each calibration standard in the 
-		form of a list of Network types
-		'''
-		ntwk_list=\
-			[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \
-				for k in range(len(self.ideals))]
-		
-		for k in range(len(ntwk_list)):
-			if self.ideals[k].name  is not None:
-				name = self.ideals[k].name
-			else:
-				name='std# %i'%k
-			
-			ntwk_list[k].name = self.ideals[k].name 
-		
-		return ntwk_list 
 	
-		
 	def mean_residuals(self):
 		ntwk_list=\
 			[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \

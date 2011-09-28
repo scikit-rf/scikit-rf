@@ -29,9 +29,9 @@ class RectangularWaveguide(Media):
 	'''
 	Rectangular Waveguide medium. 
 	
-	Supports homogeneously filled rectangular waveguide of arbitrary
-	cross-section, mode-type, and mode index.
-	 
+	Can be used to represent any mode of a homogeneously filled 	
+	rectangular waveguide of arbitrary cross-section, mode-type, and
+	mode index.
 	'''
 	def __init__(self, frequency, a, b=None, mode_type = 'te', m=1, \
 		n=0, ep_r=1, mu_r=1, *args, **kwargs):
@@ -52,7 +52,7 @@ class RectangularWaveguide(Media):
 			
 		example:
 			most common usage is probably standard waveguide dominant 
-		mode. TE10 mode of wr10 waveguide can be constructed by
+			mode. TE10 mode of wr10 waveguide can be constructed by
 			
 			freq = mwavepy.Frequency(75,110,101,'ghz')
 			RectangularWaveguide(freq, 100*mil)
@@ -92,10 +92,16 @@ class RectangularWaveguide(Media):
 	
 	@property
 	def ep(self):
+		'''
+		the permativity of the filling material 
+		'''
 		return self.ep_r * epsilon_0
 	
 	@property
 	def mu(self):
+		'''
+		the permeability of the filling material 
+		'''
 		return self.mu_r * mu_0
 	
 	@property

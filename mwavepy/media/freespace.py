@@ -1,5 +1,5 @@
 
-#       freeSpace.py
+#       freespace.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
 #       
@@ -19,7 +19,7 @@
 #       MA 02110-1301, USA.
 
 '''
-contains free space class
+A Plane-wave in Freespace.
 '''
 from scipy.constants import  epsilon_0, mu_0
 from numpy import real, imag
@@ -27,8 +27,9 @@ from .distributedCircuit import DistributedCircuit
 
 class Freespace(DistributedCircuit):
 	'''
-	Represents a plane-wave in freespace, defined by [possibly complex]
-	values of relative permativity and relative permeability.
+	Represents a plane-wave in a homogeneous freespace, defined by
+	[possibly complex] values of relative permativity and 
+	relative permeability.
 	
 	The field properties of space are related to a disctributed 
 	circuit transmission line model given in circuit theory by:

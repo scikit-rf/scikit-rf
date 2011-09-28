@@ -1,5 +1,5 @@
 
-#       genericTEM.py
+#       distributedCircuit.py
 #       
 #       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
 #       
@@ -19,7 +19,7 @@
 #       MA 02110-1301, USA.
 
 '''
-general class for TEM transmission lines
+A transmission line defined in terms of distributed circuit components
 '''
 
 from copy import deepcopy
@@ -37,33 +37,8 @@ ONE = 1.0 + 1/1e14
 
 class DistributedCircuit(Media):
 	'''
-	== Intro ==
-	This is a general super-class for distributed circuit transmission lines. The 
-	structure behind the methods dependencies is a result of  
-	physics. a brief summary is given below. 
-	
-	== Class Structure ==
-	This class can support two models for TEM transmission lines:
-		1)simple media: in which the distributed circuit quantities are 
-			NOT functions of frequency,
-		2)not-simple media:  in which the distributed circuit quantities
-			ART functions of frequency
-	
-	1) The simple media can be constructed with scalar values for the 
-	distributed circuit quantities. then all methods for transmission
-	line properties( Z0, gamma) will take frequency as an argument. 
-	
-	2) The not-simple media must be constructed with array's for 
-	distributed circuit quanties and a frequency array. alternativly, 
-	you can construct this type of tline from propagation constant,  
-	characterisitc impedance, and frequency information, through use of
-	the class method; from_gamma_Z0().
-	
-	== Physics ==
-	A TEM transmission line can be described by a characterisitc 
-	impedance and propagation constant, or by distributed impedance and 
-	admittance. This description will be in terms of distributed 
-	circuit quantities, given:
+	A TEM transmission line, defined in terms of  distributed impedance
+	 and admittance values. This class takes the following information,
 	
 		distributed Capacitance, C
 		distributed Inductance, I
@@ -73,7 +48,7 @@ class DistributedCircuit(Media):
 	from these the following quantities may be calculated, which
 	are functions of angular frequency (w):
 	
-		distributed Impedance,  Z(w) = wR + jwI
+		distributed Impedance,  Z'(w) = wR + jwI
 		distributed Admittance, Y'(w) = wG + jwC
 	
 	from these we can calculate properties which define their wave 
@@ -87,19 +62,7 @@ class DistributedCircuit(Media):
 		
 		positive real(gamma) = attenuation
 		positive imag(gamma) = forward propagation 
-	
-	this sign convention means that the transmission gain through a
-	distance, d, is given by, 
-		
-		S21 = exp(-gamma*d)
-		
-	and then finally these all produce methods which we use 
-		
-		electrical Length (theta) 
-		input Impedance
-		relfection Coefficient
-		
-	
+
 	'''
 	## CONSTRUCTOR
 	def __init__(self, frequency,  C, I, R, G,*args, **kwargs):
@@ -108,13 +71,17 @@ class DistributedCircuit(Media):
 		
 		takes:
 			frequency: [mwavepy.Frequency object]
-			C: distributed_capacitance [real float]
-			I: distributed_inductance [real float]
-			R: distributed_resistance [real float]
-			G: distributed_conductance [real float]
-			
+			C: distributed_capacitance [real float, or vector]
+			I: distributed_inductance [real float, or vector]
+			R: distributed_resistance [real float, or vector]
+			G: distributed_conductance [real float, or vector]
+		
+		returns:
+			mwavepy.Media object
 		
 		notes:
+			C,I,R,G can all be vectors as long as they are the same length
+			
 			can be constructed from a Media instance too, see the 
 			classmethod from_Media()
 		
@@ -125,7 +92,6 @@ class DistributedCircuit(Media):
 		self.frequency = deepcopy(frequency)
 		self.C, self.I, self.R, self.G = C,I,R,G
 
-		
 		# for unambiguousness  
 		self.distributed_resistance = self.R
 		self.distributed_capacitance = self.C
@@ -195,7 +161,7 @@ class DistributedCircuit(Media):
 	
 	def Z0(self):
 		'''
-		The  characteristic impedance in ohms
+		The characteristic impedance in ohms
 		
 		'''
 		
