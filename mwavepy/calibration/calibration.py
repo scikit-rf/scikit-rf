@@ -25,6 +25,7 @@
 Contains the Calibration class, and supporting functions
 '''
 import numpy as npy
+from numpy import mean, std
 import pylab as plb
 import os 
 from copy import deepcopy, copy
@@ -35,7 +36,9 @@ from calibrationAlgorithms import *
 from ..mathFunctions import complex_2_db
 from ..frequency import *
 from ..network import *
+from ..network import func_on_networks as fon
 from ..convenience import *
+
 
 
 ## main class
@@ -115,7 +118,7 @@ class Calibration(object):
 		self.name = name
 		self.is_reciprocal = is_reciprocal
 		self.switch_terms = switch_terms
-		self._residuals = None
+		self._residual_ntwks = None
 		self.has_run = False
 		
 
@@ -406,31 +409,31 @@ class Calibration(object):
 		if show_legend:
 			plb.legend()
 	
-	def plot_residuals_db(self,ax=None,show_legend=True,**kwargs):
-		'''
-		plot magnitude of the resdiues, if calibration is
-		 overdetermined 
-		'''
+	#def plot_residuals_db(self,ax=None,show_legend=True,**kwargs):
+		#'''
+		#plot magnitude of the resdiues, if calibration is
+		 #overdetermined 
+		#'''
 
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
+		## get current axis if user doesnt supply and axis 
+		#if ax is None:
+			#ax = plb.gca()
 
-		if self.name is None:
-			label_string = ''	
-		else:
-			label_string = self.name	
-		ax.semilogy(self.frequency.f_scaled, \
-			abs(self.residuals), label=label_string,\
-			**kwargs)
+		#if self.name is None:
+			#label_string = ''	
+		#else:
+			#label_string = self.name	
+		#ax.semilogy(self.frequency.f_scaled, \
+			#abs(self.residuals), label=label_string,\
+			#**kwargs)
 
-		# label axis
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Residual Magnitude')
-		plb.axis('tight')
-		#draw legend
-		if show_legend:
-			plb.legend()
+		## label axis
+		#plb.xlabel('Frequency ['+ self.frequency.unit +']')
+		#plb.ylabel('Residual Magnitude')
+		#plb.axis('tight')
+		##draw legend
+		#if show_legend:
+			#plb.legend()
 	
 	
 	
@@ -478,7 +481,90 @@ class Calibration(object):
 				for k in range(len(self.ideals))]
 				
 		return func_on_networks(ntwk_list, mean, 's_mag')
-			
+	
+	def uncertainty_per_standard(self, std_names, attribute='s'):
+		'''
+		given that you have repeat-connections of single standards, 
+		this calculates the complex standard deviation (distance) 
+		for each standard in the calibration across connection #.
+		
+		takes:
+			std_names: list of strings to uniquely identify each
+				standard.* 
+			attribute: string passed to func_on_networks to calculate 
+				std deviation on a component if desired. ['s']
+		
+		returns:
+			list of mwavepy.Networks, whose magnitude of s-parameters is
+			proportional to the standard deviation for that standard
+		
+		
+		*example:
+			if your calibration had ideals named like:
+				'short 1', 'short 2', 'open 1', 'open 2', etc. 
+			you would pass this
+				mycal.uncertainty_per_standard(['short','open','match'])
+		
+		'''
+		return [fon([r for r in self.residual_ntwks \
+			if std_name in r.name],std,attribute) \
+			for std_name in std_names]
+	
+	def systematic_error(self, std_names):
+		'''
+		estimate of systematic error for overdetermined calibration with
+		multiple connections of each standard
+		
+		takes:
+			std_names: list of strings to uniquely identify each
+				standard.* 
+		returns:
+			systematic error: mwavepy.Network type who's .s_mag is 
+				proportional to the systematic error metric
+		'''
+		systematic_error= \
+			fon([fon( [ntwk for ntwk in self.residual_ntwks \
+				if ntwk.name==std_name],mean) \
+				for std_name in std_names],mean, 's_mag')
+		systematic_error.name='systematic error'
+		return systematic_error
+	
+	def stochastic_error(self, std_names):
+		'''
+		estimate of stochastic error for overdetermined calibration with
+		multiple connections of each standard
+		
+		takes:
+			std_names: list of strings to uniquely identify each
+				standard.* 
+		returns:
+			stochastic error: mwavepy.Network type who's .s_mag is 
+				proportional to the stochastic error metric
+		'''
+		stochastic_error= \
+			fon([fon( [ntwk for ntwk in self.residual_ntwks \
+				if ntwk.name==std_name],std) \
+				for std_name in std_names],mean)
+		stochastic_error.name = 'stochastic error'
+		return stochastic_error
+		
+	def composit_error(self, std_names):
+		'''
+		estimate of composit error for overdetermined calibration with
+		multiple connections of each standard. This is a 'worst' case
+		out of  systematic and stochastic
+		
+		takes:
+			std_names: list of strings to uniquely identify each
+				standard.* 
+		returns:
+			composit error: mwavepy.Network type who's .s_mag is 
+				proportional to the composit error metric
+		'''	
+		composit_error= \
+			fon([ntwk for ntwk in self.residual_ntwks],mean,'s_mag') 
+		composit_error.name='composit error'
+		return composit_error
 ## Functions	
 def two_port_error_vector_2_Ts(error_coefficients):
 	ec = error_coefficients
