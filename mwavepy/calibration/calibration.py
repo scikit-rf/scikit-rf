@@ -510,9 +510,9 @@ class Calibration(object):
 			if std_name in r.name],std,attribute) \
 			for std_name in std_names]
 	
-	def systematic_error(self, std_names):
+	def biased_error(self, std_names):
 		'''
-		estimate of systematic error for overdetermined calibration with
+		estimate of biased error for overdetermined calibration with
 		multiple connections of each standard
 		
 		takes:
@@ -521,17 +521,25 @@ class Calibration(object):
 		returns:
 			systematic error: mwavepy.Network type who's .s_mag is 
 				proportional to the systematic error metric
+		
+		note:
+			mathematically, this is 
+				mean_s(|mean_c(r)|)
+			where:
+				r: complex residual errors
+				mean_c: complex mean taken accross connection
+				mean_s: complex mean taken accross standard
 		'''
-		systematic_error= \
+		biased_error= \
 			fon([fon( [ntwk for ntwk in self.residual_ntwks \
 				if ntwk.name==std_name],mean) \
 				for std_name in std_names],mean, 's_mag')
-		systematic_error.name='systematic error'
-		return systematic_error
+		biased_error.name='biased error'
+		return biased_error
 	
-	def stochastic_error(self, std_names):
+	def unbiased_error(self, std_names):
 		'''
-		estimate of stochastic error for overdetermined calibration with
+		estimate of unbiased error for overdetermined calibration with
 		multiple connections of each standard
 		
 		takes:
@@ -540,19 +548,31 @@ class Calibration(object):
 		returns:
 			stochastic error: mwavepy.Network type who's .s_mag is 
 				proportional to the stochastic error metric
+		
+		see also:
+			uncertainty_per_standard, for this a measure of unbiased 
+			errors for each standard
+			
+		note:
+			mathematically, this is 
+				mean_s(std_c(r))
+			where:
+				r: complex residual errors
+				std_c: standard deviation taken accross  connections
+				mean_s: complex mean taken accross  standards
 		'''
-		stochastic_error= \
+		unbiased_error= \
 			fon([fon( [ntwk for ntwk in self.residual_ntwks \
 				if ntwk.name==std_name],std) \
 				for std_name in std_names],mean)
-		stochastic_error.name = 'stochastic error'
-		return stochastic_error
+		unbiased_error.name = 'unbiased error'
+		return unbiased_error
 		
-	def composit_error(self, std_names):
+	def total_error(self, std_names):
 		'''
-		estimate of composit error for overdetermined calibration with
-		multiple connections of each standard. This is a 'worst' case
-		out of  systematic and stochastic
+		estimate of total error for overdetermined calibration with
+		multiple connections of each standard. This is the combined 
+		effects of both biased and un-biased errors
 		
 		takes:
 			std_names: list of strings to uniquely identify each
@@ -560,11 +580,20 @@ class Calibration(object):
 		returns:
 			composit error: mwavepy.Network type who's .s_mag is 
 				proportional to the composit error metric
+		
+		note:
+			mathematically, this is 
+				std_cs(r)
+			where:
+				r: complex residual errors
+				std_cs: standard deviation taken accross connections
+					and standards
 		'''	
-		composit_error= \
+		total_error= \
 			fon([ntwk for ntwk in self.residual_ntwks],mean,'s_mag') 
-		composit_error.name='composit error'
-		return composit_error
+		total_error.name='total error'
+		return total_error
+
 ## Functions	
 def two_port_error_vector_2_Ts(error_coefficients):
 	ec = error_coefficients

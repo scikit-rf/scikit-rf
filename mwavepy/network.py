@@ -1610,3 +1610,8 @@ def csv_2_touchstone(filename):
 	
 	return ntwk
 
+
+## convinience names
+fon = func_on_networks
+
+
