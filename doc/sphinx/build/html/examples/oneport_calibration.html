@@ -1,0 +1,191 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>One-Port Calibration &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="../examples.html" />
+    <link rel="next" title="Two-Port Calibration" href="twoport_calibration.html" />
+    <link rel="prev" title="Basic Plotting" href="basic_plotting.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="twoport_calibration.html" title="Two-Port Calibration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="basic_plotting.html" title="Basic Plotting"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="../examples.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="one-port-calibration">
+<h1>One-Port Calibration<a class="headerlink" href="#one-port-calibration" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="instructive">
+<h2>Instructive<a class="headerlink" href="#instructive" title="Permalink to this headline">¶</a></h2>
+<p>This example is written to be instructive, not concise.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+
+
+<span class="c">## created necessary data for Calibration class</span>
+
+<span class="c"># a list of Network types, holding &#39;ideal&#39; responses</span>
+<span class="n">my_ideals</span> <span class="o">=</span> <span class="p">[</span>\
+        <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ideal/short.s1p&#39;</span><span class="p">),</span>
+        <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ideal/open.s1p&#39;</span><span class="p">),</span>
+        <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ideal/load.s1p&#39;</span><span class="p">),</span>
+        <span class="p">]</span>
+
+<span class="c"># a list of Network types, holding &#39;measured&#39; responses</span>
+<span class="n">my_measured</span> <span class="o">=</span> <span class="p">[</span>\
+        <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;measured/short.s1p&#39;</span><span class="p">),</span>
+        <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;measured/open.s1p&#39;</span><span class="p">),</span>
+        <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;measured/load.s1p&#39;</span><span class="p">),</span>
+        <span class="p">]</span>
+
+<span class="c">## create a Calibration instance</span>
+<span class="n">cal</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span>\
+        <span class="n">ideals</span> <span class="o">=</span> <span class="n">my_ideals</span><span class="p">,</span>
+        <span class="n">measured</span> <span class="o">=</span> <span class="n">my_measured</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="c">## run, and apply calibration to a DUT</span>
+
+<span class="c"># run calibration algorithm</span>
+<span class="n">cal</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c"># apply it to a dut</span>
+<span class="n">dut</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;my_dut.s1p&#39;</span><span class="p">)</span>
+<span class="n">dut_caled</span> <span class="o">=</span> <span class="n">cal</span><span class="o">.</span><span class="n">apply_cal</span><span class="p">(</span><span class="n">dut</span><span class="p">)</span>
+
+<span class="c"># plot results</span>
+<span class="n">dut_caled</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">()</span>
+<span class="c"># save results</span>
+<span class="n">dut_caled</span><span class="o">.</span><span class="n">write_touchstone</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="concise">
+<h2>Concise<a class="headerlink" href="#concise" title="Permalink to this headline">¶</a></h2>
+<p>This example is meant to be the same as the first except more concise:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+
+<span class="n">my_ideals</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">load_all_touchstones_in_dir</span><span class="p">(</span><span class="s">&#39;ideals/&#39;</span><span class="p">)</span>
+<span class="n">my_measured</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">load_all_touchstones_in_dir</span><span class="p">(</span><span class="s">&#39;measured/&#39;</span><span class="p">)</span>
+
+
+<span class="c">## create a Calibration instance</span>
+<span class="n">cal</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Calibration</span><span class="p">(</span>\
+        <span class="n">ideals</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_ideals</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;short&#39;</span><span class="p">,</span><span class="s">&#39;open&#39;</span><span class="p">,</span><span class="s">&#39;load&#39;</span><span class="p">]],</span>
+        <span class="n">measured</span> <span class="o">=</span> <span class="p">[</span><span class="n">my_measured</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="p">[</span><span class="s">&#39;short&#39;</span><span class="p">,</span><span class="s">&#39;open&#39;</span><span class="p">,</span><span class="s">&#39;load&#39;</span><span class="p">]],</span>
+        <span class="p">)</span>
+
+<span class="c">## what you do with &#39;cal&#39; may  may be similar to above example</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">One-Port Calibration</a><ul>
+<li><a class="reference internal" href="#instructive">Instructive</a></li>
+<li><a class="reference internal" href="#concise">Concise</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="basic_plotting.html"
+                        title="previous chapter">Basic Plotting</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="twoport_calibration.html"
+                        title="next chapter">Two-Port Calibration</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/examples/oneport_calibration.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="twoport_calibration.html" title="Two-Port Calibration"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="basic_plotting.html" title="Basic Plotting"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="../examples.html" >Examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

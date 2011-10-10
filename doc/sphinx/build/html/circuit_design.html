@@ -1,0 +1,258 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Circuit Design &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="index.html" />
+    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="prev" title="Calibration" href="calibration.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="calibration.html" title="Calibration"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="circuit-design">
+<span id="id1"></span><h1>Circuit Design<a class="headerlink" href="#circuit-design" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="intro">
+<h2>Intro<a class="headerlink" href="#intro" title="Permalink to this headline">¶</a></h2>
+<p>mwavepy has basic support for microwave circuit design. Network synthesis is accomplished through the Media Class (<a class="reference internal" href="api/mwavepy.media.html#module-mwavepy.media"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt></a>), which represent a transmission line object for a given medium. A  Media object contains properties such as propagation constant and characteristic impedance, that are needed to generate network components.</p>
+<p>Typically circuit design is done within a given frequency band. Therefore every Media object is created with a  Frequency object to  relieve the user of repitously providing frequency information for each new network created.</p>
+</div>
+<div class="section" id="media-s-supported-by-mwavepy">
+<h2>Media&#8217;s Supported by mwavepy<a class="headerlink" href="#media-s-supported-by-mwavepy" title="Permalink to this headline">¶</a></h2>
+<p>Below is a list of mediums types supported by mwavepy,</p>
+<ul class="simple">
+<li>DistributedCircuit</li>
+<li>Freespace</li>
+<li>RectangularWaveguide</li>
+<li>CPW</li>
+</ul>
+<p>More info on all of these classes can be found in the media sub-module section of <a class="reference internal" href="api/mwavepy.media.html#module-mwavepy.media"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt></a>  mavepy&#8217;s API.</p>
+<p>Here is an example of how to initialize a Media object representing a freespace from 10-20GHz:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+<span class="n">freq</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Frequency</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="s">&#39;ghz&#39;</span><span class="p">)</span>
+<span class="n">my_media</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">Freespace</span><span class="p">(</span><span class="n">freq</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here is another example constructing a coplanar waveguide media. The instance has  a 10um center conductor and gap of 5um, on a substrate with relative permativity of 10.6,:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">freq</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Frequency</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span><span class="mi">750</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="s">&#39;ghz&#39;</span><span class="p">)</span>
+<span class="n">my_media</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">CPW</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">w</span><span class="o">=</span><span class="mf">10e-6</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mf">5e-6</span><span class="p">,</span> <span class="n">ep_r</span><span class="o">=</span><span class="mf">10.6</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or a WR10 Rectangular Waveguide:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">scipy.constants</span> <span class="kn">import</span> <span class="o">*</span> <span class="c"># for the &#39;mil&#39; unit</span>
+<span class="n">freq</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Frequency</span><span class="p">(</span><span class="mi">75</span><span class="p">,</span><span class="mi">110</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="s">&#39;ghz&#39;</span><span class="p">)</span>
+<span class="n">my_media</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">media</span><span class="o">.</span><span class="n">RectangularWaveguide</span><span class="p">(</span><span class="n">freq</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mi">100</span><span class="o">*</span><span class="n">mil</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="creating-individual-networks">
+<h2>Creating Individual Networks<a class="headerlink" href="#creating-individual-networks" title="Permalink to this headline">¶</a></h2>
+<p>Network components are created through methods of a Media object.  Here is a brief, incomplete list of a some generic network components mwavepy supports,</p>
+<ul class="simple">
+<li>match</li>
+<li>short</li>
+<li>open</li>
+<li>load</li>
+<li>line</li>
+<li>tee</li>
+<li>thru</li>
+<li>delay_short</li>
+<li>shunt_delay_open</li>
+</ul>
+<p>Details for each component and usage help can be found in their doc-strings. So help(my_media.short) should provide you with enough details to create a short-circuit component.
+To create a 1-port network for a short,</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">my_media</span><span class="o">.</span><span class="n">short</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>to create a 90deg section of transmission line, with characteristic impedance of 30 ohms:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">my_media</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span><span class="n">unit</span><span class="o">=</span><span class="s">&#39;deg&#39;</span><span class="p">,</span><span class="n">z0</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Network components specific to a given medium, such as cpw_short, or microstrip_bend, are implemented in by the Media Classes themselves.</p>
+</div>
+<div class="section" id="building-cicuits">
+<h2>Building Cicuits<a class="headerlink" href="#building-cicuits" title="Permalink to this headline">¶</a></h2>
+<p>Circuits can be built in an intuitive maner from individual networks. To build a the 90deg delay_short standard can be made by:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">delay_short_90deg</span> <span class="o">=</span> <span class="n">my_media</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="mi">90</span><span class="p">,</span><span class="s">&#39;deg&#39;</span><span class="p">)</span> <span class="o">**</span> <span class="n">my_media</span><span class="o">.</span><span class="n">short</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For frequently used circuits, it may be worthwhile creating a function for something like this:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="k">def</span> <span class="nf">delay_short</span><span class="p">(</span><span class="n">wb</span><span class="p">,</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">my_media</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span><span class="o">**</span><span class="n">my_media</span><span class="o">.</span><span class="n">short</span><span class="p">()</span>
+
+<span class="n">delay_short</span><span class="p">(</span><span class="n">wb</span><span class="p">,</span><span class="mi">90</span><span class="p">,</span><span class="s">&#39;deg&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This is how many of mwavepy&#8217;s network compnents are made internally.</p>
+<p>To connect networks with more than two ports together, use the <em>connect()</em> function. You must provide the connect function with the two networks to be connected and the port indecies (starting from 0) to be connected.</p>
+<p>To connect port# &#8216;0&#8217; of ntwkA to port# &#8216;3&#8217; of ntwkB:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">ntwkC</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">ntwkA</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">ntwkB</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the connect function takes into account port impedances. To create a two-port network for a shunted delayed open, you can create an ideal 3-way splitter (a &#8216;tee&#8217;) and conect the delayed open to one of its ports, like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">tee</span> <span class="o">=</span> <span class="n">my_media</span><span class="o">.</span><span class="n">tee</span><span class="p">()</span>
+<span class="n">delay_open</span> <span class="o">=</span> <span class="n">my_media</span><span class="o">.</span><span class="n">delay_open</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span><span class="s">&#39;deg&#39;</span><span class="p">)</span>
+
+<span class="n">shunt_open</span> <span class="o">=</span> <span class="n">connect</span><span class="p">(</span><span class="n">tee</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">delay_open</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="single-stub-tuner">
+<h2>Single Stub Tuner<a class="headerlink" href="#single-stub-tuner" title="Permalink to this headline">¶</a></h2>
+<p>This is an example of how to design a single stub tuning network to match a 100ohm resistor to a 50 ohm environment.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># calculate reflection coefficient off a 100ohm</span>
+<span class="n">Gamma0</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">zl_2_Gamma0</span><span class="p">(</span><span class="n">z0</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span><span class="n">zl</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c"># create the network for the 100ohm load</span>
+<span class="n">load</span> <span class="o">=</span> <span class="n">my_media</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">Gamma0</span><span class="p">)</span>
+
+<span class="c"># create the single stub  network, parameterized by two delay lengths</span>
+<span class="c"># in units of &#39;deg&#39;</span>
+<span class="n">single_stub</span> <span class="o">=</span> <span class="n">my_media</span><span class="o">.</span><span class="n">shunt_delay_open</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span><span class="s">&#39;deg&#39;</span><span class="p">)</span> <span class="o">**</span> <span class="n">my_media</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span><span class="s">&#39;deg&#39;</span><span class="p">)</span>
+
+<span class="c"># the resulting network</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">single_stub</span> <span class="o">**</span> <span class="n">load</span>
+
+<span class="n">result</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="optimizing-designs">
+<h2>Optimizing Designs<a class="headerlink" href="#optimizing-designs" title="Permalink to this headline">¶</a></h2>
+<p>The abilities of scipy&#8217;s optimizers can be used to automate network design. To automate the single stub design, we can create a &#8216;cost&#8217; function which returns somthing we want to minimize, such as the reflection coefficient magnitude at band center.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">scipy.optmize</span> <span class="kn">import</span> <span class="n">fmin</span>
+
+<span class="c"># the load we are trying to match</span>
+<span class="n">load</span> <span class="o">=</span> <span class="n">my_media</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">zl_2_Gamma0</span><span class="p">(</span><span class="mi">100</span><span class="p">))</span>
+
+<span class="c"># single stub generator function</span>
+<span class="k">def</span> <span class="nf">single_stub</span><span class="p">(</span><span class="n">wb</span><span class="p">,</span><span class="n">d0</span><span class="p">,</span><span class="n">d1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">my_media</span><span class="o">.</span><span class="n">shunt_open</span><span class="p">(</span><span class="n">d1</span><span class="p">,</span><span class="s">&#39;deg&#39;</span><span class="p">)</span><span class="o">**</span><span class="n">my_media</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">d0</span><span class="p">,</span><span class="s">&#39;deg&#39;</span><span class="p">)</span>
+
+<span class="c"># cost function we want to minimize (note: this uses sloppy namespace)</span>
+<span class="k">def</span> <span class="nf">cost</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">single_stub</span><span class="p">(</span><span class="n">wb</span><span class="p">,</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">**</span> <span class="n">load</span><span class="p">)[</span><span class="mi">100</span><span class="p">]</span><span class="o">.</span><span class="n">s_mag</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+
+<span class="c"># initial guess of optimal delay lengths in degrees</span>
+<span class="n">d0</span><span class="o">=</span> <span class="mi">120</span><span class="p">,</span><span class="mi">40</span> <span class="c"># initial guess</span>
+
+<span class="c">#determine the optimal delays</span>
+<span class="n">d_opt</span> <span class="o">=</span> <span class="n">fmin</span><span class="p">(</span><span class="n">cost</span><span class="p">,(</span><span class="mi">120</span><span class="p">,</span><span class="mi">40</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Circuit Design</a><ul>
+<li><a class="reference internal" href="#intro">Intro</a></li>
+<li><a class="reference internal" href="#media-s-supported-by-mwavepy">Media&#8217;s Supported by mwavepy</a></li>
+<li><a class="reference internal" href="#creating-individual-networks">Creating Individual Networks</a></li>
+<li><a class="reference internal" href="#building-cicuits">Building Cicuits</a></li>
+<li><a class="reference internal" href="#single-stub-tuner">Single Stub Tuner</a></li>
+<li><a class="reference internal" href="#optimizing-designs">Optimizing Designs</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="calibration.html"
+                        title="previous chapter">Calibration</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="examples.html"
+                        title="next chapter">Examples</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/circuit_design.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples.html" title="Examples"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="calibration.html" title="Calibration"
+             >previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

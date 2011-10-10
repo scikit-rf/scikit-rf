@@ -1,0 +1,252 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>virtualInstruments Package &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="up" title="mwavepy Package" href="mwavepy.html" />
+    <link rel="prev" title="parametricStandard Package" href="mwavepy.calibration.parametricStandard.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.parametricStandard.html" title="parametricStandard Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" accesskey="U">mwavepy Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="virtualinstruments-package">
+<h1>virtualInstruments Package<a class="headerlink" href="#virtualinstruments-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">virtualInstruments</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-mwavepy.virtualInstruments"></span><p>import virtual instruments</p>
+</div>
+<div class="section" id="module-mwavepy.virtualInstruments.futekLoadCell">
+<span id="futekloadcell-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">futekLoadCell</span></tt> Module<a class="headerlink" href="#module-mwavepy.virtualInstruments.futekLoadCell" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor">
+<em class="property">class </em><tt class="descclassname">mwavepy.virtualInstruments.futekLoadCell.</tt><tt class="descname">FutekMonitor</tt><big>(</big><em>ax=None</em>, <em>window_length=-1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.get_data_and_plot">
+<tt class="descname">get_data_and_plot</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.get_data_and_plot" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_axis_scale">
+<tt class="descname">update_axis_scale</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_axis_scale" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_data">
+<tt class="descname">update_data</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_line">
+<tt class="descname">update_line</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_line" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe">
+<em class="property">class </em><tt class="descclassname">mwavepy.virtualInstruments.futekLoadCell.</tt><tt class="descname">Futek_USB210_pipe</tt><big>(</big><em>sample_rate=2.5</em>, <em>avg_len=1</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.data">
+<tt class="descname">data</tt><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.data" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.read">
+<tt class="descname">read</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.read" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.write">
+<tt class="descname">write</tt><big>(</big><em>data='gimme datan'</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_socket">
+<em class="property">class </em><tt class="descclassname">mwavepy.virtualInstruments.futekLoadCell.</tt><tt class="descname">Futek_USB210_socket</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_socket" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader" title="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader</span></tt></a></p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.virtualInstruments.generalSocketReader">
+<span id="generalsocketreader-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">generalSocketReader</span></tt> Module<a class="headerlink" href="#module-mwavepy.virtualInstruments.generalSocketReader" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader">
+<em class="property">class </em><tt class="descclassname">mwavepy.virtualInstruments.generalSocketReader.</tt><tt class="descname">GeneralSocketReader</tt><big>(</big><em>sock=None</em>, <em>sample_rate=2.5</em>, <em>avg_len=1</em>, <em>query_string='1'</em>, <em>msg_len=1000.0</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader" title="Permalink to this definition">¶</a></dt>
+<dd><p>A general class which wraps a socket and has a simple data query
+function, implemented by the property data_point.</p>
+<p>this was made as a way to interface a piece of hardware which did
+not support     gpib.  is useful for general interfacing  of 
+non-standard hardware or software.</p>
+<dl class="docutils">
+<dt>example usage:</dt>
+<dd>gsr = generalSocketRead()
+gsr.connect(&#8216;127.0.0.1&#8217;,1111)
+gsr.data_point  # implicityly calls send() then receive()</dd>
+</dl>
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.close">
+<tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.connect">
+<tt class="descname">connect</tt><big>(</big><em>host</em>, <em>port</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.data">
+<tt class="descname">data</tt><a class="headerlink" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>tmp = []
+for n in range(self.avg_len):</p>
+<blockquote>
+sleep(1./self.sample_rate)
+self.send(self.query_string)
+tmp.append(float(self.receive()))</blockquote>
+<p>return npy.mean(tmp)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.receive">
+<tt class="descname">receive</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.receive" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.send">
+<tt class="descname">send</tt><big>(</big><em>data</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.send" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="lifetimeprobetester-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">lifetimeProbeTester</span></tt> Module<a class="headerlink" href="#lifetimeprobetester-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="lifetimeprobetesterfunctions-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">lifetimeProbeTesterFunctions</span></tt> Module<a class="headerlink" href="#lifetimeprobetesterfunctions-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="stages-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">stages</span></tt> Module<a class="headerlink" href="#stages-module" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="vna-module">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">vna</span></tt> Module<a class="headerlink" href="#vna-module" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">virtualInstruments Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">virtualInstruments</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-mwavepy.virtualInstruments.futekLoadCell"><tt class="docutils literal"><span class="pre">futekLoadCell</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.virtualInstruments.generalSocketReader"><tt class="docutils literal"><span class="pre">generalSocketReader</span></tt> Module</a></li>
+<li><a class="reference internal" href="#lifetimeprobetester-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTester</span></tt> Module</a></li>
+<li><a class="reference internal" href="#lifetimeprobetesterfunctions-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTesterFunctions</span></tt> Module</a></li>
+<li><a class="reference internal" href="#stages-module"><tt class="docutils literal"><span class="pre">stages</span></tt> Module</a></li>
+<li><a class="reference internal" href="#vna-module"><tt class="docutils literal"><span class="pre">vna</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mwavepy.calibration.parametricStandard.html"
+                        title="previous chapter">parametricStandard Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/mwavepy.virtualInstruments.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.parametricStandard.html" title="parametricStandard Package"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" >mwavepy Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,152 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Architecture &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="architecture">
+<span id="id1"></span><h1>Architecture<a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-layout-and-inheritance">
+<h2>Module Layout and Inheritance<a class="headerlink" href="#module-layout-and-inheritance" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-center">
+<img alt="images/classInheretanceOutline.eps" src="images/classInheretanceOutline.eps" style="width: 800px;" />
+</div>
+</div>
+<div class="section" id="individual-class-architectures">
+<h2>Individual Class Architectures<a class="headerlink" href="#individual-class-architectures" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-center">
+<img alt="images/classOutline.eps" src="images/classOutline.eps" style="width: 800px;" />
+</div>
+<div class="section" id="frequency">
+<h3>Frequency<a class="headerlink" href="#frequency" title="Permalink to this headline">¶</a></h3>
+<p>The frequency object was created to make storing and manipulating frequency information easier and more rigid. A major convenience this class provides is the acounting of the frequency vector&#8217;s unit. Other objects, such as Network, and Calibration require a frequency vector to be meaningful. This vector is commonly referenced when a plot is generated, which one generally doesnt was in units of Hz. If the Frequency object did not exist other objects which require frequency information would have to implement the unit and multiplier bagage.</p>
+<div class="figure align-center">
+<img alt="images/frequency.eps" src="images/frequency.eps" style="width: 800px;" />
+</div>
+</div>
+<div class="section" id="network">
+<h3>Network<a class="headerlink" href="#network" title="Permalink to this headline">¶</a></h3>
+<div class="figure align-center">
+<img alt="images/network.eps" src="images/network.eps" style="width: 800px;" />
+</div>
+</div>
+<div class="section" id="touchstone">
+<h3>touchstone<a class="headerlink" href="#touchstone" title="Permalink to this headline">¶</a></h3>
+<p>The standard file format used to store data retrieved from Vector Network Analyzers (VNAs) is the touchstone file format. This file contains all relevent data of a measured network such as frequency info, network parameters (s, y,z, etc), and port impedance.</p>
+</div>
+<div class="section" id="workingband">
+<h3>WorkingBand<a class="headerlink" href="#workingband" title="Permalink to this headline">¶</a></h3>
+<div class="figure align-center">
+<img alt="images/workingBand.eps" src="images/workingBand.eps" style="width: 800px;" />
+</div>
+</div>
+<div class="section" id="calibration">
+<h3>Calibration<a class="headerlink" href="#calibration" title="Permalink to this headline">¶</a></h3>
+<div class="figure align-center">
+<img alt="images/calibration.eps" src="images/calibration.eps" style="width: 800px;" />
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Architecture</a><ul>
+<li><a class="reference internal" href="#module-layout-and-inheritance">Module Layout and Inheritance</a></li>
+<li><a class="reference internal" href="#individual-class-architectures">Individual Class Architectures</a><ul>
+<li><a class="reference internal" href="#frequency">Frequency</a></li>
+<li><a class="reference internal" href="#network">Network</a></li>
+<li><a class="reference internal" href="#touchstone">touchstone</a></li>
+<li><a class="reference internal" href="#workingband">WorkingBand</a></li>
+<li><a class="reference internal" href="#calibration">Calibration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/architecture.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

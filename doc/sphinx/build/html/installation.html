@@ -1,0 +1,167 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="index.html" />
+    <link rel="next" title="Quick Introduction" href="quick_intro.html" />
+    <link rel="prev" title="mwavepy’s documentation" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="quick_intro.html" title="Quick Introduction"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="mwavepy’s documentation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<p>The requirements are basically a python environment setup to do numerical/scientific computing. If you are new to Python development, I recommend you install a pre-built scientific python IDE like pythonxy. This will install all requirements, as well as provide a nice environment to get started in. If you dont want use Pythonxy, there is a list of requirements at end of this section.</p>
+<p>NOTE: if you want to use mwavepy for instrument control you will need to install pyvisa manually. The link is given in List of Requirements section. Also, you may be interested in David Urso&#8217;s Pythics module, for easy gui creation.</p>
+</div>
+<div class="section" id="install-mwavepy">
+<h2>Install mwavepy<a class="headerlink" href="#install-mwavepy" title="Permalink to this headline">¶</a></h2>
+<p>There are three choices for installing mwavepy:</p>
+<ul class="simple">
+<li>windows installer</li>
+<li>python source package</li>
+<li>SVN version</li>
+</ul>
+<p>They can all be found here <a class="reference external" href="http://code.google.com/p/mwavepy/downloads/list">http://code.google.com/p/mwavepy/downloads/list</a></p>
+<p>If you dont know how to install a python module and dont care to learn how, you want the windows installer.</p>
+<p>If you know how to install a python package but aren&#8217;t familiar with SVN then you want the Python source package . Examples, documentation, and installation instructions are provided in the the python package.</p>
+<p>If you know how to use SVN, I recommend the SVN version because it has more features.</p>
+</div>
+<div class="section" id="linux-specific">
+<h2>Linux-Specific<a class="headerlink" href="#linux-specific" title="Permalink to this headline">¶</a></h2>
+<p>For debian-based linux users who dont want to install Pythonxy, here is a one-shot line to install all requirements,</p>
+<p>sudo apt-get install python-pyvisa python-numpy python-scipy:</p>
+<div class="highlight-python"><pre>python-matplotlib ipython python</pre>
+</div>
+</div>
+<div class="section" id="list-of-requirements">
+<h2>List of Requirements<a class="headerlink" href="#list-of-requirements" title="Permalink to this headline">¶</a></h2>
+<p>Here is a list of the requirements, Necessary:</p>
+<ul class="simple">
+<li>python (&gt;=2.6) <a class="reference external" href="http://www.python.org/">http://www.python.org/</a></li>
+<li>matplotlib (aka pylab) <a class="reference external" href="http://matplotlib.sourceforge.net/">http://matplotlib.sourceforge.net/</a></li>
+<li>numpy <a class="reference external" href="http://numpy.scipy.org/">http://numpy.scipy.org/</a></li>
+<li>scipy <a class="reference external" href="http://www.scipy.org/">http://www.scipy.org/</a> ( provides tons of good stuff, check it out)</li>
+</ul>
+<p>Optional:</p>
+<ul class="simple">
+<li>pyvisa <a class="reference external" href="http://pyvisa.sourceforge.net/pyvisa/">http://pyvisa.sourceforge.net/pyvisa/</a> - for instrument control</li>
+<li>ipython <a class="reference external" href="http://ipython.scipy.org/moin/">http://ipython.scipy.org/moin/</a> - for interactive shell</li>
+<li>Pythics <a class="reference external" href="http://code.google.com/p/pythics">http://code.google.com/p/pythics</a> - instrument control and gui creation</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation</a><ul>
+<li><a class="reference internal" href="#requirements">Requirements</a></li>
+<li><a class="reference internal" href="#install-mwavepy">Install mwavepy</a></li>
+<li><a class="reference internal" href="#linux-specific">Linux-Specific</a></li>
+<li><a class="reference internal" href="#list-of-requirements">List of Requirements</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">mwavepy&#8217;s documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="quick_intro.html"
+                        title="next chapter">Quick Introduction</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/installation.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="quick_intro.html" title="Quick Introduction"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="mwavepy’s documentation"
+             >previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

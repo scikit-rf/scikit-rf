@@ -1,0 +1,134 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Slow Introduction &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="index.html" />
+    <link rel="next" title="Calibration" href="calibration.html" />
+    <link rel="prev" title="Quick Introduction" href="quick_intro.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="calibration.html" title="Calibration"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="quick_intro.html" title="Quick Introduction"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="slow-introduction">
+<span id="slow-intro"></span><h1>Slow Introduction<a class="headerlink" href="#slow-introduction" title="Permalink to this headline">¶</a></h1>
+<p>This is a slow  intro to get readers who arent especially familiar with python comfortable working with <strong>mwavepy</strong>. If you are familiar with python, or are impatient see the <a class="reference internal" href="quick_intro.html"><em>Quick Introduction</em></a>.</p>
+<p><strong>mwavepy</strong>, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don&#8217;t understand anything on this page, please see the Install page first.
+From a python shell or similar (ie IPython),  the <strong>mwavepy</strong> module can be imported like so:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+</pre></div>
+</div>
+<p>From here all <strong>mwavepy</strong>&#8216;s functions can be accessed through the variable &#8216;mv&#8217;. Help can be accessed through pythons help command. For example, to get help with the Network class</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">help</span><span class="p">(</span><span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Network class is a representation of a n-port network. The most common way to initialize a Network is by loading data saved in a touchstone file. Touchstone files have the extension &#8216;.sNp&#8217;, where N is the number of ports of the network.
+To create a Network from the touchstone file &#8216;horn.s1p&#8217;:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">horn</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;horn.s1p&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>From here you can tab out the contents of the newly created Network by typing <tt class="docutils literal"><span class="pre">horn.[hit</span> <span class="pre">tab]</span></tt>. You can get help on the various functions as described above.  The base storage format for a Network&#8217;s data is in scattering parameters, these can be accessed by the property, &#8216;s&#8217;. Basic element-wise arithmetic can also be done on the scattering parameters, through operations on the Networks themselves. For instance if you want to form the complex division of two Networks scatering matrices,</p>
+<p>This can also be used to implement averaging</p>
+<p>Other non-elementwise operations are also available, such as cascading and de-embeding two-port networks. For instance the composit network of two, two-port networks is formed using the power operator (<tt class="docutils literal"><span class="pre">**</span></tt>),</p>
+<p>De-embeding can be accomplished by using the floor division (<tt class="docutils literal"><span class="pre">//</span></tt>) operator</p>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="quick_intro.html"
+                        title="previous chapter">Quick Introduction</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="calibration.html"
+                        title="next chapter">Calibration</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/slow_intro.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="calibration.html" title="Calibration"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="quick_intro.html" title="Quick Introduction"
+             >previous</a> |</li>
+        <li><a href="index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>
