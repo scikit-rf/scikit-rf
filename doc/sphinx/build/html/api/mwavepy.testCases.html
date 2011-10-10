@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>testCases Package &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="testcases-package">
+<h1>testCases Package<a class="headerlink" href="#testcases-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">testCases</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-mwavepy.testCases"></span><p>holds unittest&#8217;s</p>
+</div>
+<div class="section" id="module-mwavepy.testCases.testCalibration">
+<span id="testcalibration-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">testCalibration</span></tt> Module<a class="headerlink" href="#module-mwavepy.testCases.testCalibration" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mwavepy.testCases.testCalibration.OnePortStandardCalibration">
+<em class="property">class </em><tt class="descclassname">mwavepy.testCases.testCalibration.</tt><tt class="descname">OnePortStandardCalibration</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#mwavepy.testCases.testCalibration.OnePortStandardCalibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<p>One-port calibration test.</p>
+<p>loads data for a reciprocal embeding network, and some ideal
+standards. ficticous measurements are made by cascading the ideals
+behind teh embeding network, and a calibration is performed.</p>
+<p>the calculated embedding network and de-embeded ideals are compared
+to originals as a metric of &#8216;working&#8217;</p>
+<dl class="method">
+<dt id="mwavepy.testCases.testCalibration.OnePortStandardCalibration.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testCalibration.OnePortStandardCalibration.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testCalibration.OnePortStandardCalibration.test_least_squares_calibration">
+<tt class="descname">test_least_squares_calibration</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testCalibration.OnePortStandardCalibration.test_least_squares_calibration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testCalibration.OnePortStandardCalibration.test_standard_calibration">
+<tt class="descname">test_standard_calibration</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testCalibration.OnePortStandardCalibration.test_standard_calibration" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.testCases.testMedia">
+<span id="testmedia-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">testMedia</span></tt> Module<a class="headerlink" href="#module-mwavepy.testCases.testMedia" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mwavepy.testCases.testMedia.CPWTestCase">
+<em class="property">class </em><tt class="descclassname">mwavepy.testCases.testMedia.</tt><tt class="descname">CPWTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.CPWTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.testCases.testMedia.MediaTestCase" title="mwavepy.testCases.testMedia.MediaTestCase"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.testCases.testMedia.MediaTestCase</span></tt></a></p>
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.CPWTestCase.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.CPWTestCase.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.testCases.testMedia.DistributedCircuitTestCase">
+<em class="property">class </em><tt class="descclassname">mwavepy.testCases.testMedia.</tt><tt class="descname">DistributedCircuitTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.DistributedCircuitTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.testCases.testMedia.MediaTestCase" title="mwavepy.testCases.testMedia.MediaTestCase"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.testCases.testMedia.MediaTestCase</span></tt></a></p>
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.DistributedCircuitTestCase.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.DistributedCircuitTestCase.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.testCases.testMedia.FreespaceTestCase">
+<em class="property">class </em><tt class="descclassname">mwavepy.testCases.testMedia.</tt><tt class="descname">FreespaceTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.FreespaceTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.testCases.testMedia.MediaTestCase" title="mwavepy.testCases.testMedia.MediaTestCase"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.testCases.testMedia.MediaTestCase</span></tt></a></p>
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.FreespaceTestCase.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.FreespaceTestCase.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.FreespaceTestCase.test_characterisitc_impedance_value">
+<tt class="descname">test_characterisitc_impedance_value</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.FreespaceTestCase.test_characterisitc_impedance_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase">
+<em class="property">class </em><tt class="descclassname">mwavepy.testCases.testMedia.</tt><tt class="descname">MediaTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_capacitor">
+<tt class="descname">test_capacitor</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_capacitor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_characterisitc_impedance_value">
+<tt class="descname">test_characterisitc_impedance_value</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_characterisitc_impedance_value" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_delay_load">
+<tt class="descname">test_delay_load</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_delay_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_delay_open">
+<tt class="descname">test_delay_open</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_delay_open" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_delay_short">
+<tt class="descname">test_delay_short</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_delay_short" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_impedance_mismatch">
+<tt class="descname">test_impedance_mismatch</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_impedance_mismatch" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_inductor">
+<tt class="descname">test_inductor</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_inductor" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_line">
+<tt class="descname">test_line</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_line" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_load">
+<tt class="descname">test_load</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_match">
+<tt class="descname">test_match</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_match" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_open">
+<tt class="descname">test_open</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_open" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_propagation_constant">
+<tt class="descname">test_propagation_constant</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_propagation_constant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_short">
+<tt class="descname">test_short</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_short" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_shunt_delay_load">
+<tt class="descname">test_shunt_delay_load</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_shunt_delay_load" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_shunt_delay_open">
+<tt class="descname">test_shunt_delay_open</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_shunt_delay_open" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_shunt_delay_short">
+<tt class="descname">test_shunt_delay_short</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_shunt_delay_short" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_splitter">
+<tt class="descname">test_splitter</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_splitter" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_tee">
+<tt class="descname">test_tee</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_tee" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.MediaTestCase.test_thru">
+<tt class="descname">test_thru</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.MediaTestCase.test_thru" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.testCases.testMedia.RectangularWaveguideTestCase">
+<em class="property">class </em><tt class="descclassname">mwavepy.testCases.testMedia.</tt><tt class="descname">RectangularWaveguideTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.RectangularWaveguideTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.testCases.testMedia.MediaTestCase" title="mwavepy.testCases.testMedia.MediaTestCase"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.testCases.testMedia.MediaTestCase</span></tt></a></p>
+<dl class="method">
+<dt id="mwavepy.testCases.testMedia.RectangularWaveguideTestCase.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testMedia.RectangularWaveguideTestCase.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.testCases.testNetwork">
+<span id="testnetwork-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">testNetwork</span></tt> Module<a class="headerlink" href="#module-mwavepy.testCases.testNetwork" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase">
+<em class="property">class </em><tt class="descclassname">mwavepy.testCases.testNetwork.</tt><tt class="descname">NetworkTestCase</tt><big>(</big><em>methodName='runTest'</em><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></tt></p>
+<p>Network class operation test case.</p>
+<blockquote>
+<dl class="docutils">
+<dt>As tested by lihan in ADS the following is true:</dt>
+<dd>test 3 == test1 ** test2</dd>
+</dl>
+</blockquote>
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.setUp">
+<tt class="descname">setUp</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.setUp" title="Permalink to this definition">¶</a></dt>
+<dd><p>this also tests the ability to read touchstone files
+without an error</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_cascade">
+<tt class="descname">test_cascade</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_cascade" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_connect">
+<tt class="descname">test_connect</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_de_embed_by_inv">
+<tt class="descname">test_de_embed_by_inv</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_de_embed_by_inv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_open_saved_touchstone">
+<tt class="descname">test_open_saved_touchstone</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_open_saved_touchstone" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_one_port_db">
+<tt class="descname">test_plot_one_port_db</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_one_port_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_one_port_deg">
+<tt class="descname">test_plot_one_port_deg</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_one_port_deg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_one_port_smith">
+<tt class="descname">test_plot_one_port_smith</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_one_port_smith" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_two_port_db">
+<tt class="descname">test_plot_two_port_db</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_two_port_db" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_two_port_deg">
+<tt class="descname">test_plot_two_port_deg</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_two_port_deg" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_two_port_smith">
+<tt class="descname">test_plot_two_port_smith</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.testCases.testNetwork.NetworkTestCase.test_plot_two_port_smith" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">testCases Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">testCases</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-mwavepy.testCases.testCalibration"><tt class="docutils literal"><span class="pre">testCalibration</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.testCases.testMedia"><tt class="docutils literal"><span class="pre">testMedia</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.testCases.testNetwork"><tt class="docutils literal"><span class="pre">testNetwork</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/mwavepy.testCases.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

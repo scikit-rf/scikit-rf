@@ -1,0 +1,826 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>calibration Package &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="up" title="mwavepy Package" href="mwavepy.html" />
+    <link rel="next" title="parametricStandard Package" href="mwavepy.calibration.parametricStandard.html" />
+    <link rel="prev" title="media Package" href="mwavepy.media.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.parametricStandard.html" title="parametricStandard Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.media.html" title="media Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" accesskey="U">mwavepy Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="calibration-package">
+<h1>calibration Package<a class="headerlink" href="#calibration-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">calibration</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-mwavepy.calibration"></span><p>Provides high-leve Calibration class as well as calibration algorithms
+and parametric standards</p>
+</div>
+<div class="section" id="module-mwavepy.calibration.calibration">
+<span id="calibration-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">calibration</span></tt> Module<a class="headerlink" href="#module-mwavepy.calibration.calibration" title="Permalink to this headline">¶</a></h2>
+<p>Contains the Calibration class, and supporting functions</p>
+<dl class="class">
+<dt id="mwavepy.calibration.calibration.Calibration">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.calibration.</tt><tt class="descname">Calibration</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>type=None</em>, <em>frequency=None</em>, <em>is_reciprocal=False</em>, <em>switch_terms=None</em>, <em>name=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>Represents a calibration instance, a class to hold sets
+of measurements, ideals, and calibration results.</p>
+<p>see init for more information on usage.</p>
+<p>note:
+all calibration algorithms are in calibrationAlgorithms.py, and are
+referenced by the dictionary in this object called
+&#8216;calibration_algorihtm_dict&#8217;</p>
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.Ts">
+<tt class="descname">Ts</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.Ts" title="Permalink to this definition">¶</a></dt>
+<dd><p>T-matricies used for de-embeding.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.apply_cal">
+<tt class="descname">apply_cal</tt><big>(</big><em>input_ntwk</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.apply_cal" title="Permalink to this definition">¶</a></dt>
+<dd><p>apply the current calibration to a measurement.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>input_ntwk: the measurement to apply the calibration to, a</dt>
+<dd>Network type.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>caled: the calibrated measurement, a Network type.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.apply_cal_to_all_in_dir">
+<tt class="descname">apply_cal_to_all_in_dir</tt><big>(</big><em>dir</em>, <em>contains=None</em>, <em>f_unit='ghz'</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.apply_cal_to_all_in_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>convience function to apply calibration to an entire directory
+of measurements, and return a dictionary of the calibrated
+results, optionally the user can &#8216;grep&#8217; the direction
+by using the contains switch.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">dir: directory of measurements (string)
+contains: will only load measurements who&#8217;s filename contains</p>
+<blockquote>
+this string.</blockquote>
+<dl class="last docutils">
+<dt>f_unit: frequency unit, to use for all networks. see</dt>
+<dd>frequency.Frequency.unit for info.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>ntwkDict: a dictionary of calibrated measurements, the keys</dt>
+<dd>are the filenames.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.biased_error">
+<tt class="descname">biased_error</tt><big>(</big><em>std_names</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.biased_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>estimate of biased error for overdetermined calibration with
+multiple connections of each standard</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>std_names: list of strings to uniquely identify each</dt>
+<dd>standard.*</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>systematic error: mwavepy.Network type who&#8217;s .s_mag is </dt>
+<dd>proportional to the systematic error metric</dd>
+</dl>
+</dd>
+<dt>note:</dt>
+<dd><dl class="first last docutils">
+<dt>mathematically, this is </dt>
+<dd>mean_s(<a href="#id12"><span class="problematic" id="id13">|mean_c(r)|</span></a>)</dd>
+<dt>where:</dt>
+<dd>r: complex residual errors
+mean_c: complex mean taken accross connection
+mean_s: complex mean taken accross standard</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.coefs">
+<tt class="descname">coefs</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.coefs" title="Permalink to this definition">¶</a></dt>
+<dd><p>coefs: a dictionary holding the calibration coefficients</p>
+<dl class="docutils">
+<dt>for one port cal&#8217;s</dt>
+<dd>&#8216;directivity&#8217;:e00
+&#8216;reflection tracking&#8217;:e01e10
+&#8216;source match&#8217;:e11</dd>
+<dt>for 7-error term two port cal&#8217;s</dt>
+<dd>TBD</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.error_ntwk">
+<tt class="descname">error_ntwk</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.error_ntwk" title="Permalink to this definition">¶</a></dt>
+<dd><p>a Network type which represents the error network being
+calibrated out.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.frequency">
+<tt class="descname">frequency</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.frequency" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.mean_residuals">
+<tt class="descname">mean_residuals</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.mean_residuals" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.nports">
+<tt class="descname">nports</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.nports" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of ports in the calibration</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.nstandards">
+<tt class="descname">nstandards</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.nstandards" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.output_from_cal">
+<tt class="descname">output_from_cal</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.output_from_cal" title="Permalink to this definition">¶</a></dt>
+<dd><p>a dictionary holding all of the output from the calibration
+algorithm</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.plot_coefs_db">
+<tt class="descname">plot_coefs_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_coefs_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot magnitude of the error coeficient dictionary</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.plot_residuals">
+<tt class="descname">plot_residuals</tt><big>(</big><em>attribute</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_residuals" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots a component of the residual errors on the  Calibration-plane.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first docutils">
+<dt>attribute: name of ploting method of Network class to call</dt>
+<dd><dl class="first last docutils">
+<dt>possible options are:</dt>
+<dd>&#8216;mag&#8217;, &#8216;db&#8217;, &#8216;smith&#8217;, &#8216;deg&#8217;, etc</dd>
+</dl>
+</dd>
+</dl>
+<p class="last"><a href="#id2"><span class="problematic" id="id3">*</span></a>args,**kwargs: passed to <a href="#id14"><span class="problematic" id="id15">plot_s_</span></a>&#8216;atttribute&#8217;()</p>
+</dd>
+</dl>
+<p>note:
+the residuals are calculated by:</p>
+<blockquote>
+(self.error_ntwk.inv**self.measured[k])-self.ideals[k])</blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.plot_residuals_db">
+<tt class="descname">plot_residuals_db</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_residuals_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>see plot_residuals</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.plot_residuals_mag">
+<tt class="descname">plot_residuals_mag</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_residuals_mag" title="Permalink to this definition">¶</a></dt>
+<dd><p>see plot_residuals</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.plot_residuals_smith">
+<tt class="descname">plot_residuals_smith</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_residuals_smith" title="Permalink to this definition">¶</a></dt>
+<dd><p>see plot_residuals</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.residual_ntwks">
+<tt class="descname">residual_ntwks</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.residual_ntwks" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a the residuals for each calibration standard in the 
+form of a list of Network types.</p>
+<dl class="docutils">
+<dt>note:</dt>
+<dd>the residuals are only calculated if they are not existent.</dd>
+</dl>
+<p>so, if you want to re-calculate the residual networks then 
+you delete the property &#8216;_residual_ntwks&#8217;.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.residuals">
+<tt class="descname">residuals</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.residuals" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>from numpy.lstsq:</dt>
+<dd>residues:
+the sum of the residues; squared euclidean norm for 
+each column vector in b (given ax=b)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.run">
+<tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.run" title="Permalink to this definition">¶</a></dt>
+<dd><p>runs the calibration algorihtm.</p>
+<blockquote>
+this is automatically called the</blockquote>
+<p>first time      any dependent property is referenced (like error_ntwk)
+, but only the first time. if you change something and want to
+re-run the calibration use this.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.total_error">
+<tt class="descname">total_error</tt><big>(</big><em>std_names</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.total_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>estimate of total error for overdetermined calibration with
+multiple connections of each standard. This is the combined 
+effects of both biased and un-biased errors</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>std_names: list of strings to uniquely identify each</dt>
+<dd>standard.*</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>composit error: mwavepy.Network type who&#8217;s .s_mag is </dt>
+<dd>proportional to the composit error metric</dd>
+</dl>
+</dd>
+<dt>note:</dt>
+<dd><dl class="first last docutils">
+<dt>mathematically, this is </dt>
+<dd>std_cs(r)</dd>
+<dt>where:</dt>
+<dd><p class="first">r: complex residual errors
+std_cs: standard deviation taken accross connections</p>
+<blockquote class="last">
+and standards</blockquote>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.calibration.Calibration.type">
+<tt class="descname">type</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>string representing what type of calibration is to be
+performed. supported types at the moment are:</p>
+<dl class="docutils">
+<dt>&#8216;one port&#8217;:     standard one-port cal. if more than</dt>
+<dd>2 measurement/ideal pairs are given it will
+calculate the least squares solution.</dd>
+<dt>&#8216;one port xds&#8217;: self-calibration of a unknown-length</dt>
+<dd>delay-shorts.</dd>
+</dl>
+<p>note:
+algorithms referenced by  calibration_algorithm_dict</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.unbiased_error">
+<tt class="descname">unbiased_error</tt><big>(</big><em>std_names</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.unbiased_error" title="Permalink to this definition">¶</a></dt>
+<dd><p>estimate of unbiased error for overdetermined calibration with
+multiple connections of each standard</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>std_names: list of strings to uniquely identify each</dt>
+<dd>standard.*</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>stochastic error: mwavepy.Network type who&#8217;s .s_mag is </dt>
+<dd>proportional to the stochastic error metric</dd>
+</dl>
+</dd>
+<dt>see also:</dt>
+<dd>uncertainty_per_standard, for this a measure of unbiased 
+errors for each standard</dd>
+<dt>note:</dt>
+<dd><dl class="first last docutils">
+<dt>mathematically, this is </dt>
+<dd>mean_s(std_c(r))</dd>
+<dt>where:</dt>
+<dd>r: complex residual errors
+std_c: standard deviation taken accross  connections
+mean_s: complex mean taken accross  standards</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.uncertainty_per_standard">
+<tt class="descname">uncertainty_per_standard</tt><big>(</big><em>std_names</em>, <em>attribute='s'</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.uncertainty_per_standard" title="Permalink to this definition">¶</a></dt>
+<dd><p>given that you have repeat-connections of single standards, 
+this calculates the complex standard deviation (distance) 
+for each standard in the calibration across connection #.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>std_names: list of strings to uniquely identify each</dt>
+<dd>standard.*</dd>
+<dt>attribute: string passed to func_on_networks to calculate </dt>
+<dd>std deviation on a component if desired. [&#8216;s&#8217;]</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>list of mwavepy.Networks, whose magnitude of s-parameters is
+proportional to the standard deviation for that standard</dd>
+<dt><a href="#id4"><span class="problematic" id="id5">*</span></a>example:</dt>
+<dd><dl class="first last docutils">
+<dt>if your calibration had ideals named like:</dt>
+<dd>&#8216;short 1&#8217;, &#8216;short 2&#8217;, &#8216;open 1&#8217;, &#8216;open 2&#8217;, etc.</dd>
+<dt>you would pass this</dt>
+<dd>mycal.uncertainty_per_standard([&#8216;short&#8217;,&#8217;open&#8217;,&#8217;match&#8217;])</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibration.error_dict_2_network">
+<tt class="descclassname">mwavepy.calibration.calibration.</tt><tt class="descname">error_dict_2_network</tt><big>(</big><em>coefs</em>, <em>frequency=None</em>, <em>is_reciprocal=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.error_dict_2_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>convert a dictionary holding standard error terms to a Network
+object.</p>
+<p>takes:</p>
+<p>returns:</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibration.rand">
+<tt class="descclassname">mwavepy.calibration.calibration.</tt><tt class="descname">rand</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.rand" title="Permalink to this definition">¶</a></dt>
+<dd><p>rand(d0, d1, ..., dn)</p>
+<p>Random values in a given shape.</p>
+<p>Create an array of the given shape and propagate it with
+random samples from a uniform distribution
+over <tt class="docutils literal"><span class="pre">[0,</span> <span class="pre">1)</span></tt>.</p>
+<dl class="docutils">
+<dt>d0, d1, ..., dn <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>Shape of the output.</dd>
+</dl>
+<dl class="docutils">
+<dt>out <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape <tt class="docutils literal"><span class="pre">(d0,</span> <span class="pre">d1,</span> <span class="pre">...,</span> <span class="pre">dn)</span></tt></span></dt>
+<dd>Random values.</dd>
+</dl>
+<p>random</p>
+<p>This is a convenience function. If you want an interface that
+takes a shape-tuple as the first argument, refer to
+<cite>random</cite>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">array([[ 0.14022471,  0.96360618],  #random</span>
+<span class="go">       [ 0.37601032,  0.25528411],  #random</span>
+<span class="go">       [ 0.49313049,  0.94909878]]) #random</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibration.two_port_error_vector_2_Ts">
+<tt class="descclassname">mwavepy.calibration.calibration.</tt><tt class="descname">two_port_error_vector_2_Ts</tt><big>(</big><em>error_coefficients</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.two_port_error_vector_2_Ts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.calibration.calibrationAlgorithms">
+<span id="calibrationalgorithms-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">calibrationAlgorithms</span></tt> Module<a class="headerlink" href="#module-mwavepy.calibration.calibrationAlgorithms" title="Permalink to this headline">¶</a></h2>
+<p>Contains calibrations algorithms, used in the Calibration class,</p>
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.abc_2_coefs_dict">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">abc_2_coefs_dict</tt><big>(</big><em>abc</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.abc_2_coefs_dict" title="Permalink to this definition">¶</a></dt>
+<dd><p>converts an abc ndarry to a dictionarry containing the error 
+coefficients.</p>
+<dl class="docutils">
+<dt>takes: </dt>
+<dd><dl class="first last docutils">
+<dt>abc <span class="classifier-delimiter">:</span> <span class="classifier">Nx3 numpy.ndarray, which holds the complex calibration </span></dt>
+<dd><dl class="first last docutils">
+<dt>coefficients. the components of abc are </dt>
+<dd>a[:] = abc[:,0]
+b[:] = abc[:,1]
+c[:] = abc[:,2],</dd>
+<dt>a, b and c are related to the error network by </dt>
+<dd>a = det(e) = e01*e10 - e00*e11 
+b = e00 
+c = e11</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>coefsDict: dictionary containing the following</dt>
+<dd>&#8216;directivity&#8217;:e00
+&#8216;reflection tracking&#8217;:e01e10
+&#8216;source match&#8217;:e11</dd>
+</dl>
+</dd>
+<dt>note: </dt>
+<dd>e00 = directivity error
+e10e01 = reflection tracking error
+e11 = source match error</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.eight_term_2_one_port_coefs">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">eight_term_2_one_port_coefs</tt><big>(</big><em>coefs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.eight_term_2_one_port_coefs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.guess_length_of_delay_short">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">guess_length_of_delay_short</tt><big>(</big><em>aNtwk</em>, <em>tline</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.guess_length_of_delay_short" title="Permalink to this definition">¶</a></dt>
+<dd><p>guess length of physical length of a Delay Short given by aNtwk</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>aNtwk: a mwavepy.ntwk type . (note: if this is a measurment </dt>
+<dd>it needs to be normalized to the short plane</dd>
+<dt>tline: transmission line class of the medium. needed for the </dt>
+<dd>calculation of propagation constant</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.one_port">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">one_port</tt><big>(</big><em>measured</em>, <em>ideals</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.one_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>standard algorithm for a one port calibration. If more than three 
+standards are supplied then a least square algorithm is applied.</p>
+<dl class="docutils">
+<dt>takes: </dt>
+<dd><dl class="first last docutils">
+<dt>measured - list of measured reflection coefficients. can be </dt>
+<dd>lists of either a kxnxn numpy.ndarray, representing a 
+s-matrix or list of  1-port mwavepy.ntwk types.</dd>
+<dt>ideals - list of assumed reflection coefficients. can be </dt>
+<dd>lists of either a kxnxn numpy.ndarray, representing a 
+s-matrix or list of  1-port mwavepy.ntwk types.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>a dictionary containing the following keys</dt>
+<dd><p class="first">&#8216;error coeffcients&#8217;: dictionary containing standard error
+coefficients
+&#8216;residuals&#8217;: a matrix of residuals from the least squared</p>
+<blockquote class="last">
+calculation. see numpy.linalg.lstsq() for more info</blockquote>
+</dd>
+</dl>
+</dd>
+<dt>note:</dt>
+<dd><p class="first">uses numpy.linalg.lstsq() for least squares calculation</p>
+<p class="last">see one_port_nls for a non-linear least square implementation</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.one_port_nls">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">one_port_nls</tt><big>(</big><em>measured</em>, <em>ideals</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.one_port_nls" title="Permalink to this definition">¶</a></dt>
+<dd><p>one port non-linear least squares.</p>
+<dl class="docutils">
+<dt>takes: </dt>
+<dd><dl class="first last docutils">
+<dt>measured - list of measured reflection coefficients. can be </dt>
+<dd>lists of either a kxnxn numpy.ndarray, representing a 
+s-matrix or list of  1-port mwavepy.ntwk types.</dd>
+<dt>ideals - list of assumed reflection coefficients. can be </dt>
+<dd>lists of either a kxnxn numpy.ndarray, representing a 
+s-matrix or list of  1-port mwavepy.ntwk types.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>a dictionary containing the following keys:</dt>
+<dd><p class="first">&#8216;error coeffcients&#8217;: dictionary containing standard error
+coefficients
+&#8216;residuals&#8217;: a matrix of residuals from the least squared</p>
+<blockquote>
+calculation. see numpy.linalg.lstsq() for more info</blockquote>
+<p class="last">&#8216;cov_x&#8217;: covariance matrix</p>
+</dd>
+</dl>
+</dd>
+<dt>note:</dt>
+<dd>uses scipy.optmize.leastsq for non-linear least squares calculation</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.parameterized_self_calibration">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">parameterized_self_calibration</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>showProgress=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.parameterized_self_calibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>An iterative, general self-calibration routine which can take any
+mixture of parameterized standards. The correct parameter values
+are defined as the ones which minimize the mean residual error.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>measured: list of Network types holding actual measurements
+ideals: list of ParametricStandard types
+showProgress: turn printing progress on/off [boolean]
+<a href="#id6"><span class="problematic" id="id7">**</span></a>kwargs: passed to minimization algorithm (scipy.optimize.fmin)</dd>
+<dt>returns:</dt>
+<dd><p class="first">a dictionary holding:
+&#8216;error_coefficients&#8217;: dictionary of error coefficients
+&#8216;residuals&#8217;: residual matrix (shape depends on #stds)
+&#8216;parameter_vector_final&#8217;: final results for parameter vector
+&#8216;mean_residual_list&#8217;: the mean, magnitude of the residuals at each</p>
+<blockquote class="last">
+iteration of calibration. this is the variable being minimized.</blockquote>
+</dd>
+</dl>
+<p>see  parametricStandard sub-module for more info on them</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.parameterized_self_calibration_bounded">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">parameterized_self_calibration_bounded</tt><big>(</big><em>measured</em>, <em>ideals_ps</em>, <em>showProgress=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.parameterized_self_calibration_bounded" title="Permalink to this definition">¶</a></dt>
+<dd><p>An iterative, general self-calibration routine which can take any
+mixture of parameterized standards. The correct parameter values
+are defined as the ones which minimize the mean residual error.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>measured: list of Network types holding actual measurements
+ideals_ps: list of ParameterizedStandard types
+showProgress: turn printing progress on/off [boolean]
+<a href="#id8"><span class="problematic" id="id9">**</span></a>kwargs: passed to minimization algorithm (scipy.optimize.fmin)</dd>
+<dt>returns:</dt>
+<dd><p class="first">a dictionary holding:
+&#8216;error_coefficients&#8217;: dictionary of error coefficients
+&#8216;residuals&#8217;: residual matrix (shape depends on #stds)
+&#8216;parameter_vector_final&#8217;: final results for parameter vector
+&#8216;mean_residual_list&#8217;: the mean, magnitude of the residuals at each</p>
+<blockquote class="last">
+iteration of calibration. this is the variable being minimized.</blockquote>
+</dd>
+</dl>
+<p>see  ParameterizedStandard for more info on them</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.parameterized_self_calibration_nls">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">parameterized_self_calibration_nls</tt><big>(</big><em>measured</em>, <em>ideals_ps</em>, <em>showProgress=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.parameterized_self_calibration_nls" title="Permalink to this definition">¶</a></dt>
+<dd><p>An iterative, general self-calibration routine which can take any
+mixture of parametric standards. The correct parameter values
+are defined as the ones which minimize the mean residual error.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>measured: list of Network types holding actual measurements
+ideals_ps: list of ParametricStandard types
+showProgress: turn printing progress on/off [boolean]
+<a href="#id10"><span class="problematic" id="id11">**</span></a>kwargs: passed to minimization algorithm (scipy.optimize.fmin)</dd>
+<dt>returns:</dt>
+<dd><p class="first">a dictionary holding:
+&#8216;error_coefficients&#8217;: dictionary of error coefficients
+&#8216;residuals&#8217;: residual matrix (shape depends on #stds)
+&#8216;parameter_vector_final&#8217;: final results for parameter vector
+&#8216;mean_residual_list&#8217;: the mean, magnitude of the residuals at each</p>
+<blockquote class="last">
+iteration of calibration. this is the variable being minimized.</blockquote>
+</dd>
+</dl>
+<p>see  ParametricStandard for more info on them</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.rand">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">rand</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.rand" title="Permalink to this definition">¶</a></dt>
+<dd><p>rand(d0, d1, ..., dn)</p>
+<p>Random values in a given shape.</p>
+<p>Create an array of the given shape and propagate it with
+random samples from a uniform distribution
+over <tt class="docutils literal"><span class="pre">[0,</span> <span class="pre">1)</span></tt>.</p>
+<dl class="docutils">
+<dt>d0, d1, ..., dn <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>Shape of the output.</dd>
+</dl>
+<dl class="docutils">
+<dt>out <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape <tt class="docutils literal"><span class="pre">(d0,</span> <span class="pre">d1,</span> <span class="pre">...,</span> <span class="pre">dn)</span></tt></span></dt>
+<dd>Random values.</dd>
+</dl>
+<p>random</p>
+<p>This is a convenience function. If you want an interface that
+takes a shape-tuple as the first argument, refer to
+<cite>random</cite>.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
+<span class="go">array([[ 0.14022471,  0.96360618],  #random</span>
+<span class="go">       [ 0.37601032,  0.25528411],  #random</span>
+<span class="go">       [ 0.49313049,  0.94909878]]) #random</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.two_port">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">two_port</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>switchterms=None</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.two_port" title="Permalink to this definition">¶</a></dt>
+<dd><p>two port calibration based on the 8-term error model.  takes two
+ordered lists of measured and ideal responses. optionally, switch
+terms can be taken into account by passing a tuple containing the
+forward and reverse switch terms as 1-port Networks</p>
+<dl class="docutils">
+<dt>takes: </dt>
+<dd><dl class="first last docutils">
+<dt>measured: ordered list of measured networks. list elements</dt>
+<dd>should be       2-port  Network types. list order must correspond
+with ideals.</dd>
+<dt>ideals: ordered list of ideal networks. list elements should be</dt>
+<dd>2-port  Network types.</dd>
+<dt>switch_terms: tuple of 1-port Network types holding switch terms</dt>
+<dd>in this order (forward, reverse).</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>output: a dictionary containing the follwoing keys:</dt>
+<dd>&#8216;error coefficients&#8217;:
+&#8216;error vector&#8217;:
+&#8216;residuals&#8217;:</dd>
+</dl>
+</dd>
+<dt>note:</dt>
+<dd>support for gathering switch terms on HP8510C  is in
+mwavepy.virtualInstruments.vna.py</dd>
+</dl>
+<p>references</p>
+<p>Doug Rytting &#8221; Network Analyzer Error Models and Calibration Methods&#8221;
+RF 8 Microwave. Measurements for Wireless Applications (ARFTG/NIST)</p>
+<blockquote>
+Short Course ...</blockquote>
+<p>Speciale, R.A.; , &#8220;A Generalization of the TSD Network-Analyzer
+Calibration Procedure, Covering n-Port Scattering-Parameter
+Measurements, Affected by Leakage Errors,&#8221; Microwave Theory and
+Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115,
+Dec 1977</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.calibration.calibrationAlgorithms.unterminate_switch_terms">
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">unterminate_switch_terms</tt><big>(</big><em>two_port</em>, <em>gamma_f</em>, <em>gamma_r</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.unterminate_switch_terms" title="Permalink to this definition">¶</a></dt>
+<dd><p>unterminates switch terms from raw measurements.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>two_port: the raw measurement, a 2-port Network type. 
+gamma_f: the measured forward switch term, a 1-port Network type
+gamma_r: the measured reverse switch term, a 1-port Network type</dd>
+<dt>returns:</dt>
+<dd>un-terminated measurement, a 2-port Network type</dd>
+<dt>see:</dt>
+<dd>&#8216;Formulations of the Basic Vector Network Analyzer Error
+Model including Switch Terms&#8217; by Roger B. Marks</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mwavepy.calibration.parametricStandard.html">parametricStandard Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.parametricStandard.html#id1"><tt class="docutils literal"><span class="pre">parametricStandard</span></tt> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.parametricStandard.html#module-mwavepy.calibration.parametricStandard.generic"><tt class="docutils literal"><span class="pre">generic</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.parametricStandard.html#module-mwavepy.calibration.parametricStandard.parametricStandard"><tt class="docutils literal"><span class="pre">parametricStandard</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.parametricStandard.html#module-mwavepy.calibration.parametricStandard.rectangularWaveguide"><tt class="docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">calibration Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">calibration</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-mwavepy.calibration.calibration"><tt class="docutils literal"><span class="pre">calibration</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.calibration.calibrationAlgorithms"><tt class="docutils literal"><span class="pre">calibrationAlgorithms</span></tt> Module</a></li>
+<li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mwavepy.media.html"
+                        title="previous chapter">media Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mwavepy.calibration.parametricStandard.html"
+                        title="next chapter">parametricStandard Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/mwavepy.calibration.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.parametricStandard.html" title="parametricStandard Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.media.html" title="media Package"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" >mwavepy Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

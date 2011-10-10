@@ -1,0 +1,159 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mwavepy API &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="next" title="mwavepy Package" href="mwavepy.html" />
+    <link rel="prev" title="Circuit Design: Single Stub Matching Network" href="../examples/matching_single_stub.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.html" title="mwavepy Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../examples/matching_single_stub.html" title="Circuit Design: Single Stub Matching Network"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="mwavepy-api">
+<h1>mwavepy API<a class="headerlink" href="#mwavepy-api" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="mwavepy.html">mwavepy Package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#id1"><tt class="docutils literal"><span class="pre">mwavepy</span></tt> Package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#module-mwavepy.convenience"><tt class="docutils literal"><span class="pre">convenience</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#module-mwavepy.frequency"><tt class="docutils literal"><span class="pre">frequency</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#module-mwavepy.mathFunctions"><tt class="docutils literal"><span class="pre">mathFunctions</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#module-mwavepy.network"><tt class="docutils literal"><span class="pre">network</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#module-mwavepy.plotting"><tt class="docutils literal"><span class="pre">plotting</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#module-mwavepy.tlineFunctions"><tt class="docutils literal"><span class="pre">tlineFunctions</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#module-mwavepy.touchstone"><tt class="docutils literal"><span class="pre">touchstone</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="mwavepy.media.html">media Package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.media.html#id1"><tt class="docutils literal"><span class="pre">media</span></tt> Package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.cpw"><tt class="docutils literal"><span class="pre">cpw</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.distributedCircuit"><tt class="docutils literal"><span class="pre">distributedCircuit</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.freespace"><tt class="docutils literal"><span class="pre">freespace</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.media"><tt class="docutils literal"><span class="pre">media</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.rectangularWaveguide"><tt class="docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mwavepy.calibration.html">calibration Package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.calibration.html#id1"><tt class="docutils literal"><span class="pre">calibration</span></tt> Package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.calibration.html#module-mwavepy.calibration.calibration"><tt class="docutils literal"><span class="pre">calibration</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.calibration.html#module-mwavepy.calibration.calibrationAlgorithms"><tt class="docutils literal"><span class="pre">calibrationAlgorithms</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.calibration.html#subpackages">Subpackages</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="mwavepy.virtualInstruments.html">virtualInstruments Package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.virtualInstruments.html#id1"><tt class="docutils literal"><span class="pre">virtualInstruments</span></tt> Package</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.virtualInstruments.html#module-mwavepy.virtualInstruments.futekLoadCell"><tt class="docutils literal"><span class="pre">futekLoadCell</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.virtualInstruments.html#module-mwavepy.virtualInstruments.generalSocketReader"><tt class="docutils literal"><span class="pre">generalSocketReader</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.virtualInstruments.html#lifetimeprobetester-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTester</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.virtualInstruments.html#lifetimeprobetesterfunctions-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTesterFunctions</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.virtualInstruments.html#stages-module"><tt class="docutils literal"><span class="pre">stages</span></tt> Module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mwavepy.virtualInstruments.html#vna-module"><tt class="docutils literal"><span class="pre">vna</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../examples/matching_single_stub.html"
+                        title="previous chapter">Circuit Design: Single Stub Matching Network</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mwavepy.html"
+                        title="next chapter">mwavepy Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/modules.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.html" title="mwavepy Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../examples/matching_single_stub.html" title="Circuit Design: Single Stub Matching Network"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

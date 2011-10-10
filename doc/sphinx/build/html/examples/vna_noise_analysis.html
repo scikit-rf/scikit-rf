@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>VNA Noise Analysis &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="../examples.html" />
+    <link rel="next" title="Circuit Design: Single Stub Matching Network" href="matching_single_stub.html" />
+    <link rel="prev" title="Two-Port Calibration" href="twoport_calibration.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="matching_single_stub.html" title="Circuit Design: Single Stub Matching Network"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="twoport_calibration.html" title="Two-Port Calibration"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="../examples.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="vna-noise-analysis">
+<h1>VNA Noise Analysis<a class="headerlink" href="#vna-noise-analysis" title="Permalink to this headline">¶</a></h1>
+<p>This example records a series of sweeps from a vna to touchstone files, named in a chronological order. These are then used to characterize the noise of a vna</p>
+<div class="section" id="touchstone-file-retrieval">
+<h2>Touchstone File Retrieval<a class="headerlink" href="#touchstone-file-retrieval" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+<span class="kn">import</span> <span class="nn">os</span><span class="o">,</span><span class="nn">datetime</span>
+
+<span class="n">nsweeps</span> <span class="o">=</span> <span class="mi">101</span> <span class="c"># number of sweeps to take</span>
+<span class="nb">dir</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">date</span><span class="p">()</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span> <span class="c"># directory to save files in</span>
+
+<span class="n">myvna</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">vna</span><span class="o">.</span><span class="n">HP8720</span><span class="p">()</span> <span class="c"># HP8510 also available</span>
+<span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="nb">dir</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nsweeps</span><span class="p">):</span>
+        <span class="k">print</span>  <span class="n">k</span>
+        <span class="n">ntwk</span> <span class="o">=</span> <span class="n">myvna</span><span class="o">.</span><span class="n">s11</span>
+        <span class="n">date_string</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">__str__</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s">&#39;:&#39;</span><span class="p">,</span><span class="s">&#39;-&#39;</span><span class="p">)</span>
+        <span class="n">ntwk</span><span class="o">.</span><span class="n">write_touchstone</span><span class="p">(</span><span class="nb">dir</span> <span class="o">+</span><span class="s">&#39;/&#39;</span><span class="o">+</span> <span class="n">date_string</span><span class="p">)</span>
+
+<span class="n">myvna</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="noise-analysis">
+<h2>Noise Analysis<a class="headerlink" href="#noise-analysis" title="Permalink to this headline">¶</a></h2>
+<p>Calculates and plots various metrics of noise, given a directory of
+touchstones files, as would be created from the previous script</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+<span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+
+<span class="nb">dir</span> <span class="o">=</span> <span class="s">&#39;2010-12-03&#39;</span> <span class="c"># directory of touchstone files</span>
+<span class="n">npoints</span> <span class="o">=</span> <span class="mi">3</span> <span class="c"># number of frequency points to calculate statistics for</span>
+
+
+<span class="c"># load all touchstones in directory into a dictionary, and sort keys</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">load_all_touchstones</span><span class="p">(</span><span class="nb">dir</span><span class="o">+</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+<span class="n">keys</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+<span class="n">keys</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+<span class="c"># length of frequency vector of each network</span>
+<span class="n">f_len</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">npoints</span>
+<span class="c"># frequency vector indecies at which we will calculate the statistics</span>
+<span class="n">f_vector</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">f_len</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">npoints</span><span class="p">)]</span>
+
+<span class="c">#loop through the frequencies of interest and calculate statistics</span>
+<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">f_vector</span><span class="p">:</span>
+        <span class="c"># for legends</span>
+        <span class="n">f_scaled</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">f_scaled</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
+        <span class="n">f_unit</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">frequency</span><span class="o">.</span><span class="n">unit</span>
+
+        <span class="c"># z is 1d complex array of the s11 at the current frequency, it is</span>
+        <span class="c"># as long as the number of touchsone files</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">array</span><span class="p">(</span> <span class="p">[(</span><span class="n">data</span><span class="p">[</span><span class="n">keys</span><span class="p">[</span><span class="n">k</span><span class="p">]])</span><span class="o">.</span><span class="n">s</span><span class="p">[</span><span class="n">f</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">))])</span>
+        <span class="n">phase_change</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">complex_2_degree</span><span class="p">(</span><span class="n">z</span> <span class="o">*</span> <span class="mi">1</span><span class="o">/</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">phase_change</span> <span class="o">=</span> <span class="n">phase_change</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="n">phase_change</span><span class="p">)</span>
+        <span class="n">mag_change</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">complex_2_magnitude</span><span class="p">(</span><span class="n">z</span><span class="o">-</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">title</span><span class="p">(</span><span class="s">&#39;Complex Drift&#39;</span><span class="p">)</span>
+        <span class="n">plot</span><span class="p">(</span><span class="n">z</span><span class="o">.</span><span class="n">real</span><span class="p">,</span><span class="n">z</span><span class="o">.</span><span class="n">imag</span><span class="p">,</span><span class="s">&#39;.&#39;</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s">&#39;f = </span><span class="si">%i%s</span><span class="s">&#39;</span><span class="o">%</span> <span class="p">(</span> <span class="n">f_scaled</span><span class="p">,</span><span class="n">f_unit</span><span class="p">))</span>
+        <span class="n">axis</span><span class="p">(</span><span class="s">&#39;equal&#39;</span><span class="p">)</span>
+        <span class="n">legend</span><span class="p">()</span>
+        <span class="n">mv</span><span class="o">.</span><span class="n">smith</span><span class="p">()</span>
+
+        <span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">title</span><span class="p">(</span><span class="s">&#39;Phase Drift vs. Time&#39;</span><span class="p">)</span>
+        <span class="n">xlabel</span><span class="p">(</span><span class="s">&#39;Sample [n]&#39;</span><span class="p">)</span>
+        <span class="n">ylabel</span><span class="p">(</span><span class="s">&#39;Phase From Mean [deg]&#39;</span><span class="p">)</span>
+        <span class="n">plot</span><span class="p">(</span><span class="n">phase_change</span><span class="p">,</span><span class="n">label</span><span class="o">=</span><span class="s">&#39;f = </span><span class="si">%i%s</span><span class="s">, $\sigma=</span><span class="si">%.1f</span><span class="s">$&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">f_scaled</span><span class="p">,</span><span class="n">f_unit</span><span class="p">,</span><span class="n">std</span><span class="p">(</span><span class="n">phase_change</span><span class="p">)))</span>
+        <span class="n">legend</span><span class="p">()</span>
+
+        <span class="n">figure</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="n">title</span><span class="p">(</span><span class="s">&#39;Phase Drift Distrobution&#39;</span><span class="p">)</span>
+        <span class="n">xlabel</span><span class="p">(</span><span class="s">&#39;Phase From Mean[deg]&#39;</span><span class="p">)</span>
+        <span class="n">ylabel</span><span class="p">(</span><span class="s">&#39;Frequency Of Occurrence&#39;</span><span class="p">)</span>
+        <span class="n">hist</span><span class="p">(</span><span class="n">phase_change</span><span class="p">,</span><span class="n">alpha</span><span class="o">=.</span><span class="mi">5</span><span class="p">,</span><span class="n">bins</span><span class="o">=</span><span class="mi">21</span><span class="p">,</span><span class="n">histtype</span><span class="o">=</span><span class="s">&#39;stepfilled&#39;</span><span class="p">,</span>\
+                <span class="n">label</span><span class="o">=</span><span class="s">&#39;f = </span><span class="si">%i%s</span><span class="s">, $\sigma=</span><span class="si">%.1f</span><span class="s">$&#39;</span><span class="o">%</span><span class="p">(</span><span class="n">f_scaled</span><span class="p">,</span><span class="n">f_unit</span><span class="p">,</span><span class="n">std</span><span class="p">(</span><span class="n">phase_change</span><span class="p">))</span> <span class="p">)</span>
+        <span class="n">legend</span><span class="p">()</span>
+        <span class="n">figure</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+        <span class="n">title</span><span class="p">(</span><span class="s">&#39;FFT of Phase Drift&#39;</span><span class="p">)</span>
+        <span class="n">ylabel</span><span class="p">(</span><span class="s">&#39;Power [dB]&#39;</span><span class="p">)</span>
+        <span class="n">xlabel</span><span class="p">(</span><span class="s">&#39;Sample Frequency [?]&#39;</span><span class="p">)</span>
+        <span class="n">plot</span><span class="p">(</span><span class="n">log10</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">fftshift</span><span class="p">(</span><span class="n">fft</span><span class="p">(</span><span class="n">phase_change</span><span class="p">))))[</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="o">+</span><span class="mi">1</span><span class="p">:])</span>
+
+<span class="n">draw</span><span class="p">();</span><span class="n">show</span><span class="p">();</span>
+</pre></div>
+</div>
+<div class="figure align-center">
+<img alt="../_images/ComplexDrift.png" src="../_images/ComplexDrift.png" style="width: 800px;" />
+</div>
+<div class="figure align-center">
+<img alt="../_images/PhaseDriftvsTime.png" src="../_images/PhaseDriftvsTime.png" style="width: 800px;" />
+</div>
+<div class="figure align-center">
+<img alt="../_images/PhaseDriftDistrobution.png" src="../_images/PhaseDriftDistrobution.png" style="width: 800px;" />
+</div>
+<div class="figure align-center">
+<img alt="../_images/FFTofPhaseDrift.png" src="../_images/FFTofPhaseDrift.png" style="width: 800px;" />
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">VNA Noise Analysis</a><ul>
+<li><a class="reference internal" href="#touchstone-file-retrieval">Touchstone File Retrieval</a></li>
+<li><a class="reference internal" href="#noise-analysis">Noise Analysis</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="twoport_calibration.html"
+                        title="previous chapter">Two-Port Calibration</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="matching_single_stub.html"
+                        title="next chapter">Circuit Design: Single Stub Matching Network</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/examples/vna_noise_analysis.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="matching_single_stub.html" title="Circuit Design: Single Stub Matching Network"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="twoport_calibration.html" title="Two-Port Calibration"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="../examples.html" >Examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

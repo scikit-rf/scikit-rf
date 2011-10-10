@@ -1,0 +1,313 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>parametricStandard Package &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="up" title="calibration Package" href="mwavepy.calibration.html" />
+    <link rel="next" title="virtualInstruments Package" href="mwavepy.virtualInstruments.html" />
+    <link rel="prev" title="calibration Package" href="mwavepy.calibration.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.virtualInstruments.html" title="virtualInstruments Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.html" title="calibration Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" >mwavepy Package</a> &raquo;</li>
+          <li><a href="mwavepy.calibration.html" accesskey="U">calibration Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="parametricstandard-package">
+<h1>parametricStandard Package<a class="headerlink" href="#parametricstandard-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">parametricStandard</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-mwavepy.calibration.parametricStandard"></span><p>Provides  parametric standards used in self-calibration routines</p>
+</div>
+<div class="section" id="module-mwavepy.calibration.parametricStandard.generic">
+<span id="generic-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">generic</span></tt> Module<a class="headerlink" href="#module-mwavepy.calibration.parametricStandard.generic" title="Permalink to this headline">¶</a></h2>
+<p>Provides  generic parametric standards which dont depend on any 
+specific properties of a given media</p>
+<dl class="docutils">
+<dt>The naming convention for these classes is </dt>
+<dd>Standard_UnknownQuantity</dd>
+</dl>
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">DelayLoad_UnknownLength</tt><big>(</big><em>media</em>, <em>d</em>, <em>Gamma0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A  Delayed Termination of unknown length, but known termination</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength_UnknownLoad">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">DelayLoad_UnknownLength_UnknownLoad</tt><big>(</big><em>media</em>, <em>d</em>, <em>Gamma0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength_UnknownLoad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A  Delayed load of unknown length or reflection coefficient. 
+Assumes the load is frequency independent</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLoad">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">DelayLoad_UnknownLoad</tt><big>(</big><em>media</em>, <em>d</em>, <em>Gamma0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLoad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A  Delayed Load of unknown Load. Assumes load is frequency independent</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.DelayOpen_UnknownLength">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">DelayOpen_UnknownLength</tt><big>(</big><em>media</em>, <em>d</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.DelayOpen_UnknownLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength" title="mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength</span></tt></a></p>
+<p>A delay open of unknown length</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.DelayShort_UnknownLength">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">DelayShort_UnknownLength</tt><big>(</big><em>media</em>, <em>d</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.DelayShort_UnknownLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength" title="mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.generic.DelayLoad_UnknownLength</span></tt></a></p>
+<p>A delay short of unknown length</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.Line_UnknownLength">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">Line_UnknownLength</tt><big>(</big><em>media</em>, <em>d</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.Line_UnknownLength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A matched delay line of unknown length</p>
+<p>initial guess for length should be given to constructor</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.Parameterless">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">Parameterless</tt><big>(</big><em>ideal_network</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.Parameterless" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A parameterless standard.</p>
+<p>note:
+this is needed so that the calibration algorithm doesnt have to
+handle more than one class type for  standards</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.UnknownShuntCapacitance">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">UnknownShuntCapacitance</tt><big>(</big><em>media</em>, <em>C</em>, <em>ntwk</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.UnknownShuntCapacitance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A Network with unknown connector capacitance</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.UnknownShuntCapacitanceInductance">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">UnknownShuntCapacitanceInductance</tt><big>(</big><em>media</em>, <em>C</em>, <em>L</em>, <em>ntwk</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.UnknownShuntCapacitanceInductance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A Network with unknown connector inductance and capacitance</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.generic.UnknownShuntInductance">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.generic.</tt><tt class="descname">UnknownShuntInductance</tt><big>(</big><em>media</em>, <em>L</em>, <em>ntwk</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.generic.UnknownShuntInductance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<p>A Network with unknown connector inductance</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.calibration.parametricStandard.parametricStandard">
+<span id="parametricstandard-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">parametricStandard</span></tt> Module<a class="headerlink" href="#module-mwavepy.calibration.parametricStandard.parametricStandard" title="Permalink to this headline">¶</a></h2>
+<p>Provides Parametric Standard class, and some specific instances. The 
+specific instances are named as follows</p>
+<blockquote>
+StandardType_UnknownQuantity</blockquote>
+<dl class="exception">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParameterBoundsError">
+<em class="property">exception </em><tt class="descclassname">mwavepy.calibration.parametricStandard.parametricStandard.</tt><tt class="descname">ParameterBoundsError</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParameterBoundsError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.parametricStandard.</tt><tt class="descname">ParametricStandard</tt><big>(</big><em>function=None</em>, <em>parameters={}</em>, <em>parameter_bounds={}</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="attribute">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.INF">
+<tt class="descname">INF</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.INF" title="Permalink to this definition">¶</a></dt>
+<dd><p>A parametric standard represents a calibration standard which
+has uncertainty in its response. This uncertainty is functionally
+known, and      represented by a parametric function, where the
+uknown quantity is the adjustable parameter.</p>
+<p>This class presents an abstract interface to a general Parametric
+Standard. Its main purpose is to allow the self calibration routine
+to be independent of calibration set.</p>
+<p>See initializer for more
+details.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.network">
+<tt class="descname">network</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.network" title="Permalink to this definition">¶</a></dt>
+<dd><blockquote>
+a Networks instance generated by calling self.function(), for</blockquote>
+<p>the current set of parameters (and kwargs)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.number_of_parameters">
+<tt class="descname">number_of_parameters</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.number_of_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of parameters this standard has</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.parameter_array">
+<tt class="descname">parameter_array</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.parameter_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>This property provides a 1D-array interface to the parameters 
+dictionary. This is needed to intereface teh optimizing function
+because it only takes a 1D-array. Therefore, order must be 
+preserved with accessing and updating the parameters through this
+array. To handle this I make it return and update in alphebetical
+order of the parameters dictionary keys.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.parameter_bounds_array">
+<tt class="descname">parameter_bounds_array</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.parameter_bounds_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>This property provides a 1D-array interface to the parameters 
+bounds dictionary. if key doesnt exist, then i presume the
+parameter has no bounds. this then returns a tuple of -INF,INF
+where INF is a global variable in this class.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.parameter_keys">
+<tt class="descname">parameter_keys</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.parameter_keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a list of parameter dictionary keys in alphabetical order</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.s">
+<tt class="descname">s</tt><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard.s" title="Permalink to this definition">¶</a></dt>
+<dd><p>a direct access to the calulated networks&#8217; s-matrix</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="mwavepy.calibration.parametricStandard.parametricStandard.SlidingLoad_UnknownTermination">
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.parametricStandard.parametricStandard.</tt><tt class="descname">SlidingLoad_UnknownTermination</tt><big>(</big><em>media</em>, <em>d_list</em>, <em>Gamma0</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.parametricStandard.parametricStandard.SlidingLoad_UnknownTermination" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard" title="mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard</span></tt></a></p>
+<dl class="docutils">
+<dt>A set of parametersized standards representing a set of Delayed</dt>
+<dd>Terminations of known length, but unknown termination</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.calibration.parametricStandard.rectangularWaveguide">
+<span id="rectangularwaveguide-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module<a class="headerlink" href="#module-mwavepy.calibration.parametricStandard.rectangularWaveguide" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">parametricStandard Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">parametricStandard</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-mwavepy.calibration.parametricStandard.generic"><tt class="docutils literal"><span class="pre">generic</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.calibration.parametricStandard.parametricStandard"><tt class="docutils literal"><span class="pre">parametricStandard</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.calibration.parametricStandard.rectangularWaveguide"><tt class="docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mwavepy.calibration.html"
+                        title="previous chapter">calibration Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mwavepy.virtualInstruments.html"
+                        title="next chapter">virtualInstruments Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/mwavepy.calibration.parametricStandard.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.virtualInstruments.html" title="virtualInstruments Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.html" title="calibration Package"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" >mwavepy Package</a> &raquo;</li>
+          <li><a href="mwavepy.calibration.html" >calibration Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

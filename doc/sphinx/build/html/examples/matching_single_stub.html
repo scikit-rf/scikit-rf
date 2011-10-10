@@ -1,0 +1,212 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Circuit Design: Single Stub Matching Network &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="up" title="Examples" href="../examples.html" />
+    <link rel="next" title="mwavepy API" href="../api/modules.html" />
+    <link rel="prev" title="VNA Noise Analysis" href="vna_noise_analysis.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../api/modules.html" title="mwavepy API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="vna_noise_analysis.html" title="VNA Noise Analysis"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="../examples.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="circuit-design-single-stub-matching-network">
+<h1>Circuit Design: Single Stub Matching Network<a class="headerlink" href="#circuit-design-single-stub-matching-network" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This example illustrates a way to visualize the design space for a single stub matching network. The matching Network consists of a shunt and series stub arranged as shown below, (image taken from R.M. Weikle&#8217;s Notes)</p>
+<div class="figure align-center">
+<img alt="../_images/single_stub_matching_diagram.png" src="../_images/single_stub_matching_diagram.png" style="width: 400px;" />
+</div>
+<p>A single stub matching network can be designed to produce maximum power transfer to the load, at a single frequency. The matching network has two design parameters:</p>
+<blockquote>
+<ul class="simple">
+<li>length of series tline</li>
+<li>length of shunt tline</li>
+</ul>
+</blockquote>
+<p>This script illustrates how to create a plot of return loss magnitude off the matched load, vs series and shunt line lengths. The optmial designs are then seen as the minima of a 2D surface.</p>
+</div>
+<div class="section" id="script">
+<h2>Script<a class="headerlink" href="#script" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+<span class="kn">from</span> <span class="nn">pylab</span> <span class="kn">import</span> <span class="o">*</span>
+
+
+<span class="c"># Inputs</span>
+<span class="n">wg</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">wr10</span> <span class="c"># The Media class</span>
+<span class="n">f0</span> <span class="o">=</span> <span class="mi">90</span>                 <span class="c"># Design Frequency in GHz</span>
+<span class="n">d_start</span><span class="p">,</span> <span class="n">d_stop</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span><span class="mi">180</span> <span class="c"># span of tline lengths [degrees]</span>
+<span class="n">n</span> <span class="o">=</span> <span class="mi">51</span>                  <span class="c"># number of points</span>
+<span class="n">Gamma0</span> <span class="o">=</span> <span class="o">.</span><span class="mi">5</span>     <span class="c"># the reflection coefficient off the load we are matching</span>
+
+
+<span class="c"># change wg.frequency so we only simulat at f0</span>
+<span class="n">wg</span><span class="o">.</span><span class="n">frequency</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Frequency</span><span class="p">(</span><span class="n">f0</span><span class="p">,</span><span class="n">f0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="s">&#39;ghz&#39;</span><span class="p">)</span>
+<span class="c"># create load network</span>
+<span class="n">load</span> <span class="o">=</span> <span class="n">wg</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="o">.</span><span class="mi">5</span><span class="p">)</span>
+<span class="c"># the vector of possible line-lengths to simulate at</span>
+<span class="n">d_range</span> <span class="o">=</span> <span class="n">linspace</span><span class="p">(</span><span class="n">d_start</span><span class="p">,</span><span class="n">d_stop</span><span class="p">,</span><span class="n">n</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">single_stub</span><span class="p">(</span><span class="n">wb</span><span class="p">,</span><span class="n">d</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        function to return series-shunt stub matching network, given a</span>
+<span class="sd">        WorkingBand and the electrical lengths of the stubs</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        <span class="k">return</span> <span class="n">wg</span><span class="o">.</span><span class="n">shunt_delay_open</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="s">&#39;deg&#39;</span><span class="p">)</span> <span class="o">**</span> <span class="n">wg</span><span class="o">.</span><span class="n">line</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="s">&#39;deg&#39;</span><span class="p">)</span>
+
+<span class="c"># loop through all line-lengths for series and shunt tlines, and store</span>
+<span class="c"># reflection coefficient magnitude in array</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">array</span><span class="p">([[</span> <span class="p">(</span><span class="n">single_stub</span><span class="p">(</span><span class="n">wb</span><span class="p">,[</span><span class="n">d0</span><span class="p">,</span><span class="n">d1</span><span class="p">])</span><span class="o">**</span><span class="n">load</span><span class="p">)</span><span class="o">.</span><span class="n">s_mag</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span> \
+        <span class="k">for</span> <span class="n">d0</span> <span class="ow">in</span> <span class="n">d_range</span><span class="p">]</span> <span class="k">for</span> <span class="n">d1</span> <span class="ow">in</span> <span class="n">d_range</span><span class="p">]</span> <span class="p">)</span>
+
+
+<span class="c"># show the resultant return loss for the parameters space</span>
+<span class="n">figure</span><span class="p">()</span>
+<span class="n">title</span><span class="p">(</span><span class="s">&#39;Series-Shunt Stub Matching Network Design Space (2D)&#39;</span><span class="p">)</span>
+<span class="n">imshow</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+<span class="n">xlabel</span><span class="p">(</span><span class="s">&#39;Series T-line [deg]&#39;</span><span class="p">)</span>
+<span class="n">ylabel</span><span class="p">(</span><span class="s">&#39;Shunt T-line [deg]&#39;</span><span class="p">)</span>
+<span class="n">xticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="o">/</span><span class="mi">5</span><span class="p">),</span><span class="n">d_range</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="n">n</span><span class="o">/</span><span class="mi">5</span><span class="p">])</span>
+<span class="n">yticks</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">n</span><span class="o">/</span><span class="mi">5</span><span class="p">),</span><span class="n">d_range</span><span class="p">[</span><span class="mi">0</span><span class="p">::</span><span class="n">n</span><span class="o">/</span><span class="mi">5</span><span class="p">])</span>
+<span class="n">cbar</span> <span class="o">=</span> <span class="n">colorbar</span><span class="p">()</span>
+<span class="n">cbar</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s">&#39;Return Loss Magnitude&#39;</span><span class="p">)</span>
+
+<span class="kn">from</span> <span class="nn">mpl_toolkits.mplot3d</span> <span class="kn">import</span> <span class="n">Axes3D</span>
+
+<span class="n">fig</span><span class="o">=</span><span class="n">figure</span><span class="p">()</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">Axes3D</span><span class="p">(</span><span class="n">fig</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span><span class="n">y</span> <span class="o">=</span> <span class="n">meshgrid</span><span class="p">(</span><span class="n">d_range</span><span class="p">,</span> <span class="n">d_range</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot_surface</span><span class="p">(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">output</span><span class="p">,</span> <span class="n">rstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">cstride</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">cmap</span><span class="o">=</span><span class="n">cm</span><span class="o">.</span><span class="n">jet</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s">&#39;Series T-line [deg]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s">&#39;Shunt T-line[deg]&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s">&#39;Return Loss Magnitude&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s">r&#39;Series-Shunt Stub Matching Network Design Space (3D)&#39;</span><span class="p">)</span>
+<span class="n">draw</span><span class="p">()</span>
+<span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="output">
+<h2>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h2>
+<div class="figure align-center">
+<img alt="../_images/Series-Shunt_Stub_Matching_2D.png" src="../_images/Series-Shunt_Stub_Matching_2D.png" style="width: 800px;" />
+</div>
+<div class="figure align-center">
+<img alt="../_images/Series-Shunt_Stub_Matching_3D.png" src="../_images/Series-Shunt_Stub_Matching_3D.png" style="width: 800px;" />
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Circuit Design: Single Stub Matching Network</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#script">Script</a></li>
+<li><a class="reference internal" href="#output">Output</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="vna_noise_analysis.html"
+                        title="previous chapter">VNA Noise Analysis</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../api/modules.html"
+                        title="next chapter">mwavepy API</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/examples/matching_single_stub.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../api/modules.html" title="mwavepy API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="vna_noise_analysis.html" title="VNA Noise Analysis"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="../examples.html" >Examples</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

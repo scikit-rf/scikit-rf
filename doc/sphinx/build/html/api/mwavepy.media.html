@@ -1,0 +1,812 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>media Package &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="up" title="mwavepy Package" href="mwavepy.html" />
+    <link rel="next" title="calibration Package" href="mwavepy.calibration.html" />
+    <link rel="prev" title="mwavepy Package" href="mwavepy.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.html" title="calibration Package"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.html" title="mwavepy Package"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" accesskey="U">mwavepy Package</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="media-package">
+<span id="api-media"></span><h1>media Package<a class="headerlink" href="#media-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">media</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-mwavepy.media"></span><p>Provides Media super-Class and instances of Media Class&#8217;s for various 
+transmission-line mediums.</p>
+<p>Instances of the Media Class are objects which provide methods to
+create network objects. See media for more detailed information.</p>
+</div>
+<div class="section" id="module-mwavepy.media.cpw">
+<span id="cpw-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">cpw</span></tt> Module<a class="headerlink" href="#module-mwavepy.media.cpw" title="Permalink to this headline">¶</a></h2>
+<p>contains CPW class</p>
+<dl class="class">
+<dt id="mwavepy.media.cpw.CPW">
+<em class="property">class </em><tt class="descclassname">mwavepy.media.cpw.</tt><tt class="descname">CPW</tt><big>(</big><em>frequency</em>, <em>w</em>, <em>s</em>, <em>ep_r</em>, <em>t=None</em>, <em>rho=None</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.cpw.CPW" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.media.media.Media" title="mwavepy.media.media.Media"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.media.media.Media</span></tt></a></p>
+<p>Coplanar waveguide class</p>
+<p>This class was made from the the documentation from the
+qucs project ( qucs.sourceforge.net/ ).</p>
+<dl class="attribute">
+<dt id="mwavepy.media.cpw.CPW.K_ratio">
+<tt class="descname">K_ratio</tt><a class="headerlink" href="#mwavepy.media.cpw.CPW.K_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>intermediary parameter. see qucs docs on cpw lines.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.cpw.CPW.Z0">
+<tt class="descname">Z0</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.media.cpw.CPW.Z0" title="Permalink to this definition">¶</a></dt>
+<dd><p>characterisitc impedance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.cpw.CPW.alpha_conductor">
+<tt class="descname">alpha_conductor</tt><a class="headerlink" href="#mwavepy.media.cpw.CPW.alpha_conductor" title="Permalink to this definition">¶</a></dt>
+<dd><p>losses due to conductor resistivity</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.cpw.CPW.ep_re">
+<tt class="descname">ep_re</tt><a class="headerlink" href="#mwavepy.media.cpw.CPW.ep_re" title="Permalink to this definition">¶</a></dt>
+<dd><p>intermediary parameter. see qucs docs on cpw lines.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.cpw.CPW.gamma">
+<tt class="descname">gamma</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.media.cpw.CPW.gamma" title="Permalink to this definition">¶</a></dt>
+<dd><p>propagation constant</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.cpw.CPW.k1">
+<tt class="descname">k1</tt><a class="headerlink" href="#mwavepy.media.cpw.CPW.k1" title="Permalink to this definition">¶</a></dt>
+<dd><p>intermediary parameter. see qucs docs on cpw lines.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.media.distributedCircuit">
+<span id="distributedcircuit-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">distributedCircuit</span></tt> Module<a class="headerlink" href="#module-mwavepy.media.distributedCircuit" title="Permalink to this headline">¶</a></h2>
+<p>A transmission line defined in terms of distributed circuit components</p>
+<dl class="class">
+<dt id="mwavepy.media.distributedCircuit.DistributedCircuit">
+<em class="property">class </em><tt class="descclassname">mwavepy.media.distributedCircuit.</tt><tt class="descname">DistributedCircuit</tt><big>(</big><em>frequency</em>, <em>C</em>, <em>I</em>, <em>R</em>, <em>G</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.media.media.Media" title="mwavepy.media.media.Media"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.media.media.Media</span></tt></a></p>
+<dl class="docutils">
+<dt>A TEM transmission line, defined in terms of  distributed impedance</dt>
+<dd><p class="first">and admittance values. This class takes the following information,</p>
+<blockquote class="last">
+distributed Capacitance, C
+distributed Inductance, I
+distributed Resistance, R
+distributed Conductance, G</blockquote>
+</dd>
+</dl>
+<p>from these the following quantities may be calculated, which
+are functions of angular frequency (w):</p>
+<blockquote>
+distributed Impedance,  Z&#8217;(w) = wR + jwI
+distributed Admittance, Y&#8217;(w) = wG + jwC</blockquote>
+<p>from these we can calculate properties which define their wave 
+behavior:</p>
+<blockquote>
+characteristic Impedance, Z0(w) = sqrt(Z(w)/Y&#8217;(w))              [ohms]
+propagation Constant,   gamma(w) = sqrt(Z(w)*Y&#8217;(w))     [none]</blockquote>
+<p>given the following definitions, the components of propagation 
+constant are interpreted as follows:</p>
+<blockquote>
+positive real(gamma) = attenuation
+positive imag(gamma) = forward propagation</blockquote>
+<dl class="attribute">
+<dt id="mwavepy.media.distributedCircuit.DistributedCircuit.Y">
+<tt class="descname">Y</tt><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit.Y" title="Permalink to this definition">¶</a></dt>
+<dd><p>distributed Admittance,in ohms^-1 /m</p>
+<blockquote>
+Y&#8217;(w) = wG + jwC</blockquote>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.distributedCircuit.DistributedCircuit.Z">
+<tt class="descname">Z</tt><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit.Z" title="Permalink to this definition">¶</a></dt>
+<dd><p>distributed Impedance, ohms/m.</p>
+<blockquote>
+Z&#8217;(w) = wR + jwI</blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.distributedCircuit.DistributedCircuit.Z0">
+<tt class="descname">Z0</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit.Z0" title="Permalink to this definition">¶</a></dt>
+<dd><p>The characteristic impedance in ohms</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="mwavepy.media.distributedCircuit.DistributedCircuit.from_Media">
+<em class="property">classmethod </em><tt class="descname">from_Media</tt><big>(</big><em>my_media</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit.from_Media" title="Permalink to this definition">¶</a></dt>
+<dd><p>initializer which creates  DistributedCircuit from a Media 
+instance</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.distributedCircuit.DistributedCircuit.gamma">
+<tt class="descname">gamma</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit.gamma" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>possibly complex propagation constant, [rad/m]</dt>
+<dd>gamma = sqrt(Z&#8217;<a href="#id2"><span class="problematic" id="id3">*</span></a>Y&#8217;)</dd>
+</dl>
+<p>note:
+the components of propagation constant are interpreted as follows:</p>
+<p>positive real(gamma) = attenuation
+positive imag(gamma) = forward propagation</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.media.freespace">
+<span id="freespace-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">freespace</span></tt> Module<a class="headerlink" href="#module-mwavepy.media.freespace" title="Permalink to this headline">¶</a></h2>
+<p>A Plane-wave in Freespace.</p>
+<dl class="class">
+<dt id="mwavepy.media.freespace.Freespace">
+<em class="property">class </em><tt class="descclassname">mwavepy.media.freespace.</tt><tt class="descname">Freespace</tt><big>(</big><em>frequency</em>, <em>ep_r=1</em>, <em>mu_r=1</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.freespace.Freespace" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.media.distributedCircuit.DistributedCircuit" title="mwavepy.media.distributedCircuit.DistributedCircuit"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.media.distributedCircuit.DistributedCircuit</span></tt></a></p>
+<p>Represents a plane-wave in a homogeneous freespace, defined by
+[possibly complex] values of relative permativity and 
+relative permeability.</p>
+<p>The field properties of space are related to a disctributed 
+circuit transmission line model given in circuit theory by:</p>
+<blockquote>
+distributed_capacitance = real(ep_0*ep_r)
+distributed_resistance = imag(ep_0*ep_r)
+distributed_inductance = real(mu_0*mu_r)
+distributed_conductance = imag(mu_0*mu_r)</blockquote>
+<dl class="docutils">
+<dt>note: this class&#8217;s inheritence is;</dt>
+<dd>Media-&gt;DistributedCircuit-&gt;FreeSpace</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.media.media">
+<span id="media-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">media</span></tt> Module<a class="headerlink" href="#module-mwavepy.media.media" title="Permalink to this headline">¶</a></h2>
+<p>Contains Media class.</p>
+<dl class="class">
+<dt id="mwavepy.media.media.Media">
+<em class="property">class </em><tt class="descclassname">mwavepy.media.media.</tt><tt class="descname">Media</tt><big>(</big><em>frequency</em>, <em>propagation_constant</em>, <em>characteristic_impedance</em>, <em>z0=None</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p>The super-class for all transmission line media.</p>
+<p>It provides methods to produce generic network components for any
+transmision line medium, such as line, delay_short, etc.</p>
+<p>Network Components specific to an instance of the Media super-class
+such as cpw_short, microstrip_bend, are implemented within the 
+Media instances themselves.</p>
+<dl class="method">
+<dt id="mwavepy.media.media.Media.capacitor">
+<tt class="descname">capacitor</tt><big>(</big><em>C</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.capacitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A lumped capacitor</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>C: capacitance, in Farads, [number]</dd>
+<dt>returns:</dt>
+<dd>mwavepy.Network</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.media.Media.characteristic_impedance">
+<tt class="descname">characteristic_impedance</tt><a class="headerlink" href="#mwavepy.media.media.Media.characteristic_impedance" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.delay_load">
+<tt class="descname">delay_load</tt><big>(</big><em>Gamma0</em>, <em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.delay_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a delayed load transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">Gamma0: reflection coefficient of load (not in dB)
+d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id4"><span class="problematic" id="id5">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 1-port Network class, representing a loaded transmission
+line of length d</dd>
+</dl>
+<p>note: this just calls,
+self.line(d,**kwargs) ** self.load(Gamma0, <a href="#id6"><span class="problematic" id="id7">**</span></a>kwargs)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.delay_open">
+<tt class="descname">delay_open</tt><big>(</big><em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.delay_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a delayed open transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id8"><span class="problematic" id="id9">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 1-port Network class, representing a shorted transmission
+line of length d</dd>
+</dl>
+<p>note: this just calls,
+self.line(d,**kwargs) ** self.open(<a href="#id10"><span class="problematic" id="id11">**</span></a>kwargs)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.delay_short">
+<tt class="descname">delay_short</tt><big>(</big><em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.delay_short" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a delayed short transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id12"><span class="problematic" id="id13">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 1-port Network class, representing a shorted transmission
+line of length d</dd>
+</dl>
+<p>note: this just calls,
+self.line(d,**kwargs) ** self.short(<a href="#id14"><span class="problematic" id="id15">**</span></a>kwargs)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.electrical_length">
+<tt class="descname">electrical_length</tt><big>(</big><em>d</em>, <em>deg=False</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.electrical_length" title="Permalink to this definition">¶</a></dt>
+<dd><p>calculates the electrical length for a given distance, at 
+the center frequency.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>d: distance, in meters 
+deg: is d in deg?[Boolean]</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>theta: electrical length in radians or degrees, </dt>
+<dd>depending on  value of deg.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.guess_length_of_delay_short">
+<tt class="descname">guess_length_of_delay_short</tt><big>(</big><em>aNtwk</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.guess_length_of_delay_short" title="Permalink to this definition">¶</a></dt>
+<dd><p>guess length of physical length of a Delay Short given by aNtwk</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>aNtwk: a mwavepy.ntwk type . (note: if this is a measurment </dt>
+<dd>it needs to be normalized to the reference plane)</dd>
+<dt>tline: transmission line class of the medium. needed for the </dt>
+<dd>calculation of propagation constant</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.impedance_mismatch">
+<tt class="descname">impedance_mismatch</tt><big>(</big><em>z1</em>, <em>z2</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.impedance_mismatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a two-port network for a impedance mis-match</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>z1: complex impedance of port 1 [ number, list, or 1D ndarray]
+z2: complex impedance of port 2 [ number, list, or 1D ndarray]
+<a href="#id16"><span class="problematic" id="id17">**</span></a>kwargs: passed to mwavepy.Network constructor</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+<dt>note:</dt>
+<dd>if z1 and z2 are arrays or lists, they must be of same length
+as the self.frequency.npoints</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.inductor">
+<tt class="descname">inductor</tt><big>(</big><em>L</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.inductor" title="Permalink to this definition">¶</a></dt>
+<dd><p>A lumped inductor</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>L: inductance in Henrys [number]</dd>
+<dt>returns:</dt>
+<dd>mwavepy.Network</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.line">
+<tt class="descname">line</tt><big>(</big><em>d</em>, <em>unit='m'</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.line" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a section of matched transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">d: the length (see unit argument) [number]
+unit: string specifying the units of d. possible options are</p>
+<blockquote>
+&#8216;m&#8217;: meters, physical length in meters (default)
+&#8216;deg&#8217;:degrees, electrical length in degrees
+&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+<dl class="last docutils">
+<dt><a href="#id18"><span class="problematic" id="id19">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network. the kwarg
+&#8216;z0&#8217; can be used to create a line of a given impedance</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 2-port Network class, representing a transmission line of 
+length d</dd>
+<dt>example:</dt>
+<dd>my_media = mwavepy.Freespace(...)
+my_media.line(90, &#8216;deg&#8217;, z0=50)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.load">
+<tt class="descname">load</tt><big>(</big><em>Gamma0</em>, <em>nports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a Load termianting a transmission line</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">Gamma0: reflection coefficient of load (not in db)
+nports: number of ports. creates a short on all ports,</p>
+<blockquote>
+default is 1 [int]</blockquote>
+<dl class="last docutils">
+<dt><a href="#id20"><span class="problematic" id="id21">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network class, where  S = Gamma0*eye(...)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.match">
+<tt class="descname">match</tt><big>(</big><em>nports=1</em>, <em>z0=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.match" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a perfect matched transmission line (Gamma0=0)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">nports: number of ports [int]
+z0: characterisitc impedance [number of array]. defaults is</p>
+<blockquote>
+None, in which case the Media&#8217;s z0 is used. 
+Otherwise this sets the resultant network&#8217;s z0. See
+Network.z0 property for more info</blockquote>
+<p class="last"><a href="#id22"><span class="problematic" id="id23">**</span></a>kwargs: key word arguments passed to Network Constructor</p>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+<dt>example:</dt>
+<dd>mymatch = wb.match(2,z0 = 50, name=&#8217;Super Awesome Match&#8217;)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.open">
+<tt class="descname">open</tt><big>(</big><em>nports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.open" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a &#8216;open&#8217; transmission line (Gamma0=1)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>nports: number of ports. creates a short on all ports,</dt>
+<dd>default is 1 [int]</dd>
+<dt><a href="#id24"><span class="problematic" id="id25">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.media.Media.propagation_constant">
+<tt class="descname">propagation_constant</tt><a class="headerlink" href="#mwavepy.media.media.Media.propagation_constant" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.short">
+<tt class="descname">short</tt><big>(</big><em>nports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.short" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a short  transmission line (Gamma0=-1)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt>nports: number of ports. creates a short on all ports,</dt>
+<dd>default is 1 [int]</dd>
+<dt><a href="#id26"><span class="problematic" id="id27">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.shunt">
+<tt class="descname">shunt</tt><big>(</big><em>ntwk</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.shunt" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a shunted ntwk. this creates a &#8216;tee&#8217;, connects 
+&#8216;ntwk&#8217; to port 1, and returns the result</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>ntwk: the network to be shunted. [mwavepy.Network]
+<a href="#id28"><span class="problematic" id="id29">**</span></a>kwargs: passed to the self.tee() function</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.shunt_capacitor">
+<tt class="descname">shunt_capacitor</tt><big>(</big><em>C</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.shunt_capacitor" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shunt capacitor</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>C: capacitance in farads
+<a href="#id30"><span class="problematic" id="id31">*</span></a>args: passed to self.capacitor
+<a href="#id32"><span class="problematic" id="id33">**</span></a>kwargs:passed to self.capacitor</dd>
+<dt>returns:</dt>
+<dd>a 2-port mwavepy.Network</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.shunt_delay_load">
+<tt class="descname">shunt_delay_load</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.shunt_delay_load" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shunted delayed load:</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><a href="#id34"><span class="problematic" id="id35">*</span></a>args: passed to self.delay_load
+<a href="#id36"><span class="problematic" id="id37">**</span></a>kwargs:passed to self.delay_load</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.shunt_delay_open">
+<tt class="descname">shunt_delay_open</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.shunt_delay_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shunted delayed open:</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><a href="#id38"><span class="problematic" id="id39">*</span></a>args: passed to self.delay_load
+<a href="#id40"><span class="problematic" id="id41">**</span></a>kwargs:passed to self.delay_load</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.shunt_delay_short">
+<tt class="descname">shunt_delay_short</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.shunt_delay_short" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shunted delayed short:</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><a href="#id42"><span class="problematic" id="id43">*</span></a>args: passed to self.delay_load
+<a href="#id44"><span class="problematic" id="id45">**</span></a>kwargs:passed to self.delay_load</dd>
+<dt>returns:</dt>
+<dd>a 2-port network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.shunt_inductor">
+<tt class="descname">shunt_inductor</tt><big>(</big><em>L</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.shunt_inductor" title="Permalink to this definition">¶</a></dt>
+<dd><p>a shunt inductor</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>L: inductance in henrys
+<a href="#id46"><span class="problematic" id="id47">*</span></a>args: passed to self.inductor
+<a href="#id48"><span class="problematic" id="id49">**</span></a>kwargs:passed to self.inductor</dd>
+<dt>returns:</dt>
+<dd>a 2-port mwavepy.Network</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.splitter">
+<tt class="descname">splitter</tt><big>(</big><em>nports</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.splitter" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns an ideal, lossless n-way splitter.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">nports: number of ports [int]
+<a href="#id50"><span class="problematic" id="id51">**</span></a>kwargs: key word arguments passed to match(), which is</p>
+<blockquote class="last">
+called initially to create a &#8216;blank&#8217; network.</blockquote>
+</dd>
+<dt>returns:</dt>
+<dd>a n-port Network [mwavepy.Network]</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.tee">
+<tt class="descname">tee</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.tee" title="Permalink to this definition">¶</a></dt>
+<dd><p>makes a ideal, lossless tee. (aka three port splitter)</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt><a href="#id52"><span class="problematic" id="id53">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network.</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 3-port Network [mwavepy.Network]</dd>
+<dt>note:</dt>
+<dd>this just calls splitter(3)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.theta_2_d">
+<tt class="descname">theta_2_d</tt><big>(</big><em>theta</em>, <em>deg=True</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.theta_2_d" title="Permalink to this definition">¶</a></dt>
+<dd><p>converts electrical length to physical distance. The electrical
+length is given at center frequency of self.frequency</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first docutils">
+<dt>theta: electrical length, at band center (see deg for unit)</dt>
+<dd>[number]</dd>
+</dl>
+<p class="last">deg: is theta in degrees? [boolean]</p>
+</dd>
+<dt>returns:</dt>
+<dd>d: physical distance in meters</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.thru">
+<tt class="descname">thru</tt><big>(</big><em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.thru" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a Network for a thru</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><dl class="first last docutils">
+<dt><a href="#id54"><span class="problematic" id="id55">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
+<dd>called initially to create a &#8216;blank&#8217; network</dd>
+</dl>
+</dd>
+<dt>returns:</dt>
+<dd>a 2-port Network class, representing a thru</dd>
+<dt>note:</dt>
+<dd>this just calls self.line(0)</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.media.Media.white_gaussian_polar">
+<tt class="descname">white_gaussian_polar</tt><big>(</big><em>phase_dev</em>, <em>mag_dev</em>, <em>n_ports=1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.media.Media.white_gaussian_polar" title="Permalink to this definition">¶</a></dt>
+<dd><p>creates a complex zero-mean gaussian white-noise signal of given
+standard deviations for phase and magnitude</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>phase_mag: standard deviation of magnitude
+phase_dev: standard deviation of phase
+n_ports: number of ports. defualt to 1
+<a href="#id56"><span class="problematic" id="id57">**</span></a>kwargs: passed to Network() initializer</dd>
+<dt>returns:</dt>
+<dd>result: Network type</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.media.Media.z0">
+<tt class="descname">z0</tt><a class="headerlink" href="#mwavepy.media.media.Media.z0" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.media.rectangularWaveguide">
+<span id="rectangularwaveguide-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module<a class="headerlink" href="#module-mwavepy.media.rectangularWaveguide" title="Permalink to this headline">¶</a></h2>
+<p>Rectangular Waveguide class</p>
+<dl class="class">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide">
+<em class="property">class </em><tt class="descclassname">mwavepy.media.rectangularWaveguide.</tt><tt class="descname">RectangularWaveguide</tt><big>(</big><em>frequency</em>, <em>a</em>, <em>b=None</em>, <em>mode_type='te'</em>, <em>m=1</em>, <em>n=0</em>, <em>ep_r=1</em>, <em>mu_r=1</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#mwavepy.media.media.Media" title="mwavepy.media.media.Media"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.media.media.Media</span></tt></a></p>
+<p>Rectangular Waveguide medium.</p>
+<p>Can be used to represent any mode of a homogeneously filled     
+rectangular waveguide of arbitrary cross-section, mode-type, and
+mode index.</p>
+<dl class="method">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.Z0">
+<tt class="descname">Z0</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.Z0" title="Permalink to this definition">¶</a></dt>
+<dd><p>the characteristic impedance of a given mode</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.ep">
+<tt class="descname">ep</tt><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.ep" title="Permalink to this definition">¶</a></dt>
+<dd><p>the permativity of the filling material</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.k0">
+<tt class="descname">k0</tt><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.k0" title="Permalink to this definition">¶</a></dt>
+<dd><p>characteristic wave number</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.kc">
+<tt class="descname">kc</tt><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.kc" title="Permalink to this definition">¶</a></dt>
+<dd><p>cut-off wave number</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.kx">
+<tt class="descname">kx</tt><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.kx" title="Permalink to this definition">¶</a></dt>
+<dd><p>eigen value in the &#8216;a&#8217; direction</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.ky">
+<tt class="descname">ky</tt><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.ky" title="Permalink to this definition">¶</a></dt>
+<dd><p>eigen-value in the &#8216;b&#8217; direction</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.kz">
+<tt class="descname">kz</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.kz" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the propagation constant, which is:</dt>
+<dd>IMAGINARY for propagating modes
+REAL  for non-propagating modes,</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.media.rectangularWaveguide.RectangularWaveguide.mu">
+<tt class="descname">mu</tt><a class="headerlink" href="#mwavepy.media.rectangularWaveguide.RectangularWaveguide.mu" title="Permalink to this definition">¶</a></dt>
+<dd><p>the permeability of the filling material</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">media Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">media</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-mwavepy.media.cpw"><tt class="docutils literal"><span class="pre">cpw</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.media.distributedCircuit"><tt class="docutils literal"><span class="pre">distributedCircuit</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.media.freespace"><tt class="docutils literal"><span class="pre">freespace</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.media.media"><tt class="docutils literal"><span class="pre">media</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.media.rectangularWaveguide"><tt class="docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="mwavepy.html"
+                        title="previous chapter">mwavepy Package</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="mwavepy.calibration.html"
+                        title="next chapter">calibration Package</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/mwavepy.media.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.calibration.html" title="calibration Package"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="mwavepy.html" title="mwavepy Package"
+             >previous</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+          <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
+          <li><a href="mwavepy.html" >mwavepy Package</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,193 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>beta Package &mdash; mwavepy v1.4 documentation</title>
+    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.4',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="beta-package">
+<h1>beta Package<a class="headerlink" href="#beta-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2><tt class="xref py py-mod docutils literal"><span class="pre">beta</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<span class="target" id="module-mwavepy.beta"></span><p>holds modules i dont know what to do with yet</p>
+</div>
+<div class="section" id="module-mwavepy.beta.mobius">
+<span id="mobius-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">mobius</span></tt> Module<a class="headerlink" href="#module-mwavepy.beta.mobius" title="Permalink to this headline">¶</a></h2>
+<p>provides the mobius class.</p>
+<dl class="class">
+<dt id="mwavepy.beta.mobius.mobius">
+<em class="property">class </em><tt class="descclassname">mwavepy.beta.mobius.</tt><tt class="descname">mobius</tt><big>(</big><em>h</em><big>)</big><a class="headerlink" href="#mwavepy.beta.mobius.mobius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="method">
+<dt id="mwavepy.beta.mobius.mobius.itransform">
+<tt class="descname">itransform</tt><big>(</big><em>z</em><big>)</big><a class="headerlink" href="#mwavepy.beta.mobius.mobius.itransform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.beta.mobius.mobius.transform">
+<tt class="descname">transform</tt><big>(</big><em>w</em><big>)</big><a class="headerlink" href="#mwavepy.beta.mobius.mobius.transform" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.beta.mobius.mobiusTransformation">
+<tt class="descclassname">mwavepy.beta.mobius.</tt><tt class="descname">mobiusTransformation</tt><big>(</big><em>m</em>, <em>a</em><big>)</big><a class="headerlink" href="#mwavepy.beta.mobius.mobiusTransformation" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the unique maping function between m and a planes which are
+related through the mobius transform.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>m: list containing the triplet of points in m plane m0,m1,m2
+a: list containing the triplet of points in a plane a0,a1,a2</dd>
+<dt>returns:</dt>
+<dd><dl class="first last docutils">
+<dt>a (m) <span class="classifier-delimiter">:</span> <span class="classifier">function of variable in m plane, which returns a value</span></dt>
+<dd>in the a-plane</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.beta.onePortCalibrationGui">
+<span id="oneportcalibrationgui-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">onePortCalibrationGui</span></tt> Module<a class="headerlink" href="#module-mwavepy.beta.onePortCalibrationGui" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="mwavepy.beta.onePortCalibrationGui.App">
+<em class="property">class </em><tt class="descclassname">mwavepy.beta.onePortCalibrationGui.</tt><tt class="descname">App</tt><big>(</big><em>master</em><big>)</big><a class="headerlink" href="#mwavepy.beta.onePortCalibrationGui.App" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="mwavepy.beta.onePortCalibrationGui.App.addstandard">
+<tt class="descname">addstandard</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#mwavepy.beta.onePortCalibrationGui.App.addstandard" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.beta.onePortCalibrationGui.App.openfile">
+<tt class="descname">openfile</tt><big>(</big><em>*args</em><big>)</big><a class="headerlink" href="#mwavepy.beta.onePortCalibrationGui.App.openfile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-mwavepy.beta.testCases">
+<span id="testcases-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">testCases</span></tt> Module<a class="headerlink" href="#module-mwavepy.beta.testCases" title="Permalink to this headline">¶</a></h2>
+<p>initial testcases for some of mwavepy&#8217;s functionality.</p>
+<dl class="function">
+<dt id="mwavepy.beta.testCases.wg_characteristic_impedance">
+<tt class="descclassname">mwavepy.beta.testCases.</tt><tt class="descname">wg_characteristic_impedance</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.beta.testCases.wg_characteristic_impedance" title="Permalink to this definition">¶</a></dt>
+<dd><p>produce a plot of the normalized characteristic impedances for 
+TE and TM waveguide modes, vs normalized frequency.</p>
+<p>impedance normalized to characteristic impedance of freespace
+frequency normalized to cut-off frequency of given mode</p>
+<p>This example was produces same figure 4-3 in Harrington&#8217;s 
+Time-Harmonic Electromagnetic Fields</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.beta.testCases.wg_propagation_constant">
+<tt class="descclassname">mwavepy.beta.testCases.</tt><tt class="descname">wg_propagation_constant</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.beta.testCases.wg_propagation_constant" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot the normalized propagation constant for TE10 waveguide mode, 
+vs normalized frequency.</p>
+<p>propagation constant normalized to freespace propagation constant
+at cut-off frequency of teh TE10 mode. 
+frequency normalized to cut-off frequency of given mode</p>
+<p>This example was produces same figure 2-18 in Harrington&#8217;s 
+Time-Harmonic Electromagnetic Fields</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">beta Package</a><ul>
+<li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">beta</span></tt> Package</a></li>
+<li><a class="reference internal" href="#module-mwavepy.beta.mobius"><tt class="docutils literal"><span class="pre">mobius</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.beta.onePortCalibrationGui"><tt class="docutils literal"><span class="pre">onePortCalibrationGui</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.beta.testCases"><tt class="docutils literal"><span class="pre">testCases</span></tt> Module</a></li>
+</ul>
+</li>
+</ul>
+
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/api/mwavepy.beta.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, alex arsenovic.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+    </div>
+  </body>
+</html>
