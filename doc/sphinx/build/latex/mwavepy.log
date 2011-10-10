@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.7.1)  25 SEP 2011 18:29
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009/Debian) (format=pdflatex 2011.7.1)  10 OCT 2011 08:14
 entering extended mode
  %&-line parsing enabled.
 **mwavepy.tex
@@ -868,7 +868,7 @@ pdfTeX warning (ext4): destination with the same identifier (name{page.i}) has
 been already used, duplicate ignored
 <to be read again> 
                    \relax 
-l.78 ...line {8}Indices and tables}{65}{chapter.8}
+l.78 ...line {8}Indices and tables}{67}{chapter.8}
                                                    [1
 
 ])
@@ -1010,692 +1010,687 @@ LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <12> not available
 LaTeX Font Info:    Font shape `T1/pcr/bx/n' in size <10> not available
 (Font)              Font shape `T1/pcr/b/n' tried instead on input line 1191.
 [33] [34] [35] [36] [37] [38]
-Underfull \hbox (badness 10000) in paragraph at lines 2043--2043
+Underfull \hbox (badness 10000) in paragraph at lines 2062--2062
 []\T1/ptm/m/it/10 attribute\T1/ptm/m/n/10 , \T1/ptm/m/it/10 y_label=None\T1/ptm
 /m/n/10 , \T1/ptm/m/it/10 m=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 n=None\T1/ptm/
 m/n/10 , \T1/ptm/m/it/10 ax=None\T1/ptm/m/n/10 ,
  []
 
-[39] [40] [41]
-Underfull \hbox (badness 10000) in paragraph at lines 2527--2527
+[39] [40] [41] [42]
+Underfull \hbox (badness 10000) in paragraph at lines 2578--2578
 []\T1/ptm/m/it/10 ntwk_list\T1/ptm/m/n/10 , \T1/ptm/m/it/10 at-tribute='s_mag'\
 T1/ptm/m/n/10 , \T1/ptm/m/it/10 m=0\T1/ptm/m/n/10 , \T1/ptm/m/it/10 n=0\T1/ptm/
 m/n/10 ,
  []
 
-[42] [43]
-Overfull \hbox (52.3239pt too wide) in paragraph at lines 2759--2759
+[43]
+Overfull \hbox (52.3239pt too wide) in paragraph at lines 2810--2810
 []\T1/ptm/m/it/10 distributed_admittance\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2759--2759
+Underfull \hbox (badness 10000) in paragraph at lines 2810--2810
 \T1/ptm/m/it/10 dis-
  []
 
 
-Overfull \hbox (43.03427pt too wide) in paragraph at lines 2759--2759
+Overfull \hbox (43.03427pt too wide) in paragraph at lines 2810--2810
 \T1/ptm/m/it/10 tributed_impedance\T1/pcr/m/n/10 ) 
  []
 
 [44]
-Overfull \hbox (4.63492pt too wide) in paragraph at lines 2846--2846
+Overfull \hbox (4.63492pt too wide) in paragraph at lines 2897--2897
 []\T1/ptm/m/it/10 z0\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (2.41481pt too wide) in paragraph at lines 2846--2846
+Overfull \hbox (2.41481pt too wide) in paragraph at lines 2897--2897
 \T1/ptm/m/it/10 zl\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (19.24475pt too wide) in paragraph at lines 2846--2846
+Overfull \hbox (19.24475pt too wide) in paragraph at lines 2897--2897
 \T1/ptm/m/it/10 theta\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (47.53436pt too wide) in paragraph at lines 2868--2868
+Overfull \hbox (47.53436pt too wide) in paragraph at lines 2919--2919
 []\T1/ptm/m/it/10 propagation_constant\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2868--2868
+Underfull \hbox (badness 10000) in paragraph at lines 2919--2919
 \T1/ptm/m/it/10 char-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 2868--2868
+Underfull \hbox (badness 10000) in paragraph at lines 2919--2919
 \T1/ptm/m/it/10 ac-ter-is-
  []
 
 
-Overfull \hbox (21.56444pt too wide) in paragraph at lines 2868--2868
+Overfull \hbox (21.56444pt too wide) in paragraph at lines 2919--2919
 \T1/ptm/m/it/10 tic_impedance\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (4.63492pt too wide) in paragraph at lines 2902--2902
+Overfull \hbox (4.63492pt too wide) in paragraph at lines 2953--2953
 []\T1/ptm/m/it/10 z0\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (32.40494pt too wide) in paragraph at lines 2902--2902
+Overfull \hbox (32.40494pt too wide) in paragraph at lines 2953--2953
 \T1/ptm/m/it/10 Gamma0\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (19.24475pt too wide) in paragraph at lines 2902--2902
+Overfull \hbox (19.24475pt too wide) in paragraph at lines 2953--2953
 \T1/ptm/m/it/10 theta\T1/pcr/m/n/10 ) 
  []
 
-[45] [46] [47]
-Underfull \hbox (badness 10000) in paragraph at lines 3352--3356
+[45] [46] [47] [48]
+Underfull \hbox (badness 10000) in paragraph at lines 3403--3407
 []\T1/ptm/m/n/10 distributed_capacitance = real(ep_0*ep_r) dis-tributed_resista
 nce = imag(ep_0*ep_r) dis-
  []
 
-[48]
-Underfull \hbox (badness 10000) in paragraph at lines 3373--3373
+
+Underfull \hbox (badness 10000) in paragraph at lines 3424--3424
 []\T1/ptm/m/it/10 frequency\T1/ptm/m/n/10 , \T1/ptm/m/it/10 prop-a-ga-tion_cons
 tant\T1/ptm/m/n/10 , \T1/ptm/m/it/10 char-ac-ter-is-tic_impedance\T1/ptm/m/n/10
  ,
  []
 
 [49] [50] [51] [52]
-Underfull \hbox (badness 10000) in paragraph at lines 3951--3951
+Underfull \hbox (badness 10000) in paragraph at lines 4002--4002
 []\T1/ptm/m/it/10 frequency\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 3951--3951
+Underfull \hbox (badness 10000) in paragraph at lines 4002--4002
 \T1/ptm/m/it/10 a\T1/ptm/m/n/10 , \T1/ptm/m/it/10 b=None\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 3951--3951
+Underfull \hbox (badness 10000) in paragraph at lines 4002--4002
 \T1/ptm/m/it/10 mode_type='te'\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 3951--3951
+Underfull \hbox (badness 10000) in paragraph at lines 4002--4002
 \T1/ptm/m/it/10 mu_r=1\T1/ptm/m/n/10 , \T1/ptm/m/it/10 *args\T1/ptm/m/n/10 ,
  []
 
 [53]
-Underfull \hbox (badness 6188) in paragraph at lines 4047--4047
+Underfull \hbox (badness 6188) in paragraph at lines 4098--4098
 []\T1/ptm/m/it/10 measured\T1/ptm/m/n/10 , \T1/ptm/m/it/10 ide-als\T1/ptm/m/n/1
 0 , \T1/ptm/m/it/10 type=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 fre-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4047--4047
+Underfull \hbox (badness 10000) in paragraph at lines 4098--4098
 \T1/ptm/m/it/10 quency=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 is_reciprocal=False
 \T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4047--4047
+Underfull \hbox (badness 10000) in paragraph at lines 4098--4098
 \T1/ptm/m/it/10 switch_terms=None\T1/ptm/m/n/10 , \T1/ptm/m/it/10 name=None\T1/
 ptm/m/n/10 ,
  []
 
-[54]
-Underfull \hbox (badness 10000) in paragraph at lines 4305--4305
+[54] [55] [56]
+Underfull \hbox (badness 10000) in paragraph at lines 4508--4508
 []\T1/ptm/m/it/10 coefs\T1/ptm/m/n/10 , \T1/ptm/m/it/10 fre-quency=None\T1/ptm/
 m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4305--4305
+Underfull \hbox (badness 10000) in paragraph at lines 4508--4508
 \T1/ptm/m/it/10 is_reciprocal=False\T1/ptm/m/n/10 ,
  []
 
-[55]
-Overfull \hbox (25.00003pt too wide) in paragraph at lines 4348--4348
+[57]
+Overfull \hbox (25.00003pt too wide) in paragraph at lines 4551--4551
 | [] 
  []
 
 
-Overfull \hbox (1.7947pt too wide) in paragraph at lines 4406--4406
+Overfull \hbox (1.7947pt too wide) in paragraph at lines 4609--4609
 []\T1/ptm/m/it/10 coefs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (3.3047pt too wide) in paragraph at lines 4412--4412
+Overfull \hbox (3.3047pt too wide) in paragraph at lines 4615--4615
 []\T1/ptm/m/it/10 aNtwk\T1/ptm/m/n/10 ,
  []
 
-[56]
-Overfull \hbox (34.25465pt too wide) in paragraph at lines 4508--4508
+[58]
+Overfull \hbox (34.25465pt too wide) in paragraph at lines 4711--4711
 []\T1/ptm/m/it/10 measured\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (8.79482pt too wide) in paragraph at lines 4508--4508
+Overfull \hbox (8.79482pt too wide) in paragraph at lines 4711--4711
 \T1/ptm/m/it/10 ide-
  []
 
 
-Overfull \hbox (7.41481pt too wide) in paragraph at lines 4508--4508
+Overfull \hbox (7.41481pt too wide) in paragraph at lines 4711--4711
 \T1/ptm/m/it/10 als\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (17.1348pt too wide) in paragraph at lines 4508--4508
+Overfull \hbox (17.1348pt too wide) in paragraph at lines 4711--4711
 \T1/ptm/m/it/10 show-
  []
 
 
-Overfull \hbox (56.0244pt too wide) in paragraph at lines 4508--4508
+Overfull \hbox (56.0244pt too wide) in paragraph at lines 4711--4711
 \T1/ptm/m/it/10 Progress=True\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (37.76466pt too wide) in paragraph at lines 4508--4508
+Overfull \hbox (37.76466pt too wide) in paragraph at lines 4711--4711
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (82.25465pt too wide) in paragraph at lines 4539--4539
+Overfull \hbox (82.25465pt too wide) in paragraph at lines 4742--4742
 []\T1/ptm/m/it/10 measured\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (56.79482pt too wide) in paragraph at lines 4539--4539
+Overfull \hbox (56.79482pt too wide) in paragraph at lines 4742--4742
 \T1/ptm/m/it/10 ide-
  []
 
 
-Overfull \hbox (69.3047pt too wide) in paragraph at lines 4539--4539
+Overfull \hbox (69.3047pt too wide) in paragraph at lines 4742--4742
 \T1/ptm/m/it/10 als_ps\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (65.1348pt too wide) in paragraph at lines 4539--4539
+Overfull \hbox (65.1348pt too wide) in paragraph at lines 4742--4742
 \T1/ptm/m/it/10 show-
  []
 
 
-Overfull \hbox (104.0244pt too wide) in paragraph at lines 4539--4539
+Overfull \hbox (104.0244pt too wide) in paragraph at lines 4742--4742
 \T1/ptm/m/it/10 Progress=True\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (85.76466pt too wide) in paragraph at lines 4539--4539
+Overfull \hbox (85.76466pt too wide) in paragraph at lines 4742--4742
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
-[57]
-Overfull \hbox (58.25465pt too wide) in paragraph at lines 4570--4570
+[59]
+Overfull \hbox (58.25465pt too wide) in paragraph at lines 4773--4773
 []\T1/ptm/m/it/10 measured\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (32.79482pt too wide) in paragraph at lines 4570--4570
+Overfull \hbox (32.79482pt too wide) in paragraph at lines 4773--4773
 \T1/ptm/m/it/10 ide-
  []
 
 
-Overfull \hbox (45.3047pt too wide) in paragraph at lines 4570--4570
+Overfull \hbox (45.3047pt too wide) in paragraph at lines 4773--4773
 \T1/ptm/m/it/10 als_ps\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (41.1348pt too wide) in paragraph at lines 4570--4570
+Overfull \hbox (41.1348pt too wide) in paragraph at lines 4773--4773
 \T1/ptm/m/it/10 show-
  []
 
 
-Overfull \hbox (80.0244pt too wide) in paragraph at lines 4570--4570
+Overfull \hbox (80.0244pt too wide) in paragraph at lines 4773--4773
 \T1/ptm/m/it/10 Progress=True\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (61.76466pt too wide) in paragraph at lines 4570--4570
+Overfull \hbox (61.76466pt too wide) in paragraph at lines 4773--4773
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (25.00003pt too wide) in paragraph at lines 4631--4631
-| [] 
- []
-
-[58]
-Overfull \hbox (25.00003pt too wide) in paragraph at lines 4631--4631
+Overfull \hbox (25.00003pt too wide) in paragraph at lines 4834--4834
 | [] 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4638--4638
+Underfull \hbox (badness 10000) in paragraph at lines 4841--4841
 []\T1/ptm/m/it/10 measured\T1/ptm/m/n/10 , \T1/ptm/m/it/10 ide-als\T1/ptm/m/n/1
 0 ,
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 4691--4691
+[60]
+Underfull \hbox (badness 10000) in paragraph at lines 4894--4894
 []\T1/ptm/m/it/10 two_port\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4691--4691
+Underfull \hbox (badness 10000) in paragraph at lines 4894--4894
 \T1/ptm/m/it/10 gamma_f\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (1.80482pt too wide) in paragraph at lines 4691--4691
+Overfull \hbox (1.80482pt too wide) in paragraph at lines 4894--4894
 \T1/ptm/m/it/10 gamma_r\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (30.68445pt too wide) in paragraph at lines 4735--4735
+Overfull \hbox (30.68445pt too wide) in paragraph at lines 4938--4938
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (11.24464pt too wide) in paragraph at lines 4735--4735
+Overfull \hbox (11.24464pt too wide) in paragraph at lines 4938--4938
 \T1/ptm/m/it/10 d\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (42.90456pt too wide) in paragraph at lines 4735--4735
+Overfull \hbox (42.90456pt too wide) in paragraph at lines 4938--4938
 \T1/ptm/m/it/10 Gamma0\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (48.26428pt too wide) in paragraph at lines 4735--4735
+Overfull \hbox (48.26428pt too wide) in paragraph at lines 4938--4938
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4736--4737
-\T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
-.parametricStandard.ParametricStandard[][] 
- []
-
-[59]
-Overfull \hbox (102.68445pt too wide) in paragraph at lines 4745--4745
-[]\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
- []
-
-
-Overfull \hbox (83.24464pt too wide) in paragraph at lines 4745--4745
-\T1/ptm/m/it/10 d\T1/ptm/m/n/10 ,
- []
-
-
-Overfull \hbox (114.90456pt too wide) in paragraph at lines 4745--4745
-\T1/ptm/m/it/10 Gamma0\T1/ptm/m/n/10 ,
- []
-
-
-Overfull \hbox (120.26428pt too wide) in paragraph at lines 4745--4745
-\T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
- []
-
-
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4746--4747
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 4939--4940
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
 
-Overfull \hbox (18.68445pt too wide) in paragraph at lines 4756--4756
+Overfull \hbox (102.68445pt too wide) in paragraph at lines 4948--4948
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4756--4756
+Overfull \hbox (83.24464pt too wide) in paragraph at lines 4948--4948
 \T1/ptm/m/it/10 d\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (30.90456pt too wide) in paragraph at lines 4756--4756
+Overfull \hbox (114.90456pt too wide) in paragraph at lines 4948--4948
 \T1/ptm/m/it/10 Gamma0\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (36.26428pt too wide) in paragraph at lines 4756--4756
+Overfull \hbox (120.26428pt too wide) in paragraph at lines 4948--4948
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4757--4758
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 4949--4950
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
 
-Overfull \hbox (30.68445pt too wide) in paragraph at lines 4766--4766
+Overfull \hbox (18.68445pt too wide) in paragraph at lines 4959--4959
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (11.24464pt too wide) in paragraph at lines 4766--4766
+Underfull \hbox (badness 10000) in paragraph at lines 4959--4959
 \T1/ptm/m/it/10 d\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (48.26428pt too wide) in paragraph at lines 4766--4766
+Overfull \hbox (30.90456pt too wide) in paragraph at lines 4959--4959
+\T1/ptm/m/it/10 Gamma0\T1/ptm/m/n/10 ,
+ []
+
+
+Overfull \hbox (36.26428pt too wide) in paragraph at lines 4959--4959
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (4.1545pt too wide) in paragraph at lines 4767--4768
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 4960--4961
+\T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
+.parametricStandard.ParametricStandard[][] 
+ []
+
+[61]
+Overfull \hbox (30.68445pt too wide) in paragraph at lines 4969--4969
+[]\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
+ []
+
+
+Overfull \hbox (11.24464pt too wide) in paragraph at lines 4969--4969
+\T1/ptm/m/it/10 d\T1/ptm/m/n/10 ,
+ []
+
+
+Overfull \hbox (48.26428pt too wide) in paragraph at lines 4969--4969
+\T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
+ []
+
+
+Overfull \hbox (4.1545pt too wide) in paragraph at lines 4970--4971
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .generic.DelayLoad_UnknownLength[][] 
  []
 
 
-Overfull \hbox (36.68445pt too wide) in paragraph at lines 4776--4776
+Overfull \hbox (36.68445pt too wide) in paragraph at lines 4979--4979
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (17.24464pt too wide) in paragraph at lines 4776--4776
+Overfull \hbox (17.24464pt too wide) in paragraph at lines 4979--4979
 \T1/ptm/m/it/10 d\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (54.26428pt too wide) in paragraph at lines 4776--4776
+Overfull \hbox (54.26428pt too wide) in paragraph at lines 4979--4979
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (4.1545pt too wide) in paragraph at lines 4777--4778
+Overfull \hbox (4.1545pt too wide) in paragraph at lines 4980--4981
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .generic.DelayLoad_UnknownLength[][] 
  []
 
 
-Overfull \hbox (0.68445pt too wide) in paragraph at lines 4786--4786
+Overfull \hbox (0.68445pt too wide) in paragraph at lines 4989--4989
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4786--4786
+Underfull \hbox (badness 10000) in paragraph at lines 4989--4989
 \T1/ptm/m/it/10 d\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (18.26428pt too wide) in paragraph at lines 4786--4786
+Overfull \hbox (18.26428pt too wide) in paragraph at lines 4989--4989
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4787--4788
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 4990--4991
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
 
-Overfull \hbox (7.13387pt too wide) in paragraph at lines 4798--4798
+Overfull \hbox (7.13387pt too wide) in paragraph at lines 5001--5001
 []\T1/ptm/m/it/10 ideal_network\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4799--4800
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 5002--5003
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
 
-Overfull \hbox (30.68445pt too wide) in paragraph at lines 4812--4812
+Overfull \hbox (30.68445pt too wide) in paragraph at lines 5015--5015
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (12.91457pt too wide) in paragraph at lines 4812--4812
+Overfull \hbox (12.91457pt too wide) in paragraph at lines 5015--5015
 \T1/ptm/m/it/10 C\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (25.1344pt too wide) in paragraph at lines 4812--4812
+Overfull \hbox (25.1344pt too wide) in paragraph at lines 5015--5015
 \T1/ptm/m/it/10 ntwk\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (48.26428pt too wide) in paragraph at lines 4812--4812
+Overfull \hbox (48.26428pt too wide) in paragraph at lines 5015--5015
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4813--4814
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 5016--5017
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
 
-Overfull \hbox (90.68445pt too wide) in paragraph at lines 4822--4822
+Overfull \hbox (90.68445pt too wide) in paragraph at lines 5025--5025
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (72.91457pt too wide) in paragraph at lines 4822--4822
+Overfull \hbox (72.91457pt too wide) in paragraph at lines 5025--5025
 \T1/ptm/m/it/10 C\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (71.80458pt too wide) in paragraph at lines 4822--4822
+Overfull \hbox (71.80458pt too wide) in paragraph at lines 5025--5025
 \T1/ptm/m/it/10 L\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (85.1344pt too wide) in paragraph at lines 4822--4822
+Overfull \hbox (85.1344pt too wide) in paragraph at lines 5025--5025
 \T1/ptm/m/it/10 ntwk\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (108.26428pt too wide) in paragraph at lines 4822--4822
+Overfull \hbox (108.26428pt too wide) in paragraph at lines 5025--5025
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4823--4824
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 5026--5027
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
-[60]
-Overfull \hbox (24.68445pt too wide) in paragraph at lines 4832--4832
+
+Overfull \hbox (24.68445pt too wide) in paragraph at lines 5035--5035
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (5.80458pt too wide) in paragraph at lines 4832--4832
+Overfull \hbox (5.80458pt too wide) in paragraph at lines 5035--5035
 \T1/ptm/m/it/10 L\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (19.1344pt too wide) in paragraph at lines 4832--4832
+Overfull \hbox (19.1344pt too wide) in paragraph at lines 5035--5035
 \T1/ptm/m/it/10 ntwk\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (42.26428pt too wide) in paragraph at lines 4832--4832
+Overfull \hbox (42.26428pt too wide) in paragraph at lines 5035--5035
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4833--4834
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 5036--5037
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
-
-Overfull \hbox (102.88412pt too wide) in paragraph at lines 4860--4860
+[62]
+Overfull \hbox (102.88412pt too wide) in paragraph at lines 5063--5063
 []\T1/ptm/m/it/10 function=None\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (53.0746pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (53.0746pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 pa-
  []
 
 
-Overfull \hbox (59.03456pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (59.03456pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 ram-
  []
 
 
-Overfull \hbox (47.51454pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (47.51454pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 e-
  []
 
 
-Overfull \hbox (71.89424pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (71.89424pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 ters={}\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (53.0746pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (53.0746pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 pa-
  []
 
 
-Overfull \hbox (59.03456pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (59.03456pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 ram-
  []
 
 
-Overfull \hbox (47.51454pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (47.51454pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 e-
  []
 
 
-Overfull \hbox (101.99423pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (101.99423pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 ter_bounds={}\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (84.26428pt too wide) in paragraph at lines 4860--4860
+Overfull \hbox (84.26428pt too wide) in paragraph at lines 5063--5063
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
-[61]
-Overfull \hbox (138.68445pt too wide) in paragraph at lines 4946--4946
+
+Overfull \hbox (138.68445pt too wide) in paragraph at lines 5149--5149
 []\T1/ptm/m/it/10 media\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (136.47421pt too wide) in paragraph at lines 4946--4946
+Overfull \hbox (136.47421pt too wide) in paragraph at lines 5149--5149
 \T1/ptm/m/it/10 d_list\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (150.90456pt too wide) in paragraph at lines 4946--4946
+Overfull \hbox (150.90456pt too wide) in paragraph at lines 5149--5149
 \T1/ptm/m/it/10 Gamma0\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (156.26428pt too wide) in paragraph at lines 4946--4946
+Overfull \hbox (156.26428pt too wide) in paragraph at lines 5149--5149
 \T1/ptm/m/it/10 **kwargs\T1/pcr/m/n/10 ) 
  []
 
 
-Overfull \hbox (40.1545pt too wide) in paragraph at lines 4947--4948
+Overfull \hbox (40.1545pt too wide) in paragraph at lines 5150--5151
 \T1/ptm/m/n/10 Bases: [][]\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard[][] 
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 4973--4973
+[63]
+Underfull \hbox (badness 10000) in paragraph at lines 5176--5176
 []\T1/ptm/m/it/10 ax=None\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 4973--4973
+Underfull \hbox (badness 10000) in paragraph at lines 5176--5176
 \T1/ptm/m/it/10 window_length=-1\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (2.78416pt too wide) in paragraph at lines 5005--5005
+Overfull \hbox (2.78416pt too wide) in paragraph at lines 5208--5208
 []\T1/ptm/m/it/10 sample_rate=2.5\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 5037--5037
+Underfull \hbox (badness 10000) in paragraph at lines 5240--5240
 []\T1/ptm/m/it/10 *args\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (27.67433pt too wide) in paragraph at lines 5048--5048
+Overfull \hbox (27.67433pt too wide) in paragraph at lines 5251--5251
 []\T1/ptm/m/it/10 sock=None\T1/ptm/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 5048--5048
+Underfull \hbox (badness 10000) in paragraph at lines 5251--5251
 \T1/ptm/m/it/10 sam-
  []
 
 
-Overfull \hbox (34.6743pt too wide) in paragraph at lines 5048--5048
+Overfull \hbox (34.6743pt too wide) in paragraph at lines 5251--5251
 \T1/ptm/m/it/10 ple_rate=2.5\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (25.65442pt too wide) in paragraph at lines 5048--5048
+Overfull \hbox (25.65442pt too wide) in paragraph at lines 5251--5251
 \T1/ptm/m/it/10 avg_len=1\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (51.7639pt too wide) in paragraph at lines 5048--5048
+Overfull \hbox (51.7639pt too wide) in paragraph at lines 5251--5251
 \T1/ptm/m/it/10 query_string=`1'\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (53.32434pt too wide) in paragraph at lines 5048--5048
+Overfull \hbox (53.32434pt too wide) in paragraph at lines 5251--5251
 \T1/ptm/m/it/10 msg_len=1000.0\T1/pcr/m/n/10 ) 
  []
 
-[62] [63] [64
+[64] [65] [66
 
 ]
 Chapter 8.
-[65] [66
+[67] [68
 
 ]
-Overfull \hbox (18.6225pt too wide) in paragraph at lines 5141--5142
+Overfull \hbox (18.6225pt too wide) in paragraph at lines 5344--5345
 []\T1/pcr/m/n/10 mwavepy.calibration.calibrationAlgorithms\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (0.6225pt too wide) in paragraph at lines 5142--5143
+Overfull \hbox (0.6225pt too wide) in paragraph at lines 5345--5346
 []\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (48.6225pt too wide) in paragraph at lines 5143--5144
+Overfull \hbox (48.6225pt too wide) in paragraph at lines 5346--5347
 []\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard.generic\T1/ptm/m/n/10 ,
 
  []
 
 
-Overfull \hbox (114.6225pt too wide) in paragraph at lines 5144--5145
+Overfull \hbox (114.6225pt too wide) in paragraph at lines 5347--5348
 []\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard.parametricStandard\T1/p
 tm/m/n/10 ,
  []
 
 
-Overfull \hbox (126.6225pt too wide) in paragraph at lines 5145--5146
+Overfull \hbox (126.6225pt too wide) in paragraph at lines 5348--5349
 []\T1/pcr/m/n/10 mwavepy.calibration.parametricStandard.rectangularWaveguide\T1
 /ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (12.6225pt too wide) in paragraph at lines 5160--5161
+Overfull \hbox (12.6225pt too wide) in paragraph at lines 5363--5364
 []\T1/pcr/m/n/10 mwavepy.virtualInstruments.futekLoadCell\T1/ptm/m/n/10 ,
  []
 
 
-Overfull \hbox (48.6225pt too wide) in paragraph at lines 5161--5162
+Overfull \hbox (48.6225pt too wide) in paragraph at lines 5364--5365
 []\T1/pcr/m/n/10 mwavepy.virtualInstruments.generalSocketReader\T1/ptm/m/n/10 ,
 
  []
 
-[67
+[69
 
 
-] (./mwavepy.ind [68
+] (./mwavepy.ind [70
 
 
 ]
@@ -1709,752 +1704,774 @@ Underfull \hbox (badness 10000) in paragraph at lines 5--6
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 9--11
+Underfull \hbox (badness 10000) in paragraph at lines 10--12
 []\T1/ptm/m/n/10 apply_cal_to_all_in_dir()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 9--11
+Underfull \hbox (badness 10000) in paragraph at lines 10--12
 \T1/ptm/m/n/10 (mwavepy.calibration.calibration.Calibration
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 19--20
+Overfull \hbox (7.7099pt too wide) in paragraph at lines 16--17
+[]\T1/ptm/m/n/10 biased_error() (mwavepy.calibration.calibration.Calibration
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 24--25
 []\T1/ptm/m/n/10 change_frequency() (mwavepy.network.Network
  []
 
 
-Overfull \hbox (63.28975pt too wide) in paragraph at lines 21--23
+Overfull \hbox (63.28975pt too wide) in paragraph at lines 26--28
 []\T1/ptm/m/n/10 close() (mwavepy.virtualInstruments.futekLoadCell.Futek_USB210
 _pipe
  []
 
 
-Overfull \hbox (92.47919pt too wide) in paragraph at lines 23--25
+Overfull \hbox (92.47919pt too wide) in paragraph at lines 28--30
 []\T1/ptm/m/n/10 close() (mwavepy.virtualInstruments.generalSocketReader.Genera
 lSocketReader
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 25--26
+Underfull \hbox (badness 10000) in paragraph at lines 30--31
 []\T1/ptm/m/n/10 coefs (mwavepy.calibration.calibration.Calibration
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 27--28
+Underfull \hbox (badness 10000) in paragraph at lines 32--33
 []\T1/ptm/m/n/10 complex2MagPhase() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 31--32
+Underfull \hbox (badness 10000) in paragraph at lines 36--37
 []\T1/ptm/m/n/10 complex_2_degree() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 32--33
+Underfull \hbox (badness 10000) in paragraph at lines 37--38
 []\T1/ptm/m/n/10 complex_2_magnitude() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 33--34
+Underfull \hbox (badness 10000) in paragraph at lines 38--39
 []\T1/ptm/m/n/10 complex_2_quadrature() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 34--35
+Underfull \hbox (badness 10000) in paragraph at lines 39--40
 []\T1/ptm/m/n/10 complex_2_radian() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 35--36
+Underfull \hbox (badness 10000) in paragraph at lines 40--41
 []\T1/ptm/m/n/10 complex_components() (in mod-ule
  []
 
 
-Overfull \hbox (103.02924pt too wide) in paragraph at lines 37--39
+Overfull \hbox (103.02924pt too wide) in paragraph at lines 42--44
 []\T1/ptm/m/n/10 connect() (mwavepy.virtualInstruments.generalSocketReader.Gene
 ralSocketReader
  []
 
 
-Overfull \hbox (52.73994pt too wide) in paragraph at lines 45--47
+Overfull \hbox (52.73994pt too wide) in paragraph at lines 50--52
 []\T1/ptm/m/n/10 data (mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pi
 pe
  []
 
 
-Overfull \hbox (81.92938pt too wide) in paragraph at lines 47--49
+Overfull \hbox (81.92938pt too wide) in paragraph at lines 52--54
 []\T1/ptm/m/n/10 data (mwavepy.virtualInstruments.generalSocketReader.GeneralSo
 cketReader
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 56--58
+Underfull \hbox (badness 10000) in paragraph at lines 61--63
 []\T1/ptm/m/n/10 DelayLoad_UnknownLength (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 56--58
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 61--63
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Underfull \hbox (badness 7468) in paragraph at lines 58--60
+Underfull \hbox (badness 7468) in paragraph at lines 63--65
 []\T1/ptm/m/n/10 DelayLoad_UnknownLength_UnknownLoad (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 58--60
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 63--65
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 60--62
+Underfull \hbox (badness 10000) in paragraph at lines 65--67
 []\T1/ptm/m/n/10 DelayLoad_UnknownLoad (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 60--62
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 65--67
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
+[71
 
-Underfull \hbox (badness 10000) in paragraph at lines 62--64
+]
+Underfull \hbox (badness 10000) in paragraph at lines 67--69
 []\T1/ptm/m/n/10 DelayOpen_UnknownLength (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 62--64
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 67--69
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 64--66
+Underfull \hbox (badness 10000) in paragraph at lines 69--71
 []\T1/ptm/m/n/10 DelayShort_UnknownLength (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 64--66
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 69--71
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
-[69
 
-]
-Underfull \hbox (badness 10000) in paragraph at lines 67--68
+Underfull \hbox (badness 10000) in paragraph at lines 72--73
 []\T1/ptm/m/n/10 distance_2_electrical_length() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 70--71
+Underfull \hbox (badness 10000) in paragraph at lines 75--76
 []\T1/ptm/m/n/10 DistributedCircuit (class in
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 74--76
+Underfull \hbox (badness 10000) in paragraph at lines 79--81
 []\T1/ptm/m/n/10 eight_term_2_one_port_coefs() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 74--76
+Underfull \hbox (badness 10000) in paragraph at lines 79--81
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 77--78
+Underfull \hbox (badness 10000) in paragraph at lines 82--83
 []\T1/ptm/m/n/10 electrical_length() (mwavepy.media.media.Media
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 78--79
+Underfull \hbox (badness 10000) in paragraph at lines 83--84
 []\T1/ptm/m/n/10 electrical_length_2_distance() (in mod-ule
  []
 
 
-Overfull \hbox (36.1909pt too wide) in paragraph at lines 79--80
+Overfull \hbox (36.1909pt too wide) in paragraph at lines 84--85
 []\T1/ptm/m/n/10 ep (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 81--82
+Underfull \hbox (badness 10000) in paragraph at lines 86--87
 []\T1/ptm/m/n/10 error_dict_2_network() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 96--97
+Underfull \hbox (badness 10000) in paragraph at lines 102--103
 []\T1/ptm/m/n/10 frequency (mwavepy.calibration.calibration.Calibration
  []
 
 
-Overfull \hbox (44.55931pt too wide) in paragraph at lines 99--101
+Overfull \hbox (44.55931pt too wide) in paragraph at lines 105--107
 []\T1/ptm/m/n/10 from_Media() (mwavepy.media.distributedCircuit.DistributedCirc
 uit
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 102--103
+Underfull \hbox (badness 10000) in paragraph at lines 108--109
 []\T1/ptm/m/n/10 Futek_USB210_pipe (class in
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 102--103
+Underfull \hbox (badness 10000) in paragraph at lines 108--109
 \T1/ptm/m/n/10 mwavepy.virtualInstruments.futekLoadCell),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 103--104
+Underfull \hbox (badness 10000) in paragraph at lines 109--110
 []\T1/ptm/m/n/10 Futek_USB210_socket (class in
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 103--104
+Underfull \hbox (badness 10000) in paragraph at lines 109--110
 \T1/ptm/m/n/10 mwavepy.virtualInstruments.futekLoadCell),
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 104--105
-[]\T1/ptm/m/n/10 FutekMonitor (class in
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 104--105
-\T1/ptm/m/n/10 mwavepy.virtualInstruments.futekLoadCell),
- []
-
-
-Overfull \hbox (23.95956pt too wide) in paragraph at lines 109--110
-[]\T1/ptm/m/n/10 gamma() (mwavepy.media.distributedCircuit.DistributedCircuit
  []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 110--111
+[]\T1/ptm/m/n/10 FutekMonitor (class in
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 110--111
+\T1/ptm/m/n/10 mwavepy.virtualInstruments.futekLoadCell),
+ []
+
+
+Overfull \hbox (23.95956pt too wide) in paragraph at lines 115--116
+[]\T1/ptm/m/n/10 gamma() (mwavepy.media.distributedCircuit.DistributedCircuit
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 116--117
 []\T1/ptm/m/n/10 Gamma0_2_Gamma_in() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 113--115
+Underfull \hbox (badness 10000) in paragraph at lines 119--121
 []\T1/ptm/m/n/10 GeneralSocketReader (class in
  []
 
 
-Overfull \hbox (16.83044pt too wide) in paragraph at lines 113--115
+Overfull \hbox (16.83044pt too wide) in paragraph at lines 119--121
 \T1/ptm/m/n/10 mwavepy.virtualInstruments.generalSocketReader),
  []
 
 
-Overfull \hbox (87.72939pt too wide) in paragraph at lines 115--117
+Overfull \hbox (87.72939pt too wide) in paragraph at lines 121--123
 []\T1/ptm/m/n/10 get_data_and_plot() (mwavepy.virtualInstruments.futekLoadCell.
 FutekMonitor
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 118--119
+Underfull \hbox (badness 10000) in paragraph at lines 124--125
 []\T1/ptm/m/n/10 get_noise_data() (mwavepy.touchstone.touchstone
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 119--120
+Underfull \hbox (badness 10000) in paragraph at lines 125--126
 []\T1/ptm/m/n/10 get_noise_names() (mwavepy.touchstone.touchstone
  []
 
 
-Overfull \hbox (1.87039pt too wide) in paragraph at lines 120--121
+Overfull \hbox (1.87039pt too wide) in paragraph at lines 126--127
 []\T1/ptm/m/n/10 get_sparameter_arrays() (mwavepy.touchstone.touchstone
  []
 
 
-Overfull \hbox (2.99037pt too wide) in paragraph at lines 122--123
+Overfull \hbox (2.99037pt too wide) in paragraph at lines 128--129
 []\T1/ptm/m/n/10 get_sparameter_names() (mwavepy.touchstone.touchstone
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 123--125
+Underfull \hbox (badness 10000) in paragraph at lines 129--131
 []\T1/ptm/m/n/10 guess_length_of_delay_short() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 123--125
+Underfull \hbox (badness 10000) in paragraph at lines 129--131
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 125--126
+Underfull \hbox (badness 10000) in paragraph at lines 131--132
 []\T1/ptm/m/n/10 guess_length_of_delay_short()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 125--126
+Underfull \hbox (badness 10000) in paragraph at lines 131--132
 \T1/ptm/m/n/10 (mwavepy.media.media.Media method),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 130--131
+Underfull \hbox (badness 10000) in paragraph at lines 136--137
 []\T1/ptm/m/n/10 impedance_mismatch() (mwavepy.media.media.Media
  []
 
 
-Overfull \hbox (117.2482pt too wide) in paragraph at lines 132--134
+Overfull \hbox (117.2482pt too wide) in paragraph at lines 138--140
 []\T1/ptm/m/n/10 INF (mwavepy.calibration.parametricStandard.parametricStandard
 .ParametricStandard
  []
 
-
-Underfull \hbox (badness 10000) in paragraph at lines 140--141
+[72]
+Underfull \hbox (badness 10000) in paragraph at lines 146--147
 []\T1/ptm/m/n/10 input_impedance_at_theta() (in mod-ule
  []
 
-[70]
-Overfull \hbox (36.75096pt too wide) in paragraph at lines 147--148
+
+Overfull \hbox (36.75096pt too wide) in paragraph at lines 153--154
 []\T1/ptm/m/n/10 k0 (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
 
-Overfull \hbox (36.1909pt too wide) in paragraph at lines 150--151
+Overfull \hbox (36.1909pt too wide) in paragraph at lines 156--157
 []\T1/ptm/m/n/10 kc (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
 
-Overfull \hbox (36.75096pt too wide) in paragraph at lines 151--152
+Overfull \hbox (36.75096pt too wide) in paragraph at lines 157--158
 []\T1/ptm/m/n/10 kx (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
 
-Overfull \hbox (36.60106pt too wide) in paragraph at lines 152--153
+Overfull \hbox (36.60106pt too wide) in paragraph at lines 158--159
 []\T1/ptm/m/n/10 ky (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
 
-Overfull \hbox (42.85081pt too wide) in paragraph at lines 153--154
+Overfull \hbox (42.85081pt too wide) in paragraph at lines 159--160
 []\T1/ptm/m/n/10 kz() (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 160--162
+Underfull \hbox (badness 10000) in paragraph at lines 166--168
 []\T1/ptm/m/n/10 Line_UnknownLength (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 160--162
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 166--168
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Overfull \hbox (19.9396pt too wide) in paragraph at lines 170--171
+Overfull \hbox (19.9396pt too wide) in paragraph at lines 176--177
 []\T1/ptm/m/n/10 mean_residuals() (mwavepy.calibration.calibration.Calibration
  []
 
 
-Overfull \hbox (39.53085pt too wide) in paragraph at lines 172--173
+Overfull \hbox (39.53085pt too wide) in paragraph at lines 178--179
 []\T1/ptm/m/n/10 mu (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 180--181
+Underfull \hbox (badness 10000) in paragraph at lines 186--187
 []\T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic (mod-
  []
 
 
-Overfull \hbox (14.6899pt too wide) in paragraph at lines 181--182
+Overfull \hbox (14.6899pt too wide) in paragraph at lines 187--188
 []\T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.parametricStandard
  []
 
 
-Overfull \hbox (25.6003pt too wide) in paragraph at lines 182--183
+Overfull \hbox (25.6003pt too wide) in paragraph at lines 188--189
 []\T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.rectangularWaveguide
  []
 
 
-Overfull \hbox (133.8087pt too wide) in paragraph at lines 203--205
+Overfull \hbox (133.8087pt too wide) in paragraph at lines 209--211
 []\T1/ptm/m/n/10 network (mwavepy.calibration.parametricStandard.parametricStan
 dard.ParametricStandard
  []
 
 
-Underfull \hbox (badness 5077) in paragraph at lines 209--210
+Underfull \hbox (badness 5077) in paragraph at lines 215--216
 []\T1/ptm/m/n/10 nstandards (mwavepy.calibration.calibration.Calibration
  []
 
 
-Overfull \hbox (193.88803pt too wide) in paragraph at lines 212--214
+Overfull \hbox (193.88803pt too wide) in paragraph at lines 218--220
 []\T1/ptm/m/n/10 number_of_parameters (mwavepy.calibration.parametricStandard.p
 arametricStandard.ParametricStandard
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 218--219
+Underfull \hbox (badness 10000) in paragraph at lines 224--225
 []\T1/ptm/m/n/10 one_port() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 218--219
+Underfull \hbox (badness 10000) in paragraph at lines 224--225
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 220--221
+Underfull \hbox (badness 10000) in paragraph at lines 226--227
 []\T1/ptm/m/n/10 one_port_nls() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 220--221
+Underfull \hbox (badness 10000) in paragraph at lines 226--227
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Overfull \hbox (17.72987pt too wide) in paragraph at lines 222--223
+Overfull \hbox (17.72987pt too wide) in paragraph at lines 228--229
 []\T1/ptm/m/n/10 output_from_cal (mwavepy.calibration.calibration.Calibration
  []
 
-
-Overfull \hbox (166.65819pt too wide) in paragraph at lines 226--228
+[73]
+Overfull \hbox (166.65819pt too wide) in paragraph at lines 232--234
 []\T1/ptm/m/n/10 parameter_array (mwavepy.calibration.parametricStandard.parame
 tricStandard.ParametricStandard
  []
 
 
-Overfull \hbox (200.54808pt too wide) in paragraph at lines 228--230
+Overfull \hbox (200.54808pt too wide) in paragraph at lines 234--236
 []\T1/ptm/m/n/10 parameter_bounds_array (mwavepy.calibration.parametricStandard
 .parametricStandard.ParametricStandard
  []
 
 
-Overfull \hbox (164.19833pt too wide) in paragraph at lines 230--232
+Overfull \hbox (164.19833pt too wide) in paragraph at lines 236--238
 []\T1/ptm/m/n/10 parameter_keys (mwavepy.calibration.parametricStandard.paramet
 ricStandard.ParametricStandard
  []
 
-[71]
-Underfull \hbox (badness 10000) in paragraph at lines 233--235
+
+Underfull \hbox (badness 10000) in paragraph at lines 239--241
 []\T1/ptm/m/n/10 parameterized_self_calibration() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 233--235
+Underfull \hbox (badness 10000) in paragraph at lines 239--241
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 235--237
+Underfull \hbox (badness 10000) in paragraph at lines 241--243
 []\T1/ptm/m/n/10 parameterized_self_calibration_bounded() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 235--237
+Underfull \hbox (badness 10000) in paragraph at lines 241--243
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 237--239
+Underfull \hbox (badness 10000) in paragraph at lines 243--245
 []\T1/ptm/m/n/10 parameterized_self_calibration_nls() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 237--239
+Underfull \hbox (badness 10000) in paragraph at lines 243--245
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 239--240
+Underfull \hbox (badness 10000) in paragraph at lines 245--246
 []\T1/ptm/m/n/10 Parameterless (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 239--240
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 245--246
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 240--242
+Underfull \hbox (badness 10000) in paragraph at lines 246--248
 []\T1/ptm/m/n/10 ParametricStandard (class in
  []
 
 
-Overfull \hbox (60.51985pt too wide) in paragraph at lines 240--242
+Overfull \hbox (60.51985pt too wide) in paragraph at lines 246--248
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.parametricStandard),
  []
 
 
-Overfull \hbox (14.38994pt too wide) in paragraph at lines 243--244
+Overfull \hbox (14.38994pt too wide) in paragraph at lines 249--250
 []\T1/ptm/m/n/10 plot_coefs_db() (mwavepy.calibration.calibration.Calibration
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 245--246
+Underfull \hbox (badness 10000) in paragraph at lines 251--252
 []\T1/ptm/m/n/10 plot_polar_generic() (mwavepy.network.Network
  []
 
 
-Overfull \hbox (13.83961pt too wide) in paragraph at lines 246--247
+Overfull \hbox (13.83961pt too wide) in paragraph at lines 252--253
 []\T1/ptm/m/n/10 plot_residuals() (mwavepy.calibration.calibration.Calibration
  []
 
 
-Overfull \hbox (28.83961pt too wide) in paragraph at lines 247--248
+Overfull \hbox (28.83961pt too wide) in paragraph at lines 253--254
 []\T1/ptm/m/n/10 plot_residuals_db() (mwavepy.calibration.calibration.Calibrati
 on
  []
 
 
-Overfull \hbox (36.05945pt too wide) in paragraph at lines 248--249
+Overfull \hbox (36.05945pt too wide) in paragraph at lines 254--255
 []\T1/ptm/m/n/10 plot_residuals_mag() (mwavepy.calibration.calibration.Calibrat
 ion
  []
 
 
-Overfull \hbox (41.06918pt too wide) in paragraph at lines 249--251
+Overfull \hbox (41.06918pt too wide) in paragraph at lines 255--257
 []\T1/ptm/m/n/10 plot_residuals_smith() (mwavepy.calibration.calibration.Calibr
 ation
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 255--256
+Underfull \hbox (badness 10000) in paragraph at lines 261--262
 []\T1/ptm/m/n/10 plot_s_deg_unwrap() (mwavepy.network.Network
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 256--257
+Underfull \hbox (badness 10000) in paragraph at lines 262--263
 []\T1/ptm/m/n/10 plot_s_deg_unwrapped() (mwavepy.network.Network
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 260--261
+Underfull \hbox (badness 10000) in paragraph at lines 266--267
 []\T1/ptm/m/n/10 plot_s_rad_unwrapped() (mwavepy.network.Network
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 262--263
+Underfull \hbox (badness 10000) in paragraph at lines 268--269
 []\T1/ptm/m/n/10 plot_uncertainty_bounds() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 263--264
+Underfull \hbox (badness 10000) in paragraph at lines 269--270
 []\T1/ptm/m/n/10 plot_uncertainty_bounds_s_deg() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 264--265
+Underfull \hbox (badness 10000) in paragraph at lines 270--271
 []\T1/ptm/m/n/10 plot_uncertainty_bounds_s_mag() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 265--266
+Underfull \hbox (badness 10000) in paragraph at lines 271--272
 []\T1/ptm/m/n/10 plot_vs_frequency_generic()
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 269--270
+Underfull \hbox (badness 10000) in paragraph at lines 275--276
 []\T1/ptm/m/n/10 psd2TimeDomain() (in mod-ule
  []
 
 
-Overfull \hbox (20.97pt too wide) in paragraph at lines 275--276
+Overfull \hbox (20.97pt too wide) in paragraph at lines 281--282
 []\T1/ptm/m/n/10 rand() (in mod-ule mwavepy.calibration.calibrationAlgorithms),
 
  []
 
 
-Overfull \hbox (59.94992pt too wide) in paragraph at lines 276--278
+Overfull \hbox (59.94992pt too wide) in paragraph at lines 282--284
 []\T1/ptm/m/n/10 read() (mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_
 pipe
  []
 
 
-Overfull \hbox (100.39923pt too wide) in paragraph at lines 279--281
+Overfull \hbox (100.39923pt too wide) in paragraph at lines 285--287
 []\T1/ptm/m/n/10 receive() (mwavepy.virtualInstruments.generalSocketReader.Gene
 ralSocketReader
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 281--282
+Underfull \hbox (badness 10000) in paragraph at lines 287--288
 []\T1/ptm/m/n/10 RectangularWaveguide (class in
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 281--282
+Underfull \hbox (badness 10000) in paragraph at lines 287--288
 \T1/ptm/m/n/10 mwavepy.media.rectangularWaveguide),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 286--287
+Underfull \hbox (badness 10000) in paragraph at lines 292--293
 []\T1/ptm/m/n/10 reflection_coefficient_at_theta() (in mod-ule
  []
 
 
-Overfull \hbox (11.61978pt too wide) in paragraph at lines 287--288
+Overfull \hbox (11.61978pt too wide) in paragraph at lines 293--294
 []\T1/ptm/m/n/10 residual_ntwks (mwavepy.calibration.calibration.Calibration
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 289--290
+Underfull \hbox (badness 10000) in paragraph at lines 295--296
 []\T1/ptm/m/n/10 run() (mwavepy.calibration.calibration.Calibration
  []
 
 
-Overfull \hbox (105.02882pt too wide) in paragraph at lines 293--295
+Overfull \hbox (105.02882pt too wide) in paragraph at lines 299--301
 []\T1/ptm/m/n/10 s (mwavepy.calibration.parametricStandard.parametricStandard.P
 arametricStandard
  []
 
-[72]
-Overfull \hbox (90.25935pt too wide) in paragraph at lines 309--311
+[74]
+Overfull \hbox (90.25935pt too wide) in paragraph at lines 315--317
 []\T1/ptm/m/n/10 send() (mwavepy.virtualInstruments.generalSocketReader.General
 SocketReader
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 313--314
+Underfull \hbox (badness 10000) in paragraph at lines 319--320
 []\T1/ptm/m/n/10 shunt_capacitor() (mwavepy.media.media.Media
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 314--315
+Underfull \hbox (badness 10000) in paragraph at lines 320--321
 []\T1/ptm/m/n/10 shunt_delay_load() (mwavepy.media.media.Media
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 315--316
+Underfull \hbox (badness 10000) in paragraph at lines 321--322
 []\T1/ptm/m/n/10 shunt_delay_open() (mwavepy.media.media.Media
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 316--317
+Underfull \hbox (badness 10000) in paragraph at lines 322--323
 []\T1/ptm/m/n/10 shunt_delay_short() (mwavepy.media.media.Media
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 319--321
+Underfull \hbox (badness 10000) in paragraph at lines 325--327
 []\T1/ptm/m/n/10 SlidingLoad_UnknownTermination (class in
  []
 
 
-Overfull \hbox (60.51985pt too wide) in paragraph at lines 319--321
+Overfull \hbox (60.51985pt too wide) in paragraph at lines 325--327
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.parametricStandard),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 334--335
+Underfull \hbox (badness 10000) in paragraph at lines 341--342
 []\T1/ptm/m/n/10 Ts (mwavepy.calibration.calibration.Calibration at-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 335--336
+Underfull \hbox (badness 10000) in paragraph at lines 342--343
 []\T1/ptm/m/n/10 two_port() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 335--336
+Underfull \hbox (badness 10000) in paragraph at lines 342--343
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 336--338
+Underfull \hbox (badness 10000) in paragraph at lines 343--345
 []\T1/ptm/m/n/10 two_port_error_vector_2_Ts() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 339--340
+Underfull \hbox (badness 10000) in paragraph at lines 346--347
 []\T1/ptm/m/n/10 type (mwavepy.calibration.calibration.Calibration at-
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 344--346
+Overfull \hbox (17.7099pt too wide) in paragraph at lines 350--351
+[]\T1/ptm/m/n/10 unbiased_error() (mwavepy.calibration.calibration.Calibration
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 351--353
+[]\T1/ptm/m/n/10 uncertainty_per_standard()
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 351--353
+\T1/ptm/m/n/10 (mwavepy.calibration.calibration.Calibration
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 354--356
 []\T1/ptm/m/n/10 UnknownShuntCapacitance (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 344--346
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 354--356
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 346--348
+Underfull \hbox (badness 10000) in paragraph at lines 356--358
 []\T1/ptm/m/n/10 UnknownShuntCapacitanceInductance (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 346--348
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 356--358
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 348--350
+Underfull \hbox (badness 10000) in paragraph at lines 358--360
 []\T1/ptm/m/n/10 UnknownShuntInductance (class in
  []
 
 
-Overfull \hbox (11.6405pt too wide) in paragraph at lines 348--350
+Overfull \hbox (11.6405pt too wide) in paragraph at lines 358--360
 \T1/ptm/m/n/10 mwavepy.calibration.parametricStandard.generic),
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 350--352
+Underfull \hbox (badness 10000) in paragraph at lines 360--362
 []\T1/ptm/m/n/10 unterminate_switch_terms() (in mod-ule
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 350--352
+Underfull \hbox (badness 10000) in paragraph at lines 360--362
 \T1/ptm/m/n/10 mwavepy.calibration.calibrationAlgorithms),
  []
 
 
-Overfull \hbox (86.60916pt too wide) in paragraph at lines 352--354
+Overfull \hbox (86.60916pt too wide) in paragraph at lines 362--364
 []\T1/ptm/m/n/10 update_axis_scale() (mwavepy.virtualInstruments.futekLoadCell.
 FutekMonitor
  []
 
 
-Overfull \hbox (62.1696pt too wide) in paragraph at lines 354--356
+Overfull \hbox (62.1696pt too wide) in paragraph at lines 364--366
 []\T1/ptm/m/n/10 update_data() (mwavepy.virtualInstruments.futekLoadCell.FutekM
 onitor
  []
 
 
-Overfull \hbox (60.50955pt too wide) in paragraph at lines 356--358
+Overfull \hbox (60.50955pt too wide) in paragraph at lines 366--368
 []\T1/ptm/m/n/10 update_line() (mwavepy.virtualInstruments.futekLoadCell.FutekM
 onitor
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 362--363
+Underfull \hbox (badness 10000) in paragraph at lines 372--373
 []\T1/ptm/m/n/10 white_gaussian_polar() (mwavepy.media.media.Media
  []
 
 
-Overfull \hbox (63.28973pt too wide) in paragraph at lines 363--365
+Overfull \hbox (63.28973pt too wide) in paragraph at lines 373--375
 []\T1/ptm/m/n/10 write() (mwavepy.virtualInstruments.futekLoadCell.Futek_USB210
 _pipe
  []
 
 
-Overfull \hbox (5.67982pt too wide) in paragraph at lines 379--380
+Overfull \hbox (5.67982pt too wide) in paragraph at lines 389--390
 []\T1/ptm/m/n/10 Z0() (mwavepy.media.distributedCircuit.DistributedCircuit
  []
 
 
-Overfull \hbox (44.52086pt too wide) in paragraph at lines 380--381
+Overfull \hbox (44.52086pt too wide) in paragraph at lines 390--391
 []\T1/ptm/m/n/10 Z0() (mwavepy.media.rectangularWaveguide.RectangularWaveguide
  []
 
-[73]) (./mwavepy.aux) ) 
+[75] [76
+
+]) (./mwavepy.aux) ) 
 Here is how much of TeX's memory you used:
- 8840 strings out of 495061
- 136231 string characters out of 1182622
- 216345 words of memory out of 3000000
- 11390 multiletter control sequences out of 15000+50000
+ 8855 strings out of 495061
+ 136760 string characters out of 1182622
+ 217653 words of memory out of 3000000
+ 11396 multiletter control sequences out of 15000+50000
  59888 words of font info for 71 fonts, out of 3000000 for 9000
  29 hyphenation exceptions out of 8191
- 45i,12n,48p,527b,570s stack positions out of 5000i,500n,10000p,200000b,50000s
-{/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</
-usr/share/texmf-texlive/fonts/type1/urw/courier/ucrb8a.pfb></usr/share/texmf-te
-xlive/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/
-urw/courier/ucrro8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/helvetic/uhvb
-8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/helvetic/uhvbo8a.pfb></usr/sha
-re/texmf-texlive/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-texlive/
-fonts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/time
-s/utmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
-Output written on mwavepy.pdf (77 pages, 2541871 bytes).
+ 45i,12n,48p,527b,544s stack positions out of 5000i,500n,10000p,200000b,50000s
+{/usr/share/texmf-texlive/fonts/enc/dvips/base/8r.enc}</usr
+/share/texmf-texlive/fonts/type1/urw/courier/ucrb8a.pfb></usr/share/texmf-texli
+ve/fonts/type1/urw/courier/ucrr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw
+/courier/ucrro8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/helvetic/uhvb8a.
+pfb></usr/share/texmf-texlive/fonts/type1/urw/helvetic/uhvbo8a.pfb></usr/share/
+texmf-texlive/fonts/type1/urw/helvetic/uhvr8a.pfb></usr/share/texmf-texlive/fon
+ts/type1/urw/times/utmb8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/u
+tmr8a.pfb></usr/share/texmf-texlive/fonts/type1/urw/times/utmri8a.pfb>
+Output written on mwavepy.pdf (80 pages, 2548869 bytes).
 PDF statistics:
- 1286 PDF objects out of 1440 (max. 8388607)
- 412 named destinations out of 1000 (max. 500000)
+ 1313 PDF objects out of 1440 (max. 8388607)
+ 421 named destinations out of 1000 (max. 500000)
  349 words of extra memory for PDF output out of 10000 (max. 10000000)
 

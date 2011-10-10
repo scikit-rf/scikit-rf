@@ -2,13 +2,18 @@
 \def\bigletter#1{{\Large\sffamily#1}\nopagebreak\vspace{1mm}}
 
   \bigletter A
-  \item abc\_2\_coefs\_dict() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{56}
+  \item abc\_2\_coefs\_dict() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{58}
   \item add\_noise\_polar() (mwavepy.network.Network method), \hyperpage{36}
-  \item alpha\_conductor (mwavepy.media.cpw.CPW attribute), \hyperpage{47}
+  \item add\_noise\_polar\_flatband() (mwavepy.network.Network method), \hyperpage{36}
+  \item alpha\_conductor (mwavepy.media.cpw.CPW attribute), \hyperpage{48}
   \item apply\_cal() (mwavepy.calibration.calibration.Calibration method), \hyperpage{54}
   \item apply\_cal\_to\_all\_in\_dir() (mwavepy.calibration.calibration.Calibration method), 
-		\hyperpage{54}
+		\hyperpage{55}
   \item average() (in module mwavepy.network), \hyperpage{40}
+
+  \indexspace
+  \bigletter B
+  \item biased\_error() (mwavepy.calibration.calibration.Calibration method), \hyperpage{55}
 
   \indexspace
   \bigletter C
@@ -19,10 +24,10 @@
   \item change\_frequency() (mwavepy.network.Network method), \hyperpage{36}
   \item characteristic\_impedance (mwavepy.media.media.Media attribute), \hyperpage{49}
   \item close() (mwavepy.virtualInstruments.futekLoadCell.Futek\_USB210\_pipe method), 
-		\hyperpage{62}
+		\hyperpage{64}
   \item close() (mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader method), 
-		\hyperpage{63}
-  \item coefs (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{54}
+		\hyperpage{65}
+  \item coefs (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{55}
   \item complex2dB() (in module mwavepy.mathFunctions), \hyperpage{34}
   \item complex2MagPhase() (in module mwavepy.mathFunctions), \hyperpage{34}
   \item complex2ReIm() (in module mwavepy.mathFunctions), \hyperpage{34}
@@ -33,9 +38,9 @@
   \item complex\_2\_quadrature() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item complex\_2\_radian() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item complex\_components() (in module mwavepy.mathFunctions), \hyperpage{35}
-  \item connect() (in module mwavepy.network), \hyperpage{40}
+  \item connect() (in module mwavepy.network), \hyperpage{41}
   \item connect() (mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader method), 
-		\hyperpage{63}
+		\hyperpage{65}
   \item connect\_s() (in module mwavepy.network), \hyperpage{41}
   \item CPW (class in mwavepy.media.cpw), \hyperpage{47}
   \item csv\_2\_touchstone() (in module mwavepy.network), \hyperpage{41}
@@ -43,43 +48,43 @@
   \indexspace
   \bigletter D
   \item data (mwavepy.virtualInstruments.futekLoadCell.Futek\_USB210\_pipe attribute), 
-		\hyperpage{62}
+		\hyperpage{64}
   \item data (mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader attribute), 
-		\hyperpage{63}
+		\hyperpage{65}
   \item db\_2\_magnitude() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item db\_2\_np() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item de\_embed() (in module mwavepy.network), \hyperpage{41}
   \item degree\_2\_radian() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item delay\_load() (mwavepy.media.media.Media method), \hyperpage{49}
-  \item delay\_open() (mwavepy.media.media.Media method), \hyperpage{49}
-  \item delay\_short() (mwavepy.media.media.Media method), \hyperpage{49}
+  \item delay\_open() (mwavepy.media.media.Media method), \hyperpage{50}
+  \item delay\_short() (mwavepy.media.media.Media method), \hyperpage{50}
   \item DelayLoad\_UnknownLength (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{59}
+		\hyperpage{61}
   \item DelayLoad\_UnknownLength\_UnknownLoad (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{60}
+		\hyperpage{61}
   \item DelayLoad\_UnknownLoad (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{60}
+		\hyperpage{61}
   \item DelayOpen\_UnknownLength (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{60}
+		\hyperpage{62}
   \item DelayShort\_UnknownLength (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{60}
+		\hyperpage{62}
   \item dirac\_delta() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item distance\_2\_electrical\_length() (in module mwavepy.tlineFunctions), \hyperpage{44}
   \item distributed\_circuit\_2\_propagation\_impedance() (in module mwavepy.tlineFunctions), 
 		\hyperpage{44}
-  \item DistributedCircuit (class in mwavepy.media.distributedCircuit), \hyperpage{47}
+  \item DistributedCircuit (class in mwavepy.media.distributedCircuit), \hyperpage{48}
 
   \indexspace
   \bigletter E
   \item eight\_term\_2\_one\_port\_coefs() (in module mwavepy.calibration.calibrationAlgorithms), 
-		\hyperpage{56}
-  \item electrical\_length() (in module mwavepy.tlineFunctions), \hyperpage{44}
+		\hyperpage{58}
+  \item electrical\_length() (in module mwavepy.tlineFunctions), \hyperpage{45}
   \item electrical\_length() (mwavepy.media.media.Media method), \hyperpage{50}
-  \item electrical\_length\_2\_distance() (in module mwavepy.tlineFunctions), \hyperpage{44}
-  \item ep (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{53}
-  \item ep\_re (mwavepy.media.cpw.CPW attribute), \hyperpage{47}
-  \item error\_dict\_2\_network() (in module mwavepy.calibration.calibration), \hyperpage{55}
-  \item error\_ntwk (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{54}
+  \item electrical\_length\_2\_distance() (in module mwavepy.tlineFunctions), \hyperpage{45}
+  \item ep (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{54}
+  \item ep\_re (mwavepy.media.cpw.CPW attribute), \hyperpage{48}
+  \item error\_dict\_2\_network() (in module mwavepy.calibration.calibration), \hyperpage{57}
+  \item error\_ntwk (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{55}
 
   \indexspace
   \bigletter F
@@ -91,46 +96,47 @@
   \item find\_nearest\_index() (in module mwavepy.convenience), \hyperpage{33}
   \item flip() (in module mwavepy.network), \hyperpage{41}
   \item flip() (mwavepy.network.Network method), \hyperpage{36}
-  \item Freespace (class in mwavepy.media.freespace), \hyperpage{48}
+  \item fon() (in module mwavepy.network), \hyperpage{41}
+  \item Freespace (class in mwavepy.media.freespace), \hyperpage{49}
   \item Frequency (class in mwavepy.frequency), \hyperpage{33}
-  \item frequency (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{54}
+  \item frequency (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{55}
   \item frequency (mwavepy.network.Network attribute), \hyperpage{36}
   \item from\_f() (mwavepy.frequency.Frequency class method), \hyperpage{34}
   \item from\_Media() (mwavepy.media.distributedCircuit.DistributedCircuit class method), 
 		\hyperpage{48}
-  \item func\_on\_networks() (in module mwavepy.network), \hyperpage{41}
-  \item Futek\_USB210\_pipe (class in mwavepy.virtualInstruments.futekLoadCell), \hyperpage{62}
-  \item Futek\_USB210\_socket (class in mwavepy.virtualInstruments.futekLoadCell), \hyperpage{62}
-  \item FutekMonitor (class in mwavepy.virtualInstruments.futekLoadCell), \hyperpage{62}
+  \item func\_on\_networks() (in module mwavepy.network), \hyperpage{42}
+  \item Futek\_USB210\_pipe (class in mwavepy.virtualInstruments.futekLoadCell), \hyperpage{64}
+  \item Futek\_USB210\_socket (class in mwavepy.virtualInstruments.futekLoadCell), \hyperpage{64}
+  \item FutekMonitor (class in mwavepy.virtualInstruments.futekLoadCell), \hyperpage{64}
 
   \indexspace
   \bigletter G
-  \item gamma() (mwavepy.media.cpw.CPW method), \hyperpage{47}
-  \item gamma() (mwavepy.media.distributedCircuit.DistributedCircuit method), \hyperpage{48}
-  \item Gamma0\_2\_Gamma\_in() (in module mwavepy.tlineFunctions), \hyperpage{43}
+  \item gamma() (mwavepy.media.cpw.CPW method), \hyperpage{48}
+  \item gamma() (mwavepy.media.distributedCircuit.DistributedCircuit method), \hyperpage{49}
+  \item Gamma0\_2\_Gamma\_in() (in module mwavepy.tlineFunctions), \hyperpage{44}
   \item Gamma0\_2\_zin() (in module mwavepy.tlineFunctions), \hyperpage{44}
   \item Gamma0\_2\_zl() (in module mwavepy.tlineFunctions), \hyperpage{44}
   \item GeneralSocketReader (class in mwavepy.virtualInstruments.generalSocketReader), 
-		\hyperpage{63}
+		\hyperpage{64}
   \item get\_data\_and\_plot() (mwavepy.virtualInstruments.futekLoadCell.FutekMonitor method), 
-		\hyperpage{62}
-  \item get\_format() (mwavepy.touchstone.touchstone method), \hyperpage{46}
-  \item get\_noise\_data() (mwavepy.touchstone.touchstone method), \hyperpage{46}
-  \item get\_noise\_names() (mwavepy.touchstone.touchstone method), \hyperpage{46}
-  \item get\_sparameter\_arrays() (mwavepy.touchstone.touchstone method), \hyperpage{46}
-  \item get\_sparameter\_data() (mwavepy.touchstone.touchstone method), \hyperpage{46}
-  \item get\_sparameter\_names() (mwavepy.touchstone.touchstone method), \hyperpage{46}
+		\hyperpage{64}
+  \item get\_format() (mwavepy.touchstone.touchstone method), \hyperpage{47}
+  \item get\_noise\_data() (mwavepy.touchstone.touchstone method), \hyperpage{47}
+  \item get\_noise\_names() (mwavepy.touchstone.touchstone method), \hyperpage{47}
+  \item get\_sparameter\_arrays() (mwavepy.touchstone.touchstone method), \hyperpage{47}
+  \item get\_sparameter\_data() (mwavepy.touchstone.touchstone method), \hyperpage{47}
+  \item get\_sparameter\_names() (mwavepy.touchstone.touchstone method), \hyperpage{47}
   \item guess\_length\_of\_delay\_short() (in module mwavepy.calibration.calibrationAlgorithms), 
-		\hyperpage{56}
+		\hyperpage{58}
   \item guess\_length\_of\_delay\_short() (mwavepy.media.media.Media method), \hyperpage{50}
 
   \indexspace
   \bigletter I
-  \item impedance\_mismatch() (in module mwavepy.network), \hyperpage{41}
+  \item impedance\_mismatch() (in module mwavepy.network), \hyperpage{42}
   \item impedance\_mismatch() (mwavepy.media.media.Media method), \hyperpage{50}
-  \item inductor() (mwavepy.media.media.Media method), \hyperpage{50}
+  \item inductor() (mwavepy.media.media.Media method), \hyperpage{51}
   \item INF (mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard attribute), 
-		\hyperpage{61}
+		\hyperpage{63}
   \item innerconnect() (in module mwavepy.network), \hyperpage{42}
   \item innerconnect\_s() (in module mwavepy.network), \hyperpage{42}
   \item input\_impedance\_2\_reflection\_coefficient() (in module mwavepy.tlineFunctions), 
@@ -144,22 +150,22 @@
 
   \indexspace
   \bigletter K
-  \item k0 (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{53}
-  \item k1 (mwavepy.media.cpw.CPW attribute), \hyperpage{47}
-  \item K\_ratio (mwavepy.media.cpw.CPW attribute), \hyperpage{47}
-  \item kc (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{53}
-  \item kx (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{53}
-  \item ky (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{53}
-  \item kz() (mwavepy.media.rectangularWaveguide.RectangularWaveguide method), \hyperpage{53}
+  \item k0 (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{54}
+  \item k1 (mwavepy.media.cpw.CPW attribute), \hyperpage{48}
+  \item K\_ratio (mwavepy.media.cpw.CPW attribute), \hyperpage{48}
+  \item kc (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{54}
+  \item kx (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{54}
+  \item ky (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{54}
+  \item kz() (mwavepy.media.rectangularWaveguide.RectangularWaveguide method), \hyperpage{54}
 
   \indexspace
   \bigletter L
   \item labelXAxis() (mwavepy.frequency.Frequency method), \hyperpage{34}
   \item legend\_off() (in module mwavepy.convenience), \hyperpage{33}
-  \item line() (mwavepy.media.media.Media method), \hyperpage{50}
+  \item line() (mwavepy.media.media.Media method), \hyperpage{51}
   \item Line\_UnknownLength (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{60}
-  \item load() (mwavepy.media.media.Media method), \hyperpage{50}
+		\hyperpage{62}
+  \item load() (mwavepy.media.media.Media method), \hyperpage{51}
   \item load\_all\_touchstones() (in module mwavepy.network), \hyperpage{42}
   \item load\_file() (mwavepy.touchstone.touchstone method), \hyperpage{47}
 
@@ -167,41 +173,41 @@
   \bigletter M
   \item magnitude\_2\_db() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item match() (mwavepy.media.media.Media method), \hyperpage{51}
-  \item mean\_residuals() (mwavepy.calibration.calibration.Calibration method), \hyperpage{54}
+  \item mean\_residuals() (mwavepy.calibration.calibration.Calibration method), \hyperpage{55}
   \item Media (class in mwavepy.media.media), \hyperpage{49}
-  \item mu (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{53}
+  \item mu (mwavepy.media.rectangularWaveguide.RectangularWaveguide attribute), \hyperpage{54}
   \item multiplier (mwavepy.frequency.Frequency attribute), \hyperpage{34}
   \item multiply\_noise() (mwavepy.network.Network method), \hyperpage{37}
   \item mwavepy.\_\_init\_\_ (module), \hyperpage{33}
   \item mwavepy.calibration (module), \hyperpage{54}
   \item mwavepy.calibration.calibration (module), \hyperpage{54}
-  \item mwavepy.calibration.calibrationAlgorithms (module), \hyperpage{56}
-  \item mwavepy.calibration.parametricStandard (module), \hyperpage{59}
-  \item mwavepy.calibration.parametricStandard.generic (module), \hyperpage{59}
-  \item mwavepy.calibration.parametricStandard.parametricStandard (module), \hyperpage{61}
-  \item mwavepy.calibration.parametricStandard.rectangularWaveguide (module), \hyperpage{62}
+  \item mwavepy.calibration.calibrationAlgorithms (module), \hyperpage{58}
+  \item mwavepy.calibration.parametricStandard (module), \hyperpage{61}
+  \item mwavepy.calibration.parametricStandard.generic (module), \hyperpage{61}
+  \item mwavepy.calibration.parametricStandard.parametricStandard (module), \hyperpage{63}
+  \item mwavepy.calibration.parametricStandard.rectangularWaveguide (module), \hyperpage{64}
   \item mwavepy.convenience (module), \hyperpage{33}
   \item mwavepy.frequency (module), \hyperpage{33}
   \item mwavepy.mathFunctions (module), \hyperpage{34}
   \item mwavepy.media (module), \hyperpage{47}
   \item mwavepy.media.cpw (module), \hyperpage{47}
-  \item mwavepy.media.distributedCircuit (module), \hyperpage{47}
-  \item mwavepy.media.freespace (module), \hyperpage{48}
+  \item mwavepy.media.distributedCircuit (module), \hyperpage{48}
+  \item mwavepy.media.freespace (module), \hyperpage{49}
   \item mwavepy.media.media (module), \hyperpage{49}
   \item mwavepy.media.rectangularWaveguide (module), \hyperpage{53}
   \item mwavepy.network (module), \hyperpage{36}
-  \item mwavepy.plotting (module), \hyperpage{43}
-  \item mwavepy.tlineFunctions (module), \hyperpage{43}
-  \item mwavepy.touchstone (module), \hyperpage{46}
-  \item mwavepy.virtualInstruments (module), \hyperpage{62}
-  \item mwavepy.virtualInstruments.futekLoadCell (module), \hyperpage{62}
-  \item mwavepy.virtualInstruments.generalSocketReader (module), \hyperpage{63}
+  \item mwavepy.plotting (module), \hyperpage{44}
+  \item mwavepy.tlineFunctions (module), \hyperpage{44}
+  \item mwavepy.touchstone (module), \hyperpage{47}
+  \item mwavepy.virtualInstruments (module), \hyperpage{64}
+  \item mwavepy.virtualInstruments.futekLoadCell (module), \hyperpage{64}
+  \item mwavepy.virtualInstruments.generalSocketReader (module), \hyperpage{64}
 
   \indexspace
   \bigletter N
   \item Network (class in mwavepy.network), \hyperpage{36}
   \item network (mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard attribute), 
-		\hyperpage{61}
+		\hyperpage{63}
   \item neuman() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item now\_string() (in module mwavepy.convenience), \hyperpage{33}
   \item np\_2\_db() (in module mwavepy.mathFunctions), \hyperpage{35}
@@ -210,60 +216,60 @@
   \item nudge() (mwavepy.network.Network method), \hyperpage{37}
   \item null() (in module mwavepy.mathFunctions), \hyperpage{35}
   \item number\_of\_parameters (mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard attribute), 
-		\hyperpage{61}
+		\hyperpage{63}
   \item number\_of\_ports (mwavepy.network.Network attribute), \hyperpage{37}
 
   \indexspace
   \bigletter O
-  \item one\_port() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{56}
+  \item one\_port() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{58}
   \item one\_port\_2\_two\_port() (in module mwavepy.network), \hyperpage{42}
-  \item one\_port\_nls() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{57}
+  \item one\_port\_nls() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{59}
   \item open() (mwavepy.media.media.Media method), \hyperpage{51}
   \item output\_from\_cal (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{55}
 
   \indexspace
   \bigletter P
   \item parameter\_array (mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard attribute), 
-		\hyperpage{61}
+		\hyperpage{63}
   \item parameter\_bounds\_array (mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard attribute), 
-		\hyperpage{61}
+		\hyperpage{63}
   \item parameter\_keys (mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard attribute), 
-		\hyperpage{62}
-  \item ParameterBoundsError, \hyperpage{61}
+		\hyperpage{63}
+  \item ParameterBoundsError, \hyperpage{63}
   \item parameterized\_self\_calibration() (in module mwavepy.calibration.calibrationAlgorithms), 
-		\hyperpage{57}
+		\hyperpage{59}
   \item parameterized\_self\_calibration\_bounded() (in module mwavepy.calibration.calibrationAlgorithms), 
-		\hyperpage{57}
+		\hyperpage{59}
   \item parameterized\_self\_calibration\_nls() (in module mwavepy.calibration.calibrationAlgorithms), 
-		\hyperpage{58}
-  \item Parameterless (class in mwavepy.calibration.parametricStandard.generic), \hyperpage{60}
+		\hyperpage{60}
+  \item Parameterless (class in mwavepy.calibration.parametricStandard.generic), \hyperpage{62}
   \item ParametricStandard (class in mwavepy.calibration.parametricStandard.parametricStandard), 
-		\hyperpage{61}
+		\hyperpage{63}
   \item passivity (mwavepy.network.Network attribute), \hyperpage{37}
   \item plot\_coefs\_db() (mwavepy.calibration.calibration.Calibration method), \hyperpage{55}
   \item plot\_complex() (in module mwavepy.convenience), \hyperpage{33}
   \item plot\_polar\_generic() (mwavepy.network.Network method), \hyperpage{37}
   \item plot\_residuals() (mwavepy.calibration.calibration.Calibration method), \hyperpage{55}
-  \item plot\_residuals\_db() (mwavepy.calibration.calibration.Calibration method), \hyperpage{55}
-  \item plot\_residuals\_mag() (mwavepy.calibration.calibration.Calibration method), \hyperpage{55}
+  \item plot\_residuals\_db() (mwavepy.calibration.calibration.Calibration method), \hyperpage{56}
+  \item plot\_residuals\_mag() (mwavepy.calibration.calibration.Calibration method), \hyperpage{56}
   \item plot\_residuals\_smith() (mwavepy.calibration.calibration.Calibration method), 
-		\hyperpage{55}
+		\hyperpage{56}
   \item plot\_s\_all\_db() (mwavepy.network.Network method), \hyperpage{37}
-  \item plot\_s\_complex() (mwavepy.network.Network method), \hyperpage{37}
+  \item plot\_s\_complex() (mwavepy.network.Network method), \hyperpage{38}
   \item plot\_s\_db() (mwavepy.network.Network method), \hyperpage{38}
   \item plot\_s\_deg() (mwavepy.network.Network method), \hyperpage{38}
   \item plot\_s\_deg\_unwrap() (mwavepy.network.Network method), \hyperpage{38}
   \item plot\_s\_deg\_unwrapped() (mwavepy.network.Network method), \hyperpage{38}
   \item plot\_s\_mag() (mwavepy.network.Network method), \hyperpage{38}
   \item plot\_s\_polar() (mwavepy.network.Network method), \hyperpage{38}
-  \item plot\_s\_rad() (mwavepy.network.Network method), \hyperpage{38}
+  \item plot\_s\_rad() (mwavepy.network.Network method), \hyperpage{39}
   \item plot\_s\_rad\_unwrapped() (mwavepy.network.Network method), \hyperpage{39}
   \item plot\_s\_smith() (mwavepy.network.Network method), \hyperpage{39}
-  \item plot\_uncertainty\_bounds() (in module mwavepy.network), \hyperpage{42}
-  \item plot\_uncertainty\_bounds\_s\_deg() (in module mwavepy.network), \hyperpage{42}
+  \item plot\_uncertainty\_bounds() (in module mwavepy.network), \hyperpage{43}
+  \item plot\_uncertainty\_bounds\_s\_deg() (in module mwavepy.network), \hyperpage{43}
   \item plot\_uncertainty\_bounds\_s\_mag() (in module mwavepy.network), \hyperpage{43}
   \item plot\_vs\_frequency\_generic() (mwavepy.network.Network method), \hyperpage{39}
-  \item propagation\_constant (mwavepy.media.media.Media attribute), \hyperpage{51}
+  \item propagation\_constant (mwavepy.media.media.Media attribute), \hyperpage{52}
   \item propagation\_impedance\_2\_distributed\_circuit() (in module mwavepy.tlineFunctions), 
 		\hyperpage{45}
   \item psd2TimeDomain() (in module mwavepy.mathFunctions), \hyperpage{35}
@@ -271,27 +277,27 @@
   \indexspace
   \bigletter R
   \item radian\_2\_degree() (in module mwavepy.mathFunctions), \hyperpage{36}
-  \item rand() (in module mwavepy.calibration.calibration), \hyperpage{56}
-  \item rand() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{58}
+  \item rand() (in module mwavepy.calibration.calibration), \hyperpage{57}
+  \item rand() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{60}
   \item read() (mwavepy.virtualInstruments.futekLoadCell.Futek\_USB210\_pipe method), 
-		\hyperpage{62}
+		\hyperpage{64}
   \item read\_touchstone() (mwavepy.network.Network method), \hyperpage{39}
   \item receive() (mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader method), 
-		\hyperpage{63}
+		\hyperpage{65}
   \item RectangularWaveguide (class in mwavepy.media.rectangularWaveguide), \hyperpage{53}
   \item reflection\_coefficient\_2\_input\_impedance() (in module mwavepy.tlineFunctions), 
 		\hyperpage{45}
   \item reflection\_coefficient\_2\_input\_impedance\_at\_theta() (in module mwavepy.tlineFunctions), 
 		\hyperpage{45}
-  \item reflection\_coefficient\_at\_theta() (in module mwavepy.tlineFunctions), \hyperpage{45}
-  \item residual\_ntwks (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{55}
-  \item residuals (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{55}
-  \item run() (mwavepy.calibration.calibration.Calibration method), \hyperpage{55}
+  \item reflection\_coefficient\_at\_theta() (in module mwavepy.tlineFunctions), \hyperpage{46}
+  \item residual\_ntwks (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{56}
+  \item residuals (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{56}
+  \item run() (mwavepy.calibration.calibration.Calibration method), \hyperpage{56}
 
   \indexspace
   \bigletter S
   \item s (mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard attribute), 
-		\hyperpage{62}
+		\hyperpage{63}
   \item s (mwavepy.network.Network attribute), \hyperpage{39}
   \item s11 (mwavepy.network.Network attribute), \hyperpage{39}
   \item s12 (mwavepy.network.Network attribute), \hyperpage{39}
@@ -299,69 +305,73 @@
   \item s22 (mwavepy.network.Network attribute), \hyperpage{39}
   \item s2t() (in module mwavepy.network), \hyperpage{43}
   \item s\_db (mwavepy.network.Network attribute), \hyperpage{39}
-  \item s\_deg (mwavepy.network.Network attribute), \hyperpage{39}
-  \item s\_deg\_unwrap (mwavepy.network.Network attribute), \hyperpage{39}
+  \item s\_deg (mwavepy.network.Network attribute), \hyperpage{40}
+  \item s\_deg\_unwrap (mwavepy.network.Network attribute), \hyperpage{40}
   \item s\_mag (mwavepy.network.Network attribute), \hyperpage{40}
   \item s\_rad (mwavepy.network.Network attribute), \hyperpage{40}
   \item s\_rad\_unwrap (mwavepy.network.Network attribute), \hyperpage{40}
   \item save\_all\_figs() (in module mwavepy.convenience), \hyperpage{33}
   \item scalar2Complex() (in module mwavepy.mathFunctions), \hyperpage{36}
   \item send() (mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader method), 
-		\hyperpage{63}
-  \item short() (mwavepy.media.media.Media method), \hyperpage{51}
-  \item shunt() (mwavepy.media.media.Media method), \hyperpage{51}
-  \item shunt\_capacitor() (mwavepy.media.media.Media method), \hyperpage{51}
-  \item shunt\_delay\_load() (mwavepy.media.media.Media method), \hyperpage{51}
+		\hyperpage{65}
+  \item short() (mwavepy.media.media.Media method), \hyperpage{52}
+  \item shunt() (mwavepy.media.media.Media method), \hyperpage{52}
+  \item shunt\_capacitor() (mwavepy.media.media.Media method), \hyperpage{52}
+  \item shunt\_delay\_load() (mwavepy.media.media.Media method), \hyperpage{52}
   \item shunt\_delay\_open() (mwavepy.media.media.Media method), \hyperpage{52}
   \item shunt\_delay\_short() (mwavepy.media.media.Media method), \hyperpage{52}
   \item shunt\_inductor() (mwavepy.media.media.Media method), \hyperpage{52}
-  \item skin\_depth() (in module mwavepy.tlineFunctions), \hyperpage{45}
+  \item skin\_depth() (in module mwavepy.tlineFunctions), \hyperpage{46}
   \item SlidingLoad\_UnknownTermination (class in mwavepy.calibration.parametricStandard.parametricStandard), 
-		\hyperpage{62}
-  \item smith() (in module mwavepy.plotting), \hyperpage{43}
+		\hyperpage{63}
+  \item smith() (in module mwavepy.plotting), \hyperpage{44}
   \item splitter() (mwavepy.media.media.Media method), \hyperpage{52}
-  \item surface\_resistivity() (in module mwavepy.tlineFunctions), \hyperpage{45}
+  \item surface\_resistivity() (in module mwavepy.tlineFunctions), \hyperpage{46}
 
   \indexspace
   \bigletter T
   \item t (mwavepy.network.Network attribute), \hyperpage{40}
   \item t2s() (in module mwavepy.network), \hyperpage{43}
-  \item tee() (mwavepy.media.media.Media method), \hyperpage{52}
+  \item tee() (mwavepy.media.media.Media method), \hyperpage{53}
   \item theta() (in module mwavepy.tlineFunctions), \hyperpage{46}
-  \item theta\_2\_d() (mwavepy.media.media.Media method), \hyperpage{52}
-  \item thru() (mwavepy.media.media.Media method), \hyperpage{52}
-  \item touchstone (class in mwavepy.touchstone), \hyperpage{46}
+  \item theta\_2\_d() (mwavepy.media.media.Media method), \hyperpage{53}
+  \item thru() (mwavepy.media.media.Media method), \hyperpage{53}
+  \item total\_error() (mwavepy.calibration.calibration.Calibration method), \hyperpage{56}
+  \item touchstone (class in mwavepy.touchstone), \hyperpage{47}
   \item Ts (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{54}
-  \item two\_port() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{59}
+  \item two\_port() (in module mwavepy.calibration.calibrationAlgorithms), \hyperpage{60}
   \item two\_port\_error\_vector\_2\_Ts() (in module mwavepy.calibration.calibration), 
-		\hyperpage{56}
+		\hyperpage{58}
   \item two\_port\_reflect() (in module mwavepy.network), \hyperpage{43}
-  \item type (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{55}
+  \item type (mwavepy.calibration.calibration.Calibration attribute), \hyperpage{56}
 
   \indexspace
   \bigletter U
+  \item unbiased\_error() (mwavepy.calibration.calibration.Calibration method), \hyperpage{57}
+  \item uncertainty\_per\_standard() (mwavepy.calibration.calibration.Calibration method), 
+		\hyperpage{57}
   \item unit (mwavepy.frequency.Frequency attribute), \hyperpage{34}
   \item UnknownShuntCapacitance (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{60}
+		\hyperpage{62}
   \item UnknownShuntCapacitanceInductance (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{60}
+		\hyperpage{62}
   \item UnknownShuntInductance (class in mwavepy.calibration.parametricStandard.generic), 
-		\hyperpage{61}
+		\hyperpage{62}
   \item unterminate\_switch\_terms() (in module mwavepy.calibration.calibrationAlgorithms), 
-		\hyperpage{59}
+		\hyperpage{61}
   \item update\_axis\_scale() (mwavepy.virtualInstruments.futekLoadCell.FutekMonitor method), 
-		\hyperpage{62}
+		\hyperpage{64}
   \item update\_data() (mwavepy.virtualInstruments.futekLoadCell.FutekMonitor method), 
-		\hyperpage{62}
+		\hyperpage{64}
   \item update\_line() (mwavepy.virtualInstruments.futekLoadCell.FutekMonitor method), 
-		\hyperpage{62}
+		\hyperpage{64}
 
   \indexspace
   \bigletter W
   \item w (mwavepy.frequency.Frequency attribute), \hyperpage{34}
   \item white\_gaussian\_polar() (mwavepy.media.media.Media method), \hyperpage{53}
   \item write() (mwavepy.virtualInstruments.futekLoadCell.Futek\_USB210\_pipe method), 
-		\hyperpage{62}
+		\hyperpage{64}
   \item write\_dict\_of\_networks() (in module mwavepy.network), \hyperpage{43}
   \item write\_touchstone() (mwavepy.network.Network method), \hyperpage{40}
 
@@ -375,9 +385,9 @@
   \item Z (mwavepy.media.distributedCircuit.DistributedCircuit attribute), \hyperpage{48}
   \item z0 (mwavepy.media.media.Media attribute), \hyperpage{53}
   \item z0 (mwavepy.network.Network attribute), \hyperpage{40}
-  \item Z0() (mwavepy.media.cpw.CPW method), \hyperpage{47}
+  \item Z0() (mwavepy.media.cpw.CPW method), \hyperpage{48}
   \item Z0() (mwavepy.media.distributedCircuit.DistributedCircuit method), \hyperpage{48}
-  \item Z0() (mwavepy.media.rectangularWaveguide.RectangularWaveguide method), \hyperpage{53}
+  \item Z0() (mwavepy.media.rectangularWaveguide.RectangularWaveguide method), \hyperpage{54}
   \item zl\_2\_Gamma0() (in module mwavepy.tlineFunctions), \hyperpage{46}
   \item zl\_2\_Gamma\_in() (in module mwavepy.tlineFunctions), \hyperpage{46}
   \item zl\_2\_zin() (in module mwavepy.tlineFunctions), \hyperpage{46}

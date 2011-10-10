@@ -12,7 +12,7 @@
 \usepackage{epstopdf}
 
 \title{mwavepy Documentation}
-\date{September 25, 2011}
+\date{October 10, 2011}
 \release{1.4}
 \author{alex arsenovic}
 \newcommand{\sphinxlogo}{}
@@ -1627,6 +1627,25 @@ nothing
 
 \end{fulllineitems}
 
+\index{add\_noise\_polar\_flatband() (mwavepy.network.Network method)}
+
+\begin{fulllineitems}
+\phantomsection\label{api/mwavepy:mwavepy.network.Network.add_noise_polar_flatband}\pysiglinewithargsret{\bfcode{add\_noise\_polar\_flatband}}{\emph{mag\_dev}, \emph{phase\_dev}, \emph{**kwargs}}{}
+adds a flatband complex zero-mean gaussian white-noise signal of
+given standard deviations for magnitude and phase
+\begin{description}
+\item[{takes:}] \leavevmode
+mag\_mag: standard deviation of magnitude
+phase\_dev: standard deviation of phase {[}in degrees{]}
+n\_ports: number of ports. defualt to 1
+
+\item[{returns:}] \leavevmode
+nothing
+
+\end{description}
+
+\end{fulllineitems}
+
 \index{change\_frequency() (mwavepy.network.Network method)}
 
 \begin{fulllineitems}
@@ -2365,6 +2384,38 @@ invert the ports of a networks s-matrix, `flipping' it over
 \begin{description}
 \item[{note:}] \leavevmode
 only works for 2-ports at the moment
+
+\end{description}
+
+\end{fulllineitems}
+
+\index{fon() (in module mwavepy.network)}
+
+\begin{fulllineitems}
+\phantomsection\label{api/mwavepy:mwavepy.network.fon}\pysiglinewithargsret{\code{mwavepy.network.}\bfcode{fon}}{\emph{ntwk\_list}, \emph{func}, \emph{attribute='s'}, \emph{*args}, \emph{**kwargs}}{}
+Applies a function to some attribute of aa list of networks, and 
+returns the result in the form of a Network. This means information 
+that may not be s-parameters is stored in the s-matrix of the
+returned Network.
+\begin{description}
+\item[{takes:}] \leavevmode
+ntwk\_list: list of mwavepy.Network types
+func: function to operate on ntwk\_list s-matrices
+attribute: attribute of Network's  in ntwk\_list for func to act on
+{\color{red}\bfseries{}*}args: passed to func
+{\color{red}\bfseries{}**}kwargs: passed to func
+
+\item[{returns:}] \leavevmode\begin{description}
+\item[{mwavepy.Network type, with s-matrix the result of func, }] \leavevmode
+operating on ntwk\_list's s-matrices
+
+\end{description}
+
+\item[{example:}] \leavevmode\begin{description}
+\item[{averaging can be implemented with func\_on\_networks by }] \leavevmode
+func\_on\_networks(ntwk\_list,mean)
+
+\end{description}
 
 \end{description}
 
@@ -4115,6 +4166,40 @@ are the filenames.
 
 \end{fulllineitems}
 
+\index{biased\_error() (mwavepy.calibration.calibration.Calibration method)}
+
+\begin{fulllineitems}
+\phantomsection\label{api/mwavepy.calibration:mwavepy.calibration.calibration.Calibration.biased_error}\pysiglinewithargsret{\bfcode{biased\_error}}{\emph{std\_names}}{}
+estimate of biased error for overdetermined calibration with
+multiple connections of each standard
+\begin{description}
+\item[{takes:}] \leavevmode\begin{description}
+\item[{std\_names: list of strings to uniquely identify each}] \leavevmode
+standard.*
+
+\end{description}
+
+\item[{returns:}] \leavevmode\begin{description}
+\item[{systematic error: mwavepy.Network type who's .s\_mag is }] \leavevmode
+proportional to the systematic error metric
+
+\end{description}
+
+\item[{note:}] \leavevmode\begin{description}
+\item[{mathematically, this is }] \leavevmode
+mean\_s({\color{red}\bfseries{}\textbar{}mean\_c(r)\textbar{}})
+
+\item[{where:}] \leavevmode
+r: complex residual errors
+mean\_c: complex mean taken accross connection
+mean\_s: complex mean taken accross standard
+
+\end{description}
+
+\end{description}
+
+\end{fulllineitems}
+
 \index{coefs (mwavepy.calibration.calibration.Calibration attribute)}
 
 \begin{fulllineitems}
@@ -4242,7 +4327,15 @@ see plot\_residuals
 \begin{fulllineitems}
 \phantomsection\label{api/mwavepy.calibration:mwavepy.calibration.calibration.Calibration.residual_ntwks}\pysigline{\bfcode{residual\_ntwks}}{}
 returns a the residuals for each calibration standard in the 
-form of a list of Network types
+form of a list of Network types.
+\begin{description}
+\item[{note:}] \leavevmode
+the residuals are only calculated if they are not existent.
+
+\end{description}
+
+so, if you want to re-calculate the residual networks then 
+you delete the property `\_residual\_ntwks'.
 
 \end{fulllineitems}
 
@@ -4275,6 +4368,44 @@ re-run the calibration use this.
 
 \end{fulllineitems}
 
+\index{total\_error() (mwavepy.calibration.calibration.Calibration method)}
+
+\begin{fulllineitems}
+\phantomsection\label{api/mwavepy.calibration:mwavepy.calibration.calibration.Calibration.total_error}\pysiglinewithargsret{\bfcode{total\_error}}{\emph{std\_names}}{}
+estimate of total error for overdetermined calibration with
+multiple connections of each standard. This is the combined 
+effects of both biased and un-biased errors
+\begin{description}
+\item[{takes:}] \leavevmode\begin{description}
+\item[{std\_names: list of strings to uniquely identify each}] \leavevmode
+standard.*
+
+\end{description}
+
+\item[{returns:}] \leavevmode\begin{description}
+\item[{composit error: mwavepy.Network type who's .s\_mag is }] \leavevmode
+proportional to the composit error metric
+
+\end{description}
+
+\item[{note:}] \leavevmode\begin{description}
+\item[{mathematically, this is }] \leavevmode
+std\_cs(r)
+
+\item[{where:}] \leavevmode
+r: complex residual errors
+std\_cs: standard deviation taken accross connections
+\begin{quote}
+
+and standards
+\end{quote}
+
+\end{description}
+
+\end{description}
+
+\end{fulllineitems}
+
 \index{type (mwavepy.calibration.calibration.Calibration attribute)}
 
 \begin{fulllineitems}
@@ -4293,6 +4424,78 @@ delay-shorts.
 
 note:
 algorithms referenced by  calibration\_algorithm\_dict
+
+\end{fulllineitems}
+
+\index{unbiased\_error() (mwavepy.calibration.calibration.Calibration method)}
+
+\begin{fulllineitems}
+\phantomsection\label{api/mwavepy.calibration:mwavepy.calibration.calibration.Calibration.unbiased_error}\pysiglinewithargsret{\bfcode{unbiased\_error}}{\emph{std\_names}}{}
+estimate of unbiased error for overdetermined calibration with
+multiple connections of each standard
+\begin{description}
+\item[{takes:}] \leavevmode\begin{description}
+\item[{std\_names: list of strings to uniquely identify each}] \leavevmode
+standard.*
+
+\end{description}
+
+\item[{returns:}] \leavevmode\begin{description}
+\item[{stochastic error: mwavepy.Network type who's .s\_mag is }] \leavevmode
+proportional to the stochastic error metric
+
+\end{description}
+
+\item[{see also:}] \leavevmode
+uncertainty\_per\_standard, for this a measure of unbiased 
+errors for each standard
+
+\item[{note:}] \leavevmode\begin{description}
+\item[{mathematically, this is }] \leavevmode
+mean\_s(std\_c(r))
+
+\item[{where:}] \leavevmode
+r: complex residual errors
+std\_c: standard deviation taken accross  connections
+mean\_s: complex mean taken accross  standards
+
+\end{description}
+
+\end{description}
+
+\end{fulllineitems}
+
+\index{uncertainty\_per\_standard() (mwavepy.calibration.calibration.Calibration method)}
+
+\begin{fulllineitems}
+\phantomsection\label{api/mwavepy.calibration:mwavepy.calibration.calibration.Calibration.uncertainty_per_standard}\pysiglinewithargsret{\bfcode{uncertainty\_per\_standard}}{\emph{std\_names}, \emph{attribute='s'}}{}
+given that you have repeat-connections of single standards, 
+this calculates the complex standard deviation (distance) 
+for each standard in the calibration across connection \#.
+\begin{description}
+\item[{takes:}] \leavevmode\begin{description}
+\item[{std\_names: list of strings to uniquely identify each}] \leavevmode
+standard.*
+
+\item[{attribute: string passed to func\_on\_networks to calculate }] \leavevmode
+std deviation on a component if desired. {[}'s'{]}
+
+\end{description}
+
+\item[{returns:}] \leavevmode
+list of mwavepy.Networks, whose magnitude of s-parameters is
+proportional to the standard deviation for that standard
+
+\item[{{\color{red}\bfseries{}*}example:}] \leavevmode\begin{description}
+\item[{if your calibration had ideals named like:}] \leavevmode
+`short 1', `short 2', `open 1', `open 2', etc.
+
+\item[{you would pass this}] \leavevmode
+mycal.uncertainty\_per\_standard({[}'short','open','match'{]})
+
+\end{description}
+
+\end{description}
 
 \end{fulllineitems}
 

@@ -46,35 +46,35 @@
 \contentsline {subsection}{\numberline {7.1.3}\texttt {frequency} Module}{33}{subsection.7.1.3}
 \contentsline {subsection}{\numberline {7.1.4}\texttt {mathFunctions} Module}{34}{subsection.7.1.4}
 \contentsline {subsection}{\numberline {7.1.5}\texttt {network} Module}{36}{subsection.7.1.5}
-\contentsline {subsection}{\numberline {7.1.6}\texttt {plotting} Module}{43}{subsection.7.1.6}
-\contentsline {subsection}{\numberline {7.1.7}\texttt {tlineFunctions} Module}{43}{subsection.7.1.7}
-\contentsline {subsection}{\numberline {7.1.8}\texttt {touchstone} Module}{46}{subsection.7.1.8}
+\contentsline {subsection}{\numberline {7.1.6}\texttt {plotting} Module}{44}{subsection.7.1.6}
+\contentsline {subsection}{\numberline {7.1.7}\texttt {tlineFunctions} Module}{44}{subsection.7.1.7}
+\contentsline {subsection}{\numberline {7.1.8}\texttt {touchstone} Module}{47}{subsection.7.1.8}
 \contentsline {subsection}{\numberline {7.1.9}Subpackages}{47}{subsection.7.1.9}
-\contentsline {subsubsection}{media Package}{47}{subsubsection*.132}
-\contentsline {paragraph}{\texttt {media} Package}{47}{paragraph*.133}
-\contentsline {paragraph}{\texttt {cpw} Module}{47}{paragraph*.135}
-\contentsline {paragraph}{\texttt {distributedCircuit} Module}{47}{paragraph*.143}
-\contentsline {paragraph}{\texttt {freespace} Module}{48}{paragraph*.150}
-\contentsline {paragraph}{\texttt {media} Module}{49}{paragraph*.152}
-\contentsline {paragraph}{\texttt {rectangularWaveguide} Module}{53}{paragraph*.181}
-\contentsline {subsubsection}{calibration Package}{54}{subsubsection*.191}
-\contentsline {paragraph}{\texttt {calibration} Package}{54}{paragraph*.192}
-\contentsline {paragraph}{\texttt {calibration} Module}{54}{paragraph*.194}
-\contentsline {paragraph}{\texttt {calibrationAlgorithms} Module}{56}{paragraph*.218}
-\contentsline {paragraph}{Subpackages}{59}{paragraph*.230}
-\contentsline {subparagraph}{parametricStandard Package}{59}{subparagraph*.231}
-\contentsline {subparagraph}{\texttt {parametricStandard} Package}{59}{subparagraph*.232}
-\contentsline {subparagraph}{\texttt {generic} Module}{59}{subparagraph*.234}
-\contentsline {subparagraph}{\texttt {parametricStandard} Module}{61}{subparagraph*.245}
-\contentsline {subparagraph}{\texttt {rectangularWaveguide} Module}{62}{subparagraph*.256}
-\contentsline {subsubsection}{virtualInstruments Package}{62}{subsubsection*.257}
-\contentsline {paragraph}{\texttt {virtualInstruments} Package}{62}{paragraph*.258}
-\contentsline {paragraph}{\texttt {futekLoadCell} Module}{62}{paragraph*.260}
-\contentsline {paragraph}{\texttt {generalSocketReader} Module}{63}{paragraph*.272}
-\contentsline {paragraph}{\texttt {lifetimeProbeTester} Module}{63}{paragraph*.279}
-\contentsline {paragraph}{\texttt {lifetimeProbeTesterFunctions} Module}{63}{paragraph*.280}
-\contentsline {paragraph}{\texttt {stages} Module}{63}{paragraph*.281}
-\contentsline {paragraph}{\texttt {vna} Module}{63}{paragraph*.282}
-\contentsline {chapter}{\numberline {8}Indices and tables}{65}{chapter.8}
-\contentsline {chapter}{Python Module Index}{67}{section*.283}
-\contentsline {chapter}{Index}{69}{section*.284}
+\contentsline {subsubsection}{media Package}{47}{subsubsection*.134}
+\contentsline {paragraph}{\texttt {media} Package}{47}{paragraph*.135}
+\contentsline {paragraph}{\texttt {cpw} Module}{47}{paragraph*.137}
+\contentsline {paragraph}{\texttt {distributedCircuit} Module}{48}{paragraph*.145}
+\contentsline {paragraph}{\texttt {freespace} Module}{49}{paragraph*.152}
+\contentsline {paragraph}{\texttt {media} Module}{49}{paragraph*.154}
+\contentsline {paragraph}{\texttt {rectangularWaveguide} Module}{53}{paragraph*.183}
+\contentsline {subsubsection}{calibration Package}{54}{subsubsection*.193}
+\contentsline {paragraph}{\texttt {calibration} Package}{54}{paragraph*.194}
+\contentsline {paragraph}{\texttt {calibration} Module}{54}{paragraph*.196}
+\contentsline {paragraph}{\texttt {calibrationAlgorithms} Module}{58}{paragraph*.224}
+\contentsline {paragraph}{Subpackages}{61}{paragraph*.236}
+\contentsline {subparagraph}{parametricStandard Package}{61}{subparagraph*.237}
+\contentsline {subparagraph}{\texttt {parametricStandard} Package}{61}{subparagraph*.238}
+\contentsline {subparagraph}{\texttt {generic} Module}{61}{subparagraph*.240}
+\contentsline {subparagraph}{\texttt {parametricStandard} Module}{63}{subparagraph*.251}
+\contentsline {subparagraph}{\texttt {rectangularWaveguide} Module}{64}{subparagraph*.262}
+\contentsline {subsubsection}{virtualInstruments Package}{64}{subsubsection*.263}
+\contentsline {paragraph}{\texttt {virtualInstruments} Package}{64}{paragraph*.264}
+\contentsline {paragraph}{\texttt {futekLoadCell} Module}{64}{paragraph*.266}
+\contentsline {paragraph}{\texttt {generalSocketReader} Module}{64}{paragraph*.278}
+\contentsline {paragraph}{\texttt {lifetimeProbeTester} Module}{65}{paragraph*.285}
+\contentsline {paragraph}{\texttt {lifetimeProbeTesterFunctions} Module}{65}{paragraph*.286}
+\contentsline {paragraph}{\texttt {stages} Module}{65}{paragraph*.287}
+\contentsline {paragraph}{\texttt {vna} Module}{65}{paragraph*.288}
+\contentsline {chapter}{\numberline {8}Indices and tables}{67}{chapter.8}
+\contentsline {chapter}{Python Module Index}{69}{section*.289}
+\contentsline {chapter}{Index}{71}{section*.290}
