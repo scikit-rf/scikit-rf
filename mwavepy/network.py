@@ -1088,9 +1088,10 @@ def connect(ntwkA, k, ntwkB,l):
 	# account for port impedance mis-match by inserting a two-port 
 	# network at the connection. if ports are matched this becomes a 
 	# thru
-	ntwkC.s = connect_s(\
-		ntwkA.s,k, \
-		impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
+	if not (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all():
+		ntwkC.s = connect_s(\
+			ntwkA.s,k, \
+			impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
 			
 	ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
 	ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
