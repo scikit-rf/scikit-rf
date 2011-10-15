@@ -270,7 +270,7 @@ class Calibration(object):
 			return self._residual_ntwks
 		else:
 			ntwk_list=\
-				[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \
+				[ ((self.apply_cal(self.measured[k]))-self.ideals[k]) \
 					for k in range(len(self.ideals))]
 			
 			for k in range(len(ntwk_list)):
@@ -532,7 +532,7 @@ class Calibration(object):
 		'''
 		biased_error= \
 			fon([fon( [ntwk for ntwk in self.residual_ntwks \
-				if ntwk.name==std_name],mean) \
+				if std_name in ntwk.name],mean) \
 				for std_name in std_names],mean, 's_mag')
 		biased_error.name='biased error'
 		return biased_error
@@ -563,7 +563,7 @@ class Calibration(object):
 		'''
 		unbiased_error= \
 			fon([fon( [ntwk for ntwk in self.residual_ntwks \
-				if ntwk.name==std_name],std) \
+				if std_name in ntwk.name],std) \
 				for std_name in std_names],mean)
 		unbiased_error.name = 'unbiased error'
 		return unbiased_error

@@ -463,17 +463,17 @@ class HP8510C(GpibInstrument):
 		if you are taking multiple sweeps, and want the sweep timing to
 		work, put the turn continuous mode off. like pnax.continuous='off'
 		'''
-		tmp_continuous = self.continuous
-		if self.continuous:
-			tmp_continuous =True
-			self.continuous = False
+		#tmp_continuous = self.continuous
+		#if self.continuous:
+		#	tmp_continuous =True
+		self.continuous = False
 		s = npy.array(self.ask_for_values('OUTPDATA'))
 		s.shape=(-1,2)
 		s =  s[:,0]+1j*s[:,1]
 		ntwk = Network()
 		ntwk.s = s
 		ntwk.frequency= self.frequency 
-		self.continuous  = tmp_continuous
+		#self.continuous  = tmp_continuous
 		return ntwk
 
 	@property
