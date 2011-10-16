@@ -53,27 +53,3 @@ def cartesian_product_calibration_ensemble( ideals, measured):
 	return [Calibration(ideals =ideals, measured = list(product_element))\
 		for product_element in measured_product]
 
-def calibration_from_names( ideals, measured):
-	'''
-	Creates a Calibration from unordered and possibly different length 
-	lists of ideal and measured Networks. The elements of each list 
-	are aligned to each other based on their names. the ideal Network's
-	must have uniquely identifying names which are sub-strings of the 
-	measured Network's names. 
-		you can have more than one measured Network corresponding to a
-	single ideal, in which case this will use multiple copies of that 
-	ideal network.
-	
-	takes:
-		ideals: list of ideal Networks
-		measured: list of measured Networks
-	
-	returns:
-		cal: Calibration instance
-	'''
-	# this creates a 2D nested list. first level is a the standard, 
-	# the second level is the instance of the standard
-	ideals_new = \
-		[ ideal for ideal in ideals for measure in measured if ideal.name in measure.name]
-	
-	return Calibration(ideals = ideals_new, measured = measured)

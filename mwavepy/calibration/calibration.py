@@ -64,7 +64,8 @@ class Calibration(object):
 		}
 	
 	def __init__(self,measured, ideals, type=None, frequency=None,\
-		is_reciprocal=False,switch_terms=None, name=None,**kwargs):
+		is_reciprocal=False,switch_terms=None, name=None, sloppy_input=False,
+		**kwargs):
 		'''
 		Calibration initializer.
 		
@@ -120,7 +121,7 @@ class Calibration(object):
 		self.switch_terms = switch_terms
 		self._residual_ntwks = None
 		self.has_run = False
-		
+		self.sloppy_input= sloppy_input
 
 	## properties
 	@property 
@@ -299,9 +300,15 @@ class Calibration(object):
 		# some basic checking to make sure they gave us consistent data
 		if self.type == 'one port' or self.type == 'two port':
 			
-			#1 did they supply the same number of  ideals as measured?
-			if len(self.measured) != len(self.ideals):
-				raise(IndexError(' The length of measured and ideals lists are different. Number of ideals must equal the number of measured. '))
+			if self.sloppy_input == True:
+				# if they gave sloppy input try to align networks based
+				# on their names 
+				self.ideals= [ ideal for ideal in self.ideals \
+					for measure in self.measured if ideal.name in measure.name]
+			else:
+				#1 did they supply the same number of  ideals as measured?
+				if len(self.measured) != len(self.ideals):
+					raise(IndexError(' The length of measured and ideals lists are different. Number of ideals must equal the number of measured. '))
 			
 			#2 are all the networks' frequency's the same? 
 			index_tuple = \
