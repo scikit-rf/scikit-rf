@@ -482,7 +482,7 @@ class Calibration(object):
 				
 		return func_on_networks(ntwk_list, mean, 's_mag')
 	
-	def uncertainty_per_standard(self, std_names, attribute='s'):
+	def uncertainty_per_standard(self, std_names=None, attribute='s'):
 		'''
 		given that you have repeat-connections of single standards, 
 		this calculates the complex standard deviation (distance) 
@@ -506,11 +506,13 @@ class Calibration(object):
 				mycal.uncertainty_per_standard(['short','open','match'])
 		
 		'''
+		if std_names is None:
+			std_names = set([ntwk.name for ntwk in self.ideals])
 		return [fon([r for r in self.residual_ntwks \
 			if std_name in r.name],std,attribute) \
 			for std_name in std_names]
 	
-	def biased_error(self, std_names):
+	def biased_error(self, std_names=None):
 		'''
 		estimate of biased error for overdetermined calibration with
 		multiple connections of each standard
@@ -530,6 +532,8 @@ class Calibration(object):
 				mean_c: complex mean taken accross connection
 				mean_s: complex mean taken accross standard
 		'''
+		if std_names is None:
+			std_names = set([ntwk.name for ntwk in self.ideals])
 		biased_error= \
 			fon([fon( [ntwk for ntwk in self.residual_ntwks \
 				if std_name in ntwk.name],mean) \
@@ -537,7 +541,7 @@ class Calibration(object):
 		biased_error.name='biased error'
 		return biased_error
 	
-	def unbiased_error(self, std_names):
+	def unbiased_error(self, std_names=None):
 		'''
 		estimate of unbiased error for overdetermined calibration with
 		multiple connections of each standard
@@ -561,6 +565,8 @@ class Calibration(object):
 				std_c: standard deviation taken accross  connections
 				mean_s: complex mean taken accross  standards
 		'''
+		if std_names is None:
+			std_names = set([ntwk.name for ntwk in self.ideals])
 		unbiased_error= \
 			fon([fon( [ntwk for ntwk in self.residual_ntwks \
 				if std_name in ntwk.name],std) \
@@ -568,7 +574,7 @@ class Calibration(object):
 		unbiased_error.name = 'unbiased error'
 		return unbiased_error
 		
-	def total_error(self, std_names):
+	def total_error(self, std_names=None):
 		'''
 		estimate of total error for overdetermined calibration with
 		multiple connections of each standard. This is the combined 
@@ -589,6 +595,8 @@ class Calibration(object):
 				std_cs: standard deviation taken accross connections
 					and standards
 		'''	
+		if std_names is None:
+			std_names = set([ntwk.name for ntwk in self.ideals])
 		total_error= \
 			fon([ntwk for ntwk in self.residual_ntwks],mean,'s_mag') 
 		total_error.name='total error'
