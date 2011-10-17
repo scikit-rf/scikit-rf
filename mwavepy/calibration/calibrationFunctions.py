@@ -37,10 +37,9 @@ def cartesian_product_calibration_ensemble( ideals, measured, *args, **kwargs):
 	of all instances of each measured standard.
 	
 	The idea is that if you have multiple measurements of each standard,
-	then the multiple calibrations can be made, by generating all possible
-	combinations of measurements.  This yields a simple way to estimate 
-	calibration uncertainty. This is similiar to a technique described 
-	in 'De-embeding and	Un-terminating' by Penfield and Baurer. 
+	then the multiple calibrations can be made by generating all possible
+	combinations of measurements.  This produces a conceptually simple,
+	but computationally expensive way to estimate calibration uncertainty. 
 	
 	
 		
@@ -77,14 +76,20 @@ def cartesian_product_calibration_ensemble( ideals, measured, *args, **kwargs):
 
 def subset_calibration_ensemble( ideals, measured, n,  *args, **kwargs):
 	'''
-	This is similiar to a technique described in 'De-embeding and
+	Produces a ensemble of calibration instances based on choosing
+	sub-sets of the ideal/measurement lists from an overdetermined 
+	calibration. This concept is described in 'De-embeding and 
 	Un-terminating' by Penfield and Baurer. 
 	
+	so, if the calibration ideals and measured lists have length 'm' 
+	then the resultant ensemble of calibrations is 'm choose n' long.
 	
 		
 	takes:
 		ideals: list of ideal Networks
 		measured: list of measured Networks
+		n: length of ideal/measured lists to pass to calibrations
+			(must be < len(ideals) )
 		*args,**kwargs: passed to Calibration initializer
 	
 	returns:
