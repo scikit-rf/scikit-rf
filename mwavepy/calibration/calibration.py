@@ -44,15 +44,12 @@ from ..convenience import *
 ## main class
 class Calibration(object):
 	'''
-	Represents a calibration instance, a class to hold sets
-	of measurements, ideals, and calibration results.
+	Represents a Calibration object, which can run a calibration 
+	algorithm, store results, and apply calibration to measurements. 
 	
 	see init for more information on usage. 
 	
-	note:
-	all calibration algorithms are in calibrationAlgorithms.py, and are
-	referenced by the dictionary in this object called
-	'calibration_algorihtm_dict'
+
 	'''
 	calibration_algorithm_dict={\
 		'one port': one_port,\
@@ -100,13 +97,21 @@ class Calibration(object):
 			switch_terms: tuple holding the two measured switch terms in
 				the order (forward, reverse) [None]. the tuple elements
 				 should	be Network types. (note: is only used in two-port
-				  calibrations)
+				  calibrations). (see roger mark's paper on switch terms)
 
 			name: string holding the name of calibration, just for your
 				convenience [None].
-				
+			
+			sloppy_input: a Boolean. Allows ideals and measured lists to
+				be 'aligned' based on the network names [False]. Can be
+			
 			**kwargs: key-word arguments passed to the calibration
 				algorithm.
+				
+		note:
+		all calibration algorithms are in calibrationAlgorithms.py, and are
+		referenced by the dictionary in this object called
+		'calibration_algorihtm_dict'
 		'''
 		
 		self.measured = copy(measured)
@@ -292,10 +297,10 @@ class Calibration(object):
 		'''
 		runs the calibration algorihtm.
 		
-		 this is automatically called the
-		first time	any dependent property is referenced (like error_ntwk)
-		, but only the first time. if you change something and want to
-		re-run the calibration use this.  
+		this is automatically called the first time	any dependent 
+		property is referenced (like error_ntwk), but only the first 
+		time. if you change something and want to re-run the calibration
+		 use this.  
 		'''
 		# some basic checking to make sure they gave us consistent data
 		if self.type == 'one port' or self.type == 'two port':
@@ -303,8 +308,8 @@ class Calibration(object):
 			if self.sloppy_input == True:
 				# if they gave sloppy input try to align networks based
 				# on their names 
-				self.ideals= [ ideal for ideal in self.ideals \
-					for measure in self.measured if ideal.name in measure.name]
+				self.ideals= [ ideal for measure in self.measured\
+					for ideal in self.ideals if ideal.name in measure.name]
 			else:
 				#1 did they supply the same number of  ideals as measured?
 				if len(self.measured) != len(self.ideals):
@@ -480,8 +485,16 @@ class Calibration(object):
 		see plot_residuals
 		'''
 		self.plot_residuals(self,attribute='db',*args,**kwargs)	
-
 	
+	def plot_errors(self,std_names =None,*args, **kwargs):
+		'''
+		plot calibration error metrics 
+		
+		'''
+		self.biased_error(std_names).plot_s_mag(*args, **kwargs)
+		self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
+		self.total_error(std_names).plot_s_mag(*args, **kwargs)
+		plb.title('Error Metrics')
 	def mean_residuals(self):
 		ntwk_list=\
 			[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \
