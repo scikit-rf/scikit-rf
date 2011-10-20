@@ -25,7 +25,7 @@ Functions which operate on or pertain to Calibration Objects
 '''
 from itertools import product, combinations
 from calibration import Calibration
-
+from numpy import array
 
 def cartesian_product_calibration_ensemble( ideals, measured, *args, **kwargs):
 	'''
@@ -70,10 +70,30 @@ def cartesian_product_calibration_ensemble( ideals, measured, *args, **kwargs):
 			if ideal.name in measure.name] for ideal in ideals]
 	measured_product = product(*measured_iterable)
 	
-	return [Calibration(ideals =ideals, measured = list(product_element)\
+	return [Calibration(ideals =ideals, measured = list(product_element),\
 		*args, **kwargs)\
 		for product_element in measured_product]
+def zip_calibration_ensemble( ideals, measured, *args, **kwargs):
+	'''
+	
+		
+	takes:
+		ideals: list of ideal Networks
+		measured: list of measured Networks
+		*args,**kwargs: passed to Calibration initializer
+	
+	returns:
+		cal_ensemble: a list of Calibration instances.
+		
+		
 
+	'''
+	measured_iterable = \
+		[[ measure for measure in measured \
+			if ideal.name in measure.name] for ideal in ideals]
+	m_array= array( measured_iterable)
+	return [Calibration(ideals = ideals, measured = list(m_array[:,k]))\
+		for k in range(m_array.shape[1])]
 def subset_calibration_ensemble( ideals, measured, n,  *args, **kwargs):
 	'''
 	Produces a ensemble of calibration instances based on choosing

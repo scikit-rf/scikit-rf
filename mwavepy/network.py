@@ -1231,12 +1231,76 @@ def plot_uncertainty_bounds_s_mag(*args, **kwargs):
 def plot_uncertainty_bounds_s_deg(*args, **kwargs):
 	'''
 	this just calls 
-		plot_uncertainty_bounds(attribute= 's_deg',*args,**kwargs)
+		plot_uncertainty_bounds(attribute= 's_deg_unwrap',*args,**kwargs)
 	see plot_uncertainty_bounds for help
 	
+	note; the attribute 's_deg_unwrap' is called on purpose to alleviate
+	the phase wraping effects on std dev. if you DO want to look at 
+	's_deg' and not 's_deg_unwrap' then use plot_uncertainty_bounds
+	
 	'''
-	kwargs.update({'attribute':'s_deg'})
+	kwargs.update({'attribute':'s_deg_unwrap'})
 	plot_uncertainty_bounds(*args,**kwargs)
+
+def plot_uncertainty_bounds_s_db(ntwk_list,attribute='s_mag',m=0,n=0,\
+	n_deviations=3, alpha=.3,*args,**kwargs):
+	'''
+	plots mean value with +- uncertainty bounds in an Network's attribute
+	for a list of Networks.
+
+	This is plotted on a log scale (db), but uncertainty is calculated 
+	in the linear domain
+
+	takes:
+		ntwk_list: list of Netmwork types [list]
+		attribute: attribute of Network type to analyze [string] 
+		m: first index of attribute matrix [int]
+		n: second index of attribute matrix [int]
+		n_deviations: number of std deviations to plot as bounds [number]
+		alpha: passed to matplotlib.fill_between() command. [number, 0-1]
+		*args,**kwargs: passed to Network.plot_'attribute' command
+		
+	returns:
+		None
+		
+	
+	Caution:
+		 if your list_of_networks is for a calibrated short, then the 
+		std dev of deg_unwrap might blow up, because even though each
+		network is unwrapped, they may fall on either side fo the pi 
+		relative to one another.
+	'''
+	
+	# calculate mean response, and std dev of given attribute
+	ntwk_mean = average(ntwk_list)
+	ntwk_std = func_on_networks(ntwk_list,npy.std, attribute=attribute)
+	
+	# pull out port of interest
+	ntwk_mean.s = ntwk_mean.s[:,m,n]
+	ntwk_std.s = ntwk_std.s[:,m,n]
+	
+	# create bounds (the s_mag here is confusing but is realy in units
+	# of whatever 'attribute' is. read the func_on_networks call to understand
+	upper_bound =  ntwk_mean.__getattribute__(attribute) +\
+		ntwk_std.s_mag*n_deviations
+	lower_bound =   ntwk_mean.__getattribute__(attribute) -\
+		ntwk_std.s_mag*n_deviations
+	
+	#convert to dB
+	upper_bound_db, lower_bound_db = \
+		mf.magnitude_2_db(upper_bound),mf.magnitude_2_db(lower_bound)
+	
+	# find the correct ploting method
+	plot_func = ntwk_mean.plot_s_db
+	
+	#plot mean response
+	plot_func(*args,**kwargs)
+	
+	#plot bounds
+	plb.fill_between(ntwk_mean.frequency.f_scaled, \
+		lower_bound_db.squeeze(),upper_bound_db.squeeze(), alpha=alpha)
+	plb.axis('tight')
+	plb.draw()
 	
 def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
 	n_deviations=3, alpha=.3,*args,**kwargs):
