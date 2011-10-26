@@ -369,6 +369,20 @@ class Network(object):
 
 	# s-parameters convinience properties	
 	@property
+	def s_re(self):
+		'''
+		returns the real part of the s-parameters.
+		'''
+		return npy.real(self.s)
+	
+	@property
+	def s_im(self):
+		'''
+		returns the imaginary part of the s-parameters.
+		'''
+		return npy.imag(self.s)
+		
+	@property
 	def s_mag(self):
 		'''
 		returns the magnitude of the s-parameters.
@@ -754,7 +768,41 @@ class Network(object):
 		self.plot_vs_frequency_generic(attribute= 's_mag',\
 			y_label='Magnitude [not dB]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,*args,**kwargs)
-
+	
+	def plot_s_re(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
+		'''
+		plots the real part of a scattering parameter of indecies m, n
+		
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			*args,**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_re',\
+			y_label='Real Part', m=m,n=n, ax=ax,\
+			show_legend = show_legend,*args,**kwargs)
+			
+	def plot_s_im(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
+		'''
+		plots the imaginary part of a scattering parameter of indecies m, n
+		
+		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			*args,**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_im',\
+			y_label='Imaginary Part', m=m,n=n, ax=ax,\
+			show_legend = show_legend,*args,**kwargs)
+	
 	def plot_s_deg(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
 		plots the phase of a scattering parameter of indecies m, n in
@@ -1243,7 +1291,7 @@ def plot_uncertainty_bounds_s_deg(*args, **kwargs):
 	plot_uncertainty_bounds(*args,**kwargs)
 
 def plot_uncertainty_bounds_s_db(ntwk_list,attribute='s_mag',m=0,n=0,\
-	n_deviations=3, alpha=.3,*args,**kwargs):
+	n_deviations=3, alpha=.3,fill_color ='b',*args,**kwargs):
 	'''
 	plots mean value with +- uncertainty bounds in an Network's attribute
 	for a list of Networks.
@@ -1298,12 +1346,12 @@ def plot_uncertainty_bounds_s_db(ntwk_list,attribute='s_mag',m=0,n=0,\
 	
 	#plot bounds
 	plb.fill_between(ntwk_mean.frequency.f_scaled, \
-		lower_bound_db.squeeze(),upper_bound_db.squeeze(), alpha=alpha)
+		lower_bound_db.squeeze(),upper_bound_db.squeeze(), alpha=alpha, color=fill_color)
 	plb.axis('tight')
 	plb.draw()
 	
 def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
-	n_deviations=3, alpha=.3,*args,**kwargs):
+	n_deviations=3, alpha=.3,fill_color ='b',*args,**kwargs):
 	'''
 	plots mean value with +- uncertainty bounds in an Network attribute,
 	for a list of Networks. 
@@ -1350,7 +1398,7 @@ def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
 	
 	#plot bounds
 	plb.fill_between(ntwk_mean.frequency.f_scaled, \
-		lower_bound.squeeze(),upper_bound.squeeze(), alpha=alpha)
+		lower_bound.squeeze(),upper_bound.squeeze(), alpha=alpha, color=fill_color)
 	plb.axis('tight')
 	plb.draw()
 

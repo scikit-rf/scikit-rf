@@ -75,7 +75,15 @@ def cartesian_product_calibration_ensemble( ideals, measured, *args, **kwargs):
 		for product_element in measured_product]
 def zip_calibration_ensemble( ideals, measured, *args, **kwargs):
 	'''
+	This function is used for calculating calibration uncertainty due 
+	to un-biased, non-systematic errors. 
 	
+	It creates an ensemble of calibration instances. the set  of 
+	measurement lists used in the ensemble is the python 'zip' of measured 
+	and ideal lists. it is equivalent to making a calibration for each
+	connection instance of a measurement.
+	
+	This requires the same number of repeat elements for 
 		
 	takes:
 		ideals: list of ideal Networks
@@ -88,6 +96,13 @@ def zip_calibration_ensemble( ideals, measured, *args, **kwargs):
 		
 
 	'''
+	# this is a way to sort the measured list by alphabetically ordering
+	# of the Network element names
+	measured_range = range(len(measured))
+	name_list = [k.name for k in measured]
+	sorted_index = sorted(measured_range, key = lambda k:name_list[k])
+	measured = [measured[k] for k in sorted_index]
+	
 	measured_iterable = \
 		[[ measure for measure in measured \
 			if ideal.name in measure.name] for ideal in ideals]
