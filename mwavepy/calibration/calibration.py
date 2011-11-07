@@ -495,6 +495,14 @@ class Calibration(object):
 		self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
 		self.total_error(std_names).plot_s_mag(*args, **kwargs)
 		plb.title('Error Metrics')
+		plb.ylabel('Mean Distance')
+	
+	def plot_uncertainty_per_standard(self, *args, **kwargs):
+		plb.title('Uncertainty Per Standard')
+		[ntwk.plot_s_mag() for ntwk in self.uncertainty_per_standard(*args, **kwargs)]
+		plb.ylabel('Mean Distance')
+		
+	
 	def mean_residuals(self):
 		ntwk_list=\
 			[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \

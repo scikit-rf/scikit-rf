@@ -1351,7 +1351,7 @@ def plot_uncertainty_bounds_s_db(ntwk_list,attribute='s_mag',m=0,n=0,\
 	plb.draw()
 	
 def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
-	n_deviations=3, alpha=.3,fill_color ='b',*args,**kwargs):
+	n_deviations=3, alpha=.3,fill_color ='b',std_attribute=None,*args,**kwargs):
 	'''
 	plots mean value with +- uncertainty bounds in an Network attribute,
 	for a list of Networks. 
@@ -1377,7 +1377,10 @@ def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
 	'''
 	# calculate mean response, and std dev of given attribute
 	ntwk_mean = average(ntwk_list)
-	ntwk_std = func_on_networks(ntwk_list,npy.std, attribute=attribute)
+	if std_attribute is None:
+		# they want to calculate teh std deviation on a different attribute
+		std_attribute = attribute
+	ntwk_std = func_on_networks(ntwk_list,npy.std, attribute=std_attribute)
 	
 	# pull out port of interest
 	ntwk_mean.s = ntwk_mean.s[:,m,n]
