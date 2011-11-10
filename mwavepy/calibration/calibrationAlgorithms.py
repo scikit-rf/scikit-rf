@@ -310,7 +310,7 @@ def one_port_nls (measured, ideals):
 
 
 ## TWO PORT
-def two_port(measured, ideals, switchterms = None):
+def two_port(measured, ideals, switch_terms = None):
 	'''
 	two port calibration based on the 8-term error model.  takes two
 	ordered lists of measured and ideal responses. optionally, switch
@@ -357,13 +357,13 @@ def two_port(measured, ideals, switchterms = None):
 	if len (mList) != len(iList):
 		raise ValueError('Number of ideals must == number of measurements')
 	
-	if switchterms is not None:
-		for ntwk in mList:
-			ntwk = unterminate_switch_terms(\
-				two_port = ntwk,\
-				gamma_f = switchterms[0],\
-				gamma_r = switchterms[1],\
-				)
+	if switch_terms is not None:
+		mList = [unterminate_switch_terms(\
+					two_port = ntwk,\
+					gamma_f = switch_terms[0],\
+					gamma_r = switch_terms[1])\
+					for ntwk in mList]
+				
 	
 	# try to access s-parameters, in case its a ntwk type, other wise 
 	# just keep on rollin 

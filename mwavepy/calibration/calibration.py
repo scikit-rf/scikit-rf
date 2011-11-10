@@ -61,7 +61,7 @@ class Calibration(object):
 		}
 	
 	def __init__(self,measured, ideals, type=None, frequency=None,\
-		is_reciprocal=False,switch_terms=None, name=None, sloppy_input=False,
+		is_reciprocal=False,name=None, sloppy_input=False,
 		**kwargs):
 		'''
 		Calibration initializer.
@@ -123,7 +123,7 @@ class Calibration(object):
 		self.kwargs = kwargs
 		self.name = name
 		self.is_reciprocal = is_reciprocal
-		self.switch_terms = switch_terms
+		#self.switch_terms = switch_terms
 		self._residual_ntwks = None
 		self.has_run = False
 		self.sloppy_input= sloppy_input
@@ -392,8 +392,6 @@ class Calibration(object):
 		
 		return ntwkDict
 		
-	
-	#def plot_error_coefs(self):
 
 	## ploting
 	def plot_coefs_db(self,ax=None,show_legend=True,**kwargs):
@@ -420,35 +418,7 @@ class Calibration(object):
 		#draw legend
 		if show_legend:
 			plb.legend()
-	
-	#def plot_residuals_db(self,ax=None,show_legend=True,**kwargs):
-		#'''
-		#plot magnitude of the resdiues, if calibration is
-		 #overdetermined 
-		#'''
 
-		## get current axis if user doesnt supply and axis 
-		#if ax is None:
-			#ax = plb.gca()
-
-		#if self.name is None:
-			#label_string = ''	
-		#else:
-			#label_string = self.name	
-		#ax.semilogy(self.frequency.f_scaled, \
-			#abs(self.residuals), label=label_string,\
-			#**kwargs)
-
-		## label axis
-		#plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		#plb.ylabel('Residual Magnitude')
-		#plb.axis('tight')
-		##draw legend
-		#if show_legend:
-			#plb.legend()
-	
-	
-	
 	def plot_residuals(self,attribute,*args,**kwargs):
 		'''
 		plots a component of the residual errors on the  Calibration-plane.
