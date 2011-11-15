@@ -97,7 +97,7 @@ class Calibration(object):
 			switch_terms: tuple holding the two measured switch terms in
 				the order (forward, reverse) [None]. the tuple elements
 				 should	be Network types. (note: is only used in two-port
-				  calibrations). (see roger mark's paper on switch terms)
+				  calibrations,see roger mark's paper on switch terms)
 
 			name: string holding the name of calibration, just for your
 				convenience [None].
@@ -131,6 +131,9 @@ class Calibration(object):
 	## properties
 	@property 
 	def frequency(self):
+		'''
+		frequency object for the calibration
+		'''
 		return self._frequency
 	
 	@frequency.setter
@@ -151,11 +154,12 @@ class Calibration(object):
 			2 measurement/ideal pairs are given it will
 			calculate the least squares solution.
 
-		'one port xds': self-calibration of a unknown-length
-			delay-shorts.
+		'two port': two port calibration based on the error-box model
+		
 
 		note:
-		algorithms referenced by  calibration_algorithm_dict 
+		algorithms referenced by  calibration_algorithm_dict, are stored
+		in calibrationAlgorithms.py 
 		'''
 		return self._type
 
@@ -195,6 +199,9 @@ class Calibration(object):
 
 	@property
 	def nstandards(self):
+		'''
+		number of ideal/measurement pairs in calibration
+		'''
 		if len(self.ideals) != len(self.measured):
 			warnings.warn('number of ideals and measured dont agree')
 		return len(self.ideals)
@@ -218,12 +225,18 @@ class Calibration(object):
 			'reflection tracking':e01e10
 			'source match':e11
 		for 7-error term two port cal's
-			TBD
+			TODO:
 		'''
 		return self.output_from_cal['error coefficients']
 	@property
 	def residuals(self):
 		'''
+		if calibration is overdeteremined, this holds the residuals 
+		in the form of a vector. 
+		
+		also available are the complex residuals in the form
+		of mwavepy.Network's, see the property 'residual_ntwks'
+		
 		from numpy.lstsq:
 			residues:
 			the sum of the residues; squared euclidean norm for 
@@ -249,7 +262,7 @@ class Calibration(object):
 	@property
 	def Ts(self):
 		'''
-		T-matricies used for de-embeding. 
+		T-matricies used for de-embeding, a two-port calibration.
 		'''
 		
 		if self.nports ==2:
@@ -266,6 +279,19 @@ class Calibration(object):
 		'''
 		returns a the residuals for each calibration standard in the 
 		form of a list of Network types.
+		
+		these residuals are calculated in the 'calibrated domain',
+		meaning they are 
+			r = (E.inv ** m - i)
+		
+		where, 
+			r: residual network, 
+			E: embedding network,
+			m: measured network
+			i: ideal network  
+		
+		This way the units of the residual networks are meaningful
+		
 		
 		note:
 			the residuals are only calculated if they are not existent.
@@ -290,7 +316,6 @@ class Calibration(object):
 			self._residual_ntwks = ntwk_list
 		return ntwk_list 
 	
-	##  methods for manual control of internal calculations
 
 	##  methods for manual control of internal calculations
 	def run(self):
@@ -392,97 +417,15 @@ class Calibration(object):
 		
 		return ntwkDict
 		
-
-	## ploting
-	def plot_coefs_db(self,ax=None,show_legend=True,**kwargs):
-		'''
-		plot magnitude of the error coeficient dictionary
-		'''
-
-		# get current axis if user doesnt supply and axis 
-		if ax is None:
-			ax = plb.gca()
-
-				
-		# plot the desired attribute vs frequency
-		for error_term in self.coefs:
-			error_term_db = complex_2_db(self.coefs[error_term])
-			if plb.rcParams['text.usetex'] and '_' in error_term:
-				error_term = '$'+error_term+'$'
-			ax.plot(self.frequency.f_scaled, error_term_db , label=error_term,**kwargs)
-
-		# label axis
-		plb.xlabel('Frequency ['+ self.frequency.unit +']')
-		plb.ylabel('Magnitude [dB]')
-		plb.axis('tight')
-		#draw legend
-		if show_legend:
-			plb.legend()
-
-	def plot_residuals(self,attribute,*args,**kwargs):
-		'''
-		plots a component of the residual errors on the  Calibration-plane.
-		
-		takes:
-			attribute: name of ploting method of Network class to call
-				possible options are:
-					'mag', 'db', 'smith', 'deg', etc
-			*args,**kwargs: passed to plot_s_'atttribute'()
-			
-		
-		note:
-		the residuals are calculated by:
-			(self.error_ntwk.inv**self.measured[k])-self.ideals[k])
-			
-		'''
-		for ntwk in self.residual_ntwks:
-			ntwk.__getattribute__('plot_s_'+attribute)(*args,**kwargs)
-				
-	def plot_residuals_smith(self,*args,**kwargs):
-		'''
-		see plot_residuals
-		'''
-		self.plot_residuals(self,attribute='smith',*args,**kwargs)	
-	
-	def plot_residuals_mag(self,*args,**kwargs):
-		'''
-		see plot_residuals
-		'''
-		self.plot_residuals(self,attribute='mag',*args,**kwargs)	
-	
-	def plot_residuals_db(self,*args,**kwargs):
-		'''
-		see plot_residuals
-		'''
-		self.plot_residuals(self,attribute='db',*args,**kwargs)	
-	
-	def plot_errors(self,std_names =None,*args, **kwargs):
-		'''
-		plot calibration error metrics 
-		
-		'''
-		self.biased_error(std_names).plot_s_mag(*args, **kwargs)
-		self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
-		self.total_error(std_names).plot_s_mag(*args, **kwargs)
-		plb.title('Error Metrics')
-		plb.ylabel('Mean Distance')
-	
-	def plot_uncertainty_per_standard(self, *args, **kwargs):
-		plb.title('Uncertainty Per Standard')
-		[ntwk.plot_s_mag() for ntwk in self.uncertainty_per_standard(*args, **kwargs)]
-		plb.ylabel('Mean Distance')
-		
-	
+	## error metrics and related functions
 	def mean_residuals(self):
-		ntwk_list=\
-			[ ((self.error_ntwk.inv**self.measured[k])-self.ideals[k]) \
-				for k in range(len(self.ideals))]
-				
-		return func_on_networks(ntwk_list, mean, 's_mag')
+		'''
+		'''
+		return func_on_networks(self.residual_ntwks, mean, 's_mag')
 	
 	def uncertainty_per_standard(self, std_names=None, attribute='s'):
 		'''
-		given that you have repeat-connections of single standards, 
+		given that you have repeat-connections of single standard, 
 		this calculates the complex standard deviation (distance) 
 		for each standard in the calibration across connection #.
 		
@@ -600,6 +543,91 @@ class Calibration(object):
 		total_error.name='total error'
 		return total_error
 
+	## ploting
+	def plot_coefs_db(self,ax=None,show_legend=True,**kwargs):
+		'''
+		plot magnitude of the error coeficient dictionary
+		'''
+
+		# get current axis if user doesnt supply and axis 
+		if ax is None:
+			ax = plb.gca()
+
+				
+		# plot the desired attribute vs frequency
+		for error_term in self.coefs:
+			error_term_db = complex_2_db(self.coefs[error_term])
+			if plb.rcParams['text.usetex'] and '_' in error_term:
+				error_term = '$'+error_term+'$'
+			ax.plot(self.frequency.f_scaled, error_term_db , label=error_term,**kwargs)
+
+		# label axis
+		plb.xlabel('Frequency ['+ self.frequency.unit +']')
+		plb.ylabel('Magnitude [dB]')
+		plb.axis('tight')
+		#draw legend
+		if show_legend:
+			plb.legend()
+
+	def plot_residuals(self,attribute,*args,**kwargs):
+		'''
+		plots a component of the residual errors on the  Calibration-plane.
+		
+		takes:
+			attribute: name of ploting method of Network class to call
+				possible options are:
+					'mag', 'db', 'smith', 'deg', etc
+			*args,**kwargs: passed to plot_s_'atttribute'()
+			
+		
+		note:
+		the residuals are calculated by:
+			(self.apply_cal(self.measured[k])-self.ideals[k])
+			
+		'''
+		for ntwk in self.residual_ntwks:
+			ntwk.__getattribute__('plot_s_'+attribute)(*args,**kwargs)
+				
+	def plot_residuals_smith(self,*args,**kwargs):
+		'''
+		see plot_residuals
+		'''
+		self.plot_residuals(self,attribute='smith',*args,**kwargs)	
+	
+	def plot_residuals_mag(self,*args,**kwargs):
+		'''
+		see plot_residuals
+		'''
+		self.plot_residuals(self,attribute='mag',*args,**kwargs)	
+	
+	def plot_residuals_db(self,*args,**kwargs):
+		'''
+		see plot_residuals
+		'''
+		self.plot_residuals(self,attribute='db',*args,**kwargs)	
+	
+	def plot_errors(self,std_names =None,*args, **kwargs):
+		'''
+		plot calibration error metrics for an over-determined calibration. 
+		
+		see biased_error, unbiased_error, and total_error for more info
+		
+		'''
+		self.biased_error(std_names).plot_s_mag(*args, **kwargs)
+		self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
+		self.total_error(std_names).plot_s_mag(*args, **kwargs)
+		plb.title('Error Metrics')
+		plb.ylabel('Mean Distance')
+	
+	def plot_uncertainty_per_standard(self, *args, **kwargs):
+		'''
+		see uncertainty_per_standard
+		'''
+		plb.title('Uncertainty Per Standard')
+		[ntwk.plot_s_mag() for ntwk in self.uncertainty_per_standard(*args, **kwargs)]
+		plb.ylabel('Mean Distance')
+		
+	
 ## Functions	
 def two_port_error_vector_2_Ts(error_coefficients):
 	ec = error_coefficients
