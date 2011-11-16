@@ -760,7 +760,7 @@ class Network(object):
 		self.plot_vs_frequency_generic(attribute= 's_db',\
 			y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,*args,**kwargs)
-
+	
 	def plot_s_mag(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
 		plots the magnitude of a scattering parameter of indecies m, n
@@ -828,7 +828,6 @@ class Network(object):
 		self.plot_vs_frequency_generic(attribute= 's_deg',\
 			y_label='Phase [deg]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,*args,**kwargs)
-		
 				
 	def plot_s_deg_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
 		*args,**kwargs):
@@ -867,7 +866,6 @@ class Network(object):
 			y_label='Phase [rad]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,*args,**kwargs)
 		
-				
 	def plot_s_rad_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
 		*args,**kwargs):
 		'''
@@ -1049,6 +1047,28 @@ class Network(object):
 				self.plot_vs_frequency_generic(attribute= 's_db',\
 					y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
 					show_legend = show_legend,*args,**kwargs)
+	
+	def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
+		'''
+		plots the passivity of a network, possible for a specific
+		port. see the property 'passivity' for more information.
+				
+		takes:
+			port: list of ports[ints] to plot passivity for [None]
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			*args,**kwargs - passed to the matplotlib.plot command
+		'''
+		if port is None:
+			port = range(self.number_of_ports)
+		
+		for mn in list(port):	
+			self.plot_vs_frequency_generic(attribute= 'passivity',\
+				y_label='Passivity', m=mn,n=mn, ax=ax,\
+				show_legend = show_legend,*args,**kwargs)
+	
+	
 	# noise
 	def add_noise_polar(self,mag_dev, phase_dev,**kwargs):
 		'''
