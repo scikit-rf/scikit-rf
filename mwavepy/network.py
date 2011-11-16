@@ -428,6 +428,15 @@ class Network(object):
 		'''
 		return npy.unwrap(mf.complex_2_radian(self.s),axis=0)
 
+	@property
+	def s_quad(self):
+		'''
+		this is like a arc-length, its 
+		s_quad = s_rad * s_mag 
+		
+		used in calculating differences in phase, but in units of distance
+		'''
+		return self.s_rad * self.s_mag
 
 	@property
 	def s11(self):

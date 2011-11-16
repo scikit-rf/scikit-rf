@@ -107,7 +107,8 @@ def zip_calibration_ensemble( ideals, measured, *args, **kwargs):
 		[[ measure for measure in measured \
 			if ideal.name in measure.name] for ideal in ideals]
 	m_array= array( measured_iterable)
-	return [Calibration(ideals = ideals, measured = list(m_array[:,k]))\
+	return [Calibration(ideals = ideals, measured = list(m_array[:,k]),\
+		*args, **kwargs)\
 		for k in range(m_array.shape[1])]
 def subset_calibration_ensemble( ideals, measured, n,  *args, **kwargs):
 	'''
