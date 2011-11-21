@@ -17,7 +17,7 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.from media import Media
 '''
-Provides high-leve Calibration class as well as calibration algorithms
+Provides high-level Calibration class as well as calibration algorithms
 and parametric standards 
 '''
 

@@ -58,7 +58,7 @@
 <h1>calibration Package<a class="headerlink" href="#calibration-package" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id1">
 <h2><tt class="xref py py-mod docutils literal"><span class="pre">calibration</span></tt> Package<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
-<span class="target" id="module-mwavepy.calibration"></span><p>Provides high-leve Calibration class as well as calibration algorithms
+<span class="target" id="module-mwavepy.calibration"></span><p>Provides high-level Calibration class as well as calibration algorithms
 and parametric standards</p>
 </div>
 <div class="section" id="module-mwavepy.calibration.calibration">
@@ -66,19 +66,15 @@ and parametric standards</p>
 <p>Contains the Calibration class, and supporting functions</p>
 <dl class="class">
 <dt id="mwavepy.calibration.calibration.Calibration">
-<em class="property">class </em><tt class="descclassname">mwavepy.calibration.calibration.</tt><tt class="descname">Calibration</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>type=None</em>, <em>frequency=None</em>, <em>is_reciprocal=False</em>, <em>switch_terms=None</em>, <em>name=None</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><tt class="descclassname">mwavepy.calibration.calibration.</tt><tt class="descname">Calibration</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>type=None</em>, <em>frequency=None</em>, <em>is_reciprocal=False</em>, <em>name=None</em>, <em>sloppy_input=False</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Represents a calibration instance, a class to hold sets
-of measurements, ideals, and calibration results.</p>
+<p>Represents a Calibration object, which can run a calibration 
+algorithm, store results, and apply calibration to measurements.</p>
 <p>see init for more information on usage.</p>
-<p>note:
-all calibration algorithms are in calibrationAlgorithms.py, and are
-referenced by the dictionary in this object called
-&#8216;calibration_algorihtm_dict&#8217;</p>
 <dl class="attribute">
 <dt id="mwavepy.calibration.calibration.Calibration.Ts">
 <tt class="descname">Ts</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.Ts" title="Permalink to this definition">¶</a></dt>
-<dd><p>T-matricies used for de-embeding.</p>
+<dd><p>T-matricies used for de-embeding, a two-port calibration.</p>
 </dd></dl>
 
 <dl class="method">
@@ -126,7 +122,7 @@ this string.</blockquote>
 
 <dl class="method">
 <dt id="mwavepy.calibration.calibration.Calibration.biased_error">
-<tt class="descname">biased_error</tt><big>(</big><em>std_names</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.biased_error" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">biased_error</tt><big>(</big><em>std_names=None</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.biased_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>estimate of biased error for overdetermined calibration with
 multiple connections of each standard</p>
 <dl class="docutils">
@@ -165,7 +161,7 @@ mean_s: complex mean taken accross standard</dd>
 &#8216;reflection tracking&#8217;:e01e10
 &#8216;source match&#8217;:e11</dd>
 <dt>for 7-error term two port cal&#8217;s</dt>
-<dd>TBD</dd>
+<dd>TODO:</dd>
 </dl>
 </dd></dl>
 
@@ -179,7 +175,8 @@ calibrated out.</p>
 <dl class="attribute">
 <dt id="mwavepy.calibration.calibration.Calibration.frequency">
 <tt class="descname">frequency</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.frequency" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>frequency object for the calibration</p>
+</dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.calibration.calibration.Calibration.mean_residuals">
@@ -195,7 +192,8 @@ calibrated out.</p>
 <dl class="attribute">
 <dt id="mwavepy.calibration.calibration.Calibration.nstandards">
 <tt class="descname">nstandards</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.nstandards" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>number of ideal/measurement pairs in calibration</p>
+</dd></dl>
 
 <dl class="attribute">
 <dt id="mwavepy.calibration.calibration.Calibration.output_from_cal">
@@ -208,6 +206,13 @@ algorithm</p>
 <dt id="mwavepy.calibration.calibration.Calibration.plot_coefs_db">
 <tt class="descname">plot_coefs_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_coefs_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>plot magnitude of the error coeficient dictionary</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.plot_errors">
+<tt class="descname">plot_errors</tt><big>(</big><em>std_names=None</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_errors" title="Permalink to this definition">¶</a></dt>
+<dd><p>plot calibration error metrics for an over-determined calibration.</p>
+<p>see biased_error, unbiased_error, and total_error for more info</p>
 </dd></dl>
 
 <dl class="method">
@@ -230,7 +235,7 @@ algorithm</p>
 <p>note:
 the residuals are calculated by:</p>
 <blockquote>
-(self.error_ntwk.inv**self.measured[k])-self.ideals[k])</blockquote>
+(self.apply_cal(self.measured[k])-self.ideals[k])</blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -251,11 +256,29 @@ the residuals are calculated by:</p>
 <dd><p>see plot_residuals</p>
 </dd></dl>
 
+<dl class="method">
+<dt id="mwavepy.calibration.calibration.Calibration.plot_uncertainty_per_standard">
+<tt class="descname">plot_uncertainty_per_standard</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.plot_uncertainty_per_standard" title="Permalink to this definition">¶</a></dt>
+<dd><p>see uncertainty_per_standard</p>
+</dd></dl>
+
 <dl class="attribute">
 <dt id="mwavepy.calibration.calibration.Calibration.residual_ntwks">
 <tt class="descname">residual_ntwks</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.residual_ntwks" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns a the residuals for each calibration standard in the 
 form of a list of Network types.</p>
+<p>these residuals are calculated in the &#8216;calibrated domain&#8217;,
+meaning they are</p>
+<blockquote>
+r = (E.inv ** m - i)</blockquote>
+<dl class="docutils">
+<dt>where, </dt>
+<dd>r: residual network, 
+E: embedding network,
+m: measured network
+i: ideal network</dd>
+</dl>
+<p>This way the units of the residual networks are meaningful</p>
 <dl class="docutils">
 <dt>note:</dt>
 <dd>the residuals are only calculated if they are not existent.</dd>
@@ -267,7 +290,11 @@ you delete the property &#8216;_residual_ntwks&#8217;.</p>
 <dl class="attribute">
 <dt id="mwavepy.calibration.calibration.Calibration.residuals">
 <tt class="descname">residuals</tt><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.residuals" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
+<dd><p>if calibration is overdeteremined, this holds the residuals 
+in the form of a vector.</p>
+<p>also available are the complex residuals in the form
+of mwavepy.Network&#8217;s, see the property &#8216;residual_ntwks&#8217;</p>
+<dl class="docutils">
 <dt>from numpy.lstsq:</dt>
 <dd>residues:
 the sum of the residues; squared euclidean norm for 
@@ -279,16 +306,16 @@ each column vector in b (given ax=b)</dd>
 <dt id="mwavepy.calibration.calibration.Calibration.run">
 <tt class="descname">run</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.run" title="Permalink to this definition">¶</a></dt>
 <dd><p>runs the calibration algorihtm.</p>
+<p>this is automatically called the first time     any dependent 
+property is referenced (like error_ntwk), but only the first 
+time. if you change something and want to re-run the calibration</p>
 <blockquote>
-this is automatically called the</blockquote>
-<p>first time      any dependent property is referenced (like error_ntwk)
-, but only the first time. if you change something and want to
-re-run the calibration use this.</p>
+use this.</blockquote>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.calibration.calibration.Calibration.total_error">
-<tt class="descname">total_error</tt><big>(</big><em>std_names</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.total_error" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">total_error</tt><big>(</big><em>std_names=None</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.total_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>estimate of total error for overdetermined calibration with
 multiple connections of each standard. This is the combined 
 effects of both biased and un-biased errors</p>
@@ -329,16 +356,16 @@ performed. supported types at the moment are:</p>
 <dt>&#8216;one port&#8217;:     standard one-port cal. if more than</dt>
 <dd>2 measurement/ideal pairs are given it will
 calculate the least squares solution.</dd>
-<dt>&#8216;one port xds&#8217;: self-calibration of a unknown-length</dt>
-<dd>delay-shorts.</dd>
 </dl>
+<p>&#8216;two port&#8217;: two port calibration based on the error-box model</p>
 <p>note:
-algorithms referenced by  calibration_algorithm_dict</p>
+algorithms referenced by  calibration_algorithm_dict, are stored
+in calibrationAlgorithms.py</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mwavepy.calibration.calibration.Calibration.unbiased_error">
-<tt class="descname">unbiased_error</tt><big>(</big><em>std_names</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.unbiased_error" title="Permalink to this definition">¶</a></dt>
+<tt class="descname">unbiased_error</tt><big>(</big><em>std_names=None</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.unbiased_error" title="Permalink to this definition">¶</a></dt>
 <dd><p>estimate of unbiased error for overdetermined calibration with
 multiple connections of each standard</p>
 <dl class="docutils">
@@ -372,8 +399,8 @@ mean_s: complex mean taken accross  standards</dd>
 
 <dl class="method">
 <dt id="mwavepy.calibration.calibration.Calibration.uncertainty_per_standard">
-<tt class="descname">uncertainty_per_standard</tt><big>(</big><em>std_names</em>, <em>attribute='s'</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.uncertainty_per_standard" title="Permalink to this definition">¶</a></dt>
-<dd><p>given that you have repeat-connections of single standards, 
+<tt class="descname">uncertainty_per_standard</tt><big>(</big><em>std_names=None</em>, <em>attribute='s'</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibration.Calibration.uncertainty_per_standard" title="Permalink to this definition">¶</a></dt>
+<dd><p>given that you have repeat-connections of single standard, 
 this calculates the complex standard deviation (distance) 
 for each standard in the calibration across connection #.</p>
 <dl class="docutils">
@@ -676,7 +703,7 @@ takes a shape-tuple as the first argument, refer to
 
 <dl class="function">
 <dt id="mwavepy.calibration.calibrationAlgorithms.two_port">
-<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">two_port</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>switchterms=None</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.two_port" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">mwavepy.calibration.calibrationAlgorithms.</tt><tt class="descname">two_port</tt><big>(</big><em>measured</em>, <em>ideals</em>, <em>switch_terms=None</em><big>)</big><a class="headerlink" href="#mwavepy.calibration.calibrationAlgorithms.two_port" title="Permalink to this definition">¶</a></dt>
 <dd><p>two port calibration based on the 8-term error model.  takes two
 ordered lists of measured and ideal responses. optionally, switch
 terms can be taken into account by passing a tuple containing the

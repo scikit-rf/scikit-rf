@@ -33,7 +33,7 @@ import itertools
 import warnings
 
 from calibrationAlgorithms import *
-from ..mathFunctions import complex_2_db
+from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
 from ..frequency import *
 from ..network import *
 from ..network import func_on_networks as fon
@@ -678,6 +678,8 @@ def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
 				tracking  = coefs['reflection tracking'] 
 				s12 = npy.sqrt(tracking)
 				s21 = npy.sqrt(tracking)
+				#s12 = 	sqrt_phase_unwrap(tracking)
+				#s21 = 	sqrt_phase_unwrap(tracking)
 				
 			else:
 				s21 = coefs['reflection tracking'] 

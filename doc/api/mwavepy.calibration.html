@@ -47,18 +47,13 @@
 <font color="#000000" face="helvetica, arial"><a name="Calibration">class <strong>Calibration</strong></a>(<a href="__builtin__.html#object">__builtin__.object</a>)</font></td></tr>
     
 <tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
-<td colspan=2><tt>Represents&nbsp;a&nbsp;calibration&nbsp;instance,&nbsp;a&nbsp;class&nbsp;to&nbsp;hold&nbsp;sets<br>
-of&nbsp;measurements,&nbsp;ideals,&nbsp;and&nbsp;calibration&nbsp;results.<br>
+<td colspan=2><tt>Represents&nbsp;a&nbsp;<a href="#Calibration">Calibration</a>&nbsp;<a href="__builtin__.html#object">object</a>,&nbsp;which&nbsp;can&nbsp;run&nbsp;a&nbsp;calibration&nbsp;<br>
+algorithm,&nbsp;store&nbsp;results,&nbsp;and&nbsp;apply&nbsp;calibration&nbsp;to&nbsp;measurements.&nbsp;<br>
 &nbsp;<br>
-see&nbsp;init&nbsp;for&nbsp;more&nbsp;information&nbsp;on&nbsp;usage.&nbsp;<br>
-&nbsp;<br>
-note:<br>
-all&nbsp;calibration&nbsp;algorithms&nbsp;are&nbsp;in&nbsp;calibrationAlgorithms.py,&nbsp;and&nbsp;are<br>
-referenced&nbsp;by&nbsp;the&nbsp;dictionary&nbsp;in&nbsp;this&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;called<br>
-'calibration_algorihtm_dict'<br>&nbsp;</tt></td></tr>
+see&nbsp;init&nbsp;for&nbsp;more&nbsp;information&nbsp;on&nbsp;usage.<br>&nbsp;</tt></td></tr>
 <tr><td>&nbsp;</td>
 <td width="100%">Methods defined here:<br>
-<dl><dt><a name="Calibration-__init__"><strong>__init__</strong></a>(self, measured, ideals, type<font color="#909090">=None</font>, frequency<font color="#909090">=None</font>, is_reciprocal<font color="#909090">=False</font>, switch_terms<font color="#909090">=None</font>, name<font color="#909090">=None</font>, **kwargs)</dt><dd><tt><a href="#Calibration">Calibration</a>&nbsp;initializer.<br>
+<dl><dt><a name="Calibration-__init__"><strong>__init__</strong></a>(self, measured, ideals, type<font color="#909090">=None</font>, frequency<font color="#909090">=None</font>, is_reciprocal<font color="#909090">=False</font>, name<font color="#909090">=None</font>, sloppy_input<font color="#909090">=False</font>, **kwargs)</dt><dd><tt><a href="#Calibration">Calibration</a>&nbsp;initializer.<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;measured:&nbsp;a&nbsp;list&nbsp;of&nbsp;measured&nbsp;Network's&nbsp;(order&nbsp;must&nbsp;align&nbsp;<br>
@@ -91,13 +86,21 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;switch_terms:&nbsp;tuple&nbsp;holding&nbsp;the&nbsp;two&nbsp;measured&nbsp;switch&nbsp;terms&nbsp;in<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;order&nbsp;(forward,&nbsp;reverse)&nbsp;[None].&nbsp;the&nbsp;tuple&nbsp;elements<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;should&nbsp;be&nbsp;Network&nbsp;types.&nbsp;(note:&nbsp;is&nbsp;only&nbsp;used&nbsp;in&nbsp;two-port<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calibrations)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calibrations,see&nbsp;roger&nbsp;mark's&nbsp;paper&nbsp;on&nbsp;switch&nbsp;terms)<br>
 &nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;name:&nbsp;string&nbsp;holding&nbsp;the&nbsp;name&nbsp;of&nbsp;calibration,&nbsp;just&nbsp;for&nbsp;your<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;convenience&nbsp;[None].<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sloppy_input:&nbsp;a&nbsp;Boolean.&nbsp;Allows&nbsp;ideals&nbsp;and&nbsp;measured&nbsp;lists&nbsp;to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;be&nbsp;'aligned'&nbsp;based&nbsp;on&nbsp;the&nbsp;network&nbsp;names&nbsp;[False].&nbsp;Can&nbsp;be<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;key-word&nbsp;arguments&nbsp;passed&nbsp;to&nbsp;the&nbsp;calibration<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm.</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;algorithm.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+all&nbsp;calibration&nbsp;algorithms&nbsp;are&nbsp;in&nbsp;calibrationAlgorithms.py,&nbsp;and&nbsp;are<br>
+referenced&nbsp;by&nbsp;the&nbsp;dictionary&nbsp;in&nbsp;this&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;called<br>
+'calibration_algorihtm_dict'</tt></dd></dl>
 
 <dl><dt><a name="Calibration-apply_cal"><strong>apply_cal</strong></a>(self, input_ntwk)</dt><dd><tt>apply&nbsp;the&nbsp;current&nbsp;calibration&nbsp;to&nbsp;a&nbsp;measurement.<br>
 &nbsp;<br>
@@ -122,9 +125,31 @@ returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwkDict:&nbsp;a&nbsp;dictionary&nbsp;of&nbsp;calibrated&nbsp;measurements,&nbsp;the&nbsp;keys<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;are&nbsp;the&nbsp;filenames.</tt></dd></dl>
 
+<dl><dt><a name="Calibration-biased_error"><strong>biased_error</strong></a>(self, std_names<font color="#909090">=None</font>)</dt><dd><tt>estimate&nbsp;of&nbsp;biased&nbsp;error&nbsp;for&nbsp;overdetermined&nbsp;calibration&nbsp;with<br>
+multiple&nbsp;connections&nbsp;of&nbsp;each&nbsp;standard<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std_names:&nbsp;list&nbsp;of&nbsp;strings&nbsp;to&nbsp;uniquely&nbsp;identify&nbsp;each<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;standard.*&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;systematic&nbsp;error:&nbsp;mwavepy.Network&nbsp;type&nbsp;who's&nbsp;.s_mag&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proportional&nbsp;to&nbsp;the&nbsp;systematic&nbsp;error&nbsp;metric<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mathematically,&nbsp;this&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mean_s(|mean_c(r)|)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r:&nbsp;complex&nbsp;residual&nbsp;errors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mean_c:&nbsp;complex&nbsp;mean&nbsp;taken&nbsp;accross&nbsp;connection<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mean_s:&nbsp;complex&nbsp;mean&nbsp;taken&nbsp;accross&nbsp;standard</tt></dd></dl>
+
 <dl><dt><a name="Calibration-mean_residuals"><strong>mean_residuals</strong></a>(self)</dt></dl>
 
 <dl><dt><a name="Calibration-plot_coefs_db"><strong>plot_coefs_db</strong></a>(self, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>plot&nbsp;magnitude&nbsp;of&nbsp;the&nbsp;error&nbsp;coeficient&nbsp;dictionary</tt></dd></dl>
+
+<dl><dt><a name="Calibration-plot_errors"><strong>plot_errors</strong></a>(self, std_names<font color="#909090">=None</font>, *args, **kwargs)</dt><dd><tt>plot&nbsp;calibration&nbsp;error&nbsp;metrics&nbsp;for&nbsp;an&nbsp;over-determined&nbsp;calibration.&nbsp;<br>
+&nbsp;<br>
+see&nbsp;biased_error,&nbsp;unbiased_error,&nbsp;and&nbsp;total_error&nbsp;for&nbsp;more&nbsp;info</tt></dd></dl>
 
 <dl><dt><a name="Calibration-plot_residuals"><strong>plot_residuals</strong></a>(self, attribute, *args, **kwargs)</dt><dd><tt>plots&nbsp;a&nbsp;component&nbsp;of&nbsp;the&nbsp;residual&nbsp;errors&nbsp;on&nbsp;the&nbsp;&nbsp;<a href="#Calibration">Calibration</a>-plane.<br>
 &nbsp;<br>
@@ -137,7 +162,7 @@ takes:<br>
 &nbsp;<br>
 note:<br>
 the&nbsp;residuals&nbsp;are&nbsp;calculated&nbsp;by:<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(self.<strong>error_ntwk</strong>.inv**self.<strong>measured</strong>[k])-self.<strong>ideals</strong>[k])</tt></dd></dl>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a href="#Calibration-apply_cal">apply_cal</a>(self.<strong>measured</strong>[k])-self.<strong>ideals</strong>[k])</tt></dd></dl>
 
 <dl><dt><a name="Calibration-plot_residuals_db"><strong>plot_residuals_db</strong></a>(self, *args, **kwargs)</dt><dd><tt>see&nbsp;plot_residuals</tt></dd></dl>
 
@@ -145,17 +170,81 @@ the&nbsp;residuals&nbsp;are&nbsp;calculated&nbsp;by:<br>
 
 <dl><dt><a name="Calibration-plot_residuals_smith"><strong>plot_residuals_smith</strong></a>(self, *args, **kwargs)</dt><dd><tt>see&nbsp;plot_residuals</tt></dd></dl>
 
+<dl><dt><a name="Calibration-plot_uncertainty_per_standard"><strong>plot_uncertainty_per_standard</strong></a>(self, *args, **kwargs)</dt><dd><tt>see&nbsp;uncertainty_per_standard</tt></dd></dl>
+
 <dl><dt><a name="Calibration-run"><strong>run</strong></a>(self)</dt><dd><tt>runs&nbsp;the&nbsp;calibration&nbsp;algorihtm.<br>
 &nbsp;<br>
-&nbsp;this&nbsp;is&nbsp;automatically&nbsp;called&nbsp;the<br>
-first&nbsp;time&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;any&nbsp;dependent&nbsp;property&nbsp;is&nbsp;referenced&nbsp;(like&nbsp;error_ntwk)<br>
-,&nbsp;but&nbsp;only&nbsp;the&nbsp;first&nbsp;time.&nbsp;if&nbsp;you&nbsp;change&nbsp;something&nbsp;and&nbsp;want&nbsp;to<br>
-re-run&nbsp;the&nbsp;calibration&nbsp;use&nbsp;this.</tt></dd></dl>
+this&nbsp;is&nbsp;automatically&nbsp;called&nbsp;the&nbsp;first&nbsp;time&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;any&nbsp;dependent&nbsp;<br>
+property&nbsp;is&nbsp;referenced&nbsp;(like&nbsp;error_ntwk),&nbsp;but&nbsp;only&nbsp;the&nbsp;first&nbsp;<br>
+time.&nbsp;if&nbsp;you&nbsp;change&nbsp;something&nbsp;and&nbsp;want&nbsp;to&nbsp;re-run&nbsp;the&nbsp;calibration<br>
+&nbsp;use&nbsp;this.</tt></dd></dl>
+
+<dl><dt><a name="Calibration-total_error"><strong>total_error</strong></a>(self, std_names<font color="#909090">=None</font>)</dt><dd><tt>estimate&nbsp;of&nbsp;total&nbsp;error&nbsp;for&nbsp;overdetermined&nbsp;calibration&nbsp;with<br>
+multiple&nbsp;connections&nbsp;of&nbsp;each&nbsp;standard.&nbsp;This&nbsp;is&nbsp;the&nbsp;combined&nbsp;<br>
+effects&nbsp;of&nbsp;both&nbsp;biased&nbsp;and&nbsp;un-biased&nbsp;errors<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std_names:&nbsp;list&nbsp;of&nbsp;strings&nbsp;to&nbsp;uniquely&nbsp;identify&nbsp;each<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;standard.*&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;composit&nbsp;error:&nbsp;mwavepy.Network&nbsp;type&nbsp;who's&nbsp;.s_mag&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proportional&nbsp;to&nbsp;the&nbsp;composit&nbsp;error&nbsp;metric<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mathematically,&nbsp;this&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std_cs(r)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r:&nbsp;complex&nbsp;residual&nbsp;errors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std_cs:&nbsp;standard&nbsp;deviation&nbsp;taken&nbsp;accross&nbsp;connections<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;and&nbsp;standards</tt></dd></dl>
+
+<dl><dt><a name="Calibration-unbiased_error"><strong>unbiased_error</strong></a>(self, std_names<font color="#909090">=None</font>)</dt><dd><tt>estimate&nbsp;of&nbsp;unbiased&nbsp;error&nbsp;for&nbsp;overdetermined&nbsp;calibration&nbsp;with<br>
+multiple&nbsp;connections&nbsp;of&nbsp;each&nbsp;standard<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std_names:&nbsp;list&nbsp;of&nbsp;strings&nbsp;to&nbsp;uniquely&nbsp;identify&nbsp;each<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;standard.*&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;stochastic&nbsp;error:&nbsp;mwavepy.Network&nbsp;type&nbsp;who's&nbsp;.s_mag&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proportional&nbsp;to&nbsp;the&nbsp;stochastic&nbsp;error&nbsp;metric<br>
+&nbsp;<br>
+see&nbsp;also:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;uncertainty_per_standard,&nbsp;for&nbsp;this&nbsp;a&nbsp;measure&nbsp;of&nbsp;unbiased&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;errors&nbsp;for&nbsp;each&nbsp;standard<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mathematically,&nbsp;this&nbsp;is&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mean_s(std_c(r))<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;where:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r:&nbsp;complex&nbsp;residual&nbsp;errors<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std_c:&nbsp;standard&nbsp;deviation&nbsp;taken&nbsp;accross&nbsp;&nbsp;connections<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mean_s:&nbsp;complex&nbsp;mean&nbsp;taken&nbsp;accross&nbsp;&nbsp;standards</tt></dd></dl>
+
+<dl><dt><a name="Calibration-uncertainty_per_standard"><strong>uncertainty_per_standard</strong></a>(self, std_names<font color="#909090">=None</font>, attribute<font color="#909090">='s'</font>)</dt><dd><tt>given&nbsp;that&nbsp;you&nbsp;have&nbsp;repeat-connections&nbsp;of&nbsp;single&nbsp;standard,&nbsp;<br>
+this&nbsp;calculates&nbsp;the&nbsp;complex&nbsp;standard&nbsp;deviation&nbsp;(distance)&nbsp;<br>
+for&nbsp;each&nbsp;standard&nbsp;in&nbsp;the&nbsp;calibration&nbsp;across&nbsp;connection&nbsp;#.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std_names:&nbsp;list&nbsp;of&nbsp;strings&nbsp;to&nbsp;uniquely&nbsp;identify&nbsp;each<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;standard.*&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attribute:&nbsp;string&nbsp;passed&nbsp;to&nbsp;func_on_networks&nbsp;to&nbsp;calculate&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std&nbsp;deviation&nbsp;on&nbsp;a&nbsp;component&nbsp;if&nbsp;desired.&nbsp;['s']<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;list&nbsp;of&nbsp;mwavepy.Networks,&nbsp;whose&nbsp;magnitude&nbsp;of&nbsp;s-parameters&nbsp;is<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proportional&nbsp;to&nbsp;the&nbsp;standard&nbsp;deviation&nbsp;for&nbsp;that&nbsp;standard<br>
+&nbsp;<br>
+&nbsp;<br>
+*example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;your&nbsp;calibration&nbsp;had&nbsp;ideals&nbsp;named&nbsp;like:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'short&nbsp;1',&nbsp;'short&nbsp;2',&nbsp;'open&nbsp;1',&nbsp;'open&nbsp;2',&nbsp;etc.&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;you&nbsp;would&nbsp;pass&nbsp;this<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mycal.<a href="#Calibration-uncertainty_per_standard">uncertainty_per_standard</a>(['short','open','match'])</tt></dd></dl>
 
 <hr>
 Data descriptors defined here:<br>
 <dl><dt><strong>Ts</strong></dt>
-<dd><tt>T-matricies&nbsp;used&nbsp;for&nbsp;de-embeding.</tt></dd>
+<dd><tt>T-matricies&nbsp;used&nbsp;for&nbsp;de-embeding,&nbsp;a&nbsp;two-port&nbsp;calibration.</tt></dd>
 </dl>
 <dl><dt><strong>__dict__</strong></dt>
 <dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
@@ -171,18 +260,20 @@ for&nbsp;one&nbsp;port&nbsp;cal's<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'reflection&nbsp;tracking':e01e10<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'source&nbsp;match':e11<br>
 for&nbsp;7-error&nbsp;term&nbsp;two&nbsp;port&nbsp;cal's<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TBD</tt></dd>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;TODO:</tt></dd>
 </dl>
 <dl><dt><strong>error_ntwk</strong></dt>
 <dd><tt>a&nbsp;Network&nbsp;type&nbsp;which&nbsp;represents&nbsp;the&nbsp;error&nbsp;network&nbsp;being<br>
 calibrated&nbsp;out.</tt></dd>
 </dl>
 <dl><dt><strong>frequency</strong></dt>
+<dd><tt>frequency&nbsp;object&nbsp;for&nbsp;the&nbsp;calibration</tt></dd>
 </dl>
 <dl><dt><strong>nports</strong></dt>
 <dd><tt>the&nbsp;number&nbsp;of&nbsp;ports&nbsp;in&nbsp;the&nbsp;calibration</tt></dd>
 </dl>
 <dl><dt><strong>nstandards</strong></dt>
+<dd><tt>number&nbsp;of&nbsp;ideal/measurement&nbsp;pairs&nbsp;in&nbsp;calibration</tt></dd>
 </dl>
 <dl><dt><strong>output_from_cal</strong></dt>
 <dd><tt>a&nbsp;dictionary&nbsp;holding&nbsp;all&nbsp;of&nbsp;the&nbsp;output&nbsp;from&nbsp;the&nbsp;calibration<br>
@@ -190,10 +281,34 @@ algorithm</tt></dd>
 </dl>
 <dl><dt><strong>residual_ntwks</strong></dt>
 <dd><tt>returns&nbsp;a&nbsp;the&nbsp;residuals&nbsp;for&nbsp;each&nbsp;calibration&nbsp;standard&nbsp;in&nbsp;the&nbsp;<br>
-form&nbsp;of&nbsp;a&nbsp;list&nbsp;of&nbsp;Network&nbsp;types</tt></dd>
+form&nbsp;of&nbsp;a&nbsp;list&nbsp;of&nbsp;Network&nbsp;types.<br>
+&nbsp;<br>
+these&nbsp;residuals&nbsp;are&nbsp;calculated&nbsp;in&nbsp;the&nbsp;'calibrated&nbsp;domain',<br>
+meaning&nbsp;they&nbsp;are&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r&nbsp;=&nbsp;(E.inv&nbsp;**&nbsp;m&nbsp;-&nbsp;i)<br>
+&nbsp;<br>
+where,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;r:&nbsp;residual&nbsp;network,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E:&nbsp;embedding&nbsp;network,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;measured&nbsp;network<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;i:&nbsp;ideal&nbsp;network&nbsp;&nbsp;<br>
+&nbsp;<br>
+This&nbsp;way&nbsp;the&nbsp;units&nbsp;of&nbsp;the&nbsp;residual&nbsp;networks&nbsp;are&nbsp;meaningful<br>
+&nbsp;<br>
+&nbsp;<br>
+note:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;residuals&nbsp;are&nbsp;only&nbsp;calculated&nbsp;if&nbsp;they&nbsp;are&nbsp;not&nbsp;existent.<br>
+so,&nbsp;if&nbsp;you&nbsp;want&nbsp;to&nbsp;re-calculate&nbsp;the&nbsp;residual&nbsp;networks&nbsp;then&nbsp;<br>
+you&nbsp;delete&nbsp;the&nbsp;property&nbsp;'_residual_ntwks'.</tt></dd>
 </dl>
 <dl><dt><strong>residuals</strong></dt>
-<dd><tt>from&nbsp;numpy.lstsq:<br>
+<dd><tt>if&nbsp;calibration&nbsp;is&nbsp;overdeteremined,&nbsp;this&nbsp;holds&nbsp;the&nbsp;residuals&nbsp;<br>
+in&nbsp;the&nbsp;form&nbsp;of&nbsp;a&nbsp;vector.&nbsp;<br>
+&nbsp;<br>
+also&nbsp;available&nbsp;are&nbsp;the&nbsp;complex&nbsp;residuals&nbsp;in&nbsp;the&nbsp;form<br>
+of&nbsp;mwavepy.Network's,&nbsp;see&nbsp;the&nbsp;property&nbsp;'residual_ntwks'<br>
+&nbsp;<br>
+from&nbsp;numpy.lstsq:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;residues:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;sum&nbsp;of&nbsp;the&nbsp;residues;&nbsp;squared&nbsp;euclidean&nbsp;norm&nbsp;for&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;each&nbsp;column&nbsp;vector&nbsp;in&nbsp;b&nbsp;(given&nbsp;ax=b)</tt></dd>
@@ -206,11 +321,12 @@ performed.&nbsp;supported&nbsp;types&nbsp;at&nbsp;the&nbsp;moment&nbsp;are:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2&nbsp;measurement/ideal&nbsp;pairs&nbsp;are&nbsp;given&nbsp;it&nbsp;will<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;calculate&nbsp;the&nbsp;least&nbsp;squares&nbsp;solution.<br>
 &nbsp;<br>
-'one&nbsp;port&nbsp;xds':&nbsp;self-calibration&nbsp;of&nbsp;a&nbsp;unknown-length<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;delay-shorts.<br>
+'two&nbsp;port':&nbsp;two&nbsp;port&nbsp;calibration&nbsp;based&nbsp;on&nbsp;the&nbsp;error-box&nbsp;model<br>
+&nbsp;<br>
 &nbsp;<br>
 note:<br>
-algorithms&nbsp;referenced&nbsp;by&nbsp;&nbsp;calibration_algorithm_dict</tt></dd>
+algorithms&nbsp;referenced&nbsp;by&nbsp;&nbsp;calibration_algorithm_dict,&nbsp;are&nbsp;stored<br>
+in&nbsp;calibrationAlgorithms.py</tt></dd>
 </dl>
 <hr>
 Data and other attributes defined here:<br>

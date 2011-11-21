@@ -426,8 +426,8 @@ class Network(object):
 		'''
 		returns the unwrapped phase of the s-parameters, in radians.
 		'''
-		return npy.unwrap(mf.complex_2_radian(self.s),axis=0)
-
+		return mf.unwrap_rad(self.s_rad)
+		
 	@property
 	def s_quad(self):
 		'''
@@ -865,7 +865,22 @@ class Network(object):
 		self.plot_vs_frequency_generic(attribute= 's_rad',\
 			y_label='Phase [rad]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,*args,**kwargs)
+	def plot_s_quad(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
+		'''
+		plots the quadrature of a scattering parameter of indecies m, n,
+		quadrature is the arclength.
 		
+		takes:
+			m - first index, int
+			n - second indext, int
+			ax - matplotlib.axes object to plot on, used in case you
+				want to update an existing plot.
+			show_legend: boolean, to turn legend show legend of not
+			*args,**kwargs - passed to the matplotlib.plot command
+		'''
+		self.plot_vs_frequency_generic(attribute= 's_quad',\
+			y_label='Arc-Length [distance]', m=m,n=n, ax=ax,\
+			show_legend = show_legend,*args,**kwargs)	
 	def plot_s_rad_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
 		*args,**kwargs):
 		'''
@@ -1295,6 +1310,26 @@ def func_on_networks(ntwk_list, func, attribute='s',*args, **kwargs):
 	new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
 	return new_ntwk
 
+def plot_uncertainty_bounds_s_re(*args, **kwargs):
+	'''
+	this just calls 
+		plot_uncertainty_bounds(attribute= 's_re',*args,**kwargs)
+	see plot_uncertainty_bounds for help
+	
+	'''
+	kwargs.update({'attribute':'s_re'})
+	plot_uncertainty_bounds(*args,**kwargs)
+
+def plot_uncertainty_bounds_s_im(*args, **kwargs):
+	'''
+	this just calls 
+		plot_uncertainty_bounds(attribute= 's_im',*args,**kwargs)
+	see plot_uncertainty_bounds for help
+	
+	'''
+	kwargs.update({'attribute':'s_im'})
+	plot_uncertainty_bounds(*args,**kwargs)
+
 def plot_uncertainty_bounds_s_mag(*args, **kwargs):
 	'''
 	this just calls 
@@ -1304,6 +1339,7 @@ def plot_uncertainty_bounds_s_mag(*args, **kwargs):
 	'''
 	kwargs.update({'attribute':'s_mag'})
 	plot_uncertainty_bounds(*args,**kwargs)
+
 
 def plot_uncertainty_bounds_s_deg(*args, **kwargs):
 	'''

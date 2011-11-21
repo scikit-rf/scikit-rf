@@ -78,6 +78,20 @@ def complex_components(z):
 	'''
 	return (npy.real(z), npy.imag(z), npy.angle(z,deg=True), complex_2_quadrature(z)[0], complex_2_quadrature(z)[1])
 
+def complex_2_reim(z):
+	'''
+	takes:
+		 input: complex number or array
+	return:
+		real: real part of input
+		imag: imaginary part of input
+		
+		
+	note: this just calls 'complex_components'
+	'''
+	out = complex_components(z)
+	return (out[0],out[1])
+
 def magnitude_2_db(input):
 	'''
 	converts magnitude to db 
@@ -115,7 +129,23 @@ def radian_2_degree(rad):
 def degree_2_radian(deg):
 	return (deg)*pi/180.
 
+def unwrap_rad(input):
+	'''
+	unwraps a phase given in radians
+	
+	the normal numpy unwrap is not what you usually want for some reason
+	'''
+	return .5*npy.unwrap(2*input,axis=0)
 
+def sqrt_phase_unwrap(input):
+	'''
+	takes the square root of a complex number with unwraped phase
+	
+	this idea came from Lihan Chen
+	'''
+	return npy.sqrt(abs(input))*\
+		npy.exp(0.5*1j*unwrap_rad(complex_2_radian(input)))
+	
 # mathematical functions
 def dirac_delta(x):
 	'''

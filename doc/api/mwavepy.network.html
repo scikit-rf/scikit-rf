@@ -110,6 +110,16 @@ takes:<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nothing</tt></dd></dl>
 
+<dl><dt><a name="Network-add_noise_polar_flatband"><strong>add_noise_polar_flatband</strong></a>(self, mag_dev, phase_dev, **kwargs)</dt><dd><tt>adds&nbsp;a&nbsp;flatband&nbsp;complex&nbsp;zero-mean&nbsp;gaussian&nbsp;white-noise&nbsp;signal&nbsp;of<br>
+given&nbsp;standard&nbsp;deviations&nbsp;for&nbsp;magnitude&nbsp;and&nbsp;phase<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mag_mag:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;magnitude<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;phase_dev:&nbsp;standard&nbsp;deviation&nbsp;of&nbsp;phase&nbsp;[in&nbsp;degrees]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_ports:&nbsp;number&nbsp;of&nbsp;ports.&nbsp;defualt&nbsp;to&nbsp;1<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;nothing</tt></dd></dl>
+
 <dl><dt><a name="Network-change_frequency"><strong>change_frequency</strong></a>(self, new_frequency, **kwargs)</dt></dl>
 
 <dl><dt><a name="Network-flip"><strong>flip</strong></a>(self)</dt><dd><tt>swaps&nbsp;the&nbsp;ports&nbsp;of&nbsp;a&nbsp;two&nbsp;port</tt></dd></dl>
@@ -148,6 +158,16 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;amount:&nbsp;amount&nbsp;to&nbsp;add&nbsp;to&nbsp;s&nbsp;parameters<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;na</tt></dd></dl>
+
+<dl><dt><a name="Network-plot_passivity"><strong>plot_passivity</strong></a>(self, port<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;passivity&nbsp;of&nbsp;a&nbsp;network,&nbsp;possible&nbsp;for&nbsp;a&nbsp;specific<br>
+port.&nbsp;see&nbsp;the&nbsp;property&nbsp;'passivity'&nbsp;for&nbsp;more&nbsp;information.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;port:&nbsp;list&nbsp;of&nbsp;ports[ints]&nbsp;to&nbsp;plot&nbsp;passivity&nbsp;for&nbsp;[None]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;-&nbsp;matplotlib.axes&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;to&nbsp;plot&nbsp;on,&nbsp;used&nbsp;in&nbsp;case&nbsp;you<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;want&nbsp;to&nbsp;update&nbsp;an&nbsp;existing&nbsp;plot.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args,**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
 
 <dl><dt><a name="Network-plot_polar_generic"><strong>plot_polar_generic</strong></a>(self, attribute_r, attribute_theta, m<font color="#909090">=0</font>, n<font color="#909090">=0</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, **kwargs)</dt><dd><tt>generic&nbsp;plotting&nbsp;function&nbsp;for&nbsp;plotting&nbsp;a&nbsp;<a href="#Network">Network</a>'s&nbsp;attribute<br>
 in&nbsp;polar&nbsp;form<br>
@@ -208,6 +228,17 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args,**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
 
+<dl><dt><a name="Network-plot_s_im"><strong>plot_s_im</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;imaginary&nbsp;part&nbsp;of&nbsp;a&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n<br>
+&nbsp;<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m&nbsp;-&nbsp;first&nbsp;index,&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;-&nbsp;second&nbsp;indext,&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;-&nbsp;matplotlib.axes&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;to&nbsp;plot&nbsp;on,&nbsp;used&nbsp;in&nbsp;case&nbsp;you<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;want&nbsp;to&nbsp;update&nbsp;an&nbsp;existing&nbsp;plot.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args,**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
+
 <dl><dt><a name="Network-plot_s_mag"><strong>plot_s_mag</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;magnitude&nbsp;of&nbsp;a&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n<br>
 not&nbsp;in&nbsp;&nbsp;magnitude<br>
 &nbsp;<br>
@@ -242,6 +273,17 @@ takes:<br>
 
 <dl><dt><a name="Network-plot_s_rad_unwrapped"><strong>plot_s_rad_unwrapped</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;phase&nbsp;of&nbsp;a&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n&nbsp;in<br>
 unwrapped&nbsp;radians<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m&nbsp;-&nbsp;first&nbsp;index,&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n&nbsp;-&nbsp;second&nbsp;indext,&nbsp;int<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ax&nbsp;-&nbsp;matplotlib.axes&nbsp;<a href="__builtin__.html#object">object</a>&nbsp;to&nbsp;plot&nbsp;on,&nbsp;used&nbsp;in&nbsp;case&nbsp;you<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;want&nbsp;to&nbsp;update&nbsp;an&nbsp;existing&nbsp;plot.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;show_legend:&nbsp;boolean,&nbsp;to&nbsp;turn&nbsp;legend&nbsp;show&nbsp;legend&nbsp;of&nbsp;not<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args,**kwargs&nbsp;-&nbsp;passed&nbsp;to&nbsp;the&nbsp;matplotlib.plot&nbsp;command</tt></dd></dl>
+
+<dl><dt><a name="Network-plot_s_re"><strong>plot_s_re</strong></a>(self, m<font color="#909090">=None</font>, n<font color="#909090">=None</font>, ax<font color="#909090">=None</font>, show_legend<font color="#909090">=True</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;the&nbsp;real&nbsp;part&nbsp;of&nbsp;a&nbsp;scattering&nbsp;parameter&nbsp;of&nbsp;indecies&nbsp;m,&nbsp;n<br>
+&nbsp;<br>
 &nbsp;<br>
 takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m&nbsp;-&nbsp;first&nbsp;index,&nbsp;int<br>
@@ -365,14 +407,26 @@ note:<br>
 <dl><dt><strong>s_deg_unwrap</strong></dt>
 <dd><tt>returns&nbsp;the&nbsp;unwrapped&nbsp;phase&nbsp;of&nbsp;the&nbsp;s-paramerts,&nbsp;in&nbsp;degrees</tt></dd>
 </dl>
+<dl><dt><strong>s_im</strong></dt>
+<dd><tt>returns&nbsp;the&nbsp;imaginary&nbsp;part&nbsp;of&nbsp;the&nbsp;s-parameters.</tt></dd>
+</dl>
 <dl><dt><strong>s_mag</strong></dt>
 <dd><tt>returns&nbsp;the&nbsp;magnitude&nbsp;of&nbsp;the&nbsp;s-parameters.</tt></dd>
+</dl>
+<dl><dt><strong>s_quad</strong></dt>
+<dd><tt>this&nbsp;is&nbsp;like&nbsp;a&nbsp;arc-length,&nbsp;its&nbsp;<br>
+s_quad&nbsp;=&nbsp;s_rad&nbsp;*&nbsp;s_mag&nbsp;<br>
+&nbsp;<br>
+used&nbsp;in&nbsp;calculating&nbsp;differences&nbsp;in&nbsp;phase,&nbsp;but&nbsp;in&nbsp;units&nbsp;of&nbsp;distance</tt></dd>
 </dl>
 <dl><dt><strong>s_rad</strong></dt>
 <dd><tt>returns&nbsp;the&nbsp;phase&nbsp;of&nbsp;the&nbsp;s-parameters,&nbsp;in&nbsp;radians.</tt></dd>
 </dl>
 <dl><dt><strong>s_rad_unwrap</strong></dt>
 <dd><tt>returns&nbsp;the&nbsp;unwrapped&nbsp;phase&nbsp;of&nbsp;the&nbsp;s-parameters,&nbsp;in&nbsp;radians.</tt></dd>
+</dl>
+<dl><dt><strong>s_re</strong></dt>
+<dd><tt>returns&nbsp;the&nbsp;real&nbsp;part&nbsp;of&nbsp;the&nbsp;s-parameters.</tt></dd>
 </dl>
 <dl><dt><strong>t</strong></dt>
 <dd><tt>returns&nbsp;the&nbsp;t-parameters,&nbsp;which&nbsp;are&nbsp;also&nbsp;known&nbsp;as&nbsp;wave&nbsp;cascading<br>
@@ -469,6 +523,26 @@ note:<br>
 &nbsp;<br>
 note:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;only&nbsp;works&nbsp;for&nbsp;2-ports&nbsp;at&nbsp;the&nbsp;moment</tt></dd></dl>
+ <dl><dt><a name="-fon"><strong>fon</strong></a> = func_on_networks(ntwk_list, func, attribute<font color="#909090">='s'</font>, *args, **kwargs)</dt><dd><tt>Applies&nbsp;a&nbsp;function&nbsp;to&nbsp;some&nbsp;attribute&nbsp;of&nbsp;aa&nbsp;list&nbsp;of&nbsp;networks,&nbsp;and&nbsp;<br>
+returns&nbsp;the&nbsp;result&nbsp;in&nbsp;the&nbsp;form&nbsp;of&nbsp;a&nbsp;<a href="#Network">Network</a>.&nbsp;This&nbsp;means&nbsp;information&nbsp;<br>
+that&nbsp;may&nbsp;not&nbsp;be&nbsp;s-parameters&nbsp;is&nbsp;stored&nbsp;in&nbsp;the&nbsp;s-matrix&nbsp;of&nbsp;the<br>
+returned&nbsp;<a href="#Network">Network</a>.<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk_list:&nbsp;list&nbsp;of&nbsp;mwavepy.<a href="#Network">Network</a>&nbsp;types<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;func:&nbsp;function&nbsp;to&nbsp;operate&nbsp;on&nbsp;ntwk_list&nbsp;s-matrices<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attribute:&nbsp;attribute&nbsp;of&nbsp;<a href="#Network">Network</a>'s&nbsp;&nbsp;in&nbsp;ntwk_list&nbsp;for&nbsp;func&nbsp;to&nbsp;act&nbsp;on<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args:&nbsp;passed&nbsp;to&nbsp;func<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;**kwargs:&nbsp;passed&nbsp;to&nbsp;func<br>
+&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;mwavepy.<a href="#Network">Network</a>&nbsp;type,&nbsp;with&nbsp;s-matrix&nbsp;the&nbsp;result&nbsp;of&nbsp;func,&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;operating&nbsp;on&nbsp;ntwk_list's&nbsp;s-matrices<br>
+&nbsp;<br>
+&nbsp;<br>
+example:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;averaging&nbsp;can&nbsp;be&nbsp;implemented&nbsp;with&nbsp;func_on_networks&nbsp;by&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-func_on_networks">func_on_networks</a>(ntwk_list,mean)</tt></dd></dl>
  <dl><dt><a name="-func_on_networks"><strong>func_on_networks</strong></a>(ntwk_list, func, attribute<font color="#909090">='s'</font>, *args, **kwargs)</dt><dd><tt>Applies&nbsp;a&nbsp;function&nbsp;to&nbsp;some&nbsp;attribute&nbsp;of&nbsp;aa&nbsp;list&nbsp;of&nbsp;networks,&nbsp;and&nbsp;<br>
 returns&nbsp;the&nbsp;result&nbsp;in&nbsp;the&nbsp;form&nbsp;of&nbsp;a&nbsp;<a href="#Network">Network</a>.&nbsp;This&nbsp;means&nbsp;information&nbsp;<br>
 that&nbsp;may&nbsp;not&nbsp;be&nbsp;s-parameters&nbsp;is&nbsp;stored&nbsp;in&nbsp;the&nbsp;s-matrix&nbsp;of&nbsp;the<br>
@@ -542,7 +616,7 @@ takes:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;a&nbsp;symetric,&nbsp;reciprocal&nbsp;and&nbsp;lossless&nbsp;one-port&nbsp;network.<br>
 returns:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk:&nbsp;the&nbsp;resultant&nbsp;two-port&nbsp;<a href="#Network">Network</a></tt></dd></dl>
- <dl><dt><a name="-plot_uncertainty_bounds"><strong>plot_uncertainty_bounds</strong></a>(ntwk_list, attribute<font color="#909090">='s_mag'</font>, m<font color="#909090">=0</font>, n<font color="#909090">=0</font>, n_deviations<font color="#909090">=3</font>, alpha<font color="#909090">=0.3</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;mean&nbsp;value&nbsp;with&nbsp;+-&nbsp;uncertainty&nbsp;bounds&nbsp;in&nbsp;an&nbsp;<a href="#Network">Network</a>&nbsp;attribute,<br>
+ <dl><dt><a name="-plot_uncertainty_bounds"><strong>plot_uncertainty_bounds</strong></a>(ntwk_list, attribute<font color="#909090">='s_mag'</font>, m<font color="#909090">=0</font>, n<font color="#909090">=0</font>, n_deviations<font color="#909090">=3</font>, alpha<font color="#909090">=0.3</font>, fill_color<font color="#909090">='b'</font>, std_attribute<font color="#909090">=None</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;mean&nbsp;value&nbsp;with&nbsp;+-&nbsp;uncertainty&nbsp;bounds&nbsp;in&nbsp;an&nbsp;<a href="#Network">Network</a>&nbsp;attribute,<br>
 for&nbsp;a&nbsp;list&nbsp;of&nbsp;Networks.&nbsp;<br>
 &nbsp;<br>
 takes:<br>
@@ -563,11 +637,45 @@ Caution:<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std&nbsp;dev&nbsp;of&nbsp;deg_unwrap&nbsp;might&nbsp;blow&nbsp;up,&nbsp;because&nbsp;even&nbsp;though&nbsp;each<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;network&nbsp;is&nbsp;unwrapped,&nbsp;they&nbsp;may&nbsp;fall&nbsp;on&nbsp;either&nbsp;side&nbsp;fo&nbsp;the&nbsp;pi&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;relative&nbsp;to&nbsp;one&nbsp;another.</tt></dd></dl>
+ <dl><dt><a name="-plot_uncertainty_bounds_s_db"><strong>plot_uncertainty_bounds_s_db</strong></a>(ntwk_list, attribute<font color="#909090">='s_mag'</font>, m<font color="#909090">=0</font>, n<font color="#909090">=0</font>, n_deviations<font color="#909090">=3</font>, alpha<font color="#909090">=0.3</font>, fill_color<font color="#909090">='b'</font>, *args, **kwargs)</dt><dd><tt>plots&nbsp;mean&nbsp;value&nbsp;with&nbsp;+-&nbsp;uncertainty&nbsp;bounds&nbsp;in&nbsp;an&nbsp;<a href="#Network">Network</a>'s&nbsp;attribute<br>
+for&nbsp;a&nbsp;list&nbsp;of&nbsp;Networks.<br>
+&nbsp;<br>
+This&nbsp;is&nbsp;plotted&nbsp;on&nbsp;a&nbsp;log&nbsp;scale&nbsp;(db),&nbsp;but&nbsp;uncertainty&nbsp;is&nbsp;calculated&nbsp;<br>
+in&nbsp;the&nbsp;linear&nbsp;domain<br>
+&nbsp;<br>
+takes:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ntwk_list:&nbsp;list&nbsp;of&nbsp;Netmwork&nbsp;types&nbsp;[list]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;attribute:&nbsp;attribute&nbsp;of&nbsp;<a href="#Network">Network</a>&nbsp;type&nbsp;to&nbsp;analyze&nbsp;[string]&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;m:&nbsp;first&nbsp;index&nbsp;of&nbsp;attribute&nbsp;matrix&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n:&nbsp;second&nbsp;index&nbsp;of&nbsp;attribute&nbsp;matrix&nbsp;[int]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;n_deviations:&nbsp;number&nbsp;of&nbsp;std&nbsp;deviations&nbsp;to&nbsp;plot&nbsp;as&nbsp;bounds&nbsp;[number]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;alpha:&nbsp;passed&nbsp;to&nbsp;matplotlib.fill_between()&nbsp;command.&nbsp;[number,&nbsp;0-1]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*args,**kwargs:&nbsp;passed&nbsp;to&nbsp;<a href="#Network">Network</a>.plot_'attribute'&nbsp;command<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+returns:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;None<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br>
+&nbsp;<br>
+Caution:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if&nbsp;your&nbsp;list_of_networks&nbsp;is&nbsp;for&nbsp;a&nbsp;calibrated&nbsp;short,&nbsp;then&nbsp;the&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;std&nbsp;dev&nbsp;of&nbsp;deg_unwrap&nbsp;might&nbsp;blow&nbsp;up,&nbsp;because&nbsp;even&nbsp;though&nbsp;each<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;network&nbsp;is&nbsp;unwrapped,&nbsp;they&nbsp;may&nbsp;fall&nbsp;on&nbsp;either&nbsp;side&nbsp;fo&nbsp;the&nbsp;pi&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;relative&nbsp;to&nbsp;one&nbsp;another.</tt></dd></dl>
  <dl><dt><a name="-plot_uncertainty_bounds_s_deg"><strong>plot_uncertainty_bounds_s_deg</strong></a>(*args, **kwargs)</dt><dd><tt>this&nbsp;just&nbsp;calls&nbsp;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-plot_uncertainty_bounds">plot_uncertainty_bounds</a>(attribute=&nbsp;'s_deg',*args,**kwargs)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-plot_uncertainty_bounds">plot_uncertainty_bounds</a>(attribute=&nbsp;'s_deg_unwrap',*args,**kwargs)<br>
+see&nbsp;plot_uncertainty_bounds&nbsp;for&nbsp;help<br>
+&nbsp;<br>
+note;&nbsp;the&nbsp;attribute&nbsp;'s_deg_unwrap'&nbsp;is&nbsp;called&nbsp;on&nbsp;purpose&nbsp;to&nbsp;alleviate<br>
+the&nbsp;phase&nbsp;wraping&nbsp;effects&nbsp;on&nbsp;std&nbsp;dev.&nbsp;if&nbsp;you&nbsp;DO&nbsp;want&nbsp;to&nbsp;look&nbsp;at&nbsp;<br>
+'s_deg'&nbsp;and&nbsp;not&nbsp;'s_deg_unwrap'&nbsp;then&nbsp;use&nbsp;plot_uncertainty_bounds</tt></dd></dl>
+ <dl><dt><a name="-plot_uncertainty_bounds_s_im"><strong>plot_uncertainty_bounds_s_im</strong></a>(*args, **kwargs)</dt><dd><tt>this&nbsp;just&nbsp;calls&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-plot_uncertainty_bounds">plot_uncertainty_bounds</a>(attribute=&nbsp;'s_im',*args,**kwargs)<br>
 see&nbsp;plot_uncertainty_bounds&nbsp;for&nbsp;help</tt></dd></dl>
  <dl><dt><a name="-plot_uncertainty_bounds_s_mag"><strong>plot_uncertainty_bounds_s_mag</strong></a>(*args, **kwargs)</dt><dd><tt>this&nbsp;just&nbsp;calls&nbsp;<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-plot_uncertainty_bounds">plot_uncertainty_bounds</a>(attribute=&nbsp;'s_mag',*args,**kwargs)<br>
+see&nbsp;plot_uncertainty_bounds&nbsp;for&nbsp;help</tt></dd></dl>
+ <dl><dt><a name="-plot_uncertainty_bounds_s_re"><strong>plot_uncertainty_bounds_s_re</strong></a>(*args, **kwargs)</dt><dd><tt>this&nbsp;just&nbsp;calls&nbsp;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="#-plot_uncertainty_bounds">plot_uncertainty_bounds</a>(attribute=&nbsp;'s_re',*args,**kwargs)<br>
 see&nbsp;plot_uncertainty_bounds&nbsp;for&nbsp;help</tt></dd></dl>
  <dl><dt><a name="-s2t"><strong>s2t</strong></a>(s)</dt><dd><tt>converts&nbsp;a&nbsp;scattering&nbsp;parameters&nbsp;to&nbsp;'wave&nbsp;cascading&nbsp;parameters'<br>
 &nbsp;<br>

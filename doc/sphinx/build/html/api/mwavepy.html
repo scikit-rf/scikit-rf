@@ -230,7 +230,7 @@ converts a frequency vector to a Frequency object</p>
 <dd><p>returns the magnitude in dB of a complex number.</p>
 <dl class="docutils">
 <dt>returns:</dt>
-<dd>20*log10(<a href="#id42"><span class="problematic" id="id43">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id50"><span class="problematic" id="id51">|z|</span></a>)</dd>
 </dl>
 <p>where z is a complex number</p>
 </dd></dl>
@@ -310,7 +310,7 @@ returns 1 or 0</p>
 <blockquote>
 <dl class="docutils">
 <dt>db is given by </dt>
-<dd>20*log10(<a href="#id44"><span class="problematic" id="id45">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id52"><span class="problematic" id="id53">|z|</span></a>)</dd>
 </dl>
 </blockquote>
 <p>where z is a complex number</p>
@@ -543,6 +543,23 @@ see more at,
 </dd></dl>
 
 <dl class="method">
+<dt id="mwavepy.network.Network.plot_passivity">
+<tt class="descname">plot_passivity</tt><big>(</big><em>port=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_passivity" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots the passivity of a network, possible for a specific
+port. see the property &#8216;passivity&#8217; for more information.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">port: list of ports[ints] to plot passivity for [None]
+ax - matplotlib.axes object to plot on, used in case you</p>
+<blockquote>
+want to update an existing plot.</blockquote>
+<p class="last">show_legend: boolean, to turn legend show legend of not
+<a href="#id10"><span class="problematic" id="id11">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="mwavepy.network.Network.plot_polar_generic">
 <tt class="descname">plot_polar_generic</tt><big>(</big><em>attribute_r</em>, <em>attribute_theta</em>, <em>m=0</em>, <em>n=0</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_polar_generic" title="Permalink to this definition">¶</a></dt>
 <dd><p>generic plotting function for plotting a Network&#8217;s attribute
@@ -561,7 +578,7 @@ in polar form</p>
 <dd>want to update an existing plot.</dd>
 </dl>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id10"><span class="problematic" id="id11">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id12"><span class="problematic" id="id13">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -578,7 +595,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id12"><span class="problematic" id="id13">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id14"><span class="problematic" id="id15">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -596,7 +613,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id14"><span class="problematic" id="id15">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id16"><span class="problematic" id="id17">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -614,7 +631,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id16"><span class="problematic" id="id17">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id18"><span class="problematic" id="id19">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -632,7 +649,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id18"><span class="problematic" id="id19">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id20"><span class="problematic" id="id21">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -650,7 +667,24 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id20"><span class="problematic" id="id21">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id22"><span class="problematic" id="id23">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.network.Network.plot_s_im">
+<tt class="descname">plot_s_im</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_im" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots the imaginary part of a scattering parameter of indecies m, n</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">m - first index, int
+n - second indext, int
+ax - matplotlib.axes object to plot on, used in case you</p>
+<blockquote>
+want to update an existing plot.</blockquote>
+<p class="last">show_legend: boolean, to turn legend show legend of not
+<a href="#id24"><span class="problematic" id="id25">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -668,7 +702,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id22"><span class="problematic" id="id23">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id26"><span class="problematic" id="id27">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -685,7 +719,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id24"><span class="problematic" id="id25">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id28"><span class="problematic" id="id29">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -703,7 +737,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id26"><span class="problematic" id="id27">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id30"><span class="problematic" id="id31">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -721,7 +755,24 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id28"><span class="problematic" id="id29">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id32"><span class="problematic" id="id33">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="mwavepy.network.Network.plot_s_re">
+<tt class="descname">plot_s_re</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_re" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots the real part of a scattering parameter of indecies m, n</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">m - first index, int
+n - second indext, int
+ax - matplotlib.axes object to plot on, used in case you</p>
+<blockquote>
+want to update an existing plot.</blockquote>
+<p class="last">show_legend: boolean, to turn legend show legend of not
+<a href="#id34"><span class="problematic" id="id35">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -743,7 +794,7 @@ chart_type: string determining countour type. options are:</p>
 <blockquote>
 &#8216;z&#8217;: impedance contours (default)
 &#8216;y&#8217;: admittance contours</blockquote>
-<p class="last"><a href="#id30"><span class="problematic" id="id31">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<p class="last"><a href="#id36"><span class="problematic" id="id37">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -808,7 +859,7 @@ n&#8217;s are port indicies</blockquote>
 <dt>note:</dt>
 <dd><dl class="first last docutils">
 <dt>dB is calculated by </dt>
-<dd>20*log10(<a href="#id46"><span class="problematic" id="id47">|s|</span></a>)</dd>
+<dd>20*log10(<a href="#id54"><span class="problematic" id="id55">|s|</span></a>)</dd>
 </dl>
 </dd>
 </dl>
@@ -827,9 +878,23 @@ n&#8217;s are port indicies</blockquote>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="mwavepy.network.Network.s_im">
+<tt class="descname">s_im</tt><a class="headerlink" href="#mwavepy.network.Network.s_im" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the imaginary part of the s-parameters.</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="mwavepy.network.Network.s_mag">
 <tt class="descname">s_mag</tt><a class="headerlink" href="#mwavepy.network.Network.s_mag" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns the magnitude of the s-parameters.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.network.Network.s_quad">
+<tt class="descname">s_quad</tt><a class="headerlink" href="#mwavepy.network.Network.s_quad" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is like a arc-length, its 
+s_quad = s_rad * s_mag</p>
+<p>used in calculating differences in phase, but in units of distance</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -842,6 +907,12 @@ n&#8217;s are port indicies</blockquote>
 <dt id="mwavepy.network.Network.s_rad_unwrap">
 <tt class="descname">s_rad_unwrap</tt><a class="headerlink" href="#mwavepy.network.Network.s_rad_unwrap" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns the unwrapped phase of the s-parameters, in radians.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.network.Network.s_re">
+<tt class="descname">s_re</tt><a class="headerlink" href="#mwavepy.network.Network.s_re" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the real part of the s-parameters.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -871,7 +942,7 @@ name. if this is empty, then throws an error.</dd>
 <dt>note:</dt>
 <dd>in the future could make possible use of the touchtone 
 class, but at the moment this would not provide any benefit 
-as it has not <a href="#id48"><span class="problematic" id="id49">set_</span></a> functions.</dd>
+as it has not <a href="#id56"><span class="problematic" id="id57">set_</span></a> functions.</dd>
 </dl>
 </dd></dl>
 
@@ -1013,8 +1084,8 @@ returned Network.</p>
 <dd>ntwk_list: list of mwavepy.Network types
 func: function to operate on ntwk_list s-matrices
 attribute: attribute of Network&#8217;s  in ntwk_list for func to act on
-<a href="#id32"><span class="problematic" id="id33">*</span></a>args: passed to func
-<a href="#id34"><span class="problematic" id="id35">**</span></a>kwargs: passed to func</dd>
+<a href="#id38"><span class="problematic" id="id39">*</span></a>args: passed to func
+<a href="#id40"><span class="problematic" id="id41">**</span></a>kwargs: passed to func</dd>
 <dt>returns:</dt>
 <dd><dl class="first last docutils">
 <dt>mwavepy.Network type, with s-matrix the result of func, </dt>
@@ -1042,8 +1113,8 @@ returned Network.</p>
 <dd>ntwk_list: list of mwavepy.Network types
 func: function to operate on ntwk_list s-matrices
 attribute: attribute of Network&#8217;s  in ntwk_list for func to act on
-<a href="#id36"><span class="problematic" id="id37">*</span></a>args: passed to func
-<a href="#id38"><span class="problematic" id="id39">**</span></a>kwargs: passed to func</dd>
+<a href="#id42"><span class="problematic" id="id43">*</span></a>args: passed to func
+<a href="#id44"><span class="problematic" id="id45">**</span></a>kwargs: passed to func</dd>
 <dt>returns:</dt>
 <dd><dl class="first last docutils">
 <dt>mwavepy.Network type, with s-matrix the result of func, </dt>
@@ -1155,7 +1226,7 @@ lossless one-port network.</p>
 
 <dl class="function">
 <dt id="mwavepy.network.plot_uncertainty_bounds">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds</tt><big>(</big><em>ntwk_list</em>, <em>attribute='s_mag'</em>, <em>m=0</em>, <em>n=0</em>, <em>n_deviations=3</em>, <em>alpha=0.3</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds</tt><big>(</big><em>ntwk_list</em>, <em>attribute='s_mag'</em>, <em>m=0</em>, <em>n=0</em>, <em>n_deviations=3</em>, <em>alpha=0.3</em>, <em>fill_color='b'</em>, <em>std_attribute=None</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots mean value with +- uncertainty bounds in an Network attribute,
 for a list of Networks.</p>
 <dl class="docutils">
@@ -1166,7 +1237,35 @@ m: first index of attribute matrix [int]
 n: second index of attribute matrix [int]
 n_deviations: number of std deviations to plot as bounds [number]
 alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-<a href="#id40"><span class="problematic" id="id41">*</span></a>args,**kwargs: passed to <a href="#id50"><span class="problematic" id="id51">Network.plot_</span></a>&#8216;attribute&#8217; command</dd>
+<a href="#id46"><span class="problematic" id="id47">*</span></a>args,**kwargs: passed to <a href="#id58"><span class="problematic" id="id59">Network.plot_</span></a>&#8216;attribute&#8217; command</dd>
+<dt>returns:</dt>
+<dd>None</dd>
+<dt>Caution:</dt>
+<dd><blockquote class="first">
+if your list_of_networks is for a calibrated short, then the</blockquote>
+<p class="last">std dev of deg_unwrap might blow up, because even though each
+network is unwrapped, they may fall on either side fo the pi 
+relative to one another.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.network.plot_uncertainty_bounds_s_db">
+<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_db</tt><big>(</big><em>ntwk_list</em>, <em>attribute='s_mag'</em>, <em>m=0</em>, <em>n=0</em>, <em>n_deviations=3</em>, <em>alpha=0.3</em>, <em>fill_color='b'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_db" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots mean value with +- uncertainty bounds in an Network&#8217;s attribute
+for a list of Networks.</p>
+<p>This is plotted on a log scale (db), but uncertainty is calculated 
+in the linear domain</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd>ntwk_list: list of Netmwork types [list]
+attribute: attribute of Network type to analyze [string] 
+m: first index of attribute matrix [int]
+n: second index of attribute matrix [int]
+n_deviations: number of std deviations to plot as bounds [number]
+alpha: passed to matplotlib.fill_between() command. [number, 0-1]
+<a href="#id48"><span class="problematic" id="id49">*</span></a>args,**kwargs: passed to <a href="#id60"><span class="problematic" id="id61">Network.plot_</span></a>&#8216;attribute&#8217; command</dd>
 <dt>returns:</dt>
 <dd>None</dd>
 <dt>Caution:</dt>
@@ -1184,7 +1283,20 @@ relative to one another.</p>
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_deg</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_deg" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="docutils">
 <dt>this just calls </dt>
-<dd>plot_uncertainty_bounds(attribute= &#8216;s_deg&#8217;,*args,**kwargs)</dd>
+<dd>plot_uncertainty_bounds(attribute= &#8216;s_deg_unwrap&#8217;,*args,**kwargs)</dd>
+</dl>
+<p>see plot_uncertainty_bounds for help</p>
+<p>note; the attribute &#8216;s_deg_unwrap&#8217; is called on purpose to alleviate
+the phase wraping effects on std dev. if you DO want to look at 
+&#8216;s_deg&#8217; and not &#8216;s_deg_unwrap&#8217; then use plot_uncertainty_bounds</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.network.plot_uncertainty_bounds_s_im">
+<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_im</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_im" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>this just calls </dt>
+<dd>plot_uncertainty_bounds(attribute= &#8216;s_im&#8217;,*args,**kwargs)</dd>
 </dl>
 <p>see plot_uncertainty_bounds for help</p>
 </dd></dl>
@@ -1195,6 +1307,16 @@ relative to one another.</p>
 <dd><dl class="docutils">
 <dt>this just calls </dt>
 <dd>plot_uncertainty_bounds(attribute= &#8216;s_mag&#8217;,*args,**kwargs)</dd>
+</dl>
+<p>see plot_uncertainty_bounds for help</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.network.plot_uncertainty_bounds_s_re">
+<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_re</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_re" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>this just calls </dt>
+<dd>plot_uncertainty_bounds(attribute= &#8216;s_re&#8217;,*args,**kwargs)</dd>
 </dl>
 <p>see plot_uncertainty_bounds for help</p>
 </dd></dl>
