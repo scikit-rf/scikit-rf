@@ -49,43 +49,93 @@ class NetworkSet(object):
 		self.ntwk_set = ntwk_set
 	
 	@property 
-	def mean(self):
+	def mean_s(self):
 		'''
 		returns the complex mean network for the set 
 		'''
-		# note: this can also be implemented with fon, and mean, but
-		# this way is a little faster computationally
-		return network_average(self.ntwk_set)
+		return mean_of('s')
 	
 	@property 
 	def mean_s_mag(self):
 		'''
 		returns the mean of the magnitude  for the set 
 		'''
-		return fon(self.ntwk_set,npy.mean,'s_mag')
+		return mean_of('s_mag')
+			
+	@property 
+	def mean_s_deg(self):
+		'''
+		returns the mean of the phase, in degrees for the set 
+		
+		NOTE: you probably want mean_s_deg_unwrap instead!
+		'''
+		return mean_of('s_deg')
+		
+	@property 
+	def mean_s_deg_unwrap(self):
+		'''
+		returns the mean of the phase, in unwrapped degrees for the set 
+		'''
+		return mean_of('s_deg_unwrap')
+	
 	
 	@property
-	def std(self):
+	def std_s(self):
 		'''
 		return complex standard deviation (mean distance)
 		'''
-		return fon(self.ntwk_set,npy.std,'s')
+		return std_of('s')
 
 	@property
 	def std_s_mag(self):
 		'''
-		return complex standard deviation (mean distance)
+		return  standard deviation of the magnitude of s parameters
 		'''
-		return fon(self.ntwk_set,npy.std,'s_mag')
+		return std_of('s_mag')
 	
-	def plot_uncertainty_bounds(ntwk_list,attribute='s_mag',m=0,n=0,\
+	@property
+	def std_s_deg(self):
+		'''
+		return  standard deviation of the phase, in degrees, of s parameters
+		'''
+		return std_of('s_deg')
+	
+	@property
+	def std_s_deg_unwrap(self):
+		'''
+		return standard deviation of the phase, in unwrapped degrees, 
+		of s parameters
+		'''
+		return std_of('s_deg_unwrap')
+	
+	
+	def mean_of(self, a_property):
+		'''
+		general function to return the mean of a given network property 
+		'''
+		return fon(self.ntwk_set,npy.mean,a_property)
+	
+	def std_of(self, a_property):
+		'''
+		general function to return the standard deviation of a given 
+		network property 
+		'''
+		return func_on(npy.std, a_property)
+	
+	def func_on(self, func, a_property, *args, **kwargs):
+		'''
+		calls a function on a specific property of the networks in 
+		this NetworkSet.
+		'''
+		return fon(self.ntwk_set, func, a_property, *args, **kwargs)
+	
+	def plot_uncertainty_bounds(self,attribute='s_mag',m=0,n=0,\
 		n_deviations=3, alpha=.3,fill_color ='b',std_attribute=None,*args,**kwargs):
 		'''
 		plots mean value with +- uncertainty bounds in an Network attribute,
 		for a list of Networks. 
 		
 		takes:
-			ntwk_list: list of Netmwork types [list]
 			attribute: attribute of Network type to analyze [string] 
 			m: first index of attribute matrix [int]
 			n: second index of attribute matrix [int]
@@ -103,12 +153,13 @@ class NetworkSet(object):
 			network is unwrapped, they may fall on either side fo the pi 
 			relative to one another.
 		'''
+		
 		# calculate mean response, and std dev of given attribute
-		ntwk_mean = average(ntwk_list)
+		ntwk_mean = average(self.ntwk_set)
 		if std_attribute is None:
 			# they want to calculate teh std deviation on a different attribute
 			std_attribute = attribute
-		ntwk_std = func_on_networks(ntwk_list,npy.std, attribute=std_attribute)
+		ntwk_std = func_on_networks(self.ntwk_set,npy.std, attribute=std_attribute)
 		
 		# pull out port of interest
 		ntwk_mean.s = ntwk_mean.s[:,m,n]
@@ -133,7 +184,7 @@ class NetworkSet(object):
 		plb.axis('tight')
 		plb.draw()
 
-	def plot_uncertainty_bounds_s_re(*args, **kwargs):
+	def plot_uncertainty_bounds_s_re(self,*args, **kwargs):
 		'''
 		this just calls 
 			plot_uncertainty_bounds(attribute= 's_re',*args,**kwargs)
@@ -143,7 +194,7 @@ class NetworkSet(object):
 		kwargs.update({'attribute':'s_re'})
 		plot_uncertainty_bounds(*args,**kwargs)
 	
-	def plot_uncertainty_bounds_s_im(*args, **kwargs):
+	def plot_uncertainty_bounds_s_im(self,*args, **kwargs):
 		'''
 		this just calls 
 			plot_uncertainty_bounds(attribute= 's_im',*args,**kwargs)
@@ -153,7 +204,7 @@ class NetworkSet(object):
 		kwargs.update({'attribute':'s_im'})
 		plot_uncertainty_bounds(*args,**kwargs)
 	
-	def plot_uncertainty_bounds_s_mag(*args, **kwargs):
+	def plot_uncertainty_bounds_s_mag(self,*args, **kwargs):
 		'''
 		this just calls 
 			plot_uncertainty_bounds(attribute= 's_mag',*args,**kwargs)
@@ -163,7 +214,7 @@ class NetworkSet(object):
 		kwargs.update({'attribute':'s_mag'})
 		plot_uncertainty_bounds(*args,**kwargs)
 		
-	def plot_uncertainty_bounds_s_deg(*args, **kwargs):
+	def plot_uncertainty_bounds_s_deg(self,*args, **kwargs):
 		'''
 		this just calls 
 			plot_uncertainty_bounds(attribute= 's_deg_unwrap',*args,**kwargs)
@@ -177,7 +228,7 @@ class NetworkSet(object):
 		kwargs.update({'attribute':'s_deg_unwrap'})
 		plot_uncertainty_bounds(*args,**kwargs)
 	
-	def plot_uncertainty_bounds_s_db(ntwk_list,attribute='s_mag',m=0,n=0,\
+	def plot_uncertainty_bounds_s_db(self,attribute='s_mag',m=0,n=0,\
 		n_deviations=3, alpha=.3,fill_color ='b',*args,**kwargs):
 		'''
 		plots mean value with +- uncertainty bounds in an Network's attribute
@@ -187,7 +238,7 @@ class NetworkSet(object):
 		in the linear domain
 	
 		takes:
-			ntwk_list: list of Netmwork types [list]
+			self.ntwk_set: list of Netmwork types [list]
 			attribute: attribute of Network type to analyze [string] 
 			m: first index of attribute matrix [int]
 			n: second index of attribute matrix [int]
@@ -207,8 +258,8 @@ class NetworkSet(object):
 		'''
 		
 		# calculate mean response, and std dev of given attribute
-		ntwk_mean = average(ntwk_list)
-		ntwk_std = func_on_networks(ntwk_list,npy.std, attribute=attribute)
+		ntwk_mean = average(self.ntwk_set)
+		ntwk_std = func_on_networks(self.ntwk_set,npy.std, attribute=attribute)
 		
 		# pull out port of interest
 		ntwk_mean.s = ntwk_mean.s[:,m,n]
