@@ -25,9 +25,9 @@ network sets.
 '''
 
 
-from Network import average as network_average
+from network import average as network_average
 
-
+from copy import deepcopy
 import numpy as npy
 
 
@@ -47,80 +47,33 @@ class NetworkSet(object):
 			a NetworkSet type
 		'''
 		self.ntwk_set = ntwk_set
-	
-	@property 
-	def mean_s(self):
-		'''
-		returns the complex mean network for the set 
-		'''
-		return mean_of('s')
-	
-	@property 
-	def mean_s_mag(self):
-		'''
-		returns the mean of the magnitude  for the set 
-		'''
-		return mean_of('s_mag')
-			
-	@property 
-	def mean_s_deg(self):
-		'''
-		returns the mean of the phase, in degrees for the set 
 		
-		NOTE: you probably want mean_s_deg_unwrap instead!
-		'''
-		return mean_of('s_deg')
+		for network_property_name in ['s','s_re','s_im','s_mag','s_deg']:
+			for func in [npy.mean, npy.std]:
+				self.add_a_property(network_property_name, func)
 		
-	@property 
-	def mean_s_deg_unwrap(self):
+	def __str__(self):
 		'''
-		returns the mean of the phase, in unwrapped degrees for the set 
 		'''
-		return mean_of('s_deg_unwrap')
-	
-	
-	@property
-	def std_s(self):
-		'''
-		return complex standard deviation (mean distance)
-		'''
-		return std_of('s')
+		output =  \
+			'A NetworkSet of length %i'%len(self.ntwk_set)
 
-	@property
-	def std_s_mag(self):
-		'''
-		return  standard deviation of the magnitude of s parameters
-		'''
-		return std_of('s_mag')
+		return output
+	def __repr__(self):
+		return self.__str__()
 	
-	@property
-	def std_s_deg(self):
+	def add_a_property(self,network_property_name,func):
 		'''
-		return  standard deviation of the phase, in degrees, of s parameters
+		dynamically adds a property to this class (NetworkSet)
+		
+		this is mostly used internally to genrate all of the classes 
+		properties
 		'''
-		return std_of('s_deg')
-	
-	@property
-	def std_s_deg_unwrap(self):
-		'''
-		return standard deviation of the phase, in unwrapped degrees, 
-		of s parameters
-		'''
-		return std_of('s_deg_unwrap')
+		fget = lambda self: fon(self.ntwk_set,func,network_property_name)
+		setattr(self.__class__,func.__name__+'_'+network_property_name,\
+			property(fget))
 	
 	
-	def mean_of(self, a_property):
-		'''
-		general function to return the mean of a given network property 
-		'''
-		return fon(self.ntwk_set,npy.mean,a_property)
-	
-	def std_of(self, a_property):
-		'''
-		general function to return the standard deviation of a given 
-		network property 
-		'''
-		return func_on(npy.std, a_property)
 	
 	def func_on(self, func, a_property, *args, **kwargs):
 		'''
@@ -129,6 +82,7 @@ class NetworkSet(object):
 		'''
 		return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 	
+	# plotting functions
 	def plot_uncertainty_bounds(self,attribute='s_mag',m=0,n=0,\
 		n_deviations=3, alpha=.3,fill_color ='b',std_attribute=None,*args,**kwargs):
 		'''

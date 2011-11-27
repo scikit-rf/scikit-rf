@@ -38,6 +38,7 @@ import calibration
 import touchstone 	
 import frequency
 import network
+import networkSet
 import convenience
 import plotting
 import mathFunctions
@@ -47,6 +48,7 @@ import tlineFunctions
 # Import contents into current namespace for ease of calling 
 from frequency import * 
 from network import * 
+from networkSet import * 
 from calibration import * 
 from convenience import * 
 from plotting import  * 

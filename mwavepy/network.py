@@ -431,13 +431,31 @@ class Network(object):
 	@property
 	def s_quad(self):
 		'''
-		this is like a arc-length, its 
-		s_quad = s_rad * s_mag 
+		this is a different name for  arc-length, 
+		see Network.s_arcl
+		'''
+		return self.s_arcl
+		
+	@property
+	def s_arcl(self):
+		'''
+		the arc-length of the s-parameters, given by  
+			= s_rad * s_mag 
 		
 		used in calculating differences in phase, but in units of distance
 		'''
 		return self.s_rad * self.s_mag
-
+	
+	@property
+	def s_arcl_unwrap(self):
+		'''
+		the unwrapped arc-length of the s-parameters, given by  
+			= s_rad_unwrap * s_mag 
+		
+		used in calculating differences in phase, but in units of distance
+		'''
+		return self.s_rad_unwrap * self.s_mag
+	
 	@property
 	def s11(self):
 		result = Network()
@@ -1792,7 +1810,5 @@ def csv_2_touchstone(filename):
 	return ntwk
 
 
-## convinience names
-fon = func_on_networks
 
 

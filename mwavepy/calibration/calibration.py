@@ -36,7 +36,7 @@ from calibrationAlgorithms import *
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
 from ..frequency import *
 from ..network import *
-from ..network import func_on_networks as fon
+from ..networkSet import func_on_networks as fon
 from ..convenience import *
 
 
