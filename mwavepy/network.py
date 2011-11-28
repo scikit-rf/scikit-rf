@@ -388,6 +388,12 @@ class Network(object):
 		returns the magnitude of the s-parameters.
 		'''
 		return mf.complex_2_magnitude(self.s)
+	@property
+	def s_abs(self):
+		'''
+		see s_mag
+		'''
+		return self.s_mag
 	
 	@property
 	def s_db(self):
@@ -406,7 +412,13 @@ class Network(object):
 		returns the phase of the s-parameters, in radians
 		'''
 		return mf.complex_2_degree(self.s)
-		
+	
+	@property
+	def s_angle(self):
+		'''
+		see s_deg
+		'''
+		return self.s_deg	
 	@property
 	def s_rad(self):
 		'''
@@ -672,7 +684,6 @@ class Network(object):
 		# get current axis if user doesnt supply and axis 
 		if ax is None:
 			ax = plb.gca()
-		
 		
 		if m is None:
 			M = range(self.number_of_ports)

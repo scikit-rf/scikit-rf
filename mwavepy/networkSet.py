@@ -190,10 +190,43 @@ class NetworkSet(object):
 		plb.axis('tight')
 		plb.draw()
 
-	def plot_uncertainty_bounds2(self,attribute='s_mag',m=0,n=0,\
-		n_deviations=3, alpha=.3,fill_color ='b',*args,**kwargs):
+	def plot_uncertainty_bounds_component(self,attribute='s_mag',m=0,n=0,\
+		n_deviations=3, alpha=.3,fill_color ='b',ax=None,*args,**kwargs):
 		'''
+		plots mean value of the NetworkSet with +- uncertainty bounds 
+		in an Network's attribute. This is designed to represent 
+		uncertainty in a scalar component of the s-parameter. this is 
+		expressed by,
+		
+			mean(abs(s)) +- std(abs(s))
+		
+		the order of mean and abs is meaningful.
+		
+	
+		takes:
+			attribute: attribute of Network type to analyze [string] 
+			m: first index of attribute matrix [int]
+			n: second index of attribute matrix [int]
+			n_deviations: number of std deviations to plot as bounds [number]
+			alpha: passed to matplotlib.fill_between() command. [number, 0-1]
+			fill_color: color of the +- std dev fill shading
+			ax: Axes to plot on
+			*args,**kwargs: passed to Network.plot_'attribute' command
+			
+		returns:
+			None
+			
+		
+		Note:
+			for phase uncertainty you probably want s_deg_unwrap, or 
+			similar.  uncerainty for wrapped phase blows up at +-pi.
+			
 		'''
+		ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase [deg]',
+			's_deg_unwrap':'Phase [deg]','s_deg_unwrapped':'Phase [deg]',
+			's_db':'Magnitude [dB]'}
+		ax = plb.gca()
+		
 		ntwk_mean = self.__getattribute__('mean_'+attribute)
 		ntwk_std = self.__getattribute__('std_'+attribute)
 		ntwk_std.s = n_deviations * ntwk_std.s
@@ -201,12 +234,16 @@ class NetworkSet(object):
 		upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
 		lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
 		
-		plb.fill_between(ntwk_mean.frequency.f_scaled, \
+		ax.fill_between(ntwk_mean.frequency.f_scaled, \
 			lower_bound,upper_bound, alpha=alpha, color=fill_color)
-		plb.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
-		#ntwk_mean.plot_s_mag(m=m,n=n, *args, **kwargs)
+		ntwk_mean.plot_s_re(m=m,n=n,*args, **kwargs)	#ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
+		ax.errorbar(ntwk_mean.frequency.f_scaled[::10],\
+			ntwk_mean.s_re[:,m,n].squeeze()[::10], \
+			yerr=ntwk_std.s_mag[:,m,n].squeeze()[::10], fmt='o')
+		ntwk_mean.frequency.labelXAxis(ax=ax)
+		ax.set_ylabel(ylabel_dict.get(attribute,''))
 		
-	
+		
 	def plot_uncertainty_bounds_s_re(self,*args, **kwargs):
 		'''
 		this just calls 
