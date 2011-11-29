@@ -27,7 +27,9 @@ network sets.
 
 from network import average as network_average
 import mathFunctions as mf
+
 from copy import deepcopy
+import warnings
 import numpy as npy
 import pylab as plb
 
@@ -51,14 +53,13 @@ class NetworkSet(object):
 		'''
 		self.ntwk_set = ntwk_set
 		
+		# dynamically generate properties. this is slick.
 		for network_property_name in \
 			['s','s_re','s_im','s_mag','s_deg','s_deg_unwrap','s_rad',\
 			's_rad_unwrap','s_arcl','s_arcl_unwrap','passivity']:
 			for func in [npy.mean, npy.std]:
 				self.add_a_func_on_property(func, network_property_name)
 	
-	
-		
 	def __str__(self):
 		'''
 		'''
@@ -66,9 +67,15 @@ class NetworkSet(object):
 			'A NetworkSet of length %i'%len(self.ntwk_set)
 
 		return output
+	
 	def __repr__(self):
 		return self.__str__()
 	
+	def __getitem__(self,key):
+		'''
+		returns an element of the network set
+		'''
+		return self.ntwk_set[key]
 	@property
 	def mean_s_db(self):
 		'''
@@ -122,6 +129,23 @@ class NetworkSet(object):
 		setattr(self.__class__,func.__name__+'_'+network_property_name,\
 			property(fget))
 	
+	def add_a_plot_func(self,network_set_property_name):
+		'''
+
+		takes:
+			network_property_name: a property of the Network class, 
+				a string. this must have a matrix output of shape fxnxn
+			
+		
+		
+		example:
+			my_ntwk_set.add_a_func_on_property('s',mean)
+			
+		
+		'''
+		
+		setattr(self.__class__,'plot_'+network_set_property_name,\
+			self.getattr(network_set_property_name).plot_s_re)
 	
 	
 	def func_on(self, func, a_property, *args, **kwargs):
@@ -190,28 +214,37 @@ class NetworkSet(object):
 		plb.axis('tight')
 		plb.draw()
 
-	def plot_uncertainty_bounds_component(self,attribute='s_mag',m=0,n=0,\
-		n_deviations=3, alpha=.3,fill_color ='b',ax=None,*args,**kwargs):
+	def plot_uncertainty_bounds_component(self,attribute,m=0,n=0,\
+		type='shade',n_deviations=3, alpha=.3, color_error ='b',markevery_error=20,
+		ax=None,ppf=None,kwargs_error={},*args,**kwargs):
 		'''
 		plots mean value of the NetworkSet with +- uncertainty bounds 
 		in an Network's attribute. This is designed to represent 
-		uncertainty in a scalar component of the s-parameter. this is 
-		expressed by,
+		uncertainty in a scalar component of the s-parameter. for example
+		ploting the uncertainty in the magnitude would be expressed by,
 		
 			mean(abs(s)) +- std(abs(s))
 		
-		the order of mean and abs is meaningful.
+		the order of mean and abs is important.
 		
 	
 		takes:
 			attribute: attribute of Network type to analyze [string] 
 			m: first index of attribute matrix [int]
 			n: second index of attribute matrix [int]
+			type: ['shade' | 'bar'], type of plot to draw
 			n_deviations: number of std deviations to plot as bounds [number]
 			alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-			fill_color: color of the +- std dev fill shading
+			color_error: color of the +- std dev fill shading
+			markevery_error: if type=='bar', this controls frequency 
+				of error bars 
 			ax: Axes to plot on
-			*args,**kwargs: passed to Network.plot_'attribute' command
+			ppf: post processing function. a function applied to the 
+				upper and low
+			*args,**kwargs: passed to Network.plot_s_re command used 
+				to plot mean response
+			kwargs_error: dictionary of kwargs to pass to the fill_between
+				or errorbar plot command depending on value of type.
 			
 		returns:
 			None
@@ -225,6 +258,7 @@ class NetworkSet(object):
 		ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase [deg]',
 			's_deg_unwrap':'Phase [deg]','s_deg_unwrapped':'Phase [deg]',
 			's_db':'Magnitude [dB]'}
+		
 		ax = plb.gca()
 		
 		ntwk_mean = self.__getattribute__('mean_'+attribute)
@@ -234,25 +268,40 @@ class NetworkSet(object):
 		upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
 		lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
 		
-		ax.fill_between(ntwk_mean.frequency.f_scaled, \
-			lower_bound,upper_bound, alpha=alpha, color=fill_color)
-		ntwk_mean.plot_s_re(m=m,n=n,*args, **kwargs)	#ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
-		ax.errorbar(ntwk_mean.frequency.f_scaled[::10],\
-			ntwk_mean.s_re[:,m,n].squeeze()[::10], \
-			yerr=ntwk_std.s_mag[:,m,n].squeeze()[::10], fmt='o')
-		ntwk_mean.frequency.labelXAxis(ax=ax)
-		ax.set_ylabel(ylabel_dict.get(attribute,''))
+		if ppf is not None:
+			if type =='bar':
+				warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
+			ntwk_mean.s = ppf(ntwk_mean.s)
+			upper_bound = ppf(upper_bound)
+			lower_bound = ppf(lower_bound)
 		
+		if type == 'shade':
+			ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+			ax.fill_between(ntwk_mean.frequency.f_scaled, \
+				lower_bound,upper_bound, alpha=alpha, color=color_error,
+				**kwargs_error)
+			#ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
+		elif type =='bar':
+			ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+			ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
+				ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
+				yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
+				fmt='o',color=color_error,**kwargs_error)
+			
+		else:
+			raise(ValueError('incorrect plot type'))
+			
+		ax.set_ylabel(ylabel_dict.get(attribute,''))
 		
 	def plot_uncertainty_bounds_s_re(self,*args, **kwargs):
 		'''
 		this just calls 
-			plot_uncertainty_bounds(attribute= 's_re',*args,**kwargs)
+			plot_uncertainty_bounds_component(attribute= 's_re',*args,**kwargs)
 		see plot_uncertainty_bounds for help
 		
 		'''
 		kwargs.update({'attribute':'s_re'})
-		plot_uncertainty_bounds(*args,**kwargs)
+		self.plot_uncertainty_bounds_component(*args,**kwargs)
 	
 	def plot_uncertainty_bounds_s_im(self,*args, **kwargs):
 		'''
@@ -262,7 +311,7 @@ class NetworkSet(object):
 		
 		'''
 		kwargs.update({'attribute':'s_im'})
-		plot_uncertainty_bounds(*args,**kwargs)
+		self.plot_uncertainty_bounds_component(*args,**kwargs)
 	
 	def plot_uncertainty_bounds_s_mag(self,*args, **kwargs):
 		'''
@@ -272,7 +321,7 @@ class NetworkSet(object):
 		
 		'''
 		kwargs.update({'attribute':'s_mag'})
-		plot_uncertainty_bounds(*args,**kwargs)
+		self.plot_uncertainty_bounds_component(*args,**kwargs)
 		
 	def plot_uncertainty_bounds_s_deg(self,*args, **kwargs):
 		'''
@@ -280,73 +329,25 @@ class NetworkSet(object):
 			plot_uncertainty_bounds(attribute= 's_deg_unwrap',*args,**kwargs)
 		see plot_uncertainty_bounds for help
 		
-		note; the attribute 's_deg_unwrap' is called on purpose to alleviate
+		NOTE: the attribute 's_deg_unwrap' is called on purpose to alleviate
 		the phase wraping effects on std dev. if you DO want to look at 
-		's_deg' and not 's_deg_unwrap' then use plot_uncertainty_bounds
+		's_deg' and not 's_deg_unwrap' then directly call 
+			self.plot_uncertainty_bounds_component('s_deg')
 		
 		'''
 		kwargs.update({'attribute':'s_deg_unwrap'})
-		plot_uncertainty_bounds(*args,**kwargs)
+		self.plot_uncertainty_bounds_component(*args,**kwargs)
 	
-	def plot_uncertainty_bounds_s_db(self,attribute='s_mag',m=0,n=0,\
-		n_deviations=3, alpha=.3,fill_color ='b',*args,**kwargs):
+	def plot_uncertainty_bounds_s_db(self,*args, **kwargs):
 		'''
-		plots mean value with +- uncertainty bounds in an Network's attribute
-		for a list of Networks.
-	
-		This is plotted on a log scale (db), but uncertainty is calculated 
-		in the linear domain
-	
-		takes:
-			self.ntwk_set: list of Netmwork types [list]
-			attribute: attribute of Network type to analyze [string] 
-			m: first index of attribute matrix [int]
-			n: second index of attribute matrix [int]
-			n_deviations: number of std deviations to plot as bounds [number]
-			alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-			*args,**kwargs: passed to Network.plot_'attribute' command
-			
-		returns:
-			None
-			
+		this just calls 
+			plot_uncertainty_bounds(attribute= 's_mag',*args,**kwargs)
+		see plot_uncertainty_bounds for help
 		
-		Caution:
-			 if your list_of_networks is for a calibrated short, then the 
-			std dev of deg_unwrap might blow up, because even though each
-			network is unwrapped, they may fall on either side fo the pi 
-			relative to one another.
 		'''
+		kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
+		self.plot_uncertainty_bounds_component(*args,**kwargs)
 		
-		# calculate mean response, and std dev of given attribute
-		ntwk_mean = average(self.ntwk_set)
-		ntwk_std = func_on_networks(self.ntwk_set,npy.std, attribute=attribute)
-		
-		# pull out port of interest
-		ntwk_mean.s = ntwk_mean.s[:,m,n]
-		ntwk_std.s = ntwk_std.s[:,m,n]
-		
-		# create bounds (the s_mag here is confusing but is realy in units
-		# of whatever 'attribute' is. read the func_on_networks call to understand
-		upper_bound =  ntwk_mean.__getattribute__(attribute) +\
-			ntwk_std.s_mag*n_deviations
-		lower_bound =   ntwk_mean.__getattribute__(attribute) -\
-			ntwk_std.s_mag*n_deviations
-		
-		#convert to dB
-		upper_bound_db, lower_bound_db = \
-			mf.magnitude_2_db(upper_bound),mf.magnitude_2_db(lower_bound)
-		
-		# find the correct ploting method
-		plot_func = ntwk_mean.plot_s_db
-		
-		#plot mean response
-		plot_func(*args,**kwargs)
-		
-		#plot bounds
-		plb.fill_between(ntwk_mean.frequency.f_scaled, \
-			lower_bound_db.squeeze(),upper_bound_db.squeeze(), alpha=alpha, color=fill_color)
-		plb.axis('tight')
-		plb.draw()
 		
 	
 
@@ -380,5 +381,5 @@ def func_on_networks(ntwk_list, func, attribute='s',*args, **kwargs):
 	new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
 	return new_ntwk
 
-# short hand name for convinnce
+# short hand name for convenience
 fon = func_on_networks
