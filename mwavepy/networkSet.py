@@ -59,6 +59,8 @@ class NetworkSet(object):
 			's_rad_unwrap','s_arcl','s_arcl_unwrap','passivity']:
 			for func in [npy.mean, npy.std]:
 				self.add_a_func_on_property(func, network_property_name)
+			
+			self.add_a_plot_uncertainty(network_property_name)
 	
 	def __str__(self):
 		'''
@@ -76,6 +78,12 @@ class NetworkSet(object):
 		returns an element of the network set
 		'''
 		return self.ntwk_set[key]
+	def __len__(self,key):
+		'''
+		returns an element of the network set
+		'''
+		return len(self.ntwk_set)
+	
 	@property
 	def mean_s_db(self):
 		'''
@@ -129,7 +137,7 @@ class NetworkSet(object):
 		setattr(self.__class__,func.__name__+'_'+network_property_name,\
 			property(fget))
 	
-	def add_a_plot_func(self,network_set_property_name):
+	def add_a_plot_uncertainty(self,network_property_name):
 		'''
 
 		takes:
@@ -143,11 +151,19 @@ class NetworkSet(object):
 			
 		
 		'''
+		def plot_func(self,*args, **kwargs):
+			kwargs.update({'attribute':network_property_name})
+			self.plot_uncertainty_bounds_component(*args,**kwargs)
 		
-		setattr(self.__class__,'plot_'+network_set_property_name,\
-			self.getattr(network_set_property_name).plot_s_re)
+		setattr(self.__class__,'plot_uncertainty_bounds_'+\
+			network_property_name,plot_func)
 	
-	
+	def add_a_set_plot(self,network_property_name):
+		def plot_func(self, *args, **kwargs):
+			[e_set[k].getattr('plot_')(*args,**kwargs) \
+				for k in range(len(e_set.ntwk_set))]
+		setattr(self.__class__,'plot_'+	network_property_name,plot_func)
+		
 	def func_on(self, func, a_property, *args, **kwargs):
 		'''
 		calls a function on a specific property of the networks in 
@@ -293,50 +309,7 @@ class NetworkSet(object):
 			
 		ax.set_ylabel(ylabel_dict.get(attribute,''))
 		
-	def plot_uncertainty_bounds_s_re(self,*args, **kwargs):
-		'''
-		this just calls 
-			plot_uncertainty_bounds_component(attribute= 's_re',*args,**kwargs)
-		see plot_uncertainty_bounds for help
-		
-		'''
-		kwargs.update({'attribute':'s_re'})
-		self.plot_uncertainty_bounds_component(*args,**kwargs)
 	
-	def plot_uncertainty_bounds_s_im(self,*args, **kwargs):
-		'''
-		this just calls 
-			plot_uncertainty_bounds(attribute= 's_im',*args,**kwargs)
-		see plot_uncertainty_bounds for help
-		
-		'''
-		kwargs.update({'attribute':'s_im'})
-		self.plot_uncertainty_bounds_component(*args,**kwargs)
-	
-	def plot_uncertainty_bounds_s_mag(self,*args, **kwargs):
-		'''
-		this just calls 
-			plot_uncertainty_bounds(attribute= 's_mag',*args,**kwargs)
-		see plot_uncertainty_bounds for help
-		
-		'''
-		kwargs.update({'attribute':'s_mag'})
-		self.plot_uncertainty_bounds_component(*args,**kwargs)
-		
-	def plot_uncertainty_bounds_s_deg(self,*args, **kwargs):
-		'''
-		this just calls 
-			plot_uncertainty_bounds(attribute= 's_deg_unwrap',*args,**kwargs)
-		see plot_uncertainty_bounds for help
-		
-		NOTE: the attribute 's_deg_unwrap' is called on purpose to alleviate
-		the phase wraping effects on std dev. if you DO want to look at 
-		's_deg' and not 's_deg_unwrap' then directly call 
-			self.plot_uncertainty_bounds_component('s_deg')
-		
-		'''
-		kwargs.update({'attribute':'s_deg_unwrap'})
-		self.plot_uncertainty_bounds_component(*args,**kwargs)
 	
 	def plot_uncertainty_bounds_s_db(self,*args, **kwargs):
 		'''
