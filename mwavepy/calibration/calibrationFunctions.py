@@ -23,11 +23,11 @@
 '''
 Functions which operate on or pertain to Calibration Objects
 '''
-from itertools import product, combinations
+from itertools import product, combinations, permutations
 from calibration import Calibration
 from numpy import array
 
-def cartesian_product_calibration_ensemble( ideals, measured, *args, **kwargs):
+def cartesian_product_calibration_set( ideals, measured, *args, **kwargs):
 	'''
 	This function is used for calculating calibration uncertainty due 
 	to un-biased, non-systematic errors. 
@@ -74,7 +74,7 @@ def cartesian_product_calibration_ensemble( ideals, measured, *args, **kwargs):
 		*args, **kwargs)\
 		for product_element in measured_product]
 
-def dot_product_calibration_ensemble( ideals, measured, *args, **kwargs):
+def dot_product_calibration_set( ideals, measured, *args, **kwargs):
 	'''
 	This function is used for calculating calibration uncertainty due 
 	to un-biased, non-systematic errors. 
@@ -112,7 +112,7 @@ def dot_product_calibration_ensemble( ideals, measured, *args, **kwargs):
 		*args, **kwargs)\
 		for k in range(m_array.shape[1])]
 
-def binomial_coefficient_calibration_ensemble( ideals, measured, n,  *args, **kwargs):
+def binomial_coefficient_calibration_set( ideals, measured, n,  *args, **kwargs):
 	'''
 	Produces a ensemble of calibration instances based on choosing
 	sub-sets of the ideal/measurement lists from an overdetermined 
@@ -149,5 +149,5 @@ def binomial_coefficient_calibration_ensemble( ideals, measured, n,  *args, **kw
 
 
 # for backward compatability
-zip_calibration_ensemble = dot_product_calibration_ensemble
-subset_calibration_ensemble = binomial_coefficient_calibration_ensemble
+zip_calibration_ensemble = dot_product_calibration_set
+subset_calibration_ensemble = binomial_coefficient_calibration_set
