@@ -111,6 +111,7 @@ class NetworkSet(object):
 			for func in [npy.mean, npy.std]:
 				self.__add_a_func_on_property(func, network_property_name)
 			
+			
 			self.__add_a_plot_uncertainty(network_property_name)
 			self.__add_a_element_wise_method('plot_'+network_property_name)
 		
@@ -118,8 +119,19 @@ class NetworkSet(object):
 			['__pow__','__floordiv__','__mul__','__add__','__sub__', \
 			'write_touchstone','interpolate']:
 			self.__add_a_element_wise_method(network_method_name)
-		
-		
+	
+	'''			
+	def operator(self,other):
+		if isinstance(other, NetworkSet):
+			if len(other) != len(self):
+				raise(ValueError('Network sets must be of same length to be casacaded'))
+			return NetworkSet([self.ntwk_set[k].__getattribute__(other.ntwk_set[k]	for k in len(self)])
+
+		elif isinstance(other, Network):
+			return NetworkSet([ntwk**other for ntwk in ntwk_set])
+		else:
+			raise(TypeError('cascaded type must be either Network, or NetworkSet'))
+	'''			
 	def __str__(self):
 		'''
 		'''
@@ -234,7 +246,10 @@ class NetworkSet(object):
 		ntwk= self.std_s_mag
 		ntwk.s = ntwk.s_db
 		return ntwk
-		
+	
+	@property
+	def inv(self):
+		return NetworkSet( [ntwk.inv for ntwk in self.ntwk_set])	
 	
 	def set_wise_function(self, func, a_property, *args, **kwargs):
 		'''

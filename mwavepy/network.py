@@ -266,6 +266,8 @@ class Network(object):
 		'''
 		a network representing inverse s-parameters, for de-embeding
 		'''
+		if self.number_of_ports <2:
+			raise(TypeError('One-Port Networks dont have inverses'))
 		out = copy(self)
 		out.s = inv(self.s)
 		return out
