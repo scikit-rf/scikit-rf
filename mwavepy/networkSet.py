@@ -116,22 +116,36 @@ class NetworkSet(object):
 			self.__add_a_element_wise_method('plot_'+network_property_name)
 		
 		for network_method_name in \
-			['__pow__','__floordiv__','__mul__','__add__','__sub__', \
-			'write_touchstone','interpolate']:
+			['write_touchstone','interpolate']:
 			self.__add_a_element_wise_method(network_method_name)
+		
+		for operator_name in \
+			['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
+			self.__add_a_operator(operator_name)
+		
+	def __add_a_operator(self,operator_name):
+		'''
+		adds a operator method to the NetworkSet. this is made to 
+		take either a Network or a NetworkSet. if a Network is passed 
+		to the operator, each element of the set will operate on the
+		Network. If a NetworkSet is passed to the operator, and is the 
+		same length as self. then it will operate element-to-element 
+		like a dot-product.
+		'''
+		def operator_func(self, other):
+			if isinstance(other, NetworkSet):
+				if len(other) != len(self):
+					raise(ValueError('Network sets must be of same length to be casacaded'))
+				return NetworkSet([self.ntwk_set[k].__getattribute__(operator_name)(other.ntwk_set[k]) for k in range(len(self))])
 	
-	'''			
-	def operator(self,other):
-		if isinstance(other, NetworkSet):
-			if len(other) != len(self):
-				raise(ValueError('Network sets must be of same length to be casacaded'))
-			return NetworkSet([self.ntwk_set[k].__getattribute__(other.ntwk_set[k]	for k in len(self)])
-
-		elif isinstance(other, Network):
-			return NetworkSet([ntwk**other for ntwk in ntwk_set])
-		else:
-			raise(TypeError('cascaded type must be either Network, or NetworkSet'))
-	'''			
+			elif isinstance(other, Network):
+				return NetworkSet([ntwk.__getattribute__(operator_name)(other) for ntwk in self.ntwk_set])
+			
+			else:
+				raise(TypeError('NetworkSet operators operate on either Network, or NetworkSet types'))
+		setattr(self.__class__,operator_name,operator_func)		
+		
+				
 	def __str__(self):
 		'''
 		'''
@@ -155,16 +169,6 @@ class NetworkSet(object):
 		'''
 		return len(self.ntwk_set)
 	
-	def element_wise_method(self,network_method_name, *args, **kwargs):
-		'''
-		calls a given method of each element and returns the result as
-		a new NetworkSet if the output is a Network.
-		'''
-		output = [ntwk.__getattribute__(network_method_name)(*args, **kwargs) for ntwk in self.ntwk_set]
-		if isinstance(output[0],Network):
-			return NetworkSet(output)
-		else:
-			return output
 	
 	def __add_a_element_wise_method(self,network_method_name):
 		 def func(self,  *args, **kwargs):
@@ -215,6 +219,17 @@ class NetworkSet(object):
 		
 		setattr(self.__class__,'plot_uncertainty_bounds_'+\
 			network_property_name,plot_func)
+	
+	def element_wise_method(self,network_method_name, *args, **kwargs):
+		'''
+		calls a given method of each element and returns the result as
+		a new NetworkSet if the output is a Network.
+		'''
+		output = [ntwk.__getattribute__(network_method_name)(*args, **kwargs) for ntwk in self.ntwk_set]
+		if isinstance(output[0],Network):
+			return NetworkSet(output)
+		else:
+			return output
 	
 	
 	@property

@@ -93,9 +93,6 @@ def dot_product_calibration_set( ideals, measured, *args, **kwargs):
 	
 	returns:
 		cal_ensemble: a list of Calibration instances.
-		
-		
-
 	'''
 	# this is a way to sort the measured list by alphabetically ordering
 	# of the Network element names
