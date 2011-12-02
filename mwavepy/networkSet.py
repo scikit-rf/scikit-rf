@@ -116,7 +116,7 @@ class NetworkSet(object):
 			self.__add_a_element_wise_method('plot_'+network_property_name)
 		
 		for network_method_name in \
-			['write_touchstone','interpolate']:
+			['write_touchstone','interpolate','plot_s_smith']:
 			self.__add_a_element_wise_method(network_method_name)
 		
 		for operator_name in \
@@ -331,7 +331,24 @@ class NetworkSet(object):
 			lower_bound.squeeze(),upper_bound.squeeze(), alpha=alpha, color=fill_color)
 		plb.axis('tight')
 		plb.draw()
-
+	
+	def uncertainty_ntwk_triplet(self, attribute,n_deviations=3):
+		'''
+		returns a 3-tuple of Network objects which contain the 
+		mean, upper_bound, and lower_bound for the given Network 
+		attribute. 
+		
+		Used to save and plot uncertainty information data
+		'''
+		ntwk_mean = self.__getattribute__('mean_'+attribute)
+		ntwk_std = self.__getattribute__('std_'+attribute)
+		ntwk_std.s = n_deviations * ntwk_std.s
+		
+		upper_bound = (ntwk_mean +ntwk_std)
+		lower_bound = (ntwk_mean -ntwk_std)
+		
+		return (ntwk_mean, lower_bound, upper_bound)
+		
 	def plot_uncertainty_bounds_component(self,attribute,m=0,n=0,\
 		type='shade',n_deviations=3, alpha=.3, color_error ='b',markevery_error=20,
 		ax=None,ppf=None,kwargs_error={},*args,**kwargs):
