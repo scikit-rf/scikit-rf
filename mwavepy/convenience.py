@@ -68,14 +68,22 @@ def save_all_figs(dir = './', format=['eps','pdf','png']):
 	if dir[-1] != '/':
 		dir = dir + '/'
 	for fignum in plb.get_fignums():
-		plb.figure(fignum)
-		fileName = plb.gca().get_title()
+		fileName = plb.figure(fignum).get_axes()[0].get_title()
 		if fileName == '':
 				fileName = 'unamedPlot'
 		for fmt in format:
 			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
 			print (dir+fileName+'.'+fmt)
 
+def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=5):
+	if ax is None:
+		ax=plb.gca()
+	lines = ax.get_lines()
+	if len(lines) > len (marker_list ):
+		marker_list *= 3
+	[k[0].set_marker(k[1]) for k in zip(lines, marker_list)]
+	[line.set_markevery(markevery) for line in lines]
+	
 def legend_off(ax=None):
 	'''
 	turn off the legend for a given axes. if no axes is given then 
@@ -84,7 +92,7 @@ def legend_off(ax=None):
 	if ax is None:
 		plb.gca().legend_.set_visible(0)
 	else:
-		ax.lengend_.set_visible(0)
+		ax.legend_.set_visible(0)
 
 def plot_complex(z,*args, **kwargs):
 	'''
