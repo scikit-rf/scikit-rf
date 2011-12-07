@@ -277,60 +277,60 @@ class NetworkSet(object):
 		return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 	
 	# plotting functions
-	def plot_uncertainty_bounds(self,attribute='s_mag',m=0,n=0,\
-		n_deviations=3, alpha=.3,fill_color ='b',std_attribute=None,*args,**kwargs):
-		'''
-		plots mean value with +- uncertainty bounds in an Network attribute,
-		for a list of Networks. 
+	#def plot_uncertainty_bounds(self,attribute='s_mag',m=0,n=0,\
+		#n_deviations=3, alpha=.3,fill_color ='b',std_attribute=None,*args,**kwargs):
+		#'''
+		#plots mean value with +- uncertainty bounds in an Network attribute,
+		#for a list of Networks. 
 		
-		takes:
-			attribute: attribute of Network type to analyze [string] 
-			m: first index of attribute matrix [int]
-			n: second index of attribute matrix [int]
-			n_deviations: number of std deviations to plot as bounds [number]
-			alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-			*args,**kwargs: passed to Network.plot_'attribute' command
+		#takes:
+			#attribute: attribute of Network type to analyze [string] 
+			#m: first index of attribute matrix [int]
+			#n: second index of attribute matrix [int]
+			#n_deviations: number of std deviations to plot as bounds [number]
+			#alpha: passed to matplotlib.fill_between() command. [number, 0-1]
+			#*args,**kwargs: passed to Network.plot_'attribute' command
 			
-		returns:
-			None
+		#returns:
+			#None
 			
 		
-		Caution:
-			 if your list_of_networks is for a calibrated short, then the 
-			std dev of deg_unwrap might blow up, because even though each
-			network is unwrapped, they may fall on either side fo the pi 
-			relative to one another.
-		'''
+		#Caution:
+			 #if your list_of_networks is for a calibrated short, then the 
+			#std dev of deg_unwrap might blow up, because even though each
+			#network is unwrapped, they may fall on either side fo the pi 
+			#relative to one another.
+		#'''
 		
-		# calculate mean response, and std dev of given attribute
-		ntwk_mean = average(self.ntwk_set)
-		if std_attribute is None:
-			# they want to calculate teh std deviation on a different attribute
-			std_attribute = attribute
-		ntwk_std = func_on_networks(self.ntwk_set,npy.std, attribute=std_attribute)
+		## calculate mean response, and std dev of given attribute
+		#ntwk_mean = average(self.ntwk_set)
+		#if std_attribute is None:
+			## they want to calculate teh std deviation on a different attribute
+			#std_attribute = attribute
+		#ntwk_std = func_on_networks(self.ntwk_set,npy.std, attribute=std_attribute)
 		
-		# pull out port of interest
-		ntwk_mean.s = ntwk_mean.s[:,m,n]
-		ntwk_std.s = ntwk_std.s[:,m,n]
+		## pull out port of interest
+		#ntwk_mean.s = ntwk_mean.s[:,m,n]
+		#ntwk_std.s = ntwk_std.s[:,m,n]
 		
-		# create bounds (the s_mag here is confusing but is realy in units
-		# of whatever 'attribute' is. read the func_on_networks call to understand
-		upper_bound =  ntwk_mean.__getattribute__(attribute) +\
-			ntwk_std.s_mag*n_deviations
-		lower_bound =   ntwk_mean.__getattribute__(attribute) -\
-			ntwk_std.s_mag*n_deviations
+		## create bounds (the s_mag here is confusing but is realy in units
+		## of whatever 'attribute' is. read the func_on_networks call to understand
+		#upper_bound =  ntwk_mean.__getattribute__(attribute) +\
+			#ntwk_std.s_mag*n_deviations
+		#lower_bound =   ntwk_mean.__getattribute__(attribute) -\
+			#ntwk_std.s_mag*n_deviations
 		
-		# find the correct ploting method
-		plot_func = ntwk_mean.__getattribute__('plot_'+attribute)
+		## find the correct ploting method
+		#plot_func = ntwk_mean.__getattribute__('plot_'+attribute)
 		
-		#plot mean response
-		plot_func(*args,**kwargs)
+		##plot mean response
+		#plot_func(*args,**kwargs)
 		
-		#plot bounds
-		plb.fill_between(ntwk_mean.frequency.f_scaled, \
-			lower_bound.squeeze(),upper_bound.squeeze(), alpha=alpha, color=fill_color)
-		plb.axis('tight')
-		plb.draw()
+		##plot bounds
+		#plb.fill_between(ntwk_mean.frequency.f_scaled, \
+			#lower_bound.squeeze(),upper_bound.squeeze(), alpha=alpha, color=fill_color)
+		#plb.axis('tight')
+		#plb.draw()
 	
 	def uncertainty_ntwk_triplet(self, attribute,n_deviations=3):
 		'''
@@ -409,6 +409,7 @@ class NetworkSet(object):
 			ntwk_mean.s = ppf(ntwk_mean.s)
 			upper_bound = ppf(upper_bound)
 			lower_bound = ppf(lower_bound)
+			lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
 		
 		if type == 'shade':
 			ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
@@ -421,7 +422,7 @@ class NetworkSet(object):
 			ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
 				ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
 				yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
-				fmt='o',color=color_error,**kwargs_error)
+				color=color_error,**kwargs_error)
 			
 		else:
 			raise(ValueError('incorrect plot type'))
