@@ -139,12 +139,12 @@ Simple One-port</p>
 </div>
 <div class="section" id="two-port">
 <h2>Two-port<a class="headerlink" href="#two-port" title="Permalink to this headline">¶</a></h2>
-<p>Two-port calibration is more involved than one-port. mwavepy supports two-port calibration using a 8-term error model based on the algorithm described in <em>&#8220;A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors&#8221;</em> by R.A. Speciale.</p>
+<p>Two-port calibration is more involved than one-port. mwavepy supports two-port calibration using a 8-term error model based on the algorithm described in <a class="footnote-reference" href="#id4" id="id2">[1]</a>, by R.A. Speciale.</p>
 <p>Like the one-port algorithm, the two-port calibration can handle any number of standards, providing that some fundamental constraints are met. In short, you need three two-port standards; one must be transmissive, and one must provide a known impedance and be reflective.</p>
 <p>One draw-back of using the 8-term error model formulation (which is the same formulation used in TRL) is that switch-terms may need to be measured in order to achieve a high quality calibration (this was pointed out to me by Dylan Williams).</p>
 <div class="section" id="a-note-on-switch-terms">
 <h3>A note on switch-terms<a class="headerlink" href="#a-note-on-switch-terms" title="Permalink to this headline">¶</a></h3>
-<p>Switch-terms are explained in Roger Marks&#8217;s paper titled <em>&#8216;Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms&#8217;</em>. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.</p>
+<p>Switch-terms are explained in a paper by Roger Marks  <a class="footnote-reference" href="#id5" id="id3">[2]</a>. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.</p>
 <p>So how do you measure switch terms? With a custom measurement configuration on the VNA itself. mwavpey has support for switch terms for the HP8510C class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.</p>
 <p>See <tt class="xref doc docutils literal"><span class="pre">example_twoport_calibration</span></tt> for and example</p>
 </div>
@@ -202,6 +202,19 @@ Simple One-port</p>
 <span class="n">short_load</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">two_port_reflect</span><span class="p">(</span><span class="n">short</span><span class="p">,</span> <span class="n">load</span><span class="p">)</span>
 </pre></div>
 </div>
+<p class="rubric">Bibliography</p>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>Speciale, R.A.; , &#8220;A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors,&#8221; Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: <a class="reference external" href="http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=1129282&amp;isnumber=25047">http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=1129282&amp;isnumber=25047</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>Marks, Roger B.; , &#8220;Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms,&#8221; ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: <a class="reference external" href="http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=4119948&amp;isnumber=4119931">http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=4119948&amp;isnumber=4119931</a></td></tr>
+</tbody>
+</table>
 </div>
 </div>
 </div>

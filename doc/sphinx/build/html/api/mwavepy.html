@@ -79,6 +79,11 @@ Media objects for standard waveguide bands,</dd>
 </dl>
 </blockquote>
 <dl class="function">
+<dt id="mwavepy.convenience.add_markers_to_lines">
+<tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">add_markers_to_lines</tt><big>(</big><em>ax=None</em>, <em>marker_list=</em><span class="optional">[</span>, <em>'o'</em>, <em>'D'</em>, <em>'s'</em>, <em>'+'</em>, <em>'x'</em><span class="optional">]</span>, <em>markevery=5</em><big>)</big><a class="headerlink" href="#mwavepy.convenience.add_markers_to_lines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
 <dt id="mwavepy.convenience.find_nearest">
 <tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">find_nearest</tt><big>(</big><em>array</em>, <em>value</em><big>)</big><a class="headerlink" href="#mwavepy.convenience.find_nearest" title="Permalink to this definition">¶</a></dt>
 <dd><p>find nearest value in array.
@@ -230,7 +235,7 @@ converts a frequency vector to a Frequency object</p>
 <dd><p>returns the magnitude in dB of a complex number.</p>
 <dl class="docutils">
 <dt>returns:</dt>
-<dd>20*log10(<a href="#id50"><span class="problematic" id="id51">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id40"><span class="problematic" id="id41">|z|</span></a>)</dd>
 </dl>
 <p>where z is a complex number</p>
 </dd></dl>
@@ -257,6 +262,19 @@ converts a frequency vector to a Frequency object</p>
 <dt id="mwavepy.mathFunctions.complex_2_radian">
 <tt class="descclassname">mwavepy.mathFunctions.</tt><tt class="descname">complex_2_radian</tt><big>(</big><em>input</em><big>)</big><a class="headerlink" href="#mwavepy.mathFunctions.complex_2_radian" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns the angle complex number in radians.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.mathFunctions.complex_2_reim">
+<tt class="descclassname">mwavepy.mathFunctions.</tt><tt class="descname">complex_2_reim</tt><big>(</big><em>z</em><big>)</big><a class="headerlink" href="#mwavepy.mathFunctions.complex_2_reim" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>takes:</dt>
+<dd>input: complex number or array</dd>
+<dt>return:</dt>
+<dd>real: real part of input
+imag: imaginary part of input</dd>
+</dl>
+<p>note: this just calls &#8216;complex_components&#8217;</p>
 </dd></dl>
 
 <dl class="function">
@@ -310,7 +328,7 @@ returns 1 or 0</p>
 <blockquote>
 <dl class="docutils">
 <dt>db is given by </dt>
-<dd>20*log10(<a href="#id52"><span class="problematic" id="id53">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id42"><span class="problematic" id="id43">|z|</span></a>)</dd>
 </dl>
 </blockquote>
 <p>where z is a complex number</p>
@@ -367,6 +385,20 @@ exp(t*2*pi*f[0])</blockquote>
 <tt class="descclassname">mwavepy.mathFunctions.</tt><tt class="descname">scalar2Complex</tt><big>(</big><em>input</em><big>)</big><a class="headerlink" href="#mwavepy.mathFunctions.scalar2Complex" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
+<dl class="function">
+<dt id="mwavepy.mathFunctions.sqrt_phase_unwrap">
+<tt class="descclassname">mwavepy.mathFunctions.</tt><tt class="descname">sqrt_phase_unwrap</tt><big>(</big><em>input</em><big>)</big><a class="headerlink" href="#mwavepy.mathFunctions.sqrt_phase_unwrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>takes the square root of a complex number with unwraped phase</p>
+<p>this idea came from Lihan Chen</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="mwavepy.mathFunctions.unwrap_rad">
+<tt class="descclassname">mwavepy.mathFunctions.</tt><tt class="descname">unwrap_rad</tt><big>(</big><em>input</em><big>)</big><a class="headerlink" href="#mwavepy.mathFunctions.unwrap_rad" title="Permalink to this definition">¶</a></dt>
+<dd><p>unwraps a phase given in radians</p>
+<p>the normal numpy unwrap is not what you usually want for some reason</p>
+</dd></dl>
+
 </div>
 <div class="section" id="module-mwavepy.network">
 <span id="network-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">network</span></tt> Module<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h2>
@@ -375,7 +407,7 @@ exp(t*2*pi*f[0])</blockquote>
 <dt id="mwavepy.network.Network">
 <em class="property">class </em><tt class="descclassname">mwavepy.network.</tt><tt class="descname">Network</tt><big>(</big><em>touchstone_file=None</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p>Represents a n-port microwave network.</p>
+<p><cite>Represents</cite> a n-port microwave network.</p>
 <dl class="docutils">
 <dt>the most fundemental properties are:</dt>
 <dd><dl class="first docutils">
@@ -725,6 +757,24 @@ want to update an existing plot.</blockquote>
 </dd></dl>
 
 <dl class="method">
+<dt id="mwavepy.network.Network.plot_s_quad">
+<tt class="descname">plot_s_quad</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_quad" title="Permalink to this definition">¶</a></dt>
+<dd><p>plots the quadrature of a scattering parameter of indecies m, n,
+quadrature is the arclength.</p>
+<dl class="docutils">
+<dt>takes:</dt>
+<dd><p class="first">m - first index, int
+n - second indext, int
+ax - matplotlib.axes object to plot on, used in case you</p>
+<blockquote>
+want to update an existing plot.</blockquote>
+<p class="last">show_legend: boolean, to turn legend show legend of not
+<a href="#id30"><span class="problematic" id="id31">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="mwavepy.network.Network.plot_s_rad">
 <tt class="descname">plot_s_rad</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_rad" title="Permalink to this definition">¶</a></dt>
 <dd><p>plots the phase of a scattering parameter of indecies m, n in
@@ -737,7 +787,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id30"><span class="problematic" id="id31">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id32"><span class="problematic" id="id33">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -755,7 +805,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id32"><span class="problematic" id="id33">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id34"><span class="problematic" id="id35">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -772,7 +822,7 @@ ax - matplotlib.axes object to plot on, used in case you</p>
 <blockquote>
 want to update an existing plot.</blockquote>
 <p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id34"><span class="problematic" id="id35">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<a href="#id36"><span class="problematic" id="id37">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -794,7 +844,7 @@ chart_type: string determining countour type. options are:</p>
 <blockquote>
 &#8216;z&#8217;: impedance contours (default)
 &#8216;y&#8217;: admittance contours</blockquote>
-<p class="last"><a href="#id36"><span class="problematic" id="id37">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
+<p class="last"><a href="#id38"><span class="problematic" id="id39">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
 </dd>
 </dl>
 </dd></dl>
@@ -852,6 +902,38 @@ n&#8217;s are port indicies</blockquote>
 <dd></dd></dl>
 
 <dl class="attribute">
+<dt id="mwavepy.network.Network.s_abs">
+<tt class="descname">s_abs</tt><a class="headerlink" href="#mwavepy.network.Network.s_abs" title="Permalink to this definition">¶</a></dt>
+<dd><p>see s_mag</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.network.Network.s_angle">
+<tt class="descname">s_angle</tt><a class="headerlink" href="#mwavepy.network.Network.s_angle" title="Permalink to this definition">¶</a></dt>
+<dd><p>see s_deg</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.network.Network.s_arcl">
+<tt class="descname">s_arcl</tt><a class="headerlink" href="#mwavepy.network.Network.s_arcl" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the arc-length of the s-parameters, given by  </dt>
+<dd>= s_rad * s_mag</dd>
+</dl>
+<p>used in calculating differences in phase, but in units of distance</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="mwavepy.network.Network.s_arcl_unwrap">
+<tt class="descname">s_arcl_unwrap</tt><a class="headerlink" href="#mwavepy.network.Network.s_arcl_unwrap" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>the unwrapped arc-length of the s-parameters, given by  </dt>
+<dd>= s_rad_unwrap * s_mag</dd>
+</dl>
+<p>used in calculating differences in phase, but in units of distance</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="mwavepy.network.Network.s_db">
 <tt class="descname">s_db</tt><a class="headerlink" href="#mwavepy.network.Network.s_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns the magnitude of the s-parameters, in dB</p>
@@ -859,7 +941,7 @@ n&#8217;s are port indicies</blockquote>
 <dt>note:</dt>
 <dd><dl class="first last docutils">
 <dt>dB is calculated by </dt>
-<dd>20*log10(<a href="#id54"><span class="problematic" id="id55">|s|</span></a>)</dd>
+<dd>20*log10(<a href="#id44"><span class="problematic" id="id45">|s|</span></a>)</dd>
 </dl>
 </dd>
 </dl>
@@ -892,9 +974,8 @@ n&#8217;s are port indicies</blockquote>
 <dl class="attribute">
 <dt id="mwavepy.network.Network.s_quad">
 <tt class="descname">s_quad</tt><a class="headerlink" href="#mwavepy.network.Network.s_quad" title="Permalink to this definition">¶</a></dt>
-<dd><p>this is like a arc-length, its 
-s_quad = s_rad * s_mag</p>
-<p>used in calculating differences in phase, but in units of distance</p>
+<dd><p>this is a different name for  arc-length, 
+see Network.s_arcl</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -942,7 +1023,7 @@ name. if this is empty, then throws an error.</dd>
 <dt>note:</dt>
 <dd>in the future could make possible use of the touchtone 
 class, but at the moment this would not provide any benefit 
-as it has not <a href="#id56"><span class="problematic" id="id57">set_</span></a> functions.</dd>
+as it has not <a href="#id46"><span class="problematic" id="id47">set_</span></a> functions.</dd>
 </dl>
 </dd></dl>
 
@@ -1073,64 +1154,6 @@ if s11 or s22 is 1.</dd>
 </dd></dl>
 
 <dl class="function">
-<dt id="mwavepy.network.fon">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">fon</tt><big>(</big><em>ntwk_list</em>, <em>func</em>, <em>attribute='s'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.fon" title="Permalink to this definition">¶</a></dt>
-<dd><p>Applies a function to some attribute of aa list of networks, and 
-returns the result in the form of a Network. This means information 
-that may not be s-parameters is stored in the s-matrix of the
-returned Network.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>ntwk_list: list of mwavepy.Network types
-func: function to operate on ntwk_list s-matrices
-attribute: attribute of Network&#8217;s  in ntwk_list for func to act on
-<a href="#id38"><span class="problematic" id="id39">*</span></a>args: passed to func
-<a href="#id40"><span class="problematic" id="id41">**</span></a>kwargs: passed to func</dd>
-<dt>returns:</dt>
-<dd><dl class="first last docutils">
-<dt>mwavepy.Network type, with s-matrix the result of func, </dt>
-<dd>operating on ntwk_list&#8217;s s-matrices</dd>
-</dl>
-</dd>
-<dt>example:</dt>
-<dd><dl class="first last docutils">
-<dt>averaging can be implemented with func_on_networks by </dt>
-<dd>func_on_networks(ntwk_list,mean)</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="mwavepy.network.func_on_networks">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">func_on_networks</tt><big>(</big><em>ntwk_list</em>, <em>func</em>, <em>attribute='s'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.func_on_networks" title="Permalink to this definition">¶</a></dt>
-<dd><p>Applies a function to some attribute of aa list of networks, and 
-returns the result in the form of a Network. This means information 
-that may not be s-parameters is stored in the s-matrix of the
-returned Network.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>ntwk_list: list of mwavepy.Network types
-func: function to operate on ntwk_list s-matrices
-attribute: attribute of Network&#8217;s  in ntwk_list for func to act on
-<a href="#id42"><span class="problematic" id="id43">*</span></a>args: passed to func
-<a href="#id44"><span class="problematic" id="id45">**</span></a>kwargs: passed to func</dd>
-<dt>returns:</dt>
-<dd><dl class="first last docutils">
-<dt>mwavepy.Network type, with s-matrix the result of func, </dt>
-<dd>operating on ntwk_list&#8217;s s-matrices</dd>
-</dl>
-</dd>
-<dt>example:</dt>
-<dd><dl class="first last docutils">
-<dt>averaging can be implemented with func_on_networks by </dt>
-<dd>func_on_networks(ntwk_list,mean)</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
 <dt id="mwavepy.network.impedance_mismatch">
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">impedance_mismatch</tt><big>(</big><em>z1</em>, <em>z2</em><big>)</big><a class="headerlink" href="#mwavepy.network.impedance_mismatch" title="Permalink to this definition">¶</a></dt>
 <dd><p>returns a two-port network for a impedance mis-match</p>
@@ -1225,103 +1248,6 @@ lossless one-port network.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="mwavepy.network.plot_uncertainty_bounds">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds</tt><big>(</big><em>ntwk_list</em>, <em>attribute='s_mag'</em>, <em>m=0</em>, <em>n=0</em>, <em>n_deviations=3</em>, <em>alpha=0.3</em>, <em>fill_color='b'</em>, <em>std_attribute=None</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots mean value with +- uncertainty bounds in an Network attribute,
-for a list of Networks.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>ntwk_list: list of Netmwork types [list]
-attribute: attribute of Network type to analyze [string] 
-m: first index of attribute matrix [int]
-n: second index of attribute matrix [int]
-n_deviations: number of std deviations to plot as bounds [number]
-alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-<a href="#id46"><span class="problematic" id="id47">*</span></a>args,**kwargs: passed to <a href="#id58"><span class="problematic" id="id59">Network.plot_</span></a>&#8216;attribute&#8217; command</dd>
-<dt>returns:</dt>
-<dd>None</dd>
-<dt>Caution:</dt>
-<dd><blockquote class="first">
-if your list_of_networks is for a calibrated short, then the</blockquote>
-<p class="last">std dev of deg_unwrap might blow up, because even though each
-network is unwrapped, they may fall on either side fo the pi 
-relative to one another.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="mwavepy.network.plot_uncertainty_bounds_s_db">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_db</tt><big>(</big><em>ntwk_list</em>, <em>attribute='s_mag'</em>, <em>m=0</em>, <em>n=0</em>, <em>n_deviations=3</em>, <em>alpha=0.3</em>, <em>fill_color='b'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots mean value with +- uncertainty bounds in an Network&#8217;s attribute
-for a list of Networks.</p>
-<p>This is plotted on a log scale (db), but uncertainty is calculated 
-in the linear domain</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>ntwk_list: list of Netmwork types [list]
-attribute: attribute of Network type to analyze [string] 
-m: first index of attribute matrix [int]
-n: second index of attribute matrix [int]
-n_deviations: number of std deviations to plot as bounds [number]
-alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-<a href="#id48"><span class="problematic" id="id49">*</span></a>args,**kwargs: passed to <a href="#id60"><span class="problematic" id="id61">Network.plot_</span></a>&#8216;attribute&#8217; command</dd>
-<dt>returns:</dt>
-<dd>None</dd>
-<dt>Caution:</dt>
-<dd><blockquote class="first">
-if your list_of_networks is for a calibrated short, then the</blockquote>
-<p class="last">std dev of deg_unwrap might blow up, because even though each
-network is unwrapped, they may fall on either side fo the pi 
-relative to one another.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="function">
-<dt id="mwavepy.network.plot_uncertainty_bounds_s_deg">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_deg</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_deg" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>this just calls </dt>
-<dd>plot_uncertainty_bounds(attribute= &#8216;s_deg_unwrap&#8217;,*args,**kwargs)</dd>
-</dl>
-<p>see plot_uncertainty_bounds for help</p>
-<p>note; the attribute &#8216;s_deg_unwrap&#8217; is called on purpose to alleviate
-the phase wraping effects on std dev. if you DO want to look at 
-&#8216;s_deg&#8217; and not &#8216;s_deg_unwrap&#8217; then use plot_uncertainty_bounds</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="mwavepy.network.plot_uncertainty_bounds_s_im">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_im</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_im" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>this just calls </dt>
-<dd>plot_uncertainty_bounds(attribute= &#8216;s_im&#8217;,*args,**kwargs)</dd>
-</dl>
-<p>see plot_uncertainty_bounds for help</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="mwavepy.network.plot_uncertainty_bounds_s_mag">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_mag</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_mag" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>this just calls </dt>
-<dd>plot_uncertainty_bounds(attribute= &#8216;s_mag&#8217;,*args,**kwargs)</dd>
-</dl>
-<p>see plot_uncertainty_bounds for help</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="mwavepy.network.plot_uncertainty_bounds_s_re">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">plot_uncertainty_bounds_s_re</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.plot_uncertainty_bounds_s_re" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>this just calls </dt>
-<dd>plot_uncertainty_bounds(attribute= &#8216;s_re&#8217;,*args,**kwargs)</dd>
-</dl>
-<p>see plot_uncertainty_bounds for help</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="mwavepy.network.s2t">
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">s2t</tt><big>(</big><em>s</em><big>)</big><a class="headerlink" href="#mwavepy.network.s2t" title="Permalink to this definition">¶</a></dt>
 <dd><p>converts a scattering parameters to &#8216;wave cascading parameters&#8217;</p>
@@ -1336,26 +1262,6 @@ better</p>
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">t2s</tt><big>(</big><em>t</em><big>)</big><a class="headerlink" href="#mwavepy.network.t2s" title="Permalink to this definition">¶</a></dt>
 <dd><p>converts a &#8216;wave cascading parameters&#8217; to scattering parameters</p>
 <p>input matrix shape should be should be 2x2, or kx2x2</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="mwavepy.network.two_port_reflect">
-<tt class="descclassname">mwavepy.network.</tt><tt class="descname">two_port_reflect</tt><big>(</big><em>ntwk1</em>, <em>ntwk2</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.two_port_reflect" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>generates a two-port reflective (S21=S12=0) network, from the</dt>
-<dd>2 one-port networks</dd>
-<dt>takes:</dt>
-<dd>ntwk1: Network on  port 1 [mwavepy.Network]
-ntwk2: Network on  port 2 [mwavepy.Network]</dd>
-<dt>returns:</dt>
-<dd>result: two-port reflective network, S12=S21=0 [mwavepy.Network]</dd>
-</dl>
-<p>example:
-to use a working band to create a two-port reflective standard from
-two one-port standards</p>
-<blockquote>
-my_media= ...
-two_port_reflect(my_media.short(), my_media.match())</blockquote>
 </dd></dl>
 
 <dl class="function">

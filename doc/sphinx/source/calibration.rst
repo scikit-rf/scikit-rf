@@ -97,7 +97,7 @@ This example is meant to be the same as the first except more concise.::
 Two-port
 ---------
 
-Two-port calibration is more involved than one-port. mwavepy supports two-port calibration using a 8-term error model based on the algorithm described in *"A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors"* by R.A. Speciale.
+Two-port calibration is more involved than one-port. mwavepy supports two-port calibration using a 8-term error model based on the algorithm described in [#]_, by R.A. Speciale.
 
 Like the one-port algorithm, the two-port calibration can handle any number of standards, providing that some fundamental constraints are met. In short, you need three two-port standards; one must be transmissive, and one must provide a known impedance and be reflective.
 
@@ -106,7 +106,7 @@ One draw-back of using the 8-term error model formulation (which is the same for
 A note on switch-terms
 ++++++++++++++++++++++++
 
-Switch-terms are explained in Roger Marks's paper titled *'Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms'*. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.
+Switch-terms are explained in a paper by Roger Marks  [#]_. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.
 
 So how do you measure switch terms? With a custom measurement configuration on the VNA itself. mwavpey has support for switch terms for the HP8510C class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.
 
@@ -166,4 +166,11 @@ Commonly, you have data for ideal data for reflective standards in the form of o
     short = mv.Network('ideals/short.s1p')
     load = mv.Network('ideals/load.s1p')
     short_load = mv.two_port_reflect(short, load)
+
+.. rubric:: Bibliography
+
+.. [#] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: `http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047 <http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047>`_
+
+
+.. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: `http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931  <http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931>`_
 
