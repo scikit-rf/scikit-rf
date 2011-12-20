@@ -41,7 +41,7 @@ from tlineFunctions import zl_2_Gamma0
 
 class Network(object):
 	'''
-	Represents a n-port microwave network.
+	`Represents` a n-port microwave network.
 
 	the most fundemental properties are:
 		s: scattering matrix. a kxnxn complex matrix where 'n' is number

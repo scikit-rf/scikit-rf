@@ -75,7 +75,7 @@ def save_all_figs(dir = './', format=['eps','pdf','png']):
 			plb.savefig(dir+fileName+'.'+fmt, format=fmt)
 			print (dir+fileName+'.'+fmt)
 
-def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=5):
+def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
 	if ax is None:
 		ax=plb.gca()
 	lines = ax.get_lines()

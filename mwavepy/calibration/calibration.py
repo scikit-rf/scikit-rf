@@ -453,6 +453,13 @@ class Calibration(object):
 			if std_name in r.name],std,attribute) \
 			for std_name in std_names]
 	
+	def func_per_standard(self, func,attribute='s',std_names=None):
+		if std_names is None:
+			std_names = set([ntwk.name for ntwk in self.ideals])
+		return [fon([r for r in self.residual_ntwks \
+			if std_name in r.name],func,attribute) \
+			for std_name in std_names]
+		
 	def biased_error(self, std_names=None):
 		'''
 		estimate of biased error for overdetermined calibration with
