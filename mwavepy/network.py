@@ -28,7 +28,7 @@ Network Module (:mod:`mwavepy.network`)
 
 .. currentmodule:: mwavepy.network
 
-This module provides a n-port Network  class and associated functions
+Provides a n-port Network  class and associated functions
 
 
 Network Class
@@ -36,7 +36,8 @@ Network Class
 .. autosummary::
    :toctree: generated/
 
-   Network 
+   Network
+
 
 Functions On Networks
 ======================
@@ -85,34 +86,27 @@ class Network(object):
 	An n-port microwave network.
 
 	the most fundemental properties are:
-		s: scattering matrix. a kxnxn complex matrix where 'n' is number
-			of ports of network.
-		z0: characteristic impedance
-		f: frequency vector in Hz. see also frequency, which is a
-			Frequency object (see help on this class for more info)
+	
+	- `s` : scattering matrix. a kxnxn complex matrix where 'n' is number of ports of network.
+	- `z0`: characteristic impedance
+	- `f` : frequency vector in Hz. see also frequency, which is a Frequency object (see help on this class for more info)
 		
+	
 	
 	The following operators are defined as follows:
 		
-	- '+' : element-wise addition of the s-matrix
-	- '-' : element-wise subtraction of the s-matrix
-	- '*' : element-wise multiplication of the s-matrix
-	- '/' : element-wise division of the s-matrix
-	- '**': cascading of 2-port networks
-	- '//': de-embdeding of one network from the other.
-
+	- `+` 	: element-wise addition of the s-matrix
+	- `-` 	: element-wise subtraction of the s-matrix
+	- `*` 	: element-wise multiplication of the s-matrix
+	- `/` 	: element-wise division of the s-matrix
+	- `**`	: cascading of 2-port networks
+	- `//`	: de-embdeding of one network from the other.
+	
 	various other network properties are accesable as well as plotting
 	routines are also defined for convenience, 
 	
 	most properties are derived from the specifications given for
 	touchstone files. 
-	
-	Methods
-	--------
-	.. autosummary::
-		:toctree: generated/
-		
-		read_touchstone
 	
 	'''
 	global ALMOST_ZER0
@@ -830,16 +824,38 @@ class Network(object):
 		
 	def plot_s_db(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the magnitude of the scattering parameter of indecies m, n
-		in log magnitude
+		plots the magnitude of the scattering parameters.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_db()
+		>>> myntwk.plot_s_db(m=0,n=1,color='b', marker='x')
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_db',\
 			y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
@@ -847,16 +863,38 @@ class Network(object):
 	
 	def plot_s_mag(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the magnitude of a scattering parameter of indecies m, n
-		not in  magnitude
+		plots the magnitude of a scattering parameters.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_mag()
+		>>> myntwk.plot_s_mag(m=0,n=1,color='b', marker='x')
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_mag',\
 			y_label='Magnitude [not dB]', m=m,n=n, ax=ax,\
@@ -866,14 +904,36 @@ class Network(object):
 		'''
 		plots the real part of a scattering parameter of indecies m, n
 		
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_re()
+		>>> myntwk.plot_s_re(m=0,n=1,color='b', marker='x')
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_re',\
 			y_label='Real Part', m=m,n=n, ax=ax,\
@@ -881,16 +941,39 @@ class Network(object):
 			
 	def plot_s_im(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the imaginary part of a scattering parameter of indecies m, n
+		plots the imaginary part of a scattering parameters.
+		
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
 		
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_im()
+		>>> myntwk.plot_s_im(m=0,n=1,color='b', marker='x')
+		
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_im',\
 			y_label='Imaginary Part', m=m,n=n, ax=ax,\
@@ -898,16 +981,39 @@ class Network(object):
 	
 	def plot_s_deg(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the phase of a scattering parameter of indecies m, n in
-		degrees
+		plots the phase of a scattering parameters.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_deg()
+		>>> myntwk.plot_s_deg(m=0,n=1,color='b', marker='x')
+		
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_deg',\
 			y_label='Phase [deg]', m=m,n=n, ax=ax,\
@@ -916,16 +1022,39 @@ class Network(object):
 	def plot_s_deg_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
 		*args,**kwargs):
 		'''
-		plots the phase of a scattering parameter of indecies m, n in
-		unwrapped degrees
+		plots the phase of a scattering parameters.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_deg_unwrapped()
+		>>> myntwk.plot_s_deg_unwrapped(m=0,n=1,color='b', marker='x')
+		
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_deg_unwrap',\
 			y_label='Phase [deg]', m=m,n=n, ax=ax,\
@@ -935,32 +1064,78 @@ class Network(object):
 	
 	def plot_s_rad(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the phase of a scattering parameter of indecies m, n in
-		radians
+		plots the phase of a scattering parameters.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_rad()
+		>>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
+		
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_rad',\
 			y_label='Phase [rad]', m=m,n=n, ax=ax,\
 			show_legend = show_legend,*args,**kwargs)
 	def plot_s_quad(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the quadrature of a scattering parameter of indecies m, n,
-		quadrature is the arclength.
+		plots the quadrature of a scattering parameters.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		quadrature is another name for arc-length. 
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_quad()
+		>>> myntwk.plot_s_quad(m=0,n=1,color='b', marker='x')
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_quad',\
 			y_label='Arc-Length [distance]', m=m,n=n, ax=ax,\
@@ -968,16 +1143,38 @@ class Network(object):
 	def plot_s_rad_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
 		*args,**kwargs):
 		'''
-		plots the phase of a scattering parameter of indecies m, n in
-		unwrapped radians
+		plots the phase of a scattering parameters, in unwrapped radians.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_rad_unwrap()
+		>>> myntwk.plot_s_rad_unwrap(m=0,n=1,color='b', marker='x')
 		'''
 		self.plot_vs_frequency_generic(attribute= 's_rad_unwrap',\
 			y_label='Phase [rad]', m=m,n=n, ax=ax,\
@@ -986,15 +1183,38 @@ class Network(object):
 	def plot_s_polar(self,m=0, n=0, ax = None, show_legend=True,\
 		*args,**kwargs):
 		'''
-		plots the scattering parameter of indecies m, n in polar form
+		plots the scattering parameter in polar form.
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_polar()
+		>>> myntwk.plot_s_polar(m=0,n=1,color='b', marker='x')
 		'''
 		self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
 			m=m,n=n, ax=ax,	show_legend = show_legend,*args,**kwargs)	
@@ -1002,19 +1222,38 @@ class Network(object):
 	def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
 		chart_type='z', *args,**kwargs):
 		'''
-		plots the scattering parameter of indecies m, n on smith chart
+		plots the scattering parameter on a smith chart
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			r -  radius of smith chart
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			chart_type: string determining countour type. options are:
-				'z': impedance contours (default)
-				'y': admittance contours
-			*args,**kwargs - passed to the matplotlib.plot command	
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		smith -  draws a smith chart
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_smith()
+		>>> myntwk.plot_s_smith(m=0,n=1,color='b', marker='x')
 		'''
 		# TODO: prevent this from re-drawing smith chart if one alread
 		# exists on current set of axes
@@ -1071,15 +1310,38 @@ class Network(object):
 	def plot_s_complex(self,m=None, n=None,ax = None, show_legend=True,\
 		*args,**kwargs):
 		'''
-		plots the scattering parameter of indecies m, n on complex plane
+		plots the scattering parameter on complex plane
 		
-		takes:
-			m - first index, int
-			n - second indext, int
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command	
+		plots indecies `m`, `n`, where `m` and `n` can be integers or 
+		lists of integers.
+		
+		
+		Parameters
+		-----------
+		m : int, optional
+			first index
+		n : int, optional
+			second index
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_rad()
+		>>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
 		'''
 		# TODO: prevent this from re-drawing smith chart if one alread
 		# exists on current set of axes
@@ -1149,15 +1411,34 @@ class Network(object):
 	
 	def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the passivity of a network, possible for a specific
-		port. see the property 'passivity' for more information.
-				
-		takes:
-			port: list of ports[ints] to plot passivity for [None]
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
+		plots the passivity of a network.
+		possibly for a specific port. 
+		
+		
+		Parameters
+		-----------
+		port: int
+			calculate passivity of a given port
+		ax : matplotlib.Axes object, optional
+			axes to plot on. in case you want to update an existing 
+			plot.
+		show_legend : boolean, optional
+			to turn legend show legend of not, optional
+		*args : arguments, optional
+			passed to the matplotlib.plot command
+		**kwargs : keyword arguments, optional
+			passed to the matplotlib.plot command
+		
+		
+		See Also
+		--------
+		plot_vs_frequency_generic - generic plotting function
+		passivity - passivity property
+		
+		Examples
+		---------
+		>>> myntwk.plot_s_rad()
+		>>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
 		'''
 		if port is None:
 			port = range(self.number_of_ports)
