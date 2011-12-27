@@ -21,7 +21,48 @@
 #       MA 02110-1301, USA.
 
 '''
-Provides the Network class and related functions. 
+
+========================================
+Network Module (:mod:`mwavepy.network`)
+========================================
+
+.. currentmodule:: mwavepy.network
+
+This module provides a n-port Network  class and associated functions
+
+
+Network Class
+===============
+.. autosummary::
+   :toctree: generated/
+
+   Network 
+
+Functions On Networks
+======================
+
+.. autosummary::
+   :toctree: generated/
+
+   connect 
+   innerconnect
+   average
+   one_port_2_two_port
+
+Supporting Functions 
+=====================
+
+.. autosummary::
+   :toctree: generated/
+
+   connect_s
+   innerconnect_s
+   s2t
+   t2s
+   cascade
+   de_embed
+   flip
+
 
 '''
 from copy import deepcopy as copy
@@ -41,7 +82,7 @@ from tlineFunctions import zl_2_Gamma0
 
 class Network(object):
 	'''
-	`Represents` a n-port microwave network.
+	An n-port microwave network.
 
 	the most fundemental properties are:
 		s: scattering matrix. a kxnxn complex matrix where 'n' is number
@@ -52,18 +93,27 @@ class Network(object):
 		
 	
 	The following operators are defined as follows:
-		'+' : element-wise addition of the s-matrix
-		'-' : element-wise subtraction of the s-matrix
-		'*' : element-wise multiplication of the s-matrix
-		'/' : element-wise division of the s-matrix
-		'**': cascading of 2-port networks
-		'//': de-embdeding of one network from the other.
+		
+	- '+' : element-wise addition of the s-matrix
+	- '-' : element-wise subtraction of the s-matrix
+	- '*' : element-wise multiplication of the s-matrix
+	- '/' : element-wise division of the s-matrix
+	- '**': cascading of 2-port networks
+	- '//': de-embdeding of one network from the other.
 
 	various other network properties are accesable as well as plotting
 	routines are also defined for convenience, 
 	
 	most properties are derived from the specifications given for
 	touchstone files. 
+	
+	Methods
+	--------
+	.. autosummary::
+		:toctree: generated/
+		
+		read_touchstone
+	
 	'''
 	global ALMOST_ZER0
 	ALMOST_ZER0=1e-6 # used for testing s-parameter equivalencee
@@ -72,9 +122,12 @@ class Network(object):
 		'''
 		constructor.
 		
-		takes:
-			file: if given will load information from touchstone file
-			name: name of this network. 
+		Parameters
+		------------
+		file: string
+			if given will load information from touchstone file,optional
+		name: string
+			name of this network, optional 
 		'''
 		# although meaningless untill set with real values, this
 		# needs this to exist for dependent properties
@@ -1185,27 +1238,51 @@ class Network(object):
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB,l):
 	'''
-	connect two n-port networks together. specifically, connect port 'k'
-	on ntwkA to port 'l' on ntwkB. The resultant network has
-	(ntwkA.nports+ntwkB.nports -2) ports. The port index's ('k','l') 
-	start from 0. Port impedances are taken into account.
+	connect two n-port networks together. 
+
+	specifically, connect port `k` on `ntwkA` to port `l` on `ntwkB`. The 
+	resultant network has (ntwkA.nports+ntwkB.nports-2) ports. The port
+	index's ('k','l') start from 0. Port impedances *are* taken into 
+	account.
 	
-	takes:
-		ntwkA: network 'A', [mwavepy.Network]
-		k: port index on ntwkA [int] ( port indecies start from 0 )
-		ntwkB: network 'B', [mwavepy.Network]
-		l: port index on ntwkB [int]
+	Parameters
+	-----------
+	ntwkA : mwavepy.Network
+		network 'A'
+	k : int
+		port index on ntwkA ( port indecies start from 0 )
+	ntwkB : mwavepy.Network
+		network 'B'
+	l : int
+		port index on ntwkB
 	
-	returns:
-		ntwkC': new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
 	
 	
-	note:
-		see functions connect_s() and innerconnect_s() for actual 
-	S-parameter connection algorithm.
-		
+	Returns
+	---------
+	ntwkC : mwavepy.Network
+		new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+	
+	
+	See Also
+	-----------
+		connect_s : actual  S-parameter connection algorithm.
+		innerconnect_s : actual S-parameter connection algorithm.
 		the effect of mis-matched port impedances is handled by inserting
-	a 2-port 'mismatch' network between the two connected ports. 
+		
+	Notes
+	-------
+		a 2-port 'mismatch' network between the two connected ports. 
+		.. math:: X(e^{j\omega } ) = x(n)e^{ - j\omega n}
+	
+	Examples
+	---------
+	To implement a *cascade* of two networks
+	
+	>>> ntwkA = mv.Network('ntwkA.s2p')
+	>>> ntwkB = mv.Network('ntwkB.s2p')
+	>>> ntwkC = mv.connect(ntwkA, 1, ntwkB,0)
+	
 	'''
 	ntwkC = deepcopy(ntwkA)
 	# account for port impedance mis-match by inserting a two-port 
@@ -1219,7 +1296,7 @@ def connect(ntwkA, k, ntwkB,l):
 	ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
 	ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
 	return ntwkC
-
+	
 def innerconnect(ntwkA, k, l):
 	'''
 	connect two ports of a single n-port network, resulting in a 

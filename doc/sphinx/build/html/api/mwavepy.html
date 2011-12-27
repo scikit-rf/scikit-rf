@@ -7,13 +7,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mwavepy Package &mdash; mwavepy v1.4 documentation</title>
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <title>mwavepy Package &mdash; mwavepy v1.5 documentation</title>
+    <link rel="stylesheet" href="../_static/scipy.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.4',
+        VERSION:     '1.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,9 +22,8 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="top" title="mwavepy v1.5 documentation" href="../index.html" />
     <link rel="up" title="mwavepy API" href="modules.html" />
-    <link rel="next" title="media Package" href="mwavepy.media.html" />
     <link rel="prev" title="mwavepy API" href="modules.html" /> 
   </head>
   <body>
@@ -38,12 +37,9 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="mwavepy.media.html" title="media Package"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
           <a href="modules.html" title="mwavepy API"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li>
           <li><a href="modules.html" accesskey="U">mwavepy API</a> &raquo;</li> 
       </ul>
     </div>  
@@ -80,7 +76,7 @@ Media objects for standard waveguide bands,</dd>
 </blockquote>
 <dl class="function">
 <dt id="mwavepy.convenience.add_markers_to_lines">
-<tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">add_markers_to_lines</tt><big>(</big><em>ax=None</em>, <em>marker_list=</em><span class="optional">[</span>, <em>'o'</em>, <em>'D'</em>, <em>'s'</em>, <em>'+'</em>, <em>'x'</em><span class="optional">]</span>, <em>markevery=5</em><big>)</big><a class="headerlink" href="#mwavepy.convenience.add_markers_to_lines" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">add_markers_to_lines</tt><big>(</big><em>ax=None</em>, <em>marker_list=</em><span class="optional">[</span>, <em>'o'</em>, <em>'D'</em>, <em>'s'</em>, <em>'+'</em>, <em>'x'</em><span class="optional">]</span>, <em>markevery=10</em><big>)</big><a class="headerlink" href="#mwavepy.convenience.add_markers_to_lines" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -142,6 +138,21 @@ formattedAxis</blockquote>
 <p>frequently many calcluations are made in a given band , so this class 
 is used in other classes so user doesnt have to continually supply 
 frequency info.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="#mwavepy.frequency.Frequency.from_f" title="mwavepy.frequency.Frequency.from_f"><tt class="xref py py-obj docutils literal"><span class="pre">from_f</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.frequency.Frequency.labelXAxis" title="mwavepy.frequency.Frequency.labelXAxis"><tt class="xref py py-obj docutils literal"><span class="pre">labelXAxis</span></tt></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <dl class="attribute">
 <dt id="mwavepy.frequency.Frequency.center">
 <tt class="descname">center</tt><a class="headerlink" href="#mwavepy.frequency.Frequency.center" title="Permalink to this definition">¶</a></dt>
@@ -235,7 +246,7 @@ converts a frequency vector to a Frequency object</p>
 <dd><p>returns the magnitude in dB of a complex number.</p>
 <dl class="docutils">
 <dt>returns:</dt>
-<dd>20*log10(<a href="#id40"><span class="problematic" id="id41">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id2"><span class="problematic" id="id3">|z|</span></a>)</dd>
 </dl>
 <p>where z is a complex number</p>
 </dd></dl>
@@ -328,7 +339,7 @@ returns 1 or 0</p>
 <blockquote>
 <dl class="docutils">
 <dt>db is given by </dt>
-<dd>20*log10(<a href="#id42"><span class="problematic" id="id43">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id4"><span class="problematic" id="id5">|z|</span></a>)</dd>
 </dl>
 </blockquote>
 <p>where z is a complex number</p>
@@ -402,12 +413,82 @@ exp(t*2*pi*f[0])</blockquote>
 </div>
 <div class="section" id="module-mwavepy.network">
 <span id="network-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">network</span></tt> Module<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h2>
-<p>Provides the Network class and related functions.</p>
+<div class="section" id="network-module-mwavepy-network">
+<h3>Network Module (<a class="reference internal" href="../network.html#module-mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a>)<a class="headerlink" href="#network-module-mwavepy-network" title="Permalink to this headline">¶</a></h3>
+<p>This module provides a n-port Network  class and associated functions</p>
+<div class="section" id="network-class">
+<h4>Network Class<a class="headerlink" href="#network-class" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-obj docutils literal"><span class="pre">Network</span></tt></a>([touchstone_file,&nbsp;name])</td>
+<td>An n-port microwave network.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="functions-on-networks">
+<h4>Functions On Networks<a class="headerlink" href="#functions-on-networks" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a>(ntwkA,&nbsp;k,&nbsp;ntwkB,&nbsp;l)</td>
+<td>connect two n-port networks together.</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.innerconnect.html#mwavepy.network.innerconnect" title="mwavepy.network.innerconnect"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect</span></tt></a>(ntwkA,&nbsp;k,&nbsp;l)</td>
+<td>connect two ports of a single n-port network, resulting in a</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.average.html#mwavepy.network.average" title="mwavepy.network.average"><tt class="xref py py-obj docutils literal"><span class="pre">average</span></tt></a>(list_of_networks)</td>
+<td>calculates the average network from a list of Networks.</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.one_port_2_two_port.html#mwavepy.network.one_port_2_two_port" title="mwavepy.network.one_port_2_two_port"><tt class="xref py py-obj docutils literal"><span class="pre">one_port_2_two_port</span></tt></a>(ntwk)</td>
+<td>calculates the two-port network given a  symetric, reciprocal and</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="supporting-functions">
+<h4>Supporting Functions<a class="headerlink" href="#supporting-functions" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a>(S,&nbsp;k,&nbsp;T,&nbsp;l)</td>
+<td>connect two n-port networks together. specifically, connect port &#8216;k&#8217;</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a>(S,&nbsp;k,&nbsp;l)</td>
+<td>connect two ports of a single n-port network, resulting in a</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.s2t.html#mwavepy.network.s2t" title="mwavepy.network.s2t"><tt class="xref py py-obj docutils literal"><span class="pre">s2t</span></tt></a>(s)</td>
+<td>converts a scattering parameters to &#8216;wave cascading parameters&#8217;</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.t2s.html#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a>(t)</td>
+<td>converts a &#8216;wave cascading parameters&#8217; to scattering parameters</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.cascade.html#mwavepy.network.cascade" title="mwavepy.network.cascade"><tt class="xref py py-obj docutils literal"><span class="pre">cascade</span></tt></a>(a,&nbsp;b)</td>
+<td>DEPRECATED. see connect_s() instead.</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.de_embed.html#mwavepy.network.de_embed" title="mwavepy.network.de_embed"><tt class="xref py py-obj docutils literal"><span class="pre">de_embed</span></tt></a>(a,&nbsp;b)</td>
+<td>de-embed a 2x2 s-matrix from another 2x2 s-matrix</td>
+</tr>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.flip.html#mwavepy.network.flip" title="mwavepy.network.flip"><tt class="xref py py-obj docutils literal"><span class="pre">flip</span></tt></a>(a)</td>
+<td>invert the ports of a networks s-matrix, &#8216;flipping&#8217; it over</td>
+</tr>
+</tbody>
+</table>
 <dl class="class">
 <dt id="mwavepy.network.Network">
 <em class="property">class </em><tt class="descclassname">mwavepy.network.</tt><tt class="descname">Network</tt><big>(</big><em>touchstone_file=None</em>, <em>name=None</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
-<p><cite>Represents</cite> a n-port microwave network.</p>
+<p>An n-port microwave network.</p>
 <dl class="docutils">
 <dt>the most fundemental properties are:</dt>
 <dd><dl class="first docutils">
@@ -419,626 +500,25 @@ f: frequency vector in Hz. see also frequency, which is a</p>
 <blockquote class="last">
 Frequency object (see help on this class for more info)</blockquote>
 </dd>
-<dt>The following operators are defined as follows:</dt>
-<dd>&#8216;+&#8217; : element-wise addition of the s-matrix
-&#8216;-&#8216; : element-wise subtraction of the s-matrix
-&#8216;*&#8217; : element-wise multiplication of the s-matrix
-&#8216;/&#8217; : element-wise division of the s-matrix
-&#8216;**&#8217;: cascading of 2-port networks
-&#8216;//&#8217;: de-embdeding of one network from the other.</dd>
 </dl>
+<p>The following operators are defined as follows:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>&#8216;+&#8217; <span class="classifier-delimiter">:</span> <span class="classifier">element-wise addition of the s-matrix</span></dt>
+<dd><p class="first">&#8216;-&#8216; : element-wise subtraction of the s-matrix</p>
+<p>&#8216;*&#8217; : element-wise multiplication of the s-matrix</p>
+<p>&#8216;/&#8217; : element-wise division of the s-matrix</p>
+<p>&#8216;**&#8217;: cascading of 2-port networks</p>
+<p class="last">&#8216;//&#8217;: de-embdeding of one network from the other.</p>
+</dd>
+</dl>
+</li>
+</ul>
 <p>various other network properties are accesable as well as plotting
 routines are also defined for convenience,</p>
 <p>most properties are derived from the specifications given for
 touchstone files.</p>
-<dl class="method">
-<dt id="mwavepy.network.Network.add_noise_polar">
-<tt class="descname">add_noise_polar</tt><big>(</big><em>mag_dev</em>, <em>phase_dev</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.add_noise_polar" title="Permalink to this definition">¶</a></dt>
-<dd><p>adds a complex zero-mean gaussian white-noise signal of given
-standard deviations for magnitude and phase</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>mag_mag: standard deviation of magnitude
-phase_dev: standard deviation of phase [in degrees]
-n_ports: number of ports. defualt to 1</dd>
-<dt>returns:</dt>
-<dd>nothing</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.add_noise_polar_flatband">
-<tt class="descname">add_noise_polar_flatband</tt><big>(</big><em>mag_dev</em>, <em>phase_dev</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.add_noise_polar_flatband" title="Permalink to this definition">¶</a></dt>
-<dd><p>adds a flatband complex zero-mean gaussian white-noise signal of
-given standard deviations for magnitude and phase</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>mag_mag: standard deviation of magnitude
-phase_dev: standard deviation of phase [in degrees]
-n_ports: number of ports. defualt to 1</dd>
-<dt>returns:</dt>
-<dd>nothing</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.change_frequency">
-<tt class="descname">change_frequency</tt><big>(</big><em>new_frequency</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.change_frequency" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.f">
-<tt class="descname">f</tt><a class="headerlink" href="#mwavepy.network.Network.f" title="Permalink to this definition">¶</a></dt>
-<dd><p>the frequency vector for the network, in Hz.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.flip">
-<tt class="descname">flip</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.network.Network.flip" title="Permalink to this definition">¶</a></dt>
-<dd><p>swaps the ports of a two port</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.frequency">
-<tt class="descname">frequency</tt><a class="headerlink" href="#mwavepy.network.Network.frequency" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns a Frequency object, see  frequency.py</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.interpolate">
-<tt class="descname">interpolate</tt><big>(</big><em>new_frequency</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.interpolate" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculates an interpolated network. defualt interpolation type
-is linear. see notes about other interpolation types</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>new_frequency:
-<a href="#id2"><span class="problematic" id="id3">**</span></a>kwargs: passed to scipy.interpolate.interp1d initializer.</dd>
-<dt>returns:</dt>
-<dd>result: an interpolated Network</dd>
-<dt>note:</dt>
-<dd><dl class="first last docutils">
-<dt>usefule keyward for  scipy.interpolate.interp1d:</dt>
-<dd><dl class="first last docutils">
-<dt>kind <span class="classifier-delimiter">:</span> <span class="classifier">str or int</span></dt>
-<dd>Specifies the kind of interpolation as a string (&#8216;linear&#8217;,
-&#8216;nearest&#8217;, &#8216;zero&#8217;, &#8216;slinear&#8217;, &#8216;quadratic, &#8216;cubic&#8217;) or as an integer
-specifying the order of the spline interpolator to use.</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.inv">
-<tt class="descname">inv</tt><a class="headerlink" href="#mwavepy.network.Network.inv" title="Permalink to this definition">¶</a></dt>
-<dd><p>a network representing inverse s-parameters, for de-embeding</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.multiply_noise">
-<tt class="descname">multiply_noise</tt><big>(</big><em>mag_dev</em>, <em>phase_dev</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.multiply_noise" title="Permalink to this definition">¶</a></dt>
-<dd><p>multiplys a complex bivariate gaussian white-noise signal
-of given standard deviations for magnitude and phase.   
-magnitude mean is 1, phase mean is 0</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>mag_dev: standard deviation of magnitude
-phase_dev: standard deviation of phase [in degrees]
-n_ports: number of ports. defualt to 1</dd>
-<dt>returns:</dt>
-<dd>nothing</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.nudge">
-<tt class="descname">nudge</tt><big>(</big><em>amount=1e-12</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.nudge" title="Permalink to this definition">¶</a></dt>
-<dd><p>perturb s-parameters by small amount. this is usefule to work-around
-numerical bugs.
-takes:</p>
-<blockquote>
-amount: amount to add to s parameters</blockquote>
-<dl class="docutils">
-<dt>returns:</dt>
-<dd>na</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.number_of_ports">
-<tt class="descname">number_of_ports</tt><a class="headerlink" href="#mwavepy.network.Network.number_of_ports" title="Permalink to this definition">¶</a></dt>
-<dd><p>the number of ports the network has.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.passivity">
-<tt class="descname">passivity</tt><a class="headerlink" href="#mwavepy.network.Network.passivity" title="Permalink to this definition">¶</a></dt>
-<dd><blockquote>
-passivity metric for a multi-port network. It returns</blockquote>
-<p>a matrix who&#8217;s diagonals are equal to the total power 
-received at all ports, normalized to the power at a single
-excitement  port.</p>
-<p>mathmatically, this is a test for unitary-ness of the 
-s-parameter matrix.</p>
-<dl class="docutils">
-<dt>for two port this is </dt>
-<dd>( <a href="#id4"><span class="problematic" id="id5">|</span></a>S11|^2 + <a href="#id6"><span class="problematic" id="id7">|</span></a>S21|^2, <a href="#id8"><span class="problematic" id="id9">|</span></a>S22|^2+|S12|^2)</dd>
-<dt>in general it is  </dt>
-<dd>S.H * S</dd>
-</dl>
-<p>where H is conjugate transpose of S, and * is dot product</p>
-<p>note:
-see more at,
-<a class="reference external" href="http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks">http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks</a></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_passivity">
-<tt class="descname">plot_passivity</tt><big>(</big><em>port=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_passivity" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the passivity of a network, possible for a specific
-port. see the property &#8216;passivity&#8217; for more information.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">port: list of ports[ints] to plot passivity for [None]
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id10"><span class="problematic" id="id11">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_polar_generic">
-<tt class="descname">plot_polar_generic</tt><big>(</big><em>attribute_r</em>, <em>attribute_theta</em>, <em>m=0</em>, <em>n=0</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_polar_generic" title="Permalink to this definition">¶</a></dt>
-<dd><p>generic plotting function for plotting a Network&#8217;s attribute
-in polar form</p>
-<p>takes:</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_all_db">
-<tt class="descname">plot_s_all_db</tt><big>(</big><em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_all_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots all s parameters in log magnitude</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><dl class="first docutils">
-<dt>ax - matplotlib.axes object to plot on, used in case you</dt>
-<dd>want to update an existing plot.</dd>
-</dl>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id12"><span class="problematic" id="id13">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_complex">
-<tt class="descname">plot_s_complex</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_complex" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the scattering parameter of indecies m, n on complex plane</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id14"><span class="problematic" id="id15">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_db">
-<tt class="descname">plot_s_db</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the magnitude of the scattering parameter of indecies m, n
-in log magnitude</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id16"><span class="problematic" id="id17">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_deg">
-<tt class="descname">plot_s_deg</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_deg" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the phase of a scattering parameter of indecies m, n in
-degrees</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id18"><span class="problematic" id="id19">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_deg_unwrap">
-<tt class="descname">plot_s_deg_unwrap</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_deg_unwrap" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the phase of a scattering parameter of indecies m, n in
-unwrapped degrees</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id20"><span class="problematic" id="id21">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_deg_unwrapped">
-<tt class="descname">plot_s_deg_unwrapped</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_deg_unwrapped" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the phase of a scattering parameter of indecies m, n in
-unwrapped degrees</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id22"><span class="problematic" id="id23">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_im">
-<tt class="descname">plot_s_im</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_im" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the imaginary part of a scattering parameter of indecies m, n</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id24"><span class="problematic" id="id25">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_mag">
-<tt class="descname">plot_s_mag</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_mag" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the magnitude of a scattering parameter of indecies m, n
-not in  magnitude</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id26"><span class="problematic" id="id27">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_polar">
-<tt class="descname">plot_s_polar</tt><big>(</big><em>m=0</em>, <em>n=0</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_polar" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the scattering parameter of indecies m, n in polar form</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id28"><span class="problematic" id="id29">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_quad">
-<tt class="descname">plot_s_quad</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_quad" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the quadrature of a scattering parameter of indecies m, n,
-quadrature is the arclength.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id30"><span class="problematic" id="id31">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_rad">
-<tt class="descname">plot_s_rad</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_rad" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the phase of a scattering parameter of indecies m, n in
-radians</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id32"><span class="problematic" id="id33">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_rad_unwrapped">
-<tt class="descname">plot_s_rad_unwrapped</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_rad_unwrapped" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the phase of a scattering parameter of indecies m, n in
-unwrapped radians</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id34"><span class="problematic" id="id35">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_re">
-<tt class="descname">plot_s_re</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_re" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the real part of a scattering parameter of indecies m, n</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p class="last">show_legend: boolean, to turn legend show legend of not
-<a href="#id36"><span class="problematic" id="id37">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_s_smith">
-<tt class="descname">plot_s_smith</tt><big>(</big><em>m=None</em>, <em>n=None</em>, <em>r=1</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>chart_type='z'</em>, <em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_s_smith" title="Permalink to this definition">¶</a></dt>
-<dd><p>plots the scattering parameter of indecies m, n on smith chart</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd><p class="first">m - first index, int
-n - second indext, int
-r -  radius of smith chart
-ax - matplotlib.axes object to plot on, used in case you</p>
-<blockquote>
-want to update an existing plot.</blockquote>
-<p>show_legend: boolean, to turn legend show legend of not
-chart_type: string determining countour type. options are:</p>
-<blockquote>
-&#8216;z&#8217;: impedance contours (default)
-&#8216;y&#8217;: admittance contours</blockquote>
-<p class="last"><a href="#id38"><span class="problematic" id="id39">*</span></a>args,**kwargs - passed to the matplotlib.plot command</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.plot_vs_frequency_generic">
-<tt class="descname">plot_vs_frequency_generic</tt><big>(</big><em>attribute</em>, <em>y_label=None</em>, <em>m=None</em>, <em>n=None</em>, <em>ax=None</em>, <em>show_legend=True</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="Permalink to this definition">¶</a></dt>
-<dd><p>generic plotting function for plotting a Network&#8217;s attribute
-vs frequency.</p>
-<p>takes:</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.read_touchstone">
-<tt class="descname">read_touchstone</tt><big>(</big><em>filename</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.read_touchstone" title="Permalink to this definition">¶</a></dt>
-<dd><p>loads  values from a touchstone file.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>filename - touchstone file name, string.</dd>
-<dt>note: </dt>
-<dd>ONLY &#8216;S&#8217; FORMAT SUPORTED AT THE MOMENT 
-all work is tone in the touchstone class.</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s">
-<tt class="descname">s</tt><a class="headerlink" href="#mwavepy.network.Network.s" title="Permalink to this definition">¶</a></dt>
-<dd><p>The scattering parameter matrix.</p>
-<p>s-matrix has shape fxnxn, 
-where;</p>
-<blockquote>
-f is frequency axis and,
-n&#8217;s are port indicies</blockquote>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s11">
-<tt class="descname">s11</tt><a class="headerlink" href="#mwavepy.network.Network.s11" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s12">
-<tt class="descname">s12</tt><a class="headerlink" href="#mwavepy.network.Network.s12" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s21">
-<tt class="descname">s21</tt><a class="headerlink" href="#mwavepy.network.Network.s21" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s22">
-<tt class="descname">s22</tt><a class="headerlink" href="#mwavepy.network.Network.s22" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_abs">
-<tt class="descname">s_abs</tt><a class="headerlink" href="#mwavepy.network.Network.s_abs" title="Permalink to this definition">¶</a></dt>
-<dd><p>see s_mag</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_angle">
-<tt class="descname">s_angle</tt><a class="headerlink" href="#mwavepy.network.Network.s_angle" title="Permalink to this definition">¶</a></dt>
-<dd><p>see s_deg</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_arcl">
-<tt class="descname">s_arcl</tt><a class="headerlink" href="#mwavepy.network.Network.s_arcl" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>the arc-length of the s-parameters, given by  </dt>
-<dd>= s_rad * s_mag</dd>
-</dl>
-<p>used in calculating differences in phase, but in units of distance</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_arcl_unwrap">
-<tt class="descname">s_arcl_unwrap</tt><a class="headerlink" href="#mwavepy.network.Network.s_arcl_unwrap" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="docutils">
-<dt>the unwrapped arc-length of the s-parameters, given by  </dt>
-<dd>= s_rad_unwrap * s_mag</dd>
-</dl>
-<p>used in calculating differences in phase, but in units of distance</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_db">
-<tt class="descname">s_db</tt><a class="headerlink" href="#mwavepy.network.Network.s_db" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the magnitude of the s-parameters, in dB</p>
-<dl class="docutils">
-<dt>note:</dt>
-<dd><dl class="first last docutils">
-<dt>dB is calculated by </dt>
-<dd>20*log10(<a href="#id44"><span class="problematic" id="id45">|s|</span></a>)</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_deg">
-<tt class="descname">s_deg</tt><a class="headerlink" href="#mwavepy.network.Network.s_deg" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the phase of the s-parameters, in radians</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_deg_unwrap">
-<tt class="descname">s_deg_unwrap</tt><a class="headerlink" href="#mwavepy.network.Network.s_deg_unwrap" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the unwrapped phase of the s-paramerts, in degrees</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_im">
-<tt class="descname">s_im</tt><a class="headerlink" href="#mwavepy.network.Network.s_im" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the imaginary part of the s-parameters.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_mag">
-<tt class="descname">s_mag</tt><a class="headerlink" href="#mwavepy.network.Network.s_mag" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the magnitude of the s-parameters.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_quad">
-<tt class="descname">s_quad</tt><a class="headerlink" href="#mwavepy.network.Network.s_quad" title="Permalink to this definition">¶</a></dt>
-<dd><p>this is a different name for  arc-length, 
-see Network.s_arcl</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_rad">
-<tt class="descname">s_rad</tt><a class="headerlink" href="#mwavepy.network.Network.s_rad" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the phase of the s-parameters, in radians.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_rad_unwrap">
-<tt class="descname">s_rad_unwrap</tt><a class="headerlink" href="#mwavepy.network.Network.s_rad_unwrap" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the unwrapped phase of the s-parameters, in radians.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.s_re">
-<tt class="descname">s_re</tt><a class="headerlink" href="#mwavepy.network.Network.s_re" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the real part of the s-parameters.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.t">
-<tt class="descname">t</tt><a class="headerlink" href="#mwavepy.network.Network.t" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns the t-parameters, which are also known as wave cascading
-matrix.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mwavepy.network.Network.write_touchstone">
-<tt class="descname">write_touchstone</tt><big>(</big><em>filename=None</em>, <em>dir='./'</em><big>)</big><a class="headerlink" href="#mwavepy.network.Network.write_touchstone" title="Permalink to this definition">¶</a></dt>
-<dd><p>write a touchstone file representing this network.  the only 
-format supported at the moment is :</p>
-<blockquote>
-HZ S RI</blockquote>
-<dl class="docutils">
-<dt>takes: </dt>
-<dd><dl class="first last docutils">
-<dt>filename: a string containing filename without </dt>
-<dd>extension[None]. if &#8216;None&#8217;, then will use the network&#8217;s 
-name. if this is empty, then throws an error.</dd>
-<dt>dir: the directory to save the file in. [string]. Defaults </dt>
-<dd>to &#8216;./&#8217;</dd>
-</dl>
-</dd>
-<dt>note:</dt>
-<dd>in the future could make possible use of the touchtone 
-class, but at the moment this would not provide any benefit 
-as it has not <a href="#id46"><span class="problematic" id="id47">set_</span></a> functions.</dd>
-</dl>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.y">
-<tt class="descname">y</tt><a class="headerlink" href="#mwavepy.network.Network.y" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="attribute">
-<dt id="mwavepy.network.Network.z0">
-<tt class="descname">z0</tt><a class="headerlink" href="#mwavepy.network.Network.z0" title="Permalink to this definition">¶</a></dt>
-<dd><p>the characteristic impedance of the network.</p>
-<p>z0 can be may be a number, or numpy.ndarray of shape n or fxn.</p>
-</dd></dl>
-
+<p class="rubric">Methods</p>
 </dd></dl>
 
 <dl class="function">
@@ -1075,25 +555,60 @@ if s11 or s22 is 1.</dd>
 <dl class="function">
 <dt id="mwavepy.network.connect">
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">connect</tt><big>(</big><em>ntwkA</em>, <em>k</em>, <em>ntwkB</em>, <em>l</em><big>)</big><a class="headerlink" href="#mwavepy.network.connect" title="Permalink to this definition">¶</a></dt>
-<dd><p>connect two n-port networks together. specifically, connect port &#8216;k&#8217;
-on ntwkA to port &#8216;l&#8217; on ntwkB. The resultant network has
-(ntwkA.nports+ntwkB.nports -2) ports. The port index&#8217;s (&#8216;k&#8217;,&#8217;l&#8217;) 
-start from 0. Port impedances are taken into account.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>ntwkA: network &#8216;A&#8217;, [mwavepy.Network]
-k: port index on ntwkA [int] ( port indecies start from 0 )
-ntwkB: network &#8216;B&#8217;, [mwavepy.Network]
-l: port index on ntwkB [int]</dd>
-<dt>returns:</dt>
-<dd>ntwkC&#8217;: new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</dd>
-<dt>note:</dt>
-<dd>see functions connect_s() and innerconnect_s() for actual</dd>
-</dl>
-<p>S-parameter connection algorithm.</p>
+<dd><p>connect two n-port networks together.</p>
+<p>specifically, connect port <cite>k</cite> on <cite>ntwkA</cite> to port <cite>l</cite> on <cite>ntwkB</cite>. The 
+resultant network has (ntwkA.nports+ntwkB.nports-2) ports. The port
+index&#8217;s (&#8216;k&#8217;,&#8217;l&#8217;) start from 0. Port impedances <em>are</em> taken into 
+account.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : mwavepy.Network</p>
 <blockquote>
-the effect of mis-matched port impedances is handled by inserting</blockquote>
-<p>a 2-port &#8216;mismatch&#8217; network between the two connected ports.</p>
+<p>network &#8216;A&#8217;</p>
+</blockquote>
+<p><strong>k</strong> : int</p>
+<blockquote>
+<p>port index on ntwkA ( port indecies start from 0 )</p>
+</blockquote>
+<p><strong>ntwkB</strong> : mwavepy.Network</p>
+<blockquote>
+<p>network &#8216;B&#8217;</p>
+</blockquote>
+<p><strong>l</strong> : int</p>
+<blockquote>
+<p>port index on ntwkB</p>
+</blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : mwavepy.Network</p>
+<blockquote class="last">
+<p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
+</blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a></dt>
+<dd>actual  S-parameter connection algorithm.</dd>
+<dt><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
+<dd>actual S-parameter connection algorithm. the effect of mis-matched port impedances is handled by inserting</dd>
+</dl>
+</div>
+<p class="rubric">Notes</p>
+<p>a 2-port &#8216;mismatch&#8217; network between the two connected ports. 
+.. math:: X(e^{jomega } ) = x(n)e^{ - jomega n}</p>
+<p class="rubric">Examples</p>
+<p>To implement a <em>cascade</em> of two networks</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ntwkA</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ntwkA.s2p&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ntwkB</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ntwkB.s2p&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ntwkC</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">ntwkA</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ntwkB</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
@@ -1270,6 +785,8 @@ better</p>
 <dd><p>writes a dictionary of networks to a given directory</p>
 </dd></dl>
 
+</div>
+</div>
 </div>
 <div class="section" id="module-mwavepy.plotting">
 <span id="plotting-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">plotting</span></tt> Module<a class="headerlink" href="#module-mwavepy.plotting" title="Permalink to this headline">¶</a></h2>
@@ -1600,6 +1117,36 @@ theta: electrical length of the line, (may be complex)</dd>
 The reference for writing this class is the draft of the
 Touchstone(R) File Format Specification Rev 2.0
 <a class="reference external" href="http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf">http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf</a></p>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="#mwavepy.touchstone.touchstone.get_format" title="mwavepy.touchstone.touchstone.get_format"><tt class="xref py py-obj docutils literal"><span class="pre">get_format</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.touchstone.touchstone.get_noise_data" title="mwavepy.touchstone.touchstone.get_noise_data"><tt class="xref py py-obj docutils literal"><span class="pre">get_noise_data</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.touchstone.touchstone.get_noise_names" title="mwavepy.touchstone.touchstone.get_noise_names"><tt class="xref py py-obj docutils literal"><span class="pre">get_noise_names</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.touchstone.touchstone.get_sparameter_arrays" title="mwavepy.touchstone.touchstone.get_sparameter_arrays"><tt class="xref py py-obj docutils literal"><span class="pre">get_sparameter_arrays</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.touchstone.touchstone.get_sparameter_data" title="mwavepy.touchstone.touchstone.get_sparameter_data"><tt class="xref py py-obj docutils literal"><span class="pre">get_sparameter_data</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.touchstone.touchstone.get_sparameter_names" title="mwavepy.touchstone.touchstone.get_sparameter_names"><tt class="xref py py-obj docutils literal"><span class="pre">get_sparameter_names</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.touchstone.touchstone.load_file" title="mwavepy.touchstone.touchstone.load_file"><tt class="xref py py-obj docutils literal"><span class="pre">load_file</span></tt></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="mwavepy.touchstone.touchstone.get_format">
 <tt class="descname">get_format</tt><big>(</big><em>format='ri'</em><big>)</big><a class="headerlink" href="#mwavepy.touchstone.touchstone.get_format" title="Permalink to this definition">¶</a></dt>
@@ -1670,16 +1217,28 @@ ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="mwavepy.media.html">media Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#id1"><tt class="docutils literal"><span class="pre">media</span></tt> Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.cpw"><tt class="docutils literal"><span class="pre">cpw</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.distributedCircuit"><tt class="docutils literal"><span class="pre">distributedCircuit</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.freespace"><tt class="docutils literal"><span class="pre">freespace</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.media"><tt class="docutils literal"><span class="pre">media</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.rectangularWaveguide"><tt class="docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.cpw"><tt class="docutils literal"><span class="pre">cpw</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.distributedCircuit"><tt class="docutils literal"><span class="pre">distributedCircuit</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.freespace"><tt class="docutils literal"><span class="pre">freespace</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.media"><tt class="docutils literal"><span class="pre">media</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.media.html#module-mwavepy.media.rectangularWaveguide"><tt class="docutils literal"><span class="pre">rectangularWaveguide</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="mwavepy.calibration.html">calibration Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.html#id1"><tt class="docutils literal"><span class="pre">calibration</span></tt> Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.html#module-mwavepy.calibration.calibration"><tt class="docutils literal"><span class="pre">calibration</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.html#module-mwavepy.calibration.calibration"><tt class="docutils literal"><span class="pre">calibration</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.html#module-mwavepy.calibration.calibrationAlgorithms"><tt class="docutils literal"><span class="pre">calibrationAlgorithms</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.calibration.html#subpackages">Subpackages</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="mwavepy.calibration.parametricStandard.html">parametricStandard Package</a><ul>
@@ -1695,8 +1254,12 @@ ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="mwavepy.virtualInstruments.html">virtualInstruments Package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#id1"><tt class="docutils literal"><span class="pre">virtualInstruments</span></tt> Package</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#module-mwavepy.virtualInstruments.futekLoadCell"><tt class="docutils literal"><span class="pre">futekLoadCell</span></tt> Module</a></li>
-<li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#module-mwavepy.virtualInstruments.generalSocketReader"><tt class="docutils literal"><span class="pre">generalSocketReader</span></tt> Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#module-mwavepy.virtualInstruments.futekLoadCell"><tt class="docutils literal"><span class="pre">futekLoadCell</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#module-mwavepy.virtualInstruments.generalSocketReader"><tt class="docutils literal"><span class="pre">generalSocketReader</span></tt> Module</a><ul class="simple">
+</ul>
+</li>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#lifetimeprobetester-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTester</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#lifetimeprobetesterfunctions-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTesterFunctions</span></tt> Module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="mwavepy.virtualInstruments.html#stages-module"><tt class="docutils literal"><span class="pre">stages</span></tt> Module</a></li>
@@ -1719,12 +1282,30 @@ ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
 <li><a class="reference internal" href="#">mwavepy Package</a><ul>
 <li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">mwavepy</span></tt> Package</a></li>
 <li><a class="reference internal" href="#module-mwavepy.convenience"><tt class="docutils literal"><span class="pre">convenience</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-mwavepy.frequency"><tt class="docutils literal"><span class="pre">frequency</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.frequency"><tt class="docutils literal"><span class="pre">frequency</span></tt> Module</a><ul>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-mwavepy.mathFunctions"><tt class="docutils literal"><span class="pre">mathFunctions</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-mwavepy.network"><tt class="docutils literal"><span class="pre">network</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.network"><tt class="docutils literal"><span class="pre">network</span></tt> Module</a><ul>
+<li><a class="reference internal" href="#network-module-mwavepy-network">Network Module (<tt class="docutils literal"><span class="pre">mwavepy.network</span></tt>)</a><ul>
+<li><a class="reference internal" href="#network-class">Network Class</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#functions-on-networks">Functions On Networks</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#supporting-functions">Supporting Functions</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
 <li><a class="reference internal" href="#module-mwavepy.plotting"><tt class="docutils literal"><span class="pre">plotting</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-mwavepy.tlineFunctions"><tt class="docutils literal"><span class="pre">tlineFunctions</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-mwavepy.touchstone"><tt class="docutils literal"><span class="pre">touchstone</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.touchstone"><tt class="docutils literal"><span class="pre">touchstone</span></tt> Module</a><ul>
+</ul>
+</li>
 <li><a class="reference internal" href="#subpackages">Subpackages</a><ul>
 </ul>
 </li>
@@ -1735,9 +1316,6 @@ ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
   <h4>Previous topic</h4>
   <p class="topless"><a href="modules.html"
                         title="previous chapter">mwavepy API</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="mwavepy.media.html"
-                        title="next chapter">media Package</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../_sources/api/mwavepy.txt"
@@ -1770,12 +1348,9 @@ ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="mwavepy.media.html" title="media Package"
-             >next</a> |</li>
-        <li class="right" >
           <a href="modules.html" title="mwavepy API"
              >previous</a> |</li>
-        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li>
           <li><a href="modules.html" >mwavepy API</a> &raquo;</li> 
       </ul>
     </div>

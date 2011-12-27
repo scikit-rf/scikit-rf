@@ -7,13 +7,13 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>virtualInstruments Package &mdash; mwavepy v1.4 documentation</title>
-    <link rel="stylesheet" href="../_static/default.css" type="text/css" />
+    <title>virtualInstruments Package &mdash; mwavepy v1.5 documentation</title>
+    <link rel="stylesheet" href="../_static/scipy.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '1.4',
+        VERSION:     '1.5',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -22,7 +22,7 @@
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <link rel="top" title="mwavepy v1.4 documentation" href="../index.html" />
+    <link rel="top" title="mwavepy v1.5 documentation" href="../index.html" />
     <link rel="up" title="mwavepy Package" href="mwavepy.html" />
     <link rel="prev" title="parametricStandard Package" href="mwavepy.calibration.parametricStandard.html" /> 
   </head>
@@ -39,7 +39,7 @@
         <li class="right" >
           <a href="mwavepy.calibration.parametricStandard.html" title="parametricStandard Package"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li>
           <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
           <li><a href="mwavepy.html" accesskey="U">mwavepy Package</a> &raquo;</li> 
       </ul>
@@ -88,6 +88,24 @@
 <dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe">
 <em class="property">class </em><tt class="descclassname">mwavepy.virtualInstruments.futekLoadCell.</tt><tt class="descname">Futek_USB210_pipe</tt><big>(</big><em>sample_rate=2.5</em>, <em>avg_len=1</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.close" title="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.close"><tt class="xref py py-obj docutils literal"><span class="pre">close</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.read" title="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.read"><tt class="xref py py-obj docutils literal"><span class="pre">read</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.write" title="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.write"><tt class="xref py py-obj docutils literal"><span class="pre">write</span></tt></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.close">
 <tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_pipe.close" title="Permalink to this definition">¶</a></dt>
@@ -133,6 +151,27 @@ non-standard hardware or software.</p>
 gsr.connect(&#8216;127.0.0.1&#8217;,1111)
 gsr.data_point  # implicityly calls send() then receive()</dd>
 </dl>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.close" title="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.close"><tt class="xref py py-obj docutils literal"><span class="pre">close</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.connect" title="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.receive" title="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.receive"><tt class="xref py py-obj docutils literal"><span class="pre">receive</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.send" title="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.send"><tt class="xref py py-obj docutils literal"><span class="pre">send</span></tt></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.close">
 <tt class="descname">close</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader.close" title="Permalink to this definition">¶</a></dt>
@@ -192,8 +231,12 @@ tmp.append(float(self.receive()))</blockquote>
   <ul>
 <li><a class="reference internal" href="#">virtualInstruments Package</a><ul>
 <li><a class="reference internal" href="#id1"><tt class="docutils literal"><span class="pre">virtualInstruments</span></tt> Package</a></li>
-<li><a class="reference internal" href="#module-mwavepy.virtualInstruments.futekLoadCell"><tt class="docutils literal"><span class="pre">futekLoadCell</span></tt> Module</a></li>
-<li><a class="reference internal" href="#module-mwavepy.virtualInstruments.generalSocketReader"><tt class="docutils literal"><span class="pre">generalSocketReader</span></tt> Module</a></li>
+<li><a class="reference internal" href="#module-mwavepy.virtualInstruments.futekLoadCell"><tt class="docutils literal"><span class="pre">futekLoadCell</span></tt> Module</a><ul>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-mwavepy.virtualInstruments.generalSocketReader"><tt class="docutils literal"><span class="pre">generalSocketReader</span></tt> Module</a><ul>
+</ul>
+</li>
 <li><a class="reference internal" href="#lifetimeprobetester-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTester</span></tt> Module</a></li>
 <li><a class="reference internal" href="#lifetimeprobetesterfunctions-module"><tt class="docutils literal"><span class="pre">lifetimeProbeTesterFunctions</span></tt> Module</a></li>
 <li><a class="reference internal" href="#stages-module"><tt class="docutils literal"><span class="pre">stages</span></tt> Module</a></li>
@@ -239,7 +282,7 @@ tmp.append(float(self.receive()))</blockquote>
         <li class="right" >
           <a href="mwavepy.calibration.parametricStandard.html" title="parametricStandard Package"
              >previous</a> |</li>
-        <li><a href="../index.html">mwavepy v1.4 documentation</a> &raquo;</li>
+        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li>
           <li><a href="modules.html" >mwavepy API</a> &raquo;</li>
           <li><a href="mwavepy.html" >mwavepy Package</a> &raquo;</li> 
       </ul>
