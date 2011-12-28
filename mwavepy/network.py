@@ -23,7 +23,7 @@
 '''
 
 ========================================
-Network Module (:mod:`mwavepy.network`)
+network (:mod:`mwavepy.network`)
 ========================================
 
 .. currentmodule:: mwavepy.network
@@ -50,6 +50,8 @@ Functions On Networks
 
    connect 
    innerconnect
+   cascade
+   de_embed
    average
    one_port_2_two_port
 
@@ -63,8 +65,7 @@ Supporting Functions
    innerconnect_s
    s2t
    t2s
-   cascade
-   de_embed
+   inv
    flip
 
 
@@ -147,34 +148,20 @@ class Network(object):
 	## OPERATORS
 	def __pow__(self,other):
 		'''
-		 implements cascading this network with another network
-		'''
+		cascade this network with another network
 		
-		# this is the old algorithm
-		'''if self.number_of_ports == 2  and other.number_of_ports == 2:
-			result = copy(self)
-			result.s = cascade(self.s,other.s)
-			return result
-		elif self.number_of_ports == 2 and other.number_of_ports == 1:
-			result = copy(other)
-			result.s = cascade(self.s, other.s)
-			return result
-		elif self.number_of_ports == 1 and other.number_of_ports == 2:
-			result = copy(other)
-			# this flip is to make the termination what the syntax
-			# looks like  
-			result.s = cascade(flip(other.s),self.s)
-			return result
-		else:
-			raise IndexError('Incorrect number of ports.')
-			'''
+		port 1 of this network is connected to port 0 or the other 
+		network
+		'''
 		return connect(self,1,other,0)
 
 	def __floordiv__(self,other):
 		'''
-		 implements de-embeding another network[s], from this network
+		de-embeding another network[s], from this network
 
-		see de_embed
+		See Also
+		----------
+		inv : inverse s-parameters
 		'''
 		try: 	
 			# if they passed 1 ntwks and a tuple of ntwks, 
@@ -1526,25 +1513,25 @@ def connect(ntwkA, k, ntwkB,l):
 
 	specifically, connect port `k` on `ntwkA` to port `l` on `ntwkB`. The 
 	resultant network has (ntwkA.nports+ntwkB.nports-2) ports. The port
-	index's ('k','l') start from 0. Port impedances *are* taken into 
+	index's ('k','l') start from 0. Port impedances **are** taken into 
 	account.
 	
 	Parameters
 	-----------
-	ntwkA : mwavepy.Network 
+	ntwkA : :class:`Network` 
 		network 'A'
 	k : int
-		port index on ntwkA ( port indecies start from 0 )
-	ntwkB : mwavepy.Network
+		port index on `ntwkA` ( port indecies start from 0 )
+	ntwkB : :class:`Network` 
 		network 'B'
 	l : int
-		port index on ntwkB
+		port index on `ntwkB`
 	
 	
 	
 	Returns
 	---------
-	ntwkC : mwavepy.Network
+	ntwkC : :class:`Network` 
 		new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
 	
 	
@@ -1556,7 +1543,9 @@ def connect(ntwkA, k, ntwkB,l):
 	Notes
 	-------
 		the effect of mis-matched port impedances is handled by inserting
-		a 2-port 'mismatch' network between the two connected ports. 
+		a 2-port 'mismatch' network between the two connected ports.
+		This mismatch Network is calculated with the 
+		:func:impedance_mismatch function.
 	
 	Examples
 	---------
@@ -1589,7 +1578,7 @@ def innerconnect(ntwkA, k, l):
 	
 	Parameters
 	-----------
-	ntwkA : mwavepy.Network 
+	ntwkA : :class:`Network`  
 		network 'A'
 	k : int
 		port index on ntwkA ( port indecies start from 0 )
@@ -1600,7 +1589,7 @@ def innerconnect(ntwkA, k, l):
 	
 	Returns
 	---------
-	ntwkC : mwavepy.Network
+	ntwkC : :class:`Network` 
 		new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
 	
 	
@@ -1628,7 +1617,58 @@ def innerconnect(ntwkA, k, l):
 	ntwkC.s = innerconnect_s(ntwkC.s,k,l)
 	ntwkC.z0=npy.delete(ntwkC.z0,[l,k],1)
 	return ntwkC
+	
+def cascade(ntwkA,ntwkB):
+	'''
+	cascade two 2-port Networks together
+	
+	connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls 
+	`connect(ntwkA,1, ntwkB,0)`
+	
+	Parameters
+	-----------
+	ntwkA : :class:`Network`
+		network `ntwkA`
+	ntwkB : Network
+		network `ntwkB`
+	
+	Returns
+	--------
+	C : Network
+		the resultant network of ntwkA cascaded with ntwkB	
+	
+	See Also
+	---------
+	connect : connects two Networks together at arbitrary ports.
+	'''
+	return connect(ntwkA,1, ntwkB,0)
 
+def de_embed(ntwkA,ntwkB):	
+	'''
+	de-embed `ntwkA` from `ntwkB`. this calls `ntwkA.inv**ntwkB`. 
+	the syntax of cascading an inverse is more explicit, it is 
+	recomended that it be used instead of this function. 
+	
+	Parameters
+	-----------
+	ntwkA : :class:`Network`
+		network `ntwkA`
+	ntwkB : :class:`Network`
+		network `ntwkB`
+	
+	Returns
+	--------
+	C : Network
+		the resultant network of  ntwkB	de-embeded from ntwkA
+	
+	See Also
+	---------
+	connect : connects two Networks together at arbitrary ports.
+	
+	'''
+	return ntwkA.inv ** ntwkB
+
+	
 def average(list_of_networks):
 	'''
 	calculates the average network from a list of Networks.
@@ -1643,14 +1683,19 @@ def average(list_of_networks):
 			
 	Returns
 	---------
-	ntwk: Network
+	ntwk : :class:`Network` 
 		the resultant averaged Network
 	
 	Notes
 	------
 	This same function can be accomplished with properties of a 
 	:class:`NetworkSet` class.
-		
+	
+	Examples
+	---------
+	
+	>>> ntwk_list = [mv.Network('myntwk.s1p'), mv.Network('myntwk2.s1p')]
+	>>> mean_ntwk = mv.average(ntwk_list)	
 	'''
 	out_ntwk = copy(list_of_networks[0])
 	
@@ -1711,27 +1756,29 @@ def one_port_2_two_port(ntwk):
 
 
 ## Functions operating on s-parameter matrices
-def connect_s(S,k,T,l):
+def connect_s(A,k,B,l):
 	'''
-	connect two n-port networks together. 
+	connect two n-port networks' s-matricies together. 
 	
-	specifically, connect port `k` on network `S` to port `l` on network
-	`T`. The resultant network has (S.rank + T.rank-2)-ports
+	specifically, connect port `k` on network `A` to port `l` on network
+	`B`. The resultant network has nports = (A.rank + B.rank-2). This
+	function operates on, and returns s-matricies. The function 
+	:func:`connect` operates on :class:`Network` types.
 	
 	Parameters
 	-----------
-	S : numpy.ndarray
-		S-parameter matrix of `S`, shape is fxnxn
+	A : numpy.ndarray
+		S-parameter matrix of `A`, shape is fxnxn
 	k : int
-		port index on `S` (port indecies start from 0)
-	T : numpy.ndarray
-		S-parameter matrix of `T`, shape is fxnxn
+		port index on `A` (port indecies start from 0)
+	B : numpy.ndarray
+		S-parameter matrix of `B`, shape is fxnxn
 	l : int
-		port index on `T`
+		port index on `B`
 		
 	Returns
 	-------
-	S' : numpy.ndarray
+	C : numpy.ndarray
 		new S-parameter matrix 
 		
 	
@@ -1743,47 +1790,51 @@ def connect_s(S,k,T,l):
 	
 	See Also
 	--------
+		connect : operates on :class:`Network` types
 		innerconnect_s : function which implements the connection 
 			connection algorithm
+		
 
 	'''
-	if k > S.shape[-1]-1 or l>T.shape[-1]-1:
+	if k > A.shape[-1]-1 or l>B.shape[-1]-1:
 		raise(ValueError('port indecies are out of range'))
 	
-	if len (S.shape) > 2:
+	if len (A.shape) > 2:
 		# assume this is a kxnxn matrix
-		n = S.shape[-1]+T.shape[-1]-2 # nports of output Matrix
-		Sp = npy.zeros((S.shape[0], n,n), dtype='complex')
+		n = A.shape[-1]+B.shape[-1]-2 # nports of output Matrix
+		C = npy.zeros((A.shape[0], n,n), dtype='complex')
 		
-		for f in range(S.shape[0]):
-			Sp[f,:,:] = connect_s(S[f,:,:],k,T[f,:,:],l)
-		return Sp
+		for f in range(A.shape[0]):
+			C[f,:,:] = connect_s(A[f,:,:],k,B[f,:,:],l)
+		return C
 	else:		
-		filler = npy.zeros((S.shape[0],T.shape[1]))
+		filler = npy.zeros((A.shape[0],B.shape[1]))
 		#create composite matrix, appending each sub-matrix diagonally
-		Sp= npy.vstack( [npy.hstack([S,filler]),npy.hstack([filler.T,T])])
+		C= npy.vstack( [npy.hstack([A,filler]),npy.hstack([filler.T,B])])
 		
-		return innerconnect_s(Sp, k,S.shape[-1]+l)
+		return innerconnect_s(C, k,A.shape[-1]+l)
 		
-def innerconnect_s(S, k, l):
+def innerconnect_s(A, k, l):
 	'''
-	Connect two ports of a single n-port network.
+	connect two ports of a single n-port network's s-matrix.
 	
-	Specifically, connect port `k`  to port `l` on `S`. This results in
-	a (n-2)-port network. 
+	Specifically, connect port `k`  to port `l` on `A`. This results in
+	a (n-2)-port network.  This	function operates on, and returns 
+	s-matricies. The function :func:`innerconnect` operates on 
+	:class:`Network` types.
 	
 	Parameters
 	-----------
-	S : numpy.ndarray
-		S-parameter matrix of `S`, shape is fxnxn
+	A : numpy.ndarray
+		S-parameter matrix of `A`, shape is fxnxn
 	k : int
-		port index on `S` (port indecies start from 0)
+		port index on `A` (port indecies start from 0)
 	l : int
-		port index on `S`
+		port index on `A`
 		
 	Returns
 	-------
-	S' : numpy.ndarray
+	C : numpy.ndarray
 		new S-parameter matrix 
 	
 	Notes
@@ -1804,41 +1855,58 @@ def innerconnect_s(S, k, l):
 	# TODO: this algorithm is a bit wasteful in that it calculates the 
 	# scattering parameters for a network of rank S.rank+T.rank and 
 	# then deletes the ports which are 'connected' 
-	if k > S.shape[-1] -1 or l>S.shape[-1]-1:
+	if k > A.shape[-1] -1 or l>A.shape[-1]-1:
 		raise(ValueError('port indecies are out of range'))
 	
-	if len (S.shape) > 2:
+	if len (A.shape) > 2:
 		# assume this is a kxnxn matrix
-		n = S.shape[-1]-2 # nports of output Matrix
-		Sp = npy.zeros((S.shape[0], n,n), dtype='complex')
+		n = A.shape[-1]-2 # nports of output Matrix
+		C = npy.zeros((A.shape[0], n,n), dtype='complex')
 		
-		for f in range(S.shape[0]):
-			Sp[f,:,:] = innerconnect_s(S[f,:,:],k,l)
-		return Sp
+		for f in range(A.shape[0]):
+			C[f,:,:] = innerconnect_s(A[f,:,:],k,l)
+		return C
 	else:
-		n = S.shape[0]
-		Sp = npy.zeros([n,n],dtype='complex')
+		n = A.shape[0]
+		C = npy.zeros([n,n],dtype='complex')
 		for i in range(n):
 			for j in range(n):
-				Sp[i,j] = S[i,j] +  \
-					( S[k,j]*S[i,l]*(1-S[l,k]) + S[l,j]*S[i,k]*(1-S[k,l]) +\
-					S[k,j]*S[l,l]*S[i,k] + S[l,j]*S[k,k]*S[i,l])/\
-					( (1-S[k,l])*(1-S[l,k]) - S[k,k]*S[l,l] )
-		Sp = npy.delete(Sp,(k,l),0)
-		Sp = npy.delete(Sp,(k,l),1)
-		return Sp
+				C[i,j] = A[i,j] +  \
+					( A[k,j]*A[i,l]*(1-A[l,k]) + A[l,j]*A[i,k]*(1-A[k,l]) +\
+					A[k,j]*A[l,l]*A[i,k] + A[l,j]*A[k,k]*A[i,l])/\
+					( (1-A[k,l])*(1-A[l,k]) - A[k,k]*A[l,l] )
+		C = npy.delete(C,(k,l),0)
+		C = npy.delete(C,(k,l),1)
+		return C
 
 def s2t(s):
 	'''
-	converts a scattering parameters to 'wave cascading parameters'
+	converts scattering parameters to scattering transfer parameters. 
+	
+	transfer parameters [#]_ are also refered to as 
+	'wave cascading matrix', this function only operates on 2-port
+	networks.
 	
 	Parameters
 	-----------
-	input matrix shape should be should be 2x2, or fx2x2
+	s : numpy.ndarray
+		scattering parameter matrix. shape should be should be 2x2, or
+		fx2x2
 	
-	BUG: if s -matrix has ones for reflection, thsi will produce inf's
-	you cant cascade a matrix like this anyway, but we should handle it 
-	better
+	Returns
+	-------
+	t : numpy.ndarray
+		scattering transfer parameters (aka wave cascading matrix)
+		
+	See Also
+	---------
+	t2s : converts scattering transfer parameters to scattering 
+		parameters
+	inv : calculates inverse s-parameters
+	
+	References
+	-----------
+	.. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
 	'''
 	t = npy.copy(s)
 
@@ -1854,9 +1922,32 @@ def s2t(s):
         
 def t2s(t):
 	'''
-	converts a 'wave cascading parameters' to scattering parameters 
+	converts scattering transfer parameters to scattering parameters 
 	
-	input matrix shape should be should be 2x2, or kx2x2
+	transfer parameters [#]_ are also refered to as 
+	'wave cascading matrix', this function only operates on 2-port
+	networks. this function only operates on 2-port scattering 
+	parameters.
+	
+	Parameters
+	-----------
+	t : numpy.ndarray
+		scattering transfer parameters, shape should be should be 2x2, or
+		fx2x2
+	
+	Returns
+	-------
+	s : numpy.ndarray
+		scattering parameter matrix.
+		
+	See Also
+	---------
+	t2s : converts scattering transfer parameters to scattering parameters
+	inv : calculates inverse s-parameters
+	
+	References
+	-----------
+	.. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
 	'''
 	s = npy.copy(t)
 	if len (t.shape) > 2 :
@@ -1872,7 +1963,35 @@ def t2s(t):
 	
 def inv(s):
 	'''
-	inverse s-parameters, used for de-embeding
+	calculates inverse s-parameter matrix, used for de-embeding
+	
+	this is not literally the inverse of the s-parameter matrix. it 
+	is defined such that the inverse of the s-matrix cascaded 
+	with itself is unity.
+	
+	.. math::
+	
+		inv(s) = t2s({s2t(s)}^{-1})
+		
+	where :math:`x^{-1}` is the matrix inverse.
+	
+	Parameters
+	-----------
+	s : numpy.ndarray
+		scattering parameter matrix. shape should be should be 2x2, or
+		fx2x2
+	
+	Returns
+	-------
+	s' : numpy.ndarray
+		inverse scattering parameter matrix.
+	
+	See Also
+	---------
+	t2s : converts scattering transfer parameters to scattering parameters
+	s2t : converts scattering parameters to scattering transfer parameters 
+		
+		
 	'''
 	# this idea is from lihan
 	i = npy.copy(s)
@@ -1885,70 +2004,8 @@ def inv(s):
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return i
 
-def cascade(a,b):
-	'''
-	DEPRECATED. see connect_s() instead.
+
 	
-	cascade two s-matricies together.
-	
-	a's port 2 == b's port 1
-	
-	if you want a different port configuration use the flip() fuction
-	takes:
-		a: a 2x2 or kx2x2 s-matrix
-		b: a 2x2, kx2x2, 1x1, or kx1x1 s-matrix 
-	note:
-		BE AWARE! this relies on s2t function which has a inf problem 
-		if s11 or s22 is 1. 
-	'''
-	c = copy(b)
-	
-	if len (a.shape) > 2 :
-		# assume this is a kxnxn matrix
-		for f in range(a.shape[0]):
-			c[f,:,:] = cascade(a[f,:,:],b[f,:,:])
-	
-	elif a.shape == (2,2) and b.shape == (2,2):
-		c = t2s(npy.dot (s2t(a) ,s2t(b)))
-	elif a.shape == (2,2) and b.shape == (1,1):
-		# makes b into a two-port s-matrix so that s2t will work, but  
-		# only s11 of the  resultant network is returned
-		c = t2s(npy.dot (s2t(a) , \
-			s2t(npy.array([[b.squeeze(),1.0],[1.0,0.0]]))))[0,0]
-	else:
-		raise IndexError('one of the s-matricies has incorrect shape')
-	return c
-	
-def de_embed(a,b):	
-	'''
-	de-embed a 2x2 s-matrix from another 2x2 s-matrix
-	
-	c = b**-1 * a
-	
-	note:
-		BE AWARE! this relies on s2t function which has a inf problem 
-		if s11 or s22 is 1. 
-	'''
-	# TODO: re-write this and make more efficient/concise
-	c = copy(a)
-	
-	if len (b.shape) > 2 :
-		for f in range(b.shape[0]):
-			if len(a.shape) == 1:
-				# 'a' is a one-port netowrk
-				c[f] = de_embed(a[f],b[f,:,:])
-			else:
-				c[f,:,:] = de_embed(a[f,:,:],b[f,:,:])
-	
-	elif b.shape == (2,2):
-		if a.shape == (2,2):
-			c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), s2t(a)))
-		else:
-			c = t2s(npy.dot ( npy.linalg.inv(s2t(b)), \
-				s2t(npy.array([[a.squeeze(),1.],[1.,0.]]))))[0,0]
-	else:
-		raise IndexError('matrix should be 2x2, or kx2x2')
-	return c
 
 def flip(a):
 	'''

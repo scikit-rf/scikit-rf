@@ -19,7 +19,26 @@
 #       MA 02110-1301, USA.
 
 '''
-Provides the Frequency class, and related functions
+
+========================================
+frequency (:mod:`mwavepy.frequency`)
+========================================
+
+.. currentmodule:: mwavepy.frequency
+
+Provides a frequency object and related functions.
+
+Most of the functionality is provided as methods and properties of the
+:class:`Frequency` Class. 
+
+
+Frequency Class
+===============
+.. autosummary::
+   :toctree: generated/
+
+   Frequency 
+	
 '''
 
 from pylab import linspace, gca

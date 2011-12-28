@@ -23,9 +23,10 @@ Examples:
 Reference:
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 1
    
-   api/modules
+   network
+   frequency
     
 Indices and tables
 ==================
