@@ -246,7 +246,7 @@ converts a frequency vector to a Frequency object</p>
 <dd><p>returns the magnitude in dB of a complex number.</p>
 <dl class="docutils">
 <dt>returns:</dt>
-<dd>20*log10(<a href="#id12"><span class="problematic" id="id13">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id16"><span class="problematic" id="id17">|z|</span></a>)</dd>
 </dl>
 <p>where z is a complex number</p>
 </dd></dl>
@@ -339,7 +339,7 @@ returns 1 or 0</p>
 <blockquote>
 <dl class="docutils">
 <dt>db is given by </dt>
-<dd>20*log10(<a href="#id14"><span class="problematic" id="id15">|z|</span></a>)</dd>
+<dd>20*log10(<a href="#id18"><span class="problematic" id="id19">|z|</span></a>)</dd>
 </dl>
 </blockquote>
 <p>where z is a complex number</p>
@@ -415,7 +415,9 @@ exp(t*2*pi*f[0])</blockquote>
 <span id="network-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">network</span></tt> Module<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="network-module-mwavepy-network">
 <h3>Network Module (<a class="reference internal" href="../network.html#module-mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a>)<a class="headerlink" href="#network-module-mwavepy-network" title="Permalink to this headline">¶</a></h3>
-<p>Provides a n-port Network  class and associated functions</p>
+<p>Provides a n-port Network  class and associated functions.</p>
+<p>Most of the functionality is provided as methods and properties of the
+Network Class.</p>
 <div class="section" id="network-class">
 <h4>Network Class<a class="headerlink" href="#network-class" title="Permalink to this headline">¶</a></h4>
 <table border="1" class="docutils">
@@ -442,7 +444,7 @@ exp(t*2*pi*f[0])</blockquote>
 <td>connect two n-port networks together.</td>
 </tr>
 <tr><td><a class="reference internal" href="../generated/mwavepy.network.innerconnect.html#mwavepy.network.innerconnect" title="mwavepy.network.innerconnect"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect</span></tt></a>(ntwkA,&nbsp;k,&nbsp;l)</td>
-<td>connect two ports of a single n-port network, resulting in a</td>
+<td>connect two ports of a single n-port network.</td>
 </tr>
 <tr><td><a class="reference internal" href="../generated/mwavepy.network.average.html#mwavepy.network.average" title="mwavepy.network.average"><tt class="xref py py-obj docutils literal"><span class="pre">average</span></tt></a>(list_of_networks)</td>
 <td>calculates the average network from a list of Networks.</td>
@@ -462,10 +464,10 @@ exp(t*2*pi*f[0])</blockquote>
 </colgroup>
 <tbody valign="top">
 <tr><td><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a>(S,&nbsp;k,&nbsp;T,&nbsp;l)</td>
-<td>connect two n-port networks together. specifically, connect port &#8216;k&#8217;</td>
+<td>connect two n-port networks together.</td>
 </tr>
 <tr><td><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a>(S,&nbsp;k,&nbsp;l)</td>
-<td>connect two ports of a single n-port network, resulting in a</td>
+<td>Connect two ports of a single n-port network.</td>
 </tr>
 <tr><td><a class="reference internal" href="../generated/mwavepy.network.s2t.html#mwavepy.network.s2t" title="mwavepy.network.s2t"><tt class="xref py py-obj docutils literal"><span class="pre">s2t</span></tt></a>(s)</td>
 <td>converts a scattering parameters to &#8216;wave cascading parameters&#8217;</td>
@@ -491,9 +493,9 @@ exp(t*2*pi*f[0])</blockquote>
 <p>An n-port microwave network.</p>
 <p>the most fundemental properties are:</p>
 <ul class="simple">
-<li><cite>s</cite> : scattering matrix. a kxnxn complex matrix where &#8216;n&#8217; is number of ports of network.</li>
-<li><cite>z0</cite>: characteristic impedance</li>
-<li><cite>f</cite> : frequency vector in Hz. see also frequency, which is a Frequency object (see help on this class for more info)</li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.s.html#mwavepy.network.Network.s" title="mwavepy.network.Network.s"><tt class="xref py py-attr docutils literal"><span class="pre">s</span></tt></a> : scattering matrix. a kxnxn complex matrix where &#8216;n&#8217; is number of ports of network, and <cite>k</cite> is number of frequency points</li>
+<li><a class="reference internal" href="#mwavepy.network.Network.z0" title="mwavepy.network.Network.z0"><tt class="xref py py-attr docutils literal"><span class="pre">z0</span></tt></a>: characteristic impedance</li>
+<li><a class="reference internal" href="#mwavepy.network.Network.f" title="mwavepy.network.Network.f"><tt class="xref py py-attr docutils literal"><span class="pre">f</span></tt></a> : frequency vector in Hz. see <a class="reference internal" href="#mwavepy.network.Network.frequency" title="mwavepy.network.Network.frequency"><tt class="xref py py-attr docutils literal"><span class="pre">frequency</span></tt></a>, which is a <tt class="xref py py-class docutils literal"><span class="pre">Frequency</span></tt> object (see help on this class for more info)</li>
 </ul>
 <p>The following operators are defined as follows:</p>
 <ul class="simple">
@@ -501,11 +503,9 @@ exp(t*2*pi*f[0])</blockquote>
 <li><cite>-</cite>   : element-wise subtraction of the s-matrix</li>
 <li><cite>*</cite>   : element-wise multiplication of the s-matrix</li>
 <li><cite>/</cite>   : element-wise division of the s-matrix</li>
-<li><cite>**</cite>  : cascading of 2-port networks</li>
-<li><cite>//</cite>  : de-embdeding of one network from the other.</li>
+<li><cite>**</cite>  : cascading of 2-port networks (see <a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-func docutils literal"><span class="pre">connect()</span></tt></a>)</li>
+<li><cite>//</cite>  : de-embdeding of one network from the other. (better to</li>
 </ul>
-<p>various other network properties are accesable as well as plotting
-routines are also defined for convenience,</p>
 <p>most properties are derived from the specifications given for
 touchstone files.</p>
 <p class="rubric">Methods</p>
@@ -590,7 +590,7 @@ touchstone files.</p>
 <tr><td><a class="reference internal" href="#mwavepy.network.Network.read_touchstone" title="mwavepy.network.Network.read_touchstone"><tt class="xref py py-obj docutils literal"><span class="pre">read_touchstone</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.write_touchstone" title="mwavepy.network.Network.write_touchstone"><tt class="xref py py-obj docutils literal"><span class="pre">write_touchstone</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.write_touchstone.html#mwavepy.network.Network.write_touchstone" title="mwavepy.network.Network.write_touchstone"><tt class="xref py py-obj docutils literal"><span class="pre">write_touchstone</span></tt></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -1550,7 +1550,7 @@ n&#8217;s are port indicies</blockquote>
 <dt>note:</dt>
 <dd><dl class="first last docutils">
 <dt>dB is calculated by </dt>
-<dd>20*log10(<a href="#id16"><span class="problematic" id="id17">|s|</span></a>)</dd>
+<dd>20*log10(<a href="#id20"><span class="problematic" id="id21">|s|</span></a>)</dd>
 </dl>
 </dd>
 </dl>
@@ -1632,7 +1632,7 @@ name. if this is empty, then throws an error.</dd>
 <dt>note:</dt>
 <dd>in the future could make possible use of the touchtone 
 class, but at the moment this would not provide any benefit 
-as it has not <a href="#id18"><span class="problematic" id="id19">set_</span></a> functions.</dd>
+as it has not <a href="#id22"><span class="problematic" id="id23">set_</span></a> functions.</dd>
 </dl>
 </dd></dl>
 
@@ -1653,14 +1653,29 @@ as it has not <a href="#id18"><span class="problematic" id="id19">set_</span></a
 <dl class="function">
 <dt id="mwavepy.network.average">
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">average</tt><big>(</big><em>list_of_networks</em><big>)</big><a class="headerlink" href="#mwavepy.network.average" title="Permalink to this definition">¶</a></dt>
-<dd><p>calculates the average network from a list of Networks. 
-this is complex average of the s-parameters for a  list of Networks</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>list_of_networks: a list of Networks</dd>
-<dt>returns:</dt>
-<dd>ntwk: the resultant averaged Network [mwavepy.Network]</dd>
-</dl>
+<dd><p>calculates the average network from a list of Networks.</p>
+<p>this is complex average of the s-parameters for a  list of Networks</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>list_of_networks: list</strong> :</p>
+<blockquote>
+<p>a list of <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> objects</p>
+</blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwk: Network</strong> :</p>
+<blockquote class="last">
+<p>the resultant averaged Network</p>
+</blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>This same function can be accomplished with properties of a 
+<tt class="xref py py-class docutils literal"><span class="pre">NetworkSet</span></tt> class.</p>
 </dd></dl>
 
 <dl class="function">
@@ -1725,12 +1740,12 @@ account.</p>
 <dt><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a></dt>
 <dd>actual  S-parameter connection algorithm.</dd>
 <dt><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
-<dd>actual S-parameter connection algorithm. the effect of mis-matched port impedances is handled by inserting</dd>
+<dd>actual S-parameter connection algorithm.</dd>
 </dl>
 </div>
 <p class="rubric">Notes</p>
-<p>a 2-port &#8216;mismatch&#8217; network between the two connected ports. 
-.. math:: X(e^{jomega } ) = x(n)e^{ - jomega n}</p>
+<p>the effect of mis-matched port impedances is handled by inserting
+a 2-port &#8216;mismatch&#8217; network between the two connected ports.</p>
 <p class="rubric">Examples</p>
 <p>To implement a <em>cascade</em> of two networks</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ntwkA</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ntwkA.s2p&#39;</span><span class="p">)</span>
@@ -1743,23 +1758,49 @@ account.</p>
 <dl class="function">
 <dt id="mwavepy.network.connect_s">
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">connect_s</tt><big>(</big><em>S</em>, <em>k</em>, <em>T</em>, <em>l</em><big>)</big><a class="headerlink" href="#mwavepy.network.connect_s" title="Permalink to this definition">¶</a></dt>
-<dd><p>connect two n-port networks together. specifically, connect port &#8216;k&#8217;
-on network &#8216;S&#8217; to port &#8216;l&#8217; on network &#8216;T&#8217;. The resultant network has
-(S.rank + T.rank-2)-ports</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>S: S-parameter matrix [numpy.ndarray].
-k: port index on S (port indecies start from 0) [int]
-T: S-parameter matrix [numpy.ndarray]
-l: port index on T [int]</dd>
-<dt>returns:</dt>
-<dd>S&#8217;: new S-parameter matrix [numpy.ndarry]</dd>
-<dt>note: </dt>
-<dd>shape of S-parameter matrices can be either nxn, or fxnxn, where</dd>
-<dt>f is the frequency axis. </dt>
-<dd>internally, this function creates a larger composite network</dd>
+<dd><p>connect two n-port networks together.</p>
+<p>specifically, connect port <cite>k</cite> on network <cite>S</cite> to port <cite>l</cite> on network
+<cite>T</cite>. The resultant network has (S.rank + T.rank-2)-ports</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>S</strong> : numpy.ndarray</p>
+<blockquote>
+<p>S-parameter matrix of <cite>S</cite>, shape is fxnxn</p>
+</blockquote>
+<p><strong>k</strong> : int</p>
+<blockquote>
+<p>port index on <cite>S</cite> (port indecies start from 0)</p>
+</blockquote>
+<p><strong>T</strong> : numpy.ndarray</p>
+<blockquote>
+<p>S-parameter matrix of <cite>T</cite>, shape is fxnxn</p>
+</blockquote>
+<p><strong>l</strong> : int</p>
+<blockquote>
+<p>port index on <cite>T</cite></p>
+</blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>S&#8217;</strong> : numpy.ndarray</p>
+<blockquote class="last">
+<p>new S-parameter matrix</p>
+</blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
+<dd>function which implements the connection connection algorithm</dd>
 </dl>
-<p>and calls the  innerconnect() function. see that function for more 
+</div>
+<p class="rubric">Notes</p>
+<p>internally, this function creates a larger composite network 
+and calls the  <a class="reference internal" href="../generated/mwavepy.network.innerconnect.html#mwavepy.network.innerconnect" title="mwavepy.network.innerconnect"><tt class="xref py py-func docutils literal"><span class="pre">innerconnect()</span></tt></a> function. see that function for more 
 details about the implementation</p>
 </dd></dl>
 
@@ -1813,43 +1854,103 @@ z2: complex impedance of port 2 [ number, list, or 1D ndarray]</dd>
 <dl class="function">
 <dt id="mwavepy.network.innerconnect">
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">innerconnect</tt><big>(</big><em>ntwkA</em>, <em>k</em>, <em>l</em><big>)</big><a class="headerlink" href="#mwavepy.network.innerconnect" title="Permalink to this definition">¶</a></dt>
-<dd><p>connect two ports of a single n-port network, resulting in a 
-(n-2)-port network. port indecies start from 0.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>ntwk: the network. [mwavepy.Network]
-k: port index [int] (port indecies start from 0)
-l: port index [int]</dd>
-<dt>returns:</dt>
-<dd>ntwk&#8217;: new network of with n-2 ports. [mwavepy.Network]</dd>
-<dt>note:</dt>
-<dd>see functions connect_s() and innerconnect_s() for actual</dd>
+<dd><p>connect two ports of a single n-port network.</p>
+<p>this results in a (n-2)-port network. remember port indecies start
+from 0.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : mwavepy.Network</p>
+<blockquote>
+<p>network &#8216;A&#8217;</p>
+</blockquote>
+<p><strong>k</strong> : int</p>
+<blockquote>
+<p>port index on ntwkA ( port indecies start from 0 )</p>
+</blockquote>
+<p><strong>l</strong> : int</p>
+<blockquote>
+<p>port index on ntwkB</p>
+</blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : mwavepy.Network</p>
+<blockquote class="last">
+<p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
+</blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a></dt>
+<dd>actual  S-parameter connection algorithm.</dd>
+<dt><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
+<dd>actual S-parameter connection algorithm.</dd>
 </dl>
-<p>S-parameter connection algorithm.</p>
+</div>
+<p class="rubric">Notes</p>
+<p>a 2-port &#8216;mismatch&#8217; network between the two connected ports.</p>
+<p class="rubric">Examples</p>
+<p>To connect ports &#8216;0&#8217; and port &#8216;1&#8217; on ntwkA</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">ntwkA</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ntwkA.s3p&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ntwkC</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">innerconnect</span><span class="p">(</span><span class="n">ntwkA</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="function">
 <dt id="mwavepy.network.innerconnect_s">
 <tt class="descclassname">mwavepy.network.</tt><tt class="descname">innerconnect_s</tt><big>(</big><em>S</em>, <em>k</em>, <em>l</em><big>)</big><a class="headerlink" href="#mwavepy.network.innerconnect_s" title="Permalink to this definition">¶</a></dt>
-<dd><p>connect two ports of a single n-port network, resulting in a 
-(n-2)-port network.</p>
-<dl class="docutils">
-<dt>takes:</dt>
-<dd>S: S-parameter matrix [numpy.ndarray] 
-k: port index [int]
-l: port index [int]</dd>
-<dt>returns:</dt>
-<dd>S&#8217;: new S-parameter matrix [numpy.ndarry]</dd>
-<dt>This function is based on the algorithm presented in the paper:</dt>
-<dd><dl class="first last docutils">
-<dt>&#8216;Perspectives in Microwave Circuit Analysis&#8217; by R. C. Compton</dt>
-<dd>and D. B. Rutledge</dd>
-</dl>
-</dd>
-<dt>The original algorithm is given in </dt>
-<dd>&#8216;A NEW GENERAL COMPUTER ALGORITHM FOR S-MATRIX CALCULATION OF
-INTERCONNECTED MULTIPORTS&#8217; by Gunnar Filipsson</dd>
-</dl>
+<dd><p>Connect two ports of a single n-port network.</p>
+<p>Specifically, connect port <cite>k</cite>  to port <cite>l</cite> on <cite>S</cite>. This results in
+a (n-2)-port network.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>S</strong> : numpy.ndarray</p>
+<blockquote>
+<p>S-parameter matrix of <cite>S</cite>, shape is fxnxn</p>
+</blockquote>
+<p><strong>k</strong> : int</p>
+<blockquote>
+<p>port index on <cite>S</cite> (port indecies start from 0)</p>
+</blockquote>
+<p><strong>l</strong> : int</p>
+<blockquote>
+<p>port index on <cite>S</cite></p>
+</blockquote>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>S&#8217;</strong> : numpy.ndarray</p>
+<blockquote class="last">
+<p>new S-parameter matrix</p>
+</blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The algorithm used to calculate the resultant network is called a 
+&#8216;sub-network growth&#8217;,  can be found in <a class="footnote-reference" href="#id14" id="id12">[1]</a>. The original paper 
+describing the  algorithm is given in <a class="footnote-reference" href="#id15" id="id13">[2]</a>.</p>
+<p class="rubric">References</p>
+<table class="docutils footnote" frame="void" id="id14" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id12">[1]</a></td><td>Compton, R.C.; , &#8220;Perspectives in microwave circuit analysis,&#8221; Circuits and Systems, 1989., Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989. URL: <a class="reference external" href="http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=101955&amp;isnumber=3167">http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=101955&amp;isnumber=3167</a></td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id15" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id13">[2]</a></td><td>Filipsson, Gunnar; , &#8220;A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports,&#8221; Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981. URL: <a class="reference external" href="http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=4131699&amp;isnumber=4131585">http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&amp;arnumber=4131699&amp;isnumber=4131585</a></td></tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="function">

@@ -28,7 +28,10 @@ Network Module (:mod:`mwavepy.network`)
 
 .. currentmodule:: mwavepy.network
 
-Provides a n-port Network  class and associated functions
+Provides a n-port Network  class and associated functions. 
+
+Most of the functionality is provided as methods and properties of the
+Network Class. 
 
 
 Network Class
@@ -36,8 +39,8 @@ Network Class
 .. autosummary::
    :toctree: generated/
 
-   Network
-
+   Network 
+	
 
 Functions On Networks
 ======================
@@ -87,11 +90,12 @@ class Network(object):
 
 	the most fundemental properties are:
 	
-	- `s` : scattering matrix. a kxnxn complex matrix where 'n' is number of ports of network.
-	- `z0`: characteristic impedance
-	- `f` : frequency vector in Hz. see also frequency, which is a Frequency object (see help on this class for more info)
-		
+	- :attr:`s` : scattering matrix. a kxnxn complex matrix where 'n' is number of ports of network, and `k` is number of frequency points
+	- :attr:`z0`: characteristic impedance
+	- :attr:`f` : frequency vector in Hz. see :attr:`frequency`, which is a :class:`Frequency` object (see help on this class for more info)
 	
+	
+		
 	
 	The following operators are defined as follows:
 		
@@ -99,11 +103,9 @@ class Network(object):
 	- `-` 	: element-wise subtraction of the s-matrix
 	- `*` 	: element-wise multiplication of the s-matrix
 	- `/` 	: element-wise division of the s-matrix
-	- `**`	: cascading of 2-port networks
-	- `//`	: de-embdeding of one network from the other.
+	- `**`	: cascading of 2-port networks (see :func:`connect`)
+	- `//`	: de-embdeding of one network from the other. (better to 
 	
-	various other network properties are accesable as well as plotting
-	routines are also defined for convenience, 
 	
 	most properties are derived from the specifications given for
 	touchstone files. 
@@ -111,7 +113,8 @@ class Network(object):
 	'''
 	global ALMOST_ZER0
 	ALMOST_ZER0=1e-6 # used for testing s-parameter equivalencee
-## CONSTRUCTOR
+
+	## CONSTRUCTOR
 	def __init__(self, touchstone_file = None, name = None ):
 		'''
 		constructor.
@@ -141,7 +144,7 @@ class Network(object):
 		#self.nports = self.number_of_ports
 		
 
-## OPERATORS
+	## OPERATORS
 	def __pow__(self,other):
 		'''
 		 implements cascading this network with another network
@@ -264,7 +267,7 @@ class Network(object):
 		return output
 	def __repr__(self):
 		return self.__str__()
-## PRIMARY PROPERTIES
+	## PRIMARY PROPERTIES
 	# s-parameter matrix
 	@property
 	def s(self):
@@ -1528,7 +1531,7 @@ def connect(ntwkA, k, ntwkB,l):
 	
 	Parameters
 	-----------
-	ntwkA : mwavepy.Network
+	ntwkA : mwavepy.Network 
 		network 'A'
 	k : int
 		port index on ntwkA ( port indecies start from 0 )
@@ -1549,12 +1552,11 @@ def connect(ntwkA, k, ntwkB,l):
 	-----------
 		connect_s : actual  S-parameter connection algorithm.
 		innerconnect_s : actual S-parameter connection algorithm.
-		the effect of mis-matched port impedances is handled by inserting
 		
 	Notes
 	-------
+		the effect of mis-matched port impedances is handled by inserting
 		a 2-port 'mismatch' network between the two connected ports. 
-		.. math:: X(e^{j\omega } ) = x(n)e^{ - j\omega n}
 	
 	Examples
 	---------
@@ -1580,19 +1582,44 @@ def connect(ntwkA, k, ntwkB,l):
 	
 def innerconnect(ntwkA, k, l):
 	'''
-	connect two ports of a single n-port network, resulting in a 
-	(n-2)-port network. port indecies start from 0.
+	connect two ports of a single n-port network.
 	
-	takes:
-		ntwk: the network. [mwavepy.Network]
-		k: port index [int] (port indecies start from 0)
-		l: port index [int]
-	returns:
-		ntwk': new network of with n-2 ports. [mwavepy.Network]
+	this results in a (n-2)-port network. remember port indecies start
+	from 0.
+	
+	Parameters
+	-----------
+	ntwkA : mwavepy.Network 
+		network 'A'
+	k : int
+		port index on ntwkA ( port indecies start from 0 )
+	l : int
+		port index on ntwkB
+	
+	
+	
+	Returns
+	---------
+	ntwkC : mwavepy.Network
+		new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+	
+	
+	See Also
+	-----------
+		connect_s : actual  S-parameter connection algorithm.
+		innerconnect_s : actual S-parameter connection algorithm.
 		
-	note:
-		see functions connect_s() and innerconnect_s() for actual 
-	S-parameter connection algorithm. 
+	Notes
+	-------
+		a 2-port 'mismatch' network between the two connected ports. 
+	
+	Examples
+	---------
+	To connect ports '0' and port '1' on ntwkA
+	
+	>>> ntwkA = mv.Network('ntwkA.s3p')
+	>>> ntwkC = mv.innerconnect(ntwkA, 0,1)
+	
 	'''
 	ntwkC = deepcopy(ntwkA)
 	ntwkC.s = connect_s(\
@@ -1604,13 +1631,25 @@ def innerconnect(ntwkA, k, l):
 
 def average(list_of_networks):
 	'''
-	calculates the average network from a list of Networks. 
+	calculates the average network from a list of Networks.
+	 
 	this is complex average of the s-parameters for a  list of Networks
+
 	
-	takes:
-		list_of_networks: a list of Networks
-	returns:
-		ntwk: the resultant averaged Network [mwavepy.Network]
+	Parameters
+	-----------
+	list_of_networks: list
+		a list of :class:`Network` objects
+			
+	Returns
+	---------
+	ntwk: Network
+		the resultant averaged Network
+	
+	Notes
+	------
+	This same function can be accomplished with properties of a 
+	:class:`NetworkSet` class.
 		
 	'''
 	out_ntwk = copy(list_of_networks[0])
@@ -1674,26 +1713,39 @@ def one_port_2_two_port(ntwk):
 ## Functions operating on s-parameter matrices
 def connect_s(S,k,T,l):
 	'''
-	connect two n-port networks together. specifically, connect port 'k'
-	on network 'S' to port 'l' on network 'T'. The resultant network has
-	(S.rank + T.rank-2)-ports
+	connect two n-port networks together. 
 	
-	takes:
-		S: S-parameter matrix [numpy.ndarray].
-		k: port index on S (port indecies start from 0) [int]
-		T: S-parameter matrix [numpy.ndarray]
-		l: port index on T [int]
-	returns:
-		S': new S-parameter matrix [numpy.ndarry]
+	specifically, connect port `k` on network `S` to port `l` on network
+	`T`. The resultant network has (S.rank + T.rank-2)-ports
+	
+	Parameters
+	-----------
+	S : numpy.ndarray
+		S-parameter matrix of `S`, shape is fxnxn
+	k : int
+		port index on `S` (port indecies start from 0)
+	T : numpy.ndarray
+		S-parameter matrix of `T`, shape is fxnxn
+	l : int
+		port index on `T`
+		
+	Returns
+	-------
+	S' : numpy.ndarray
+		new S-parameter matrix 
 		
 	
-	note: 
-		shape of S-parameter matrices can be either nxn, or fxnxn, where
-	f is the frequency axis. 
-		internally, this function creates a larger composite network 
-	and calls the  innerconnect() function. see that function for more 
+	Notes
+	-------
+	internally, this function creates a larger composite network 
+	and calls the  :func:`innerconnect_s` function. see that function for more 
 	details about the implementation
 	
+	See Also
+	--------
+		innerconnect_s : function which implements the connection 
+			connection algorithm
+
 	'''
 	if k > S.shape[-1]-1 or l>T.shape[-1]-1:
 		raise(ValueError('port indecies are out of range'))
@@ -1715,22 +1767,38 @@ def connect_s(S,k,T,l):
 		
 def innerconnect_s(S, k, l):
 	'''
-	connect two ports of a single n-port network, resulting in a 
-	(n-2)-port network.
+	Connect two ports of a single n-port network.
 	
-	takes:
-		S: S-parameter matrix [numpy.ndarray] 
-		k: port index [int]
-		l: port index [int]
-	returns:
-		S': new S-parameter matrix [numpy.ndarry]
+	Specifically, connect port `k`  to port `l` on `S`. This results in
+	a (n-2)-port network. 
+	
+	Parameters
+	-----------
+	S : numpy.ndarray
+		S-parameter matrix of `S`, shape is fxnxn
+	k : int
+		port index on `S` (port indecies start from 0)
+	l : int
+		port index on `S`
 		
-	This function is based on the algorithm presented in the paper:
-		'Perspectives in Microwave Circuit Analysis' by R. C. Compton
-		 and D. B. Rutledge
-	The original algorithm is given in 
-		'A NEW GENERAL COMPUTER ALGORITHM FOR S-MATRIX CALCULATION OF
-		INTERCONNECTED MULTIPORTS' by Gunnar Filipsson
+	Returns
+	-------
+	S' : numpy.ndarray
+		new S-parameter matrix 
+	
+	Notes
+	-----
+	The algorithm used to calculate the resultant network is called a 
+	'sub-network growth',  can be found in [#]_. The original paper 
+	describing the  algorithm is given in [#]_.
+	
+	References
+	----------	
+	.. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989., Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
+
+	.. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports," Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4131699&isnumber=4131585
+
+
 	'''
 	
 	# TODO: this algorithm is a bit wasteful in that it calculates the 
@@ -1764,7 +1832,9 @@ def s2t(s):
 	'''
 	converts a scattering parameters to 'wave cascading parameters'
 	
-	input matrix shape should be should be 2x2, or kx2x2
+	Parameters
+	-----------
+	input matrix shape should be should be 2x2, or fx2x2
 	
 	BUG: if s -matrix has ones for reflection, thsi will produce inf's
 	you cant cascade a matrix like this anyway, but we should handle it 
