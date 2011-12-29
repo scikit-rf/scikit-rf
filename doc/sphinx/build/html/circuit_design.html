@@ -55,7 +55,7 @@
 <span id="id1"></span><h1>Circuit Design<a class="headerlink" href="#circuit-design" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="intro">
 <h2>Intro<a class="headerlink" href="#intro" title="Permalink to this headline">¶</a></h2>
-<p>mwavepy has basic support for microwave circuit design. Network synthesis is accomplished through the Media Class (<a class="reference internal" href="api/mwavepy.media.html#module-mwavepy.media"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt></a>), which represent a transmission line object for a given medium. A  Media object contains properties such as propagation constant and characteristic impedance, that are needed to generate network components.</p>
+<p>mwavepy has basic support for microwave circuit design. Network synthesis is accomplished through the Media Class (<tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt>), which represent a transmission line object for a given medium. A  Media object contains properties such as propagation constant and characteristic impedance, that are needed to generate network components.</p>
 <p>Typically circuit design is done within a given frequency band. Therefore every Media object is created with a  Frequency object to  relieve the user of repitously providing frequency information for each new network created.</p>
 </div>
 <div class="section" id="media-s-supported-by-mwavepy">
@@ -67,7 +67,7 @@
 <li>RectangularWaveguide</li>
 <li>CPW</li>
 </ul>
-<p>More info on all of these classes can be found in the media sub-module section of <a class="reference internal" href="api/mwavepy.media.html#module-mwavepy.media"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt></a>  mavepy&#8217;s API.</p>
+<p>More info on all of these classes can be found in the media sub-module section of <tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt>  mavepy&#8217;s API.</p>
 <p>Here is an example of how to initialize a Media object representing a freespace from 10-20GHz:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 <span class="n">freq</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Frequency</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="s">&#39;ghz&#39;</span><span class="p">)</span>
@@ -215,6 +215,10 @@ To create a 1-port network for a short,</p>
     <li><a href="_sources/circuit_design.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
+<ul class="this-page-menu">
+  <li><a href="/scipy/docs/scipy-docs/circuit_design.rst">Edit page</a></li>
+</ul>
+
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="search.html" method="get">
@@ -228,6 +232,7 @@ To create a 1-port network for a short,</p>
     </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
         </div>
       </div>
       <div class="clearer"></div>

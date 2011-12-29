@@ -24,7 +24,7 @@
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="top" title="mwavepy v1.5 documentation" href="../index.html" />
     <link rel="up" title="Examples" href="../examples.html" />
-    <link rel="next" title="One-Port Calibration" href="oneport_calibration.html" />
+    <link rel="next" title="mwavepy.network.Network.plot_s_smith" href="generated/mwavepy.network.Network.plot_s_smith.html" />
     <link rel="prev" title="Examples" href="../examples.html" /> 
   </head>
   <body>
@@ -38,7 +38,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="oneport_calibration.html" title="One-Port Calibration"
+          <a href="generated/mwavepy.network.Network.plot_s_smith.html" title="mwavepy.network.Network.plot_s_smith"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="../examples.html" title="Examples"
@@ -55,35 +55,158 @@
             
   <div class="section" id="basic-plotting">
 <h1>Basic Plotting<a class="headerlink" href="#basic-plotting" title="Permalink to this headline">¶</a></h1>
-<p>This example illustrates how to create common plots:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
-<span class="kn">import</span> <span class="nn">pylab</span>
-
+<p>This example illustrates how to create common plots. The plotting
+functions are implemented as methods of the <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> class,
+which is provided by the <tt class="xref py py-mod docutils literal"><span class="pre">network</span></tt> module.
+Below is a brief list of the some commonly used plotting functions,</p>
+<ul class="simple">
+<li><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_smith.html#mwavepy.network.Network.plot_s_smith" title="mwavepy.network.Network.plot_s_smith"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_smith()</span></tt></a></li>
+<li><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_smith.html#mwavepy.network.Network.plot_s_smith" title="mwavepy.network.Network.plot_s_smith"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_smith()</span></tt></a></li>
+</ul>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_smith.html#mwavepy.network.Network.plot_s_smith" title="mwavepy.network.Network.plot_s_smith"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_smith</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;...])</td>
+<td>plots the scattering parameter on a smith chart</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_complex.html#mwavepy.network.Network.plot_s_complex" title="mwavepy.network.Network.plot_s_complex"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_complex</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;...])</td>
+<td>plots the scattering parameter on complex plane</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_db.html#mwavepy.network.Network.plot_s_db" title="mwavepy.network.Network.plot_s_db"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_db</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;n,&nbsp;...])</td>
+<td>plots the magnitude of the scattering parameters.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_mag.html#mwavepy.network.Network.plot_s_mag" title="mwavepy.network.Network.plot_s_mag"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_mag</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;n,&nbsp;...])</td>
+<td>plots the magnitude of a scattering parameters.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_deg.html#mwavepy.network.Network.plot_s_deg" title="mwavepy.network.Network.plot_s_deg"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_deg</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;n,&nbsp;...])</td>
+<td>plots the phase of a scattering parameters.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_deg_unwrapped.html#mwavepy.network.Network.plot_s_deg_unwrapped" title="mwavepy.network.Network.plot_s_deg_unwrapped"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_deg_unwrapped</span></tt></a>(*args,&nbsp;**kwargs)</td>
+<td>plots the phase of a scattering parameters.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_rad.html#mwavepy.network.Network.plot_s_rad" title="mwavepy.network.Network.plot_s_rad"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_rad</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;n,&nbsp;...])</td>
+<td>plots the phase of a scattering parameters.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_rad_unwrapped.html#mwavepy.network.Network.plot_s_rad_unwrapped" title="mwavepy.network.Network.plot_s_rad_unwrapped"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_rad_unwrapped</span></tt></a>(*args,&nbsp;**kwargs)</td>
+<td>plots the phase of a scattering parameters, in unwrapped radians.</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_quad.html#mwavepy.network.Network.plot_s_quad" title="mwavepy.network.Network.plot_s_quad"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_quad</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;n,&nbsp;...])</td>
+<td>plots the quadrature of a scattering parameters.</td>
+</tr>
+<tr><td><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_quad_unwrapped</span></tt></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_re.html#mwavepy.network.Network.plot_s_re" title="mwavepy.network.Network.plot_s_re"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_re</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;n,&nbsp;...])</td>
+<td>plots the real part of a scattering parameter of indecies m, n</td>
+</tr>
+<tr><td><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_im.html#mwavepy.network.Network.plot_s_im" title="mwavepy.network.Network.plot_s_im"><tt class="xref py py-obj docutils literal"><span class="pre">Network.plot_s_im</span></tt></a>(*args,&nbsp;**kwargs[,&nbsp;m,&nbsp;n,&nbsp;...])</td>
+<td>plots the imaginary part of a scattering parameters.</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="return-loss-magnitude">
+<h2>Return Loss Magnitude<a class="headerlink" href="#return-loss-magnitude" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 
 <span class="c"># create a Network type from a touchstone file of a horn antenna</span>
-<span class="n">horn</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;horn.s1p&#39;</span><span class="p">)</span>
+<span class="n">ring_slot</span><span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ring slot array measured.s1p&#39;</span><span class="p">)</span>
 
-<span class="c"># plot magnitude of S11</span>
+<span class="c"># plot magnitude (in db) of S11</span>
 <span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Return Loss (Mag)&#39;</span><span class="p">)</span>
-<span class="n">horn</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c"># m,n are S-Matrix indecies</span>
-<span class="c"># show the plots (only needed if you dont have interactive set on ipython)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;WR-10 Ringslot Array, Mag&#39;</span><span class="p">)</span>
+<span class="n">ring_slot</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c"># m,n are S-Matrix indecies</span>
+
+
+<span class="c"># show the plots</span>
 <span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="figure align-center">
-<img alt="../_images/Return_Loss(Mag).png" src="../_images/Return_Loss(Mag).png" style="width: 800px;" />
+<p>(<a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_mag.py">Source code</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_mag.png">png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_mag.hires.png">hires.png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_mag.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="../_images/plot_ringslot_mag.png" src="../_images/plot_ringslot_mag.png" />
 </div>
-<div class="highlight-python"><div class="highlight"><pre><span class="c"># plot phase of S11</span>
-<span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Return Loss (Phase)&#39;</span><span class="p">)</span>
-<span class="c"># all keyword arguments are passed to matplotlib.plot command</span>
-<span class="n">horn</span><span class="o">.</span><span class="n">plot_s_deg</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;Broadband Horn Antenna&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</div>
+<div class="section" id="return-loss-phase">
+<h2>Return Loss Phase<a class="headerlink" href="#return-loss-phase" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+
+<span class="n">ring_slot</span><span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ring slot array measured.s1p&#39;</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;WR-10 Ringslot Array, Phase&#39;</span><span class="p">)</span>
+<span class="c"># kwargs given to plot commands are passed through to the pylab.plot</span>
+<span class="c"># command</span>
+<span class="n">ring_slot</span><span class="o">.</span><span class="n">plot_s_deg</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s">&#39;r&#39;</span><span class="p">,</span> <span class="n">markevery</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s">&#39;o&#39;</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 </div>
-<div class="figure align-center">
-<img alt="../_images/Return_Loss(Phase).png" src="../_images/Return_Loss(Phase).png" style="width: 800px;" />
+<p>(<a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_phase.py">Source code</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_phase.png">png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_phase.hires.png">hires.png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_phase.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="../_images/plot_ringslot_phase.png" src="../_images/plot_ringslot_phase.png" />
 </div>
+</div>
+<div class="section" id="return-loss-smith">
+<h2>Return Loss Smith<a class="headerlink" href="#return-loss-smith" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+
+<span class="n">ring_slot</span><span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ring slot array measured.s1p&#39;</span><span class="p">)</span>
+
+<span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;WR-10 Ringslot Array, Smith&#39;</span><span class="p">)</span>
+<span class="n">ring_slot</span><span class="o">.</span><span class="n">plot_s_smith</span><span class="p">(</span><span class="n">m</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="n">n</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="c"># m,n are S-Matrix indecies</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_smith.py">Source code</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_smith.png">png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_smith.hires.png">hires.png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_smith.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="../_images/plot_ringslot_smith.png" src="../_images/plot_ringslot_smith.png" />
+</div>
+</div>
+<div class="section" id="all-s-parameters">
+<h2>All S-parameters<a class="headerlink" href="#all-s-parameters" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+
+<span class="c"># from the extension you know this is a 2-port network</span>
+<span class="n">ring_slot</span><span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ring slot array simulation.s2p&#39;</span><span class="p">)</span>
+
+<span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;WR-10 Ringslot Array Simulated, Mag&#39;</span><span class="p">)</span>
+<span class="c"># if no indecies are passed to the plot command it will plot all</span>
+<span class="c"># available s-parameters</span>
+<span class="n">ring_slot</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">()</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_simulated_mag.py">Source code</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_simulated_mag.png">png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_simulated_mag.hires.png">hires.png</a>, <a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_simulated_mag.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="../_images/plot_ringslot_simulated_mag.png" src="../_images/plot_ringslot_simulated_mag.png" />
+</div>
+</div>
+<div class="section" id="comparing-with-simulation">
+<h2>Comparing with Simulation<a class="headerlink" href="#comparing-with-simulation" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+
+<span class="c"># from the extension you know this is a 2-port network</span>
+<span class="n">ring_slot_sim</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ring slot array simulation.s2p&#39;</span><span class="p">)</span>
+<span class="n">ring_slot_meas</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ring slot array measured.s2p&#39;</span><span class="p">)</span>
+
+<span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;WR-10 Ringslot Array Simulated vs Measured&#39;</span><span class="p">)</span>
+<span class="c"># if no indecies are passed to the plot command it will plot all</span>
+<span class="c"># available s-parameters</span>
+<span class="n">ring_slot_sim</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;Simulated&#39;</span><span class="p">)</span>
+<span class="n">ring_slot_meas</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s">&#39;Measured&#39;</span><span class="p">)</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href="../pyplots/basic_touchstone_plotting/plot_ringslot_simulated_vs_measured.py">Source code</a>)</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="c"># plot unwrapped phase of S11</span>
 <span class="n">pylab</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">pylab</span><span class="o">.</span><span class="n">title</span><span class="p">(</span><span class="s">&#39;Return Loss (Unwrapped Phase)&#39;</span><span class="p">)</span>
@@ -116,6 +239,7 @@
 </pre></div>
 </div>
 </div>
+</div>
 
 
           </div>
@@ -123,17 +247,33 @@
       </div>
       <div class="sphinxsidebar">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Basic Plotting</a><ul>
+<li><a class="reference internal" href="#return-loss-magnitude">Return Loss Magnitude</a></li>
+<li><a class="reference internal" href="#return-loss-phase">Return Loss Phase</a></li>
+<li><a class="reference internal" href="#return-loss-smith">Return Loss Smith</a></li>
+<li><a class="reference internal" href="#all-s-parameters">All S-parameters</a></li>
+<li><a class="reference internal" href="#comparing-with-simulation">Comparing with Simulation</a></li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="../examples.html"
                         title="previous chapter">Examples</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="oneport_calibration.html"
-                        title="next chapter">One-Port Calibration</a></p>
+  <p class="topless"><a href="generated/mwavepy.network.Network.plot_s_smith.html"
+                        title="next chapter">mwavepy.network.Network.plot_s_smith</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="../_sources/examples/basic_plotting.txt"
            rel="nofollow">Show Source</a></li>
   </ul>
+<ul class="this-page-menu">
+  <li><a href="/scipy/docs/scipy-docs/examples/basic_plotting.rst">Edit page</a></li>
+</ul>
+
 <div id="searchbox" style="display: none">
   <h3>Quick search</h3>
     <form class="search" action="../search.html" method="get">
@@ -147,6 +287,7 @@
     </p>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
+
         </div>
       </div>
       <div class="clearer"></div>
@@ -161,7 +302,7 @@
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="oneport_calibration.html" title="One-Port Calibration"
+          <a href="generated/mwavepy.network.Network.plot_s_smith.html" title="mwavepy.network.Network.plot_s_smith"
              >next</a> |</li>
         <li class="right" >
           <a href="../examples.html" title="Examples"

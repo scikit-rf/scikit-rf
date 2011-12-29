@@ -3,37 +3,59 @@
 Basic Plotting  
 ****************************
 
-This example illustrates how to create common plots::
+.. currentmodule:: mwavepy.network
 
-	import mwavepy as mv
-	import pylab
-	
-	
-	# create a Network type from a touchstone file of a horn antenna
-	horn = mv.Network('horn.s1p')
-	
-	# plot magnitude of S11
-	pylab.figure(1)
-	pylab.title('Return Loss (Mag)')	
-	horn.plot_s_db(m=0,n=0)	# m,n are S-Matrix indecies
-	# show the plots (only needed if you dont have interactive set on ipython)
-	pylab.show()
+This example illustrates how to create common plots. The plotting 
+functions are implemented as methods of the :class:`Network` class, 
+which is provided by the :mod:`.network` module. 
+Below is a brief list of the some commonly used plotting functions, 
 
-.. figure::  ../images/Return_Loss(Mag).png
-   :align:   center
-   :width:	800
+* :func:`Network.plot_s_smith`
+* :func:`Network.plot_s_smith`
+ 
+.. autosummary::
+   :toctree: generated/
 
-::	
+   Network.plot_s_smith
+   Network.plot_s_complex
+   Network.plot_s_db 
+   Network.plot_s_mag 
+   Network.plot_s_deg 
+   Network.plot_s_deg_unwrapped 
+   Network.plot_s_rad 
+   Network.plot_s_rad_unwrapped 
+   Network.plot_s_quad 
+   Network.plot_s_quad_unwrapped 
+   Network.plot_s_re 
+   Network.plot_s_im 
 
-	# plot phase of S11
-	pylab.figure(2)
-	pylab.title('Return Loss (Phase)')
-	# all keyword arguments are passed to matplotlib.plot command
-	horn.plot_s_deg(0,0, label='Broadband Horn Antenna', color='r', linewidth=2)
+Return Loss Magnitude
+-----------------------
 
-.. figure::  ../images/Return_Loss(Phase).png
-   :align:   center
-   :width:	800
+.. plot:: ../pyplots/basic_touchstone_plotting/plot_ringslot_mag.py
+   :include-source:
+
+Return Loss Phase
+---------------------
+ 
+.. plot:: ../pyplots/basic_touchstone_plotting/plot_ringslot_phase.py
+   :include-source:
+   
+Return Loss Smith
+---------------------
+ 
+.. plot:: ../pyplots/basic_touchstone_plotting/plot_ringslot_smith.py
+   :include-source:
+
+All S-parameters
+---------------------
+.. plot:: ../pyplots/basic_touchstone_plotting/plot_ringslot_simulated_mag.py
+   :include-source:
+
+Comparing with Simulation
+--------------------------
+.. plot:: ../pyplots/basic_touchstone_plotting/plot_ringslot_simulated_vs_measured.py
+   :include-source:
 
 ::	
 	
