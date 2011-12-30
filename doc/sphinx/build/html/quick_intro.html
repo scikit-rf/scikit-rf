@@ -52,7 +52,7 @@
           <div class="body">
             
   <div class="section" id="quick-introduction">
-<span id="quick-intro"></span><h1>Quick Introduction<a class="headerlink" href="#quick-introduction" title="Permalink to this headline">¶</a></h1>
+<h1>Quick Introduction<a class="headerlink" href="#quick-introduction" title="Permalink to this headline">¶</a></h1>
 <p>This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the <a class="reference internal" href="slow_intro.html"><em>Slow Introduction</em></a>.</p>
 <div class="section" id="loading-touchstone-files">
 <h2>Loading Touchstone Files<a class="headerlink" href="#loading-touchstone-files" title="Permalink to this headline">¶</a></h2>
@@ -60,7 +60,7 @@
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 </pre></div>
 </div>
-<p>The most fundamental object mwavpey is a n-port <em>Network</em>. Commonly a Network is constructed from data stored in a touchstone files, like so.:</p>
+<p>The most fundamental object mwavpey is a n-port <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a>. Commonly a <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> is constructed from data stored in a touchstone files, like so.:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="n">short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span> <span class="p">(</span><span class="s">&#39;short.s1p&#39;</span><span class="p">)</span>
 <span class="n">delay_short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span> <span class="p">(</span><span class="s">&#39;delay_short.s1p&#39;</span><span class="p">)</span>
 </pre></div>
@@ -68,11 +68,11 @@
 </div>
 <div class="section" id="important-properties">
 <h2>Important Properties<a class="headerlink" href="#important-properties" title="Permalink to this headline">¶</a></h2>
-<p>The important qualities of a <em>Network</em> are provided by the properties:</p>
+<p>The important qualities of a <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> are provided by the properties:</p>
 <ul class="simple">
-<li><strong>s</strong>: Scattering Parameter matrix.</li>
-<li><strong>frequency</strong>: Frequency Object.</li>
-<li><strong>z0</strong>: Characterisic Impedance matrix.</li>
+<li><a class="reference internal" href="generated/mwavepy.network.Network.s.html#mwavepy.network.Network.s" title="mwavepy.network.Network.s"><tt class="xref py py-attr docutils literal"><span class="pre">Network.s</span></tt></a> : Scattering Parameter matrix.</li>
+<li><a class="reference internal" href="generated/mwavepy.network.Network.frequency.html#mwavepy.network.Network.frequency" title="mwavepy.network.Network.frequency"><tt class="xref py py-attr docutils literal"><span class="pre">Network.frequency</span></tt></a>  : Frequency Object.</li>
+<li><a class="reference internal" href="generated/mwavepy.network.Network.z0.html#mwavepy.network.Network.z0" title="mwavepy.network.Network.z0"><tt class="xref py py-attr docutils literal"><span class="pre">Network.z0</span></tt></a>  : Characterisic Impedance matrix.</li>
 </ul>
 </div>
 <div class="section" id="element-wise-operations-linear">

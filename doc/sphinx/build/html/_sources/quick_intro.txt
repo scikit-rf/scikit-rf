@@ -1,5 +1,6 @@
 .. _quick-intro:
 
+.. currentmodule:: mwavepy.network
 Quick Introduction
 *********************
 
@@ -12,7 +13,7 @@ First, import mwavepy and name it something short, like ''mv''::
 
 	import mwavepy as mv
 
-The most fundamental object mwavpey is a n-port *Network*. Commonly a Network is constructed from data stored in a touchstone files, like so.::
+The most fundamental object mwavpey is a n-port :class:`Network`. Commonly a :class:`Network` is constructed from data stored in a touchstone files, like so.::
 	
 	short = mv.Network ('short.s1p')
 	delay_short = mv.Network ('delay_short.s1p')
@@ -20,11 +21,11 @@ The most fundamental object mwavpey is a n-port *Network*. Commonly a Network is
 Important Properties
 +++++++++++++++++++++++++
 	
-The important qualities of a *Network* are provided by the properties:
+The important qualities of a :class:`Network` are provided by the properties:
 
-* **s**: Scattering Parameter matrix. 
-* **frequency**: Frequency Object. 
-* **z0**: Characterisic Impedance matrix.
+* :attr:`Network.s` : Scattering Parameter matrix. 
+* :attr:`Network.frequency`  : Frequency Object. 
+* :attr:`Network.z0`  : Characterisic Impedance matrix.
 
 Element-wise Operations (Linear)
 ++++++++++++++++++++++++++++++++

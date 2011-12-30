@@ -21,21 +21,20 @@
 #       MA 02110-1301, USA.
 
 '''
-
 ========================================
 network (:mod:`mwavepy.network`)
 ========================================
+.. module:: mwavepy.network
 
-.. currentmodule:: mwavepy.network
+Provides a n-port network class and associated functions.  
 
-Provides a n-port Network  class and associated functions. 
-
-Most of the functionality is provided as methods and properties of the
-Network Class. 
+Most of the functionality in this module is provided as methods and
+properties of the :class:`Network` Class. 
 
 
 Network Class
 ===============
+
 .. autosummary::
    :toctree: generated/
 
@@ -87,6 +86,7 @@ from tlineFunctions import zl_2_Gamma0
 
 class Network(object):
 	'''
+
 	An n-port microwave network.
 
 	the most fundemental properties are:
@@ -313,7 +313,15 @@ class Network(object):
 	@property
 	def frequency(self):
 		'''
-		returns a Frequency object, see  frequency.py
+		stores the frequency information for this network. 
+		
+		This property is a :class:`~wmwavepy.frequency.Frequency` class.
+		
+		See Also
+		---------
+			f : property holding frequency vector in Hz
+			change_frequency : updates frequency property, and 
+				interpolates s-parameters if needed
 		'''
 		try:
 			return self._frequency

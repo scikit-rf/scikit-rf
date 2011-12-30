@@ -428,9 +428,9 @@ exp(t*2*pi*f[0])</blockquote>
 <span id="network-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">network</span></tt> Module<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-mwavepy.network">
 <span id="network-mwavepy-network"></span><h3>network (<a class="reference internal" href="../network.html#module-mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a>)<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h3>
-<p>Provides a n-port Network  class and associated functions.</p>
-<p>Most of the functionality is provided as methods and properties of the
-<a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> Class.</p>
+<p>Provides a n-port network class and associated functions.</p>
+<p>Most of the functionality in this module is provided as methods and
+properties of the <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> Class.</p>
 <div class="section" id="network-class">
 <h4>Network Class<a class="headerlink" href="#network-class" title="Permalink to this headline">¶</a></h4>
 <table border="1" class="docutils">
@@ -661,7 +661,17 @@ n_ports: number of ports. defualt to 1</dd>
 <dl class="attribute">
 <dt id="mwavepy.network.Network.frequency">
 <tt class="descname">frequency</tt><a class="headerlink" href="#mwavepy.network.Network.frequency" title="Permalink to this definition">¶</a></dt>
-<dd><p>returns a Frequency object, see  frequency.py</p>
+<dd><p>stores the frequency information for this network.</p>
+<p>This property is a <tt class="xref py py-class docutils literal"><span class="pre">Frequency</span></tt> class.</p>
+<div class="admonition-see-also admonition seealso">
+<p class="first admonition-title">See also</p>
+<dl class="last docutils">
+<dt><a class="reference internal" href="../generated/mwavepy.network.Network.f.html#mwavepy.network.Network.f" title="mwavepy.network.Network.f"><tt class="xref py py-obj docutils literal"><span class="pre">f</span></tt></a></dt>
+<dd>property holding frequency vector in Hz</dd>
+<dt><a class="reference internal" href="../generated/mwavepy.network.Network.change_frequency.html#mwavepy.network.Network.change_frequency" title="mwavepy.network.Network.change_frequency"><tt class="xref py py-obj docutils literal"><span class="pre">change_frequency</span></tt></a></dt>
+<dd>updates frequency property, and interpolates s-parameters if needed</dd>
+</dl>
+</div>
 </dd></dl>
 
 <dl class="method">
