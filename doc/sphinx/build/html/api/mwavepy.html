@@ -426,11 +426,11 @@ exp(t*2*pi*f[0])</blockquote>
 </div>
 <div class="section" id="module-mwavepy.network">
 <span id="network-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">network</span></tt> Module<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="network-mwavepy-network">
-<h3>network (<a class="reference internal" href="#module-mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a>)<a class="headerlink" href="#network-mwavepy-network" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="module-mwavepy.network">
+<span id="network-mwavepy-network"></span><h3>network (<a class="reference internal" href="../network.html#module-mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a>)<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h3>
 <p>Provides a n-port Network  class and associated functions.</p>
 <p>Most of the functionality is provided as methods and properties of the
-Network Class.</p>
+<a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> Class.</p>
 <div class="section" id="network-class">
 <h4>Network Class<a class="headerlink" href="#network-class" title="Permalink to this headline">¶</a></h4>
 <table border="1" class="docutils">
@@ -439,7 +439,7 @@ Network Class.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr><td><a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-obj docutils literal"><span class="pre">Network</span></tt></a>([touchstone_file,&nbsp;name])</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-obj docutils literal"><span class="pre">Network</span></tt></a>([touchstone_file,&nbsp;name])</td>
 <td>An n-port microwave network.</td>
 </tr>
 </tbody>
@@ -453,22 +453,22 @@ Network Class.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr><td><a class="reference internal" href="#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a>(ntwkA,&nbsp;k,&nbsp;ntwkB,&nbsp;l)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a>(ntwkA,&nbsp;k,&nbsp;ntwkB,&nbsp;l)</td>
 <td>connect two n-port networks together.</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.innerconnect" title="mwavepy.network.innerconnect"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect</span></tt></a>(ntwkA,&nbsp;k,&nbsp;l)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.innerconnect.html#mwavepy.network.innerconnect" title="mwavepy.network.innerconnect"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect</span></tt></a>(ntwkA,&nbsp;k,&nbsp;l)</td>
 <td>connect two ports of a single n-port network.</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.cascade" title="mwavepy.network.cascade"><tt class="xref py py-obj docutils literal"><span class="pre">cascade</span></tt></a>(ntwkA,&nbsp;ntwkB)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.cascade.html#mwavepy.network.cascade" title="mwavepy.network.cascade"><tt class="xref py py-obj docutils literal"><span class="pre">cascade</span></tt></a>(ntwkA,&nbsp;ntwkB)</td>
 <td>cascade two 2-port Networks together</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.de_embed" title="mwavepy.network.de_embed"><tt class="xref py py-obj docutils literal"><span class="pre">de_embed</span></tt></a>(ntwkA,&nbsp;ntwkB)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.de_embed.html#mwavepy.network.de_embed" title="mwavepy.network.de_embed"><tt class="xref py py-obj docutils literal"><span class="pre">de_embed</span></tt></a>(ntwkA,&nbsp;ntwkB)</td>
 <td>de-embed <cite>ntwkA</cite> from <cite>ntwkB</cite>. this calls <cite>ntwkA.inv**ntwkB</cite>.</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.average" title="mwavepy.network.average"><tt class="xref py py-obj docutils literal"><span class="pre">average</span></tt></a>(list_of_networks)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.average.html#mwavepy.network.average" title="mwavepy.network.average"><tt class="xref py py-obj docutils literal"><span class="pre">average</span></tt></a>(list_of_networks)</td>
 <td>calculates the average network from a list of Networks.</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.one_port_2_two_port" title="mwavepy.network.one_port_2_two_port"><tt class="xref py py-obj docutils literal"><span class="pre">one_port_2_two_port</span></tt></a>(ntwk)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.one_port_2_two_port.html#mwavepy.network.one_port_2_two_port" title="mwavepy.network.one_port_2_two_port"><tt class="xref py py-obj docutils literal"><span class="pre">one_port_2_two_port</span></tt></a>(ntwk)</td>
 <td>calculates the two-port network given a  symetric, reciprocal and</td>
 </tr>
 </tbody>
@@ -482,22 +482,22 @@ Network Class.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr><td><a class="reference internal" href="#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a>(A,&nbsp;k,&nbsp;B,&nbsp;l)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a>(A,&nbsp;k,&nbsp;B,&nbsp;l)</td>
 <td>connect two n-port networks&#8217; s-matricies together.</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a>(A,&nbsp;k,&nbsp;l)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a>(A,&nbsp;k,&nbsp;l)</td>
 <td>connect two ports of a single n-port network&#8217;s s-matrix.</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.s2t" title="mwavepy.network.s2t"><tt class="xref py py-obj docutils literal"><span class="pre">s2t</span></tt></a>(s)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.s2t.html#mwavepy.network.s2t" title="mwavepy.network.s2t"><tt class="xref py py-obj docutils literal"><span class="pre">s2t</span></tt></a>(s)</td>
 <td>converts scattering parameters to scattering transfer parameters.</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a>(t)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.t2s.html#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a>(t)</td>
 <td>converts scattering transfer parameters to scattering parameters</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.inv" title="mwavepy.network.inv"><tt class="xref py py-obj docutils literal"><span class="pre">inv</span></tt></a>(s)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.inv.html#mwavepy.network.inv" title="mwavepy.network.inv"><tt class="xref py py-obj docutils literal"><span class="pre">inv</span></tt></a>(s)</td>
 <td>calculates inverse s-parameter matrix, used for de-embeding</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.flip" title="mwavepy.network.flip"><tt class="xref py py-obj docutils literal"><span class="pre">flip</span></tt></a>(a)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.flip.html#mwavepy.network.flip" title="mwavepy.network.flip"><tt class="xref py py-obj docutils literal"><span class="pre">flip</span></tt></a>(a)</td>
 <td>invert the ports of a networks s-matrix, &#8216;flipping&#8217; it over</td>
 </tr>
 </tbody>
@@ -509,9 +509,9 @@ Network Class.</p>
 <p>An n-port microwave network.</p>
 <p>the most fundemental properties are:</p>
 <ul class="simple">
-<li><a class="reference internal" href="#mwavepy.network.Network.s" title="mwavepy.network.Network.s"><tt class="xref py py-attr docutils literal"><span class="pre">s</span></tt></a> : scattering matrix. a kxnxn complex matrix where &#8216;n&#8217; is number of ports of network, and <cite>k</cite> is number of frequency points</li>
-<li><a class="reference internal" href="#mwavepy.network.Network.z0" title="mwavepy.network.Network.z0"><tt class="xref py py-attr docutils literal"><span class="pre">z0</span></tt></a>: characteristic impedance</li>
-<li><a class="reference internal" href="#mwavepy.network.Network.f" title="mwavepy.network.Network.f"><tt class="xref py py-attr docutils literal"><span class="pre">f</span></tt></a> : frequency vector in Hz. see <a class="reference internal" href="#mwavepy.network.Network.frequency" title="mwavepy.network.Network.frequency"><tt class="xref py py-attr docutils literal"><span class="pre">frequency</span></tt></a>, which is a <tt class="xref py py-class docutils literal"><span class="pre">Frequency</span></tt> object (see help on this class for more info)</li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.s.html#mwavepy.network.Network.s" title="mwavepy.network.Network.s"><tt class="xref py py-attr docutils literal"><span class="pre">s</span></tt></a> : scattering matrix. a kxnxn complex matrix where &#8216;n&#8217; is number of ports of network, and <cite>k</cite> is number of frequency points</li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.z0.html#mwavepy.network.Network.z0" title="mwavepy.network.Network.z0"><tt class="xref py py-attr docutils literal"><span class="pre">z0</span></tt></a>: characteristic impedance</li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.f.html#mwavepy.network.Network.f" title="mwavepy.network.Network.f"><tt class="xref py py-attr docutils literal"><span class="pre">f</span></tt></a> : frequency vector in Hz. see <a class="reference internal" href="../generated/mwavepy.network.Network.frequency.html#mwavepy.network.Network.frequency" title="mwavepy.network.Network.frequency"><tt class="xref py py-attr docutils literal"><span class="pre">frequency</span></tt></a>, which is a <tt class="xref py py-class docutils literal"><span class="pre">Frequency</span></tt> object (see help on this class for more info)</li>
 </ul>
 <p>The following operators are defined as follows:</p>
 <ul class="simple">
@@ -519,7 +519,7 @@ Network Class.</p>
 <li><cite>-</cite>   : element-wise subtraction of the s-matrix</li>
 <li><cite>*</cite>   : element-wise multiplication of the s-matrix</li>
 <li><cite>/</cite>   : element-wise division of the s-matrix</li>
-<li><cite>**</cite>  : cascading of 2-port networks (see <a class="reference internal" href="#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-func docutils literal"><span class="pre">connect()</span></tt></a>)</li>
+<li><cite>**</cite>  : cascading of 2-port networks (see <a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-func docutils literal"><span class="pre">connect()</span></tt></a>)</li>
 <li><cite>//</cite>  : de-embdeding of one network from the other. (better to</li>
 </ul>
 <p>most properties are derived from the specifications given for
@@ -531,82 +531,82 @@ touchstone files.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.add_noise_polar" title="mwavepy.network.Network.add_noise_polar"><tt class="xref py py-obj docutils literal"><span class="pre">add_noise_polar</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.add_noise_polar.html#mwavepy.network.Network.add_noise_polar" title="mwavepy.network.Network.add_noise_polar"><tt class="xref py py-obj docutils literal"><span class="pre">add_noise_polar</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.add_noise_polar_flatband" title="mwavepy.network.Network.add_noise_polar_flatband"><tt class="xref py py-obj docutils literal"><span class="pre">add_noise_polar_flatband</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.add_noise_polar_flatband.html#mwavepy.network.Network.add_noise_polar_flatband" title="mwavepy.network.Network.add_noise_polar_flatband"><tt class="xref py py-obj docutils literal"><span class="pre">add_noise_polar_flatband</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.change_frequency" title="mwavepy.network.Network.change_frequency"><tt class="xref py py-obj docutils literal"><span class="pre">change_frequency</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.change_frequency.html#mwavepy.network.Network.change_frequency" title="mwavepy.network.Network.change_frequency"><tt class="xref py py-obj docutils literal"><span class="pre">change_frequency</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.flip" title="mwavepy.network.flip"><tt class="xref py py-obj docutils literal"><span class="pre">flip</span></tt></a>(a)</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.flip.html#mwavepy.network.flip" title="mwavepy.network.flip"><tt class="xref py py-obj docutils literal"><span class="pre">flip</span></tt></a>(a)</td>
 <td>invert the ports of a networks s-matrix, &#8216;flipping&#8217; it over</td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.interpolate" title="mwavepy.network.Network.interpolate"><tt class="xref py py-obj docutils literal"><span class="pre">interpolate</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.interpolate.html#mwavepy.network.Network.interpolate" title="mwavepy.network.Network.interpolate"><tt class="xref py py-obj docutils literal"><span class="pre">interpolate</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.multiply_noise" title="mwavepy.network.Network.multiply_noise"><tt class="xref py py-obj docutils literal"><span class="pre">multiply_noise</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.multiply_noise.html#mwavepy.network.Network.multiply_noise" title="mwavepy.network.Network.multiply_noise"><tt class="xref py py-obj docutils literal"><span class="pre">multiply_noise</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.nudge" title="mwavepy.network.Network.nudge"><tt class="xref py py-obj docutils literal"><span class="pre">nudge</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.nudge.html#mwavepy.network.Network.nudge" title="mwavepy.network.Network.nudge"><tt class="xref py py-obj docutils literal"><span class="pre">nudge</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_passivity" title="mwavepy.network.Network.plot_passivity"><tt class="xref py py-obj docutils literal"><span class="pre">plot_passivity</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_passivity.html#mwavepy.network.Network.plot_passivity" title="mwavepy.network.Network.plot_passivity"><tt class="xref py py-obj docutils literal"><span class="pre">plot_passivity</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_polar_generic" title="mwavepy.network.Network.plot_polar_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_polar_generic</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_polar_generic.html#mwavepy.network.Network.plot_polar_generic" title="mwavepy.network.Network.plot_polar_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_polar_generic</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_all_db" title="mwavepy.network.Network.plot_s_all_db"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_all_db</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_all_db.html#mwavepy.network.Network.plot_s_all_db" title="mwavepy.network.Network.plot_s_all_db"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_all_db</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_complex" title="mwavepy.network.Network.plot_s_complex"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_complex</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_complex.html#mwavepy.network.Network.plot_s_complex" title="mwavepy.network.Network.plot_s_complex"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_complex</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_db" title="mwavepy.network.Network.plot_s_db"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_db</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_db.html#mwavepy.network.Network.plot_s_db" title="mwavepy.network.Network.plot_s_db"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_db</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_deg" title="mwavepy.network.Network.plot_s_deg"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_deg</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_deg.html#mwavepy.network.Network.plot_s_deg" title="mwavepy.network.Network.plot_s_deg"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_deg</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_deg_unwrap" title="mwavepy.network.Network.plot_s_deg_unwrap"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_deg_unwrap</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_deg_unwrap.html#mwavepy.network.Network.plot_s_deg_unwrap" title="mwavepy.network.Network.plot_s_deg_unwrap"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_deg_unwrap</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_deg_unwrapped" title="mwavepy.network.Network.plot_s_deg_unwrapped"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_deg_unwrapped</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_deg_unwrapped.html#mwavepy.network.Network.plot_s_deg_unwrapped" title="mwavepy.network.Network.plot_s_deg_unwrapped"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_deg_unwrapped</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_im" title="mwavepy.network.Network.plot_s_im"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_im</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_im.html#mwavepy.network.Network.plot_s_im" title="mwavepy.network.Network.plot_s_im"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_im</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_mag" title="mwavepy.network.Network.plot_s_mag"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_mag</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_mag.html#mwavepy.network.Network.plot_s_mag" title="mwavepy.network.Network.plot_s_mag"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_mag</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_polar" title="mwavepy.network.Network.plot_s_polar"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_polar</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_polar.html#mwavepy.network.Network.plot_s_polar" title="mwavepy.network.Network.plot_s_polar"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_polar</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_quad" title="mwavepy.network.Network.plot_s_quad"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_quad</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_quad.html#mwavepy.network.Network.plot_s_quad" title="mwavepy.network.Network.plot_s_quad"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_quad</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_rad" title="mwavepy.network.Network.plot_s_rad"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_rad</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_rad.html#mwavepy.network.Network.plot_s_rad" title="mwavepy.network.Network.plot_s_rad"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_rad</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_rad_unwrapped" title="mwavepy.network.Network.plot_s_rad_unwrapped"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_rad_unwrapped</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_rad_unwrapped.html#mwavepy.network.Network.plot_s_rad_unwrapped" title="mwavepy.network.Network.plot_s_rad_unwrapped"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_rad_unwrapped</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_re" title="mwavepy.network.Network.plot_s_re"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_re</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_re.html#mwavepy.network.Network.plot_s_re" title="mwavepy.network.Network.plot_s_re"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_re</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_s_smith" title="mwavepy.network.Network.plot_s_smith"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_smith</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_smith.html#mwavepy.network.Network.plot_s_smith" title="mwavepy.network.Network.plot_s_smith"><tt class="xref py py-obj docutils literal"><span class="pre">plot_s_smith</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.read_touchstone" title="mwavepy.network.Network.read_touchstone"><tt class="xref py py-obj docutils literal"><span class="pre">read_touchstone</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.read_touchstone.html#mwavepy.network.Network.read_touchstone" title="mwavepy.network.Network.read_touchstone"><tt class="xref py py-obj docutils literal"><span class="pre">read_touchstone</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.network.Network.write_touchstone" title="mwavepy.network.Network.write_touchstone"><tt class="xref py py-obj docutils literal"><span class="pre">write_touchstone</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.network.Network.write_touchstone.html#mwavepy.network.Network.write_touchstone" title="mwavepy.network.Network.write_touchstone"><tt class="xref py py-obj docutils literal"><span class="pre">write_touchstone</span></tt></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -790,7 +790,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a>, <a class="reference internal" href="#mwavepy.network.Network.passivity" title="mwavepy.network.Network.passivity"><tt class="xref py py-obj docutils literal"><span class="pre">passivity</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a>, <a class="reference internal" href="../generated/mwavepy.network.Network.passivity.html#mwavepy.network.Network.passivity" title="mwavepy.network.Network.passivity"><tt class="xref py py-obj docutils literal"><span class="pre">passivity</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_rad</span><span class="p">()</span>
@@ -864,7 +864,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_rad</span><span class="p">()</span>
@@ -914,7 +914,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_db</span><span class="p">()</span>
@@ -964,7 +964,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_deg</span><span class="p">()</span>
@@ -1014,7 +1014,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_deg_unwrapped</span><span class="p">()</span>
@@ -1064,7 +1064,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_deg_unwrapped</span><span class="p">()</span>
@@ -1114,7 +1114,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_im</span><span class="p">()</span>
@@ -1164,7 +1164,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_mag</span><span class="p">()</span>
@@ -1214,7 +1214,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_polar</span><span class="p">()</span>
@@ -1265,7 +1265,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_quad</span><span class="p">()</span>
@@ -1315,7 +1315,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_rad</span><span class="p">()</span>
@@ -1365,7 +1365,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_rad_unwrap</span><span class="p">()</span>
@@ -1415,7 +1415,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_re</span><span class="p">()</span>
@@ -1465,7 +1465,7 @@ plot.</p>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a>, <tt class="xref py py-obj docutils literal"><span class="pre">smith</span></tt></p>
+<p class="last"><a class="reference internal" href="../generated/mwavepy.network.Network.plot_vs_frequency_generic.html#mwavepy.network.Network.plot_vs_frequency_generic" title="mwavepy.network.Network.plot_vs_frequency_generic"><tt class="xref py py-obj docutils literal"><span class="pre">plot_vs_frequency_generic</span></tt></a>, <tt class="xref py py-obj docutils literal"><span class="pre">smith</span></tt></p>
 </div>
 <p class="rubric">Examples</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">myntwk</span><span class="o">.</span><span class="n">plot_s_smith</span><span class="p">()</span>
@@ -1677,11 +1677,11 @@ as it has not <a href="#id26"><span class="problematic" id="id27">set_</span></a
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>list_of_networks: list</strong> :</p>
 <blockquote>
-<p>a list of <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> objects</p>
+<p>a list of <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> objects</p>
 </blockquote>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwk</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwk</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote class="last">
 <p>the resultant averaged Network</p>
 </blockquote>
@@ -1709,7 +1709,7 @@ as it has not <a href="#id26"><span class="problematic" id="id27">set_</span></a
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
 <p>network <cite>ntwkA</cite></p>
 </blockquote>
@@ -1730,7 +1730,7 @@ as it has not <a href="#id26"><span class="problematic" id="id27">set_</span></a
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a></dt>
 <dd>connects two Networks together at arbitrary ports.</dd>
 </dl>
 </div>
@@ -1748,7 +1748,7 @@ account.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
 <p>network &#8216;A&#8217;</p>
 </blockquote>
@@ -1756,7 +1756,7 @@ account.</p>
 <blockquote>
 <p>port index on <cite>ntwkA</cite> ( port indecies start from 0 )</p>
 </blockquote>
-<p><strong>ntwkB</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<p><strong>ntwkB</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
 <p>network &#8216;B&#8217;</p>
 </blockquote>
@@ -1766,7 +1766,7 @@ account.</p>
 </blockquote>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote class="last">
 <p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
 </blockquote>
@@ -1777,9 +1777,9 @@ account.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a></dt>
 <dd>actual  S-parameter connection algorithm.</dd>
-<dt><a class="reference internal" href="#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
 <dd>actual S-parameter connection algorithm.</dd>
 </dl>
 </div>
@@ -1804,7 +1804,7 @@ This mismatch Network is calculated with the
 <p>specifically, connect port <cite>k</cite> on network <cite>A</cite> to port <cite>l</cite> on network
 <cite>B</cite>. The resultant network has nports = (A.rank + B.rank-2). This
 function operates on, and returns s-matricies. The function 
-<a class="reference internal" href="#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-func docutils literal"><span class="pre">connect()</span></tt></a> operates on <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> types.</p>
+<a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-func docutils literal"><span class="pre">connect()</span></tt></a> operates on <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> types.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1838,15 +1838,15 @@ function operates on, and returns s-matricies. The function
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a></dt>
-<dd>operates on <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> types</dd>
-<dt><a class="reference internal" href="#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a></dt>
+<dd>operates on <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> types</dd>
+<dt><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
 <dd>function which implements the connection connection algorithm</dd>
 </dl>
 </div>
 <p class="rubric">Notes</p>
 <p>internally, this function creates a larger composite network 
-and calls the  <a class="reference internal" href="#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-func docutils literal"><span class="pre">innerconnect_s()</span></tt></a> function. see that function for more 
+and calls the  <a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-func docutils literal"><span class="pre">innerconnect_s()</span></tt></a> function. see that function for more 
 details about the implementation</p>
 </dd></dl>
 
@@ -1872,11 +1872,11 @@ recomended that it be used instead of this function.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
 <p>network <cite>ntwkA</cite></p>
 </blockquote>
-<p><strong>ntwkB</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<p><strong>ntwkB</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
 <p>network <cite>ntwkB</cite></p>
 </blockquote>
@@ -1893,7 +1893,7 @@ recomended that it be used instead of this function.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.connect.html#mwavepy.network.connect" title="mwavepy.network.connect"><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></a></dt>
 <dd>connects two Networks together at arbitrary ports.</dd>
 </dl>
 </div>
@@ -1932,7 +1932,7 @@ from 0.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
 <p>network &#8216;A&#8217;</p>
 </blockquote>
@@ -1946,7 +1946,7 @@ from 0.</p>
 </blockquote>
 </td>
 </tr>
-<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : <a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
+<tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote class="last">
 <p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
 </blockquote>
@@ -1957,9 +1957,9 @@ from 0.</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.connect_s.html#mwavepy.network.connect_s" title="mwavepy.network.connect_s"><tt class="xref py py-obj docutils literal"><span class="pre">connect_s</span></tt></a></dt>
 <dd>actual  S-parameter connection algorithm.</dd>
-<dt><a class="reference internal" href="#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.innerconnect_s.html#mwavepy.network.innerconnect_s" title="mwavepy.network.innerconnect_s"><tt class="xref py py-obj docutils literal"><span class="pre">innerconnect_s</span></tt></a></dt>
 <dd>actual S-parameter connection algorithm.</dd>
 </dl>
 </div>
@@ -1979,8 +1979,8 @@ from 0.</p>
 <dd><p>connect two ports of a single n-port network&#8217;s s-matrix.</p>
 <p>Specifically, connect port <cite>k</cite>  to port <cite>l</cite> on <cite>A</cite>. This results in
 a (n-2)-port network.  This     function operates on, and returns 
-s-matricies. The function <a class="reference internal" href="#mwavepy.network.innerconnect" title="mwavepy.network.innerconnect"><tt class="xref py py-func docutils literal"><span class="pre">innerconnect()</span></tt></a> operates on 
-<a class="reference internal" href="#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> types.</p>
+s-matricies. The function <a class="reference internal" href="../generated/mwavepy.network.innerconnect.html#mwavepy.network.innerconnect" title="mwavepy.network.innerconnect"><tt class="xref py py-func docutils literal"><span class="pre">innerconnect()</span></tt></a> operates on 
+<a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> types.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -2058,9 +2058,9 @@ fx2x2</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.t2s.html#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a></dt>
 <dd>converts scattering transfer parameters to scattering parameters</dd>
-<dt><a class="reference internal" href="#mwavepy.network.s2t" title="mwavepy.network.s2t"><tt class="xref py py-obj docutils literal"><span class="pre">s2t</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.s2t.html#mwavepy.network.s2t" title="mwavepy.network.s2t"><tt class="xref py py-obj docutils literal"><span class="pre">s2t</span></tt></a></dt>
 <dd>converts scattering parameters to scattering transfer parameters</dd>
 </dl>
 </div>
@@ -2128,9 +2128,9 @@ fx2x2</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.t2s.html#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a></dt>
 <dd>converts scattering transfer parameters to scattering parameters</dd>
-<dt><a class="reference internal" href="#mwavepy.network.inv" title="mwavepy.network.inv"><tt class="xref py py-obj docutils literal"><span class="pre">inv</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.inv.html#mwavepy.network.inv" title="mwavepy.network.inv"><tt class="xref py py-obj docutils literal"><span class="pre">inv</span></tt></a></dt>
 <dd>calculates inverse s-parameters</dd>
 </dl>
 </div>
@@ -2173,9 +2173,9 @@ fx2x2</p>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
 <dl class="last docutils">
-<dt><a class="reference internal" href="#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.t2s.html#mwavepy.network.t2s" title="mwavepy.network.t2s"><tt class="xref py py-obj docutils literal"><span class="pre">t2s</span></tt></a></dt>
 <dd>converts scattering transfer parameters to scattering parameters</dd>
-<dt><a class="reference internal" href="#mwavepy.network.inv" title="mwavepy.network.inv"><tt class="xref py py-obj docutils literal"><span class="pre">inv</span></tt></a></dt>
+<dt><a class="reference internal" href="../generated/mwavepy.network.inv.html#mwavepy.network.inv" title="mwavepy.network.inv"><tt class="xref py py-obj docutils literal"><span class="pre">inv</span></tt></a></dt>
 <dd>calculates inverse s-parameters</dd>
 </dl>
 </div>
@@ -2702,7 +2702,7 @@ ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
 </li>
 <li><a class="reference internal" href="#module-mwavepy.mathFunctions"><tt class="docutils literal"><span class="pre">mathFunctions</span></tt> Module</a></li>
 <li><a class="reference internal" href="#module-mwavepy.network"><tt class="docutils literal"><span class="pre">network</span></tt> Module</a><ul>
-<li><a class="reference internal" href="#network-mwavepy-network">network (<tt class="docutils literal"><span class="pre">mwavepy.network</span></tt>)</a><ul>
+<li><a class="reference internal" href="#module-mwavepy.network">network (<tt class="docutils literal"><span class="pre">mwavepy.network</span></tt>)</a><ul>
 <li><a class="reference internal" href="#network-class">Network Class</a><ul>
 </ul>
 </li>
