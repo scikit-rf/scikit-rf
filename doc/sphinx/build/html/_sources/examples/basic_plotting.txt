@@ -1,5 +1,5 @@
 .. _example-basic-plotting:
-****************************
+
 Basic Plotting  
 ****************************
 
@@ -11,18 +11,16 @@ which is provided by the :mod:`mwavepy.network` module.
 Below is a brief list of the some commonly used plotting functions, 
 
    
-   Network.plot_s_smith
-   Network.plot_s_complex
-   Network.plot_s_db 
-   Network.plot_s_mag 
-   Network.plot_s_deg 
-   Network.plot_s_deg_unwrapped 
-   Network.plot_s_rad 
-   Network.plot_s_rad_unwrapped 
-   Network.plot_s_quad 
-   Network.plot_s_quad_unwrapped 
-   Network.plot_s_re 
-   Network.plot_s_im 
+* :func:`Network.plot_s_re`
+* :func:`Network.plot_s_im`
+* :func:`Network.plot_s_mag`
+* :func:`Network.plot_s_db`
+* :func:`Network.plot_s_deg`
+* :func:`Network.plot_s_deg_unwrapped`
+* :func:`Network.plot_s_rad`
+* :func:`Network.plot_s_rad_unwrapped`
+* :func:`Network.plot_s_smith`
+* :func:`Network.plot_s_complex`
 
 Return Loss Magnitude
 -----------------------

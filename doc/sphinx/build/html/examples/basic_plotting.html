@@ -23,9 +23,8 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="top" title="mwavepy v1.5 documentation" href="../index.html" />
-    <link rel="up" title="Examples" href="../examples.html" />
     <link rel="next" title="One-Port Calibration" href="oneport_calibration.html" />
-    <link rel="prev" title="Examples" href="../examples.html" /> 
+    <link rel="prev" title="Circuit Design" href="../circuit_design.html" /> 
   </head>
   <body>
     <div class="related">
@@ -41,10 +40,9 @@
           <a href="oneport_calibration.html" title="One-Port Calibration"
              accesskey="N">next</a> |</li>
         <li class="right" >
-          <a href="../examples.html" title="Examples"
+          <a href="../circuit_design.html" title="Circuit Design"
              accesskey="P">previous</a> |</li>
-        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li>
-          <li><a href="../examples.html" accesskey="U">Examples</a> &raquo;</li> 
+        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -54,24 +52,23 @@
           <div class="body">
             
   <div class="section" id="basic-plotting">
-<h1>Basic Plotting<a class="headerlink" href="#basic-plotting" title="Permalink to this headline">¶</a></h1>
+<span id="example-basic-plotting"></span><h1>Basic Plotting<a class="headerlink" href="#basic-plotting" title="Permalink to this headline">¶</a></h1>
 <p>This example illustrates how to create common plots. The plotting
 functions are implemented as methods of the <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> class,
 which is provided by the <a class="reference internal" href="../network.html#module-mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a> module.
 Below is a brief list of the some commonly used plotting functions,</p>
-<blockquote>
-Network.plot_s_smith
-Network.plot_s_complex
-Network.plot_s_db
-Network.plot_s_mag
-Network.plot_s_deg
-Network.plot_s_deg_unwrapped
-Network.plot_s_rad
-Network.plot_s_rad_unwrapped
-Network.plot_s_quad
-Network.plot_s_quad_unwrapped
-Network.plot_s_re
-Network.plot_s_im</blockquote>
+<ul class="simple">
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_re.html#mwavepy.network.Network.plot_s_re" title="mwavepy.network.Network.plot_s_re"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_re()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_im.html#mwavepy.network.Network.plot_s_im" title="mwavepy.network.Network.plot_s_im"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_im()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_mag.html#mwavepy.network.Network.plot_s_mag" title="mwavepy.network.Network.plot_s_mag"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_mag()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_db.html#mwavepy.network.Network.plot_s_db" title="mwavepy.network.Network.plot_s_db"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_db()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_deg.html#mwavepy.network.Network.plot_s_deg" title="mwavepy.network.Network.plot_s_deg"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_deg()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_deg_unwrapped.html#mwavepy.network.Network.plot_s_deg_unwrapped" title="mwavepy.network.Network.plot_s_deg_unwrapped"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_deg_unwrapped()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_rad.html#mwavepy.network.Network.plot_s_rad" title="mwavepy.network.Network.plot_s_rad"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_rad()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_rad_unwrapped.html#mwavepy.network.Network.plot_s_rad_unwrapped" title="mwavepy.network.Network.plot_s_rad_unwrapped"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_rad_unwrapped()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_smith.html#mwavepy.network.Network.plot_s_smith" title="mwavepy.network.Network.plot_s_smith"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_smith()</span></tt></a></li>
+<li><a class="reference internal" href="../generated/mwavepy.network.Network.plot_s_complex.html#mwavepy.network.Network.plot_s_complex" title="mwavepy.network.Network.plot_s_complex"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_complex()</span></tt></a></li>
+</ul>
 <div class="section" id="return-loss-magnitude">
 <h2>Return Loss Magnitude<a class="headerlink" href="#return-loss-magnitude" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pylab</span>
@@ -230,8 +227,8 @@ Network.plot_s_im</blockquote>
 </ul>
 
   <h4>Previous topic</h4>
-  <p class="topless"><a href="../examples.html"
-                        title="previous chapter">Examples</a></p>
+  <p class="topless"><a href="../circuit_design.html"
+                        title="previous chapter">Circuit Design</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="oneport_calibration.html"
                         title="next chapter">One-Port Calibration</a></p>
@@ -275,10 +272,9 @@ Network.plot_s_im</blockquote>
           <a href="oneport_calibration.html" title="One-Port Calibration"
              >next</a> |</li>
         <li class="right" >
-          <a href="../examples.html" title="Examples"
+          <a href="../circuit_design.html" title="Circuit Design"
              >previous</a> |</li>
-        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li>
-          <li><a href="../examples.html" >Examples</a> &raquo;</li> 
+        <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">

@@ -1,49 +1,72 @@
 .. _quick-intro:
 
+
 .. currentmodule:: mwavepy.network
+
+*******************
 Quick Introduction
 *********************
 
 This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the :doc:`slow_intro`.
 
-Loading Touchstone Files
-++++++++++++++++++++++++++
+Create Network from Touchstone Files
++++++++++++++++++++++++++++++++++++++
 
 First, import mwavepy and name it something short, like ''mv''::
 
 	import mwavepy as mv
 
-The most fundamental object mwavpey is a n-port :class:`Network`. Commonly a :class:`Network` is constructed from data stored in a touchstone files, like so.::
+If this produces an error, please see :doc:`installation`. The most fundamental object mwavepy is a n-port :class:`Network`. Commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so.::
 	
-	short = mv.Network ('short.s1p')
-	delay_short = mv.Network ('delay_short.s1p')
+	>>> short = mv.Network('short.s1p')
+	>>> delay_short = mv.Network('delay_short.s1p')
 
 Important Properties
 +++++++++++++++++++++++++
 	
-The important qualities of a :class:`Network` are provided by the properties:
+The important qualities of a :class:`Network` are provided by the 
+properties:
 
 * :attr:`Network.s` : Scattering Parameter matrix. 
 * :attr:`Network.frequency`  : Frequency Object. 
 * :attr:`Network.z0`  : Characterisic Impedance matrix.
 
+These properties are stored as numpy.ndarray's. If you are using 
+Ipython, then all properties and methods of a class, can be 
+'tabbed' out. Methods of the :class:`Network` class provide
+convenient ways to plot components of the s-parameters, below is a 
+non-exhaustive list of common plotting commands,
+
+* :func:`Network.plot_s_db` : plot magnitude of s-parameters in log scale
+* :func:`Network.plot_s_deg` : plot phase of s-parameters in degrees
+* :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
+
+For example, to create a 2-port :class:`Network` from a touchstone file,
+and then plot all s-parameters on the Smith Chart.
+
+.. plot:: ./pyplots/quick_intro/simple_plot.py
+   :include-source:
+
+For more info about plotting see :doc:`examples/basic_plotting`.   
+
+
 Element-wise Operations (Linear)
 ++++++++++++++++++++++++++++++++
 	
-Simple element-wise mathematical operations on the scattering parameter matrices are accesable through overloaded operators::
+Simple element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators::
 
-	short + delay_short
-	short - delay_short 
-	short / delay_short 
-	short * delay_short
+	>>> short + delay_short
+	>>> short - delay_short 
+	>>> short / delay_short 
+	>>> short * delay_short
 
-These have various uses. For example, the difference operation returns a network that represents the complex distance between two networks. This can be used to calculate the euclidean norm between two networks like ::
+These operations return :class:`Network` types, so all :class:` methods and properties of are available on the result. These have various uses. For example, the difference operation ('-') can be used to calculate the complex distance between two networks ::
 	
-	(short- delay_short).s_mag
+	>>> distance = (short- delay_short)
 
-or you can plot it::
+Because this returns :class:`Network` type, the distance is accessed through the :attr:`Network.s` property. The plotting methods of the :class:`Network` type can also be used::
 
-	(short - delay_short).plot_s_mag()
+	>>> (short - delay_short).plot_s_mag()
 
 Another use is calculating or plotting de-trended phase using the division operator. This can be done by::
 	

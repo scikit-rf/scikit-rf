@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Quick Introduction &mdash; mwavepy v1.5 documentation</title>
+    <title>Create Network from Touchstone Files &mdash; mwavepy v1.5 documentation</title>
     <link rel="stylesheet" href="_static/scipy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -51,37 +51,61 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="quick-introduction">
-<h1>Quick Introduction<a class="headerlink" href="#quick-introduction" title="Permalink to this headline">¶</a></h1>
-<p>This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the <a class="reference internal" href="slow_intro.html"><em>Slow Introduction</em></a>.</p>
-<div class="section" id="loading-touchstone-files">
-<h2>Loading Touchstone Files<a class="headerlink" href="#loading-touchstone-files" title="Permalink to this headline">¶</a></h2>
+  <p>This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the <a class="reference internal" href="slow_intro.html"><em>Slow Introduction</em></a>.</p>
+<div class="section" id="create-network-from-touchstone-files">
+<h1>Create Network from Touchstone Files<a class="headerlink" href="#create-network-from-touchstone-files" title="Permalink to this headline">¶</a></h1>
 <p>First, import mwavepy and name it something short, like &#8216;&#8217;mv&#8217;&#8216;:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 </pre></div>
 </div>
-<p>The most fundamental object mwavpey is a n-port <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a>. Commonly a <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> is constructed from data stored in a touchstone files, like so.:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span> <span class="p">(</span><span class="s">&#39;short.s1p&#39;</span><span class="p">)</span>
-<span class="n">delay_short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span> <span class="p">(</span><span class="s">&#39;delay_short.s1p&#39;</span><span class="p">)</span>
+<p>If this produces an error, please see <a class="reference internal" href="installation.html"><em>Installation</em></a>. The most fundamental object mwavepy is a n-port <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a>. Commonly, a <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> is constructed from data stored in a touchstone files, like so.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;short.s1p&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">delay_short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;delay_short.s1p&#39;</span><span class="p">)</span>
 </pre></div>
-</div>
 </div>
 <div class="section" id="important-properties">
 <h2>Important Properties<a class="headerlink" href="#important-properties" title="Permalink to this headline">¶</a></h2>
-<p>The important qualities of a <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> are provided by the properties:</p>
+<p>The important qualities of a <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> are provided by the
+properties:</p>
 <ul class="simple">
 <li><a class="reference internal" href="generated/mwavepy.network.Network.s.html#mwavepy.network.Network.s" title="mwavepy.network.Network.s"><tt class="xref py py-attr docutils literal"><span class="pre">Network.s</span></tt></a> : Scattering Parameter matrix.</li>
 <li><a class="reference internal" href="generated/mwavepy.network.Network.frequency.html#mwavepy.network.Network.frequency" title="mwavepy.network.Network.frequency"><tt class="xref py py-attr docutils literal"><span class="pre">Network.frequency</span></tt></a>  : Frequency Object.</li>
 <li><a class="reference internal" href="generated/mwavepy.network.Network.z0.html#mwavepy.network.Network.z0" title="mwavepy.network.Network.z0"><tt class="xref py py-attr docutils literal"><span class="pre">Network.z0</span></tt></a>  : Characterisic Impedance matrix.</li>
 </ul>
+<p>These properties are stored as numpy.ndarray&#8217;s. If you are using
+Ipython, then all properties and methods of a class, can be
+&#8216;tabbed&#8217; out. Methods of the <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> class provide
+convenient ways to plot components of the s-parameters, below is a
+non-exhaustive list of common plotting commands,</p>
+<ul class="simple">
+<li><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_db.html#mwavepy.network.Network.plot_s_db" title="mwavepy.network.Network.plot_s_db"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_db()</span></tt></a> : plot magnitude of s-parameters in log scale</li>
+<li><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_deg.html#mwavepy.network.Network.plot_s_deg" title="mwavepy.network.Network.plot_s_deg"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_deg()</span></tt></a> : plot phase of s-parameters in degrees</li>
+<li><a class="reference internal" href="generated/mwavepy.network.Network.plot_s_smith.html#mwavepy.network.Network.plot_s_smith" title="mwavepy.network.Network.plot_s_smith"><tt class="xref py py-func docutils literal"><span class="pre">Network.plot_s_smith()</span></tt></a> : plot complex s-parameters on Smith Chart</li>
+</ul>
+<p>For example, to create a 2-port <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> from a touchstone file,
+and then plot all s-parameters on the Smith Chart.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">pylab</span>
+<span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
+
+<span class="c"># create a Network type from a touchstone file</span>
+<span class="n">ring_slot</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;ring slot.s2p&#39;</span><span class="p">)</span>
+<span class="n">ring_slot</span><span class="o">.</span><span class="n">plot_s_smith</span><span class="p">()</span>
+<span class="n">pylab</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>(<a class="reference external" href="./pyplots/quick_intro/simple_plot.py">Source code</a>, <a class="reference external" href="./pyplots/quick_intro/simple_plot.png">png</a>, <a class="reference external" href="./pyplots/quick_intro/simple_plot.hires.png">hires.png</a>, <a class="reference external" href="./pyplots/quick_intro/simple_plot.pdf">pdf</a>)</p>
+<div class="figure">
+<img alt="_images/simple_plot.png" src="_images/simple_plot.png" />
+</div>
+<p>For more info about plotting see <a class="reference internal" href="examples/basic_plotting.html"><em>Basic Plotting</em></a>.</p>
 </div>
 <div class="section" id="element-wise-operations-linear">
 <h2>Element-wise Operations (Linear)<a class="headerlink" href="#element-wise-operations-linear" title="Permalink to this headline">¶</a></h2>
-<p>Simple element-wise mathematical operations on the scattering parameter matrices are accesable through overloaded operators:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">short</span> <span class="o">+</span> <span class="n">delay_short</span>
-<span class="n">short</span> <span class="o">-</span> <span class="n">delay_short</span>
-<span class="n">short</span> <span class="o">/</span> <span class="n">delay_short</span>
-<span class="n">short</span> <span class="o">*</span> <span class="n">delay_short</span>
+<p>Simple element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">short</span> <span class="o">+</span> <span class="n">delay_short</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">short</span> <span class="o">-</span> <span class="n">delay_short</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">short</span> <span class="o">/</span> <span class="n">delay_short</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">short</span> <span class="o">*</span> <span class="n">delay_short</span>
 </pre></div>
 </div>
 <p>These have various uses. For example, the difference operation returns a network that represents the complex distance between two networks. This can be used to calculate the euclidean norm between two networks like</p>
@@ -153,8 +177,7 @@ Terminating one port of a ideal 3-way splitter can be done like so:</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Quick Introduction</a><ul>
-<li><a class="reference internal" href="#loading-touchstone-files">Loading Touchstone Files</a></li>
+<li><a class="reference internal" href="#">Create Network from Touchstone Files</a><ul>
 <li><a class="reference internal" href="#important-properties">Important Properties</a></li>
 <li><a class="reference internal" href="#element-wise-operations-linear">Element-wise Operations (Linear)</a></li>
 <li><a class="reference internal" href="#cascading-and-embeding-operations-non-linear">Cascading and Embeding Operations (Non-linear)</a></li>
