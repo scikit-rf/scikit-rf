@@ -5,10 +5,7 @@ Plotting
 
 .. currentmodule:: mwavepy.network
 
-This example illustrates how to create common plots. The plotting 
-functions are implemented as methods of the :class:`Network` class, 
-which is provided by the :mod:`mwavepy.network` module. 
-Below is a brief list of the some commonly used plotting functions, 
+This tutorial illustrates how to create common plots associated with microwave networks. The plotting functions are implemented as methods of the :class:`Network` class, which is provided by the :mod:`mwavepy.network` module. Below is a list of the some of the plotting functions, 
 
    
 * :func:`Network.plot_s_re`
@@ -21,6 +18,8 @@ Below is a brief list of the some commonly used plotting functions,
 * :func:`Network.plot_s_rad_unwrapped`
 * :func:`Network.plot_s_smith`
 * :func:`Network.plot_s_complex`
+
+
 
 Return Loss Magnitude
 -----------------------
@@ -50,47 +49,12 @@ Comparing with Simulation
 .. plot:: ./pyplots/plotting/plot_ringslot_simulated_vs_measured.py
    :include-source:
 
-::	
-	
-	# plot unwrapped phase of S11
-	pylab.figure(3)
-	pylab.title('Return Loss (Unwrapped Phase)')
-	horn.plot_s_deg_unwrapped(0,0)
-	
-.. figure::  ../images/Return_Loss(Unwrapped_Phase).png
-   :align:   center
-   :width:	800
+Saving Plots
+-------------
+Plots can be saved in various file formats using the GUI provided by the matplotlib. However, mwavepy provides a convenience function, called :func:`~mwavepy.convenience.save_all_figs`,  that allows all open figures to be saved to disk in multiple file formats, with filenames pulled from each figure's title::
 
-::	
+    >>> mv.save_all_figs('plot_directory', format=['eps','pdf'])
 
 
-
-	# plot complex S11 on smith chart
-	pylab.figure(5)
-	horn.plot_s_smith(0,0, show_legend=False)
-	pylab.title('Return Loss, Smith')
-
-.. figure::  ../images/Return_Loss(Smith).png
-   :align:   center
-   :width:	800
-
-::		
-
-	# plot complex S11 on polar grid
-	pylab.figure(4)
-	horn.plot_s_polar(0,0, show_legend=False)
-	pylab.title('Return Loss, Polar')
-
-.. figure::  ../images/Return_Loss(Polar).png
-   :align:   center
-   :width:	800
-
-::	
-
-
-
-	#  to save all figures, 
-	mv.save_all_figs('.', format = ['png','eps'])
-	
 	
 	
