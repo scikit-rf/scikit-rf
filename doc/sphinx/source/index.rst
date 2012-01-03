@@ -8,8 +8,8 @@ Tutorials:
    :maxdepth: 1
    
    installation
-   quick_intro
-   slow_intro
+   introduction
+   plotting
    calibration
    circuit_design
 
@@ -18,7 +18,6 @@ Examples:
 .. toctree::
    :maxdepth: 1
    
-   examples/basic_plotting
    examples/oneport_calibration
    examples/twoport_calibration
    examples/vna_noise_analysis

@@ -16,7 +16,9 @@ First, import mwavepy and name it something short, like ''mv''::
 
 	import mwavepy as mv
 
-If this produces an error, please see :doc:`installation`. The most fundamental object mwavepy is a n-port :class:`Network`. Commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so.::
+If this produces an error, please see :doc:`installation`. 
+
+The most fundamental object mwavepy is a n-port :class:`Network`. Commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so.::
 	
 	>>> short = mv.Network('short.s1p')
 	>>> delay_short = mv.Network('delay_short.s1p')
