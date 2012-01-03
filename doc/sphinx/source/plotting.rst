@@ -25,29 +25,29 @@ Below is a brief list of the some commonly used plotting functions,
 Return Loss Magnitude
 -----------------------
 
-.. plot:: ./pyplots/basic_plotting/plot_ringslot_mag.py
+.. plot:: ./pyplots/plotting/plot_ringslot_mag.py
    :include-source:
 
 Return Loss Phase
 ---------------------
  
-.. plot:: ./pyplots/basic_plotting/plot_ringslot_phase.py
+.. plot:: ./pyplots/plotting/plot_ringslot_phase.py
    :include-source:
    
 Return Loss Smith
 ---------------------
  
-.. plot:: ./pyplots/basic_plotting/plot_ringslot_smith.py
+.. plot:: ./pyplots/plotting/plot_ringslot_smith.py
    :include-source:
 
 All S-parameters
 ---------------------
-.. plot:: ./pyplots/basic_plotting/plot_ringslot_simulated_mag.py
+.. plot:: ./pyplots/plotting/plot_ringslot_simulated_mag.py
    :include-source:
 
 Comparing with Simulation
 --------------------------
-.. plot:: ./pyplots/basic_plotting/plot_ringslot_simulated_vs_measured.py
+.. plot:: ./pyplots/plotting/plot_ringslot_simulated_vs_measured.py
    :include-source:
 
 ::	

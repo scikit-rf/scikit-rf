@@ -4,7 +4,7 @@ Slow Introduction
 **********************
 
 
-This is a slow  introduction to **mwavepy** for readers who arent especially familiar with python. If you are familiar with python, or are impatient see the :doc:`quick_intro`.
+This is a slow  introduction to **mwavepy** for readers who arent especially familiar with python. If you are familiar with python, or are impatient see the :doc:`introduction`.
 
 **mwavepy**, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don't understand anything on this page, please see the Install page first.
 From a python shell or similar (ie IPython),  the **mwavepy** module can be imported like so::
