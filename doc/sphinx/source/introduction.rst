@@ -1,10 +1,10 @@
-.. _quick-intro:
+.. _introduction:
 
 
 .. currentmodule:: mwavepy.network
 
 *******************
-Quick Introduction
+Introduction
 *******************
 
 This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the :doc:`slow_intro`.
