@@ -1,1 +1,0 @@
-.. automodule:: mwavepy.frequency
