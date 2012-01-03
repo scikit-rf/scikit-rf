@@ -34,6 +34,9 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -151,7 +154,7 @@ by using the contains switch.</p>
 <dd><p class="first">dir: directory of measurements (string)
 contains: will only load measurements who&#8217;s filename contains</p>
 <blockquote>
-this string.</blockquote>
+<div>this string.</div></blockquote>
 <dl class="last docutils">
 <dt>f_unit: frequency unit, to use for all networks. see</dt>
 <dd>frequency.Frequency.unit for info.</dd>
@@ -286,7 +289,7 @@ algorithm</p>
 <p>note:
 the residuals are calculated by:</p>
 <blockquote>
-(self.apply_cal(self.measured[k])-self.ideals[k])</blockquote>
+<div>(self.apply_cal(self.measured[k])-self.ideals[k])</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -321,7 +324,7 @@ form of a list of Network types.</p>
 <p>these residuals are calculated in the &#8216;calibrated domain&#8217;,
 meaning they are</p>
 <blockquote>
-r = (E.inv ** m - i)</blockquote>
+<div>r = (E.inv ** m - i)</div></blockquote>
 <dl class="docutils">
 <dt>where, </dt>
 <dd>r: residual network, 
@@ -361,7 +364,7 @@ each column vector in b (given ax=b)</dd>
 property is referenced (like error_ntwk), but only the first 
 time. if you change something and want to re-run the calibration</p>
 <blockquote>
-use this.</blockquote>
+<div>use this.</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -391,7 +394,7 @@ effects of both biased and un-biased errors</p>
 <dd><p class="first">r: complex residual errors
 std_cs: standard deviation taken accross connections</p>
 <blockquote class="last">
-and standards</blockquote>
+<div>and standards</div></blockquote>
 </dd>
 </dl>
 </dd>
@@ -501,21 +504,21 @@ over <tt class="docutils literal"><span class="pre">[0,</span> <span class="pre"
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>d0, d1, ..., dn</strong> : int</p>
 <blockquote>
-<p>Shape of the output.</p>
-</blockquote>
+<div><p>Shape of the output.</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : ndarray, shape <tt class="docutils literal"><span class="pre">(d0,</span> <span class="pre">d1,</span> <span class="pre">...,</span> <span class="pre">dn)</span></tt></p>
 <blockquote class="last">
-<p>Random values.</p>
-</blockquote>
+<div><p>Random values.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://docs.python.org/dev/library/random.html#random" title="(in Python v3.3)"><tt class="docutils literal"><span class="pre">random</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://docs.python.org/library/random.html#module-random" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">random</span></tt></a></p>
 </div>
 <p class="rubric">Notes</p>
 <p>This is a convenience function. If you want an interface that
@@ -620,7 +623,7 @@ s-matrix or list of  1-port mwavepy.ntwk types.</dd>
 coefficients
 &#8216;residuals&#8217;: a matrix of residuals from the least squared</p>
 <blockquote class="last">
-calculation. see numpy.linalg.lstsq() for more info</blockquote>
+<div>calculation. see numpy.linalg.lstsq() for more info</div></blockquote>
 </dd>
 </dl>
 </dd>
@@ -653,7 +656,7 @@ s-matrix or list of  1-port mwavepy.ntwk types.</dd>
 coefficients
 &#8216;residuals&#8217;: a matrix of residuals from the least squared</p>
 <blockquote>
-calculation. see numpy.linalg.lstsq() for more info</blockquote>
+<div>calculation. see numpy.linalg.lstsq() for more info</div></blockquote>
 <p class="last">&#8216;cov_x&#8217;: covariance matrix</p>
 </dd>
 </dl>
@@ -682,7 +685,7 @@ showProgress: turn printing progress on/off [boolean]
 &#8216;parameter_vector_final&#8217;: final results for parameter vector
 &#8216;mean_residual_list&#8217;: the mean, magnitude of the residuals at each</p>
 <blockquote class="last">
-iteration of calibration. this is the variable being minimized.</blockquote>
+<div>iteration of calibration. this is the variable being minimized.</div></blockquote>
 </dd>
 </dl>
 <p>see  parametricStandard sub-module for more info on them</p>
@@ -707,7 +710,7 @@ showProgress: turn printing progress on/off [boolean]
 &#8216;parameter_vector_final&#8217;: final results for parameter vector
 &#8216;mean_residual_list&#8217;: the mean, magnitude of the residuals at each</p>
 <blockquote class="last">
-iteration of calibration. this is the variable being minimized.</blockquote>
+<div>iteration of calibration. this is the variable being minimized.</div></blockquote>
 </dd>
 </dl>
 <p>see  ParameterizedStandard for more info on them</p>
@@ -732,7 +735,7 @@ showProgress: turn printing progress on/off [boolean]
 &#8216;parameter_vector_final&#8217;: final results for parameter vector
 &#8216;mean_residual_list&#8217;: the mean, magnitude of the residuals at each</p>
 <blockquote class="last">
-iteration of calibration. this is the variable being minimized.</blockquote>
+<div>iteration of calibration. this is the variable being minimized.</div></blockquote>
 </dd>
 </dl>
 <p>see  ParametricStandard for more info on them</p>
@@ -751,21 +754,21 @@ over <tt class="docutils literal"><span class="pre">[0,</span> <span class="pre"
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>d0, d1, ..., dn</strong> : int</p>
 <blockquote>
-<p>Shape of the output.</p>
-</blockquote>
+<div><p>Shape of the output.</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>out</strong> : ndarray, shape <tt class="docutils literal"><span class="pre">(d0,</span> <span class="pre">d1,</span> <span class="pre">...,</span> <span class="pre">dn)</span></tt></p>
 <blockquote class="last">
-<p>Random values.</p>
-</blockquote>
+<div><p>Random values.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
 <div class="admonition-see-also admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference external" href="http://docs.python.org/dev/library/random.html#random" title="(in Python v3.3)"><tt class="docutils literal"><span class="pre">random</span></tt></a></p>
+<p class="last"><a class="reference external" href="http://docs.python.org/library/random.html#module-random" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">random</span></tt></a></p>
 </div>
 <p class="rubric">Notes</p>
 <p>This is a convenience function. If you want an interface that
@@ -815,7 +818,7 @@ mwavepy.virtualInstruments.vna.py</dd>
 <p>Doug Rytting &#8221; Network Analyzer Error Models and Calibration Methods&#8221;
 RF 8 Microwave. Measurements for Wireless Applications (ARFTG/NIST)</p>
 <blockquote>
-Short Course ...</blockquote>
+<div>Short Course ...</div></blockquote>
 <p>Speciale, R.A.; , &#8220;A Generalization of the TSD Network-Analyzer
 Calibration Procedure, Covering n-Port Scattering-Parameter
 Measurements, Affected by Leakage Errors,&#8221; Microwave Theory and
@@ -914,12 +917,15 @@ Model including Switch Terms&#8217; by Roger B. Marks</dd>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011, alex arsenovic.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

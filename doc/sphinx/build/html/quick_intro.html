@@ -7,7 +7,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Create Network from Touchstone Files &mdash; mwavepy v1.5 documentation</title>
+    <title>Quick Introduction &mdash; mwavepy v1.5 documentation</title>
     <link rel="stylesheet" href="_static/scipy.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -37,6 +37,9 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="slow_intro.html" title="Slow Introduction"
              accesskey="N">next</a> |</li>
         <li class="right" >
@@ -51,9 +54,11 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <p>This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the <a class="reference internal" href="slow_intro.html"><em>Slow Introduction</em></a>.</p>
+  <div class="section" id="quick-introduction">
+<span id="quick-intro"></span><h1>Quick Introduction<a class="headerlink" href="#quick-introduction" title="Permalink to this headline">¶</a></h1>
+<p>This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the <a class="reference internal" href="slow_intro.html"><em>Slow Introduction</em></a>.</p>
 <div class="section" id="create-network-from-touchstone-files">
-<h1>Create Network from Touchstone Files<a class="headerlink" href="#create-network-from-touchstone-files" title="Permalink to this headline">¶</a></h1>
+<h2>Create Network from Touchstone Files<a class="headerlink" href="#create-network-from-touchstone-files" title="Permalink to this headline">¶</a></h2>
 <p>First, import mwavepy and name it something short, like &#8216;&#8217;mv&#8217;&#8216;:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 </pre></div>
@@ -62,6 +67,7 @@
 <div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;short.s1p&#39;</span><span class="p">)</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">delay_short</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Network</span><span class="p">(</span><span class="s">&#39;delay_short.s1p&#39;</span><span class="p">)</span>
 </pre></div>
+</div>
 </div>
 <div class="section" id="important-properties">
 <h2>Important Properties<a class="headerlink" href="#important-properties" title="Permalink to this headline">¶</a></h2>
@@ -95,7 +101,7 @@ and then plot all s-parameters on the Smith Chart.</p>
 </div>
 <p>(<a class="reference external" href="./pyplots/quick_intro/simple_plot.py">Source code</a>, <a class="reference external" href="./pyplots/quick_intro/simple_plot.png">png</a>, <a class="reference external" href="./pyplots/quick_intro/simple_plot.hires.png">hires.png</a>, <a class="reference external" href="./pyplots/quick_intro/simple_plot.pdf">pdf</a>)</p>
 <div class="figure">
-<img alt="_images/simple_plot.png" src="_images/simple_plot.png" />
+<img alt="_images/simple_plot2.png" src="_images/simple_plot2.png" />
 </div>
 <p>For more info about plotting see <a class="reference internal" href="examples/basic_plotting.html"><em>Basic Plotting</em></a>.</p>
 </div>
@@ -108,12 +114,12 @@ and then plot all s-parameters on the Smith Chart.</p>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">short</span> <span class="o">*</span> <span class="n">delay_short</span>
 </pre></div>
 </div>
-<p>These have various uses. For example, the difference operation returns a network that represents the complex distance between two networks. This can be used to calculate the euclidean norm between two networks like</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="n">short</span><span class="o">-</span> <span class="n">delay_short</span><span class="p">)</span><span class="o">.</span><span class="n">s_mag</span>
+<p>These operations return <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> types, so all :class:` methods and properties of are available on the result. These have various uses. For example, the difference operation (&#8216;-&#8216;) can be used to calculate the complex distance between two networks</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">distance</span> <span class="o">=</span> <span class="p">(</span><span class="n">short</span><span class="o">-</span> <span class="n">delay_short</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>or you can plot it:</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="p">(</span><span class="n">short</span> <span class="o">-</span> <span class="n">delay_short</span><span class="p">)</span><span class="o">.</span><span class="n">plot_s_mag</span><span class="p">()</span>
+<p>Because this returns <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> type, the distance is accessed through the <a class="reference internal" href="generated/mwavepy.network.Network.s.html#mwavepy.network.Network.s" title="mwavepy.network.Network.s"><tt class="xref py py-attr docutils literal"><span class="pre">Network.s</span></tt></a> property. The plotting methods of the <a class="reference internal" href="generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> type can also be used:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="p">(</span><span class="n">short</span> <span class="o">-</span> <span class="n">delay_short</span><span class="p">)</span><span class="o">.</span><span class="n">plot_s_mag</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>Another use is calculating or plotting de-trended phase using the division operator. This can be done by:</p>
@@ -177,7 +183,8 @@ Terminating one port of a ideal 3-way splitter can be done like so:</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Create Network from Touchstone Files</a><ul>
+<li><a class="reference internal" href="#">Quick Introduction</a><ul>
+<li><a class="reference internal" href="#create-network-from-touchstone-files">Create Network from Touchstone Files</a></li>
 <li><a class="reference internal" href="#important-properties">Important Properties</a></li>
 <li><a class="reference internal" href="#element-wise-operations-linear">Element-wise Operations (Linear)</a></li>
 <li><a class="reference internal" href="#cascading-and-embeding-operations-non-linear">Cascading and Embeding Operations (Non-linear)</a></li>
@@ -230,6 +237,9 @@ Terminating one port of a ideal 3-way splitter can be done like so:</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
           <a href="slow_intro.html" title="Slow Introduction"
              >next</a> |</li>
         <li class="right" >
@@ -240,7 +250,7 @@ Terminating one port of a ideal 3-way splitter can be done like so:</p>
     </div>
     <div class="footer">
         &copy; Copyright 2011, alex arsenovic.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

@@ -34,6 +34,9 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -108,7 +111,7 @@ qucs project ( qucs.sourceforge.net/ ).</p>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">match</span></tt></td>
 <td></td>
 </tr>
-<tr><td><a class="reference external" href="http://docs.python.org/dev/library/functions.html#open" title="(in Python v3.3)"><tt class="docutils literal"><span class="pre">open</span></tt></a></td>
+<tr><td><a class="reference external" href="http://docs.python.org/library/functions.html#open" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">open</span></tt></a></td>
 <td></td>
 </tr>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">short</span></tt></td>
@@ -199,27 +202,27 @@ qucs project ( qucs.sourceforge.net/ ).</p>
 <dt>A TEM transmission line, defined in terms of  distributed impedance</dt>
 <dd><p class="first">and admittance values. This class takes the following information,</p>
 <blockquote class="last">
-distributed Capacitance, C
+<div>distributed Capacitance, C
 distributed Inductance, I
 distributed Resistance, R
-distributed Conductance, G</blockquote>
+distributed Conductance, G</div></blockquote>
 </dd>
 </dl>
 <p>from these the following quantities may be calculated, which
 are functions of angular frequency (w):</p>
 <blockquote>
-distributed Impedance,  Z&#8217;(w) = wR + jwI
-distributed Admittance, Y&#8217;(w) = wG + jwC</blockquote>
+<div>distributed Impedance,  Z&#8217;(w) = wR + jwI
+distributed Admittance, Y&#8217;(w) = wG + jwC</div></blockquote>
 <p>from these we can calculate properties which define their wave 
 behavior:</p>
 <blockquote>
-characteristic Impedance, Z0(w) = sqrt(Z(w)/Y&#8217;(w))              [ohms]
-propagation Constant,   gamma(w) = sqrt(Z(w)*Y&#8217;(w))     [none]</blockquote>
+<div>characteristic Impedance, Z0(w) = sqrt(Z(w)/Y&#8217;(w))              [ohms]
+propagation Constant,   gamma(w) = sqrt(Z(w)*Y&#8217;(w))     [none]</div></blockquote>
 <p>given the following definitions, the components of propagation 
 constant are interpreted as follows:</p>
 <blockquote>
-positive real(gamma) = attenuation
-positive imag(gamma) = forward propagation</blockquote>
+<div>positive real(gamma) = attenuation
+positive imag(gamma) = forward propagation</div></blockquote>
 <p class="rubric">Methods</p>
 <table border="1" class="docutils">
 <colgroup>
@@ -269,7 +272,7 @@ positive imag(gamma) = forward propagation</blockquote>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">match</span></tt></td>
 <td></td>
 </tr>
-<tr><td><a class="reference external" href="http://docs.python.org/dev/library/functions.html#open" title="(in Python v3.3)"><tt class="docutils literal"><span class="pre">open</span></tt></a></td>
+<tr><td><a class="reference external" href="http://docs.python.org/library/functions.html#open" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">open</span></tt></a></td>
 <td></td>
 </tr>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">short</span></tt></td>
@@ -315,7 +318,7 @@ positive imag(gamma) = forward propagation</blockquote>
 <tt class="descname">Y</tt><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit.Y" title="Permalink to this definition">¶</a></dt>
 <dd><p>distributed Admittance,in ohms^-1 /m</p>
 <blockquote>
-Y&#8217;(w) = wG + jwC</blockquote>
+<div>Y&#8217;(w) = wG + jwC</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
@@ -323,7 +326,7 @@ Y&#8217;(w) = wG + jwC</blockquote>
 <tt class="descname">Z</tt><a class="headerlink" href="#mwavepy.media.distributedCircuit.DistributedCircuit.Z" title="Permalink to this definition">¶</a></dt>
 <dd><p>distributed Impedance, ohms/m.</p>
 <blockquote>
-Z&#8217;(w) = wR + jwI</blockquote>
+<div>Z&#8217;(w) = wR + jwI</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -368,10 +371,10 @@ relative permeability.</p>
 <p>The field properties of space are related to a disctributed 
 circuit transmission line model given in circuit theory by:</p>
 <blockquote>
-distributed_capacitance = real(ep_0*ep_r)
+<div>distributed_capacitance = real(ep_0*ep_r)
 distributed_resistance = imag(ep_0*ep_r)
 distributed_inductance = real(mu_0*mu_r)
-distributed_conductance = imag(mu_0*mu_r)</blockquote>
+distributed_conductance = imag(mu_0*mu_r)</div></blockquote>
 <dl class="docutils">
 <dt>note: this class&#8217;s inheritence is;</dt>
 <dd>Media-&gt;DistributedCircuit-&gt;FreeSpace</dd>
@@ -425,7 +428,7 @@ distributed_conductance = imag(mu_0*mu_r)</blockquote>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">match</span></tt></td>
 <td></td>
 </tr>
-<tr><td><a class="reference external" href="http://docs.python.org/dev/library/functions.html#open" title="(in Python v3.3)"><tt class="docutils literal"><span class="pre">open</span></tt></a></td>
+<tr><td><a class="reference external" href="http://docs.python.org/library/functions.html#open" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">open</span></tt></a></td>
 <td></td>
 </tr>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">short</span></tt></td>
@@ -590,9 +593,9 @@ Media instances themselves.</p>
 d: the length (see unit argument) [number]
 unit: string specifying the units of d. possible options are</p>
 <blockquote>
-&#8216;m&#8217;: meters, physical length in meters (default)
+<div>&#8216;m&#8217;: meters, physical length in meters (default)
 &#8216;deg&#8217;:degrees, electrical length in degrees
-&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+&#8216;rad&#8217;:radians, electrical length in radians</div></blockquote>
 <dl class="last docutils">
 <dt><a href="#id4"><span class="problematic" id="id5">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
 <dd>called initially to create a &#8216;blank&#8217; network. the kwarg
@@ -616,9 +619,9 @@ self.line(d,**kwargs) ** self.load(Gamma0, <a href="#id6"><span class="problemat
 <dd><p class="first">d: the length (see unit argument) [number]
 unit: string specifying the units of d. possible options are</p>
 <blockquote>
-&#8216;m&#8217;: meters, physical length in meters (default)
+<div>&#8216;m&#8217;: meters, physical length in meters (default)
 &#8216;deg&#8217;:degrees, electrical length in degrees
-&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+&#8216;rad&#8217;:radians, electrical length in radians</div></blockquote>
 <dl class="last docutils">
 <dt><a href="#id8"><span class="problematic" id="id9">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
 <dd>called initially to create a &#8216;blank&#8217; network. the kwarg
@@ -642,9 +645,9 @@ self.line(d,**kwargs) ** self.open(<a href="#id10"><span class="problematic" id=
 <dd><p class="first">d: the length (see unit argument) [number]
 unit: string specifying the units of d. possible options are</p>
 <blockquote>
-&#8216;m&#8217;: meters, physical length in meters (default)
+<div>&#8216;m&#8217;: meters, physical length in meters (default)
 &#8216;deg&#8217;:degrees, electrical length in degrees
-&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+&#8216;rad&#8217;:radians, electrical length in radians</div></blockquote>
 <dl class="last docutils">
 <dt><a href="#id12"><span class="problematic" id="id13">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
 <dd>called initially to create a &#8216;blank&#8217; network. the kwarg
@@ -731,9 +734,9 @@ as the self.frequency.npoints</dd>
 <dd><p class="first">d: the length (see unit argument) [number]
 unit: string specifying the units of d. possible options are</p>
 <blockquote>
-&#8216;m&#8217;: meters, physical length in meters (default)
+<div>&#8216;m&#8217;: meters, physical length in meters (default)
 &#8216;deg&#8217;:degrees, electrical length in degrees
-&#8216;rad&#8217;:radians, electrical length in radians</blockquote>
+&#8216;rad&#8217;:radians, electrical length in radians</div></blockquote>
 <dl class="last docutils">
 <dt><a href="#id18"><span class="problematic" id="id19">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
 <dd>called initially to create a &#8216;blank&#8217; network. the kwarg
@@ -758,7 +761,7 @@ my_media.line(90, &#8216;deg&#8217;, z0=50)</dd>
 <dd><p class="first">Gamma0: reflection coefficient of load (not in db)
 nports: number of ports. creates a short on all ports,</p>
 <blockquote>
-default is 1 [int]</blockquote>
+<div>default is 1 [int]</div></blockquote>
 <dl class="last docutils">
 <dt><a href="#id20"><span class="problematic" id="id21">**</span></a>kwargs: key word arguments passed to match(), which is </dt>
 <dd>called initially to create a &#8216;blank&#8217; network</dd>
@@ -778,9 +781,9 @@ default is 1 [int]</blockquote>
 <dd><p class="first">nports: number of ports [int]
 z0: characterisitc impedance [number of array]. defaults is</p>
 <blockquote>
-None, in which case the Media&#8217;s z0 is used. 
+<div>None, in which case the Media&#8217;s z0 is used. 
 Otherwise this sets the resultant network&#8217;s z0. See
-Network.z0 property for more info</blockquote>
+Network.z0 property for more info</div></blockquote>
 <p class="last"><a href="#id22"><span class="problematic" id="id23">**</span></a>kwargs: key word arguments passed to Network Constructor</p>
 </dd>
 <dt>returns:</dt>
@@ -921,7 +924,7 @@ Network.z0 property for more info</blockquote>
 <dd><p class="first">nports: number of ports [int]
 <a href="#id50"><span class="problematic" id="id51">**</span></a>kwargs: key word arguments passed to match(), which is</p>
 <blockquote class="last">
-called initially to create a &#8216;blank&#8217; network.</blockquote>
+<div>called initially to create a &#8216;blank&#8217; network.</div></blockquote>
 </dd>
 <dt>returns:</dt>
 <dd>a n-port Network [mwavepy.Network]</dd>
@@ -1063,7 +1066,7 @@ mode index.</p>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">match</span></tt></td>
 <td></td>
 </tr>
-<tr><td><a class="reference external" href="http://docs.python.org/dev/library/functions.html#open" title="(in Python v3.3)"><tt class="docutils literal"><span class="pre">open</span></tt></a></td>
+<tr><td><a class="reference external" href="http://docs.python.org/library/functions.html#open" title="(in Python v2.7)"><tt class="xref py py-obj docutils literal"><span class="pre">open</span></tt></a></td>
 <td></td>
 </tr>
 <tr><td><tt class="xref py py-obj docutils literal"><span class="pre">short</span></tt></td>
@@ -1226,12 +1229,15 @@ REAL  for non-propagating modes,</dd>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011, alex arsenovic.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

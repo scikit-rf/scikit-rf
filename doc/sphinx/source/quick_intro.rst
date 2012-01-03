@@ -5,12 +5,12 @@
 
 *******************
 Quick Introduction
-*********************
+*******************
 
 This quick intro of basic mwavepy usage. It is aimed at those who are familiar with python, or are impatient. If you want a slower introduction, see the :doc:`slow_intro`.
 
 Create Network from Touchstone Files
-+++++++++++++++++++++++++++++++++++++
+-------------------------------------
 
 First, import mwavepy and name it something short, like ''mv''::
 
@@ -22,7 +22,7 @@ If this produces an error, please see :doc:`installation`. The most fundamental 
 	>>> delay_short = mv.Network('delay_short.s1p')
 
 Important Properties
-+++++++++++++++++++++++++
+-------------------------------------
 	
 The important qualities of a :class:`Network` are provided by the 
 properties:
@@ -51,7 +51,7 @@ For more info about plotting see :doc:`examples/basic_plotting`.
 
 
 Element-wise Operations (Linear)
-++++++++++++++++++++++++++++++++
+-------------------------------------
 	
 Simple element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators::
 
@@ -75,7 +75,7 @@ Another use is calculating or plotting de-trended phase using the division opera
 	
 	
 Cascading and Embeding Operations (Non-linear)
-++++++++++++++++++++++++++++++++++++++++++++++++
+----------------------------------------------
 Cascading and de-embeding 2-port Networks is done so frequently, that it can also be done though operators. The cascade function is called by the power operator,  ``**``, and the de-embed function is done by cascading the inverse of a network, which is implemented by the property ``inv``. Given the following Networks::
 
 	cable = mv.Network('cable.s2p')
@@ -98,7 +98,7 @@ if you want to de-embed from the other side you can use the flip() function prov
 	dut ** (cable.inv).flip()
 
 Sub Networks
-++++++++++++++++++++++++++
+---------------------
 Frequently, the individual responses of a higher order network are of interest. Network type provide way quick access like so::
 
 	reflection_off_cable = cable.s11
@@ -106,7 +106,7 @@ Frequently, the individual responses of a higher order network are of interest. 
 
 
 Connecting Multi-ports 
-+++++++++++++++++++++++++
+------------------------
 **mwavepy** supports the connection of arbitrary ports of N-port networks. It does this using an algorithm call sub-network growth. This connection process takes into account port impedances.
 Terminating one port of a ideal 3-way splitter can be done like so::
 

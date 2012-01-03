@@ -34,6 +34,9 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -55,6 +58,27 @@
 <dt id="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor">
 <em class="property">class </em><tt class="descclassname">mwavepy.virtualInstruments.futekLoadCell.</tt><tt class="descname">FutekMonitor</tt><big>(</big><em>ax=None</em>, <em>window_length=-1</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.get_data_and_plot" title="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.get_data_and_plot"><tt class="xref py py-obj docutils literal"><span class="pre">get_data_and_plot</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_axis_scale" title="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_axis_scale"><tt class="xref py py-obj docutils literal"><span class="pre">update_axis_scale</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_data" title="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_data"><tt class="xref py py-obj docutils literal"><span class="pre">update_data</span></tt></a></td>
+<td></td>
+</tr>
+<tr><td><a class="reference internal" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_line" title="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.update_line"><tt class="xref py py-obj docutils literal"><span class="pre">update_line</span></tt></a></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 <dl class="method">
 <dt id="mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.get_data_and_plot">
 <tt class="descname">get_data_and_plot</tt><big>(</big><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.FutekMonitor.get_data_and_plot" title="Permalink to this definition">¶</a></dt>
@@ -125,6 +149,27 @@
 <dt id="mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_socket">
 <em class="property">class </em><tt class="descclassname">mwavepy.virtualInstruments.futekLoadCell.</tt><tt class="descname">Futek_USB210_socket</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="headerlink" href="#mwavepy.virtualInstruments.futekLoadCell.Futek_USB210_socket" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader" title="mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader"><tt class="xref py py-class docutils literal"><span class="pre">mwavepy.virtualInstruments.generalSocketReader.GeneralSocketReader</span></tt></a></p>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr><td><tt class="xref py py-obj docutils literal"><span class="pre">close</span></tt></td>
+<td></td>
+</tr>
+<tr><td><tt class="xref py py-obj docutils literal"><span class="pre">connect</span></tt></td>
+<td></td>
+</tr>
+<tr><td><tt class="xref py py-obj docutils literal"><span class="pre">receive</span></tt></td>
+<td></td>
+</tr>
+<tr><td><tt class="xref py py-obj docutils literal"><span class="pre">send</span></tt></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </div>
@@ -181,9 +226,9 @@ gsr.data_point  # implicityly calls send() then receive()</dd>
 <dd><p>tmp = []
 for n in range(self.avg_len):</p>
 <blockquote>
-sleep(1./self.sample_rate)
+<div>sleep(1./self.sample_rate)
 self.send(self.query_string)
-tmp.append(float(self.receive()))</blockquote>
+tmp.append(float(self.receive()))</div></blockquote>
 <p>return npy.mean(tmp)</p>
 </dd></dl>
 
@@ -274,12 +319,15 @@ tmp.append(float(self.receive()))</blockquote>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011, alex arsenovic.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

@@ -34,6 +34,9 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>  
@@ -62,15 +65,15 @@ and import modules themselves for coherent  structured referencing</p>
 some functions, which cant be categorized as anything better than 
 general conviniencies.</p>
 <blockquote>
-<dl class="docutils">
+<div><dl class="docutils">
 <dt>Pre-initialized classes include:</dt>
 <dd>Frequency Objects for standard frequency bands
 Media objects for standard waveguide bands,</dd>
 </dl>
-</blockquote>
+</div></blockquote>
 <dl class="function">
 <dt id="mwavepy.convenience.add_markers_to_lines">
-<tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">add_markers_to_lines</tt><big>(</big><em>ax=None</em>, <em>marker_list=</em><span class="optional">[</span>, <em>'o'</em>, <em>'D'</em>, <em>'s'</em>, <em>'+'</em>, <em>'x'</em><span class="optional">]</span>, <em>markevery=10</em><big>)</big><a class="headerlink" href="#mwavepy.convenience.add_markers_to_lines" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">add_markers_to_lines</tt><big>(</big><em>ax=None, marker_list=['o', 'D', 's', '+', 'x'], markevery=10</em><big>)</big><a class="headerlink" href="#mwavepy.convenience.add_markers_to_lines" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="function">
@@ -107,17 +110,17 @@ it will use current axes.</p>
 
 <dl class="function">
 <dt id="mwavepy.convenience.save_all_figs">
-<tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">save_all_figs</tt><big>(</big><em>dir='./'</em>, <em>format=</em><span class="optional">[</span>, <em>'eps'</em>, <em>'pdf'</em>, <em>'png'</em><span class="optional">]</span><big>)</big><a class="headerlink" href="#mwavepy.convenience.save_all_figs" title="Permalink to this definition">¶</a></dt>
+<tt class="descclassname">mwavepy.convenience.</tt><tt class="descname">save_all_figs</tt><big>(</big><em>dir='./', format=['eps', 'pdf', 'png']</em><big>)</big><a class="headerlink" href="#mwavepy.convenience.save_all_figs" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 </div>
 <div class="section" id="module-mwavepy.frequency">
 <span id="frequency-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">frequency</span></tt> Module<a class="headerlink" href="#module-mwavepy.frequency" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="frequency-mwavepy-frequency">
-<h3>frequency (<a class="reference internal" href="#module-mwavepy.frequency"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.frequency</span></tt></a>)<a class="headerlink" href="#frequency-mwavepy-frequency" title="Permalink to this headline">¶</a></h3>
+<h3>frequency (<a class="reference internal" href="../frequency.html#module-mwavepy.frequency" title="mwavepy.frequency"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.frequency</span></tt></a>)<a class="headerlink" href="#frequency-mwavepy-frequency" title="Permalink to this headline">¶</a></h3>
 <p>Provides a frequency object and related functions.</p>
 <p>Most of the functionality is provided as methods and properties of the
-<a class="reference internal" href="#mwavepy.frequency.Frequency" title="mwavepy.frequency.Frequency"><tt class="xref py py-class docutils literal"><span class="pre">Frequency</span></tt></a> Class.</p>
+<a class="reference internal" href="../generated/mwavepy.frequency.Frequency.html#mwavepy.frequency.Frequency" title="mwavepy.frequency.Frequency"><tt class="xref py py-class docutils literal"><span class="pre">Frequency</span></tt></a> Class.</p>
 <div class="section" id="frequency-class">
 <h4>Frequency Class<a class="headerlink" href="#frequency-class" title="Permalink to this headline">¶</a></h4>
 <table border="1" class="docutils">
@@ -126,7 +129,7 @@ it will use current axes.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr><td><a class="reference internal" href="#mwavepy.frequency.Frequency" title="mwavepy.frequency.Frequency"><tt class="xref py py-obj docutils literal"><span class="pre">Frequency</span></tt></a>(start,&nbsp;stop,&nbsp;npoints[,&nbsp;unit,&nbsp;...])</td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.frequency.Frequency.html#mwavepy.frequency.Frequency" title="mwavepy.frequency.Frequency"><tt class="xref py py-obj docutils literal"><span class="pre">Frequency</span></tt></a>(start,&nbsp;stop,&nbsp;npoints[,&nbsp;unit,&nbsp;...])</td>
 <td>represents a frequency band.</td>
 </tr>
 </tbody>
@@ -143,7 +146,7 @@ stop: stoping frequency  (in Hz)
 npoints: number of points, an int
 unit: unit which to scale a formated axis, when accesssed. see</p>
 <blockquote class="last">
-formattedAxis</blockquote>
+<div>formattedAxis</div></blockquote>
 </dd>
 </dl>
 <p>frequently many calcluations are made in a given band , so this class 
@@ -156,10 +159,10 @@ frequency info.</p>
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr><td><a class="reference internal" href="#mwavepy.frequency.Frequency.from_f" title="mwavepy.frequency.Frequency.from_f"><tt class="xref py py-obj docutils literal"><span class="pre">from_f</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.frequency.Frequency.from_f.html#mwavepy.frequency.Frequency.from_f" title="mwavepy.frequency.Frequency.from_f"><tt class="xref py py-obj docutils literal"><span class="pre">from_f</span></tt></a></td>
 <td></td>
 </tr>
-<tr><td><a class="reference internal" href="#mwavepy.frequency.Frequency.labelXAxis" title="mwavepy.frequency.Frequency.labelXAxis"><tt class="xref py py-obj docutils literal"><span class="pre">labelXAxis</span></tt></a></td>
+<tr><td><a class="reference internal" href="../generated/mwavepy.frequency.Frequency.labelXAxis.html#mwavepy.frequency.Frequency.labelXAxis" title="mwavepy.frequency.Frequency.labelXAxis"><tt class="xref py py-obj docutils literal"><span class="pre">labelXAxis</span></tt></a></td>
 <td></td>
 </tr>
 </tbody>
@@ -187,7 +190,7 @@ frequency info.</p>
 <dd><p>alternative constructor from a frequency vector,
 takes:</p>
 <blockquote>
-f: frequency array (default in Hz)</blockquote>
+<div>f: frequency array (default in Hz)</div></blockquote>
 <dl class="docutils">
 <dt>returns:</dt>
 <dd>mwavepy.Frequency object</dd>
@@ -308,11 +311,11 @@ imag: imaginary part of input</dd>
 <p>takes: complex ndarray 
 return:</p>
 <blockquote>
-c_real: real part
+<div>c_real: real part
 c_imag: imaginary part
 c_angle: angle in degrees
 c_mag:  magnitude
-c_arc:  arclength from real axis, angle*magnitude</blockquote>
+c_arc:  arclength from real axis, angle*magnitude</div></blockquote>
 </dd></dl>
 
 <dl class="function">
@@ -350,11 +353,11 @@ returns 1 or 0</p>
 <tt class="descclassname">mwavepy.mathFunctions.</tt><tt class="descname">magnitude_2_db</tt><big>(</big><em>input</em><big>)</big><a class="headerlink" href="#mwavepy.mathFunctions.magnitude_2_db" title="Permalink to this definition">¶</a></dt>
 <dd><p>converts magnitude to db</p>
 <blockquote>
-<dl class="docutils">
+<div><dl class="docutils">
 <dt>db is given by </dt>
 <dd>20*log10(<a href="#id22"><span class="problematic" id="id23">|z|</span></a>)</dd>
 </dl>
-</blockquote>
+</div></blockquote>
 <p>where z is a complex number</p>
 </dd></dl>
 
@@ -375,7 +378,7 @@ returns 1 or 0</p>
 <dt id="mwavepy.mathFunctions.null">
 <tt class="descclassname">mwavepy.mathFunctions.</tt><tt class="descname">null</tt><big>(</big><em>A</em>, <em>eps=1e-15</em><big>)</big><a class="headerlink" href="#mwavepy.mathFunctions.null" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
-calculates the null space of matrix A.</blockquote>
+<div>calculates the null space of matrix A.</div></blockquote>
 <p>i found this on stack overflow.</p>
 </dd></dl>
 
@@ -385,9 +388,9 @@ calculates the null space of matrix A.</blockquote>
 <dd><p>convert a one sided complex spectrum into a real time-signal.
 takes</p>
 <blockquote>
-f: frequency array, 
+<div>f: frequency array, 
 y: complex PSD arary 
-windowType: windowing function, defaults to rect</blockquote>
+windowType: windowing function, defaults to rect</div></blockquote>
 <dl class="docutils">
 <dt>returns in the form:</dt>
 <dd>[timeVector, signalVector]</dd>
@@ -395,7 +398,7 @@ windowType: windowing function, defaults to rect</blockquote>
 <p>timeVector is in inverse units of the input variable f,
 if spectrum is not baseband then, timeSignal is modulated by</p>
 <blockquote>
-exp(t*2*pi*f[0])</blockquote>
+<div>exp(t*2*pi*f[0])</div></blockquote>
 <p>so keep in mind units, also due to this f must be increasing left to right</p>
 </dd></dl>
 
@@ -427,7 +430,7 @@ exp(t*2*pi*f[0])</blockquote>
 <div class="section" id="module-mwavepy.network">
 <span id="network-module"></span><h2><tt class="xref py py-mod docutils literal"><span class="pre">network</span></tt> Module<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="module-mwavepy.network">
-<span id="network-mwavepy-network"></span><h3>network (<a class="reference internal" href="../network.html#module-mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a>)<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h3>
+<span id="network-mwavepy-network"></span><h3>network (<a class="reference internal" href="../network.html#module-mwavepy.network" title="mwavepy.network"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.network</span></tt></a>)<a class="headerlink" href="#module-mwavepy.network" title="Permalink to this headline">¶</a></h3>
 <p>Provides a n-port network class and associated functions.</p>
 <p>Most of the functionality in this module is provided as methods and
 properties of the <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> Class.</p>
@@ -729,7 +732,7 @@ n_ports: number of ports. defualt to 1</dd>
 numerical bugs.
 takes:</p>
 <blockquote>
-amount: amount to add to s parameters</blockquote>
+<div>amount: amount to add to s parameters</div></blockquote>
 <dl class="docutils">
 <dt>returns:</dt>
 <dd>na</dd>
@@ -746,7 +749,7 @@ amount: amount to add to s parameters</blockquote>
 <dt id="mwavepy.network.Network.passivity">
 <tt class="descname">passivity</tt><a class="headerlink" href="#mwavepy.network.Network.passivity" title="Permalink to this definition">¶</a></dt>
 <dd><blockquote>
-passivity metric for a multi-port network. It returns</blockquote>
+<div>passivity metric for a multi-port network. It returns</div></blockquote>
 <p>a matrix who&#8217;s diagonals are equal to the total power 
 received at all ports, normalized to the power at a single
 excitement  port.</p>
@@ -775,25 +778,25 @@ possibly for a specific port.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>port: int</strong> :</p>
 <blockquote>
-<p>calculate passivity of a given port</p>
-</blockquote>
+<div><p>calculate passivity of a given port</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -845,29 +848,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -895,29 +898,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -945,29 +948,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -995,29 +998,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1045,29 +1048,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1095,29 +1098,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1145,29 +1148,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1195,29 +1198,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1246,29 +1249,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1296,29 +1299,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1346,29 +1349,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1396,29 +1399,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1446,29 +1449,29 @@ lists of integers.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>m</strong> : int, optional</p>
 <blockquote>
-<p>first index</p>
-</blockquote>
+<div><p>first index</p>
+</div></blockquote>
 <p><strong>n</strong> : int, optional</p>
 <blockquote>
-<p>second index</p>
-</blockquote>
+<div><p>second index</p>
+</div></blockquote>
 <p><strong>ax</strong> : matplotlib.Axes object, optional</p>
 <blockquote>
-<p>axes to plot on. in case you want to update an existing 
+<div><p>axes to plot on. in case you want to update an existing 
 plot.</p>
-</blockquote>
+</div></blockquote>
 <p><strong>show_legend</strong> : boolean, optional</p>
 <blockquote>
-<p>to turn legend show legend of not, optional</p>
-</blockquote>
+<div><p>to turn legend show legend of not, optional</p>
+</div></blockquote>
 <p><strong>*args</strong> : arguments, optional</p>
 <blockquote>
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 <p><strong>**kwargs</strong> : keyword arguments, optional</p>
 <blockquote class="last">
-<p>passed to the matplotlib.plot command</p>
-</blockquote>
+<div><p>passed to the matplotlib.plot command</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1512,8 +1515,8 @@ all work is tone in the touchstone class.</dd>
 <p>s-matrix has shape fxnxn, 
 where;</p>
 <blockquote>
-f is frequency axis and,
-n&#8217;s are port indicies</blockquote>
+<div>f is frequency axis and,
+n&#8217;s are port indicies</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
@@ -1644,7 +1647,7 @@ matrix.</p>
 <dd><p>write a touchstone file representing this network.  the only 
 format supported at the moment is :</p>
 <blockquote>
-HZ S RI</blockquote>
+<div>HZ S RI</div></blockquote>
 <dl class="docutils">
 <dt>takes: </dt>
 <dd><dl class="first last docutils">
@@ -1687,14 +1690,14 @@ as it has not <a href="#id26"><span class="problematic" id="id27">set_</span></a
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>list_of_networks: list</strong> :</p>
 <blockquote>
-<p>a list of <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> objects</p>
-</blockquote>
+<div><p>a list of <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a> objects</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwk</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote class="last">
-<p>the resultant averaged Network</p>
-</blockquote>
+<div><p>the resultant averaged Network</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1721,18 +1724,18 @@ as it has not <a href="#id26"><span class="problematic" id="id27">set_</span></a
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
-<p>network <cite>ntwkA</cite></p>
-</blockquote>
+<div><p>network <cite>ntwkA</cite></p>
+</div></blockquote>
 <p><strong>ntwkB</strong> : Network</p>
 <blockquote>
-<p>network <cite>ntwkB</cite></p>
-</blockquote>
+<div><p>network <cite>ntwkB</cite></p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>C</strong> : Network</p>
 <blockquote class="last">
-<p>the resultant network of ntwkA cascaded with ntwkB</p>
-</blockquote>
+<div><p>the resultant network of ntwkA cascaded with ntwkB</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1760,26 +1763,26 @@ account.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
-<p>network &#8216;A&#8217;</p>
-</blockquote>
+<div><p>network &#8216;A&#8217;</p>
+</div></blockquote>
 <p><strong>k</strong> : int</p>
 <blockquote>
-<p>port index on <cite>ntwkA</cite> ( port indecies start from 0 )</p>
-</blockquote>
+<div><p>port index on <cite>ntwkA</cite> ( port indecies start from 0 )</p>
+</div></blockquote>
 <p><strong>ntwkB</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
-<p>network &#8216;B&#8217;</p>
-</blockquote>
+<div><p>network &#8216;B&#8217;</p>
+</div></blockquote>
 <p><strong>l</strong> : int</p>
 <blockquote>
-<p>port index on <cite>ntwkB</cite></p>
-</blockquote>
+<div><p>port index on <cite>ntwkB</cite></p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote class="last">
-<p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
-</blockquote>
+<div><p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1821,26 +1824,26 @@ function operates on, and returns s-matricies. The function
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>A</strong> : numpy.ndarray</p>
 <blockquote>
-<p>S-parameter matrix of <cite>A</cite>, shape is fxnxn</p>
-</blockquote>
+<div><p>S-parameter matrix of <cite>A</cite>, shape is fxnxn</p>
+</div></blockquote>
 <p><strong>k</strong> : int</p>
 <blockquote>
-<p>port index on <cite>A</cite> (port indecies start from 0)</p>
-</blockquote>
+<div><p>port index on <cite>A</cite> (port indecies start from 0)</p>
+</div></blockquote>
 <p><strong>B</strong> : numpy.ndarray</p>
 <blockquote>
-<p>S-parameter matrix of <cite>B</cite>, shape is fxnxn</p>
-</blockquote>
+<div><p>S-parameter matrix of <cite>B</cite>, shape is fxnxn</p>
+</div></blockquote>
 <p><strong>l</strong> : int</p>
 <blockquote>
-<p>port index on <cite>B</cite></p>
-</blockquote>
+<div><p>port index on <cite>B</cite></p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>C</strong> : numpy.ndarray</p>
 <blockquote class="last">
-<p>new S-parameter matrix</p>
-</blockquote>
+<div><p>new S-parameter matrix</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1884,18 +1887,18 @@ recomended that it be used instead of this function.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
-<p>network <cite>ntwkA</cite></p>
-</blockquote>
+<div><p>network <cite>ntwkA</cite></p>
+</div></blockquote>
 <p><strong>ntwkB</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
-<p>network <cite>ntwkB</cite></p>
-</blockquote>
+<div><p>network <cite>ntwkB</cite></p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>C</strong> : Network</p>
 <blockquote class="last">
-<p>the resultant network of  ntwkB de-embeded from ntwkA</p>
-</blockquote>
+<div><p>the resultant network of  ntwkB de-embeded from ntwkA</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1944,22 +1947,22 @@ from 0.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>ntwkA</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote>
-<p>network &#8216;A&#8217;</p>
-</blockquote>
+<div><p>network &#8216;A&#8217;</p>
+</div></blockquote>
 <p><strong>k</strong> : int</p>
 <blockquote>
-<p>port index on ntwkA ( port indecies start from 0 )</p>
-</blockquote>
+<div><p>port index on ntwkA ( port indecies start from 0 )</p>
+</div></blockquote>
 <p><strong>l</strong> : int</p>
 <blockquote>
-<p>port index on ntwkB</p>
-</blockquote>
+<div><p>port index on ntwkB</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>ntwkC</strong> : <a class="reference internal" href="../generated/mwavepy.network.Network.html#mwavepy.network.Network" title="mwavepy.network.Network"><tt class="xref py py-class docutils literal"><span class="pre">Network</span></tt></a></p>
 <blockquote class="last">
-<p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
-</blockquote>
+<div><p>new network of rank (ntwkA.nports+ntwkB.nports -2)-ports</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -1997,22 +2000,22 @@ s-matricies. The function <a class="reference internal" href="../generated/mwave
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>A</strong> : numpy.ndarray</p>
 <blockquote>
-<p>S-parameter matrix of <cite>A</cite>, shape is fxnxn</p>
-</blockquote>
+<div><p>S-parameter matrix of <cite>A</cite>, shape is fxnxn</p>
+</div></blockquote>
 <p><strong>k</strong> : int</p>
 <blockquote>
-<p>port index on <cite>A</cite> (port indecies start from 0)</p>
-</blockquote>
+<div><p>port index on <cite>A</cite> (port indecies start from 0)</p>
+</div></blockquote>
 <p><strong>l</strong> : int</p>
 <blockquote>
-<p>port index on <cite>A</cite></p>
-</blockquote>
+<div><p>port index on <cite>A</cite></p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>C</strong> : numpy.ndarray</p>
 <blockquote class="last">
-<p>new S-parameter matrix</p>
-</blockquote>
+<div><p>new S-parameter matrix</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -2052,15 +2055,15 @@ with itself is unity.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>s</strong> : numpy.ndarray</p>
 <blockquote>
-<p>scattering parameter matrix. shape should be should be 2x2, or
+<div><p>scattering parameter matrix. shape should be should be 2x2, or
 fx2x2</p>
-</blockquote>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>s&#8217;</strong> : numpy.ndarray</p>
 <blockquote class="last">
-<p>inverse scattering parameter matrix.</p>
-</blockquote>
+<div><p>inverse scattering parameter matrix.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -2085,7 +2088,7 @@ fx2x2</p>
 <dd><p class="first">dir  - the path to the dir, passed as a string (defalut is cwd)
 contains - string which filename must contain to be loaded, not</p>
 <blockquote class="last">
-used if None.(default None)</blockquote>
+<div>used if None.(default None)</div></blockquote>
 </dd>
 <dt>returns:</dt>
 <dd><dl class="first last docutils">
@@ -2122,15 +2125,15 @@ networks.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>s</strong> : numpy.ndarray</p>
 <blockquote>
-<p>scattering parameter matrix. shape should be should be 2x2, or
+<div><p>scattering parameter matrix. shape should be should be 2x2, or
 fx2x2</p>
-</blockquote>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>t</strong> : numpy.ndarray</p>
 <blockquote class="last">
-<p>scattering transfer parameters (aka wave cascading matrix)</p>
-</blockquote>
+<div><p>scattering transfer parameters (aka wave cascading matrix)</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -2167,15 +2170,15 @@ parameters.</p>
 <tbody valign="top">
 <tr class="field"><th class="field-name">Parameters :</th><td class="field-body"><p class="first"><strong>t</strong> : numpy.ndarray</p>
 <blockquote>
-<p>scattering transfer parameters, shape should be should be 2x2, or
+<div><p>scattering transfer parameters, shape should be should be 2x2, or
 fx2x2</p>
-</blockquote>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field"><th class="field-name">Returns :</th><td class="field-body"><p class="first"><strong>s</strong> : numpy.ndarray</p>
 <blockquote class="last">
-<p>scattering parameter matrix.</p>
-</blockquote>
+<div><p>scattering parameter matrix.</p>
+</div></blockquote>
 </td>
 </tr>
 </tbody>
@@ -2216,13 +2219,13 @@ fx2x2</p>
 <dd><p>plots the smith chart of a given radius
 takes:</p>
 <blockquote>
-<p>smithR - radius of smith chart
+<div><p>smithR - radius of smith chart
 chart_type: string representing contour type: acceptable values are</p>
 <blockquote>
-&#8216;z&#8217;: lines of constant impedance
-&#8216;y&#8217;: lines of constant admittance</blockquote>
+<div>&#8216;z&#8217;: lines of constant impedance
+&#8216;y&#8217;: lines of constant admittance</div></blockquote>
 <p>ax - matplotlib.axes instance</p>
-</blockquote>
+</div></blockquote>
 </dd></dl>
 
 </div>
@@ -2235,8 +2238,8 @@ chart_type: string representing contour type: acceptable values are</p>
 <dd><p>reflection coefficient at electrical length theta
 takes:</p>
 <blockquote>
-Gamma0: reflection coefficient at theta=0
-theta: electrical length, (may be complex)</blockquote>
+<div>Gamma0: reflection coefficient at theta=0
+theta: electrical length, (may be complex)</div></blockquote>
 <dl class="docutils">
 <dt>returns:</dt>
 <dd>Gamma_in</dd>
@@ -2252,9 +2255,9 @@ theta: electrical length, (may be complex)</blockquote>
 reflection coefficient and characterisitc impedance of the medium
 takes:</p>
 <blockquote>
-z0 - characteristic impedance. 
+<div>z0 - characteristic impedance. 
 Gamma: reflection coefficient
-theta: electrical length of the line, (may be complex)</blockquote>
+theta: electrical length of the line, (may be complex)</div></blockquote>
 <dl class="docutils">
 <dt>returns </dt>
 <dd>zin: input impedance at theta</dd>
@@ -2268,8 +2271,8 @@ theta: electrical length of the line, (may be complex)</blockquote>
 characterisitc impedance of the medium
 takes:</p>
 <blockquote>
-Gamma: reflection coefficient
-z0 - characteristic impedance.</blockquote>
+<div>Gamma: reflection coefficient
+z0 - characteristic impedance.</div></blockquote>
 </dd></dl>
 
 <dl class="function">
@@ -2357,8 +2360,8 @@ propagating part is positive imag part.</p>
 <dd><p>calculates the reflection coefficient for a given input impedance 
 takes:</p>
 <blockquote>
-zl: input (load) impedance [number of array].  
-z0 - characteristic impedance[number of array].</blockquote>
+<div>zl: input (load) impedance [number of array].  
+z0 - characteristic impedance[number of array].</div></blockquote>
 <dl class="docutils">
 <dt>note:</dt>
 <dd>input data is typecasted to 1D complex array</dd>
@@ -2405,8 +2408,8 @@ distributed_impedance: what it says [complex number or array]</dd>
 characterisitc impedance of the medium
 takes:</p>
 <blockquote>
-Gamma: reflection coefficient
-z0 - characteristic impedance.</blockquote>
+<div>Gamma: reflection coefficient
+z0 - characteristic impedance.</div></blockquote>
 </dd></dl>
 
 <dl class="function">
@@ -2416,9 +2419,9 @@ z0 - characteristic impedance.</blockquote>
 reflection coefficient and characterisitc impedance of the medium
 takes:</p>
 <blockquote>
-z0 - characteristic impedance. 
+<div>z0 - characteristic impedance. 
 Gamma: reflection coefficient
-theta: electrical length of the line, (may be complex)</blockquote>
+theta: electrical length of the line, (may be complex)</div></blockquote>
 <dl class="docutils">
 <dt>returns </dt>
 <dd>zin: input impedance at theta</dd>
@@ -2431,8 +2434,8 @@ theta: electrical length of the line, (may be complex)</blockquote>
 <dd><p>reflection coefficient at electrical length theta
 takes:</p>
 <blockquote>
-Gamma0: reflection coefficient at theta=0
-theta: electrical length, (may be complex)</blockquote>
+<div>Gamma0: reflection coefficient at theta=0
+theta: electrical length, (may be complex)</div></blockquote>
 <dl class="docutils">
 <dt>returns:</dt>
 <dd>Gamma_in</dd>
@@ -2498,8 +2501,8 @@ deg: return in degrees or not. [boolean].</p>
 <dd><p>calculates the reflection coefficient for a given input impedance 
 takes:</p>
 <blockquote>
-zl: input (load) impedance [number of array].  
-z0 - characteristic impedance[number of array].</blockquote>
+<div>zl: input (load) impedance [number of array].  
+z0 - characteristic impedance[number of array].</div></blockquote>
 <dl class="docutils">
 <dt>note:</dt>
 <dd>input data is typecasted to 1D complex array</dd>
@@ -2593,8 +2596,8 @@ the frequency vector (in Hz) and the s-parameters are a 3d numpy array.
 The values of the sparameters are complex number.
 usage:</p>
 <blockquote>
-f,a = self.sgetparameter_arrays()
-s11 = a[:,0,0]</blockquote>
+<div>f,a = self.sgetparameter_arrays()
+s11 = a[:,0,0]</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -2603,10 +2606,10 @@ s11 = a[:,0,0]</blockquote>
 <dd><p>get the data of the sparameter with the given format.
 supported formats are:</p>
 <blockquote>
-orig:  unmodified s-parameter data
+<div>orig:  unmodified s-parameter data
 ri:    data in real/imaginary
 ma:    data in magnitude and angle (degree)
-db:    data in log magnitute and angle (degree)</blockquote>
+db:    data in log magnitute and angle (degree)</div></blockquote>
 <p>Returns a list of numpy.arrays</p>
 </dd></dl>
 
@@ -2617,7 +2620,7 @@ db:    data in log magnitute and angle (degree)</blockquote>
 The names are different for each format.
 posible format parameters:</p>
 <blockquote>
-ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
+<div>ri, ma, db, orig  (where orig refers to one of the three others)</div></blockquote>
 <p>returns a list of strings.</p>
 </dd></dl>
 
@@ -2774,12 +2777,15 @@ ri, ma, db, orig  (where orig refers to one of the three others)</blockquote>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="../np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
         <li><a href="../index.html">mwavepy v1.5 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
         &copy; Copyright 2011, alex arsenovic.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>

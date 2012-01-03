@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="mwavepy v1.5 documentation" href="index.html" />
-    <link rel="next" title="Examples" href="examples.html" />
+    <link rel="next" title="Basic Plotting" href="examples/basic_plotting.html" />
     <link rel="prev" title="Calibration" href="calibration.html" /> 
   </head>
   <body>
@@ -37,7 +37,10 @@
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="examples.html" title="Examples"
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples/basic_plotting.html" title="Basic Plotting"
              accesskey="N">next</a> |</li>
         <li class="right" >
           <a href="calibration.html" title="Calibration"
@@ -55,7 +58,7 @@
 <span id="id1"></span><h1>Circuit Design<a class="headerlink" href="#circuit-design" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="intro">
 <h2>Intro<a class="headerlink" href="#intro" title="Permalink to this headline">¶</a></h2>
-<p>mwavepy has basic support for microwave circuit design. Network synthesis is accomplished through the Media Class (<tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt>), which represent a transmission line object for a given medium. A  Media object contains properties such as propagation constant and characteristic impedance, that are needed to generate network components.</p>
+<p>mwavepy has basic support for microwave circuit design. Network synthesis is accomplished through the Media Class (<a class="reference internal" href="api/mwavepy.media.html#module-mwavepy.media" title="mwavepy.media"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt></a>), which represent a transmission line object for a given medium. A  Media object contains properties such as propagation constant and characteristic impedance, that are needed to generate network components.</p>
 <p>Typically circuit design is done within a given frequency band. Therefore every Media object is created with a  Frequency object to  relieve the user of repitously providing frequency information for each new network created.</p>
 </div>
 <div class="section" id="media-s-supported-by-mwavepy">
@@ -67,7 +70,7 @@
 <li>RectangularWaveguide</li>
 <li>CPW</li>
 </ul>
-<p>More info on all of these classes can be found in the media sub-module section of <tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt>  mavepy&#8217;s API.</p>
+<p>More info on all of these classes can be found in the media sub-module section of <a class="reference internal" href="api/mwavepy.media.html#module-mwavepy.media" title="mwavepy.media"><tt class="xref py py-mod docutils literal"><span class="pre">mwavepy.media</span></tt></a>  mavepy&#8217;s API.</p>
 <p>Here is an example of how to initialize a Media object representing a freespace from 10-20GHz:</p>
 <div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">mwavepy</span> <span class="kn">as</span> <span class="nn">mv</span>
 <span class="n">freq</span> <span class="o">=</span> <span class="n">mv</span><span class="o">.</span><span class="n">Frequency</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">20</span><span class="p">,</span><span class="mi">101</span><span class="p">,</span><span class="s">&#39;ghz&#39;</span><span class="p">)</span>
@@ -208,8 +211,8 @@ To create a 1-port network for a short,</p>
   <p class="topless"><a href="calibration.html"
                         title="previous chapter">Calibration</a></p>
   <h4>Next topic</h4>
-  <p class="topless"><a href="examples.html"
-                        title="next chapter">Examples</a></p>
+  <p class="topless"><a href="examples/basic_plotting.html"
+                        title="next chapter">Basic Plotting</a></p>
   <h3>This Page</h3>
   <ul class="this-page-menu">
     <li><a href="_sources/circuit_design.txt"
@@ -247,7 +250,10 @@ To create a 1-port network for a short,</p>
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
         <li class="right" >
-          <a href="examples.html" title="Examples"
+          <a href="np-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="examples/basic_plotting.html" title="Basic Plotting"
              >next</a> |</li>
         <li class="right" >
           <a href="calibration.html" title="Calibration"
@@ -257,7 +263,7 @@ To create a 1-port network for a short,</p>
     </div>
     <div class="footer">
         &copy; Copyright 2011, alex arsenovic.
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.1.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.7.
     </div>
   </body>
 </html>
