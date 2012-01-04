@@ -6,6 +6,7 @@
 
 div.body p, div.body dd, div.body li {
   line-height: 125%;
+  font-size: 15px;
 }
 
 ul.simple { 
@@ -66,11 +67,13 @@ ul li a.reference {
  */
 div.body h3 { 
   background-color: transparent;
+  
 }
 
 div.body h4 { 
   border: none;
   background-color: transparent;
+  
 }
 
 /** 
@@ -156,6 +159,8 @@ div.plot-output:after {
   height: 0; 
   clear: both; 
 }
+
+
 
 
 /*
