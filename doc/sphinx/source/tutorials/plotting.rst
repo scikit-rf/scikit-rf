@@ -26,30 +26,30 @@ This tutorial illustrates how to create common plots associated with microwave n
 Magnitude
 -----------------------
 
-.. plot:: ./pyplots/plotting/plot_ringslot_mag.py
+.. plot:: ../pyplots/plotting/plot_ringslot_mag.py
    :include-source:
 
 Phase
 ---------------------
  
-.. plot:: ./pyplots/plotting/plot_ringslot_phase.py
+.. plot:: ../pyplots/plotting/plot_ringslot_phase.py
    :include-source:
    
 Smith Chart
 ---------------------
-.. plot:: ./pyplots/plotting/plot_ringslot_smith.py
+.. plot:: ../pyplots/plotting/plot_ringslot_smith.py
    :include-source:
 
 The Smith Chart can be also drawn independently of any :class:`Network` object through the :func:`~plotting.smith` function. 
 
 Multiple S-parameters
 ----------------------
-.. plot:: ./pyplots/plotting/plot_ringslot_simulated_mag.py
+.. plot:: ../pyplots/plotting/plot_ringslot_simulated_mag.py
    :include-source:
 
 Comparing with Simulation
 --------------------------
-.. plot:: ./pyplots/plotting/plot_ringslot_simulated_vs_measured.py
+.. plot:: ../pyplots/plotting/plot_ringslot_simulated_vs_measured.py
    :include-source:
 
 Saving Plots

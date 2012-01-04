@@ -1,19 +1,22 @@
+===================================
 mwavepy's documentation
 ===================================
 
-Tutorials:
-
+Tutorials
+----------
 
 .. toctree::
    :maxdepth: 1
    
-   installation
-   introduction
-   plotting
-   calibration
-   circuit_design
+   tutorials/installation
+   tutorials/introduction
+   tutorials/plotting
+   tutorials/calibration
+   tutorials/circuit_design
 
-Examples:
+
+Examples
+---------
 
 .. toctree::
    :maxdepth: 1
@@ -23,13 +26,14 @@ Examples:
    examples/vna_noise_analysis
    examples/matching_single_stub
 
-Reference:
+Reference
+----------
 
 .. toctree::
    :maxdepth: 1
    
-   network
-   frequency
+   reference/network
+   reference/frequency
    
     
 Indices and tables

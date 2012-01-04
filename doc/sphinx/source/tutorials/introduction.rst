@@ -6,7 +6,7 @@ Introduction
 .. currentmodule:: mwavepy.network
 .. contents::
 
-This is a brief introduction to mwavepy, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . All of the touchstone files used in these tutorials are provided along with this source code, and are located in the directory ``./pyplots/`` (relative to this file).
+This is a brief introduction to mwavepy, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . All of the touchstone files used in these tutorials are provided along with this source code, and are located in the directory ``../pyplots/`` (relative to this file).
 
 Creating Networks 
 ------------------
@@ -48,7 +48,7 @@ These properties are stored as complex numpy.ndarray's. The :class:`Network` cla
 For example, to create a 2-port :class:`Network` from a touchstone file,
 and then plot all s-parameters on the Smith Chart.
 
-.. plot:: ./pyplots/introduction/simple_plot.py
+.. plot:: ../pyplots/introduction/simple_plot.py
    :include-source:
 
 For more detailed information about plotting see :doc:`plotting`.   
