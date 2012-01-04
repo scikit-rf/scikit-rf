@@ -1,32 +1,37 @@
 .. _introduction:
 
-
-.. currentmodule:: mwavepy.network
-
 *******************
 Introduction
 *******************
+.. currentmodule:: mwavepy.network
+.. contents::
 
-This is a brief introduction to mwavepy usage, aimed at those who are familiar with python. All of the touchstone files used in these tutorials are provided along with this documentation, and are located in the directory ``./pyplots/`` (relative to this file).
+This is a brief introduction to mwavepy, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . All of the touchstone files used in these tutorials are provided along with this source code, and are located in the directory ``./pyplots/`` (relative to this file).
 
-Creating Networks from Touchstone Files
----------------------------------------
+Creating Networks 
+------------------
 
-First, import mwavepy and name it something short, like 'mv'::
+For this turtorial, and the rest of the mwavpey documentation, we assume that mwavepy has been imported as ``mv``. Whether or not you follow this convention in your own code is up to you::
 
 	>>> import mwavepy as mv
 
 If this produces an error, please see :doc:`installation`. 
 
-The most fundamental object in mwavepy is a n-port :class:`Network`. Most commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so.::
+The most fundamental object in mwavepy is a n-port :class:`Network`. Most commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so ::
 	
 	>>> short = mv.Network('short.s1p')
 	>>> delay_short = mv.Network('delay_short.s1p')
 
-Network Properties
--------------------------------------
+The :class:`Network` object will produce a short description if entered onto the command line::
 	
-The basic quantities associated with a :class:`Network` are provided by the 
+	>>> short
+	1-Port Network.  75-110 GHz.  201 points. z0=[ 50.]
+
+
+Basic Network Properties
+-------------------------
+	
+The basic attributes of a microwave :class:`Network` are provided by the 
 following properties :
 
 * :attr:`Network.s` : Scattering Parameter matrix. 
@@ -34,11 +39,7 @@ following properties :
 * :attr:`Network.frequency`  : Frequency Object. 
 
 
-These properties are stored as complex numpy.ndarray's. Note that if you are using 
-Ipython, then other properties and methods of the :class:`Network` class, can be 
-'tabbed' out. Amongst other things, the methods of the :class:`Network` class provide
-convenient ways to plot components of the s-parameters, below is a 
-non-exhaustive list of common plotting commands,
+These properties are stored as complex numpy.ndarray's. The :class:`Network` class has numerous other properties and methods,  which can found in the  :class:`Network` docs. If you are using Ipython, then these properties and methods can be 'tabbed' out on the command line. Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the s-parameters, below is a short list of common plotting commands,
 
 * :func:`Network.plot_s_db` : plot magnitude of s-parameters in log scale
 * :func:`Network.plot_s_deg` : plot phase of s-parameters in degrees
@@ -52,9 +53,11 @@ and then plot all s-parameters on the Smith Chart.
 
 For more detailed information about plotting see :doc:`plotting`.   
 
+Network Operators
+-------------------
 
 Element-wise Operations 
--------------------------------------
+=========================
 	
 Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators::
 
@@ -77,7 +80,7 @@ Another use of operators is calculating the phase difference using the division 
 	
 	
 Cascading and Embeding Operations 
-----------------------------------------------
+==================================================
 Cascading and de-embeding 2-port Networks is done so frequently, that it can also be done though operators as well. The cascade function is called by the power operator,  ``**``, and the de-embedding operation is accomplished by cascading the inverse of a network, which is implemented by the property :attr:`Network.inv`. Given the following Networks::
 
 	>>> line = mv.Network('line.s2p')
@@ -95,7 +98,7 @@ or to de-embed the *short* from *delay_short*::
 
 Connecting Multi-ports 
 ------------------------
-**mwavepy** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth[#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of a ideal 3-way splitter can be done like so::
+**mwavepy** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth [#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of a ideal 3-way splitter can be done like so::
 
 	>>> tee = mv.Network('tee.s3p')
 	>>> delay_short = mv.Network('delay_short.s1p')
@@ -110,6 +113,18 @@ Frequently, the one-port s-parameters of a multiport network's are of interest. 
 
 	>>> port1_return = line.s11
 	>>> port1_insertion = line.s21
+	
+	
+Convenience Functions
+---------------------
+Frequently there is an entire directory of touchstone files that need to be analyzed. The function :func:`~convenience.load_all_touchstones` is meant deal with this scenario. It takes a string representing the directory,  and returns a dictionary type with keys equal to the touchstone filenames, and values equal to :class:`Network` types::
+	
+	>>> ntwk_dict = mv.load_all_touchstones('.')
+	{'delay_short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.],
+	'line': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
+	'ring slot': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
+	'short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.]}
+
 
 References
 ----------	
