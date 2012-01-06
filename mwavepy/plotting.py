@@ -95,8 +95,12 @@ def smith(smithR=1, chart_type = 'z',ax=None):
 	ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))
 	
 	# loop though contours and draw them on the given axes
+	clipc = Circle( [0,0], smithR, visible=False)
+	ax1.add_patch( clipc)
 	for currentContour in contour:
-		ax1.add_patch(currentContour)
+		cc=ax1.add_patch(currentContour)
+		cc.set_clip_path(clipc)
+
 
 
 
