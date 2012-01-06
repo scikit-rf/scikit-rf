@@ -66,8 +66,16 @@ Supporting Functions
    t2s
    inv
    flip
-
-
+   
+Misc Functions 
+=====================
+.. autosummary::
+   :toctree: generated/
+   
+	impedance_mismatch
+	load_all_touchstones
+	write_dict_of_networks
+	csv_2_touchstone
 '''
 from copy import deepcopy as copy
 from copy import deepcopy
@@ -1676,7 +1684,6 @@ def de_embed(ntwkA,ntwkB):
 	'''
 	return ntwkA.inv ** ntwkB
 
-	
 def average(list_of_networks):
 	'''
 	calculates the average network from a list of Networks.
@@ -1735,33 +1742,6 @@ def one_port_2_two_port(ntwk):
 	result.s[:,1,0] = result.s[:,0,1]
 	return result
 	
-#def two_port_reflect(ntwk1, ntwk2, **kwargs):
-	#'''
-	#generates a two-port reflective (S21=S12=0) network, from the
-	 #2 one-port networks
-
-	#takes:
-		#ntwk1: Network on  port 1 [mwavepy.Network]
-		#ntwk2: Network on  port 2 [mwavepy.Network]
-	
-	#returns:
-		#result: two-port reflective network, S12=S21=0 [mwavepy.Network]
-
-	
-	#example:
-	#to use a working band to create a two-port reflective standard from
-	#two one-port standards
-		#my_media= ...
-		#two_port_reflect(my_media.short(), my_media.match())
-	#'''
-	#result = deepcopy(ntwk1)
-	#result.s = npy.zeros((ntwk1.frequency.npoints,2,2), dtype='complex')
-	#for f in range(ntwk1.frequency.npoints):
-		#result.s[f,0,0] = ntwk1.s[f,0,0]
-		#result.s[f,1,1] = ntwk2.s[f,0,0]
-	#return result	
-
-
 
 ## Functions operating on s-parameter matrices
 def connect_s(A,k,B,l):
@@ -1971,17 +1951,19 @@ def t2s(t):
 	
 def inv(s):
 	'''
-	calculates inverse s-parameter matrix, used for de-embeding
+	calculates 'inverse' s-parameter matrix, used for de-embeding
 	
 	this is not literally the inverse of the s-parameter matrix. it 
 	is defined such that the inverse of the s-matrix cascaded 
-	with itself is unity.
+	with itself is unity. 
 	
 	.. math::
 	
 		inv(s) = t2s({s2t(s)}^{-1})
 		
-	where :math:`x^{-1}` is the matrix inverse.
+	where :math:`x^{-1}` is the matrix inverse. in other words this 
+	is the inverse of the scattering transfer parameters matrix 
+	transformed into a scattering parameters matrix.
 	
 	Parameters
 	-----------
@@ -2012,14 +1994,24 @@ def inv(s):
 		raise IndexError('matrix should be 2x2, or kx2x2')
 	return i
 
-
-	
-
 def flip(a):
 	'''
 	invert the ports of a networks s-matrix, 'flipping' it over
 	
-	note:
+	Parameters
+	-----------
+	a : numpy.ndarray
+		scattering parameter matrix. shape should be should be 2x2, or
+		fx2x2
+	
+	Returns
+	-------
+	a' : numpy.ndarray
+		flipped scattering parameter matrix, ie interchange of port 0 
+		and port 1
+	
+	Note
+	-----
 			only works for 2-ports at the moment
 	'''
 	c = copy(a)
@@ -2043,38 +2035,53 @@ def flip(a):
 # dont belong here, but i needed them quickly
 # this is needed for port impedance mismatches 
 def impedance_mismatch(z1, z2):
-		'''
-		returns a two-port network for a impedance mis-match
-		
-		takes:
-			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
-			z2: complex impedance of port 2 [ number, list, or 1D ndarray]
-		returns:
-			2-port s-matrix for the impedance mis-match
-		'''	
-		gamma = zl_2_Gamma0(z1,z2)
-		result = npy.zeros(shape=(len(gamma),2,2), dtype='complex')
-		
-		result[:,0,0] = gamma
-		result[:,1,1] = -gamma
-		result[:,1,0] = 1+gamma
-		result[:,0,1] = 1-gamma
-		return result
+	'''
+	creates a two-port network for a impedance mis-match
+	
+	Parameters
+	-----------
+	z1 : number or array-like
+		complex impedance of port 1
+	z2 : number or array-like
+		complex impedance of port 2
+	
+	Returns
+	---------
+	s' : 2-port s-matrix for the impedance mis-match
+	'''	
+	gamma = zl_2_Gamma0(z1,z2)
+	result = npy.zeros(shape=(len(gamma),2,2), dtype='complex')
+	
+	result[:,0,0] = gamma
+	result[:,1,1] = -gamma
+	result[:,1,0] = 1+gamma
+	result[:,0,1] = 1-gamma
+	return result
 
 
 # Touchstone manipulation	
 def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 	'''
-	loads all touchtone files in a given dir 
+	loads all touchtone files in a given dir into a dictionary. 
 	
-	takes:
-		dir  - the path to the dir, passed as a string (defalut is cwd)
-		contains - string which filename must contain to be loaded, not 
-			used if None.(default None)
-	returns:
-		ntwkDict - a Dictonary with keys equal to the file name (without
-			a suffix), and values equal to the corresponding ntwk types
+	Parameters
+	-----------
+	dir :	string
+		the path 
+	contains :	string 
+		a string the filenames must contain to be loaded.
+	f_unit 	: ['hz','mhz','ghz']
+		the frequency unit to assign all loaded networks. see 
+		:attr:`frequency.Frequency.unit`.
+		
+	Returns
+	---------
+	ntwkDict : a dictonary with keys equal to the file name (without
+		a suffix), and values equal to the corresponding ntwk types
 	
+	Examples
+	----------
+	>>> ntwk_dict = mv.load_all_touchstones('.', contains ='20v')
 		
 	'''
 	ntwkDict = {}
@@ -2093,19 +2100,40 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
 def write_dict_of_networks(ntwkDict, dir='.'):
 	'''
-	writes a dictionary of networks to a given directory
+	saves a dictionary of networks touchstone files in a given directory
+	
+	The filenames assigned to the touchstone files are taken from 
+	the keys of the dictionary. 
+	
+	Parameters
+	-----------
+	ntwkDict : dictionary 
+		dictionary of :class:`Network` objects
+	dir : string
+		directory to write touchstone file to 
+
+		
 	'''
 	for ntwkKey in ntwkDict:
 		ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
 
 def csv_2_touchstone(filename):
 	'''
-	converts a csv file saved from a Rhode swarz and possibly other 
+	converts a csv file to a :class:`Network`
 	
-	takes:
-		filename: name of file
-	returns:
-		Network object
+	specifically, this converts csv files saved from a Rohde Shcwarz 
+	ZVA-40, and possibly other network analyzers, into a :class:`Network`
+	object. 
+	
+	Parameters
+	------------
+	filename : string
+		name of file
+	
+	Returns
+	--------
+	ntwk : :class:`Network` object
+		the network representing data in the csv file
 	'''
 		
 	ntwk = Network(name=filename[:-4])

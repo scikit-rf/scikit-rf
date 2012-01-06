@@ -31,10 +31,12 @@ Reference
 ----------
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    
-   reference/index
-   
+   reference/network
+   reference/networkSet
+   reference/frequency
+
    
 
 Indices and tables
