@@ -30,14 +30,23 @@ Examples
 Reference
 ----------
 
+Modules
+++++++++++
 .. toctree::
    :maxdepth: 1
    
    reference/network
    reference/networkSet
    reference/frequency
+   reference/plotting
+   reference/touchstone
 
+Packages
+++++++++++
+.. toctree::
+   :maxdepth: 1
    
+   reference/calibration/index
 
 Indices and tables
 ==================
