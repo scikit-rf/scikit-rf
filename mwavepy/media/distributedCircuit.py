@@ -19,6 +19,11 @@
 #       MA 02110-1301, USA.
 
 '''
+.. module:: mwavepy.media.distributedCircuit
+============================================================
+distributedCircuit (:mod:`mwavepy.media.distributedCircuit`)
+============================================================
+
 A transmission line defined in terms of distributed circuit components
 '''
 

@@ -20,7 +20,39 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-Contains calibrations algorithms, used in the Calibration class, 
+.. module:: mwavepy.calibration.calibrationAlgorithms
+====================================================================================
+calibrationAlgorithms (:mod:`mwavepy.calibration.calibrationAlgorithms`)
+====================================================================================
+
+
+
+
+Contains calibrations algorithms and related functions, which are used 
+in the :class:`~mwavepy.calibration.calibration.Calibration` class. 
+
+Calibration Algorithms
+-----------------------
+
+.. autosummary::
+   :toctree: generated/
+	
+	one_port
+	one_port_nls
+	two_port
+	parameterized_self_calibration
+	parameterized_self_calibration_nls
+
+Supporting Functions
+-----------------------
+.. autosummary::
+   :toctree: generated/
+   
+   unterminate_switch_terms
+   abc_2_coefs_dict
+   eight_term_2_one_port_coefs
+   
+
 '''
 
 from copy import copy,deepcopy
@@ -142,29 +174,41 @@ def unterminate_switch_terms(two_port, gamma_f, gamma_r):
 ## ONE PORT 
 def one_port(measured, ideals):
 	'''
-	standard algorithm for a one port calibration. If more than three 
-	standards are supplied then a least square algorithm is applied.
-	 
-	takes: 
-		measured - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or list of  1-port mwavepy.ntwk types. 
-		ideals - list of assumed reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or list of  1-port mwavepy.ntwk types. 
+	Standard algorithm for a one port calibration. 
 	
-	returns:
-		a dictionary containing the following keys
-			'error coeffcients': dictionary containing standard error
+	If more than three standards are supplied then a least square 
+	algorithm is applied.
+	 
+	Parameters
+	----------- 
+	measured : list of :class:`~....network.Network` objects or numpy.ndarray
+		a list of the measured reflection coefficients. The elements 
+		of the list can  either a kxnxn numpy.ndarray, representing a 
+		s-matrix, or list of  1-port :class:`~mwavepy.network.Network` 
+		objects.
+	ideals : list of :class:`~mwavepy.network.Network` objects or numpy.ndarray
+		a list of the ideal reflection coefficients. The elements 
+		of the list can  either a kxnxn numpy.ndarray, representing a 
+		s-matrix, or list of  1-port :class:`~mwavepy.network.Network`
+		objects.
+	
+	Returns
+	-----------
+	output : a dictionary
+		containing the following keys
+		 * 'error coeffcients': dictionary containing standard error
 			coefficients
-			'residuals': a matrix of residuals from the least squared 
-				calculation. see numpy.linalg.lstsq() for more info
+		 * 'residuals': a matrix of residuals from the least squared 
+			calculation. see numpy.linalg.lstsq() for more info
 
 
-	note:
+	Notes
+	-----
 		uses numpy.linalg.lstsq() for least squares calculation
-		
-		see one_port_nls for a non-linear least square implementation
+	
+	See Also
+	---------
+		one_port_nls :  for a non-linear least square implementation
 	'''
 	#make  copies so list entities are not changed, when we typecast 
 	mList = copy(measured)
@@ -229,23 +273,34 @@ def one_port_nls (measured, ideals):
 	'''
 	one port non-linear least squares.
 	
-	takes: 
-		measured - list of measured reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or list of  1-port mwavepy.ntwk types. 
-		ideals - list of assumed reflection coefficients. can be 
-			lists of either a kxnxn numpy.ndarray, representing a 
-			s-matrix or list of  1-port mwavepy.ntwk types. 
+	Parameters
+	----------- 
+	measured : list of :class:`~....network.Network` objects or numpy.ndarray
+		a list of the measured reflection coefficients. The elements 
+		of the list can  either a kxnxn numpy.ndarray, representing a 
+		s-matrix, or list of  1-port :class:`~mwavepy.network.Network` 
+		objects.
+	ideals : list of :class:`~mwavepy.network.Network` objects or numpy.ndarray
+		a list of the ideal reflection coefficients. The elements 
+		of the list can  either a kxnxn numpy.ndarray, representing a 
+		s-matrix, or list of  1-port :class:`~mwavepy.network.Network`
+		objects.
 	
-	returns:
+	Returns
+	-----------
+	output : a dictionary
 		a dictionary containing the following keys:
-			'error coeffcients': dictionary containing standard error
+		
+		* 'error coeffcients': dictionary containing standard error
 			coefficients
-			'residuals': a matrix of residuals from the least squared 
-				calculation. see numpy.linalg.lstsq() for more info
-			'cov_x': covariance matrix
+		
+		* 'residuals': a matrix of residuals from the least squared 
+			calculation. see numpy.linalg.lstsq() for more info
+		
+		* 'cov_x': covariance matrix
 
-	note:
+	Notes
+	------
 		uses scipy.optmize.leastsq for non-linear least squares calculation
 	
 	'''
@@ -439,27 +494,40 @@ def two_port(measured, ideals, switch_terms = None):
 def parameterized_self_calibration(measured, ideals, showProgress=True,\
 	**kwargs):
 	'''
-	An iterative, general self-calibration routine which can take any
-	mixture of parameterized standards. The correct parameter values
-	are defined as the ones which minimize the mean residual error. 
+	An iterative, general self-calibration routine. 
+	
+	A self calibration routine based off of residual error minimization
+	which can take any mixture of parameterized standards. 
 	
 	
 	
-	takes:
-		measured: list of Network types holding actual measurements
-		ideals: list of ParametricStandard types
-		showProgress: turn printing progress on/off [boolean]
-		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
+	Parameters
+	------------
+	measured : list of :class:`~....network.Network` objects
+		a list of the measured networks 
+	ideals : list of :class:`~mwavepy.network.Network` objects 
+		a list of the ideal networks
+	showProgress : Boolean
+		turn printing progress on/off 
+	**kwargs : key-word arguments
+		passed to minimization algorithm (scipy.optimize.fmin)
 	
-	returns:
-		a dictionary holding:
-		'error_coefficients': dictionary of error coefficients
-		'residuals': residual matrix (shape depends on #stds)
-		'parameter_vector_final': final results for parameter vector
-		'mean_residual_list': the mean, magnitude of the residuals at each
+	Returns
+	-----------
+	output : a dictionary
+		a dictionary containing the following keys:
+		
+		* 'error_coefficients' : dictionary of error coefficients
+		* 'residuals': residual matrix (shape depends on #stds)
+		* 'parameter_vector_final': final results for parameter vector
+		* 'mean_residual_list': the mean, magnitude of the residuals at each
 			iteration of calibration. this is the variable being minimized.
 	
-	see  parametricStandard sub-module for more info on them
+	See Also
+	----------
+		:class:`parametricStandard` :  sub-module for more info on them
+		parameterized_self_calibration_nls : similar algorithm, but uses 
+			a non-linear least-squares estimator
 	'''
 	ideals_ps = copy(ideals)
 	#make copies so list entities are not changed
@@ -526,27 +594,41 @@ def parameterized_self_calibration(measured, ideals, showProgress=True,\
 def parameterized_self_calibration_nls(measured, ideals_ps, showProgress=True,\
 	**kwargs):
 	'''
-	An iterative, general self-calibration routine which can take any
-	mixture of parametric standards. The correct parameter values
-	are defined as the ones which minimize the mean residual error. 
+	An iterative, general self-calibration routine. 
+	
+	A self calibration routine based off of residual error minimization
+	which can take any mixture of parameterized standards. Uses a 
+	non-linear least squares estimator to calculate the residuals. 
 	
 	
 	
-	takes:
-		measured: list of Network types holding actual measurements
-		ideals_ps: list of ParametricStandard types
-		showProgress: turn printing progress on/off [boolean]
-		**kwargs: passed to minimization algorithm (scipy.optimize.fmin)
+	Parameters
+	------------
+	measured : list of :class:`~....network.Network` objects
+		a list of the measured networks 
+	ideals : list of :class:`~mwavepy.network.Network` objects 
+		a list of the ideal networks
+	showProgress : Boolean
+		turn printing progress on/off 
+	**kwargs : key-word arguments
+		passed to minimization algorithm (scipy.optimize.fmin)
 	
-	returns:
-		a dictionary holding:
-		'error_coefficients': dictionary of error coefficients
-		'residuals': residual matrix (shape depends on #stds)
-		'parameter_vector_final': final results for parameter vector
-		'mean_residual_list': the mean, magnitude of the residuals at each
+	Returns
+	-----------
+	output : a dictionary
+		a dictionary containing the following keys:
+		
+		* 'error_coefficients' : dictionary of error coefficients
+		* 'residuals': residual matrix (shape depends on #stds)
+		* 'parameter_vector_final': final results for parameter vector
+		* 'mean_residual_list': the mean, magnitude of the residuals at each
 			iteration of calibration. this is the variable being minimized.
 	
-	see  ParametricStandard for more info on them
+	See Also
+	----------
+		:class:`parametricStandard` :  sub-module for more info on them
+		parameterized_self_calibration_nls : similar algorithm, but uses 
+			a non-linear least-squares estimator
 	'''
 	#make copies so list entities are not changed
 	measured = copy(measured)

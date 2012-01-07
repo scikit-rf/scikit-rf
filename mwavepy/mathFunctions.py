@@ -21,7 +21,67 @@
 #       MA 02110-1301, USA.
 
 '''
-Provides commonly used math functions. 
+.. currentmodule:: mwavepy.mathFunctions
+=============================================
+mathFunctions (:mod:`mwavepy.mathFunctions`)
+=============================================
+
+
+Provides commonly used mathematical functions. 
+
+Complex Component Conversion
+---------------------------------
+.. autosummary::
+	:toctree: generated/
+	
+	complex_2_reim
+	complex_2_magnitude
+	complex_2_db
+	complex_2_radian
+	complex_2_degree
+	complex_2_magnitude
+
+Phase Unwrapping
+--------------------------------
+.. autosummary::
+	:toctree: generated/
+	
+	unwrap_rad
+	sqrt_phase_unwrap
+	
+	
+
+Unit Conversion
+--------------------------------
+.. autosummary::
+	:toctree: generated/
+	
+	radian_2_degree
+	degree_2_radian
+	np_2_db
+	db_2_np
+	
+Scalar-Complex Conversion
+---------------------------------
+These conversions are useful for wrapping other functions that dont 
+support complex numbers. 
+
+.. autosummary::
+	:toctree: generated/
+	
+	complex2Scalar
+	scalar2Complex
+	
+
+Special Functions
+---------------------------------
+.. autosummary::
+	:toctree: generated/
+	
+	dirac_delta
+	neuman
+	null
+	
 '''
 import numpy as npy
 from numpy import pi,angle

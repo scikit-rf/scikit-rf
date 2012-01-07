@@ -16,8 +16,25 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 '''
+.. module:: mwavepy.touchstone
+========================================
+touchstone (:mod:`mwavepy.touchstone`)
+========================================
+
+
+This module provides a class to represent touchstone files.
+
+This module was written by Werner Hoch.
+
+touchstone Class
+------------------
+	
+.. autosummary::
+	:toctree: generated/
+	
+	touchstone
+
 contains touchstone class
-( written by Werner Hoch )
 '''
 
 import numpy

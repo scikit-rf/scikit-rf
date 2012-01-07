@@ -18,7 +18,69 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-transmission line theory related functions 
+.. module:: mwavepy.tlineFunctions
+===============================================
+tlineFunctions (:mod:`mwavepy.tlineFunctions`)
+===============================================
+
+This module provides functions related to transmission line theory.
+
+Transmission Line Theory
+---------------------------------
+The functions relate basic tranmission line quantities such as 
+characteristic impedance, input impedance, reflection coefficient, etc.
+The functions are given in long-winded but readable names as well as 
+short-hand variable-like names. Below is a table relating these 
+with each other as well as common mathematical symbols.
+
+================  ======================  ================================
+Symbol            Variable Name           Long Name	
+================  ======================  ================================
+:math:`Z_l`       z_l                     load_impedance
+:math:`Z_{in}`    z_in                    input_impedance
+:math:`\Gamma_0`  Gamma_0                 reflection_coefficient
+:math:`\Gamma`    Gamma_in                reflection_coefficient_at_theta
+:math:`\\theta`     theta                   electrical_length
+================  ======================  ================================
+
+
+Short names 
++++++++++++++
+.. autosummary::
+	:toctree: generated/
+	
+	theta
+	zl_2_Gamma0
+	Gamma0_2_zl
+	zl_2_zin
+	zl_2_Gamma_in
+	Gamma0_2_Gamma_in
+	Gamma0_2_zin
+	
+Long-names
+++++++++++++++
+.. autosummary::
+	:toctree: generated/
+	
+	distance_2_electrical_length
+	electrical_length_2_distance
+	
+	reflection_coefficient_at_theta
+	reflection_coefficient_2_input_impedance
+	reflection_coefficient_2_input_impedance_at_theta
+	
+	input_impedance_at_theta
+	input_impedance_2_reflection_coefficient	
+	input_impedance_2_reflection_coefficient_at_theta
+
+
+Transmission Line Physics
+---------------------------------
+.. autosummary::
+	:toctree: generated/
+	
+	skin_depth
+	surface_resistivity
 '''
 
 import numpy as npy

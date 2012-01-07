@@ -20,9 +20,23 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 
-
 '''
+.. module:: mwavepy.calibration.calibration
+================================================================
+calibration (:mod:`mwavepy.calibration.calibration`)
+================================================================
+
+
 Contains the Calibration class, and supporting functions
+
+Calibration Class
+===============
+
+.. autosummary::
+   :toctree: generated/
+
+   Calibration 
+
 '''
 import numpy as npy
 from numpy import mean, std

@@ -19,6 +19,11 @@
 #       MA 02110-1301, USA.
 
 '''
+.. module:: mwavepy.media.cpw
+========================================
+cpw (:mod:`mwavepy.media.cpw`)
+========================================
+
 contains CPW class
 '''
 from scipy.constants import  epsilon_0, mu_0

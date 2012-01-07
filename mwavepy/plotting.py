@@ -19,7 +19,22 @@
 #       MA 02110-1301, USA.
 
 '''
-provides plotting functions, which dont belong to any class. 
+.. module:: mwavepy.plotting
+========================================
+plotting (:mod:`mwavepy.plotting`)
+========================================
+
+
+This module provides plotting functions which dont belong to any class. 
+
+Charts
+-------
+	
+.. autosummary::
+	:toctree: generated/
+	
+	smith 
+
 '''
 import pylab as plb
 import numpy as npy
@@ -29,14 +44,21 @@ from matplotlib.patches import Circle 	# for drawing smith chart
 
 
 def smith(smithR=1, chart_type = 'z',ax=None):
-	''' 
+	'''
 	plots the smith chart of a given radius
-	takes:
-		smithR - radius of smith chart
-		chart_type: string representing contour type: acceptable values are 
-			'z': lines of constant impedance
-			'y': lines of constant admittance
-		ax - matplotlib.axes instance 
+	
+	Parameters
+	-----------
+	smithR : number
+		radius of smith chart
+	chart_type : ['z','y']
+		string representing contour type. acceptable values are 
+		'z': lines of constant impedance
+		'y': lines of constant admittance
+	ax : matplotlib.axes object
+		existing axes to draw smith chart on
+		
+		
 	'''
 	##TODO: fix this function so it doesnt suck
 	if ax == None:
@@ -86,17 +108,19 @@ def smith(smithR=1, chart_type = 'z',ax=None):
 		radius = 1./x	
 		contour.append( Circle( center, radius, ec='black',fc = 'none'))
 	
+	# clipping circle 
+	clipc = Circle( [0,0], smithR, ec='k',fc='None',visible=True)
+	ax1.add_patch( clipc)
+	
 	#draw x and y axis
-	ax1.axhline(0, color='k')
-	ax1.axvline(1*y_flip_sign, color='k')
+	ax1.axhline(0, color='k', lw=.1, clip_path=clipc)
+	ax1.axvline(1*y_flip_sign, color='k', clip_path=clipc)
 	ax1.grid(0)
 	#set axis limits
 	ax1.axis('equal')
 	ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))
 	
 	# loop though contours and draw them on the given axes
-	clipc = Circle( [0,0], smithR, visible=False)
-	ax1.add_patch( clipc)
 	for currentContour in contour:
 		cc=ax1.add_patch(currentContour)
 		cc.set_clip_path(clipc)

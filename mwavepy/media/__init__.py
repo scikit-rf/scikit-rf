@@ -17,11 +17,39 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.from media import Media
 '''
+.. module:: mwavepy.media
+========================================
+media (:mod:`mwavepy.media`)
+========================================
+
 Provides Media super-Class and instances of Media Class's for various 
 transmission-line mediums.
 
 Instances of the Media Class are objects which provide methods to
 create network objects. See media for more detailed information.
+
+Transmission Line Classes
+-------------------------
+.. toctree::
+   :maxdepth: 1
+   
+   Media
+   Freespace
+   cpw.CPW
+   rectangularWaveguide.RectangularWaveguide
+
+.. autosummary::
+	:toctree: generated/	
+	
+	media.Media
+
+Transmission Line Modules
+-------------------------
+.. toctree::
+   :maxdepth: 1
+   
+   media
+   freespace
 '''
 
 from media import Media

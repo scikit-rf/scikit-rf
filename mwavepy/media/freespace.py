@@ -19,6 +19,12 @@
 #       MA 02110-1301, USA.
 
 '''
+.. module:: mwavepy.media.freespace
+
+========================================
+freespace (:mod:`mwavepy.media.freespace`)
+========================================
+
 A Plane-wave in Freespace.
 '''
 from scipy.constants import  epsilon_0, mu_0

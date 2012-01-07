@@ -21,10 +21,11 @@
 #       MA 02110-1301, USA.
 
 '''
+.. module:: mwavepy.network
 ========================================
 network (:mod:`mwavepy.network`)
 ========================================
-.. module:: mwavepy.network
+
 
 Provides a n-port network class and associated functions.  
 

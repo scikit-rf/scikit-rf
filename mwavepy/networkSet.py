@@ -20,13 +20,13 @@
 #       MA 02110-1301, USA.
 
 '''
-
+.. module:: mwavepy.networkSet
 ========================================
 networkSet (:mod:`mwavepy.networkSet`)
 ========================================
-.. module:: mwavepy.networkSet
 
-Provides a network set class representing an un-ordered set of n-port
+
+Provides a class representing an un-ordered set of n-port
 microwave networks.
 
 
@@ -35,16 +35,16 @@ deviation, on an entire set of n-port networks. To facilitate these
 calculations the :class:`NetworkSet` class provides convenient
 ways to make such calculations. 
 
-The results are returned in :class:`Network` objects, so that 
+The results are returned in :class:`~mwavepy.network.Network` objects, so that 
 the results can be plotted and saved in the same way one would do with 
-:class:`Network`.
+:class:`~mwavepy.network.Network`.
 
 The functionality in this module is provided as methods and
 properties of the :class:`NetworkSet` Class. 
 
 
 NetworkSet Class
-===============
+================
 
 .. autosummary::
    :toctree: generated/
@@ -70,10 +70,12 @@ class NetworkSet(object):
 	A set of Networks.
 	 
 	This class allows functions on sets of Networks, such as mean or 
-	standard deviation to be calculated conveniently. The results are 
-	returned in :class:`Network` objects, so that the results can be 
-	plotted and saved in the same way one would do with :class:`Network`.
+	standard deviation, to be calculated conveniently. The results are 
+	returned in :class:`~mwavepy.network.Network` objects, so that they may be 
+	plotted and saved in like :class:`~mwavepy.network.Network` objects.
 	
+	This class also provides methods which can be used to plot uncertainty 
+	bounds for a set of :class:`~mwavepy.network.Network`.
 		
 	The names of the :class:`NetworkSet` properties are generated 
 	dynamically upon ititialization, and thus documentation for 
@@ -82,7 +84,7 @@ class NetworkSet(object):
 	
 		>>> my_network_set.FunctionName_NetworkPropertyName
 	
-	For example, the complex average (mean) :class:`Network` for a 
+	For example, the complex average (mean) :class:`~mwavepy.network.Network` for a 
 	:class:`NetworkSet` is::
 	
 		>>> my_network_set.mean_s 
@@ -91,8 +93,8 @@ class NetworkSet(object):
 	set, and **then** calculates the 'mean' of the resultant set. The
 	order of operations is important. 
 	
-	Results are returned as :class:`Network` objects, so they may be
-	plotted or saved in the same way as for :class:`Network` objects::
+	Results are returned as :class:`~mwavepy.network.Network` objects, so they may be
+	plotted or saved in the same way as for :class:`~mwavepy.network.Network` objects::
 	
 		>>> my_network_set.mean_s.plot_s_mag()
 		>>> my_network_set.mean_s.write_touchstone('mean_response')
@@ -126,8 +128,8 @@ class NetworkSet(object):
 		'''
 		Parameters
 		-----------
-		ntwk_set : list of :class:`Network` objects
-			the set of :class:`Network` objects
+		ntwk_set : list of :class:`~mwavepy.network.Network` objects
+			the set of :class:`~mwavepy.network.Network` objects
 			 
 		'''
 		## type checking 

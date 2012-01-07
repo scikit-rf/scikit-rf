@@ -17,8 +17,38 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.from media import Media
 '''
-Provides high-level Calibration class as well as calibration algorithms
-and parametric standards 
+.. module:: mwavepy.calibration
+========================================
+calibration (:mod:`mwavepy.calibration`)
+========================================
+
+
+This Package provides a high-level class representing a 
+calibration instance, as well as calibration algorithms and supporting
+functions.
+
+Both one and two port calibrations are supported. These calibration 
+algorithms allow for redundant measurements, by using a simple least  
+squares estimator to solve for the embedding network.
+
+Modules
+----------
+.. toctree::
+   :maxdepth: 1
+   
+   calibration
+   calibrationAlgorithms
+   calibrationFunctions
+
+
+Classes
+-------------------------
+.. currentmodule:: mwavepy.calibration.calibration
+.. autosummary::
+	:toctree: generated/	
+	
+	Calibration
+
 '''
 
 import calibration 

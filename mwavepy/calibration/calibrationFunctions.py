@@ -21,7 +21,20 @@
 #       MA 02110-1301, USA.
 
 '''
-Functions which operate on or pertain to Calibration Objects
+.. module:: mwavepy.calibration.calibrationFunctions
+===================================================================================
+calibrationFunctions (:mod:`mwavepy.calibration.calibrationFunctions`)
+===================================================================================
+
+
+
+Functions which operate on or pertain to :class:`~mwavepy.calibration.calibration.Calibration` Objects
+
+.. autosummary::
+   :toctree: generated/
+	
+	cartesian_product_calibration_set
+
 '''
 from itertools import product, combinations, permutations
 from calibration import Calibration

@@ -19,12 +19,12 @@
 #       MA 02110-1301, USA.
 
 '''
-
+.. currentmodule:: mwavepy.frequency
 ========================================
 frequency (:mod:`mwavepy.frequency`)
 ========================================
 
-.. currentmodule:: mwavepy.frequency
+
 
 Provides a frequency object and related functions.
 

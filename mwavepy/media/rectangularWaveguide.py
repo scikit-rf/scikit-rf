@@ -19,6 +19,11 @@
 #       MA 02110-1301, USA.
 
 '''
+.. module:: mwavepy.media.rectangularWaveguide
+================================================================
+rectangularWaveguide (:mod:`mwavepy.media.rectangularWaveguide`)
+================================================================
+
 Rectangular Waveguide class
 '''
 from scipy.constants import  epsilon_0, mu_0,pi

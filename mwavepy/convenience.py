@@ -21,6 +21,12 @@
 #       MA 02110-1301, USA.
 
 '''
+
+.. currentmodule:: mwavepy.convenience
+========================================
+convenience (:mod:`mwavepy.convenience`)
+========================================
+
 Holds pre-initialized  class's to provide convenience. Also provides
 some functions, which cant be categorized as anything better than 
 general conviniencies.
