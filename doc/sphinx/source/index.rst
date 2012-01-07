@@ -40,13 +40,20 @@ Modules
    reference/frequency
    reference/plotting
    reference/touchstone
+   reference/convenience
+   reference/mathFunctions
+   reference/tlineFunctions
 
+
+   
+   
 Packages
 ++++++++++
 .. toctree::
    :maxdepth: 1
    
    reference/calibration/index
+   reference/media/index
 
 Indices and tables
 ==================
