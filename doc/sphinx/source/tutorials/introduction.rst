@@ -27,7 +27,6 @@ The :class:`Network` object will produce a short description if entered onto the
 	>>> short
 	1-Port Network.  75-110 GHz.  201 points. z0=[ 50.]
 
-
 Basic Network Properties
 -------------------------
 	
@@ -47,6 +46,7 @@ These properties are stored as complex numpy.ndarray's. The :class:`Network` cla
 
 For example, to create a 2-port :class:`Network` from a touchstone file,
 and then plot all s-parameters on the Smith Chart.
+
 
 .. plot:: ../pyplots/introduction/simple_plot.py
    :include-source:
