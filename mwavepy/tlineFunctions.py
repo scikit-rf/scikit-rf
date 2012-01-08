@@ -25,23 +25,24 @@ tlineFunctions (:mod:`mwavepy.tlineFunctions`)
 
 This module provides functions related to transmission line theory.
 
-Transmission Line Theory
----------------------------------
-The functions relate basic tranmission line quantities such as 
+Impedance and Reflection Coefficient
+--------------------------------------
+These functions relate basic tranmission line quantities such as 
 characteristic impedance, input impedance, reflection coefficient, etc.
-The functions are given in long-winded but readable names as well as 
-short-hand variable-like names. Below is a table relating these 
-with each other as well as common mathematical symbols.
+Each function has two names. One is a long-winded but readable name and 
+the other is a short-hand variable-like names. Below is a table relating
+these two names with each other as well as common mathematical symbols.
 
-================  ======================  ================================
-Symbol            Variable Name           Long Name	
-================  ======================  ================================
-:math:`Z_l`       z_l                     load_impedance
-:math:`Z_{in}`    z_in                    input_impedance
-:math:`\Gamma_0`  Gamma_0                 reflection_coefficient
-:math:`\Gamma`    Gamma_in                reflection_coefficient_at_theta
-:math:`\\theta`     theta                   electrical_length
-================  ======================  ================================
+
+====================  ======================  ================================
+Symbol                Variable Name           Long Name	
+====================  ======================  ================================
+:math:`Z_l`           z_l                     load_impedance
+:math:`Z_{in}`        z_in                    input_impedance
+:math:`\Gamma_0`      Gamma_0                 reflection_coefficient
+:math:`\Gamma_{in}`   Gamma_in                reflection_coefficient_at_theta
+:math:`\\theta`        theta                   electrical_length
+====================  ======================  ================================
 
 
 Short names 
@@ -73,6 +74,16 @@ Long-names
 	input_impedance_2_reflection_coefficient	
 	input_impedance_2_reflection_coefficient_at_theta
 
+	
+
+
+Distributed Circuit and Wave Quantities
+----------------------------------------
+.. autosummary::
+	:toctree: generated/
+	
+	distributed_circuit_2_propagation_impedance
+	propagation_impedance_2_distributed_circuit
 
 Transmission Line Physics
 ---------------------------------
@@ -97,30 +108,45 @@ ONE = 1.0 + 1/1e14
 def skin_depth(f,rho, mu_r):
 	'''
 	
-	the skin depth for a material. see www.microwaves101.com for more info. 
+	the skin depth for a material. 
 	
-	takes:
-		f: frequency, in Hz
-		rho: bulk resistivity of material, in ohm*m
-		mu_r: relative permiability of material
+	see www.microwaves101.com for more info. 
+	
+	Parameters
+	----------
+	f : number or array-like
+		frequency, in Hz
+	rho : number of array-like
+		bulk resistivity of material, in ohm*m
+	mu_r : number or array-like
+		relative permiability of material
 		
-	returns:
-		skin depth: in m
+	Returns
+	----------
+	skin depth : number or array-like
+		the skin depth, in m
 	
 	'''
 	return sqrt(rho/(pi*f*mu_r*mu_0))
 
 def surface_resistivity(f,rho,mu_r):
 	'''
-	surface resistivity. see www.microwaves101.com for more info. 
+	surface resistivity. 
 	
-	takes:
-		f: frequency, in Hz
-		rho: bulk resistivity of material, in ohm*m
-		mu_r: relative permiability of material
+	see www.microwaves101.com for more info. 
 	
-	returns:
-		surface resistivity: ohms/square
+	Parameters
+	----------
+	f : number or array-like
+		frequency, in Hz
+	rho : number or array-like
+		bulk resistivity of material, in ohm*m
+	mu_r : number or array-like
+		relative permiability of material
+	
+	Returns
+	----------
+	surface resistivity: ohms/square
 		
 		
 	'''
@@ -129,17 +155,33 @@ def surface_resistivity(f,rho,mu_r):
 def distributed_circuit_2_propagation_impedance( distributed_admittance,\
 	distributed_impedance):
 	'''
+	Converts distrubuted circuit values to wave quantities.
 	
-	converts complex distributed impedance and admittance to propagation 
-	constant and characteristic impedance.
+	This converts complex distributed impedance and admittance to 
+	propagation constant and characteristic impedance. The relation is 
 	
-	takes:
-		distributed_admittance: what it says [complex number or array]
-		distributed_impedance: what it says [complex number or array]
+	.. math::
+		Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
+		\\quad\\quad 
+		\\gamma = \\sqrt{ Z^{'}  Y^{'}}
+		
+	Parameters
+	------------
+	distributed_admittance : number, array-like
+		distributed admittance
+	distributed_impedance :  number, array-like
+		distributed impedance	
+		
+	Returns
+	----------
+	propagation_constant : number, array-like
+		distributed impedance	
+	characteristic_impedance : number, array-like
+		distributed impedance	
 	
-	returns:
-		propagation_constant: what it says [complex number or array]
-		characteristic_impedance: what it says [complex number or array]
+	See Also
+	----------
+		propagation_impedance_2_distributed_circuit : opposite conversion
 	'''
 	propagation_constant = \
 		sqrt(distributed_impedance*distributed_admittance)
@@ -150,16 +192,33 @@ def distributed_circuit_2_propagation_impedance( distributed_admittance,\
 def propagation_impedance_2_distributed_circuit(propagation_constant, \
 	characteristic_impedance):
 	'''
-	converts complex propagation constant and characteristic impedance 
-	to distributed impedance and admittance.
+	Converts wave quantities to distrubuted circuit values.
 	
-	takes:
-		propagation_constant: what it says [complex number or array]
-		characteristic_impedance: what it says [complex number or array]
-			
-	returns:
-		distributed_admittance: what it says [complex number or array]
-		distributed_impedance: what it says [complex number or array]
+	Converts complex propagation constant and characteristic impedance 
+	to distributed impedance and admittance. The relation is,
+	
+	.. math::
+		Z^{'} = \\gamma  Z_0 \\quad\\quad
+		Y^{'} = \\frac{\\gamma}{Z_0}
+	
+	Parameters
+	------------
+	propagation_constant : number, array-like
+		distributed impedance	
+	characteristic_impedance : number, array-like
+		distributed impedance	
+		
+	Returns
+	----------
+	distributed_admittance : number, array-like
+		distributed admittance
+	distributed_impedance :  number, array-like
+		distributed impedance	
+	
+	
+	See Also
+	----------
+		distributed_circuit_2_propagation_impedance : opposite conversion
 	'''
 	distributed_admittance = propagation_constant/characteristic_impedance
 	distributed_impedance = propagation_constant*characteristic_impedance
@@ -167,18 +226,38 @@ def propagation_impedance_2_distributed_circuit(propagation_constant, \
 
 def electrical_length(gamma, f , d, deg=False):
 	'''
-	calculates the electrical length of a section of transmission line.
-
-	takes:
-		gamma: propagation constant function [function], 
-			(a function which takes frequency in hz )
-		l: length of line. in meters
-		f: frequency at which to calculate. [array-like or float]. 
-		deg: return in degrees or not. [boolean].
+	Calculates the electrical length of a section of transmission line.
 	
-	returns:
-		theta: electrical length in radians or degrees, 
-			depending on  value of deg.
+	.. math::
+		\\theta = \\gamma(f) \\cdot d
+
+	Parameters
+	----------
+	gamma : function
+		propagation constant function, which takes frequency in hz as a 
+		sole argument. see Notes.
+	l : number or array-like
+		length of line, in meters
+	f : number or array-like
+		frequency at which to calculate
+	deg : Boolean
+		return in degrees or not. 
+	
+	Returns
+	----------
+	theta :  number or array-like
+		electrical length in radians or degrees, depending on  value of
+		deg.
+		
+	See Also
+	-----------
+		electrical_length_2_distance : opposite conversion
+		
+	Notes
+	------ 
+	the convention has been chosen that forward propagation is 
+	represented by the positive imaginary part of the value returned by 
+	the gamma function
 	'''
 	
 	# typecast to a 1D array
@@ -192,19 +271,36 @@ def electrical_length(gamma, f , d, deg=False):
 
 def electrical_length_2_distance(theta, gamma, f0,deg=True):
 	'''
-	convert electrical length to a physical distance.
+	Convert electrical length to a physical distance.
 	
-	takes:
-		theta: electrical length
-		gamma: propagation constant function [function]
-		f0:	frequency of interest [number]
-		deg: is theta in degrees [Boolean]
-	returns:
-		d: physical distance
+	.. math::
+		d = \\frac{\\theta}{\\gamma(f_0)}
+	
+	Parameters
+	----------
+	theta : number or array-like
+		electical length. units depend on `deg` option
+	gamma : function
+		propagation constant function, which takes frequency in hz as a 
+		sole argument. see Notes
+	f0 : number or array-like
+		frequency at which to calculate
+	deg : Boolean
+		return in degrees or not. 
+	
+	Returns
+	----------
+	d: physical distance
 		
-	note: the gamma function must take a single variable, that is 
-	frequency and return complex propagation constant such that the 
-	propagating part is positive imag part.  
+	Notes
+	------ 
+	the convention has been chosen that forward propagation is 
+	represented by the positive imaginary part of the value returned by 
+	the gamma function
+	
+	See Also
+	---------
+		distance_2_electrical_length: opposite conversion
 	'''
 	if deg == True:
 		theta = mf.degree_2_radian(theta)
@@ -212,14 +308,37 @@ def electrical_length_2_distance(theta, gamma, f0,deg=True):
 
 def input_impedance_2_reflection_coefficient(z0, zl):
 	'''
-	calculates the reflection coefficient for a given input impedance 
-	takes:
+	Reflection coefficient for a given load impedance, and 
+	characteristic impedance.
+	
+	For a transmission line of characteristic impedance :math:`Z_0` 
+	terminated with load impedance :math:`Z_l`, the complex reflection 
+	coefficient is given by,
 		
-		zl: input (load) impedance [number of array].  
-		z0 - characteristic impedance[number of array].
+	.. math::
+		\\Gamma = \\frac {Z_l - Z_0}{Z_l + Z_0}
+	
+	
+	Parameters
+	----------
+	zl :  number or array-like
+		load impedance (aka input impedance)
+	z0 :  number or array-like
+		characteristic impedance
+	
+	Returns
+	--------
+	gamma : number or array-like
+		reflection coefficient
+	
+	See Also
+	----------
+		Gamma0_2_zl : reflection coefficient to load impedance
 		
-	note:
-		input data is typecasted to 1D complex array
+	
+	Notes
+	------
+		inputs are typecasted to 1D complex array
 	'''
 	# typecast to a complex 1D array. this makes everything easier	
 	z0 = array(z0, dtype=complex).reshape(-1)
@@ -233,11 +352,26 @@ def input_impedance_2_reflection_coefficient(z0, zl):
 def reflection_coefficient_2_input_impedance(z0,Gamma):
 	'''
 	calculates the input impedance given a reflection coefficient and 
-	characterisitc impedance of the medium
-	takes:
+	characterisitc impedance
+	
+	.. math::
+		Z_0 (\\frac {1 + \\Gamma}{1-\\Gamma})
+	
+	
+	
+	Parameters
+	----------
+	Gamma : number or array-like
+		complex reflection coefficient
+	z0 : number or array-like
+		characteristic impedance
+	
+	Returns
+	--------
+	zin : number or array-like
+		input impedance
 		
-		Gamma: reflection coefficient
-		z0 - characteristic impedance. 
+		
 	'''
 	# typecast to a complex 1D array. this makes everything easier	
 	Gamma = array(Gamma, dtype=complex).reshape(-1)
@@ -250,15 +384,23 @@ def reflection_coefficient_2_input_impedance(z0,Gamma):
 	
 def reflection_coefficient_at_theta(Gamma0,theta):
 	'''
-	reflection coefficient at electrical length theta
-	takes:
-		Gamma0: reflection coefficient at theta=0
-		theta: electrical length, (may be complex)
-	returns:
-		Gamma_in
-		
-	note: 
-		 = Gamma0 * exp(-2j* theta)
+	reflection coefficient at a given electrical length.
+	
+	.. math::
+		\\Gamma_{in} = \\Gamma_0 e^{-2j\\theta}
+	
+	Parameters
+	----------
+	Gamma0 : number or array-like
+		reflection coefficient at theta=0
+	theta : number or array-like
+		electrical length, (may be complex)
+	
+	Returns
+	----------
+	Gamma_in : number or array-like
+		input reflection coefficient
+
 	'''
 	Gamma0 = array(Gamma0, dtype=complex).reshape(-1)
 	theta = array(theta, dtype=complex).reshape(-1)
@@ -266,13 +408,14 @@ def reflection_coefficient_at_theta(Gamma0,theta):
 
 def input_impedance_at_theta(z0,zl, theta):
 	'''
-	input impedance of load impedance zl at electrical length theta, 
+	input impedance of load impedance zl at a given electrical length, 
 	given characteristic impedance z0.
 	
-	takes:
-		z0 - characteristic impedance. 
-		zl: load impedance
-		theta: electrical length of the line, (may be complex) 
+	Parameters
+	----------
+	z0 : characteristic impedance. 
+	zl : load impedance
+	theta : electrical length of the line, (may be complex) 
 	'''
 	Gamma = input_impedance_2_reflection_coefficient(z0=z0,zl=zl)
 	Gamma_in = reflection_coefficient_at_theta(Gamma=Gamma, theta=theta)
@@ -287,7 +430,8 @@ def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
 	'''
 	calculates the input impedance at electrical length theta, given a
 	reflection coefficient and characterisitc impedance of the medium
-	takes:
+	Parameters
+	----------
 		z0 - characteristic impedance. 
 		Gamma: reflection coefficient
 		theta: electrical length of the line, (may be complex) 

@@ -57,7 +57,7 @@ class Media(object):
 		
 		'propagation_constant', 'characterisitc_impedance' and 'z0' can 
 		all be	either static or dynamic. This is achieved by allowing 
-		all those arguments to be either; 
+		those arguments to be either; 
 			functions which take no arguments or 
 			values (numbers or arrays)
 		
