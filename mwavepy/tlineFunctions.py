@@ -33,7 +33,6 @@ Each function has two names. One is a long-winded but readable name and
 the other is a short-hand variable-like names. Below is a table relating
 these two names with each other as well as common mathematical symbols.
 
-
 ====================  ======================  ================================
 Symbol                Variable Name           Long Name	
 ====================  ======================  ================================
@@ -43,6 +42,35 @@ Symbol                Variable Name           Long Name
 :math:`\Gamma_{in}`   Gamma_in                reflection_coefficient_at_theta
 :math:`\\theta`        theta                   electrical_length
 ====================  ======================  ================================
+
+There may be a bit of confusion about the difference between the load 
+impedance the input impedance. This is because the load impedance **is**
+the input impedance at the load. An illustration may provide some 
+useful reference.
+
+Below is a (bad) illustration of a section of uniform transmission line
+of characteristic impedance :math:`Z_0`, and electrical length 
+:math:`\\theta`. The line is terminated on the right with some
+load impedance, :math:`Z_l`. The input impedance :math:`Z_{in}` and
+input reflection coefficient :math:`\\Gamma_{in}` are 
+looking in towards the load from the distance :math:`\\theta` from the 
+load. 
+
+.. math::
+	Z_0, \\theta
+	
+	\\text{o===============o=}[Z_l]
+	
+	\\to\\qquad\\qquad\\qquad\\quad\\qquad \\qquad \\to \\qquad \\quad
+	
+	Z_{in},\\Gamma_{in}\\qquad\\qquad\\qquad\\qquad\\quad Z_l,\\Gamma_0 \\qquad 
+
+So, to clarify the confusion,
+
+.. math::
+	Z_{in}= Z_{l},\\qquad\\qquad 
+	
+	\\Gamma_{in}=\\Gamma_l \\text{ at }  \\theta=0
 
 
 Short names 
@@ -71,8 +99,8 @@ Long-names
 	reflection_coefficient_2_input_impedance_at_theta
 	
 	input_impedance_at_theta
-	input_impedance_2_reflection_coefficient	
-	input_impedance_2_reflection_coefficient_at_theta
+	load_impedance_2_reflection_coefficient	
+	load_impedance_2_reflection_coefficient_at_theta
 
 	
 
@@ -306,9 +334,9 @@ def electrical_length_2_distance(theta, gamma, f0,deg=True):
 		theta = mf.degree_2_radian(theta)
 	return theta/imag(gamma(f0))
 
-def input_impedance_2_reflection_coefficient(z0, zl):
+def load_impedance_2_reflection_coefficient(z0, zl):
 	'''
-	Reflection coefficient for a given load impedance, and 
+	Returns the reflection coefficient for a given load impedance, and 
 	characteristic impedance.
 	
 	For a transmission line of characteristic impedance :math:`Z_0` 
@@ -321,10 +349,11 @@ def input_impedance_2_reflection_coefficient(z0, zl):
 	
 	Parameters
 	----------
-	zl :  number or array-like
-		load impedance (aka input impedance)
 	z0 :  number or array-like
 		characteristic impedance
+	zl :  number or array-like
+		load impedance (aka input impedance)
+	
 	
 	Returns
 	--------
@@ -416,13 +445,16 @@ def input_impedance_at_theta(z0,zl, theta):
 	z0 : characteristic impedance. 
 	zl : load impedance
 	theta : electrical length of the line, (may be complex) 
+	
+	Returns
+	---------
 	'''
-	Gamma = input_impedance_2_reflection_coefficient(z0=z0,zl=zl)
+	Gamma = load_impedance_2_reflection_coefficient(z0=z0,zl=zl)
 	Gamma_in = reflection_coefficient_at_theta(Gamma=Gamma, theta=theta)
 	return reflection_coefficient_2_input_impedance(z0=z0, Gamma=Gamma_in)
 	
-def input_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
-	Gamma0 = input_impedance_2_reflection_coefficient(z0=z0,zl=zl)
+def load_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
+	Gamma0 = load_impedance_2_reflection_coefficient(z0=z0,zl=zl)
 	Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
 	return Gamma_in
 
@@ -447,11 +479,11 @@ def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
 theta = electrical_length
 distance_2_electrical_length = electrical_length
 
-zl_2_Gamma0 = input_impedance_2_reflection_coefficient
+zl_2_Gamma0 = load_impedance_2_reflection_coefficient
 Gamma0_2_zl = reflection_coefficient_2_input_impedance
 
 zl_2_zin = input_impedance_at_theta
-zl_2_Gamma_in = input_impedance_2_reflection_coefficient_at_theta
+zl_2_Gamma_in = load_impedance_2_reflection_coefficient_at_theta
 
 Gamma0_2_Gamma_in = reflection_coefficient_at_theta
 Gamma0_2_zin = reflection_coefficient_2_input_impedance_at_theta

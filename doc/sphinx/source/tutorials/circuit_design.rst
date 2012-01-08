@@ -2,7 +2,7 @@
 
 Circuit Design
 **********************
-
+.. contents::
 Intro
 ----------
 
