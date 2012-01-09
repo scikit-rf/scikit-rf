@@ -96,30 +96,75 @@ from tlineFunctions import zl_2_Gamma0
 class Network(object):
 	'''
 
-	An n-port microwave network.
+	A n-port microwave network.
 
-	the most fundemental properties are:
+	A n-port microwave networks is defined by three quantities,
+	 * scattering parameter matrix (s-matrix)
+	 * port characteristic impedance matrix 
+	 * frequency information
 	
-	- :attr:`s` : scattering matrix. a kxnxn complex matrix where 'n' is number of ports of network, and `k` is number of frequency points
-	- :attr:`z0`: characteristic impedance
-	- :attr:`f` : frequency vector in Hz. see :attr:`frequency`, which is a :class:`Frequency` object (see help on this class for more info)
+	The :class:`Network` class stores these data structures internally 
+	in the form of complex numpy.ndarray's. These arrays are not 
+	interfaced directly but instead through the use of the properties:
+
+	=====================  =============================================
+	Property               Quantity
+	=====================  =============================================	
+	:attr:`s`              scattering parameter matrix
+	:attr:`z0`             characteristic impedancematrix
+	:attr:`f`              frequency vector 
+	=====================  =============================================	
 	
+	Individual components of the s-matrix are accesable through
+	properties as well. These also return numpy.ndarray's.
 	
-		
+	=====================  =============================================
+	Property               Quantitiy
+	=====================  =============================================	
+	:attr:`s_re`           real part of the s-matrix
+	:attr:`s_im`           imaginary part of the s-matrix
+	:attr:`s_mag`          magnitude of the s-matrix
+	:attr:`s_db`           magnitude in log scale of the s-matrix
+	:attr:`s_deg`          phase of the s-matrix in degrees
+	=====================  =============================================
 	
-	The following operators are defined as follows:
-		
-	- `+` 	: element-wise addition of the s-matrix
-	- `-` 	: element-wise subtraction of the s-matrix
-	- `*` 	: element-wise multiplication of the s-matrix
-	- `/` 	: element-wise division of the s-matrix
-	- `**`	: cascading of 2-port networks (see :func:`connect`)
-	- `//`	: de-embdeding of one network from the other. (better to 
+	The following :class:`Network` operators are available:
 	
+	=====================  =============================================
+	Operator               Function	
+	=====================  =============================================	
+	\+                     element-wise addition of the s-matrix
+	\-                     element-wise difference of the s-matrix
+	\*                     element-wise multiplication of the s-matrix
+	\/                     element-wise division of the s-matrix
+	\*\*                     cascading (only for 2-ports) 
+	\//                    de-embedding (for 2-ports, see :attr:`inv`)
+	=====================  =============================================	
+
+	Different components of the :class:`Network` can be visualized
+	through various plotting methods. These methods can be used to plot
+	individual elements of the s-matrix or all at once. For more info
+	about plotting see the :doc:`../tutorials/plotting` tutorial.
 	
-	most properties are derived from the specifications given for
-	touchstone files. 
+	=====================  =============================================
+	Method                 Function	
+	=====================  =============================================	
+	:func:`plot_s_smith`   plot complex s-parameters on smith chart
+	:func:`plot_s_re`      plot real part of s-parameters vs frequency
+	:func:`plot_s_im`      plot imaginary part of s-parameters vs frequency
+	:func:`plot_s_mag`     plot magnitude of s-parameters vs frequency
+	:func:`plot_s_db`      plot magnitude (in dB) of s-parameters vs frequency
+	:func:`plot_s_deg`     plot phase of s-parameters (in degrees) vs frequency
+	=====================  =============================================	
 	
+	Generally, :class:`Network`  objects are created from touchstone 
+	files upon initializtion  (see :func:`__init__`), or are created
+	from a :class:`~media.media.Media` object. :class:`Network`  objects
+	can be saved to disk in the form of touchstone files with the 
+	:func:`write_touchstone` method.
+	
+	An exhaustive list of :class:`Network` Methods and Properties
+	(Attributes) are given below
 	'''
 	global ALMOST_ZER0
 	ALMOST_ZER0=1e-6 # used for testing s-parameter equivalencee
