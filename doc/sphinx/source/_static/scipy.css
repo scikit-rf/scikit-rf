@@ -9,6 +9,10 @@ div.body p, div.body dd, div.body li {
   font-size: 15px;
 }
 
+table.docutils {
+    font-size: 15px;
+}
+
 ul.simple { 
     margin-top: 0;
     margin-bottom: 0;

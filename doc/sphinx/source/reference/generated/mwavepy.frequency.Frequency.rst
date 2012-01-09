@@ -4,29 +4,37 @@ mwavepy.frequency.Frequency
 .. currentmodule:: mwavepy.frequency
 
 .. autoclass:: Frequency
-
-   
-
-   .. HACK
-      .. autosummary::
-         :toctree:
-      
-         Frequency.__init__
-         Frequency.from_f
-         Frequency.labelXAxis
+  :no-members:
 
 
 
-   
+.. rubric:: Attributes
 
-   .. HACK
-      .. autosummary::
-         :toctree:
-      
-         Frequency.center
-         Frequency.f
-         Frequency.f_scaled
-         Frequency.multiplier
-         Frequency.unit
-         Frequency.w
+.. autosummary::
+  :toctree:
+  :nosignatures:
+
+  ~Frequency.center
+  ~Frequency.f
+  ~Frequency.f_scaled
+  ~Frequency.multiplier
+  ~Frequency.unit
+  ~Frequency.w
+
+
+
+
+
+.. rubric:: Methods
+
+.. autosummary::
+  :toctree:
+  :nosignatures:
+
+  ~Frequency.__init__
+  ~Frequency.from_f
+  ~Frequency.labelXAxis
+
+
+
 

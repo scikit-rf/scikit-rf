@@ -1,23 +1,36 @@
-{% extends "!autosummary/class.rst" %}
+{{ fullname }}
+{{ underline }}
 
-{% block methods %}
-{% if methods %}
-   .. HACK
-      .. autosummary::
-         :toctree:
-      {% for item in methods %}
-         {{ name }}.{{ item }}
-      {%- endfor %}
-{% endif %}
-{% endblock %}
+.. currentmodule:: {{ module }}
+
+.. autoclass:: {{ objname }}
+  :no-members:
 
 {% block attributes %}
 {% if attributes %}
-   .. HACK
-      .. autosummary::
-         :toctree:
-      {% for item in attributes %}
-         {{ name }}.{{ item }}
-      {%- endfor %}
+.. rubric:: Attributes
+
+.. autosummary::
+  :toctree:
+  :nosignatures:
+{% for item in attributes %}
+  ~{{ name }}.{{ item }}
+{%- endfor %}
 {% endif %}
 {% endblock %}
+
+{% block methods %}
+{% if methods %}
+.. rubric:: Methods
+
+.. autosummary::
+  :toctree:
+  :nosignatures:
+{% for item in methods %}
+  ~{{ name }}.{{ item }}
+{%- endfor %}
+{% endif %}
+{% endblock %}
+
+
+
