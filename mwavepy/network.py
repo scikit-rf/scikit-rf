@@ -96,9 +96,9 @@ from tlineFunctions import zl_2_Gamma0
 class Network(object):
 	'''
 
-	A n-port microwave network.
+	A n-port network.
 	
-	A n-port microwave networks is defined by three quantities,
+	A n-port networks is defined by three quantities,
 	 * scattering parameter matrix (s-matrix)
 	 * port characteristic impedance matrix 
 	 * frequency information
@@ -108,10 +108,10 @@ class Network(object):
 	interfaced directly but instead through the use of the properties:
 
 	=====================  =============================================
-	Property               Quantity
+	Property               Meaning
 	=====================  =============================================	
 	:attr:`s`              scattering parameter matrix
-	:attr:`z0`             characteristic impedancematrix
+	:attr:`z0`             characteristic impedance matrix
 	:attr:`f`              frequency vector 
 	=====================  =============================================	
 	
@@ -119,7 +119,7 @@ class Network(object):
 	properties as well. These also return numpy.ndarray's.
 	
 	=====================  =============================================
-	Property               Quantitiy
+	Property               Meaning
 	=====================  =============================================	
 	:attr:`s_re`           real part of the s-matrix
 	:attr:`s_im`           imaginary part of the s-matrix
@@ -147,7 +147,7 @@ class Network(object):
 	about plotting see the :doc:`../tutorials/plotting` tutorial.
 	
 	=====================  =============================================
-	Method                 Function	
+	Method                 Meaning	
 	=====================  =============================================	
 	:func:`plot_s_smith`   plot complex s-parameters on smith chart
 	:func:`plot_s_re`      plot real part of s-parameters vs frequency
@@ -192,6 +192,9 @@ class Network(object):
 			self.read_touchstone(touchstone_file)
 			if name is not None:
 				self.name = name
+				'''
+				name of the network
+				'''
 		
 		else:
 			self.name = name
@@ -317,7 +320,7 @@ class Network(object):
 	@property
 	def s(self):
 		'''
-		the scattering parameter matrix.
+		the scattering parameter matrix [#]_.
 		
 		s-matrix is a 3 dimensional numpy.ndarray which has shape 
 		`fxnxn`, where `f` is frequency axis and `n` is number of ports
@@ -326,6 +329,10 @@ class Network(object):
 		---------
 		s : complex numpy.ndarry of shape `fxnxn`
 			the scattering parameter matrix.
+		
+		References
+		------------
+		.. [#] http://en.wikipedia.org/wiki/Scattering_parameters
 		'''
 		return self._s
 	
@@ -358,7 +365,7 @@ class Network(object):
 	@property
 	def t(self):
 		'''
-		t-parameters, aka scattering transfer parameters
+		t-parameters, aka scattering transfer parameters [#]_
 		
 		this is also known or the wave cascading matrix, and is only 
 		defined for a 2-port Network
@@ -369,7 +376,9 @@ class Network(object):
 		t : complex numpy.ndarry of shape `fxnxn`
 			t-parameters, aka scattering transfer parameters
 			
-		
+		References
+		-----------
+		.. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
 		'''
 		return s2t(self.s)
 	@property
@@ -442,6 +451,11 @@ class Network(object):
 		--------
 		f : numpy.ndarray 
 			frequency vector in Hz
+			
+		See Also
+		---------
+			frequency : frequency property that holds all frequency 
+				information
 		'''
 		return self.frequency.f
 		
@@ -654,20 +668,29 @@ class Network(object):
 	@property
 	def s_arcl(self):
 		'''
-		the arc-length of the s-parameters, given by  
-			= s_rad * s_mag 
+		arc-length of the s-parameters
 		
-		used in calculating differences in phase, but in units of distance
+		This useful in that it is a measure of phase, but given in units
+		of distance. this is calculated by 
+		
+		.. math::
+		
+			\\angle s \\cdot |s| 
+		
+		Returns
+		--------
+		s_arcl : numpy.ndarray of shape fxnxn
 		'''
 		return self.s_rad * self.s_mag
 	
 	@property
 	def s_arcl_unwrap(self):
 		'''
-		the unwrapped arc-length of the s-parameters, given by  
-			= s_rad_unwrap * s_mag 
+		unwrapped arc-length of the s-parameters, see :attr:`s_arcl`
 		
-		used in calculating differences in phase, but in units of distance
+		Returns
+		--------
+		s_arcl_unwrap : numpy.ndarray of shape fxnxn
 		'''
 		return self.s_rad_unwrap * self.s_mag
 	
@@ -705,28 +728,48 @@ class Network(object):
 	def number_of_ports(self):
 		'''
 		the number of ports the network has.
+		
+		Returns
+		--------
+		number_of_ports : number
+			the number of ports the network has.
+			
 		'''
 		return self.s.shape[1]
 	@property
 	def passivity(self):
 		'''
-		 passivity metric for a multi-port network. It returns
-		a matrix who's diagonals are equal to the total power 
-		received at all ports, normalized to the power at a single
-		excitement  port.
+		passivity metric for a multi-port network.
+		
+		This returns a matrix who's diagonals are equal to the total 
+		power received at all ports, normalized to the power at a single
+		excitement port.
 		
 		mathmatically, this is a test for unitary-ness of the 
-		s-parameter matrix. 
+		s-parameter matrix [#]_. 
 		
-		for two port this is 
-			( |S11|^2 + |S21|^2, |S22|^2+|S12|^2)
+		for two port this is
+		
+		.. math::
+		
+			( |S_{11}|^2 + |S_{21}|^2 \, , \, |S_{22}|^2+|S_{12}|^2)
+		
 		in general it is  
-			S.H * S
-		where H is conjugate transpose of S, and * is dot product
 		
-		note:
-		see more at,
-		http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
+		.. math::
+		
+			S^H \\cdot S
+		
+		where :math:`H` is conjugate transpose of S, and :math:`\\cdot` 
+		is dot product.
+		
+		Returns
+		---------
+		passivity : numpy.ndarray of shape fxnxn
+	
+		References
+		------------
+		.. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
 		'''
 		if self.number_of_ports == 1:
 			raise (ValueError('Doesnt exist for one ports'))
@@ -743,14 +786,24 @@ class Network(object):
 	# touchstone file IO
 	def read_touchstone(self, filename):
 		'''
-		loads  values from a touchstone file. 
+		loads values from a touchstone file. 
 		
-		takes:
-			filename - touchstone file name, string. 
+		The work of this function is done through the 
+		:class:`~mwavepy.touchstone.touchstone` class.
 		
-		note: 
-			ONLY 'S' FORMAT SUPORTED AT THE MOMENT 
-			all work is tone in the touchstone class. 
+		Parameters
+		----------
+		filename : string
+			touchstone file name. 
+		
+		
+		Notes
+		------ 
+		only the scattering parameters format is supported at the 
+		moment
+		
+	
+			
 		'''
 		touchstoneFile = touchstone.touchstone(filename)
 		
@@ -765,22 +818,28 @@ class Network(object):
 
 	def write_touchstone(self, filename=None, dir = './'):
 		'''
-		write a touchstone file representing this network.  the only 
-		format supported at the moment is :
-			HZ S RI 
+		write a contents of the :class:`Network` to a touchstone file.
+		 
 		
-		takes: 
-			filename: a string containing filename without 
-				extension[None]. if 'None', then will use the network's 
-				name. if this is empty, then throws an error.
-			dir: the directory to save the file in. [string]. Defaults 
-				to './'
+		Parameters
+		----------
+		filename : a string, optional
+			touchstone filename, without extension. if 'None', then 
+			will use the network's :attr:`name`.
+		dir : string, optional 
+			the directory to save the file in. Defaults 
+			to cwd './'.
 			
 		
-		note:
-			in the future could make possible use of the touchtone 
-			class, but at the moment this would not provide any benefit 
-			as it has not set_ functions. 
+		Notes
+		-------
+			format supported at the moment is,
+				HZ S RI
+			
+			The functionality of this function should take place in the 
+			:class:`~mwavepy.touchstone.touchstone` class. 
+	
+		
 		'''
 		if filename is None:
 			if self.name is not None:
@@ -829,21 +888,31 @@ class Network(object):
 	# self-modifications
 	def interpolate(self, new_frequency,**kwargs):
 		'''
-		calculates an interpolated network. defualt interpolation type
-		is linear. see notes about other interpolation types
+		calculates an interpolated network.
+		
+		The default interpolation type is linear. see Notes for how to 
+		use other interpolation types.
+		
 
-		takes:
-			new_frequency:
-			**kwargs: passed to scipy.interpolate.interp1d initializer.
+		Parameters
+		-----------
+		new_frequency : :class:`~mwavepy.frequency.Frequency`
+			frequency information to interpolate at
+		**kwargs : keyword arguments 
+			passed to :func:`scipy.interpolate.interp1d` initializer.
 				  
-		returns:
-			result: an interpolated Network
+		Returns
+		----------
+		result : :class:`Network`
+			an interpolated Network
 
-		note:
-			usefule keyward for  scipy.interpolate.interp1d:
-			 kind : str or int
+		Notes
+		--------
+			useful keyword for  :func:`scipy.interpolate.interp1d`,
+			 **kind** : str or int
 				Specifies the kind of interpolation as a string ('linear',
-				'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or as an integer
+				'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
+				as an integer
 				specifying the order of the spline interpolator to use.
 
 			
@@ -863,7 +932,7 @@ class Network(object):
 		
 	def flip(self):
 		'''
-		swaps the ports of a two port 
+		swaps the ports of a two port Network
 		'''
 		if self.number_of_ports == 2:
 			self.s = flip(self.s)
@@ -876,13 +945,30 @@ class Network(object):
 	def plot_vs_frequency_generic(self,attribute,y_label=None,\
 		m=None,n=None, ax=None,show_legend=True,**kwargs):
 		'''
-		generic plotting function for plotting a Network's attribute
-		vs frequency.
+		plot a Network  attribute vs frequency.
 		
-
-		takes:
-
+		Parameters
+		-----------
+		attribute : string
+			Network attribute to plot 
+		y_label : string, optional
+			the y-axis label
+		m : int, optional
+			first index of s-parameter matrix, if None will use all 
+		n : int, optional
+			secon index of the s-parameter matrix, if None will use all  
+		ax : :class:`matplotlib.Axes` object, optional
+			An existing Axes object to plot on
+		show_legend : Boolean
+			draw legend or not
+		**kwargs : keyword arguments
+			passed to :func:`matplotlib.plot` 
 		
+		Examples
+		------------
+		
+		>>> myntwk.plot_vs_frequency_generic(attribute= 's_mag',
+			y_label='Magnitude', m=0,n=0, show_legend = True, color='r')
 		'''
 		# get current axis if user doesnt supply and axis 
 		if ax is None:
@@ -941,8 +1027,7 @@ class Network(object):
 		generic plotting function for plotting a Network's attribute
 		in polar form
 		
-
-		takes:
+		Needs Work
 			
 		
 		'''
@@ -1494,8 +1579,8 @@ class Network(object):
 		
 		Examples
 		---------
-		>>> myntwk.plot_s_rad()
-		>>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
+		>>> myntwk.plot_s_complex()
+		>>> myntwk.plot_s_complex(m=0,n=1,color='b', marker='x')
 		'''
 		# TODO: prevent this from re-drawing smith chart if one alread
 		# exists on current set of axes
@@ -1565,8 +1650,7 @@ class Network(object):
 	
 	def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
-		plots the passivity of a network.
-		possibly for a specific port. 
+		plots the passivity of a network, possibly for a specific port. 
 		
 		
 		Parameters
@@ -1606,15 +1690,18 @@ class Network(object):
 	# noise
 	def add_noise_polar(self,mag_dev, phase_dev,**kwargs):
 		'''
-		adds a complex zero-mean gaussian white-noise signal of given
-		standard deviations for magnitude and phase
+		adds a complex zero-mean gaussian white-noise.
+		
+		adds a complex zero-mean gaussian white-noise of a given
+		standard deviation for magnitude and phase
 
-		takes:
-			mag_mag: standard deviation of magnitude
-			phase_dev: standard deviation of phase [in degrees]
-			n_ports: number of ports. defualt to 1
-		returns:
-			nothing
+		Parameters
+		------------
+		mag_dev : number
+			standard deviation of magnitude
+		phase_dev : number
+			standard deviation of phase [in degrees]
+		
 		'''
 		phase_rv= stats.norm(loc=0, scale=phase_dev).rvs(size = self.s.shape)
 		mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size = self.s.shape)
@@ -1626,12 +1713,13 @@ class Network(object):
 		adds a flatband complex zero-mean gaussian white-noise signal of
 		given standard deviations for magnitude and phase
 
-		takes:
-			mag_mag: standard deviation of magnitude
-			phase_dev: standard deviation of phase [in degrees]
-			n_ports: number of ports. defualt to 1
-		returns:
-			nothing
+		Parameters
+		------------
+		mag_dev : number
+			standard deviation of magnitude
+		phase_dev : number
+			standard deviation of phase [in degrees]
+
 		'''
 		phase_rv= stats.norm(loc=0, scale=phase_dev).rvs(size = self.s[0].shape)
 		mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size = self.s[0].shape)
