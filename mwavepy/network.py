@@ -97,7 +97,7 @@ class Network(object):
 	'''
 
 	A n-port microwave network.
-
+	
 	A n-port microwave networks is defined by three quantities,
 	 * scattering parameter matrix (s-matrix)
 	 * port characteristic impedance matrix 
@@ -173,6 +173,9 @@ class Network(object):
 	def __init__(self, touchstone_file = None, name = None ):
 		'''
 		constructor.
+		
+		Contructs a Network, and optionally populates the s-matrix 
+		and frequency information from touchstone file.
 		
 		Parameters
 		------------
@@ -263,7 +266,7 @@ class Network(object):
 
 	def __div__(self,other):
 		'''
-		element-wise complex division  of s-matrix
+		element-wise division  of s-matrix
 		'''
 		if other.number_of_ports != self.number_of_ports:
 			raise IndexError('Networks must have same number of ports.')
@@ -308,17 +311,21 @@ class Network(object):
 		return output
 	def __repr__(self):
 		return self.__str__()
+	
 	## PRIMARY PROPERTIES
 	# s-parameter matrix
 	@property
 	def s(self):
 		'''
-		The scattering parameter matrix.
+		the scattering parameter matrix.
 		
-		s-matrix has shape fxnxn, 
-		where; 
-			f is frequency axis and,
-			n's are port indicies
+		s-matrix is a 3 dimensional numpy.ndarray which has shape 
+		`fxnxn`, where `f` is frequency axis and `n` is number of ports
+		
+		Returns
+		---------
+		s : complex numpy.ndarry of shape `fxnxn`
+			the scattering parameter matrix.
 		'''
 		return self._s
 	
@@ -339,6 +346,9 @@ class Network(object):
 		#s.squeeze()
 	@property
 	def y(self):
+		'''
+		needs work
+		'''
 		if self.number_of_ports == 1:
 			return (1-self.s)/(1+self.s)
 		else:
@@ -348,14 +358,36 @@ class Network(object):
 	@property
 	def t(self):
 		'''
-		returns the t-parameters, which are also known as wave cascading
-		matrix. 
+		t-parameters, aka scattering transfer parameters
+		
+		this is also known or the wave cascading matrix, and is only 
+		defined for a 2-port Network
+		
+		
+		Returns
+		--------
+		t : complex numpy.ndarry of shape `fxnxn`
+			t-parameters, aka scattering transfer parameters
+			
+		
 		'''
 		return s2t(self.s)
 	@property
 	def inv(self):
 		'''
-		a network representing inverse s-parameters, for de-embeding
+		a :class:`Network` object with 'inverse' s-parameters.
+		
+		This is used for de-embeding. It is defined so that the inverse
+		of a Network cascaded with itself is unity.
+		
+		Returns
+		---------
+		inv : a :class:`Network` object
+			a :class:`Network` object with 'inverse' s-parameters.
+		
+		See Also
+		----------
+			inv : function which implements the inverse s-matrix
 		'''
 		if self.number_of_ports <2:
 			raise(TypeError('One-Port Networks dont have inverses'))
@@ -367,15 +399,26 @@ class Network(object):
 	@property
 	def frequency(self):
 		'''
-		stores the frequency information for this network. 
+		frequency information for the network. 
 		
-		This property is a :class:`~wmwavepy.frequency.Frequency` class.
+		This property is a :class:`~mwavepy.frequency.Frequency` object.
+		It holds the frequency vector, as well frequency unit, and 
+		provides other properties related to frequency information, such 
+		as start, stop, etc.
+		
+		Returns
+		--------
+		frequency :  :class:`~mwavepy.frequency.Frequency` object
+			frequency information for the network. 
+	
 		
 		See Also
 		---------
 			f : property holding frequency vector in Hz
 			change_frequency : updates frequency property, and 
 				interpolates s-parameters if needed
+			interpolate : interpolate function based on new frequency 
+				info
 		'''
 		try:
 			return self._frequency
@@ -392,7 +435,14 @@ class Network(object):
 	
 	@property
 	def f(self):
-		''' the frequency vector for the network, in Hz. '''
+		''' 
+		the frequency vector for the network, in Hz. 
+		
+		Returns
+		--------
+		f : numpy.ndarray 
+			frequency vector in Hz
+		'''
 		return self.frequency.f
 		
 	@f.setter
@@ -406,9 +456,21 @@ class Network(object):
 	# characteristic impedance
 	@property
 	def z0(self):
-		''' the characteristic impedance of the network.
+		'''
+		the characteristic impedance[s] of the network ports.
 		
-		z0 can be may be a number, or numpy.ndarray of shape n or fxn. 
+		This property stores the  characteristic impedance of each port
+		of the network. Because it is possible that each port has
+		a different characteristic impedance, that is a function of 
+		frequency, `z0` is stored internally as a `fxn` array.
+		
+		However because frequenty `z0` is simple (like 50ohm),it can 
+		be set with just number as well. 
+		
+		Returns
+		--------
+		z0 : numpy.ndarray of shape fxn
+			characteristic impedance for network
 		
 		'''
 		# i hate this function
@@ -472,80 +534,120 @@ class Network(object):
 	@property
 	def s_re(self):
 		'''
-		returns the real part of the s-parameters.
+		real part of the s-parameters.
+		
+		Returns
+		--------
+		s_re : numpy.ndarray of shape fxnxn
+		
 		'''
 		return npy.real(self.s)
 	
 	@property
 	def s_im(self):
 		'''
-		returns the imaginary part of the s-parameters.
+		imaginary part of the s-parameters.
+		
+		Returns
+		--------
+		s_im : numpy.ndarray of shape fxnxn
 		'''
 		return npy.imag(self.s)
 		
 	@property
 	def s_mag(self):
 		'''
-		returns the magnitude of the s-parameters.
+		magnitude of the s-parameters.
+		
+		Returns
+		--------
+		s_mag : numpy.ndarray of shape fxnxn
 		'''
 		return mf.complex_2_magnitude(self.s)
 	@property
 	def s_abs(self):
 		'''
-		see s_mag
+		see :attr:`s_mag`
 		'''
 		return self.s_mag
 	
 	@property
 	def s_db(self):
 		'''
-		returns the magnitude of the s-parameters, in dB
+		magnitude of the s-parameters, in dB
 		
-		note:
-			dB is calculated by 
-				20*log10(|s|)
+		this is calculated by 
+		
+		.. math::
+			
+			20\cdot \log_{10}(|s|)
+		
+		Returns
+		--------
+		s_db : numpy.ndarray of shape fxnxn
+		
+		
+		
 		'''
 		return mf.complex_2_db(self.s)
 		
 	@property
 	def s_deg(self):
 		'''
-		returns the phase of the s-parameters, in radians
+		phase of the s-parameters, in degrees
+		
+		Returns
+		--------
+		s_deg : numpy.ndarray of shape fxnxn
 		'''
 		return mf.complex_2_degree(self.s)
 	
 	@property
 	def s_angle(self):
 		'''
-		see s_deg
+		see :attr:`s_deg`
 		'''
 		return self.s_deg	
 	@property
 	def s_rad(self):
 		'''
-		returns the phase of the s-parameters, in radians.
+		phase of the s-parameters, in radians.
+		
+		Returns
+		--------
+		s_rad : numpy.ndarray of shape fxnxn
 		'''
 		return mf.complex_2_radian(self.s)
 	
 	@property
 	def s_deg_unwrap(self):
 		'''
-		returns the unwrapped phase of the s-paramerts, in degrees
+		unwrapped phase of the s-paramerts, in degrees
+		
+		Returns
+		--------
+		s_deg_unwrap : numpy.ndarray of shape fxnxn
+		
+		
 		'''
 		return mf.radian_2_degree(self.s_rad_unwrap)
 	
 	@property
 	def s_rad_unwrap(self):
 		'''
-		returns the unwrapped phase of the s-parameters, in radians.
+		unwrapped phase of the s-parameters, in radians.
+		
+		Returns
+		--------
+		s_rad_unwrap : numpy.ndarray of shape fxnxn
+		
 		'''
 		return mf.unwrap_rad(self.s_rad)
 		
 	@property
 	def s_quad(self):
 		'''
-		this is a different name for  arc-length, 
-		see Network.s_arcl
+		see :attr:`s_arcl`
 		'''
 		return self.s_arcl
 		
