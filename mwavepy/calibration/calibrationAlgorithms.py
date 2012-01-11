@@ -195,11 +195,11 @@ def one_port(measured, ideals):
 	Returns
 	-----------
 	output : a dictionary
-		containing the following keys
+		output information from the calibration, the keys are
 		 * 'error coeffcients': dictionary containing standard error
-			coefficients
+		   coefficients
 		 * 'residuals': a matrix of residuals from the least squared 
-			calculation. see numpy.linalg.lstsq() for more info
+		   calculation. see numpy.linalg.lstsq() for more info
 
 
 	Notes
@@ -292,16 +292,17 @@ def one_port_nls (measured, ideals):
 		a dictionary containing the following keys:
 		
 		* 'error coeffcients': dictionary containing standard error
-			coefficients
+		  coefficients
 		
 		* 'residuals': a matrix of residuals from the least squared 
-			calculation. see numpy.linalg.lstsq() for more info
+		  calculation. see numpy.linalg.lstsq() for more info
 		
 		* 'cov_x': covariance matrix
 
 	Notes
 	------
-		uses scipy.optmize.leastsq for non-linear least squares calculation
+	Uses :func:`scipy.optmize.leastsq` for non-linear least squares
+	calculation
 	
 	'''
 	#make  copies so list entities are not changed, when we typecast 
@@ -367,41 +368,51 @@ def one_port_nls (measured, ideals):
 ## TWO PORT
 def two_port(measured, ideals, switch_terms = None):
 	'''
-	two port calibration based on the 8-term error model.  takes two
-	ordered lists of measured and ideal responses. optionally, switch
-	terms can be taken into account by passing a tuple containing the
-	forward and reverse switch terms as 1-port Networks
+	Two port calibration based on the 8-term error model.
+	
+	Takes two
+	ordered lists of measured and ideal responses. Optionally, switch
+	terms [1]_ can be taken into account by passing a tuple containing the
+	forward and reverse switch terms as 1-port Networks. This algorithm
+	is based on the work in [2]_ . 
 
-	takes: 
+	Parameters
+	-----------
+	measured : list of 2-port :class:`~mwavepy.network.Network` objects
+		Raw measurements of the calibration standards. The order 
+		must align with the `ideals` parameter
+	
+	ideals : list of 2-port :class:`~mwavepy.network.Network` objects
+		Predicted ideal response of the calibration standards.
+		The order must align with `ideals` list
 		measured: ordered list of measured networks. list elements
-			should be	2-port	Network types. list order must correspond
-			with ideals.  
-		ideals: ordered list of ideal networks. list elements should be
-			2-port	Network types.
-		switch_terms: tuple of 1-port Network types holding switch terms
-			in this order (forward, reverse). 
+			
+	switch_terms : tuple of :class:`~mwavepy.network.Network` objects
+			The two measured switch terms in the order 
+			(forward, reverse).  This is only applicable in two-port
+			calibrations. See Roger Mark's paper on switch terms [1]_ 
+			for explanation of what they are.
 
-	returns:
-		output: a dictionary containing the follwoing keys:
-			'error coefficients':
-			'error vector':
-			'residuals':
+	Returns
+	----------
+	output : a dictionary 
+		output information, contains the following keys:
+		* 'error coefficients':
+		* 'error vector':
+		* 'residuals':
 
-	note:
-		support for gathering switch terms on HP8510C  is in
-		mwavepy.virtualInstruments.vna.py
+	Notes
+	---------
+	support for gathering switch terms on HP8510C  is in
+	:mod:`mwavepy.virtualInstruments.vna`
 	
-	references
 	
-	Doug Rytting " Network Analyzer Error Models and Calibration Methods"
-	RF 8 Microwave. Measurements for Wireless Applications (ARFTG/NIST)
-	 Short Course ...
-	
-	Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer
-	Calibration Procedure, Covering n-Port Scattering-Parameter
-	Measurements, Affected by Leakage Errors," Microwave Theory and
-	Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115,
-	Dec 1977
+	References
+	-------------
+	.. [1] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931  
+	.. [2] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047 
+
+
 	'''
 	#make  copies so list entities are not changed, when we typecast 
 	mList = copy(measured)
@@ -505,7 +516,7 @@ def parameterized_self_calibration(measured, ideals, showProgress=True,\
 	------------
 	measured : list of :class:`~....network.Network` objects
 		a list of the measured networks 
-	ideals : list of :class:`~mwavepy.network.Network` objects 
+	ideals : list of :class:`~mwavepy.calibration.parametricStandard.parametricStandard.ParametricStandard` objects 
 		a list of the ideal networks
 	showProgress : Boolean
 		turn printing progress on/off 

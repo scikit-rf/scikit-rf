@@ -64,7 +64,7 @@ class Calibration(object):
 	set meaurements and ideals responses. It can run a calibration,
 	store results, and apply the results to calculate corrected 
 	measurements. 
-
+	
 	'''
 	calibration_algorithm_dict={\
 		'one port': one_port,\
@@ -74,6 +74,13 @@ class Calibration(object):
 		'two port': two_port,\
 		'two port parametric':parameterized_self_calibration,\
 		}
+	'''
+	dictionary holding calibration algorithms.
+	
+	See Also
+	---------
+		:mod:`mwavepy.calibration.calibrationAlgorithms`
+	'''
 	
 	def __init__(self,measured, ideals, type=None, frequency=None,\
 		is_reciprocal=False,name=None, sloppy_input=False,
@@ -84,12 +91,12 @@ class Calibration(object):
 		Parameters
 		----------
 		measured : list of :class:`~mwavepy.network.Network` objects
-			raw measurements of the calibration standards. The order 
+			Raw measurements of the calibration standards. The order 
 			must align with the `ideals` parameter
 		
 		ideals : list of :class:`~mwavepy.network.Network` objects
-			a list of measured Network's. the order must align with 
-			`ideals` list
+			Predicted ideal response of the calibration standards.
+			The order must align with `ideals` list
 		
 		Other Parameters
 		-----------------	
@@ -99,45 +106,51 @@ class Calibration(object):
 			first element in `measured`.
 
 		type : string 
-			representing what type of calibration is to be
-				performed [None]. See
-				`Calibration.calibration_algorithm_dict` for a list 
-				of supported algorithms:
+			the calibration algorithm. If `None`, the class will inspect
+			number of ports on first `measured` Network and choose either
+			`'one port'` or `'two port'`. See Notes_ section for more 
+			infor
 
-				'one port':	standard one-port cal. if more than
-					2 measurement/ideal pairs are given it will
-					calculate the least squares solution.
-
-				'two port': standard two-port calibibration based on
-					8-term error model. can take switch-terms into
-					by using the switch_term option.
-				
-				if None, will inspect number of ports on first measured
-				network and choose either 'one port' or 'two port'
-				
+			
 		is_reciprocal : Boolean
 			enables the reciprocity assumption on the calculation of the
 			error_network, which is only relevant for one-port 
 			calibrations.
 
-		switch_terms: tuple holding the two measured switch terms in
-			the order (forward, reverse) [None]. the tuple elements
-			 should	be Network types. (note: is only used in two-port
-			  calibrations,see roger mark's paper on switch terms)
+		switch_terms : tuple of :class:`~mwavepy.network.Network` objects
+			The two measured switch terms in the order 
+			(forward, reverse).  This is only applicable in two-port
+			calibrations. See Roger Mark's paper on switch terms [#]_ 
+			for explanation of what they are. 
 
-		name: string holding the name of calibration, just for your
+		name: string 
+			the name of calibration, just for your
 				convenience [None].
 			
-			sloppy_input: a Boolean. Allows ideals and measured lists to
-				be 'aligned' based on the network names [False]. Can be
+		sloppy_input :  Boolean. 
+			Allows ideals and measured lists to be 'aligned' based on
+			the network names
 			
-			**kwargs: key-word arguments passed to the calibration
-				algorithm.
+		\*\*kwargs : key-word arguments 
+			passed to the calibration algorithm, defined by `type`
 				
-		note:
-		all calibration algorithms are in calibrationAlgorithms.py, and are
-		referenced by the dictionary in this object called
-		'calibration_algorihtm_dict'
+		Notes
+		-------
+		All calibration algorithms are in stored in
+		:mod:`mwavepy.calibration.calibrationAlgorithms` , refer to that 
+		file for documentation on the algorithms themselves. The 
+		Calibration class accesses those functions through the attribute
+		`'calibration_algorihtm_dict'`.
+		
+		Examples
+		----------
+		See the :doc:`../../../tutorials/calibration` tutorial, or the 
+		examples sections for :doc:`../../../examples/oneport_calibration`
+		and :doc:`../../../examples/twoport_calibration`
+		
+		References
+		-------------
+		.. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931 
 		'''
 		
 		self.measured = copy(measured)
