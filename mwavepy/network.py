@@ -350,6 +350,18 @@ class Network(object):
 			elif len(s_shape)==1:
 				 s = npy.reshape(s,(-1,1,1))
 		self._s = s
+		
+		# dynamically generate 1-port subnetworks
+		def smn(self,m,n):
+			result = Network()
+			result.frequency = self.frequency
+			result.s = s[:,m,n]
+			# need to set characteristic impedance
+			return result
+		for m in range(npy.shape(s)[1]):
+			for n in range(npy.shape(s)[2]):
+				setattr(self.__class__,'s%i%i'%(m+1,n+1),\
+					property(lambda self: smn(self,m,n)))
 		#s.squeeze()
 	@property
 	def y(self):
@@ -695,36 +707,6 @@ class Network(object):
 		return self.s_rad_unwrap * self.s_mag
 	
 	@property
-	def s11(self):
-		result = Network()
-		result.frequency = self.frequency
-		result.s = self.s[:,0,0]
-		return result
-	@property
-	def s22(self):
-		if self.number_of_ports < 2:
-			raise(IndexError('this network doesn have enough ports'))
-		result = Network()
-		result.frequency = self.frequency
-		result.s = self.s[:,1,1]
-		return result
-	@property
-	def s21(self):
-		if self.number_of_ports < 2:
-			raise(IndexError('this network doesn have enough ports'))
-		result = Network()
-		result.frequency = self.frequency
-		result.s = self.s[:,1,0]
-		return result
-	@property
-	def s12(self):
-		if self.number_of_ports < 2:
-			raise(IndexError('this network doesn have enough ports'))
-		result = Network()
-		result.frequency = self.frequency
-		result.s = self.s[:,0,1]
-		return result
-	@property
 	def number_of_ports(self):
 		'''
 		the number of ports the network has.
@@ -964,11 +946,16 @@ class Network(object):
 		**kwargs : keyword arguments
 			passed to :func:`matplotlib.plot` 
 		
+		Notes
+		-------
+		All rectangular plotting commands (ie :func:`plot_s_db`,
+		:func:`plot_s_deg`) call this function and just pass 
+		through **kwargs and *args
+		
 		Examples
 		------------
-		
-		>>> myntwk.plot_vs_frequency_generic(attribute= 's_mag',
-			y_label='Magnitude', m=0,n=0, show_legend = True, color='r')
+		to plot the magnitude of the s-parameters one would use this, 
+		>>> myntwk.plot_vs_frequency_generic(attribute= 's_mag')
 		'''
 		# get current axis if user doesnt supply and axis 
 		if ax is None:
@@ -1632,21 +1619,7 @@ class Network(object):
 		ax.axis('equal')
 		ax.set_xlabel('Real')
 		ax.set_ylabel('Imaginary')
-	def plot_s_all_db(self,ax = None, show_legend=True,*args,**kwargs):
-		'''
-		plots all s parameters in log magnitude
 
-		takes:
-			ax - matplotlib.axes object to plot on, used in case you
-				want to update an existing plot.
-			show_legend: boolean, to turn legend show legend of not
-			*args,**kwargs - passed to the matplotlib.plot command
-		'''
-		for m in range(self.number_of_ports):
-			for n in range(self.number_of_ports):
-				self.plot_vs_frequency_generic(attribute= 's_db',\
-					y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
-					show_legend = show_legend,*args,**kwargs)
 	
 	def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
 		'''
@@ -1749,12 +1722,14 @@ class Network(object):
 	
 	def nudge(self, amount=1e-12):
 		'''
-		perturb s-parameters by small amount. this is usefule to work-around
-		numerical bugs.
-		takes:
-			amount: amount to add to s parameters
-		returns:
-			na
+		perturb s-parameters by small amount. this is useful to 
+		work-around numerical bugs.
+		
+		Parameters
+		------------
+		amount : number, 
+			amount to add to s parameters
+		
 		'''
 		self.s = self.s + 1e-12
 
