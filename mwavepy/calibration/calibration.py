@@ -58,11 +58,12 @@ from ..convenience import *
 ## main class
 class Calibration(object):
 	'''
-	Represents a Calibration object, which can run a calibration 
-	algorithm, store results, and apply calibration to measurements. 
+	An object to represent a VNA calibration instance.
 	
-	see init for more information on usage. 
-	
+	A Calibration object is used to perform a calibration given a 
+	set meaurements and ideals responses. It can run a calibration,
+	store results, and apply the results to calculate corrected 
+	measurements. 
 
 	'''
 	calibration_algorithm_dict={\
@@ -80,19 +81,28 @@ class Calibration(object):
 		'''
 		Calibration initializer.
 		
-		takes:
-			measured: a list of measured Network's (order must align 
-				with 'ideals'
-			ideals: a list of ideal Network's (order must align 
-				with 'measured'
+		Parameters
+		----------
+		measured : list of :class:`~mwavepy.network.Network` objects
+			raw measurements of the calibration standards. The order 
+			must align with the `ideals` parameter
 		
-		[ optional]:		
-			frequency: a Frequency object over which the calibration
-				is defined [None]. if None then will take frequency
-				information	from the first measurement.
+		ideals : list of :class:`~mwavepy.network.Network` objects
+			a list of measured Network's. the order must align with 
+			`ideals` list
+		
+		Other Parameters
+		-----------------	
+		frequency : a :class:`~mwavepy.frequency.Frequency` object
+			the frequency information of the calibration if `None` then
+			the Calibration will take the frequency information	from the
+			first element in `measured`.
 
-			type: string representing what type of calibration is to be
-				performed [None]. supported types at the moment are:
+		type : string 
+			representing what type of calibration is to be
+				performed [None]. See
+				`Calibration.calibration_algorithm_dict` for a list 
+				of supported algorithms:
 
 				'one port':	standard one-port cal. if more than
 					2 measurement/ideal pairs are given it will
@@ -105,15 +115,17 @@ class Calibration(object):
 				if None, will inspect number of ports on first measured
 				network and choose either 'one port' or 'two port'
 				
-			is_reciprocal: enables the reciprocity assumption on 
-				the property error_network [False].
+		is_reciprocal : Boolean
+			enables the reciprocity assumption on the calculation of the
+			error_network, which is only relevant for one-port 
+			calibrations.
 
-			switch_terms: tuple holding the two measured switch terms in
-				the order (forward, reverse) [None]. the tuple elements
-				 should	be Network types. (note: is only used in two-port
-				  calibrations,see roger mark's paper on switch terms)
+		switch_terms: tuple holding the two measured switch terms in
+			the order (forward, reverse) [None]. the tuple elements
+			 should	be Network types. (note: is only used in two-port
+			  calibrations,see roger mark's paper on switch terms)
 
-			name: string holding the name of calibration, just for your
+		name: string holding the name of calibration, just for your
 				convenience [None].
 			
 			sloppy_input: a Boolean. Allows ideals and measured lists to

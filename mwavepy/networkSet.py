@@ -35,8 +35,7 @@ deviation, on an entire set of n-port networks. To facilitate these
 calculations the :class:`NetworkSet` class provides convenient
 ways to make such calculations. 
 
-The results are returned in :class:`~mwavepy.network.Network` objects, so that 
-the results can be plotted and saved in the same way one would do with 
+The results are returned in :class:`~mwavepy.network.Network` objects, so they can be plotted and saved in the same way one would do with a
 :class:`~mwavepy.network.Network`.
 
 The functionality in this module is provided as methods and
@@ -82,7 +81,7 @@ class NetworkSet(object):
 	individual properties and methods is not available. However, the 
 	properties do follow the convention::
 	
-		>>> my_network_set.FunctionName_NetworkPropertyName
+		>>> my_network_set.function_name_network_property_name
 	
 	For example, the complex average (mean) :class:`~mwavepy.network.Network` for a 
 	:class:`NetworkSet` is::
