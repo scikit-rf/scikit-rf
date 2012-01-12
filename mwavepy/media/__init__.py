@@ -22,34 +22,37 @@
 media (:mod:`mwavepy.media`)
 ========================================
 
-Provides Media super-Class and instances of Media Class's for various 
+Provides :class:`media.Media` base-class and instances of :class:`media.Media` objects Class's for various 
 transmission-line mediums.
 
 Instances of the Media Class are objects which provide methods to
 create network objects. See media for more detailed information.
 
+Media basecalss
+-------------------------
+
 Transmission Line Classes
 -------------------------
-.. toctree::
-   :maxdepth: 1
    
-   Media
-   Freespace
-   cpw.CPW
-   rectangularWaveguide.RectangularWaveguide
+* :class:`~mwavepy.media.rectangularWaveguide.RectangularWaveguide` 
+* :class:`~mwavepy.media.distributedCircuit.DistributedCircuite` 
+* :class:`~mwavepy.media.cpw.CPW` 
+* :class:`~mwavepy.media.freespace.Freespace` 
 
-.. autosummary::
+
+.. Hackk to generate docs for these classes, without displaying the 
+    table
+    .. autosummary::
 	:toctree: generated/	
+	:nosignatures:
 	
 	media.Media
+	distributedCircuit.DistributedCircuit
+	rectangularWaveguide.RectangularWaveguide
+	cpw.CPW
+	freespace.Freespace
+	
 
-Transmission Line Modules
--------------------------
-.. toctree::
-   :maxdepth: 1
-   
-   media
-   freespace
 '''
 
 from media import Media

@@ -52,9 +52,9 @@ def smith(smithR=1, chart_type = 'z',ax=None):
 	smithR : number
 		radius of smith chart
 	chart_type : ['z','y']
-		string representing contour type. acceptable values are 
-		'z': lines of constant impedance
-		'y': lines of constant admittance
+		Contour type. Possible values are 
+		 * *'z'* : lines of constant impedance
+		 * *'y'* : lines of constant admittance
 	ax : matplotlib.axes object
 		existing axes to draw smith chart on
 		

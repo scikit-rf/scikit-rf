@@ -40,7 +40,7 @@ Smith Chart
 .. plot:: ../pyplots/plotting/plot_ringslot_smith.py
    :include-source:
 
-The Smith Chart can be also drawn independently of any :class:`Network` object through the :func:`~plotting.smith` function. 
+The Smith Chart can be also drawn independently of any :class:`Network` object through the :func:`~mwavepy.plotting.smith` function. This function also allows admittance contours can also be drawn.
 
 Multiple S-parameters
 ----------------------

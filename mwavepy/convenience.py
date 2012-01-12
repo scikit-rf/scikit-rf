@@ -27,14 +27,71 @@
 convenience (:mod:`mwavepy.convenience`)
 ========================================
 
-Holds pre-initialized  class's to provide convenience. Also provides
-some functions, which cant be categorized as anything better than 
-general conviniencies.
+Holds pre-initialized  objects's and functions that are general 
+conveniences.
+
+
+Functions
+------------
+.. autosummary::
+   :toctree: generated/
+
+   save_all_figs
+   add_markers_to_lines 
+   legend_off
+   now_string
+   find_nearest
+   find_nearest_index
+   
+
+Pre-initialized Objects 
+--------------------------
+
+:class:`~mwavepy.frequency.Frequency` Objects
+==============================================
+These are predefined :class:`~mwavepy.frequency.Frequency` objects 
+that correspond to standard waveguide bands. This information is taken 
+from the VDI Application Note 1002 [#]_ . The naming convenction is 
+f_wr# where '#' is the band number.
+
+
+=======================  ===============================================
+Object Name              Description
+=======================  ===============================================
+f_wr10                   WR-10, 75-110 GHz
+f_wr3                    WR-3, 220-325 GHz
+f_wr2p2                  WR-2.2, 330-500 GHz
+f_wr1p5                  WR-1.5, 500-750 GHz
+f_wr1                    WR-1, 750-1100 GHz
+=======================  ===============================================
+
+
+:class:`~mwavepy.media.media.Media` Objects
+==============================================
+These are predefined :class:`~mwavepy.media.media.Media` objects 
+that represent Standardized transmission line media's. This information
+
+Rectangular Waveguide Media's 
+++++++++++++++++++++++++++++++++++
+
+:class:`~mwavepy.media.rectangularWaveguide.RectangularWaveguide` 
+Objects for standard bands.
+
+=======================  ===============================================
+Object Name              Description
+=======================  ===============================================
+wr10                     WR-10, 75-110 GHz
+wr3                      WR-3, 220-325 GHz
+wr2p2                    WR-2.2, 330-500 GHz
+wr1p5                    WR-1.5, 500-750 GHz
+wr1                      WR-1, 750-1100 GHz
+=======================  ===============================================
+  
+
 	
-	Pre-initialized classes include:
-		Frequency Objects for standard frequency bands
-		Media objects for standard waveguide bands, 
-		
+References
+-------------
+.. [#] VDI Application Note:  VDI Waveguide Band Designations (VDI-1002) http://vadiodes.com/VDI/pdf/waveguidechart200908.pdf
 '''
 
 
@@ -71,6 +128,18 @@ wr1 	= RectangularWaveguide(Frequency(750,1100,201, 'ghz'), 10*mil,z0=50)
 ## Functions
 # Ploting
 def save_all_figs(dir = './', format=['eps','pdf','png']):
+	'''
+	Save all open Figures to disk.
+	
+	Parameters
+	------------
+	dir : string
+		path to save figures into
+	format : list of strings
+		the types of formats to save figures as. The elements of this 
+		list are passed to :matplotlib:`savefig`. This is a list so that 
+		you can save each figure in multiple formats.  
+	'''
 	if dir[-1] != '/':
 		dir = dir + '/'
 	for fignum in plb.get_fignums():
