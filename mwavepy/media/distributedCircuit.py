@@ -42,56 +42,76 @@ ONE = 1.0 + 1/1e14
 
 class DistributedCircuit(Media):
 	'''
+	Generic, distributed circuit TEM transmission line
+	
 	A TEM transmission line, defined in terms of  distributed impedance
-	 and admittance values. This class takes the following information,
+	and admittance values. A Distributed Circuit may be defined in terms 
+	of the following attributes,
 	
-		distributed Capacitance, C
-		distributed Inductance, I
-		distributed Resistance, R
-		distributed Conductance, G
+	================================  ================  ================
+	Property                          Symbol            Unit
+	================================  ================  ================
+	Distributed Capacitance           :math:`C^{'}`     F/m
+	Distributed Inductance            :math:`I^{'}`     H/m
+	Distributed Resistance            :math:`R^{'}`     Ohm/m
+	Distributed Conductance           :math:`G^{'}`     S/m
+	================================  ================  ================
 		
-	from these the following quantities may be calculated, which
-	are functions of angular frequency (w):
+		
+	From these, the following quantities may be calculated, which
+	are functions of angular frequency (:math:`\omega`):
 	
-		distributed Impedance,  Z'(w) = wR + jwI
-		distributed Admittance, Y'(w) = wG + jwC
+	===================================  ==================================
+	Property                             Symbol
+	===================================  ==================================
+	Distributed Impedance                :math:`Z^{'} = \\omega R^{'} + j \\omega I^{'}`
+	Distributed Admittance               :math:`Y^{'} = \\omega G^{'} + j \\omega C^{'}`
+	===================================  ==================================
+	
 	
 	from these we can calculate properties which define their wave 
 	behavior:
 		
-		characteristic Impedance, Z0(w) = sqrt(Z(w)/Y'(w))		[ohms]
-		propagation Constant,	gamma(w) = sqrt(Z(w)*Y'(w))	[none]
+	===================================  ==================================
+	Property                             Symbol
+	===================================  ==================================
+	Characteristic Impedance             :math:`Z0(w) = sqrt(Z(w)/Y'`
+	===================================  ==================================
+	
+	propagation Constant,	gamma(w) = sqrt(Z(w)*Y'(w))	[none]
 		
 	given the following definitions, the components of propagation 
 	constant are interpreted as follows:
 		
-		positive real(gamma) = attenuation
-		positive imag(gamma) = forward propagation 
+	* positive real(gamma) = attenuation
+	* positive imag(gamma) = forward propagation 
 
 	'''
 	## CONSTRUCTOR
 	def __init__(self, frequency,  C, I, R, G,*args, **kwargs):
 		'''
-		generic, distributed circuit model transmission line constructor.
+		Distributed Circuit constructor.
 		
-		takes:
-			frequency: [mwavepy.Frequency object]
-			C: distributed_capacitance [real float, or vector]
-			I: distributed_inductance [real float, or vector]
-			R: distributed_resistance [real float, or vector]
-			G: distributed_conductance [real float, or vector]
+		Parameters
+		------------
+		frequency : :class:`~mwavepy.frequency.Frequency` object
+		C : number, or array-like
+			distributed capacitance, in F/m
+		I : number, or array-like
+			distributed inductance, in  H/m
+		R : number, or array-like
+			distributed resistance, in Ohm/m
+		G : number, or array-like
+			distributed conductance, in S/m
 		
-		returns:
-			mwavepy.Media object
 		
-		notes:
-			C,I,R,G can all be vectors as long as they are the same length
+		Notes
+		----------
+		C,I,R,G can all be vectors as long as they are the same 
+		length
 			
-			can be constructed from a Media instance too, see the 
-			classmethod from_Media()
-		
-			see class help for details on the class structure.
-	
+		This object can be constructed from a Media instance too, see 
+		the classmethod from_Media()	
 		'''
 		
 		self.frequency = deepcopy(frequency)
@@ -125,8 +145,8 @@ class DistributedCircuit(Media):
 	@classmethod
 	def from_Media(cls, my_media, *args, **kwargs):
 		'''
-		initializer which creates  DistributedCircuit from a Media 
-		instance
+		initializer which creates  DistributedCircuit from an existing 
+		:class:'~mwavepy.media.media.Media' instance
 		'''
 		
 		w  =  my_media.frequency.w

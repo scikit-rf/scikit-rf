@@ -38,21 +38,30 @@ class CPW(Media):
 	
 	
 	This class was made from the the documentation from the
-	qucs project ( qucs.sourceforge.net/ ).
+	qucs project ( http://www.qucs.sourceforge.net/ ).
 	
 	'''
 	def __init__(self, frequency, w , s, ep_r, t=None, rho=None, \
 		*args, **kwargs):
 		'''
-		takes:
-			w: width of center conductor, in m. 
-			s: width of gap, in m. 
-			ep_r: relative permativity of substrate
-			t: conductor thickness, in m.
-			rho: resistivity of conductor (None)
+		Coplanar Waveguide  initializer
+		
+		Parameters
+		-------------
+		frequency : :class:`~mwavepy.frequency.Frequency` object
+			frequency band of this transmission line medium
+		w : number, or array-like
+			width of center conductor, in m. 
+		s : number, or array-like
+			width of gap, in m. 
+		ep_r : number, or array-like
+			relative permativity of substrate
+		t : number, or array-like, optional
+			conductor thickness, in m.
+		rho: number, or array-like, optional
+			resistivity of conductor (None)
 			
-		returns:
-			mwavepy.Media object 
+		
 		'''
 		self.frequency, self.w, self.s, self.ep_r, self.t, self.rho =\
 			frequency, w, s, ep_r, t, rho

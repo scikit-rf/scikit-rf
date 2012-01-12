@@ -43,21 +43,28 @@ class Media(object):
 	The base-class for all transmission line mediums.
 	
 	The :class:`Media` object provides generic methods to produce   :class:`~mwavepy.network.Network`'s for any transmision line medium, such  as :func:`line` and :func:`delay_short`. 
-
+	
+	The initializer for this class has flexible argument types. This
+	allows for the important attributes of the :class:`Media` object 
+	to be dynamic. For example, if a Media object's propagation constant
+	is a function of some attribute of that object, say `conductor_width`, 
+	then the propagation constant will change when that attribute 
+	changes. See :func:`__init__` for details.
+	
 	'''
 	def __init__(self, frequency,  propagation_constant,
 		characteristic_impedance, z0=None):
 		'''
-		The Media initializer. This initializer has flexible argument 
-		types, which deserves some explaination.
+		The Media initializer. 
 		
-		'propagation_constant', 'characterisitc_impedance' and 'z0' can 
-		all be	either static or dynamic. This is achieved by allowing 
-		those arguments to be either; 
-			functions which take no arguments or 
-			values (numbers or arrays)
+		This initializer has flexible argument types. The parameters
+		`propagation_constant`, `characterisitc_impedance` and `z0` can 
+		all be either static or dynamic. This is achieved by allowing 
+		those arguments to be either:
+		* functions which take no arguments or 
+		* values (numbers or arrays)
 		
-		in the case where the media's propagation constant may change 
+		In the case where the media's propagation constant may change 
 		after initialization, because you adjusted a parameter, then 
 		passing the propagation_constant as a function can allow 
 		for the properties in this Class to reflect that change.
@@ -66,10 +73,13 @@ class Media(object):
 		--------------
 		frequency : :class:`~mwavepy.frequency.Frequency` object
 			frequency band of this transmission line medium
+		
 		propagation_constant : number, array-like, or a function
 			propagation constant for the medium. 
+		
 		characteristic_impedance : number,array-like, or a function
 			characteristic impedance of transmission line medium.
+		
 		z0 : number, array-like, or a function
 			characteristic impedance for media , IF its different
 			from the characterisitc impedance of the transmission 
@@ -84,9 +94,11 @@ class Media(object):
 		 * positive real(gamma) = attenuation
 		 * positive imag(gamma) = forward propagation 
 		
-			 waveguide is an example  where you may need this, because
-			 a characteristic impedance is variable but the touchstone's
-			 from most VNA's have z0=1	
+		the z0 parameter is needed in some cases. For example, the 
+		:class:`~mwavepy.media.rectangularWaveguide.RectangularWaveguide`
+		is an example  where you may need this, because the 
+		characteristic impedance is frequency dependent, but the 
+		touchstone's created by most VNA's have z0=1	
 		'''
 		self.frequency = frequency
 		
