@@ -46,43 +46,66 @@ from numpy import pi
 
 class Frequency(object):
 	'''
-	represents a frequency band. 
+	A frequency band. 
 	
-	attributes:
-		start: starting frequency  (in Hz)
-		stop: stoping frequency  (in Hz)
-		npoints: number of points, an int
-		unit: unit which to scale a formated axis, when accesssed. see
-			formattedAxis
-		
-	frequently many calcluations are made in a given band , so this class 
-	is used in other classes so user doesnt have to continually supply 
-	frequency info.
+	The frequency object provides a convenient way to work with and 
+	access a frequency band. It contains  a fruequency vector as well as
+	a frequency unit. This allows a frequency vector in a given unit
+	to be available (:attr:`f_scaled`), as well as an absolute frquency
+	axis in 'Hz'  (:attr:`f`).  
 	'''
 	unit_dict = {\
 		'hz':'Hz',\
+		'khz':'KHz',\
 		'mhz':'MHz',\
-		'ghz':'GHz'\
+		'ghz':'GHz',\
+		'thz':'THz'\
 		}
 	multiplier_dict={
 		'hz':1,\
+		'khz':1e3,\
 		'mhz':1e6,\
-		'ghz':1e9\
+		'ghz':1e9,\
+		'thz':1e12\
 		}
 	def __init__(self,start, stop, npoints, unit='hz', sweep_type='lin'):
 		'''
-		takes:
-			start: start of band.  units of unit, defaults is  Hz
-			stop: end of band. units of unit, defaults is  Hz
-			npoints: number of points in the band. 
-			unit: unit you want the band in for plots. a string. can be:
-				'hz', 'mhz','ghz', 
+		Frequency initializer.
 		
-		example:
-			wr1p5band = frequencyBand(500,750,401, 'ghz')
-			
-		note: unit sets the property freqMultiplier, which is used 
+		Creates a Frequency object from start/stop/npoints and a unit. 
+		Alternatively, the class method :func:`from_f` can be used to 
+		create a Frequency object from a frequency vector instead.
+		
+		Parameters
+		----------
+		start : number
+			start frequency in  units of `unit`
+		stop : number
+			stop frequency in  units of `unit`
+		npoints : int
+			number of points in the band. 
+		unit : ['hz','khz','mhz','ghz']
+			frequency unit of the band. This is used to create the 
+			attribute :attr:`f_scaled`. It is also used by the 
+			:class:`~mwavepy.network.Network` class for plots vs. 
+			frequency.
+		
+		Notes
+		--------
+		The attribute unit sets the property freqMultiplier, which is used 
 		to scale the frequency when f_scaled is referenced.
+		
+		See Also
+		---------
+			from_f : constructs a Frequency object from a frequency 
+				vector instead of start/stop/npoints. 
+			
+		Examples
+		---------
+		
+		>>> wr1p5band = Frequency(500,750,401, 'ghz')
+			
+		
 			
 		'''
 		self._unit = unit.lower()
@@ -94,11 +117,26 @@ class Frequency(object):
 	@classmethod
 	def from_f(cls,f, *args,**kwargs):
 		'''
-		alternative constructor from a frequency vector,
-		takes:
-			f: frequency array (default in Hz) 
-		returns:
-			mwavepy.Frequency object
+		Alternative constructor of a Frequency object from a frequency
+		vector,
+		
+		Parameters
+		-----------
+		f : array-like 
+			frequency vector  
+		 
+		*args, **kwargs : arguments, keyword arguments
+			passed on to  :func:`__init__`.
+			
+		Returns
+		--------
+		myfrequency : :class:`Frequency` object
+			the Frequency object
+		
+		Examples
+		-----------
+		>>> f = np.linspace(75,100,101)
+		>>> mv.Frequency.from_f(f, unit='ghz')
 		'''
 		return cls(start=f[0], stop=f[-1],npoints = len(f), *args, **kwargs)
 	
@@ -110,11 +148,29 @@ class Frequency(object):
 		
 	@property
 	def center(self):
+		'''
+		Center frequency.
+		
+		Returns
+		---------
+		center : number
+			the exact center frequency in units of :attr:`unit` 
+		'''
 		return self.start + (self.stop-self.start)/2.
 	@property
 	def	f(self):
 		'''
-		returns a frequency vector  in Hz 
+		Frequency vector  in Hz
+		
+		Returns
+		----------
+		f :  :class:`numpy.ndarray` 
+			The frequency vector  in Hz
+		
+		See Also
+		----------
+			f_scaled : frequency vector in units of :attr:`unit`
+			w : angular frequency vector in rad/s
 		'''
 		return linspace(self.start,self.stop,self.npoints)
 		#return self._f
@@ -131,19 +187,51 @@ class Frequency(object):
 	@property
 	def	f_scaled(self):
 		'''
-		returns a frequency vector in units of self.unit 
+		Frequency vector in units of :attr:`unit`
+		
+		Returns
+		---------
+		f_scaled :  :class:`numpy.ndarray` 
+			A frequency vector in units of :attr:`unit`
+		
+		See Also
+		---------
+			f : frequency vector in Hz
+			w : frequency vector in rad/s
 		'''
 		return self.f/self.multiplier
 	@property
 	def w(self):
 		'''
-		angular frequency in radians
+		Frequency vector in radians/s
+		
+		The frequency vector  in rad/s
+		
+		Returns
+		----------
+		w :  :class:`numpy.ndarray` 
+			The frequency vector  in rad/s
+		
+		See Also
+		----------
+			f_scaled : frequency vector in units of :attr:`unit`
+			f :  frequency vector in Hz
 		'''
 		return 2*pi*self.f
 	@property
 	def unit(self):
 		'''
-		The unit to format the frequency axis in. see formatedAxis
+		Unit of this frequency band.
+		
+		Possible strings for this attribute are: 
+		 'hz', 'khz', 'mhz', 'ghz', 'thz'
+		
+		Setting this attribute is not case sensitive.
+		
+		Returns
+		---------
+		unit : string 
+			lower-case string representing the frequency units
 		'''
 		return self.unit_dict[self._unit]
 	@unit.setter
@@ -153,21 +241,46 @@ class Frequency(object):
 	@property
 	def multiplier(self):
 		'''
-		multiplier for formating axis
+		Multiplier for formating axis
+		
+		This accesses the internal dictionary `multiplier_dict` using 
+		the value of :attr:`unit`
+		
+		Returns
+		---------
+		multiplier : number 
+			multiplier for this Frequencies unit
 		'''
 		return self.multiplier_dict[self._unit]
 	
 	
 	
 	def labelXAxis(self, ax=None):
+		'''
+		Label the x-axis of a plot.
+		
+		Sets the labels of a plot using :func:`matplotlib.x_label` with
+		string containing the frequency  unit.
+		
+		Parameters
+		---------------
+		ax : :class:`matplotlib.Axes`, optional
+			Axes on which to label the plot, defaults what is 
+			returned by :func:`matplotlib.gca()`
+		'''
 		if ax is None:
 			ax = gca()
 		ax.set_xlabel('Frequency [%s]' % self.unit )
 	
 def f_2_frequency(f):
 	'''
+	converts a frequency vector to a Frequency object
+	
+	Depricated
+	-------------
+	Use the class method :func:`Frequency.from_f`
 	convienience function
-	converts a frequency vector to a Frequency object 
+	 
 	
 	!depricated, use classmethod from_f instead. 
 	'''

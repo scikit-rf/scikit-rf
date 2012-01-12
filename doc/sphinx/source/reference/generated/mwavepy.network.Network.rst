@@ -20,10 +20,6 @@ mwavepy.network.Network
   ~Network.number_of_ports
   ~Network.passivity
   ~Network.s
-  ~Network.s11
-  ~Network.s12
-  ~Network.s21
-  ~Network.s22
   ~Network.s_abs
   ~Network.s_angle
   ~Network.s_arcl
@@ -61,19 +57,8 @@ mwavepy.network.Network
   ~Network.nudge
   ~Network.plot_passivity
   ~Network.plot_polar_generic
-  ~Network.plot_s_all_db
   ~Network.plot_s_complex
-  ~Network.plot_s_db
-  ~Network.plot_s_deg
-  ~Network.plot_s_deg_unwrap
-  ~Network.plot_s_deg_unwrapped
-  ~Network.plot_s_im
-  ~Network.plot_s_mag
   ~Network.plot_s_polar
-  ~Network.plot_s_quad
-  ~Network.plot_s_rad
-  ~Network.plot_s_rad_unwrapped
-  ~Network.plot_s_re
   ~Network.plot_s_smith
   ~Network.plot_vs_frequency_generic
   ~Network.read_touchstone

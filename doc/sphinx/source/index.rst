@@ -30,6 +30,13 @@ Examples
 Reference
 ----------
 
+Major Classes
+++++++++++++++++
+* :class:`~mwavepy.network.Network`
+* :class:`~mwavepy.networkSet.NetworkSet`
+* :class:`~mwavepy.frequency.Frequency`
+* :class:`~mwavepy.calibration.calibration.Calibration`
+
 Modules
 ++++++++++
 .. toctree::

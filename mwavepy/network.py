@@ -144,7 +144,7 @@ class Network(object):
 	Different components of the :class:`Network` can be visualized
 	through various plotting methods. These methods can be used to plot
 	individual elements of the s-matrix or all at once. For more info
-	about plotting see the :doc:`../tutorials/plotting` tutorial.
+	about plotting see the :doc:`../../tutorials/plotting` tutorial.
 	
 	=====================  =============================================
 	Method                 Meaning	
@@ -196,6 +196,7 @@ class Network(object):
 		
 		Parameters
 		------------
+		
 		file: string
 			if given will load information from touchstone file,optional
 		name: string

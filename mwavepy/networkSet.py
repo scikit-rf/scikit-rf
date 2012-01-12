@@ -83,7 +83,8 @@ class NetworkSet(object):
 	
 		>>> my_network_set.function_name_network_property_name
 	
-	For example, the complex average (mean) :class:`~mwavepy.network.Network` for a 
+	For example, the complex average (mean) 
+	:class:`~mwavepy.network.Network` for a 
 	:class:`NetworkSet` is::
 	
 		>>> my_network_set.mean_s 
@@ -92,8 +93,9 @@ class NetworkSet(object):
 	set, and **then** calculates the 'mean' of the resultant set. The
 	order of operations is important. 
 	
-	Results are returned as :class:`~mwavepy.network.Network` objects, so they may be
-	plotted or saved in the same way as for :class:`~mwavepy.network.Network` objects::
+	Results are returned as :class:`~mwavepy.network.Network` objects, 
+	so they may be plotted or saved in the same way as for 
+	:class:`~mwavepy.network.Network` objects::
 	
 		>>> my_network_set.mean_s.plot_s_mag()
 		>>> my_network_set.mean_s.write_touchstone('mean_response')
@@ -125,6 +127,7 @@ class NetworkSet(object):
 	
 	def __init__(self, ntwk_set):
 		'''
+		Initializer for NetworkSet
 		Parameters
 		-----------
 		ntwk_set : list of :class:`~mwavepy.network.Network` objects
