@@ -22,36 +22,46 @@
 media (:mod:`mwavepy.media`)
 ========================================
 
-Provides :class:`media.Media` base-class and instances of :class:`media.Media` objects Class's for various 
-transmission-line mediums.
+Provides :class:`~media.Media` base-class and specific instances of
+:class:`~media.Media` objects representing various transmission-line 
+mediums.
 
-Instances of the Media Class are objects which provide methods to
-create network objects. See media for more detailed information.
+The :class:`~media.Media` object provides generic methods to produce  
+:class:`~mwavepy.network.Network`'s for any transmision line medium, such 
+as :func:`~media.Media.line` and :func:`~media.Media.delay_short`. These
+methods are inherited by the specific tranmission line classes, 
+which interally define relevant quantities such as propagation constant,
+and characteristic impedance. This allows the specific transmission line
+mediums to produce networks without re-implementing methods for 
+each specific media instance.
 
-Media basecalss
+Network components specific to an given transmission line medium 
+such as :func:`~media.cpw.CPW.cpw_short` and 
+:func:`~media.microstrip.Microstrip.microstrip_bend`, are implemented 
+in those object
+
+Media base-class
 -------------------------
+.. autosummary::
+    :toctree: generated/	
+    :nosignatures:
+    
+    ~media.Media
 
 Transmission Line Classes
 -------------------------
-   
-* :class:`~mwavepy.media.rectangularWaveguide.RectangularWaveguide` 
-* :class:`~mwavepy.media.distributedCircuit.DistributedCircuite` 
-* :class:`~mwavepy.media.cpw.CPW` 
-* :class:`~mwavepy.media.freespace.Freespace` 
+.. autosummary::
+    :toctree: generated/	
+    :nosignatures:
+    
+    ~distributedCircuit.DistributedCircuit
+    ~rectangularWaveguide.RectangularWaveguide
+    ~cpw.CPW
+    ~freespace.Freespace
+	
 
 
-.. Hackk to generate docs for these classes, without displaying the 
-    table
-    .. autosummary::
-	:toctree: generated/	
-	:nosignatures:
-	
-	media.Media
-	distributedCircuit.DistributedCircuit
-	rectangularWaveguide.RectangularWaveguide
-	cpw.CPW
-	freespace.Freespace
-	
+.. _DistributedCircuit: :class:`~mwavepy.media.distributedCircuit.DistributedCircuit` 
 
 '''
 

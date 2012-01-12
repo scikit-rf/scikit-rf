@@ -40,14 +40,10 @@ from .. import mathFunctions as mf
 
 class Media(object):
 	'''
-	The super-class for all transmission line media.
+	The base-class for all transmission line mediums.
 	
-	It provides methods to produce generic network components for any
-	transmision line medium, such as line, delay_short, etc. 
-	
-	Network Components specific to an instance of the Media super-class
-	such as cpw_short, microstrip_bend, are implemented within the 
-	Media instances themselves. 
+	The :class:`Media` object provides generic methods to produce   :class:`~mwavepy.network.Network`'s for any transmision line medium, such  as :func:`line` and :func:`delay_short`. 
+
 	'''
 	def __init__(self, frequency,  propagation_constant,
 		characteristic_impedance, z0=None):
@@ -66,25 +62,28 @@ class Media(object):
 		passing the propagation_constant as a function can allow 
 		for the properties in this Class to reflect that change.
 		
-		takes:
-			frequency: mwavepy.Frequency object
-			propagation_constant*: propagation constant for the medium. 
-			characteristic_impedance: characteristic impedance of 
-				transmission line medium.
-			z0**: characteristic impedance for media , IF its different
-				from the characterisitc impedance of the transmission 
-				line medium  (None) [a number].
-				if z0= None then will set to characterisitc_impedance
+		Parameters
+		--------------
+		frequency : :class:`~mwavepy.frequency.Frequency` object
+			frequency band of this transmission line medium
+		propagation_constant : number, array-like, or a function
+			propagation constant for the medium. 
+		characteristic_impedance : number,array-like, or a function
+			characteristic impedance of transmission line medium.
+		z0 : number, array-like, or a function
+			characteristic impedance for media , IF its different
+			from the characterisitc impedance of the transmission 
+			line medium  (None) [a number].
+			if z0= None then will set to characterisitc_impedance
 			
-		returns:
-			mwavepy.Media Object
 		
 				
-		*note:
-			propagation_constant must adhere to the following convention,
-				positive real(gamma) = attenuation
-				positive imag(gamma) = forward propagation 
-		**note:
+		Notes
+		------
+		`propagation_constant` must adhere to the following convention,
+		 * positive real(gamma) = attenuation
+		 * positive imag(gamma) = forward propagation 
+		
 			 waveguide is an example  where you may need this, because
 			 a characteristic impedance is variable but the touchstone's
 			 from most VNA's have z0=1	
@@ -108,6 +107,12 @@ class Media(object):
 	#	static ( if they pass values)
 	@property
 	def propagation_constant(self):
+		'''
+		propagation constant.
+		
+		Returns
+		---------
+		'''
 		try:
 			return self._propagation_constant()
 		except(TypeError):
