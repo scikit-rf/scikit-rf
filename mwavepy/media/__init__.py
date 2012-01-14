@@ -26,7 +26,7 @@ This package provides objects representing transmission line mediums.
 
 The :class:`~media.Media` object is the base-class that is inherited
 by specific transmission line instances, such as 
-:class:`~freeSpace.FreeSpace`, or
+:class:`~freespace.Freespace`, or
 :class:`~rectangularWaveguide.RectangularWaveguide`. The
 :class:`~media.Media` object provides generic methods to produce  
 :class:`~mwavepy.network.Network`'s for any transmision line medium, such 

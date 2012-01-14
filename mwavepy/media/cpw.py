@@ -37,9 +37,13 @@ class CPW(Media):
 	Coplanar waveguide class
 	
 	
-	This class was made from the the documentation from the
-	qucs project ( http://www.qucs.sourceforge.net/ ).
+	This class was made from the technical documentation [#]_ provided 
+	by the qucs project [#]_ . 
+	The variables  and properties of this class are coincident with 
+	their derivations.
 	
+	.. [#] http://qucs.sourceforge.net/docs/technical.pdf
+	.. [#] http://www.qucs.sourceforge.net/
 	'''
 	def __init__(self, frequency, w , s, ep_r, t=None, rho=None, \
 		*args, **kwargs):
@@ -116,7 +120,15 @@ class CPW(Media):
 	@property
 	def alpha_conductor(self):
 		'''
-		losses due to conductor resistivity
+		Losses due to conductor resistivity
+		
+		Returns
+		--------
+		alpha_conductor : array-like
+			lossyness due to conductor losses
+		See Also
+		----------
+		surface_resistivity : calculates surface resistivity
 		'''
 		if self.rho is None or self.t is None:
 			raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
@@ -138,14 +150,19 @@ class CPW(Media):
 	
 	def Z0(self):
 		'''
-		characterisitc impedance
+		Characterisitc impedance
 		'''
 		return 30.*pi / sqrt(self.ep_re) * self.K_ratio
 	
 	
 	def gamma(self):
 		'''
-		propagation constant
+		Propagation constant
+		
+		
+		See Also
+		--------
+		alpha_conductor : calculates losses to conductors
 		'''
 		beta = 1j*2*pi*self.frequency.f*sqrt(self.ep_re*epsilon_0*mu_0)
 		alpha = zeros(len(beta))
