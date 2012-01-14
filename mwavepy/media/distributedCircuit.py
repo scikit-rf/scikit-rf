@@ -49,42 +49,45 @@ class DistributedCircuit(Media):
 	of the following attributes,
 	
 	================================  ================  ================
-	Property                          Symbol            Unit
+	Quantity                          Symbol            Property
 	================================  ================  ================
-	Distributed Capacitance           :math:`C^{'}`     F/m
-	Distributed Inductance            :math:`I^{'}`     H/m
-	Distributed Resistance            :math:`R^{'}`     Ohm/m
-	Distributed Conductance           :math:`G^{'}`     S/m
+	Distributed Capacitance           :math:`C^{'}`     :attr:`C`
+	Distributed Inductance            :math:`I^{'}`     :attr:`I`
+	Distributed Resistance            :math:`R^{'}`     :attr:`R`
+	Distributed Conductance           :math:`G^{'}`     :attr:`G`
 	================================  ================  ================
 		
 		
 	From these, the following quantities may be calculated, which
 	are functions of angular frequency (:math:`\omega`):
 	
-	===================================  ==================================
-	Property                             Symbol
-	===================================  ==================================
-	Distributed Impedance                :math:`Z^{'} = \\omega R^{'} + j \\omega I^{'}`
-	Distributed Admittance               :math:`Y^{'} = \\omega G^{'} + j \\omega C^{'}`
-	===================================  ==================================
+	===================================  ==================================================  ==============================
+	Quantity                             Symbol                                              Property
+	===================================  ==================================================  ==============================  
+	Distributed Impedance                :math:`Z^{'} = \\omega R^{'} + j \\omega I^{'}`       :attr:`Z`
+	Distributed Admittance               :math:`Y^{'} = \\omega G^{'} + j \\omega C^{'}`       :attr:`Y`
+	===================================  ==================================================  ==============================
 	
 	
 	from these we can calculate properties which define their wave 
 	behavior:
 		
-	===================================  ==================================
-	Property                             Symbol
-	===================================  ==================================
-	Characteristic Impedance             :math:`Z0(w) = sqrt(Z(w)/Y'`
-	===================================  ==================================
+	===================================  ============================================  ==============================
+	Quantity                             Symbol                                        Method
+	===================================  ============================================  ==============================
+	Characteristic Impedance             :math:`Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}`     :func:`Z0`
+	Propagation Constant                 :math:`\\gamma = \\sqrt{ Z^{'}  Y^{'}}`         :func:`gamma`
+	===================================  ============================================  ==============================
 	
-	propagation Constant,	gamma(w) = sqrt(Z(w)*Y'(w))	[none]
-		
-	given the following definitions, the components of propagation 
+	Given the following definitions, the components of propagation 
 	constant are interpreted as follows:
+	
+	.. math::
+			+\\Re e\\{\\gamma\\} = \\text{attenuation}
+			
+			-\\Im m\\{\\gamma\\} = \\text{forward propagation}
 		
-	* positive real(gamma) = attenuation
-	* positive imag(gamma) = forward propagation 
+		
 
 	'''
 	## CONSTRUCTOR
@@ -145,8 +148,11 @@ class DistributedCircuit(Media):
 	@classmethod
 	def from_Media(cls, my_media, *args, **kwargs):
 		'''
-		initializer which creates  DistributedCircuit from an existing 
-		:class:'~mwavepy.media.media.Media' instance
+		Initializes a DistributedCircuit from an existing 
+		:class:'~mwavepy.media.media.Media' instance.
+		
+		Parameters
+		------------
 		'''
 		
 		w  =  my_media.frequency.w
@@ -163,10 +169,18 @@ class DistributedCircuit(Media):
 	@property	
 	def Z(self):
 		'''
-		distributed Impedance, ohms/m.
+		Distributed Impedance, :math:`Z^{'}`
 		
-		 Z'(w) = wR + jwI
+		Defined as
 		
+		.. math::
+			Z^{'} = \\omega R^{'} + j \\omega I^{'}
+		
+
+		Returns
+		--------
+		Z : numpy.ndarray
+			Distributed impedance in units of ohm/m
 		'''
 		w  = 2*npy.pi * self.frequency.f
 		return w*self.R + 1j*w*self.I
@@ -174,10 +188,15 @@ class DistributedCircuit(Media):
 	@property
 	def Y(self):
 		'''
-		distributed Admittance,in ohms^-1 /m
+		Distributed Admittance, :math:`Y^{'}`
 		
-		 Y'(w) = wG + jwC
+		..math::
+			\\gamma = \\sqrt{ Z^{'}  Y^{'}}
 		
+		Returns
+		--------
+		Y : numpy.ndarray
+			Distributed Admittance in units of S/m
 		'''
 		
 		w = 2*npy.pi*self.frequency.f
@@ -186,8 +205,15 @@ class DistributedCircuit(Media):
 	
 	def Z0(self):
 		'''
-		The characteristic impedance in ohms
+		Characteristic Impedance, :math:`Z0`
 		
+		.. math::
+			Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
+		
+		Returns
+		--------
+		Z0 : numpy.ndarray
+			Characteristic Impedance in units of ohms
 		'''
 		
 		return sqrt(self.Z/self.Y)
@@ -195,11 +221,21 @@ class DistributedCircuit(Media):
 	
 	def gamma(self):
 		'''
-		possibly complex propagation constant, [rad/m]
-			gamma = sqrt(Z'*Y')
+		Propagation Constant, :math:`\\gamma`
 		
-		note:
-		the components of propagation constant are interpreted as follows:
+		Defined as, 
+		
+		.. math::
+			\\gamma =  \\sqrt{ Z^{'}  Y^{'}}
+		
+		Returns
+		--------
+		gamma : numpy.ndarray
+			Propagation Constant, 
+		
+		Notes
+		---------
+		The components of propagation constant are interpreted as follows:
 		
 		positive real(gamma) = attenuation
 		positive imag(gamma) = forward propagation 

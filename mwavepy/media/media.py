@@ -61,13 +61,13 @@ class Media(object):
 		`propagation_constant`, `characterisitc_impedance` and `z0` can 
 		all be either static or dynamic. This is achieved by allowing 
 		those arguments to be either:
-		* functions which take no arguments or 
-		* values (numbers or arrays)
+		 * functions which take no arguments or 
+		 * values (numbers or arrays)
 		
 		In the case where the media's propagation constant may change 
-		after initialization, because you adjusted a parameter, then 
-		passing the propagation_constant as a function can allow 
-		for the properties in this Class to reflect that change.
+		after initialization, because you adjusted a parameter of the 
+		media, then passing the propagation_constant as a function 
+		allows it to change when the media's parameters do.
 		
 		Parameters
 		--------------
@@ -81,7 +81,7 @@ class Media(object):
 			characteristic impedance of transmission line medium.
 		
 		z0 : number, array-like, or a function
-			characteristic impedance for media , IF its different
+			the port impedance for media , IF its different
 			from the characterisitc impedance of the transmission 
 			line medium  (None) [a number].
 			if z0= None then will set to characterisitc_impedance
@@ -120,10 +120,18 @@ class Media(object):
 	@property
 	def propagation_constant(self):
 		'''
-		propagation constant.
+		Propagation constant
 		
 		Returns
 		---------
+		propagation_constant : :class:`numpy.ndarray`
+			complex propagation constant for this media
+		
+		Notes
+		------
+		`propagation_constant` must adhere to the following convention,
+		 * positive real(propagation_constant) = attenuation
+		 * positive imag(propagation_constant) = forward propagation 
 		'''
 		try:
 			return self._propagation_constant()
@@ -135,6 +143,13 @@ class Media(object):
 	
 	@property
 	def characteristic_impedance(self):
+		'''
+		Characterisitc impedance
+		
+		Returns
+		----------
+		characteristic_impedance : :class:`numpy.ndarray`
+		'''
 		try:
 			return self._characteristic_impedance()
 		except(TypeError):
@@ -146,6 +161,24 @@ class Media(object):
 	
 	@property
 	def z0(self):
+		'''
+		Port Impedance
+		
+		The port impedance  is usually equal to the 
+		:attr:`characterisitc_impedance`. Therefore, if the port 
+		impedance is `None` then this will return 
+		:attr:`characterisitc_impedance`.
+		
+		However, in some cases such as rectangular waveguide, the port 
+		impedance is traditionally set to 1 (normalized). In such a case
+		this property may be used. 
+		
+		
+		Returns
+		----------
+		port_impedance : :class:`numpy.ndarray`
+			the media's port impedance
+		'''
 		try:
 			return self._z0()
 		except(TypeError):
@@ -162,12 +195,14 @@ class Media(object):
 		converts electrical length to physical distance. The electrical
 		length is given at center frequency of self.frequency 
 		
-		takes:
+		Parameters
+		----------
 			theta: electrical length, at band center (see deg for unit)
 				[number]
 			deg: is theta in degrees? [boolean]
 			
-		returns:
+		Returns
+		--------
 			d: physical distance in meters
 			
 		
@@ -183,11 +218,13 @@ class Media(object):
 		calculates the electrical length for a given distance, at 
 		the center frequency. 
 		
-		takes:
+		Parameters
+		----------
 			d: distance, in meters 
 			deg: is d in deg?[Boolean]
 		
-		returns:
+		Returns
+		--------
 			theta: electrical length in radians or degrees, 
 				depending on  value of deg.
 		'''
@@ -203,22 +240,29 @@ class Media(object):
 	# lumped elements
 	def match(self,nports=1, z0=None, **kwargs):
 		'''
-		creates a Network for a perfect matched transmission line (Gamma0=0) 
+		Perfect matched load (:math:`\\Gamma_0 = 0`).
 		
-		takes:
-			nports: number of ports [int]
-			z0: characterisitc impedance [number of array]. defaults is 
-				None, in which case the Media's z0 is used. 
-				Otherwise this sets the resultant network's z0. See
-				Network.z0 property for more info
-			**kwargs: key word arguments passed to Network Constructor
+		Parameters
+		----------
+		nports : int
+			number of ports
+		z0 : number, or array-like
+			characterisitc impedance. Default is 
+			None, in which case the Media's :attr:`z0` is used. 
+			This sets the resultant Network's 
+			:attr:`~mwavepy.network.Network.z0`. 
+		\*\*kwargs : key word arguments 
+			passed to :class:`~mwavepy.network.Network` initializer
 		
-		returns:
-			a n-port Network [mwavepy.Network]
+		Returns
+		--------
+		match : :class:`~mwavepy.network.Network` object 
+			a n-port match  
 		
 		
-		example:
-			mymatch = wb.match(2,z0 = 50, name='Super Awesome Match')
+		Examples
+		------------
+			>>> my_match = my_media.match(2,z0 = 50, name='Super Awesome Match')
 		
 		'''
 		result = Network(**kwargs)
@@ -232,16 +276,24 @@ class Media(object):
 	
 	def load(self,Gamma0,nports=1,**kwargs):
 		'''
-		creates a Network for a Load termianting a transmission line 
+		Load of given reflection coefficient. 
 		
-		takes:
-			Gamma0: reflection coefficient of load (not in db)
-			nports: number of ports. creates a short on all ports,
-				default is 1 [int]
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network
-		returns:
-			a n-port Network class, where  S = Gamma0*eye(...)
+		Parameters
+		----------
+		Gamma0 : number, array-like 
+			Reflection coefficient of load (linear, not in db). If its
+			an array it must be of shape: kxnxn, where k is #frequency 
+			points in media, and n is `nports`
+		nports : int
+			number of ports 
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network. 
+		
+		Returns
+		--------
+		load  :class:`~mwavepy.network.Network` object
+			n-port load, where  S = Gamma0*eye(...)
 		'''
 		result = self.match(nports,**kwargs)
 		try:
@@ -256,73 +308,126 @@ class Media(object):
 	
 	def short(self,nports=1,**kwargs):
 		'''
-		creates a Network for a short  transmission line (Gamma0=-1) 
+		Short (:math:`\\Gamma_0 = -1`) 
 		
-		takes:
-			nports: number of ports. creates a short on all ports,
-				default is 1 [int]
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network
-		returns:
-			a n-port Network [mwavepy.Network]
+		Parameters
+		----------
+		nports : int
+			number of ports 
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network. 
+		
+		Returns
+		--------
+		match : :class:`~mwavepy.network.Network` object 
+			a n-port short circuit  
+		
+		See Also
+		---------
+		match : function called to create a 'blank' network
 		'''
 		return self.load(-1., nports, **kwargs)
 
 	def open(self,nports=1, **kwargs):
 		'''
-		creates a Network for a 'open' transmission line (Gamma0=1) 
+		Open (:math:`\\Gamma_0 = 1`) 
 		
-		takes:
-			nports: number of ports. creates a short on all ports,
-				default is 1 [int]
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network
-		returns:
-			a n-port Network [mwavepy.Network]
+		Parameters
+		----------
+		nports : int
+			number of ports 
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network. 
+		
+		Returns
+		--------
+		match : :class:`~mwavepy.network.Network` object 
+			a n-port open circuit  
+		
+		See Also
+		---------
+		match : function called to create a 'blank' network
 		'''
 		
 		return self.load(1., nports, **kwargs)
 	
 	def capacitor(self, C, **kwargs):
 		'''
-		A lumped capacitor
+		Capacitor  
 		
-		takes:
-			C: capacitance, in Farads, [number]
 		
-		returns:
-			mwavepy.Network 
+		Parameters
+		----------
+		C : number, array 
+			Capacitance, in Farads. If this is an array, must be of 
+			same length as frequency vector. 
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network. 
+		
+		Returns
+		--------
+		capacitor : :class:`~mwavepy.network.Network` object 
+			a n-port capacitor  
+		
+		See Also
+		---------
+		match : function called to create a 'blank' network 
 		'''
 		Gamma0 = tf.zl_2_Gamma0(self.z0, -1j/(self.frequency.w*C))
 		return self.load(Gamma0=Gamma0, **kwargs)
 
 	def inductor(self, L, **kwargs):
 		'''
-		A lumped inductor
+		Inductor   
 		
-		takes:
-			L: inductance in Henrys [number]
+		Parameters
+		----------
+		L : number, array 
+			Inductance, in Henrys. If this is an array, must be of 
+			same length as frequency vector. 
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network. 
 		
-		returns:
-			mwavepy.Network 
+		Returns
+		--------
+		inductor : :class:`~mwavepy.network.Network` object 
+			a n-port inductor   
+		
+		See Also
+		---------
+		match : function called to create a 'blank' network  
 		'''
 		Gamma0 = tf.zl_2_Gamma0(self.z0,-1j*(self.frequency.w*L))
 		return self.load(Gamma0=Gamma0, **kwargs)
 
 	def impedance_mismatch(self, z1, z2, **kwargs):
 		'''
-		returns a two-port network for a impedance mis-match
+		Two-port network for an impedance miss-match
 		
-		takes:
-			z1: complex impedance of port 1 [ number, list, or 1D ndarray]
-			z2: complex impedance of port 2 [ number, list, or 1D ndarray]
-			**kwargs: passed to mwavepy.Network constructor
-		returns:
-			a 2-port network [mwavepy.Network]
+		
+		Parameters
+		----------
+		z1 : number, or array-like
+			complex impedance of port 1 
+		z2 : number, or array-like
+			complex impedance of port 2
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network.
+		
+		Returns
+		--------
+		missmatch : :class:`~mwavepy.network.Network` object 
+			a 2-port network representing the impedance missmatch
 			
-		note:
-			if z1 and z2 are arrays or lists, they must be of same length
-			as the self.frequency.npoints
+		Notes
+		--------
+		If z1 and z2 are arrays, they must be of same length
+		as the :attr:`Media.frequency.npoints`
 		'''	
 		result = self.match(nports=2, **kwargs)
 		gamma = tf.zl_2_Gamma0(z1,z2)
@@ -336,29 +441,41 @@ class Media(object):
 	# splitter/couplers
 	def tee(self,**kwargs):
 		'''
-		makes a ideal, lossless tee. (aka three port splitter)
+		Ideal, lossless tee. (3-port splitter)
 		
-		takes:
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network. 
-		returns:
-			a 3-port Network [mwavepy.Network]
+		Parameters
+		----------
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network.
 		
-		note:
-			this just calls splitter(3)
+		Returns
+		--------
+		tee : :class:`~mwavepy.network.Network` object
+			a 3-port splitter
+		
+		See Also
+		----------
+		splitter : this just calls splitter(3)
 		'''
 		return self.splitter(3,**kwargs)
 		
 	def splitter(self, nports,**kwargs):
 		'''
-		returns an ideal, lossless n-way splitter.
+		Ideal, lossless n-way splitter.
 		
-		takes:
-			nports: number of ports [int]
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network. 
-		returns:
-			a n-port Network [mwavepy.Network]
+		Parameters
+		----------
+		nports : int
+			number of ports
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network.
+		
+		Returns
+		--------
+			tee : :class:`~mwavepy.network.Network` object
+			a n-port splitter
 		'''
 		n=nports
 		result = self.match(n, **kwargs)
@@ -373,16 +490,21 @@ class Media(object):
 	# transmission line
 	def thru(self, **kwargs):
 		'''
-		creates a Network for a thru
+		Matched transmission line of length 0.
 		
-		takes:
-			**kwargs: key word arguments passed to match(), which is 
-				called initially to create a 'blank' network
-		returns:
-			a 2-port Network class, representing a thru
-
-		note:
-			this just calls self.line(0)
+		Parameters
+		----------
+		\*\*kwargs : key word arguments 
+			passed to :func:`match`, which is called initially to create a 
+			'blank' network.
+		
+		Returns
+		--------
+		thru : :class:`~mwavepy.network.Network` object
+			matched tranmission line of 0 length
+		See Also
+		---------
+			line : this just calls line(0)
 		'''
 		return self.line(0,**kwargs)
 	
@@ -390,7 +512,8 @@ class Media(object):
 		'''
 		creates a Network for a section of matched transmission line
 		
-		takes:
+		Parameters
+		----------
 			d: the length (see unit argument) [number]
 			unit: string specifying the units of d. possible options are 
 				'm': meters, physical length in meters (default)
@@ -400,7 +523,8 @@ class Media(object):
 				called initially to create a 'blank' network. the kwarg
 				'z0' can be used to create a line of a given impedance
 		
-		returns:
+		Returns
+		--------
 			a 2-port Network class, representing a transmission line of 
 			length d
 	
@@ -433,7 +557,8 @@ class Media(object):
 		'''
 		creates a Network for a delayed load transmission line
 		
-		takes:
+		Parameters
+		----------
 			Gamma0: reflection coefficient of load (not in dB)
 			d: the length (see unit argument) [number]
 			unit: string specifying the units of d. possible options are 
@@ -444,7 +569,8 @@ class Media(object):
 				called initially to create a 'blank' network. the kwarg
 				'z0' can be used to create a line of a given impedance
 		
-		returns:
+		Returns
+		--------
 			a 1-port Network class, representing a loaded transmission
 			line of length d
 			
@@ -459,7 +585,8 @@ class Media(object):
 		'''
 		creates a Network for a delayed short transmission line
 		
-		takes:
+		Parameters
+		----------
 			d: the length (see unit argument) [number]
 			unit: string specifying the units of d. possible options are 
 				'm': meters, physical length in meters (default)
@@ -468,7 +595,8 @@ class Media(object):
 			**kwargs: key word arguments passed to match(), which is 
 				called initially to create a 'blank' network. the kwarg
 				'z0' can be used to create a line of a given impedance
-		returns:
+		Returns
+		--------
 			a 1-port Network class, representing a shorted transmission
 			line of length d
 			
@@ -482,7 +610,8 @@ class Media(object):
 		'''
 		creates a Network for a delayed open transmission line
 		
-		takes:
+		Parameters
+		----------
 			d: the length (see unit argument) [number]
 			unit: string specifying the units of d. possible options are 
 				'm': meters, physical length in meters (default)
@@ -491,7 +620,8 @@ class Media(object):
 			**kwargs: key word arguments passed to match(), which is 
 				called initially to create a 'blank' network. the kwarg
 				'z0' can be used to create a line of a given impedance
-		returns:
+		Returns
+		--------
 			a 1-port Network class, representing a shorted transmission
 			line of length d
 			
@@ -506,11 +636,13 @@ class Media(object):
 		returns a shunted ntwk. this creates a 'tee', connects 
 		'ntwk' to port 1, and returns the result
 		
-		takes:
+		Parameters
+		----------
 			ntwk: the network to be shunted. [mwavepy.Network]
 			**kwargs: passed to the self.tee() function
 			
-		returns:
+		Returns
+		--------
 			a 2-port network [mwavepy.Network]
 		'''
 		return connect(self.tee(**kwargs),1,ntwk,0)
@@ -519,10 +651,12 @@ class Media(object):
 		'''
 		a shunted delayed load:
 		
-		takes:
+		Parameters
+		----------
 			*args: passed to self.delay_load
 			**kwargs:passed to self.delay_load
-		returns:
+		Returns
+		--------
 			a 2-port network [mwavepy.Network]
 		'''
 		return self.shunt(self.delay_load(*args, **kwargs))
@@ -531,10 +665,12 @@ class Media(object):
 		'''
 		a shunted delayed open:
 		
-		takes:
+		Parameters
+		----------
 			*args: passed to self.delay_load
 			**kwargs:passed to self.delay_load
-		returns:
+		Returns
+		--------
 			a 2-port network [mwavepy.Network]
 		'''
 		return self.shunt(self.delay_open(*args, **kwargs))
@@ -543,10 +679,12 @@ class Media(object):
 		'''
 		a shunted delayed short:
 		
-		takes:
+		Parameters
+		----------
 			*args: passed to self.delay_load
 			**kwargs:passed to self.delay_load
-		returns:
+		Returns
+		--------
 			a 2-port network [mwavepy.Network]
 		'''
 		return self.shunt(self.delay_short(*args, **kwargs))
@@ -555,11 +693,13 @@ class Media(object):
 		'''
 		a shunt capacitor
 		
-		takes:
+		Parameters
+		----------
 			C: capacitance in farads
 			*args: passed to self.capacitor
 			**kwargs:passed to self.capacitor
-		returns:
+		Returns
+		--------
 			a 2-port mwavepy.Network
 		
 		'''
@@ -569,11 +709,13 @@ class Media(object):
 		'''
 		a shunt inductor
 		
-		takes:
+		Parameters
+		----------
 			L: inductance in henrys
 			*args: passed to self.inductor
 			**kwargs:passed to self.inductor
-		returns:
+		Returns
+		--------
 			a 2-port mwavepy.Network
 		
 		'''
@@ -586,12 +728,14 @@ class Media(object):
 		creates a complex zero-mean gaussian white-noise signal of given
 		standard deviations for phase and magnitude
 
-		takes:
+		Parameters
+		----------
 			phase_mag: standard deviation of magnitude
 			phase_dev: standard deviation of phase
 			n_ports: number of ports. defualt to 1
 			**kwargs: passed to Network() initializer
-		returns:
+		Returns
+		--------
 			result: Network type 
 		'''
 		shape = (self.frequency.npoints, n_ports,n_ports)
@@ -609,7 +753,8 @@ class Media(object):
 		'''
 		guess length of physical length of a Delay Short given by aNtwk
 		
-		takes:
+		Parameters
+		----------
 			aNtwk: a mwavepy.ntwk type . (note: if this is a measurment 
 				it needs to be normalized to the reference plane)
 			tline: transmission line class of the medium. needed for the 

@@ -69,7 +69,6 @@ So, to clarify the confusion,
 
 .. math::
 	Z_{in}= Z_{l},\\qquad\\qquad 
-	
 	\\Gamma_{in}=\\Gamma_l \\text{ at }  \\theta=0
 
 

@@ -22,11 +22,13 @@
 media (:mod:`mwavepy.media`)
 ========================================
 
-Provides :class:`~media.Media` base-class and specific instances of
-:class:`~media.Media` objects representing various transmission-line 
-mediums.
+This package provides objects representing transmission line mediums. 
 
-The :class:`~media.Media` object provides generic methods to produce  
+The :class:`~media.Media` object is the base-class that is inherited
+by specific transmission line instances, such as 
+:class:`~freeSpace.FreeSpace`, or
+:class:`~rectangularWaveguide.RectangularWaveguide`. The
+:class:`~media.Media` object provides generic methods to produce  
 :class:`~mwavepy.network.Network`'s for any transmision line medium, such 
 as :func:`~media.Media.line` and :func:`~media.Media.delay_short`. These
 methods are inherited by the specific tranmission line classes, 
