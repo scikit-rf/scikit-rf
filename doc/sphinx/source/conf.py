@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.abspath('../sphinxext'))
 extensions = [
     'sphinx.ext.autodoc', 
     'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx', 
+    #'sphinx.ext.intersphinx', 
     'sphinx.ext.pngmath',
     'numpydoc',
     'plot_directive',
@@ -58,7 +58,7 @@ copyright = u'2011, alex arsenovic'
 # built documents.
 #
 # The short X.Y version.
-version = '1.51'
+version = '1.50'
 # The full version, including alpha/beta/rc tags.
 release = '1.51'
 

@@ -34,33 +34,59 @@ class RectangularWaveguide(Media):
 	'''
 	Rectangular Waveguide medium. 
 	
-	Can be used to represent any mode of a homogeneously filled 	
-	rectangular waveguide of arbitrary cross-section, mode-type, and
-	mode index.
+	Represents a single mode of a homogeneously filled rectangular 
+	waveguide of cross-section `a` x `b`. The mode is determined by 
+	mode-type (te or tm) and mode indecies ( m and n ).
+	 
+
+	====================================  =============  ===============
+	Quantity                              Symbol         Variable
+	====================================  =============  ===============     
+	Characteristic Wave Number            :math:`k_0`    :attr:`k0`
+	Cut-off Wave Number                   :math:`k_c`    :attr:`kc`
+	Longitudinal Wave Number              :math:`k_z`    :attr:`kz`
+	Transverse Wave Number (a)            :math:`k_x`    :attr:`kx`
+	Transverse Wave Number (b)            :math:`k_y`    :attr:`ky`
+	Characteristic Impedance              :math:`Z_0`    :attr:`Z0`
+	====================================  =============  ===============
+		
 	'''
 	def __init__(self, frequency, a, b=None, mode_type = 'te', m=1, \
 		n=0, ep_r=1, mu_r=1, *args, **kwargs):
 		'''
-		takes:
-			frequency: mwavepy.Frequency object
-			a: width of waveguide, in meters. [number]
-			b: height of waveguide, in meters. defaults to a/2 [number]
-			mode_type: mode type, can be either 'te' or 'tm' (to-z)
-			m: mode index in 'a'-direction, (default=1) [integer]
-			n: mode index in 'b'-direction, (default=0) [integer]
-			ep_r: filling material relative permativity [number]
-			mu_r: filling material relative permeability [number]
-			*args,**kwargs: passed to Media() constructor
-		returns:
-			mwavepy.Media object
+		RectangularWaveguide initializer
+		
+		Parameters
+		----------
+		frequency : class:`~mwavepy.frequency.Frequency` object
+			frequency band for this media
+		a : number
+			width of waveguide, in meters.
+		b : number 
+			height of waveguide, in meters. If `None` defaults to a/2
+		mode_type : ['te','tm']
+			mode type, transverse electric (te) or transverse magnetic
+			(tm) to-z. where z is direction of propagation
+		m : int 
+			mode index in 'a'-direction
+		n : int
+			mode index in 'b'-direction
+		ep_r : number, array-like, 
+			filling material's relative permativity
+		mu_r : number, array-like 
+			filling material's relative permeability
+		*args,**kwargs : arguments, keywrod arguments
+			passed to :class:`~mwavepy.media.media.Media`'s constructor
+			(:func:`~mwavepy.media.media.Media.__init__`
+		
 			
-			
-		example:
-			most common usage is probably standard waveguide dominant 
-			mode. TE10 mode of wr10 waveguide can be constructed by
-			
-			freq = mwavepy.Frequency(75,110,101,'ghz')
-			RectangularWaveguide(freq, 100*mil)
+		Examples
+		------------
+		Most common usage is standard aspect ratio (2:1) dominant 
+		mode, TE10 mode of wr10 waveguide can be constructed by
+		
+		>>> freq = mv.Frequency(75,110,101,'ghz')
+		>>> mv.RectangularWaveguide(freq, 100*mil)
 		'''
 		if b is None: 
 			b = a/2.
@@ -98,51 +124,116 @@ class RectangularWaveguide(Media):
 	@property
 	def ep(self):
 		'''
-		the permativity of the filling material 
+		The permativity of the filling material 
+		
+		Returns
+		-------
+		ep : number
+			filling material's relative permativity
 		'''
 		return self.ep_r * epsilon_0
 	
 	@property
 	def mu(self):
 		'''
-		the permeability of the filling material 
+		The permeability of the filling material
+		
+		Returns
+		-------
+		mu : number
+			filling material's relative permeability
+		 
 		'''
 		return self.mu_r * mu_0
 	
 	@property
 	def k0(self):
 		'''
-		characteristic wave number
+		Characteristic wave number
+		
+		Returns
+		-------
+		k0 : number
+			characteristic wave number
 		'''
 		return 2*pi*self.frequency.f*sqrt(self.ep * self.mu)
 	
 	@property
 	def ky(self):
 		'''
-		eigen-value in the 'b' direction
+		Eigen-value in the `b` direction.
+		
+		Defined as
+		 
+		.. math::
+			
+			k_y = n \\frac{\pi}{b}
+		
+		Returns
+		-------
+		ky : number
+			eigen-value in `b` direction 
 		'''
 		return self.n*pi/self.b
 	
 	@property
 	def kx(self):
 		'''
-		eigen value in the 'a' direction
+		Eigen value in the 'a' direction
+		
+		Defined as
+		 
+		.. math::
+			
+			k_x = m \\frac{\pi}{a}
+		
+		Returns
+		-------
+		kx : number
+			eigen-value in `a` direction 
 		'''
 		return self.m*pi/self.a
 	
 	@property
 	def kc(self):
 		'''
-		cut-off wave number 
+		Cut-off wave number 
+		
+		Defined as
+		 
+		.. math::
+			
+			k_c = \\sqrt {k_x^2 + k_y^2} = \\sqrt {
+			{m \\frac{\pi}{a}}^2 + {n \\frac{\pi}{b}}^2}
+			
+		Returns
+		-------
+		kc : number
+			cut-off wavenumber 	
 		'''
 		return sqrt( self.kx**2 + self.ky**2)
 	
 	
 	def kz(self):
 		'''
-		the propagation constant, which is:
-			IMAGINARY for propagating modes
-			REAL  for non-propagating modes, 
+		The Longitudinal wave number, aka propagation constant.
+		
+		Defined as 
+		
+		.. math::
+			
+			k_z = \\pm \\sqrt {k_0^2 - k_c^2}
+		
+		This is.
+			* IMAGINARY for propagating modes
+			* REAL  for non-propagating modes, 
+		
+		Returns 
+		--------
+		kz :  number
+			The propagation constant
+
+		
 		'''
 		k0,kc = self.k0, self.kc
 		return \
@@ -153,7 +244,7 @@ class RectangularWaveguide(Media):
 	
 	def Z0(self):
 		'''
-		the characteristic impedance of a given mode
+		The characteristic impedance
 		'''
 		omega = self.frequency.w
 		impedance_dict = {\
