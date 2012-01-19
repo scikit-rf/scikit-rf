@@ -1,6 +1,6 @@
-mwavepy.calibration.calibrationFunctions.cartesian_product_calibration_set
+skrf.calibration.calibrationFunctions.cartesian_product_calibration_set
 ==========================================================================
 
-.. currentmodule:: mwavepy.calibration.calibrationFunctions
+.. currentmodule:: skrf.calibration.calibrationFunctions
 
 .. autofunction:: cartesian_product_calibration_set

@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.load
+skrf.media.media.Media.load
 ==============================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.load

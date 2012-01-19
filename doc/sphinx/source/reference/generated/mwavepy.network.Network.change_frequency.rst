@@ -1,6 +1,6 @@
-mwavepy.network.Network.change_frequency
+skrf.network.Network.change_frequency
 ========================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.change_frequency

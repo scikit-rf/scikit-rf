@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.residual_ntwks
+skrf.calibration.calibration.Calibration.residual_ntwks
 ==========================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoattribute:: Calibration.residual_ntwks

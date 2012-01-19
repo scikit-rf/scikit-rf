@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.characteristic_impedance
+skrf.media.media.Media.characteristic_impedance
 ==================================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. autoattribute:: Media.characteristic_impedance

@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.shunt
+skrf.media.media.Media.shunt
 ===============================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.shunt

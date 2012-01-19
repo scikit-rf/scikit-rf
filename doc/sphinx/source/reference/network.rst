@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.network
+.. automodule:: skrf.network

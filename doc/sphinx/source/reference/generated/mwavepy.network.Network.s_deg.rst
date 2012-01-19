@@ -1,6 +1,6 @@
-mwavepy.network.Network.s_deg
+skrf.network.Network.s_deg
 =============================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoattribute:: Network.s_deg

@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.__init__
+skrf.calibration.calibration.Calibration.__init__
 ====================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.__init__

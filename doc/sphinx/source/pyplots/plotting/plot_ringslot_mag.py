@@ -1,5 +1,5 @@
 import pylab
-import mwavepy as mv 
+import skrf as mv 
 
 # create a Network type from a touchstone file of a horn antenna
 ring_slot= mv.Network('ring slot array measured.s1p')

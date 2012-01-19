@@ -1,6 +1,6 @@
-mwavepy.calibration.calibrationAlgorithms.one_port
+skrf.calibration.calibrationAlgorithms.one_port
 ==================================================
 
-.. currentmodule:: mwavepy.calibration.calibrationAlgorithms
+.. currentmodule:: skrf.calibration.calibrationAlgorithms
 
 .. autofunction:: one_port

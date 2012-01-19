@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.frequency
+skrf.calibration.calibration.Calibration.frequency
 =====================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoattribute:: Calibration.frequency

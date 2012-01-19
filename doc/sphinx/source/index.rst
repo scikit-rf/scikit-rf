@@ -1,5 +1,5 @@
 ===================================
-mwavepy's documentation
+skrf's documentation
 ===================================
 
 Tutorials
@@ -32,10 +32,10 @@ Reference
 
 Major Classes
 ++++++++++++++++
-* :class:`~mwavepy.network.Network`
-* :class:`~mwavepy.networkSet.NetworkSet`
-* :class:`~mwavepy.frequency.Frequency`
-* :class:`~mwavepy.calibration.calibration.Calibration`
+* :class:`~skrf.network.Network`
+* :class:`~skrf.networkSet.NetworkSet`
+* :class:`~skrf.frequency.Frequency`
+* :class:`~skrf.calibration.calibration.Calibration`
 
 Modules
 ++++++++++

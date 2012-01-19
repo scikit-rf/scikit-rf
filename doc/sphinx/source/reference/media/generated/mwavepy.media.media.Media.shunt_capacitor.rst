@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.shunt_capacitor
+skrf.media.media.Media.shunt_capacitor
 =========================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.shunt_capacitor

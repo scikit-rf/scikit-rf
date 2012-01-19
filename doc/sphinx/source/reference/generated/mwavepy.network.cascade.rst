@@ -1,6 +1,6 @@
-mwavepy.network.cascade
+skrf.network.cascade
 =======================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: cascade

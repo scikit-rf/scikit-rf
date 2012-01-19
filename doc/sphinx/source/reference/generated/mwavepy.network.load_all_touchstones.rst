@@ -1,6 +1,6 @@
-mwavepy.network.load_all_touchstones
+skrf.network.load_all_touchstones
 ====================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: load_all_touchstones

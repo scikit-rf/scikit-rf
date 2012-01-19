@@ -1,5 +1,5 @@
 import pylab
-import mwavepy as mv 
+import skrf as mv 
 
 # from the extension you know this is a 2-port network
 ring_slot_sim = mv.Network('ring slot array simulation.s2p')

@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.theta_2_d
+skrf.media.media.Media.theta_2_d
 ===================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.theta_2_d

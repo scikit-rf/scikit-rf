@@ -1,5 +1,5 @@
 import pylab
-import mwavepy as mv 
+import skrf as mv 
 
 # create a Network type from a touchstone file of a horn antenna
 horn = mv.Network('horn antenna.s1p')

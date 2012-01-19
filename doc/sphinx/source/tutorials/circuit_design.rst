@@ -6,26 +6,26 @@ Circuit Design
 Intro
 ----------
 
-mwavepy has basic support for microwave circuit design. Network synthesis is accomplished through the Media Class (:py:mod:`mwavepy.media`), which represent a transmission line object for a given medium. A  Media object contains properties such as propagation constant and characteristic impedance, that are needed to generate network components.
+skrf has basic support for microwave circuit design. Network synthesis is accomplished through the Media Class (:py:mod:`skrf.media`), which represent a transmission line object for a given medium. A  Media object contains properties such as propagation constant and characteristic impedance, that are needed to generate network components.
 
 Typically circuit design is done within a given frequency band. Therefore every Media object is created with a  Frequency object to  relieve the user of repitously providing frequency information for each new network created. 
 
 
-Media's Supported by mwavepy
+Media's Supported by skrf
 ------------------------------
 
-Below is a list of mediums types supported by mwavepy,
+Below is a list of mediums types supported by skrf,
 
 * DistributedCircuit
 * Freespace
 * RectangularWaveguide
 * CPW
 
-More info on all of these classes can be found in the media sub-module section of :py:mod:`mwavepy.media`  mavepy's API. 
+More info on all of these classes can be found in the media sub-module section of :py:mod:`skrf.media`  mavepy's API. 
 
 Here is an example of how to initialize a Media object representing a freespace from 10-20GHz::
 
-	import mwavepy as mv
+	import skrf as mv
 	freq = mv.Frequency(10,20,101,'ghz')
 	my_media = mv.media.Freespace(freq)
 
@@ -43,7 +43,7 @@ or a WR10 Rectangular Waveguide::
 Creating Individual Networks
 ------------------------------
 
-Network components are created through methods of a Media object.  Here is a brief, incomplete list of a some generic network components mwavepy supports,
+Network components are created through methods of a Media object.  Here is a brief, incomplete list of a some generic network components skrf supports,
 
 * match
 * short
@@ -83,7 +83,7 @@ For frequently used circuits, it may be worthwhile creating a function for somet
 	
 	delay_short(wb,90,'deg')
 
-This is how many of mwavepy's network compnents are made internally. 
+This is how many of skrf's network compnents are made internally. 
 
 To connect networks with more than two ports together, use the *connect()* function. You must provide the connect function with the two networks to be connected and the port indecies (starting from 0) to be connected. 
 

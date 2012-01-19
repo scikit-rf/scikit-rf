@@ -1,6 +1,6 @@
-mwavepy.network.Network.plot_s_db
+skrf.network.Network.plot_s_db
 =================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.plot_s_db

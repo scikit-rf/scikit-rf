@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.delay_load
+skrf.media.media.Media.delay_load
 ====================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.delay_load

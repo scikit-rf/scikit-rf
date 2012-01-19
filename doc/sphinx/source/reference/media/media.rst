@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.media.media
+.. automodule:: skrf.media.media

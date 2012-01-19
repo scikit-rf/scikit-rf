@@ -1,6 +1,6 @@
-mwavepy.network.average
+skrf.network.average
 =======================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: average

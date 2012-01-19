@@ -1,6 +1,6 @@
-mwavepy.calibration.calibrationAlgorithms.parameterized_self_calibration
+skrf.calibration.calibrationAlgorithms.parameterized_self_calibration
 ========================================================================
 
-.. currentmodule:: mwavepy.calibration.calibrationAlgorithms
+.. currentmodule:: skrf.calibration.calibrationAlgorithms
 
 .. autofunction:: parameterized_self_calibration

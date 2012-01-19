@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.uncertainty_per_standard
+skrf.calibration.calibration.Calibration.uncertainty_per_standard
 ====================================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.uncertainty_per_standard

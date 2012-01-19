@@ -1,6 +1,6 @@
-mwavepy.network.Network.passivity
+skrf.network.Network.passivity
 =================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoattribute:: Network.passivity

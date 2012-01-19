@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.inductor
+skrf.media.media.Media.inductor
 ==================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.inductor

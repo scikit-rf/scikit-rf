@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.coefs
+skrf.calibration.calibration.Calibration.coefs
 =================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoattribute:: Calibration.coefs

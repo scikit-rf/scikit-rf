@@ -1,7 +1,7 @@
-mwavepy.network.Network
+skrf.network.Network
 =======================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoclass:: Network
   :no-members:

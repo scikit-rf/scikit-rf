@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.electrical_length
+skrf.media.media.Media.electrical_length
 ===========================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.electrical_length

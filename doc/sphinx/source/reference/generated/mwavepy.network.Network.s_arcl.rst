@@ -1,6 +1,6 @@
-mwavepy.network.Network.s_arcl
+skrf.network.Network.s_arcl
 ==============================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoattribute:: Network.s_arcl

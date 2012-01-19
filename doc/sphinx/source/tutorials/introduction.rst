@@ -3,21 +3,21 @@
 *******************
 Introduction
 *******************
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 .. contents::
 
-This is a brief introduction to mwavepy, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . All of the touchstone files used in these tutorials are provided along with this source code, and are located in the directory ``../pyplots/`` (relative to this file).
+This is a brief introduction to skrf, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . All of the touchstone files used in these tutorials are provided along with this source code, and are located in the directory ``../pyplots/`` (relative to this file).
 
 Creating Networks 
 ------------------
 
-For this turtorial, and the rest of the mwavpey documentation, we assume that mwavepy has been imported as ``mv``. Whether or not you follow this convention in your own code is up to you::
+For this turtorial, and the rest of the mwavpey documentation, we assume that skrf has been imported as ``mv``. Whether or not you follow this convention in your own code is up to you::
 
-	>>> import mwavepy as mv
+	>>> import skrf as mv
 
 If this produces an error, please see :doc:`installation`. 
 
-The most fundamental object in mwavepy is a n-port :class:`Network`. Most commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so ::
+The most fundamental object in skrf is a n-port :class:`Network`. Most commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so ::
 	
 	>>> short = mv.Network('short.s1p')
 	>>> delay_short = mv.Network('delay_short.s1p')
@@ -98,7 +98,7 @@ or to de-embed the *short* from *delay_short*::
 
 Connecting Multi-ports 
 ------------------------
-**mwavepy** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth [#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of a ideal 3-way splitter can be done like so::
+**skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth [#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of a ideal 3-way splitter can be done like so::
 
 	>>> tee = mv.Network('tee.s3p')
 	>>> delay_short = mv.Network('delay_short.s1p')

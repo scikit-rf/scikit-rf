@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.z0
+skrf.media.media.Media.z0
 ============================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. autoattribute:: Media.z0

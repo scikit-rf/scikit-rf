@@ -4,7 +4,7 @@ import ez_setup
 ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
-setup(name='mwavepy',
+setup(name='scikit-rf',
 	version='1.5',
 	license='gpl',
 	description='Object Oriented Microwave Engineering',

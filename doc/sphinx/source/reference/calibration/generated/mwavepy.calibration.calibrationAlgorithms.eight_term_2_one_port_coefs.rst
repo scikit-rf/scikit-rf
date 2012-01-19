@@ -1,6 +1,6 @@
-mwavepy.calibration.calibrationAlgorithms.eight_term_2_one_port_coefs
+skrf.calibration.calibrationAlgorithms.eight_term_2_one_port_coefs
 =====================================================================
 
-.. currentmodule:: mwavepy.calibration.calibrationAlgorithms
+.. currentmodule:: skrf.calibration.calibrationAlgorithms
 
 .. autofunction:: eight_term_2_one_port_coefs

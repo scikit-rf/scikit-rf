@@ -1,6 +1,6 @@
-mwavepy.network.Network.flip
+skrf.network.Network.flip
 ============================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.flip

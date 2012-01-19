@@ -6,11 +6,11 @@ Calibration
 Intro
 ---------------
 
-This page describes how to use **mwavepy** to calibrate data taken from a VNA. The explanation of calibration theory and calibration kit design is beyond the scope of this  page. This page describes how to calibrate a device under test (DUT), assuming you have measured an acceptable set of standards, and have a coresponding set ideal responses.
+This page describes how to use **skrf** to calibrate data taken from a VNA. The explanation of calibration theory and calibration kit design is beyond the scope of this  page. This page describes how to calibrate a device under test (DUT), assuming you have measured an acceptable set of standards, and have a coresponding set ideal responses.
 
-mwavepy's calibration algorithm is generic in that it will work with any set of standards. If you supply more calibration standards than is needed, mwavepy will implement a simple least-squares solution.
+skrf's calibration algorithm is generic in that it will work with any set of standards. If you supply more calibration standards than is needed, skrf will implement a simple least-squares solution.
 
-Calibrations are performed through a Calibration class, which makes creating and working with calibrations easy. Since mwavepy-1.2 the Calibration class only requires two pieces of information:
+Calibrations are performed through a Calibration class, which makes creating and working with calibrations easy. Since skrf-1.2 the Calibration class only requires two pieces of information:
 
 *   a list of measured Networks
 *   a list of ideal Networks 
@@ -24,7 +24,7 @@ Optionally, other information can be provided for explicitness, such as,
 *    reciprocity of embedding networks
 *    etc 
 
-When this information is not provided mwavepy will determine it through inspection.
+When this information is not provided skrf will determine it through inspection.
 
 One-Port
 --------------
@@ -36,7 +36,7 @@ Simple One-port
 
 This example is written to be instructive, not concise.::
 
-	import mwavepy as mv
+	import skrf as mv
 	
 	
 	## created necessary data for Calibration class
@@ -80,7 +80,7 @@ Concise One-port
 
 This example is meant to be the same as the first except more concise.::
 
-    import mwavepy as mv
+    import skrf as mv
     
     my_ideals = mv.load_all_touchstones_in_dir('ideals/')
     my_measured = mv.load_all_touchstones_in_dir('measured/')
@@ -97,7 +97,7 @@ This example is meant to be the same as the first except more concise.::
 Two-port
 ---------
 
-Two-port calibration is more involved than one-port. mwavepy supports two-port calibration using a 8-term error model based on the algorithm described in [#]_, by R.A. Speciale.
+Two-port calibration is more involved than one-port. skrf supports two-port calibration using a 8-term error model based on the algorithm described in [#]_, by R.A. Speciale.
 
 Like the one-port algorithm, the two-port calibration can handle any number of standards, providing that some fundamental constraints are met. In short, you need three two-port standards; one must be transmissive, and one must provide a known impedance and be reflective.
 
@@ -117,7 +117,7 @@ Simple Two Port
 
 Two-port calibration is accomplished in an identical way to one-port, except all the standards are two-port networks. This is even true of reflective standards (S21=S12=0). So if you measure reflective standards you must measure two of them simultaneously, and store information in a two-port. For example, connect a short to port-1 and a load to port-2, and save a two-port measurement as 'short,load.s2p' or similar::
 
-    import mwavepy as mv
+    import skrf as mv
     
     
     ## created necessary data for Calibration class
@@ -161,7 +161,7 @@ Two-port calibration is accomplished in an identical way to one-port, except all
 Using s1p ideals in two-port calibration
 ++++++++++++++++++++++++++++++++++++++++++
 
-Commonly, you have data for ideal data for reflective standards in the form of one-port touchstone files (ie s1p). To use this with mwavepy's two-port calibration method you need to create a two-port network that is a composite of the two networks. There is a function in the WorkingBand Class which will do this for you, called two_port_reflect.::
+Commonly, you have data for ideal data for reflective standards in the form of one-port touchstone files (ie s1p). To use this with skrf's two-port calibration method you need to create a two-port network that is a composite of the two networks. There is a function in the WorkingBand Class which will do this for you, called two_port_reflect.::
     
     short = mv.Network('ideals/short.s1p')
     load = mv.Network('ideals/load.s1p')

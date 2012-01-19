@@ -1,6 +1,6 @@
-mwavepy.network.Network.__init__
+skrf.network.Network.__init__
 ================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.__init__

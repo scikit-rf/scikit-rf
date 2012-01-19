@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.match
+skrf.media.media.Media.match
 ===============================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.match

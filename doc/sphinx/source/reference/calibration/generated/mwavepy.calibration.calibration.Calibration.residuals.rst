@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.residuals
+skrf.calibration.calibration.Calibration.residuals
 =====================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoattribute:: Calibration.residuals

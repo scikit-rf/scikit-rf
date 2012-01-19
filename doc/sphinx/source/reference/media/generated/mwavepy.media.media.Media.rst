@@ -1,7 +1,7 @@
-mwavepy.media.media.Media
+skrf.media.media.Media
 =========================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. autoclass:: Media
   :no-members:

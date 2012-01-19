@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.propagation_constant
+skrf.media.media.Media.propagation_constant
 ==============================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. autoattribute:: Media.propagation_constant

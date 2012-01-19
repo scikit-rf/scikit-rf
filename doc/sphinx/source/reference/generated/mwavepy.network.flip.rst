@@ -1,6 +1,6 @@
-mwavepy.network.flip
+skrf.network.flip
 ====================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: flip

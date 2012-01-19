@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.plot_residuals_smith
+skrf.calibration.calibration.Calibration.plot_residuals_smith
 ================================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.plot_residuals_smith

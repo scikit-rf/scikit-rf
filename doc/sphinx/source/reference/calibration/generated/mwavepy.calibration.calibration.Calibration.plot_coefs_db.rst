@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.plot_coefs_db
+skrf.calibration.calibration.Calibration.plot_coefs_db
 =========================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.plot_coefs_db

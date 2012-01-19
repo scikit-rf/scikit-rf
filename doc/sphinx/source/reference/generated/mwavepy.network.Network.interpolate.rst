@@ -1,6 +1,6 @@
-mwavepy.network.Network.interpolate
+skrf.network.Network.interpolate
 ===================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.interpolate

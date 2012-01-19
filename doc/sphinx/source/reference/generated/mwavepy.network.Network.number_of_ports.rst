@@ -1,6 +1,6 @@
-mwavepy.network.Network.number_of_ports
+skrf.network.Network.number_of_ports
 =======================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoattribute:: Network.number_of_ports

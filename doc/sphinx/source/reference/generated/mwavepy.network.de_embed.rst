@@ -1,6 +1,6 @@
-mwavepy.network.de_embed
+skrf.network.de_embed
 ========================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: de_embed

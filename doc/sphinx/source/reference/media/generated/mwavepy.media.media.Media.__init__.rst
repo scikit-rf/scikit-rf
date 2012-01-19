@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.__init__
+skrf.media.media.Media.__init__
 ==================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.__init__

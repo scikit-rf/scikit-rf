@@ -6,7 +6,7 @@ Two-Port Calibration
 
 This is an example of how to setup two-port calibration. For more detailed explaination see :doc:`calibration`::
 	
-	import mwavepy as mv
+	import skrf as mv
 	
 	
 	## created necessary data for Calibration class

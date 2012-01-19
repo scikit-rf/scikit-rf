@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.total_error
+skrf.calibration.calibration.Calibration.total_error
 =======================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.total_error

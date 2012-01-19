@@ -1,6 +1,6 @@
-mwavepy.network.s2t
+skrf.network.s2t
 ===================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: s2t

@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.nports
+skrf.calibration.calibration.Calibration.nports
 ==================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoattribute:: Calibration.nports

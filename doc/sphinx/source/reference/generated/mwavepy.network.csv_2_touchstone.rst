@@ -1,6 +1,6 @@
-mwavepy.network.csv_2_touchstone
+skrf.network.csv_2_touchstone
 ================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: csv_2_touchstone

@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.unbiased_error
+skrf.calibration.calibration.Calibration.unbiased_error
 ==========================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.unbiased_error

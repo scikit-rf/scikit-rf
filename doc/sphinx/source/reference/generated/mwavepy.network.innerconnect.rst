@@ -1,6 +1,6 @@
-mwavepy.network.innerconnect
+skrf.network.innerconnect
 ============================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: innerconnect

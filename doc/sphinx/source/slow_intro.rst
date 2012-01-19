@@ -4,15 +4,15 @@ Slow Introduction
 **********************
 
 
-This is a slow  introduction to **mwavepy** for readers who arent especially familiar with python. If you are familiar with python, or are impatient see the :doc:`introduction`.
+This is a slow  introduction to **skrf** for readers who arent especially familiar with python. If you are familiar with python, or are impatient see the :doc:`introduction`.
 
-**mwavepy**, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don't understand anything on this page, please see the Install page first.
-From a python shell or similar (ie IPython),  the **mwavepy** module can be imported like so::
+**skrf**, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don't understand anything on this page, please see the Install page first.
+From a python shell or similar (ie IPython),  the **skrf** module can be imported like so::
 
-	import mwavepy as mv
+	import skrf as mv
 
 
-From here all **mwavepy**'s functions can be accessed through the variable 'mv'. Help can be accessed through pythons help command. For example, to get help with the Network class ::
+From here all **skrf**'s functions can be accessed through the variable 'mv'. Help can be accessed through pythons help command. For example, to get help with the Network class ::
 	
 	help(mv.Network) 
 

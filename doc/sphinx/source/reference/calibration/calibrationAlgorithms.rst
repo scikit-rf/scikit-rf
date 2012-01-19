@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.calibration.calibrationAlgorithms
+.. automodule:: skrf.calibration.calibrationAlgorithms

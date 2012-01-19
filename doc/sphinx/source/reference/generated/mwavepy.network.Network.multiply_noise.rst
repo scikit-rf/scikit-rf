@@ -1,6 +1,6 @@
-mwavepy.network.Network.multiply_noise
+skrf.network.Network.multiply_noise
 ======================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.multiply_noise

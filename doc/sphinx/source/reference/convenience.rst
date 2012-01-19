@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.convenience
+.. automodule:: skrf.convenience

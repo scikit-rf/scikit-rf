@@ -1,6 +1,6 @@
-mwavepy.network.Network.nudge
+skrf.network.Network.nudge
 =============================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.nudge

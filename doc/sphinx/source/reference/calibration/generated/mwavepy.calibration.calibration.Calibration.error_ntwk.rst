@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.error_ntwk
+skrf.calibration.calibration.Calibration.error_ntwk
 ======================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoattribute:: Calibration.error_ntwk

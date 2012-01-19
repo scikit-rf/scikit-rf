@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.networkSet
+.. automodule:: skrf.networkSet

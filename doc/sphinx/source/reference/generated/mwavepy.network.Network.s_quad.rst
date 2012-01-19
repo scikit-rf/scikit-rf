@@ -1,6 +1,6 @@
-mwavepy.network.Network.s_quad
+skrf.network.Network.s_quad
 ==============================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoattribute:: Network.s_quad

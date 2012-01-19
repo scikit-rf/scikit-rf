@@ -1,6 +1,6 @@
-mwavepy.network.Network.plot_vs_frequency_generic
+skrf.network.Network.plot_vs_frequency_generic
 =================================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.plot_vs_frequency_generic

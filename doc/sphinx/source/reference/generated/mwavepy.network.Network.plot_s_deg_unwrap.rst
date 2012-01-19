@@ -1,6 +1,6 @@
-mwavepy.network.Network.plot_s_deg_unwrap
+skrf.network.Network.plot_s_deg_unwrap
 =========================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.plot_s_deg_unwrap

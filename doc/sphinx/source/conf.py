@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# mwavepy documentation build configuration file, created by
+# skrf documentation build configuration file, created by
 # sphinx-quickstart on Sun Aug 21 15:10:05 2011.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -50,7 +50,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'mwavepy'
+project = u'skrf'
 copyright = u'2011, alex arsenovic'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -173,7 +173,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'mwavepydoc'
+htmlhelp_basename = 'skrfdoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -187,7 +187,7 @@ htmlhelp_basename = 'mwavepydoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'mwavepy.tex', u'mwavepy Documentation',
+  ('index', 'skrf.tex', u'skrf Documentation',
    u'alex arsenovic', 'manual'),
 ]
 
@@ -220,7 +220,7 @@ autosummary_generate=True
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'mwavepy', u'mwavepy Documentation',
+    ('index', 'skrf', u'skrf Documentation',
      [u'alex arsenovic'], 1)
 ]
 

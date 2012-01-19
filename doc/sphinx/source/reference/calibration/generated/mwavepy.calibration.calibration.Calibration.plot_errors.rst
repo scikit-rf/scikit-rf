@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.plot_errors
+skrf.calibration.calibration.Calibration.plot_errors
 =======================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.plot_errors

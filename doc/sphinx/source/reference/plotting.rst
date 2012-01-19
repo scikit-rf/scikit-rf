@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.plotting
+.. automodule:: skrf.plotting

@@ -1,5 +1,5 @@
 import pylab
-import mwavepy as mv 
+import skrf as mv 
 
 ring_slot= mv.Network('ring slot array measured.s1p')
 pylab.figure(1)

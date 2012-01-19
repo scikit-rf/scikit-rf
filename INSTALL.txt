@@ -1,8 +1,8 @@
-How To Install mwavepy
+How To Install skrf
 ======================
 
-mwavepy uses Python Distutils for installation. Installers are available for 
-some platforms. See the Installation page, which can be found in docs/mwavepy.html
+skrf uses Python Distutils for installation. Installers are available for 
+some platforms. See the Installation page, which can be found in docs/skrf.html
 
 you can install from a source distribution (.tar.gz or .zip) by:
 

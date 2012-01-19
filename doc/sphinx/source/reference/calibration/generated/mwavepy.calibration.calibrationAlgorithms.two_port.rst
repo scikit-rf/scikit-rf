@@ -1,6 +1,6 @@
-mwavepy.calibration.calibrationAlgorithms.two_port
+skrf.calibration.calibrationAlgorithms.two_port
 ==================================================
 
-.. currentmodule:: mwavepy.calibration.calibrationAlgorithms
+.. currentmodule:: skrf.calibration.calibrationAlgorithms
 
 .. autofunction:: two_port

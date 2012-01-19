@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.splitter
+skrf.media.media.Media.splitter
 ==================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.splitter

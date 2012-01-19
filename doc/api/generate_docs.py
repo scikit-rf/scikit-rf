@@ -6,9 +6,9 @@ http://stackoverflow.com/questions/1707709/list-all-the-modules-that-are-part-of
 '''
 from subprocess import call
 import pkgutil
-import mwavepy 
+import skrf 
 
-package = mwavepy
+package = skrf
 for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
 	call(['pydoc','-w',package.__name__+'.'+modname])
 	if ispkg:

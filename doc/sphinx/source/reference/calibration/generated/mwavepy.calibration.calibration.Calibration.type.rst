@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.type
+skrf.calibration.calibration.Calibration.type
 ================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoattribute:: Calibration.type

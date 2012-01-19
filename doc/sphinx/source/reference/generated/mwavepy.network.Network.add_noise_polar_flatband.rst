@@ -1,6 +1,6 @@
-mwavepy.network.Network.add_noise_polar_flatband
+skrf.network.Network.add_noise_polar_flatband
 ================================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.add_noise_polar_flatband

@@ -3,11 +3,11 @@
 *********
 Plotting  
 *********
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 .. contents::
 
 
-This tutorial illustrates how to create common plots associated with microwave networks. The plotting functions are implemented as methods of the :class:`Network` class, which is provided by the :mod:`mwavepy.network` module. Below is a list of the some of the plotting functions of network s-parameters, 
+This tutorial illustrates how to create common plots associated with microwave networks. The plotting functions are implemented as methods of the :class:`Network` class, which is provided by the :mod:`skrf.network` module. Below is a list of the some of the plotting functions of network s-parameters, 
 
    
 * :func:`Network.plot_s_re`
@@ -40,7 +40,7 @@ Smith Chart
 .. plot:: ../pyplots/plotting/plot_ringslot_smith.py
    :include-source:
 
-The Smith Chart can be also drawn independently of any :class:`Network` object through the :func:`~mwavepy.plotting.smith` function. This function also allows admittance contours can also be drawn.
+The Smith Chart can be also drawn independently of any :class:`Network` object through the :func:`~skrf.plotting.smith` function. This function also allows admittance contours can also be drawn.
 
 Multiple S-parameters
 ----------------------
@@ -54,7 +54,7 @@ Comparing with Simulation
 
 Saving Plots
 -------------
-Plots can be saved in various file formats using the GUI provided by the matplotlib. However, mwavepy provides a convenience function, called :func:`~mwavepy.convenience.save_all_figs`,  that allows all open figures to be saved to disk in multiple file formats, with filenames pulled from each figure's title::
+Plots can be saved in various file formats using the GUI provided by the matplotlib. However, skrf provides a convenience function, called :func:`~skrf.convenience.save_all_figs`,  that allows all open figures to be saved to disk in multiple file formats, with filenames pulled from each figure's title::
 
     >>> mv.save_all_figs('.', format=['eps','pdf'])
     ./WR-10 Ringslot Array Simulated vs Measured.eps

@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.tee
+skrf.media.media.Media.tee
 =============================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.tee

@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.mathFunctions
+.. automodule:: skrf.mathFunctions

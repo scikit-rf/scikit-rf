@@ -1,6 +1,6 @@
-mwavepy.network.impedance_mismatch
+skrf.network.impedance_mismatch
 ==================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: impedance_mismatch

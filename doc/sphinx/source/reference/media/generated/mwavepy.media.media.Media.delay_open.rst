@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.delay_open
+skrf.media.media.Media.delay_open
 ====================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.delay_open

@@ -24,7 +24,7 @@ Script
 
 ::
 
-	import mwavepy as mv
+	import skrf as mv
 	from pylab import * 
 	
 	

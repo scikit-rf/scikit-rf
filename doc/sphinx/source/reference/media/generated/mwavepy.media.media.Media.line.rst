@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.line
+skrf.media.media.Media.line
 ==============================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.line

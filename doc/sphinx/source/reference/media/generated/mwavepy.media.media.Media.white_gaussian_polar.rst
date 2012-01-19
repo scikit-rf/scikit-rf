@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.white_gaussian_polar
+skrf.media.media.Media.white_gaussian_polar
 ==============================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.white_gaussian_polar

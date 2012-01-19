@@ -1,6 +1,6 @@
-mwavepy.network.Network.read_touchstone
+skrf.network.Network.read_touchstone
 =======================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.read_touchstone

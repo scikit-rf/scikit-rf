@@ -1,5 +1,5 @@
 import pylab
-import mwavepy as mv 
+import skrf as mv 
 
 horn = mv.Network('horn antenna.s1p')
 pylab.title('WR-10 Horn Antenna')

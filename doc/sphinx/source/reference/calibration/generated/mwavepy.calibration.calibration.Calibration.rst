@@ -1,7 +1,7 @@
-mwavepy.calibration.calibration.Calibration
+skrf.calibration.calibration.Calibration
 ===========================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. autoclass:: Calibration
   :no-members:

@@ -10,7 +10,7 @@ Touchstone File Retrieval
 ::
 
 
-    import mwavepy as mv
+    import skrf as mv
     import os,datetime
     
     nsweeps = 101 # number of sweeps to take
@@ -33,7 +33,7 @@ touchstones files, as would be created from the previous script
 
 ::
 
-    import mwavepy as mv
+    import skrf as mv
     from pylab import * 
     
     dir = '2010-12-03' # directory of touchstone files

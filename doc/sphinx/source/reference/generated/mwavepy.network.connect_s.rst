@@ -1,6 +1,6 @@
-mwavepy.network.connect_s
+skrf.network.connect_s
 =========================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autofunction:: connect_s

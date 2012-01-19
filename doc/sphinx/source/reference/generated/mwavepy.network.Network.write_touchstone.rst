@@ -1,6 +1,6 @@
-mwavepy.network.Network.write_touchstone
+skrf.network.Network.write_touchstone
 ========================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.write_touchstone

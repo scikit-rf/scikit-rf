@@ -1,6 +1,6 @@
-mwavepy.network.Network.plot_s_mag
+skrf.network.Network.plot_s_mag
 ==================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.plot_s_mag

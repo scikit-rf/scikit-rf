@@ -1,6 +1,6 @@
-mwavepy.network.Network.s11
+skrf.network.Network.s11
 ===========================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoattribute:: Network.s11

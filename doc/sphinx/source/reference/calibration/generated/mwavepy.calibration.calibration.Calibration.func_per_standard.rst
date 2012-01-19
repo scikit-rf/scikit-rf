@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.func_per_standard
+skrf.calibration.calibration.Calibration.func_per_standard
 =============================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.func_per_standard

@@ -1,6 +1,6 @@
-mwavepy.calibration.calibration.Calibration.apply_cal_to_all_in_dir
+skrf.calibration.calibration.Calibration.apply_cal_to_all_in_dir
 ===================================================================
 
-.. currentmodule:: mwavepy.calibration.calibration
+.. currentmodule:: skrf.calibration.calibration
 
 .. automethod:: Calibration.apply_cal_to_all_in_dir

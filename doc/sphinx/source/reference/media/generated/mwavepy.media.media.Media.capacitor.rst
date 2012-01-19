@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.capacitor
+skrf.media.media.Media.capacitor
 ===================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.capacitor

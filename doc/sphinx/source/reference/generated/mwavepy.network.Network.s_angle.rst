@@ -1,6 +1,6 @@
-mwavepy.network.Network.s_angle
+skrf.network.Network.s_angle
 ===============================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. autoattribute:: Network.s_angle

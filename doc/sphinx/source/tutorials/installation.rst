@@ -8,23 +8,23 @@ Installation
 Introduction
 -----------------
 
-The requirements to run mwavepy are basically a python environment setup to do numerical/scientific computing. If you are new to  Python_ development, you may want to install a pre-built scientific python IDE like pythonxy_. This will install all requirements, as well as provide a nice environment to get started in. If you dont want use pythonxy_, you see `Requirements`_.
+The requirements to run skrf are basically a python environment setup to do numerical/scientific computing. If you are new to  Python_ development, you may want to install a pre-built scientific python IDE like pythonxy_. This will install all requirements, as well as provide a nice environment to get started in. If you dont want use pythonxy_, you see `Requirements`_.
 
-**Note:** If you want to use mwavepy for instrument control you will need to install pyvisa. You may also be interested in Pythics, which provides a simple way to build interfaces to virtual instruments. Links is provided in `Requirements`_ section. 
+**Note:** If you want to use skrf for instrument control you will need to install pyvisa. You may also be interested in Pythics, which provides a simple way to build interfaces to virtual instruments. Links is provided in `Requirements`_ section. 
 
-mwavepy Installation 
+skrf Installation 
 -----------------------------
 
-Once the requirements are installed, there are two choices for installing mwavepy:
+Once the requirements are installed, there are two choices for installing skrf:
 
 *    windows installer
 *   python source package 
 
-They can all be found at http://code.google.com/p/mwavepy/downloads/list
+They can all be found at http://code.google.com/p/skrf/downloads/list
 
 If you dont know how to install a python module and dont care to learn how, you want the windows installer. Otherwise, I recommend the python source package because examples, documentation, and installation instructions are provided with the the python package.
 
-The current version can be accessed through `SVN <http://code.google.com/p/mwavepy/source/checkout>`_. This is mainly of interest for developers, and is not stable most of the time.
+The current version can be accessed through `SVN <http://code.google.com/p/skrf/source/checkout>`_. This is mainly of interest for developers, and is not stable most of the time.
 
 
 

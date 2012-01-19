@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.shunt_delay_short
+skrf.media.media.Media.shunt_delay_short
 ===========================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.shunt_delay_short

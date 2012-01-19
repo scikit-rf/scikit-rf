@@ -1,1 +1,1 @@
-.. automodule:: mwavepy.frequency
+.. automodule:: skrf.frequency

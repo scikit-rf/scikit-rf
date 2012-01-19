@@ -8,7 +8,7 @@ Instructive
 
 This example is written to be instructive, not concise.::
 
-	import mwavepy as mv
+	import skrf as mv
 	
 	
 	## created necessary data for Calibration class
@@ -53,7 +53,7 @@ Concise
 
 This example is meant to be the same as the first except more concise::
 
-	import mwavepy as mv
+	import skrf as mv
 	
 	my_ideals = mv.load_all_touchstones_in_dir('ideals/')
 	my_measured = mv.load_all_touchstones_in_dir('measured/')

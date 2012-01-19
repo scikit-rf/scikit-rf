@@ -1,6 +1,6 @@
-mwavepy.media.media.Media.impedance_mismatch
+skrf.media.media.Media.impedance_mismatch
 ============================================
 
-.. currentmodule:: mwavepy.media.media
+.. currentmodule:: skrf.media.media
 
 .. automethod:: Media.impedance_mismatch

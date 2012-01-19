@@ -1,6 +1,6 @@
-mwavepy.network.Network.plot_polar_generic
+skrf.network.Network.plot_polar_generic
 ==========================================
 
-.. currentmodule:: mwavepy.network
+.. currentmodule:: skrf.network
 
 .. automethod:: Network.plot_polar_generic
