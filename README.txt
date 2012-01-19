@@ -1,12 +1,16 @@
+About
+-------
+
 	mwavepy is an object-oriented approach to microwave engineering,
 implemented in the Python programming language. It provides a set of 
-objects and features which can be used to build powerful solutions to 
-specific problems. Some of mwavepy's abilities are; touchstone file 
-manipulation, calibration, VNA data acquisition, circuit design and 
-much more. 
+objects and features which can be used to constuct solutions to 
+specific problems.  
 
 
-see docs/ for more help .
+Documentation
+--------------
+
+http://packages.python.org/mwavepy/#
 
 
 -- alex
