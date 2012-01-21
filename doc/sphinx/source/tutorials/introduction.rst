@@ -11,16 +11,16 @@ This is a brief introduction to skrf, aimed at those who are familiar with pytho
 Creating Networks 
 ------------------
 
-For this turtorial, and the rest of the mwavpey documentation, we assume that skrf has been imported as ``mv``. Whether or not you follow this convention in your own code is up to you::
+For this turtorial, and the rest of the mwavpey documentation, we assume that skrf has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you::
 
-	>>> import skrf as mv
+	>>> import skrf as rf
 
 If this produces an error, please see :doc:`installation`. 
 
 The most fundamental object in skrf is a n-port :class:`Network`. Most commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so ::
 	
-	>>> short = mv.Network('short.s1p')
-	>>> delay_short = mv.Network('delay_short.s1p')
+	>>> short = rf.Network('short.s1p')
+	>>> delay_short = rf.Network('delay_short.s1p')
 
 The :class:`Network` object will produce a short description if entered onto the command line::
 	
@@ -83,8 +83,8 @@ Cascading and Embeding Operations
 ==================================================
 Cascading and de-embeding 2-port Networks is done so frequently, that it can also be done though operators as well. The cascade function is called by the power operator,  ``**``, and the de-embedding operation is accomplished by cascading the inverse of a network, which is implemented by the property :attr:`Network.inv`. Given the following Networks::
 
-	>>> line = mv.Network('line.s2p')
-	>>> short = mv.Network('short.s1p')
+	>>> line = rf.Network('line.s2p')
+	>>> short = rf.Network('short.s1p')
 	
 To calculate a new network which is the cascaded connection of the two individual Networks ``line`` and ``short``::
 	
@@ -100,12 +100,12 @@ Connecting Multi-ports
 ------------------------
 **skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth [#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of a ideal 3-way splitter can be done like so::
 
-	>>> tee = mv.Network('tee.s3p')
-	>>> delay_short = mv.Network('delay_short.s1p')
+	>>> tee = rf.Network('tee.s3p')
+	>>> delay_short = rf.Network('delay_short.s1p')
 
 to connect port '1' of the tee, to port 0 of the delay short::
 
-	>>> terminated_tee = mv.connect(tee,1,delay_short,0)
+	>>> terminated_tee = rf.connect(tee,1,delay_short,0)
 	
 Sub-Networks
 ---------------------
@@ -119,7 +119,7 @@ Convenience Functions
 ---------------------
 Frequently there is an entire directory of touchstone files that need to be analyzed. The function :func:`~convenience.load_all_touchstones` is meant deal with this scenario. It takes a string representing the directory,  and returns a dictionary type with keys equal to the touchstone filenames, and values equal to :class:`Network` types::
 	
-	>>> ntwk_dict = mv.load_all_touchstones('.')
+	>>> ntwk_dict = rf.load_all_touchstones('.')
 	{'delay_short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.],
 	'line': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
 	'ring slot': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],

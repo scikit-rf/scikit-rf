@@ -4,7 +4,7 @@ import optparse
 import pylab as plb
 
 try:
-	import skrf as mv
+	import skrf as rf
 except (ImportError):
 	print ('IMPORT ERROR: skrf is not installed correctly. Check you path.')
 
@@ -38,7 +38,7 @@ def main():
 	ax_4 = plb.subplot(224)
 	
 	for touchstone_filename in args:
-		ntwk = mv.Network(touchstone_filename)
+		ntwk = rf.Network(touchstone_filename)
 		ntwk.plot_s_db(ax = ax_1, m=options.m,n=options.n)
 		ntwk.plot_s_deg(ax = ax_2, m=options.m,n=options.n)
 		ntwk.plot_s_smith(ax = ax_3,m=options.m,n=options.n )

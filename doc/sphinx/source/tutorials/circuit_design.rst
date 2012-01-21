@@ -25,20 +25,20 @@ More info on all of these classes can be found in the media sub-module section o
 
 Here is an example of how to initialize a Media object representing a freespace from 10-20GHz::
 
-	import skrf as mv
-	freq = mv.Frequency(10,20,101,'ghz')
-	my_media = mv.media.Freespace(freq)
+	import skrf as rf
+	freq = rf.Frequency(10,20,101,'ghz')
+	my_media = rf.media.Freespace(freq)
 
 Here is another example constructing a coplanar waveguide media. The instance has  a 10um center conductor and gap of 5um, on a substrate with relative permativity of 10.6,::
 
-	freq = mv.Frequency(500,750,101,'ghz')
-	my_media = mv.media.CPW(freq, w=10e-6, s=5e-6, ep_r=10.6)
+	freq = rf.Frequency(500,750,101,'ghz')
+	my_media = rf.media.CPW(freq, w=10e-6, s=5e-6, ep_r=10.6)
 
 or a WR10 Rectangular Waveguide::
 	
 	from scipy.constants import * # for the 'mil' unit
-	freq = mv.Frequency(75,110,101,'ghz')
-	my_media = mv.media.RectangularWaveguide(freq, a=100*mil)
+	freq = rf.Frequency(75,110,101,'ghz')
+	my_media = rf.media.RectangularWaveguide(freq, a=100*mil)
 	
 Creating Individual Networks
 ------------------------------
@@ -89,7 +89,7 @@ To connect networks with more than two ports together, use the *connect()* funct
 
 To connect port# '0' of ntwkA to port# '3' of ntwkB: ::
 	
-	ntwkC = mv.connect(ntwkA,0,ntwkB,3)
+	ntwkC = rf.connect(ntwkA,0,ntwkB,3)
 
 Note that the connect function takes into account port impedances. To create a two-port network for a shunted delayed open, you can create an ideal 3-way splitter (a 'tee') and conect the delayed open to one of its ports, like so::
 
@@ -105,7 +105,7 @@ Single Stub Tuner
 This is an example of how to design a single stub tuning network to match a 100ohm resistor to a 50 ohm environment. ::
 	
 	# calculate reflection coefficient off a 100ohm
-	Gamma0 = mv.zl_2_Gamma0(z0=50,zl=100)	
+	Gamma0 = rf.zl_2_Gamma0(z0=50,zl=100)	
 	
 	# create the network for the 100ohm load
 	load = my_media.load(Gamma0)
@@ -128,7 +128,7 @@ The abilities of scipy's optimizers can be used to automate network design. To a
 	from scipy.optmize import fmin
 	
 	# the load we are trying to match
-	load = my_media.load(mv.zl_2_Gamma0(100))
+	load = my_media.load(rf.zl_2_Gamma0(100))
 	
 	# single stub generator function
 	def single_stub(wb,d0,d1):

@@ -1,5 +1,5 @@
 import unittest
-import skrf as mv
+import skrf as rf
 from scipy.constants import *
 
 
@@ -71,8 +71,8 @@ class MediaTestCase(unittest.TestCase):
 
 class FreespaceTestCase(MediaTestCase):
 	def setUp(self):
-		self.frequency = mv.Frequency(75,110,101,'ghz')
-		self.media = mv.media.Freespace(self.frequency)
+		self.frequency = rf.Frequency(75,110,101,'ghz')
+		self.media = rf.media.Freespace(self.frequency)
 	
 	def test_characterisitc_impedance_value(self):
 		self.assertEqual(round(self.media.characteristic_impedance[0].real) , 377)
@@ -80,8 +80,8 @@ class FreespaceTestCase(MediaTestCase):
 
 class CPWTestCase(MediaTestCase):
 	def setUp(self):
-		self.frequency = mv.Frequency(75,110,101,'ghz')
-		self.media = mv.media.CPW(\
+		self.frequency = rf.Frequency(75,110,101,'ghz')
+		self.media = rf.media.CPW(\
 			frequency=self.frequency,
 			w=10e-6,
 			s=5e-6,
@@ -91,16 +91,16 @@ class CPWTestCase(MediaTestCase):
 
 class RectangularWaveguideTestCase(MediaTestCase):
 	def setUp(self):
-		self.frequency = mv.Frequency(75,110,101,'ghz')
-		self.media = mv.media.RectangularWaveguide(\
+		self.frequency = rf.Frequency(75,110,101,'ghz')
+		self.media = rf.media.RectangularWaveguide(\
 			frequency=self.frequency,
 			a=100*mil,
 			)
 
 class DistributedCircuitTestCase(MediaTestCase):
 	def setUp(self):
-		self.frequency = mv.Frequency(75,110,101,'ghz')
-		self.media = mv.media.DistributedCircuit(\
+		self.frequency = rf.Frequency(75,110,101,'ghz')
+		self.media = rf.media.DistributedCircuit(\
 			frequency=self.frequency,
 			I=1,C=1,R=0,G=0
 			)

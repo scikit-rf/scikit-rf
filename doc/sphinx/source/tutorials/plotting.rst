@@ -56,7 +56,7 @@ Saving Plots
 -------------
 Plots can be saved in various file formats using the GUI provided by the matplotlib. However, skrf provides a convenience function, called :func:`~skrf.convenience.save_all_figs`,  that allows all open figures to be saved to disk in multiple file formats, with filenames pulled from each figure's title::
 
-    >>> mv.save_all_figs('.', format=['eps','pdf'])
+    >>> rf.save_all_figs('.', format=['eps','pdf'])
     ./WR-10 Ringslot Array Simulated vs Measured.eps
     ./WR-10 Ringslot Array Simulated vs Measured.pdf
 

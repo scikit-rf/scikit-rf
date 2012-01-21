@@ -1,5 +1,5 @@
 import unittest
-import skrf as mv
+import skrf as rf
 
 
 
@@ -16,11 +16,11 @@ class OnePortStandardCalibration(unittest.TestCase):
 	
 	'''
 	def setUp(self):
-		self.short = mv.Network('short.s1p')
-		self.match = mv.Network('match.s1p')
-		self.open = mv.Network('open.s1p')
-		self.delay_short = mv.Network('delay short.s1p')
-		self.embeding_network = mv.Network('embedingNetwork.s2p')
+		self.short = rf.Network('short.s1p')
+		self.match = rf.Network('match.s1p')
+		self.open = rf.Network('open.s1p')
+		self.delay_short = rf.Network('delay short.s1p')
+		self.embeding_network = rf.Network('embedingNetwork.s2p')
 		
 
 	def test_standard_calibration(self):
@@ -31,7 +31,7 @@ class OnePortStandardCalibration(unittest.TestCase):
 			ideals.append(ntwk)
 			measured.append(self.embeding_network**ntwk)
 
-		cal = mv.Calibration(\
+		cal = rf.Calibration(\
 			ideals = ideals,\
 			measured = measured,\
 			type = 'one port',\
@@ -52,7 +52,7 @@ class OnePortStandardCalibration(unittest.TestCase):
 			ideals.append(ntwk)
 			measured.append(self.embeding_network**ntwk)
 
-		cal = mv.Calibration(\
+		cal = rf.Calibration(\
 			ideals = ideals,\
 			measured = measured,\
 			type = 'one port',\

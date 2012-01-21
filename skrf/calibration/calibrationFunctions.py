@@ -69,13 +69,13 @@ def cartesian_product_calibration_set( ideals, measured, *args, **kwargs):
 	with all calibrations, and then running statistics on the resultant
 	set of Networks. for example
 	
-	import skrf as mv
+	import skrf as rf
 	# define you lists of ideals and measured networks
 	cal_ensemble = \
-		mv.cartesian_product_calibration_ensemble( ideals, measured)
-	dut = mv.Network('dut.s1p')
+		rf.cartesian_product_calibration_ensemble( ideals, measured)
+	dut = rf.Network('dut.s1p')
 	network_ensemble = [cal.apply_cal(dut) for cal in cal_ensemble]
-	mv.plot_uncertainty_mag(network_ensemble)
+	rf.plot_uncertainty_mag(network_ensemble)
 	[network.plot_s_smith() for network in network_ensemble]
 	'''
 	measured_iterable = \

@@ -1,8 +1,8 @@
 import pylab
-import skrf as mv 
+import skrf as rf 
 
 # create a Network type from a touchstone file of a horn antenna
-horn = mv.Network('horn antenna.s1p')
+horn = rf.Network('horn antenna.s1p')
 
 # plot magnitude (in db) of S11
 pylab.figure(1)

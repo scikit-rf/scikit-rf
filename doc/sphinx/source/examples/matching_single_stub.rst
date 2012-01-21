@@ -24,12 +24,12 @@ Script
 
 ::
 
-	import skrf as mv
+	import skrf as rf
 	from pylab import * 
 	
 	
 	# Inputs
-	wg = mv.wr10 # The Media class
+	wg = rf.wr10 # The Media class
 	f0 = 90 		# Design Frequency in GHz
 	d_start, d_stop = 0,180 # span of tline lengths [degrees]
 	n = 51 			# number of points
@@ -37,7 +37,7 @@ Script
 
 	
 	# change wg.frequency so we only simulat at f0
-	wg.frequency = mv.Frequency(f0,f0,1,'ghz')
+	wg.frequency = rf.Frequency(f0,f0,1,'ghz')
 	# create load network 
 	load = wg.load(.5) 
 	# the vector of possible line-lengths to simulate at 

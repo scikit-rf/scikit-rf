@@ -85,8 +85,8 @@ class RectangularWaveguide(Media):
 		Most common usage is standard aspect ratio (2:1) dominant 
 		mode, TE10 mode of wr10 waveguide can be constructed by
 		
-		>>> freq = mv.Frequency(75,110,101,'ghz')
-		>>> mv.RectangularWaveguide(freq, 100*mil)
+		>>> freq = rf.Frequency(75,110,101,'ghz')
+		>>> rf.RectangularWaveguide(freq, 100*mil)
 		'''
 		if b is None: 
 			b = a/2.

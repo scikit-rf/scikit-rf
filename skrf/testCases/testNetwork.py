@@ -1,5 +1,5 @@
 import unittest
-import skrf as mv
+import skrf as rf
 
 
 
@@ -17,21 +17,21 @@ class NetworkTestCase(unittest.TestCase):
 		this also tests the ability to read touchstone files
 		without an error
 		'''
-		self.ntwk1 =mv.Network('./ntwk1.s2p')
-		self.ntwk2 =mv.Network('./ntwk2.s2p')
-		self.ntwk3 =mv.Network('./ntwk3.s2p')
+		self.ntwk1 =rf.Network('./ntwk1.s2p')
+		self.ntwk2 =rf.Network('./ntwk2.s2p')
+		self.ntwk3 =rf.Network('./ntwk3.s2p')
 	
 	
 	def test_open_saved_touchstone(self):
 		self.ntwk1.write_touchstone('./ntwk1Saved')
-		ntwk1Saved = mv.Network('./ntwk1Saved.s2p')
+		ntwk1Saved = rf.Network('./ntwk1Saved.s2p')
 		self.assertEqual(self.ntwk1, ntwk1Saved)
 		
 	def test_cascade(self):
 		self.assertEqual(self.ntwk1**self.ntwk2, self.ntwk3)
 		
 	def test_connect(self):
-		self.assertEqual(mv.connect(self.ntwk1,1,self.ntwk2,0), \
+		self.assertEqual(rf.connect(self.ntwk1,1,self.ntwk2,0), \
 			self.ntwk3)
 
 	def test_de_embed_by_inv(self):

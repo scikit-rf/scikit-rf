@@ -1,4 +1,4 @@
-#import skrf as mv
+#import skrf as rf
 from skrf.virtualInstruments.lifetimeProbeTester import LifeTimeProbeTester
 from skrf import Network 
 import pdb

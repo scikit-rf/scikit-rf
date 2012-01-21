@@ -9,17 +9,17 @@ This is a slow  introduction to **skrf** for readers who arent especially famili
 **skrf**, like all of python, can be used in scripts or through the python interpreter. If you are new to python and don't understand anything on this page, please see the Install page first.
 From a python shell or similar (ie IPython),  the **skrf** module can be imported like so::
 
-	import skrf as mv
+	import skrf as rf
 
 
 From here all **skrf**'s functions can be accessed through the variable 'mv'. Help can be accessed through pythons help command. For example, to get help with the Network class ::
 	
-	help(mv.Network) 
+	help(rf.Network) 
 
 The Network class is a representation of a n-port network. The most common way to initialize a Network is by loading data saved in a touchstone file. Touchstone files have the extension '.sNp', where N is the number of ports of the network. 
 To create a Network from the touchstone file 'horn.s1p'::
 	
-	horn = mv.Network('horn.s1p')
+	horn = rf.Network('horn.s1p')
 
 	
 

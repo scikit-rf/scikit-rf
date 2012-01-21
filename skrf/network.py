@@ -1812,9 +1812,9 @@ def connect(ntwkA, k, ntwkB,l):
 	---------
 	To implement a *cascade* of two networks
 	
-	>>> ntwkA = mv.Network('ntwkA.s2p')
-	>>> ntwkB = mv.Network('ntwkB.s2p')
-	>>> ntwkC = mv.connect(ntwkA, 1, ntwkB,0)
+	>>> ntwkA = rf.Network('ntwkA.s2p')
+	>>> ntwkB = rf.Network('ntwkB.s2p')
+	>>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 	
 	'''
 	ntwkC = deepcopy(ntwkA)
@@ -1867,8 +1867,8 @@ def innerconnect(ntwkA, k, l):
 	---------
 	To connect ports '0' and port '1' on ntwkA
 	
-	>>> ntwkA = mv.Network('ntwkA.s3p')
-	>>> ntwkC = mv.innerconnect(ntwkA, 0,1)
+	>>> ntwkA = rf.Network('ntwkA.s3p')
+	>>> ntwkC = rf.innerconnect(ntwkA, 0,1)
 	
 	'''
 	ntwkC = deepcopy(ntwkA)
@@ -1954,8 +1954,8 @@ def average(list_of_networks):
 	Examples
 	---------
 	
-	>>> ntwk_list = [mv.Network('myntwk.s1p'), mv.Network('myntwk2.s1p')]
-	>>> mean_ntwk = mv.average(ntwk_list)	
+	>>> ntwk_list = [rf.Network('myntwk.s1p'), rf.Network('myntwk2.s1p')]
+	>>> mean_ntwk = rf.average(ntwk_list)	
 	'''
 	out_ntwk = copy(list_of_networks[0])
 	
@@ -2326,7 +2326,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 	
 	Examples
 	----------
-	>>> ntwk_dict = mv.load_all_touchstones('.', contains ='20v')
+	>>> ntwk_dict = rf.load_all_touchstones('.', contains ='20v')
 		
 	'''
 	ntwkDict = {}

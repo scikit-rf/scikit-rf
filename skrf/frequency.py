@@ -136,7 +136,7 @@ class Frequency(object):
 		Examples
 		-----------
 		>>> f = np.linspace(75,100,101)
-		>>> mv.Frequency.from_f(f, unit='ghz')
+		>>> rf.Frequency.from_f(f, unit='ghz')
 		'''
 		return cls(start=f[0], stop=f[-1],npoints = len(f), *args, **kwargs)
 	

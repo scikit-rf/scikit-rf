@@ -6,28 +6,28 @@ Two-Port Calibration
 
 This is an example of how to setup two-port calibration. For more detailed explaination see :doc:`calibration`::
 	
-	import skrf as mv
+	import skrf as rf
 	
 	
 	## created necessary data for Calibration class
 	
 	# a list of Network types, holding 'ideal' responses
 	my_ideals = [\
-	        mv.Network('ideal/thru.s2p'),
-	        mv.Network('ideal/line.s2p'),
-	        mv.Network('ideal/short, short.s2p'),
+	        rf.Network('ideal/thru.s2p'),
+	        rf.Network('ideal/line.s2p'),
+	        rf.Network('ideal/short, short.s2p'),
 	        ]
 	
 	# a list of Network types, holding 'measured' responses
 	my_measured = [\
-	        mv.Network('measured/thru.s2p'),
-	        mv.Network('measured/line.s2p'),
-	        mv.Network('measured/short, short.s2p'),
+	        rf.Network('measured/thru.s2p'),
+	        rf.Network('measured/line.s2p'),
+	        rf.Network('measured/short, short.s2p'),
 	        ]
 	
 	
 	## create a Calibration instance
-	cal = mv.Calibration(\
+	cal = rf.Calibration(\
 	        ideals = my_ideals,
 	        measured = my_measured,
 	        )
@@ -39,7 +39,7 @@ This is an example of how to setup two-port calibration. For more detailed expla
 	cal.run() 
 	
 	# apply it to a dut
-	dut = mv.Network('my_dut.s2p')
+	dut = rf.Network('my_dut.s2p')
 	dut_caled = cal.apply_cal(dut)
 	
 	# plot results

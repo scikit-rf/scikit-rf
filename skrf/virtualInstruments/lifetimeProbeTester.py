@@ -6,7 +6,7 @@ import numpy as npy
 from .futekLoadCell import *
 from .stages import ESP300
 from .vna import ZVA40_alex
-import skrf as mv
+import skrf as rf
 
 class LifeTimeProbeTester(object):
 	'''

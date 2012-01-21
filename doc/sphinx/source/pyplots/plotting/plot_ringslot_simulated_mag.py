@@ -1,8 +1,8 @@
 import pylab
-import skrf as mv 
+import skrf as rf 
 
 # from the extension you know this is a 2-port network
-ring_slot= mv.Network('ring slot array simulation.s2p')
+ring_slot= rf.Network('ring slot array simulation.s2p')
 
 pylab.figure(1)
 pylab.title('WR-10 Ringslot Array Simulated, Mag')

@@ -10,13 +10,13 @@ Touchstone File Retrieval
 ::
 
 
-    import skrf as mv
+    import skrf as rf
     import os,datetime
     
     nsweeps = 101 # number of sweeps to take
     dir = datetime.datetime.now().date().__str__() # directory to save files in 
     
-    myvna = mv.vna.HP8720() # HP8510 also available
+    myvna = rf.vna.HP8720() # HP8510 also available
     os.mkdir(dir)
     for k in range(nsweeps):
 	    print  k 
@@ -33,7 +33,7 @@ touchstones files, as would be created from the previous script
 
 ::
 
-    import skrf as mv
+    import skrf as rf
     from pylab import * 
     
     dir = '2010-12-03' # directory of touchstone files
@@ -41,7 +41,7 @@ touchstones files, as would be created from the previous script
     
     
     # load all touchstones in directory into a dictionary, and sort keys
-    data = mv.load_all_touchstones(dir+'/')
+    data = rf.load_all_touchstones(dir+'/')
     keys=data.keys()
     keys.sort()
     
@@ -59,16 +59,16 @@ touchstones files, as would be created from the previous script
 	    # z is 1d complex array of the s11 at the current frequency, it is
 	    # as long as the number of touchsone files
 	    z = array( [(data[keys[k]]).s[f,0,0] for k in range(len(keys))])
-	    phase_change = mv.complex_2_degree(z * 1/z[0])
+	    phase_change = rf.complex_2_degree(z * 1/z[0])
 	    phase_change = phase_change - mean(phase_change)
-	    mag_change = mv.complex_2_magnitude(z-z[0])
+	    mag_change = rf.complex_2_magnitude(z-z[0])
 	    
 	    figure(1)
 	    title('Complex Drift')
 	    plot(z.real,z.imag,'.',label='f = %i%s'% ( f_scaled,f_unit))
 	    axis('equal')
 	    legend()
-	    mv.smith()
+	    rf.smith()
     
 	    figure(2)
 	    title('Phase Drift vs. Time')

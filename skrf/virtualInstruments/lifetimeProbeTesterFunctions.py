@@ -1,4 +1,4 @@
-import skrf as mv
+import skrf as rf
 from skrf.virtualInstruments import lifetimeProbeTester as lpt
 import os
 
@@ -50,10 +50,10 @@ def run_cal(l, contact_force,  dir='',one_on_top = True):
 def make_cal(dir):
 	ideal_dir = '../cpw_ideals/convertedByAlex/'
 	prefix=''
-	raw = mv.load_all_touchstones(dir, f_unit = 'ghz')
-	all_ideals = mv.load_all_touchstones(ideal_dir)
+	raw = rf.load_all_touchstones(dir, f_unit = 'ghz')
+	all_ideals = rf.load_all_touchstones(ideal_dir)
 	freq = raw[raw.keys()[0]].frequency
-	cal = mv.Calibration( \
+	cal = rf.Calibration( \
 		type = 'one port',\
 		is_reciprocal = True,\
 		frequency = freq, \
@@ -107,4 +107,4 @@ def move_to_gold_and_back(l):
 '''
 
 
-vna = mv.Network('../chen/02-01-2011/0831_VNACal/vna.s2p')
+vna = rf.Network('../chen/02-01-2011/0831_VNACal/vna.s2p')
