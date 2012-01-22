@@ -1,5 +1,3 @@
-.. -*- mode: rst -*-
-
 scikit-rf
 =========
 
