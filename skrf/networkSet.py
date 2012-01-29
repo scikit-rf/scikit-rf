@@ -125,14 +125,17 @@ class NetworkSet(object):
 	
 	'''
 	
-	def __init__(self, ntwk_set):
+	def __init__(self, ntwk_set, name = None):
 		'''
 		Initializer for NetworkSet
+		
 		Parameters
 		-----------
 		ntwk_set : list of :class:`~skrf.network.Network` objects
 			the set of :class:`~skrf.network.Network` objects
-			 
+		name : string
+			the name of the NetworkSet, given to the Networks returned 
+			from properties of this class.
 		'''
 		## type checking 
 		# did they pass a list of Networks?
@@ -151,6 +154,7 @@ class NetworkSet(object):
 		## initialization
 		# we are good to go
 		self.ntwk_set = ntwk_set
+		self.name = name
 		
 		# dynamically generate properties. this is slick.
 		for network_property_name in \
@@ -245,7 +249,8 @@ class NetworkSet(object):
 			
 		
 		'''
-		fget = lambda self: fon(self.ntwk_set,func,network_property_name)
+		fget = lambda self: fon(self.ntwk_set,func,network_property_name,\
+			name = self.name)
 		setattr(self.__class__,func.__name__+'_'+network_property_name,\
 			property(fget))
 	
@@ -493,34 +498,49 @@ class NetworkSet(object):
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
 	NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)	
 
-def func_on_networks(ntwk_list, func, attribute='s',*args, **kwargs):
+def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
+	**kwargs):
 	'''
-	Applies a function to some attribute of aa list of networks, and 
-	returns the result in the form of a Network. This means information 
+	Applies a function to some attribute of a list of networks.
+	
+	
+	Returns the result in the form of a Network. This means information 
 	that may not be s-parameters is stored in the s-matrix of the
 	returned Network.
 	
-	takes:
-		ntwk_list: list of skrf.Network types
-		func: function to operate on ntwk_list s-matrices
-		attribute: attribute of Network's  in ntwk_list for func to act on
-		*args: passed to func
-		**kwargs: passed to func
-	
-	returns:
-		skrf.Network type, with s-matrix the result of func, 
-			operating on ntwk_list's s-matrices
+	Parameters
+	-------------
+	ntwk_list : list of :class:`~skrf.network.Network` objects
+		list of Networks on which to apply `func` to
+	func : function 
+		function to operate on `ntwk_list` s-matrices
+	attribute : string
+		attribute of Network's  in ntwk_list for func to act on
+	\*args,\*\*kwargs : arguments and keyword arguments
+		passed to func
+
+	Returns
+	---------
+	ntwk : :class:`~skrf.network.Network` 
+		Network with s-matrix the result of func, operating on 
+		ntwk_list's s-matrices
 
 	
-	example:
-		averaging can be implemented with func_on_networks by 
-			func_on_networks(ntwk_list,mean)
+	Examples
+	----------
+	averaging can be implemented with func_on_networks by 
+	
+	>>> func_on_networks(ntwk_list,mean)
 	'''
 	data_matrix = \
 		npy.array([ntwk.__getattribute__(attribute) for ntwk in ntwk_list])
 	
 	new_ntwk = deepcopy(ntwk_list[0])
 	new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
+	
+	if name is not None: 
+		new_ntwk.name = name
+	
 	return new_ntwk
 
 # short hand name for convenience

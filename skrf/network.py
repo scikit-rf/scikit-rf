@@ -220,7 +220,8 @@ class Network(object):
 			#self.z0 = 50 
 		
 		#self.__generate_plot_functions()
-		#convenience 
+		##convenience 
+		self.resample = self.interpolate_self_npoints
 		#self.nports = self.number_of_ports
 		
 
@@ -925,11 +926,61 @@ class Network(object):
 		result.s = interpolation_s(new_frequency.f)
 		result.z0 = interpolation_z0(new_frequency.f)
 		return result
-
-	def change_frequency(self, new_frequency, **kwargs):
-		self.frequency.start = new_frequency.start
-		self.frequency.stop = new_frequency.stop
-		self = self.interpolate(new_frequency, **kwargs)
+	
+	def interpolate_self_npoints(self, npoints, **kwargs):
+		'''
+		interpolate network based on a new number of frequency points
+		
+		Parameters
+		----------
+		npoints : int
+			number of frequency points 
+		**kwargs : keyword arguments 
+			passed to :func:`scipy.interpolate.interp1d` initializer.
+			
+		See Also
+		---------
+			interpolate_self : same functionality but takes a Frequency 
+				object
+			interpolate : same functionality but takes a Frequency 
+				object and returns a new Network, instead of updating 
+				itself.
+		'''
+		new_frequency = deepcopy(self.frequency)
+		new_frequency.npoints = npoints
+		self.interpolate_self(new_frequency, **kwargs)
+		
+	def interpolate_self(self, new_frequency, **kwargs):
+		'''
+		interpolates s-parameters given a new 
+		:class:'~skrf.frequency.Frequency' object.
+		
+		
+		The default interpolation type is linear. see Notes for how to 
+		use other interpolation types.
+		
+		Parameters
+		-----------
+		new_frequency : :class:`~skrf.frequency.Frequency`
+			frequency information to interpolate at
+		**kwargs : keyword arguments 
+			passed to :func:`scipy.interpolate.interp1d` initializer.
+		
+		Notes
+		--------
+			useful keyword for  :func:`scipy.interpolate.interp1d`,
+			 **kind** : str or int
+				Specifies the kind of interpolation as a string ('linear',
+				'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
+				as an integer
+				specifying the order of the spline interpolator to use.
+		
+		See Also
+		-----------
+			interpolate : same function, but returns a new Network
+		'''
+		ntwk = self.interpolate(new_frequency, **kwargs)
+		self.frequency, self.s,self.z0 = ntwk.frequency, ntwk.s,ntwk.z0
 		
 	def flip(self):
 		'''
