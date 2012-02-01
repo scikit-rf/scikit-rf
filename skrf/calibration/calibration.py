@@ -164,6 +164,7 @@ class Calibration(object):
 		self.is_reciprocal = is_reciprocal
 		#self.switch_terms = switch_terms
 		self._residual_ntwks = None
+		self._caled_ntwks =None
 		self.has_run = False
 		self.sloppy_input= sloppy_input
 
@@ -355,6 +356,30 @@ class Calibration(object):
 			self._residual_ntwks = ntwk_list
 		return ntwk_list 
 	
+	@property
+	def caled_ntwks(self):
+		'''
+		list of the calibrated, calibration standards.
+		
+		
+		'''
+		if self._caled_ntwks is not None:
+			return self._caled_ntwks
+		else:
+			ntwk_list=\
+				[ self.apply_cal(self.measured[k]) \
+					for k in range(len(self.ideals))]
+			
+			for k in range(len(ntwk_list)):
+				if self.ideals[k].name  is not None:
+					name = self.ideals[k].name
+				else:
+					name='std# %i'%k
+				
+				ntwk_list[k].name = self.ideals[k].name 
+			
+			self._caled_ntwks = ntwk_list
+		return ntwk_list 
 
 	##  methods for manual control of internal calculations
 	def run(self):
@@ -417,20 +442,25 @@ class Calibration(object):
 		returns:
 			caled: the calibrated measurement, a Network type.
 		'''
-		if self.nports ==1:
-			caled =  self.error_ntwk.inv**input_ntwk 
-			caled.name = input_ntwk.name
+		try:
+			x = len (input_ntwk)
+			return  [self.apply_cal(ntwk) for  ntwk in input_ntwk]
 			
-		elif self.nports == 2:
-			caled = deepcopy(input_ntwk)
-			T1,T2,T3,T4 = self.Ts
-			dot = npy.dot
-			for f in range(len(input_ntwk.s)):
-				t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
-					T4[f,:,:],input_ntwk.s[f,:,:]
-				caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
-		return caled 
-
+		except(TypeError):
+			if self.nports ==1:
+				caled =  self.error_ntwk.inv**input_ntwk 
+				caled.name = input_ntwk.name
+				
+			elif self.nports == 2:
+				caled = deepcopy(input_ntwk)
+				T1,T2,T3,T4 = self.Ts
+				dot = npy.dot
+				for f in range(len(input_ntwk.s)):
+					t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+						T4[f,:,:],input_ntwk.s[f,:,:]
+					caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
+			return caled 
+	
 	def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
 		'''
 		convience function to apply calibration to an entire directory
