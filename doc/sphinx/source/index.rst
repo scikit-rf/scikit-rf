@@ -13,6 +13,7 @@ Tutorials
    tutorials/plotting
    tutorials/calibration
    tutorials/circuit_design
+   tutorials/uncertainty_estimation
 
 
 Examples
