@@ -3,7 +3,7 @@
 VNA Noise Analysis 
 ****************************
 
-This example records a series of sweeps from a vna to touchstone files, named in a chronological order. These are then used to characterize the noise of a vna
+This example records a series of sweeps from a VNA to touchstone files, named in a chronological order. These are then used to characterize the noise of a VNA.
 
 Touchstone File Retrieval
 ---------------------------
@@ -29,7 +29,7 @@ Touchstone File Retrieval
 Noise Analysis
 --------------------
 Calculates and plots various metrics of noise, given a directory of
-touchstones files, as would be created from the previous script
+touchstone files, as would be created from the previous script.
 
 ::
 
@@ -78,7 +78,7 @@ touchstones files, as would be created from the previous script
 	    legend()
     
 	    figure(3)
-	    title('Phase Drift Distrobution')
+	    title('Phase Drift Distribution')
 	    xlabel('Phase From Mean[deg]')
 	    ylabel('Frequency Of Occurrence')
 	    hist(phase_change,alpha=.5,bins=21,histtype='stepfilled',\
