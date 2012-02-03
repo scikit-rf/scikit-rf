@@ -371,17 +371,17 @@ class Network(object):
 		self._s = s
 		
 		# dynamically generate 1-port subnetworks
-		def smn(self,m,n):
-			result = Network()
-			result.frequency = self.frequency
-			result.s = s[:,m,n]
-			# need to set characteristic impedance
-			return result
-		for m in range(s_shape[1]):
-			for n in range(s_shape[2]):
-				setattr(self.__class__,'s%i%i'%(m+1,n+1),\
-					property(lambda self: smn(self,m,n)))
-		#s.squeeze()
+		#def smn(self,m,n):
+			#result = Network()
+			#result.frequency = self.frequency
+			#result.s = s[:,m,n]
+			## need to set characteristic impedance
+			#return result
+		#for m in range(s_shape[1]):
+			#for n in range(s_shape[2]):
+				#setattr(self.__class__,'s%i%i'%(m+1,n+1),\
+					#property(lambda self: smn(self,m,n)))
+		##s.squeeze()
 	@property
 	def y(self):
 		'''
