@@ -17,7 +17,7 @@ A single stub matching network can be designed to produce maximum power transfer
  * length of series tline
  * length of shunt tline
   
-This script illustrates how to create a plot of return loss magnitude off the matched load, vs series and shunt line lengths. The optmial designs are then seen as the minima of a 2D surface.
+This script illustrates how to create a plot of return loss magnitude off the matched load, vs series and shunt line lengths. The optimal designs are then seen as the minima of a 2D surface.
 
 Script
 ------------
@@ -43,7 +43,7 @@ Script
 	# the vector of possible line-lengths to simulate at 
 	d_range = linspace(d_start,d_stop,n)
 	
-	def single_stub(wb,d):
+	def single_stub(wg, d):
 		'''
 		function to return series-shunt stub matching network, given a 
 		WorkingBand and the electrical lengths of the stubs
@@ -52,7 +52,7 @@ Script
 	
 	# loop through all line-lengths for series and shunt tlines, and store
 	# reflection coefficient magnitude in array
-	output = array([[ (single_stub(wb,[d0,d1])**load).s_mag[0,0,0] \
+	output = array([[ (single_stub(wg, [d0,d1])**load).s_mag[0,0,0] \
 		for d0 in d_range] for d1 in d_range] )
 	
 	
