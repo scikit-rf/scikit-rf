@@ -19,8 +19,6 @@ results of a calibrated measurement.
 
 
 
-
-
 Simple Case
 --------------
 
