@@ -494,7 +494,40 @@ class NetworkSet(object):
 		kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
 		self.plot_uncertainty_bounds_component(*args,**kwargs)
 		
+	def signature(self,m=0,n=0, vmax = None, *args, **kwargs):
+		'''
+		visualization of relative changes in a NetworkSet.
 		
+		Creates a colored image representing the devation of each 
+		Network from the from mean Network of the NetworkSet, vs
+		frequency.
+		
+		
+		Parameters
+		------------
+		m : int
+			first s-parameters index
+		n : 
+			second s-parameter index
+		vmax : number 
+			sets upper limit of colorbar, if None, will be set to 
+			3*mean of the magnitude of the complex difference 
+		\*args,\*\*kwargs : arguments, keyword arguments
+			passed to :func:`~pylab.imshow`
+		
+		
+		'''
+		diff_set = (self - self.mean_s)
+		sig = array([diff_set[k].s_mag[:,m,n] for k in range(len(ntwk_set))])
+		if vmax is None:
+			vmax == 3*sig.mean()
+		imshow(sig, vmax = vmax, *args, **kwargs)
+		axis('tight')
+		ylabel('Network \#')
+		c_bar = colorbar()
+		c_bar.set_label('Distance From Mean')
+		show();draw()
+	
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
 	NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)	
 
