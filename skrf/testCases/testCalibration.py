@@ -1,6 +1,7 @@
 import unittest
-import skrf as rf
+import os
 
+import skrf as rf
 
 
 class OnePortStandardCalibration(unittest.TestCase):
@@ -13,19 +14,21 @@ class OnePortStandardCalibration(unittest.TestCase):
 
 	the calculated embedding network and de-embeded ideals are compared
 	to originals as a metric of 'working'
-	
+
 	'''
 	def setUp(self):
-		self.short = rf.Network('short.s1p')
-		self.match = rf.Network('match.s1p')
-		self.open = rf.Network('open.s1p')
-		self.delay_short = rf.Network('delay short.s1p')
-		self.embeding_network = rf.Network('embedingNetwork.s2p')
-		
+                test_dir = os.path.dirname(__file__)
+		self.short = rf.Network(os.path.join(test_dir, 'short.s1p'))
+		self.match = rf.Network(os.path.join(test_dir, 'match.s1p'))
+		self.open = rf.Network(os.path.join(test_dir, 'open.s1p'))
+		self.delay_short = rf.Network(os.path.join(test_dir,
+                                                           'delay short.s1p'))
+		self.embeding_network = rf.Network(os.path.join(test_dir,
+                                                       'embedingNetwork.s2p'))
 
 	def test_standard_calibration(self):
 		ideals, measured = [],[]
-		std_list = [self.short, self.match,self.open] 
+		std_list = [self.short, self.match,self.open]
 
 		for ntwk in std_list:
 			ideals.append(ntwk)
@@ -42,11 +45,11 @@ class OnePortStandardCalibration(unittest.TestCase):
 		self.assertEqual(self.embeding_network, cal.error_ntwk)
 		# are the de-embeded networks the same as their ideals?
 		for ntwk in std_list:
-			self.assertEqual(ntwk,  cal.apply_cal(self.embeding_network**ntwk))
+			self.assertEqual(ntwk, cal.apply_cal(self.embeding_network**ntwk))
 
 	def test_least_squares_calibration(self):
 		ideals, measured = [],[]
-		std_list = [self.short, self.match,self.open,self.delay_short] 
+		std_list = [self.short, self.match,self.open,self.delay_short]
 
 		for ntwk in std_list:
 			ideals.append(ntwk)
@@ -65,7 +68,7 @@ class OnePortStandardCalibration(unittest.TestCase):
 		for ntwk in std_list:
 			self.assertEqual(ntwk,  cal.apply_cal(self.embeding_network**ntwk))
 
-	
+
 suite = unittest.TestLoader().loadTestsFromTestCase(OnePortStandardCalibration)
 unittest.TextTestRunner(verbosity=2).run(suite)
 
