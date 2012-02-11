@@ -23,8 +23,10 @@ Simple Case
 --------------
 
 Assume that numerous touchstone files, representing redudant 
-measurements of a single network are made, such as :: 
-    
+measurements of a single network are made, such as 
+
+.. sourcecode:: ipython
+
     In [24]: ls *ro*
         ro,0.s1p  ro,1.s1p  ro,2.s1p  ro,3.s1p  ro,4.s1p  ro,5.s1p
 

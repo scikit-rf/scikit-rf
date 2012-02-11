@@ -2354,7 +2354,45 @@ def impedance_mismatch(z1, z2):
 	result[:,0,1] = 1-gamma
 	return result
 
+def two_port_reflect(ntwk1, ntwk2):
+		'''
+		generates a two-port reflective two-port, from two
+		one-ports.
+		
 
+		Parameters
+		----------
+		ntwk1 : one-port Network object
+			network seen from port 1
+		ntwk2 : one-port Network object
+			network seen from port 2
+		
+		Returns
+		-------
+		result : Network object 
+			two-port reflective network
+
+
+		Examples
+		---------
+		
+		>>>short,open = rf.Network('short.s1p', rf.Network('open.s1p')
+		>>>rf.two_port_reflect(short,open)
+		'''
+		result = deepcopy(ntwk1)
+		s11 = ntwk1.s[:,0,0]
+		s22 = ntwk2.s[:,0,0]
+		s21 = npy.zeros(ntwk1.frequency.npoints, dtype=complex)
+		result.s = npy.array(\
+			[[s11, 	s21],\
+			[ s21,	s22]]).\
+			transpose().reshape(-1,2,2)
+		try:
+			result.name = ntwk1.name+ntwk2.name
+		except(TypeError):
+			pass
+		return result
+		
 # Touchstone manipulation	
 def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 	'''
