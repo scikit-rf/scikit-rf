@@ -14,7 +14,7 @@ Tutorials
    tutorials/calibration
    tutorials/circuit_design
    tutorials/uncertainty_estimation
-
+   tutorials/develop
 
 Examples
 ---------
