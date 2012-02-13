@@ -42,8 +42,8 @@ Network Class
    Network 
 	
 
-Functions On Networks
-======================
+Functions Operating on Networks
+===============================
 
 .. autosummary::
    :toctree: generated/
@@ -54,6 +54,9 @@ Functions On Networks
    de_embed
    average
    one_port_2_two_port
+   interpolate
+   interpolate_self
+   resample
 
 Supporting Functions 
 =====================
@@ -379,8 +382,9 @@ class Network(object):
 			result.s = s[:,m,n]
 			# need to set characteristic impedance
 			return result
-		for m in range(s_shape[1]):
-			for n in range(s_shape[2]):
+		
+		for m in range(s.shape[1]):
+			for n in range(s.shape[2]):
 				setattr(self.__class__,'s%i%i'%(m+1,n+1),\
 					property(lambda self: smn(self,m,n)))
 		#s.squeeze()
