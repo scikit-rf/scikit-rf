@@ -55,7 +55,7 @@ class MediaTestCase():
 
     def test_shunt_delay_load(self):
         self.media.shunt_delay_load(1,1)
-        
+
     def test_shunt_delay_short(self):
         self.media.shunt_delay_short(1)
 
