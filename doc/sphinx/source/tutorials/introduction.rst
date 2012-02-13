@@ -6,9 +6,7 @@ Introduction
 .. currentmodule:: skrf.network
 .. contents::
 
-This is a brief introduction to skrf, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . 
-
-All of the files used in these tutorials are provided along with skrf's source code, and are located in the directory ``docs/sphinx/source/pyplots/``. Alternatively, the files can be accessed on `github <https://github.com/scikit-rf/scikit-rf/tree/master/doc/sphinx/source/pyplots>`_.
+This is a brief introduction to skrf, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . All of the touchstone files used in these tutorials are provided along with this source code, and are located in the directory ``../pyplots/`` (relative to this file).
 
 Creating Networks 
 ------------------

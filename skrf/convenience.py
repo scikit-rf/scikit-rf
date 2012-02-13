@@ -99,7 +99,7 @@ from network import *
 from frequency import Frequency
 from media import RectangularWaveguide
 
-
+import warnings
 import os
 import pylab as plb
 import numpy as npy
@@ -222,3 +222,90 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
 	new_file.close()
 	old_file.close()
 
+
+
+## script templates
+script_templates = {}
+script_templates['cal_gen_ideals'] = \
+'''
+from pylab import * 
+from scipy.constants import *
+import skrf as rf
+
+################################# INPUT ################################
+measured_dir = ''	
+media_type = ''		
+media_kwargs ={}	
+f_unit = 'ghz'
+########################################################################
+
+
+measured_dict = rf.load_all_touchstones(measured_dir,f_unit=f_unit)
+frequency = measured_dict.values()[0].frequency
+media = rf.__getattribute__(media_type)(frequency, **media_kwargs)
+
+cal = rf.Calibration(
+	ideals = [
+		media.(),
+		media.(),
+		media.(),
+		],
+	measured = [
+		measured_dict[''],
+		measured_dict[''],
+		measured_dict[''],
+		]
+	)
+'''
+script_templates['cal'] = \
+'''
+from pylab import * 
+from scipy.constants import *
+import skrf as rf
+
+################################# INPUT ################################
+measured_dir = ''
+ideals_dir = ''
+ideals_names = ['','','']
+measured_names = ['','','']	
+f_unit = 'ghz'
+########################################################################
+
+
+measured_dict = rf.load_all_touchstones(measured_dir,f_unit=f_unit)
+ideals_dict = rf.load_all_touchstones(measured_dir,f_unit=f_unit)
+frequency = measured_dict.values()[0].frequency
+[ideals_dict[k].resample(frequency.npoints) for k in ideals_dict]
+
+cal = rf.Calibration(
+	ideals = [ideals_dict[k] for k in ideals_names],
+	measured = [measured_dict[k] for k in measured_names],
+	)
+'''
+
+def script_template(template_name, file_name='skrf_script.py', \
+	overwrite=False, *args, **kwargs):
+	'''
+	creates skrf scripts based on templates
+	
+	Parameters
+	-----------
+	template_name : string ['cal', 'cal_gen_ideals']
+		name of template to use
+	file_name : string
+		name of script file to write
+	overwrite : Boolean
+		if file_name exists should it be overwritten
+	\*args, \*\*kwargs : arguments and keyword arguments
+		passed to open()
+	'''
+	if template_name not in script_templates.keys():
+		raise(ValueError('\'%s\' not valid template_name'%template_name))
+		
+	if os.path.isfile(file_name) and overwrite is False:
+		warnings.warn('%s exists, and `overwrite` is False, abort. '\
+			%file_name)
+	else:
+		script_file = open(file_name, 'w')
+		script_file.write(script_templates[template_name])
+		script_file.close()
