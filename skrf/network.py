@@ -372,7 +372,8 @@ class Network(object):
 		self._s = s
 		
 		# dynamically generate 1-port subnetworks
-		def smn(self,m,n):
+		'''
+        def smn(self,m,n):
 			result = Network()
 			result.frequency = self.frequency
 			result.s = s[:,m,n]
@@ -383,6 +384,7 @@ class Network(object):
 				setattr(self.__class__,'s%i%i'%(m+1,n+1),\
 					property(lambda self: smn(self,m,n)))
 		#s.squeeze()
+        '''
 	@property
 	def y(self):
 		'''

@@ -405,7 +405,7 @@ class NetworkSet(object):
 		return (ntwk_mean, lower_bound, upper_bound)
 		
 	def plot_uncertainty_bounds_component(self,attribute,m=0,n=0,\
-		type='shade',n_deviations=3, alpha=.3, color_error ='b',markevery_error=20,
+		type='shade',n_deviations=3, alpha=.3, color_error =None,markevery_error=20,
 		ax=None,ppf=None,kwargs_error={},*args,**kwargs):
 		'''
 		plots mean value of the NetworkSet with +- uncertainty bounds 
@@ -466,14 +466,19 @@ class NetworkSet(object):
 			lower_bound = ppf(lower_bound)
 			lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
 		
+		
 		if type == 'shade':
 			ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+			if color_error is None:
+				color_error = ax.get_lines()[-1].get_color()
 			ax.fill_between(ntwk_mean.frequency.f_scaled, \
 				lower_bound,upper_bound, alpha=alpha, color=color_error,
 				**kwargs_error)
 			#ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
 		elif type =='bar':
 			ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+			if color_error is None:
+				color_error = ax.get_lines()[-1].get_color()
 			ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
 				ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
 				yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
