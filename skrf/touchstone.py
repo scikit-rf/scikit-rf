@@ -28,11 +28,11 @@ This module was written by Werner Hoch.
 
 touchstone Class
 ------------------
-	
+
 .. autosummary::
-	:toctree: generated/
-	
-	touchstone
+        :toctree: generated/
+
+        touchstone
 
 contains touchstone class
 '''
@@ -58,7 +58,7 @@ class touchstone():
         self.parameter = None
         ## s-parameter format (MA, DB, RI)
         self.format = None
-        ## reference resistance, global setup        
+        ## reference resistance, global setup
         self.resistance = None
         ## reference impedance for each s-parameter
         self.reference = None
@@ -70,7 +70,7 @@ class touchstone():
 
         ## kind of s-parameter data (s1p, s2p, s3p, s4p)
         self.rank = None
-        
+
         self.load_file(filename)
 
     def load_file(self, filename):
@@ -78,7 +78,7 @@ class touchstone():
         Load the touchstone file into the interal data structures
         """
         f = open(filename)
-        
+
         extention = filename.split('.')[-1].lower()
         #self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
         try:
@@ -86,7 +86,7 @@ class touchstone():
         except (ValueError):
             raise (ValueError("filename does not have a s-parameter extention. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
 
-        
+
         linenr = 0
         values = []
         while (1):
@@ -191,7 +191,7 @@ class touchstone():
                 names.append("S%i%i%s"%(r1+1,r2+1,ext1))
                 names.append("S%i%i%s"%(r1+1,r2+1,ext2))
         return names
-    
+
     def get_sparameter_data(self, format='ri'):
         """
         get the data of the sparameter with the given format.
@@ -212,7 +212,7 @@ class touchstone():
             if (self.format == 'db') and (format == 'ma'):
                 values[:,1::2] = 10**(values[:,1::2]/20.0)
             elif (self.format == 'db') and (format == 'ri'):
-                v_complex = ((10**values[:,1::2]/20.0) 
+                v_complex = ((10**values[:,1::2]/20.0)
                              * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
                 values[:,1::2] = numpy.real(v_complex)
                 values[:,2::2] = numpy.imag(v_complex)
@@ -230,7 +230,7 @@ class touchstone():
                 v_complex = numpy.absolute(values[:,1::2] + 1j* self.sparameters[:,2::2])
                 values[:,1::2] = 20*numpy.log10(numpy.absolute(v_complex))
                 values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
-        
+
         for i,n in enumerate(self.get_sparameter_names(format=format)):
             ret[n] = values[:,i]
         return ret
@@ -252,7 +252,7 @@ class touchstone():
             v_complex = (v[:,1::2] * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
         elif self.format == 'db':
             v_complex = ((10**(v[:,1::2]/20.0)) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
-        
+
         # this return is tricky its do the stupid way the touchtone lines are in order like s11,s21, etc. because of this we need the transpose command, and axes specifier
         return (v[:,0] * self.frequency_mult,
                 numpy.transpose(v_complex.reshape((-1, self.rank, self.rank)),axes=(0,2,1)))
@@ -262,8 +262,8 @@ class touchstone():
         TODO: NIY
         """
         TBD = 1
-      
-        
+
+
     def get_noise_data(self):
         """
         TODO: NIY
@@ -298,10 +298,3 @@ class touchstone():
     #pylab.xlabel('frequency [%s]' %(t.frequency_unit))
     #pylab.grid()
     #pylab.show()
-
-    
-            
-            
-    
-
-        

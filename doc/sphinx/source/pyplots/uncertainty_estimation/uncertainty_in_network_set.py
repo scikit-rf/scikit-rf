@@ -1,9 +1,9 @@
 import pylab
-import skrf as rf 
+import skrf as rf
 
 ro_set = rf.NetworkSet(\
-	rf.load_all_touchstones('.',contains='ro').values(),\
-	name = 'Radiating Open')
+        rf.load_all_touchstones('.',contains='ro').values(),\
+        name = 'Radiating Open')
 
 pylab.figure()
 pylab.title('Uncertainty in Phase')

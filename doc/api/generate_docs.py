@@ -6,12 +6,11 @@ http://stackoverflow.com/questions/1707709/list-all-the-modules-that-are-part-of
 '''
 from subprocess import call
 import pkgutil
-import skrf 
+import skrf
 
 package = skrf
 for importer, modname, ispkg in pkgutil.iter_modules(package.__path__):
-	call(['pydoc','-w',package.__name__+'.'+modname])
-	if ispkg:
-		for importer, modname2, ispkg in pkgutil.iter_modules([package.__path__[0]+'/'+modname] ):
-			call(['pydoc','-w',package.__name__+'.'+modname+'.'+modname2])
-			
+    call(['pydoc','-w',package.__name__+'.'+modname])
+    if ispkg:
+        for importer, modname2, ispkg in pkgutil.iter_modules([package.__path__[0]+'/'+modname] ):
+            call(['pydoc','-w',package.__name__+'.'+modname+'.'+modname2])

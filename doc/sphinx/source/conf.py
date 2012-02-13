@@ -27,9 +27,9 @@ import sys, os
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 extensions = [
-    'sphinx.ext.autodoc', 
+    'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    #'sphinx.ext.intersphinx', 
+    #'sphinx.ext.intersphinx',
     'sphinx.ext.pngmath',
     'numpydoc',
     'plot_directive',

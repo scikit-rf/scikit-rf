@@ -1,5 +1,5 @@
 import pylab
-import skrf as rf 
+import skrf as rf
 
 ring_slot= rf.Network('ring slot array measured.s1p')
 
