@@ -1947,7 +1947,7 @@ def cascade(ntwkA,ntwkB):
     cascade two 2-port Networks together
 
     connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
-    `connect(ntwkA,1, ntwkB,0)`
+    `connect(ntwkA,1, ntwkB,0)`, which is a more general function.
 
     Parameters
     -----------
@@ -1973,7 +1973,7 @@ def cascade_fast(ntwkA,ntwkB):
 
     connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
     s2t and t2s functions, which allows vectorization and thus a
-    speedup of about 40x over cascade()
+    speedup.
 
     Parameters
     -----------
