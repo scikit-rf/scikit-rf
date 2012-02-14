@@ -1884,7 +1884,12 @@ def connect(ntwkA, k, ntwkB,l):
                 ntwkA.s,k, \
                 impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
 
-    ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
+    if ntwkA.number_of_ports == 2 and \
+        (ntwkB.number_of_ports==2 or ntwkB.number_of_ports==1):
+        ntwkC = cascade_fast(ntwkA, ntwkB)
+    else:
+        ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
+
     ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
     return ntwkC
 
@@ -1961,6 +1966,49 @@ def cascade(ntwkA,ntwkB):
     connect : connects two Networks together at arbitrary ports.
     '''
     return connect(ntwkA,1, ntwkB,0)
+
+def cascade_fast(ntwkA,ntwkB):
+    '''
+    cascade two 2-port Networks togetherm, ignoring port imedances
+
+    connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
+    s2t and t2s functions, which allows vectorization and thus a
+    speedup of about 40x over cascade()
+
+    Parameters
+    -----------
+    ntwkA : :class:`Network`
+            network `ntwkA`
+    ntwkB : Network
+            network `ntwkB`
+
+    Returns
+    --------
+    C : Network
+            the resultant network of ntwkA cascaded with ntwkB
+
+    See Also
+    ---------
+    cascade : cascades two Networks, taking into account port impedance
+    '''
+    ntwkC = deepcopy(ntwkA)
+    ntwkB = deepcopy(ntwkB) 
+    one_port = False
+    
+    if ntwkB.number_of_ports == 1:
+        one_port = True
+        temp = npy.ones((len(ntwkB.s),2,2),dtype='complex') - npy.eye(2)
+        temp[:,0,0] = ntwkB.s.squeeze()
+        ntwkB.s = temp
+        
+    t_a, t_b = s2t(ntwkA.s), s2t(ntwkB.s)
+    for f in range(len(ntwkA.s)):
+        ntwkC.s[f,:,:] = npy.dot(t_a[f,:,:], t_b[f,:,:])
+    ntwkC.s = t2s(ntwkC.s)
+
+    if one_port:
+        ntwkC.s = ntwkC.s[:,0,0]
+    return ntwkC
 
 def de_embed(ntwkA,ntwkB):
     '''
@@ -2181,23 +2229,25 @@ def s2t(s):
     Parameters
     -----------
     s : numpy.ndarray (shape fx2x2)
-            scattering parameter matrix, of  
+        scattering parameter matrix
 
     Returns
     -------
     t : numpy.ndarray
-            scattering transfer parameters (aka wave cascading matrix)
+        scattering transfer parameters (aka wave cascading matrix)
 
     See Also
     ---------
     t2s : converts scattering transfer parameters to scattering
-            parameters
+        parameters
     inv : calculates inverse s-parameters
 
     References
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
+    # although unintuitive this is calculated by
+    # [[s11, s21],[s12,s22]].T
     t = npy.array([
         [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
             -s[:,1,1]/s[:,1,0]],
@@ -2205,16 +2255,6 @@ def s2t(s):
             1/s[:,1,0] ]
         ]).transpose()
     return t    
-    '''
-    if len (s.shape) > 2 :
-        for f in range(s.shape[0]):
-            t[f,:,:] = s2t(s[f,:,:])
-    elif s.shape == (2,2):
-        t = npy.array([[-1*npy.linalg.det(s),   s[0,0]],\
-                                [-s[1,1],1]]) / s[1,0]
-    else:
-        raise IndexError('matrix should be 2x2, or kx2x2')
-    '''
 
 def t2s(t):
     '''
@@ -2227,9 +2267,8 @@ def t2s(t):
 
     Parameters
     -----------
-    t : numpy.ndarray
-            scattering transfer parameters, shape should be should be 2x2, or
-            fx2x2
+    t : numpy.ndarray (shape fx2x2)
+            scattering transfer parameters
 
     Returns
     -------
@@ -2253,18 +2292,7 @@ def t2s(t):
             -1*t[:,1,0]/t[:,1,1] ]
         ]).transpose()
     return s
-    '''s = npy.copy(t)
-    if len (t.shape) > 2 :
-        for f in range(t.shape[0]):
-            s[f,:,:] = t2s(s[f,:,:])
-
-    elif t.shape== (2,2):
-        s = npy.array([[t[0,1],npy.linalg.det(t)],\
-                [1,-t[1,0]]])/t[1,1]
-    else:
-        raise IndexError('matrix should be 2x2, or kx2x2')
-    return s
-    '''
+   
 def inv(s):
     '''
     calculates 'inverse' s-parameter matrix, used for de-embeding
@@ -2283,9 +2311,8 @@ def inv(s):
 
     Parameters
     -----------
-    s : numpy.ndarray
-            scattering parameter matrix. shape should be should be 2x2, or
-            fx2x2
+    s : numpy.ndarray (shape fx2x2)
+            scattering parameter matrix.
 
     Returns
     -------
