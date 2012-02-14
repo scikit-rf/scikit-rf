@@ -864,7 +864,7 @@ def smn(self,m,n):
         # the '#'  line is NOT a comment it is essential and it must be
         #exactly this format, to work
         # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-        outputFile.write('!Created with skrf.\n')
+        outputFile.write('!Created with skrf (https://github.com/scikit-rf/scikit-rf).\n')
         outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
 
         #write comment line for users (optional)
