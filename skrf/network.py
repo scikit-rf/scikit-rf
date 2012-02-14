@@ -2180,9 +2180,8 @@ def s2t(s):
 
     Parameters
     -----------
-    s : numpy.ndarray
-            scattering parameter matrix. shape should be should be 2x2, or
-            fx2x2
+    s : numpy.ndarray (shape fx2x2)
+            scattering parameter matrix, of  
 
     Returns
     -------
@@ -2199,8 +2198,14 @@ def s2t(s):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
-    t = npy.copy(s)
-
+    t = npy.array([
+        [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
+            -s[:,1,1]/s[:,1,0]],
+        [s[:,0,0]/s[:,1,0],
+            1/s[:,1,0] ]
+        ]).transpose()
+    return t    
+    '''
     if len (s.shape) > 2 :
         for f in range(s.shape[0]):
             t[f,:,:] = s2t(s[f,:,:])
@@ -2209,7 +2214,7 @@ def s2t(s):
                                 [-s[1,1],1]]) / s[1,0]
     else:
         raise IndexError('matrix should be 2x2, or kx2x2')
-    return t
+    '''
 
 def t2s(t):
     '''
@@ -2240,7 +2245,15 @@ def t2s(t):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
-    s = npy.copy(t)
+    
+    s = npy.array([
+        [t[:,0,1]/t[:,1,1],
+             1/t[:,1,1]],
+        [(t[:,0,0]*t[:,1,1]- t[:,1,0]*t[:,0,1])/t[:,1,1],
+            -1*t[:,1,0]/t[:,1,1] ]
+        ]).transpose()
+    return s
+    '''s = npy.copy(t)
     if len (t.shape) > 2 :
         for f in range(t.shape[0]):
             s[f,:,:] = t2s(s[f,:,:])
@@ -2251,7 +2264,7 @@ def t2s(t):
     else:
         raise IndexError('matrix should be 2x2, or kx2x2')
     return s
-
+    '''
 def inv(s):
     '''
     calculates 'inverse' s-parameter matrix, used for de-embeding
@@ -2287,14 +2300,10 @@ def inv(s):
 
     '''
     # this idea is from lihan
-    i = npy.copy(s)
-    if len (s.shape) > 2 :
-        for f in range(len(s)):
-            i[f,:,:] = inv(s[f,:,:])
-    elif s.shape == (2,2):
-        i = t2s(npy.linalg.inv(s2t(s)))
-    else:
-        raise IndexError('matrix should be 2x2, or kx2x2')
+    i = s2t(s) 
+    for f in range(len(i)):
+        i[f,:,:] = npy.linalg.inv(i[f,:,:])
+    i = t2s(i)
     return i
 
 def flip(a):
