@@ -1880,9 +1880,9 @@ def connect(ntwkA, k, ntwkB,l):
     # network at the connection. if ports are matched this becomes a
     # thru
     if not (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all():
-        ntwkC.s = connect_s(\
-                ntwkA.s,k, \
-                impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
+        ntwkC.s = connect_s(
+            ntwkA.s,k, 
+            impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
 
     if ntwkA.number_of_ports == 2 and \
         (ntwkB.number_of_ports==2 or ntwkB.number_of_ports==1):
@@ -2152,6 +2152,68 @@ def connect_s(A,k,B,l):
         C= npy.vstack( [npy.hstack([A,filler]),npy.hstack([filler.T,B])])
 
         return innerconnect_s(C, k,A.shape[-1]+l)
+
+def connect_s_fast(A,k,B,l):
+    '''
+    connect two n-port networks' s-matricies together.
+
+    specifically, connect port `k` on network `A` to port `l` on network
+    `B`. The resultant network has nports = (A.rank + B.rank-2). This
+    function operates on, and returns s-matricies. The function
+    :func:`connect` operates on :class:`Network` types.
+
+    Parameters
+    -----------
+    A : numpy.ndarray
+            S-parameter matrix of `A`, shape is fxnxn
+    k : int
+            port index on `A` (port indecies start from 0)
+    B : numpy.ndarray
+            S-parameter matrix of `B`, shape is fxnxn
+    l : int
+            port index on `B`
+
+    Returns
+    -------
+    C : numpy.ndarray
+            new S-parameter matrix
+
+
+    Notes
+    -------
+    internally, this function creates a larger composite network
+    and calls the  :func:`innerconnect_s` function. see that function for more
+    details about the implementation
+
+    See Also
+    --------
+            connect : operates on :class:`Network` types
+            innerconnect_s : function which implements the connection
+                    connection algorithm
+
+
+    '''
+    if k > A.shape[-1]-1 or l>B.shape[-1]-1:
+        raise(ValueError('port indecies are out of range'))
+
+    freq = np.ones(len(A)) 
+    nFreq = len (freq)
+    nA = A.shape[2]
+    nB = B.shape[2]
+    C = B.copy()
+    
+    connect_lib.connect_s(
+        freq.ctypes.data_as(ct.POINTER(ct.c_float)), 
+        nFreq,
+        A.ctypes.data_as(ct.POINTER(ct.c_float)),
+        nA,
+        k,
+        B.ctypes.data_as(ct.POINTER(ct.c_float)),
+        nB,
+        l,
+        C.ctypes.data_as(ct.POINTER(ct.c_float)),
+        nResult)
+    return C
 
 def innerconnect_s(A, k, l):
     '''
