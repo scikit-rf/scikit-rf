@@ -2284,9 +2284,9 @@ def connect_s_vectorized(A,k,B,l):
     C = npy.zeros((nf, nC, nC), dtype='complex')
 
     #create composite matrix, appending each sub-matrix diagonally
-    C[:, :nA, :nA] = A
-    C[:, nB:, nB:] = B
-    return innerconnect_s(C, k, nA + l)
+    C[:, :nA, :nA] = A.copy()
+    C[:, nA:, nA:] = B.copy()
+    return innerconnect_s_vectorized(C, k, nA + l)
 
 def innerconnect_s_vectorized(A, k, l):
     '''
@@ -2331,17 +2331,19 @@ def innerconnect_s_vectorized(A, k, l):
     # then deletes the ports which are 'connected'
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
         raise(ValueError('port indecies are out of range'))
-    
+    A=A.copy()
+    nA = A.shape[1]  # num of ports on input s-matrix
     C = npy.zeros(shape=A.shape, dtype='complex')
-    for i in range(C.shape[1]):
-        for j in range(C.shape[2]):
+    
+    for i in range(nA):
+        for j in range(nA):
             C[:,i,j] = A[:,i,j] + \
                 ( A[:,k,j]*A[:,i,l]*(1-A[:,l,k]) + A[:,l,j]*A[:,i,k]*(1-A[:,k,l]) +\
                 A[:,k,j]*A[:,l,l]*A[:,i,k] + A[:,l,j]*A[:,k,k]*A[:,i,l])/\
                 ( (1-A[:,k,l])*(1-A[:,l,k]) - A[:,k,k]*A[:,l,l] )
-        
-    C = npy.delete(C,(k,l),1)
-    C = npy.delete(C,(k,l),2)
+   
+    C = npy.delete(C, (k,l), 1)
+    C = npy.delete(C, (k,l), 2)
     return C
    
         
