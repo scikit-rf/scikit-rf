@@ -84,8 +84,10 @@ Misc Functions
 from copy import deepcopy as copy
 from copy import deepcopy
 import os
+import warnings
 
 import numpy as npy
+import ctypes as ct     # for connect_s_fast
 import pylab as plb
 from scipy import stats         # for Network.add_noise_*
 from scipy.interpolate import interp1d # for Network.interpolate()
@@ -96,6 +98,11 @@ from frequency import Frequency
 from plotting import smith
 from tlineFunctions import zl_2_Gamma0
 
+try:
+    from src import connect_s_fast
+except:
+    warnings.warn('libconnect failed to load. network connection will be slow.')
+    
 class Network(object):
     '''
 
@@ -1884,12 +1891,13 @@ def connect(ntwkA, k, ntwkB,l):
             ntwkA.s,k, 
             impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
 
-    if ntwkA.number_of_ports == 2 and \
+    '''if ntwkA.number_of_ports == 2 and \
         (ntwkB.number_of_ports==2 or ntwkB.number_of_ports==1):
         ntwkC = cascade_fast(ntwkA, ntwkB)
     else:
         ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
-
+    '''
+    ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
     ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
     return ntwkC
 
@@ -2135,6 +2143,10 @@ def connect_s(A,k,B,l):
 
 
     '''
+    try:
+        return connect_s_fast(A,k,B,l)
+    except:
+        pass
     if k > A.shape[-1]-1 or l>B.shape[-1]-1:
         raise(ValueError('port indecies are out of range'))
 
@@ -2153,67 +2165,7 @@ def connect_s(A,k,B,l):
 
         return innerconnect_s(C, k,A.shape[-1]+l)
 
-def connect_s_fast(A,k,B,l):
-    '''
-    connect two n-port networks' s-matricies together.
 
-    specifically, connect port `k` on network `A` to port `l` on network
-    `B`. The resultant network has nports = (A.rank + B.rank-2). This
-    function operates on, and returns s-matricies. The function
-    :func:`connect` operates on :class:`Network` types.
-
-    Parameters
-    -----------
-    A : numpy.ndarray
-            S-parameter matrix of `A`, shape is fxnxn
-    k : int
-            port index on `A` (port indecies start from 0)
-    B : numpy.ndarray
-            S-parameter matrix of `B`, shape is fxnxn
-    l : int
-            port index on `B`
-
-    Returns
-    -------
-    C : numpy.ndarray
-            new S-parameter matrix
-
-
-    Notes
-    -------
-    internally, this function creates a larger composite network
-    and calls the  :func:`innerconnect_s` function. see that function for more
-    details about the implementation
-
-    See Also
-    --------
-            connect : operates on :class:`Network` types
-            innerconnect_s : function which implements the connection
-                    connection algorithm
-
-
-    '''
-    if k > A.shape[-1]-1 or l>B.shape[-1]-1:
-        raise(ValueError('port indecies are out of range'))
-
-    freq = np.ones(len(A)) 
-    nFreq = len (freq)
-    nA = A.shape[2]
-    nB = B.shape[2]
-    C = B.copy()
-    
-    connect_lib.connect_s(
-        freq.ctypes.data_as(ct.POINTER(ct.c_float)), 
-        nFreq,
-        A.ctypes.data_as(ct.POINTER(ct.c_float)),
-        nA,
-        k,
-        B.ctypes.data_as(ct.POINTER(ct.c_float)),
-        nB,
-        l,
-        C.ctypes.data_as(ct.POINTER(ct.c_float)),
-        nResult)
-    return C
 
 def innerconnect_s(A, k, l):
     '''
