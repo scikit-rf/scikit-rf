@@ -84,8 +84,10 @@ Misc Functions
 from copy import deepcopy as copy
 from copy import deepcopy
 import os
+import warnings
 
 import numpy as npy
+import ctypes as ct     # for connect_s_fast
 import pylab as plb
 from scipy import stats         # for Network.add_noise_*
 from scipy.interpolate import interp1d # for Network.interpolate()
@@ -96,6 +98,11 @@ from frequency import Frequency
 from plotting import smith
 from tlineFunctions import zl_2_Gamma0
 
+try:
+    from src import connect_s_fast
+except:
+    warnings.warn('libconnect failed to load.')
+    
 class Network(object):
     '''
 
@@ -864,7 +871,7 @@ def smn(self,m,n):
         # the '#'  line is NOT a comment it is essential and it must be
         #exactly this format, to work
         # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-        outputFile.write('!Created with skrf.\n')
+        outputFile.write('!Created with skrf (https://github.com/scikit-rf/scikit-rf).\n')
         outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
 
         #write comment line for users (optional)
@@ -1875,17 +1882,30 @@ def connect(ntwkA, k, ntwkB,l):
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
     '''
+    # create output Network, from copy of input 
     ntwkC = deepcopy(ntwkA)
-    # account for port impedance mis-match by inserting a two-port
-    # network at the connection. if ports are matched this becomes a
-    # thru
+    
+    # if networks' z0's are not identical, then connect a impedance
+    # mismatch, which takes into account th effect of differing port
+    # impedances. 
     if not (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all():
-        ntwkC.s = connect_s(\
-                ntwkA.s,k, \
-                impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
+        ntwkC.s = connect_s(
+            ntwkA.s, k, 
+            impedance_mismatch(ntwkA.z0[:,k], ntwkB.z0[:,l]), 0)
 
+    #if ntwkA.number_of_ports == 2 and \
+    #(ntwkB.number_of_ports == 2 or ntwkB.number_of_ports == 1):
+    #    ntwkC = cascade_fast(ntwkA, ntwkB)
+    #else:
+    #    ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
+
+    # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
-    ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
+
+    # remove rows and coloumns of z0 matrix, which where `connected`
+    ntwkC.z0 = npy.hstack(
+        (npy.delete(ntwkA.z0, k, 1), npy.delete(ntwkB.z0, l, 1)))
+
     return ntwkC
 
 def innerconnect(ntwkA, k, l):
@@ -1898,28 +1918,25 @@ def innerconnect(ntwkA, k, l):
     Parameters
     -----------
     ntwkA : :class:`Network`
-            network 'A'
+        network 'A'
     k : int
-            port index on ntwkA ( port indecies start from 0 )
+        port index on ntwkA ( port indecies start from 0 )
     l : int
-            port index on ntwkB
-
-
+        port index on ntwkB
 
     Returns
     ---------
     ntwkC : :class:`Network`
-            new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
-
+        new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
 
     See Also
     -----------
-            connect_s : actual  S-parameter connection algorithm.
-            innerconnect_s : actual S-parameter connection algorithm.
+        connect_s : actual  S-parameter connection algorithm.
+        innerconnect_s : actual S-parameter connection algorithm.
 
     Notes
     -------
-            a 2-port 'mismatch' network between the two connected ports.
+        a 2-port 'mismatch' network between the two connected ports.
 
     Examples
     ---------
@@ -1929,12 +1946,22 @@ def innerconnect(ntwkA, k, l):
     >>> ntwkC = rf.innerconnect(ntwkA, 0,1)
 
     '''
+    # create output Network, from copy of input 
     ntwkC = deepcopy(ntwkA)
-    ntwkC.s = connect_s(\
+
+    # connect a impedance mismatch, which will takes into account the
+    # effect of differing port impedances
+    if not (ntwkA.z0[:,k] == ntwkA.z0[:,l]).all():
+        ntwkC.s = connect_s(\
             ntwkA.s,k, \
-            impedance_mismatch(ntwkA.z0[:,k],ntwkA.z0[:,l]),0)
+            impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l]), 0)
+
+    # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s,k,l)
-    ntwkC.z0=npy.delete(ntwkC.z0,[l,k],1)
+
+    # update the characteristic impedance matrix
+    ntwkC.z0 = npy.delete(ntwkC.z0,[l,k],1)
+
     return ntwkC
 
 def cascade(ntwkA,ntwkB):
@@ -1942,7 +1969,7 @@ def cascade(ntwkA,ntwkB):
     cascade two 2-port Networks together
 
     connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
-    `connect(ntwkA,1, ntwkB,0)`
+    `connect(ntwkA,1, ntwkB,0)`, which is a more general function.
 
     Parameters
     -----------
@@ -2070,7 +2097,7 @@ def connect_s(A,k,B,l):
     Returns
     -------
     C : numpy.ndarray
-            new S-parameter matrix
+        new S-parameter matrix
 
 
     Notes
@@ -2081,29 +2108,28 @@ def connect_s(A,k,B,l):
 
     See Also
     --------
-            connect : operates on :class:`Network` types
-            innerconnect_s : function which implements the connection
-                    connection algorithm
+        connect : operates on :class:`Network` types
+        innerconnect_s : function which implements the connection
+            connection algorithm
 
 
     '''
-    if k > A.shape[-1]-1 or l>B.shape[-1]-1:
+ 
+    if k > A.shape[-1]-1 or l > B.shape[-1] - 1:
         raise(ValueError('port indecies are out of range'))
 
-    if len (A.shape) > 2:
-        # assume this is a kxnxn matrix
-        n = A.shape[-1]+B.shape[-1]-2 # nports of output Matrix
-        C = npy.zeros((A.shape[0], n,n), dtype='complex')
+    nf = A.shape[0]     # num frequency points
+    nA = A.shape[1]     # num ports on A
+    nB = B.shape[1]     # num ports on B
+    nC = nA + nB        # num ports on C 
+    
+    #create composite matrix, appending each sub-matrix diagonally
+    C = npy.zeros((nf, nC, nC), dtype='complex')
+    C[:, :nA, :nA] = A.copy()
+    C[:, nA:, nA:] = B.copy()
 
-        for f in range(A.shape[0]):
-            C[f,:,:] = connect_s(A[f,:,:],k,B[f,:,:],l)
-        return C
-    else:
-        filler = npy.zeros((A.shape[0],B.shape[1]))
-        #create composite matrix, appending each sub-matrix diagonally
-        C= npy.vstack( [npy.hstack([A,filler]),npy.hstack([filler.T,B])])
-
-        return innerconnect_s(C, k,A.shape[-1]+l)
+    # call innerconnect_s() on composit matrix C 
+    return innerconnect_s(C, k, nA + l)
 
 def innerconnect_s(A, k, l):
     '''
@@ -2117,11 +2143,11 @@ def innerconnect_s(A, k, l):
     Parameters
     -----------
     A : numpy.ndarray
-            S-parameter matrix of `A`, shape is fxnxn
+        S-parameter matrix of `A`, shape is fxnxn
     k : int
-            port index on `A` (port indecies start from 0)
+        port index on `A` (port indecies start from 0)
     l : int
-            port index on `A`
+        port index on `A`
 
     Returns
     -------
@@ -2142,34 +2168,32 @@ def innerconnect_s(A, k, l):
 
 
     '''
-
-    # TODO: this algorithm is a bit wasteful in that it calculates the
-    # scattering parameters for a network of rank S.rank+T.rank and
-    # then deletes the ports which are 'connected'
-    if k > A.shape[-1] -1 or l>A.shape[-1]-1:
+    
+    if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
         raise(ValueError('port indecies are out of range'))
 
-    if len (A.shape) > 2:
-        # assume this is a kxnxn matrix
-        n = A.shape[-1]-2 # nports of output Matrix
-        C = npy.zeros((A.shape[0], n,n), dtype='complex')
+    nA = A.shape[1]  # num of ports on input s-matrix
+    # create an empty s-matrix, to store the result
+    C = npy.zeros(shape=A.shape, dtype='complex')
 
-        for f in range(A.shape[0]):
-            C[f,:,:] = innerconnect_s(A[f,:,:],k,l)
-        return C
-    else:
-        n = A.shape[0]
-        C = npy.zeros([n,n],dtype='complex')
-        for i in range(n):
-            for j in range(n):
-                C[i,j] = A[i,j] +  \
-                        ( A[k,j]*A[i,l]*(1-A[l,k]) + A[l,j]*A[i,k]*(1-A[k,l]) +\
-                        A[k,j]*A[l,l]*A[i,k] + A[l,j]*A[k,k]*A[i,l])/\
-                        ( (1-A[k,l])*(1-A[l,k]) - A[k,k]*A[l,l] )
-        C = npy.delete(C,(k,l),0)
-        C = npy.delete(C,(k,l),1)
-        return C
+    # loop through ports and calulates resultant s-parameters
+    for i in range(nA):
+        for j in range(nA):
+            C[:,i,j] = \
+                A[:,i,j] + \
+                ( A[:,k,j] * A[:,i,l] * (1 - A[:,l,k]) + \
+                A[:,l,j] * A[:,i,k] * (1 - A[:,k,l]) +\
+                A[:,k,j] * A[:,l,l] * A[:,i,k] + \
+                A[:,l,j] * A[:,k,k] * A[:,i,l])/\
+                ((1 - A[:,k,l]) * (1 - A[:,l,k]) - A[:,k,k] * A[:,l,l])
 
+    # remove ports that where `connected`
+    C = npy.delete(C, (k,l), 1)
+    C = npy.delete(C, (k,l), 2)
+
+    return C
+   
+        
 def s2t(s):
     '''
     converts scattering parameters to scattering transfer parameters.
@@ -2180,36 +2204,33 @@ def s2t(s):
 
     Parameters
     -----------
-    s : numpy.ndarray
-            scattering parameter matrix. shape should be should be 2x2, or
-            fx2x2
+    s : numpy.ndarray (shape fx2x2)
+        scattering parameter matrix
 
     Returns
     -------
     t : numpy.ndarray
-            scattering transfer parameters (aka wave cascading matrix)
+        scattering transfer parameters (aka wave cascading matrix)
 
     See Also
     ---------
     t2s : converts scattering transfer parameters to scattering
-            parameters
+        parameters
     inv : calculates inverse s-parameters
 
     References
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
-    t = npy.copy(s)
-
-    if len (s.shape) > 2 :
-        for f in range(s.shape[0]):
-            t[f,:,:] = s2t(s[f,:,:])
-    elif s.shape == (2,2):
-        t = npy.array([[-1*npy.linalg.det(s),   s[0,0]],\
-                                [-s[1,1],1]]) / s[1,0]
-    else:
-        raise IndexError('matrix should be 2x2, or kx2x2')
-    return t
+    # although unintuitive this is calculated by
+    # [[s11, s21],[s12,s22]].T
+    t = npy.array([
+        [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
+            -s[:,1,1]/s[:,1,0]],
+        [s[:,0,0]/s[:,1,0],
+            1/s[:,1,0] ]
+        ]).transpose()
+    return t    
 
 def t2s(t):
     '''
@@ -2222,9 +2243,8 @@ def t2s(t):
 
     Parameters
     -----------
-    t : numpy.ndarray
-            scattering transfer parameters, shape should be should be 2x2, or
-            fx2x2
+    t : numpy.ndarray (shape fx2x2)
+            scattering transfer parameters
 
     Returns
     -------
@@ -2240,18 +2260,15 @@ def t2s(t):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
-    s = npy.copy(t)
-    if len (t.shape) > 2 :
-        for f in range(t.shape[0]):
-            s[f,:,:] = t2s(s[f,:,:])
-
-    elif t.shape== (2,2):
-        s = npy.array([[t[0,1],npy.linalg.det(t)],\
-                [1,-t[1,0]]])/t[1,1]
-    else:
-        raise IndexError('matrix should be 2x2, or kx2x2')
+    
+    s = npy.array([
+        [t[:,0,1]/t[:,1,1],
+             1/t[:,1,1]],
+        [(t[:,0,0]*t[:,1,1]- t[:,1,0]*t[:,0,1])/t[:,1,1],
+            -1*t[:,1,0]/t[:,1,1] ]
+        ]).transpose()
     return s
-
+   
 def inv(s):
     '''
     calculates 'inverse' s-parameter matrix, used for de-embeding
@@ -2270,9 +2287,8 @@ def inv(s):
 
     Parameters
     -----------
-    s : numpy.ndarray
-            scattering parameter matrix. shape should be should be 2x2, or
-            fx2x2
+    s : numpy.ndarray (shape fx2x2)
+            scattering parameter matrix.
 
     Returns
     -------
@@ -2287,14 +2303,10 @@ def inv(s):
 
     '''
     # this idea is from lihan
-    i = npy.copy(s)
-    if len (s.shape) > 2 :
-        for f in range(len(s)):
-            i[f,:,:] = inv(s[f,:,:])
-    elif s.shape == (2,2):
-        i = t2s(npy.linalg.inv(s2t(s)))
-    else:
-        raise IndexError('matrix should be 2x2, or kx2x2')
+    i = s2t(s) 
+    for f in range(len(i)):
+        i[f,:,:] = npy.linalg.inv(i[f,:,:])
+    i = t2s(i)
     return i
 
 def flip(a):
@@ -2354,7 +2366,7 @@ def impedance_mismatch(z1, z2):
     '''
     gamma = zl_2_Gamma0(z1,z2)
     result = npy.zeros(shape=(len(gamma),2,2), dtype='complex')
-
+    
     result[:,0,0] = gamma
     result[:,1,1] = -gamma
     result[:,1,0] = 1+gamma

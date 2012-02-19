@@ -24,8 +24,9 @@ class NetworkTestCase(unittest.TestCase):
     def test_open_saved_touchstone(self):
         #TODO: this leaves files on the local drive after running the
         # tests.
-        self.ntwk1.write_touchstone('./ntwk1Saved')
-        ntwk1Saved = rf.Network('./ntwk1Saved.s2p')
+        test_dir = os.path.dirname(__file__)
+        self.ntwk1.write_touchstone('ntwk1Saved',dir=test_dir)
+        ntwk1Saved = rf.Network(os.path.join(test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
 
     def test_cascade(self):
