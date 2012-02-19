@@ -140,9 +140,9 @@ class Frequency(object):
         '''
         return cls(start=f[0], stop=f[-1],npoints = len(f), *args, **kwargs)
 
-
     def __eq__(self, other):
         return (list(self.f) == list(other.f))
+
     def __ne__(self,other):
         return (not self.__eq__(other))
 
@@ -157,8 +157,9 @@ class Frequency(object):
                 the exact center frequency in units of :attr:`unit`
         '''
         return self.start + (self.stop-self.start)/2.
+
     @property
-    def     f(self):
+    def f(self):
         '''
         Frequency vector  in Hz
 
@@ -174,6 +175,7 @@ class Frequency(object):
         '''
         return linspace(self.start,self.stop,self.npoints)
         #return self._f
+
     @f.setter
     def f(self,new_f):
         '''
@@ -185,7 +187,7 @@ class Frequency(object):
         self.npoints = len(new_f)
 
     @property
-    def     f_scaled(self):
+    def f_scaled(self):
         '''
         Frequency vector in units of :attr:`unit`
 
@@ -200,6 +202,7 @@ class Frequency(object):
                 w : frequency vector in rad/s
         '''
         return self.f/self.multiplier
+
     @property
     def w(self):
         '''
@@ -218,6 +221,7 @@ class Frequency(object):
                 f :  frequency vector in Hz
         '''
         return 2*pi*self.f
+
     @property
     def unit(self):
         '''
@@ -234,6 +238,7 @@ class Frequency(object):
                 lower-case string representing the frequency units
         '''
         return self.unit_dict[self._unit]
+
     @unit.setter
     def unit(self,unit):
         self._unit = unit.lower()
@@ -252,9 +257,18 @@ class Frequency(object):
                 multiplier for this Frequencies unit
         '''
         return self.multiplier_dict[self._unit]
-
-
-
+    
+    def copy(self):
+        '''
+        returns a new copy of this frequency
+        '''
+        return Frequency(
+            start = self.start/self.multiplier, 
+            stop = self.stop/self.multiplier, 
+            npoints = self.npoints, 
+            unit = self.unit, 
+            sweep_type = self.sweep_type)
+        
     def labelXAxis(self, ax=None):
         '''
         Label the x-axis of a plot.

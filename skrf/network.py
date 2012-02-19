@@ -325,7 +325,7 @@ class Network(object):
         '''
         returns a Network object at a given single frequency
         '''
-        a= self.z0# hack to force getter for z0 to re-shape it
+        a = self.z0# HACK: to force getter for z0 to re-shape it
         output = deepcopy(self)
         output.s = output.s[key,:,:]
         output.z0 = output.z0[key,:]
@@ -344,7 +344,7 @@ class Network(object):
         return output
     def __repr__(self):
         return self.__str__()
-
+    
     ## PRIMARY PROPERTIES
     # s-parameter matrix
     @property
@@ -427,6 +427,7 @@ def smn(self,m,n):
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
         '''
         return s2t(self.s)
+
     @property
     def inv(self):
         '''
@@ -480,13 +481,13 @@ def smn(self,m,n):
         except (AttributeError):
             self._frequency = Frequency(0,0,0)
             return self._frequency
+
     @frequency.setter
     def frequency(self, new_frequency):
         '''
         takes a Frequency object, see  frequency.py
         '''
         self._frequency= copy(new_frequency)
-
 
     @property
     def f(self):
@@ -510,8 +511,6 @@ def smn(self,m,n):
         tmpUnit = self.frequency.unit
         self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
         self._frequency.unit = tmpUnit
-
-
 
     # characteristic impedance
     @property
@@ -799,6 +798,17 @@ def smn(self,m,n):
 
 
 ## CLASS METHODS
+    def copy(self):
+        '''
+        returns a copy of this Network
+        '''
+        ntwk = Network()
+        ntwk.frequency = self.frequency.copy()
+        ntwk.s = self.s.copy()
+        ntwk.z0 = self.z0.copy()
+        ntwk.name = self.name
+        return ntwk
+        
     # touchstone file IO
     def read_touchstone(self, filename):
         '''
