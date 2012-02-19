@@ -101,7 +101,7 @@ from tlineFunctions import zl_2_Gamma0
 try:
     from src import connect_s_fast
 except:
-    warnings.warn('libconnect failed to load. network connection will be slow.')
+    warnings.warn('libconnect failed to load.')
     
 class Network(object):
     '''
@@ -1882,23 +1882,30 @@ def connect(ntwkA, k, ntwkB,l):
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
     '''
+    # create output Network, from copy of input 
     ntwkC = deepcopy(ntwkA)
-    # account for port impedance mis-match by inserting a two-port
-    # network at the connection. if ports are matched this becomes a
-    # thru
+    
+    # if networks' z0's are not identical, then connect a impedance
+    # mismatch, which takes into account th effect of differing port
+    # impedances. if ports are matched this becomes a thru
     if not (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all():
         ntwkC.s = connect_s(
-            ntwkA.s,k, 
-            impedance_mismatch(ntwkA.z0[:,k],ntwkB.z0[:,l]),0)
+            ntwkA.s, k, 
+            impedance_mismatch(ntwkA.z0[:,k], ntwkB.z0[:,l]), 0)
 
-    '''if ntwkA.number_of_ports == 2 and \
-        (ntwkB.number_of_ports==2 or ntwkB.number_of_ports==1):
-        ntwkC = cascade_fast(ntwkA, ntwkB)
-    else:
-        ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
-    '''
+    #if ntwkA.number_of_ports == 2 and \
+    #(ntwkB.number_of_ports == 2 or ntwkB.number_of_ports == 1):
+    #    ntwkC = cascade_fast(ntwkA, ntwkB)
+    #else:
+    #    ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
+
+    # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
-    ntwkC.z0=npy.hstack((npy.delete(ntwkA.z0,k,1),npy.delete(ntwkB.z0,l,1)))
+
+    # remove rows and coloumns of z0 matrix, which where `connected`
+    ntwkC.z0 = npy.hstack(
+        (npy.delete(ntwkA.z0, k, 1), npy.delete(ntwkB.z0, l, 1)))
+
     return ntwkC
 
 def innerconnect(ntwkA, k, l):
@@ -1911,28 +1918,25 @@ def innerconnect(ntwkA, k, l):
     Parameters
     -----------
     ntwkA : :class:`Network`
-            network 'A'
+        network 'A'
     k : int
-            port index on ntwkA ( port indecies start from 0 )
+        port index on ntwkA ( port indecies start from 0 )
     l : int
-            port index on ntwkB
-
-
+        port index on ntwkB
 
     Returns
     ---------
     ntwkC : :class:`Network`
-            new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
-
+        new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
 
     See Also
     -----------
-            connect_s : actual  S-parameter connection algorithm.
-            innerconnect_s : actual S-parameter connection algorithm.
+        connect_s : actual  S-parameter connection algorithm.
+        innerconnect_s : actual S-parameter connection algorithm.
 
     Notes
     -------
-            a 2-port 'mismatch' network between the two connected ports.
+        a 2-port 'mismatch' network between the two connected ports.
 
     Examples
     ---------
@@ -1942,12 +1946,21 @@ def innerconnect(ntwkA, k, l):
     >>> ntwkC = rf.innerconnect(ntwkA, 0,1)
 
     '''
+    # create output Network, from copy of input 
     ntwkC = deepcopy(ntwkA)
+
+    # connect a impedance mismatch, which will takes into account the
+    # effect of differing port impedances
     ntwkC.s = connect_s(\
-            ntwkA.s,k, \
-            impedance_mismatch(ntwkA.z0[:,k],ntwkA.z0[:,l]),0)
+        ntwkA.s,k, \
+        impedance_mismatch(ntwkA.z0[:,k],ntwkA.z0[:,l]),0)
+
+    # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s,k,l)
-    ntwkC.z0=npy.delete(ntwkC.z0,[l,k],1)
+
+    # update the characteristic impedance matrix
+    ntwkC.z0 = npy.delete(ntwkC.z0,[l,k],1)
+
     return ntwkC
 
 def cascade(ntwkA,ntwkB):
@@ -2126,7 +2139,7 @@ def connect_s(A,k,B,l):
     Returns
     -------
     C : numpy.ndarray
-            new S-parameter matrix
+        new S-parameter matrix
 
 
     Notes
@@ -2137,35 +2150,28 @@ def connect_s(A,k,B,l):
 
     See Also
     --------
-            connect : operates on :class:`Network` types
-            innerconnect_s : function which implements the connection
-                    connection algorithm
+        connect : operates on :class:`Network` types
+        innerconnect_s : function which implements the connection
+            connection algorithm
 
 
     '''
-    #try:
-        #return connect_s_fast(A,k,B,l)
-    #except:
-        #pass
-    if k > A.shape[-1]-1 or l>B.shape[-1]-1:
+ 
+    if k > A.shape[-1]-1 or l > B.shape[-1] - 1:
         raise(ValueError('port indecies are out of range'))
 
-    if len (A.shape) > 2:
-        # assume this is a kxnxn matrix
-        n = A.shape[-1]+B.shape[-1]-2 # nports of output Matrix
-        C = npy.zeros((A.shape[0], n,n), dtype='complex')
+    nf = A.shape[0]     # num frequency points
+    nA = A.shape[1]     # num ports on A
+    nB = B.shape[1]     # num ports on B
+    nC = nA + nB        # num ports on C 
+    
+    #create composite matrix, appending each sub-matrix diagonally
+    C = npy.zeros((nf, nC, nC), dtype='complex')
+    C[:, :nA, :nA] = A.copy()
+    C[:, nA:, nA:] = B.copy()
 
-        for f in range(A.shape[0]):
-            C[f,:,:] = connect_s(A[f,:,:],k,B[f,:,:],l)
-        return C
-    else:
-        filler = npy.zeros((A.shape[0],B.shape[1]))
-        #create composite matrix, appending each sub-matrix diagonally
-        C= npy.vstack( [npy.hstack([A,filler]),npy.hstack([filler.T,B])])
-
-        return innerconnect_s(C, k,A.shape[-1]+l)
-
-
+    # call innerconnect_s() on composit matrix C 
+    return innerconnect_s(C, k, nA + l)
 
 def innerconnect_s(A, k, l):
     '''
@@ -2179,11 +2185,11 @@ def innerconnect_s(A, k, l):
     Parameters
     -----------
     A : numpy.ndarray
-            S-parameter matrix of `A`, shape is fxnxn
+        S-parameter matrix of `A`, shape is fxnxn
     k : int
-            port index on `A` (port indecies start from 0)
+        port index on `A` (port indecies start from 0)
     l : int
-            port index on `A`
+        port index on `A`
 
     Returns
     -------
@@ -2204,146 +2210,29 @@ def innerconnect_s(A, k, l):
 
 
     '''
-
-    # TODO: this algorithm is a bit wasteful in that it calculates the
-    # scattering parameters for a network of rank S.rank+T.rank and
-    # then deletes the ports which are 'connected'
-    if k > A.shape[-1] -1 or l>A.shape[-1]-1:
-        raise(ValueError('port indecies are out of range'))
-
     
-    if len (A.shape) > 2:
-        # assume this is a kxnxn matrix
-        n = A.shape[-1]-2 # nports of output Matrix
-        C = npy.zeros((A.shape[0], n,n), dtype='complex')
-
-        for f in range(A.shape[0]):
-            C[f,:,:] = innerconnect_s(A[f,:,:],k,l)
-        return C
-    else:
-        n = A.shape[0]
-        C = npy.zeros([n,n],dtype='complex')
-        for i in range(n):
-            for j in range(n):
-                C[i,j] = A[i,j] +  \
-                        ( A[k,j]*A[i,l]*(1-A[l,k]) + A[l,j]*A[i,k]*(1-A[k,l]) +\
-                        A[k,j]*A[l,l]*A[i,k] + A[l,j]*A[k,k]*A[i,l])/\
-                        ( (1-A[k,l])*(1-A[l,k]) - A[k,k]*A[l,l] )
-        C = npy.delete(C,(k,l),0)
-        C = npy.delete(C,(k,l),1)
-        return C
-
-def connect_s_vectorized(A,k,B,l):
-    '''
-    connect two n-port networks' s-matricies together.
-
-    specifically, connect port `k` on network `A` to port `l` on network
-    `B`. The resultant network has nports = (A.rank + B.rank-2). This
-    function operates on, and returns s-matricies. The function
-    :func:`connect` operates on :class:`Network` types.
-
-    Parameters
-    -----------
-    A : numpy.ndarray
-            S-parameter matrix of `A`, shape is fxnxn
-    k : int
-            port index on `A` (port indecies start from 0)
-    B : numpy.ndarray
-            S-parameter matrix of `B`, shape is fxnxn
-    l : int
-            port index on `B`
-
-    Returns
-    -------
-    C : numpy.ndarray
-            new S-parameter matrix
-
-
-    Notes
-    -------
-    internally, this function creates a larger composite network
-    and calls the  :func:`innerconnect_s` function. see that function for more
-    details about the implementation
-
-    See Also
-    --------
-            connect : operates on :class:`Network` types
-            innerconnect_s : function which implements the connection
-                    connection algorithm
-
-
-    '''
- 
-    if k > A.shape[-1]-1 or l > B.shape[-1] - 1:
-        raise(ValueError('port indecies are out of range'))
-    nf = A.shape[0]     # num frequency points
-    nA = A.shape[1]     # num ports on A
-    nB = B.shape[1]     # num ports on B
-    nC = nA + nB        # num ports on C 
-    
-    C = npy.zeros((nf, nC, nC), dtype='complex')
-
-    #create composite matrix, appending each sub-matrix diagonally
-    C[:, :nA, :nA] = A.copy()
-    C[:, nA:, nA:] = B.copy()
-    return innerconnect_s_vectorized(C, k, nA + l)
-
-def innerconnect_s_vectorized(A, k, l):
-    '''
-    connect two ports of a single n-port network's s-matrix.
-
-    Specifically, connect port `k`  to port `l` on `A`. This results in
-    a (n-2)-port network.  This     function operates on, and returns
-    s-matricies. The function :func:`innerconnect` operates on
-    :class:`Network` types.
-
-    Parameters
-    -----------
-    A : numpy.ndarray
-            S-parameter matrix of `A`, shape is fxnxn
-    k : int
-            port index on `A` (port indecies start from 0)
-    l : int
-            port index on `A`
-
-    Returns
-    -------
-    C : numpy.ndarray
-            new S-parameter matrix
-
-    Notes
-    -----
-    The algorithm used to calculate the resultant network is called a
-    'sub-network growth',  can be found in [#]_. The original paper
-    describing the  algorithm is given in [#]_.
-
-    References
-    ----------
-    .. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989., Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
-
-    .. [#] Filipsson, Gunnar; , "A New General Computer Algorithm for S-Matrix Calculation of Interconnected Multiports," Microwave Conference, 1981. 11th European , vol., no., pp.700-704, 7-11 Sept. 1981. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4131699&isnumber=4131585
-
-
-    '''
-
-    # TODO: this algorithm is a bit wasteful in that it calculates the
-    # scattering parameters for a network of rank S.rank+T.rank and
-    # then deletes the ports which are 'connected'
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
         raise(ValueError('port indecies are out of range'))
-    A=A.copy()
+
     nA = A.shape[1]  # num of ports on input s-matrix
+    # create an empty s-matrix, to store the result
     C = npy.zeros(shape=A.shape, dtype='complex')
-    
+
+    # loop through ports and calulates resultant s-parameters
     for i in range(nA):
         for j in range(nA):
-            C[:,i,j] = A[:,i,j] + \
-                ( A[:,k,j]*A[:,i,l]*(1-A[:,l,k]) + A[:,l,j]*A[:,i,k]*(1-A[:,k,l]) +\
-                A[:,k,j]*A[:,l,l]*A[:,i,k] + A[:,l,j]*A[:,k,k]*A[:,i,l])/\
-                ( (1-A[:,k,l])*(1-A[:,l,k]) - A[:,k,k]*A[:,l,l] )
-   
+            C[:,i,j] = \
+                A[:,i,j] + \
+                ( A[:,k,j] * A[:,i,l] * (1 - A[:,l,k]) + \
+                A[:,l,j] * A[:,i,k] * (1 - A[:,k,l]) +\
+                A[:,k,j] * A[:,l,l] * A[:,i,k] + \
+                A[:,l,j] * A[:,k,k] * A[:,i,l])/\
+                ((1 - A[:,k,l]) * (1 - A[:,l,k]) - A[:,k,k] * A[:,l,l])
+
+    # remove ports that where `connected`
     C = npy.delete(C, (k,l), 1)
     C = npy.delete(C, (k,l), 2)
+
     return C
    
         
@@ -2519,7 +2408,7 @@ def impedance_mismatch(z1, z2):
     '''
     gamma = zl_2_Gamma0(z1,z2)
     result = npy.zeros(shape=(len(gamma),2,2), dtype='complex')
-
+    
     result[:,0,0] = gamma
     result[:,1,1] = -gamma
     result[:,1,0] = 1+gamma
