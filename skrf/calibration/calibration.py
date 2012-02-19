@@ -153,10 +153,10 @@ class Calibration(object):
         .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
         '''
 
-        self.measured = copy(measured)
-        self.ideals = copy(ideals)
+        self.measured = measured[:]
+        self.ideals = ideals[:]
         self.type = type
-        self.frequency = frequency
+        self.frequency = frequency.copy()
         # a dictionary holding key word arguments to pass to whatever
         # calibration function we are going to call
         self.kwargs = kwargs
@@ -182,7 +182,7 @@ class Calibration(object):
             # they did not supply frequency, so i will try
             # to inspect a measured ntwk to  get it
             new_frequency = self.measured[0].frequency
-        self._frequency = deepcopy(new_frequency)
+        self._frequency = new_frequency.copy()
 
     @property
     def type (self):
