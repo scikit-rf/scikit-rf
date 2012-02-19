@@ -10,7 +10,7 @@ LONG_DESCRIPTION = """
 	sckit-rf is an object-oriented approach to RF/Microwave engineering implemented in the Python programming language. It provides a general set of objects and features which can be used to construct solutions to specific problems. 
 """
 setup(name='scikit-rf',
-	version='1.5',
+	version='0.1',
 	license='gpl',
 	description='Object Oriented Microwave Engineering',
 	long_description=LONG_DESCRIPTION,

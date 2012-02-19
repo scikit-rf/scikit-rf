@@ -54,10 +54,7 @@ Functions Operating on Networks
    de_embed
    average
    one_port_2_two_port
-   interpolate
-   interpolate_self
-   resample
-
+   
 Supporting Functions
 =====================
 
@@ -69,17 +66,26 @@ Supporting Functions
    s2t
    t2s
    inv
-   flip
+
+Interpolation
+================
+.. autosummary::
+   :toctree: generated/
+   
+   Network.interpolate
+   Network.interpolate_self
+   Network.interpolate_self_npoints (Network.resample)
+   
 
 Misc Functions
 =====================
 .. autosummary::
    :toctree: generated/
 
-        impedance_mismatch
-        load_all_touchstones
-        write_dict_of_networks
-        csv_2_touchstone
+    impedance_mismatch
+    load_all_touchstones
+    write_dict_of_networks
+    csv_2_touchstone
 '''
 import os
 import warnings
@@ -932,12 +938,12 @@ def smn(self,m,n):
 
         Notes
         --------
-                useful keyword for  :func:`scipy.interpolate.interp1d`,
-                 **kind** : str or int
-                        Specifies the kind of interpolation as a string ('linear',
-                        'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
-                        as an integer
-                        specifying the order of the spline interpolator to use.
+        useful keyword for  :func:`scipy.interpolate.interp1d`,
+            kind : str or int
+                Specifies the kind of interpolation as a string ('linear',
+                'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
+                as an integer
+                specifying the order of the spline interpolator to use.
 
 
         '''
