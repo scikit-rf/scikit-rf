@@ -153,11 +153,11 @@ def unterminate_switch_terms(two_port, gamma_f, gamma_r):
             'Formulations of the Basic Vector Network Analyzer Error
             Model including Switch Terms' by Roger B. Marks
     '''
-    unterminated = copy(two_port)
+    unterminated = two_port.copy()
 
     # extract scattering matrices
     m, gamma_r, gamma_f = two_port.s, gamma_r.s, gamma_f.s
-    u = copy(m)
+    u = m.copy()
 
     one = npy.ones(two_port.frequency.npoints)
 
@@ -211,8 +211,8 @@ def one_port(measured, ideals):
             one_port_nls :  for a non-linear least square implementation
     '''
     #make  copies so list entities are not changed, when we typecast
-    mList = copy(measured)
-    iList = copy(ideals)
+    mList = measured[:]
+    iList = ideals[:]
 
     numStds = len(mList)# find number of standards given, for dimensions
     numCoefs=3
@@ -306,8 +306,8 @@ def one_port_nls (measured, ideals):
 
     '''
     #make  copies so list entities are not changed, when we typecast
-    mList = copy(measured)
-    iList = copy(ideals)
+    mList = measured[:]
+    iList = ideals[:]
     # find number of standards given, for dimensions
     numStds = len(mList)
     numCoefs=3
@@ -415,8 +415,8 @@ def two_port(measured, ideals, switch_terms = None):
 
     '''
     #make  copies so list entities are not changed, when we typecast
-    mList = copy(measured)
-    iList = copy(ideals)
+    mList = measured[:]
+    iList = ideals[:]
     numStds = len(mList)# find number of standards given, for dimensions
     numCoefs = 7
 
@@ -540,9 +540,9 @@ def parameterized_self_calibration(measured, ideals, showProgress=True,\
             parameterized_self_calibration_nls : similar algorithm, but uses
                     a non-linear least-squares estimator
     '''
-    ideals_ps = copy(ideals)
+    ideals_ps = ideals[:]
     #make copies so list entities are not changed
-    measured = copy(measured)
+    measured = measured[:]
     if measured[0].number_of_ports ==1:
         cal_function = one_port
     elif measured[0].number_of_ports ==2:
@@ -558,7 +558,7 @@ def parameterized_self_calibration(measured, ideals, showProgress=True,\
         #parameter_bounds = npy.append(parameter_bounds, a_ps.parameter_bounds)
 
 
-    ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
+    ideals = measured[:] #sloppy initalization, but this gets re-written by sub_cal
     mean_residual_list = []
 
     def sub_cal(parameter_vector, measured, ideals_ps):
@@ -642,7 +642,7 @@ def parameterized_self_calibration_nls(measured, ideals_ps, showProgress=True,\
                     a non-linear least-squares estimator
     '''
     #make copies so list entities are not changed
-    measured = copy(measured)
+    measured = measured[:]
     if measured[0].number_of_ports ==1:
         cal_function = one_port
     elif measured[0].number_of_ports ==2:
@@ -658,7 +658,7 @@ def parameterized_self_calibration_nls(measured, ideals_ps, showProgress=True,\
         #parameter_bounds = npy.append(parameter_bounds, a_ps.parameter_bounds)
 
 
-    ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
+    ideals = measured[:] #sloppy initalization, but this gets re-written by sub_cal
     mean_residual_list = []
 
     def sub_cal(parameter_vector, measured, ideals_ps):
@@ -726,7 +726,7 @@ def parameterized_self_calibration_bounded(measured, ideals_ps, showProgress=Tru
     if len(measured) != len(ideals_ps):
         raise(IndexError('Number of ideals and measurements must be equal'))
     #make copies so list entities are not changed
-    measured = copy(measured)
+    measured = measured[:]
     if measured[0].number_of_ports ==1:
         cal_function = one_port
     elif measured[0].number_of_ports ==2:
@@ -745,7 +745,7 @@ def parameterized_self_calibration_bounded(measured, ideals_ps, showProgress=Tru
     print parameter_bounds_list
     print parameter_vector
 
-    ideals = copy(measured) #sloppy initalization, but this gets re-written by sub_cal
+    ideals = measured[:] #sloppy initalization, but this gets re-written by sub_cal
     mean_residual_list = []
 
     def sub_cal(parameter_vector, measured, ideals_ps):
