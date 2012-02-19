@@ -1988,49 +1988,6 @@ def cascade(ntwkA,ntwkB):
     '''
     return connect(ntwkA,1, ntwkB,0)
 
-def cascade_fast(ntwkA,ntwkB):
-    '''
-    cascade two 2-port Networks togetherm, ignoring port imedances
-
-    connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
-    s2t and t2s functions, which allows vectorization and thus a
-    speedup.
-
-    Parameters
-    -----------
-    ntwkA : :class:`Network`
-            network `ntwkA`
-    ntwkB : Network
-            network `ntwkB`
-
-    Returns
-    --------
-    C : Network
-            the resultant network of ntwkA cascaded with ntwkB
-
-    See Also
-    ---------
-    cascade : cascades two Networks, taking into account port impedance
-    '''
-    ntwkC = deepcopy(ntwkA)
-    ntwkB = deepcopy(ntwkB) 
-    one_port = False
-    
-    if ntwkB.number_of_ports == 1:
-        one_port = True
-        temp = npy.ones((len(ntwkB.s),2,2),dtype='complex') - npy.eye(2)
-        temp[:,0,0] = ntwkB.s.squeeze()
-        ntwkB.s = temp
-        
-    t_a, t_b = s2t(ntwkA.s), s2t(ntwkB.s)
-    for f in range(len(ntwkA.s)):
-        ntwkC.s[f,:,:] = npy.dot(t_a[f,:,:], t_b[f,:,:])
-    ntwkC.s = t2s(ntwkC.s)
-
-    if one_port:
-        ntwkC.s = ntwkC.s[:,0,0]
-    return ntwkC
-
 def de_embed(ntwkA,ntwkB):
     '''
     de-embed `ntwkA` from `ntwkB`. this calls `ntwkA.inv**ntwkB`.
