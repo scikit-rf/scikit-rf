@@ -16,19 +16,17 @@ class NetworkTestCase(unittest.TestCase):
         this also tests the ability to read touchstone files
         without an error
         '''
-        test_dir = os.path.dirname(__file__)
-        self.ntwk1 = rf.Network(os.path.join(test_dir, 'ntwk1.s2p'))
-        self.ntwk2 = rf.Network(os.path.join(test_dir, 'ntwk2.s2p'))
-        self.ntwk3 = rf.Network(os.path.join(test_dir, 'ntwk3.s2p'))
-
+        self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
+        self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
+        self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
+        self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
+    
     def test_open_saved_touchstone(self):
-        #TODO: this leaves files on the local drive after running the
-        # tests.
-        test_dir = os.path.dirname(__file__)
-        self.ntwk1.write_touchstone('ntwk1Saved',dir=test_dir)
-        ntwk1Saved = rf.Network(os.path.join(test_dir, 'ntwk1Saved.s2p'))
+        self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
+        ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
-
+        os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
+        
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
 

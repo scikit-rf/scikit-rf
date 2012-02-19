@@ -574,7 +574,7 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
     data_matrix = \
             npy.array([ntwk.__getattribute__(attribute) for ntwk in ntwk_list])
 
-    new_ntwk = deepcopy(ntwk_list[0])
+    new_ntwk = ntwk_list[0].copy()
     new_ntwk.s = func(data_matrix,axis=0,*args,**kwargs)
 
     if name is not None:
