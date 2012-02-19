@@ -81,8 +81,6 @@ Misc Functions
         write_dict_of_networks
         csv_2_touchstone
 '''
-from copy import deepcopy as copy
-from copy import deepcopy
 import os
 import warnings
 
@@ -266,7 +264,7 @@ class Network(object):
             pass
 
         if other.number_of_ports == 2:
-            result = copy(self)
+            result = self.copy()
             result.s = (other.inv**self).s
             #de_embed(self.s,other.s)
             return result
@@ -277,7 +275,7 @@ class Network(object):
         '''
         element-wise complex multiplication  of s-matrix
         '''
-        result = copy(self)
+        result = self.copy()
         result.s = result.s * a.s
         return result
 
@@ -285,7 +283,7 @@ class Network(object):
         '''
         element-wise addition of s-matrix
         '''
-        result = copy(self)
+        result = self.copy()
         result.s = result.s + other.s
         return result
 
@@ -293,7 +291,7 @@ class Network(object):
         '''
         element-wise subtraction of s-matrix
         '''
-        result = copy(self)
+        result = self.copy()
         result.s = result.s - other.s
         return result
 
@@ -304,7 +302,7 @@ class Network(object):
         if other.number_of_ports != self.number_of_ports:
             raise IndexError('Networks must have same number of ports.')
         else:
-            result = copy(self)
+            result = self.copy()
             try:
                 result.name = self.name+'/'+other.name
             except TypeError:
@@ -326,7 +324,7 @@ class Network(object):
         returns a Network object at a given single frequency
         '''
         a = self.z0# HACK: to force getter for z0 to re-shape it
-        output = deepcopy(self)
+        output = self.copy()
         output.s = output.s[key,:,:]
         output.z0 = output.z0[key,:]
         output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
@@ -447,7 +445,7 @@ def smn(self,m,n):
         '''
         if self.number_of_ports <2:
             raise(TypeError('One-Port Networks dont have inverses'))
-        out = copy(self)
+        out = self.copy()
         out.s = inv(self.s)
         return out
 
@@ -487,7 +485,7 @@ def smn(self,m,n):
         '''
         takes a Frequency object, see  frequency.py
         '''
-        self._frequency= copy(new_frequency)
+        self._frequency = new_frequency.copy()
 
     @property
     def f(self):
@@ -789,7 +787,7 @@ def smn(self,m,n):
         if self.number_of_ports == 1:
             raise (ValueError('Doesnt exist for one ports'))
 
-        pas_mat = copy(self.s)
+        pas_mat = self.s.copy()
         for f in range(len(self.s)):
             pas_mat[f,:,:] = npy.dot(self.s[f,:,:].conj().T, self.s[f,:,:])
 
@@ -945,7 +943,7 @@ def smn(self,m,n):
         '''
         interpolation_s = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
         interpolation_z0 = interp1d(self.frequency.f,self.z0,axis=0,**kwargs)
-        result = deepcopy(self)
+        result = self.copy()
         result.frequency = new_frequency
         result.s = interpolation_s(new_frequency.f)
         result.z0 = interpolation_z0(new_frequency.f)
@@ -970,7 +968,7 @@ def smn(self,m,n):
                         object and returns a new Network, instead of updating
                         itself.
         '''
-        new_frequency = deepcopy(self.frequency)
+        new_frequency = self.frequency.copy()
         new_frequency.npoints = npoints
         self.interpolate_self(new_frequency, **kwargs)
 
@@ -1893,7 +1891,7 @@ def connect(ntwkA, k, ntwkB,l):
 
     '''
     # create output Network, from copy of input 
-    ntwkC = deepcopy(ntwkA)
+    ntwkC = ntwkA.copy()
     
     # if networks' z0's are not identical, then connect a impedance
     # mismatch, which takes into account th effect of differing port
@@ -1957,7 +1955,7 @@ def innerconnect(ntwkA, k, l):
 
     '''
     # create output Network, from copy of input 
-    ntwkC = deepcopy(ntwkA)
+    ntwkC = ntwkA.copy()
 
     # connect a impedance mismatch, which will takes into account the
     # effect of differing port impedances
@@ -2052,7 +2050,7 @@ def average(list_of_networks):
     >>> ntwk_list = [rf.Network('myntwk.s1p'), rf.Network('myntwk2.s1p')]
     >>> mean_ntwk = rf.average(ntwk_list)
     '''
-    out_ntwk = copy(list_of_networks[0])
+    out_ntwk = list_of_networks[0].copy()
 
     for a_ntwk in list_of_networks[1:]:
         out_ntwk += a_ntwk
@@ -2071,7 +2069,7 @@ def one_port_2_two_port(ntwk):
     returns:
             ntwk: the resultant two-port Network
     '''
-    result = copy(ntwk)
+    result = ntwk.copy()
     result.s = npy.zeros((result.frequency.npoints,2,2), dtype=complex)
     s11 = ntwk.s[:,0,0]
     result.s[:,0,0] = s11
@@ -2339,7 +2337,7 @@ def flip(a):
     -----
                     only works for 2-ports at the moment
     '''
-    c = copy(a)
+    c = a.copy()
 
     if len (a.shape) > 2 :
         for f in range(a.shape[0]):
@@ -2408,7 +2406,7 @@ def two_port_reflect(ntwk1, ntwk2):
     >>>short,open = rf.Network('short.s1p', rf.Network('open.s1p')
     >>>rf.two_port_reflect(short,open)
     '''
-    result = deepcopy(ntwk1)
+    result = ntwk1.copy()
     s11 = ntwk1.s[:,0,0]
     s22 = ntwk2.s[:,0,0]
     s21 = npy.zeros(ntwk1.frequency.npoints, dtype=complex)
