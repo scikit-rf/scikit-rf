@@ -1887,7 +1887,7 @@ def connect(ntwkA, k, ntwkB,l):
     
     # if networks' z0's are not identical, then connect a impedance
     # mismatch, which takes into account th effect of differing port
-    # impedances. if ports are matched this becomes a thru
+    # impedances. 
     if not (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all():
         ntwkC.s = connect_s(
             ntwkA.s, k, 
@@ -1951,9 +1951,10 @@ def innerconnect(ntwkA, k, l):
 
     # connect a impedance mismatch, which will takes into account the
     # effect of differing port impedances
-    ntwkC.s = connect_s(\
-        ntwkA.s,k, \
-        impedance_mismatch(ntwkA.z0[:,k],ntwkA.z0[:,l]),0)
+    if not (ntwkA.z0[:,k] == ntwkA.z0[:,l]).all():
+        ntwkC.s = connect_s(\
+            ntwkA.s,k, \
+            impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l]), 0)
 
     # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s,k,l)
