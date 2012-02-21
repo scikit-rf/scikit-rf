@@ -947,6 +947,7 @@ def smn(self,m,n):
 
 
         '''
+        # create interpolation objects
         interpolation_s_re = \
             interp1d(self.frequency.f,self.s_re,axis=0,**kwargs)
         interpolation_s_im = \
@@ -956,10 +957,9 @@ def smn(self,m,n):
         interpolation_z0_im = \
             interp1d(self.frequency.f,self.z0.imag,axis=0,**kwargs)
 
+        # make new network and fill with interpolated s, and z0
         result = self.copy()
-
         result.frequency = new_frequency
-
         result.s = interpolation_s_re(new_frequency.f) +\
             1j*interpolation_s_im(new_frequency.f)
         result.z0 = interpolation_z0_re(new_frequency.f) +\
