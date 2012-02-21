@@ -156,7 +156,10 @@ class Calibration(object):
         self.measured = measured[:]
         self.ideals = ideals[:]
         self.type = type
-        self.frequency = frequency.copy()
+        if frequency:
+            self.frequency = frequency.copy()
+        else:
+            self.frequency = None
         # a dictionary holding key word arguments to pass to whatever
         # calibration function we are going to call
         self.kwargs = kwargs
