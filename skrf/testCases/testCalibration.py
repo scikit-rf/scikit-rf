@@ -38,7 +38,6 @@ class OnePortStandardCalibration(unittest.TestCase):
                 ideals = ideals,\
                 measured = measured,\
                 type = 'one port',\
-                frequency = self.short.frequency,\
                 is_reciprocal = True,\
                 )
         # did we find correct embeding network?
@@ -59,7 +58,6 @@ class OnePortStandardCalibration(unittest.TestCase):
                 ideals = ideals,\
                 measured = measured,\
                 type = 'one port',\
-                frequency = self.short.frequency,\
                 is_reciprocal = True,\
                 )
         # did we find correct embeding network?
