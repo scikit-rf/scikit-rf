@@ -87,6 +87,10 @@ import numpy as npy
 from numpy import pi,angle
 from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
+
+global LOG_OF_NEG
+LOG_OF_NEG = -100
+
 ## simple conversions
 def complex_2_magnitude(input):
     '''
@@ -152,7 +156,7 @@ def complex_2_reim(z):
     out = complex_components(z)
     return (out[0],out[1])
 
-def magnitude_2_db(input):
+def magnitude_2_db(input,zero_nan=True):
     '''
     converts magnitude to db
 
@@ -160,8 +164,14 @@ def magnitude_2_db(input):
             20*log10(|z|)
     where z is a complex number
     '''
-    return  20*npy.log10(input)
+    if zero_nan:
+        out = 20 * npy.log10(npy.array(input))
+        out[npy.isnan(out)] = LOG_OF_NEG
+    else:
+        out = 20*npy.log10(input)
 
+    return out
+    
 def db_2_magnitude(input):
     '''
     converts db to normal magnitude
