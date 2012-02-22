@@ -191,14 +191,13 @@ class Calibration(object):
         if new_type is None:
             # they did not supply a calibration type, so i will try
             # to inspect a measured ntwk to see how many ports it has
-            warn('''Calibration type not supplied,
-                inspecting type from measured Networks..'''),
+            print('Warning: Calibration type not supplied, inspecting type from measured Networks...')
             if self.measured[0].number_of_ports == 1:
                 new_type = 'one port'
-                warn (' using \'one port\' calibration')
+                print ('Warning: using \'one port\' calibration')
             elif self.measured[0].number_of_ports == 2:
                 new_type = 'two port'
-                warn (' using \'two port\' calibration')
+                print ('Warning: using \'two port\' calibration')
 
         if new_type not in self.calibration_algorithm_dict.keys():
             raise ValueError('incorrect calibration type')
@@ -212,8 +211,7 @@ class Calibration(object):
         elif 'two port' in new_type:
             self._nports = 2
         else:
-            raise NotImplementedError('''only one and two ports
-                supported right now''')
+            raise NotImplementedError('only one and two ports supported right now')
 
     @property
     def nports(self):
@@ -376,27 +374,39 @@ class Calibration(object):
         time. if you change something and want to re-run the calibration
          use this.
         '''
-        # some basic checking to make sure they gave us consistent data
+        # some checking to make sure they gave us consistent data
         if self.type == 'one port' or self.type == 'two port':
 
             if self.sloppy_input == True:
                 # if they gave sloppy input try to align networks based
                 # on their names
                 self.ideals= [ ideal for measure in self.measured\
-                        for ideal in self.ideals if ideal.name in measure.name]
+                    for ideal in self.ideals if ideal.name in measure.name]
+                #FIXME: should turn off sloppy_input at this point,
+                # otherwise if self is run() twice it will mess up. 
             else:
-                #1 did they supply the same number of  ideals as measured?
+                # did they supply the same number of  ideals as measured?
                 if len(self.measured) != len(self.ideals):
-                    raise(IndexError(' The length of measured and ideals lists are different. Number of ideals must equal the number of measured. '))
+                    raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured.'))
 
-            #2 are all the networks' frequency's the same?
-            index_tuple = \
-            list(itertools.permutations(range(len(self.measured)),2))
-
-            for k in index_tuple:
-                if self.measured[k[0]].frequency != \
-                        self.ideals[k[1]].frequency:
-                    raise(IndexError('Frequency information doesnt match on measured[%i], ideals[%i]. All networks must have identical frequency information'%(k[0],k[1])))
+            # ensure all the measured Networks' frequency's are the same
+            for measure in self.measured:
+                if self.measured[0].frequency != measure.frequency:
+                    raise(ValueError('measured Networks dont have matching frequencies.'))
+            # ensure that all ideals have same frequency of the measured
+            # if not, then attempt to interpolate
+            for k in range(len(self.ideals)):
+                if self.ideals[k].frequency != self.measured[0]:
+                    print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
+                    try:
+                        # try to resample our ideals network to match
+                        # the meaurement frequency
+                        self.ideals[k].resample(\
+                            self.measured[0].frequency.npoints)
+                        print ('Success')
+                        
+                    except:
+                        raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
 #
 
 
