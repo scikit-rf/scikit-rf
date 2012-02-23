@@ -2432,6 +2432,7 @@ def two_port_reflect(ntwk1, ntwk2):
             [[s11,  s21],\
             [ s21,  s22]]).\
             transpose().reshape(-1,2,2)
+    result.z0 = npy.hstack([ntwk1.z0, ntwk2.z0])
     try:
         result.name = ntwk1.name+ntwk2.name
     except(TypeError):
