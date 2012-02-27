@@ -1248,7 +1248,7 @@ def smn(self,m,n):
         >>> myntwk.plot_s_mag(m=0,n=1,color='b', marker='x')
         '''
         self.plot_vs_frequency_generic(attribute= 's_mag',\
-                y_label='Magnitude [not dB]', m=m,n=n, ax=ax,\
+                y_label='Magnitude', m=m,n=n, ax=ax,\
                 show_legend = show_legend,*args,**kwargs)
 
     def plot_s_re(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
