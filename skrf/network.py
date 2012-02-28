@@ -224,9 +224,7 @@ class Network(object):
             self.read_touchstone(touchstone_file)
             if name is not None:
                 self.name = name
-                '''
-                name of the network
-                '''
+                
 
         else:
             self.name = name
@@ -340,10 +338,14 @@ class Network(object):
     def __str__(self):
         '''
         '''
-        f=self.frequency
+        f = self.frequency
+        if self.name is None:
+            name = ''
+        else:
+            name = self.name
         output =  \
-                '%i-Port Network.  %i-%i %s.  %i points. z0='% \
-                (self.number_of_ports,f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
+                '%i-Port Network: \'%s\',  %i-%i %s,  %i points, z0='% \
+                (self.number_of_ports,name, f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
 
         return output
     def __repr__(self):
@@ -384,32 +386,27 @@ class Network(object):
             elif len(s_shape)==1:
                 s = npy.reshape(s,(-1,1,1))
         self._s = s
+        self._y = (1 - self._s) / (1 + self._s)
+        self._z = (1 + self._s) / (1 - self._s)
 
-        # dynamically generate 1-port subnetworks
-        '''
-def smn(self,m,n):
-                result = Network()
-                result.frequency = self.frequency
-                result.s = s[:,m,n]
-                # need to set characteristic impedance
-                return result
-
-        for m in range(s.shape[1]):
-                for n in range(s.shape[2]):
-                        setattr(self.__class__,'s%i%i'%(m+1,n+1),\
-                                property(lambda self: smn(self,m,n)))
+        
+        
         #s.squeeze()
-'''
 
     @property
     def y(self):
         '''
-        needs work
+        admittance parameters
         '''
-        if self.number_of_ports == 1:
-            return (1-self.s)/(1+self.s)
-        else:
-            raise(NotImplementedError)
+        return self._y
+
+    @property
+    def z(self):
+        '''
+        impedance parameters
+        '''
+        return self._z
+        
 
     # t-parameters
     @property
@@ -812,6 +809,48 @@ def smn(self,m,n):
         ntwk.z0 = self.z0.copy()
         ntwk.name = self.name
         return ntwk
+
+    def subnetwork(self,m,n):
+        '''
+        one port subnetwork of given port indecies
+
+        the characteristic impedance is set to equal that of first port
+        index.
+
+        Parameters
+        -----------
+        m : int
+            first s-parameter index (starting from 0)
+        n : int
+            second s-parameters index
+
+        Returns
+        ---------
+        ntwk : :class:`Network` object
+            the subnetwork 
+        '''
+        ntwk = self.copy()
+        ntwk.s = self.s[:,m,n]
+        ntwk.z0 = self.z0[:,m]
+        return ntwk
+
+    def generate_all_subnetworks(self):
+        '''
+        generate all one sub-networks
+
+        calls subnetwork(m,n) for all possible port indecies
+
+        See Also
+        ----------
+            subnetwork : creates subnetworks
+        '''
+        func = lambda x: re
+        # dynamically generate 1-port subnetworks
+        for m in range(self.number_of_ports):
+            for n in range(self.number_of_ports):
+                setattr(self.__class__,'s%i%i'%(m+1,n+1),\
+                    property(lambda self: self.subnetwork(m,n)))
+
         
     # touchstone file IO
     def read_touchstone(self, filename):
