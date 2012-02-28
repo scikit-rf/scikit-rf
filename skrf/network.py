@@ -352,7 +352,7 @@ class Network(object):
         return self.__str__()
     
     ## PRIMARY PROPERTIES
-    # s-parameter matrix
+    # scatering parameter matrix
     @property
     def s(self):
         '''
@@ -389,10 +389,6 @@ class Network(object):
         self._y = (1 - self._s) / (1 + self._s)
         self._z = (1 + self._s) / (1 - self._s)
 
-        
-        
-        #s.squeeze()
-
     @property
     def y(self):
         '''
@@ -407,112 +403,6 @@ class Network(object):
         '''
         return self._z
         
-
-    # t-parameters
-    @property
-    def t(self):
-        '''
-        t-parameters, aka scattering transfer parameters [#]_
-
-        this is also known or the wave cascading matrix, and is only
-        defined for a 2-port Network
-
-
-        Returns
-        --------
-        t : complex numpy.ndarry of shape `fxnxn`
-                t-parameters, aka scattering transfer parameters
-
-        References
-        -----------
-        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
-        '''
-        return s2t(self.s)
-
-    @property
-    def inv(self):
-        '''
-        a :class:`Network` object with 'inverse' s-parameters.
-
-        This is used for de-embeding. It is defined so that the inverse
-        of a Network cascaded with itself is unity.
-
-        Returns
-        ---------
-        inv : a :class:`Network` object
-                a :class:`Network` object with 'inverse' s-parameters.
-
-        See Also
-        ----------
-                inv : function which implements the inverse s-matrix
-        '''
-        if self.number_of_ports <2:
-            raise(TypeError('One-Port Networks dont have inverses'))
-        out = self.copy()
-        out.s = inv(self.s)
-        return out
-
-    # frequency information
-    @property
-    def frequency(self):
-        '''
-        frequency information for the network.
-
-        This property is a :class:`~skrf.frequency.Frequency` object.
-        It holds the frequency vector, as well frequency unit, and
-        provides other properties related to frequency information, such
-        as start, stop, etc.
-
-        Returns
-        --------
-        frequency :  :class:`~skrf.frequency.Frequency` object
-                frequency information for the network.
-
-
-        See Also
-        ---------
-                f : property holding frequency vector in Hz
-                change_frequency : updates frequency property, and
-                        interpolates s-parameters if needed
-                interpolate : interpolate function based on new frequency
-                        info
-        '''
-        try:
-            return self._frequency
-        except (AttributeError):
-            self._frequency = Frequency(0,0,0)
-            return self._frequency
-
-    @frequency.setter
-    def frequency(self, new_frequency):
-        '''
-        takes a Frequency object, see  frequency.py
-        '''
-        self._frequency = new_frequency.copy()
-
-    @property
-    def f(self):
-        '''
-        the frequency vector for the network, in Hz.
-
-        Returns
-        --------
-        f : numpy.ndarray
-                frequency vector in Hz
-
-        See Also
-        ---------
-                frequency : frequency property that holds all frequency
-                        information
-        '''
-        return self.frequency.f
-
-    @f.setter
-    def f(self,f):
-        tmpUnit = self.frequency.unit
-        self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
-        self._frequency.unit = tmpUnit
-
     # characteristic impedance
     @property
     def z0(self):
@@ -588,8 +478,133 @@ class Network(object):
         '''
         self._z0 = z0
 
-## SECONDARY PROPERTIES
+    # frequency information
+    @property
+    def frequency(self):
+        '''
+        frequency information for the network.
 
+        This property is a :class:`~skrf.frequency.Frequency` object.
+        It holds the frequency vector, as well frequency unit, and
+        provides other properties related to frequency information, such
+        as start, stop, etc.
+
+        Returns
+        --------
+        frequency :  :class:`~skrf.frequency.Frequency` object
+                frequency information for the network.
+
+
+        See Also
+        ---------
+                f : property holding frequency vector in Hz
+                change_frequency : updates frequency property, and
+                        interpolates s-parameters if needed
+                interpolate : interpolate function based on new frequency
+                        info
+        '''
+        try:
+            return self._frequency
+        except (AttributeError):
+            self._frequency = Frequency(0,0,0)
+            return self._frequency
+
+    @frequency.setter
+    def frequency(self, new_frequency):
+        '''
+        takes a Frequency object, see  frequency.py
+        '''
+        self._frequency = new_frequency.copy()
+
+    # t-parameters
+    @property
+    def t(self):
+        '''
+        t-parameters, aka scattering transfer parameters [#]_
+
+        this is also known or the wave cascading matrix, and is only
+        defined for a 2-port Network
+
+
+        Returns
+        --------
+        t : complex numpy.ndarry of shape `fxnxn`
+                t-parameters, aka scattering transfer parameters
+
+        References
+        -----------
+        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
+        '''
+        return s2t(self.s)
+
+    @property
+    def inv(self):
+        '''
+        a :class:`Network` object with 'inverse' s-parameters.
+
+        This is used for de-embeding. It is defined so that the inverse
+        of a Network cascaded with itself is unity.
+
+        Returns
+        ---------
+        inv : a :class:`Network` object
+                a :class:`Network` object with 'inverse' s-parameters.
+
+        See Also
+        ----------
+                inv : function which implements the inverse s-matrix
+        '''
+        if self.number_of_ports <2:
+            raise(TypeError('One-Port Networks dont have inverses'))
+        out = self.copy()
+        out.s = inv(self.s)
+        return out
+
+    @property
+    def f(self):
+        '''
+        the frequency vector for the network, in Hz.
+
+        Returns
+        --------
+        f : numpy.ndarray
+                frequency vector in Hz
+
+        See Also
+        ---------
+                frequency : frequency property that holds all frequency
+                        information
+        '''
+        return self.frequency.f
+
+    @f.setter
+    def f(self,f):
+        tmpUnit = self.frequency.unit
+        self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
+        self._frequency.unit = tmpUnit
+
+    
+## SECONDARY PROPERTIES
+    def gen_secondary_props(self):
+        prop_dict = {
+            's' : self.s,
+            'y' : self.y,
+            'z' : self.z,
+            }
+        component_func_dict = {
+            're': npy.real,
+            'im': npy.imag,
+            'deg': mf.complex_2_degree,
+            }
+        # dynamically generate 1-port subnetworks
+        for prop_key in prop_dict:
+            prop = prop_dict[prop_key]
+            for component_func_key in component_func_dict:
+                component_func = component_func_dict[component_func_key]
+                setattr(self.__class__,'%s_%s'\
+                    %(prop_key, component_func_key),\
+                    property(lambda self: component_func(prop)))
+                
     # s-parameters convinience properties
     @property
     def s_re(self):
@@ -844,7 +859,6 @@ class Network(object):
         ----------
             subnetwork : creates subnetworks
         '''
-        func = lambda x: re
         # dynamically generate 1-port subnetworks
         for m in range(self.number_of_ports):
             for n in range(self.number_of_ports):
