@@ -184,9 +184,16 @@ class Network(object):
     global ALMOST_ZER0
     ALMOST_ZER0=1e-6
 
+
+    global PRIMARY_PROPERTIES
+    PRIMARY_PROPERTIES = [ 's','z']
+
+    global COMPONENT_FUNC_DICT
+    COMPONENT_FUNC_DICT = {
+        }
     # used to assign y-axis labels to the plotting functions
-    global ATTRIBUTE_DICT
-    ATTRIBUTE_DICT= {
+    global COMPONENT_YLABEL_DICT
+    COMPONENT_YLABEL_DICT = {
             's_re': 'Real Part',
             's_im': 'Imag Part',
             's_mag': 'Magnitude [linear]',
@@ -200,6 +207,8 @@ class Network(object):
             's_arcl_unwrap': 'Arc Length',
             }
 
+    
+        
     ## CONSTRUCTOR
     def __init__(self, touchstone_file = None, name = None ):
         '''
@@ -585,25 +594,30 @@ class Network(object):
 
     
 ## SECONDARY PROPERTIES
-    def gen_secondary_props(self):
-        prop_dict = {
-            's' : self.s,
-            'y' : self.y,
-            'z' : self.z,
+    def add_secondary_property(self, func_key, prop_name):
+        func_dict = {
+            'real': npy.real,
+            'imag': npy.imag,
+            'degree': mf.complex_2_degree,
             }
-        component_func_dict = {
-            're': npy.real,
-            'im': npy.imag,
-            'deg': mf.complex_2_degree,
+        func = func_dict[func_key]
+        fget = lambda self: func(self.__getattribute__(prop_name))
+        setattr(self.__class__,'%s_%s'%(prop_name,func_key),\
+            property(fget))
+
+    
+    def gen_secondary_props2(self):
+        prop_list = ['s','z']
+        func_dict = {
+            'real': npy.real,
+            'imag': npy.imag,
+            'degree': mf.complex_2_degree,
             }
-        # dynamically generate 1-port subnetworks
-        for prop_key in prop_dict:
-            prop = prop_dict[prop_key]
-            for component_func_key in component_func_dict:
-                component_func = component_func_dict[component_func_key]
-                setattr(self.__class__,'%s_%s'\
-                    %(prop_key, component_func_key),\
-                    property(lambda self: component_func(prop)))
+        for prop_key in prop_list:
+            for func_key in func_dict:
+                fget = lambda self: func_dict[func_key](self.__getattribute__(prop_key))
+                setattr(self.__class__,'%s_%s'%(prop_key, func_key),\
+                    property(fget))
                 
     # s-parameters convinience properties
     @property
