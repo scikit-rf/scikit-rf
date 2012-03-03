@@ -44,7 +44,7 @@ import pylab as plb
 import os
 from copy import deepcopy, copy
 import itertools
-import warnings
+from warnings import warn
 
 from calibrationAlgorithms import *
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
@@ -82,7 +82,7 @@ class Calibration(object):
             :mod:`skrf.calibration.calibrationAlgorithms`
     '''
 
-    def __init__(self,measured, ideals, type=None, frequency=None,\
+    def __init__(self,measured, ideals, type=None, \
             is_reciprocal=False,name=None, sloppy_input=False,
             **kwargs):
         '''
@@ -100,11 +100,6 @@ class Calibration(object):
 
         Other Parameters
         -----------------
-        frequency : a :class:`~skrf.frequency.Frequency` object
-                the frequency information of the calibration if `None` then
-                the Calibration will take the frequency information     from the
-                first element in `measured`.
-
         type : string
                 the calibration algorithm. If `None`, the class will inspect
                 number of ports on first `measured` Network and choose either
@@ -152,38 +147,26 @@ class Calibration(object):
         -------------
         .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
         '''
+        # fill measured and ideals with copied lists of input 
+        self.measured = [ntwk.copy() for ntwk in measured]
+        self.ideals = [ntwk.copy() for ntwk in ideals]
 
-        self.measured = measured[:]
-        self.ideals = ideals[:]
+        self.frequency = measured[0].frequency.copy()
         self.type = type
-        self.frequency = frequency.copy()
-        # a dictionary holding key word arguments to pass to whatever
-        # calibration function we are going to call
-        self.kwargs = kwargs
+
+        # passed to calibration algorithm in run()
+        self.kwargs = kwargs 
         self.name = name
         self.is_reciprocal = is_reciprocal
-        #self.switch_terms = switch_terms
+        self.sloppy_input= sloppy_input
+
+        # initialized internal properties to None
         self._residual_ntwks = None
         self._caled_ntwks =None
         self.has_run = False
-        self.sloppy_input= sloppy_input
+        
 
     ## properties
-    @property
-    def frequency(self):
-        '''
-        frequency object for the calibration
-        '''
-        return self._frequency
-
-    @frequency.setter
-    def frequency(self, new_frequency):
-        if new_frequency is None:
-            # they did not supply frequency, so i will try
-            # to inspect a measured ntwk to  get it
-            new_frequency = self.measured[0].frequency
-        self._frequency = new_frequency.copy()
-
     @property
     def type (self):
         '''
@@ -208,13 +191,13 @@ class Calibration(object):
         if new_type is None:
             # they did not supply a calibration type, so i will try
             # to inspect a measured ntwk to see how many ports it has
-            print ('Calibration type not supplied, inspecting type from measured Networks..'),
+            print('Warning: Calibration type not supplied, inspecting type from measured Networks...')
             if self.measured[0].number_of_ports == 1:
                 new_type = 'one port'
-                print (' using \'one port\' calibration')
+                print ('Warning: using \'one port\' calibration')
             elif self.measured[0].number_of_ports == 2:
                 new_type = 'two port'
-                print (' using \'two port\' calibration')
+                print ('Warning: using \'two port\' calibration')
 
         if new_type not in self.calibration_algorithm_dict.keys():
             raise ValueError('incorrect calibration type')
@@ -243,7 +226,7 @@ class Calibration(object):
         number of ideal/measurement pairs in calibration
         '''
         if len(self.ideals) != len(self.measured):
-            warnings.warn('number of ideals and measured dont agree')
+            warn('number of ideals and measured dont agree')
         return len(self.ideals)
 
     @property
@@ -391,27 +374,39 @@ class Calibration(object):
         time. if you change something and want to re-run the calibration
          use this.
         '''
-        # some basic checking to make sure they gave us consistent data
+        # some checking to make sure they gave us consistent data
         if self.type == 'one port' or self.type == 'two port':
 
             if self.sloppy_input == True:
                 # if they gave sloppy input try to align networks based
                 # on their names
                 self.ideals= [ ideal for measure in self.measured\
-                        for ideal in self.ideals if ideal.name in measure.name]
+                    for ideal in self.ideals if ideal.name in measure.name]
+                #FIXME: should turn off sloppy_input at this point,
+                # otherwise if self is run() twice it will mess up. 
             else:
-                #1 did they supply the same number of  ideals as measured?
+                # did they supply the same number of  ideals as measured?
                 if len(self.measured) != len(self.ideals):
-                    raise(IndexError(' The length of measured and ideals lists are different. Number of ideals must equal the number of measured. '))
+                    raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured.'))
 
-            #2 are all the networks' frequency's the same?
-            index_tuple = \
-            list(itertools.permutations(range(len(self.measured)),2))
-
-            for k in index_tuple:
-                if self.measured[k[0]].frequency != \
-                        self.ideals[k[1]].frequency:
-                    raise(IndexError('Frequency information doesnt match on measured[%i], ideals[%i]. All networks must have identical frequency information'%(k[0],k[1])))
+            # ensure all the measured Networks' frequency's are the same
+            for measure in self.measured:
+                if self.measured[0].frequency != measure.frequency:
+                    raise(ValueError('measured Networks dont have matching frequencies.'))
+            # ensure that all ideals have same frequency of the measured
+            # if not, then attempt to interpolate
+            for k in range(len(self.ideals)):
+                if self.ideals[k].frequency != self.measured[0]:
+                    print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
+                    try:
+                        # try to resample our ideals network to match
+                        # the meaurement frequency
+                        self.ideals[k].resample(\
+                            self.measured[0].frequency.npoints)
+                        print ('Success')
+                        
+                    except:
+                        raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
 #
 
 

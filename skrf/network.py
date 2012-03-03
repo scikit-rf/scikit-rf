@@ -947,12 +947,24 @@ def smn(self,m,n):
 
 
         '''
-        interpolation_s = interp1d(self.frequency.f,self.s,axis=0,**kwargs)
-        interpolation_z0 = interp1d(self.frequency.f,self.z0,axis=0,**kwargs)
+        # create interpolation objects
+        interpolation_s_re = \
+            interp1d(self.frequency.f,self.s_re,axis=0,**kwargs)
+        interpolation_s_im = \
+            interp1d(self.frequency.f,self.s_im,axis=0,**kwargs)
+        interpolation_z0_re = \
+            interp1d(self.frequency.f,self.z0.real,axis=0,**kwargs)
+        interpolation_z0_im = \
+            interp1d(self.frequency.f,self.z0.imag,axis=0,**kwargs)
+
+        # make new network and fill with interpolated s, and z0
         result = self.copy()
         result.frequency = new_frequency
-        result.s = interpolation_s(new_frequency.f)
-        result.z0 = interpolation_z0(new_frequency.f)
+        result.s = interpolation_s_re(new_frequency.f) +\
+            1j*interpolation_s_im(new_frequency.f)
+        result.z0 = interpolation_z0_re(new_frequency.f) +\
+            1j*interpolation_z0_im(new_frequency.f)
+
         return result
 
     def interpolate_self_npoints(self, npoints, **kwargs):
@@ -2420,6 +2432,7 @@ def two_port_reflect(ntwk1, ntwk2):
             [[s11,  s21],\
             [ s21,  s22]]).\
             transpose().reshape(-1,2,2)
+    result.z0 = npy.hstack([ntwk1.z0, ntwk2.z0])
     try:
         result.name = ntwk1.name+ntwk2.name
     except(TypeError):

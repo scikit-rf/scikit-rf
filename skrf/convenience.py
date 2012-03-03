@@ -245,17 +245,17 @@ frequency = measured_dict.values()[0].frequency
 media = rf.__getattribute__(media_type)(frequency, **media_kwargs)
 
 cal = rf.Calibration(
-        ideals = [
-                media.(),
-                media.(),
-                media.(),
-                ],
-        measured = [
-                measured_dict[''],
-                measured_dict[''],
-                measured_dict[''],
-                ]
-        )
+    ideals = [
+        media.(),
+        media.(),
+        media.(),
+        ],
+    measured = [
+        measured_dict[''],
+        measured_dict[''],
+        measured_dict[''],
+        ]
+    )
 '''
 script_templates['cal'] = \
 '''
@@ -278,9 +278,9 @@ frequency = measured_dict.values()[0].frequency
 [ideals_dict[k].resample(frequency.npoints) for k in ideals_dict]
 
 cal = rf.Calibration(
-        ideals = [ideals_dict[k] for k in ideals_names],
-        measured = [measured_dict[k] for k in measured_names],
-        )
+    ideals = [ideals_dict[k] for k in ideals_names],
+    measured = [measured_dict[k] for k in measured_names],
+    )
 '''
 
 def script_template(template_name, file_name='skrf_script.py', \
