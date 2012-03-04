@@ -186,10 +186,22 @@ class Network(object):
 
 
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = [ 's','z']
+    PRIMARY_PROPERTIES = [ 's','z','y']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
+        're' : npy.real,
+        'im' : npy.imag,
+        'mag' : npy.abs,
+        'db' : mf.complex_2_db,
+        'rad' : npy.angle,
+        'deg' : lambda x: npy.angle(x, deg=True),
+        'arcl' : lambda x: npy.angle(x) * npy.abs(x),
+        'rad_unwrap' : lambda x: mf.unwrap_rad(npy.angle(x)),
+        'deg_unwrap' : lambda x: mf.radian_2_degree(mf.unwrap_rad(\
+            npy.angle(x))),
+        'arcl_unwrap' : lambda x: mf.unwrap_rad(npy.angle(x)) *\
+            npy.abs(x),
         }
     # used to assign y-axis labels to the plotting functions
     global COMPONENT_YLABEL_DICT
@@ -288,6 +300,7 @@ class Network(object):
         '''
         element-wise complex multiplication  of s-matrix
         '''
+        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
         result.s = result.s * a.s
         return result
@@ -296,6 +309,7 @@ class Network(object):
         '''
         element-wise addition of s-matrix
         '''
+        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
         result.s = result.s + other.s
         return result
@@ -304,6 +318,7 @@ class Network(object):
         '''
         element-wise subtraction of s-matrix
         '''
+        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
         result.s = result.s - other.s
         return result
@@ -312,23 +327,17 @@ class Network(object):
         '''
         element-wise division  of s-matrix
         '''
-        if other.number_of_ports != self.number_of_ports:
-            raise IndexError('Networks must have same number of ports.')
-        else:
-            result = self.copy()
-            try:
-                result.name = self.name+'/'+other.name
-            except TypeError:
-                pass
-            result.s =(self.s/ other.s)
-
-            return result
+        self.__compatable_for_scalar_operation_test(other)
+        result = self.copy()
+        result.s =(self.s/ other.s)
+        return result
 
     def __eq__(self,other):
         if npy.mean(npy.abs(self.s - other.s)) < ALMOST_ZER0:
             return True
         else:
             return False
+
     def __ne__(self,other):
         return (not self.__eq__(other))
 
@@ -357,11 +366,33 @@ class Network(object):
                 (self.number_of_ports,name, f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
 
         return output
+
     def __repr__(self):
         return self.__str__()
+
+    ## INTERNAL METHODS
+    def __compatable_for_scalar_operation_test(self, other):
+        '''
+        '''
+        if other.number_of_ports != self.number_of_ports:
+            raise IndexError('Networks must have same number of ports.')
+        if other.frequency  != self.frequency:
+            raise IndexError('Networks must have same frequency')
+            
+    def __generate_secondary_properties(self):
+        '''
+        '''
+        for prop_name in PRIMARY_PROPERTIES:
+            for func_name in COMPONENT_FUNC_DICT:
+                func = COMPONENT_FUNC_DICT[func_name]
+                def fget(self, f=func, p = prop_name):
+                    return f(getattr(self,p))
+                setattr(self.__class__,'%s_%s'%(prop_name, func_name),\
+                    property(fget))
+
+
     
     ## PRIMARY PROPERTIES
-    # scatering parameter matrix
     @property
     def s(self):
         '''
@@ -389,14 +420,16 @@ class Network(object):
         '''
         s_shape= npy.shape(s)
         if len(s_shape) <3:
-            if len(s_shape)==2:
+            if len(s_shape) == 2:
                 # reshape to kx1x1, this simplifies indexing in function
                 s = npy.reshape(s,(-1,s_shape[0],s_shape[0]))
-            elif len(s_shape)==1:
+            elif len(s_shape) == 1:
                 s = npy.reshape(s,(-1,1,1))
+
         self._s = s
         self._y = (1 - self._s) / (1 + self._s)
         self._z = (1 + self._s) / (1 - self._s)
+        self.__generate_secondary_properties()
 
     @property
     def y(self):
@@ -404,6 +437,7 @@ class Network(object):
         admittance parameters
         '''
         return self._y
+    
 
     @property
     def z(self):
@@ -412,7 +446,6 @@ class Network(object):
         '''
         return self._z
         
-    # characteristic impedance
     @property
     def z0(self):
         '''
@@ -487,7 +520,6 @@ class Network(object):
         '''
         self._z0 = z0
 
-    # frequency information
     @property
     def frequency(self):
         '''
@@ -525,7 +557,6 @@ class Network(object):
         '''
         self._frequency = new_frequency.copy()
 
-    # t-parameters
     @property
     def t(self):
         '''
@@ -593,182 +624,9 @@ class Network(object):
         self._frequency.unit = tmpUnit
 
     
-## SECONDARY PROPERTIES
-    def add_secondary_property(self, func_key, prop_name):
-        func_dict = {
-            'real': npy.real,
-            'imag': npy.imag,
-            'degree': mf.complex_2_degree,
-            }
-        func = func_dict[func_key]
-        fget = lambda self: func(self.__getattribute__(prop_name))
-        setattr(self.__class__,'%s_%s'%(prop_name,func_key),\
-            property(fget))
-
     
-    def gen_secondary_props2(self):
-        prop_list = ['s','z']
-        func_dict = {
-            'real': npy.real,
-            'imag': npy.imag,
-            'degree': mf.complex_2_degree,
-            }
-        for prop_key in prop_list:
-            for func_key in func_dict:
-                fget = lambda self: func_dict[func_key](self.__getattribute__(prop_key))
-                setattr(self.__class__,'%s_%s'%(prop_key, func_key),\
-                    property(fget))
                 
-    # s-parameters convinience properties
-    @property
-    def s_re(self):
-        '''
-        real part of the s-parameters.
-
-        Returns
-        --------
-        s_re : numpy.ndarray of shape fxnxn
-
-        '''
-        return npy.real(self.s)
-
-    @property
-    def s_im(self):
-        '''
-        imaginary part of the s-parameters.
-
-        Returns
-        --------
-        s_im : numpy.ndarray of shape fxnxn
-        '''
-        return npy.imag(self.s)
-
-    @property
-    def s_mag(self):
-        '''
-        magnitude of the s-parameters.
-
-        Returns
-        --------
-        s_mag : numpy.ndarray of shape fxnxn
-        '''
-        return mf.complex_2_magnitude(self.s)
-    @property
-    def s_abs(self):
-        '''
-        see :attr:`s_mag`
-        '''
-        return self.s_mag
-
-    @property
-    def s_db(self):
-        '''
-        magnitude of the s-parameters, in dB
-
-        this is calculated by
-
-        .. math::
-
-                20\cdot \log_{10}(|s|)
-
-        Returns
-        --------
-        s_db : numpy.ndarray of shape fxnxn
-
-
-
-        '''
-        return mf.complex_2_db(self.s)
-
-    @property
-    def s_deg(self):
-        '''
-        phase of the s-parameters, in degrees
-
-        Returns
-        --------
-        s_deg : numpy.ndarray of shape fxnxn
-        '''
-        return mf.complex_2_degree(self.s)
-
-    @property
-    def s_angle(self):
-        '''
-        see :attr:`s_deg`
-        '''
-        return self.s_deg
-    @property
-    def s_rad(self):
-        '''
-        phase of the s-parameters, in radians.
-
-        Returns
-        --------
-        s_rad : numpy.ndarray of shape fxnxn
-        '''
-        return mf.complex_2_radian(self.s)
-
-    @property
-    def s_deg_unwrap(self):
-        '''
-        unwrapped phase of the s-paramerts, in degrees
-
-        Returns
-        --------
-        s_deg_unwrap : numpy.ndarray of shape fxnxn
-
-
-        '''
-        return mf.radian_2_degree(self.s_rad_unwrap)
-
-    @property
-    def s_rad_unwrap(self):
-        '''
-        unwrapped phase of the s-parameters, in radians.
-
-        Returns
-        --------
-        s_rad_unwrap : numpy.ndarray of shape fxnxn
-
-        '''
-        return mf.unwrap_rad(self.s_rad)
-
-    @property
-    def s_quad(self):
-        '''
-        see :attr:`s_arcl`
-        '''
-        return self.s_arcl
-
-    @property
-    def s_arcl(self):
-        '''
-        arc-length of the s-parameters
-
-        This useful in that it is a measure of phase, but given in units
-        of distance. this is calculated by
-
-        .. math::
-
-                \\angle s \\cdot |s|
-
-        Returns
-        --------
-        s_arcl : numpy.ndarray of shape fxnxn
-        '''
-        return self.s_rad * self.s_mag
-
-    @property
-    def s_arcl_unwrap(self):
-        '''
-        unwrapped arc-length of the s-parameters, see :attr:`s_arcl`
-
-        Returns
-        --------
-        s_arcl_unwrap : numpy.ndarray of shape fxnxn
-        '''
-        return self.s_rad_unwrap * self.s_mag
-
+    ## SECONDARY PROPERTIES
     @property
     def number_of_ports(self):
         '''
@@ -781,6 +639,20 @@ class Network(object):
 
         '''
         return self.s.shape[1]
+
+    @property
+    def nports(self):
+        '''
+        the number of ports the network has.
+
+        Returns
+        --------
+        number_of_ports : number
+                the number of ports the network has.
+
+        '''
+        return self.number_of_ports
+        
     @property
     def passivity(self):
         '''
@@ -826,8 +698,7 @@ class Network(object):
         return pas_mat
 
 
-
-## CLASS METHODS
+    ## CLASS METHODS
     def copy(self):
         '''
         returns a copy of this Network
@@ -1187,17 +1058,29 @@ class Network(object):
             ax.legend()
         plb.draw()
 
-    def __generate_plot_functions(self):
+    def generate_plot_functions(self):
         '''
         generates plotting functions of Network properties vs frequency
         '''
-        for attr in ATTRIBUTE_DICT.keys():
+        for attr in COMPONENT_YLABEL_DICT.keys():
             def plot_func(*args, **kwargs):
                 self.plot_vs_frequency_generic(self,attr,\
-                        y_label=ATTRIBUTE_DICT[attr],*args, **kwargs)
+                        y_label=COMPONENT_YLABEL_DICT[attr],*args, **kwargs)
 
             plot_func.__doc__ = "\n\t\tplot the Network attribute :attr:`%s` vs frequency.\n\t\t\n\t\tParameters\n\t\t-----------\n\t\tattribute : string\n\t\t\tNetwork attribute to plot \n\t\ty_label : string, optional\n\t\t\tthe y-axis label\n\t\tm : int, optional\n\t\t\tfirst index of s-parameter matrix, if None will use all \n\t\tn : int, optional\n\t\t\tsecon index of the s-parameter matrix, if None will use all  \n\t\tax : :class:`matplotlib.Axes` object, optional\n\t\t\tAn existing Axes object to plot on\n\t\tshow_legend : Boolean\n\t\t\tdraw legend or not\n\t\t**kwargs : keyword arguments\n\t\t\tpassed to :func:`matplotlib.plot` \n\t\t\n\t\tNotes\n\t\t-------\n\t\t This function is dynamically generated by calling :func:`plot_vs_frequency_generic`\n\t\tExamples\n\t\t------------\n\t\t\n\t\t\t>>> myntwk.plot_%s(m=1,n=0,color='r')\n\t\t"%(attr,attr)
             setattr(self.__class__,'plot_'+attr,plot_func)
+
+    def add_rectangular_plot(self, attr):
+        '''
+        generates plotting functions of Network properties vs frequency
+        '''
+        
+        def plot_func(*args, **kwargs):
+            self.plot_vs_frequency_generic(self, attribute = attr,\
+                y_label=COMPONENT_YLABEL_DICT[attr],*args, **kwargs)
+
+            plot_func.__doc__ = "\n\t\tplot the Network attribute :attr:`%s` vs frequency.\n\t\t\n\t\tParameters\n\t\t-----------\n\t\tattribute : string\n\t\t\tNetwork attribute to plot \n\t\ty_label : string, optional\n\t\t\tthe y-axis label\n\t\tm : int, optional\n\t\t\tfirst index of s-parameter matrix, if None will use all \n\t\tn : int, optional\n\t\t\tsecon index of the s-parameter matrix, if None will use all  \n\t\tax : :class:`matplotlib.Axes` object, optional\n\t\t\tAn existing Axes object to plot on\n\t\tshow_legend : Boolean\n\t\t\tdraw legend or not\n\t\t**kwargs : keyword arguments\n\t\t\tpassed to :func:`matplotlib.plot` \n\t\t\n\t\tNotes\n\t\t-------\n\t\t This function is dynamically generated by calling :func:`plot_vs_frequency_generic`\n\t\tExamples\n\t\t------------\n\t\t\n\t\t\t>>> myntwk.plot_%s(m=1,n=0,color='r')\n\t\t"%(attr,attr)
+        setattr(self.__class__,'plot_' + attr, plot_func)
 
 
     def plot_polar_generic (self,attribute_r, attribute_theta,      m=0,n=0,\
