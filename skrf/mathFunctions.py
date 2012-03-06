@@ -91,6 +91,9 @@ from scipy import signal
 global LOG_OF_NEG
 LOG_OF_NEG = -100
 
+global INF
+INF = 1e99
+
 ## simple conversions
 def complex_2_magnitude(input):
     '''
@@ -240,6 +243,30 @@ def null(A, eps=1e-15):
     u, s, vh = npy.linalg.svd(A)
     null_space = npy.compress(s <= eps, vh, axis=0)
     return null_space.T
+
+
+def inf_to_num(x):
+    '''
+    converts inf and -inf's to large numbers
+
+    Parameters
+    ------------
+    x : array-like or number
+        the input array or number
+    Returns
+    -------
+    '''
+    #TODO: make this valid for complex arrays
+    try:
+        x[npy.isposinf(x)] = INF
+        x[npy.isneginf(x)] = -1*INF
+
+    except(TypeError):
+        x = npy.array(x)
+        x[npy.isposinf(x)] = INF
+        x[npy.isneginf(x)] = -1*INF
+    
+
 
 # old functions just for reference
 def complex2Scalar(input):
