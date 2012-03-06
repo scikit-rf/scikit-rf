@@ -272,7 +272,7 @@ class Network(object):
         ##convenience
         self.resample = self.interpolate_self_npoints
         #self.nports = self.number_of_ports
-
+        self.__generate_rectangular_plot_functions()
 
     ## OPERATORS
     def __pow__(self,other):
@@ -1064,17 +1064,18 @@ class Network(object):
                 if generate_label:
                     if self.name is None:
                         if plb.rcParams['text.usetex']:
-                            label_string = '$S_{'+repr(m+1) + \
-                                    repr(n+1)+'}$'
+                            label_string = '$%s_{%i%i}$'%\
+                            (attribute[0].upper(),m+1,n+1)
                         else:
-                            label_string = 'S'+repr(m+1) + repr(n+1)
+                            label_string = '%s%i%i'%\
+                            (attribute[0].upper(),m+1,n+1)
                     else:
                         if plb.rcParams['text.usetex']:
-                            label_string = self.name+', $S_{'+repr(m+1)\
-                                    + repr(n+1)+'}$'
+                            label_string = self.name+', $%s_{%i%i}$'%\
+                            (attribute[0].upper(),m+1,n+1)
                         else:
-                            label_string = self.name+', S'+repr(m+1) +\
-                                    repr(n+1)
+                            label_string = self.name+', %s%i%i'%\
+                            (attribute[0].upper(),m+1,n+1)
                     kwargs['label'] = label_string
 
                 # plot the desired attribute vs frequency
@@ -2225,11 +2226,23 @@ def s2z(s):
     ----------
     s2z : converts scattering parameters to impedance parameters
     s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
     z2s : converts impedance parameters to scattering parameters
     z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
     y2s : converts admittance parameters to impedance parameters
     y2z : converts admittance parameters to impedance parameters
-    
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+        
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
@@ -2259,44 +2272,22 @@ def s2y(s):
     ----------
     s2z : converts scattering parameters to impedance parameters
     s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
     z2s : converts impedance parameters to scattering parameters
     z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
     y2s : converts admittance parameters to impedance parameters
     y2z : converts admittance parameters to impedance parameters
-    
-    References
-    ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
-    '''
-    y =  (1 - s) / (1 + s)
-    return y
-
-def z2s(z):
-    '''
-    convert impedance parameters to scattering parameters [#]_
-
-
-    .. math::
-        s = \\frac {1 - s}{1 + s}
-
-    Parameters
-    ------------
-    z : complex array-like or number
-        impedance parameters
-
-    Returns
-    ---------
-    s : complex array-like or number
-        scattering parameters
-
-    See Also
-    ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
     
     References
     ----------
@@ -2333,6 +2324,7 @@ def s2t(s):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
+    #TODO: check rank(s) ==2
     # although unintuitive this is calculated by
     # [[s11, s21],[s12,s22]].T
     t = npy.array([
@@ -2341,7 +2333,277 @@ def s2t(s):
         [s[:,0,0]/s[:,1,0],
             1/s[:,1,0] ]
         ]).transpose()
-    return t    
+    return t   
+
+def z2s(z):
+    '''
+    convert impedance parameters to scattering parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def z2y(z):
+    '''
+    convert impedance parameters to admittance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def z2t(z):
+    '''
+    convert impedance parameters to scattering transfer parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def y2s(y):
+    '''
+    convert admittance parameters to scattering parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def y2z(y):
+    '''
+    convert admittance parameters to impedance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def y2t(y):
+    '''
+    convert admittance parameters to scattering-transfer parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
 
 def t2s(t):
     '''
@@ -2371,7 +2633,7 @@ def t2s(t):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
-    
+    #TODO: check rank(s) ==2
     s = npy.array([
         [t[:,0,1]/t[:,1,1],
              1/t[:,1,1]],
@@ -2379,6 +2641,96 @@ def t2s(t):
             -1*t[:,1,0]/t[:,1,1] ]
         ]).transpose()
     return s
+
+def t2z(t):
+    '''
+    convert scattering transfer parameters to impedance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def t2y(t):
+    '''
+    convert scattering transfer parameters to admittance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
 
 ## cascading assistance functions
 def inv(s):
