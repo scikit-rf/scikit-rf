@@ -219,13 +219,13 @@ class Network(object):
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
         }
-    # used to assign y-axis labels to the plotting functions
+    # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
     Y_LABEL_DICT = {
             're': 'Real Part',
             'im': 'Imag Part',
-            'mag': 'Magnitude [linear]',
-            'abs': 'Magnitude [linear]',
+            'mag': 'Magnitude',
+            'abs': 'Magnitude',
             'db': 'Magnitude [dB]',
             'deg': 'Phase [deg]',
             'deg_unwrap': 'Phase [deg]',
@@ -397,6 +397,9 @@ class Network(object):
             
     def __generate_secondary_properties(self):
         '''
+        creates numerous `secondary properties` which are various
+        different scalar projects of the promary properties. the primary
+        properties are  s,z, and y.
         '''
         for prop_name in PRIMARY_PROPERTIES:
             for func_name in COMPONENT_FUNC_DICT:
@@ -425,7 +428,19 @@ class Network(object):
                 setattr(self.__class__,'plot_%s'%(attribute), \
                     plot_func)
 
-    
+    def __generate_subnetworks(self):
+        '''
+        generates all one-port sub-networks
+        '''
+        for m in range(self.number_of_ports):
+            for n in range(self.number_of_ports):
+                def fget(self,m=m,n=n):
+                    ntwk = self.copy()
+                    ntwk.s = self.s[:,m,n]
+                    ntwk.z0 = self.z0[:,m]
+                    return ntwk
+                setattr(self.__class__,'s%i%i'%(m+1,n+1),property(fget))
+
     ## PRIMARY PROPERTIES
     @property
     def s(self):
@@ -464,7 +479,8 @@ class Network(object):
         self._y = s2y(self._s)
         self._z = s2z(self._s)
         self.__generate_secondary_properties()
-
+        self.__generate_subnetworks()
+       
     @property
     def y(self):
         '''
@@ -472,7 +488,6 @@ class Network(object):
         '''
         return self._y
     
-
     @property
     def z(self):
         '''
@@ -742,45 +757,8 @@ class Network(object):
         ntwk.name = self.name
         return ntwk
 
-    def subnetwork(self,m,n):
-        '''
-        one port subnetwork of given port indecies
 
-        the characteristic impedance is set to equal that of first port
-        index.
-
-        Parameters
-        -----------
-        m : int
-            first s-parameter index (starting from 0)
-        n : int
-            second s-parameters index
-
-        Returns
-        ---------
-        ntwk : :class:`Network` object
-            the subnetwork 
-        '''
-        ntwk = self.copy()
-        ntwk.s = self.s[:,m,n]
-        ntwk.z0 = self.z0[:,m]
-        return ntwk
-
-    def generate_all_subnetworks(self):
-        '''
-        generate all one sub-networks
-
-        calls subnetwork(m,n) for all possible port indecies
-
-        See Also
-        ----------
-            subnetwork : creates subnetworks
-        '''
-        # dynamically generate 1-port subnetworks
-        for m in range(self.number_of_ports):
-            for n in range(self.number_of_ports):
-                setattr(self.__class__,'s%i%i'%(m+1,n+1),\
-                    property(lambda self: self.subnetwork(m,n)))
+    
 
         
     # touchstone file IO
