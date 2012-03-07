@@ -31,9 +31,13 @@ Charts
 -------
 
 .. autosummary::
-        :toctree: generated/
+    :toctree: generated/
 
-        smith
+    smith
+    plot_rectangular
+    plot_polar
+    plot_complex_rectangular 
+    plot_complex_polar
 
 '''
 import pylab as plb
@@ -125,25 +129,39 @@ def smith(smithR=1, chart_type = 'z',ax=None):
         cc=ax1.add_patch(currentContour)
         cc.set_clip_path(clipc)
 
-
-def plot_complex(z, ax=None, x_label='Real', y_label='Imaginary', 
-    title=None, show_legend=True, *args, **kwargs):
+def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
+    show_legend=True, axis_equal=True, ax=None, *args, **kwargs):
     '''
-    plot complex data on the complex plane
+    plots rectangular data and optionally label axes.
 
     Parameters
     ------------
+    z : array-like, of complex data
+        data to plot
+    x_label : string
+        x-axis label
+    y_label : string
+        y-axis label
+    title : string
+        plot title
+    show_legend : Boolean
+        controls the drawing of the legend
+    ax : :class:`matplotlib.axes.AxesSubplot` object
+        axes to draw on
+    *args,**kwargs : passed to pylab.plot
+    
     '''
     if ax is None:
         ax = plb.gca()
 
-    ax.plot(npy.real(z), npy.imag(z), *args, **kwargs)
+    ax.plot(x, y, *args, **kwargs)
 
-    ax.axis('equal')
     if x_label is not None:
         ax.set_xlabel(x_label)
+
     if y_label is not None:
         ax.set_ylabel(y_label)
+
     if title is not None:
         ax.set_title(title)
 
@@ -151,6 +169,192 @@ def plot_complex(z, ax=None, x_label='Real', y_label='Imaginary',
         # only show legend if they provide a label
         if 'label' in kwargs:
             ax.legend()
+
+    if axis_equal:
+        print 'axis is equal'
+        ax.axis('equal')
         
+    if plb.isinteractive():
+        plb.draw()
+
+def plot_polar(theta, r, x_label=None, y_label=None, title=None,
+    show_legend=True, axis_equal=False, ax=None, *args, **kwargs):
+    '''
+    plots polar data on a polar plot and optionally label axes.
+
+    Parameters
+    ------------
+    theta : array-like
+        data to plot
+    r : array-like
+        
+    x_label : string
+        x-axis label
+    y_label : string
+        y-axis label
+    title : string
+        plot title
+    show_legend : Boolean
+        controls the drawing of the legend
+    ax : :class:`matplotlib.axes.AxesSubplot` object
+        axes to draw on
+    *args,**kwargs : passed to pylab.plot
+    
+    See Also
+    ----------
+    plot_rectangular : plots rectangular data
+    plot_complex_rectangular : plot complex data on complex plane
+    plot_polar : plot polar data
+    plot_complex_polar : plot complex data on polar plane
+    plot_smith : plot complex data on smith chart
+
+    '''
+    if ax is None:
+        ax = plb.gca(polar=True)
+
+    ax.plot(theta, r, *args, **kwargs)
+
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+
+    if title is not None:
+        ax.set_title(title)
+
+    if show_legend:
+        # only show legend if they provide a label
+        if 'label' in kwargs:
+            ax.legend()
+
+    if axis_equal:
+        ax.axis('equal')
+        
+    if plb.isinteractive():
+        plb.draw()
+
+def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
+    title='Complex Plane', show_legend=True, axis_equal=True, ax=None,
+    *args, **kwargs):
+    '''
+    plot complex data on the complex plane
+
+    Parameters
+    ------------
+    z : array-like, of complex data
+        data to plot
+    x_label : string
+        x-axis label
+    y_label : string
+        y-axis label
+    title : string
+        plot title
+    show_legend : Boolean
+        controls the drawing of the legend
+    ax : :class:`matplotlib.axes.AxesSubplot` object
+        axes to draw on
+    *args,**kwargs : passed to pylab.plot
+
+    See Also
+    ----------
+    plot_rectangular : plots rectangular data
+    plot_complex_rectangular : plot complex data on complex plane
+    plot_polar : plot polar data
+    plot_complex_polar : plot complex data on polar plane
+    plot_smith : plot complex data on smith chart
+    
+    '''
+    x = npy.real(z)
+    y = npy.imag(z)
+    plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
+        title=title, show_legend=show_legend, axis_equal=axis_equal,
+        ax=ax, *args, **kwargs)
+
+def plot_complex_polar(z, x_label=None, y_label=None,
+    title=None, show_legend=True, axis_equal=False, ax=None,
+    *args, **kwargs):
+    '''
+    plot complex data in polar format.
+
+    Parameters
+    ------------
+    z : array-like, of complex data
+        data to plot
+    x_label : string
+        x-axis label
+    y_label : string
+        y-axis label
+    title : string
+        plot title
+    show_legend : Boolean
+        controls the drawing of the legend
+    ax : :class:`matplotlib.axes.AxesSubplot` object
+        axes to draw on
+    *args,**kwargs : passed to pylab.plot
+
+    See Also
+    ----------
+    plot_rectangular : plots rectangular data
+    plot_complex_rectangular : plot complex data on complex plane
+    plot_polar : plot polar data
+    plot_complex_polar : plot complex data on polar plane
+    plot_smith : plot complex data on smith chart
+    '''
+    theta = npy.angle(z)
+    r = npy.abs(z)
+    plot_polar(theta=theta, r=r, x_label=x_label, y_label=y_label,
+        title=title, show_legend=show_legend, axis_equal=axis_equal,
+        ax=ax, *args, **kwargs)
+
+def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
+    y_label='Imag', title='Complex Plane', show_legend=True,
+    axis_equal=False, ax=None, *args, **kwargs):
+    '''
+    plot complex data on smith chart
+
+    Parameters
+    ------------
+    z : array-like, of complex data
+        data to plot
+    smith_r : number
+        radius of smith chart
+    chart_type : ['z','y']
+        Contour type for chart.
+         * *'z'* : lines of constant impedance
+         * *'y'* : lines of constant admittance
+    x_label : string
+        x-axis label
+    y_label : string
+        y-axis label
+    title : string
+        plot title
+    show_legend : Boolean
+        controls the drawing of the legend
+    ax : :class:`matplotlib.axes.AxesSubplot` object
+        axes to draw on
+    *args,**kwargs : passed to pylab.plot
+
+    See Also
+    ----------
+    plot_rectangular : plots rectangular data
+    plot_complex_rectangular : plot complex data on complex plane
+    plot_polar : plot polar data
+    plot_complex_polar : plot complex data on polar plane
+    plot_smith : plot complex data on smith chart
+    '''
+    
+    if ax is None:
+        ax = plb.gca()
+
+    # test if smith chart is already drawn
+    if len(ax.patches) == 0:
+        smith(ax=ax, smithR = smith_r, chart_type=chart_type)
+
+    plot_complex_rectangular(z, x_label=x_label, y_label=y_label,
+        title=title, show_legend=show_legend, axis_equal=axis_equal,
+        ax=ax, *args, **kwargs)
+
+    ax.axis(smith_r*npy.array([-1., 1., -1., 1.]))
     if plb.isinteractive():
         plb.draw()
