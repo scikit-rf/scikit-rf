@@ -124,3 +124,33 @@ def smith(smithR=1, chart_type = 'z',ax=None):
     for currentContour in contour:
         cc=ax1.add_patch(currentContour)
         cc.set_clip_path(clipc)
+
+
+def plot_complex(z, ax=None, x_label='Real', y_label='Imaginary', 
+    title=None, show_legend=True, *args, **kwargs):
+    '''
+    plot complex data on the complex plane
+
+    Parameters
+    ------------
+    '''
+    if ax is None:
+        ax = plb.gca()
+
+    ax.plot(npy.real(z), npy.imag(z), *args, **kwargs)
+
+    ax.axis('equal')
+    if x_label is not None:
+        ax.set_xlabel(x_label)
+    if y_label is not None:
+        ax.set_ylabel(y_label)
+    if title is not None:
+        ax.set_title(title)
+
+    if show_legend:
+        # only show legend if they provide a label
+        if 'label' in kwargs:
+            ax.legend()
+        
+    if plb.isinteractive():
+        plb.draw()
