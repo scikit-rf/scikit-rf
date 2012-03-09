@@ -25,7 +25,7 @@ plotting (:mod:`skrf.plotting`)
 ========================================
 
 
-This module provides plotting functions which dont belong to any class.
+This module provides general plotting functions.
 
 Charts
 -------
@@ -34,10 +34,12 @@ Charts
     :toctree: generated/
 
     smith
+    plot_smith
     plot_rectangular
     plot_polar
     plot_complex_rectangular 
     plot_complex_polar
+    
 
 '''
 import pylab as plb
@@ -130,7 +132,7 @@ def smith(smithR=1, chart_type = 'z',ax=None):
         cc.set_clip_path(clipc)
 
 def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
-    show_legend=True, axis_equal=True, ax=None, *args, **kwargs):
+    show_legend=True, axis='tight', ax=None, *args, **kwargs):
     '''
     plots rectangular data and optionally label axes.
 
@@ -170,9 +172,8 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
         if 'label' in kwargs:
             ax.legend()
 
-    if axis_equal:
-        print 'axis is equal'
-        ax.axis('equal')
+    if axis is not None:
+        ax.axis(axis)
         
     if plb.isinteractive():
         plb.draw()
@@ -235,7 +236,7 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
         plb.draw()
 
 def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
-    title='Complex Plane', show_legend=True, axis_equal=True, ax=None,
+    title='Complex Plane', show_legend=True, axis='equal', ax=None,
     *args, **kwargs):
     '''
     plot complex data on the complex plane
@@ -268,7 +269,7 @@ def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
     x = npy.real(z)
     y = npy.imag(z)
     plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
-        title=title, show_legend=show_legend, axis_equal=axis_equal,
+        title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
 def plot_complex_polar(z, x_label=None, y_label=None,
@@ -309,7 +310,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
 
 def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imag', title='Complex Plane', show_legend=True,
-    axis_equal=False, ax=None, *args, **kwargs):
+    axis='equal', ax=None, force_chart = False, *args, **kwargs):
     '''
     plot complex data on smith chart
 
@@ -331,6 +332,10 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
         plot title
     show_legend : Boolean
         controls the drawing of the legend
+    axis_equal: Boolean
+        sets axis to be equal increments (calls axis('equal'))
+    force_chart : Boolean
+        forces the re-drawing of smith chart 
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
     *args,**kwargs : passed to pylab.plot
@@ -348,11 +353,12 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
         ax = plb.gca()
 
     # test if smith chart is already drawn
-    if len(ax.patches) == 0:
-        smith(ax=ax, smithR = smith_r, chart_type=chart_type)
+    if not force_chart:
+        if len(ax.patches) == 0:
+            smith(ax=ax, smithR = smith_r, chart_type=chart_type)
 
     plot_complex_rectangular(z, x_label=x_label, y_label=y_label,
-        title=title, show_legend=show_legend, axis_equal=axis_equal,
+        title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
     ax.axis(smith_r*npy.array([-1., 1., -1., 1.]))
