@@ -272,7 +272,7 @@ class Network(object):
         ##convenience
         self.resample = self.interpolate_self_npoints
         #self.nports = self.number_of_ports
-        self.__generate_rectangular_plot_functions()
+        self.__generate_plot_functions()
 
     ## OPERATORS
     def __pow__(self,other):
@@ -394,7 +394,7 @@ class Network(object):
         if other.frequency  != self.frequency:
             raise IndexError('Networks must have same frequency. See `Network.interpolate`')
 
-        if other.s.shape != self.number_of_ports:
+        if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
         
     def __generate_secondary_properties(self):
@@ -411,14 +411,14 @@ class Network(object):
                 setattr(self.__class__,'%s_%s'%(prop_name, func_name),\
                     property(fget))
 
-    def __generate_rectangular_plot_functions(self):
+    def __generate_plot_functions(self):
         '''
         '''
         for prop_name in PRIMARY_PROPERTIES:
 
-            def plot_prop_polar(self, prop_name=prop_name,
+            def plot_prop_polar(self, 
                 m=None, n=None, ax=None,
-                show_legend=True,*args, **kwargs):
+                show_legend=True ,prop_name=prop_name,*args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -507,9 +507,9 @@ class Network(object):
             setattr(self.__class__,'plot_%s_polar'%(prop_name), \
                 plot_prop_polar)
 
-            def plot_prop_rect(self, prop_name=prop_name,
+            def plot_prop_rect(self, 
                 m=None, n=None, ax=None,
-                show_legend=True,*args, **kwargs):
+                show_legend=True,prop_name=prop_name,*args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -527,9 +527,9 @@ class Network(object):
                     gen_label = False
 
                 
-                was_interactive = plb.isinteractive
-                if was_interactive:
-                    plb.interactive(False)
+                #was_interactive = plb.isinteractive
+                #if was_interactive:
+                #    plb.interactive(False)
                     
                 for m in M:
                     for n in N:
@@ -558,10 +558,10 @@ class Network(object):
                             z = getattr(self,prop_name)[:,m,n],
                             *args, **kwargs)
 
-                if was_interactive:
-                    plb.interactive(True)
-                    plb.draw()
-                    plb.show()
+                #if was_interactive:
+                #    plb.interactive(True)
+                #    plb.draw()
+                #    plb.show()
             
             plot_prop_rect.__doc__ = '''
     plot the Network attribute :attr:`%s` vs frequency.
@@ -603,9 +603,9 @@ class Network(object):
                 attribute = '%s_%s'%(prop_name, func_name)
                 y_label = Y_LABEL_DICT[func_name]
                 
-                def plot_func(self, attribute=attribute,
-                    y_label=y_label, m=None, n=None, ax=None,
-                    show_legend=True,*args, **kwargs):
+                def plot_func(self,  m=None, n=None, ax=None,
+                    show_legend=True,attribute=attribute,
+                    y_label=y_label,*args, **kwargs):
 
                     # create index lists, if not provided by user
                     if m is None:
@@ -622,10 +622,13 @@ class Network(object):
                     else:
                         gen_label = False
 
-                    
-                    was_interactive = plb.isinteractive
-                    if was_interactive:
-                        plb.interactive(False)
+                    #TODO: turn off interactive plotting for performance
+                    # this didnt work because it required a show()
+                    # to be called, which in turn, disrupted testCases
+                    #
+                    #was_interactive = plb.isinteractive
+                    #if was_interactive:
+                    #    plb.interactive(False)
                         
                     for m in M:
                         for n in N:
@@ -658,10 +661,10 @@ class Network(object):
                                 y_label = y_label,
                                 *args, **kwargs)
 
-                    if was_interactive:
-                        plb.interactive(True)
-                        plb.draw()
-                        plb.show()
+                    #if was_interactive:
+                    #    plb.interactive(True)
+                    #    plb.draw()
+                    #    #plb.show()
                 
                 plot_func.__doc__ = '''
         plot the Network attribute :attr:`%s` vs frequency.
@@ -1130,8 +1133,8 @@ class Network(object):
 
         outputFile.close()
 
-
-    # self-modifications
+    
+    # interpolation
     def interpolate(self, new_frequency,**kwargs):
         '''
         calculates an interpolated network.
@@ -1376,6 +1379,15 @@ class Network(object):
                     y_label='Passivity', m=mn,n=mn, ax=ax,\
                     show_legend = show_legend,*args,**kwargs)
 
+    def plot_it_all(self,*args, **kwargs):
+        plb.subplot(221)
+        getattr(self,'plot_s_db')(*args, **kwargs)
+        plb.subplot(222)
+        getattr(self,'plot_s_deg')(*args, **kwargs)
+        plb.subplot(223)
+        getattr(self,'plot_s_smith')(*args, **kwargs)
+        plb.subplot(224)
+        getattr(self,'plot_s_deg_unwrap')(*args, **kwargs)
 
     # noise
     def add_noise_polar(self,mag_dev, phase_dev,**kwargs):
