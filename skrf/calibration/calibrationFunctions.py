@@ -40,6 +40,8 @@ from itertools import product, combinations, permutations
 from calibration import Calibration
 from numpy import array
 
+
+
 def cartesian_product_calibration_set( ideals, measured, *args, **kwargs):
     '''
     This function is used for calculating calibration uncertainty due
