@@ -40,6 +40,15 @@ CalibrationSet Class
 '''
 from itertools import product, combinations, permutations
 from calibration import Calibration
+from ..networkSet import NetworkSet
+
+def cartesian_product(ideals, measured_sets, *args, **kwargs):
+    '''
+    '''
+    measured_lists = product(*[k[:] for k in measured_sets])
+    return [Calibration(ideals = ideals, measured = measured, *args, **kwargs) \
+        for measured in measured_lists ]
+
 
 class CalibrationSet(object):
     '''
@@ -55,17 +64,21 @@ class CalibrationSet(object):
         '''
         self.ideals = ideals
         self.measured_sets = measured_sets
+        self.type = type
         self.args = args
         self.kwargs = kwargs
+        self.cal_list = None
         self.run()
+
+    def apply_cal(self, raw_ntwk, *args, **kwargs):
+        '''
+        '''
+        return NetworkSet([k.apply_cal(raw_ntwk) for k in self.cal_list],
+            *args, **kwargs)
         
     def run(self):
-        self.cal_list = combinitoric_func_dict[self.type](
+        self.cal_list = self.combinitoric_func_dict[self.type](
             ideals = self.ideals,
             measured_sets = self.measured_sets,
             *self.args, **self.kwargs)
     
-def cartesian_product(ideals, measured_sets): 
-    measured_lists = product([k[:] for k in self.measured_sets])
-    return [Calibration(ideals = self.ideals, measured = measured) \
-        for measured in measured_lists ]
