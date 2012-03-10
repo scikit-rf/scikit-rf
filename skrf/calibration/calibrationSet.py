@@ -75,7 +75,22 @@ class CalibrationSet(object):
         '''
         return NetworkSet([k.apply_cal(raw_ntwk) for k in self.cal_list],
             *args, **kwargs)
-        
+
+    def plot_uncertainty_per_standard(self):
+        '''
+        '''
+        self.dankness('std_s','plot_s_mag')
+
+    def dankness(self, prop, func, *args, **kwargs):
+        '''
+        '''
+        try:
+            [k.__getattribute__(prop).__getattribute__(func)\
+                (*args, **kwargs) for k in self.measured_sets]
+        except (TypeError):
+            return [k.__getattribute__(prop).__getattribute__(func) \
+                for k in self.measured_sets]
+                
     def run(self):
         self.cal_list = self.combinitoric_func_dict[self.type](
             ideals = self.ideals,
