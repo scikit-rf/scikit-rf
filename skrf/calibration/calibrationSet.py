@@ -42,34 +42,48 @@ from itertools import product, combinations, permutations
 from calibration import Calibration
 from ..networkSet import NetworkSet
 
+
+
 def cartesian_product(ideals, measured_sets, *args, **kwargs):
     '''
     '''
     measured_lists = product(*[k[:] for k in measured_sets])
-    return [Calibration(ideals = ideals, measured = measured, *args, **kwargs) \
-        for measured in measured_lists ]
+    return [Calibration(ideals = ideals, measured = measured,
+        *args, **kwargs) for measured in measured_lists ]
 
+def dot_product(ideals, measured_sets, *args, **kwargs):
+    '''
+    '''
+    for measured_set in measured_sets:
+        if len(measured_set) != len(measured_sets[0]):
+            raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
+
+    cal_list = []
+    for k in range(len(measured_sets)):
+        measured = [measured_set[k] for measured_set in measured_sets]
+        cal_list.append(
+            Calibration(ideals=ideals, measured= measured,
+            *args,**kwargs)
+            )
+        
+    return cal_list
 
 class CalibrationSet(object):
     '''
     '''
-    combinitoric_func_dict = {
-        'cartesian': cartesian_product,
-        }
 
-    def __init__(self, ideals, measured_sets, type='cartesian',
+    def __init__(self, ideals, measured_sets, combinatoric_func,
         *args, **kwargs):
         '''
         
         '''
         self.ideals = ideals
         self.measured_sets = measured_sets
-        self.type = type
         self.args = args
         self.kwargs = kwargs
-        self.cal_list = None
+        self.combinatoric_func = combinatoric_func
         self.run()
-
+        
     def apply_cal(self, raw_ntwk, *args, **kwargs):
         '''
         '''
@@ -90,10 +104,28 @@ class CalibrationSet(object):
         except (TypeError):
             return [k.__getattribute__(prop).__getattribute__(func) \
                 for k in self.measured_sets]
-                
+
     def run(self):
-        self.cal_list = self.combinitoric_func_dict[self.type](
+        self.cal_list = self.combinatoric_func(
             ideals = self.ideals,
             measured_sets = self.measured_sets,
             *self.args, **self.kwargs)
-    
+
+class CalibrationSetCartesian(CalibrationSet):
+    def __init__(self, ideals, measured_sets, *args, **kwargs):
+        print (ideals, measured_sets)
+        CalibrationSet.__init__(self,
+            ideals = ideals,
+            measured_sets = measured_sets,
+            combinatoric_func = cartesian_product,
+            *args, **kwargs)
+            
+class CalibrationSetDot(CalibrationSet):
+    def __init__(self, ideals, measured_sets, *args, **kwargs):
+        print (ideals, measured_sets)
+        CalibrationSet.__init__(self,
+            ideals = ideals,
+            measured_sets = measured_sets,
+            combinatoric_func = dot_product,
+            *args, **kwargs)
+
