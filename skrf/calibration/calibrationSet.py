@@ -111,7 +111,7 @@ class CalibrationSet(object):
             measured_sets = self.measured_sets,
             *self.args, **self.kwargs)
 
-class CalibrationSetCartesian(CalibrationSet):
+class Cartesian(CalibrationSet):
     def __init__(self, ideals, measured_sets, *args, **kwargs):
         print (ideals, measured_sets)
         CalibrationSet.__init__(self,
@@ -120,7 +120,7 @@ class CalibrationSetCartesian(CalibrationSet):
             combinatoric_func = cartesian_product,
             *args, **kwargs)
             
-class CalibrationSetDot(CalibrationSet):
+class Dot(CalibrationSet):
     def __init__(self, ideals, measured_sets, *args, **kwargs):
         print (ideals, measured_sets)
         CalibrationSet.__init__(self,
