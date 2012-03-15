@@ -233,10 +233,21 @@ from scipy.constants import *
 import skrf as rf
 
 ################################# INPUT ################################
-measured_dir = ''
-media_type = ''
-media_kwargs ={}
-f_unit = 'ghz'
+media_type = 'RectangularWaveguide'
+media_kwargs ={'a':10*mil}
+f_unit = 'thz'
+
+measured_dir = '.'
+measured_names =['short', 'delay short', 'match']
+ideals = [\
+    ['short',
+        {'name':'short'} ],
+    ['delay_short',
+        {'name':'delay short', 'd': 106*micron } ],
+    ['match',
+        {'name':'match'} ],
+    ]
+
 ########################################################################
 
 
@@ -245,16 +256,8 @@ frequency = measured_dict.values()[0].frequency
 media = rf.__getattribute__(media_type)(frequency, **media_kwargs)
 
 cal = rf.Calibration(
-    ideals = [
-        media.(),
-        media.(),
-        media.(),
-        ],
-    measured = [
-        measured_dict[''],
-        measured_dict[''],
-        measured_dict[''],
-        ]
+    ideals = [ media.__getattribute__(k[0])(**k[1]) for k in ideals[:] ],
+    measured = [ measured_dict[k] for k in measured_names ]
     )
 '''
 script_templates['cal'] = \
