@@ -486,6 +486,7 @@ class NetworkSet(object):
             raise(ValueError('incorrect plot type'))
 
         ax.set_ylabel(ylabel_dict.get(attribute,''))
+        ax.axis('tight')
 
     def plot_uncertainty_bounds_s_db(self,*args, **kwargs):
         '''

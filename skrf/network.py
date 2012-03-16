@@ -37,55 +37,71 @@ Network Class
 ===============
 
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
+    
+    Network
 
-   Network
 
-
-Functions Operating on Networks
+Connecting Networks
 ===============================
 
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
+    
+    connect
+    innerconnect
+    cascade
+    de_embed
 
-   connect
-   innerconnect
-   cascade
-   de_embed
-   average
-   one_port_2_two_port
-   
-Supporting Functions
-=====================
-
-.. autosummary::
-   :toctree: generated/
-
-   connect_s
-   innerconnect_s
-   s2t
-   t2s
-   inv
 
 Interpolation
 ================
+
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
+    
+    Network.interpolate
+    Network.interpolate_self
+    Network.interpolate_self_npoints (Network.resample)
+
    
-   Network.interpolate
-   Network.interpolate_self
-   Network.interpolate_self_npoints (Network.resample)
-   
+Supporting Functions
+======================
+
+.. autosummary::
+    :toctree: generated/
+    
+    inv
+    connect_s
+    innerconnect_s
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
+    y2z
+    y2t
+    t2s
+    t2z
+    t2y
+
 
 Misc Functions
 =====================
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
 
+    average
+    one_port_2_two_port
     impedance_mismatch
     load_all_touchstones
     write_dict_of_networks
     csv_2_touchstone
+
+
+
 '''
 import os
 import warnings
@@ -99,7 +115,7 @@ from scipy.interpolate import interp1d # for Network.interpolate()
 import  mathFunctions as mf
 import touchstone
 from frequency import Frequency
-from plotting import smith
+from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
 
 try:
@@ -110,9 +126,9 @@ except:
 class Network(object):
     '''
 
-    A n-port network.
+    A n-port electrical network.
 
-    A n-port networks is defined by three quantities,
+    A n-port network may be defined by three quantities,
      * scattering parameter matrix (s-matrix)
      * port characteristic impedance matrix
      * frequency information
@@ -184,22 +200,43 @@ class Network(object):
     global ALMOST_ZER0
     ALMOST_ZER0=1e-6
 
-    # used to assign y-axis labels to the plotting functions
-    global ATTRIBUTE_DICT
-    ATTRIBUTE_DICT= {
-            's_re': 'Real Part',
-            's_im': 'Imag Part',
-            's_mag': 'Magnitude [linear]',
-            's_abs': 'Magnitude [linear]',
-            's_db': 'Magnitude [dB]',
-            's_deg': 'Phase [deg]',
-            's_deg_unwrap': 'Phase [deg]',
-            's_rad': 'Phase [rad]',
-            's_rad_unwrap': 'Phase [rad]',
-            's_arcl': 'Arc Length',
-            's_arcl_unwrap': 'Arc Length',
-            }
 
+    global PRIMARY_PROPERTIES
+    PRIMARY_PROPERTIES = [ 's','z','y']
+
+    global COMPONENT_FUNC_DICT
+    COMPONENT_FUNC_DICT = {
+        're'    : npy.real,
+        'im'    : npy.imag,
+        'mag'   : npy.abs,
+        'db'    : mf.complex_2_db,
+        'rad'   : npy.angle,
+        'deg'   : lambda x: npy.angle(x, deg=True),
+        'arcl'  : lambda x: npy.angle(x) * npy.abs(x),
+        'rad_unwrap'    : lambda x: mf.unwrap_rad(npy.angle(x)),
+        'deg_unwrap'    : lambda x: mf.radian_2_degree(mf.unwrap_rad(\
+            npy.angle(x))),
+        'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
+            npy.abs(x),
+        }
+    # provides y-axis labels to the plotting functions
+    global Y_LABEL_DICT
+    Y_LABEL_DICT = {
+        're'    : 'Real Part',
+        'im'    : 'Imag Part',
+        'mag'   : 'Magnitude',
+        'abs'   : 'Magnitude',
+        'db'    : 'Magnitude [dB]',
+        'deg'   : 'Phase [deg]',
+        'deg_unwrap'    : 'Phase [deg]',
+        'rad'   : 'Phase [rad]',
+        'rad_unwrap'    : 'Phase [rad]',
+        'arcl'  : 'Arc Length',
+        'arcl_unwrap'   : 'Arc Length',
+        }
+
+    
+        
     ## CONSTRUCTOR
     def __init__(self, touchstone_file = None, name = None ):
         '''
@@ -224,9 +261,7 @@ class Network(object):
             self.read_touchstone(touchstone_file)
             if name is not None:
                 self.name = name
-                '''
-                name of the network
-                '''
+                
 
         else:
             self.name = name
@@ -237,7 +272,7 @@ class Network(object):
         ##convenience
         self.resample = self.interpolate_self_npoints
         #self.nports = self.number_of_ports
-
+        self.__generate_plot_functions()
 
     ## OPERATORS
     def __pow__(self,other):
@@ -281,6 +316,7 @@ class Network(object):
         '''
         element-wise complex multiplication  of s-matrix
         '''
+        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
         result.s = result.s * a.s
         return result
@@ -289,6 +325,7 @@ class Network(object):
         '''
         element-wise addition of s-matrix
         '''
+        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
         result.s = result.s + other.s
         return result
@@ -297,6 +334,7 @@ class Network(object):
         '''
         element-wise subtraction of s-matrix
         '''
+        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
         result.s = result.s - other.s
         return result
@@ -305,23 +343,17 @@ class Network(object):
         '''
         element-wise division  of s-matrix
         '''
-        if other.number_of_ports != self.number_of_ports:
-            raise IndexError('Networks must have same number of ports.')
-        else:
-            result = self.copy()
-            try:
-                result.name = self.name+'/'+other.name
-            except TypeError:
-                pass
-            result.s =(self.s/ other.s)
-
-            return result
+        self.__compatable_for_scalar_operation_test(other)
+        result = self.copy()
+        result.s =(self.s/ other.s)
+        return result
 
     def __eq__(self,other):
         if npy.mean(npy.abs(self.s - other.s)) < ALMOST_ZER0:
             return True
         else:
             return False
+
     def __ne__(self,other):
         return (not self.__eq__(other))
 
@@ -340,17 +372,349 @@ class Network(object):
     def __str__(self):
         '''
         '''
-        f=self.frequency
+        f = self.frequency
+        if self.name is None:
+            name = ''
+        else:
+            name = self.name
         output =  \
-                '%i-Port Network.  %i-%i %s.  %i points. z0='% \
-                (self.number_of_ports,f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
+                '%i-Port Network: \'%s\',  %i-%i %s,  %i points, z0='% \
+                (self.number_of_ports,name, f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
 
         return output
+
     def __repr__(self):
         return self.__str__()
+
+    ## INTERNAL CODE GENERATION METHODS
+    def __compatable_for_scalar_operation_test(self, other):
+        '''
+        tests to make sure other network's s-matrix is of same shape
+        '''
+        if other.frequency  != self.frequency:
+            raise IndexError('Networks must have same frequency. See `Network.interpolate`')
+
+        if other.s.shape != self.s.shape:
+            raise IndexError('Networks must have same number of ports.')
+        
+    def __generate_secondary_properties(self):
+        '''
+        creates numerous `secondary properties` which are various
+        different scalar projects of the promary properties. the primary
+        properties are  s,z, and y.
+        '''
+        for prop_name in PRIMARY_PROPERTIES:
+            for func_name in COMPONENT_FUNC_DICT:
+                func = COMPONENT_FUNC_DICT[func_name]
+                def fget(self, f=func, p = prop_name):
+                    return f(getattr(self,p))
+                setattr(self.__class__,'%s_%s'%(prop_name, func_name),\
+                    property(fget))
+
+    def __generate_plot_functions(self):
+        '''
+        '''
+        for prop_name in PRIMARY_PROPERTIES:
+
+            def plot_prop_polar(self, 
+                m=None, n=None, ax=None,
+                show_legend=True ,prop_name=prop_name,*args, **kwargs):
+
+                # create index lists, if not provided by user
+                if m is None:
+                    M = range(self.number_of_ports)
+                else:
+                    M = [m]
+                if n is None:
+                    N = range(self.number_of_ports)
+                else:
+                    N = [n]
+
+                if 'label'  not in kwargs.keys():
+                    gen_label = True
+                else:
+                    gen_label = False
+
+                
+                was_interactive = plb.isinteractive
+                if was_interactive:
+                    plb.interactive(False)
+                    
+                for m in M:
+                    for n in N:
+                        # set the legend label for this trace to the networks
+                        # name if it exists, and they didnt pass a name key in
+                        # the kwargs
+                        if gen_label:
+                            if self.name is None:
+                                if plb.rcParams['text.usetex']:
+                                    label_string = '$%s_{%i%i}$'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                                else:
+                                    label_string = '%s%i%i'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                            else:
+                                if plb.rcParams['text.usetex']:
+                                    label_string = self.name+', $%s_{%i%i}$'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                                else:
+                                    label_string = self.name+', %s%i%i'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                            kwargs['label'] = label_string
+        
+                        # plot the desired attribute vs frequency
+                        plot_complex_polar(
+                            z = getattr(self,prop_name)[:,m,n],
+                            *args, **kwargs)
+
+                if was_interactive:
+                    plb.interactive(True)
+                    plb.draw()
+                    plb.show()
+            
+            plot_prop_polar.__doc__ = '''
+    plot the Network attribute :attr:`%s` vs frequency.
     
+    Parameters
+    -----------
+    m : int, optional
+        first index of s-parameter matrix, if None will use all 
+    n : int, optional
+        secon index of the s-parameter matrix, if None will use all  
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    attribute : string
+        Network attribute to plot 
+    y_label : string, optional
+        the y-axis label
+    
+    \*args,\\**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot` 
+    
+    Notes
+    -------
+    This function is dynamically generated upon Network
+    initialization. This is accomplished by calling
+    :func:`plot_vs_frequency_generic`
+
+    Examples
+    ------------
+    >>> myntwk.plot_%s(m=1,n=0,color='r')
+    '''%(prop_name,prop_name)
+
+            setattr(self.__class__,'plot_%s_polar'%(prop_name), \
+                plot_prop_polar)
+
+            def plot_prop_rect(self, 
+                m=None, n=None, ax=None,
+                show_legend=True,prop_name=prop_name,*args, **kwargs):
+
+                # create index lists, if not provided by user
+                if m is None:
+                    M = range(self.number_of_ports)
+                else:
+                    M = [m]
+                if n is None:
+                    N = range(self.number_of_ports)
+                else:
+                    N = [n]
+
+                if 'label'  not in kwargs.keys():
+                    gen_label = True
+                else:
+                    gen_label = False
+
+                
+                #was_interactive = plb.isinteractive
+                #if was_interactive:
+                #    plb.interactive(False)
+                    
+                for m in M:
+                    for n in N:
+                        # set the legend label for this trace to the networks
+                        # name if it exists, and they didnt pass a name key in
+                        # the kwargs
+                        if gen_label:
+                            if self.name is None:
+                                if plb.rcParams['text.usetex']:
+                                    label_string = '$%s_{%i%i}$'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                                else:
+                                    label_string = '%s%i%i'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                            else:
+                                if plb.rcParams['text.usetex']:
+                                    label_string = self.name+', $%s_{%i%i}$'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                                else:
+                                    label_string = self.name+', %s%i%i'%\
+                                    (prop_name[0].upper(),m+1,n+1)
+                            kwargs['label'] = label_string
+        
+                        # plot the desired attribute vs frequency
+                        plot_complex_rectangular(
+                            z = getattr(self,prop_name)[:,m,n],
+                            *args, **kwargs)
+
+                #if was_interactive:
+                #    plb.interactive(True)
+                #    plb.draw()
+                #    plb.show()
+            
+            plot_prop_rect.__doc__ = '''
+    plot the Network attribute :attr:`%s` vs frequency.
+    
+    Parameters
+    -----------
+    m : int, optional
+        first index of s-parameter matrix, if None will use all 
+    n : int, optional
+        secon index of the s-parameter matrix, if None will use all  
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    attribute : string
+        Network attribute to plot 
+    y_label : string, optional
+        the y-axis label
+    
+    \*args,\\**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot` 
+    
+    Notes
+    -------
+    This function is dynamically generated upon Network
+    initialization. This is accomplished by calling
+    :func:`plot_vs_frequency_generic`
+
+    Examples
+    ------------
+    >>> myntwk.plot_%s(m=1,n=0,color='r')
+    '''%(prop_name,prop_name)
+
+            setattr(self.__class__,'plot_%s_complex'%(prop_name), \
+                plot_prop_rect)
+
+
+            for func_name in COMPONENT_FUNC_DICT:
+                attribute = '%s_%s'%(prop_name, func_name)
+                y_label = Y_LABEL_DICT[func_name]
+                
+                def plot_func(self,  m=None, n=None, ax=None,
+                    show_legend=True,attribute=attribute,
+                    y_label=y_label,*args, **kwargs):
+
+                    # create index lists, if not provided by user
+                    if m is None:
+                        M = range(self.number_of_ports)
+                    else:
+                        M = [m]
+                    if n is None:
+                        N = range(self.number_of_ports)
+                    else:
+                        N = [n]
+
+                    if 'label'  not in kwargs.keys():
+                        gen_label = True
+                    else:
+                        gen_label = False
+
+                    #TODO: turn off interactive plotting for performance
+                    # this didnt work because it required a show()
+                    # to be called, which in turn, disrupted testCases
+                    #
+                    #was_interactive = plb.isinteractive
+                    #if was_interactive:
+                    #    plb.interactive(False)
+                        
+                    for m in M:
+                        for n in N:
+                            # set the legend label for this trace to the networks
+                            # name if it exists, and they didnt pass a name key in
+                            # the kwargs
+                            if gen_label:
+                                if self.name is None:
+                                    if plb.rcParams['text.usetex']:
+                                        label_string = '$%s_{%i%i}$'%\
+                                        (attribute[0].upper(),m+1,n+1)
+                                    else:
+                                        label_string = '%s%i%i'%\
+                                        (attribute[0].upper(),m+1,n+1)
+                                else:
+                                    if plb.rcParams['text.usetex']:
+                                        label_string = self.name+', $%s_{%i%i}$'%\
+                                        (attribute[0].upper(),m+1,n+1)
+                                    else:
+                                        label_string = self.name+', %s%i%i'%\
+                                        (attribute[0].upper(),m+1,n+1)
+                                kwargs['label'] = label_string
+            
+                            # plot the desired attribute vs frequency
+                            plot_rectangular(
+                                x = self.frequency.f_scaled,
+                                y = getattr(self,attribute)[:,m,n],
+                                x_label = 'Frequency [' + \
+                                    self.frequency.unit +']',
+                                y_label = y_label,
+                                *args, **kwargs)
+
+                    #if was_interactive:
+                    #    plb.interactive(True)
+                    #    plb.draw()
+                    #    #plb.show()
+                
+                plot_func.__doc__ = '''
+        plot the Network attribute :attr:`%s` vs frequency.
+        
+        Parameters
+        -----------
+        m : int, optional
+            first index of s-parameter matrix, if None will use all 
+        n : int, optional
+            secon index of the s-parameter matrix, if None will use all  
+        ax : :class:`matplotlib.Axes` object, optional
+            An existing Axes object to plot on
+        show_legend : Boolean
+            draw legend or not
+        attribute : string
+            Network attribute to plot 
+        y_label : string, optional
+            the y-axis label
+        
+        \*args,\\**kwargs : arguments, keyword arguments
+            passed to :func:`matplotlib.plot` 
+        
+        Notes
+        -------
+        This function is dynamically generated upon Network
+        initialization. This is accomplished by calling
+        :func:`plot_vs_frequency_generic`
+
+        Examples
+        ------------
+        >>> myntwk.plot_%s(m=1,n=0,color='r')
+        '''%(attribute,attribute)
+
+                setattr(self.__class__,'plot_%s'%(attribute), \
+                    plot_func)
+
+    def __generate_subnetworks(self):
+        '''
+        generates all one-port sub-networks
+        '''
+        for m in range(self.number_of_ports):
+            for n in range(self.number_of_ports):
+                def fget(self,m=m,n=n):
+                    ntwk = self.copy()
+                    ntwk.s = self.s[:,m,n]
+                    ntwk.z0 = self.z0[:,m]
+                    return ntwk
+                setattr(self.__class__,'s%i%i'%(m+1,n+1),property(fget))
+
     ## PRIMARY PROPERTIES
-    # s-parameter matrix
     @property
     def s(self):
         '''
@@ -378,145 +742,32 @@ class Network(object):
         '''
         s_shape= npy.shape(s)
         if len(s_shape) <3:
-            if len(s_shape)==2:
+            if len(s_shape) == 2:
                 # reshape to kx1x1, this simplifies indexing in function
                 s = npy.reshape(s,(-1,s_shape[0],s_shape[0]))
-            elif len(s_shape)==1:
+            elif len(s_shape) == 1:
                 s = npy.reshape(s,(-1,1,1))
+
         self._s = s
-
-        # dynamically generate 1-port subnetworks
-        '''
-def smn(self,m,n):
-                result = Network()
-                result.frequency = self.frequency
-                result.s = s[:,m,n]
-                # need to set characteristic impedance
-                return result
-
-        for m in range(s.shape[1]):
-                for n in range(s.shape[2]):
-                        setattr(self.__class__,'s%i%i'%(m+1,n+1),\
-                                property(lambda self: smn(self,m,n)))
-        #s.squeeze()
-'''
-
+        self._y = s2y(self._s)
+        self._z = s2z(self._s)
+        self.__generate_secondary_properties()
+        self.__generate_subnetworks()
+       
     @property
     def y(self):
         '''
-        needs work
+        admittance parameters
         '''
-        if self.number_of_ports == 1:
-            return (1-self.s)/(1+self.s)
-        else:
-            raise(NotImplementedError)
-
-    # t-parameters
+        return self._y
+    
     @property
-    def t(self):
+    def z(self):
         '''
-        t-parameters, aka scattering transfer parameters [#]_
-
-        this is also known or the wave cascading matrix, and is only
-        defined for a 2-port Network
-
-
-        Returns
-        --------
-        t : complex numpy.ndarry of shape `fxnxn`
-                t-parameters, aka scattering transfer parameters
-
-        References
-        -----------
-        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
+        impedance parameters
         '''
-        return s2t(self.s)
-
-    @property
-    def inv(self):
-        '''
-        a :class:`Network` object with 'inverse' s-parameters.
-
-        This is used for de-embeding. It is defined so that the inverse
-        of a Network cascaded with itself is unity.
-
-        Returns
-        ---------
-        inv : a :class:`Network` object
-                a :class:`Network` object with 'inverse' s-parameters.
-
-        See Also
-        ----------
-                inv : function which implements the inverse s-matrix
-        '''
-        if self.number_of_ports <2:
-            raise(TypeError('One-Port Networks dont have inverses'))
-        out = self.copy()
-        out.s = inv(self.s)
-        return out
-
-    # frequency information
-    @property
-    def frequency(self):
-        '''
-        frequency information for the network.
-
-        This property is a :class:`~skrf.frequency.Frequency` object.
-        It holds the frequency vector, as well frequency unit, and
-        provides other properties related to frequency information, such
-        as start, stop, etc.
-
-        Returns
-        --------
-        frequency :  :class:`~skrf.frequency.Frequency` object
-                frequency information for the network.
-
-
-        See Also
-        ---------
-                f : property holding frequency vector in Hz
-                change_frequency : updates frequency property, and
-                        interpolates s-parameters if needed
-                interpolate : interpolate function based on new frequency
-                        info
-        '''
-        try:
-            return self._frequency
-        except (AttributeError):
-            self._frequency = Frequency(0,0,0)
-            return self._frequency
-
-    @frequency.setter
-    def frequency(self, new_frequency):
-        '''
-        takes a Frequency object, see  frequency.py
-        '''
-        self._frequency = new_frequency.copy()
-
-    @property
-    def f(self):
-        '''
-        the frequency vector for the network, in Hz.
-
-        Returns
-        --------
-        f : numpy.ndarray
-                frequency vector in Hz
-
-        See Also
-        ---------
-                frequency : frequency property that holds all frequency
-                        information
-        '''
-        return self.frequency.f
-
-    @f.setter
-    def f(self,f):
-        tmpUnit = self.frequency.unit
-        self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
-        self._frequency.unit = tmpUnit
-
-    # characteristic impedance
+        return self._z
+        
     @property
     def z0(self):
         '''
@@ -591,158 +842,111 @@ def smn(self,m,n):
         '''
         self._z0 = z0
 
-## SECONDARY PROPERTIES
-
-    # s-parameters convinience properties
     @property
-    def s_re(self):
+    def frequency(self):
         '''
-        real part of the s-parameters.
+        frequency information for the network.
+
+        This property is a :class:`~skrf.frequency.Frequency` object.
+        It holds the frequency vector, as well frequency unit, and
+        provides other properties related to frequency information, such
+        as start, stop, etc.
 
         Returns
         --------
-        s_re : numpy.ndarray of shape fxnxn
+        frequency :  :class:`~skrf.frequency.Frequency` object
+                frequency information for the network.
 
+
+        See Also
+        ---------
+                f : property holding frequency vector in Hz
+                change_frequency : updates frequency property, and
+                        interpolates s-parameters if needed
+                interpolate : interpolate function based on new frequency
+                        info
         '''
-        return npy.real(self.s)
+        try:
+            return self._frequency
+        except (AttributeError):
+            self._frequency = Frequency(0,0,0)
+            return self._frequency
+
+    @frequency.setter
+    def frequency(self, new_frequency):
+        '''
+        takes a Frequency object, see  frequency.py
+        '''
+        self._frequency = new_frequency.copy()
 
     @property
-    def s_im(self):
+    def t(self):
         '''
-        imaginary part of the s-parameters.
+        t-parameters, aka scattering transfer parameters [#]_
+
+        this is also known or the wave cascading matrix, and is only
+        defined for a 2-port Network
+
 
         Returns
         --------
-        s_im : numpy.ndarray of shape fxnxn
+        t : complex numpy.ndarry of shape `fxnxn`
+                t-parameters, aka scattering transfer parameters
+
+        References
+        -----------
+        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
         '''
-        return npy.imag(self.s)
+        return s2t(self.s)
 
     @property
-    def s_mag(self):
+    def inv(self):
         '''
-        magnitude of the s-parameters.
+        a :class:`Network` object with 'inverse' s-parameters.
+
+        This is used for de-embeding. It is defined so that the inverse
+        of a Network cascaded with itself is unity.
+
+        Returns
+        ---------
+        inv : a :class:`Network` object
+                a :class:`Network` object with 'inverse' s-parameters.
+
+        See Also
+        ----------
+                inv : function which implements the inverse s-matrix
+        '''
+        if self.number_of_ports <2:
+            raise(TypeError('One-Port Networks dont have inverses'))
+        out = self.copy()
+        out.s = inv(self.s)
+        return out
+
+    @property
+    def f(self):
+        '''
+        the frequency vector for the network, in Hz.
 
         Returns
         --------
-        s_mag : numpy.ndarray of shape fxnxn
+        f : numpy.ndarray
+                frequency vector in Hz
+
+        See Also
+        ---------
+                frequency : frequency property that holds all frequency
+                        information
         '''
-        return mf.complex_2_magnitude(self.s)
-    @property
-    def s_abs(self):
-        '''
-        see :attr:`s_mag`
-        '''
-        return self.s_mag
+        return self.frequency.f
 
-    @property
-    def s_db(self):
-        '''
-        magnitude of the s-parameters, in dB
+    @f.setter
+    def f(self,f):
+        tmpUnit = self.frequency.unit
+        self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
+        self._frequency.unit = tmpUnit
 
-        this is calculated by
-
-        .. math::
-
-                20\cdot \log_{10}(|s|)
-
-        Returns
-        --------
-        s_db : numpy.ndarray of shape fxnxn
-
-
-
-        '''
-        return mf.complex_2_db(self.s)
-
-    @property
-    def s_deg(self):
-        '''
-        phase of the s-parameters, in degrees
-
-        Returns
-        --------
-        s_deg : numpy.ndarray of shape fxnxn
-        '''
-        return mf.complex_2_degree(self.s)
-
-    @property
-    def s_angle(self):
-        '''
-        see :attr:`s_deg`
-        '''
-        return self.s_deg
-    @property
-    def s_rad(self):
-        '''
-        phase of the s-parameters, in radians.
-
-        Returns
-        --------
-        s_rad : numpy.ndarray of shape fxnxn
-        '''
-        return mf.complex_2_radian(self.s)
-
-    @property
-    def s_deg_unwrap(self):
-        '''
-        unwrapped phase of the s-paramerts, in degrees
-
-        Returns
-        --------
-        s_deg_unwrap : numpy.ndarray of shape fxnxn
-
-
-        '''
-        return mf.radian_2_degree(self.s_rad_unwrap)
-
-    @property
-    def s_rad_unwrap(self):
-        '''
-        unwrapped phase of the s-parameters, in radians.
-
-        Returns
-        --------
-        s_rad_unwrap : numpy.ndarray of shape fxnxn
-
-        '''
-        return mf.unwrap_rad(self.s_rad)
-
-    @property
-    def s_quad(self):
-        '''
-        see :attr:`s_arcl`
-        '''
-        return self.s_arcl
-
-    @property
-    def s_arcl(self):
-        '''
-        arc-length of the s-parameters
-
-        This useful in that it is a measure of phase, but given in units
-        of distance. this is calculated by
-
-        .. math::
-
-                \\angle s \\cdot |s|
-
-        Returns
-        --------
-        s_arcl : numpy.ndarray of shape fxnxn
-        '''
-        return self.s_rad * self.s_mag
-
-    @property
-    def s_arcl_unwrap(self):
-        '''
-        unwrapped arc-length of the s-parameters, see :attr:`s_arcl`
-
-        Returns
-        --------
-        s_arcl_unwrap : numpy.ndarray of shape fxnxn
-        '''
-        return self.s_rad_unwrap * self.s_mag
-
+    
+    ## SECONDARY PROPERTIES
     @property
     def number_of_ports(self):
         '''
@@ -755,6 +959,20 @@ def smn(self,m,n):
 
         '''
         return self.s.shape[1]
+
+    @property
+    def nports(self):
+        '''
+        the number of ports the network has.
+
+        Returns
+        --------
+        number_of_ports : number
+                the number of ports the network has.
+
+        '''
+        return self.number_of_ports
+        
     @property
     def passivity(self):
         '''
@@ -800,8 +1018,7 @@ def smn(self,m,n):
         return pas_mat
 
 
-
-## CLASS METHODS
+    ## CLASS METHODS
     def copy(self):
         '''
         returns a copy of this Network
@@ -812,7 +1029,7 @@ def smn(self,m,n):
         ntwk.z0 = self.z0.copy()
         ntwk.name = self.name
         return ntwk
-        
+
     # touchstone file IO
     def read_touchstone(self, filename):
         '''
@@ -845,6 +1062,8 @@ def smn(self,m,n):
         self.z0 = float(touchstoneFile.resistance)
         self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
         self.name = os.path.basename( os.path.splitext(filename)[0])
+        #TODO: add Network property `comments` which is read from
+        # touchstone file. 
 
     def write_touchstone(self, filename=None, dir = './'):
         '''
@@ -914,8 +1133,8 @@ def smn(self,m,n):
 
         outputFile.close()
 
-
-    # self-modifications
+    
+    # interpolation
     def interpolate(self, new_frequency,**kwargs):
         '''
         calculates an interpolated network.
@@ -1033,543 +1252,6 @@ def smn(self,m,n):
 
 
     # ploting
-
-    def plot_vs_frequency_generic(self,attribute,y_label=None,\
-            m=None,n=None, ax=None,show_legend=True,**kwargs):
-        '''
-        plot a Network  attribute vs frequency.
-
-        Parameters
-        -----------
-        attribute : string
-                Network attribute to plot
-        y_label : string, optional
-                the y-axis label
-        m : int, optional
-                first index of s-parameter matrix, if None will use all
-        n : int, optional
-                secon index of the s-parameter matrix, if None will use all
-        ax : :class:`matplotlib.Axes` object, optional
-                An existing Axes object to plot on
-        show_legend : Boolean
-                draw legend or not
-        **kwargs : keyword arguments
-                passed to :func:`matplotlib.plot`
-
-        Notes
-        -------
-        All rectangular plotting commands (ie :func:`plot_s_db`,
-        :func:`plot_s_deg`) call this function and just pass
-        through **kwargs and *args
-
-        Examples
-        ------------
-        to plot the magnitude of the s-parameters one would use,
-
-        >>> myntwk.plot_vs_frequency_generic(attribute= 's_mag')
-        '''
-        # get current axis if user doesnt supply and axis
-        if ax is None:
-            ax = plb.gca()
-
-        if m is None:
-            M = range(self.number_of_ports)
-        else:
-            M = [m]
-        if n is None:
-            N = range(self.number_of_ports)
-        else:
-            N = [n]
-
-        if 'label'  not in kwargs.keys():
-            generate_label=True
-        else:
-            generate_label=False
-
-        for m in M:
-            for n in N:
-                # set the legend label for this trace to the networks
-                # name if it exists, and they didnt pass a name key in
-                # the kwargs
-                if generate_label:
-                    if self.name is None:
-                        if plb.rcParams['text.usetex']:
-                            label_string = '$S_{'+repr(m+1) + \
-                                    repr(n+1)+'}$'
-                        else:
-                            label_string = 'S'+repr(m+1) + repr(n+1)
-                    else:
-                        if plb.rcParams['text.usetex']:
-                            label_string = self.name+', $S_{'+repr(m+1)\
-                                    + repr(n+1)+'}$'
-                        else:
-                            label_string = self.name+', S'+repr(m+1) +\
-                                    repr(n+1)
-                    kwargs['label'] = label_string
-
-                # plot the desired attribute vs frequency
-                ax.plot(self.frequency.f_scaled, getattr(self,\
-                        attribute)[:,m,n], **kwargs)
-
-        # label axis
-        ax.set_xlabel('Frequency ['+ self.frequency.unit +']')
-        ax.set_ylabel(y_label)
-        ax.axis('tight')
-        #draw legend
-        if show_legend:
-            ax.legend()
-        plb.draw()
-
-    def __generate_plot_functions(self):
-        '''
-        generates plotting functions of Network properties vs frequency
-        '''
-        for attr in ATTRIBUTE_DICT.keys():
-            def plot_func(*args, **kwargs):
-                self.plot_vs_frequency_generic(self,attr,\
-                        y_label=ATTRIBUTE_DICT[attr],*args, **kwargs)
-
-            plot_func.__doc__ = "\n\t\tplot the Network attribute :attr:`%s` vs frequency.\n\t\t\n\t\tParameters\n\t\t-----------\n\t\tattribute : string\n\t\t\tNetwork attribute to plot \n\t\ty_label : string, optional\n\t\t\tthe y-axis label\n\t\tm : int, optional\n\t\t\tfirst index of s-parameter matrix, if None will use all \n\t\tn : int, optional\n\t\t\tsecon index of the s-parameter matrix, if None will use all  \n\t\tax : :class:`matplotlib.Axes` object, optional\n\t\t\tAn existing Axes object to plot on\n\t\tshow_legend : Boolean\n\t\t\tdraw legend or not\n\t\t**kwargs : keyword arguments\n\t\t\tpassed to :func:`matplotlib.plot` \n\t\t\n\t\tNotes\n\t\t-------\n\t\t This function is dynamically generated by calling :func:`plot_vs_frequency_generic`\n\t\tExamples\n\t\t------------\n\t\t\n\t\t\t>>> myntwk.plot_%s(m=1,n=0,color='r')\n\t\t"%(attr,attr)
-            setattr(self.__class__,'plot_'+attr,plot_func)
-
-
-    def plot_polar_generic (self,attribute_r, attribute_theta,      m=0,n=0,\
-            ax=None,show_legend=True,**kwargs):
-        '''
-        generic plotting function for plotting a Network's attribute
-        in polar form
-
-        Needs Work
-
-
-        '''
-
-        # get current axis if user doesnt supply and axis
-        if ax is None:
-            ax = plb.gca(polar=True)
-
-        # set the legend label for this trace to the networks name if it
-        # exists, and they didnt pass a name key in the kwargs
-        if 'label'  not in kwargs.keys():
-            if self.name is None:
-                if plb.rcParams['text.usetex']:
-                    label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
-                else:
-                    label_string = 'S'+repr(m+1) + repr(n+1)
-            else:
-                if plb.rcParams['text.usetex']:
-                    label_string = self.name+', $S_{'+repr(m+1) + \
-                            repr(n+1)+'}$'
-                else:
-                    label_string = self.name+', S'+repr(m+1) + repr(n+1)
-
-            kwargs['label'] = label_string
-
-        #TODO: fix this to call from ax, if possible
-        plb.polar(getattr(self, attribute_theta)[:,m,n],\
-                getattr(self, attribute_r)[:,m,n],**kwargs)
-
-        #draw legend
-        if show_legend:
-            plb.legend()
-
-    def plot_s_db(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the magnitude of the scattering parameters.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_db()
-        >>> myntwk.plot_s_db(m=0,n=1,color='b', marker='x')
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_db',\
-                y_label='Magnitude [dB]', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-
-    def plot_s_mag(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the magnitude of a scattering parameters.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_mag()
-        >>> myntwk.plot_s_mag(m=0,n=1,color='b', marker='x')
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_mag',\
-                y_label='Magnitude [not dB]', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-
-    def plot_s_re(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the real part of a scattering parameter of indecies m, n
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_re()
-        >>> myntwk.plot_s_re(m=0,n=1,color='b', marker='x')
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_re',\
-                y_label='Real Part', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-
-    def plot_s_im(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the imaginary part of a scattering parameters.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_im()
-        >>> myntwk.plot_s_im(m=0,n=1,color='b', marker='x')
-
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_im',\
-                y_label='Imaginary Part', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-
-    def plot_s_deg(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the phase of a scattering parameters.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_deg()
-        >>> myntwk.plot_s_deg(m=0,n=1,color='b', marker='x')
-
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_deg',\
-                y_label='Phase [deg]', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-
-    def plot_s_deg_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
-            *args,**kwargs):
-        '''
-        plots the phase of a scattering parameters.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_deg_unwrapped()
-        >>> myntwk.plot_s_deg_unwrapped(m=0,n=1,color='b', marker='x')
-
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_deg_unwrap',\
-                y_label='Phase [deg]', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-
-    plot_s_deg_unwrap = plot_s_deg_unwrapped
-
-    def plot_s_rad(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the phase of a scattering parameters.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_rad()
-        >>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
-
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_rad',\
-                y_label='Phase [rad]', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-    def plot_s_quad(self,m=None, n=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the quadrature of a scattering parameters.
-
-        quadrature is another name for arc-length.
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_quad()
-        >>> myntwk.plot_s_quad(m=0,n=1,color='b', marker='x')
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_quad',\
-                y_label='Arc-Length [distance]', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-    def plot_s_rad_unwrapped(self,m=None, n=None, ax = None, show_legend=True,\
-            *args,**kwargs):
-        '''
-        plots the phase of a scattering parameters, in unwrapped radians.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_rad_unwrap()
-        >>> myntwk.plot_s_rad_unwrap(m=0,n=1,color='b', marker='x')
-        '''
-        self.plot_vs_frequency_generic(attribute= 's_rad_unwrap',\
-                y_label='Phase [rad]', m=m,n=n, ax=ax,\
-                show_legend = show_legend,*args,**kwargs)
-
-    def plot_s_polar(self,m=0, n=0, ax = None, show_legend=True,\
-            *args,**kwargs):
-        '''
-        plots the scattering parameter in polar form.
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_polar()
-        >>> myntwk.plot_s_polar(m=0,n=1,color='b', marker='x')
-        '''
-        self.plot_polar_generic(attribute_r= 's_mag',attribute_theta='s_rad',\
-                m=m,n=n, ax=ax, show_legend = show_legend,*args,**kwargs)
-
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
             chart_type='z', *args,**kwargs):
         '''
@@ -1658,93 +1340,6 @@ def smn(self,m,n):
         ax.axis(npy.array([-1,1,-1,1])*r)
         ax.set_xlabel('Real')
         ax.set_ylabel('Imaginary')
-    def plot_s_complex(self,m=None, n=None,ax = None, show_legend=True,\
-            *args,**kwargs):
-        '''
-        plots the scattering parameter on complex plane
-
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
-        lists of integers.
-
-
-        Parameters
-        -----------
-        m : int, optional
-                first index
-        n : int, optional
-                second index
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-
-
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-
-
-        Examples
-        ---------
-        >>> myntwk.plot_s_complex()
-        >>> myntwk.plot_s_complex(m=0,n=1,color='b', marker='x')
-        '''
-        # TODO: prevent this from re-drawing smith chart if one alread
-        # exists on current set of axes
-
-        # get current axis if user doesnt supply and axis
-        if ax is None:
-            ax = plb.gca()
-
-
-        if m is None:
-            M = range(self.number_of_ports)
-        else:
-            M = [m]
-        if n is None:
-            N = range(self.number_of_ports)
-        else:
-            N = [n]
-
-        if 'label'  not in kwargs.keys():
-            generate_label=True
-        else:
-            generate_label=False
-
-        for m in M:
-            for n in N:
-                # set the legend label for this trace to the networks name if it
-                # exists, and they didnt pass a name key in the kwargs
-                if generate_label:
-                    if self.name is None:
-                        if plb.rcParams['text.usetex']:
-                            label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
-                        else:
-                            label_string = 'S'+repr(m+1) + repr(n+1)
-                    else:
-                        if plb.rcParams['text.usetex']:
-                            label_string = self.name+', $S_{'+repr(m+1) + \
-                                    repr(n+1)+'}$'
-                        else:
-                            label_string = self.name+', S'+repr(m+1) + repr(n+1)
-
-                    kwargs['label'] = label_string
-
-                # plot the desired attribute vs frequency
-                ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, *args,**kwargs)
-
-        #draw legend
-        if show_legend:
-            ax.legend()
-        ax.axis('equal')
-        ax.set_xlabel('Real')
-        ax.set_ylabel('Imaginary')
-
 
     def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
         '''
@@ -1784,6 +1379,15 @@ def smn(self,m,n):
                     y_label='Passivity', m=mn,n=mn, ax=ax,\
                     show_legend = show_legend,*args,**kwargs)
 
+    def plot_it_all(self,*args, **kwargs):
+        plb.subplot(221)
+        getattr(self,'plot_s_db')(*args, **kwargs)
+        plb.subplot(222)
+        getattr(self,'plot_s_deg')(*args, **kwargs)
+        plb.subplot(223)
+        getattr(self,'plot_s_smith')(*args, **kwargs)
+        plb.subplot(224)
+        getattr(self,'plot_s_deg_unwrap')(*args, **kwargs)
 
     # noise
     def add_noise_polar(self,mag_dev, phase_dev,**kwargs):
@@ -1806,6 +1410,7 @@ def smn(self,m,n):
         phase = (self.s_deg+phase_rv)
         mag = self.s_mag + mag_rv
         self.s = mag* npy.exp(1j*npy.pi/180.*phase)
+
     def add_noise_polar_flatband(self,mag_dev, phase_dev,**kwargs):
         '''
         adds a flatband complex zero-mean gaussian white-noise signal of
@@ -2219,7 +1824,100 @@ def innerconnect_s(A, k, l):
 
     return C
    
+## network representation conversion       
+
+def s2z(s):
+    '''
+    convert scattering parameters to impedance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 + s}{1 - s}
+
+    Parameters
+    ------------
+    s : complex array-like or number
+        scattering parameters
+
+    Returns
+    ---------
+    z : complex array-like or number
+        impedance parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
         
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    z =  (1 + s) / (1 - s)
+    return z
+
+def s2y(s):
+    '''
+    convert scattering parameters to admittance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 + s}{1 - s}
+
+    Parameters
+    ------------
+    s : complex array-like or number
+        scattering parameters
+
+    Returns
+    ---------
+    y : complex array-like or number
+        admittance parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    y =  (1 - s) / (1 + s)
+    return y
+
 def s2t(s):
     '''
     converts scattering parameters to scattering transfer parameters.
@@ -2248,6 +1946,7 @@ def s2t(s):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
+    #TODO: check rank(s) ==2
     # although unintuitive this is calculated by
     # [[s11, s21],[s12,s22]].T
     t = npy.array([
@@ -2256,7 +1955,277 @@ def s2t(s):
         [s[:,0,0]/s[:,1,0],
             1/s[:,1,0] ]
         ]).transpose()
-    return t    
+    return t   
+
+def z2s(z):
+    '''
+    convert impedance parameters to scattering parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def z2y(z):
+    '''
+    convert impedance parameters to admittance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def z2t(z):
+    '''
+    convert impedance parameters to scattering transfer parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def y2s(y):
+    '''
+    convert admittance parameters to scattering parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def y2z(y):
+    '''
+    convert admittance parameters to impedance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def y2t(y):
+    '''
+    convert admittance parameters to scattering-transfer parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
 
 def t2s(t):
     '''
@@ -2286,7 +2255,7 @@ def t2s(t):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
-    
+    #TODO: check rank(s) ==2
     s = npy.array([
         [t[:,0,1]/t[:,1,1],
              1/t[:,1,1]],
@@ -2294,7 +2263,98 @@ def t2s(t):
             -1*t[:,1,0]/t[:,1,1] ]
         ]).transpose()
     return s
-   
+
+def t2z(t):
+    '''
+    convert scattering transfer parameters to impedance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+def t2y(t):
+    '''
+    convert scattering transfer parameters to admittance parameters [#]_
+
+
+    .. math::
+        s = \\frac {1 - s}{1 + s}
+
+    Parameters
+    ------------
+    z : complex array-like or number
+        impedance parameters
+
+    Returns
+    ---------
+    s : complex array-like or number
+        scattering parameters
+
+    See Also
+    ----------
+    s2z : converts scattering parameters to impedance parameters
+    s2y : converts scattering parameters to admittance parameters
+    s2t : converts scattering parameters to scattering transfer
+        parameters
+    z2s : converts impedance parameters to scattering parameters
+    z2y : converts impedance parameters to impedance parameters
+    z2t : converts impedance parameters to scattering transfer
+        parameters
+    y2s : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to impedance parameters
+    y2z : converts admittance parameters to scattering transfer
+        parameters
+    t2s : converts scattering transfer paramerters to scattering
+        parameters
+    t2z : converts scattering transfer paramerters to impedance
+        parameters
+    t2y : converts scattering transfer paramerters to admittance
+        parameters
+    
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    '''
+    raise (NotImplementedError)
+
+## cascading assistance functions
 def inv(s):
     '''
     calculates 'inverse' s-parameter matrix, used for de-embeding
