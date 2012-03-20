@@ -113,7 +113,6 @@ class CalibrationSet(object):
 
 class Cartesian(CalibrationSet):
     def __init__(self, ideals, measured_sets, *args, **kwargs):
-        print (ideals, measured_sets)
         CalibrationSet.__init__(self,
             ideals = ideals,
             measured_sets = measured_sets,
@@ -122,7 +121,6 @@ class Cartesian(CalibrationSet):
             
 class Dot(CalibrationSet):
     def __init__(self, ideals, measured_sets, *args, **kwargs):
-        print (ideals, measured_sets)
         CalibrationSet.__init__(self,
             ideals = ideals,
             measured_sets = measured_sets,
