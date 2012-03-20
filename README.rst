@@ -1,5 +1,18 @@
-scikit-rf
-=========
+
+=================
+
+
+HomePage
+--------
+http://www.scikit-rf.org
+
+Documentation
+-------------
+http://www.scikit-rf.org/doc/dev/
+
+Mailing List
+------------
+http://groups.google.com/group/scikit-rf
 
 Summary
 --------
@@ -9,9 +22,5 @@ set of objects and features which can be used to construct solutions
 to specific problems.  
 
 
-Documentation
---------------
-
-http://packages.python.org/scikit-rf/#
 
 
