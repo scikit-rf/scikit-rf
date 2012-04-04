@@ -17,10 +17,12 @@ setup(name='scikit-rf',
 	author_email='arsenovic@virginia.edu',
 	url='http://scikit-rf.org',
 	packages=find_packages(),
-	install_requires = [
+	requires = [
 		'numpy',
 		'scipy',
 		'matplotlib',
 		],
+	package_dir={'skrf':'skrf'},
+	package_data = {'skrf':['src/*']}
 	)
 
