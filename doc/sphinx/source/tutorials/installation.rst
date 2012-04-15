@@ -20,11 +20,11 @@ Once the requirements are installed, there are two choices for installing skrf:
 *    windows installer
 *   python source package 
 
-They can all be found at http://code.google.com/p/skrf/downloads/list
+They can all be found at http://scikit-rf.org/download/
 
 If you dont know how to install a python module and dont care to learn how, you want the windows installer. Otherwise, I recommend the python source package because examples, documentation, and installation instructions are provided with the the python package.
 
-The current version can be accessed through `SVN <http://code.google.com/p/skrf/source/checkout>`_. This is mainly of interest for developers, and is not stable most of the time.
+The current version can be accessed through `github  <https://github.com/scikit-rf/scikit-rf>`_. This is mainly of interest for developers, and is not stable most of the time.
 
 
 

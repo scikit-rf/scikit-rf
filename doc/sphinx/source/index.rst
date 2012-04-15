@@ -1,6 +1,9 @@
 ===================================
-skrf's documentation
+scikit-rf's documentation
 ===================================
+
+This documentation is also available in pdf form:   `scikit-rf.pdf <scikit-rf.pdf>`_
+   
 
 Tutorials
 ----------
