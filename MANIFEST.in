@@ -1,4 +1,3 @@
-include README.txt INSTALL.txt COPYING.txt
+include README.txt INSTALL.txt COPYING.txt ez_setup.py
 recursive-include doc * 
-recursive-include examples * 
 

@@ -4,24 +4,25 @@ import ez_setup
 ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
-
-
+VERSION = '0.11'
 LONG_DESCRIPTION = """
-	sckit-rf is an object-oriented approach to RF/Microwave engineering implemented in the Python programming language. It provides a general set of objects and features which can be used to construct solutions to specific problems. 
+	sckit-rf is an object-oriented approach to RF/Microwave engineering implemented in the Python programming language. 
 """
 setup(name='scikit-rf',
-	version='0.1',
+	version=VERSION,
 	license='gpl',
 	description='Object Oriented Microwave Engineering',
 	long_description=LONG_DESCRIPTION,
 	author='Alex Arsenovic',
 	author_email='arsenovic@virginia.edu',
-	url='http://github.com/scikit-rf/scikit-rf/wiki',
+	url='http://scikit-rf.org',
 	packages=find_packages(),
-	#install_requires = [
-	#	'numpy',
-	#	'scipy',
-	#	'matplotlib',
-	#	],
+	requires = [
+		'numpy',
+		'scipy',
+		'matplotlib',
+		],
+	package_dir={'skrf':'skrf'},
+	package_data = {'skrf':['src/*']}
 	)
 
