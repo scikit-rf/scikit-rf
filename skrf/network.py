@@ -385,7 +385,8 @@ class Network(object):
 
     def __repr__(self):
         return self.__str__()
-
+    
+       
     ## INTERNAL CODE GENERATION METHODS
     def __compatable_for_scalar_operation_test(self, other):
         '''
@@ -396,7 +397,7 @@ class Network(object):
 
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
-        
+    
     def __generate_secondary_properties(self):
         '''
         creates numerous `secondary properties` which are various
@@ -1513,22 +1514,20 @@ def connect(ntwkA, k, ntwkB,l):
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
     '''
+    # some checking 
+    check_frequency_equal(ntwkA,ntwkB)
+    
     # create output Network, from copy of input 
     ntwkC = ntwkA.copy()
     
     # if networks' z0's are not identical, then connect a impedance
     # mismatch, which takes into account th effect of differing port
     # impedances. 
-    if not (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all():
+    #import pdb;pdb.set_trace()
+    if test_z0_at_ports_equal(ntwkA,k,ntwkB,l) == False:
         ntwkC.s = connect_s(
             ntwkA.s, k, 
             impedance_mismatch(ntwkA.z0[:,k], ntwkB.z0[:,l]), 0)
-
-    #if ntwkA.number_of_ports == 2 and \
-    #(ntwkB.number_of_ports == 2 or ntwkB.number_of_ports == 1):
-    #    ntwkC = cascade_fast(ntwkA, ntwkB)
-    #else:
-    #    ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
 
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
@@ -2428,6 +2427,49 @@ def flip(a):
     else:
         raise IndexError('matricies should be 2x2, or kx2x2')
     return c
+
+
+## COMMON CHECKS (raise exceptions)
+def check_frequency_equal(ntwkA, ntwkB):
+    '''
+    '''
+    if test_frequency_equal(ntwkA,ntwkB) == False:
+        raise IndexError('Networks dont have matching frequency. See `Network.interpolate`')
+
+
+def check_z0_equal(ntwkA,ntwkB):
+    '''
+    '''
+    #note you should check frequency equal before you call this
+    if test_z0_equal(ntwkA,ntwkB) == False:
+        raise ValueError('Networks dont have matching z0.')
+
+def check_nports_equal(ntwkA,ntwkB):
+    '''
+    '''
+    if test_nports_equal(ntwkA,ntwkB) == False:
+        raise ValueError('Networks dont have matching number of ports.')
+        
+## TESTs (return [usually boolean] values)
+def test_frequency_equal(ntwkA, ntwkB):
+    '''
+    '''
+    return (ntwkA.frequency  == ntwkB.frequency)
+
+def test_z0_equal(ntwkA,ntwkB):
+    '''
+    '''
+    return (ntwkA.z0 == ntwkB.z0).all()
+
+def test_z0_at_ports_equal(ntwkA,k,ntwkB,l):
+    '''
+    '''
+    return (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all()
+
+def test_nports_equal(ntwkA,ntwkB):
+    '''
+    '''
+    return (ntwkA.number_of_ports == ntwkB.number_of_ports)        
 
 
 
