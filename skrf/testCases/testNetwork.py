@@ -8,7 +8,7 @@ class NetworkTestCase(unittest.TestCase):
     '''
     Network class operation test case.
     The following is true, as tested by lihan in ADS,
-        test 3 == test1 ** test2
+        test3 == test1 ** test2
 
     '''
     def setUp(self):
