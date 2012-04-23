@@ -121,7 +121,7 @@ from tlineFunctions import zl_2_Gamma0
 try:
     from src import connect_s_fast
 except:
-    warnings.warn('libconnect failed to load.')
+    pass#warnings.warn('libconnect failed to load.')
     
 class Network(object):
     '''
