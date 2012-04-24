@@ -258,7 +258,6 @@ class ZVA40(GpibInstrument):
         '''
         return self.one_port
 
-
     @property
     def error(self):
         '''
@@ -309,7 +308,17 @@ class ZVA40(GpibInstrument):
     def update_trace_list(self):
         raise(NotImplementedError)
 
-
+    def upload_cal_data(self, error_data, cal_name='test', port=1):
+        '''
+        '''
+        cal_type = 'FOPort'
+        self.write('CORR:COLL:METH:DEF %s, %s, %i'%(cal_name, cal_type,port))
+        self.write('corr:coll:save:sel:def')
+        self.continuous=False
+        for key in error_data:
+            self.write('corr:cdat \'%s\',%i,0,%s'\
+            %(key, port, values_as_strings))
+    
 class ZVA40_alex(GpibInstrument):
     '''
     the rohde Swarz zva40
