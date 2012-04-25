@@ -468,8 +468,8 @@ class Media(object):
         gamma = tf.zl_2_Gamma0(z1,z2)
         result.s[:,0,0] = gamma
         result.s[:,1,1] = -gamma
-        result.s[:,1,0] = 1+gamma
-        result.s[:,0,1] = 1-gamma
+        result.s[:,1,0] = (1+gamma)*npy.sqrt(1.0*z1/z2)
+        result.s[:,0,1] = (1-gamma)*npy.sqrt(1.0*z2/z1)
         return result
 
 

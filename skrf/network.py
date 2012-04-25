@@ -1018,7 +1018,26 @@ class Network(object):
 
         return pas_mat
 
-
+	## NETWORK CLASIFIERs
+	def is_reciprocal(self):
+		'''
+		'''
+		raise(NotImplementedError)
+	
+	def is_symmetric(self):
+		'''
+		'''
+		raise(NotImplementedError)
+	
+	def is_passive(self):
+		'''
+		'''
+		raise(NotImplementedError)		
+	
+	def is_lossless(self):
+		'''
+		'''
+		raise(NotImplementedError)	
     ## CLASS METHODS
     def copy(self):
         '''
@@ -1105,7 +1124,7 @@ class Network(object):
         # the '#'  line is NOT a comment it is essential and it must be
         #exactly this format, to work
         # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-        outputFile.write('!Created with skrf (https://github.com/scikit-rf/scikit-rf).\n')
+        outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
         outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
 
         #write comment line for users (optional)
