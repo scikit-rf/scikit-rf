@@ -114,7 +114,7 @@ class DistributedCircuit(Media):
         length
 
         This object can be constructed from a Media instance too, see
-        the classmethod from_Media()
+        the classmethod :func:`from_Media`
         '''
 
         self.frequency = deepcopy(frequency)
