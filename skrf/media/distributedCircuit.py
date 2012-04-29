@@ -60,16 +60,16 @@ class DistributedCircuit(Media):
 
     From these, the following quantities may be calculated, which
     are functions of angular frequency (:math:`\omega`):
-
+    
     ===================================  ==================================================  ==============================
     Quantity                             Symbol                                              Property
     ===================================  ==================================================  ==============================
-    Distributed Impedance                :math:`Z^{'} = \\omega R^{'} + j \\omega I^{'}`       :attr:`Z`
-    Distributed Admittance               :math:`Y^{'} = \\omega G^{'} + j \\omega C^{'}`       :attr:`Y`
+    Distributed Impedance                :math:`Z^{'} = R^{'} + j \\omega I^{'}`              :attr:`Z`
+    Distributed Admittance               :math:`Y^{'} = G^{'} + j \\omega C^{'}`              :attr:`Y`
     ===================================  ==================================================  ==============================
 
 
-    from these we can calculate properties which define their wave
+    From these we can calculate properties which define their wave
     behavior:
 
     ===================================  ============================================  ==============================
@@ -161,8 +161,8 @@ class DistributedCircuit(Media):
 
         Y = gamma/Z0
         Z = gamma*Z0
-        G,C = real(Y)/w, imag(Y)/w
-        R,I = real(Z)/w, imag(Z)/w
+        G,C = real(Y), imag(Y)/w
+        R,I = real(Z), imag(Z)/w
         return cls(my_media.frequency, C=C, I=I, R=R, G=G, *args, **kwargs)
 
 
@@ -174,7 +174,7 @@ class DistributedCircuit(Media):
         Defined as
 
         .. math::
-                Z^{'} = \\omega R^{'} + j \\omega I^{'}
+                Z^{'} = R^{'} + j \\omega I^{'}
 
 
         Returns
@@ -183,15 +183,17 @@ class DistributedCircuit(Media):
                 Distributed impedance in units of ohm/m
         '''
         w  = 2*npy.pi * self.frequency.f
-        return w*self.R + 1j*w*self.I
+        return self.R + 1j*w*self.I
 
     @property
     def Y(self):
         '''
         Distributed Admittance, :math:`Y^{'}`
-
-        ..math::
-                \\gamma = \\sqrt{ Z^{'}  Y^{'}}
+        
+        Defined as
+        
+        .. math::
+                Y^{'} = G^{'} + j \\omega C^{'}
 
         Returns
         --------
@@ -200,7 +202,7 @@ class DistributedCircuit(Media):
         '''
 
         w = 2*npy.pi*self.frequency.f
-        return w*self.G + 1j*w*self.C
+        return self.G + 1j*w*self.C
 
 
     def Z0(self):
