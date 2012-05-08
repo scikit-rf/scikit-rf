@@ -2663,3 +2663,5 @@ def csv_2_touchstone(filename):
     ntwk.frequency.unit='ghz'
 
     return ntwk
+
+lat = load_all_touchstones

@@ -214,6 +214,9 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
             touchstone header written to first beginning of file
 
     '''
+    if new_file_name is None:
+        new_file_name = 'tmp-'+file_name
+        remove_tmp_file = True
     old_file = file(file_name,'r')
     new_file = open(new_file_name,'w')
     new_file.write('%s\n'%header_string)
@@ -221,8 +224,10 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         new_file.write(line)
     new_file.close()
     old_file.close()
-
-
+    
+    if remove_tmp_file is True:
+        os.rename(new_file_name,file_name)
+        #os.remove(new_file_name)
 
 ## script templates
 script_templates = {}
