@@ -28,7 +28,7 @@ from visa import GpibInstrument
 
 from ..frequency import *
 from ..network import *
-
+import ..mathFuntions as mf
 class PNAX(GpibInstrument):
     '''
     Agilent PNAX
@@ -73,7 +73,6 @@ class PNAX(GpibInstrument):
         ntwk.s = s
         ntwk.frequency= self.frequency
         return ntwk
-
 
 class ZVA40_lihan(object):
     '''
@@ -310,8 +309,23 @@ class ZVA40(GpibInstrument):
 
     def upload_cal_data(self, error_data, cal_name='test', port=1):
         '''
+        for explanation of this code see the 
+        zva manual (v1145.1084.12 p6.193)
         '''
-        cal_type = 'FOPort'
+        directivity  = error_data.s[:,0,0]
+        source_match  = error_data.s[:,1,1]
+        reflection_tracking  = error_data.s[:,1,0]*error_data.s[:0,1]
+        
+        def flatten_to_string(z):
+            return ''.join(['%s,'%k for k in mf.complex2Scalar(z)])
+        
+        error_dict={}
+        if port ==1:
+            error_dict['SCORR1'] = flatten_to_string(directivty)
+            error_dict['SCORR2'] = flatten_to_string(directivty)
+            error_dict['SCORR3'] = flatten_to_string(directivty)
+        
+        cal_type = 'FOPort%i'%port
         self.write('CORR:COLL:METH:DEF %s, %s, %i'%(cal_name, cal_type,port))
         self.write('corr:coll:save:sel:def')
         self.continuous=False
@@ -413,9 +427,6 @@ class ZVA40_alex(GpibInstrument):
 
     def wait(self):
         self.write('*WAIt')
-
-
-
 
 class HP8510C(GpibInstrument):
     '''
@@ -566,6 +577,7 @@ class HP8510C(GpibInstrument):
         reverse.name = 'reverse switch term'
 
         return (forward,reverse)
+
 class HP8720(HP8510C):
     def __init__(self, address=16,**kwargs):
         HP8510C.__init__(self,address,**kwargs)
