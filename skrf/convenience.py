@@ -230,8 +230,6 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         os.rename(new_file_name,file_name)
 
 
->>>>>>> 4fac78e6c3bc3e00391bf0220524beffb43f763b
-
 ## script templates
 script_templates = {}
 script_templates['cal_gen_ideals'] = \
