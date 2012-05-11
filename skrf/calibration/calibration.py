@@ -51,6 +51,7 @@ from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
+from ..networkSet import NetworkSet
 from ..convenience import *
 
 
@@ -163,6 +164,7 @@ class Calibration(object):
         # initialized internal properties to None
         self._residual_ntwks = None
         self._caled_ntwks =None
+        self._caled_ntwk_sets = None
         self.has_run = False
         
 
@@ -363,7 +365,24 @@ class Calibration(object):
 
             self._caled_ntwks = ntwk_list
         return ntwk_list
+    
+    @property
+    def caled_ntwk_sets(self):
+        '''
+        returns a NetworkSet for each caled_ntwk, based on their names
+        '''
+        if self._caled_ntwk_sets is not None:
+            return self._caled_ntwk_sets
+        else:
+            caled_sets={}
+            std_names = list(set([k.name  for k in self.caled_ntwks ]))
+            for std_name in std_names:
+                caled_sets[std_name] = NetworkSet(
+                    [k for k in self.caled_ntwks if k.name is std_name])
+            self._caled_ntwk_sets = caled_sets
+            return caled_sets
 
+    
     ##  methods for manual control of internal calculations
     def run(self):
         '''
