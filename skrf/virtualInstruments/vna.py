@@ -28,7 +28,7 @@ from visa import GpibInstrument
 
 from ..frequency import *
 from ..network import *
-import ..mathFuntions as mf
+from .. import mathFunctions as mf
 class PNAX(GpibInstrument):
     '''
     Agilent PNAX
@@ -314,25 +314,27 @@ class ZVA40(GpibInstrument):
         '''
         directivity  = error_data.s[:,0,0]
         source_match  = error_data.s[:,1,1]
-        reflection_tracking  = error_data.s[:,1,0]*error_data.s[:0,1]
+        reflection_tracking  = error_data.s[:,1,0]*error_data.s[:,0,1]
         
         def flatten_to_string(z):
             return ''.join(['%s,'%k for k in mf.complex2Scalar(z)])
         
         error_dict={}
         if port ==1:
-            error_dict['SCORR1'] = flatten_to_string(directivty)
-            error_dict['SCORR2'] = flatten_to_string(directivty)
-            error_dict['SCORR3'] = flatten_to_string(directivty)
+            error_dict['DIRECTIVITY'] = flatten_to_string(directivity)
+            error_dict['SRCMATCH'] = flatten_to_string(source_match)
+            error_dict['REFLTRACK'] = flatten_to_string(reflection_tracking)
         
         cal_type = 'FOPort%i'%port
         self.write('CORR:COLL:METH:DEF %s, %s, %i'%(cal_name, cal_type,port))
         self.write('corr:coll:save:sel:def')
         self.continuous=False
         for key in error_data:
-            self.write('corr:cdat \'%s\',%i,0,%s'\
-            %(key, port, values_as_strings))
+            self.write('corr:dat \'%s\',%i,0,%s'\
+            %(key, port, error_dict[key]))
     
+        self.continuous=True
+        
 class ZVA40_alex(GpibInstrument):
     '''
     the rohde Swarz zva40
