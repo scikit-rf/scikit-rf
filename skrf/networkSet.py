@@ -498,6 +498,27 @@ class NetworkSet(object):
         kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
         self.plot_uncertainty_bounds_component(*args,**kwargs)
 
+    
+    def plot_uncertainty_decomposition(self, m=0,n=0):
+        '''
+        plots the total and per component uncertainty
+        
+        Parameters
+        --------------
+        m : int
+            first s-parameters index
+        n :
+            second s-parameter index
+            
+        '''
+        if self.name is not None:
+            title(r'Uncertainty Decomposition: %s $S_{%i%i}$'%(self.name,m,n))
+        self.std_s.plot_s_mag(label='Distance', m=m,n=n)
+        self.std_s_re.plot_s_mag(label='Real',  m=m,n=n)
+        self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n)
+        self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n)
+        self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
+
 
     def signature(self,m=0,n=0, vmax = None, *args, **kwargs):
         '''
@@ -520,7 +541,7 @@ class NetworkSet(object):
         \*args,\*\*kwargs : arguments, keyword arguments
                 passed to :func:`~pylab.imshow`
 
-
+        
         '''
         diff_set = (self - self.mean_s)
         sig = array([diff_set[k].s_mag[:,m,n] for k in range(len(ntwk_set))])
@@ -585,3 +606,40 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
 
 # short hand name for convenience
 fon = func_on_networks
+
+
+def getset(ntwk_dict, s, *args, **kwargs):
+    '''
+    Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
+    objects in a dictionary that contain `s` in its key. This is useful 
+    for dealing with the output of 
+    :func:`~skrf.convenience.load_all_touchstones`, which contains
+    Networks grouped by some kind of naming convention.
+    
+    Parameters
+    ------------
+    ntwk_dict : dictionary of Network objects
+        network dictionary that contains a set of keys `s`
+    s : string
+        string contained in the keys of ntwk_dict that are to be in the 
+        NetworkSet that is returned
+    \*args,\*\*kwargs : passed to NetworkSet()
+    
+    Returns
+    --------
+    ntwk_set :  NetworkSet object
+        A NetworkSet that made from values of ntwk_dict with `s` in 
+        their key
+        
+    Examples
+    ---------
+    >>>ntwk_dict = rf.load_all_touchstone('my_dir')
+    >>>set5v = getset(ntwk_dict,'5v')
+    >>>set10v = getset(ntwk_dict,'10v')
+    '''
+    ntwk_list = [ntwk_dict[k] for k in ntwk_dict if s in k]
+    if len(ntwk_list) > 0:
+        return NetworkSet( ntwk_list,*args, **kwargs)
+    else:
+        print 'Warning: No keys in ntwk_dict contain \'%s\''%s
+        return None 
