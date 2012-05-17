@@ -512,7 +512,7 @@ class NetworkSet(object):
             
         '''
         if self.name is not None:
-            title(r'Uncertainty Decomposition: %s $S_{%i%i}$'%(self.name,m,n))
+            plb.title(r'Uncertainty Decomposition: %s $S_{%i%i}$'%(self.name,m,n))
         self.std_s.plot_s_mag(label='Distance', m=m,n=n)
         self.std_s_re.plot_s_mag(label='Real',  m=m,n=n)
         self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n)
