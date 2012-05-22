@@ -165,7 +165,7 @@ class NetworkSet(object):
 
             self.__add_a_plot_uncertainty(network_property_name)
             self.__add_a_element_wise_method('plot_'+network_property_name)
-
+            self.__add_a_element_wise_method('plot_s_db')
         for network_method_name in \
                 ['write_touchstone','interpolate','plot_s_smith']:
             self.__add_a_element_wise_method(network_method_name)
@@ -501,7 +501,7 @@ class NetworkSet(object):
     
     def plot_uncertainty_decomposition(self, m=0,n=0):
         '''
-        plots the total and per component uncertainty
+        plots the total and  component-wise uncertainty
         
         Parameters
         --------------
