@@ -444,9 +444,9 @@ class NetworkSet(object):
                 similar.  uncerainty for wrapped phase blows up at +-pi.
 
         '''
-        ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase [deg]',
-                's_deg_unwrap':'Phase [deg]','s_deg_unwrapped':'Phase [deg]',
-                's_db':'Magnitude [dB]'}
+        ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
+                's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
+                's_db':'Magnitude (dB)'}
 
         ax = plb.gca()
 

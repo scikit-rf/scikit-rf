@@ -151,6 +151,17 @@ def save_all_figs(dir = './', format=['eps','pdf','png']):
             print (dir+fileName+'.'+fmt)
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
+    '''
+    Parameters
+    -----------
+    ax : matplotlib.Axes
+        axis which to add markers to, defaults to gca()
+    marker_list : list of marker characters
+        see matplotlib.plot help for possible marker characters
+    markevery : int
+        markevery number of points with a marker.
+    
+    '''
     if ax is None:
         ax=plb.gca()
     lines = ax.get_lines()
@@ -175,6 +186,25 @@ def plot_complex(z,*args, **kwargs):
     '''
     plb.plot(npy.array(z).real,npy.array(z).imag, *args, **kwargs)
 
+
+def func_on_all_figs(func, *args, **kwargs):
+    '''
+    runs a function after making all open figures current. 
+    
+    Parameters
+    ----------
+    func : function
+        function to call
+    \*args, \*\*kwargs : pased to func
+    
+    Examples
+    ----------
+    >>>rf.func_on_all_figs(grid,alpha=.3)
+    '''
+    for fig_n in plb.get_fignums():
+        plb.figure(fig_n)
+        func(*args, **kwargs)
+        plb.draw()
 
 # other
 def now_string():

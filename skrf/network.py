@@ -226,11 +226,11 @@ class Network(object):
         'im'    : 'Imag Part',
         'mag'   : 'Magnitude',
         'abs'   : 'Magnitude',
-        'db'    : 'Magnitude [dB]',
-        'deg'   : 'Phase [deg]',
-        'deg_unwrap'    : 'Phase [deg]',
-        'rad'   : 'Phase [rad]',
-        'rad_unwrap'    : 'Phase [rad]',
+        'db'    : 'Magnitude (dB)',
+        'deg'   : 'Phase (deg)',
+        'deg_unwrap'    : 'Phase (deg)',
+        'rad'   : 'Phase (rad)',
+        'rad_unwrap'    : 'Phase (rad)',
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
         }
@@ -657,8 +657,8 @@ class Network(object):
                             plot_rectangular(
                                 x = self.frequency.f_scaled,
                                 y = getattr(self,attribute)[:,m,n],
-                                x_label = 'Frequency [' + \
-                                    self.frequency.unit +']',
+                                x_label = 'Frequency (' + \
+                                    self.frequency.unit +')',
                                 y_label = y_label,
                                 *args, **kwargs)
 
