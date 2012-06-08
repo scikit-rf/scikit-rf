@@ -28,7 +28,7 @@ from visa import GpibInstrument
 
 from ..frequency import *
 from ..network import *
-
+from .. import mathFunctions as mf
 class PNAX(GpibInstrument):
     '''
     Agilent PNAX
@@ -73,7 +73,6 @@ class PNAX(GpibInstrument):
         ntwk.s = s
         ntwk.frequency= self.frequency
         return ntwk
-
 
 class ZVA40_lihan(object):
     '''
@@ -258,7 +257,6 @@ class ZVA40(GpibInstrument):
         '''
         return self.one_port
 
-
     @property
     def error(self):
         '''
@@ -309,7 +307,34 @@ class ZVA40(GpibInstrument):
     def update_trace_list(self):
         raise(NotImplementedError)
 
-
+    def upload_cal_data(self, error_data, cal_name='test', port=1):
+        '''
+        for explanation of this code see the 
+        zva manual (v1145.1084.12 p6.193)
+        '''
+        directivity  = error_data.s[:,0,0]
+        source_match  = error_data.s[:,1,1]
+        reflection_tracking  = error_data.s[:,1,0]*error_data.s[:,0,1]
+        
+        def flatten_to_string(z):
+            return ''.join(['%s,'%k for k in mf.complex2Scalar(z)])
+        
+        error_dict={}
+        if port ==1:
+            error_dict['DIRECTIVITY'] = flatten_to_string(directivity)
+            error_dict['SRCMATCH'] = flatten_to_string(source_match)
+            error_dict['REFLTRACK'] = flatten_to_string(reflection_tracking)
+        
+        cal_type = 'FOPort%i'%port
+        self.write('CORR:COLL:METH:DEF %s, %s, %i'%(cal_name, cal_type,port))
+        self.write('corr:coll:save:sel:def')
+        self.continuous=False
+        for key in error_data:
+            self.write('corr:dat \'%s\',%i,0,%s'\
+            %(key, port, error_dict[key]))
+    
+        self.continuous=True
+        
 class ZVA40_alex(GpibInstrument):
     '''
     the rohde Swarz zva40
@@ -404,9 +429,6 @@ class ZVA40_alex(GpibInstrument):
 
     def wait(self):
         self.write('*WAIt')
-
-
-
 
 class HP8510C(GpibInstrument):
     '''
@@ -557,6 +579,7 @@ class HP8510C(GpibInstrument):
         reverse.name = 'reverse switch term'
 
         return (forward,reverse)
+
 class HP8720(HP8510C):
     def __init__(self, address=16,**kwargs):
         HP8510C.__init__(self,address,**kwargs)

@@ -134,11 +134,18 @@ class DistributedCircuit(Media):
 
     def __str__(self):
         f=self.frequency
-        output =  \
+        try:
+            output =  \
                 'Distributed Circuit Media.  %i-%i %s.  %i points'%\
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
                 '\nI\'= %.2f, C\'= %.2f,R\'= %.2f, G\'= %.2f, '% \
                 (self.I, self.C,self.R, self.G)
+        except(TypeError):
+            output =  \
+                'Distributed Circuit Media.  %i-%i %s.  %i points'%\
+                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
+                '\nI\'= %.2f.., C\'= %.2f..,R\'= %.2f.., G\'= %.2f.., '% \
+                (self.I[0], self.C[0],self.R[0], self.G[0])
         return output
 
     def __repr__(self):

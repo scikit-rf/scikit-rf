@@ -121,7 +121,7 @@ from tlineFunctions import zl_2_Gamma0
 try:
     from src import connect_s_fast
 except:
-    warnings.warn('libconnect failed to load.')
+    pass#warnings.warn('libconnect failed to load.')
     
 class Network(object):
     '''
@@ -226,11 +226,11 @@ class Network(object):
         'im'    : 'Imag Part',
         'mag'   : 'Magnitude',
         'abs'   : 'Magnitude',
-        'db'    : 'Magnitude [dB]',
-        'deg'   : 'Phase [deg]',
-        'deg_unwrap'    : 'Phase [deg]',
-        'rad'   : 'Phase [rad]',
-        'rad_unwrap'    : 'Phase [rad]',
+        'db'    : 'Magnitude (dB)',
+        'deg'   : 'Phase (deg)',
+        'deg_unwrap'    : 'Phase (deg)',
+        'rad'   : 'Phase (rad)',
+        'rad_unwrap'    : 'Phase (rad)',
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
         }
@@ -657,8 +657,8 @@ class Network(object):
                             plot_rectangular(
                                 x = self.frequency.f_scaled,
                                 y = getattr(self,attribute)[:,m,n],
-                                x_label = 'Frequency [' + \
-                                    self.frequency.unit +']',
+                                x_label = 'Frequency (' + \
+                                    self.frequency.unit +')',
                                 y_label = y_label,
                                 *args, **kwargs)
 
@@ -1015,29 +1015,37 @@ class Network(object):
         pas_mat = self.s.copy()
         for f in range(len(self.s)):
             pas_mat[f,:,:] = npy.dot(self.s[f,:,:].conj().T, self.s[f,:,:])
-
+		
         return pas_mat
-
-	## NETWORK CLASIFIERs
+    
+    
+    
+    
+	## NETWORK CLASIFIER
 	def is_reciprocal(self):
 		'''
+		test for reciprocity
 		'''
 		raise(NotImplementedError)
 	
 	def is_symmetric(self):
 		'''
+		test for symmetry
 		'''
 		raise(NotImplementedError)
 	
 	def is_passive(self):
 		'''
+		test for passivity 
 		'''
 		raise(NotImplementedError)		
 	
 	def is_lossless(self):
 		'''
+		test for losslessness
 		'''
 		raise(NotImplementedError)	
+    
     ## CLASS METHODS
     def copy(self):
         '''
@@ -2498,7 +2506,7 @@ def test_nports_equal(ntwkA,ntwkB):
 # this is needed for port impedance mismatches
 def impedance_mismatch(z1, z2):
     '''
-    creates a two-port network for a impedance mis-match
+    creates a two-port s-matrix for a impedance mis-match
 
     Parameters
     -----------
@@ -2516,8 +2524,8 @@ def impedance_mismatch(z1, z2):
     
     result[:,0,0] = gamma
     result[:,1,1] = -gamma
-    result[:,1,0] = 1+gamma
-    result[:,0,1] = 1-gamma
+    result[:,1,0] = (1+gamma)*npy.sqrt(1.0*z1/z2)
+    result[:,0,1] = (1-gamma)*npy.sqrt(1.0*z2/z1)
     return result
 
 def two_port_reflect(ntwk1, ntwk2):
@@ -2655,3 +2663,5 @@ def csv_2_touchstone(filename):
     ntwk.frequency.unit='ghz'
 
     return ntwk
+
+lat = load_all_touchstones
