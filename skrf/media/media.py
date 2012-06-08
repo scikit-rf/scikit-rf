@@ -251,13 +251,17 @@ class Media(object):
 
         Parameters
         ----------
-                d: distance, in meters
-                deg: is d in deg?[Boolean]
+        d: number or array-like
+            delay distance, in meters
+        
+        deg: Boolean
+            return electral length in deg?
 
         Returns
         --------
-                theta: electrical length in radians or degrees,
-                        depending on  value of deg.
+        theta: number or array-like
+            electrical length in radians or degrees, depending on  
+            value of deg.
         '''
         gamma = self.propagation_constant
 
