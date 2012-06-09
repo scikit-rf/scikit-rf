@@ -1,0 +1,29 @@
+<Qucs Schematic 0.0.15>
+<Properties>
+  <View=-158,0,800,800,0.839056,0,0>
+  <Grid=10,10,0>
+  <DataSet=impedanceMismatch.dat>
+  <DataDisplay=impedanceMismatch.sch>
+  <OpenDisplay=1>
+  <showFrame=0>
+  <FrameText0=Title>
+  <FrameText1=Drawn By:>
+  <FrameText2=Date:>
+  <FrameText3=Revision:>
+</Properties>
+<Symbol>
+</Symbol>
+<Components>
+</Components>
+<Wires>
+</Wires>
+<Diagrams>
+  <Smith -20 473 433 433 3 #c0c0c0 1 00 1 0 1 1 1 0 4 1 1 0 1 1 315 0 225 "" "" "">
+	<"S[1,1]" #0000ff 2 3 0 5 0>
+	<"S[1,2]" #ff0000 1 3 0 5 0>
+	<"S[2,1]" #ff00ff 1 3 0 0 0>
+	<"S[2,2]" #00ff00 1 3 0 5 0>
+  </Smith>
+</Diagrams>
+<Paintings>
+</Paintings>

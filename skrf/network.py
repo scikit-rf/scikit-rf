@@ -2546,7 +2546,11 @@ def two_port_reflect(ntwk1, ntwk2):
     result : Network object
             two-port reflective network
 
-
+    Notes
+    -------
+        The resultant Network is copied from `ntwk1`, so its various 
+    properties(name, frequency, etc) are inhereted from that Network.
+    
     Examples
     ---------
 
