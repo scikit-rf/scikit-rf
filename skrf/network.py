@@ -750,8 +750,8 @@ class Network(object):
                 s = npy.reshape(s,(-1,1,1))
 
         self._s = s
-        self._y = s2y(self._s)
-        self._z = s2z(self._s)
+        self._y = s2y(self._s, self.z0)
+        self._z = s2z(self._s, self.z0)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
        
@@ -779,7 +779,7 @@ class Network(object):
         a different characteristic impedance, that is a function of
         frequency, `z0` is stored internally as a `fxn` array.
 
-        However because frequenty `z0` is simple (like 50ohm),it can
+        However because frequently `z0` is simple (like 50ohm),it can
         be set with just number as well.
 
         Returns
@@ -1086,8 +1086,9 @@ class Network(object):
             raise NotImplementedError('only s-parameters supported for now.')
 
 
+        # set z0 before s so that y and z can be computed
+        self.z0 = float(touchstoneFile.resistance)  
         self.f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
-        self.z0 = float(touchstoneFile.resistance)
         self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
         self.name = os.path.basename( os.path.splitext(filename)[0])
         #TODO: add Network property `comments` which is read from
@@ -1852,22 +1853,24 @@ def innerconnect_s(A, k, l):
    
 ## network representation conversion       
 
-def s2z(s):
+def s2z(s,z0=50):
     '''
     convert scattering parameters to impedance parameters [#]_
 
 
     .. math::
-        s = \\frac {1 + s}{1 - s}
+        z = \\sqrt {z0} * {I + s} * {I - s}^{-1} * \\sqrt{z0}
 
     Parameters
     ------------
-    s : complex array-like or number
+    s : complex array-like
         scattering parameters
+    z0 : complex array-like or number
+        port impedances                                                                                             
 
     Returns
     ---------
-    z : complex array-like or number
+    z : complex array-like
         impedance parameters
 
     See Also
@@ -1893,27 +1896,39 @@ def s2z(s):
         
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
-    z =  (1 + s) / (1 - s)
-    return z
+    if npy.isscalar(z0):
+        z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
+    z = npy.zeros(s.shape)
+    I = npy.mat(npy.identity(s.shape[1]))
+    try:
+        for fidx in xrange(s.shape[0]):
+            sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
+            z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
+        return z
+    except (npy.linalg.LinAlgError, ValueError):
+        #print ('Warning: Cannot compute impedance parameters for network.')
+        return None
 
-def s2y(s):
+def s2y(s,z0=50):
     '''
     convert scattering parameters to admittance parameters [#]_
 
 
     .. math::
-        s = \\frac {1 + s}{1 - s}
+        y = \\sqrt {y0} * {I - s} * {I + s}^{-1} * \\sqrt{y0}
 
     Parameters
     ------------
-    s : complex array-like or number
+    s : complex array-like
         scattering parameters
+    z0 : complex array-like or number
+        port impedances                                                                                             
 
     Returns
     ---------
-    y : complex array-like or number
+    y : complex array-like 
         admittance parameters
 
     See Also
@@ -1939,10 +1954,21 @@ def s2y(s):
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     '''
-    y =  (1 - s) / (1 + s)
-    return y
+
+    if npy.isscalar(z0):
+        z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
+    y = npy.zeros(s.shape)
+    I = npy.mat(npy.identity(s.shape[1]))
+    try:
+        for fidx in xrange(s.shape[0]):
+            sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+            y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
+        return y
+    except (npy.linalg.LinAlgError, ValueError):
+        #print ('Warning: Cannot compute admittance parameters for network.')
+        return None
 
 def s2t(s):
     '''
@@ -1983,22 +2009,23 @@ def s2t(s):
         ]).transpose()
     return t   
 
-def z2s(z):
+def z2s(z, z0=50):
     '''
     convert impedance parameters to scattering parameters [#]_
 
-
     .. math::
-        s = \\frac {1 - s}{1 + s}
+        s = {\\sqrt{y0}*z*\\sqrt{y0} - I} * {\\sqrt(y0}*z*\\sqrt{y0} + I}^{-1}
 
     Parameters
     ------------
-    z : complex array-like or number
+    z : complex array-like
         impedance parameters
+    z0 : complex array-like or number
+        port impedances                                                                                             
 
     Returns
     ---------
-    s : complex array-like or number
+    s : complex array-like
         scattering parameters
 
     See Also
@@ -2024,9 +2051,17 @@ def z2s(z):
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
-    raise (NotImplementedError)
+    if npy.isscalar(z0):
+        z0 = npy.array(z.shape[0]*[z.shape[1] * [z0]])
+    s = npy.zeros(z.shape)
+    I = npy.mat(npy.identity(z.shape[1]))
+    for fidx in xrange(z.shape[0]):
+        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+        s[fidx] = (sqrty0*z[fidx]*sqrty0 - I) * (sqrty0*z[fidx]*sqrty0 + I)**-1
+    return s
+
 
 def z2y(z):
     '''
@@ -2034,17 +2069,17 @@ def z2y(z):
 
 
     .. math::
-        s = \\frac {1 - s}{1 + s}
+        y = z^{-1}
 
     Parameters
     ------------
-    z : complex array-like or number
+    z : complex array-like
         impedance parameters
 
     Returns
     ---------
-    s : complex array-like or number
-        scattering parameters
+    y : complex array-like 
+        admittance parameters
 
     See Also
     ----------
@@ -2071,7 +2106,8 @@ def z2y(z):
     ----------
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     '''
-    raise (NotImplementedError)
+    return npy.array([npy.mat(z[f,:,:])**-1 for f in xrange(z.shape[0])])
+    
 
 def z2t(z):
     '''
@@ -2118,18 +2154,21 @@ def z2t(z):
     '''
     raise (NotImplementedError)
 
-def y2s(y):
+def y2s(y, z0=50):
     '''
     convert admittance parameters to scattering parameters [#]_
 
 
     .. math::
-        s = \\frac {1 - s}{1 + s}
+        s = {I - \\sqrt{z0}*y*\\sqrt{z0}} * {I + \\sqrt(z0}*y*\\sqrt{z0}}^{-1}
 
     Parameters
     ------------
-    z : complex array-like or number
-        impedance parameters
+    y : complex array-like
+        admittance parameters
+
+    z0 : complex array-like or number
+        port impedances                                                                                             
 
     Returns
     ---------
@@ -2148,8 +2187,8 @@ def y2s(y):
         parameters
     y2s : converts admittance parameters to impedance parameters
     y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
+    y2z : converts admittance parameters to impedance parameters
+
     t2s : converts scattering transfer paramerters to scattering
         parameters
     t2z : converts scattering transfer paramerters to impedance
@@ -2159,9 +2198,16 @@ def y2s(y):
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     '''
-    raise (NotImplementedError)
+    if npy.isscalar(z0):
+        z0 = npy.array(y.shape[0]*[y.shape[1] * [z0]])
+    s = npy.zeros(y.shape)
+    I = npy.mat(npy.identity(s.shape[1]))
+    for fidx in xrange(s.shape[0]):
+        sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
+        s[fidx] = (I - sqrtz0*y[fidx]*sqrtz0) * (I + sqrtz0*y[fidx]*sqrtz0)**-1
+    return s
 
 def y2z(y):
     '''
@@ -2169,17 +2215,17 @@ def y2z(y):
 
 
     .. math::
-        s = \\frac {1 - s}{1 + s}
+        z = y^{-1}
 
     Parameters
     ------------
-    z : complex array-like or number
-        impedance parameters
+    y : complex array-like 
+        admittance parameters
 
     Returns
     ---------
-    s : complex array-like or number
-        scattering parameters
+    z : complex array-like
+        impedance parameters
 
     See Also
     ----------
@@ -2204,9 +2250,9 @@ def y2z(y):
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     '''
-    raise (NotImplementedError)
+    return npy.array([npy.mat(y[f,:,:])**-1 for f in xrange(y.shape[0])])
 
 def y2t(y):
     '''
@@ -2417,7 +2463,8 @@ def inv(s):
     # this idea is from lihan
     i = s2t(s) 
     for f in range(len(i)):
-        i[f,:,:] = npy.linalg.inv(i[f,:,:])
+        i[f,:,:] = npy.linalg.inv(i[f,:,:])   # could also be written as
+                                              #   npy.mat(i[f,:,:])**-1  -- Trey
     i = t2s(i)
     return i
 

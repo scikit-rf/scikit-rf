@@ -1,5 +1,6 @@
 import unittest
 import os
+import numpy as npy
 
 import skrf as rf
 
@@ -55,6 +56,18 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_plot_two_port_smith(self):
         self.ntwk1.plot_s_smith()
+
+    def test_yz(self):
+        tinyfloat = 1e-12
+        ntwk = rf.Network()
+        ntwk.z0 = npy.array([28,75])
+        ntwk.f = npy.array([1000, 2000])
+        ntwk.s = rf.z2s(npy.array([[[1,5,11],[40,5,3],[16,8,9]],
+                                   [[1,20,3],[14,10,16],[27,18,19]]]))
+        self.assertTrue((abs(rf.y2z(ntwk.y)-ntwk.z) < tinyfloat).all())
+        self.assertTrue((abs(rf.y2s(ntwk.y, ntwk.z0)-ntwk.s) < tinyfloat).all())
+        self.assertTrue((abs(rf.z2y(ntwk.z)-ntwk.y) < tinyfloat).all())
+        self.assertTrue((abs(rf.z2s(ntwk.z, ntwk.z0)-ntwk.s) < tinyfloat).all())
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
