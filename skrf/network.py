@@ -1900,7 +1900,7 @@ def s2z(s,z0=50):
     '''
     if npy.isscalar(z0):
         z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
-    z = npy.zeros(s.shape)
+    z = npy.zeros(s.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
     try:
         for fidx in xrange(s.shape[0]):
@@ -1959,7 +1959,7 @@ def s2y(s,z0=50):
 
     if npy.isscalar(z0):
         z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
-    y = npy.zeros(s.shape)
+    y = npy.zeros(s.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
     try:
         for fidx in xrange(s.shape[0]):
@@ -2055,7 +2055,7 @@ def z2s(z, z0=50):
     '''
     if npy.isscalar(z0):
         z0 = npy.array(z.shape[0]*[z.shape[1] * [z0]])
-    s = npy.zeros(z.shape)
+    s = npy.zeros(z.shape, dtype='complex')
     I = npy.mat(npy.identity(z.shape[1]))
     for fidx in xrange(z.shape[0]):
         sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
@@ -2202,7 +2202,7 @@ def y2s(y, z0=50):
     '''
     if npy.isscalar(z0):
         z0 = npy.array(y.shape[0]*[y.shape[1] * [z0]])
-    s = npy.zeros(y.shape)
+    s = npy.zeros(y.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
     for fidx in xrange(s.shape[0]):
         sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))

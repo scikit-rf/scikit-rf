@@ -60,10 +60,10 @@ class NetworkTestCase(unittest.TestCase):
     def test_yz(self):
         tinyfloat = 1e-12
         ntwk = rf.Network()
-        ntwk.z0 = npy.array([28,75])
+        ntwk.z0 = npy.array([28,75+3j])
         ntwk.f = npy.array([1000, 2000])
-        ntwk.s = rf.z2s(npy.array([[[1,5,11],[40,5,3],[16,8,9]],
-                                   [[1,20,3],[14,10,16],[27,18,19]]]))
+        ntwk.s = rf.z2s(npy.array([[[1+1j,5,11],[40,5,3],[16,8,9+8j]],
+                                   [[1,20,3],[14,10,16],[27,18,-19-2j]]]))
         self.assertTrue((abs(rf.y2z(ntwk.y)-ntwk.z) < tinyfloat).all())
         self.assertTrue((abs(rf.y2s(ntwk.y, ntwk.z0)-ntwk.s) < tinyfloat).all())
         self.assertTrue((abs(rf.z2y(ntwk.z)-ntwk.y) < tinyfloat).all())
