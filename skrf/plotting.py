@@ -49,7 +49,7 @@ from matplotlib.patches import Circle   # for drawing smith chart
 
 
 
-def smith(smithR=1, chart_type = 'z',ax=None):
+def smith(smithR=1, chart_type = 'z', axis_type = 'r', ax=None):
     '''
     plots the smith chart of a given radius
 
@@ -61,6 +61,11 @@ def smith(smithR=1, chart_type = 'z',ax=None):
             Contour type. Possible values are
              * *'z'* : lines of constant impedance
              * *'y'* : lines of constant admittance
+    axis_type : ['r', 'i']
+            Axis type. Possible values are
+             * *'r'* : Show axis of reflection coefficient (standard).
+             * *'i'* : Don't show reflection coefficient and annotate real and
+                       imaginary parts of impedance on the chart (if smithR=1)
     ax : matplotlib.axes object
             existing axes to draw smith chart on
 
@@ -82,8 +87,12 @@ def smith(smithR=1, chart_type = 'z',ax=None):
 
     #TODO: fix this
     # these could be dynamically coded in the future, but work good'nuff for now
-    rLightList = plb.logspace(3,-5,9,base=.5)
-    xLightList = plb.hstack([plb.logspace(2,-5,8,base=.5), -1*plb.logspace(2,-5,8,base=.5)])
+    if axis_type is 'r':
+        rLightList = plb.logspace(3,-5,9,base=.5)
+        xLightList = plb.hstack([plb.logspace(2,-5,8,base=.5), -1*plb.logspace(2,-5,8,base=.5)])
+    else:
+        rLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
+        xLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
@@ -124,12 +133,45 @@ def smith(smithR=1, chart_type = 'z',ax=None):
     ax1.grid(0)
     #set axis limits
     ax1.axis('equal')
-    ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))
+    ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))     
+
+    if axis_type is 'i':
+        #Clear axis
+        ax1.yaxis.set_ticks([])
+        ax1.xaxis.set_ticks([])
+        for loc, spine in ax1.spines.iteritems():
+            spine.set_color('none')
+
+        #Will make annotations only if the radius is 1 and it is the impedance smith chart
+        if smithR is 1 and y_flip_sign is 1:
+            #Make room for annotation
+            ax1.axis(smithR*npy.array([-1., 1., -1.2, 1.2]))
+
+            #Annotate real part
+            for value in rLightList:
+                rho = (value - 1)/(value + 1)
+                ax1.annotate(str(value), xy=((rho-0.12)*smithR, 0.01*smithR), \
+                    xytext=((rho-0.12)*smithR, 0.01*smithR))
+
+            #Annotate imaginary part
+            deltax = plb.array([-0.17, -0.14, -0.06,  0., 0.02, -0.2, -0.2, -0.08, 0., 0.03])
+            deltay = plb.array([0., 0.03, 0.01, 0.02, 0., -0.02, -0.06, -0.09, -0.08, -0.05])
+            for value, dx, dy in zip(xLightList, deltax, deltay):
+                #Transforms from complex to cartesian and adds a delta to x and y values
+                rhox = (-value**2 + 1)/(-value**2 - 1) * smithR * y_flip_sign + dx
+                rhoy = (-2*value)/(-value**2 - 1) * smithR + dy
+                #Annotate value
+                ax1.annotate(str(value) + 'j', xy=(rhox, rhoy), xytext=(rhox, rhoy))
+
+            #Annotate 0 and inf
+            ax1.annotate('0.0', xy=(-1.15, -0.02), xytext=(-1.15, -0.02))
+            ax1.annotate('$\infty$', xy=(1.02, -0.02), xytext=(1.02, -0.02))
 
     # loop though contours and draw them on the given axes
     for currentContour in contour:
         cc=ax1.add_patch(currentContour)
         cc.set_clip_path(clipc)
+
 
 def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     show_legend=True, axis='tight', ax=None, *args, **kwargs):
