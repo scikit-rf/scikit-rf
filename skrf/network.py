@@ -111,7 +111,7 @@ import ctypes as ct     # for connect_s_fast
 import pylab as plb
 from scipy import stats         # for Network.add_noise_*
 from scipy.interpolate import interp1d # for Network.interpolate()
-
+import unittest # for unitest.skip 
 import  mathFunctions as mf
 import touchstone
 from frequency import Frequency
@@ -122,7 +122,8 @@ try:
     from src import connect_s_fast
 except:
     pass#warnings.warn('libconnect failed to load.')
-    
+
+
 class Network(object):
     '''
 
@@ -2525,6 +2526,7 @@ def check_nports_equal(ntwkA,ntwkB):
         raise ValueError('Networks dont have matching number of ports.')
         
 ## TESTs (return [usually boolean] values)
+# TODO: would like to nose from running these, but i dont know how
 def test_frequency_equal(ntwkA, ntwkB):
     '''
     '''
