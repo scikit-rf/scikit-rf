@@ -14,6 +14,10 @@ Mailing List
 ------------
 http://groups.google.com/group/scikit-rf
 
+Development
+------------
+https://github.com/scikit-rf/scikit-rf/wiki/Development
+
 Summary
 --------
 **sckit-rf** is an object-oriented approach to RF/Microwave engineering 
