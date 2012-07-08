@@ -751,8 +751,6 @@ class Network(object):
                 s = npy.reshape(s,(-1,1,1))
 
         self._s = s
-        self._y = s2y(self._s, self.z0)
-        self._z = s2z(self._s, self.z0)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
        
@@ -761,6 +759,7 @@ class Network(object):
         '''
         admittance parameters
         '''
+        self._y = s2y(self._s, self.z0)
         return self._y
     
     @property
@@ -768,6 +767,7 @@ class Network(object):
         '''
         impedance parameters
         '''
+        self._z = s2z(self._s, self.z0)
         return self._z
         
     @property
