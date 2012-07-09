@@ -175,7 +175,7 @@ class NetworkSet(object):
             self.__add_a_operator(operator_name)
 
     @classmethod
-    def from_zip(cls, zip_file_name, *args, **kwargs):
+    def from_zip(cls, zip_file_name, sort_filenames=True, *args, **kwargs):
         '''
         creates a NetworkSet from a zipfile of touchstones. 
         
@@ -183,6 +183,9 @@ class NetworkSet(object):
         -----------
         zip_file_name : string
             name of zipfile
+        sort_filenames: Boolean
+            sort the filenames in teh zip file before constructing the 
+            NetworkSet
         \\*args,\\*\\*kwargs : arguments
             passed to NetworkSet constructor
         
@@ -194,8 +197,20 @@ class NetworkSet(object):
         '''
         z = zipfile.ZipFile(zip_file_name)
         filename_list = z.namelist()
-        return cls([Network(z.open(filename))
-            for filename in filename_list])
+        
+        ntwk_list = []
+        
+        if sort_filenames:
+            filename_list.sort()
+            
+        for filename in filename_list:
+            # try/except block in case not all files are touchstones
+            try:
+                ntwk_list.append(Network(z.open(filename)))
+            except:
+                pass
+        
+        return cls(ntwk_list)
     
     def __add_a_operator(self,operator_name):
         '''
@@ -568,16 +583,14 @@ class NetworkSet(object):
         '''
         diff_set = (self - self.mean_s)
         sig = npy.array([diff_set[k].s_mag[:,m,n] \
-            for k in range(len(ntwk_set))])
+            for k in range(len(self))])
         if vmax is None:
             vmax == 3*sig.mean()
-        imshow(sig, vmax = vmax, *args, **kwargs)
-        axis('tight')
-        ylabel('Network \#')
-        c_bar = colorbar()
+        plb.imshow(sig, vmax = vmax, *args, **kwargs)
+        plb.axis('tight')
+        plb.ylabel('Network \#')
+        c_bar = plb.colorbar()
         c_bar.set_label('Distance From Mean')
-        show();draw()
-
 
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
@@ -630,7 +643,6 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
 
 # short hand name for convenience
 fon = func_on_networks
-
 
 def getset(ntwk_dict, s, *args, **kwargs):
     '''
