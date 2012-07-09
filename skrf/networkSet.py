@@ -57,7 +57,7 @@ NetworkSet Class
 from network import average as network_average
 from network import Network
 import mathFunctions as mf
-
+import zipfile
 from copy import deepcopy
 import warnings
 import numpy as npy
@@ -174,6 +174,29 @@ class NetworkSet(object):
                 ['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
             self.__add_a_operator(operator_name)
 
+    @classmethod
+    def from_zip(cls, zip_file_name, *args, **kwargs):
+        '''
+        creates a NetworkSet from a zipfile of touchstones. 
+        
+        Parameters
+        -----------
+        zip_file_name : string
+            name of zipfile
+        \\*args,\\*\\*kwargs : arguments
+            passed to NetworkSet constructor
+        
+        Examples
+        ----------
+        >>>import skrf as rf
+        >>>my_set = rf.NetworkSet.from_zip('myzip.zip')
+            
+        '''
+        z = zipfile.ZipFile(zip_file_name)
+        filename_list = z.namelist()
+        return cls([Network(z.open(filename))
+            for filename in filename_list])
+    
     def __add_a_operator(self,operator_name):
         '''
         adds a operator method to the NetworkSet.
@@ -273,7 +296,7 @@ class NetworkSet(object):
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
-
+    
     def element_wise_method(self,network_method_name, *args, **kwargs):
         '''
         calls a given method of each element and returns the result as
