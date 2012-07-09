@@ -77,7 +77,15 @@ class touchstone():
         """
         Load the touchstone file into the interal data structures
         """
-        f = open(filename)
+        try:
+            f = open(filename)
+        except(TypeError):
+            # HACK: allow them to pass a file-like object
+            # this means you cant run load_file() twice, which may cause
+            # unexpected behavoir 
+            f = filename
+            self.filename = f.name
+            filename = f.name
 
         extention = filename.split('.')[-1].lower()
         #self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)

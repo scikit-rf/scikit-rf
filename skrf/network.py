@@ -1091,7 +1091,18 @@ class Network(object):
         self.z0 = float(touchstoneFile.resistance)  
         self.f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
         self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
-        self.name = os.path.basename( os.path.splitext(filename)[0])
+        try:
+            self.name = os.path.basename( os.path.splitext(filename)[0])
+            # this may not work if filename is a file object
+        except(AttributeError):
+            # in case they pass a file-object instead of file name, 
+            # get the name from the touchstone file
+            try: 
+                self.name = os.path.basename( os.path.splitext(touchstoneFile.filename)[0])
+            except():
+                print 'warning: couldnt inspect network name'
+                self.name=''
+            pass
         #TODO: add Network property `comments` which is read from
         # touchstone file. 
 

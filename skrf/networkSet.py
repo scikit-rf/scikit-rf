@@ -532,19 +532,20 @@ class NetworkSet(object):
         Parameters
         ------------
         m : int
-                first s-parameters index
-        n :
-                second s-parameter index
+            first s-parameters index
+        n : int
+            second s-parameter index
         vmax : number
-                sets upper limit of colorbar, if None, will be set to
-                3*mean of the magnitude of the complex difference
+            sets upper limit of colorbar, if None, will be set to
+            3*mean of the magnitude of the complex difference
         \*args,\*\*kwargs : arguments, keyword arguments
-                passed to :func:`~pylab.imshow`
+            passed to :func:`~pylab.imshow`
 
         
         '''
         diff_set = (self - self.mean_s)
-        sig = array([diff_set[k].s_mag[:,m,n] for k in range(len(ntwk_set))])
+        sig = npy.array([diff_set[k].s_mag[:,m,n] \
+            for k in range(len(ntwk_set))])
         if vmax is None:
             vmax == 3*sig.mean()
         imshow(sig, vmax = vmax, *args, **kwargs)
