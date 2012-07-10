@@ -558,7 +558,8 @@ class NetworkSet(object):
         self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
 
 
-    def signature(self,m=0,n=0, vmax = None, *args, **kwargs):
+    def signature(self,m=0,n=0,from_mean=False, operation='__sub__',
+        component='s_mag',vmax = None,  *args, **kwargs):
         '''
         visualization of relative changes in a NetworkSet.
 
@@ -573,6 +574,16 @@ class NetworkSet(object):
             first s-parameters index
         n : int
             second s-parameter index
+        from_mean : Boolean
+            calculate distance from mean if True. or distance from 
+            first network in networkset if False.
+        operation : ['__sub__', '__div__'], ..
+            operation to apply between each network and the reference 
+            network, which is either the mean, or the initial ntwk.
+        component : ['s_mag','s_db','s_deg' ..]
+            scalar component of Network to plot on the imshow. should 
+            be a property of the Network object.  
+            
         vmax : number
             sets upper limit of colorbar, if None, will be set to
             3*mean of the magnitude of the complex difference
@@ -581,8 +592,12 @@ class NetworkSet(object):
 
         
         '''
-        diff_set = (self - self.mean_s)
-        sig = npy.array([diff_set[k].s_mag[:,m,n] \
+        if from_mean:
+            diff_set = self.__getattribute__(operation)(self.mean_s)
+        else:
+            diff_set = self.__getattribute__(operation)(self.ntwk_set[0])
+        
+        sig = npy.array([diff_set[k].__getattribute__(component)[:,m,n] \
             for k in range(len(self))])
         if vmax is None:
             vmax == 3*sig.mean()
