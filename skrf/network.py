@@ -387,6 +387,11 @@ class Network(object):
     def __repr__(self):
         return self.__str__()
     
+    def __len__(self):
+        '''
+        length of frequency axis
+        '''
+        return len(self.s)
        
     ## INTERNAL CODE GENERATION METHODS
     def __compatable_for_scalar_operation_test(self, other):
