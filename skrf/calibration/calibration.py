@@ -456,11 +456,12 @@ class Calibration(object):
         returns:
                 caled: the calibrated measurement, a Network type.
         '''
-        try:
-            x = len (input_ntwk)
+        if isinstance(input_ntwk,list):
+            # if they pass a list of networks, look through them and 
+            # calibrate all
             return  [self.apply_cal(ntwk) for  ntwk in input_ntwk]
 
-        except(TypeError):
+        else:
             if self.nports ==1:
                 caled =  self.error_ntwk.inv**input_ntwk
                 caled.name = input_ntwk.name

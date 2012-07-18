@@ -331,13 +331,12 @@ class Media(object):
                 n-port load, where  S = Gamma0*eye(...)
         '''
         result = self.match(nports,**kwargs)
-        try:
-            result.s =  Gamma0* \
+        result.s =  npy.array(Gamma0).reshape(-1,1,1)* \
                     npy.eye(nports,dtype=complex).reshape((-1,nports,nports)).\
                     repeat(self.frequency.npoints,0)
-        except(ValueError):
-            for f in range(self.frequency.npoints):
-                result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
+        #except(ValueError):
+        #    for f in range(self.frequency.npoints):
+        #        result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
 
         return result
 
