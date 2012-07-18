@@ -66,7 +66,13 @@ class MediaTestCase():
 
     def test_shunt_delay_open(self):
         self.media.shunt_delay_open(1)
-
+    
+    def test_shunt_capacitor(self):
+        self.media.shunt_capacitor(1)
+    
+    def test_shunt_inductor(self):
+        self.media.shunt_inductor(1)
+    
 
 class FreespaceTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
