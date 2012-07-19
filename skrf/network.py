@@ -378,9 +378,13 @@ class Network(object):
             name = ''
         else:
             name = self.name
-        output =  \
-                '%i-Port Network: \'%s\',  %i-%i %s,  %i points, z0='% \
-                (self.number_of_ports,name, f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
+
+        if len(npy.shape(self.z0)) == 0:
+            z0 = str(self.z0)
+        else:
+            z0 = str(self.z0[0,:])
+
+        output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), z0)
 
         return output
 
@@ -764,8 +768,11 @@ class Network(object):
         '''
         admittance parameters
         '''
-        self._y = s2y(self._s, self.z0)
-        return self._y
+        return s2y(self._s, self.z0)
+
+    @y.setter
+    def y(self, value):
+        self._s = y2s(value, self.z0)
     
     @property
     def z(self):
@@ -812,7 +819,7 @@ class Network(object):
             elif len(npy.shape(self._z0)) ==1:
                 try:
                     if len(self._z0) == self.frequency.npoints:
-                        # this z0 is frequency dependent but no port dependent
+                        # this z0 is frequency dependent but not port dependent
                         self._z0 = \
                                 npy.repeat(npy.reshape(self._z0,(-1,1)),self.number_of_ports,1)
 
@@ -965,7 +972,10 @@ class Network(object):
                 the number of ports the network has.
 
         '''
-        return self.s.shape[1]
+        try:
+            return self.s.shape[1]
+        except (AttributeError):
+            return 0
 
     @property
     def nports(self):
