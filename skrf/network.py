@@ -1332,13 +1332,13 @@ class Network(object):
         self.s[:,:,to_ports] = self.s[:,:,from_ports]  # renumber columns
         self.z0[:,to_ports] = self.z0[:,from_ports]
 
-    # ploting
+    # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
             chart_type='z', *args,**kwargs):
         '''
         plots the scattering parameter on a smith chart
 
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
+        plots indices `m`, `n`, where `m` and `n` can be integers or
         lists of integers.
 
 
@@ -1559,7 +1559,7 @@ def connect(ntwkA, k, ntwkB,l):
     ntwkA : :class:`Network`
             network 'A'
     k : int
-            port index on `ntwkA` ( port indecies start from 0 )
+            port index on `ntwkA` ( port indices start from 0 )
     ntwkB : :class:`Network`
             network 'B'
     l : int
@@ -1614,7 +1614,7 @@ def connect(ntwkA, k, ntwkB,l):
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
 
-    # remove rows and coloumns of z0 matrix, which where `connected`
+    # remove rows and coloumns of z0 matrix which were `connected`
     ntwkC.z0 = npy.hstack(
         (npy.delete(ntwkA.z0, k, 1), npy.delete(ntwkB.z0, l, 1)))
 
@@ -1624,7 +1624,7 @@ def innerconnect(ntwkA, k, l):
     '''
     connect two ports of a single n-port network.
 
-    this results in a (n-2)-port network. remember port indecies start
+    this results in a (n-2)-port network. remember port indices start
     from 0.
 
     Parameters
@@ -1798,7 +1798,7 @@ def connect_s(A,k,B,l):
     A : numpy.ndarray
             S-parameter matrix of `A`, shape is fxnxn
     k : int
-            port index on `A` (port indecies start from 0)
+            port index on `A` (port indices start from 0)
     B : numpy.ndarray
             S-parameter matrix of `B`, shape is fxnxn
     l : int
@@ -1826,7 +1826,7 @@ def connect_s(A,k,B,l):
     '''
  
     if k > A.shape[-1]-1 or l > B.shape[-1] - 1:
-        raise(ValueError('port indecies are out of range'))
+        raise(ValueError('port indices are out of range'))
 
     nf = A.shape[0]     # num frequency points
     nA = A.shape[1]     # num ports on A
@@ -1855,7 +1855,7 @@ def innerconnect_s(A, k, l):
     A : numpy.ndarray
         S-parameter matrix of `A`, shape is fxnxn
     k : int
-        port index on `A` (port indecies start from 0)
+        port index on `A` (port indices start from 0)
     l : int
         port index on `A`
 
@@ -1880,7 +1880,7 @@ def innerconnect_s(A, k, l):
     '''
     
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
-        raise(ValueError('port indecies are out of range'))
+        raise(ValueError('port indices are out of range'))
 
     nA = A.shape[1]  # num of ports on input s-matrix
     # create an empty s-matrix, to store the result
@@ -1897,7 +1897,7 @@ def innerconnect_s(A, k, l):
                 A[:,l,j] * A[:,k,k] * A[:,i,l])/\
                 ((1 - A[:,k,l]) * (1 - A[:,l,k]) - A[:,k,k] * A[:,l,l])
 
-    # remove ports that where `connected`
+    # remove ports that were `connected`
     C = npy.delete(C, (k,l), 1)
     C = npy.delete(C, (k,l), 2)
 
