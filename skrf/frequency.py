@@ -153,7 +153,13 @@ class Frequency(object):
 
     def __ne__(self,other):
         return (not self.__eq__(other))
-
+    
+    def __len__(self):
+        '''
+        The number of frequeny points
+        '''
+        return self.npoints
+        
     @property
     def center(self):
         '''
