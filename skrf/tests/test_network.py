@@ -1,5 +1,6 @@
 import unittest
 import os
+import numpy as npy
 
 import skrf as rf
 
@@ -34,6 +35,13 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
 
+        xformer = rf.Network()
+        xformer.frequency=(1,)
+        xformer.s = ((0,1),(1,0))  # connects thru
+        xformer.z0 = (50,25)  # transforms 50 ohm to 25 ohm
+        c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
+        self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
+
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)
@@ -55,6 +63,18 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_plot_two_port_smith(self):
         self.ntwk1.plot_s_smith()
+
+    def test_yz(self):
+        tinyfloat = 1e-12
+        ntwk = rf.Network()
+        ntwk.z0 = npy.array([28,75+3j])
+        ntwk.f = npy.array([1000, 2000])
+        ntwk.s = rf.z2s(npy.array([[[1+1j,5,11],[40,5,3],[16,8,9+8j]],
+                                   [[1,20,3],[14,10,16],[27,18,-19-2j]]]))
+        self.assertTrue((abs(rf.y2z(ntwk.y)-ntwk.z) < tinyfloat).all())
+        self.assertTrue((abs(rf.y2s(ntwk.y, ntwk.z0)-ntwk.s) < tinyfloat).all())
+        self.assertTrue((abs(rf.z2y(ntwk.z)-ntwk.y) < tinyfloat).all())
+        self.assertTrue((abs(rf.z2s(ntwk.z, ntwk.z0)-ntwk.s) < tinyfloat).all())
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)

@@ -57,7 +57,7 @@ NetworkSet Class
 from network import average as network_average
 from network import Network
 import mathFunctions as mf
-
+import zipfile
 from copy import deepcopy
 import warnings
 import numpy as npy
@@ -174,6 +174,44 @@ class NetworkSet(object):
                 ['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
             self.__add_a_operator(operator_name)
 
+    @classmethod
+    def from_zip(cls, zip_file_name, sort_filenames=True, *args, **kwargs):
+        '''
+        creates a NetworkSet from a zipfile of touchstones. 
+        
+        Parameters
+        -----------
+        zip_file_name : string
+            name of zipfile
+        sort_filenames: Boolean
+            sort the filenames in teh zip file before constructing the 
+            NetworkSet
+        \\*args,\\*\\*kwargs : arguments
+            passed to NetworkSet constructor
+        
+        Examples
+        ----------
+        >>>import skrf as rf
+        >>>my_set = rf.NetworkSet.from_zip('myzip.zip')
+            
+        '''
+        z = zipfile.ZipFile(zip_file_name)
+        filename_list = z.namelist()
+        
+        ntwk_list = []
+        
+        if sort_filenames:
+            filename_list.sort()
+            
+        for filename in filename_list:
+            # try/except block in case not all files are touchstones
+            try:
+                ntwk_list.append(Network(z.open(filename)))
+            except:
+                pass
+        
+        return cls(ntwk_list)
+    
     def __add_a_operator(self,operator_name):
         '''
         adds a operator method to the NetworkSet.
@@ -273,7 +311,7 @@ class NetworkSet(object):
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
-
+    
     def element_wise_method(self,network_method_name, *args, **kwargs):
         '''
         calls a given method of each element and returns the result as
@@ -520,7 +558,8 @@ class NetworkSet(object):
         self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
 
 
-    def signature(self,m=0,n=0, vmax = None, *args, **kwargs):
+    def signature(self,m=0,n=0,from_mean=False, operation='__sub__',
+        component='s_mag',vmax = None,  *args, **kwargs):
         '''
         visualization of relative changes in a NetworkSet.
 
@@ -532,28 +571,41 @@ class NetworkSet(object):
         Parameters
         ------------
         m : int
-                first s-parameters index
-        n :
-                second s-parameter index
+            first s-parameters index
+        n : int
+            second s-parameter index
+        from_mean : Boolean
+            calculate distance from mean if True. or distance from 
+            first network in networkset if False.
+        operation : ['__sub__', '__div__'], ..
+            operation to apply between each network and the reference 
+            network, which is either the mean, or the initial ntwk.
+        component : ['s_mag','s_db','s_deg' ..]
+            scalar component of Network to plot on the imshow. should 
+            be a property of the Network object.  
+            
         vmax : number
-                sets upper limit of colorbar, if None, will be set to
-                3*mean of the magnitude of the complex difference
+            sets upper limit of colorbar, if None, will be set to
+            3*mean of the magnitude of the complex difference
         \*args,\*\*kwargs : arguments, keyword arguments
-                passed to :func:`~pylab.imshow`
+            passed to :func:`~pylab.imshow`
 
         
         '''
-        diff_set = (self - self.mean_s)
-        sig = array([diff_set[k].s_mag[:,m,n] for k in range(len(ntwk_set))])
+        if from_mean:
+            diff_set = self.__getattribute__(operation)(self.mean_s)
+        else:
+            diff_set = self.__getattribute__(operation)(self.ntwk_set[0])
+        
+        sig = npy.array([diff_set[k].__getattribute__(component)[:,m,n] \
+            for k in range(len(self))])
         if vmax is None:
             vmax == 3*sig.mean()
-        imshow(sig, vmax = vmax, *args, **kwargs)
-        axis('tight')
-        ylabel('Network \#')
-        c_bar = colorbar()
+        plb.imshow(sig, vmax = vmax, *args, **kwargs)
+        plb.axis('tight')
+        plb.ylabel('Network \#')
+        c_bar = plb.colorbar()
         c_bar.set_label('Distance From Mean')
-        show();draw()
-
 
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
@@ -606,7 +658,6 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
 
 # short hand name for convenience
 fon = func_on_networks
-
 
 def getset(ntwk_dict, s, *args, **kwargs):
     '''

@@ -97,7 +97,7 @@ References
 
 from network import *
 from frequency import Frequency
-from media import RectangularWaveguide
+from media import RectangularWaveguide, Media
 
 import warnings
 import os
@@ -226,6 +226,75 @@ def find_nearest_index(array,value):
 
     '''
     return (npy.abs(array-value)).argmin()
+
+
+def hfss_touchstone_2_gamma_z0(filename):
+    '''
+    converts a HFSS-style touchstone file with Gamma and Z0 comments 
+    into a triplet of arrays being: (frequency, Gamma, Z0)
+    
+    Parameters
+    ------------
+    filename : string 
+        the HFSS-style touchstone file
+    
+    
+    Returns
+    --------
+    f : numpy.ndarray
+        frequency vector (in Hz)
+    gamma : complex numpy.ndarray
+        complex  propagation constant
+    z0 : numpy.ndarray
+        complex port impedance
+    
+    Examples
+    ----------
+    >>> f,gamm,z0 = rf.hfss_touchstone_2_gamma_z0('line.s2p')
+    '''
+    ntwk = Network(filename)
+    f= open(filename)
+    gamma, z0 = [],[]
+    
+    for line in f:
+        if '! Gamma' in line:
+            gamma.append(1j*float(line.split()[-1]) +float(line.split()[-2] ))
+        if '! Port Impedance' in line:
+            z0.append(1j*float(line.split()[-1]) +float(line.split()[-2] ))
+    return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
+
+def hfss_touchstone_2_media(filename, f_unit='ghz'):
+    '''
+    converts a HFSS-style touchstone file with Gamma and Z0 comments 
+    into a skrf.media.Media class
+    
+    Parameters
+    ------------
+    filename : string 
+        the HFSS-style touchstone file
+    f_unit : ['hz','khz','mhz','ghz']
+        passed to f_unit parameters of Frequency constructor
+    
+    Returns
+    --------
+    my_media : skrf.media.Media object
+        the transmission line model defined by the gamma, and z0 
+        comments in the HFSS file.
+    
+    Examples
+    ----------
+    >>> my_media = rf.hfss_touchstone_2_gamma_z0('line.s2p')
+    '''
+    f, gamma, z0 =hfss_touchstone_2_gamma_z0(filename)
+    
+    freq = Frequency.from_f(f)
+    freq.unit = f_unit
+    
+    return Media(
+        frequency = freq, 
+        propagation_constant =  gamma,
+        characteristic_impedance = z0
+        )
 
 ## file conversion
 def statistical_2_touchstone(file_name, new_file_name=None,\

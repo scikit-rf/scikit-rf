@@ -43,6 +43,9 @@ Frequency Class
 
 from pylab import linspace, gca
 from numpy import pi
+import numpy as npy
+
+
 
 class Frequency(object):
     '''
@@ -68,6 +71,9 @@ class Frequency(object):
             'ghz':1e9,\
             'thz':1e12\
             }
+    global ALMOST_ZER0
+    ALMOST_ZER0=1e-4
+    
     def __init__(self,start, stop, npoints, unit='hz', sweep_type='lin'):
         '''
         Frequency initializer.
@@ -114,6 +120,18 @@ class Frequency(object):
         self.npoints = npoints
         self.sweep_type = sweep_type
 
+    def __str__(self):
+        '''
+        '''
+        try:
+            output =  \
+                   '%i-%i %s,  %i points' % \
+                   (self.f_scaled[0], self.f_scaled[-1], self.unit, self.npoints)
+        except (IndexError):
+            output = "[no freqs]"
+
+        return output
+
     @classmethod
     def from_f(cls,f, *args,**kwargs):
         '''
@@ -141,7 +159,9 @@ class Frequency(object):
         return cls(start=f[0], stop=f[-1],npoints = len(f), *args, **kwargs)
 
     def __eq__(self, other):
-        return (list(self.f) == list(other.f))
+        #return (list(self.f) == list(other.f))
+        # had to do this out of practicality
+        return (max(self.f-other.f) < ALMOST_ZER0)
 
     def __ne__(self,other):
         return (not self.__eq__(other))

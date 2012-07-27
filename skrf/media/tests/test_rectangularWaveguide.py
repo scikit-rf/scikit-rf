@@ -16,7 +16,7 @@ class MediaTestCase(unittest.TestCase):
             )
             
         
-
+    @unittest.skip
     def test_line(self):
         '''
         '''
