@@ -120,6 +120,25 @@ class Frequency(object):
         self.npoints = npoints
         self.sweep_type = sweep_type
 
+    def __str__(self):
+        '''
+        '''
+        try:
+            output =  \
+                   '%i-%i %s,  %i points' % \
+                   (self.f_scaled[0], self.f_scaled[-1], self.unit, self.npoints)
+        except (IndexError):
+            output = "[no freqs]"
+
+        return output
+        
+    def __repr__(self):
+        '''
+        '''
+        return self.__str__()
+
+
+
     @classmethod
     def from_f(cls,f, *args,**kwargs):
         '''
