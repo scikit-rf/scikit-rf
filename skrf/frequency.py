@@ -131,6 +131,13 @@ class Frequency(object):
             output = "[no freqs]"
 
         return output
+        
+    def __repr__(self):
+        '''
+        '''
+        return self.__str__()
+
+
 
     @classmethod
     def from_f(cls,f, *args,**kwargs):
