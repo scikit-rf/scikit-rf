@@ -35,6 +35,13 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
 
+        xformer = rf.Network()
+        xformer.frequency=(1,)
+        xformer.s = ((0,1),(1,0))  # connects thru
+        xformer.z0 = (50,25)  # transforms 50 ohm to 25 ohm
+        c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
+        self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
+
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)

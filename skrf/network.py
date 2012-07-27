@@ -350,7 +350,7 @@ class Network(object):
         return result
 
     def __eq__(self,other):
-        if npy.mean(npy.abs(self.s - other.s)) < ALMOST_ZER0:
+        if npy.all(npy.abs(self.s - other.s) < ALMOST_ZER0):
             return True
         else:
             return False
@@ -854,7 +854,7 @@ class Network(object):
                         #they have yet to set s .
                         pass
         '''
-        self._z0 = z0
+        self._z0 = npy.array(z0)
 
     @property
     def frequency(self):
@@ -891,7 +891,13 @@ class Network(object):
         '''
         takes a Frequency object, see  frequency.py
         '''
-        self._frequency = new_frequency.copy()
+        if isinstance(new_frequency, Frequency):
+            self._frequency = new_frequency.copy()
+        else:
+            try:
+                self._frequency = Frequency.from_f(new_frequency)
+            except (TypeError):
+                raise TypeError('Could not convert argument to a frequency vector')
 
     @property
     def t(self):
@@ -1306,6 +1312,25 @@ class Network(object):
         else:
             raise ValueError('you can only flip two-port Networks')
 
+    def renumber(self, from_ports, to_ports):
+        '''
+        renumbers some ports of a two port Network
+
+        Parameters
+        -----------
+        from_ports : list-like
+        to_ports: list-like
+        '''
+        from_ports = npy.array(from_ports)
+        to_ports = npy.array(to_ports)
+        if len(npy.unique(from_ports)) != len(from_ports):
+            raise ValueError('an index can appear at most once in from_ports or to_ports')
+        if any(npy.unique(from_ports) != npy.unique(to_ports)):
+            raise ValueError('from_ports and to_ports must have the same set of indices')
+
+        self.s[:,to_ports,:] = self.s[:,from_ports,:]  # renumber rows
+        self.s[:,:,to_ports] = self.s[:,:,from_ports]  # renumber columns
+        self.z0[:,to_ports] = self.z0[:,from_ports]
 
     # ploting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
@@ -1545,7 +1570,7 @@ def connect(ntwkA, k, ntwkB,l):
     Returns
     ---------
     ntwkC : :class:`Network`
-            new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+            new network of rank (ntwkA.nports + ntwkB.nports - 2*n)-ports
 
 
     See Also
@@ -1583,6 +1608,8 @@ def connect(ntwkA, k, ntwkB,l):
         ntwkC.s = connect_s(
             ntwkA.s, k, 
             impedance_mismatch(ntwkA.z0[:,k], ntwkB.z0[:,l]), 0)
+        ntwkC.z0[:,-1] = ntwkB.z0[:,l]
+        ntwkC.renumber(from_ports=[k,-1], to_ports=[-1,k])
 
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
@@ -1604,10 +1631,8 @@ def innerconnect(ntwkA, k, l):
     -----------
     ntwkA : :class:`Network`
         network 'A'
-    k : int
-        port index on ntwkA ( port indecies start from 0 )
-    l : int
-        port index on ntwkB
+    k,l : int
+        port indices on ntwkA ( port indices start from 0 )
 
     Returns
     ---------
