@@ -779,8 +779,12 @@ class Network(object):
         '''
         impedance parameters
         '''
-        self._z = s2z(self._s, self.z0)
-        return self._z
+        return s2z(self._z, self.z0)
+    
+    @z.setter
+    def z(self, value):
+        self._s = z2s(value, self.z0)
+    
         
     @property
     def z0(self):
