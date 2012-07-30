@@ -1324,6 +1324,17 @@ class Network(object):
         -----------
         from_ports : list-like
         to_ports: list-like
+
+        Examples
+        ---------
+        To flip the ports of a 2-port network 'foo':
+        >>> foo.renumber( [0,1], [1,0] )
+
+        To rotate the ports of a 3-port network 'bar' so that port 0 becomes port 1:
+        >>> bar.renumber( [0,1,2], [1,2,0] )
+
+        To swap ports 0 and 2 of a network 'duck':
+        >>> duck.renumber( [0,2], [2,0] )
         '''
         from_ports = npy.array(from_ports)
         to_ports = npy.array(to_ports)
@@ -1549,7 +1560,7 @@ class Network(object):
         self.s = self.s + 1e-12
 
 ## Functions operating on Network[s]
-def connect(ntwkA, k, ntwkB,l):
+def connect(ntwkA, k, ntwkB,l, n=1):
     '''
     connect two n-port networks together.
 
@@ -1563,12 +1574,13 @@ def connect(ntwkA, k, ntwkB,l):
     ntwkA : :class:`Network`
             network 'A'
     k : int
-            port index on `ntwkA` ( port indices start from 0 )
+            starting port index on `ntwkA` ( port indices start from 0 )
     ntwkB : :class:`Network`
             network 'B'
     l : int
-            port index on `ntwkB`
-
+            starting port index on `ntwkB`
+    n : int
+            number of consecutive ports to connect (default 1)
 
 
     Returns
@@ -1598,6 +1610,9 @@ def connect(ntwkA, k, ntwkB,l):
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
     '''
+    if (n != 1):
+        raise (NotImplementedError)
+
     # some checking 
     check_frequency_equal(ntwkA,ntwkB)
     
