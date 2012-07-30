@@ -1312,7 +1312,7 @@ class Network(object):
         swaps the ports of a two port Network
         '''
         if self.number_of_ports == 2:
-            self.s = flip(self.s)
+            self.renumber( [0,1], [1,0] )
         else:
             raise ValueError('you can only flip two-port Networks')
 

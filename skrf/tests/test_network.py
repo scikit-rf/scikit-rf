@@ -42,6 +42,19 @@ class NetworkTestCase(unittest.TestCase):
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
 
+    def test_flip(self):
+        self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
+            self.ntwk3)
+
+        gain = rf.Network()
+        gain.frequency=(1,)
+        gain.s = ((0,2),(0.5,0))  # connects thru with gain of 2.0
+        gain.z0 = (37,82)
+        flipped = gain.copy()
+        flipped.flip()
+        c = rf.connect(gain,1,flipped,0)
+        self.assertTrue(npy.all(npy.abs(c.s - npy.array([[0,1],[1,0]])) < 1e-6))
+
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)
