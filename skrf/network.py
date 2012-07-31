@@ -1333,8 +1333,8 @@ class Network(object):
         To rotate the ports of a 3-port network 'bar' so that port 0 becomes port 1:
         >>> bar.renumber( [0,1,2], [1,2,0] )
 
-        To swap ports 0 and 2 of a network 'duck':
-        >>> duck.renumber( [0,2], [2,0] )
+        To swap the first and last ports of a network 'duck':
+        >>> duck.renumber( [0,-1], [-1,0] )
         '''
         from_ports = npy.array(from_ports)
         to_ports = npy.array(to_ports)
@@ -1560,14 +1560,14 @@ class Network(object):
         self.s = self.s + 1e-12
 
 ## Functions operating on Network[s]
-def connect(ntwkA, k, ntwkB,l, n=1):
+def connect(ntwkA, k, ntwkB, l, num=1):
     '''
     connect two n-port networks together.
 
-    specifically, connect port `k` on `ntwkA` to port `l` on `ntwkB`. The
-    resultant network has (ntwkA.nports+ntwkB.nports-2) ports. The port
-    index's ('k','l') start from 0. Port impedances **are** taken into
-    account.
+    specifically, connect ports `k` thru `k+num-1` on `ntwkA` to ports
+    `l` thru `l+num-1` on `ntwkB`. The resultant network has
+    (ntwkA.nports+ntwkB.nports-2*num) ports. The port indices ('k','l')
+    start from 0. Port impedances **are** taken into account.
 
     Parameters
     -----------
@@ -1579,14 +1579,14 @@ def connect(ntwkA, k, ntwkB,l, n=1):
             network 'B'
     l : int
             starting port index on `ntwkB`
-    n : int
+    num : int
             number of consecutive ports to connect (default 1)
 
 
     Returns
     ---------
     ntwkC : :class:`Network`
-            new network of rank (ntwkA.nports + ntwkB.nports - 2*n)-ports
+            new network of rank (ntwkA.nports + ntwkB.nports - 2*num)
 
 
     See Also
@@ -1610,9 +1610,6 @@ def connect(ntwkA, k, ntwkB,l, n=1):
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
     '''
-    if (n != 1):
-        raise (NotImplementedError)
-
     # some checking 
     check_frequency_equal(ntwkA,ntwkB)
     
@@ -1620,28 +1617,105 @@ def connect(ntwkA, k, ntwkB,l, n=1):
     ntwkC = ntwkA.copy()
     
     # if networks' z0's are not identical, then connect a impedance
-    # mismatch, which takes into account th effect of differing port
+    # mismatch, which takes into account the effect of differing port
     # impedances. 
     #import pdb;pdb.set_trace()
     if test_z0_at_ports_equal(ntwkA,k,ntwkB,l) == False:
         ntwkC.s = connect_s(
             ntwkA.s, k, 
             impedance_mismatch(ntwkA.z0[:,k], ntwkB.z0[:,l]), 0)
-        ntwkC.z0[:,-1] = ntwkB.z0[:,l]
-        ntwkC.renumber(from_ports=[k,-1], to_ports=[-1,k])
+        # the connect_s() put the mismatch's output port at the end of
+        #   ntwkC's ports.  Fix the new port's impedance, then insert it
+        #   at position k where it belongs.
+        ntwkC.z0[:,k:] = npy.hstack((ntwkC.z0[:,k+1:], ntwkB.z0[:,[l]]))
+        ntwkC.renumber(from_ports= [ntwkC.nports-1] + range(k, ntwkC.nports-1),
+                       to_ports=range(k, ntwkC.nports))
 
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
 
-    # remove rows and coloumns of z0 matrix which were `connected`
+    # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = npy.hstack(
-        (npy.delete(ntwkA.z0, k, 1), npy.delete(ntwkB.z0, l, 1)))
+        (npy.delete(ntwkA.z0, range(k,k+num), 1), npy.delete(ntwkB.z0, range(l,l+num), 1)))
+
+    # if we're connecting more than one port, call innerconnect to finish the job
+    if num>1:
+        ntwkC = innerconnect(ntwkC, k, ntwkA.nports-1+l, num-1)
 
     return ntwkC
 
-def innerconnect(ntwkA, k, l):
+def connect2(ntwkA, k, ntwkB, l, num=1):
     '''
-    connect two ports of a single n-port network.
+    connect two n-port networks together (alternative implementation)
+
+    specifically, connect ports `k` thru `k+num-1` on `ntwkA` to ports
+    `l` thru `l+num-1` on `ntwkB`. The resultant network has
+    (ntwkA.nports+ntwkB.nports-2*num) ports. The port indices ('k','l')
+    start from 0. Port impedances **are** taken into account.
+
+    Parameters
+    -----------
+    ntwkA : :class:`Network`
+            network 'A'
+    k : int
+            starting port index on `ntwkA` ( port indices start from 0 )
+    ntwkB : :class:`Network`
+            network 'B'
+    l : int
+            starting port index on `ntwkB`
+    num : int
+            number of consecutive ports to connect (default 1)
+
+
+    Returns
+    ---------
+    ntwkC : :class:`Network`
+            new network of rank (ntwkA.nports + ntwkB.nports - 2*num)
+
+
+    See Also
+    -----------
+            connect_s : actual  S-parameter connection algorithm.
+            innerconnect_s : actual S-parameter connection algorithm.
+
+    Notes
+    -------
+            the effect of mis-matched port impedances is handled by inserting
+            a 2-port 'mismatch' network between the two connected ports.
+            This mismatch Network is calculated with the
+            :func:impedance_mismatch function.
+
+    Examples
+    ---------
+    To implement a *cascade* of two networks
+
+    >>> ntwkA = rf.Network('ntwkA.s2p')
+    >>> ntwkB = rf.Network('ntwkB.s2p')
+    >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
+
+    '''
+    # some checking 
+    check_frequency_equal(ntwkA,ntwkB)
+    
+    # create output Network, from copy of input 
+    ntwkC = ntwkA.copy()
+    
+    # call s-matrix connection function
+    ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
+
+    # combine z0 arrays and remove ports which were `connected`
+    ntwkC.z0 = npy.hstack(
+        (npy.delete(ntwkA.z0, range(k,k+num), 1), npy.delete(ntwkB.z0, range(l,l+num), 1)))
+
+    # if we're connecting more than one port, call innerconnect to finish the job
+    if num>1:
+        ntwkC = innerconnect(ntwkC, k, ntwkA.nports-1+l, num-1)
+
+    return ntwkC
+
+def innerconnect(ntwkA, k, l, num=1):
+    '''
+    connect ports of a single n-port network.
 
     this results in a (n-2)-port network. remember port indices start
     from 0.
@@ -1651,12 +1725,14 @@ def innerconnect(ntwkA, k, l):
     ntwkA : :class:`Network`
         network 'A'
     k,l : int
-        port indices on ntwkA ( port indices start from 0 )
+        starting port indices on ntwkA ( port indices start from 0 )
+    num : int
+        number of consecutive ports to connect
 
     Returns
     ---------
     ntwkC : :class:`Network`
-        new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+        new network of rank (ntwkA.nports - 2*num)
 
     See Also
     -----------
@@ -1665,7 +1741,8 @@ def innerconnect(ntwkA, k, l):
 
     Notes
     -------
-        a 2-port 'mismatch' network between the two connected ports.
+        a 2-port 'mismatch' network is inserted between the connected ports
+        if their impedances are not equal.
 
     Examples
     ---------
@@ -1684,12 +1761,22 @@ def innerconnect(ntwkA, k, l):
         ntwkC.s = connect_s(\
             ntwkA.s,k, \
             impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l]), 0)
+        # the connect_s() put the mismatch's output port at the end of
+        #   ntwkC's ports.  Fix the new port's impedance, then insert it
+        #   at position k where it belongs.
+        ntwkC.z0[:,k:] = npy.hstack((ntwkC.z0[:,k+1:], ntwkC.z0[:,[l]]))
+        ntwkC.renumber(from_ports= [ntwkC.nports-1] + range(k, ntwkC.nports-1),
+                       to_ports=range(k, ntwkC.nports))
 
     # call s-matrix connection function
     ntwkC.s = innerconnect_s(ntwkC.s,k,l)
 
     # update the characteristic impedance matrix
-    ntwkC.z0 = npy.delete(ntwkC.z0,[l,k],1)
+    ntwkC.z0 = npy.delete(ntwkC.z0, range(k,k+num) + range(l,l+num),1)
+
+    # recur if we're connecting more than one port
+    if num>1:
+        ntwkC = innerconnect(ntwkC, k, l-1, num-1)
 
     return ntwkC
 
