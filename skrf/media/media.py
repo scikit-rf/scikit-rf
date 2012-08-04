@@ -915,3 +915,25 @@ class Media(object):
 
         print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
         return npy.linalg.lstsq(A, B)[0][0]
+
+    ## IO
+    def write_csv(self, filename='f,gamma,z0.csv'):
+        '''
+        write this media's frequency, z0, and gamma to a csv file. 
+        
+        Parameters
+        -------------
+        filename : string
+            file name to write out data to 
+        '''
+        f = open(filename,'w')
+        header ='f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma)\n'\
+                %self.frequency.unit
+        f.write(header)
+            
+        g,z  = self.propagation_constant, self.characteristic_impedance
+        data = npy.vstack(\
+                [self.frequency.f_scaled, z.real, z.imag, g.real,g.imag]).T
+        
+        npy.savetxt(f,data,delimiter=',')
+        f.close()
