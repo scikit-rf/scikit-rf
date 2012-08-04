@@ -235,17 +235,20 @@ class Media(object):
                 the media's port impedance
         '''
         try:
-            return self._z0()
+            result =  self._z0()
+        
         except(TypeError):
             try:
                 if len(self._z0) != len(self.characteristic_impedance):
-                    raise(IndexError('z0 and characterisitc impedance have different shapes '))
-                        
+                    raise(IndexError('z0 and characterisitc impedance have different shapes '))                        
             except(TypeError):
                 # z0 has no len,  must be a number, so vectorize it
                 self._z0 = self._z0 *npy.ones(len(self.characteristic_impedance))
-            return self._z0 
-    
+            
+            result = self._z0 
+        
+        return result
+        
     @z0.setter
     def z0(self, new_z0):
         self._z0 = new_z0
@@ -422,7 +425,7 @@ class Media(object):
 
         return self.load(1., nports, **kwargs)
 
-    def capacitor(self, C, **kwargs):
+    def capacitor(self, C, nports=1, **kwargs):
         '''
         Capacitor
 
@@ -445,9 +448,21 @@ class Media(object):
         ---------
         match : function called to create a 'blank' network
         '''
-        Gamma0 = tf.zl_2_Gamma0(self.z0, -1j/(self.frequency.w*C))
-        return self.load(Gamma0=Gamma0, **kwargs)
-
+        if nports == 1:
+            Gamma0 = tf.zl_2_Gamma0(self.z0, -1j/(self.frequency.w*C))
+            result = self.load(Gamma0=Gamma0, **kwargs)
+        elif nports ==2:
+            result = self.match(nports=2, **kwargs)
+            Gamma0 = tf.zl_2_Gamma0(self.z0, self.z0 + -1j/(self.frequency.w*C))
+            result.s[:,0,0] = Gamma0
+            result.s[:,1,1] = Gamma0
+            result.s[:,1,0] = 1+Gamma0
+            result.s[:,0,1] = 1+Gamma0
+        else:
+            raise (ValueError('nports must be 1 or 2'))
+        
+        return result
+        
     def inductor(self, L, **kwargs):
         '''
         Inductor

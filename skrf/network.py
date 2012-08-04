@@ -350,7 +350,7 @@ class Network(object):
         return result
 
     def __eq__(self,other):
-        if npy.mean(npy.abs(self.s - other.s)) < ALMOST_ZER0:
+        if npy.all(npy.abs(self.s - other.s) < ALMOST_ZER0):
             return True
         else:
             return False
@@ -378,9 +378,13 @@ class Network(object):
             name = ''
         else:
             name = self.name
-        output =  \
-                '%i-Port Network: \'%s\',  %i-%i %s,  %i points, z0='% \
-                (self.number_of_ports,name, f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)+str(self.z0[0,:])
+
+        if len(npy.shape(self.z0)) == 0:
+            z0 = str(self.z0)
+        else:
+            z0 = str(self.z0[0,:])
+
+        output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), z0)
 
         return output
 
@@ -764,16 +768,23 @@ class Network(object):
         '''
         admittance parameters
         '''
-        self._y = s2y(self._s, self.z0)
-        return self._y
+        return s2y(self._s, self.z0)
+
+    @y.setter
+    def y(self, value):
+        self._s = y2s(value, self.z0)
     
     @property
     def z(self):
         '''
         impedance parameters
         '''
-        self._z = s2z(self._s, self.z0)
-        return self._z
+        return s2z(self._s, self.z0)
+    
+    @z.setter
+    def z(self, value):
+        self._s = z2s(value, self.z0)
+    
         
     @property
     def z0(self):
@@ -812,7 +823,7 @@ class Network(object):
             elif len(npy.shape(self._z0)) ==1:
                 try:
                     if len(self._z0) == self.frequency.npoints:
-                        # this z0 is frequency dependent but no port dependent
+                        # this z0 is frequency dependent but not port dependent
                         self._z0 = \
                                 npy.repeat(npy.reshape(self._z0,(-1,1)),self.number_of_ports,1)
 
@@ -847,7 +858,7 @@ class Network(object):
                         #they have yet to set s .
                         pass
         '''
-        self._z0 = z0
+        self._z0 = npy.array(z0)
 
     @property
     def frequency(self):
@@ -884,7 +895,13 @@ class Network(object):
         '''
         takes a Frequency object, see  frequency.py
         '''
-        self._frequency = new_frequency.copy()
+        if isinstance(new_frequency, Frequency):
+            self._frequency = new_frequency.copy()
+        else:
+            try:
+                self._frequency = Frequency.from_f(new_frequency)
+            except (TypeError):
+                raise TypeError('Could not convert argument to a frequency vector')
 
     @property
     def t(self):
@@ -965,7 +982,10 @@ class Network(object):
                 the number of ports the network has.
 
         '''
-        return self.s.shape[1]
+        try:
+            return self.s.shape[1]
+        except (AttributeError):
+            return 0
 
     @property
     def nports(self):
@@ -1296,14 +1316,33 @@ class Network(object):
         else:
             raise ValueError('you can only flip two-port Networks')
 
+    def renumber(self, from_ports, to_ports):
+        '''
+        renumbers some ports of a two port Network
 
-    # ploting
+        Parameters
+        -----------
+        from_ports : list-like
+        to_ports: list-like
+        '''
+        from_ports = npy.array(from_ports)
+        to_ports = npy.array(to_ports)
+        if len(npy.unique(from_ports)) != len(from_ports):
+            raise ValueError('an index can appear at most once in from_ports or to_ports')
+        if any(npy.unique(from_ports) != npy.unique(to_ports)):
+            raise ValueError('from_ports and to_ports must have the same set of indices')
+
+        self.s[:,to_ports,:] = self.s[:,from_ports,:]  # renumber rows
+        self.s[:,:,to_ports] = self.s[:,:,from_ports]  # renumber columns
+        self.z0[:,to_ports] = self.z0[:,from_ports]
+
+    # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
             chart_type='z', *args,**kwargs):
         '''
         plots the scattering parameter on a smith chart
 
-        plots indecies `m`, `n`, where `m` and `n` can be integers or
+        plots indices `m`, `n`, where `m` and `n` can be integers or
         lists of integers.
 
 
@@ -1524,7 +1563,7 @@ def connect(ntwkA, k, ntwkB,l):
     ntwkA : :class:`Network`
             network 'A'
     k : int
-            port index on `ntwkA` ( port indecies start from 0 )
+            port index on `ntwkA` ( port indices start from 0 )
     ntwkB : :class:`Network`
             network 'B'
     l : int
@@ -1535,7 +1574,7 @@ def connect(ntwkA, k, ntwkB,l):
     Returns
     ---------
     ntwkC : :class:`Network`
-            new network of rank (ntwkA.nports+ntwkB.nports -2)-ports
+            new network of rank (ntwkA.nports + ntwkB.nports - 2*n)-ports
 
 
     See Also
@@ -1573,11 +1612,13 @@ def connect(ntwkA, k, ntwkB,l):
         ntwkC.s = connect_s(
             ntwkA.s, k, 
             impedance_mismatch(ntwkA.z0[:,k], ntwkB.z0[:,l]), 0)
+        ntwkC.z0[:,-1] = ntwkB.z0[:,l]
+        ntwkC.renumber(from_ports=[k,-1], to_ports=[-1,k])
 
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
 
-    # remove rows and coloumns of z0 matrix, which where `connected`
+    # remove rows and coloumns of z0 matrix which were `connected`
     ntwkC.z0 = npy.hstack(
         (npy.delete(ntwkA.z0, k, 1), npy.delete(ntwkB.z0, l, 1)))
 
@@ -1587,17 +1628,15 @@ def innerconnect(ntwkA, k, l):
     '''
     connect two ports of a single n-port network.
 
-    this results in a (n-2)-port network. remember port indecies start
+    this results in a (n-2)-port network. remember port indices start
     from 0.
 
     Parameters
     -----------
     ntwkA : :class:`Network`
         network 'A'
-    k : int
-        port index on ntwkA ( port indecies start from 0 )
-    l : int
-        port index on ntwkB
+    k,l : int
+        port indices on ntwkA ( port indices start from 0 )
 
     Returns
     ---------
@@ -1763,7 +1802,7 @@ def connect_s(A,k,B,l):
     A : numpy.ndarray
             S-parameter matrix of `A`, shape is fxnxn
     k : int
-            port index on `A` (port indecies start from 0)
+            port index on `A` (port indices start from 0)
     B : numpy.ndarray
             S-parameter matrix of `B`, shape is fxnxn
     l : int
@@ -1791,7 +1830,7 @@ def connect_s(A,k,B,l):
     '''
  
     if k > A.shape[-1]-1 or l > B.shape[-1] - 1:
-        raise(ValueError('port indecies are out of range'))
+        raise(ValueError('port indices are out of range'))
 
     nf = A.shape[0]     # num frequency points
     nA = A.shape[1]     # num ports on A
@@ -1820,7 +1859,7 @@ def innerconnect_s(A, k, l):
     A : numpy.ndarray
         S-parameter matrix of `A`, shape is fxnxn
     k : int
-        port index on `A` (port indecies start from 0)
+        port index on `A` (port indices start from 0)
     l : int
         port index on `A`
 
@@ -1845,7 +1884,7 @@ def innerconnect_s(A, k, l):
     '''
     
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
-        raise(ValueError('port indecies are out of range'))
+        raise(ValueError('port indices are out of range'))
 
     nA = A.shape[1]  # num of ports on input s-matrix
     # create an empty s-matrix, to store the result
@@ -1862,7 +1901,7 @@ def innerconnect_s(A, k, l):
                 A[:,l,j] * A[:,k,k] * A[:,i,l])/\
                 ((1 - A[:,k,l]) * (1 - A[:,l,k]) - A[:,k,k] * A[:,l,l])
 
-    # remove ports that where `connected`
+    # remove ports that were `connected`
     C = npy.delete(C, (k,l), 1)
     C = npy.delete(C, (k,l), 2)
 
