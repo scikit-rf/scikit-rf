@@ -34,9 +34,12 @@ import warnings
 import numpy as npy
 from scipy import stats
 
+from ..frequency import Frequency
 from ..network import Network, connect
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
+from ..mathFunctions import ALMOST_ZERO
+
 
 class Media(object):
     '''
@@ -122,11 +125,35 @@ class Media(object):
         # convinience names
         self.delay = self.line
 
+    
+    def __eq__(self,other):
+        '''
+        test for numerical equality (up to skrf.mathFunctions.ALMOST_ZERO)
+        '''
+        
+        if self.frequency != other.frequency:
+            return False
+        
+        if max(abs(self.characteristic_impedance - \
+                other.characteristic_impedance)) > ALMOST_ZERO:
+            return False
+            
+        if max(abs(self.propagation_constant - \
+                other.propagation_constant)) > ALMOST_ZERO:
+            return False
+        
+        if max(abs(self.z0 - other.z0)) > ALMOST_ZERO:
+            return False
+        
+        return True
+        
+        
     ## Properties
     # note these are made so that a Media type can be constructed with
     # propagation_constant, characteristic_impedance, and z0 either as:
     #       dynamic properties (if they pass a function)
     #       static ( if they pass values)
+    
     @property
     def propagation_constant(self):
         '''
@@ -210,12 +237,20 @@ class Media(object):
         try:
             return self._z0()
         except(TypeError):
-            return self._z0
+            try:
+                if len(self._z0) != len(self.characteristic_impedance):
+                    raise(IndexError('z0 and characterisitc impedance have different shapes '))
+                        
+            except(TypeError):
+                # z0 has no len,  must be a number, so vectorize it
+                self._z0 = self._z0 *npy.ones(len(self.characteristic_impedance))
+            return self._z0 
+    
     @z0.setter
     def z0(self, new_z0):
         self._z0 = new_z0
 
-
+    
 
     ## Other Functions
     def theta_2_d(self,theta,deg=True):
@@ -917,6 +952,42 @@ class Media(object):
         return npy.linalg.lstsq(A, B)[0][0]
 
     ## IO
+    @classmethod
+    def from_csv(cls, filename, *args, **kwargs):
+        '''
+        create a Media from numerical values stored in a csv file. 
+        
+        the csv file format must be written by the function write_csv()
+        which produces the following format
+        
+            f[$unit], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)
+            1, 1, 1, 1, 1, 1, 1
+            2, 1, 1, 1, 1, 1, 1
+            .....
+            
+        '''
+        try:
+            f = open(filename)
+        except(TypeError):
+            # they may have passed a file
+            f = filename
+        
+        header = f.readline()
+        # this is not the correct way to do this ... but whatever
+        f_unit = header.split(',')[0].split('[')[1].split(']')[0]
+        
+        f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
+                npy.loadtxt(f,  delimiter=',').T
+        
+        return cls(
+            frequency = Frequency.from_f(f, unit=f_unit),
+            characteristic_impedance = z_re+1j*z_im,
+            propagation_constant = g_re+1j*g_im,
+            z0 = pz_re+1j*pz_im,
+            *args, **kwargs
+            )
+            
+        
     def write_csv(self, filename='f,gamma,z0.csv'):
         '''
         write this media's frequency, z0, and gamma to a csv file. 
@@ -925,15 +996,24 @@ class Media(object):
         -------------
         filename : string
             file name to write out data to 
+            
+        See Also
+        ---------
+        Media.from_csv : class method to initialize Media object from a 
+            csv file written from this function
         '''
         f = open(filename,'w')
-        header ='f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma)\n'\
-                %self.frequency.unit
+        header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
         f.write(header)
             
-        g,z  = self.propagation_constant, self.characteristic_impedance
+        g,z,pz  = self.propagation_constant, \
+                self.characteristic_impedance, self.z0
+        
         data = npy.vstack(\
-                [self.frequency.f_scaled, z.real, z.imag, g.real,g.imag]).T
+                [self.frequency.f_scaled, z.real, z.imag, \
+                g.real, g.imag, pz.real, pz.imag]).T
         
         npy.savetxt(f,data,delimiter=',')
         f.close()
+    
+    

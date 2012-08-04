@@ -16,6 +16,7 @@ class MediaTestCase(unittest.TestCase):
             'qucs_prj'
             )
         
+        
     def test_impedance_mismatch(self):
         '''
         '''
@@ -30,3 +31,16 @@ class MediaTestCase(unittest.TestCase):
         
         self.assertEqual(qucs_ntwk, skrf_ntwk)
     
+    def test_write_csv(self):
+        fname = os.path.join(self.files_dir,\
+                'out.csv')
+        rf.wr10.write_csv(fname)
+        os.remove(fname)
+    
+    def test_from_csv(self):
+        fname = os.path.join(self.files_dir,\
+                'out.csv')
+        rf.wr10.write_csv(fname)
+        a_media = rf.Media.from_csv(fname)
+        self.assertEqual(a_media, rf.wr10)
+        os.remove(fname)

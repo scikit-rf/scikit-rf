@@ -94,6 +94,9 @@ LOG_OF_NEG = -100
 global INF
 INF = 1e99
 
+global ALMOST_ZERO
+ALMOST_ZERO = 1e-6
+
 ## simple conversions
 def complex_2_magnitude(input):
     '''
