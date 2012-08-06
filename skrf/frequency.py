@@ -190,7 +190,20 @@ class Frequency(object):
                 the exact center frequency in units of :attr:`unit`
         '''
         return self.start + (self.stop-self.start)/2.
-
+    @property
+    def step(self):
+        '''
+        the frequency step size
+        '''
+        return self.span/(self.npoints-1.)
+        
+    @property
+    def span(self):
+        '''
+        the frequency span
+        '''
+        return abs(self.stop-self.start)
+        
     @property
     def f(self):
         '''

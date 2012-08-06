@@ -1472,7 +1472,7 @@ class Network(object):
         plb.subplot(223)
         getattr(self,'plot_s_smith')(*args, **kwargs)
         plb.subplot(224)
-        getattr(self,'plot_s_deg_unwrap')(*args, **kwargs)
+        getattr(self,'plot_s_complex')(*args, **kwargs)
 
     # noise
     def add_noise_polar(self,mag_dev, phase_dev,**kwargs):
