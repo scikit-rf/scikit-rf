@@ -298,7 +298,22 @@ def complex2ReIm(complx):
 def complex2MagPhase(complx,deg=False):
     return npy.abs(complx), npy.angle(complx,deg=deg)
 
-
+def rand_c(*args):
+    '''
+    creates a complex random array of  shape s.
+    
+    Parameters
+    -----------
+    s : list-like
+        shape of array 
+    
+    Examples
+    ---------
+    >>> x = rf.rand_c(2,2)
+    '''
+    s = npy.array(args)
+    return npy.random.rand(npy.product(s)).reshape(s) + \
+        1j*npy.random.rand(npy.product(s)).reshape(s)
 
 
 def psd2TimeDomain(f,y, windowType='hamming'):

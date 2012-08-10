@@ -193,7 +193,7 @@ class Frequency(object):
     @property
     def step(self):
         '''
-        the frequency step size
+        the inter-frequency step size
         '''
         return self.span/(self.npoints-1.)
         

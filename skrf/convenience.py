@@ -98,6 +98,7 @@ References
 from network import *
 from frequency import Frequency
 from media import RectangularWaveguide, Media
+import mathFunctions as mf
 
 import warnings
 import os
@@ -256,17 +257,29 @@ def hfss_touchstone_2_gamma_z0(filename):
     f= open(filename)
     gamma, z0 = [],[]
     
+    def line2ComplexVector(s):
+        return mf.scalar2Complex(\
+            npy.array(\
+                [k for k in s.strip().split(' ') if k != ''][ntwk.nports*-2:],\
+                dtype='float'
+                )
+            )
+            
     for line in f:
         if '! Gamma' in line:
-            gamma.append(1j*float(line.split()[-1]) +float(line.split()[-2] ))
+            gamma.append(line2ComplexVector(line))
         if '! Port Impedance' in line:
-            z0.append(1j*float(line.split()[-1]) +float(line.split()[-2] ))
+            z0.append(line2ComplexVector(line))
+    
+    if len (z0) ==0:
+        raise(ValueError('Touchstone does not contain valid gamma, port impedance comments'))
+        
     return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
 
 def hfss_touchstone_2_media(filename, f_unit='ghz'):
     '''
     converts a HFSS-style touchstone file with Gamma and Z0 comments 
-    into a skrf.media.Media class
+    into a  list of skrf.media.Media classes, one for each port
     
     Parameters
     ------------
@@ -283,18 +296,32 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
     
     Examples
     ----------
-    >>> my_media = rf.hfss_touchstone_2_gamma_z0('line.s2p')
+    >>> port1_media, port2_media = \
+    >>>     rf.hfss_touchstone_2_gamma_z0('line.s2p')[0]
+    
+    See Also
+    ---------
+    hfss_touchstone_2_gamma_z0 : returns gamma, and z0 
     '''
-    f, gamma, z0 =hfss_touchstone_2_gamma_z0(filename)
+    f, gamma, z0 = hfss_touchstone_2_gamma_z0(filename)
     
     freq = Frequency.from_f(f)
     freq.unit = f_unit
     
-    return Media(
-        frequency = freq, 
-        propagation_constant =  gamma,
-        characteristic_impedance = z0
-        )
+    
+    media_list = []
+    
+    for port_n in range(gamma.shape[1]):
+        media_list.append(\
+            Media(
+                frequency = freq, 
+                propagation_constant =  gamma[:, port_n],
+                characteristic_impedance = z0[:, port_n]
+                )
+            )
+        
+        
+    return media_list 
 
 ## file conversion
 def statistical_2_touchstone(file_name, new_file_name=None,\
