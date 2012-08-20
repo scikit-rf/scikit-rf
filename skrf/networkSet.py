@@ -55,7 +55,7 @@ NetworkSet Class
 
 
 from network import average as network_average
-from network import Network
+from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 import mathFunctions as mf
 import zipfile
 from copy import deepcopy
@@ -154,11 +154,16 @@ class NetworkSet(object):
         # we are good to go
         self.ntwk_set = ntwk_set
         self.name = name
+        
+        # create list of network properties, which we use to dynamically
+        # create a statistical properties of this set
+        network_property_list = [k+'_'+l \
+            for k in PRIMARY_PROPERTIES \
+            for l in COMPONENT_FUNC_DICT.keys()] + \
+            ['passivity','s']
 
         # dynamically generate properties. this is slick.
-        for network_property_name in \
-                ['s','s_re','s_im','s_mag','s_deg','s_deg_unwrap','s_rad',\
-                's_rad_unwrap','s_arcl','s_arcl_unwrap','passivity']:
+        for network_property_name in network_property_list:
             for func in [npy.mean, npy.std]:
                 self.__add_a_func_on_property(func, network_property_name)
 

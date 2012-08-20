@@ -66,3 +66,12 @@ except(ImportError):
 
 ## built-in imports
 from copy import deepcopy as copy
+
+
+## Shorthand Names
+N = Network
+NS = NetworkSet
+C = Calibration
+lat = load_all_touchstones
+saf  = save_all_figs
+

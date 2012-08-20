@@ -2772,4 +2772,3 @@ def csv_2_touchstone(filename):
 
     return ntwk
 
-lat = load_all_touchstones
