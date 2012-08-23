@@ -212,6 +212,20 @@ class Media(object):
         try:
             return self._characteristic_impedance()
         except(TypeError):
+            # _characteristic_impedance is not a function, so it is 
+            # either a number or a vector. do some 
+            # shape checking and vectorize it if its a number
+            try:
+                if len(self._characteristic_impedance) != \
+                    len(self.frequency):
+                    raise(IndexError('frequency and characterisitc impedance have different lengths ')) 
+            except(TypeError):
+                # _characteristic_impedance has no len,  must be a 
+                # number, so vectorize it
+                self._characteristic_impedance = \
+                    self._characteristic_impedance *\
+                    npy.ones(len(self.frequency))
+            
             return self._characteristic_impedance
 
     @characteristic_impedance.setter

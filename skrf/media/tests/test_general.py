@@ -68,7 +68,7 @@ class MediaTestCase(unittest.TestCase):
             propagation_constant = 1 , 
             characteristic_impedance = 50 , 
             )
-        skrf_ntwk = a_media.line(1)
+        self.assertEqual(a_media.line(1),a_media.line(1))
     
     def test_vector_gamma_z0_media(self):
         '''
@@ -79,8 +79,7 @@ class MediaTestCase(unittest.TestCase):
             characteristic_impedance =  50*npy.ones(len(rf.f_wr10)), 
             )
             
-        skrf_ntwk = a_media.line(1)
-        
+        self.assertEqual(a_media.line(1),a_media.line(1))
     
     def test_write_csv(self):
         fname = os.path.join(self.files_dir,\
