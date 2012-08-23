@@ -98,7 +98,12 @@ class Media(object):
                 from the characterisitc impedance of the transmission
                 line medium  (None) [a number].
                 if z0= None then will set to characterisitc_impedance
-
+        
+        See Also
+        ---------
+        
+        :function:`~skrf.media.Media.from_csv` : function to create a
+            Media object from a csv file containing gamma/z0
 
 
         Notes
@@ -147,6 +152,11 @@ class Media(object):
         
         return True
         
+    def __len__(self):
+        '''
+        length of frequency axis
+        '''    
+        return len(frequency)
         
     ## Properties
     # note these are made so that a Media type can be constructed with
