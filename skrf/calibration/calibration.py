@@ -710,13 +710,37 @@ class Calibration(object):
         plb.title('Error Metrics')
         plb.ylabel('Mean Distance')
 
-    def plot_uncertainty_per_standard(self, *args, **kwargs):
+    def plot_uncertainty_per_standard(self, scale='db',*args, **kwargs):
         '''
-        see uncertainty_per_standard
+        Plots uncertainty associated with each calibration standard.
+        
+        This requires that each calibration standard is measured 
+        multiple times. The uncertainty associated with each 
+        standard is calculated by the complex standard deviation. 
+        Geometrically, this is the mean distance from the set's center
+        of mass. This average distance can be plotted in linear or log 
+        scaled depending on the `scale` parameter.
+        
+        
+        Parameters
+        ------------
+        scale : 'db', 'lin'
+            plot uncertainties on linear or log scale
+        \\*args, \\*\\*kwargs : passed to :func:`uncertainty_per_standard`
+        
+        See Also
+        ----------
+        :func:`uncertainty_per_standard`
         '''
         plb.title('Uncertainty Per Standard')
-        [ntwk.plot_s_mag() for ntwk in self.uncertainty_per_standard(*args, **kwargs)]
-        plb.ylabel('Mean Distance')
+        if scale=='lin':
+            [ntwk.plot_s_mag() for ntwk in \
+                self.uncertainty_per_standard(*args, **kwargs)]
+            plb.ylabel('Mean Distance From COM (linear)')
+        if scale=='db':
+            [ntwk.plot_s_db() for ntwk in \
+                self.uncertainty_per_standard(*args, **kwargs)]
+            plb.ylabel('Mean Distance From COM (dB)')
 
 
 ## Functions
