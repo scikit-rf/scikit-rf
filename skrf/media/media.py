@@ -189,7 +189,21 @@ class Media(object):
         try:
             return self._propagation_constant()
         except(TypeError):
+            # _propagation_constant is not a function, so it is 
+            # either a number or a vector. do some 
+            # shape checking and vectorize it if its a number
+            try:
+                if len(self._propagation_constant) != \
+                    len(self.frequency):
+                    raise(IndexError('frequency and propagation_constant impedance have different lengths ')) 
+            except(TypeError):
+                # _propagation_constant has no len,  must be a 
+                # number, return a vectorized copy
+                return self._propagation_constant *\
+                    npy.ones(len(self.frequency))
+            
             return self._propagation_constant
+                  
     @propagation_constant.setter
     def propagation_constant(self, new_propagation_constant):
         self._propagation_constant = new_propagation_constant
@@ -218,12 +232,11 @@ class Media(object):
             try:
                 if len(self._characteristic_impedance) != \
                     len(self.frequency):
-                    raise(IndexError('frequency and characterisitc impedance have different lengths ')) 
+                    raise(IndexError('frequency and characteristic_impedance have different lengths ')) 
             except(TypeError):
                 # _characteristic_impedance has no len,  must be a 
-                # number, so vectorize it
-                self._characteristic_impedance = \
-                    self._characteristic_impedance *\
+                # number, return a vectorized copy
+                return self._characteristic_impedance *\
                     npy.ones(len(self.frequency))
             
             return self._characteristic_impedance
@@ -260,6 +273,7 @@ class Media(object):
         '''
         try:
             result =  self._z0()
+            return result
         
         except(TypeError):
             try:
@@ -267,11 +281,11 @@ class Media(object):
                     raise(IndexError('z0 and characterisitc impedance have different shapes '))                        
             except(TypeError):
                 # z0 has no len,  must be a number, so vectorize it
-                self._z0 = self._z0 *npy.ones(len(self.characteristic_impedance))
+                return self._z0 *npy.ones(len(self.characteristic_impedance))
             
-            result = self._z0 
+            
         
-        return result
+        return self._z0
         
     @z0.setter
     def z0(self, new_z0):
@@ -1026,7 +1040,6 @@ class Media(object):
             *args, **kwargs
             )
             
-        
     def write_csv(self, filename='f,gamma,z0.csv'):
         '''
         write this media's frequency, z0, and gamma to a csv file. 

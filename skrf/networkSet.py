@@ -561,8 +561,23 @@ class NetworkSet(object):
         self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n)
         self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n)
         self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
-
-
+    
+    def plot_logsigma(self, label_axis=True, *args,**kwargs):
+        '''
+        plots the uncertainty for the set in units of log-sigma. 
+        Log-sigma is the complex standard deviation, plotted in units
+        of dB's. Geometrically, this is the mean distance from the 
+        set's center of mass plotted on a log-scale
+        
+        Parameters
+        ------------
+        \\*args, \\*\\*kwargs : arguments
+            passed to self.std_s.plot_s_db()
+        '''
+        self.std_s.plot_s_db(*args,**kwargs)
+        if label_axis:
+            plb.ylabel('Mean Distance From COM(dB)')
+    
     def signature(self,m=0,n=0,from_mean=False, operation='__sub__',
         component='s_mag',vmax = None,  *args, **kwargs):
         '''

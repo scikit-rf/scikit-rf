@@ -697,18 +697,24 @@ class Calibration(object):
         '''
         self.plot_residuals(self,attribute='db',*args,**kwargs)
 
-    def plot_errors(self,std_names =None,*args, **kwargs):
+    def plot_errors(self,std_names =None, scale='db', *args, **kwargs):
         '''
         plot calibration error metrics for an over-determined calibration.
 
         see biased_error, unbiased_error, and total_error for more info
 
         '''
-        self.biased_error(std_names).plot_s_mag(*args, **kwargs)
-        self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
-        self.total_error(std_names).plot_s_mag(*args, **kwargs)
+        if scale == 'lin':
+            self.biased_error(std_names).plot_s_mag(*args, **kwargs)
+            self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
+            self.total_error(std_names).plot_s_mag(*args, **kwargs)
+            plb.ylabel('Mean Distance (linear)')
+        elif scale == 'db':
+            self.biased_error(std_names).plot_s_db(*args, **kwargs)
+            self.unbiased_error(std_names).plot_s_db(*args, **kwargs)
+            self.total_error(std_names).plot_s_db(*args, **kwargs)
+            plb.ylabel('Mean Distance (dB)')
         plb.title('Error Metrics')
-        plb.ylabel('Mean Distance')
 
     def plot_uncertainty_per_standard(self, scale='db',*args, **kwargs):
         '''
@@ -737,7 +743,7 @@ class Calibration(object):
             [ntwk.plot_s_mag() for ntwk in \
                 self.uncertainty_per_standard(*args, **kwargs)]
             plb.ylabel('Mean Distance From COM (linear)')
-        if scale=='db':
+        elif scale=='db':
             [ntwk.plot_s_db() for ntwk in \
                 self.uncertainty_per_standard(*args, **kwargs)]
             plb.ylabel('Mean Distance From COM (dB)')
