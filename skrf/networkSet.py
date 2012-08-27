@@ -328,7 +328,12 @@ class NetworkSet(object):
         else:
             return output
 
-
+    def copy(self):
+        '''
+        copies each network of the network set. 
+        '''
+        return [k.copy() for k in self.ntwk_set]
+        
     @property
     def mean_s_db(self):
         '''
