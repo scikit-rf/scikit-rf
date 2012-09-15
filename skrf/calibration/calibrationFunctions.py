@@ -39,7 +39,7 @@ Functions which operate on or pertain to :class:`~skrf.calibration.calibration.C
 from itertools import product, combinations, permutations
 from calibration import Calibration
 from numpy import array
-
+import pdb
 
 
 def cartesian_product_calibration_set( ideals, measured, *args, **kwargs):
@@ -120,6 +120,7 @@ def dot_product_calibration_set( ideals, measured, *args, **kwargs):
             [[ measure for measure in measured \
                     if ideal.name in measure.name] for ideal in ideals]
     m_array= array( measured_iterable)
+    
     return [Calibration(ideals = ideals, measured = list(m_array[:,k]),\
             *args, **kwargs)\
             for k in range(m_array.shape[1])]

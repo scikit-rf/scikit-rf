@@ -332,7 +332,7 @@ class NetworkSet(object):
         '''
         copies each network of the network set. 
         '''
-        return [k.copy() for k in self.ntwk_set]
+        return NetworkSet([k.copy() for k in self.ntwk_set])
         
     @property
     def mean_s_db(self):
