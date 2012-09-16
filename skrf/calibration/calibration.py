@@ -717,9 +717,7 @@ class Calibration(object):
         This requires that each calibration standard is measured 
         multiple times. The uncertainty associated with each 
         standard is calculated by the complex standard deviation. 
-        Geometrically, this is the mean distance from the set's center
-        of mass. This average distance can be plotted in linear or log 
-        scaled depending on the `scale` parameter.
+       
         
         
         Parameters
@@ -736,11 +734,11 @@ class Calibration(object):
         if scale=='lin':
             [ntwk.plot_s_mag() for ntwk in \
                 self.uncertainty_per_standard(*args, **kwargs)]
-            plb.ylabel('Mean Distance From COM (linear)')
+            plb.ylabel('Standard Deviation (linear)')
         if scale=='db':
             [ntwk.plot_s_db() for ntwk in \
                 self.uncertainty_per_standard(*args, **kwargs)]
-            plb.ylabel('Mean Distance From COM (dB)')
+            plb.ylabel('Standard Deviation (dB)')
 
 
 ## Functions

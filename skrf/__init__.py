@@ -69,6 +69,8 @@ from copy import deepcopy as copy
 
 
 ## Shorthand Names
+F = Frequency
+M = Media
 N = Network
 NS = NetworkSet
 C = Calibration
