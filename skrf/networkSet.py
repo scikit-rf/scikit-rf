@@ -577,7 +577,7 @@ class NetworkSet(object):
         as circles on the smith chart. At each frequency a circle  
         with radii proportional to the complex standard deviation 
         of the set at that frequency is drawn. Due to the fact that 
-        the `markersize` argument is in pixels, the radii is scaled by 
+        the `markersize` argument is in pixels, the radii can scaled by 
         the input argument  `multiplier`. 
         
         default kwargs are
