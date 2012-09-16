@@ -335,7 +335,12 @@ class NetworkSet(object):
         else:
             return output
 
-
+    def copy(self):
+        '''
+        copies each network of the network set. 
+        '''
+        return NetworkSet([k.copy() for k in self.ntwk_set])
+        
     @property
     def mean_s_db(self):
         '''
@@ -569,6 +574,7 @@ class NetworkSet(object):
         self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n)
         self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
     
+
     def plot_uncertainty_bounds_s(self, multiplier =200, *args, **kwargs):
         '''
         Plots complex uncertianty bounds plot on smith chart. 
@@ -621,6 +627,23 @@ class NetworkSet(object):
         plb.show()
         
 
+
+    def plot_logsigma(self, label_axis=True, *args,**kwargs):
+        '''
+        plots the uncertainty for the set in units of log-sigma. 
+        Log-sigma is the complex standard deviation, plotted in units
+        of dB's. Geometrically, this is the mean distance from the 
+        set's center of mass plotted on a log-scale
+        
+        Parameters
+        ------------
+        \\*args, \\*\\*kwargs : arguments
+            passed to self.std_s.plot_s_db()
+        '''
+        self.std_s.plot_s_db(*args,**kwargs)
+        if label_axis:
+            plb.ylabel('Standard Deviation(dB)')
+    
     def signature(self,m=0,n=0,from_mean=False, operation='__sub__',
         component='s_mag',vmax = None,  *args, **kwargs):
         '''

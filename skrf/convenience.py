@@ -203,9 +203,11 @@ def func_on_all_figs(func, *args, **kwargs):
     >>>rf.func_on_all_figs(grid,alpha=.3)
     '''
     for fig_n in plb.get_fignums():
-        plb.figure(fig_n)
-        func(*args, **kwargs)
-        plb.draw()
+        fig = plb.figure(fig_n)
+        for ax_n in fig.axes:
+            fig.add_axes(ax_n) # trick to make axes current
+            func(*args, **kwargs)
+            plb.draw()
 
 # other
 def now_string():
