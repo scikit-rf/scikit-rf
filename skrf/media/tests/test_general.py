@@ -33,7 +33,16 @@ class MediaTestCase(unittest.TestCase):
         
         self.assertEqual(qucs_ntwk, skrf_ntwk)
     
-    
+    def test_resistor(self):
+        '''
+        '''
+        fname = os.path.join(self.files_dir,\
+                'resistor,1ohm.s2p')
+        qucs_ntwk = rf.Network(fname)
+        self.dummy_media.frequency = qucs_ntwk.frequency
+        skrf_ntwk = self.dummy_media.resistor(1)
+        self.assertEqual(qucs_ntwk, skrf_ntwk)
+        
     def test_capacitor(self):
         '''
         '''
@@ -42,7 +51,6 @@ class MediaTestCase(unittest.TestCase):
         qucs_ntwk = rf.Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
         skrf_ntwk = self.dummy_media.capacitor(.01e-12)
-        
         self.assertEqual(qucs_ntwk, skrf_ntwk)
     
     
@@ -54,7 +62,6 @@ class MediaTestCase(unittest.TestCase):
         qucs_ntwk = rf.Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
         skrf_ntwk = self.dummy_media.inductor(.1e-9)
-        
         self.assertEqual(qucs_ntwk, skrf_ntwk)
     
     

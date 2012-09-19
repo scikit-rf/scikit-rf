@@ -462,7 +462,38 @@ class Media(object):
         '''
 
         return self.load(1., nports, **kwargs)
+    
+    def resistor(self, R, *args, **kwargs):
+        '''
+        Resistor
 
+
+        Parameters
+        ----------
+        R : number, array
+                Resistance , in Ohms. If this is an array, must be of
+                same length as frequency vector.
+        \*args, \*\*kwargs : arguments, key word arguments
+                passed to :func:`match`, which is called initially to create a
+                'blank' network.
+
+        Returns
+        --------
+        resistor : a 2-port :class:`~skrf.network.Network` 
+                
+        See Also
+        ---------
+        match : function called to create a 'blank' network
+        '''
+        result = self.match(nports=2, **kwargs)
+        y= npy.zeros(shape=result.s.shape, dtype=complex)
+        y[:,0,0] = 1/R
+        y[:,1,1] = 1/R
+        y[:,0,1] = -1/R
+        y[:,1,0] = -1/R
+        result.y = y
+        return result    
+    
     def capacitor(self, C, **kwargs):
         '''
         Capacitor
@@ -494,8 +525,6 @@ class Media(object):
         y[:,0,1] = -1j*w*C
         y[:,1,0] = -1j*w*C
         result.y = y
-        
-        
         return result
         
     def inductor(self, L, **kwargs):
