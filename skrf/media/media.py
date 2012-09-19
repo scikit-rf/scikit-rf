@@ -65,10 +65,9 @@ class Media(object):
     calling :func:`match` to create a 'blank'
     :class:`~skrf.network.Network`, and then fill in the s-matrix.
     
-    
-    
     IO
-    ===
+    ----
+    
     Media objects can be read and written to disk through the use of 
     
     .. autosummary::
@@ -119,7 +118,7 @@ class Media(object):
         See Also
         ---------
         
-        :function:`~skrf.media.Media.from_csv` : function to create a
+        :func:`from_csv` : function to create a
             Media object from a csv file containing gamma/z0
 
 
@@ -502,7 +501,7 @@ class Media(object):
         ---------
         match : function called to create a 'blank' network
         '''
-        result = self.match(nports=2, **kwargs)
+        result = self.match(nports=2, *args, **kwargs)
         y= npy.zeros(shape=result.s.shape, dtype=complex)
         y[:,0,0] = 1/R
         y[:,1,1] = 1/R
@@ -1054,7 +1053,8 @@ class Media(object):
         print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
         return npy.linalg.lstsq(A, B)[0][0]
 
-    ## IO
+    
+    
     @classmethod
     def from_csv(cls, filename, *args, **kwargs):
         '''
@@ -1101,7 +1101,7 @@ class Media(object):
             
         See Also
         ---------
-        Media.from_csv : class method to initialize Media object from a 
+        from_csv : class method to initialize Media object from a 
             csv file written from this function
         '''
         f = open(filename,'w')

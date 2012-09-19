@@ -169,6 +169,13 @@ def save_all_figs(dir = './', format=['eps','pdf','png']):
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
     '''
+    adds markers to existing lings on a plot 
+    
+    this is convinient if you have already have a plot made, but then 
+    need to add markers afterwards, so that it can be interpreted in 
+    black and white. The markevery argument makes the markers less 
+    frequent than the data, which is generally what you want. 
+    
     Parameters
     -----------
     ax : matplotlib.Axes
@@ -189,8 +196,14 @@ def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10
 
 def legend_off(ax=None):
     '''
-    turn off the legend for a given axes. if no axes is given then
-    it will use current axes.
+    turn off the legend for a given axes. 
+    
+    if no axes is given then it will use current axes.
+    
+    Parameters
+    -----------
+    ax : matplotlib.Axes object
+        axes to operate on 
     '''
     if ax is None:
         plb.gca().legend_.set_visible(0)
@@ -208,6 +221,9 @@ def func_on_all_figs(func, *args, **kwargs):
     '''
     runs a function after making all open figures current. 
     
+    useful if you need to change the properties of many open figures 
+    at once, like turn off the grid. 
+    
     Parameters
     ----------
     func : function
@@ -216,7 +232,7 @@ def func_on_all_figs(func, *args, **kwargs):
     
     Examples
     ----------
-    >>>rf.func_on_all_figs(grid,alpha=.3)
+    >>> rf.func_on_all_figs(grid,alpha=.3)
     '''
     for fig_n in plb.get_fignums():
         fig = plb.figure(fig_n)
@@ -227,13 +243,32 @@ def func_on_all_figs(func, *args, **kwargs):
 
 # other
 def now_string():
+    '''
+    returns a unique sortable string, representing the current time
+    
+    nice for generating date-time stamps to be used in file-names 
+    
+    '''
     return datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
 
 def find_nearest(array,value):
     '''
     find nearest value in array.
+    
     taken from  http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
 
+    Parameters
+    ----------
+    array :  numpy.ndarray
+        array we are searching for a value in 
+    value : element of the array
+        value to search for 
+    
+    Returns
+    --------
+    found_value : an element of the array 
+        the value that is numerically closest to `value`
+    
     '''
     idx=(npy.abs(array-value)).argmin()
     return array[idx]
@@ -241,6 +276,21 @@ def find_nearest(array,value):
 def find_nearest_index(array,value):
     '''
     find nearest value in array.
+    
+    Parameters
+    ----------
+    array :  numpy.ndarray
+        array we are searching for a value in 
+    value : element of the array
+        value to search for 
+    
+    Returns
+    --------
+    found_index : int 
+        the index at which the  numerically closest element to `value`
+        was found at
+    
+    
     taken from  http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
 
     '''
@@ -249,8 +299,10 @@ def find_nearest_index(array,value):
 
 def hfss_touchstone_2_gamma_z0(filename):
     '''
-    converts a HFSS-style touchstone file with Gamma and Z0 comments 
-    into a triplet of arrays being: (frequency, Gamma, Z0)
+    Extracts Z0 and Gamma comments from touchstone file
+    
+    Takes a HFSS-style touchstone file with Gamma and Z0 comments and 
+    extracts a triplet of arrays being: (frequency, Gamma, Z0)
     
     Parameters
     ------------
@@ -296,8 +348,7 @@ def hfss_touchstone_2_gamma_z0(filename):
 
 def hfss_touchstone_2_media(filename, f_unit='ghz'):
     '''
-    converts a HFSS-style touchstone file with Gamma and Z0 comments 
-    into a  list of skrf.media.Media classes, one for each port
+    Creates a :class:`~skrf.media.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments 
     
     Parameters
     ------------
@@ -314,8 +365,7 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
     
     Examples
     ----------
-    >>> port1_media, port2_media = \
-    >>>     rf.hfss_touchstone_2_gamma_z0('line.s2p')[0]
+    >>> port1_media, port2_media = rf.hfss_touchstone_2_media('line.s2p')
     
     See Also
     ---------
@@ -345,7 +395,9 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
 def statistical_2_touchstone(file_name, new_file_name=None,\
         header_string='# GHz S RI R 50.0'):
     '''
-    converts the file format used by Statistical and other Dylan Williams
+    Cvonverts Statistical file to a touchstone file. 
+    
+    Converts the file format used by Statistical and other Dylan Williams
     software to standard touchstone format.
 
     Parameters
