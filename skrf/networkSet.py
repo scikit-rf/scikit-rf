@@ -632,8 +632,7 @@ class NetworkSet(object):
         '''
         plots the uncertainty for the set in units of log-sigma. 
         Log-sigma is the complex standard deviation, plotted in units
-        of dB's. Geometrically, this is the mean distance from the 
-        set's center of mass plotted on a log-scale
+        of dB's. 
         
         Parameters
         ------------
