@@ -31,7 +31,7 @@ Holds pre-initialized  objects's and functions that are general
 conveniences.
 
 
-Functions
+Plotting 
 ------------
 .. autosummary::
    :toctree: generated/
@@ -39,9 +39,25 @@ Functions
    save_all_figs
    add_markers_to_lines
    legend_off
+   func_on_all_figs
+   
+IO
+----
+.. autosummary::
+   :toctree: generated/
+    
+    hfss_touchstone_2_media
+    hfss_touchstone_2_gamma_z0
+
+General 
+------------
+.. autosummary::
+   :toctree: generated/
+
    now_string
    find_nearest
    find_nearest_index
+
 
 
 Pre-initialized Objects

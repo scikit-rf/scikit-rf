@@ -2562,13 +2562,14 @@ def flip(a):
 ## COMMON CHECKS (raise exceptions)
 def check_frequency_equal(ntwkA, ntwkB):
     '''
+    checks if two Networks have same frequency
     '''
     if assert_frequency_equal(ntwkA,ntwkB) == False:
         raise IndexError('Networks dont have matching frequency. See `Network.interpolate`')
 
-
 def check_z0_equal(ntwkA,ntwkB):
     '''
+    checks if two Networks have same port impedances
     '''
     #note you should check frequency equal before you call this
     if assert_z0_equal(ntwkA,ntwkB) == False:
@@ -2576,6 +2577,7 @@ def check_z0_equal(ntwkA,ntwkB):
 
 def check_nports_equal(ntwkA,ntwkB):
     '''
+    checks if two Networks have same number of ports
     '''
     if assert_nports_equal(ntwkA,ntwkB) == False:
         raise ValueError('Networks dont have matching number of ports.')
