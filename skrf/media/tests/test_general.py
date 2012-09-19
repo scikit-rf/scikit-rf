@@ -41,7 +41,7 @@ class MediaTestCase(unittest.TestCase):
                 'capacitor,p01pF.s2p')
         qucs_ntwk = rf.Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
-        skrf_ntwk = self.dummy_media.capacitor(.01e-12,nports=2)
+        skrf_ntwk = self.dummy_media.capacitor(.01e-12)
         
         self.assertEqual(qucs_ntwk, skrf_ntwk)
     
@@ -53,7 +53,7 @@ class MediaTestCase(unittest.TestCase):
                 'inductor,p1nH.s2p')
         qucs_ntwk = rf.Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
-        skrf_ntwk = self.dummy_media.capacitor(.1e-9,nports=2)
+        skrf_ntwk = self.dummy_media.inductor(.1e-9)
         
         self.assertEqual(qucs_ntwk, skrf_ntwk)
     

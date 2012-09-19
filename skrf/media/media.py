@@ -463,7 +463,7 @@ class Media(object):
 
         return self.load(1., nports, **kwargs)
 
-    def capacitor(self, C, nports=1, **kwargs):
+    def capacitor(self, C, **kwargs):
         '''
         Capacitor
 
@@ -479,25 +479,22 @@ class Media(object):
 
         Returns
         --------
-        capacitor : :class:`~skrf.network.Network` object
-                a n-port capacitor
+        capacitor : a 2-port :class:`~skrf.network.Network` 
+                
 
         See Also
         ---------
         match : function called to create a 'blank' network
         '''
-        if nports == 1:
-            Gamma0 = tf.zl_2_Gamma0(self.z0, -1j/(self.frequency.w*C))
-            result = self.load(Gamma0=Gamma0, **kwargs)
-        elif nports ==2:
-            result = self.match(nports=2, **kwargs)
-            Gamma0 = tf.zl_2_Gamma0(self.z0, self.z0 + -1j/(self.frequency.w*C))
-            result.s[:,0,0] = Gamma0
-            result.s[:,1,1] = Gamma0
-            result.s[:,1,0] = 1+Gamma0
-            result.s[:,0,1] = 1+Gamma0
-        else:
-            raise (ValueError('nports must be 1 or 2'))
+        result = self.match(nports=2, **kwargs)
+        w = self.frequency.w
+        y= npy.zeros(shape=result.s.shape, dtype=complex)
+        y[:,0,0] = 1j*w*C
+        y[:,1,1] = 1j*w*C
+        y[:,0,1] = -1j*w*C
+        y[:,1,0] = -1j*w*C
+        result.y = y
+        
         
         return result
         
@@ -516,15 +513,22 @@ class Media(object):
 
         Returns
         --------
-        inductor : :class:`~skrf.network.Network` object
-                a n-port inductor
+        inductor : a 2-port :class:`~skrf.network.Network` 
+                
 
         See Also
         ---------
-        match : called to create a 'blank' network
+        match : function called to create a 'blank' network
         '''
-        Gamma0 = tf.zl_2_Gamma0(self.z0,-1j*(self.frequency.w*L))
-        return self.load(Gamma0=Gamma0, **kwargs)
+        result = self.match(nports=2, **kwargs)
+        w = self.frequency.w
+        y = npy.zeros(shape=result.s.shape, dtype=complex)
+        y[:,0,0] = 1/(1j*w*L)
+        y[:,1,1] = 1/(1j*w*L)
+        y[:,0,1] = -1/(1j*w*L)
+        y[:,1,0] = -1/(1j*w*L)
+        result.y = y
+        return result
 
     def impedance_mismatch(self, z1, z2, **kwargs):
         '''
