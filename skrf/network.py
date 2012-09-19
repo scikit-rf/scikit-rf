@@ -1608,7 +1608,7 @@ def connect(ntwkA, k, ntwkB,l):
     # mismatch, which takes into account th effect of differing port
     # impedances. 
     #import pdb;pdb.set_trace()
-    if test_z0_at_ports_equal(ntwkA,k,ntwkB,l) == False:
+    if assert_z0_at_ports_equal(ntwkA,k,ntwkB,l) == False:
         ntwkC.s = connect_s(
             ntwkA.s, k, 
             impedance_mismatch(ntwkA.z0[:,k], ntwkB.z0[:,l]), 0)
@@ -2563,7 +2563,7 @@ def flip(a):
 def check_frequency_equal(ntwkA, ntwkB):
     '''
     '''
-    if test_frequency_equal(ntwkA,ntwkB) == False:
+    if assert_frequency_equal(ntwkA,ntwkB) == False:
         raise IndexError('Networks dont have matching frequency. See `Network.interpolate`')
 
 
@@ -2571,33 +2571,33 @@ def check_z0_equal(ntwkA,ntwkB):
     '''
     '''
     #note you should check frequency equal before you call this
-    if test_z0_equal(ntwkA,ntwkB) == False:
+    if assert_z0_equal(ntwkA,ntwkB) == False:
         raise ValueError('Networks dont have matching z0.')
 
 def check_nports_equal(ntwkA,ntwkB):
     '''
     '''
-    if test_nports_equal(ntwkA,ntwkB) == False:
+    if assert_nports_equal(ntwkA,ntwkB) == False:
         raise ValueError('Networks dont have matching number of ports.')
         
 ## TESTs (return [usually boolean] values)
 # TODO: would like to nose from running these, but i dont know how
-def test_frequency_equal(ntwkA, ntwkB):
+def assert_frequency_equal(ntwkA, ntwkB):
     '''
     '''
     return (ntwkA.frequency  == ntwkB.frequency)
 
-def test_z0_equal(ntwkA,ntwkB):
+def assert_z0_equal(ntwkA,ntwkB):
     '''
     '''
     return (ntwkA.z0 == ntwkB.z0).all()
 
-def test_z0_at_ports_equal(ntwkA,k,ntwkB,l):
+def assert_z0_at_ports_equal(ntwkA,k,ntwkB,l):
     '''
     '''
     return (ntwkA.z0[:,k] == ntwkB.z0[:,l]).all()
 
-def test_nports_equal(ntwkA,ntwkB):
+def assert_nports_equal(ntwkA,ntwkB):
     '''
     '''
     return (ntwkA.number_of_ports == ntwkB.number_of_ports)        
