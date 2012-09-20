@@ -56,6 +56,15 @@ class Frequency(object):
     a frequency unit. This allows a frequency vector in a given unit
     to be available (:attr:`f_scaled`), as well as an absolute frquency
     axis in 'Hz'  (:attr:`f`).
+    
+    A Frequency object can be created from either (start, stop, npoints)
+    using the default constructor, :func:`__init__`. Or, it can be 
+    created from an arbitrary frequency vector by using the class 
+    method :func:`from_f`. 
+    
+    Internally, the frequency information is stored in the `f` property
+    combined with the `unit` property. All other properties, `start` 
+    `stop`, etc are generated from these. 
     '''
     unit_dict = {\
             'hz':'Hz',\
@@ -74,7 +83,7 @@ class Frequency(object):
     global ALMOST_ZER0
     ALMOST_ZER0=1e-4
     
-    def __init__(self,start, stop, npoints, unit='hz', sweep_type='lin'):
+    def __init__(self,start, stop, npoints, unit='ghz', sweep_type='lin'):
         '''
         Frequency initializer.
 
@@ -115,10 +124,15 @@ class Frequency(object):
 
         '''
         self._unit = unit.lower()
-        self.start =  self.multiplier * start
-        self.stop = self.multiplier * stop
-        self.npoints = npoints
         self.sweep_type = sweep_type
+        
+        start =  self.multiplier * start
+        stop = self.multiplier * stop
+        
+        if sweep_type.lower() == 'lin':
+            self.f = linspace(start, stop, npoints) 
+        else:
+            raise ValueError('Sweep Type not recognized')
 
     def __str__(self):
         '''
@@ -178,7 +192,28 @@ class Frequency(object):
         The number of frequeny points
         '''
         return self.npoints
-        
+    
+    @property 
+    def start(self):
+        '''
+        starting frequency in Hz
+        '''
+        return self.f[0]
+    
+    @property 
+    def stop(self):
+        '''
+        starting frequency in Hz
+        '''
+        return self.f[-1]
+    
+    @property 
+    def npoints(self):
+        '''
+        starting frequency in Hz
+        '''
+        return len(self.f)
+    
     @property
     def center(self):
         '''
@@ -190,6 +225,7 @@ class Frequency(object):
                 the exact center frequency in units of :attr:`unit`
         '''
         return self.start + (self.stop-self.start)/2.
+    
     @property
     def step(self):
         '''
@@ -219,18 +255,16 @@ class Frequency(object):
                 f_scaled : frequency vector in units of :attr:`unit`
                 w : angular frequency vector in rad/s
         '''
-        return linspace(self.start,self.stop,self.npoints)
-        #return self._f
+        
+        return self._f
 
     @f.setter
     def f(self,new_f):
         '''
         sets the frequency object by passing a vector in Hz
         '''
-        #self._f = new_f
-        self.start = new_f[0]
-        self.stop = new_f[-1]
-        self.npoints = len(new_f)
+        self._f = new_f
+        
 
     @property
     def f_scaled(self):
