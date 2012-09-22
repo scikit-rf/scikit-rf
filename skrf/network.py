@@ -732,7 +732,10 @@ class Network(object):
         the scattering parameter matrix [#]_.
 
         s-matrix is a 3 dimensional numpy.ndarray which has shape
-        `fxnxn`, where `f` is frequency axis and `n` is number of ports
+        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        Note that indexing starts at 0!, so s11 can be accessed by 
+        taking the slice s[:,0,0].  
+        
 
         Returns
         ---------

@@ -10,7 +10,7 @@ Introduction
 
 The requirements to run skrf are basically a python environment setup to do numerical/scientific computing. If you are new to  Python_ development, you may want to install a pre-built scientific python IDE like pythonxy_. This will install all requirements, as well as provide a nice environment to get started in. If you dont want use pythonxy_, you see `Requirements`_.
 
-**Note:** If you want to use skrf for instrument control you will need to install pyvisa. You may also be interested in Pythics, which provides a simple way to build interfaces to virtual instruments. Links is provided in `Requirements`_ section. 
+**Note:** If you want to use skrf for instrument control you will need to install pyvisa. You may also be interested in Pythics, which provides a simple way to build interfaces to virtual instruments.  
 
 skrf Installation 
 -----------------------------

@@ -27,7 +27,7 @@
 convenience (:mod:`skrf.convenience`)
 ========================================
 
-Holds pre-initialized  objects's and functions that are general
+Holds pre-initialized objects's and functions that are general
 conveniences.
 
 
@@ -102,6 +102,35 @@ wr2p2                    WR-2.2, 330-500 GHz
 wr1p5                    WR-1.5, 500-750 GHz
 wr1                      WR-1, 750-1100 GHz
 =======================  ===============================================
+
+Shorthand Names 
+----------------
+
+Below is a list of shorthand object names which can be use to save some 
+typing. These names are defined in the main __init__ module. but listing
+them here makes more sense. 
+
+
+============ ================
+Shorthand    Full Object Name   
+============ ================
+F            :class:`~skrf.frequency.Frequency`
+N            :class:`~skrf.network.Network`
+NS           :class:`~skrf.networkSet.NetworkSet`
+M            :class:`~skrf.media.media.Media`
+C            :class:`~skrf.calibration.calibration.Calibration`
+============ ================
+
+The following are shorthand names for commonly used, but unfortunately
+longwinded functions.
+
+============ ================
+Shorthand    Full Object Name   
+============ ================
+lat          :func:`~skrf.network.load_all_touchstones`
+saf          :func:`~skrf.convenience.save_all_figs`
+============ ================
+ 
 
 
 
