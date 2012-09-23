@@ -72,7 +72,7 @@ All of these operations return :class:`Network` types, so the methods and proper
 	
 	>>> difference = (short- delay_short)
 
-The result is stored in the returned :class:`Network`s  :attr:`Network.s` parameter matrix.  So, to plot the magnitude of the complex difference between the networks `short` and `delay_short`::
+The result is stored in the returned :class:`Network` object's  :attr:`Network.s` parameter matrix.  So, to plot the magnitude of the complex difference between the networks `short` and `delay_short`::
 
 	>>> (short - delay_short).plot_s_mag()
 
@@ -89,7 +89,7 @@ Cascading and de-embeding 2-port Networks can also be done though operators. The
 	>>> short = rf.Network('short.s1p')	
 	>>> delay_short = line ** short
 
-De-embedding  can be accomplished either by using the  :func:`de-embed` function, or  by cascading the *inverse* of a network. The inverse of a network is accesible through the property :attr:`Network.inv`. So,  to de-embed the *short* from *delay_short*::
+De-embedding  can be accomplished either by using the  :func:`de_embed` function, or  by cascading the *inverse* of a network. The inverse of a network is accesible through the property :attr:`Network.inv`. So,  to de-embed the *short* from *delay_short*::
 
 	>>> short = line.inv ** delay_short
 
@@ -108,7 +108,7 @@ to connect port '1' of the tee, to port 0 of the delay short::
 	
 Sub-Networks
 ---------------------
-Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by properties smn, ::
+Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by theh sub-network properties, which return one-port :class:`Network` objects ::
 
 	>>> port1_return = line.s11
 	>>> port1_insertion = line.s21
@@ -116,13 +116,16 @@ Frequently, the one-port s-parameters of a multiport network's are of interest. 
 	
 Convenience Functions
 ---------------------
-Frequently there is an entire directory of touchstone files that need to be analyzed. The function :func:`~convenience.load_all_touchstones` is meant deal with this scenario. It takes a string representing the directory,  and returns a dictionary type with keys equal to the touchstone filenames, and values equal to :class:`Network` types::
+Frequently there is an entire directory of touchstone files that need to be analyzed. The function :func:`load_all_touchstones` is meant deal with this scenario. It takes a string representing the directory,  and returns a dictionary type with keys equal to the touchstone filenames, and values equal to :class:`Network` types::
 	
 	>>> ntwk_dict = rf.load_all_touchstones('.')
 	{'delay_short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.],
 	'line': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
 	'ring slot': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
 	'short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.]}
+	
+Other convenient functions, and pre-initialized objects are located in the 
+:mod:`convenience` module
 
 
 References

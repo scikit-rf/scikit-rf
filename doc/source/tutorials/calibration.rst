@@ -6,7 +6,7 @@ Calibration
 Intro
 ---------------
 
-This page describes how to use **skrf** to calibrate data taken from a VNA. The explanation of calibration theory and calibration kit design is beyond the scope of this  page. This page describes how to calibrate a device under test (DUT), assuming you have measured an acceptable set of standards, and have a coresponding set ideal responses.
+This page describes how to use **skrf** to calibrate data taken from a VNA. The explanation of calibration theory and calibration kit design is beyond the scope of this  tutorial. Instead this tutorial  describes how to calibrate a device under test (DUT), assuming you have measured an acceptable set of standards, and have a coresponding set ideal responses.
 
 skrf's calibration algorithm is generic in that it will work with any set of standards. If you supply more calibration standards than is needed, skrf will implement a simple least-squares solution.
 
