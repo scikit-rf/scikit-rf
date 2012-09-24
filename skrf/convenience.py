@@ -27,11 +27,11 @@
 convenience (:mod:`skrf.convenience`)
 ========================================
 
-Holds pre-initialized  objects's and functions that are general
+Holds pre-initialized objects's and functions that are general
 conveniences.
 
 
-Functions
+Plotting 
 ------------
 .. autosummary::
    :toctree: generated/
@@ -39,9 +39,25 @@ Functions
    save_all_figs
    add_markers_to_lines
    legend_off
+   func_on_all_figs
+   
+IO
+----
+.. autosummary::
+   :toctree: generated/
+    
+    hfss_touchstone_2_media
+    hfss_touchstone_2_gamma_z0
+
+General 
+------------
+.. autosummary::
+   :toctree: generated/
+
    now_string
    find_nearest
    find_nearest_index
+
 
 
 Pre-initialized Objects
@@ -87,6 +103,35 @@ wr1p5                    WR-1.5, 500-750 GHz
 wr1                      WR-1, 750-1100 GHz
 =======================  ===============================================
 
+Shorthand Names 
+----------------
+
+Below is a list of shorthand object names which can be use to save some 
+typing. These names are defined in the main __init__ module. but listing
+them here makes more sense. 
+
+
+============ ================
+Shorthand    Full Object Name   
+============ ================
+F            :class:`~skrf.frequency.Frequency`
+N            :class:`~skrf.network.Network`
+NS           :class:`~skrf.networkSet.NetworkSet`
+M            :class:`~skrf.media.media.Media`
+C            :class:`~skrf.calibration.calibration.Calibration`
+============ ================
+
+The following are shorthand names for commonly used, but unfortunately
+longwinded functions.
+
+============ ================
+Shorthand    Full Object Name   
+============ ================
+lat          :func:`~skrf.network.load_all_touchstones`
+saf          :func:`~skrf.convenience.save_all_figs`
+============ ================
+ 
+
 
 
 References
@@ -97,7 +142,8 @@ References
 
 from network import *
 from frequency import Frequency
-from media import RectangularWaveguide
+from media import RectangularWaveguide, Media
+import mathFunctions as mf
 
 import warnings
 import os
@@ -152,6 +198,13 @@ def save_all_figs(dir = './', format=['eps','pdf','png']):
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
     '''
+    adds markers to existing lings on a plot 
+    
+    this is convinient if you have already have a plot made, but then 
+    need to add markers afterwards, so that it can be interpreted in 
+    black and white. The markevery argument makes the markers less 
+    frequent than the data, which is generally what you want. 
+    
     Parameters
     -----------
     ax : matplotlib.Axes
@@ -172,8 +225,14 @@ def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10
 
 def legend_off(ax=None):
     '''
-    turn off the legend for a given axes. if no axes is given then
-    it will use current axes.
+    turn off the legend for a given axes. 
+    
+    if no axes is given then it will use current axes.
+    
+    Parameters
+    -----------
+    ax : matplotlib.Axes object
+        axes to operate on 
     '''
     if ax is None:
         plb.gca().legend_.set_visible(0)
@@ -191,6 +250,9 @@ def func_on_all_figs(func, *args, **kwargs):
     '''
     runs a function after making all open figures current. 
     
+    useful if you need to change the properties of many open figures 
+    at once, like turn off the grid. 
+    
     Parameters
     ----------
     func : function
@@ -199,22 +261,43 @@ def func_on_all_figs(func, *args, **kwargs):
     
     Examples
     ----------
-    >>>rf.func_on_all_figs(grid,alpha=.3)
+    >>> rf.func_on_all_figs(grid,alpha=.3)
     '''
     for fig_n in plb.get_fignums():
-        plb.figure(fig_n)
-        func(*args, **kwargs)
-        plb.draw()
+        fig = plb.figure(fig_n)
+        for ax_n in fig.axes:
+            fig.add_axes(ax_n) # trick to make axes current
+            func(*args, **kwargs)
+            plb.draw()
 
 # other
 def now_string():
+    '''
+    returns a unique sortable string, representing the current time
+    
+    nice for generating date-time stamps to be used in file-names 
+    
+    '''
     return datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
 
 def find_nearest(array,value):
     '''
     find nearest value in array.
+    
     taken from  http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
 
+    Parameters
+    ----------
+    array :  numpy.ndarray
+        array we are searching for a value in 
+    value : element of the array
+        value to search for 
+    
+    Returns
+    --------
+    found_value : an element of the array 
+        the value that is numerically closest to `value`
+    
     '''
     idx=(npy.abs(array-value)).argmin()
     return array[idx]
@@ -222,16 +305,128 @@ def find_nearest(array,value):
 def find_nearest_index(array,value):
     '''
     find nearest value in array.
+    
+    Parameters
+    ----------
+    array :  numpy.ndarray
+        array we are searching for a value in 
+    value : element of the array
+        value to search for 
+    
+    Returns
+    --------
+    found_index : int 
+        the index at which the  numerically closest element to `value`
+        was found at
+    
+    
     taken from  http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
 
     '''
     return (npy.abs(array-value)).argmin()
 
+
+def hfss_touchstone_2_gamma_z0(filename):
+    '''
+    Extracts Z0 and Gamma comments from touchstone file
+    
+    Takes a HFSS-style touchstone file with Gamma and Z0 comments and 
+    extracts a triplet of arrays being: (frequency, Gamma, Z0)
+    
+    Parameters
+    ------------
+    filename : string 
+        the HFSS-style touchstone file
+    
+    
+    Returns
+    --------
+    f : numpy.ndarray
+        frequency vector (in Hz)
+    gamma : complex numpy.ndarray
+        complex  propagation constant
+    z0 : numpy.ndarray
+        complex port impedance
+    
+    Examples
+    ----------
+    >>> f,gamm,z0 = rf.hfss_touchstone_2_gamma_z0('line.s2p')
+    '''
+    ntwk = Network(filename)
+    f= open(filename)
+    gamma, z0 = [],[]
+    
+    def line2ComplexVector(s):
+        return mf.scalar2Complex(\
+            npy.array(\
+                [k for k in s.strip().split(' ') if k != ''][ntwk.nports*-2:],\
+                dtype='float'
+                )
+            )
+            
+    for line in f:
+        if '! Gamma' in line:
+            gamma.append(line2ComplexVector(line))
+        if '! Port Impedance' in line:
+            z0.append(line2ComplexVector(line))
+    
+    if len (z0) ==0:
+        raise(ValueError('Touchstone does not contain valid gamma, port impedance comments'))
+        
+    return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
+
+def hfss_touchstone_2_media(filename, f_unit='ghz'):
+    '''
+    Creates a :class:`~skrf.media.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments 
+    
+    Parameters
+    ------------
+    filename : string 
+        the HFSS-style touchstone file
+    f_unit : ['hz','khz','mhz','ghz']
+        passed to f_unit parameters of Frequency constructor
+    
+    Returns
+    --------
+    my_media : skrf.media.Media object
+        the transmission line model defined by the gamma, and z0 
+        comments in the HFSS file.
+    
+    Examples
+    ----------
+    >>> port1_media, port2_media = rf.hfss_touchstone_2_media('line.s2p')
+    
+    See Also
+    ---------
+    hfss_touchstone_2_gamma_z0 : returns gamma, and z0 
+    '''
+    f, gamma, z0 = hfss_touchstone_2_gamma_z0(filename)
+    
+    freq = Frequency.from_f(f)
+    freq.unit = f_unit
+    
+    
+    media_list = []
+    
+    for port_n in range(gamma.shape[1]):
+        media_list.append(\
+            Media(
+                frequency = freq, 
+                propagation_constant =  gamma[:, port_n],
+                characteristic_impedance = z0[:, port_n]
+                )
+            )
+        
+        
+    return media_list 
+
 ## file conversion
 def statistical_2_touchstone(file_name, new_file_name=None,\
         header_string='# GHz S RI R 50.0'):
     '''
-    converts the file format used by Statistical and other Dylan Williams
+    Cvonverts Statistical file to a touchstone file. 
+    
+    Converts the file format used by Statistical and other Dylan Williams
     software to standard touchstone format.
 
     Parameters
@@ -348,3 +543,5 @@ def script_template(template_name, file_name='skrf_script.py', \
         script_file = open(file_name, 'w')
         script_file.write(script_templates[template_name])
         script_file.close()
+
+

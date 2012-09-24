@@ -456,11 +456,12 @@ class Calibration(object):
         returns:
                 caled: the calibrated measurement, a Network type.
         '''
-        try:
-            x = len (input_ntwk)
+        if isinstance(input_ntwk,list):
+            # if they pass a list of networks, look through them and 
+            # calibrate all
             return  [self.apply_cal(ntwk) for  ntwk in input_ntwk]
 
-        except(TypeError):
+        else:
             if self.nports ==1:
                 caled =  self.error_ntwk.inv**input_ntwk
                 caled.name = input_ntwk.name
@@ -696,26 +697,55 @@ class Calibration(object):
         '''
         self.plot_residuals(self,attribute='db',*args,**kwargs)
 
-    def plot_errors(self,std_names =None,*args, **kwargs):
+    def plot_errors(self,std_names =None, scale='db', *args, **kwargs):
         '''
         plot calibration error metrics for an over-determined calibration.
 
         see biased_error, unbiased_error, and total_error for more info
 
         '''
-        self.biased_error(std_names).plot_s_mag(*args, **kwargs)
-        self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
-        self.total_error(std_names).plot_s_mag(*args, **kwargs)
+        if scale == 'lin':
+            self.biased_error(std_names).plot_s_mag(*args, **kwargs)
+            self.unbiased_error(std_names).plot_s_mag(*args, **kwargs)
+            self.total_error(std_names).plot_s_mag(*args, **kwargs)
+            plb.ylabel('Mean Distance (linear)')
+        elif scale == 'db':
+            self.biased_error(std_names).plot_s_db(*args, **kwargs)
+            self.unbiased_error(std_names).plot_s_db(*args, **kwargs)
+            self.total_error(std_names).plot_s_db(*args, **kwargs)
+            plb.ylabel('Mean Distance (dB)')
         plb.title('Error Metrics')
-        plb.ylabel('Mean Distance')
 
-    def plot_uncertainty_per_standard(self, *args, **kwargs):
+    def plot_uncertainty_per_standard(self, scale='db',*args, **kwargs):
         '''
-        see uncertainty_per_standard
+        Plots uncertainty associated with each calibration standard.
+        
+        This requires that each calibration standard is measured 
+        multiple times. The uncertainty associated with each 
+        standard is calculated by the complex standard deviation. 
+       
+        
+        
+        Parameters
+        ------------
+        scale : 'db', 'lin'
+            plot uncertainties on linear or log scale
+        \\*args, \\*\\*kwargs : passed to :func:`uncertainty_per_standard`
+        
+        See Also
+        ----------
+        :func:`uncertainty_per_standard`
         '''
         plb.title('Uncertainty Per Standard')
-        [ntwk.plot_s_mag() for ntwk in self.uncertainty_per_standard(*args, **kwargs)]
-        plb.ylabel('Mean Distance')
+        if scale=='lin':
+            [ntwk.plot_s_mag() for ntwk in \
+                self.uncertainty_per_standard(*args, **kwargs)]
+            plb.ylabel('Standard Deviation (linear)')
+        elif scale=='db':
+
+            [ntwk.plot_s_db() for ntwk in \
+                self.uncertainty_per_standard(*args, **kwargs)]
+            plb.ylabel('Standard Deviation (dB)')
 
 
 ## Functions

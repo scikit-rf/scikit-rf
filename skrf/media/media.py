@@ -34,9 +34,12 @@ import warnings
 import numpy as npy
 from scipy import stats
 
+from ..frequency import Frequency
 from ..network import Network, connect
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
+from ..mathFunctions import ALMOST_ZERO
+
 
 class Media(object):
     '''
@@ -61,6 +64,22 @@ class Media(object):
     Most methods initialize the :class:`~skrf.network.Network` by
     calling :func:`match` to create a 'blank'
     :class:`~skrf.network.Network`, and then fill in the s-matrix.
+    
+    IO
+    ----
+    
+    Media objects can be read and written to disk through the use of 
+    
+    .. autosummary::
+        :toctree: generated/
+        
+        from_csv
+        write_csv
+    
+    There is also a function in the :mod:`skrf.convenience` module, 
+    which allows a Media object to be initialized from a 
+    touchstone file created with HFSS, if z0/gamma comments are exported. 
+    
     '''
     def __init__(self, frequency,  propagation_constant,
             characteristic_impedance, z0=None):
@@ -95,7 +114,12 @@ class Media(object):
                 from the characterisitc impedance of the transmission
                 line medium  (None) [a number].
                 if z0= None then will set to characterisitc_impedance
-
+        
+        See Also
+        ---------
+        
+        :func:`from_csv` : function to create a
+            Media object from a csv file containing gamma/z0
 
 
         Notes
@@ -122,11 +146,40 @@ class Media(object):
         # convinience names
         self.delay = self.line
 
+    
+    def __eq__(self,other):
+        '''
+        test for numerical equality (up to skrf.mathFunctions.ALMOST_ZERO)
+        '''
+        
+        if self.frequency != other.frequency:
+            return False
+        
+        if max(abs(self.characteristic_impedance - \
+                other.characteristic_impedance)) > ALMOST_ZERO:
+            return False
+            
+        if max(abs(self.propagation_constant - \
+                other.propagation_constant)) > ALMOST_ZERO:
+            return False
+        
+        if max(abs(self.z0 - other.z0)) > ALMOST_ZERO:
+            return False
+        
+        return True
+        
+    def __len__(self):
+        '''
+        length of frequency axis
+        '''    
+        return len(frequency)
+        
     ## Properties
     # note these are made so that a Media type can be constructed with
     # propagation_constant, characteristic_impedance, and z0 either as:
     #       dynamic properties (if they pass a function)
     #       static ( if they pass values)
+    
     @property
     def propagation_constant(self):
         '''
@@ -152,7 +205,21 @@ class Media(object):
         try:
             return self._propagation_constant()
         except(TypeError):
+            # _propagation_constant is not a function, so it is 
+            # either a number or a vector. do some 
+            # shape checking and vectorize it if its a number
+            try:
+                if len(self._propagation_constant) != \
+                    len(self.frequency):
+                    raise(IndexError('frequency and propagation_constant impedance have different lengths ')) 
+            except(TypeError):
+                # _propagation_constant has no len,  must be a 
+                # number, return a vectorized copy
+                return self._propagation_constant *\
+                    npy.ones(len(self.frequency))
+            
             return self._propagation_constant
+                  
     @propagation_constant.setter
     def propagation_constant(self, new_propagation_constant):
         self._propagation_constant = new_propagation_constant
@@ -175,6 +242,19 @@ class Media(object):
         try:
             return self._characteristic_impedance()
         except(TypeError):
+            # _characteristic_impedance is not a function, so it is 
+            # either a number or a vector. do some 
+            # shape checking and vectorize it if its a number
+            try:
+                if len(self._characteristic_impedance) != \
+                    len(self.frequency):
+                    raise(IndexError('frequency and characteristic_impedance have different lengths ')) 
+            except(TypeError):
+                # _characteristic_impedance has no len,  must be a 
+                # number, return a vectorized copy
+                return self._characteristic_impedance *\
+                    npy.ones(len(self.frequency))
+            
             return self._characteristic_impedance
 
     @characteristic_impedance.setter
@@ -208,14 +288,26 @@ class Media(object):
                 the media's port impedance
         '''
         try:
-            return self._z0()
+            result =  self._z0()
+            return result
+        
         except(TypeError):
-            return self._z0
+            try:
+                if len(self._z0) != len(self.characteristic_impedance):
+                    raise(IndexError('z0 and characterisitc impedance have different shapes '))                        
+            except(TypeError):
+                # z0 has no len,  must be a number, so vectorize it
+                return self._z0 *npy.ones(len(self.characteristic_impedance))
+            
+            
+        
+        return self._z0
+        
     @z0.setter
     def z0(self, new_z0):
         self._z0 = new_z0
 
-
+    
 
     ## Other Functions
     def theta_2_d(self,theta,deg=True):
@@ -331,13 +423,12 @@ class Media(object):
                 n-port load, where  S = Gamma0*eye(...)
         '''
         result = self.match(nports,**kwargs)
-        try:
-            result.s =  Gamma0* \
+        result.s =  npy.array(Gamma0).reshape(-1,1,1)* \
                     npy.eye(nports,dtype=complex).reshape((-1,nports,nports)).\
                     repeat(self.frequency.npoints,0)
-        except(ValueError):
-            for f in range(self.frequency.npoints):
-                result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
+        #except(ValueError):
+        #    for f in range(self.frequency.npoints):
+        #        result.s[f,:,:] = Gamma0[f]*npy.eye(nports, dtype=complex)
 
         return result
 
@@ -387,7 +478,38 @@ class Media(object):
         '''
 
         return self.load(1., nports, **kwargs)
+    
+    def resistor(self, R, *args, **kwargs):
+        '''
+        Resistor
 
+
+        Parameters
+        ----------
+        R : number, array
+                Resistance , in Ohms. If this is an array, must be of
+                same length as frequency vector.
+        \*args, \*\*kwargs : arguments, key word arguments
+                passed to :func:`match`, which is called initially to create a
+                'blank' network.
+
+        Returns
+        --------
+        resistor : a 2-port :class:`~skrf.network.Network` 
+                
+        See Also
+        ---------
+        match : function called to create a 'blank' network
+        '''
+        result = self.match(nports=2, *args, **kwargs)
+        y= npy.zeros(shape=result.s.shape, dtype=complex)
+        y[:,0,0] = 1/R
+        y[:,1,1] = 1/R
+        y[:,0,1] = -1/R
+        y[:,1,0] = -1/R
+        result.y = y
+        return result    
+    
     def capacitor(self, C, **kwargs):
         '''
         Capacitor
@@ -404,16 +526,23 @@ class Media(object):
 
         Returns
         --------
-        capacitor : :class:`~skrf.network.Network` object
-                a n-port capacitor
+        capacitor : a 2-port :class:`~skrf.network.Network` 
+                
 
         See Also
         ---------
         match : function called to create a 'blank' network
         '''
-        Gamma0 = tf.zl_2_Gamma0(self.z0, -1j/(self.frequency.w*C))
-        return self.load(Gamma0=Gamma0, **kwargs)
-
+        result = self.match(nports=2, **kwargs)
+        w = self.frequency.w
+        y= npy.zeros(shape=result.s.shape, dtype=complex)
+        y[:,0,0] = 1j*w*C
+        y[:,1,1] = 1j*w*C
+        y[:,0,1] = -1j*w*C
+        y[:,1,0] = -1j*w*C
+        result.y = y
+        return result
+        
     def inductor(self, L, **kwargs):
         '''
         Inductor
@@ -429,15 +558,22 @@ class Media(object):
 
         Returns
         --------
-        inductor : :class:`~skrf.network.Network` object
-                a n-port inductor
+        inductor : a 2-port :class:`~skrf.network.Network` 
+                
 
         See Also
         ---------
-        match : called to create a 'blank' network
+        match : function called to create a 'blank' network
         '''
-        Gamma0 = tf.zl_2_Gamma0(self.z0,-1j*(self.frequency.w*L))
-        return self.load(Gamma0=Gamma0, **kwargs)
+        result = self.match(nports=2, **kwargs)
+        w = self.frequency.w
+        y = npy.zeros(shape=result.s.shape, dtype=complex)
+        y[:,0,0] = 1/(1j*w*L)
+        y[:,1,1] = 1/(1j*w*L)
+        y[:,0,1] = -1/(1j*w*L)
+        y[:,1,0] = -1/(1j*w*L)
+        result.y = y
+        return result
 
     def impedance_mismatch(self, z1, z2, **kwargs):
         '''
@@ -916,3 +1052,70 @@ class Media(object):
 
         print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
         return npy.linalg.lstsq(A, B)[0][0]
+
+    
+    
+    @classmethod
+    def from_csv(cls, filename, *args, **kwargs):
+        '''
+        create a Media from numerical values stored in a csv file. 
+        
+        the csv file format must be written by the function write_csv()
+        which produces the following format
+        
+            f[$unit], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)
+            1, 1, 1, 1, 1, 1, 1
+            2, 1, 1, 1, 1, 1, 1
+            .....
+            
+        '''
+        try:
+            f = open(filename)
+        except(TypeError):
+            # they may have passed a file
+            f = filename
+        
+        header = f.readline()
+        # this is not the correct way to do this ... but whatever
+        f_unit = header.split(',')[0].split('[')[1].split(']')[0]
+        
+        f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
+                npy.loadtxt(f,  delimiter=',').T
+        
+        return cls(
+            frequency = Frequency.from_f(f, unit=f_unit),
+            characteristic_impedance = z_re+1j*z_im,
+            propagation_constant = g_re+1j*g_im,
+            z0 = pz_re+1j*pz_im,
+            *args, **kwargs
+            )
+            
+    def write_csv(self, filename='f,gamma,z0.csv'):
+        '''
+        write this media's frequency, z0, and gamma to a csv file. 
+        
+        Parameters
+        -------------
+        filename : string
+            file name to write out data to 
+            
+        See Also
+        ---------
+        from_csv : class method to initialize Media object from a 
+            csv file written from this function
+        '''
+        f = open(filename,'w')
+        header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
+        f.write(header)
+            
+        g,z,pz  = self.propagation_constant, \
+                self.characteristic_impedance, self.z0
+        
+        data = npy.vstack(\
+                [self.frequency.f_scaled, z.real, z.imag, \
+                g.real, g.imag, pz.real, pz.imag]).T
+        
+        npy.savetxt(f,data,delimiter=',')
+        f.close()
+    
+    

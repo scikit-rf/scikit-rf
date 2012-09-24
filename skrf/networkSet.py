@@ -55,9 +55,9 @@ NetworkSet Class
 
 
 from network import average as network_average
-from network import Network
+from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 import mathFunctions as mf
-
+import zipfile
 from copy import deepcopy
 import warnings
 import numpy as npy
@@ -154,16 +154,24 @@ class NetworkSet(object):
         # we are good to go
         self.ntwk_set = ntwk_set
         self.name = name
+        
+        # create list of network properties, which we use to dynamically
+        # create a statistical properties of this set
+        network_property_list = [k+'_'+l \
+            for k in PRIMARY_PROPERTIES \
+            for l in COMPONENT_FUNC_DICT.keys()] + \
+            ['passivity','s']
 
         # dynamically generate properties. this is slick.
-        for network_property_name in \
-                ['s','s_re','s_im','s_mag','s_deg','s_deg_unwrap','s_rad',\
-                's_rad_unwrap','s_arcl','s_arcl_unwrap','passivity']:
+        for network_property_name in network_property_list:
             for func in [npy.mean, npy.std]:
                 self.__add_a_func_on_property(func, network_property_name)
 
-
-            self.__add_a_plot_uncertainty(network_property_name)
+            if network_property_name != 's_db' and network_property_name != 's':
+                # db uncertainty requires a special function call see 
+                # plot_uncertainty_bounds_s_db
+                self.__add_a_plot_uncertainty(network_property_name)
+                
             self.__add_a_element_wise_method('plot_'+network_property_name)
             self.__add_a_element_wise_method('plot_s_db')
         for network_method_name in \
@@ -174,6 +182,44 @@ class NetworkSet(object):
                 ['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
             self.__add_a_operator(operator_name)
 
+    @classmethod
+    def from_zip(cls, zip_file_name, sort_filenames=True, *args, **kwargs):
+        '''
+        creates a NetworkSet from a zipfile of touchstones. 
+        
+        Parameters
+        -----------
+        zip_file_name : string
+            name of zipfile
+        sort_filenames: Boolean
+            sort the filenames in teh zip file before constructing the 
+            NetworkSet
+        \\*args,\\*\\*kwargs : arguments
+            passed to NetworkSet constructor
+        
+        Examples
+        ----------
+        >>>import skrf as rf
+        >>>my_set = rf.NetworkSet.from_zip('myzip.zip')
+            
+        '''
+        z = zipfile.ZipFile(zip_file_name)
+        filename_list = z.namelist()
+        
+        ntwk_list = []
+        
+        if sort_filenames:
+            filename_list.sort()
+            
+        for filename in filename_list:
+            # try/except block in case not all files are touchstones
+            try:
+                ntwk_list.append(Network(z.open(filename)))
+            except:
+                pass
+        
+        return cls(ntwk_list)
+    
     def __add_a_operator(self,operator_name):
         '''
         adds a operator method to the NetworkSet.
@@ -273,7 +319,11 @@ class NetworkSet(object):
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
-
+    
+        setattr(self.__class__,'plot_ub_'+\
+                network_property_name,plot_func)
+                
+    
     def element_wise_method(self,network_method_name, *args, **kwargs):
         '''
         calls a given method of each element and returns the result as
@@ -285,7 +335,12 @@ class NetworkSet(object):
         else:
             return output
 
-
+    def copy(self):
+        '''
+        copies each network of the network set. 
+        '''
+        return NetworkSet([k.copy() for k in self.ntwk_set])
+        
     @property
     def mean_s_db(self):
         '''
@@ -491,7 +546,7 @@ class NetworkSet(object):
     def plot_uncertainty_bounds_s_db(self,*args, **kwargs):
         '''
         this just calls
-                plot_uncertainty_bounds(attribute= 's_mag',*args,**kwargs)
+                plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
         see plot_uncertainty_bounds for help
 
         '''
@@ -518,9 +573,78 @@ class NetworkSet(object):
         self.std_s_im.plot_s_mag(label='Imaginary',  m=m,n=n)
         self.std_s_mag.plot_s_mag(label='Magnitude',  m=m,n=n)
         self.std_s_arcl.plot_s_mag(label='Arc-length',  m=m,n=n)
+    
+
+    def plot_uncertainty_bounds_s(self, multiplier =200, *args, **kwargs):
+        '''
+        Plots complex uncertianty bounds plot on smith chart. 
+        
+        This function plots the complex uncertainty of a NetworkSet 
+        as circles on the smith chart. At each frequency a circle  
+        with radii proportional to the complex standard deviation 
+        of the set at that frequency is drawn. Due to the fact that 
+        the `markersize` argument is in pixels, the radii can scaled by 
+        the input argument  `multiplier`. 
+        
+        default kwargs are
+            {
+            'marker':'o',
+            'color':'b',
+            'mew':0,
+            'ls':'',
+            'alpha':.1,
+            'label':None,
+            }
+        
+        Parameters
+        -------------
+        multipliter : float
+            controls the circle sizes, by multiples of the standard 
+            deviation.
+        
+            
+        
+        '''
+        default_kwargs = {
+            'marker':'o',
+            'color':'b',
+            'mew':0,
+            'ls':'',
+            'alpha':.1,
+            'label':None,
+            }
+        default_kwargs.update(**kwargs)
+        
+        if plb.isinteractive():
+            was_interactive = True
+            plb.interactive(0)
+        
+        [self.mean_s[k].plot_s_smith(*args, ms = self.std_s[k].s_mag*multiplier, **default_kwargs) for k in range(len(self[0]))]
+        
+        if was_interactive: 
+            plb.interactive(1)
+        plb.draw()
+        plb.show()
+        
 
 
-    def signature(self,m=0,n=0, vmax = None, *args, **kwargs):
+    def plot_logsigma(self, label_axis=True, *args,**kwargs):
+        '''
+        plots the uncertainty for the set in units of log-sigma. 
+        Log-sigma is the complex standard deviation, plotted in units
+        of dB's. 
+        
+        Parameters
+        ------------
+        \\*args, \\*\\*kwargs : arguments
+            passed to self.std_s.plot_s_db()
+        '''
+        self.std_s.plot_s_db(*args,**kwargs)
+        if label_axis:
+            plb.ylabel('Standard Deviation(dB)')
+    
+    def signature(self,m=0,n=0,from_mean=False, operation='__sub__',
+        component='s_mag',vmax = None,  *args, **kwargs):
         '''
         visualization of relative changes in a NetworkSet.
 
@@ -532,31 +656,46 @@ class NetworkSet(object):
         Parameters
         ------------
         m : int
-                first s-parameters index
-        n :
-                second s-parameter index
+            first s-parameters index
+        n : int
+            second s-parameter index
+        from_mean : Boolean
+            calculate distance from mean if True. or distance from 
+            first network in networkset if False.
+        operation : ['__sub__', '__div__'], ..
+            operation to apply between each network and the reference 
+            network, which is either the mean, or the initial ntwk.
+        component : ['s_mag','s_db','s_deg' ..]
+            scalar component of Network to plot on the imshow. should 
+            be a property of the Network object.  
+            
         vmax : number
-                sets upper limit of colorbar, if None, will be set to
-                3*mean of the magnitude of the complex difference
+            sets upper limit of colorbar, if None, will be set to
+            3*mean of the magnitude of the complex difference
         \*args,\*\*kwargs : arguments, keyword arguments
-                passed to :func:`~pylab.imshow`
+            passed to :func:`~pylab.imshow`
 
         
         '''
-        diff_set = (self - self.mean_s)
-        sig = array([diff_set[k].s_mag[:,m,n] for k in range(len(ntwk_set))])
+        if from_mean:
+            diff_set = self.__getattribute__(operation)(self.mean_s)
+        else:
+            diff_set = self.__getattribute__(operation)(self.ntwk_set[0])
+        
+        sig = npy.array([diff_set[k].__getattribute__(component)[:,m,n] \
+            for k in range(len(self))])
         if vmax is None:
             vmax == 3*sig.mean()
-        imshow(sig, vmax = vmax, *args, **kwargs)
-        axis('tight')
-        ylabel('Network \#')
-        c_bar = colorbar()
+        plb.imshow(sig, vmax = vmax, *args, **kwargs)
+        plb.axis('tight')
+        plb.ylabel('Network \#')
+        c_bar = plb.colorbar()
         c_bar.set_label('Distance From Mean')
-        show();draw()
-
 
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
+
+
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
@@ -604,9 +743,10 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
 
     return new_ntwk
 
+
+
 # short hand name for convenience
 fon = func_on_networks
-
 
 def getset(ntwk_dict, s, *args, **kwargs):
     '''
