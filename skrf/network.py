@@ -1911,7 +1911,7 @@ def s2z(s,z0=50):
 
 
     .. math::
-        z = \\sqrt {z0} * {I + s} * {I - s}^{-1} * \\sqrt{z0}
+        z = \\sqrt {z0}\\cdot(I + s) (I - s)^{-1} \\cdot \\sqrt{z0}
 
     Parameters
     ------------
@@ -1969,7 +1969,7 @@ def s2y(s,z0=50):
 
 
     .. math::
-        y = \\sqrt {y0} * {I - s} * {I + s}^{-1} * \\sqrt{y0}
+        y = \\sqrt {y0} \\cdot(I - s)(I + s}^{-1} \\cdot \\sqrt{y0}
 
     Parameters
     ------------
@@ -2066,7 +2066,7 @@ def z2s(z, z0=50):
     convert impedance parameters to scattering parameters [#]_
 
     .. math::
-        s = {\\sqrt{y0}*z*\\sqrt{y0} - I} * {\\sqrt(y0}*z*\\sqrt{y0} + I}^{-1}
+        s = (\\sqrt{y0} \\cdot z \\cdot \\sqrt{y0} - I)(\\sqrt{y0} \\cdot z \\cdot\\sqrt{y0} + I)^{-1}
 
     Parameters
     ------------
@@ -2163,11 +2163,10 @@ def z2y(z):
 
 def z2t(z):
     '''
+    Not Implemented yet
+    
     convert impedance parameters to scattering transfer parameters [#]_
-
-
-    .. math::
-        s = \\frac {1 - s}{1 + s}
+    
 
     Parameters
     ------------
@@ -2212,7 +2211,7 @@ def y2s(y, z0=50):
 
 
     .. math::
-        s = {I - \\sqrt{z0}*y*\\sqrt{z0}} * {I + \\sqrt(z0}*y*\\sqrt{z0}}^{-1}
+        s = (I - \\sqrt{z0} \\cdot y \\cdot \\sqrt{z0})(I + \\sqrt{z0} \\cdot y \\cdot \\sqrt{z0})^{-1}
 
     Parameters
     ------------
@@ -2308,20 +2307,19 @@ def y2z(y):
 
 def y2t(y):
     '''
+    Not Implemented Yet 
+    
     convert admittance parameters to scattering-transfer parameters [#]_
 
 
-    .. math::
-        s = \\frac {1 - s}{1 + s}
-
     Parameters
     ------------
-    z : complex array-like or number
+    y : complex array-like or number
         impedance parameters
 
     Returns
     ---------
-    s : complex array-like or number
+    t : complex array-like or number
         scattering parameters
 
     See Also
@@ -2390,20 +2388,20 @@ def t2s(t):
 
 def t2z(t):
     '''
-    convert scattering transfer parameters to impedance parameters [#]_
+    Not Implemented  Yet 
+    
+    Convert scattering transfer parameters to impedance parameters [#]_
 
 
-    .. math::
-        s = \\frac {1 - s}{1 + s}
 
     Parameters
     ------------
-    z : complex array-like or number
+    t : complex array-like or number
         impedance parameters
 
     Returns
     ---------
-    s : complex array-like or number
+    z : complex array-like or number
         scattering parameters
 
     See Also
@@ -2435,21 +2433,22 @@ def t2z(t):
 
 def t2y(t):
     '''
-    convert scattering transfer parameters to admittance parameters [#]_
+    Not Implemented Yet
+    
+    Convert scattering transfer parameters to admittance parameters [#]_
 
 
-    .. math::
-        s = \\frac {1 - s}{1 + s}
+
 
     Parameters
     ------------
-    z : complex array-like or number
-        impedance parameters
+    t : complex array-like or number
+        t-parameters
 
     Returns
     ---------
-    s : complex array-like or number
-        scattering parameters
+    y : complex array-like or number
+        admittance parameters
 
     See Also
     ----------
@@ -2481,9 +2480,9 @@ def t2y(t):
 ## cascading assistance functions
 def inv(s):
     '''
-    calculates 'inverse' s-parameter matrix, used for de-embeding
+    Calculates 'inverse' s-parameter matrix, used for de-embeding
 
-    this is not literally the inverse of the s-parameter matrix. it
+    This is not literally the inverse of the s-parameter matrix. Instead, it
     is defined such that the inverse of the s-matrix cascaded
     with itself is unity.
 
@@ -2491,7 +2490,7 @@ def inv(s):
 
             inv(s) = t2s({s2t(s)}^{-1})
 
-    where :math:`x^{-1}` is the matrix inverse. in other words this
+    where :math:`x^{-1}` is the matrix inverse. In words, this
     is the inverse of the scattering transfer parameters matrix
     transformed into a scattering parameters matrix.
 
