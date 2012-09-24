@@ -1590,7 +1590,7 @@ def connect(ntwkA, k, ntwkB,l):
             the effect of mis-matched port impedances is handled by inserting
             a 2-port 'mismatch' network between the two connected ports.
             This mismatch Network is calculated with the
-            :func:impedance_mismatch function.
+            :func:`impedance_mismatch` function.
 
     Examples
     ---------
@@ -1918,7 +1918,7 @@ def s2z(s,z0=50):
 
 
     .. math::
-        z = \\sqrt {z0}\\cdot(I + s) (I - s)^{-1} \\cdot \\sqrt{z0}
+        z = \\sqrt {z_0} \\cdot (I + s) (I - s)^{-1} \\cdot \\sqrt{z_0}
 
     Parameters
     ------------
@@ -1976,8 +1976,8 @@ def s2y(s,z0=50):
 
 
     .. math::
-        y = \\sqrt {y0} \\cdot(I - s)(I + s}^{-1} \\cdot \\sqrt{y0}
-
+        y = \\sqrt {y_0} \\cdot (I - s)(I + s)^{-1} \\cdot \\sqrt{y_0}
+    
     Parameters
     ------------
     s : complex array-like
@@ -2057,6 +2057,7 @@ def s2t(s):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
+    #TODO: add docstring describing the mathematics of this
     #TODO: check rank(s) ==2
     # although unintuitive this is calculated by
     # [[s11, s21],[s12,s22]].T
@@ -2073,7 +2074,7 @@ def z2s(z, z0=50):
     convert impedance parameters to scattering parameters [#]_
 
     .. math::
-        s = (\\sqrt{y0} \\cdot z \\cdot \\sqrt{y0} - I)(\\sqrt{y0} \\cdot z \\cdot\\sqrt{y0} + I)^{-1}
+        s = (\\sqrt{y_0} \\cdot z \\cdot \\sqrt{y_0} - I)(\\sqrt{y_0} \\cdot z \\cdot\\sqrt{y_0} + I)^{-1}
 
     Parameters
     ------------
@@ -2218,7 +2219,7 @@ def y2s(y, z0=50):
 
 
     .. math::
-        s = (I - \\sqrt{z0} \\cdot y \\cdot \\sqrt{z0})(I + \\sqrt{z0} \\cdot y \\cdot \\sqrt{z0})^{-1}
+        s = (I - \\sqrt{z_0} \\cdot y \\cdot \\sqrt{z_0})(I + \\sqrt{z_0} \\cdot y \\cdot \\sqrt{z_0})^{-1}
 
     Parameters
     ------------
