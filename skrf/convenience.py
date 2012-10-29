@@ -352,6 +352,8 @@ def hfss_touchstone_2_gamma_z0(filename):
     ----------
     >>> f,gamm,z0 = rf.hfss_touchstone_2_gamma_z0('line.s2p')
     '''
+    #TODO: make this work for different HFSS versions. and arbitrary 
+    # number of ports
     ntwk = Network(filename)
     f= open(filename)
     gamma, z0 = [],[]

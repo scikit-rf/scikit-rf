@@ -213,7 +213,14 @@ class Frequency(object):
         starting frequency in Hz
         '''
         return len(self.f)
-    
+    @npoints.setter
+    def npoints(self, n):
+        '''
+        set the number of points in the frequency 
+        '''
+        self.f = linspace(self.start, self.stop, n)
+        
+        
     @property
     def center(self):
         '''
