@@ -173,7 +173,7 @@ wr1     = RectangularWaveguide(Frequency(750,1100,201, 'ghz'), 10*mil,z0=50)
 
 ## Functions
 # Ploting
-def save_all_figs(dir = './', format=['eps','pdf','png']):
+def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
     '''
     Save all open Figures to disk.
 
