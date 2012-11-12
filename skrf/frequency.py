@@ -351,13 +351,10 @@ class Frequency(object):
         '''
         returns a new copy of this frequency
         '''
-        return Frequency(
-            start = self.start/self.multiplier, 
-            stop = self.stop/self.multiplier, 
-            npoints = self.npoints, 
-            unit = self.unit, 
-            sweep_type = self.sweep_type)
-        
+        freq =  Frequency.from_f(self.f, unit='hz')
+        freq.unit = self.unit
+        return freq
+                
     def labelXAxis(self, ax=None):
         '''
         Label the x-axis of a plot.
