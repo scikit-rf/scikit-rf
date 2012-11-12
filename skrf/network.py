@@ -968,9 +968,9 @@ class Network(object):
 
     @f.setter
     def f(self,f):
-        tmpUnit = self.frequency.unit
-        self._frequency  = Frequency(f[0],f[-1],len(f),'hz')
-        self._frequency.unit = tmpUnit
+        print 'Deprecation Warning'
+        tmpUnit= self.frequency.unit
+        self.frequency = Frequency.from_f(f, unit=tmpUnit)
 
     
     ## SECONDARY PROPERTIES
@@ -1117,8 +1117,10 @@ class Network(object):
 
         # set z0 before s so that y and z can be computed
         self.z0 = float(touchstoneFile.resistance)  
-        self.f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
-        self.frequency.unit = touchstoneFile.frequency_unit # for formatting plots
+        f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
+        freq_unit = touchstoneFile.frequency_unit 
+        self.frequency = Frequency.from_f(f,unit= freq_unit)
+        
         try:
             self.name = os.path.basename( os.path.splitext(filename)[0])
             # this may not work if filename is a file object

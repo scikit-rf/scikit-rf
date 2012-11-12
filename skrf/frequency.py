@@ -83,7 +83,7 @@ class Frequency(object):
     global ALMOST_ZER0
     ALMOST_ZER0=1e-4
     
-    def __init__(self,start, stop, npoints, unit='ghz', sweep_type='lin'):
+    def __init__(self,start=0, stop=0, npoints=0, unit='ghz', sweep_type='lin'):
         '''
         Frequency initializer.
 
@@ -157,7 +157,7 @@ class Frequency(object):
     def from_f(cls,f, *args,**kwargs):
         '''
         Alternative constructor of a Frequency object from a frequency
-        vector,
+        vector, the unit of which is set by kwarg 'unit'
 
         Parameters
         -----------
@@ -177,7 +177,9 @@ class Frequency(object):
         >>> f = np.linspace(75,100,101)
         >>> rf.Frequency.from_f(f, unit='ghz')
         '''
-        return cls(start=f[0], stop=f[-1],npoints = len(f), *args, **kwargs)
+        temp_freq =  cls(0,0,0,*args, **kwargs)
+        temp_freq.f = npy.array(f) * temp_freq.multiplier
+        return temp_freq
 
     def __eq__(self, other):
         #return (list(self.f) == list(other.f))
@@ -270,7 +272,7 @@ class Frequency(object):
         '''
         sets the frequency object by passing a vector in Hz
         '''
-        self._f = new_f
+        self._f = npy.array(new_f)
         
 
     @property
