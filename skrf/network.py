@@ -1136,7 +1136,7 @@ class Network(object):
         #TODO: add Network property `comments` which is read from
         # touchstone file. 
 
-    def write_touchstone(self, filename=None, dir = './'):
+    def write_touchstone(self, filename=None, dir = './', write_z0=True):
         '''
         write a contents of the :class:`Network` to a touchstone file.
 
@@ -1196,10 +1196,12 @@ class Network(object):
                     outputFile.write( str(npy.real(self.s[f,m,n])) + '\t'\
                      + str(npy.imag(self.s[f,m,n])) +'\t')
 
-            outputFile.write('\n')
-            outputFile.write('! Port Impedance\t' )
-            for n in range(self.number_of_ports):
-                outputFile.write('%.14f\t%.14f\t'%(self.z0[f,n].real, self.z0[f,n].imag))
+            # write out the z0 following hfss's convention if desired
+            if write_z0:
+                outputFile.write('\n')
+                outputFile.write('! Port Impedance\t' )
+                for n in range(self.number_of_ports):
+                    outputFile.write('%.14f\t%.14f\t'%(self.z0[f,n].real, self.z0[f,n].imag))
             outputFile.write('\n')
 
         outputFile.close()
