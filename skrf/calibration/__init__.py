@@ -52,9 +52,11 @@ Classes
 '''
 
 import calibration
-import parametricStandard
 import calibrationFunctions
+import parametricStandard
+import calibrationSet
 
 from parametricStandard import *
 from calibration import Calibration
 from calibrationFunctions import *
+from calibrationSet import *
