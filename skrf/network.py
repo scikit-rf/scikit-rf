@@ -1116,7 +1116,7 @@ class Network(object):
 
 
         # set z0 before s so that y and z can be computed
-        self.z0 = float(touchstoneFile.resistance)  
+        self.z0 = complex(touchstoneFile.resistance)  
         f, self.s = touchstoneFile.get_sparameter_arrays() # note: freq in Hz
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit 
