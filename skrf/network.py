@@ -313,13 +313,13 @@ class Network(object):
         else:
             raise IndexError('Incorrect number of ports.')
 
-    def __mul__(self,a):
+    def __mul__(self,other):
         '''
         element-wise complex multiplication  of s-matrix
         '''
         self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
-        result.s = result.s * a.s
+        result.s = result.s * other.s
         return result
 
     def __add__(self,other):
