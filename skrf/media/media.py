@@ -961,7 +961,7 @@ class Media(object):
                 shunt(capacitor(C,*args, **kwargs))
 
         '''
-        return self.shunt(self.capacitor(C=C,*args,**kwargs))
+        return self.shunt(self.capacitor(C=C,*args,**kwargs)**self.short())
 
     def shunt_inductor(self,L,*args,**kwargs):
         '''
@@ -986,7 +986,7 @@ class Media(object):
                 shunt(inductor(C,*args, **kwargs))
 
         '''
-        return self.shunt(self.inductor(L=L,*args,**kwargs))
+        return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
 
 
     ## Noise Networks
