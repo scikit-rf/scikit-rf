@@ -15,7 +15,18 @@ class ConvenienceTestCase(unittest.TestCase):
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.hfss_oneport_file = os.path.join(self.test_dir, 'hfss_oneport.s1p')
         self.hfss_twoport_file = os.path.join(self.test_dir, 'hfss_twoport.s2p')
+        self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
+        self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
+        self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
     
+    def test_write(self):
+        filename = os.path.join(self.test_dir, 'pickled.p')
+        rf.write(self.ntwk1, filename)
+        rf.read(filename)  == self.ntwk1
+        rf.write([self.ntwk1,self.ntwk2], filename)
+        rf.read(filename)  == [self.ntwk1,self.ntwk2]
+        os.remove(os.path.join(self.test_dir, 'pickled.p'))
+        
     def test_hfss_touchstone_2_media(self):
         '''
         currently, this just tests the execution ability. it would
@@ -28,3 +39,4 @@ class ConvenienceTestCase(unittest.TestCase):
         med_p1,med_p2 = rf.hfss_touchstone_2_media(self.hfss_twoport_file)
         med_p1.line(1)
         med_p2.line(1)
+    

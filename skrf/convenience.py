@@ -147,6 +147,7 @@ import mathFunctions as mf
 
 import warnings
 import os
+import cPickle as pickle
 import pylab as plb
 import numpy as npy
 from scipy.constants import mil
@@ -172,6 +173,8 @@ wr1     = RectangularWaveguide(Frequency(750,1100,201, 'ghz'), 10*mil,z0=50)
 
 
 ## Functions
+
+
 # Ploting
 def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
     '''
@@ -325,7 +328,65 @@ def find_nearest_index(array,value):
     '''
     return (npy.abs(array-value)).argmin()
 
+# file IO
+def read(filename, *args, **kwargs):
+    '''
+    read pickled skrf objects 
+    
+    Parameters
+    ------------
+    filename : string 
+        name of file 
+    \*args, \*\*kwargs : arguments and keyword arguments
+        passed through to pickle.load
+    Examples
+    -------------
+    >>> n = rf.Network('my_ntwk.s2p')
+    >>> n.pickle('my_ntwk.ntwk')
+    >>> n_unpickled = rf.read('my_ntwk.ntwk')
+    
+    See Also
+    ------------
+    :func:`network.Network.pickle`
+    :func:`calibration.calibration.Calibration.pickle`
+    '''
+    f = open(filename)
+    obj=  pickle.load(f, *args, **kwargs)
+    f.close()
+    return obj
 
+def write(obj, filename, *args, **kwargs):
+    '''
+    write skrf objects to disk using the pickle module
+    
+    know that you can write any python objects, so you can write 
+    a list or dict of Networks or Calibrations or anything. 
+    
+    Parameters
+    ------------
+    obj : an object, or list of objects
+        object or objects to write to disk
+    filename : string 
+        name of file 
+    \*args, \*\*kwargs : arguments and keyword arguments
+        passed through to pickle.dump
+    
+    Examples
+    -------------
+    >>> n = rf.Network('my_ntwk.s2p')
+    >>> n.pickle('my_ntwk.ntwk')
+    >>> n_unpickled = rf.read('my_ntwk.ntwk')
+    
+    See Also
+    ------------
+    :func:`network.Network.pickle`
+    :func:`calibration.calibration.Calibration.pickle`
+    '''
+    f = open(filename,'wr')
+    pickle.dump(obj, f, *args, **kwargs)
+    f.close()
+    
+    
 def hfss_touchstone_2_gamma_z0(filename):
     '''
     Extracts Z0 and Gamma comments from touchstone file
@@ -421,6 +482,8 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
         
         
     return media_list 
+
+
 
 ## file conversion
 def statistical_2_touchstone(file_name, new_file_name=None,\

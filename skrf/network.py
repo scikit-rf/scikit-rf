@@ -105,6 +105,7 @@ Misc Functions
 '''
 import os
 import warnings
+import cPickle as pickle    
 
 import numpy as npy
 import ctypes as ct     # for connect_s_fast
@@ -398,6 +399,9 @@ class Network(object):
         return len(self.s)
     
     def __getstate__(self):
+        '''
+        method needed to allow for pickling
+        '''
         return {k: self.__dict__[k] for k in ['name','_frequency','_s','_z0']}
        
     ## INTERNAL CODE GENERATION METHODS
@@ -1148,7 +1152,7 @@ class Network(object):
             pass
         #TODO: add Network property `comments` which is read from
         # touchstone file. 
-
+    
     def write_touchstone(self, filename=None, dir = './', write_z0=True):
         '''
         write a contents of the :class:`Network` to a touchstone file.
@@ -1219,6 +1223,40 @@ class Network(object):
 
         outputFile.close()
 
+    def pickle(self, filename=None, *args, **kwargs):
+        '''
+        write the Network to disk using the pickle module 
+        
+        Parameters
+        -----------
+        filename : string
+            name of file
+        \*args, \*\*kwargs : arguments and keyword arguments
+        passed through to pickle.dump
+        
+        Notes
+        ------
+        if self.name is not None then filename can left as None
+        and the resultant file will have the `.ntwk` extension appended
+        to the filename. 
+        
+        Examples
+        ---------
+        >>> cal.name = 'my_cal'
+        >>> cal.pickle()
+        
+        '''
+        
+        if self.name is not None:
+            filename= self.name+'.ntwk'
+        
+        if filename is not None:     
+            f = open(filename,'wr')
+        else:
+            raise (ValueError('No filename. You must provide a filename, or set the calibration\'s  name attribute'))
+        
+        pickle.dump(self,f, *args, **kwargs)
+        f.close()
     
     # interpolation
     def interpolate(self, new_frequency,**kwargs):

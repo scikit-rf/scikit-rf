@@ -45,6 +45,7 @@ import os
 from copy import deepcopy, copy
 import itertools
 from warnings import warn
+import cPickle as pickle
 
 from calibrationAlgorithms import *
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
@@ -167,7 +168,13 @@ class Calibration(object):
         self._caled_ntwk_sets = None
         self.has_run = False
         
-
+    def __getstate__(self):
+        '''
+        method needed to allow for pickling
+        '''
+        return {k: self.__dict__[k] for k in [
+            'name','measured','ideals','frequency','_type','sloppy_input','is_reciprocal','kwargs']}
+        
     ## properties
     @property
     def type (self):
@@ -214,7 +221,7 @@ class Calibration(object):
             self._nports = 2
         else:
             raise NotImplementedError('only one and two ports supported right now')
-
+    
     @property
     def nports(self):
         '''
@@ -747,6 +754,41 @@ class Calibration(object):
                 self.uncertainty_per_standard(*args, **kwargs)]
             plb.ylabel('Standard Deviation (dB)')
 
+    def pickle(self, filename=None, *args, **kwargs):
+        '''
+        write the calibration to disk using the pickle module 
+        
+        Parameters
+        -----------
+        filename : string
+            name of file
+        \*args, \*\*kwargs : arguments and keyword arguments
+        passed through to pickle.dump
+        
+        Notes
+        ------
+        if self.name is not None then filename can left as None
+        and the resultant file will have the `.cal` extension appended
+        to the filename. 
+        
+        Examples
+        ---------
+        >>> cal.name = 'my_cal'
+        >>> cal.pickle()
+        
+        '''
+        
+        if self.name is not None:
+            filename= self.name+'.cal'
+        
+        if filename is not None:     
+            f = open(filename,'wr')
+        else:
+            raise (ValueError('No filename. You must provide a filename, or set the calibration\'s  name attribute'))
+        
+        
+        pickle.dump(self,f, *args, **kwargs)
+        f.close()
 
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):
