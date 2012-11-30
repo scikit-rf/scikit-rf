@@ -1,7 +1,7 @@
 import unittest
 import os
 import numpy as npy
-
+import cPickle as pickle 
 import skrf as rf
 
 
@@ -27,6 +27,16 @@ class NetworkTestCase(unittest.TestCase):
         ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
+    
+    def test_pickling(self):
+        original_ntwk = self.ntwk1
+        f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'),'wr')
+        pickle.dump(original_ntwk,f)
+        f.close()
+        f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
+        unpickled = pickle.load(f)
+        self.assertEqual(original_ntwk, unpickled)
+        os.remove(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
         
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
@@ -76,6 +86,6 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue((abs(rf.z2y(ntwk.z)-ntwk.y) < tinyfloat).all())
         self.assertTrue((abs(rf.z2s(ntwk.z, ntwk.z0)-ntwk.s) < tinyfloat).all())
 
-
+    
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

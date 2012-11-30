@@ -203,7 +203,7 @@ class Network(object):
 
 
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = [ 's','z','y']
+    PRIMARY_PROPERTIES = [ 's','z','y','a']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
@@ -396,6 +396,9 @@ class Network(object):
         length of frequency axis
         '''
         return len(self.s)
+    
+    def __getstate__(self):
+        return {k: self.__dict__[k] for k in ['name','_frequency','_s','_z0']}
        
     ## INTERNAL CODE GENERATION METHODS
     def __compatable_for_scalar_operation_test(self, other):
@@ -788,6 +791,16 @@ class Network(object):
     def z(self, value):
         self._s = z2s(value, self.z0)
     
+    @property 
+    def a(self):
+        '''
+        active s-parameter
+        '''
+        return 1/self.s
+        
+    @a.setter
+    def a(self, value):
+        raise (NotImplementedError)
         
     @property
     def z0(self):
