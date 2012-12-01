@@ -55,6 +55,8 @@ from ..networkSet import func_on_networks as fon
 from ..networkSet import NetworkSet
 from ..convenience import *
 
+## later imports. delayed to solve circular dependencies
+#from io.io import write
 
 
 ## main class
@@ -753,22 +755,26 @@ class Calibration(object):
             [ntwk.plot_s_db() for ntwk in \
                 self.uncertainty_per_standard(*args, **kwargs)]
             plb.ylabel('Standard Deviation (dB)')
-
-    def pickle(self, filename=None, *args, **kwargs):
+    
+    # io
+    def write(self, file=None,  *args, **kwargs):
         '''
-        write the calibration to disk using the pickle module 
+        Write the Calibration to disk using the pickle module 
+        
         
         Parameters
         -----------
-        filename : string
-            name of file
+        file : str or file-object
+            filename or a file-object. If left as None then the 
+            filename will be set to Calibration.name, if its not None. 
+            If both are None, ValueError is raised.
         \*args, \*\*kwargs : arguments and keyword arguments
-        passed through to pickle.dump
+            passed through to pickle.dump
         
         Notes
         ------
-        if self.name is not None then filename can left as None
-        and the resultant file will have the `.cal` extension appended
+        If the self.name is not None and file is  can left as None
+        and the resultant file will have the `.ntwk` extension appended
         to the filename. 
         
         Examples
@@ -776,19 +782,20 @@ class Calibration(object):
         >>> cal.name = 'my_cal'
         >>> cal.pickle()
         
+        See Also
+        ---------
+        :func:`skrf.convenience.write`
+        :func:`skrf.convenience.read`
         '''
+        # this import is delayed untill here because of a circular depency
+        from ..io.io import write
         
-        if self.name is not None:
-            filename= self.name+'.cal'
-        
-        if filename is not None:     
-            f = open(filename,'wr')
-        else:
-            raise (ValueError('No filename. You must provide a filename, or set the calibration\'s  name attribute'))
-        
-        
-        pickle.dump(self,f, *args, **kwargs)
-        f.close()
+        if file is None:
+            if self.name is None:
+                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+            file = self.name
+
+        write(file,self) # from convenience
 
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):

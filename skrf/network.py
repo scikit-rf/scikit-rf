@@ -106,6 +106,8 @@ Misc Functions
 import os
 import warnings
 import cPickle as pickle    
+from copy import deepcopy as copy
+
 
 import numpy as npy
 import ctypes as ct     # for connect_s_fast
@@ -118,6 +120,10 @@ import touchstone
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
+
+## later imports. delayed to solve circular dependencies
+#from io.io import read, write
+
 
 try:
     from src import connect_s_fast
@@ -1223,20 +1229,23 @@ class Network(object):
 
         outputFile.close()
 
-    def pickle(self, filename=None, *args, **kwargs):
+    def write(self, file=None, *args, **kwargs):
         '''
-        write the Network to disk using the pickle module 
+        Write the Network to disk using the pickle module 
+        
         
         Parameters
         -----------
-        filename : string
-            name of file
+        file : str or file-object
+            filename or a file-object. If left as None then the 
+            filename will be set to Network.name, if its not None. 
+            If both are None, ValueError is raised.
         \*args, \*\*kwargs : arguments and keyword arguments
-        passed through to pickle.dump
+            passed through to pickle.dump
         
         Notes
         ------
-        if self.name is not None then filename can left as None
+        If the self.name is not None and file is  can left as None
         and the resultant file will have the `.ntwk` extension appended
         to the filename. 
         
@@ -1245,18 +1254,65 @@ class Network(object):
         >>> cal.name = 'my_cal'
         >>> cal.pickle()
         
+        See Also
+        ---------
+        :func:`skrf.convenience.write`
+        :func:`skrf.convenience.read`
         '''
+        # this import is delayed untill here because of a circular depency
+        from io.io import write
         
-        if self.name is not None:
-            filename= self.name+'.ntwk'
+        if file is None:
+            if self.name is None:
+                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+            file = self.name
+
+        write(file,self) # from convenience
+    
+    def copy_from(self,other):
+        '''
+        Copies the contents of another Network into self
         
-        if filename is not None:     
-            f = open(filename,'wr')
-        else:
-            raise (ValueError('No filename. You must provide a filename, or set the calibration\'s  name attribute'))
+        Parameters
+        -----------
+        other : Network 
+            the network to copy the contents of
         
-        pickle.dump(self,f, *args, **kwargs)
-        f.close()
+        Example
+        -----------
+        >>> a = rf.N()
+        >>> b = rf.N('my_file.s2p')
+        >>> a.copy_from (b)
+        '''
+        for attr in ['_s','frequency','_z0','name' ]:
+            self.__setattr__(attr,other.__getattribute__(attr))
+    
+    def read(self, *args, **kwargs):
+        '''
+        Read a Network from a 'ntwk' file
+        
+        A ntwk file is written with :func:`write`. It is just a pickled
+        file. 
+        
+        Parameters
+        -------------
+        \*args, \*\*kwargs : args and kwargs 
+            passed to :func:`skrf.io.io.write`
+        
+        Examples
+        -----------
+        >>> rf.read('myfile.ntwk')
+        >>> rf.read('myfile.p')
+            
+        See Also
+        ----------
+        :func:`write`
+        :func:`skrf.io.io.write`
+        :func:`skrf.io.io.read`
+        '''
+        from io.io import read
+        self.copy_from(read(*args, **kwargs))
+        
     
     # interpolation
     def interpolate(self, new_frequency,**kwargs):

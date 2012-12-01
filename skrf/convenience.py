@@ -143,6 +143,8 @@ References
 from network import *
 from frequency import Frequency
 from media import RectangularWaveguide, Media
+from networkSet import NetworkSet
+#from calibration import Calibration FIX circular import errors
 import mathFunctions as mf
 
 import warnings
@@ -152,6 +154,10 @@ import pylab as plb
 import numpy as npy
 from scipy.constants import mil
 from datetime import datetime
+
+
+
+# globals 
 
 
 # pre-initialized classes
@@ -169,6 +175,7 @@ wr3     = RectangularWaveguide(Frequency(220,325,201, 'ghz'), 30*mil,z0=50)
 wr2p2   = RectangularWaveguide(Frequency(330,500,201, 'ghz'), 22*mil,z0=50)
 wr1p5   = RectangularWaveguide(Frequency(500,750,201, 'ghz'), 15*mil,z0=50)
 wr1     = RectangularWaveguide(Frequency(750,1100,201, 'ghz'), 10*mil,z0=50)
+
 
 
 
@@ -329,63 +336,55 @@ def find_nearest_index(array,value):
     return (npy.abs(array-value)).argmin()
 
 # file IO
-def read(filename, *args, **kwargs):
+
+def get_fid(file, *args, **kwargs):
     '''
-    read pickled skrf objects 
+    Returns a file object, given a filename or file object
+    
+    Useful  when you want to allow the arguments of a function to
+    be either files or filenames
     
     Parameters
-    ------------
-    filename : string 
-        name of file 
+    -------------
+    file : str or file-object
+        file to open 
     \*args, \*\*kwargs : arguments and keyword arguments
         passed through to pickle.load
-    Examples
-    -------------
-    >>> n = rf.Network('my_ntwk.s2p')
-    >>> n.pickle('my_ntwk.ntwk')
-    >>> n_unpickled = rf.read('my_ntwk.ntwk')
-    
-    See Also
-    ------------
-    :func:`network.Network.pickle`
-    :func:`calibration.calibration.Calibration.pickle`
     '''
-    f = open(filename)
-    obj=  pickle.load(f, *args, **kwargs)
-    f.close()
-    return obj
-
-def write(obj, filename, *args, **kwargs):
-    '''
-    write skrf objects to disk using the pickle module
+    if isinstance(file, basestring):
+        return open(file, *args, **kwargs)
+    else:
+        return file
     
-    know that you can write any python objects, so you can write 
-    a list or dict of Networks or Calibrations or anything. 
+def get_extn(filename):
+    '''
+    Get the extension from a filename.
+    
+    The extension is defined as everything passed the last '.'.
+    Returns None if it aint got one
     
     Parameters
     ------------
-    obj : an object, or list of objects
-        object or objects to write to disk
     filename : string 
-        name of file 
-    \*args, \*\*kwargs : arguments and keyword arguments
-        passed through to pickle.dump
+        the filename 
     
-    Examples
-    -------------
-    >>> n = rf.Network('my_ntwk.s2p')
-    >>> n.pickle('my_ntwk.ntwk')
-    >>> n_unpickled = rf.read('my_ntwk.ntwk')
-    
-    See Also
-    ------------
-    :func:`network.Network.pickle`
-    :func:`calibration.calibration.Calibration.pickle`
+    Returns
+    --------
+    ext : string, None
+        either the extension (not including '.') or None if there 
+        isnt one
+        
+
     '''
-    f = open(filename,'wr')
-    pickle.dump(obj, f, *args, **kwargs)
-    f.close()
-    
+    ext = os.path.splitext(filename)[-1]
+    if len(ext)==0: 
+        return None
+    else:
+        return ext[1:]
+
+
+
+
     
 def hfss_touchstone_2_gamma_z0(filename):
     '''

@@ -43,7 +43,7 @@ import convenience
 import plotting
 import mathFunctions
 import tlineFunctions
-
+import io
 
 # Import contents into current namespace for ease of calling
 from frequency import *
@@ -54,6 +54,7 @@ from convenience import *
 from plotting import  *
 from mathFunctions import *
 from tlineFunctions import *
+from io import * 
 
 # Try to import virtualInstruments, but if except if pyvisa not installed
 try:
