@@ -146,7 +146,13 @@ class Media(object):
         # convinience names
         self.delay = self.line
 
-    
+    def __getstate__(self):
+        '''
+        method needed to allow for pickling
+        '''
+        return {k: self.__dict__[k] for k in \
+            ['frequency','_characteristic_impedance','_propagation_constant','_z0']}
+        
     def __eq__(self,other):
         '''
         test for numerical equality (up to skrf.mathFunctions.ALMOST_ZERO)

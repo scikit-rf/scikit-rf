@@ -120,7 +120,15 @@ class RectangularWaveguide(Media):
 
     def __repr__(self):
         return self.__str__()
-
+    
+    def __getstate__(self):
+        '''
+        method needed to allow for pickling
+        '''
+        return {k: self.__dict__[k] for k in \
+            ['frequency','a','b','mode_type','m','n','ep_r','mu_r']}
+        
+    
     @property
     def ep(self):
         '''

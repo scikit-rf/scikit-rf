@@ -44,15 +44,17 @@ OBJ_EXTN = [
         [Network, 'ntwk'],
         [NetworkSet, 'ns'],
         [Calibration, 'cal'],
+        [Media, 'med'],
         [object, 'p'],
         ]
 
 
 def read(file, *args, **kwargs):
     '''
-    read  skrf object[s]
+    Read  skrf object[s] from a file
     
-    reads a skrf object that is written with :func:`write` 
+    Reads a skrf object that is written with :func:`write`, which uses
+    the pickle module
     
     Parameters
     ------------
@@ -79,8 +81,9 @@ def read(file, *args, **kwargs):
 
 def write(file, obj, *args, **kwargs):
     '''
-    Write skrf objects to disk using the pickle module
+    Write skrf object[s] to a file
     
+    This uses the pickle module to write skrf objects to a file.
     Note that you can write any python object, so, for example you can 
     write  a list or dict of Networks or Calibrations or anything. 
     
