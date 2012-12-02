@@ -151,7 +151,13 @@ class DistributedCircuit(Media):
     def __repr__(self):
         return self.__str__()
 
-
+    def __getstate__(self):
+        '''
+        method needed to allow for pickling
+        '''
+        return {k: self.__dict__[k] for k in \
+            ['frequency','_z0','C','I','R','G']}
+            
     @classmethod
     def from_Media(cls, my_media, *args, **kwargs):
         '''

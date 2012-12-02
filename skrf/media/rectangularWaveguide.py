@@ -126,7 +126,7 @@ class RectangularWaveguide(Media):
         method needed to allow for pickling
         '''
         return {k: self.__dict__[k] for k in \
-            ['frequency','a','b','mode_type','m','n','ep_r','mu_r']}
+            ['frequency','_z0','kz','a','b','mode_type','m','n','ep_r','mu_r']}
         
     
     @property

@@ -120,7 +120,7 @@ import touchstone
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
-
+#from convenience import get_extn, get_fid
 ## later imports. delayed to solve circular dependencies
 #from io.io import read, write
 
@@ -246,37 +246,50 @@ class Network(object):
     
         
     ## CONSTRUCTOR
-    def __init__(self, touchstone_file = None, name = None ):
+    def __init__(self, file = None, name = None ):
         '''
-        constructor.
+        Network constructor.
 
-        Contructs a Network, and optionally populates the s-matrix
-        and frequency information from touchstone file.
+        Creates an n-port microwave network from a `file`. If 
+        no file is given, then an empty Network is created. 
 
         Parameters
         ------------
 
-        file: string
-                if given will load information from touchstone file,optional
-        name: string
-                name of this network, optional
+        file: str or file-object
+            file to load information from. supported formats are:
+             * touchstone file (.s?p)
+             * pickled Network (.ntwk, .p) see :func:`write`
+        name: str
+            Name of this Network. if None will try to use file, if 
+            its a str
+        
+        Examples
+        ------------
+        >>> n1 = rf.Network('ntwk1.s2p')
+        >>> n2 = rf.Network('ntwk1.ntwk')
+        >>> n = rf.Network() # create empty Network
+        >>> n.f, n.s, n.z0 = [1,2,3],[1,2,3], [1,2,3]
+        
+        See Also
+        -----------
+        :func:`skrf.io.io.read`
+        :func:`skrf.io.io.write`
+        
+        
         '''
-        # although meaningless untill set with real values, this
-        # needs this to exist for dependent properties
-        #self.frequency = Frequency(0,0,0)
-
-        if touchstone_file is not None:
-            self.read_touchstone(touchstone_file)
-            if name is not None:
-                self.name = name
+        from convenience import get_extn, get_fid
+        
+        
+        if file is not None:
+            fid = get_fid(file)
+            self.read_touchstone(file)
+            
+            if name is None and isinstance(file,basestring):
+                name = os.path.splitext(os.path.basename(file))[0]
+        
+        self.name = name
                 
-
-        else:
-            self.name = name
-            #self.s = None
-            #self.z0 = 50
-
-        #self.__generate_plot_functions()
         ##convenience
         self.resample = self.interpolate_self_npoints
         #self.nports = self.number_of_ports
@@ -991,7 +1004,6 @@ class Network(object):
 
     @f.setter
     def f(self,f):
-        print 'Deprecation Warning'
         tmpUnit= self.frequency.unit
         self.frequency = Frequency.from_f(f, unit=tmpUnit)
 
@@ -1101,7 +1113,10 @@ class Network(object):
     ## CLASS METHODS
     def copy(self):
         '''
-        returns a copy of this Network
+        Returns a copy of this Network
+        
+        Needed to allow pass-by-value for a Network instead of 
+        pass-by-reference
         '''
         ntwk = Network()
         ntwk.frequency = self.frequency.copy()
@@ -1109,7 +1124,28 @@ class Network(object):
         ntwk.z0 = self.z0.copy()
         ntwk.name = self.name
         return ntwk
-
+    
+    def copy_from(self,other):
+        '''
+        Copies the contents of another Network into self
+        
+        Uses copy, so that the data is passed-by-value, not reference
+        
+        Parameters
+        -----------
+        other : Network 
+            the network to copy the contents of
+        
+        Example
+        -----------
+        >>> a = rf.N()
+        >>> b = rf.N('my_file.s2p')
+        >>> a.copy_from (b)
+        '''
+        for attr in ['_s','frequency','_z0','name' ]:
+            self.__setattr__(attr,copy(other.__getattribute__(attr)))
+    
+    
     # touchstone file IO
     def read_touchstone(self, filename):
         '''
@@ -1269,23 +1305,6 @@ class Network(object):
 
         write(file,self) # from convenience
     
-    def copy_from(self,other):
-        '''
-        Copies the contents of another Network into self
-        
-        Parameters
-        -----------
-        other : Network 
-            the network to copy the contents of
-        
-        Example
-        -----------
-        >>> a = rf.N()
-        >>> b = rf.N('my_file.s2p')
-        >>> a.copy_from (b)
-        '''
-        for attr in ['_s','frequency','_z0','name' ]:
-            self.__setattr__(attr,other.__getattribute__(attr))
     
     def read(self, *args, **kwargs):
         '''

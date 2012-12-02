@@ -30,4 +30,6 @@ class MediaTestCase(unittest.TestCase):
             )
         skrf_ntwk = wg.thru(z0=50)**wg.line(200*rf.mil)**wg.thru(z0=50)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
+    
+
         

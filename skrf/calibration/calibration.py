@@ -795,7 +795,7 @@ class Calibration(object):
                  raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
             file = self.name
 
-        write(file,self) # from convenience
+        write(file,self) 
 
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):

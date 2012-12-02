@@ -37,8 +37,8 @@ from ..calibration.calibration import Calibration
 
 
 
-
-global OBJ_EXTN # file extension conventions for skrf objects.
+# file extension conventions for skrf objects.
+global OBJ_EXTN 
 OBJ_EXTN = [
         [Frequency, 'freq'],
         [Network, 'ntwk'],
@@ -109,6 +109,7 @@ def write(file, obj, *args, **kwargs):
     =====================  ===============
     skrf object            extension
     =====================  ===============
+    :class:`Frequency`     '.freq'
     :class:`Network`       '.ntwk'
     :class:`NetworkSet`    '.ns'
     :class:`Calibration`   '.cal'
