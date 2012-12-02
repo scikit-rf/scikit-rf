@@ -116,14 +116,14 @@ from scipy import stats         # for Network.add_noise_*
 from scipy.interpolate import interp1d # for Network.interpolate()
 import unittest # for unitest.skip 
 import  mathFunctions as mf
-import touchstone
+from io import touchstone
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
-#from convenience import get_extn, get_fid
+
 ## later imports. delayed to solve circular dependencies
 #from io.io import read, write
-
+#from convenience import get_extn, get_fid
 
 try:
     from src import connect_s_fast
@@ -246,7 +246,7 @@ class Network(object):
     
         
     ## CONSTRUCTOR
-    def __init__(self, file = None, name = None ):
+    def __init__(self, file = None, name = None , **kwargs):
         '''
         Network constructor.
 
@@ -278,6 +278,7 @@ class Network(object):
         
         
         '''
+        # delayed untill now to solve circular import 
         from convenience import get_extn, get_fid
         
         

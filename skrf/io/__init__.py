@@ -36,5 +36,6 @@ Modules
 '''
 
 import io
+import touchstone
 
 from io import * 
