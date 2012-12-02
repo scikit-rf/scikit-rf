@@ -28,7 +28,7 @@ io (:mod:`skrf.io.io`)
 import cPickle as pickle
 
 
-from ..convenience import get_extn, get_fid
+from ..helper import get_extn, get_fid
 from ..network import Network
 from ..frequency import Frequency
 from ..media import  Media

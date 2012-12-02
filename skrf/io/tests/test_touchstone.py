@@ -14,12 +14,12 @@ class TouchstoneTestCase(unittest.TestCase):
         '''
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         
-    def read_data(self):
+    def test_read_data(self):
         filename = os.path.join(self.test_dir, 'simple_touchstone.s2p')
-        touch= rf.touchstone.touchstone(filename)
+        touch= rf.touchstone.Touchstone(filename)
         f,s = touch.get_sparameter_arrays()
-        z0 = complex(touch.resistance())
-        f_true = array([  1.00000000e+09,   1.10000000e+09])
+        z0 = complex(touch.resistance)
+        f_true = npy.array([  1.00000000e+09,   1.10000000e+09])
         s_true = npy.array([
                 [[  1. +2.j,   5. +6.j],
                 [  3. +4.j,   7. +8.j]],
@@ -28,8 +28,9 @@ class TouchstoneTestCase(unittest.TestCase):
             ])
         z0_true = 50+50j
         
-        self.assertEqual(f,f_true)
-        self.assertEqual(s,s_strue)
-        self.assertEqual(z0,z0_strue)
+        self.assertTrue((f==f_true).all())
+        self.assertTrue((s==s_true).all())
+        self.assertTrue((z0==z0_true))
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

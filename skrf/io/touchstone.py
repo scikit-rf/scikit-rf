@@ -39,7 +39,7 @@ contains touchstone class
 
 import numpy
 
-class touchstone():
+class Touchstone():
     """
     class to read touchstone s-parameter files
     The reference for writing this class is the draft of the
@@ -284,25 +284,3 @@ class touchstone():
         noise_normalized_resistance = noise_values[:,4]
 
 
-#if __name__ == "__main__":
-    #import sys
-    #import pylab
-
-    #filename = sys.argv[1]
-    #t = touchstone(filename)
-    #n = t.get_sparameter_names(format='orig')
-    #d = t.get_sparameter_data(format='orig')
-    #f = d['frequency']
-    #pylab.subplot(211)
-    #for i in range(1,len(n),2):
-        #pylab.plot(f, d[n[i]], label=n[i])
-    #pylab.legend(loc='best')
-    #pylab.title('Touchstone S-parameter, File=[%s]'%filename)
-    #pylab.grid()
-    #pylab.subplot(212)
-    #for i in range(2,len(n),2):
-        #pylab.plot(f, d[n[i]], label=n[i])
-    #pylab.legend(loc='best')
-    #pylab.xlabel('frequency [%s]' %(t.frequency_unit))
-    #pylab.grid()
-    #pylab.show()

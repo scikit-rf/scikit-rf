@@ -39,3 +39,4 @@ import io
 import touchstone
 
 from io import * 
+from touchstone import * 

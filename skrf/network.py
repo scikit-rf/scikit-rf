@@ -116,14 +116,14 @@ from scipy import stats         # for Network.add_noise_*
 from scipy.interpolate import interp1d # for Network.interpolate()
 import unittest # for unitest.skip 
 import  mathFunctions as mf
-from io import touchstone
+
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
-
+from helper import get_fid
 ## later imports. delayed to solve circular dependencies
 #from io.io import read, write
-#from convenience import get_extn, get_fid
+#from io import touchstone
 
 try:
     from src import connect_s_fast
@@ -278,10 +278,6 @@ class Network(object):
         
         
         '''
-        # delayed untill now to solve circular import 
-        from convenience import get_extn, get_fid
-        
-        
         if file is not None:
             fid = get_fid(file)
             self.read_touchstone(file)
@@ -1169,7 +1165,8 @@ class Network(object):
 
 
         '''
-        touchstoneFile = touchstone.touchstone(filename)
+        from io import touchstone
+        touchstoneFile = touchstone.Touchstone(filename)
 
         if touchstoneFile.get_format().split()[1] != 's':
             raise NotImplementedError('only s-parameters supported for now.')
