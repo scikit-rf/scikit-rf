@@ -295,6 +295,7 @@ class Network(object):
         
         self.name = name
         
+        # allow properties to be set through the constructor 
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
             if kwargs.has_key(attr):
                 self.__setattr__(attr,kwargs[attr])

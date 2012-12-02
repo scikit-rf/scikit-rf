@@ -24,10 +24,13 @@ class NetworkTestCase(unittest.TestCase):
     
     def test_constructor_empty(self):
         rf.Network()
+    
     def test_constructor_from_values(self):
         rf.Network(f=[1,2],s=[1,2],z0=[1,2] )
+    
     def test_constructor_from_touchstone(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
+    
     def test_constructor_from_pickle(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
         

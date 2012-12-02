@@ -175,7 +175,15 @@ class Calibration(object):
         method needed to allow for pickling
         '''
         return {k: self.__dict__[k] for k in [
-            'name','measured','ideals','frequency','_type','sloppy_input','is_reciprocal','kwargs']}
+            'name','measured','ideals','frequency','_type','_nports','sloppy_input','is_reciprocal','kwargs']}
+    
+    def __str__(self):
+        output = '%s Calibration: \'%s\', %s, %i-ideals/%i-measured'\
+            %(self.type,self.name,str(self.measured[0].frequency),len(self.ideals), len(self.measured))
+            
+        return output
+    def __repr__(self):
+        return self.__str__()    
         
     ## properties
     @property

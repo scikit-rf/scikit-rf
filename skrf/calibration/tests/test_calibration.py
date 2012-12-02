@@ -89,6 +89,7 @@ class OnePortStandardCalibration(unittest.TestCase):
         f.close()
         f = open(os.path.join(self.test_dir, 'pickled_cal.cal'))
         unpickled = pickle.load(f)
+        unpickled.run()
         # TODO: this test should be more extensive 
         self.assertEqual(original.ideals, unpickled.ideals)
         self.assertEqual(original.measured, unpickled.measured)
