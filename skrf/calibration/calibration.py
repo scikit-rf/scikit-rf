@@ -178,10 +178,17 @@ class Calibration(object):
             'name','measured','ideals','frequency','_type','_nports','sloppy_input','is_reciprocal','kwargs']}
     
     def __str__(self):
+        if self.name is None:
+            name = ''
+        else:
+            name = self.name
+            
         output = '%s Calibration: \'%s\', %s, %i-ideals/%i-measured'\
-            %(self.type,self.name,str(self.measured[0].frequency),len(self.ideals), len(self.measured))
+            %(self.type,name,str(self.measured[0].frequency),\
+            len(self.ideals), len(self.measured))
             
         return output
+        
     def __repr__(self):
         return self.__str__()    
         
