@@ -22,6 +22,16 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
     
+    def test_constructor_empty(self):
+        rf.Network()
+    def test_constructor_from_values(self):
+        rf.Network(f=[1,2],s=[1,2],z0=[1,2] )
+    def test_constructor_from_touchstone(self):
+        rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
+    def test_constructor_from_pickle(self):
+        rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
+        
+    
     def test_open_saved_touchstone(self):
         self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
         ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))

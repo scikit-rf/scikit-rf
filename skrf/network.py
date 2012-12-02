@@ -106,6 +106,7 @@ Misc Functions
 import os
 import warnings
 import cPickle as pickle    
+from cPickle import UnpicklingError
 from copy import deepcopy as copy
 
 
@@ -278,15 +279,27 @@ class Network(object):
         
         
         '''
+        
+        # allow for old kwarg for backward compatability
+        if kwargs.has_key('touchstone_filename'):
+            file = kwargs['touchstone_filename']
+        
         if file is not None:
             fid = get_fid(file)
-            self.read_touchstone(file)
-            
+            try: 
+                self.read(file)
+            except(UnpicklingError):
+                self.read_touchstone(file)
             if name is None and isinstance(file,basestring):
                 name = os.path.splitext(os.path.basename(file))[0]
         
         self.name = name
-                
+        
+        for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
+            if kwargs.has_key(attr):
+                self.__setattr__(attr,kwargs[attr])
+
+        
         ##convenience
         self.resample = self.interpolate_self_npoints
         #self.nports = self.number_of_ports
