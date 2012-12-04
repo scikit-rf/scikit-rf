@@ -175,7 +175,7 @@ class Calibration(object):
         method needed to allow for pickling
         '''
         return {k: self.__dict__[k] for k in [
-            'name','measured','ideals','frequency','_type','_nports','sloppy_input','is_reciprocal','kwargs']}
+            'name','measured','ideals','frequency','_type','_nports','has_run','sloppy_input','is_reciprocal','kwargs']}
     
     def __str__(self):
         if self.name is None:

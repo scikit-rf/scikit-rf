@@ -26,7 +26,7 @@ io (:mod:`skrf.io.io`)
 
 '''
 import cPickle as pickle
-
+import inspect
 
 from ..helper import get_extn, get_fid
 from ..network import Network
@@ -154,14 +154,46 @@ def write(file, obj, *args, **kwargs):
     pickle.dump(obj, fid, *args, **kwargs)
     fid.close()
 
-def save_skrfs(namespace, filename='skrfSesh.p'):
-    skrf_objects = {}
-    for k in namespace:
+
+def save_space(locals, file='skrfSesh.p', module='skrf'):
+    '''
+    saves all objects in current namesapce, which belong to a given
+    module
+    
+    Parameters
+    ------------
+    locals : dict
+        the output of locals(). See the example. 
+    file : str or file-object
+        the file to save all objects to 
+    module : str
+        the module name to grep for. 
+    
+    Example
+    ---------
+    >>>rf.save_space(locals(), 'mysesh.p')
+    
+    '''
+    objects = {}
+    print ('pickling: '),
+    for k in locals:
         try:
-            if eval(k).__module__.split('.')[0] == 'skrf':
-                if k[0]!='_':
-                    print(k)
-                    skrf_objects[k] = eval(k)
-        except(AttributeError):
+            if module  in inspect.getmodule(locals[k]).__name__:
+                try:
+                    pickle.dumps(locals[k])
+                    if k[0] != '_':
+                        objects[k] = locals[k]
+                        print k+', ',
+                finally:
+                    pass
+               
+        except(AttributeError, TypeError):
             pass
-    write(skrf_objects, filename)
+    if len (objects ) == 0:
+        print 'nothing'
+        
+    write(file, objects)
+
+
+
+
