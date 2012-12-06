@@ -168,14 +168,13 @@ class Calibration(object):
         self._residual_ntwks = None
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
-        self.has_run = False
         
     def __getstate__(self):
         '''
         method needed to allow for pickling
         '''
         return {k: self.__dict__[k] for k in [
-            'name','measured','ideals','frequency','_type','_nports','has_run','sloppy_input','is_reciprocal','kwargs']}
+            'name','measured','ideals','frequency','_type','_nports','sloppy_input','is_reciprocal','kwargs']}
     
     def __str__(self):
         if self.name is None:
@@ -226,7 +225,7 @@ class Calibration(object):
                 print ('Warning: using \'two port\' calibration')
 
         if new_type not in self.calibration_algorithm_dict.keys():
-            raise ValueError('incorrect calibration type')
+            raise ValueError('incorrect calibration type. Should be in '+self.calibration_algorithm_dict.keys())
 
 
         self._type = new_type
@@ -297,31 +296,35 @@ class Calibration(object):
     @property
     def error_ntwk(self):
         '''
-        a Network type which represents the error network being
+        A Network object which represents the error network being
         calibrated out.
         '''
-        if not self.has_run:
-            self.run()
+        if self.nports == 1:
+            try: 
+                return( self._error_ntwk)
+            except(AttributeError):
+                self.run()
+                return self._error_ntwk
+                
 
-        if self.nports ==1:
-            return self._error_ntwk
-
-        elif self.nports == 2:
-            raise NotImplementedError('Not sure what to do yet')
+        else:
+            raise NotImplementedError('Only defined for 1-port cals.')
+            
     @property
     def Ts(self):
         '''
         T-matricies used for de-embeding, a two-port calibration.
         '''
 
-        if self.nports ==2:
-            if not self.has_run:
+        if self.nports == 2:
+            try:
+                return self._Ts
+            except(AttributeError):
                 self.run()
-            return self._Ts
-        elif self.nports ==1:
-            raise AttributeError('Only exists for two-port cals')
+                return self._Ts
         else:
-            raise NotImplementedError('Not sure what to do yet')
+            raise AttributeError('Only defined for 2-port cals')
+        
 
     @property
     def residual_ntwks(self):
@@ -467,7 +470,6 @@ class Calibration(object):
         #reset the residuals
         self._residual_ntwks = None
 
-        self.has_run = True
 
     ## methods
     def apply_cal(self,input_ntwk):

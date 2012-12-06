@@ -42,4 +42,3 @@ from ..network import Network
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 ntwk1 = Network(os.path.join(pwd, 'ntwk1.s2p'))
-ntwk2 = Network(os.path.join(pwd, 'ntwk2.s2p'))
