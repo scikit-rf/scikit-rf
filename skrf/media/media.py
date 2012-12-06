@@ -134,7 +134,7 @@ class Media(object):
         characteristic impedance is frequency dependent, but the
         touchstone's created by most VNA's have z0=1
         '''
-        self.frequency = frequency
+        self.frequency = frequency.copy()
 
         self.propagation_constant = propagation_constant
         self.characteristic_impedance = characteristic_impedance
@@ -150,8 +150,11 @@ class Media(object):
         '''
         method needed to allow for pickling
         '''
-        return {k: self.__dict__[k] for k in \
-            ['frequency','_characteristic_impedance','_propagation_constant','_z0']}
+        d = self.__dict__.copy()
+        del d['delay'] # cant pickle instance methods
+        return(d)
+        #return {k: self.__dict__[k] for k in \
+        #    ['frequency','_characteristic_impedance','_propagation_constant','_z0']}
         
     def __eq__(self,other):
         '''

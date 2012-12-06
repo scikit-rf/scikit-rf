@@ -117,7 +117,7 @@ class DistributedCircuit(Media):
         the classmethod :func:`from_Media`
         '''
 
-        self.frequency = deepcopy(frequency)
+        self.frequency = frequency.copy()
         self.C, self.I, self.R, self.G = C,I,R,G
 
         # for unambiguousness
@@ -155,8 +155,9 @@ class DistributedCircuit(Media):
         '''
         method needed to allow for pickling
         '''
-        return {k: self.__dict__[k] for k in \
-            ['frequency','_z0','C','I','R','G']}
+        d = self.__dict__.copy()
+        del d['delay'] # cant pickle instance methods
+        return(d)
             
     @classmethod
     def from_Media(cls, my_media, *args, **kwargs):

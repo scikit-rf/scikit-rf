@@ -168,13 +168,6 @@ class Calibration(object):
         self._residual_ntwks = None
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
-        
-    def __getstate__(self):
-        '''
-        method needed to allow for pickling
-        '''
-        return {k: self.__dict__[k] for k in [
-            'name','measured','ideals','frequency','_type','_nports','sloppy_input','is_reciprocal','kwargs']}
     
     def __str__(self):
         if self.name is None:
@@ -225,7 +218,7 @@ class Calibration(object):
                 print ('Warning: using \'two port\' calibration')
 
         if new_type not in self.calibration_algorithm_dict.keys():
-            raise ValueError('incorrect calibration type. Should be in '+self.calibration_algorithm_dict.keys())
+            raise ValueError('incorrect calibration type. Should be in:\n '+', '.join(self.calibration_algorithm_dict.keys()))
 
 
         self._type = new_type
@@ -350,9 +343,7 @@ class Calibration(object):
         so, if you want to re-calculate the residual networks then
         you delete the property '_residual_ntwks'.
         '''
-        if self._residual_ntwks is not None:
-            return self._residual_ntwks
-        else:
+        if self._residual_ntwks is None:
             ntwk_list=\
                     [ ((self.apply_cal(self.measured[k]))-self.ideals[k]) \
                             for k in range(len(self.ideals))]
@@ -366,7 +357,7 @@ class Calibration(object):
                 ntwk_list[k].name = self.ideals[k].name
 
             self._residual_ntwks = ntwk_list
-        return ntwk_list
+        return self._residual_ntwks
 
     @property
     def caled_ntwks(self):
@@ -375,13 +366,11 @@ class Calibration(object):
 
 
         '''
-        if self._caled_ntwks is not None:
-            return self._caled_ntwks
-        else:
+        if self._caled_ntwks is None:
             ntwk_list=\
                     [ self.apply_cal(self.measured[k]) \
                             for k in range(len(self.ideals))]
-
+            
             for k in range(len(ntwk_list)):
                 if self.ideals[k].name  is not None:
                     name = self.ideals[k].name
@@ -391,23 +380,23 @@ class Calibration(object):
                 ntwk_list[k].name = self.ideals[k].name
 
             self._caled_ntwks = ntwk_list
-        return ntwk_list
+        
+        return self._caled_ntwks
     
     @property
     def caled_ntwk_sets(self):
         '''
         returns a NetworkSet for each caled_ntwk, based on their names
         '''
-        if self._caled_ntwk_sets is not None:
-            return self._caled_ntwk_sets
-        else:
+        if self._caled_ntwk_sets is  None:
             caled_sets={}
             std_names = list(set([k.name  for k in self.caled_ntwks ]))
             for std_name in std_names:
                 caled_sets[std_name] = NetworkSet(
                     [k for k in self.caled_ntwks if k.name is std_name])
             self._caled_ntwk_sets = caled_sets
-            return caled_sets
+        
+        return self._caled_ntwk_sets
 
     
     ##  methods for manual control of internal calculations
