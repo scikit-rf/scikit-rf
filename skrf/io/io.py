@@ -155,9 +155,9 @@ def write(file, obj, *args, **kwargs):
     fid.close()
 
 
-def save_space(locals, file='skrfSesh.p', module='skrf'):
+def save_space(locals, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
     '''
-    saves all objects in current namesapce, which belong to a given
+    Saves all objects in current namespace, which belong to a given
     module
     
     Parameters
@@ -168,6 +168,9 @@ def save_space(locals, file='skrfSesh.p', module='skrf'):
         the file to save all objects to 
     module : str
         the module name to grep for. 
+    exclude_prefix: str
+        dont save objects which have this as a prefix. 
+    
     
     Example
     ---------

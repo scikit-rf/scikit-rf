@@ -432,7 +432,9 @@ class Network(object):
         '''
         method needed to allow for pickling
         '''
-        return {k: self.__dict__[k] for k in ['name','_frequency','_s','_z0']}
+        d = self.__dict__.copy()
+        del d['resample'] # cant pickle instance methods
+        return(d)
        
     ## INTERNAL CODE GENERATION METHODS
     def __compatable_for_scalar_operation_test(self, other):
@@ -1220,7 +1222,9 @@ class Network(object):
         dir : string, optional
                 the directory to save the file in. Defaults
                 to cwd './'.
-
+        write_z0 : boolean
+            write impedance information into touchstone as comments, 
+            like Ansoft HFSS does
 
         Notes
         -------

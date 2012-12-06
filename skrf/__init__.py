@@ -44,6 +44,7 @@ import plotting
 import mathFunctions
 import tlineFunctions
 import io
+import data 
 
 # Import contents into current namespace for ease of calling
 from frequency import *
