@@ -301,8 +301,7 @@ class Network(object):
                 self.__setattr__(attr,kwargs[attr])
 
         
-        ##convenience
-        self.resample = self.interpolate_self_npoints
+        
         #self.nports = self.number_of_ports
         self.__generate_plot_functions()
 
@@ -428,13 +427,7 @@ class Network(object):
         '''
         return len(self.s)
     
-    def __getstate__(self):
-        '''
-        method needed to allow for pickling
-        '''
-        d = self.__dict__.copy()
-        del d['resample'] # cant pickle instance methods
-        return(d)
+    
        
     ## INTERNAL CODE GENERATION METHODS
     def __compatable_for_scalar_operation_test(self, other):
@@ -1424,6 +1417,9 @@ class Network(object):
         new_frequency.npoints = npoints
         self.interpolate_self(new_frequency, **kwargs)
 
+    ##convenience
+    resample = interpolate_self_npoints
+    
     def interpolate_self(self, new_frequency, **kwargs):
         '''
         interpolates s-parameters given a new

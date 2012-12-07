@@ -27,6 +27,7 @@ io (:mod:`skrf.io.io`)
 '''
 import cPickle as pickle
 import inspect
+import os 
 
 from ..helper import get_extn, get_fid
 from ..network import Network
@@ -153,12 +154,33 @@ def write(file, obj, *args, **kwargs):
     
     pickle.dump(obj, fid, *args, **kwargs)
     fid.close()
+def read_all(dir='.', *args, **kwargs):
+    out={}
+    for filename in os.listdir(dir):
+        fullname = os.path.join(dir,filename)
+        keyname = os.path.splitext(filename)[0]
+        try: 
+            out[keyname] = read(fullname)
+            continue
+        except:
+            pass
+        
+        try:
+            out[keyname] = Network(fullname)
+            continue
+        except:
+            pass 
+            
+    return out
+        
+        
 
-
-def save_space(locals, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
+def write_all(locals, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
     '''
-    Saves all objects in current namespace, which belong to a given
-    module
+    Writes all skrf objects in the current namespace.
+    
+    Can be used to save current workspace in a hurry. Note this can be 
+    used for other modules as well by passing a different `module` name.
     
     Parameters
     ------------
@@ -174,7 +196,7 @@ def save_space(locals, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
     
     Example
     ---------
-    >>>rf.save_space(locals(), 'mysesh.p')
+    >>>rf.write_all(locals(), 'mysesh.p')
     
     '''
     objects = {}
