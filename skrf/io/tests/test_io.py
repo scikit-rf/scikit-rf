@@ -37,6 +37,18 @@ class IOTestCase(unittest.TestCase):
     def test_read_all(self):
         rf.read_all(self.test_dir)
         
+    def test_write_all_locals(self):
+        a=self.ntwk1
+        b=self.ntwk2
+        c=self.ntwk3
+        rf.write_all(locals(),self.pickle_file )
+        os.remove(self.pickle_file)
+    
+    def test_write_all_dict(self):
+        d = dict(a=self.ntwk1, b=self.ntwk2,   c=self.ntwk3)
+        rf.write_all(d,self.pickle_file )
+        os.remove(self.pickle_file)
+        
     def test_readwrite_network(self):
         self.read_write(self.ntwk1)
     
