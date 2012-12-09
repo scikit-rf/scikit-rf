@@ -3,7 +3,7 @@ import os
 import numpy as npy
 
 import skrf as rf
-
+from skrf.io.touchstone import Touchstone
 
 class TouchstoneTestCase(unittest.TestCase):
     '''
@@ -16,7 +16,7 @@ class TouchstoneTestCase(unittest.TestCase):
         
     def test_read_data(self):
         filename = os.path.join(self.test_dir, 'simple_touchstone.s2p')
-        touch= rf.touchstone.Touchstone(filename)
+        touch= Touchstone(filename)
         f,s = touch.get_sparameter_arrays()
         z0 = complex(touch.resistance)
         f_true = npy.array([  1.00000000e+09,   1.10000000e+09])
@@ -32,5 +32,24 @@ class TouchstoneTestCase(unittest.TestCase):
         self.assertTrue((s==s_true).all())
         self.assertTrue((z0==z0_true))
 
+    
+    def test_read_from_fid(self):
+        fid = open(os.path.join(self.test_dir, 'simple_touchstone.s2p'))
+        touch= Touchstone(fid)
+        f,s = touch.get_sparameter_arrays()
+        z0 = complex(touch.resistance)
+        f_true = npy.array([  1.00000000e+09,   1.10000000e+09])
+        s_true = npy.array([
+                [[  1. +2.j,   5. +6.j],
+                [  3. +4.j,   7. +8.j]],
+                [[  9.+10.j,  13.+14.j],
+                [ 11.+12.j,  15.+16.j]]
+            ])
+        z0_true = 50+50j
+        
+        self.assertTrue((f==f_true).all())
+        self.assertTrue((s==s_true).all())
+        self.assertTrue((z0==z0_true))
+        
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

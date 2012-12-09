@@ -34,7 +34,7 @@ and import modules themselves for coherent  structured referencing
 ## Import all  module names for coherent reference of name-space
 import media
 import calibration
-
+import io
 
 import frequency
 import network
@@ -43,8 +43,7 @@ import convenience
 import plotting
 import mathFunctions
 import tlineFunctions
-import io
-import data 
+
 
 # Import contents into current namespace for ease of calling
 from frequency import *

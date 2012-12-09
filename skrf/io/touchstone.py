@@ -38,6 +38,7 @@ contains touchstone class
 '''
 
 import numpy
+from ..helper import get_fid
 
 class Touchstone():
     """
@@ -46,7 +47,9 @@ class Touchstone():
     Touchstone(R) File Format Specification Rev 2.0
     http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
     """
-    def __init__(self,filename):
+    def __init__(self,file):
+        fid = get_fid(file)
+        filename = fid.name
         ## file name of the touchstone data file
         self.filename = filename
 
@@ -71,22 +74,15 @@ class Touchstone():
         ## kind of s-parameter data (s1p, s2p, s3p, s4p)
         self.rank = None
 
-        self.load_file(filename)
+        self.load_file(fid)
 
-    def load_file(self, filename):
+    def load_file(self, fid):
         """
         Load the touchstone file into the interal data structures
         """
-        try:
-            f = open(filename)
-        except(TypeError):
-            # HACK: allow them to pass a file-like object
-            # this means you cant run load_file() twice, which may cause
-            # unexpected behavoir 
-            f = filename
-            self.filename = f.name
-            filename = f.name
-
+        
+        filename=self.filename
+        
         extention = filename.split('.')[-1].lower()
         #self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
         try:
@@ -99,7 +95,7 @@ class Touchstone():
         values = []
         while (1):
             linenr +=1
-            line = f.readline()
+            line = fid.readline()
             if not line:
                 break
 

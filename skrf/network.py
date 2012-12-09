@@ -285,11 +285,13 @@ class Network(object):
             file = kwargs['touchstone_filename']
         
         if file is not None:
-            fid = get_fid(file)
+            fid = get_fid(file) # allows user to pass filename or file obj
+            
             try: 
-                self.read(file)
+                self.read(fid)
             except(UnpicklingError):
-                self.read_touchstone(file)
+                self.read_touchstone(fid)
+            
             if name is None and isinstance(file,basestring):
                 name = os.path.splitext(os.path.basename(file))[0]
         

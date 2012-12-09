@@ -26,8 +26,10 @@ io (:mod:`skrf.io.io`)
 
 '''
 import cPickle as pickle
+from cPickle import UnpicklingError
 import inspect
 import os 
+import zipfile
 
 from ..helper import get_extn, get_fid
 from ..network import Network
@@ -55,7 +57,7 @@ def read(file, *args, **kwargs):
     Read  skrf object[s] from a file
     
     Reads a skrf object that is written with :func:`write`, which uses
-    the pickle module
+    the pickle module.
     
     Parameters
     ------------
@@ -72,12 +74,31 @@ def read(file, *args, **kwargs):
     
     See Also
     ------------
-    :func:`network.Network.pickle`
-    :func:`calibration.calibration.Calibration.pickle`
+        :func:`network.Network.pickle`
+        :func:`calibration.calibration.Calibration.pickle`
+        
+    Notes
+    -------
+    if file is a file-object it is left open, if it is a filename then 
+    a file-object is opened and closed. If file is a file-object 
+    and reading fails, then the position is reset back to 0 using seek.
     '''
     fid = get_fid(file, mode='r')
-    obj = pickle.load(fid, *args, **kwargs)
-    fid.close()
+    try:
+        obj = pickle.load(fid, *args, **kwargs)
+    except(UnpicklingError):
+        # if fid is seekable then reset to beginning of file
+        fid.seek(0)
+        
+        if isinstance(file, basestring):
+            # we created the fid so close it
+            fid.close()
+        raise
+    
+    if isinstance(file, basestring):
+        # we created the fid so close it
+        fid.close()
+    
     return obj
 
 def write(file, obj, *args, **kwargs):

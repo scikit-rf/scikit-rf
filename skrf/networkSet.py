@@ -53,7 +53,7 @@ NetworkSet Class
 
 '''
 
-
+import os 
 from network import average as network_average
 from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 import mathFunctions as mf
@@ -210,11 +210,21 @@ class NetworkSet(object):
         
         if sort_filenames:
             filename_list.sort()
-            
+        
+        
         for filename in filename_list:
             # try/except block in case not all files are touchstones
+            n= Network()
             try:
-                ntwk_list.append(Network(z.open(filename)))
+                n.read_touchstone(z.open(filename))
+                ntwk_list.append(n)
+                continue
+            except:
+                pass
+            try:
+                n.read(z.open(filename))
+                ntwk_list.append(n)
+                continue
             except:
                 pass
         
