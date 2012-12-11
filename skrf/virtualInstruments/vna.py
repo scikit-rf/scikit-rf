@@ -321,9 +321,9 @@ class ZVA40(GpibInstrument):
         
         error_dict={}
         if port ==1:
-            error_dict['DIRECTIVITY'] = flatten_to_string(directivity)
-            error_dict['SRCMATCH'] = flatten_to_string(source_match)
-            error_dict['REFLTRACK'] = flatten_to_string(reflection_tracking)
+            error_dict['DIRECTIVITY'] = flatten_to_string(directivity)[0:-2]
+            error_dict['SRCMATCH'] = flatten_to_string(source_match)[0:-2]
+            error_dict['REFLTRACK'] = flatten_to_string(reflection_tracking)[0:-2]
         
         cal_type = 'FOPort%i'%port
         self.write('CORR:COLL:METH:DEF %s, %s, %i'%(cal_name, cal_type,port))
