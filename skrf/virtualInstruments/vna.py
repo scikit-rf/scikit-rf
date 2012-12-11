@@ -325,7 +325,7 @@ class ZVA40(GpibInstrument):
             error_dict['SRCMATCH'] = flatten_to_string(source_match)[0:-2]
             error_dict['REFLTRACK'] = flatten_to_string(reflection_tracking)[0:-2]
         
-        cal_type = 'FOPort%i'%port
+        cal_type = 'FOPort'%port
         self.write('CORR:COLL:METH:DEF %s, %s, %i'%(cal_name, cal_type,port))
         self.write('corr:coll:save:sel:def')
         self.continuous=False
