@@ -625,9 +625,13 @@ class NetworkSet(object):
             }
         default_kwargs.update(**kwargs)
         
+        
+        
         if plb.isinteractive():
             was_interactive = True
             plb.interactive(0)
+        else:
+            was_interactive = False
         
         [self.mean_s[k].plot_s_smith(*args, ms = self.std_s[k].s_mag*multiplier, **default_kwargs) for k in range(len(self[0]))]
         
