@@ -329,7 +329,7 @@ class ZVA40(GpibInstrument):
         self.write('CORR:COLL:METH:DEF %s, %s, %i'%(cal_name, cal_type,port))
         self.write('corr:coll:save:sel:def')
         self.continuous=False
-        for key in error_data:
+        for key in error_dict:
             self.write('corr:dat \'%s\',%i,0,%s'\
             %(key, port, error_dict[key]))
     
