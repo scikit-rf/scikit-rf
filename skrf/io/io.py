@@ -101,7 +101,7 @@ def read(file, *args, **kwargs):
     
     return obj
 
-def write(file, obj, *args, **kwargs):
+def write(file, obj):
     '''
     Write skrf object[s] to a file
     
@@ -120,8 +120,6 @@ def write(file, obj, *args, **kwargs):
     obj : an object, or list/dict of objects
         object or list/dict of objects to write to disk
     
-    \*args, \*\*kwargs : arguments and keyword arguments
-        passed through to pickle.dump
     
     Notes
     -------
@@ -173,8 +171,9 @@ def write(file, obj, *args, **kwargs):
         fid = file
     
     
-    pickle.dump(obj, fid, *args, **kwargs)
+    pickle.dump(obj, fid, protocol=2)
     fid.close()
+    
 def read_all(dir='.', *args, **kwargs):
     out={}
     for filename in os.listdir(dir):
