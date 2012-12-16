@@ -512,10 +512,10 @@ class Media(object):
         '''
         result = self.match(nports=2, *args, **kwargs)
         y= npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1/R
-        y[:,1,1] = 1/R
-        y[:,0,1] = -1/R
-        y[:,1,0] = -1/R
+        y[:,0,0] = 1./R
+        y[:,1,1] = 1./R
+        y[:,0,1] = -1./R
+        y[:,1,0] = -1./R
         result.y = y
         return result    
     
@@ -577,10 +577,10 @@ class Media(object):
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
         y = npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1/(1j*w*L)
-        y[:,1,1] = 1/(1j*w*L)
-        y[:,0,1] = -1/(1j*w*L)
-        y[:,1,0] = -1/(1j*w*L)
+        y[:,0,0] = 1./(1j*w*L)
+        y[:,1,1] = 1./(1j*w*L)
+        y[:,0,1] = -1./(1j*w*L)
+        y[:,1,0] = -1./(1j*w*L)
         result.y = y
         return result
 

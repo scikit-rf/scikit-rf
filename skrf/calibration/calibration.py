@@ -491,7 +491,7 @@ class Calibration(object):
                     caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
             return caled
 
-    def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
+    def apply_cal_to_all_in_dir(self, dir='.', contains=None, f_unit = 'ghz'):
         '''
         convience function to apply calibration to an entire directory
         of measurements, and return a dictionary of the calibrated
