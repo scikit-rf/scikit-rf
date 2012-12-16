@@ -33,7 +33,11 @@ class IOTestCase(unittest.TestCase):
         rf.write(self.pickle_file,obj)
         self.assertEqual(rf.read(self.pickle_file), obj)
         os.remove(self.pickle_file)
-
+    
+    #def test_read_touchstone(self):
+    #    short = rf.read(os.path.join(self.test_dir, 'short.s1p'))
+    #    self.assertEqual(self.short, short)
+    
     def test_read_all(self):
         rf.read_all(self.test_dir)
         
