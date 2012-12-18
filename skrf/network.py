@@ -1875,6 +1875,39 @@ def de_embed(ntwkA,ntwkB):
     '''
     return ntwkA.inv ** ntwkB
 
+def stitch(ntwkA, ntwkB, **kwargs):
+    '''
+    stitches ntwkA and ntwkB together.
+    
+    If you have two networks that cover different frequency bands and
+    this will combine the data in to a singl network. 
+    
+    Parameters
+    ------------
+    ntwkA : :class:`Network`
+        network `ntwkA`
+    ntwkB : :class:`Network`
+        network `ntwkB`
+    \*\*kwargs : keyword args
+        passed to :class:`Network` constructor, for output network
+    
+    Returns
+    ---------
+    ntwkC : :class:`Network`
+        result of stitching the networks `ntwkA` and `ntwkB` together
+    
+    '''
+    A,B = ntwkA, ntwkB
+    C = Network(
+        frequency = Frequency.from_f(npy.r_[A.f[:],B.f[:]], unit='hz'), 
+        s = npy.r_[A.s,B.s],
+        z0 = npy.r_[A.z0, B.z0],
+        name = A.name,
+        **kwargs,
+        )
+    C.frequency.unit = A.frequency.unit
+    return C
+
 def average(list_of_networks):
     '''
     calculates the average network from a list of Networks.

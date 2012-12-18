@@ -50,6 +50,11 @@ class NetworkTestCase(unittest.TestCase):
         unpickled = pickle.load(f)
         self.assertEqual(original_ntwk, unpickled)
         os.remove(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
+            
+    def test_stitch(self):
+        tmp = self.ntwk1.copy()
+        tmp.f = tmp.f+ tmp.f[0]
+        c = rf.stitch(self.ntwk1, tmp)
         
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
