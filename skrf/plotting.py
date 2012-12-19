@@ -364,3 +364,36 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
     ax.axis(smith_r*npy.array([-1., 1., -1., 1.]))
     if plb.isinteractive():
         plb.draw()
+
+
+
+def shade_bands(edges, y_range=[-1e5,1e5],cmap='gray', **kwargs):
+    '''
+    Shades frequency bands.
+    
+    when plotting data over a set of frequency bands it is nice to 
+    have each band visually seperated from the other. The kwarg `alpha`
+    is useful.
+    
+    Parameters 
+    --------------
+    edges : array-like
+        x-values seperating regions of a given shade
+    y_range : tuple 
+        y-values to shade in 
+    cmap : str
+        see matplotlib.cm
+    \*\* : key word arguments
+        passed to `matplotlib.fill_between`
+        
+    Examples 
+    -----------
+    >>> rf.shade_bands([325,500,750,1100], alpha=.2)
+    '''
+    cmap = plb.cm.get_cmap(cmap)
+    for k in range(len(edges)-1):
+        plb.fill_between(
+            [edges[k],edges[k+1]], 
+            y_range[0], y_range[1], 
+            color = cmap(1.0*k/len(edges)),
+            **kwargs)
