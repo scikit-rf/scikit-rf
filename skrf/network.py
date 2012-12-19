@@ -1903,7 +1903,7 @@ def stitch(ntwkA, ntwkB, **kwargs):
         s = npy.r_[A.s,B.s],
         z0 = npy.r_[A.z0, B.z0],
         name = A.name,
-        **kwargs,
+        **kwargs
         )
     C.frequency.unit = A.frequency.unit
     return C
