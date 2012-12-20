@@ -15,9 +15,9 @@ This tutorial illustrates how to create common plots associated with microwave n
 * :func:`Network.plot_s_mag`
 * :func:`Network.plot_s_db`
 * :func:`Network.plot_s_deg`
-* :func:`Network.plot_s_deg_unwrapped`
+* :func:`Network.plot_s_deg_unwrap`
 * :func:`Network.plot_s_rad`
-* :func:`Network.plot_s_rad_unwrapped`
+* :func:`Network.plot_s_rad_unwrap`
 * :func:`Network.plot_s_smith`
 * :func:`Network.plot_s_complex`
 

@@ -367,7 +367,7 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
 
 
 
-def shade_bands(edges, y_range=[-1e5,1e5],cmap='gray', **kwargs):
+def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
     '''
     Shades frequency bands.
     
@@ -382,7 +382,7 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='gray', **kwargs):
     y_range : tuple 
         y-values to shade in 
     cmap : str
-        see matplotlib.cm
+        see matplotlib.cm  or matplotlib.colormaps for acceptable values
     \*\* : key word arguments
         passed to `matplotlib.fill_between`
         
