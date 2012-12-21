@@ -271,7 +271,7 @@ class Network(object):
         >>> n2 = rf.Network('ntwk1.ntwk')
         >>> n = rf.Network() # create empty Network
         >>> n.f, n.s, n.z0 = [1,2,3],[1,2,3], [1,2,3]
-        
+        >>> n = rf.Network(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
         See Also
         -----------
         :func:`skrf.io.io.read`
@@ -793,10 +793,10 @@ class Network(object):
             if len(s_shape) == 2:
                 # reshape to kx1x1, this simplifies indexing in function
                 s = npy.reshape(s,(-1,s_shape[0],s_shape[0]))
-            elif len(s_shape) == 1:
+            else:
                 s = npy.reshape(s,(-1,1,1))
 
-        self._s = s
+        self._s = npy.array(s,dtype=complex)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
        
@@ -905,7 +905,7 @@ class Network(object):
                         #they have yet to set s .
                         pass
         '''
-        self._z0 = npy.array(z0)
+        self._z0 = npy.array(z0,dtype=complex)
 
     @property
     def frequency(self):
@@ -2138,14 +2138,16 @@ def s2z(s,z0=50):
         z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
     z = npy.zeros(s.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
-    try:
-        for fidx in xrange(s.shape[0]):
-            sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
-            z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
-        return z
-    except (npy.linalg.LinAlgError, ValueError):
+    s = s.copy() # to prevent the original array from being altered
+    s[s==1.] = 1. + 1e-12 # solve numerical singularity
+    #try:
+    for fidx in xrange(s.shape[0]):
+        sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
+        z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
+    return z
+    #except (npy.linalg.LinAlgError, ValueError):
         #print ('Warning: Cannot compute impedance parameters for network.')
-        return None
+        #return None
 
 def s2y(s,z0=50):
     '''
@@ -2197,14 +2199,16 @@ def s2y(s,z0=50):
         z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
     y = npy.zeros(s.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
-    try:
-        for fidx in xrange(s.shape[0]):
-            sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
-            y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
-        return y
-    except (npy.linalg.LinAlgError, ValueError):
-        #print ('Warning: Cannot compute admittance parameters for network.')
-        return None
+    s = s.copy() # to prevent the original array from being altered
+    s[s==-1.] = -1. + 1e-12 # solve numerical singularity
+    #try:
+    for fidx in xrange(s.shape[0]):
+        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+        y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
+    return y
+    #except (npy.linalg.LinAlgError, ValueError):
+    #    print ('Warning: Cannot compute admittance parameters for network.')
+    #    return None
 
 def s2t(s):
     '''

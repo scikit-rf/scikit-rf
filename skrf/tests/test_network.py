@@ -91,7 +91,13 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_plot_two_port_smith(self):
         self.ntwk1.plot_s_smith()
-
+        
+    def test_zy_singularities(self):
+        open = rf.N(f=[1,2,3], s=[1,1,1], z0=[50])
+        short = rf.N(f=[1,2,3], s=[-1,-1,-1], z0=[50])
+        z = open.z 
+        y = short.y
+        
     def test_yz(self):
         tinyfloat = 1e-12
         ntwk = rf.Network()
