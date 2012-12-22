@@ -93,10 +93,14 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk1.plot_s_smith()
         
     def test_zy_singularities(self):
-        open = rf.N(f=[1,2,3], s=[1,1,1], z0=[50])
-        short = rf.N(f=[1,2,3], s=[-1,-1,-1], z0=[50])
+        open = rf.N(f=[1], s=[1], z0=[50])
+        short = rf.N(f=[1], s=[-1], z0=[50])
+        react = rf.N(f=[1],s=[[0,1],[1,0]],z0=50)
         z = open.z 
         y = short.y
+        a = react.y
+        
+        
         
     def test_yz(self):
         tinyfloat = 1e-12

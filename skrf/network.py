@@ -2140,6 +2140,7 @@ def s2z(s,z0=50):
     I = npy.mat(npy.identity(s.shape[1]))
     s = s.copy() # to prevent the original array from being altered
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
+    s[s==-1.] = -1. + 1e-12 # solve numerical singularity
     #try:
     for fidx in xrange(s.shape[0]):
         sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
@@ -2201,6 +2202,7 @@ def s2y(s,z0=50):
     I = npy.mat(npy.identity(s.shape[1]))
     s = s.copy() # to prevent the original array from being altered
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
+    s[s==1.] = 1. + 1e-12 # solve numerical singularity
     #try:
     for fidx in xrange(s.shape[0]):
         sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
