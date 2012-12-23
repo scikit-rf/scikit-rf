@@ -32,7 +32,7 @@ touchstone Class
 .. autosummary::
         :toctree: generated/
 
-        touchstone
+        Touchstone
 
 contains touchstone class
 '''

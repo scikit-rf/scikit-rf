@@ -33,6 +33,7 @@ Modules
    :maxdepth: 1
 
    io
+   touchstone
 '''
 
 #import io

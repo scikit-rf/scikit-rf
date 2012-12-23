@@ -9,7 +9,7 @@ If no tag is given, the current output of 'git describe' is used.  If given,
 that is how the resulting directory will be named.
 
 In practice, you should use either actual clean tags from a current build or
-something like 'current' as a stable URL for the mest current version of the """
+something like 'current' as a stable URL for the most current version of the """
 
 #-----------------------------------------------------------------------------
 # Imports
@@ -30,6 +30,8 @@ from subprocess import Popen, PIPE, CalledProcessError, check_call
 pages_dir = 'gh-pages'
 html_dir = 'build/html'
 pdf_dir = 'build/latex'
+pdf_filename = 'scikit-rf.pdf'
+copy_pdf = True
 pages_repo = 'git@github.com:scikit-rf/doc.git'
 
 #-----------------------------------------------------------------------------
@@ -48,7 +50,6 @@ def sh2(cmd):
     out = p.communicate()[0]
     retcode = p.returncode
     if retcode:
-        print out.rstrip()
         raise CalledProcessError(retcode, cmd)
     else:
         return out.rstrip()
@@ -70,7 +71,7 @@ def sh3(cmd):
 def init_repo(path):
     """clone the gh-pages repo if we haven't already."""
     sh("git clone %s %s"%(pages_repo, path))
-    here = os.getcwd()
+    here = os.getcwdu()
     cd(path)
     sh('git checkout gh-pages')
     cd(here)
@@ -79,18 +80,16 @@ def init_repo(path):
 # Script starts
 #-----------------------------------------------------------------------------
 if __name__ == '__main__':
-    # find the version number from setup.py
-    setup_lines = open('../setup.py').readlines()
-    tag = 'vUndefined'
-    for l in setup_lines:
-        if l.startswith('VERSION'):
-            tag = l.split("'")[1]
-            break
-
-    if "dev" in tag:
-        tag = "dev"
-
-    startdir = os.getcwd()
+    # The tag can be given as a positional argument
+    try:
+        tag = sys.argv[1]
+    except IndexError:
+        try:
+            tag = sh2('git describe --exact-match')
+        except CalledProcessError:
+            tag = "dev"   # Fallback
+    
+    startdir = os.getcwdu()
     if not os.path.exists(pages_dir):
         # init the repo
         init_repo(pages_dir)
@@ -101,13 +100,22 @@ if __name__ == '__main__':
         sh('git pull')
         cd(startdir)
 
-    dest = os.path.join(pages_dir, tag)
+    dest = pjoin(pages_dir, tag)
+
+    # don't `make html` here, because gh-pages already depends on html in Makefile
+    # sh('make html')
+    if tag != 'dev':
+        # only build pdf for non-dev targets
+        #sh2('make pdf')
+        pass
+
     # This is pretty unforgiving: we unconditionally nuke the destination
     # directory, and then copy the html tree in there
     shutil.rmtree(dest, ignore_errors=True)
     shutil.copytree(html_dir, dest)
-    # copy pdf file into tree
-    #shutil.copy(pjoin(pdf_dir, 'scikits.image.pdf'), pjoin(dest, 'scikits.image.pdf'))
+    if copy_pdf == True:
+        shutil.copy(pjoin(pdf_dir, pdf_filename), pjoin(dest, pdf_filename))
+        pass
 
     try:
         cd(pages_dir)
@@ -117,18 +125,16 @@ if __name__ == '__main__':
             e = 'On %r, git branch is %r, MUST be "gh-pages"' % (pages_dir,
                                                                  branch)
             raise RuntimeError(e)
-        sh("touch .nojekyll")
-        sh('git add .nojekyll')
-        sh('git add index.html')
-        sh('git add %s' % tag)
-        sh2('git commit -m"Updated doc release: %s"' % tag)
 
-        print 'Most recent commit:'
+        sh('git add -A %s' % tag)
+        sh('git commit -m"Updated doc release: %s"' % tag)
+        print
+        print 'Most recent 3 commits:'
         sys.stdout.flush()
-        sh('git --no-pager log --oneline HEAD~1..')
+        sh('git --no-pager log --oneline HEAD~3..')
     finally:
         cd(startdir)
 
     print
     print 'Now verify the build in: %r' % dest
-    print "If everything looks good, run 'git push' inside doc/gh-pages."
+    print "If everything looks good, 'git push'"
