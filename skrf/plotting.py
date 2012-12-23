@@ -49,7 +49,7 @@ from matplotlib.patches import Circle   # for drawing smith chart
 
 
 
-def smith(smithR=1, chart_type = 'z', axis_type = 'r', ax=None):
+def smith(smithR=1, chart_type = 'z', draw_labels = False, ax=None):
     '''
     plots the smith chart of a given radius
 
@@ -61,11 +61,9 @@ def smith(smithR=1, chart_type = 'z', axis_type = 'r', ax=None):
             Contour type. Possible values are
              * *'z'* : lines of constant impedance
              * *'y'* : lines of constant admittance
-    axis_type : ['r', 'i']
-            Axis type. Possible values are
-             * *'r'* : Show axis of reflection coefficient (standard).
-             * *'i'* : Don't show reflection coefficient and annotate real and
-                       imaginary parts of impedance on the chart (if smithR=1)
+    draw_labels : Boolean
+             annotate real and imaginary parts of impedance on the 
+             chart (only if smithR=1)
     ax : matplotlib.axes object
             existing axes to draw smith chart on
 
