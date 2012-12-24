@@ -85,7 +85,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, ax=None):
 
     #TODO: fix this
     # these could be dynamically coded in the future, but work good'nuff for now
-    if axis_type is 'r':
+    if not draw_labels:
         rLightList = plb.logspace(3,-5,9,base=.5)
         xLightList = plb.hstack([plb.logspace(2,-5,8,base=.5), -1*plb.logspace(2,-5,8,base=.5)])
     else:
@@ -133,7 +133,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, ax=None):
     ax1.axis('equal')
     ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))     
 
-    if axis_type is 'i':
+    if draw_labels:
         #Clear axis
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
