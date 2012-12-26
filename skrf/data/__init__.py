@@ -37,11 +37,16 @@ Modules
 import os 
 
 from  ..network import Network
-from ..io.io import read
+from ..io.general import read
 
 pwd = os.path.dirname(os.path.abspath(__file__))
 
 ntwk1 = Network(os.path.join(pwd, 'ntwk1.s2p'))
 line = Network(os.path.join(pwd, 'line.s2p'))
 ring_slot = Network(os.path.join(pwd, 'ring slot.s2p'))
+wr2p2_line = Network(os.path.join(pwd, 'wr2p2,line.ntwk'))
+wr2p2_short = Network(os.path.join(pwd, 'wr2p2,short.ntwk'))
+wr1p5_line = Network(os.path.join(pwd, 'wr1p5,line.ntwk'))
+wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.ntwk'))
+
 one_port_cal = read(os.path.join(pwd, 'one_port.cal'))

@@ -52,6 +52,8 @@ Connecting Networks
     innerconnect
     cascade
     de_embed
+    stitch
+    Network.write
 
 
 Interpolation
@@ -60,9 +62,10 @@ Interpolation
 .. autosummary::
     :toctree: generated/
     
+    Network.resample
     Network.interpolate
     Network.interpolate_self
-    Network.interpolate_self_npoints (Network.resample)
+    Network.interpolate_self_npoints 
 
    
 Supporting Functions
@@ -123,7 +126,7 @@ from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
 from helper import get_fid
 ## later imports. delayed to solve circular dependencies
-#from io.io import read, write
+#from io.general import read, write
 #from io import touchstone
 
 try:
@@ -135,10 +138,10 @@ except:
 class Network(object):
     '''
 
-    A n-port electrical network.
+    A n-port electrical network [1]_.
 
     A n-port network may be defined by three quantities,
-     * scattering parameter matrix (s-matrix)
+     * network parameter matrix (s, z, or y-matrix)
      * port characteristic impedance matrix
      * frequency information
 
@@ -154,8 +157,11 @@ class Network(object):
     :attr:`f`              frequency vector
     =====================  =============================================
 
-    Individual components of the s-matrix are accesable through
-    properties as well. These also return numpy.ndarray's.
+    Although these docs focus on s-parameters, other equivalent network 
+    representations such as :attr:`z` and  :attr:`y` are 
+    available. Scalar projections of the complex network parameters 
+    are accesable through properties as well. These also return 
+    numpy.ndarray's.
 
     =====================  =============================================
     Property               Meaning
@@ -176,7 +182,7 @@ class Network(object):
     \-                     element-wise difference of the s-matrix
     \*                     element-wise multiplication of the s-matrix
     \/                     element-wise division of the s-matrix
-    \*\*                     cascading (only for 2-ports)
+    \*\*                   cascading (only for 2-ports)
     \//                    de-embedding (for 2-ports, see :attr:`inv`)
     =====================  =============================================
 
@@ -185,25 +191,31 @@ class Network(object):
     individual elements of the s-matrix or all at once. For more info
     about plotting see the :doc:`../../tutorials/plotting` tutorial.
 
-    =====================  =============================================
-    Method                 Meaning
-    =====================  =============================================
-    :func:`plot_s_smith`   plot complex s-parameters on smith chart
-    :func:`plot_s_re`      plot real part of s-parameters vs frequency
-    :func:`plot_s_im`      plot imaginary part of s-parameters vs frequency
-    :func:`plot_s_mag`     plot magnitude of s-parameters vs frequency
-    :func:`plot_s_db`      plot magnitude (in dB) of s-parameters vs frequency
-    :func:`plot_s_deg`     plot phase of s-parameters (in degrees) vs frequency
-    =====================  =============================================
+    =========================  =============================================
+    Method                     Meaning
+    =========================  =============================================
+    :func:`plot_s_smith`       plot complex s-parameters on smith chart
+    :func:`plot_s_re`          plot real part of s-parameters vs frequency
+    :func:`plot_s_im`          plot imaginary part of s-parameters vs frequency
+    :func:`plot_s_mag`         plot magnitude of s-parameters vs frequency
+    :func:`plot_s_db`          plot magnitude (in dB) of s-parameters vs frequency
+    :func:`plot_s_deg`         plot phase of s-parameters (in degrees) vs frequency
+    :func:`plot_s_deg_unwrap`  plot phase of s-parameters (in unwrapped degrees) vs frequency
+    =========================  =============================================
 
-    Generally, :class:`Network`  objects are created from touchstone
-    files upon initializtion  (see :func:`__init__`), or are created
-    from a :class:`~media.media.Media` object. :class:`Network`  objects
+    :class:`Network`  objects can be  created from a touchstone or pickle
+    file  (see :func:`__init__`), by a 
+    :class:`~skrf.media.media.Media` object, or manually by assigning the 
+    network properties directly. :class:`Network`  objects
     can be saved to disk in the form of touchstone files with the
     :func:`write_touchstone` method.
 
     An exhaustive list of :class:`Network` Methods and Properties
     (Attributes) are given below
+    
+    References
+    ------------
+    .. [1] http://en.wikipedia.org/wiki/Two-port_network
     '''
     # used for testing s-parameter equivalence
     global ALMOST_ZER0
@@ -251,31 +263,48 @@ class Network(object):
         '''
         Network constructor.
 
-        Creates an n-port microwave network from a `file`. If 
-        no file is given, then an empty Network is created. 
+        Creates an n-port microwave network from a `file` or directly 
+        from data. If no file or data is given, then an empty Network 
+        is created. 
 
         Parameters
         ------------
 
-        file: str or file-object
+        file : str or file-object
             file to load information from. supported formats are:
              * touchstone file (.s?p)
              * pickled Network (.ntwk, .p) see :func:`write`
-        name: str
+        name : str
             Name of this Network. if None will try to use file, if 
             its a str
-        
+        \*\*kwargs : 
+            key word arguments can be used to assign properties of the 
+            Network, such as `s`, `f` and `z0`. 
+            
         Examples
         ------------
-        >>> n1 = rf.Network('ntwk1.s2p')
-        >>> n2 = rf.Network('ntwk1.ntwk')
-        >>> n = rf.Network() # create empty Network
+        From a touchstone
+        
+        >>> n = rf.Network('ntwk1.s2p')
+        
+        From a pickle file
+        
+        >>> n = rf.Network('ntwk1.ntwk')
+        
+        Create a blank network, then fill in values
+        
+        >>> n = rf.Network() 
         >>> n.f, n.s, n.z0 = [1,2,3],[1,2,3], [1,2,3]
+        
+        Directly from values
+        
         >>> n = rf.Network(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
+        
         See Also
         -----------
-        :func:`skrf.io.io.read`
-        :func:`skrf.io.io.write`
+        read : read a network from a file
+        write : write a network to a file, using pickle
+        write_touchstone : write a network to a touchstone file
         
         
         '''
@@ -1160,12 +1189,12 @@ class Network(object):
         loads values from a touchstone file.
 
         The work of this function is done through the
-        :class:`~skrf.touchstone.touchstone` class.
+        :class:`~skrf.io.touchstone` class.
 
         Parameters
         ----------
-        filename : string
-                touchstone file name.
+        filename : str or file-object
+            touchstone file name.
 
 
         Notes
@@ -1307,7 +1336,7 @@ class Network(object):
         :func:`skrf.convenience.read`
         '''
         # this import is delayed untill here because of a circular depency
-        from io.io import write
+        from io.general import write
         
         if file is None:
             if self.name is None:
@@ -1327,7 +1356,7 @@ class Network(object):
         Parameters
         -------------
         \*args, \*\*kwargs : args and kwargs 
-            passed to :func:`skrf.io.io.write`
+            passed to :func:`skrf.io.general.write`
         
         Examples
         -----------
@@ -1337,10 +1366,10 @@ class Network(object):
         See Also
         ----------
         :func:`write`
-        :func:`skrf.io.io.write`
-        :func:`skrf.io.io.read`
+        :func:`skrf.io.general.write`
+        :func:`skrf.io.general.read`
         '''
-        from io.io import read
+        from io.general import read
         self.copy_from(read(*args, **kwargs))
         
     
@@ -1929,9 +1958,9 @@ def innerconnect(ntwkA, k, l, num=1):
 
 def cascade(ntwkA,ntwkB):
     '''
-    cascade two 2-port Networks together
+    Cascade two 2-port Networks together
 
-    connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
+    Connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
     `connect(ntwkA,1, ntwkB,0)`, which is a more general function.
 
     Parameters
@@ -1954,9 +1983,11 @@ def cascade(ntwkA,ntwkB):
 
 def de_embed(ntwkA,ntwkB):
     '''
-    de-embed `ntwkA` from `ntwkB`. this calls `ntwkA.inv**ntwkB`.
-    the syntax of cascading an inverse is more explicit, it is
-    recomended that it be used instead of this function.
+    De-embed `ntwkA` from `ntwkB`. 
+    
+    This calls `ntwkA.inv ** ntwkB`. The syntax of cascading an inverse
+    is more explicit, it is recomended that it be used instead of this 
+    function.
 
     Parameters
     -----------
@@ -1979,17 +2010,17 @@ def de_embed(ntwkA,ntwkB):
 
 def stitch(ntwkA, ntwkB, **kwargs):
     '''
-    stitches ntwkA and ntwkB together.
+    Stitches ntwkA and ntwkB together.
     
-    If you have two networks that cover different frequency bands and
-    this will combine the data in to a singl network. 
+    Concatenates  two networks' data.  Given two networks that cover 
+    different frequency bands this can be used to combine their data 
+    into a single network. 
     
     Parameters
     ------------
-    ntwkA : :class:`Network`
-        network `ntwkA`
-    ntwkB : :class:`Network`
-        network `ntwkB`
+    ntwkA, ntwkB : :class:`Network` objects
+        Networks to stitch together
+    
     \*\*kwargs : keyword args
         passed to :class:`Network` constructor, for output network
     
@@ -1998,6 +2029,11 @@ def stitch(ntwkA, ntwkB, **kwargs):
     ntwkC : :class:`Network`
         result of stitching the networks `ntwkA` and `ntwkB` together
     
+    Examples
+    ----------
+    >>> from skrf.data import wr2p2_line, wr1p5_line
+    >>> rf.stitch(wr2p2_line, wr1p5_line)
+    2-Port Network: 'wr2p2,line',  330-750 GHz, 402 pts, z0=[ 50.+0.j  50.+0.j]
     '''
     A,B = ntwkA, ntwkB
     C = Network(
@@ -2067,7 +2103,6 @@ def one_port_2_two_port(ntwk):
             npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
     result.s[:,1,0] = result.s[:,0,1]
     return result
-
 
 ## Functions operating on s-parameter matrices
 def connect_s(A,k,B,l):

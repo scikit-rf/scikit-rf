@@ -50,7 +50,6 @@ Modules
    reference/networkSet
    reference/frequency
    reference/plotting
-   reference/touchstone
    reference/convenience
    reference/mathFunctions
    reference/tlineFunctions
@@ -63,8 +62,10 @@ Packages
 .. toctree::
    :maxdepth: 1
    
+   reference/io/index
    reference/calibration/index
    reference/media/index
+
 
 Indices and tables
 ==================

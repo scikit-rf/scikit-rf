@@ -16,25 +16,15 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 '''
-.. module:: skrf.touchstone
+.. module:: skrf.io.touchstone
 ========================================
-touchstone (:mod:`skrf.touchstone`)
+touchstone (:mod:`skrf.io.touchstone`)
 ========================================
-
-
-This module provides a class to represent touchstone files.
-
-This module was written by Werner Hoch.
-
-touchstone Class
-------------------
 
 .. autosummary::
-        :toctree: generated/
+    :toctree: generated/
 
-        Touchstone
-
-contains touchstone class
+    Touchstone
 '''
 
 import numpy
@@ -43,11 +33,32 @@ from ..helper import get_fid
 class Touchstone():
     """
     class to read touchstone s-parameter files
+    
     The reference for writing this class is the draft of the
-    Touchstone(R) File Format Specification Rev 2.0
-    http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
+    Touchstone(R) File Format Specification Rev 2.0 [#]_
+    
+    .. [#] http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
     """
     def __init__(self,file):
+        '''
+        constructor
+        
+        Parameters
+        -------------
+        file : str or file-object
+            touchstone file to load
+            
+        Examples
+        ---------
+        From filename 
+        
+        >>> t = rf.Touchstone('network.s2p')
+        
+        From file-object
+        
+        >>> file = open('network.s2p')
+        >>> t = rf.Touchstone(file)
+        '''
         fid = get_fid(file)
         filename = fid.name
         ## file name of the touchstone data file

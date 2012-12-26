@@ -25,19 +25,16 @@ io (:mod:`skrf.io`)
 ========================================
 
 
-This Package provides io  functions and objects
+This Package provides io functions and objects
 
-Modules
-----------
-.. toctree::
-   :maxdepth: 1
+.. automodule:: skrf.io.general
+.. automodule:: skrf.io.touchstone
 
-   io
-   touchstone
+   
 '''
 
-#import io
-#import touchstone
+import io
+import touchstone
 
 from io import * 
 from touchstone import * 

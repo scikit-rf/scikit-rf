@@ -56,7 +56,7 @@ from ..networkSet import NetworkSet
 from ..convenience import *
 
 ## later imports. delayed to solve circular dependencies
-#from io.io import write
+#from io.general import write
 
 
 ## main class
@@ -794,7 +794,7 @@ class Calibration(object):
         :func:`skrf.convenience.read`
         '''
         # this import is delayed untill here because of a circular depency
-        from ..io.io import write
+        from ..io.general import write
         
         if file is None:
             if self.name is None:

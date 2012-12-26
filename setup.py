@@ -4,7 +4,7 @@ import ez_setup
 ez_setup.use_setuptools()
 from setuptools import setup, find_packages
 
-VERSION = '0.12'
+VERSION = 'dev'
 LONG_DESCRIPTION = """
 	sckit-rf is an object-oriented approach to RF/Microwave engineering implemented in the Python programming language. 
 """

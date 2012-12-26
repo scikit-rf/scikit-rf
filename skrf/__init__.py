@@ -43,7 +43,7 @@ import convenience
 import plotting
 import mathFunctions
 import tlineFunctions
-
+import data
 
 # Import contents into current namespace for ease of calling
 from frequency import *
