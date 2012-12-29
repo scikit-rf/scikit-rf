@@ -1,8 +1,8 @@
 TODO list 
 ============
 
-This is a list of TODO's for skrf. If you would like to add an entry
-make a pull request. 
+This is a list of TODO's for skrf. Feel free to add to this list via 
+pull request. 
 
 Network 
 -----------
@@ -13,7 +13,7 @@ Network
 * add interpolation of arbitrary network parameters
 * make interpolation functions more clear
 * incorperate support for c, and connect_s_fast
-
+* ABCD parameters
 
 IO
 -----

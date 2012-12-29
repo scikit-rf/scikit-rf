@@ -31,14 +31,14 @@ import numpy
 from ..helper import get_fid
 
 class Touchstone():
-    """
+    '''
     class to read touchstone s-parameter files
     
     The reference for writing this class is the draft of the
     Touchstone(R) File Format Specification Rev 2.0 [#]_
     
     .. [#] http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
-    """
+    '''
     def __init__(self,file):
         '''
         constructor

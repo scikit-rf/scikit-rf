@@ -184,7 +184,10 @@ class Frequency(object):
     def __eq__(self, other):
         #return (list(self.f) == list(other.f))
         # had to do this out of practicality
-        return (max(self.f-other.f) < ALMOST_ZER0)
+        if len(self.f) != len(other.f):
+            return False
+        else:
+            return (max(self.f-other.f) < ALMOST_ZER0)
 
     def __ne__(self,other):
         return (not self.__eq__(other))

@@ -67,7 +67,17 @@ Interpolation
     Network.interpolate_self
     Network.interpolate_self_npoints 
 
-   
+IO
+====
+
+.. autosummary::
+    
+    skrf.io.general.read
+    skrf.io.general.write
+    Network.write
+    Network.write_touchstone
+    Network.read
+    
 Supporting Functions
 ======================
 
@@ -146,7 +156,7 @@ class Network(object):
      * frequency information
 
     The :class:`Network` class stores these data structures internally
-    in the form of complex numpy.ndarray's. These arrays are not
+    in the form of complex :class:`numpy.ndarray`'s. These arrays are not
     interfaced directly but instead through the use of the properties:
 
     =====================  =============================================
@@ -161,7 +171,7 @@ class Network(object):
     representations such as :attr:`z` and  :attr:`y` are 
     available. Scalar projections of the complex network parameters 
     are accesable through properties as well. These also return 
-    numpy.ndarray's.
+    :class:`numpy.ndarray`'s.
 
     =====================  =============================================
     Property               Meaning
@@ -792,19 +802,27 @@ class Network(object):
     @property
     def s(self):
         '''
-        the scattering parameter matrix [#]_.
+        Scattering parameter matrix [#]_.
 
-        s-matrix is a 3 dimensional numpy.ndarray which has shape
+        The s-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
-        Note that indexing starts at 0!, so s11 can be accessed by 
+        Note that indexing starts at 0, so s11 can be accessed by 
         taking the slice s[:,0,0].  
         
 
         Returns
         ---------
-        s : complex numpy.ndarry of shape `fxnxn`
+        s : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the scattering parameter matrix.
-
+        
+        See Also
+        ------------
+        s 
+        y
+        z
+        t
+        a
+        
         References
         ------------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters
@@ -832,7 +850,30 @@ class Network(object):
     @property
     def y(self):
         '''
-        admittance parameters
+        Admittance parameter matrix [#]_.
+
+        The y-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
+        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        Note that indexing starts at 0, so y11 can be accessed by 
+        taking the slice `y[:,0,0]`.  
+        
+
+        Returns
+        ---------
+        y : complex :class:`numpy.ndarray` of shape `fxnxn`
+                the admittance parameter matrix.
+
+        See Also
+        ------------
+        s 
+        y
+        z
+        t
+        a
+
+        References
+        ------------
+        .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
         '''
         return s2y(self._s, self.z0)
 
@@ -843,7 +884,30 @@ class Network(object):
     @property
     def z(self):
         '''
-        impedance parameters
+        Impedance parameter matrix [#]_.
+
+        The y-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
+        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        Note that indexing starts at 0, so z11 can be accessed by 
+        taking the slice `z[:,0,0]`.  
+        
+
+        Returns
+        ---------
+        z : complex :class:`numpy.ndarray` of shape `fxnxn`
+                the Impedance parameter matrix.
+                
+        See Also
+        ------------
+        s 
+        y
+        z
+        t
+        a
+
+        References
+        ------------
+        .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         '''
         return s2z(self._s, self.z0)
     
@@ -851,35 +915,92 @@ class Network(object):
     def z(self, value):
         self._s = z2s(value, self.z0)
     
+    @property
+    def t(self):
+        '''
+        Scattering transfer parameters [#]_
+
+        Also known or the wave cascading matrix. Only defined for a 
+        2-port Network.
+        
+        The t-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
+        `fx2x2`, where `f` is frequency axis.
+        Note that indexing starts at 0, so t11 can be accessed by 
+        taking the slice `t[:,0,0]`.  
+
+
+        Returns
+        --------
+        t : complex numpy.ndarry of shape `fx2x2`
+                t-parameters, aka scattering transfer parameters
+
+        
+        See Also
+        ------------
+        s 
+        y
+        z
+        t
+        a
+        
+        References
+        -----------
+        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
+        '''
+        return s2t(self.s)
+    
     @property 
     def a(self):
         '''
-        active s-parameter
+        Active scattering parameter matrix.
+        
+        Active scattering parameters are simply inverted s-parameters, 
+        defined as a = 1/s. Useful in analysis of active networks.
+        The a-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
+        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        Note that indexing starts at 0, so a11 can be accessed by 
+        taking the slice a[:,0,0].  
+        
+
+        Returns
+        ---------
+        a : complex :class:`numpy.ndarray` of shape `fxnxn`
+                the active scattering parameter matrix.
+        
+        See Also
+        ------------
+        s 
+        y
+        z
+        t
+        a
         '''
         return 1/self.s
         
     @a.setter
     def a(self, value):
         raise (NotImplementedError)
+    
+    
         
     @property
     def z0(self):
         '''
-        the characteristic impedance[s] of the network ports.
+        Characteristic impedance[s] of the network ports.
 
         This property stores the  characteristic impedance of each port
         of the network. Because it is possible that each port has
-        a different characteristic impedance, that is a function of
+        a different characteristic impedance each varying with
         frequency, `z0` is stored internally as a `fxn` array.
 
-        However because frequently `z0` is simple (like 50ohm),it can
+        However because  `z0` is frequently simple (like 50ohm), it can
         be set with just number as well.
 
         Returns
         --------
-        z0 : numpy.ndarray of shape fxn
+        z0 : :class:`numpy.ndarray` of shape fxn
                 characteristic impedance for network
-
+        
         '''
         # i hate this function
         # it was written this way because id like to allow the user to
@@ -979,25 +1100,7 @@ class Network(object):
             except (TypeError):
                 raise TypeError('Could not convert argument to a frequency vector')
 
-    @property
-    def t(self):
-        '''
-        t-parameters, aka scattering transfer parameters [#]_
-
-        this is also known or the wave cascading matrix, and is only
-        defined for a 2-port Network
-
-
-        Returns
-        --------
-        t : complex numpy.ndarry of shape `fxnxn`
-                t-parameters, aka scattering transfer parameters
-
-        References
-        -----------
-        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Scattering_transfer_parameters
-        '''
-        return s2t(self.s)
+    
 
     @property
     def inv(self):
@@ -1029,7 +1132,7 @@ class Network(object):
 
         Returns
         --------
-        f : numpy.ndarray
+        f : :class:`numpy.ndarray`
                 frequency vector in Hz
 
         See Also
@@ -1104,7 +1207,7 @@ class Network(object):
 
         Returns
         ---------
-        passivity : numpy.ndarray of shape fxnxn
+        passivity : :class:`numpy.ndarray` of shape fxnxn
 
         References
         ------------
@@ -1307,7 +1410,11 @@ class Network(object):
 
     def write(self, file=None, *args, **kwargs):
         '''
-        Write the Network to disk using the pickle module 
+        Write the Network to disk using the :mod:`pickle` module.
+        
+        The resultant file can be read either by using the Networks 
+        constructor, :func:`__init__` , the read method :func:`read`, or 
+        the general read function :func:`skrf.io.general.read`
         
         
         Parameters
@@ -1327,13 +1434,14 @@ class Network(object):
         
         Examples
         ---------
-        >>> cal.name = 'my_cal'
-        >>> cal.pickle()
+        >>> n = rf.N(f=[1,2,3],s=[1,1,1],z0=50, name = 'open')
+        >>> n.write()
+        >>> n2 = rf.read('open.ntwk')
         
         See Also
         ---------
-        :func:`skrf.convenience.write`
-        :func:`skrf.convenience.read`
+        skrf.io.general.write : write any skrf object
+        skrf.io.general.read : read any skrf object
         '''
         # this import is delayed untill here because of a circular depency
         from io.general import write
@@ -1358,6 +1466,10 @@ class Network(object):
         \*args, \*\*kwargs : args and kwargs 
             passed to :func:`skrf.io.general.write`
         
+        Notes
+        ------
+        This function calls :func:`skrf.io.general.read`.
+        
         Examples
         -----------
         >>> rf.read('myfile.ntwk')
@@ -1365,9 +1477,9 @@ class Network(object):
             
         See Also
         ----------
-        :func:`write`
-        :func:`skrf.io.general.write`
-        :func:`skrf.io.general.read`
+        write
+        skrf.io.general.write
+        skrf.io.general.read
         '''
         from io.general import read
         self.copy_from(read(*args, **kwargs))
@@ -2116,18 +2228,18 @@ def connect_s(A,k,B,l):
 
     Parameters
     -----------
-    A : numpy.ndarray
+    A : :class:`numpy.ndarray`
             S-parameter matrix of `A`, shape is fxnxn
     k : int
             port index on `A` (port indices start from 0)
-    B : numpy.ndarray
+    B : :class:`numpy.ndarray`
             S-parameter matrix of `B`, shape is fxnxn
     l : int
             port index on `B`
 
     Returns
     -------
-    C : numpy.ndarray
+    C : :class:`numpy.ndarray`
         new S-parameter matrix
 
 
@@ -2173,7 +2285,7 @@ def innerconnect_s(A, k, l):
 
     Parameters
     -----------
-    A : numpy.ndarray
+    A : :class:`numpy.ndarray`
         S-parameter matrix of `A`, shape is fxnxn
     k : int
         port index on `A` (port indices start from 0)
@@ -2182,7 +2294,7 @@ def innerconnect_s(A, k, l):
 
     Returns
     -------
-    C : numpy.ndarray
+    C : :class:`numpy.ndarray`
             new S-parameter matrix
 
     Notes
@@ -2228,7 +2340,7 @@ def innerconnect_s(A, k, l):
 
 def s2z(s,z0=50):
     '''
-    convert scattering parameters to impedance parameters [#]_
+    Convert scattering parameters [#]_ to impedance parameters [#]_
 
 
     .. math::
@@ -2238,8 +2350,8 @@ def s2z(s,z0=50):
     ------------
     s : complex array-like
         scattering parameters
-    z0 : complex array-like or number
-        port impedances                                                                                             
+    z0 : complex array-like or number 
+        port impedances                                         
 
     Returns
     ---------
@@ -2248,28 +2360,28 @@ def s2z(s,z0=50):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
         
     References
     ----------
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+    
     '''
     if npy.isscalar(z0):
         z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
@@ -2289,7 +2401,7 @@ def s2z(s,z0=50):
 
 def s2y(s,z0=50):
     '''
-    convert scattering parameters to admittance parameters [#]_
+    convert scattering parameters [#]_ to admittance parameters [#]_
 
 
     .. math::
@@ -2309,27 +2421,26 @@ def s2y(s,z0=50):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
     
     References
     ----------
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     '''
 
@@ -2351,15 +2462,15 @@ def s2y(s,z0=50):
 
 def s2t(s):
     '''
-    converts scattering parameters to scattering transfer parameters.
+    Converts scattering parameters [#]_ to scattering transfer parameters [#]_ .
 
-    transfer parameters [#]_ are also refered to as
+    transfer parameters are also refered to as
     'wave cascading matrix', this function only operates on 2-port
     networks.
 
     Parameters
     -----------
-    s : numpy.ndarray (shape fx2x2)
+    s : :class:`numpy.ndarray` (shape fx2x2)
         scattering parameter matrix
 
     Returns
@@ -2369,12 +2480,28 @@ def s2t(s):
 
     See Also
     ---------
-    t2s : converts scattering transfer parameters to scattering
-        parameters
     inv : calculates inverse s-parameters
-
+    
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+    
     References
     -----------
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
     #TODO: add docstring describing the mathematics of this
@@ -2391,7 +2518,7 @@ def s2t(s):
 
 def z2s(z, z0=50):
     '''
-    convert impedance parameters to scattering parameters [#]_
+    convert impedance parameters [#]_ to scattering parameters [#]_
 
     .. math::
         s = (\\sqrt{y_0} \\cdot z \\cdot \\sqrt{y_0} - I)(\\sqrt{y_0} \\cdot z \\cdot\\sqrt{y_0} + I)^{-1}
@@ -2410,28 +2537,27 @@ def z2s(z, z0=50):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
     
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
     '''
     if npy.isscalar(z0):
         z0 = npy.array(z.shape[0]*[z.shape[1] * [z0]])
@@ -2445,7 +2571,7 @@ def z2s(z, z0=50):
 
 def z2y(z):
     '''
-    convert impedance parameters to admittance parameters [#]_
+    convert impedance parameters [#]_ to admittance parameters [#]_
 
 
     .. math::
@@ -2463,28 +2589,27 @@ def z2y(z):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+    .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     '''
     return npy.array([npy.mat(z[f,:,:])**-1 for f in xrange(z.shape[0])])
     
@@ -2493,7 +2618,7 @@ def z2t(z):
     '''
     Not Implemented yet
     
-    convert impedance parameters to scattering transfer parameters [#]_
+    convert impedance parameters [#]_ to scattering transfer parameters [#]_
     
 
     Parameters
@@ -2508,34 +2633,34 @@ def z2t(z):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+    
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+    .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
     raise (NotImplementedError)
 
 def y2s(y, z0=50):
     '''
-    convert admittance parameters to scattering parameters [#]_
+    convert admittance parameters [#]_ to scattering parameters [#]_
 
 
     .. math::
@@ -2556,28 +2681,28 @@ def y2s(y, z0=50):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+    
     
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
     '''
     if npy.isscalar(z0):
         z0 = npy.array(y.shape[0]*[y.shape[1] * [z0]])
@@ -2590,7 +2715,7 @@ def y2s(y, z0=50):
 
 def y2z(y):
     '''
-    convert admittance parameters to impedance parameters [#]_
+    convert admittance parameters [#]_ to impedance parameters [#]_
 
 
     .. math::
@@ -2608,28 +2733,27 @@ def y2z(y):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
     
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
     return npy.array([npy.mat(y[f,:,:])**-1 for f in xrange(y.shape[0])])
 
@@ -2637,7 +2761,7 @@ def y2t(y):
     '''
     Not Implemented Yet 
     
-    convert admittance parameters to scattering-transfer parameters [#]_
+    convert admittance parameters [#]_ to scattering-transfer parameters [#]_
 
 
     Parameters
@@ -2652,58 +2776,73 @@ def y2t(y):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
+    .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
     raise (NotImplementedError)
 
 def t2s(t):
     '''
-    converts scattering transfer parameters to scattering parameters
+    converts scattering transfer parameters [#]_ to scattering parameters [#]_
 
-    transfer parameters [#]_ are also refered to as
+    transfer parameters are also refered to as
     'wave cascading matrix', this function only operates on 2-port
     networks. this function only operates on 2-port scattering
     parameters.
 
     Parameters
     -----------
-    t : numpy.ndarray (shape fx2x2)
+    t : :class:`numpy.ndarray` (shape fx2x2)
             scattering transfer parameters
 
     Returns
     -------
-    s : numpy.ndarray
+    s : :class:`numpy.ndarray`
             scattering parameter matrix.
 
     See Also
     ---------
-    t2s : converts scattering transfer parameters to scattering parameters
     inv : calculates inverse s-parameters
-
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y    
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+    
     References
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
     '''
     #TODO: check rank(s) ==2
     s = npy.array([
@@ -2718,7 +2857,7 @@ def t2z(t):
     '''
     Not Implemented  Yet 
     
-    Convert scattering transfer parameters to impedance parameters [#]_
+    Convert scattering transfer parameters [#]_ to impedance parameters [#]_
 
 
 
@@ -2734,28 +2873,27 @@ def t2z(t):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
     raise (NotImplementedError)
 
@@ -2780,28 +2918,27 @@ def t2y(t):
 
     See Also
     ----------
-    s2z : converts scattering parameters to impedance parameters
-    s2y : converts scattering parameters to admittance parameters
-    s2t : converts scattering parameters to scattering transfer
-        parameters
-    z2s : converts impedance parameters to scattering parameters
-    z2y : converts impedance parameters to impedance parameters
-    z2t : converts impedance parameters to scattering transfer
-        parameters
-    y2s : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to impedance parameters
-    y2z : converts admittance parameters to scattering transfer
-        parameters
-    t2s : converts scattering transfer paramerters to scattering
-        parameters
-    t2z : converts scattering transfer paramerters to impedance
-        parameters
-    t2y : converts scattering transfer paramerters to admittance
-        parameters
+    s2z 
+    s2y 
+    s2t 
+    z2s 
+    z2y 
+    z2t 
+    y2s 
+    y2z 
+    y2z
+    t2s 
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+    
     '''
     raise (NotImplementedError)
 
@@ -2824,12 +2961,12 @@ def inv(s):
 
     Parameters
     -----------
-    s : numpy.ndarray (shape fx2x2)
+    s : :class:`numpy.ndarray` (shape fx2x2)
             scattering parameter matrix.
 
     Returns
     -------
-    s' : numpy.ndarray
+    s' : :class:`numpy.ndarray`
             inverse scattering parameter matrix.
 
     See Also
@@ -2853,13 +2990,13 @@ def flip(a):
 
     Parameters
     -----------
-    a : numpy.ndarray
+    a : :class:`numpy.ndarray`
             scattering parameter matrix. shape should be should be 2x2, or
             fx2x2
 
     Returns
     -------
-    a' : numpy.ndarray
+    a' : :class:`numpy.ndarray`
             flipped scattering parameter matrix, ie interchange of port 0
             and port 1
 

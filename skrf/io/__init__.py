@@ -25,7 +25,17 @@ io (:mod:`skrf.io`)
 ========================================
 
 
-This Package provides io functions and objects
+This Package provides io functions and objects. 
+
+The  general functions  :func:`general.read` and :func:`general.write` 
+can be used to read and write any skrf object, using the :mod:`pickle` 
+module.
+
+Reading and writing touchstone files is supported through the 
+:class:`touchstone.Touchstone` class, which is more easily used in 
+practice through the Network constructor, :func:`~skrf.network.Network.__init__` 
+ 
+
 
 .. automodule:: skrf.io.general
 .. automodule:: skrf.io.touchstone
