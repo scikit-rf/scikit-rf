@@ -28,6 +28,13 @@ Calibration
 ------------
 * TRL
 * simplify module, consolidate files
+* fixed biased error to not depend on names of calibrations
+* clean up CalibrationSet, maybe merge into Calibraiton class
+* use NetworkSets to implement biased vs. unbiased errors
+
+Frequency 
+-----------
+* add write() method 
 
 Other
 ------
