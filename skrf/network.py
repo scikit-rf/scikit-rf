@@ -53,7 +53,6 @@ Connecting Networks
     cascade
     de_embed
     stitch
-    Network.write
 
 
 Interpolation
@@ -145,11 +144,16 @@ except:
     pass#warnings.warn('libconnect failed to load.')
 
 
+
+
+
 class Network(object):
     '''
 
-    A n-port electrical network [1]_.
-
+    A n-port electrical network [#]_.
+    
+    For instructions on how to create Network see  :func:`__init__`.
+    
     A n-port network may be defined by three quantities,
      * network parameter matrix (s, z, or y-matrix)
      * port characteristic impedance matrix
@@ -183,7 +187,7 @@ class Network(object):
     :attr:`s_deg`          phase of the s-matrix in degrees
     =====================  =============================================
 
-    The following :class:`Network` operators are available:
+    The following operations act on the networks s-matrix. 
 
     =====================  =============================================
     Operator               Function
@@ -228,9 +232,8 @@ class Network(object):
     .. [1] http://en.wikipedia.org/wiki/Two-port_network
     '''
     # used for testing s-parameter equivalence
-    global ALMOST_ZER0
-    ALMOST_ZER0=1e-6
-
+    global ALMOST_ZERO
+    ALMOST_ZERO = 1e-6
 
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
@@ -266,7 +269,6 @@ class Network(object):
         'arcl_unwrap'   : 'Arc Length',
         }
 
-    
         
     ## CONSTRUCTOR
     def __init__(self, file = None, name = None , **kwargs):
@@ -335,7 +337,6 @@ class Network(object):
                 name = os.path.splitext(os.path.basename(file))[0]
         
         self.name = name
-        
         # allow properties to be set through the constructor 
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
             if kwargs.has_key(attr):
@@ -386,42 +387,113 @@ class Network(object):
 
     def __mul__(self,other):
         '''
-        element-wise complex multiplication  of s-matrix
+        Element-wise complex multiplication of s-matrix
         '''
-        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
-        result.s = result.s * other.s
+        
+        if isinstance(other, Network):
+            self.__compatable_for_scalar_operation_test(other)
+            result.s = self.s * other.s
+        else:
+            # other may be an array or a number
+            result.s = self.s * npy.array(other).reshape(-1,1,1)
+            
         return result
-
+    
+    def __rmul__(self,other):
+        '''
+        Element-wise complex multiplication of s-matrix
+        '''
+        result = self.copy()
+        
+        if isinstance(other, Network):
+            self.__compatable_for_scalar_operation_test(other)
+            result.s = self.s * other.s
+        else:
+            # other may be an array or a number
+            result.s = self.s * npy.array(other).reshape(-1,1,1)
+            
+        return result
+    
     def __add__(self,other):
         '''
-        element-wise addition of s-matrix
+        Element-wise complex addition of s-matrix
         '''
-        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
-        result.s = result.s + other.s
+        
+        if isinstance(other, Network):
+            self.__compatable_for_scalar_operation_test(other)
+            result.s = self.s + other.s
+        else:
+            # other may be an array or a number
+            result.s = self.s + npy.array(other).reshape(-1,1,1)
+            
         return result
+    
+    def __radd__(self,other):
+        '''
+        Element-wise complex addition of s-matrix
+        '''
+        result = self.copy()
+        
+        if isinstance(other, Network):
+            self.__compatable_for_scalar_operation_test(other)
+            result.s = self.s + other.s
+        else:
+            # other may be an array or a number
+            result.s = self.s + npy.array(other).reshape(-1,1,1)
+            
+        return result
+    
 
     def __sub__(self,other):
         '''
-        element-wise subtraction of s-matrix
+        Element-wise complex subtraction of s-matrix
         '''
-        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
-        result.s = result.s - other.s
+        
+        if isinstance(other, Network):
+            self.__compatable_for_scalar_operation_test(other)
+            result.s = self.s - other.s
+        else:
+            # other may be an array or a number
+            result.s = self.s - npy.array(other).reshape(-1,1,1)
+            
+        return result
+    
+    def __rsub__(self,other):
+        '''
+        Element-wise complex subtraction of s-matrix
+        '''
+        result = self.copy()
+        
+        if isinstance(other, Network):
+            self.__compatable_for_scalar_operation_test(other)
+            result.s = other.s - self.s
+        else:
+            # other may be an array or a number
+            result.s = npy.array(other).reshape(-1,1,1) - self.s
+            
         return result
 
     def __div__(self,other):
         '''
-        element-wise division  of s-matrix
+        Element-wise complex multiplication of s-matrix
         '''
-        self.__compatable_for_scalar_operation_test(other)
         result = self.copy()
-        result.s =(self.s/ other.s)
+        
+        if isinstance(other, Network):
+            self.__compatable_for_scalar_operation_test(other)
+            result.s = self.s / other.s
+        else:
+            # other may be an array or a number
+            result.s = self.s / npy.array(other).reshape(-1,1,1)
+            
         return result
+    
 
     def __eq__(self,other):
-        if npy.all(npy.abs(self.s - other.s) < ALMOST_ZER0):
+        if npy.all(npy.abs(self.s - other.s) < ALMOST_ZERO):
             return True
         else:
             return False

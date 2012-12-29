@@ -126,7 +126,42 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue((abs(rf.y2s(ntwk.y, ntwk.z0)-ntwk.s) < tinyfloat).all())
         self.assertTrue((abs(rf.z2y(ntwk.z)-ntwk.y) < tinyfloat).all())
         self.assertTrue((abs(rf.z2s(ntwk.z, ntwk.z0)-ntwk.s) < tinyfloat).all())
-
+    
+    def test_mul(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        # operating on  networks
+        self.assertTrue( ((a*a).s == npy.array([[[-3+4j]],[[-7+24j]]])).all())
+        # operating on numbers
+        self.assertTrue( ((2*a*2).s == npy.array([[[4+8j]],[[12+16j]]])).all())
+        # operating on list
+        self.assertTrue( ((a*[1,2]).s == npy.array([[[1+2j]],[[6+8j]]])).all())
+    
+    def test_sub(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        # operating on  networks
+        self.assertTrue( ((a-a).s == npy.array([[[0+0j]],[[0+0j]]])).all())
+        # operating on numbers
+        self.assertTrue( ((a-(2+2j)).s == npy.array([[[-1+0j]],[[1+2j]]])).all())
+        # operating on list
+        self.assertTrue( ((a-[1+1j,2+2j]).s == npy.array([[[0+1j]],[[1+2j]]])).all()) 
+    
+    def test_div(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        # operating on  networks
+        self.assertTrue( ((a/a).s == npy.array([[[1+0j]],[[1+0j]]])).all())
+        # operating on numbers
+        self.assertTrue( ((a/2.).s == npy.array([[[.5+1j]],[[3/2.+2j]]])).all())
+        # operating on list
+        self.assertTrue( ((a/[1,2]).s == npy.array([[[1+2j]],[[3/2.+2j]]])).all())    
+    
+    def test_add(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        # operating on  networks
+        self.assertTrue( ((a+a).s == npy.array([[[2+4j]],[[6+8j]]])).all())
+        # operating on numbers
+        self.assertTrue( ((a+2+2j).s == npy.array([[[3+4j]],[[5+6j]]])).all())
+        # operating on list
+        self.assertTrue( ((a+[1+1j,2+2j]).s == npy.array([[[2+3j]],[[5+6j]]])).all())
     
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
