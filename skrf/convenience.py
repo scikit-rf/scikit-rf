@@ -484,39 +484,7 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
 
 
 
-## file conversion
-def statistical_2_touchstone(file_name, new_file_name=None,\
-        header_string='# GHz S RI R 50.0'):
-    '''
-    Cvonverts Statistical file to a touchstone file. 
-    
-    Converts the file format used by Statistical and other Dylan Williams
-    software to standard touchstone format.
 
-    Parameters
-    ------------
-    file_name : string
-            name of file to convert
-    new_file_name : string
-            name of new file to write out (including extension)
-    header_string : string
-            touchstone header written to first beginning of file
-
-    '''
-    if new_file_name is None:
-        new_file_name = 'tmp-'+file_name
-        remove_tmp_file = True
-
-    old_file = file(file_name,'r')
-    new_file = open(new_file_name,'w')
-    new_file.write('%s\n'%header_string)
-    for line in old_file:
-        new_file.write(line)
-    new_file.close()
-    old_file.close()
-
-    if remove_tmp_file is True:
-        os.rename(new_file_name,file_name)
 
 
 ## script templates

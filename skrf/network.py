@@ -53,6 +53,7 @@ Connecting Networks
     cascade
     de_embed
     stitch
+    flip
 
 
 Interpolation
@@ -76,6 +77,16 @@ IO
     Network.write
     Network.write_touchstone
     Network.read
+    
+Noise
+============
+.. autosummary::
+    :toctree: generated/
+    
+    Network.add_noise_polar
+    Network.add_noise_polar_flatband
+    Network.multiply_noise
+
     
 Supporting Functions
 ======================
@@ -108,10 +119,7 @@ Misc Functions
     average
     one_port_2_two_port
     impedance_mismatch
-    load_all_touchstones
-    write_dict_of_networks
-    csv_2_touchstone
-
+    Network.nudge
 
 
 '''
@@ -142,7 +150,6 @@ try:
     from src import connect_s_fast
 except:
     pass#warnings.warn('libconnect failed to load.')
-
 
 
 
@@ -237,7 +244,7 @@ class Network(object):
 
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
-
+    
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
         're'    : npy.real,
@@ -564,8 +571,18 @@ class Network(object):
                 func = COMPONENT_FUNC_DICT[func_name]
                 def fget(self, f=func, p = prop_name):
                     return f(getattr(self,p))
+                
+                doc = '''
+                The %s component of the %s-matrix
+                
+                
+                See Also
+                ----------
+                %s
+                '''%(func_name, prop_name, prop_name)
+                
                 setattr(self.__class__,'%s_%s'%(prop_name, func_name),\
-                    property(fget))
+                    property(fget, doc = doc))
 
     def __generate_plot_functions(self):
         '''
@@ -868,7 +885,11 @@ class Network(object):
                     ntwk.s = self.s[:,m,n]
                     ntwk.z0 = self.z0[:,m]
                     return ntwk
-                setattr(self.__class__,'s%i%i'%(m+1,n+1),property(fget))
+                doc = '''
+                one-port sub-network.
+                '''
+                setattr(self.__class__,'s%i%i'%(m+1,n+1),\
+                    property(fget,doc=doc))
 
     ## PRIMARY PROPERTIES
     @property
@@ -2232,15 +2253,15 @@ def stitch(ntwkA, ntwkB, **kwargs):
 
 def average(list_of_networks):
     '''
-    calculates the average network from a list of Networks.
+    Calculates the average network from a list of Networks.
 
-    this is complex average of the s-parameters for a  list of Networks
+    This is complex average of the s-parameters for a  list of Networks. 
 
 
     Parameters
     -----------
-    list_of_networks: list
-            a list of :class:`Network` objects
+    list_of_networks : list of :class:`Network` objects
+        the list of networks to average
 
     Returns
     ---------
@@ -2250,7 +2271,7 @@ def average(list_of_networks):
     Notes
     ------
     This same function can be accomplished with properties of a
-    :class:`NetworkSet` class.
+    :class:`~skrf.networkset.NetworkSet` class.
 
     Examples
     ---------
@@ -2408,8 +2429,7 @@ def innerconnect_s(A, k, l):
 
     return C
    
-## network representation conversion       
-
+## network parameter conversion       
 def s2z(s,z0=50):
     '''
     Convert scattering parameters [#]_ to impedance parameters [#]_
@@ -2462,14 +2482,10 @@ def s2z(s,z0=50):
     s = s.copy() # to prevent the original array from being altered
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
-    #try:
     for fidx in xrange(s.shape[0]):
         sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
         z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
     return z
-    #except (npy.linalg.LinAlgError, ValueError):
-        #print ('Warning: Cannot compute impedance parameters for network.')
-        #return None
 
 def s2y(s,z0=50):
     '''
@@ -2523,14 +2539,10 @@ def s2y(s,z0=50):
     s = s.copy() # to prevent the original array from being altered
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
-    #try:
     for fidx in xrange(s.shape[0]):
         sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
         y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
     return y
-    #except (npy.linalg.LinAlgError, ValueError):
-    #    print ('Warning: Cannot compute admittance parameters for network.')
-    #    return None
 
 def s2t(s):
     '''
@@ -2640,7 +2652,6 @@ def z2s(z, z0=50):
         s[fidx] = (sqrty0*z[fidx]*sqrty0 - I) * (sqrty0*z[fidx]*sqrty0 + I)**-1
     return s
 
-
 def z2y(z):
     '''
     convert impedance parameters [#]_ to admittance parameters [#]_
@@ -2685,7 +2696,6 @@ def z2y(z):
     '''
     return npy.array([npy.mat(z[f,:,:])**-1 for f in xrange(z.shape[0])])
     
-
 def z2t(z):
     '''
     Not Implemented yet
@@ -3115,7 +3125,6 @@ def check_nports_equal(ntwkA,ntwkB):
         raise ValueError('Networks dont have matching number of ports.')
         
 ## TESTs (return [usually boolean] values)
-# TODO: would like to nose from running these, but i dont know how
 def assert_frequency_equal(ntwkA, ntwkB):
     '''
     '''
@@ -3209,100 +3218,4 @@ def two_port_reflect(ntwk1, ntwk2):
     except(TypeError):
         pass
     return result
-
-# Touchstone manipulation
-def load_all_touchstones(dir = '.', contains=None, f_unit=None):
-    '''
-    loads all touchtone files in a given dir into a dictionary.
-
-    Parameters
-    -----------
-    dir :   string
-            the path
-    contains :      string
-            a string the filenames must contain to be loaded.
-    f_unit  : ['hz','mhz','ghz']
-            the frequency unit to assign all loaded networks. see
-            :attr:`frequency.Frequency.unit`.
-
-    Returns
-    ---------
-    ntwkDict : a dictonary with keys equal to the file name (without
-            a suffix), and values equal to the corresponding ntwk types
-
-    Examples
-    ----------
-    >>> ntwk_dict = rf.load_all_touchstones('.', contains ='20v')
-
-    '''
-    ntwkDict = {}
-
-    for f in os.listdir (dir):
-        if contains is not None and contains not in f:
-            continue
-
-        # TODO: make this s?p with reg ex
-        if( f.lower().endswith ('.s1p') or f.lower().endswith ('.s2p') ):
-            name = f[:-4]
-            ntwkDict[name]=(Network(dir +'/'+f))
-            if f_unit is not None: ntwkDict[name].frequency.unit=f_unit
-
-    return ntwkDict
-
-def write_dict_of_networks(ntwkDict, dir='.'):
-    '''
-    saves a dictionary of networks touchstone files in a given directory
-
-    The filenames assigned to the touchstone files are taken from
-    the keys of the dictionary.
-
-    Parameters
-    -----------
-    ntwkDict : dictionary
-            dictionary of :class:`Network` objects
-    dir : string
-            directory to write touchstone file to
-
-
-    '''
-    for ntwkKey in ntwkDict:
-        ntwkDict[ntwkKey].write_touchstone(filename = dir+'/'+ntwkKey)
-
-def csv_2_touchstone(filename):
-    '''
-    converts a csv file to a :class:`Network`
-
-    specifically, this converts csv files saved from a Rohde Shcwarz
-    ZVA-40, and possibly other network analyzers, into a :class:`Network`
-    object.
-
-    Parameters
-    ------------
-    filename : string
-            name of file
-
-    Returns
-    --------
-    ntwk : :class:`Network` object
-            the network representing data in the csv file
-    '''
-
-    ntwk = Network(name=filename[:-4])
-    try:
-        data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
-                usecols=range(9))
-        s11 = data[:,1] +1j*data[:,2]
-        s21 = data[:,3] +1j*data[:,4]
-        s12 = data[:,5] +1j*data[:,6]
-        s22 = data[:,7] +1j*data[:,8]
-        ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
-    except(IndexError):
-        data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
-                usecols=range(3))
-        ntwk.s = data[:,1] +1j*data[:,2]
-
-    ntwk.frequency.f = data[:,0]
-    ntwk.frequency.unit='ghz'
-
-    return ntwk
 

@@ -43,8 +43,8 @@ practice through the Network constructor, :func:`~skrf.network.Network.__init__`
    
 '''
 
-import io
+import general
 import touchstone
 
-from io import * 
+from general import * 
 from touchstone import * 
