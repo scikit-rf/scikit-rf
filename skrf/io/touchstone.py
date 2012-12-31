@@ -21,14 +21,28 @@
 touchstone (:mod:`skrf.io.touchstone`)
 ========================================
 
+Touchstone class
 .. autosummary::
     :toctree: generated/
 
     Touchstone
+    
+
+functions
+.. autosummary::
+    :toctree: generated/
+
+    hfss_touchstone_2_gamma_z0
+    hfss_touchstone_2_media
 '''
 
 import numpy
+import numpy as npy
 from ..helper import get_fid
+from ..network import Network
+from ..frequency import Frequency
+from ..media import  Media
+from .. import mathFunctions as mf
 
 class Touchstone():
     '''
@@ -291,3 +305,98 @@ class Touchstone():
         noise_normalized_resistance = noise_values[:,4]
 
 
+def hfss_touchstone_2_gamma_z0(filename):
+    '''
+    Extracts Z0 and Gamma comments from touchstone file
+    
+    Takes a HFSS-style touchstone file with Gamma and Z0 comments and 
+    extracts a triplet of arrays being: (frequency, Gamma, Z0)
+    
+    Parameters
+    ------------
+    filename : string 
+        the HFSS-style touchstone file
+    
+    
+    Returns
+    --------
+    f : numpy.ndarray
+        frequency vector (in Hz)
+    gamma : complex numpy.ndarray
+        complex  propagation constant
+    z0 : numpy.ndarray
+        complex port impedance
+    
+    Examples
+    ----------
+    >>> f,gamm,z0 = rf.hfss_touchstone_2_gamma_z0('line.s2p')
+    '''
+    #TODO: make this work for different HFSS versions. and arbitrary 
+    # number of ports
+    ntwk = Network(filename)
+    f= open(filename)
+    gamma, z0 = [],[]
+    
+    def line2ComplexVector(s):
+        return mf.scalar2Complex(\
+            npy.array(\
+                [k for k in s.strip().split(' ') if k != ''][ntwk.nports*-2:],\
+                dtype='float'
+                )
+            )
+            
+    for line in f:
+        if '! Gamma' in line:
+            gamma.append(line2ComplexVector(line))
+        if '! Port Impedance' in line:
+            z0.append(line2ComplexVector(line))
+    
+    if len (z0) ==0:
+        raise(ValueError('Touchstone does not contain valid gamma, port impedance comments'))
+        
+    return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
+
+def hfss_touchstone_2_media(filename, f_unit='ghz'):
+    '''
+    Creates a :class:`~skrf.media.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments 
+    
+    Parameters
+    ------------
+    filename : string 
+        the HFSS-style touchstone file
+    f_unit : ['hz','khz','mhz','ghz']
+        passed to f_unit parameters of Frequency constructor
+    
+    Returns
+    --------
+    my_media : skrf.media.Media object
+        the transmission line model defined by the gamma, and z0 
+        comments in the HFSS file.
+    
+    Examples
+    ----------
+    >>> port1_media, port2_media = rf.hfss_touchstone_2_media('line.s2p')
+    
+    See Also
+    ---------
+    hfss_touchstone_2_gamma_z0 : returns gamma, and z0 
+    '''
+    f, gamma, z0 = hfss_touchstone_2_gamma_z0(filename)
+    
+    freq = Frequency.from_f(f)
+    freq.unit = f_unit
+    
+    
+    media_list = []
+    
+    for port_n in range(gamma.shape[1]):
+        media_list.append(\
+            Media(
+                frequency = freq, 
+                propagation_constant =  gamma[:, port_n],
+                characteristic_impedance = z0[:, port_n]
+                )
+            )
+        
+        
+    return media_list 

@@ -53,6 +53,8 @@ Modules
    reference/convenience
    reference/mathFunctions
    reference/tlineFunctions
+   reference/constants
+   reference/helper
 
 
    

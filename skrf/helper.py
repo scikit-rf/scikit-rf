@@ -26,8 +26,7 @@
 convenience (:mod:`skrf.convenience`)
 ========================================
 
-Holds pre-initialized objects's and functions that are general
-conveniences.
+Holds functions that are general conveniences.
 
 
 Plotting 
@@ -40,13 +39,6 @@ Plotting
    legend_off
    func_on_all_figs
    
-IO
-----
-.. autosummary::
-   :toctree: generated/
-    
-    hfss_touchstone_2_media
-    hfss_touchstone_2_gamma_z0
 
 General 
 ------------
@@ -57,50 +49,6 @@ General
    find_nearest
    find_nearest_index
 
-
-
-Pre-initialized Objects
---------------------------
-
-:class:`~skrf.frequency.Frequency` Objects
-==============================================
-These are predefined :class:`~skrf.frequency.Frequency` objects
-that correspond to standard waveguide bands. This information is taken
-from the VDI Application Note 1002 [#]_ . The naming convenction is
-f_wr# where '#' is the band number.
-
-
-=======================  ===============================================
-Object Name              Description
-=======================  ===============================================
-f_wr10                   WR-10, 75-110 GHz
-f_wr3                    WR-3, 220-325 GHz
-f_wr2p2                  WR-2.2, 330-500 GHz
-f_wr1p5                  WR-1.5, 500-750 GHz
-f_wr1                    WR-1, 750-1100 GHz
-=======================  ===============================================
-
-
-:class:`~skrf.media.media.Media` Objects
-==============================================
-These are predefined :class:`~skrf.media.media.Media` objects
-that represent Standardized transmission line media's. This information
-
-Rectangular Waveguide Media's
-++++++++++++++++++++++++++++++++++
-
-:class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`
-Objects for standard bands.
-
-=======================  ===============================================
-Object Name              Description
-=======================  ===============================================
-wr10                     WR-10, 75-110 GHz
-wr3                      WR-3, 220-325 GHz
-wr2p2                    WR-2.2, 330-500 GHz
-wr1p5                    WR-1.5, 500-750 GHz
-wr1                      WR-1, 750-1100 GHz
-=======================  ===============================================
 
 Shorthand Names 
 ----------------

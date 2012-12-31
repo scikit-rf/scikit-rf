@@ -236,7 +236,7 @@ class Network(object):
     
     References
     ------------
-    .. [1] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
     '''
     # used for testing s-parameter equivalence
     global ALMOST_ZERO

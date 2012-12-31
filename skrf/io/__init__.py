@@ -27,7 +27,7 @@ io (:mod:`skrf.io`)
 
 This Package provides io functions and objects. 
 
-The  general functions  :func:`general.read` and :func:`general.write` 
+The  general functions  :func:`~general.read` and :func:`~general.write` 
 can be used to read and write any skrf object, using the :mod:`pickle` 
 module.
 
