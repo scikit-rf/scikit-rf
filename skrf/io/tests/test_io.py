@@ -34,24 +34,24 @@ class IOTestCase(unittest.TestCase):
         self.assertEqual(rf.read(self.pickle_file), obj)
         os.remove(self.pickle_file)
     
-    #def test_read_touchstone(self):
-    #    short = rf.read(os.path.join(self.test_dir, 'short.s1p'))
-    #    self.assertEqual(self.short, short)
+   
     
     def test_read_all(self):
         rf.read_all(self.test_dir)
         
-    def test_write_all_locals(self):
+    def test_save_sesh(self):
         a=self.ntwk1
         b=self.ntwk2
         c=self.ntwk3
-        rf.write_all(locals(),self.pickle_file )
+        rf.save_sesh(locals(),self.pickle_file )
         os.remove(self.pickle_file)
     
     def test_write_all_dict(self):
         d = dict(a=self.ntwk1, b=self.ntwk2,   c=self.ntwk3)
-        rf.write_all(d,self.pickle_file )
-        os.remove(self.pickle_file)
+        rf.write_all(d, dir =self.test_dir )
+        os.remove(os.path.join(self.test_dir, 'a.ntwk'))
+        os.remove(os.path.join(self.test_dir, 'b.ntwk'))
+        os.remove(os.path.join(self.test_dir, 'c.ntwk'))
         
     def test_readwrite_network(self):
         self.read_write(self.ntwk1)

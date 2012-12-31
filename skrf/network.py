@@ -1516,8 +1516,8 @@ class Network(object):
             filename or a file-object. If left as None then the 
             filename will be set to Network.name, if its not None. 
             If both are None, ValueError is raised.
-        \*args, \*\*kwargs : arguments and keyword arguments
-            passed through to pickle.dump
+        \*args, \*\*kwargs : 
+            passed through to :func:`~skrf.io.general.write`
         
         Notes
         ------
@@ -1544,7 +1544,7 @@ class Network(object):
                  raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
             file = self.name
 
-        write(file,self) # from convenience
+        write(file,self,*args, **kwargs) # from convenience
     
     
     def read(self, *args, **kwargs):
