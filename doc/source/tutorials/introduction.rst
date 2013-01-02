@@ -124,8 +124,7 @@ Frequently there is an entire directory of touchstone files that need to be anal
 	'ring slot': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
 	'short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.]}
 	
-Other convenient functions, and pre-initialized objects are located in the 
-:mod:`convenience` module
+Pre-initialized objects are located in the  :mod:`constants` module
 
 
 References

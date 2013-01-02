@@ -53,7 +53,7 @@ from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
 from ..networkSet import NetworkSet
-from ..convenience import *
+
 
 ## later imports. delayed to solve circular dependencies
 #from io.general import write
@@ -765,7 +765,7 @@ class Calibration(object):
     # io
     def write(self, file=None,  *args, **kwargs):
         '''
-        Write the Calibration to disk using the pickle module 
+        Write the Calibration to disk using :func:`~skrf.io.general.write`
         
         
         Parameters
@@ -775,7 +775,7 @@ class Calibration(object):
             filename will be set to Calibration.name, if its not None. 
             If both are None, ValueError is raised.
         \*args, \*\*kwargs : arguments and keyword arguments
-            passed through to pickle.dump
+            passed through to :func:`~skrf.io.general.write`
         
         Notes
         ------
@@ -786,12 +786,13 @@ class Calibration(object):
         Examples
         ---------
         >>> cal.name = 'my_cal'
-        >>> cal.pickle()
+        >>> cal.write()
         
         See Also
         ---------
-        :func:`skrf.convenience.write`
-        :func:`skrf.convenience.read`
+        skrf.io.general.write
+        skrf.io.general.read
+        
         '''
         # this import is delayed untill here because of a circular depency
         from ..io.general import write
@@ -801,7 +802,7 @@ class Calibration(object):
                  raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
             file = self.name
 
-        write(file,self) 
+        write(file,self, *args, **kwargs) 
 
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):

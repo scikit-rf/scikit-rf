@@ -1,6 +1,6 @@
 
 #
-#       helper.py
+#       util.py
 #
 #       Copyright 2012 alex arsenovic <arsenovic@virginia.edu>
 #
@@ -21,12 +21,12 @@
 
 '''
 
-.. currentmodule:: skrf.convenience
+.. currentmodule:: skrf.util
 ========================================
-convenience (:mod:`skrf.convenience`)
+util (:mod:`skrf.util`)
 ========================================
 
-Holds functions that are general conveniences.
+Holds utility functions that are general conveniences.
 
 
 Plotting 
@@ -75,7 +75,7 @@ longwinded functions.
 Shorthand    Full Object Name   
 ============ ================
 lat          :func:`~skrf.network.load_all_touchstones`
-saf          :func:`~skrf.convenience.save_all_figs`
+saf          :func:`~skrf.util.save_all_figs`
 ============ ================
  
 

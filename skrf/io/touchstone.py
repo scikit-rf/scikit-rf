@@ -1,6 +1,6 @@
 
 
-#     Copyright (C) 2008 Werner Hoch
+#     Copyright (C) 2008 Werner Hoch, 2012 Alex Arsenovic
 #
 #    This program is free software; you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -22,13 +22,15 @@ touchstone (:mod:`skrf.io.touchstone`)
 ========================================
 
 Touchstone class
+
 .. autosummary::
     :toctree: generated/
 
     Touchstone
     
 
-functions
+Functions related to reading/writing touchstones.
+
 .. autosummary::
     :toctree: generated/
 
