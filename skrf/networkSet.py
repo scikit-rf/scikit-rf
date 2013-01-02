@@ -767,7 +767,7 @@ def getset(ntwk_dict, s, *args, **kwargs):
     Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
     objects in a dictionary that contain `s` in its key. This is useful 
     for dealing with the output of 
-    :func:`~skrf.convenience.load_all_touchstones`, which contains
+    :func:`~skrf.io.general.load_all_touchstones`, which contains
     Networks grouped by some kind of naming convention.
     
     Parameters

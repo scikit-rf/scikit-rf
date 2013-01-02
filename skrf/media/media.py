@@ -65,20 +65,7 @@ class Media(object):
     calling :func:`match` to create a 'blank'
     :class:`~skrf.network.Network`, and then fill in the s-matrix.
     
-    IO
-    ----
     
-    Media objects can be read and written to disk through the use of 
-    
-    .. autosummary::
-        :toctree: generated/
-        
-        from_csv
-        write_csv
-    
-    There is also a function in the :mod:`skrf.convenience` module, 
-    which allows a Media object to be initialized from a 
-    touchstone file created with HFSS, if z0/gamma comments are exported. 
     
     '''
     def __init__(self, frequency,  propagation_constant,

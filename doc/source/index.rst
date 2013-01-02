@@ -50,11 +50,9 @@ Modules
    reference/networkSet
    reference/frequency
    reference/plotting
-   reference/convenience
    reference/mathFunctions
    reference/tlineFunctions
    reference/constants
-   reference/helper
 
 
    

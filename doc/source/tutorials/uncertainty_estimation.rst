@@ -36,7 +36,7 @@ would like to calculate the mean response, with uncertainty bounds.
 
 This is most easily done by constructing :class:`~NetworkSet` object. 
 The fastest way to achieve this is to use the convenience function 
-:func:`~skrf.network.load_all_touchstones`, which returns a dictionary 
+:func:`~skrf.io.general.load_all_touchstones`, which returns a dictionary 
 with :class:`~skrf.network.Network` objects for values.
 
 .. plot:: ../pyplots/uncertainty_estimation/uncertainty_in_network_set.py

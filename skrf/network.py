@@ -1544,7 +1544,7 @@ class Network(object):
                  raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
             file = self.name
 
-        write(file,self,*args, **kwargs) # from convenience
+        write(file,self,*args, **kwargs)
     
     
     def read(self, *args, **kwargs):
