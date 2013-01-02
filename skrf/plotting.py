@@ -27,8 +27,8 @@ plotting (:mod:`skrf.plotting`)
 
 This module provides general plotting functions.
 
-Charts
--------
+Plots and Charts
+------------------
 
 .. autosummary::
     :toctree: generated/
@@ -40,6 +40,16 @@ Charts
     plot_complex_rectangular 
     plot_complex_polar
     
+Misc Functions
+-----------------
+
+.. autosummary::
+    :toctree: generated/
+    
+    save_all_figs
+    add_markers_to_lines
+    legend_off
+    func_on_all_figs
 
 '''
 import pylab as plb
@@ -169,7 +179,6 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, ax=None):
     for currentContour in contour:
         cc=ax1.add_patch(currentContour)
         cc.set_clip_path(clipc)
-
 
 def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     show_legend=True, axis='tight', ax=None, *args, **kwargs):
@@ -405,8 +414,6 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
     if plb.isinteractive():
         plb.draw()
 
-
-
 def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
     '''
     Shades frequency bands.
@@ -437,3 +444,95 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
             y_range[0], y_range[1], 
             color = cmap(1.0*k/len(edges)),
             **kwargs)
+
+
+def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
+    '''
+    Save all open Figures to disk.
+
+    Parameters
+    ------------
+    dir : string
+            path to save figures into
+    format : list of strings
+            the types of formats to save figures as. The elements of this
+            list are passed to :matplotlib:`savefig`. This is a list so that
+            you can save each figure in multiple formats.
+    '''
+    if dir[-1] != '/':
+        dir = dir + '/'
+    for fignum in plb.get_fignums():
+        fileName = plb.figure(fignum).get_axes()[0].get_title()
+        if fileName == '':
+            fileName = 'unamedPlot'
+        for fmt in format:
+            plb.savefig(dir+fileName+'.'+fmt, format=fmt)
+            print (dir+fileName+'.'+fmt)
+saf = save_all_figs
+
+def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
+    '''
+    adds markers to existing lings on a plot 
+    
+    this is convinient if you have already have a plot made, but then 
+    need to add markers afterwards, so that it can be interpreted in 
+    black and white. The markevery argument makes the markers less 
+    frequent than the data, which is generally what you want. 
+    
+    Parameters
+    -----------
+    ax : matplotlib.Axes
+        axis which to add markers to, defaults to gca()
+    marker_list : list of marker characters
+        see matplotlib.plot help for possible marker characters
+    markevery : int
+        markevery number of points with a marker.
+    
+    '''
+    if ax is None:
+        ax=plb.gca()
+    lines = ax.get_lines()
+    if len(lines) > len (marker_list ):
+        marker_list *= 3
+    [k[0].set_marker(k[1]) for k in zip(lines, marker_list)]
+    [line.set_markevery(markevery) for line in lines]
+
+def legend_off(ax=None):
+    '''
+    turn off the legend for a given axes. 
+    
+    if no axes is given then it will use current axes.
+    
+    Parameters
+    -----------
+    ax : matplotlib.Axes object
+        axes to operate on 
+    '''
+    if ax is None:
+        plb.gca().legend_.set_visible(0)
+    else:
+        ax.legend_.set_visible(0)
+
+def func_on_all_figs(func, *args, **kwargs):
+    '''
+    runs a function after making all open figures current. 
+    
+    useful if you need to change the properties of many open figures 
+    at once, like turn off the grid. 
+    
+    Parameters
+    ----------
+    func : function
+        function to call
+    \*args, \*\*kwargs : pased to func
+    
+    Examples
+    ----------
+    >>> rf.func_on_all_figs(grid,alpha=.3)
+    '''
+    for fig_n in plb.get_fignums():
+        fig = plb.figure(fig_n)
+        for ax_n in fig.axes:
+            fig.add_axes(ax_n) # trick to make axes current
+            func(*args, **kwargs)
+            plb.draw()

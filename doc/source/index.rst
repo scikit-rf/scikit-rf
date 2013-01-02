@@ -39,6 +39,7 @@ Major Classes
 * :class:`~skrf.network.Network`
 * :class:`~skrf.networkSet.NetworkSet`
 * :class:`~skrf.frequency.Frequency`
+* :class:`~skrf.media.media.Media`
 * :class:`~skrf.calibration.calibration.Calibration`
 
 Modules
@@ -53,6 +54,7 @@ Modules
    reference/mathFunctions
    reference/tlineFunctions
    reference/constants
+   reference/util
 
 
    
