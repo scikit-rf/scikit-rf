@@ -1,6 +1,7 @@
-===================================
-scikit-rf's documentation
-===================================
+==========================================================
+`scikit-rf <http://www.scikit-rf.org>`_ 's documentation
+==========================================================
+
 
 This documentation is also available in pdf form:   `scikit-rf.pdf <scikit-rf.pdf>`_
    
@@ -17,7 +18,8 @@ Tutorials
    tutorials/calibration
    tutorials/circuit_design
    tutorials/uncertainty_estimation
-   tutorials/develop
+   
+* `Development <https://github.com/scikit-rf/scikit-rf/wiki/Development>`_
 
 Examples
 ---------
