@@ -39,7 +39,7 @@ The fastest way to achieve this is to use the convenience function
 :func:`~skrf.io.general.load_all_touchstones`, which returns a dictionary 
 with :class:`~skrf.network.Network` objects for values.
 
-.. plot:: ../pyplots/uncertainty_estimation/uncertainty_in_network_set.py
+.. plot:: ./pyplots/uncertainty_estimation/uncertainty_in_network_set.py
    :include-source:
 
 

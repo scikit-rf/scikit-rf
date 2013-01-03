@@ -6,35 +6,50 @@ Introduction
 .. currentmodule:: skrf.network
 .. contents::
 
-This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorial is most easily followed by using the ipython_ shell with the `--pylab` flag.  
+This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorial is most easily followed by using the ipython_ shell with the `--pylab` flag. ::
 
-**Note:** All of the scripts and touchstone files used in these tutorials are provided along with this source code in the directory ``doc/source/pyplots/`` (relative to the scikit-rf root).
+	> ipython --pylab
+	In [1]: 
+
+.. ipython::
+	:suppress:
+	
+	In [144]: from pylab import *
+	
+	In [145]: ion()
+	
+	In [146]: rcParams['savefig.dpi'] =120
+	
+	In [147]: rcParams['figure.figsize'] = [4,3]
+	
+
+**Note:** The example code in these tutorials reference files that are distributed with the source package. The working directory for these code snippets is ``scikit-rf/doc/``, hence all data files are referenced relative to that directory. 
 
 Creating Networks 
 ------------------
 
-For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that skrf has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you::
+For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you
+
 
 .. ipython::
 
-   In [136]: x = 2
+  In [138]: import skrf as rf
 
-   In [137]: x**3
-   Out[137]: 8
+If this produces an error, please see :doc:`installation`.  The code in this tutorial assumes that you are in the directory ``scikit-rf/doc``.
 
-	>>> import skrf as rf
+**skrf** provides an object for a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file.
 
-If this produces an error, please see :doc:`installation`. 
+.. ipython::
+			
+	In [139]: ring_slot = rf.Network('../skrf/data/ring slot.s2p')
 
-skrf provides an object for a n-port microwave :class:`Network`. Most commonly, a :class:`Network` is constructed from data stored in a touchstone files, like so ::
+ 
 	
-	>>> short = rf.Network('short.s1p')
-	>>> delay_short = rf.Network('delay_short.s1p')
-
-Once created, the :class:`Network` object will print out a short description if entered onto the command line::
+A :class:`Network` object will print out a short description if entered onto the command line
 	
-	>>> short
-	1-Port Network.  75-110 GHz.  201 points. z0=[ 50.]
+.. ipython::
+	
+	In [1]: ring_slot
 
 Basic Network Properties
 -------------------------
@@ -46,19 +61,47 @@ following properties :
 * :attr:`Network.z0`  : Characterisic Impedance matrix.
 * :attr:`Network.frequency`  : Frequency Object. 
 
+Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well. All of the network parameters are represented internally as complex :class:`numpy.ndarray` 's of shape *FxNxN*, where *F* is the number of frequency points and *N* is the number of ports.
 
-These properties are represented internally as complex :func:`numpy.ndarray` 's, (and the indexing starts at 0!). The :class:`Network` class has numerous other properties and methods which can found in the  :class:`Network` docs. If you are using Ipython, then these properties and methods can be 'tabbed' out on the command line. Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the s-parameters, below is a short list of common plotting commands,
+.. ipython::
+			
+	In [139]: shape(ring_slot.s)
+
+Note that the indexing starts at 0, so the first 10 values of :math:`S_{11}` can be accessed with
+
+.. ipython::
+			
+	In [139]: ring_slot.s[:10,0,0]
+
+
+The :class:`Network` class has numerous other properties and methods which can found in the :class:`Network` docstring. If you are using IPython, then these properties and methods can be 'tabbed' out on the command line. 
+
+
+.. ipython::
+	
+	@verbatim
+	In [1]: short.s<TAB>
+	rf.data.line.s              rf.data.line.s_arcl         rf.data.line.s_im
+	rf.data.line.s11            rf.data.line.s_arcl_unwrap  rf.data.line.s_mag
+	...
+
+
+
+Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the network parameters, 
 
 * :func:`Network.plot_s_db` : plot magnitude of s-parameters in log scale
 * :func:`Network.plot_s_deg` : plot phase of s-parameters in degrees
 * :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
+* ...
 
-For example, to create a 2-port :class:`Network` from a touchstone file,
-and then plot all s-parameters on the Smith Chart.
+To plot all four s-parameters of the `ring_slot` on the Smith Chart.
+
+.. ipython::
+
+   @savefig ring_slot.png 
+   In [151]: ring_slot.plot_s_smith()
 
 
-.. plot:: ../pyplots/introduction/simple_plot.py
-   :include-source:
 
 For more detailed information about plotting see :doc:`plotting`.   
 
@@ -68,12 +111,23 @@ Network Operators
 Element-wise Operations 
 =========================
 	
-Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators::
+Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators
 
-	>>> short + delay_short
-	>>> short - delay_short 
-	>>> short / delay_short 
-	>>> short * delay_short
+.. ipython::
+	
+	In [21]: short = rf.data.wr2p2_short
+
+	In [22]: line = rf.data.wr2p2_line
+
+
+	
+	[1] short + delay_short
+	
+	[2] short - delay_short 
+	
+	[3] short / delay_short 
+	
+	[4] short * delay_short
 
 All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, the difference operation ('-') can be used to calculate the complex distance between two networks ::
 	
@@ -133,6 +187,21 @@ Frequently there is an entire directory of touchstone files that need to be anal
 	
 Pre-initialized objects are located in the  :mod:`constants` module
 
+
+Reading and Writing skrf objects
+======================================
+using the functions Another way, is to create a network from a `pickled` Network object. 
+.. ipython::
+			
+	In [139]: short = rf.Network('../skrf/data/short.s1p')
+
+From values
+===============
+Alternatively, a :class:`Network`  can be created `from scratch` by  passing values of relevant parametesr as arguments 
+
+.. ipython::
+			
+	In [139]: my_ntwk = rf.Network(f = [1,2,3], s = [1,.5,1j], z0 = 50 )
 
 References
 ----------	
