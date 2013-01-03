@@ -12,74 +12,63 @@ It will:
 - Renumber references.
 - Extract the signature from the docstring, if it can't be determined otherwise.
 
-.. [1] https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt
+.. [1] http://projects.scipy.org/scipy/numpy/wiki/CodingStyleGuidelines#docstring-standard
 
 """
 
-import sphinx
-
-if sphinx.__version__ < '1.0.1':
-    raise RuntimeError("Sphinx 1.0.1 or newer is required")
-
 import os, re, pydoc
 from docscrape_sphinx import get_doc_object, SphinxDocString
-from sphinx.util.compat import Directive
 import inspect
 
 def mangle_docstrings(app, what, name, obj, options, lines,
                       reference_offset=[0]):
-
-    cfg = dict(use_plots=app.config.numpydoc_use_plots,
-               show_class_members=app.config.numpydoc_show_class_members)
-
     if what == 'module':
         # Strip top title
-        title_re = re.compile(ur'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
+        title_re = re.compile(r'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
                               re.I|re.S)
-        lines[:] = title_re.sub(u'', u"\n".join(lines)).split(u"\n")
+        lines[:] = title_re.sub('', "\n".join(lines)).split("\n")
     else:
-        doc = get_doc_object(obj, what, u"\n".join(lines), config=cfg)
-        lines[:] = unicode(doc).split(u"\n")
+        doc = get_doc_object(obj, what, "\n".join(lines))
+        lines[:] = str(doc).split("\n")
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
            obj.__name__:
         if hasattr(obj, '__module__'):
-            v = dict(full_name=u"%s.%s" % (obj.__module__, obj.__name__))
+            v = dict(full_name="%s.%s" % (obj.__module__, obj.__name__))
         else:
             v = dict(full_name=obj.__name__)
-        lines += [u'', u'.. htmlonly::', '']
-        lines += [u'    %s' % x for x in
+        lines += ['', '.. htmlonly::', '']
+        lines += ['    %s' % x for x in
                   (app.config.numpydoc_edit_link % v).split("\n")]
 
     # replace reference numbers so that there are no duplicates
     references = []
-    for line in lines:
-        line = line.strip()
-        m = re.match(ur'^.. \[([a-z0-9_.-])\]', line, re.I)
-        if m:
-            references.append(m.group(1))
+    for l in lines:
+        l = l.strip()
+        if l.startswith('.. ['):
+            try:
+                references.append(int(l[len('.. ['):l.index(']')]))
+            except ValueError:
+                print "WARNING: invalid reference in %s docstring" % name
 
-    # start renaming from the longest string, to avoid overwriting parts
-    references.sort(key=lambda x: -len(x))
+    # Start renaming from the biggest number, otherwise we may
+    # overwrite references.
+    references.sort()
     if references:
         for i, line in enumerate(lines):
             for r in references:
-                if re.match(ur'^\d+$', r):
-                    new_r = u"R%d" % (reference_offset[0] + int(r))
-                else:
-                    new_r = u"%s%d" % (r, reference_offset[0])
-                lines[i] = lines[i].replace(u'[%s]_' % r,
-                                            u'[%s]_' % new_r)
-                lines[i] = lines[i].replace(u'.. [%s]' % r,
-                                            u'.. [%s]' % new_r)
+                new_r = reference_offset[0] + r
+                lines[i] = lines[i].replace('[%d]_' % r,
+                                            '[%d]_' % new_r)
+                lines[i] = lines[i].replace('.. [%d]' % r,
+                                            '.. [%d]' % new_r)
 
     reference_offset[0] += len(references)
 
 def mangle_signature(app, what, name, obj, options, sig, retann):
     # Do not try to inspect classes that don't define `__init__`
     if (inspect.isclass(obj) and
-        (not hasattr(obj, '__init__') or
-        'initializes x; see ' in pydoc.getdoc(obj.__init__))):
+        'initializes x; see ' in pydoc.getdoc(obj.__init__)):
         return '', ''
 
     if not (callable(obj) or hasattr(obj, '__argspec_is_invalid_')): return
@@ -87,82 +76,41 @@ def mangle_signature(app, what, name, obj, options, sig, retann):
 
     doc = SphinxDocString(pydoc.getdoc(obj))
     if doc['Signature']:
-        sig = re.sub(u"^[^(]*", u"", doc['Signature'])
-        return sig, u''
+        sig = re.sub("^[^(]*", "", doc['Signature'])
+        return sig, ''
+
+def initialize(app):
+    try:
+        app.connect('autodoc-process-signature', mangle_signature)
+    except:
+        monkeypatch_sphinx_ext_autodoc()
 
 def setup(app, get_doc_object_=get_doc_object):
     global get_doc_object
     get_doc_object = get_doc_object_
-
+    
     app.connect('autodoc-process-docstring', mangle_docstrings)
-    app.connect('autodoc-process-signature', mangle_signature)
-    app.add_config_value('numpydoc_edit_link', None, False)
-    app.add_config_value('numpydoc_use_plots', None, False)
-    app.add_config_value('numpydoc_show_class_members', True, True)
-
-    # Extra mangling domains
-    app.add_domain(NumpyPythonDomain)
-    app.add_domain(NumpyCDomain)
+    app.connect('builder-inited', initialize)
+    app.add_config_value('numpydoc_edit_link', None, True)
 
 #------------------------------------------------------------------------------
-# Docstring-mangling domains
+# Monkeypatch sphinx.ext.autodoc to accept argspecless autodocs (Sphinx < 0.5)
 #------------------------------------------------------------------------------
 
-from docutils.statemachine import ViewList
-from sphinx.domains.c import CDomain
-from sphinx.domains.python import PythonDomain
+def monkeypatch_sphinx_ext_autodoc():
+    global _original_format_signature
+    import sphinx.ext.autodoc
 
-class ManglingDomainBase(object):
-    directive_mangling_map = {}
+    if sphinx.ext.autodoc.format_signature is our_format_signature:
+        return
 
-    def __init__(self, *a, **kw):
-        super(ManglingDomainBase, self).__init__(*a, **kw)
-        self.wrap_mangling_directives()
+    print "[numpydoc] Monkeypatching sphinx.ext.autodoc ..."
+    _original_format_signature = sphinx.ext.autodoc.format_signature
+    sphinx.ext.autodoc.format_signature = our_format_signature
 
-    def wrap_mangling_directives(self):
-        for name, objtype in self.directive_mangling_map.items():
-            self.directives[name] = wrap_mangling_directive(
-                self.directives[name], objtype)
-
-class NumpyPythonDomain(ManglingDomainBase, PythonDomain):
-    name = 'np'
-    directive_mangling_map = {
-        'function': 'function',
-        'class': 'class',
-        'exception': 'class',
-        'method': 'function',
-        'classmethod': 'function',
-        'staticmethod': 'function',
-        'attribute': 'attribute',
-    }
-
-class NumpyCDomain(ManglingDomainBase, CDomain):
-    name = 'np-c'
-    directive_mangling_map = {
-        'function': 'function',
-        'member': 'attribute',
-        'macro': 'function',
-        'type': 'class',
-        'var': 'object',
-    }
-
-def wrap_mangling_directive(base_directive, objtype):
-    class directive(base_directive):
-        def run(self):
-            env = self.state.document.settings.env
-
-            name = None
-            if self.arguments:
-                m = re.match(r'^(.*\s+)?(.*?)(\(.*)?', self.arguments[0])
-                name = m.group(2).strip()
-
-            if not name:
-                name = self.arguments[0]
-
-            lines = list(self.content)
-            mangle_docstrings(env.app, objtype, name, None, None, lines)
-            self.content = ViewList(lines, self.content.parent)
-
-            return base_directive.run(self)
-
-    return directive
+def our_format_signature(what, obj):
+    r = mangle_signature(None, what, None, obj, None, None, None)
+    if r is not None:
+        return r[0]
+    else:
+        return _original_format_signature(what, obj)
