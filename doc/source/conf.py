@@ -32,6 +32,12 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.pngmath',
     'numpydoc',
+    'ipython_console_highlighting',
+    'inheritance_diagram',
+    'matplotlib.sphinxext.mathmpl',
+    'matplotlib.sphinxext.only_directives',
+    'matplotlib.sphinxext.plot_directive',
+    'matplotlib.sphinxext.ipython_directive',
     'plot_directive',
     ]
 

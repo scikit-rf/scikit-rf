@@ -6,7 +6,7 @@ Introduction
 .. currentmodule:: skrf.network
 .. contents::
 
-This is a brief introduction to skrf, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . This tutorial is most easily followed by using the ipython_ shell with the `--pylab` flag. 
+This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorial is most easily followed by using the ipython_ shell with the `--pylab` flag.  
 
 **Note:** All of the scripts and touchstone files used in these tutorials are provided along with this source code in the directory ``doc/source/pyplots/`` (relative to the scikit-rf root).
 
@@ -14,6 +14,13 @@ Creating Networks
 ------------------
 
 For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that skrf has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you::
+
+.. ipython::
+
+   In [136]: x = 2
+
+   In [137]: x**3
+   Out[137]: 8
 
 	>>> import skrf as rf
 
@@ -40,7 +47,7 @@ following properties :
 * :attr:`Network.frequency`  : Frequency Object. 
 
 
-These properties are represented internally as complex numpy.ndarray's, (and the indexing starts at 0!). The :class:`Network` class has numerous other properties and methods which can found in the  :class:`Network` docs. If you are using Ipython, then these properties and methods can be 'tabbed' out on the command line. Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the s-parameters, below is a short list of common plotting commands,
+These properties are represented internally as complex :func:`numpy.ndarray` 's, (and the indexing starts at 0!). The :class:`Network` class has numerous other properties and methods which can found in the  :class:`Network` docs. If you are using Ipython, then these properties and methods can be 'tabbed' out on the command line. Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the s-parameters, below is a short list of common plotting commands,
 
 * :func:`Network.plot_s_db` : plot magnitude of s-parameters in log scale
 * :func:`Network.plot_s_deg` : plot phase of s-parameters in degrees
