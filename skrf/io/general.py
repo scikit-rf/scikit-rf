@@ -235,7 +235,7 @@ def read_all(dir='.', contains = None):
     
     Examples
     ----------
-    >>> rf.read_all('scikit-rf/data/')
+    >>> rf.read_all('skrf/data/')
     {'delay_short': 1-Port Network: 'delay_short',  75-110 GHz, 201 pts, z0=[ 50.+0.j],
     'line': 2-Port Network: 'line',  75-110 GHz, 201 pts, z0=[ 50.+0.j  50.+0.j],
     'ntwk1': 2-Port Network: 'ntwk1',  1-10 GHz, 91 pts, z0=[ 50.+0.j  50.+0.j],

@@ -135,7 +135,8 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((2*a*2).s == npy.array([[[4+8j]],[[12+16j]]])).all())
         # operating on list
         self.assertTrue( ((a*[1,2]).s == npy.array([[[1+2j]],[[6+8j]]])).all())
-    
+        self.assertTrue( (([1,2]*a).s == npy.array([[[1+2j]],[[6+8j]]])).all())
+        
     def test_sub(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
         # operating on  networks

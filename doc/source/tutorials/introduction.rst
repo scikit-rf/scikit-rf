@@ -10,6 +10,9 @@ This is a brief introduction to **skrf**, aimed at those who are familiar with p
 
 	> ipython --pylab
 	In [1]: 
+	
+This imports several commonly used functions, and turns on 
+`interactive mode <http://matplotlib.org/users/shell.html>`_ , so that plots display immediately. 
 
 .. ipython::
 	:suppress:
@@ -22,13 +25,16 @@ This is a brief introduction to **skrf**, aimed at those who are familiar with p
 	
 	In [147]: rcParams['figure.figsize'] = [4,3]
 	
+	In [147]: rcParams['figure.subplot.left'] = 0.15
 
-**Note:** The example code in these tutorials reference files that are distributed with the source package. The working directory for these code snippets is ``scikit-rf/doc/``, hence all data files are referenced relative to that directory. 
+.. note::
+
+	The example code in these tutorials reference files that are distributed with the source package. The working directory for these code snippets is ``scikit-rf/doc/``, hence all data files are referenced relative to that directory. 
 
 Creating Networks 
 ------------------
 
-For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you
+For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you.
 
 
 .. ipython::
@@ -45,20 +51,20 @@ If this produces an error, please see :doc:`installation`.  The code in this tut
 
  
 	
-A :class:`Network` object will print out a short description if entered onto the command line
+A short description of the network will be printed out if entered onto the command line
 	
 .. ipython::
 	
 	In [1]: ring_slot
 
-Basic Network Properties
+Network Basics
 -------------------------
 	
 The basic attributes of a microwave :class:`Network` are provided by the 
 following properties :
 
 * :attr:`Network.s` : Scattering Parameter matrix. 
-* :attr:`Network.z0`  : Characterisic Impedance matrix.
+* :attr:`Network.z0`  : Port Characterisic Impedance matrix.
 * :attr:`Network.frequency`  : Frequency Object. 
 
 Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well. All of the network parameters are represented internally as complex :class:`numpy.ndarray` 's of shape *FxNxN*, where *F* is the number of frequency points and *N* is the number of ports.
@@ -74,7 +80,7 @@ Note that the indexing starts at 0, so the first 10 values of :math:`S_{11}` can
 	In [139]: ring_slot.s[:10,0,0]
 
 
-The :class:`Network` class has numerous other properties and methods which can found in the :class:`Network` docstring. If you are using IPython, then these properties and methods can be 'tabbed' out on the command line. 
+The :class:`Network` object has numerous other properties and methods which can found in the :class:`Network` docstring. If you are using IPython, then these properties and methods can be 'tabbed' out on the command line. 
 
 
 .. ipython::
@@ -98,110 +104,228 @@ To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
 .. ipython::
 
-   @savefig ring_slot.png 
-   In [151]: ring_slot.plot_s_smith()
+   @savefig ring_slot,smith.png 
+   In [151]: ring_slot.plot_s_smith();
 
 
+
+.. ipython::
+
+   In [153]: clf()
+   
+   @savefig ring_slot,db.png 
+   In [153]: ring_slot.plot_s_db();
 
 For more detailed information about plotting see :doc:`plotting`.   
 
 Network Operators
 -------------------
 
-Element-wise Operations 
+Linear Operations 
 =========================
 	
-Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators
+Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the `data` module. 
+
+.. ipython::
+	
+	In [21]: short = rf.data.wr2p2_short
+
+	In [22]: delayshort = rf.data.wr2p2_delayshort
+
+	In [22]: short - delayshort
+
+	In [22]: short + delayshort
+
+	In [22]: short * delayshort
+
+	In [22]: short / delayshort
+	
+	In [22]: short / delayshort
+
+
+
+All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  `short` and `delay_short`,
+	
+.. ipython::
+	
+	In [21]: clf();
+	
+	In [21]: difference = (short- delayshort)
+	
+	@savefig operator_illustration,difference.png
+	In [21]: difference.plot_s_mag()
+
+
+Another common application is calculating the phase difference using the division operator,
+	
+.. ipython::
+	
+	In [21]: clf();
+	
+	@savefig operator_illustration,division.png
+	In [21]: (delayshort/short).plot_s_deg()
+	
+These operators can also be used with scalars or :class:`numpy.ndarrays` that are of the same length as the :class:`Network` . 
+
+.. ipython::
+	
+	In [21]: open = (short*-1)
+
+	In [21]: open.s[:3,...]
+	
+	In [21]: rando =  open *rand(len(open))
+	
+	In [21]: rando.s[:3,...]
+	
+If multiplying a Network by an array, be sure to put the array on right side.
+
+Cascading and De-embedding
+==================================================
+Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be called through the power operator,  ``**``. To calculate a new network which is the cascaded connection of the two individual Networks ``line`` and ``short``, 
 
 .. ipython::
 	
 	In [21]: short = rf.data.wr2p2_short
 
 	In [22]: line = rf.data.wr2p2_line
-
-
 	
-	[1] short + delay_short
-	
-	[2] short - delay_short 
-	
-	[3] short / delay_short 
-	
-	[4] short * delay_short
+	In [22]: delayshort = line ** short
 
-All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, the difference operation ('-') can be used to calculate the complex distance between two networks ::
+De-embedding  can be accomplished by cascading the *inverse* of a network. The inverse of a network is accessed through the property :attr:`Network.inv`. To de-embed the ``short`` from ``delay_short``,
+
+.. ipython::
 	
-	>>> difference = (short- delay_short)
-
-The result is stored in the returned :class:`Network` object's  :attr:`Network.s` parameter matrix.  So, to plot the magnitude of the complex difference between the networks `short` and `delay_short`::
-
-	>>> (short - delay_short).plot_s_mag()
-
-Another common application is calculating the phase difference using the division operator. This can be done ::
-	
-	>>> (delay_short/short).plot_s_deg()
-	
-	
-Cascading and Embeding Operations 
-==================================================
-Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be accessed through the power operator,  ``**``. To calculate a new network which is the cascaded connection of the two individual Networks ``line`` and ``short``, ::
-
-	>>> line = rf.Network('line.s2p')
-	>>> short = rf.Network('short.s1p')	
-	>>> delay_short = line ** short
-
-De-embedding  can be accomplished either by using the  :func:`de_embed` function, or  by cascading the *inverse* of a network. The inverse of a network is accesible through the property :attr:`Network.inv`. So,  to de-embed the *short* from *delay_short*::
-
-	>>> short = line.inv ** delay_short
+	In [21]: short = line.inv ** delayshort
 
 
 
 Connecting Multi-ports 
 ------------------------
-**skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth [#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of a ideal 3-way splitter can be done like so::
+**skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth [#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of an ideal 3-way splitter can be done like so,
 
-	>>> tee = rf.Network('tee.s3p')
-	>>> delay_short = rf.Network('delay_short.s1p')
+.. ipython::
+	
+	In [21]: tee = rf.Network('../skrf/data/tee.s3p')
+	
 
-to connect port '1' of the tee, to port 0 of the delay short::
+to connect port `1` of the tee, to port `0` of the delay short,
 
-	>>> terminated_tee = rf.connect(tee,1,delay_short,0)
+.. ipython::
+	
+	In [21]: terminated_tee = rf.connect(tee,1,delayshort,0)
+
+Note that this function takes into account port impedances, and if connecting ports have different port impedances a impedance step is inserted. 	
+	
+Interpolation and Stitching 
+-----------------------------
+In order to use the operators and cascading functions, the networks involved must have matching frequencies. If two networks which have different frequency information, then an error will be raised, 
+
+.. ipython::
+	
+	In [21]: line = rf.data.wr2p2_line.copy()
+	
+	In [21]: line1 = rf.data.wr2p2_line1.copy()
+	
+	In [21]: line1
+	
+	In [21]: line
+	
+	In [21]: line1+line
+	
+This problem can be circumvented by interpolating one of Networks, using :func:`Network.resample`. 
+
+.. ipython::
+	
+	In [21]: line1.resample(201)
+	
+	In [21]: line1+line
+
+
+A similar application is the need to combine Networks which cover different frequency bands. Two  Netwoks can be stitched together using :func:`stitch`, which  concatenates their s-parameter matrices along their frequency axis.
+ 
+.. ipython::
+	
+	In [21]: from skrf.data import wr2p2_line, wr1p5_line
+	
+	In [21]: line = rf.stitch(wr2p2_line, wr1p5_line)
+	
+	In [21]: line
 	
 Sub-Networks
 ---------------------
-Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by theh sub-network properties, which return one-port :class:`Network` objects ::
+Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by theh sub-network properties, which return one-port :class:`Network` objects,
 
-	>>> port1_return = line.s11
-	>>> port1_insertion = line.s21
+.. ipython::
 	
+	In [21]: port1_return = line.s11
 	
-Convenience Functions
----------------------
-Frequently there is an entire directory of touchstone files that need to be analyzed. The function :func:`load_all_touchstones` is meant deal with this scenario. It takes a string representing the directory,  and returns a dictionary type with keys equal to the touchstone filenames, and values equal to :class:`Network` types::
+	In [21]: port1_insertion = line.s21
+
+
 	
-	>>> ntwk_dict = rf.load_all_touchstones('.')
-	{'delay_short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.],
-	'line': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
-	'ring slot': 2-Port Network.  75-110 GHz.  201 points. z0=[ 50.  50.],
-	'short': 1-Port Network.  75-110 GHz.  201 points. z0=[ 50.]}
+Reading and Writing 
+------------------------------
+While **skrf** supports reading and writing the touchstone file format, it also provides native IO capabilities for any skrf object through the functions :func:`~skrf.io.general.read` and :func:`~skrf.io.general.write`. These functions can also be called through the Network methods :func:`Network.read` and :func:`Network.write`, or implicitly through  :func:`Network.__init__`. 
+
+.. ipython::
 	
+	In [21]: line = rf.Network('../skrf/data/line.s2p')
+	
+	@verbatim
+	In [21]: line.write() # write out Network using native IO
+	line.ntwk
+
+Frequently there is an entire directory of files that need to be analyzed. The function :func:`~skrf.io.general.read_all` can be used to create objects from all files quickly. Given a directory of skrf-readable files, :func:`~skrf.io.general.read_all`  returns a :class:`dict`  with keys equal to the filenames, and values equal to objects. To load all **skrf** objects in the ``skrf/data/`` directory, 
+	
+.. ipython::
+	
+	In [21]: dict_o_ntwks = rf.read_all('../skrf/data/', contains = 'wr2p2')
+	
+	In [21]: dict_o_ntwks
+	
+:func:`~skrf.io.general.read_all` has a companion function, :func:`~skrf.io.general.write_all` which takes a dictionary of **skrf** objects, and writes each object to an individual file. 
+	
+.. ipython::
+	:verbatim:
+
+	In [21]: rf.write_all(dict_o_ntwks, dir = '.')
+	
+	In [21]: ls
+	wr2p2,delayshort.ntwk	wr2p2,line.ntwk	wr2p2,short.ntwk
+
+It is also possible to write a dictionary of objects to a single file, by using :func:`~skrf.io.general.write`,
+
+.. ipython::
+	:verbatim:
+
+	In [21]: rf.write('dict_o_ntwk.p', dict_o_ntwks)
+
+	In [21]: ls
+	dict_o_ntwk.p
+	
+
 Pre-initialized objects are located in the  :mod:`constants` module
 
 
-Reading and Writing skrf objects
-======================================
-using the functions Another way, is to create a network from a `pickled` Network object. 
-.. ipython::
-			
-	In [139]: short = rf.Network('../skrf/data/short.s1p')
 
-From values
-===============
-Alternatively, a :class:`Network`  can be created `from scratch` by  passing values of relevant parametesr as arguments 
+
+
+Creating Networks 'From Scratch'	
+----------------------------------
+A :class:`Network` can be created `from scratch` by  passing values of relevant properties as arguments,
 
 .. ipython::
 			
-	In [139]: my_ntwk = rf.Network(f = [1,2,3], s = [1,.5,1j], z0 = 50 )
+	In [139]: frequency = rf.Frequency(75,110,101,'ghz')
+	
+	In [139]: s = -1*ones(101)
+	
+	In [139]: wr10_short = rf.Network(frequency = frequency, s = s, z0 = 50 )
+
+For more information creating Networks representing transmission line and lumped components, see the :mod:`~skrf.media` module.
+
+
+
 
 References
 ----------	
