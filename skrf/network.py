@@ -284,8 +284,8 @@ class Network(object):
 
         Creates an n-port microwave network from a `file` or directly 
         from data. If no file or data is given, then an empty Network 
-        is created. 
-
+        is created.
+            
         Parameters
         ------------
 
@@ -326,6 +326,8 @@ class Network(object):
         write_touchstone : write a network to a touchstone file
         
         
+        
+    
         '''
         
         # allow for old kwarg for backward compatability
@@ -411,6 +413,7 @@ class Network(object):
         '''
         Element-wise complex multiplication of s-matrix
         '''
+        
         result = self.copy()
         
         if isinstance(other, Network):
