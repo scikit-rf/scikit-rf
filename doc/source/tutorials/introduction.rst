@@ -17,6 +17,8 @@ This imports several commonly used functions, and turns on
 .. ipython::
 	:suppress:
 	
+	In [144]: %logstart source/_static/skrf_introduction.py
+	
 	In [144]: from pylab import *
 	
 	In [145]: ion()
@@ -67,7 +69,7 @@ following properties :
 * :attr:`Network.z0`  : Port Characterisic Impedance matrix.
 * :attr:`Network.frequency`  : Frequency Object. 
 
-Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well. All of the network parameters are represented internally as complex :class:`numpy.ndarray` 's of shape *FxNxN*, where *F* is the number of frequency points and *N* is the number of ports.
+All of the network parameters are represented internally as complex :class:`numpy.ndarray` 's of shape *FxNxN*, where *F* is the number of frequency points and *N* is the number of ports.
 
 .. ipython::
 			
@@ -91,8 +93,10 @@ The :class:`Network` object has numerous other properties and methods which can 
 	rf.data.line.s11            rf.data.line.s_arcl_unwrap  rf.data.line.s_mag
 	...
 
+.. note:: 
 
-
+	Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well, see `Other Network Representations`_ .
+	
 Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the network parameters, 
 
 * :func:`Network.plot_s_db` : plot magnitude of s-parameters in log scale
@@ -111,7 +115,7 @@ To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
 .. ipython::
 
-   In [153]: clf()
+   In [153]: figure();
    
    @savefig ring_slot,db.png 
    In [153]: ring_slot.plot_s_db();
@@ -148,7 +152,7 @@ All of these operations return :class:`Network` types, so the methods and proper
 	
 .. ipython::
 	
-	In [21]: clf();
+	In [21]: figure();
 	
 	In [21]: difference = (short- delayshort)
 	
@@ -160,12 +164,12 @@ Another common application is calculating the phase difference using the divisio
 	
 .. ipython::
 	
-	In [21]: clf();
+	In [21]: figure();
 	
 	@savefig operator_illustration,division.png
 	In [21]: (delayshort/short).plot_s_deg()
 	
-These operators can also be used with scalars or :class:`numpy.ndarrays` that are of the same length as the :class:`Network` . 
+Linear operators can also be used with scalars or :class:`numpy.ndarray`s that are of the same length as the :class:`Network`. 
 
 .. ipython::
 	
@@ -177,7 +181,7 @@ These operators can also be used with scalars or :class:`numpy.ndarrays` that ar
 	
 	In [21]: rando.s[:3,...]
 	
-If multiplying a Network by an array, be sure to put the array on right side.
+Note that if you multiply a Network by an :class:`numpy.ndarray` , be sure to place the array on right side.
 
 Cascading and De-embedding
 ==================================================
@@ -198,27 +202,26 @@ De-embedding  can be accomplished by cascading the *inverse* of a network. The i
 	In [21]: short = line.inv ** delayshort
 
 
-
 Connecting Multi-ports 
 ------------------------
-**skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm call sub-network growth [#]_. This algorithm, which is available through the function :func:`connect`, takes into account port impedances. Terminating one port of an ideal 3-way splitter can be done like so,
+**skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm called sub-network growth [#]_. This algorithm is available through the function :func:`connect`. Terminating one port of an ideal 3-way splitter can be done like so,
 
 .. ipython::
 	
 	In [21]: tee = rf.Network('../skrf/data/tee.s3p')
 	
 
-to connect port `1` of the tee, to port `0` of the delay short,
+To connect port `1` of the tee, to port `0` of the delay short,
 
 .. ipython::
 	
 	In [21]: terminated_tee = rf.connect(tee,1,delayshort,0)
 
-Note that this function takes into account port impedances, and if connecting ports have different port impedances a impedance step is inserted. 	
+Note that this function takes into account port impedances, and if connecting ports have different port impedances an appropriate impedance mismatch is inserted.
 	
 Interpolation and Stitching 
 -----------------------------
-In order to use the operators and cascading functions, the networks involved must have matching frequencies. If two networks which have different frequency information, then an error will be raised, 
+A common need is to change the number of frequency points of a :class:`Network`. For instance, to use the operators and cascading functions the networks involved must have matching frequencies. If two networks have different frequency information, then an error will be raised, 
 
 .. ipython::
 	
@@ -232,16 +235,20 @@ In order to use the operators and cascading functions, the networks involved mus
 	
 	In [21]: line1+line
 	
-This problem can be circumvented by interpolating one of Networks, using :func:`Network.resample`. 
+This problem can be solved by interpolating one of Networks, using :func:`Network.resample`. 
 
 .. ipython::
 	
+	In [21]: line1
+	
 	In [21]: line1.resample(201)
+	
+	In [21]: line1
 	
 	In [21]: line1+line
 
 
-A similar application is the need to combine Networks which cover different frequency bands. Two  Netwoks can be stitched together using :func:`stitch`, which  concatenates their s-parameter matrices along their frequency axis.
+A related application is the need to combine Networks which cover different frequency ranges. Two  Netwoks can be stitched together using :func:`stitch`, which  concatenates their s-parameter matrices along their frequency axis. To combine a WR-2.2 Network with a WR-1.5 Network, 
  
 .. ipython::
 	
@@ -251,15 +258,7 @@ A similar application is the need to combine Networks which cover different freq
 	
 	In [21]: line
 	
-Sub-Networks
----------------------
-Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by theh sub-network properties, which return one-port :class:`Network` objects,
 
-.. ipython::
-	
-	In [21]: port1_return = line.s11
-	
-	In [21]: port1_insertion = line.s21
 
 
 	
@@ -307,12 +306,24 @@ It is also possible to write a dictionary of objects to a single file, by using 
 Pre-initialized objects are located in the  :mod:`constants` module
 
 
+Other Network Representations	
+----------------------------------
+This tutorial focuses on s-parameters, but other network represenations are available as well. Impedance  and Admittance Parameters can be accessed through the parameters :attr:`Network.z` and :attr:`Network.y`, respectively. Scalar components of complex parameters, such as  :attr:`Network.z_re`, :attr:`Network.z_im` and plotting methods like :func:`Network.plot_z_mag` are available as well.
 
+.. ipython::
+	
+	In [21]: ring_slot.z[:3,...]
+	
+	In [21]: figure();
+	
+	@savefig ring_slot_z_re.png
+	In [21]: ring_slot.plot_z_im()
+	
 
 
 Creating Networks 'From Scratch'	
 ----------------------------------
-A :class:`Network` can be created `from scratch` by  passing values of relevant properties as arguments,
+A :class:`Network` can be created `from scratch` by  passing values of relevant properties as keyword arguments to the constructor,
 
 .. ipython::
 			
@@ -324,8 +335,21 @@ A :class:`Network` can be created `from scratch` by  passing values of relevant 
 
 For more information creating Networks representing transmission line and lumped components, see the :mod:`~skrf.media` module.
 
+.. ipython::
+	:suppress:
+	
+	In [144]: %logstop skrf_introduction.py
 
 
+Sub-Networks
+---------------------
+Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by theh sub-network properties, which return one-port :class:`Network` objects,
+
+.. ipython::
+	
+	In [21]: port1_return = line.s11
+	
+	In [21]: port1_insertion = line.s21
 
 References
 ----------	
