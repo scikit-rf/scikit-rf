@@ -52,12 +52,11 @@ Connecting Networks
     innerconnect
     cascade
     de_embed
-    stitch
     flip
 
 
-Interpolation
-================
+Interpolation and Stitching
+=============================
 
 .. autosummary::
     :toctree: generated/
@@ -65,7 +64,8 @@ Interpolation
     Network.resample
     Network.interpolate
     Network.interpolate_self
-    Network.interpolate_self_npoints 
+    Network.interpolate_from_f
+    stitch
 
 IO
 ====
@@ -324,10 +324,6 @@ class Network(object):
         read : read a network from a file
         write : write a network to a file, using pickle
         write_touchstone : write a network to a touchstone file
-        
-        
-        
-    
         '''
         
         # allow for old kwarg for backward compatability
@@ -1171,11 +1167,11 @@ class Network(object):
 
         See Also
         ---------
-                f : property holding frequency vector in Hz
-                change_frequency : updates frequency property, and
-                        interpolates s-parameters if needed
-                interpolate : interpolate function based on new frequency
-                        info
+        f : property holding frequency vector in Hz
+        change_frequency : updates frequency property, and
+            interpolates s-parameters if needed
+        interpolate : interpolate function based on new frequency
+            info
         '''
         try:
             return self._frequency
@@ -1584,18 +1580,21 @@ class Network(object):
     # interpolation
     def interpolate(self, new_frequency,**kwargs):
         '''
-        calculates an interpolated network.
+        Return an interpolated network, from a new :class:'~skrf.frequency.Frequency'.
 
-        The default interpolation type is linear. see Notes for how to
-        use other interpolation types.
-
+        Interpolate the networks s-parameters linearly in real and 
+        imaginary components. Other interpolation types can be used 
+        by passing appropriate `\*\*kwargs`. This function `returns` an 
+        interpolated Network. Alternatively :func:`~Network.interpolate_self` 
+        will interpolate self.
+        
 
         Parameters
         -----------
         new_frequency : :class:`~skrf.frequency.Frequency`
-                frequency information to interpolate at
+            frequency information to interpolate 
         **kwargs : keyword arguments
-                passed to :func:`scipy.interpolate.interp1d` initializer.
+            passed to :func:`scipy.interpolate.interp1d` initializer.
 
         Returns
         ----------
@@ -1604,14 +1603,35 @@ class Network(object):
 
         Notes
         --------
-        useful keyword for  :func:`scipy.interpolate.interp1d`,
-            kind : str or int
+        See  :func:`scipy.interpolate.interpolate.interp1d` for useful 
+        kwargs. For example
+            **kind** : str or int
                 Specifies the kind of interpolation as a string ('linear',
                 'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
-                as an integer
-                specifying the order of the spline interpolator to use.
-
-
+                as an integer specifying the order of the spline 
+                interpolator to use.
+        
+        See Also
+        ----------
+        resample
+        interpolate_self 
+        interpolate_from_f
+        
+        Examples
+        -----------
+        .. ipython::
+        
+            @suppress
+            In [21]: import skrf as rf 
+            
+            In [21]: n = rf.data.ring_slot 
+            
+            In [21]: n
+            
+            In [21]: new_freq = rf.Frequency(75,110,501,'ghz')
+            
+            In [21]: n.interpolate(new_freq, kind = 'cubic')
+        
         '''
         # create interpolation objects
         interpolation_s_re = \
@@ -1635,8 +1655,9 @@ class Network(object):
 
     def interpolate_self_npoints(self, npoints, **kwargs):
         '''
-        interpolate network based on a new number of frequency points
+        Interpolate network based on a new number of frequency points
 
+        
         Parameters
         ----------
         npoints : int
@@ -1646,11 +1667,34 @@ class Network(object):
 
         See Also
         ---------
-                interpolate_self : same functionality but takes a Frequency
-                        object
-                interpolate : same functionality but takes a Frequency
-                        object and returns a new Network, instead of updating
-                        itself.
+        interpolate_self : same functionality but takes a Frequency
+                object
+        interpolate : same functionality but takes a Frequency
+                object and returns a new Network, instead of updating
+                itself.
+        
+        Notes
+        -------
+        The function :func:`~Network.resample` is an alias for 
+         :func:`~Network.interpolate_self_npoints`. 
+        
+        Examples
+        -----------
+        .. ipython::
+        
+            @suppress
+            In [21]: import skrf as rf 
+            
+            In [21]: n = rf.data.ring_slot 
+            
+            In [21]: n
+            
+            In [21]: n.resample(501) # resample is an alias
+            
+            In [21]: n
+            
+            @savefig interpolate_docstring.png
+            In [21]: n.plot_s_db()
         '''
         new_frequency = self.frequency.copy()
         new_frequency.npoints = npoints
@@ -1661,12 +1705,10 @@ class Network(object):
     
     def interpolate_self(self, new_frequency, **kwargs):
         '''
-        interpolates s-parameters given a new
+        Interpolates s-parameters given a new
         :class:'~skrf.frequency.Frequency' object.
 
-
-        The default interpolation type is linear. see Notes for how to
-        use other interpolation types.
+        See :func:`~Network.interpolate` for more information. 
 
         Parameters
         -----------
@@ -1675,22 +1717,54 @@ class Network(object):
         **kwargs : keyword arguments
                 passed to :func:`scipy.interpolate.interp1d` initializer.
 
-        Notes
-        --------
-                useful keyword for  :func:`scipy.interpolate.interp1d`,
-                 **kind** : str or int
-                        Specifies the kind of interpolation as a string ('linear',
-                        'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
-                        as an integer
-                        specifying the order of the spline interpolator to use.
-
         See Also
-        -----------
-                interpolate : same function, but returns a new Network
+        ----------
+        resample
+        interpolate
+        interpolate_from_f
         '''
         ntwk = self.interpolate(new_frequency, **kwargs)
         self.frequency, self.s,self.z0 = ntwk.frequency, ntwk.s,ntwk.z0
+    
+    def interpolate_from_f(self, f, interp_kwargs={}, **kwargs):
+        '''
+        Interpolates s-parameters from a frequency vector.
+        
+        Given a frequency vector, and optionally a `unit` (see \*\*kwargs)
+        , interpolate the networks s-parameters linearly in real and 
+        imaginary components. 
+        
+        See :func:`~Network.interpolate` for more information. 
 
+    
+
+        Parameters
+        -----------
+        new_frequency : :class:`~skrf.frequency.Frequency`
+            frequency information to interpolate at
+        interp_kwargs : 
+            dictionary of kwargs to be passed through to 
+            :func:`scipy.interpolate.interpolate.interp1d`
+        \*\*kwargs : 
+            passed to :func:`scipy.interpolate.interp1d` initializer.
+            
+        Notes
+        ---------
+        This creates a new :class:`~skrf.frequency.Frequency`, object 
+        using the method :func:`~skrf.frequency.from_f`, and then calls
+        :func:`~Network.interpolate_self`.
+        
+        See Also
+        ----------
+        resample
+        interpolate
+        interpolate_self 
+
+        '''
+        freq = Frequency.from_f(f,**kwargs)
+        self.interpolate_self(freq, **interp_kwargs)
+        
+        
     def flip(self):
         '''
         swaps the ports of a two port Network

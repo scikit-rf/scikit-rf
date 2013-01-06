@@ -164,5 +164,21 @@ class NetworkTestCase(unittest.TestCase):
         # operating on list
         self.assertTrue( ((a+[1+1j,2+2j]).s == npy.array([[[2+3j]],[[5+6j]]])).all())
     
+    def test_interpolate(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
+        b = a.interpolate(freq)
+        # TODO: numerically test for correct interpolation
+    
+    def test_interpolate_self_npoints(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a.interpolate_self_npoints(4)
+        # TODO: numerically test for correct interpolation
+        
+    def test_interpolate_from_f(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a.interpolate_from_f(npy.linspace(1,2,4), unit='ghz')
+        # TODO: numerically test for correct interpolation   
+        
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

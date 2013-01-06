@@ -6,7 +6,7 @@ Introduction
 .. currentmodule:: skrf.network
 .. contents::
 
-This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorial is most easily followed by using the ipython_ shell with the `--pylab` flag. ::
+This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorial is most easily followed by using the ipython_ shell with the ``--pylab`` flag. ::
 
 	> ipython --pylab
 	In [1]: 
@@ -95,7 +95,7 @@ The :class:`Network` object has numerous other properties and methods which can 
 
 .. note:: 
 
-	Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well, see `Other Network Representations`_ .
+	Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well, see `Alternative Network Representations`_ .
 	
 Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the network parameters, 
 
@@ -104,7 +104,7 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 * :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
 * ...
 
-To plot all four s-parameters of the `ring_slot` on the Smith Chart.
+To plot all four s-parameters of the ``ring_slot`` on the Smith Chart.
 
 .. ipython::
 
@@ -112,13 +112,16 @@ To plot all four s-parameters of the `ring_slot` on the Smith Chart.
    In [151]: ring_slot.plot_s_smith();
 
 
+Or plot a pair of s-parameters individually, 
 
 .. ipython::
 
    In [153]: figure();
    
+   In [153]: ring_slot.plot_s_db(m=1, n=0);	# s21
+   
    @savefig ring_slot,db.png 
-   In [153]: ring_slot.plot_s_db();
+   In [153]: ring_slot.plot_s_db(m=0, n=0); # s11
 
 For more detailed information about plotting see :doc:`plotting`.   
 
@@ -128,7 +131,7 @@ Network Operators
 Linear Operations 
 =========================
 	
-Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the `data` module. 
+Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the ``data`` module. 
 
 .. ipython::
 	
@@ -148,7 +151,7 @@ Element-wise mathematical operations on the scattering parameter matrices are ac
 
 
 
-All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  `short` and `delay_short`,
+All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  ``short`` and ``delay_short``,
 	
 .. ipython::
 	
@@ -169,7 +172,7 @@ Another common application is calculating the phase difference using the divisio
 	@savefig operator_illustration,division.png
 	In [21]: (delayshort/short).plot_s_deg()
 	
-Linear operators can also be used with scalars or :class:`numpy.ndarray`s that are of the same length as the :class:`Network`. 
+Linear operators can also be used with scalars or an :class:`numpy.ndarray`  that ais the same length as the :class:`Network`. 
 
 .. ipython::
 	
@@ -181,7 +184,7 @@ Linear operators can also be used with scalars or :class:`numpy.ndarray`s that a
 	
 	In [21]: rando.s[:3,...]
 	
-Note that if you multiply a Network by an :class:`numpy.ndarray` , be sure to place the array on right side.
+Note that if you multiply a Network by an :class:`numpy.ndarray`  be sure to place the array on right side.
 
 Cascading and De-embedding
 ==================================================
@@ -290,7 +293,7 @@ Frequently there is an entire directory of files that need to be analyzed. The f
 	In [21]: rf.write_all(dict_o_ntwks, dir = '.')
 	
 	In [21]: ls
-	wr2p2,delayshort.ntwk	wr2p2,line.ntwk	wr2p2,short.ntwk
+	wr2p2,delayshort.ntwk	wr2p2,line.ntwk		wr2p2,short.ntwk
 
 It is also possible to write a dictionary of objects to a single file, by using :func:`~skrf.io.general.write`,
 
@@ -306,8 +309,8 @@ It is also possible to write a dictionary of objects to a single file, by using 
 Pre-initialized objects are located in the  :mod:`constants` module
 
 
-Other Network Representations	
-----------------------------------
+Alternative Network Representations	
+------------------------------------
 This tutorial focuses on s-parameters, but other network represenations are available as well. Impedance  and Admittance Parameters can be accessed through the parameters :attr:`Network.z` and :attr:`Network.y`, respectively. Scalar components of complex parameters, such as  :attr:`Network.z_re`, :attr:`Network.z_im` and plotting methods like :func:`Network.plot_z_mag` are available as well.
 
 .. ipython::
@@ -317,7 +320,7 @@ This tutorial focuses on s-parameters, but other network represenations are avai
 	In [21]: figure();
 	
 	@savefig ring_slot_z_re.png
-	In [21]: ring_slot.plot_z_im()
+	In [21]: ring_slot.plot_z_im(m=1,n=0)
 	
 
 
@@ -343,7 +346,7 @@ For more information creating Networks representing transmission line and lumped
 
 Sub-Networks
 ---------------------
-Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by theh sub-network properties, which return one-port :class:`Network` objects,
+Frequently, the one-port s-parameters of a multiport network's are of interest. These can be accessed by the sub-network properties, which return one-port :class:`Network` objects,
 
 .. ipython::
 	
