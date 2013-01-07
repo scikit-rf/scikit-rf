@@ -98,7 +98,7 @@ The :class:`Network` object has numerous other properties and methods which can 
 
 .. note:: 
 
-	Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well, see `Alternative Network Representations`_ .
+	Although this tutorial focuses on s-parametes, other  network representations such as Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`) are available as well, see `Impedance and Admittance Parameters`_ .
 	
 Amongst other things, the methods of the :class:`Network` class provide convenient ways to plot components of the network parameters, 
 
@@ -315,7 +315,7 @@ A similar function :func:`~skrf.io.general.save_sesh`, can be used to
 save all **skrf** objects in the current namespace.
 
 
-Alternative Network Representations	
+Impedance and Admittance Parameters	
 ------------------------------------
 This tutorial focuses on s-parameters, but other network represenations are available as well. Impedance  and Admittance Parameters can be accessed through the parameters :attr:`Network.z` and :attr:`Network.y`, respectively. Scalar components of complex parameters, such as  :attr:`Network.z_re`, :attr:`Network.z_im` and plotting methods like :func:`Network.plot_z_mag` are available as well.
 

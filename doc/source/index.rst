@@ -34,20 +34,9 @@ Examples
 
 
 Reference
-----------
-
-Major Classes
-++++++++++++++++
-* :class:`~skrf.network.Network`
-* :class:`~skrf.networkSet.NetworkSet`
-* :class:`~skrf.frequency.Frequency`
-* :class:`~skrf.media.media.Media`
-* :class:`~skrf.calibration.calibration.Calibration`
-
-Modules
-++++++++++
+-----------
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
    reference/network
    reference/networkSet
@@ -57,15 +46,6 @@ Modules
    reference/tlineFunctions
    reference/constants
    reference/util
-
-
-   
-   
-Packages
-++++++++++
-.. toctree::
-   :maxdepth: 1
-   
    reference/io/index
    reference/calibration/index
    reference/media/index
