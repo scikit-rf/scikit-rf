@@ -6,7 +6,7 @@ Introduction
 .. currentmodule:: skrf.network
 .. contents::
 
-This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorial is most easily followed by using the ipython_ shell with the ``--pylab`` flag. ::
+This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorials are most easily followed by using the ipython_ shell with the ``--pylab`` flag. ::
 
 	> ipython --pylab
 	In [1]: 
@@ -28,6 +28,9 @@ This imports several commonly used functions, and turns on
 	In [147]: rcParams['figure.figsize'] = [4,3]
 	
 	In [147]: rcParams['figure.subplot.left'] = 0.15
+	
+	In [147]: clf()
+	
 
 .. note::
 
@@ -112,7 +115,7 @@ To plot all four s-parameters of the ``ring_slot`` on the Smith Chart.
    In [151]: ring_slot.plot_s_smith();
 
 
-Or plot a pair of s-parameters individually, 
+Or plot a pair of s-parameters individually, in log magnitude 
 
 .. ipython::
 
@@ -207,7 +210,7 @@ De-embedding  can be accomplished by cascading the *inverse* of a network. The i
 
 Connecting Multi-ports 
 ------------------------
-**skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm called sub-network growth [#]_. This algorithm is available through the function :func:`connect`. Terminating one port of an ideal 3-way splitter can be done like so,
+**skrf** supports the connection of arbitrary ports of N-port networks. It accomplishes this using an algorithm called sub-network growth [#]_,  available through the function :func:`connect`. Terminating one port of an ideal 3-way splitter can be done like so,
 
 .. ipython::
 	
@@ -267,7 +270,7 @@ A related application is the need to combine Networks which cover different freq
 	
 Reading and Writing 
 ------------------------------
-While **skrf** supports reading and writing the touchstone file format, it also provides native IO capabilities for any skrf object through the functions :func:`~skrf.io.general.read` and :func:`~skrf.io.general.write`. These functions can also be called through the Network methods :func:`Network.read` and :func:`Network.write`, or implicitly through  :func:`Network.__init__`. 
+While **skrf** supports reading and writing the touchstone file format, it also provides native IO capabilities for any skrf object through the functions :func:`~skrf.io.general.read` and :func:`~skrf.io.general.write`. These functions can also be called through the Network methods :func:`Network.read` and :func:`Network.write`. The Network constructor (:func:`Network.__init__` ) calls :func:`~skrf.io.general.read` implicitly if a skrf file is passed.
 
 .. ipython::
 	
@@ -276,8 +279,11 @@ While **skrf** supports reading and writing the touchstone file format, it also 
 	@verbatim
 	In [21]: line.write() # write out Network using native IO
 	line.ntwk
+	
+	@verbatim
+	In [21]: rf.Netwrok('line.ntwk') # read Network using native IO
 
-Frequently there is an entire directory of files that need to be analyzed. The function :func:`~skrf.io.general.read_all` can be used to create objects from all files quickly. Given a directory of skrf-readable files, :func:`~skrf.io.general.read_all`  returns a :class:`dict`  with keys equal to the filenames, and values equal to objects. To load all **skrf** objects in the ``skrf/data/`` directory, 
+Frequently there is an entire directory of files that need to be analyzed. The function :func:`~skrf.io.general.read_all` is used to create objects from all files in a directory quickly. Given a directory of skrf-readable files, :func:`~skrf.io.general.read_all`  returns a :class:`dict`  with keys equal to the filenames, and values equal to objects. To load all **skrf** files in the ``skrf/data/`` directory which contain the string ``\'wr2p2\'``.
 	
 .. ipython::
 	
@@ -305,8 +311,8 @@ It is also possible to write a dictionary of objects to a single file, by using 
 	In [21]: ls
 	dict_o_ntwk.p
 	
-
-Pre-initialized objects are located in the  :mod:`constants` module
+A similar function :func:`~skrf.io.general.save_sesh`, can be used to 
+save all **skrf** objects in the current namespace.
 
 
 Alternative Network Representations	
@@ -352,7 +358,7 @@ Frequently, the one-port s-parameters of a multiport network's are of interest. 
 	
 	In [21]: port1_return = line.s11
 	
-	In [21]: port1_insertion = line.s21
+	In [21]: port1_return 
 
 References
 ----------	
