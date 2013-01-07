@@ -117,8 +117,6 @@ Misc Functions
     :toctree: generated/
 
     average
-    one_port_2_two_port
-    impedance_mismatch
     Network.nudge
 
 
@@ -1676,7 +1674,7 @@ class Network(object):
         Notes
         -------
         The function :func:`~Network.resample` is an alias for 
-         :func:`~Network.interpolate_self_npoints`. 
+        :func:`~Network.interpolate_self_npoints`. 
         
         Examples
         -----------
@@ -1693,8 +1691,6 @@ class Network(object):
             
             In [21]: n
             
-            @savefig interpolate_docstring.png
-            In [21]: n.plot_s_db()
         '''
         new_frequency = self.frequency.copy()
         new_frequency.npoints = npoints
@@ -1751,7 +1747,7 @@ class Network(object):
         Notes
         ---------
         This creates a new :class:`~skrf.frequency.Frequency`, object 
-        using the method :func:`~skrf.frequency.from_f`, and then calls
+        using the method :func:`~skrf.frequency.Frequency.from_f`, and then calls
         :func:`~Network.interpolate_self`.
         
         See Also
@@ -1807,7 +1803,7 @@ class Network(object):
 
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
-            chart_type='z', *args,**kwargs):
+            chart_type='z', draw_labels=False, *args,**kwargs):
         '''
         plots the scattering parameter on a smith chart
 
@@ -1885,7 +1881,7 @@ class Network(object):
 
                 # plot the desired attribute vs frequency
                 if len (ax.patches) == 0:
-                    smith(ax=ax, smithR = r, chart_type=chart_type)
+                    smith(ax=ax, smithR = r, chart_type=chart_type, draw_labels=draw_labels)
                 ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, *args,**kwargs)
 
         #draw legend
@@ -2006,8 +2002,14 @@ class Network(object):
 
     def nudge(self, amount=1e-12):
         '''
-        perturb s-parameters by small amount. this is useful to
-        work-around numerical bugs.
+        Perturb s-parameters by small amount. 
+        
+        This is useful to work-around numerical bugs.
+        
+        Notes
+        -----------
+        This function is  
+            self.s = self.s + 1e-12
 
         Parameters
         ------------
@@ -2015,7 +2017,7 @@ class Network(object):
                 amount to add to s parameters
 
         '''
-        self.s = self.s + 1e-12
+        self.s = self.s + amount
 
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
