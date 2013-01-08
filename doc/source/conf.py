@@ -35,7 +35,6 @@ extensions = [
     'inheritance_diagram',
     'ipython_console_highlighting',
     'ipython_directive',
-    'matplotlib.sphinxext.mathmpl',
     'matplotlib.sphinxext.only_directives',
     'matplotlib.sphinxext.plot_directive',
     ]
@@ -114,7 +113,8 @@ html_style = 'scipy.css'
 
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
-
+html_theme_options = {
+    }
 # The name for this set of Sphinx documents.  If None, it defaults to
 # "<project> v<release> documentation".
 #html_title = None
@@ -193,12 +193,12 @@ htmlhelp_basename = 'skrfdoc'
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
   ('index', 'scikit-rf.tex', u'scikit-rf Documentation',
-   u'alex arsenovic', 'manual'),
+   u'Alex Arsenovic', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
-latex_logo = '_static/scikit-rf-title.png'
+latex_logo = '_static/scikit-rf-title-flat.pdf'
 
 # For "manual" documents, if this is true, then toplevel headings are parts,
 # not chapters.

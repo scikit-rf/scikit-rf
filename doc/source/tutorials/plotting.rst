@@ -16,7 +16,7 @@ Plotting
 	
 	In [145]: ion()
 	
-	In [146]: rcParams['savefig.dpi'] =120
+	In [146]: rcParams['savefig.dpi'] = 120 
 	
 	In [147]: rcParams['figure.figsize'] = [4,3]
 	
