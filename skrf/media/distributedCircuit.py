@@ -83,9 +83,9 @@ class DistributedCircuit(Media):
     constant are interpreted as follows:
 
     .. math::
-                    +\\Re e\\{\\gamma\\} = \\text{attenuation}
-
-                    -\\Im m\\{\\gamma\\} = \\text{forward propagation}
+        +\\Re e\\{\\gamma\\} = \\text{attenuation}
+    
+        -\\Im m\\{\\gamma\\} = \\text{forward propagation}
 
 
 

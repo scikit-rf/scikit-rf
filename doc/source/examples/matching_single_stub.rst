@@ -4,7 +4,7 @@ Circuit Design: Single Stub Matching Network
 *********************************************
 
 Introduction
---------
+-------------
 This example illustrates a way to visualize the design space for a single stub matching network. The matching Network consists of a shunt and series stub arranged as shown below, (image taken from R.M. Weikle's Notes)
 
 .. figure::  ../images/single_stub_matching_diagram.png

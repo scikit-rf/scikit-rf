@@ -892,9 +892,9 @@ class Network(object):
     @property
     def s(self):
         '''
-        Scattering parameter matrix [#]_.
+        Scattering parameter matrix.
 
-        The s-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
+        The s-matrix[#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so s11 can be accessed by 
         taking the slice s[:,0,0].  
@@ -940,9 +940,9 @@ class Network(object):
     @property
     def y(self):
         '''
-        Admittance parameter matrix [#]_.
+        Admittance parameter matrix.
 
-        The y-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
+        The y-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so y11 can be accessed by 
         taking the slice `y[:,0,0]`.  
@@ -974,9 +974,9 @@ class Network(object):
     @property
     def z(self):
         '''
-        Impedance parameter matrix [#]_.
+        Impedance parameter matrix.
 
-        The y-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
+        The z-matrix  [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so z11 can be accessed by 
         taking the slice `z[:,0,0]`.  
@@ -1008,16 +1008,15 @@ class Network(object):
     @property
     def t(self):
         '''
-        Scattering transfer parameters [#]_
+        Scattering transfer parameters
 
-        Also known or the wave cascading matrix. Only defined for a 
-        2-port Network.
-        
-        The t-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
-        `fx2x2`, where `f` is frequency axis.
+        The t-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` 
+        which has shape `fx2x2`, where `f` is frequency axis.
         Note that indexing starts at 0, so t11 can be accessed by 
         taking the slice `t[:,0,0]`.  
-
+        
+        The t-matrix, also known as the wave cascading matrix, is 
+        only defined for a 2-port Network.
 
         Returns
         --------
@@ -1366,7 +1365,7 @@ class Network(object):
         other : Network 
             the network to copy the contents of
         
-        Example
+        Examples
         -----------
         >>> a = rf.N()
         >>> b = rf.N('my_file.s2p')
