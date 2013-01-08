@@ -137,6 +137,9 @@ class NetworkSet(object):
                 from properties of this class.
         '''
         ## type checking
+        if isinstance(ntwk_set, dict):
+            ntwk_set = ntwk_set.values()
+            
         # did they pass a list of Networks?
         if not isinstance(ntwk_set[0], Network):
             raise(TypeError('input must be list of Network types'))

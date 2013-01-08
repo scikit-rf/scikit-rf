@@ -7,17 +7,10 @@ Uncertainty Estimation
 .. contents::
 
 
-**scikit-rf** can be used to calculate uncertainty estimates given a set 
-of networks. The :class:`~NetworkSet` object holds sets of networks and
-provides automated methods for calculating and displaying uncertainty 
-bounds.
-
-Although the uncertainty esimation functions operate on any set of
-networks, the topic of uncertianty estimation is frequently associated 
-with calibration uncertianty. That is, how certain can one be in 
-results of a calibrated measurement.
-
-
+**skrf** can be used to calculate uncertainty estimates given a set 
+of :class:`Networks`. The :class:`~NetworkSet` object represents a  sets
+of networks and provides automated methods for calculating and displaying 
+uncertainty bounds.
 
 Simple Case
 --------------
