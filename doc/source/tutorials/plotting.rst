@@ -9,9 +9,7 @@ Plotting
 
 .. ipython::
 	:suppress:
-	
-	In [144]: %logstart source/_static/skrf_introduction.py
-	
+		
 	In [144]: from pylab import *
 	
 	In [145]: ion()

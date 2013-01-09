@@ -13,11 +13,12 @@ Tutorials
     :maxdepth: 1
     
     tutorials/installation
-    tutorials/introduction
+    tutorials/networks
     tutorials/plotting
+    tutorials/networkset
     tutorials/calibration
     tutorials/circuit_design
-    tutorials/uncertainty_estimation
+    
     
 * `Development <https://github.com/scikit-rf/scikit-rf/wiki/Development>`_
 
