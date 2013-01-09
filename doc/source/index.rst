@@ -49,9 +49,11 @@ Reference
     reference/tlineFunctions
     reference/constants
     reference/util
+    
     reference/io/index
     reference/calibration/index
     reference/media/index
+    reference/virtualInstruments/index
 
 
 Indices and tables

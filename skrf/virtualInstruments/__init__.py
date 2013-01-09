@@ -18,7 +18,20 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-import virtual instruments
+.. module:: skrf.virtualInstruments
+========================================================
+virtualInstruments (:mod:`skrf.virtualInstruments`)
+========================================================
+
+This module holds Virtual Instruments that are intricately related 
+to **skrf**. 
+
+.. automodule:: skrf.virtualInstruments.vna
+.. automodule:: skrf.virtualInstruments.stages
+
+
 '''
 
 all = ['vna','stages','generalSocketReader']
+
+
