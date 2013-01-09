@@ -1,7 +1,7 @@
-.. _introduction:
+.. _networks:
 
 *******************
-Introduction
+Networks
 *******************
 .. currentmodule:: skrf.network
 .. contents::
@@ -17,7 +17,6 @@ This imports several commonly used functions, and turns on
 .. ipython::
 	:suppress:
 	
-	In [144]: %logstart source/_static/skrf_introduction.py
 	
 	In [144]: from pylab import *
 	
