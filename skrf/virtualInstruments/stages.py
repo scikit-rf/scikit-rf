@@ -21,7 +21,17 @@
 #          MA 02110-1301, USA.
 
 '''
-holds class's for objects for stages
+
+.. module:: skrf.virtualInstruments.stages
+================================================
+stages  (:mod:`skrf.virtualInstruments.stages`)
+================================================
+
+.. autosummary::
+    :toctree: generated/
+
+    ESP300
+
 '''
 from time import sleep
 import numpy as npy
@@ -33,13 +43,13 @@ class ESP300(GpibInstrument):
     Newport Universal Motion Controller/Driver Model ESP300
 
     all axis control commands are sent to the number axis given by the
-    local variable self.current_axis. so here is an example usage
-
-    esp= ESP300()
-    esp.current_axis=1
-    esp.units= 'millimeter'
-    esp.position = 10
-    print esp.position
+    local variable self.current_axis. An example usage ::
+        
+        from skrf.virtualInstruments.stages import ESP300
+        esp = ESP300()
+        esp.current_axis = 1
+        esp.position = 10
+        print esp.position
     '''
     UNIT_DICT = {\
             'enoder count':0,\
@@ -59,12 +69,17 @@ class ESP300(GpibInstrument):
     def __init__(self, address=1, current_axis=1,\
             always_wait_for_stop=True,delay=0,**kwargs):
         '''
-        takes:
-                address:        Gpib address, int [1]
-                current_axis:   number of current axis, int [1]
-                always_wait_for_stop:   wait for stage to stop before
-                        returning control to calling program, boolean [True]
-                **kwargs:       passed to GpibInstrument initializer
+        Parameters
+        -------------
+        address :   int
+            Gpib address
+        current_axis :   int 
+            number of current axis
+        always_wait_for_stop :   Boolean
+            wait for stage to stop before
+            returning control to calling program
+        \*\*kwargs :
+            passed to GpibInstrument initializer
         '''
 
         GpibInstrument.__init__(self,address,**kwargs)

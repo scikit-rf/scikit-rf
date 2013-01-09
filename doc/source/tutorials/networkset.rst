@@ -144,7 +144,7 @@ mean of the phase component,
     
 
 
-Uncertainty Bounds
+Plotting Uncertainty Bounds
 ----------------------------
 
 Uncertainty bounds can be plotted through the methods 
@@ -169,8 +169,22 @@ NetworkSets can be saved to disk using skrf's native IO capabilities. This
 can be ccomplished through the :func:`NetworkSet.write` method.
 
 .. ipython::
-    @verbatim
-    In [24]: ro_set.write()
-
+    :verbatim:
     
+    In [24]: ro_set.write()
+    
+    In [24]: ls
+    ro set.ns
+    
+.. note:: 
 
+    Note that if the NetworkSet's ``name`` attribute is not assigned, then you must provide a filename to :func:`NetworkSet.write`. 
+
+Alternatively, you can write the Network set by directly calling the 
+:func:`~skrf.io.general.write` function. In either case, the resultant 
+file can be read back into memory using :func:`~skrf.io.general.read`.
+    
+.. ipython::
+    :verbatim:
+    
+    In [24]: ro_ns = rf.read('ro set.ns')

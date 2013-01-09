@@ -20,7 +20,18 @@
 #          MA 02110-1301, USA.
 
 '''
-holds class's for VNA virtual instruments
+.. module:: skrf.virtualInstruments.vna
+========================================
+vna  (:mod:`skrf.virtualInstruments.vna`)
+========================================
+
+.. autosummary::
+    :toctree: generated/
+
+    PNAX
+    ZVA40
+    HP8510C
+    HP8720
 '''
 import numpy as npy
 import visa
@@ -31,7 +42,14 @@ from ..network import *
 from .. import mathFunctions as mf
 class PNAX(GpibInstrument):
     '''
-    Agilent PNAX
+    Agilent PNAX 
+    
+    Examples
+    -----------
+    
+    >>> from skrf.virtualInstrument.vna import PNAX 
+    >>> v = PNAX()
+    >>> dut = v.network
     '''
     def __init__(self, address=16, channel=1,**kwargs):
         GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
@@ -58,11 +76,17 @@ class PNAX(GpibInstrument):
     @property
     def network(self):
         '''
-        Initiates a sweep and returns a  Network type represting the
-        data.
+        Initiates a sweep and returns a  :class:`~skrf.network.Network` type represting the data.
 
-        if you are taking multiple sweeps, and want the sweep timing to
-        work, put the turn continuous mode off. like pnax.continuous='off'
+        If you are taking multiple sweeps, and want the sweep timing to
+        work, put the turn continuous mode off, with  ``pnax.continuous='off'``
+        
+        Examples
+        ----------
+        
+        >>> from skrf.virtualInstrument.vna import PNAX 
+        >>> v = PNAX()
+        >>> dut = v.network
         '''
         self.write('init:imm')
         self.write('*wai')
@@ -177,7 +201,14 @@ class ZVA40_lihan(object):
 
 class ZVA40(GpibInstrument):
     '''
-    the rohde Swarz ZVA40
+    Rohde&Scharz ZVA40
+    
+    Examples
+    -----------
+    
+    >>> from skrf.virtualInstrument.vna import ZVA40 
+    >>> v = ZVA40()
+    >>> dut = v.network
     '''
     def __init__(self, address=20, active_channel = 1, continuous=True,\
             **kwargs):
