@@ -47,7 +47,7 @@ class.
 
 A :class:`~NetworkSet` is created from a list or dict of 
 :class:`~skrf.network.Network`'s. So first we need to load all of the 
-touchstone files into Networks. This can be done quickly with 
+touchstone files. This can be done quickly with 
 :func:`~skrf.io.general.read_all` , which loads all skrf-readable objects
 in a directory. The argument ``contains`` is used to load only files 
 which match a given substring. 
@@ -67,8 +67,11 @@ This can be passed directly to the :class:`NetworkSet` constructor,
     
     In [24]: ro_ns
 
-Using a :class:`NetworkSet`
-----------------------------
+A NetworkSet can also be constructed from zipfile of touchstones
+through the class method :func:`NetworkSet.from_zip`
+
+Accesing Network Methods 
+-------------------------------
 
 The :class:`~skrf.network.Network` elements in a :class:`NetworkSet` can be accessed like the elements of list, 
 
@@ -86,10 +89,12 @@ ploting methods).
 .. ipython::
     
     @savefig ns_plot_s_db.png
-    In [24]: ro_ns.plot_s_db()
+    In [24]: ro_ns.plot_s_db(label='Mean Response')
 
+Statistical Properties
+-------------------------------
 
-Some statistical quantities can be calculated by accessing 
+Statistical quantities can be calculated by accessing 
 properties of the NetworkSet. For example, to calculate the complex 
 average of the set, access the ``mean_s`` property
 
@@ -98,20 +103,35 @@ average of the set, access the ``mean_s`` property
     
     In [24]: ro_ns.mean_s
     
+.. note:: 
+
+    Because the statistical operator methods are generated upon initialization
+    they are not explicitly documented in this manual. 
+    
 The naming convention of the statistical operator properties are `NetworkSet.function_parameter`, where `function` is the name of the 
 statistical function, and `parameter` is the Network parameter to operate 
-on. These methods return a :class:`Network` object, so they can be 
+on. These methods return a :class:`~skrf.network.Network` object, so they can be 
 saved or plotted in the same way as you would with a Network.
-To plot the complex mean response on the smith chart
+To plot the log-magnitude of the complex mean response 
 
 .. ipython::
     
     In [24]: figure();
     
-    @savefig ns_mean_s_plot_s_smith.png
-    In [24]: ro_ns.mean_s.plot_s_smith(r = .5)
+    @savefig ns_mean_s_plot_s_db.png
+    In [24]: ro_ns.mean_s.plot_s_db(label='ro')
 
-Its possible to calculate statistical quantities on the scalar 
+Or to plot the standard deviation of the complex s-parameters,
+
+.. ipython::
+    
+    In [24]: figure();
+    
+    @savefig ns_std_s_plot_s_re.png
+    In [24]: ro_ns.std_s.plot_s_re(y_label='Standard Deviations')
+
+
+Using these properties it is possible to calculate statistical quantities on the scalar 
 components of the complex network parameters. To calculate the 
 mean of the phase component,
 
@@ -122,9 +142,13 @@ mean of the phase component,
     @savefig ns_mean_s_deg.png
     In [24]: ro_ns.mean_s_deg.plot_s_re()
     
-    
+
+
 Uncertainty Bounds
 ----------------------------
+
+Uncertainty bounds can be plotted through the methods 
+
 
 .. ipython::
     
@@ -137,4 +161,16 @@ Uncertainty Bounds
     
     @savefig ns_plot_uncertainty_bounds_s_deg.png
     In [24]: ro_ns.plot_uncertainty_bounds_s_deg()
+
+Reading and Writing
+---------------------
+
+NetworkSets can be saved to disk using skrf's native IO capabilities. This 
+can be ccomplished through the :func:`NetworkSet.write` method.
+
+.. ipython::
+    @verbatim
+    In [24]: ro_set.write()
+
+    
 
