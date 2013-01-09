@@ -59,7 +59,8 @@ from matplotlib.patches import Circle   # for drawing smith chart
 
 
 
-def smith(smithR=1, chart_type = 'z', draw_labels = False, ax=None):
+def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False, 
+    ax=None):
     '''
     plots the smith chart of a given radius
 
@@ -74,6 +75,10 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, ax=None):
     draw_labels : Boolean
              annotate real and imaginary parts of impedance on the 
              chart (only if smithR=1)
+    border : Boolean
+        draw a rectangular border with axis ticks, around the perimeter 
+        of the figure. Not used if draw_labels = True
+    
     ax : matplotlib.axes object
             existing axes to draw smith chart on
 
@@ -141,8 +146,16 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, ax=None):
     ax1.grid(0)
     #set axis limits
     ax1.axis('equal')
-    ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))     
-
+    ax1.axis(smithR*npy.array([-1.1, 1.1, -1.1, 1.1]))     
+    
+    
+    if not border: 
+        ax1.yaxis.set_ticks([])
+        ax1.xaxis.set_ticks([])
+        for loc, spine in ax1.spines.iteritems():
+            spine.set_color('none')
+        
+    
     if draw_labels:
         #Clear axis
         ax1.yaxis.set_ticks([])
@@ -358,7 +371,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
         ax=ax, *args, **kwargs)
 
 def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
-    y_label='Imag', title='Complex Plane', show_legend=True,
+    y_label='Imaginary', title='Complex Plane', show_legend=True,
     axis='equal', ax=None, force_chart = False, *args, **kwargs):
     '''
     plot complex data on smith chart
@@ -410,7 +423,7 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
-    ax.axis(smith_r*npy.array([-1., 1., -1., 1.]))
+    ax.axis(smith_r*npy.array([-1.1, 1.1, -1.1, 1.1]))
     if plb.isinteractive():
         plb.draw()
 

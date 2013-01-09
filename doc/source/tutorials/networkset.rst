@@ -1,7 +1,7 @@
-.. _uncertainty_estimation:
+.. _networkset:
 
 ***********************
-Uncertainty Estimation
+NetworkSet
 ***********************
 .. currentmodule:: skrf.networkSet
 .. contents::
@@ -24,10 +24,9 @@ Uncertainty Estimation
 	
 	In [147]: clf()
 
-**skrf** can be used to calculate statistical quantities, such as 
-uncertainty bounds on sets of Networks. The :class:`~NetworkSet` object
-represents an unordered  set of networks and provides automated methods for 
-calculating and displaying uncertainty bounds.
+The :class:`~NetworkSet` object
+represents an unordered  set of networks and provides  methods for 
+calculating statistical quantities and displaying uncertainty bounds.
 
 Creating a :class:`NetworkSet`
 -------------------------------

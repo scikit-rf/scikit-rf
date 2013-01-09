@@ -1802,7 +1802,7 @@ class Network(object):
 
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
-            chart_type='z', draw_labels=False, *args,**kwargs):
+            chart_type='z', draw_labels=False, label_axes=False, *args,**kwargs):
         '''
         plots the scattering parameter on a smith chart
 
@@ -1821,9 +1821,18 @@ class Network(object):
                 plot.
         show_legend : boolean, optional
                 to turn legend show legend of not, optional
-        *args : arguments, optional
+        chart_type : ['z','y']
+            draw impedance or addmitance contours 
+        draw_labels : Boolean 
+            annotate chart with impedance values 
+        label_axes : Boolean
+            Label axis with titles `Real` and `Imaginary`
+        border : Boolean 
+            draw rectangular border around image with ticks
+        
+        \*args : arguments, optional
                 passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
+        \*\*kwargs : keyword arguments, optional
                 passed to the matplotlib.plot command
 
 
@@ -1886,9 +1895,11 @@ class Network(object):
         #draw legend
         if show_legend:
             ax.legend()
-        ax.axis(npy.array([-1,1,-1,1])*r)
-        ax.set_xlabel('Real')
-        ax.set_ylabel('Imaginary')
+        ax.axis(npy.array([-1.1,1.1,-1.1,1.1])*r)
+        
+        if label_axes:
+            ax.set_xlabel('Real')
+            ax.set_ylabel('Imaginary')
 
     def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
         '''

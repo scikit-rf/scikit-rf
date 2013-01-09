@@ -54,13 +54,15 @@ Network plotting abilities are implemented as methods of the :class:`Network` cl
 
 Similar methods exist for Impedance (:attr:`Network.z`) and Admittance Parameters (:attr:`Network.y`), 
 
-* :func:`Network.plot_z_re`
-* :func:`Network.plot_z_im`
-* ...
-
-* :func:`Network.plot_y_re`
-* :func:`Network.plot_z_im`
-* ...
+.. hlist::
+    :columns: 2
+    
+    * :func:`Network.plot_z_re`
+    * :func:`Network.plot_z_im`
+    * ...
+    * :func:`Network.plot_y_re`
+    * :func:`Network.plot_z_im`
+    * ...
 
 Step-by-step examples of how to create and customize plots are given 
 below. 
