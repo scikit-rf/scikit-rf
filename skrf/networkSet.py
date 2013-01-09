@@ -202,8 +202,9 @@ class NetworkSet(object):
         
         Examples
         ----------
-        >>>import skrf as rf
-        >>>my_set = rf.NetworkSet.from_zip('myzip.zip')
+        
+        >>> import skrf as rf
+        >>> my_set = rf.NetworkSet.from_zip('myzip.zip')
             
         '''
         z = zipfile.ZipFile(zip_file_name)
@@ -708,6 +709,49 @@ class NetworkSet(object):
         plb.ylabel('Network \#')
         c_bar = plb.colorbar()
         c_bar.set_label('Distance From Mean')
+
+
+    # io
+    def write(self, file=None,  *args, **kwargs):
+        '''
+        Write the NetworkSet to disk using :func:`~skrf.io.general.write`
+        
+        
+        Parameters
+        -----------
+        file : str or file-object
+            filename or a file-object. If left as None then the 
+            filename will be set to Calibration.name, if its not None. 
+            If both are None, ValueError is raised.
+        \*args, \*\*kwargs : arguments and keyword arguments
+            passed through to :func:`~skrf.io.general.write`
+        
+        Notes
+        ------
+        If the self.name is not None and file is  can left as None
+        and the resultant file will have the `.ns` extension appended
+        to the filename. 
+        
+        Examples
+        ---------
+        >>> ns.name = 'my_ns'
+        >>> ns.write()
+        
+        See Also
+        ---------
+        skrf.io.general.write
+        skrf.io.general.read
+        
+        '''
+        # this import is delayed untill here because of a circular depency
+        from io.general import write
+        
+        if file is None:
+            if self.name is None:
+                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+            file = self.name
+
+        write(file,self, *args, **kwargs) 
 
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
