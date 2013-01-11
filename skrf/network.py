@@ -882,7 +882,7 @@ class Network(object):
             for n in range(self.number_of_ports):
                 def fget(self,m=m,n=n):
                     ntwk = self.copy()
-                    ntwk.s = npy.squeeze(self.s[:,m,n])
+                    ntwk.s = self.s[:,m,n]
                     ntwk.z0 = self.z0[:,m]
                     return ntwk
                 doc = '''
