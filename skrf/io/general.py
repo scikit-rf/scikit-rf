@@ -202,7 +202,7 @@ def write(file, obj, overwrite = True):
                 warnings.warn('file exists, and overwrite option is False. Not writing.')
                 return
         
-        fid = open(file, 'w')    
+        fid = open(file, 'wb')    
     
     else:
         fid = file
