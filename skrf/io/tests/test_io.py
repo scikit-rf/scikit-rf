@@ -32,7 +32,7 @@ class IOTestCase(unittest.TestCase):
         '''
         rf.write(self.pickle_file,obj)
         self.assertEqual(rf.read(self.pickle_file), obj)
-        os.remove(self.pickle_file)
+       # os.remove(self.pickle_file)
     
    
     
@@ -44,7 +44,7 @@ class IOTestCase(unittest.TestCase):
         b=self.ntwk2
         c=self.ntwk3
         rf.save_sesh(locals(),self.pickle_file )
-        os.remove(self.pickle_file)
+        #os.remove(self.pickle_file)
     
     def test_write_all_dict(self):
         d = dict(a=self.ntwk1, b=self.ntwk2,   c=self.ntwk3)
@@ -69,7 +69,7 @@ class IOTestCase(unittest.TestCase):
         rf.write(self.pickle_file,rf.NS([self.ntwk1, self.ntwk2]))
         rf.read(self.pickle_file)
         #self.assertEqual(rf.read(self.pickle_file), rf.NS([self.ntwk1, self.ntwk2])
-        os.remove(self.pickle_file)    
+        #os.remove(self.pickle_file)    
     
     def test_readwrite_frequency(self):
         freq = rf.Frequency(1,10,10,'ghz')

@@ -329,11 +329,18 @@ class Network(object):
             file = kwargs['touchstone_filename']
         
         if file is not None:
-            fid = get_fid(file) # allows user to pass filename or file obj
+            # allows user to pass filename or file obj
+            # open file in 'binary' mode because we are going to try and 
+            # upickle it first
+            fid = get_fid(file,'rb') 
             
             try: 
                 self.read(fid)
             except(UnpicklingError):
+                # if unpickling doesnt work then, close fid, reopen in 
+                # non-binary mode and try to read it as touchstone
+                fid.close()
+                fid = get_fid(file)
                 self.read_touchstone(fid)
             
             if name is None and isinstance(file,basestring):

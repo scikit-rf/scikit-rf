@@ -43,7 +43,7 @@ import plotting
 import mathFunctions
 import tlineFunctions
 import constants
-#import data
+import data
 import util
 
 # Import contents into current namespace for ease of calling

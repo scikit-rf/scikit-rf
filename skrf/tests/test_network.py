@@ -43,12 +43,13 @@ class NetworkTestCase(unittest.TestCase):
     
     def test_pickling(self):
         original_ntwk = self.ntwk1
-        f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'),'wr')
+        f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'),'wb')
         pickle.dump(original_ntwk,f)
         f.close()
         f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
         unpickled = pickle.load(f)
         self.assertEqual(original_ntwk, unpickled)
+        f.close()
         os.remove(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
             
     def test_stitch(self):
