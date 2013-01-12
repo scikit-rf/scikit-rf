@@ -96,7 +96,7 @@ def read(file, *args, **kwargs):
     and reading fails, then the position is reset back to 0 using seek
     if possible.
     '''
-    fid = get_fid(file, mode='r')
+    fid = get_fid(file, mode='rb')
     try:
         obj = pickle.load(fid, *args, **kwargs)
     except(UnpicklingError):
