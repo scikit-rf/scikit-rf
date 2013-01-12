@@ -276,7 +276,7 @@ class Network(object):
 
         
     ## CONSTRUCTOR
-    def __init__(self, file = None, name = None , **kwargs):
+    def __init__(self, file = None, name = None , comments = None, **kwargs):
         '''
         Network constructor.
 
@@ -294,6 +294,8 @@ class Network(object):
         name : str
             Name of this Network. if None will try to use file, if 
             its a str
+        comments : str
+            Comments associated with the Network 
         \*\*kwargs : 
             key word arguments can be used to assign properties of the 
             Network, such as `s`, `f` and `z0`. 
@@ -347,6 +349,8 @@ class Network(object):
                 name = os.path.splitext(os.path.basename(file))[0]
         
         self.name = name
+        self.comments = comments
+        
         # allow properties to be set through the constructor 
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
             if kwargs.has_key(attr):
