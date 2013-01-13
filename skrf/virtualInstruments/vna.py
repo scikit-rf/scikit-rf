@@ -25,6 +25,11 @@
 vna  (:mod:`skrf.virtualInstruments.vna`)
 ========================================
 
+.. warning:: 
+    
+    These Virtual Instruments are very spotily written, and may be subject 
+    to major re-writing in the future. 
+
 .. autosummary::
     :toctree: generated/
 
@@ -40,6 +45,8 @@ from visa import GpibInstrument
 from ..frequency import *
 from ..network import *
 from .. import mathFunctions as mf
+
+
 class PNAX(GpibInstrument):
     '''
     Agilent PNAX 

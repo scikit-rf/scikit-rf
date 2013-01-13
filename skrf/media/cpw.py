@@ -28,7 +28,7 @@ contains CPW class
 '''
 from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
-from numpy import real, imag,pi,sqrt,log,zeros
+from numpy import real, imag,pi,sqrt,log,zeros, ones
 from .media import Media
 from ..tlineFunctions import skin_depth, surface_resistivity
 
@@ -152,7 +152,7 @@ class CPW(Media):
         '''
         Characterisitc impedance
         '''
-        return 30.*pi / sqrt(self.ep_re) * self.K_ratio
+        return (30.*pi / sqrt(self.ep_re) * self.K_ratio)*ones(len(self.frequency.f), dtype='complex')
 
 
     def gamma(self):
