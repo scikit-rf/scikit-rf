@@ -25,7 +25,7 @@ Circuit Synthesis
 Introduction
 -------------
 
-**skrf** supports the  microwave network synthesis based on transmission line models. Network creation is accomplished through methods of the Media class (see :mod:`skrf.media`), which represents a transmission line object for a given medium. Once constructed, a :class:`~media.Media` object contains the neccesary properties such as ``propagation constant`` and ``characteristic impedance``, that are needed to generate microwave circuits.
+**skrf** supports the  microwave network synthesis based on transmission line models. Network creation is accomplished through methods of the Media class, which represents a transmission line object for a given medium. Once constructed, a :class:`~media.Media` object contains the neccesary properties such as ``propagation constant`` and ``characteristic impedance``, that are needed to generate microwave circuits.
 
 This tutorial illustrates how created Networks using several different :class:`~media.Media` objects. The basic usage is, 
 
@@ -42,6 +42,16 @@ This tutorial illustrates how created Networks using several different :class:`~
 More detailed examples illustrating how to create various kinds of Media 
 objects are given below. 
 
+
+.. warning::
+
+	The network creation and connection syntax of **skrf** are cumbersome 
+	if you need to doing complex circuit design. For a this type of 
+	application, you may be interested in using QUCS_ instead.
+	**skrf**'s synthesis cabilities lend themselves more to scripted applications
+	such as  `Design Optimization`_ or batch processing.
+
+	
 
 Media's Supported by skrf
 ==========================
@@ -108,11 +118,19 @@ or a WR-10 Rectangular Waveguide
 
 	In [144]: freq = rf.Frequency(75,110,101,'ghz')
 	
-	In [144]: wg = rf.media.RectangularWaveguide(freq, a=100*rf.mil)
+	In [144]: wg = rf.media.RectangularWaveguide(freq, a=100*rf.mil,z0=50) # see note below about z0
 	
 	In [144]: wg
 
-See :class:`~rectangularWaveguide.RectangularWaveguide` for details.
+See :class:`~rectangularWaveguide.RectangularWaveguide` for details. 
+
+.. note:: 
+
+	The ``z0`` argument in the Rectangular Waveguide constructor is used
+	to force a specifc port impedance. This is commonly used to match 
+	the port impedance to what a VNA stores in a touchstone file. See 
+	:func:`media.Media.__init__` for more information. 
+	
 
 
 Working with Media's
@@ -130,8 +148,7 @@ complex :class:`numpy.ndarray`'s,
 
 	In [144]: cpw.characteristic_impedance[:3]
 
-As an example, we plot 
-these properties for the cpw class defined above.
+As an example, plot the cpw's propagation constant vs frequency.
 
 .. ipython:: 
 	
@@ -143,16 +160,32 @@ these properties for the cpw class defined above.
 	In [144]: ylabel('Propagation Constant [rad/m]');
 
 
+Because the wave quantities are dynamic they change when the attributes 
+of the cpw line change. To illustrate this, plot the propagation constant of the cpw for various values of substrated permativity,  
 
-Once created, the attributes of the cpw line can be changed  and the 
-propagation constant and impedance change appropriatly. To illustrate, 
-we plot the propagation constant of the cpw for various 
+.. ipython:: 
+	
+	In [144]: figure();
 
-
+	In [47]: for ep_r in [9,10,11]:
+	   ....:     cpw.ep_r = ep_r
+	   ....:     plot(cpw.frequency.f_scaled, cpw.propagation_constant.imag, label='er=%.1f'%ep_r)
+	
+	In [144]: xlabel('Frequency [GHz]');
+	
+	In [144]: ylabel('Propagation Constant [rad/m]');
+	
+	@savefig circuit_synthesis-cpw_propagation_constant2.png
+	In [144]: legend();
+	
+	@supress
+	In [144]: cpw.ep_r = 10.6
+	
 Network Synthesis
 --------------------
 
-Network components are created through methods of a Media object.  Here is a brieflist of some generic network components skrf supports,
+Networks are created through methods of a Media object.  Here is a brief
+list of some generic network components skrf supports,
 
 * :func:`~media.Media.match`
 * :func:`~media.Media.short`
@@ -164,114 +197,115 @@ Network components are created through methods of a Media object.  Here is a bri
 * :func:`~media.Media.delay_short`
 * :func:`~media.Media.shunt_delay_open`
 
+Usage of these methods can is demonstrated below.
 
 To create a 1-port network for a rectangular waveguide short, 
 
 .. ipython:: 
 
-	In [144]: wg.short() 
+	In [144]: wg.short(name = 'short') 
 
-.. note::
-	Simple circuits like :func:`~media.Media.short` 
-	and :func:`~media.Media.open` are ideal short and opens, meaning 
-	they have :math:`\Gamma = -1` and :math:`\Gamma = 1`, i.e. they dont take 
-	into account sophisticated effects of the discontinuties.
-	Effects of discontinuities are implemented as methods specific to a 
-	given Media class, like :func:`CPW.cpw_short <cpw.CPW.cpw_short>`.
-	
-
-
-Create a :math:`90^{\circ}` section of transmission line, with characteristic impedance of 30 :math:`\Omega`
+Or to create a :math:`90^{\circ}` section of cpw line, 
 
 .. ipython:: 
 
-	In [144]: cpw.line(d=90,unit='deg',z0=30)
+	In [144]: cpw.line(d=90,unit='deg', name='line')
 
-
-Network components specific to a given medium, such as cpw_short, or microstrip_bend, are implemented in by the Media Classes themselves.
-
- 
+.. note::
+	Simple circuits like :func:`~media.Media.short` 
+	and :func:`~media.Media.open` are ideal short and opens with
+	:math:`\Gamma = -1` and :math:`\Gamma = 1`, i.e. they dont take 
+	into account sophisticated effects of the discontinuties.
+	Effects of discontinuities are implemented as methods specific to a 
+	given Media, like :func:`CPW.cpw_short <cpw.CPW.cpw_short>`.
+	
 
 Building Cicuits
 ----------------------
 
-Circuits can be built in an intuitive maner from individual networks. To build a the 90deg delay_short standard can be made by::
+By connecting a series of simple circuits, more complex circuits can be 
+made. To build a the :math:`90^{\circ}` delay short, in the 
+rectangular waveguide media defined above.
 
-	delay_short_90deg = my_media.line(90,'deg') ** my_media.short()
+.. ipython:: 
 
-
-For frequently used circuits, it may be worthwhile creating a function for something like this::
-
-	def delay_short(wb,*args,**kwargs):
-		return my_media.line(*args,**kwargs)**my_media.short()
+	In [144]: delay_short = wg.line(d=90,unit='deg') ** wg.short()
 	
-	delay_short(wb,90,'deg')
-
-This is how many of skrf's network compnents are made internally. 
-
-To connect networks with more than two ports together, use the *connect()* function. You must provide the connect function with the two networks to be connected and the port indecies (starting from 0) to be connected. 
-
-To connect port# '0' of ntwkA to port# '3' of ntwkB: ::
+	In [144]: delay_short.name = 'delay short'
 	
-	ntwkC = rf.connect(ntwkA,0,ntwkB,3)
+	In [144]: delay_short
 
-Note that the connect function takes into account port impedances. To create a two-port network for a shunted delayed open, you can create an ideal 3-way splitter (a 'tee') and conect the delayed open to one of its ports, like so::
-
-	tee = my_media.tee()
-	delay_open = my_media.delay_open(40,'deg')
+When Networks with more than 2 ports need to be connected together, use 
+:func:`rf.connect() <skrf.network.connect>`.  To create a two-port network for a shunted delayed open, you can create an ideal 3-way splitter (a 'tee') and conect the delayed open to one of its ports,
 	
-	shunt_open = connect(tee,1,delay_open,0)
+.. ipython:: 
+
+	In [14]: tee = cpw.tee()
+	
+	In [14]: delay_open = cpw.delay_open(40,'deg')
+	
+	In [14]: shunt_open = rf.connect(tee,1,delay_open,0)
 
 
-Single Stub Tuner
---------------------
+If a specific circuit is created frequenctly, it may make sense to 
+use a function to create the circuit. This can be done most quickly using lamba
 
-This is an example of how to design a single stub tuning network to match a 100ohm resistor to a 50 ohm environment. ::
+.. ipython:: 
+
+	In [144]: delay_short = lambda d: wg.line(d,'deg')**wg.short()
 	
-	# calculate reflection coefficient off a 100ohm
-	Gamma0 = rf.zl_2_Gamma0(z0=50,zl=100)	
+	In [144]: delay_short(90)
 	
-	# create the network for the 100ohm load
-	load = my_media.load(Gamma0)
+This is how many of **skrf**'s network creation methods are made internally.
+
+A more useful example may be to create a function for a shunt-stub tuner,
+that will work for any media object
+
+.. ipython:: 
+
+	In [14]: def shunt_stub(med, d0, d1):
+	   ....:     return med.line(d0,'deg')**med.shunt_delay_open(d1,'deg')
 	
-	# create the single stub  network, parameterized by two delay lengths
-	# in units of 'deg'
-	single_stub = my_media.shunt_delay_open(120,'deg') ** my_media.line(40,'deg')
-	
-	# the resulting network
-	result = single_stub ** load 
-	
-	result.plot_s_db()
+	In [14]: shunt_stub(cpw,10,90)
 
 
-Optimizing Designs
+
+
+
+Design Optimization
 -------------------
-The abilities of scipy's optimizers can be used to automate network design. To automate the single stub design, we can create a 'cost' function which returns somthing we want to minimize, such as the reflection coefficient magnitude at band center.  
-::
 
-	from scipy.optmize import fmin
+The abilities of scipy_'s optimizers can be used to automate network design. In this example, skrf is used to automate the single stub design. First, we create a 'cost' function which returns somthing we want to minimize, such as the reflection coefficient magnitude at band center. Then, one of scipy's minimization algorithms is used to determine the optimal parameters of the stub lengths to minimize this cost.
+
+.. ipython:: 
+
+	In [14]: from scipy.optimize import fmin
 	
 	# the load we are trying to match
-	load = my_media.load(rf.zl_2_Gamma0(100))
+	In [14]: load = cpw.load(rf.zl_2_Gamma0(z0=50,zl=100))
 	
-	# single stub generator function
-	def single_stub(wb,d0,d1):
-		return my_media.shunt_open(d1,'deg')**my_media.line(d0,'deg')
+	# single stub circuit generator function
+	In [14]: def shunt_stub(med, d0, d1):
+	   ....:     return med.line(d0,'deg')**med.shunt_delay_open(d1,'deg')
 	
-	# cost function we want to minimize (note: this uses sloppy namespace)
-	def cost(d):
-		return (single_stub(wb,d[0],d[1]) ** load)[100].s_mag.squeeze()
 	
+	# define the cost function we want to minimize (this uses sloppy namespace)
+	In [14]: def cost(d):
+	   ....:     return (shunt_stub(cpw,d[0],d[1]) ** load)[100].s_mag.squeeze()
 	
 	# initial guess of optimal delay lengths in degrees
-	d0= 120,40 # initial guess
+	In [14]: d0 = 120,40 # initial guess
 	
 	#determine the optimal delays
-	d_opt = fmin(cost,(120,40))
+	In [14]: d_opt = fmin(cost,(120,40))
 	
-
+	In [14]: d_opt 
 
 References
 --------------
 
 .. [#] http://www.microwaves101.com/encyclopedia/coplanarwaveguide.cfm
+
+.. _scipy: http://www.scipy.org
+
+.. _QUCS: http://www.qucs.sourceforge.net
