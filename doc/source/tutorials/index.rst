@@ -9,4 +9,4 @@ Tutorials
    introduction
    plotting
    calibration
-   circuit_design
+   circuit_synthesis
