@@ -12,7 +12,7 @@ Network
 * make operators symetric 
 * add interpolation of arbitrary network parameters
 * make interpolation functions more clear
-* incorperate support for c, and connect_s_fast
+* incorperate support for c, and connect_s_fast, or remove
 * ABCD parameters
 
 IO
@@ -36,6 +36,13 @@ Frequency
 -----------
 * add write() method 
 
+
+virtualInstruments 
+--------------------
+* re-write VNA's coherently 
+* make a generic VNA that uses IDN? to load the correct class
+
 Other
 ------
 * switch to BSD license similar to scipy/numpy/etc
+* use doctests or ipython doctests
