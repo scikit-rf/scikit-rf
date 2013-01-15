@@ -43,9 +43,13 @@ import plotting
 import mathFunctions
 import tlineFunctions
 import constants
-import data
 import util
 
+try:
+    import data
+except:
+    print 'warning: data module didnt load. dont worry about it.'
+    pass 
 # Import contents into current namespace for ease of calling
 from frequency import *
 from network import *
