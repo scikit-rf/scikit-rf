@@ -40,7 +40,7 @@ Frequency
 virtualInstruments 
 --------------------
 * re-write VNA's coherently 
-* make a generic VNA that uses IDN? to load the correct class
+* make a generic VNA that uses IDN? to load the correct class (durrants idea)
 
 Other
 ------
