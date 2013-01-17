@@ -1,6 +1,6 @@
-.. _circuit-synthesis:
+.. _media:
 
-Circuit Synthesis
+Media
 **********************
 
 .. currentModule:: skrf.media
@@ -156,7 +156,7 @@ As an example, plot the cpw's propagation constant vs frequency.
 	
 	In [144]: xlabel('Frequency [GHz]');
 	
-	@savefig circuit_synthesis-cpw_propagation_constant.png
+	@savefig media-cpw_propagation_constant.png
 	In [144]: ylabel('Propagation Constant [rad/m]');
 
 
@@ -175,7 +175,7 @@ of the cpw line change. To illustrate this, plot the propagation constant of the
 	
 	In [144]: ylabel('Propagation Constant [rad/m]');
 	
-	@savefig circuit_synthesis-cpw_propagation_constant2.png
+	@savefig media-cpw_propagation_constant2.png
 	In [144]: legend();
 	
 	@supress
@@ -212,6 +212,7 @@ Or to create a :math:`90^{\circ}` section of cpw line,
 	In [144]: cpw.line(d=90,unit='deg', name='line')
 
 .. note::
+
 	Simple circuits like :func:`~media.Media.short` 
 	and :func:`~media.Media.open` are ideal short and opens with
 	:math:`\Gamma = -1` and :math:`\Gamma = 1`, i.e. they dont take 
