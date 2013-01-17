@@ -139,7 +139,7 @@ import  mathFunctions as mf
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
-from helper import get_fid
+from util import get_fid
 ## later imports. delayed to solve circular dependencies
 #from io.general import read, write
 #from io import touchstone
