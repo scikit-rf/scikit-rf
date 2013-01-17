@@ -40,7 +40,7 @@ Functions related to reading/writing touchstones.
 
 import numpy
 import numpy as npy
-from ..helper import get_fid
+from ..util import get_fid
 from ..network import Network
 from ..frequency import Frequency
 from ..media import  Media
