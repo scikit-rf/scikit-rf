@@ -6,13 +6,7 @@ Networks
 .. currentmodule:: skrf.network
 .. contents::
 
-This is a brief introduction to **skrf**, aimed at those who are familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . These tutorials are most easily followed by using the ipython_ shell with the ``--pylab`` flag. ::
 
-	> ipython --pylab
-	In [1]: 
-	
-This imports several commonly used functions, and turns on 
-`interactive mode <http://matplotlib.org/users/shell.html>`_ , so that plots display immediately. 
 
 .. ipython::
 	:suppress:
@@ -31,13 +25,9 @@ This imports several commonly used functions, and turns on
 	In [147]: clf()
 	
 
-.. note::
 
-	The example code in these tutorials reference files that are distributed with the source package. The working directory for these code snippets is ``scikit-rf/doc/``, hence all data files are referenced relative to that directory. 
-
-Creating Networks 
-------------------
-
+Introduction
+-------------------------
 For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you.
 
 
@@ -47,6 +37,8 @@ For this tutorial, and the rest of the scikit-rf documentation, it is  assumed t
 
 If this produces an error, please see :doc:`installation`.  The code in this tutorial assumes that you are in the directory ``scikit-rf/doc``.
 
+Creating Networks
+-------------------------
 **skrf** provides an object for a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file.
 
 .. ipython::
@@ -61,6 +53,21 @@ A short description of the network will be printed out if entered onto the comma
 	
 	In [1]: ring_slot
 
+Networks can also be created from a pickled Network (written by :func:`Network.write`), 
+
+.. ipython::
+	
+	In [139]: ring_slot = rf.Network('../skrf/data/ring slot.ntwk') 
+	
+or from directly passing values for the frequency, s-paramters  and z0. 
+
+.. ipython::
+	
+	In [1]: custom_ntwk = rf.Network(f = [1,2,3], s= [-1, 1j, 0], z0=50)
+	# `f` is interpreted in units of 'ghz'
+
+Seen :func:`Network.__init__`  for more informaition on network creation.
+
 Network Basics
 -------------------------
 	
@@ -68,7 +75,7 @@ The basic attributes of a microwave :class:`Network` are provided by the
 following properties :
 
 * :attr:`Network.s` : Scattering Parameter matrix. 
-* :attr:`Network.z0`  : Port Characterisic Impedance matrix.
+* :attr:`Network.z0`  : Port Characteristic Impedance matrix.
 * :attr:`Network.frequency`  : Frequency Object. 
 
 All of the network parameters are represented internally as complex :class:`numpy.ndarray` 's of shape *FxNxN*, where *F* is the number of frequency points and *N* is the number of ports.

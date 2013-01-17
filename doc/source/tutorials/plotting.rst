@@ -23,13 +23,7 @@ Plotting
 	In [147]: clf()
     
 
-This tutorial describes how to create common plots associated with microwave networks. It is most easily followed by using the ipython_ shell with the ``--pylab`` flag. ::
 
-	> ipython --pylab
-	In [1]: 
-	
-This imports several commonly used functions, and turns on 
-`interactive mode <http://matplotlib.org/users/shell.html>`_ , so that plots display immediately. 
 
 Plotting Methods
 -----------------------

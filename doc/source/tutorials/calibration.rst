@@ -16,7 +16,7 @@ This tutorial illustrates how to use **skrf** to calibrate data taken from a VNA
 Creating a Calibration
 ----------------------------
 
-Calibrations are performed through a :class:`Calibration` class. Creating Networks
+Calibrations are performed through a :class:`Calibration` class. Creating 
 a :class:`Calibration` object requires at least two pieces of information:
 
 *   a list of measured :class:`~skrf.network.Network`'s

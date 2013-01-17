@@ -1436,7 +1436,7 @@ class Network(object):
         #TODO: add Network property `comments` which is read from
         # touchstone file. 
     
-    def write_touchstone(self, filename=None, dir = './', write_z0=True):
+    def write_touchstone(self, filename=None, dir = './', write_z0=False):
         '''
         write a contents of the :class:`Network` to a touchstone file.
 

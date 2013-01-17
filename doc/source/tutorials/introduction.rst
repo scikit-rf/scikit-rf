@@ -56,7 +56,7 @@ If this produces an error, please see :doc:`installation`.
 Networks
 ------------------
 
-**skrf** provides an object for a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file.
+The :class:`Network`  object represents a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file.
 
 .. ipython::
 			
@@ -228,14 +228,62 @@ Uncertainty bounds on any network parameter can be plotted through the methods
 See the :doc:`networkset` tutorial for more information.
 
 
+Virtual Instruments
+-------------------
+.. currentmodule:: skrf.virtualInstruments
+.. warning::
+
+    The virtualInstruments module is not well written or tested at this point.
+
+The :mod:`~skrf.virtualInstruments` module holds  classes
+for GPIB/VISA instruments that are intricately related to skrf, ie mostly VNA's.
+The VNA classes were created for the sole purpose of retrieving data 
+so that calibration and measurements could be carried out offline by skrf, 
+control of most other VNA capabilities is neglected.
+
+.. note::
+    
+    To use the virtual instrument classes you must have `pyvisa <http://pyvisa.sourceforge.net/pyvisa/>`_ installed.
+    
+A list of VNA's that have been are partially supported.
+
+.. hlist::
+    :columns: 2
+    
+    * :class:`~vna.HP8510C`
+    * :class:`~vna.HP8720`
+    * :class:`~vna.PNAX`
+    * :class:`~vna.ZVA40`
+
+An example usage of the :class:`~vna.HP8510C` class to retrieve some s-parameter data
+
+.. ipython:: 
+    :verbatim:
 	
+    In [144]: from skrf.virtualInstruments import vna
+    
+    In [144]: my_vna = vna.HP8510C(address =16) 
+    #if an error is thrown at this point there is most likely a problem with your visa setup
+    
+    
+    In [144]: dut_1 = my_vna.s11
+    
+    In [144]: dut_2 = my_vna.s21
+    
+    In [144]: dut_3 = my_vna.two_port
+
+Unfortunately, the syntax is different for every VNA class, so the
+above example wont directly translate to other VNA's. Re-writing 
+all of the VNA classes to follow the same convention is on the 
+`TODO list <https://github.com/scikit-rf/scikit-rf/blob/develop/TODO.rst>`_
+
 Calibration
 ----------------------------
 .. currentmodule:: skrf.calibration.calibration
 
 **skrf** has support for one and two-port calibration. **skrf**'s\ default calibration algorithms are generic in that they will work with any set of standards. If you supply more calibration standards than is needed, skrf will implement a simple least-squares solution. **skrf** does not currently support TRL.
 
-Calibrations are performed through a :class:`Calibration` class. Creating Networks
+Calibrations are performed through a :class:`Calibration` class. Creating
 a :class:`Calibration` object requires at least two pieces of information:
 
 *   a list of measured :class:`~skrf.network.Network`'s
@@ -261,14 +309,98 @@ This example is the same as the first except more concise. ::
 
     import skrf as rf
     
-    my_ideals = rf.load_all_touchstones_in_dir('ideals/')
-    my_measured = rf.load_all_touchstones_in_dir('measured/')
-    
+    my_ideals = rf.read_all('ideals/')
+    my_measured = rf.read_all('measured/')
+    duts = rf.read_all('measured/')
     
     ## create a Calibration instance
     cal = rf.Calibration(\
 	    ideals = [my_ideals[k] for k in ['short','open','load']],
 	    measured = [my_measured[k] for k in ['short','open','load']],
 	    )
+
+    caled_duts = [cal.apply_cal(dut) for dut in duts.values()]
+
+
+Media
+-------------
+.. currentModule:: skrf.media
+
+**skrf** supports the  microwave network synthesis based on transmission line models. Network creation is accomplished through methods of the Media class, which represents a transmission line object for a given medium. Once constructed, a :class:`~media.Media` object contains the neccesary properties such as ``propagation constant`` and ``characteristic impedance``, that are needed to generate microwave circuits.
+
+The basic usage looks something like this,  
+
+.. ipython:: 
+
+	In [144]: import skrf as rf
+
+	In [144]: freq = rf.Frequency(75,110,101,'ghz')
+	
+	In [144]: cpw = rf.media.CPW(freq, w=10e-6, s=5e-6, ep_r=10.6)
+	
+	In [144]: cpw.line(100*1e-6, name = '100um line')
+
+
+
+.. warning::
+
+	The network creation and connection syntax of **skrf** are cumbersome 
+	if you need to doing complex circuit design. For a this type of 
+	application, you may be interested in using QUCS_ instead.
+	**skrf**'s synthesis cabilities lend themselves more to scripted applications
+	such as  `Design Optimization`_ or batch processing.
+
+Media Types
+==============
+Specific 
+instances of Media objects can be created from relevant physical and 
+electrical properties. Below is a list of mediums types supported by skrf,
+
+.. hlist::
+    :columns: 2
     
+    * :class:`~cpw.CPW`
+    * :class:`~rectangularWaveguide.RectangularWaveguide`
+    * :class:`~freespace.Freespace`
+    * :class:`~distributedCircuit.DistributedCircuit`
+    * :class:`~media.Media`
+
+
+Network Compoents 
+==================
+Here is a brief
+list of some generic network components skrf supports,
+
+.. hlist::
+    :columns: 3
+
+    * :func:`~media.Media.match`
+    * :func:`~media.Media.short`
+    * :func:`~media.Media.open`
+    * :func:`~media.Media.load`
+    * :func:`~media.Media.line`
+    * :func:`~media.Media.thru`
+    * :func:`~media.Media.tee`
+    * :func:`~media.Media.delay_short`
+    * :func:`~media.Media.shunt_delay_open`
+
+Usage of these methods can is demonstrated below.
+
+To create a 1-port network for a coplanar waveguide short (this neglects dicontinuity effects), 
+
+.. ipython:: 
+
+	In [144]: cpw.short(name = 'short') 
+
+Or to create a :math:`90^{\circ}` section of cpw line, 
+
+.. ipython:: 
+
+	In [144]: cpw.line(d=90,unit='deg', name='line')
+
+
+See :doc:`media` for more information about the Media object and network creation.
+
+
+
 .. _ipython: http://ipython.scipy.org/moin/	

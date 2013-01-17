@@ -40,7 +40,9 @@ Frequency
 virtualInstruments 
 --------------------
 * re-write VNA's coherently 
+* use consistent method names so VNA's are inter-changable as much as possible
 * make a generic VNA that uses IDN? to load the correct class (durrants idea)
+
 
 Other
 ------

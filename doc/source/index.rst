@@ -17,6 +17,7 @@ Tutorials
     tutorials/networks
     tutorials/plotting
     tutorials/networkset
+    tutorials/virtualinstruments 
     tutorials/calibration
     tutorials/media
     
@@ -32,8 +33,6 @@ Examples
     
     examples/matching_single_stub
     examples/oneport_calibration
-    examples/twoport_calibration
-    examples/vna_noise_analysis
     
 
 
