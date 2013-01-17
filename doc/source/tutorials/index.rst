@@ -5,8 +5,10 @@ Tutorials
 .. toctree::
    :maxdepth: 1
    
-   installation
-   introduction
-   plotting
-   calibration
-   circuit_synthesis
+    installation
+    introduction
+    networks
+    plotting
+    networkset
+    calibration
+    media

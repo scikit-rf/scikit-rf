@@ -18,7 +18,7 @@ Tutorials
     tutorials/plotting
     tutorials/networkset
     tutorials/calibration
-    tutorials/circuit_synthesis
+    tutorials/media
     
     
 * `Development <https://github.com/scikit-rf/scikit-rf/wiki/Development>`_
