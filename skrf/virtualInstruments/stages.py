@@ -24,7 +24,7 @@
 
 .. module:: skrf.virtualInstruments.stages
 ================================================
-stages  (:mod:`skrf.virtualInstruments.stages`)
+Stages  (:mod:`skrf.virtualInstruments.stages`)
 ================================================
 
 .. autosummary::

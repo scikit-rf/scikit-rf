@@ -21,9 +21,9 @@
 
 '''
 .. module:: skrf.virtualInstruments.vna
-========================================
-vna  (:mod:`skrf.virtualInstruments.vna`)
-========================================
+=================================================================
+Vector Network Analyzers (:mod:`skrf.virtualInstruments.vna`)
+=================================================================
 
 .. warning:: 
     
