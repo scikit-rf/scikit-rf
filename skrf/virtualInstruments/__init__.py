@@ -27,11 +27,12 @@ This module holds Virtual Instruments that are intricately related
 to **skrf**. 
 
 .. automodule:: skrf.virtualInstruments.vna
+.. automodule:: skrf.virtualInstruments.sa
 .. automodule:: skrf.virtualInstruments.stages
 
 
 '''
 
-all = ['vna','stages','generalSocketReader']
+all = ['vna','sa','stages']
 
 
