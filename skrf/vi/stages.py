@@ -22,9 +22,9 @@
 
 '''
 
-.. module:: skrf.virtualInstruments.stages
+.. module:: skrf.vi.stages
 ================================================
-Stages  (:mod:`skrf.virtualInstruments.stages`)
+Stages  (:mod:`skrf.vi.stages`)
 ================================================
 
 .. autosummary::
@@ -45,7 +45,7 @@ class ESP300(GpibInstrument):
     all axis control commands are sent to the number axis given by the
     local variable self.current_axis. An example usage ::
         
-        from skrf.virtualInstruments.stages import ESP300
+        from skrf.vi.stages import ESP300
         esp = ESP300()
         esp.current_axis = 1
         esp.position = 10

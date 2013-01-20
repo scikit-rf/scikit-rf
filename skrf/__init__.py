@@ -62,10 +62,10 @@ from tlineFunctions import *
 from io import * 
 from constants import * 
 
-# Try to import virtualInstruments, but if except if pyvisa not installed
+# Try to import vi, but if except if pyvisa not installed
 try:
-    import virtualInstruments
-    from virtualInstruments import *
+    import vi
+    from vi import *
 except(ImportError):
     print '\nWARNING: pyvisa not installed, virtual instruments will not be available\n'
 

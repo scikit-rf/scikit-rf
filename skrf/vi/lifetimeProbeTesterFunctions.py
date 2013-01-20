@@ -1,5 +1,5 @@
 import skrf as rf
-from skrf.virtualInstruments import lifetimeProbeTester as lpt
+from skrf.vi import lifetimeProbeTester as lpt
 import os
 
 def setup():

@@ -230,12 +230,12 @@ See the :doc:`networkset` tutorial for more information.
 
 Virtual Instruments
 -------------------
-.. currentmodule:: skrf.virtualInstruments
+.. currentmodule:: skrf.vi
 .. warning::
 
-    The virtualInstruments module is not well written or tested at this point.
+    The vi module is not well written or tested at this point.
 
-The :mod:`~skrf.virtualInstruments` module holds  classes
+The :mod:`~skrf.vi` module holds  classes
 for GPIB/VISA instruments that are intricately related to skrf, ie mostly VNA's.
 The VNA classes were created for the sole purpose of retrieving data 
 so that calibration and measurements could be carried out offline by skrf, 
@@ -260,7 +260,7 @@ An example usage of the :class:`~vna.HP8510C` class to retrieve some s-parameter
 .. ipython:: 
     :verbatim:
 	
-    In [144]: from skrf.virtualInstruments import vna
+    In [144]: from skrf.vi import vna
     
     In [144]: my_vna = vna.HP8510C(address =16) 
     #if an error is thrown at this point there is most likely a problem with your visa setup

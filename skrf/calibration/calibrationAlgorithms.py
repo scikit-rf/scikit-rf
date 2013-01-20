@@ -404,7 +404,7 @@ def two_port(measured, ideals, switch_terms = None):
     Notes
     ---------
     support for gathering switch terms on HP8510C  is in
-    :mod:`skrf.virtualInstruments.vna`
+    :mod:`skrf.vi.vna`
 
 
     References

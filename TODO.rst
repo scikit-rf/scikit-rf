@@ -37,7 +37,7 @@ Frequency
 * add write() method 
 
 
-virtualInstruments 
+vi 
 --------------------
 * re-write VNA's coherently 
 * use consistent method names so VNA's are inter-changable as much as possible
