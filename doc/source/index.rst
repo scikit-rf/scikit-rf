@@ -55,7 +55,7 @@ Reference
     reference/io/index
     reference/calibration/index
     reference/media/index
-    reference/virtualInstruments/index
+    reference/vi/index
 
 
 Indices and tables

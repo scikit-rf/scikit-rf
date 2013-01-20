@@ -18,17 +18,17 @@
 #       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #       MA 02110-1301, USA.
 '''
-.. module:: skrf.virtualInstruments
+.. module:: skrf.vi
 ========================================================
-virtualInstruments (:mod:`skrf.virtualInstruments`)
+vi (:mod:`skrf.vi`)
 ========================================================
 
 This module holds Virtual Instruments that are intricately related 
 to **skrf**. 
 
-.. automodule:: skrf.virtualInstruments.vna
-.. automodule:: skrf.virtualInstruments.sa
-.. automodule:: skrf.virtualInstruments.stages
+.. automodule:: skrf.vi.vna
+.. automodule:: skrf.vi.sa
+.. automodule:: skrf.vi.stages
 
 
 '''

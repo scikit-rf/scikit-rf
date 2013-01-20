@@ -1,1 +1,1 @@
-.. automodule:: skrf.virtualInstruments
+.. automodule:: skrf.vi
