@@ -54,7 +54,7 @@ class PNAX(GpibInstrument):
     Examples
     -----------
     
-    >>> from skrf.virtualInstrument.vna import PNAX 
+    >>> from skrf.virtualInstruments.vna import PNAX 
     >>> v = PNAX()
     >>> dut = v.network
     '''
@@ -73,6 +73,12 @@ class PNAX(GpibInstrument):
 
     @property
     def frequency(self, unit='ghz'):
+        '''
+        Gets frequency data, returning a :class:`~skrf.frequency.Frequency` object
+        
+        Gets the
+        
+        '''
         freq=Frequency( float(self.ask('sens:FREQ:STAR?')),
                 float(self.ask('sens:FREQ:STOP?')),\
                 int(self.ask('sens:sweep:POIN?')),'hz')

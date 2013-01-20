@@ -348,7 +348,7 @@ The basic usage looks something like this,
 	if you need to doing complex circuit design. For a this type of 
 	application, you may be interested in using QUCS_ instead.
 	**skrf**'s synthesis cabilities lend themselves more to scripted applications
-	such as  `Design Optimization`_ or batch processing.
+	such as  :ref:`Design Optimization` or batch processing.
 
 Media Types
 ==============
@@ -404,3 +404,4 @@ See :doc:`media` for more information about the Media object and network creatio
 
 
 .. _ipython: http://ipython.scipy.org/moin/	
+.. _QUCS: http://www.qucs.sourceforge.net

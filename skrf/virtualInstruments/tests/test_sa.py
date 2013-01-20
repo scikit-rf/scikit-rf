@@ -1,7 +1,12 @@
-from ..sa import HP8500
+
 from numpy.testing import dec
 import unittest
+from nose.plugins.skip import SkipTest, Skip
 
+try:
+    from skrf.virtualInstruments.sa import HP8500
+except:
+    raise SkipTest('visa failed to import, skipping')
 
 class HP8500Test(unittest.TestCase):
     def setUp(self):
