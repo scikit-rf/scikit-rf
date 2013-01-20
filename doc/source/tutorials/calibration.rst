@@ -118,7 +118,7 @@ Switch-terms
 
 Originally described by Roger Marks [#]_ , switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the internal switch within the VNA.
 
-Switch terms can be measured with a custom measurement configuration on the VNA itself. **skrf** has support for switch terms for the :class:`~skrf.virtualInstruments.vna.HP8510C` class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.
+Switch terms can be measured with a custom measurement configuration on the VNA itself. **skrf** has support for switch terms for the :class:`~skrf.vi.vna.HP8510C` class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.
 
 
 Example

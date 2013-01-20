@@ -20,9 +20,9 @@
 #          MA 02110-1301, USA.
 
 '''
-.. module:: skrf.virtualInstruments.vna
+.. module:: skrf.vi.vna
 =================================================================
-Vector Network Analyzers (:mod:`skrf.virtualInstruments.vna`)
+Vector Network Analyzers (:mod:`skrf.vi.vna`)
 =================================================================
 
 .. warning:: 
@@ -54,7 +54,7 @@ class PNAX(GpibInstrument):
     Examples
     -----------
     
-    >>> from skrf.virtualInstruments.vna import PNAX 
+    >>> from skrf.vi.vna import PNAX 
     >>> v = PNAX()
     >>> dut = v.network
     '''
@@ -97,7 +97,7 @@ class PNAX(GpibInstrument):
         Examples
         ----------
         
-        >>> from skrf.virtualInstrument.vna import PNAX 
+        >>> from skrf.vi.vna import PNAX 
         >>> v = PNAX()
         >>> dut = v.network
         '''
@@ -219,7 +219,7 @@ class ZVA40(GpibInstrument):
     Examples
     -----------
     
-    >>> from skrf.virtualInstrument.vna import ZVA40 
+    >>> from skrf.vi.vna import ZVA40 
     >>> v = ZVA40()
     >>> dut = v.network
     '''

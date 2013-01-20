@@ -4,7 +4,7 @@ import unittest
 from nose.plugins.skip import SkipTest, Skip
 
 try:
-    from skrf.virtualInstruments.sa import HP8500
+    from skrf.vi.sa import HP8500
 except:
     raise SkipTest('visa failed to import, skipping')
 

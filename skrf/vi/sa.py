@@ -20,9 +20,9 @@
 #          MA 02110-1301, USA.
 
 '''
-.. module:: skrf.virtualInstruments.sa
+.. module:: skrf.vi.sa
 =================================================================
-Spectrum Analyzers  (:mod:`skrf.virtualInstruments.sa`)
+Spectrum Analyzers  (:mod:`skrf.vi.sa`)
 =================================================================
 
 
@@ -51,7 +51,7 @@ class HP8500(GpibInstrument):
     
     Get trace, and store in a Network object
     
-    >>> from skrf.virtualInstrument.sa import HP 
+    >>> from skrf.vi.sa import HP 
     >>> my_sa = HP() # default address is 18
     >>> trace = my_sa.get_ntwk()
     
