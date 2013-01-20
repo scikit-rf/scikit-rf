@@ -10,14 +10,14 @@ Virtual Instruments
     The virtualInstruments module is not well written or tested at this point.
 
 The :mod:`~skrf.virtualInstruments` module holds  classes
-for GPIB/VISA instruments that are intricately related to skrf, ie mostly VNA's.
-The VNA classes were created for the sole purpose of retrieving data 
-so that calibration and measurements could be carried out offline by skrf, 
-control of most other VNA capabilities is neglected.
+for GPIB/VISA instruments that are intricately related to skrf.
+Most of the classes were created for the sole purpose of retrieving data 
+so that calibration and measurements could be carried out offline with skrf, 
+therefore most other instrument capabilities are neglected.
 
 .. note::
     
-    To use the virtual instrument classes you must have `pyvisa <http://pyvisa.sourceforge.net/pyvisa/>`_ installed.
+    To use the virtual instrument classes you must have `pyvisa <http://pyvisa.sourceforge.net/pyvisa/>`_ installed, and a working VISA installation.
     
 A list of VNA's that have been are partially supported.
 
