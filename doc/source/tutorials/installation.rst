@@ -23,7 +23,7 @@ Once the requirements are installed, there are two choices for installing **skrf
 *    windows installer
 *   python source package 
 
-These can be found at http://scikit-rf.org/download/
+These can be found at http://scikit-rf.org/download.html
 
 If you dont know how to install a python module and dont care to learn how, you want the windows installer. 
 
