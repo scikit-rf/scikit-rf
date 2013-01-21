@@ -2,6 +2,7 @@
 from numpy.testing import dec
 import unittest
 from nose.plugins.skip import SkipTest, Skip
+import skrf 
 
 try:
     from skrf.vi.sa import HP8500
@@ -10,14 +11,14 @@ except:
 
 class HP8500Test(unittest.TestCase):
     def setUp(self):
-        self.vi = HP8500()
+        self.vi = HP8500(timeout=3)
         self.vi.save_state(2)
     
     def tearDown(self):
         self.vi.recall_state(2)    
     
     def test_frequency(self):
-        f = self.vi.frequency()
+        f = self.vi.frequency
         
     def test_get_ntwk(self):
         n = self.vi.get_ntwk()    
