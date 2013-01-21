@@ -73,7 +73,7 @@ class HP8500(GpibInstrument):
         \*args, \*\*kwargs :
             passed to ``visa.GpibInstrument.__init__``
         '''
-        GpibInstrument.__init__(self,'GPIB::'+str(address),*ags,**kwargs)
+        GpibInstrument.__init__(self,'GPIB::'+str(address),*args,**kwargs)
 
     @property
     def frequency(self):
@@ -81,7 +81,6 @@ class HP8500(GpibInstrument):
         '''
         return Frequency(self.f_start, self.f_start, len(self.trace_a),'ghz')
         
-    @property
     def get_ntwk(self, trace='a', goto_local=False, *args, **kwargs):
         '''
         Get a trace and return the data in a :class:`~skrf.network.Network` format
@@ -120,7 +119,7 @@ class HP8500(GpibInstrument):
         self.recall_state()
         
         freq = self.frequency
-        n = Network(s=s, frequency=freq, z0=1, *arg, **kwargs)
+        n = Network(s=s, frequency=freq, z0=1, *args, **kwargs)
         
         if goto_local:
             self.goto_local()
@@ -152,7 +151,7 @@ class HP8500(GpibInstrument):
         '''
         trace 'b'
         '''
-        return self.ask_for_values("trab?")
+        return self.ask_for_values("trb?")
     
     def sweep(self):
         '''
@@ -177,7 +176,7 @@ class HP8500(GpibInstrument):
         '''
         Switches from remote to local control
         '''
-        visa.vpp43.gpib_control_ren(self,0)
+        pass#visa.vpp43.gpib_control_ren(self.vi,0)
 
     def save_state(self, reg_n=1):
         '''
@@ -185,7 +184,7 @@ class HP8500(GpibInstrument):
         '''
         self.write('saves %i'%reg_n)
     
-    def recall_state(self, reg_n):
+    def recall_state(self, reg_n=1):
         '''
         Recall current state to a given register
         '''
