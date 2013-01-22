@@ -1472,12 +1472,20 @@ class Network(object):
         extension = '.s%ip'%self.number_of_ports
 
         outputFile = open(dir+'/'+filename+extension,"w")
+        
+        # Add '!' Touchstone comment delimiters to the start of every line
+        # in self.comments
+        commented_header = ''
+        if self.comments:
+            for comment_line in self.comments.split('\n'):
+                commented_header += '!{}\n'.format(comment_line)
 
         # write header file.
         # the '#'  line is NOT a comment it is essential and it must be
         #exactly this format, to work
         # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
         outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
+        outputFile.write(commented_header)
         outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
 
         #write comment line for users (optional)
