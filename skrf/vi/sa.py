@@ -79,7 +79,9 @@ class HP8500(GpibInstrument):
     def frequency(self):
         '''
         '''
-        return Frequency(self.f_start, self.f_start, len(self.trace_a),'ghz')
+        f = Frequency(self.f_start, self.f_stop, len(self.trace_a),'hz')
+        f.unit = 'ghz'
+        return f
         
     def get_ntwk(self, trace='a', goto_local=False, *args, **kwargs):
         '''
@@ -117,7 +119,7 @@ class HP8500(GpibInstrument):
         elif trace == 'b':
             s = self.trace_b
         self.recall_state()
-        
+        s = mf.db_2_magnitude(npy.array(s))
         freq = self.frequency
         n = Network(s=s, frequency=freq, z0=1, *args, **kwargs)
         
