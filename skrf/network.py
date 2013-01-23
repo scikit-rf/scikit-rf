@@ -129,11 +129,10 @@ from copy import deepcopy as copy
 
 
 import numpy as npy
-import ctypes as ct     # for connect_s_fast
 import pylab as plb
 from scipy import stats         # for Network.add_noise_*
 from scipy.interpolate import interp1d # for Network.interpolate()
-import unittest # for unitest.skip 
+import unittest # fotr unitest.skip 
 import  mathFunctions as mf
 
 from frequency import Frequency
@@ -144,10 +143,6 @@ from util import get_fid
 #from io.general import read, write
 #from io import touchstone
 
-try:
-    from src import connect_s_fast
-except:
-    pass#warnings.warn('libconnect failed to load.')
 
 
 

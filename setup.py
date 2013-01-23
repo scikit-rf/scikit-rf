@@ -23,6 +23,9 @@ setup(name='scikit-rf',
 		'matplotlib',
 		],
 	package_dir={'skrf':'skrf'},
-	package_data = {'skrf':['src/*']}
+	include_package_data = True,
+	#exclude_package_data = {'':'doc/*'},
+	
+	#package_data = {'skrf':['src/*']}
 	)
 
