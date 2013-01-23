@@ -39,12 +39,15 @@ through the Network constructor, :func:`~skrf.network.Network.__init__`
 
 .. automodule:: skrf.io.general
 .. automodule:: skrf.io.touchstone
+.. automodule:: skrf.io.csv
 
    
 '''
 
 import general
+import csv
 import touchstone
 
 from general import * 
+from csv import * 
 from touchstone import * 
