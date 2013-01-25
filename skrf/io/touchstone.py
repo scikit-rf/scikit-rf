@@ -208,7 +208,9 @@ class Touchstone():
         containing ignored comments are removed.  By default these are comments
         which contain special meaning withing skrf and are not user comments.
         """
-        processed_comments = ''        
+        processed_comments = '' 
+        if self.comments is None:
+            self.comments = ''    
         for comment_line in self.comments.split('\n'):
             for ignored_comment in ignored_comments:
                 if ignored_comment in comment_line:
