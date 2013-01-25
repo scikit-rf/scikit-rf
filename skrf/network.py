@@ -325,6 +325,7 @@ class Network(object):
         if kwargs.has_key('touchstone_filename'):
             file = kwargs['touchstone_filename']
         
+        
         if file is not None:
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and 
@@ -1405,10 +1406,11 @@ class Network(object):
         '''
         from io import touchstone
         touchstoneFile = touchstone.Touchstone(filename)
-
+        
         if touchstoneFile.get_format().split()[1] != 's':
             raise NotImplementedError('only s-parameters supported for now.')
 
+        self.comments = touchstoneFile.get_comments()        
 
         # set z0 before s so that y and z can be computed
         self.z0 = complex(touchstoneFile.resistance)  
@@ -1467,12 +1469,20 @@ class Network(object):
         extension = '.s%ip'%self.number_of_ports
 
         outputFile = open(dir+'/'+filename+extension,"w")
+        
+        # Add '!' Touchstone comment delimiters to the start of every line
+        # in self.comments
+        commented_header = ''
+        if self.comments:
+            for comment_line in self.comments.split('\n'):
+                commented_header += '!{}\n'.format(comment_line)
 
         # write header file.
         # the '#'  line is NOT a comment it is essential and it must be
         #exactly this format, to work
         # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
         outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
+        outputFile.write(commented_header)
         outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
 
         #write comment line for users (optional)
@@ -1738,6 +1748,7 @@ class Network(object):
         See :func:`~Network.interpolate` for more information. 
 
     
+        
 
         Parameters
         -----------
@@ -1760,6 +1771,7 @@ class Network(object):
         resample
         interpolate
         interpolate_self 
+
 
         '''
         freq = Frequency.from_f(f,**kwargs)

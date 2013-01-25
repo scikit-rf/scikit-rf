@@ -82,6 +82,8 @@ class Touchstone():
 
         ## file format version
         self.version = '1.0'
+        ## comments in the file header
+        self.comments = None
         ## unit of the frequency (Hz, kHz, MHz, GHz)
         self.frequency_unit = None
         ## s-parameter type (S,Y,Z,G,H)
@@ -126,10 +128,18 @@ class Touchstone():
             if not line:
                 break
 
-            # remove comment extentions '!'
-            # this may even be the whole line if '!' is the first character
-            # everything is case insensitive in touchstone files
-            line = line.split('!',1)[0].strip().lower()
+            # store comments if they precede the option line
+            line = line.split('!',1)
+            if len(line) == 2 and not self.parameter:
+                if self.comments == None:
+                    self.comments = ''
+                self.comments = self.comments + line[1]
+            
+            # remove the comment (if any) so rest of line can be processed.
+            # touchstone files are case-insensitive
+            line = line[0].strip().lower()
+            
+            # skip the line if there was nothing except comments
             if len(line) == 0:
                 continue
 
@@ -192,6 +202,23 @@ class Touchstone():
         if not self.reference:
             self.reference = [self.resistance] * self.rank
 
+    def get_comments(self, ignored_comments = ['Created with skrf']):
+        """
+        Returns the comments which appear anywhere in the file.  Comment lines
+        containing ignored comments are removed.  By default these are comments
+        which contain special meaning withing skrf and are not user comments.
+        """
+        processed_comments = '' 
+        if self.comments is None:
+            self.comments = ''    
+        for comment_line in self.comments.split('\n'):
+            for ignored_comment in ignored_comments:
+                if ignored_comment in comment_line:
+                        comment_line = None
+            if comment_line:
+                processed_comments = processed_comments + comment_line + '\n'
+        return processed_comments                
+        
     def get_format(self, format="ri"):
         """
         returns the file format string used for the given format.
@@ -204,6 +231,7 @@ class Touchstone():
             frequency = 'hz'
         return "%s %s %s r %s" %(frequency, self.parameter,
                                  format, self.resistance)
+                                 
 
     def get_sparameter_names(self, format="ri"):
         """
