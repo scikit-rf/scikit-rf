@@ -58,18 +58,22 @@ class PNAX(GpibInstrument):
     >>> v = PNAX()
     >>> dut = v.network
     '''
-    def __init__(self, address=16, channel=1,**kwargs):
-        GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+    def __init__(self, address=16, channel=1,timeout = 3, **kwargs):
+        GpibInstrument.__init__(self,'GPIB::'+str(address),timeout=timeout,**kwargs)
         self.channel=channel
-        self.write('calc:par:sel CH1_S11_1')
-
+        self.port = 1
+        #self.write('calc:par:sel CH1_S11_1')
+        
     @property
     def continuous(self):
-        raise NotImplementedError
+        return bool(int(self.ask('init:cont?')))
 
     @continuous.setter
     def continuous(self, mode):
-        self.write('initiate:continuous '+ mode)
+        '''
+        '''
+        
+        self.write('initiate:continuous '+ str(int(mode)))
 
     @property
     def frequency(self, unit='ghz'):
@@ -86,8 +90,8 @@ class PNAX(GpibInstrument):
         return freq
 
 
-    @property
-    def network(self):
+    
+    def get_network(self):
         '''
         Initiates a sweep and returns a  :class:`~skrf.network.Network` type represting the data.
 
@@ -101,16 +105,89 @@ class PNAX(GpibInstrument):
         >>> v = PNAX()
         >>> dut = v.network
         '''
+        was_cont = self.continuous
+        
+        self.continuous = False
         self.write('init:imm')
         self.write('*wai')
-        s = npy.array(self.ask_for_values('CALCulate1:DATA? SDATa'))
-        s.shape=(-1,2)
-        s =  s[:,0]+1j*s[:,1]
-        ntwk = Network()
-        ntwk.s = s
-        ntwk.frequency= self.frequency
+        ntwk = Network(
+            s = self.get_sdata(), 
+            frequency = self.frequency,
+            name = self.get_active_measurement(),
+            )
+            
+        self.continuous = was_cont
         return ntwk
-
+    def get_power_level(self):
+        return float(self.ask('SOURce:POWer?'))
+    def set_power_level(self, num, cnum=None, port=None):
+        '''
+        set the RF power level 
+        
+        Parameters 
+        -----------
+        num : float
+            Source power in dBm
+        
+        '''
+        if cnum is None:
+            cnum = self.channel
+        
+        if port is None:
+            port = self.port
+        
+        self.write('SOURce%i:POWer%i %i'%(cnum, port, num))
+    
+    def get_idn(self):
+        return self.ask('*IDN?')
+    
+    def get_data(self, char='SDATA', cnum = None):
+        '''
+        get data for current active measuremnent
+        
+        this doesnt do any timeing. just gets data. 
+        '''
+        if cnum is None:
+            cnum = self.channel
+            
+        self.write('calc:par:sel %s'%(self.get_active_measurement()))
+        data = npy.array(self.ask_for_values('CALC%i:Data? %s'%(cnum, char)))
+        
+        if char.lower() == 'sdata':
+            data = mf.scalar2Complex(data)
+            
+        return data
+    
+    def get_sdata(self, *args, **kwargs):
+        return self.get_data(char = 'SDATA', *args, **kwargs)
+    
+    def get_fdata(self, *args, **kwargs):
+        return self.get_data(char = 'fDATA', *args, **kwargs)
+    
+    def get_rdata(self, char='A', cnum = None):
+        '''
+        Parameters
+        -----------
+        char : ['A', 'B', 'C', ... , 'REF']
+            the reciever to measure, the 'REF' number  (like R1, R2) 
+            depends on the source port.
+        cnum : int
+            channel number
+            
+        '''
+        if cnum is None:
+            cnum = self.channel
+        self.write('calc:par:sel %s'%(self.get_active_measurement()))
+        return npy.array(self.ask_for_values('CALC%i:RData? %s'%(cnum, char)))
+    
+    def get_measurements(self):
+        return self.ask("CALC:PAR:CAT?")
+    
+    def get_active_measurement(self):
+        return self.ask("SYST:ACT:MEAS?" )
+    
+    
+    
 class ZVA40_lihan(object):
     '''
     Created on Aug 3, 2010
