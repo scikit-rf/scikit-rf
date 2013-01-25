@@ -1,3 +1,4 @@
 include README.rst INSTALL.txt COPYING.txt ez_setup.py
 recursive-include doc * 
+recursive-include skrf/data * 
 

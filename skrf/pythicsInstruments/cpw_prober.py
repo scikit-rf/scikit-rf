@@ -1,5 +1,5 @@
 #import skrf as rf
-from skrf.virtualInstruments.lifetimeProbeTester import LifeTimeProbeTester
+from skrf.vi.lifetimeProbeTester import LifeTimeProbeTester
 from skrf import Network
 import pdb
 import multiprocessing

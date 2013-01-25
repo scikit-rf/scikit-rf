@@ -83,9 +83,9 @@ class DistributedCircuit(Media):
     constant are interpreted as follows:
 
     .. math::
-                    +\\Re e\\{\\gamma\\} = \\text{attenuation}
-
-                    -\\Im m\\{\\gamma\\} = \\text{forward propagation}
+        +\\Re e\\{\\gamma\\} = \\text{attenuation}
+    
+        -\\Im m\\{\\gamma\\} = \\text{forward propagation}
 
 
 
@@ -117,7 +117,7 @@ class DistributedCircuit(Media):
         the classmethod :func:`from_Media`
         '''
 
-        self.frequency = deepcopy(frequency)
+        self.frequency = frequency.copy()
         self.C, self.I, self.R, self.G = C,I,R,G
 
         # for unambiguousness
@@ -151,7 +151,14 @@ class DistributedCircuit(Media):
     def __repr__(self):
         return self.__str__()
 
-
+    def __getstate__(self):
+        '''
+        method needed to allow for pickling
+        '''
+        d = self.__dict__.copy()
+        del d['delay'] # cant pickle instance methods
+        return(d)
+            
     @classmethod
     def from_Media(cls, my_media, *args, **kwargs):
         '''

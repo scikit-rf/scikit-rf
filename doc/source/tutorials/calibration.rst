@@ -2,39 +2,48 @@
 
 Calibration
 ***************
+.. currentmodule:: skrf.calibration.calibration
 .. contents::
+
 Intro
 ---------------
 
-This page describes how to use **skrf** to calibrate data taken from a VNA. The explanation of calibration theory and calibration kit design is beyond the scope of this  tutorial. Instead this tutorial  describes how to calibrate a device under test (DUT), assuming you have measured an acceptable set of standards, and have a coresponding set ideal responses.
+This tutorial illustrates how to use **skrf** to calibrate data taken from a VNA. The explanation of calibration theory and calibration kit design is beyond the scope of this  tutorial. Instead, this tutorial  describes how to calibrate a device under test (DUT), assuming you have measured an acceptable set of standards, and have a coresponding set ideal responses.
 
-skrf's calibration algorithm is generic in that it will work with any set of standards. If you supply more calibration standards than is needed, skrf will implement a simple least-squares solution.
+**skrf**'s default calibration algorithms are generic in that they will work with any set of standards. If you supply more calibration standards than is needed, skrf will implement a simple least-squares solution.
 
-Calibrations are performed through a Calibration class, which makes creating and working with calibrations easy. Since skrf-1.2 the Calibration class only requires two pieces of information:
 
-*   a list of measured Networks
-*   a list of ideal Networks 
+Creating a Calibration
+----------------------------
 
-The Network elements in each list must all be similar, (same #ports, same frequency info, etc) and must be aligned to each other, meaning the first element of ideals list must correspond to the first element of measured list.
+Calibrations are performed through a :class:`Calibration` class. Creating 
+a :class:`Calibration` object requires at least two pieces of information:
 
-Optionally, other information can be provided for explicitness, such as,
+*   a list of measured :class:`~skrf.network.Network`'s
+*   a list of ideal :class:`~skrf.network.Network`'s
 
-*    calibration type
-*    frequency information
-*    reciprocity of embedding networks
+The :class:`~skrf.network.Network` elements in each list must all be similar (same #ports, frequency info, etc) and must be aligned to each other, meaning the first element of ideals list must correspond to the first element of measured list.
+
+Optionally, other information can be provided when relevent such as,
+
+*    calibration algorithm
+*    enforce eciprocity of embedding networks
 *    etc 
 
-When this information is not provided skrf will determine it through inspection.
+When this information is not provided skrf will determine it through 
+inspection, or use a default value.
+
+Saving and Recalling a Calibration
+-----------------------------------
+
+Like other **skrf** objects, :class:`Calibration`'s  can be written-to  and 
+read-from disk. Writing  can be accomplished  by using :func:`Calibration.write`, 
+or :func:`rf.write() <skrf.io.general.write>`, and reading is done with :func:`rf.read() <skrf.io.general.read>`. 
 
 One-Port
 --------------
 
-See :doc:`example_oneport_calibration` for examples.
-
-Below are (hopefully) self-explanatory examples of increasing complexity, which should illustrate, by example, how to make a calibration.
-Simple One-port
-
-This example is written to be instructive, not concise.::
+This example is written to be instructive, not concise. ::
 
 	import skrf as rf
 	
@@ -77,8 +86,9 @@ This example is written to be instructive, not concise.::
 	dut_caled.write_touchstone()
 
 Concise One-port
+-----------------
 
-This example is meant to be the same as the first except more concise.::
+This example is the same as the first except more concise. ::
 
     import skrf as rf
     
@@ -103,16 +113,15 @@ Like the one-port algorithm, the two-port calibration can handle any number of s
 
 One draw-back of using the 8-term error model formulation (which is the same formulation used in TRL) is that switch-terms may need to be measured in order to achieve a high quality calibration (this was pointed out to me by Dylan Williams).
 
-A note on switch-terms
+Switch-terms
 ++++++++++++++++++++++++
 
-Switch-terms are explained in a paper by Roger Marks  [#]_. Basically, switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the hardware of the VNA.
+Originally described by Roger Marks [#]_ , switch-terms account for the fact that the error networks change slightly depending on which port is being excited. This is due to the internal switch within the VNA.
 
-So how do you measure switch terms? With a custom measurement configuration on the VNA itself. mwavpey has support for switch terms for the HP8510C class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.
+Switch terms can be measured with a custom measurement configuration on the VNA itself. **skrf** has support for switch terms for the :class:`~skrf.vi.vna.HP8510C` class, which you can use or extend to different VNA. Without switch-term measurements, your calibration quality will vary depending on properties of you VNA.
 
-See :doc:`example_twoport_calibration` for and example
 
-Simple Two Port
+Example
 -------------------
 
 Two-port calibration is accomplished in an identical way to one-port, except all the standards are two-port networks. This is even true of reflective standards (S21=S12=0). So if you measure reflective standards you must measure two of them simultaneously, and store information in a two-port. For example, connect a short to port-1 and a load to port-2, and save a two-port measurement as 'short,load.s2p' or similar::
@@ -158,8 +167,8 @@ Two-port calibration is accomplished in an identical way to one-port, except all
     # save results 
     dut_caled.write_touchstone()
 
-Using s1p ideals in two-port calibration
-++++++++++++++++++++++++++++++++++++++++++
+Using one-port ideals in two-port Calibration
+++++++++++++++++++++++++++++++++++++++++++++++
 
 Commonly, you have data for ideal data for reflective standards in the form of one-port touchstone files (ie s1p). To use this with skrf's two-port calibration method you need to create a two-port network that is a composite of the two networks. There is a function in the WorkingBand Class which will do this for you, called two_port_reflect.::
     

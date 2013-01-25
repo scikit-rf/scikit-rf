@@ -45,6 +45,7 @@ import os
 from copy import deepcopy, copy
 import itertools
 from warnings import warn
+import cPickle as pickle
 
 from calibrationAlgorithms import *
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
@@ -52,8 +53,10 @@ from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
 from ..networkSet import NetworkSet
-from ..convenience import *
 
+
+## later imports. delayed to solve circular dependencies
+#from io.general import write
 
 
 ## main class
@@ -165,9 +168,22 @@ class Calibration(object):
         self._residual_ntwks = None
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
-        self.has_run = False
+    
+    def __str__(self):
+        if self.name is None:
+            name = ''
+        else:
+            name = self.name
+            
+        output = '%s Calibration: \'%s\', %s, %i-ideals/%i-measured'\
+            %(self.type,name,str(self.measured[0].frequency),\
+            len(self.ideals), len(self.measured))
+            
+        return output
         
-
+    def __repr__(self):
+        return self.__str__()    
+        
     ## properties
     @property
     def type (self):
@@ -202,7 +218,7 @@ class Calibration(object):
                 print ('Warning: using \'two port\' calibration')
 
         if new_type not in self.calibration_algorithm_dict.keys():
-            raise ValueError('incorrect calibration type')
+            raise ValueError('incorrect calibration type. Should be in:\n '+', '.join(self.calibration_algorithm_dict.keys()))
 
 
         self._type = new_type
@@ -214,7 +230,7 @@ class Calibration(object):
             self._nports = 2
         else:
             raise NotImplementedError('only one and two ports supported right now')
-
+    
     @property
     def nports(self):
         '''
@@ -273,31 +289,35 @@ class Calibration(object):
     @property
     def error_ntwk(self):
         '''
-        a Network type which represents the error network being
+        A Network object which represents the error network being
         calibrated out.
         '''
-        if not self.has_run:
-            self.run()
+        if self.nports == 1:
+            try: 
+                return( self._error_ntwk)
+            except(AttributeError):
+                self.run()
+                return self._error_ntwk
+                
 
-        if self.nports ==1:
-            return self._error_ntwk
-
-        elif self.nports == 2:
-            raise NotImplementedError('Not sure what to do yet')
+        else:
+            raise NotImplementedError('Only defined for 1-port cals.')
+            
     @property
     def Ts(self):
         '''
         T-matricies used for de-embeding, a two-port calibration.
         '''
 
-        if self.nports ==2:
-            if not self.has_run:
+        if self.nports == 2:
+            try:
+                return self._Ts
+            except(AttributeError):
                 self.run()
-            return self._Ts
-        elif self.nports ==1:
-            raise AttributeError('Only exists for two-port cals')
+                return self._Ts
         else:
-            raise NotImplementedError('Not sure what to do yet')
+            raise AttributeError('Only defined for 2-port cals')
+        
 
     @property
     def residual_ntwks(self):
@@ -323,9 +343,7 @@ class Calibration(object):
         so, if you want to re-calculate the residual networks then
         you delete the property '_residual_ntwks'.
         '''
-        if self._residual_ntwks is not None:
-            return self._residual_ntwks
-        else:
+        if self._residual_ntwks is None:
             ntwk_list=\
                     [ ((self.apply_cal(self.measured[k]))-self.ideals[k]) \
                             for k in range(len(self.ideals))]
@@ -339,7 +357,7 @@ class Calibration(object):
                 ntwk_list[k].name = self.ideals[k].name
 
             self._residual_ntwks = ntwk_list
-        return ntwk_list
+        return self._residual_ntwks
 
     @property
     def caled_ntwks(self):
@@ -348,13 +366,11 @@ class Calibration(object):
 
 
         '''
-        if self._caled_ntwks is not None:
-            return self._caled_ntwks
-        else:
+        if self._caled_ntwks is None:
             ntwk_list=\
                     [ self.apply_cal(self.measured[k]) \
                             for k in range(len(self.ideals))]
-
+            
             for k in range(len(ntwk_list)):
                 if self.ideals[k].name  is not None:
                     name = self.ideals[k].name
@@ -364,23 +380,23 @@ class Calibration(object):
                 ntwk_list[k].name = self.ideals[k].name
 
             self._caled_ntwks = ntwk_list
-        return ntwk_list
+        
+        return self._caled_ntwks
     
     @property
     def caled_ntwk_sets(self):
         '''
         returns a NetworkSet for each caled_ntwk, based on their names
         '''
-        if self._caled_ntwk_sets is not None:
-            return self._caled_ntwk_sets
-        else:
+        if self._caled_ntwk_sets is  None:
             caled_sets={}
             std_names = list(set([k.name  for k in self.caled_ntwks ]))
             for std_name in std_names:
                 caled_sets[std_name] = NetworkSet(
                     [k for k in self.caled_ntwks if k.name is std_name])
             self._caled_ntwk_sets = caled_sets
-            return caled_sets
+        
+        return self._caled_ntwk_sets
 
     
     ##  methods for manual control of internal calculations
@@ -443,7 +459,6 @@ class Calibration(object):
         #reset the residuals
         self._residual_ntwks = None
 
-        self.has_run = True
 
     ## methods
     def apply_cal(self,input_ntwk):
@@ -476,7 +491,7 @@ class Calibration(object):
                     caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
             return caled
 
-    def apply_cal_to_all_in_dir(self, dir, contains=None, f_unit = 'ghz'):
+    def apply_cal_to_all_in_dir(self, dir='.', contains=None, f_unit = 'ghz'):
         '''
         convience function to apply calibration to an entire directory
         of measurements, and return a dictionary of the calibrated
@@ -746,7 +761,48 @@ class Calibration(object):
             [ntwk.plot_s_db() for ntwk in \
                 self.uncertainty_per_standard(*args, **kwargs)]
             plb.ylabel('Standard Deviation (dB)')
+    
+    # io
+    def write(self, file=None,  *args, **kwargs):
+        '''
+        Write the Calibration to disk using :func:`~skrf.io.general.write`
+        
+        
+        Parameters
+        -----------
+        file : str or file-object
+            filename or a file-object. If left as None then the 
+            filename will be set to Calibration.name, if its not None. 
+            If both are None, ValueError is raised.
+        \*args, \*\*kwargs : arguments and keyword arguments
+            passed through to :func:`~skrf.io.general.write`
+        
+        Notes
+        ------
+        If the self.name is not None and file is  can left as None
+        and the resultant file will have the `.ntwk` extension appended
+        to the filename. 
+        
+        Examples
+        ---------
+        >>> cal.name = 'my_cal'
+        >>> cal.write()
+        
+        See Also
+        ---------
+        skrf.io.general.write
+        skrf.io.general.read
+        
+        '''
+        # this import is delayed untill here because of a circular depency
+        from ..io.general import write
+        
+        if file is None:
+            if self.name is None:
+                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+            file = self.name
 
+        write(file,self, *args, **kwargs) 
 
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):

@@ -1,5 +1,5 @@
 #import skrf as rf
-from skrf.virtualInstruments import vna as mv_vna
+from skrf.vi import vna as mv_vna
 from skrf import Network
 import pdb
 import multiprocessing
