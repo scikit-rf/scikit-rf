@@ -330,6 +330,8 @@ class Network(object):
         if kwargs.has_key('touchstone_filename'):
             file = kwargs['touchstone_filename']
         
+        self.comments = comments
+        
         if file is not None:
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and 
@@ -349,7 +351,7 @@ class Network(object):
                 name = os.path.splitext(os.path.basename(file))[0]
         
         self.name = name
-        self.comments = comments
+        
         
         # allow properties to be set through the constructor 
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
@@ -1410,10 +1412,11 @@ class Network(object):
         '''
         from io import touchstone
         touchstoneFile = touchstone.Touchstone(filename)
-
+        
         if touchstoneFile.get_format().split()[1] != 's':
             raise NotImplementedError('only s-parameters supported for now.')
 
+        self.comments = touchstoneFile.get_comments()        
 
         # set z0 before s so that y and z can be computed
         self.z0 = complex(touchstoneFile.resistance)  
