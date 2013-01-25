@@ -26,6 +26,6 @@ setup(name='scikit-rf',
 	include_package_data = True,
 	#exclude_package_data = {'':'doc/*'},
 	
-	#package_data = {'skrf':['src/*']}
+	#package_data = {'skrf':['*tests*']}
 	)
 
