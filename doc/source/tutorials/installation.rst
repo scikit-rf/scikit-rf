@@ -72,9 +72,10 @@ Necessary
 =============
 
 *    python (>=2.6) http://www.python.org/
-*    matplotlib (aka pylab) http://matplotlib.sourceforge.net/
 *    numpy http://numpy.scipy.org/
-*    scipy http://www.scipy.org/ ( provides tons of good stuff, check it out) 
+*    scipy http://www.scipy.org/
+*    matplotlib http://matplotlib.sourceforge.net/
+
 
 Optional
 ==========

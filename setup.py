@@ -17,7 +17,7 @@ setup(name='scikit-rf',
 	author_email='arsenovic@virginia.edu',
 	url='http://scikit-rf.org',
 	packages=find_packages(),
-	requires = [
+	install_requires = [
 		'numpy',
 		'scipy',
 		'matplotlib',
