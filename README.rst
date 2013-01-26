@@ -8,7 +8,7 @@ http://www.scikit-rf.org
 
 Documentation
 -------------
-http://www.scikit-rf.org/doc/dev/
+http://scikit-rf.org/documentation.html
 
 Mailing List
 ------------

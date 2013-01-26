@@ -65,20 +65,7 @@ class Media(object):
     calling :func:`match` to create a 'blank'
     :class:`~skrf.network.Network`, and then fill in the s-matrix.
     
-    IO
-    ----
     
-    Media objects can be read and written to disk through the use of 
-    
-    .. autosummary::
-        :toctree: generated/
-        
-        from_csv
-        write_csv
-    
-    There is also a function in the :mod:`skrf.convenience` module, 
-    which allows a Media object to be initialized from a 
-    touchstone file created with HFSS, if z0/gamma comments are exported. 
     
     '''
     def __init__(self, frequency,  propagation_constant,
@@ -134,7 +121,7 @@ class Media(object):
         characteristic impedance is frequency dependent, but the
         touchstone's created by most VNA's have z0=1
         '''
-        self.frequency = frequency
+        self.frequency = frequency.copy()
 
         self.propagation_constant = propagation_constant
         self.characteristic_impedance = characteristic_impedance
@@ -146,7 +133,16 @@ class Media(object):
         # convinience names
         self.delay = self.line
 
-    
+    def __getstate__(self):
+        '''
+        method needed to allow for pickling
+        '''
+        d = self.__dict__.copy()
+        del d['delay'] # cant pickle instance methods
+        return(d)
+        #return {k: self.__dict__[k] for k in \
+        #    ['frequency','_characteristic_impedance','_propagation_constant','_z0']}
+        
     def __eq__(self,other):
         '''
         test for numerical equality (up to skrf.mathFunctions.ALMOST_ZERO)
@@ -503,10 +499,10 @@ class Media(object):
         '''
         result = self.match(nports=2, *args, **kwargs)
         y= npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1/R
-        y[:,1,1] = 1/R
-        y[:,0,1] = -1/R
-        y[:,1,0] = -1/R
+        y[:,0,0] = 1./R
+        y[:,1,1] = 1./R
+        y[:,0,1] = -1./R
+        y[:,1,0] = -1./R
         result.y = y
         return result    
     
@@ -568,10 +564,10 @@ class Media(object):
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
         y = npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1/(1j*w*L)
-        y[:,1,1] = 1/(1j*w*L)
-        y[:,0,1] = -1/(1j*w*L)
-        y[:,1,0] = -1/(1j*w*L)
+        y[:,0,0] = 1./(1j*w*L)
+        y[:,1,1] = 1./(1j*w*L)
+        y[:,0,1] = -1./(1j*w*L)
+        y[:,1,0] = -1./(1j*w*L)
         result.y = y
         return result
 
@@ -961,7 +957,7 @@ class Media(object):
                 shunt(capacitor(C,*args, **kwargs))
 
         '''
-        return self.shunt(self.capacitor(C=C,*args,**kwargs))
+        return self.shunt(self.capacitor(C=C,*args,**kwargs)**self.short())
 
     def shunt_inductor(self,L,*args,**kwargs):
         '''
@@ -986,7 +982,7 @@ class Media(object):
                 shunt(inductor(C,*args, **kwargs))
 
         '''
-        return self.shunt(self.inductor(L=L,*args,**kwargs))
+        return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
 
 
     ## Noise Networks

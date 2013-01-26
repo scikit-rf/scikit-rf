@@ -42,6 +42,9 @@ such as :func:`~media.cpw.CPW.cpw_short` and
 :func:`~media.microstrip.Microstrip.microstrip_bend`, are implemented
 in those object
 
+
+    
+
 Media base-class
 -------------------------
 .. autosummary::

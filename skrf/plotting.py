@@ -27,8 +27,8 @@ plotting (:mod:`skrf.plotting`)
 
 This module provides general plotting functions.
 
-Charts
--------
+Plots and Charts
+------------------
 
 .. autosummary::
     :toctree: generated/
@@ -40,6 +40,16 @@ Charts
     plot_complex_rectangular 
     plot_complex_polar
     
+Misc Functions
+-----------------
+
+.. autosummary::
+    :toctree: generated/
+    
+    save_all_figs
+    add_markers_to_lines
+    legend_off
+    func_on_all_figs
 
 '''
 import pylab as plb
@@ -49,7 +59,8 @@ from matplotlib.patches import Circle   # for drawing smith chart
 
 
 
-def smith(smithR=1, chart_type = 'z',ax=None):
+def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False, 
+    ax=None):
     '''
     plots the smith chart of a given radius
 
@@ -61,6 +72,13 @@ def smith(smithR=1, chart_type = 'z',ax=None):
             Contour type. Possible values are
              * *'z'* : lines of constant impedance
              * *'y'* : lines of constant admittance
+    draw_labels : Boolean
+             annotate real and imaginary parts of impedance on the 
+             chart (only if smithR=1)
+    border : Boolean
+        draw a rectangular border with axis ticks, around the perimeter 
+        of the figure. Not used if draw_labels = True
+    
     ax : matplotlib.axes object
             existing axes to draw smith chart on
 
@@ -82,8 +100,12 @@ def smith(smithR=1, chart_type = 'z',ax=None):
 
     #TODO: fix this
     # these could be dynamically coded in the future, but work good'nuff for now
-    rLightList = plb.logspace(3,-5,9,base=.5)
-    xLightList = plb.hstack([plb.logspace(2,-5,8,base=.5), -1*plb.logspace(2,-5,8,base=.5)])
+    if not draw_labels:
+        rLightList = plb.logspace(3,-5,9,base=.5)
+        xLightList = plb.hstack([plb.logspace(2,-5,8,base=.5), -1*plb.logspace(2,-5,8,base=.5)])
+    else:
+        rLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
+        xLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
@@ -124,7 +146,47 @@ def smith(smithR=1, chart_type = 'z',ax=None):
     ax1.grid(0)
     #set axis limits
     ax1.axis('equal')
-    ax1.axis(smithR*npy.array([-1., 1., -1., 1.]))
+    ax1.axis(smithR*npy.array([-1.1, 1.1, -1.1, 1.1]))     
+    
+    
+    if not border: 
+        ax1.yaxis.set_ticks([])
+        ax1.xaxis.set_ticks([])
+        for loc, spine in ax1.spines.iteritems():
+            spine.set_color('none')
+        
+    
+    if draw_labels:
+        #Clear axis
+        ax1.yaxis.set_ticks([])
+        ax1.xaxis.set_ticks([])
+        for loc, spine in ax1.spines.iteritems():
+            spine.set_color('none')
+
+        #Will make annotations only if the radius is 1 and it is the impedance smith chart
+        if smithR is 1 and y_flip_sign is 1:
+            #Make room for annotation
+            ax1.axis(smithR*npy.array([-1., 1., -1.2, 1.2]))
+
+            #Annotate real part
+            for value in rLightList:
+                rho = (value - 1)/(value + 1)
+                ax1.annotate(str(value), xy=((rho-0.12)*smithR, 0.01*smithR), \
+                    xytext=((rho-0.12)*smithR, 0.01*smithR))
+
+            #Annotate imaginary part
+            deltax = plb.array([-0.17, -0.14, -0.06,  0., 0.02, -0.2, -0.2, -0.08, 0., 0.03])
+            deltay = plb.array([0., 0.03, 0.01, 0.02, 0., -0.02, -0.06, -0.09, -0.08, -0.05])
+            for value, dx, dy in zip(xLightList, deltax, deltay):
+                #Transforms from complex to cartesian and adds a delta to x and y values
+                rhox = (-value**2 + 1)/(-value**2 - 1) * smithR * y_flip_sign + dx
+                rhoy = (-2*value)/(-value**2 - 1) * smithR + dy
+                #Annotate value
+                ax1.annotate(str(value) + 'j', xy=(rhox, rhoy), xytext=(rhox, rhoy))
+
+            #Annotate 0 and inf
+            ax1.annotate('0.0', xy=(-1.15, -0.02), xytext=(-1.15, -0.02))
+            ax1.annotate('$\infty$', xy=(1.02, -0.02), xytext=(1.02, -0.02))
 
     # loop though contours and draw them on the given axes
     for currentContour in contour:
@@ -309,7 +371,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
         ax=ax, *args, **kwargs)
 
 def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
-    y_label='Imag', title='Complex Plane', show_legend=True,
+    y_label='Imaginary', title='Complex Plane', show_legend=True,
     axis='equal', ax=None, force_chart = False, *args, **kwargs):
     '''
     plot complex data on smith chart
@@ -361,6 +423,129 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
-    ax.axis(smith_r*npy.array([-1., 1., -1., 1.]))
+    ax.axis(smith_r*npy.array([-1.1, 1.1, -1.1, 1.1]))
     if plb.isinteractive():
         plb.draw()
+
+def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
+    '''
+    Shades frequency bands.
+    
+    when plotting data over a set of frequency bands it is nice to 
+    have each band visually seperated from the other. The kwarg `alpha`
+    is useful.
+    
+    Parameters 
+    --------------
+    edges : array-like
+        x-values seperating regions of a given shade
+    y_range : tuple 
+        y-values to shade in 
+    cmap : str
+        see matplotlib.cm  or matplotlib.colormaps for acceptable values
+    \*\* : key word arguments
+        passed to `matplotlib.fill_between`
+        
+    Examples 
+    -----------
+    >>> rf.shade_bands([325,500,750,1100], alpha=.2)
+    '''
+    cmap = plb.cm.get_cmap(cmap)
+    for k in range(len(edges)-1):
+        plb.fill_between(
+            [edges[k],edges[k+1]], 
+            y_range[0], y_range[1], 
+            color = cmap(1.0*k/len(edges)),
+            **kwargs)
+
+
+def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
+    '''
+    Save all open Figures to disk.
+
+    Parameters
+    ------------
+    dir : string
+            path to save figures into
+    format : list of strings
+            the types of formats to save figures as. The elements of this
+            list are passed to :matplotlib:`savefig`. This is a list so that
+            you can save each figure in multiple formats.
+    '''
+    if dir[-1] != '/':
+        dir = dir + '/'
+    for fignum in plb.get_fignums():
+        fileName = plb.figure(fignum).get_axes()[0].get_title()
+        if fileName == '':
+            fileName = 'unamedPlot'
+        for fmt in format:
+            plb.savefig(dir+fileName+'.'+fmt, format=fmt)
+            print (dir+fileName+'.'+fmt)
+saf = save_all_figs
+
+def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
+    '''
+    adds markers to existing lings on a plot 
+    
+    this is convinient if you have already have a plot made, but then 
+    need to add markers afterwards, so that it can be interpreted in 
+    black and white. The markevery argument makes the markers less 
+    frequent than the data, which is generally what you want. 
+    
+    Parameters
+    -----------
+    ax : matplotlib.Axes
+        axis which to add markers to, defaults to gca()
+    marker_list : list of marker characters
+        see matplotlib.plot help for possible marker characters
+    markevery : int
+        markevery number of points with a marker.
+    
+    '''
+    if ax is None:
+        ax=plb.gca()
+    lines = ax.get_lines()
+    if len(lines) > len (marker_list ):
+        marker_list *= 3
+    [k[0].set_marker(k[1]) for k in zip(lines, marker_list)]
+    [line.set_markevery(markevery) for line in lines]
+
+def legend_off(ax=None):
+    '''
+    turn off the legend for a given axes. 
+    
+    if no axes is given then it will use current axes.
+    
+    Parameters
+    -----------
+    ax : matplotlib.Axes object
+        axes to operate on 
+    '''
+    if ax is None:
+        plb.gca().legend_.set_visible(0)
+    else:
+        ax.legend_.set_visible(0)
+
+def func_on_all_figs(func, *args, **kwargs):
+    '''
+    runs a function after making all open figures current. 
+    
+    useful if you need to change the properties of many open figures 
+    at once, like turn off the grid. 
+    
+    Parameters
+    ----------
+    func : function
+        function to call
+    \*args, \*\*kwargs : pased to func
+    
+    Examples
+    ----------
+    >>> rf.func_on_all_figs(grid,alpha=.3)
+    '''
+    for fig_n in plb.get_fignums():
+        fig = plb.figure(fig_n)
+        for ax_n in fig.axes:
+            fig.add_axes(ax_n) # trick to make axes current
+            func(*args, **kwargs)
+            plb.draw()

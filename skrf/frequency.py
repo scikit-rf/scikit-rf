@@ -83,7 +83,7 @@ class Frequency(object):
     global ALMOST_ZER0
     ALMOST_ZER0=1e-4
     
-    def __init__(self,start, stop, npoints, unit='ghz', sweep_type='lin'):
+    def __init__(self,start=0, stop=0, npoints=0, unit='ghz', sweep_type='lin'):
         '''
         Frequency initializer.
 
@@ -139,7 +139,7 @@ class Frequency(object):
         '''
         try:
             output =  \
-                   '%i-%i %s,  %i points' % \
+                   '%i-%i %s, %i pts' % \
                    (self.f_scaled[0], self.f_scaled[-1], self.unit, self.npoints)
         except (IndexError):
             output = "[no freqs]"
@@ -157,7 +157,7 @@ class Frequency(object):
     def from_f(cls,f, *args,**kwargs):
         '''
         Alternative constructor of a Frequency object from a frequency
-        vector,
+        vector, the unit of which is set by kwarg 'unit'
 
         Parameters
         -----------
@@ -177,12 +177,17 @@ class Frequency(object):
         >>> f = np.linspace(75,100,101)
         >>> rf.Frequency.from_f(f, unit='ghz')
         '''
-        return cls(start=f[0], stop=f[-1],npoints = len(f), *args, **kwargs)
+        temp_freq =  cls(0,0,0,*args, **kwargs)
+        temp_freq.f = npy.array(f) * temp_freq.multiplier
+        return temp_freq
 
     def __eq__(self, other):
         #return (list(self.f) == list(other.f))
         # had to do this out of practicality
-        return (max(self.f-other.f) < ALMOST_ZER0)
+        if len(self.f) != len(other.f):
+            return False
+        else:
+            return (max(self.f-other.f) < ALMOST_ZER0)
 
     def __ne__(self,other):
         return (not self.__eq__(other))
@@ -213,7 +218,14 @@ class Frequency(object):
         starting frequency in Hz
         '''
         return len(self.f)
-    
+    @npoints.setter
+    def npoints(self, n):
+        '''
+        set the number of points in the frequency 
+        '''
+        self.f = linspace(self.start, self.stop, n)
+        
+        
     @property
     def center(self):
         '''
@@ -263,7 +275,7 @@ class Frequency(object):
         '''
         sets the frequency object by passing a vector in Hz
         '''
-        self._f = new_f
+        self._f = npy.array(new_f)
         
 
     @property
@@ -342,13 +354,10 @@ class Frequency(object):
         '''
         returns a new copy of this frequency
         '''
-        return Frequency(
-            start = self.start/self.multiplier, 
-            stop = self.stop/self.multiplier, 
-            npoints = self.npoints, 
-            unit = self.unit, 
-            sweep_type = self.sweep_type)
-        
+        freq =  Frequency.from_f(self.f, unit='hz')
+        freq.unit = self.unit
+        return freq
+                
     def labelXAxis(self, ax=None):
         '''
         Label the x-axis of a plot.

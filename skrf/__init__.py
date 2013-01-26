@@ -34,31 +34,38 @@ and import modules themselves for coherent  structured referencing
 ## Import all  module names for coherent reference of name-space
 import media
 import calibration
+import io
 
-import touchstone
 import frequency
 import network
 import networkSet
-import convenience
 import plotting
 import mathFunctions
 import tlineFunctions
+import constants
+import util
 
-
+try:
+    import data
+except:
+    print 'warning: data module didnt load. dont worry about it.'
+    pass 
 # Import contents into current namespace for ease of calling
 from frequency import *
 from network import *
 from networkSet import *
 from calibration import *
-from convenience import *
+from util import *
 from plotting import  *
 from mathFunctions import *
 from tlineFunctions import *
+from io import * 
+from constants import * 
 
-# Try to import virtualInstruments, but if except if pyvisa not installed
+# Try to import vi, but if except if pyvisa not installed
 try:
-    import virtualInstruments
-    from virtualInstruments import *
+    import vi
+    from vi import *
 except(ImportError):
     print '\nWARNING: pyvisa not installed, virtual instruments will not be available\n'
 

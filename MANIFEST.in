@@ -1,3 +1,11 @@
 include README.rst INSTALL.txt COPYING.txt ez_setup.py
-recursive-include doc * 
 
+recursive-include doc * 
+recursive-include skrf *.py *.s1p *.s2p *.p *.cal *.ntwk *.csv *.c
+
+include doc/Makefile
+recursive-include doc/source *.rst
+recursive-include doc/tools *.rst
+recursive-include doc/source/_templates *.html
+recursive-include doc *.py
+prune doc/build

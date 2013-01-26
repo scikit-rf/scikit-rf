@@ -53,7 +53,7 @@ NetworkSet Class
 
 '''
 
-
+import os 
 from network import average as network_average
 from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 import mathFunctions as mf
@@ -137,6 +137,9 @@ class NetworkSet(object):
                 from properties of this class.
         '''
         ## type checking
+        if isinstance(ntwk_set, dict):
+            ntwk_set = ntwk_set.values()
+            
         # did they pass a list of Networks?
         if not isinstance(ntwk_set[0], Network):
             raise(TypeError('input must be list of Network types'))
@@ -199,8 +202,9 @@ class NetworkSet(object):
         
         Examples
         ----------
-        >>>import skrf as rf
-        >>>my_set = rf.NetworkSet.from_zip('myzip.zip')
+        
+        >>> import skrf as rf
+        >>> my_set = rf.NetworkSet.from_zip('myzip.zip')
             
         '''
         z = zipfile.ZipFile(zip_file_name)
@@ -210,11 +214,21 @@ class NetworkSet(object):
         
         if sort_filenames:
             filename_list.sort()
-            
+        
+        
         for filename in filename_list:
             # try/except block in case not all files are touchstones
+            n= Network()
             try:
-                ntwk_list.append(Network(z.open(filename)))
+                n.read_touchstone(z.open(filename))
+                ntwk_list.append(n)
+                continue
+            except:
+                pass
+            try:
+                n.read(z.open(filename))
+                ntwk_list.append(n)
+                continue
             except:
                 pass
         
@@ -615,9 +629,13 @@ class NetworkSet(object):
             }
         default_kwargs.update(**kwargs)
         
+        
+        
         if plb.isinteractive():
             was_interactive = True
             plb.interactive(0)
+        else:
+            was_interactive = False
         
         [self.mean_s[k].plot_s_smith(*args, ms = self.std_s[k].s_mag*multiplier, **default_kwargs) for k in range(len(self[0]))]
         
@@ -692,6 +710,49 @@ class NetworkSet(object):
         c_bar = plb.colorbar()
         c_bar.set_label('Distance From Mean')
 
+
+    # io
+    def write(self, file=None,  *args, **kwargs):
+        '''
+        Write the NetworkSet to disk using :func:`~skrf.io.general.write`
+        
+        
+        Parameters
+        -----------
+        file : str or file-object
+            filename or a file-object. If left as None then the 
+            filename will be set to Calibration.name, if its not None. 
+            If both are None, ValueError is raised.
+        \*args, \*\*kwargs : arguments and keyword arguments
+            passed through to :func:`~skrf.io.general.write`
+        
+        Notes
+        ------
+        If the self.name is not None and file is  can left as None
+        and the resultant file will have the `.ns` extension appended
+        to the filename. 
+        
+        Examples
+        ---------
+        >>> ns.name = 'my_ns'
+        >>> ns.write()
+        
+        See Also
+        ---------
+        skrf.io.general.write
+        skrf.io.general.read
+        
+        '''
+        # this import is delayed untill here because of a circular depency
+        from io.general import write
+        
+        if file is None:
+            if self.name is None:
+                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+            file = self.name
+
+        write(file,self, *args, **kwargs) 
+
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
 
@@ -753,7 +814,7 @@ def getset(ntwk_dict, s, *args, **kwargs):
     Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
     objects in a dictionary that contain `s` in its key. This is useful 
     for dealing with the output of 
-    :func:`~skrf.convenience.load_all_touchstones`, which contains
+    :func:`~skrf.io.general.load_all_touchstones`, which contains
     Networks grouped by some kind of naming convention.
     
     Parameters
