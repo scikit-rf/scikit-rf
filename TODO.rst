@@ -20,7 +20,6 @@ IO
 * Citi files
 * .nmf or similar data-base like set
 * touchstone - ansoft style z0/gamma
-* touchstone - comments 
 * pickling of media objects
 
 
@@ -50,3 +49,7 @@ Other
 * use doctests or ipython doctests
 * change ininstance() calls so that the we dont depend on module name 
  -- see Network.frequency.setter upon change of skrf to skrf2 or similar
+
+plotting
+-------------
+* have plots return the plot object
