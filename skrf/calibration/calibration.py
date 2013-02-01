@@ -151,7 +151,16 @@ class Calibration(object):
         -------------
         .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
         '''
-        # fill measured and ideals with copied lists of input 
+        # allow them to pass di
+        if hasattr(measured, 'keys'):
+            measured = measured.values()
+            sloppy_input = True
+            warn('dictionary passed, sloppy_input automatically activated')
+        if hasattr(ideals, 'keys'):
+            ideals = ideals.values()
+            sloppy_input = True
+            warn('dictionary passed, sloppy_input automatically activated')
+        # fill measured and ideals with copied lists of input     
         self.measured = [ntwk.copy() for ntwk in measured]
         self.ideals = [ntwk.copy() for ntwk in ideals]
 
@@ -209,13 +218,10 @@ class Calibration(object):
         if new_type is None:
             # they did not supply a calibration type, so i will try
             # to inspect a measured ntwk to see how many ports it has
-            print('Warning: Calibration type not supplied, inspecting type from measured Networks...')
             if self.measured[0].number_of_ports == 1:
                 new_type = 'one port'
-                print ('Warning: using \'one port\' calibration')
             elif self.measured[0].number_of_ports == 2:
                 new_type = 'two port'
-                print ('Warning: using \'two port\' calibration')
 
         if new_type not in self.calibration_algorithm_dict.keys():
             raise ValueError('incorrect calibration type. Should be in:\n '+', '.join(self.calibration_algorithm_dict.keys()))
