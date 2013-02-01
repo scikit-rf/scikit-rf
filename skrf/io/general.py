@@ -210,7 +210,7 @@ def write(file, obj, overwrite = True):
     pickle.dump(obj, fid, protocol=2)
     fid.close()
     
-def read_all(dir='.', contains = None):
+def read_all(dir='.', contains = None, f_unit = None):
     '''
     Read all skrf objects in a directory
     
@@ -225,6 +225,9 @@ def read_all(dir='.', contains = None):
         the directory to load from, default  \'.\'
     contains : str, optional
         if not None, only files containing this substring will be loaded
+    f_unit : ['hz','khz','mhz','ghz','thz']
+        for all :class:`~skrf.network.Network` objects, set their 
+        frequencies's :attr:`~skrf.frequency.Frequency.f_unit` 
         
     Returns
     ---------
@@ -267,7 +270,15 @@ def read_all(dir='.', contains = None):
             out[keyname] = Network(fullname)
             continue
         except:
-            pass 
+            pass
+        
+    if f_unit is not None:
+        for keyname in out:
+            try: 
+                out[keyname].frequency.unit = f_unit
+            except:
+                pass
+    
             
     return out
         

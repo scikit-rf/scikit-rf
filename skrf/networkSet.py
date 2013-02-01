@@ -525,7 +525,8 @@ class NetworkSet(object):
 
         upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
         lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
-
+        
+        
         if ppf is not None:
             if type =='bar':
                 warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
