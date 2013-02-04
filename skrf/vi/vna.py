@@ -231,7 +231,21 @@ class VectorStar(GpibInstrument):
         s22 = d[:,7] +1j*d[:,8]
         s = npy.c_[s11,s12,s21,s22].reshape(-1,2,2)
         freq = self.frequency
-        
+        return Network(s = s, frequency = freq,*args, **kwargs)
+    
+    def get_oneport(self, *args, **kwargs):
+        self.write("LANG NATIVE")
+        self.write(":FORM:SNP:FREQ HZ")
+        self.write(":FORM:SNP:PAR REIM")
+        d = self.ask_for_values("TRS;WFS;OS2P")[19:] # i dont know what the first 19 values are 
+        d = npy.array(d)
+        d = d.reshape(-1,9)
+        s11 = d[:,1] +1j*d[:,2]
+        s21 = d[:,3] +1j*d[:,4]
+        s12 = d[:,5] +1j*d[:,6]
+        s22 = d[:,7] +1j*d[:,8]
+        s = npy.c_[s11,s12,s21,s22].reshape(-1,2,2)
+        freq = self.frequency
         return Network(s = s, frequency = freq,*args, **kwargs)
         
 class ZVA40_lihan(object):

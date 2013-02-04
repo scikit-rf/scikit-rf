@@ -118,3 +118,73 @@ def pna_csv_2_ntwks(filename):
         ) \
         for k in range((d.shape[1]-1)/2) ]
         
+
+def read_vectorstar_csv(filename, *args, **kwargs):
+    '''
+    Reads data from a csv file written by an Anritsu VectorStar
+    
+    Parameters 
+    -------------
+    filename : str
+        the file
+    \*args, \*\*kwargs : 
+    
+    Returns
+    ---------
+    header : str
+        The header string, which is the line just before the data
+    comments : str
+        All lines that begin with a '!'
+    data : :class:`numpy.ndarray`
+        An array containing the data. The meaning of which depends on 
+        the header. 
+        
+    
+    '''
+    fid = open(filename,'r')
+    comments = ''.join([line for line in fid if line.startswith('!')])
+    fid.seek(0)
+    header = [line for line in fid if line.startswith('PNT')]
+    fid.close()
+    data = npy.genfromtxt(
+        filename, 
+        comments='!', 
+        delimiter =',',
+        skip_header = 1)[1:]
+    comments = comments.replace('\r','')
+    comments = comments.replace('!','')
+    
+    return header, comments, data 
+
+def vectorstar_csv_2_ntwks(filename):
+    '''
+    Reads a vectorstar csv file, and returns a list of one-port Networks
+    
+    Note this only works if csv is save in Real/Imaginary format for now
+    
+    Parameters
+    -----------
+    filename : str
+        filename
+    
+    Returns
+    --------
+    out : list of :class:`~skrf.network.Network` objects
+        list of Networks representing the data contained in column pairs
+        
+    '''
+    #TODO: check the data's format (Real-imag or db/angle , ..)
+    header, comments, d = read_vectorstar_csv(filename)
+    names = [line for line in comments.split('\n') \
+        if line.startswith('PARAMETER')][0].split(',')[1:]
+    
+    
+    return [Network(
+        f = d[:,k*3+1], 
+        s = d[:,k*3+2] + 1j*d[:,k*3+3],
+        z0 = 50,
+        name = names[k].rstrip(),
+        comments = comments,
+        ) for k in range(d.shape[1]/3)]
+        
+
