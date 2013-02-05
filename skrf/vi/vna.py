@@ -189,12 +189,13 @@ class PNAX(GpibInstrument):
 class VectorStar(GpibInstrument):
     '''
     '''
-    def __init__(self, address=6,timeout = 5, *args, **kwargs):
+    def __init__(self, address=6, channel = 1, timeout = 5, *args, **kwargs):
         GpibInstrument.__init__(self,
             'GPIB::'+str(address),
             timeout = timeout,
             *args,**kwargs)
-    
+        self.channel = channel
+        
     @property
     def idn(self):
         return self.ask('*IDN?')
@@ -204,6 +205,7 @@ class VectorStar(GpibInstrument):
         Return to local 
         '''
         self.write('rtl')
+    
     @property
     def frequency(self, unit='ghz'):
         '''
@@ -217,8 +219,33 @@ class VectorStar(GpibInstrument):
                 int(self.ask('sens:sweep:POIN?')),'hz')
         freq.unit = unit
         return freq
+    
+    
+    @property
+    def continuous(self):
+        out =  self.ask(':sense%i:hold:func?'%self.channel)
+        if (out.lower() == 'hold' or out.lower() == 'sing'):
+            return False
+        else:
+            return True
         
-    def get_twoport(self, *args, **kwargs):
+
+    @continuous.setter
+    def continuous(self, mode):
+        '''
+        '''
+        if mode:
+            self.write(':sense%i:hold:func cont'%self.channel)
+        else:
+            self.write(':sense%i:hold:func hold'%self.channel)
+        
+    def get_twoport_alt(self, *args, **kwargs):
+        '''
+        get a two-port using alternative command
+        
+        this command uses the OS2P command, which isnt documented,
+        except for the examples
+        '''
         self.write("LANG NATIVE")
         self.write(":FORM:SNP:FREQ HZ")
         self.write(":FORM:SNP:PAR REIM")
@@ -233,20 +260,124 @@ class VectorStar(GpibInstrument):
         freq = self.frequency
         return Network(s = s, frequency = freq,*args, **kwargs)
     
-    def get_oneport(self, *args, **kwargs):
-        self.write("LANG NATIVE")
-        self.write(":FORM:SNP:FREQ HZ")
-        self.write(":FORM:SNP:PAR REIM")
-        d = self.ask_for_values("TRS;WFS;OS2P")[19:] # i dont know what the first 19 values are 
-        d = npy.array(d)
-        d = d.reshape(-1,9)
-        s11 = d[:,1] +1j*d[:,2]
-        s21 = d[:,3] +1j*d[:,4]
-        s12 = d[:,5] +1j*d[:,6]
-        s22 = d[:,7] +1j*d[:,8]
+    def setup_wave_quantities(self):
+        self.ntraces = 4
+        #create traces
+        self.write(':calc%i:par1:def usr,a1,1,port1'%self.channel)
+        self.write(':calc%i:par2:def usr,b1,1,port1'%self.channel)
+        self.write(':calc%i:par3:def usr,a2,1,port2'%self.channel)
+        self.write(':calc%i:par4:def usr,b2,1,port2'%self.channel)
+        # set display to log mag
+        for k in range(1,5):
+            self.write('calc%i:par%i:form mlog'%(self.channel,k))
+    
+    def setup_s_parameters(self):
+        self.ntraces = 4
+        #create traces
+        self.write(':calc%i:par1:def s11'%self.channel)
+        self.write(':calc%i:par2:def s12'%self.channel)
+        self.write(':calc%i:par3:def s21'%self.channel)
+        self.write(':calc%i:par4:def s22'%self.channel)
+        # set display to log mag
+        for k in range(1,5):
+            self.write(':calc%i:par%i:form mlog'%(self.channel,k))
+    
+    def get_wave_quantities(self):
+        self.ntraces = 4
+        #create traces
+        self.write(':calc%i:par1:def usr, a1,1,port1'%self.channel)
+        self.write(':calc%i:par2:def usr, b1,1,port1'%self.channel)
+        self.write(':calc%i:par3:def usr, a2,1,port2'%self.channel)
+        self.write(':calc%i:par4:def usr, b2,1,port2'%self.channel)
+        
+        self.active_trace = 1
+        a1 = self.get_oneport(name = 'a1')
+        self.active_trace = 2
+        b1 = self.get_oneport(name = 'b1')
+        self.active_trace = 3
+        a2 = self.get_oneport(name = 'a2')
+        self.active_trace = 4
+        b2 = self.get_oneport(name = 'b2')
+        return a1,b1,a2,b2
+    
+    def get_oneport(self, n=None, *args, **kwargs):
+        was_cont = self.continuous
+        self.continuous = False
+        
+        if n is not None:
+            self.active_trace = n
+        freq = self.frequency
+        s = npy.array(self.get_sdata())
+        s = mf.scalar2Complex(s)
+        
+        self.continuous = was_cont
+        return Network(
+            frequency = freq, 
+            s=s,
+            *args, 
+            **kwargs)    
+    
+    def get_twoport(self, *args, **kwargs):
+        was_cont = self.continuous
+        self.continuous = False
+        self.setup_s_parameters()
+        self.active_trace = 1
+        s11 = mf.scalar2Complex(self.get_sdata())
+        self.active_trace = 3
+        s21 = mf.scalar2Complex(self.get_sdata())
+        self.active_trace = 2
+        s12 = mf.scalar2Complex(self.get_sdata())
+        self.active_trace = 4
+        s22 = mf.scalar2Complex(self.get_sdata())
+        
         s = npy.c_[s11,s12,s21,s22].reshape(-1,2,2)
         freq = self.frequency
+        self.continuous=was_cont    
         return Network(s = s, frequency = freq,*args, **kwargs)
+        
+    @property
+    def ntraces(self):
+        return int(self.ask(':calc%i:par:count?'%self.channel))
+    
+    @ntraces.setter
+    def ntraces(self,n):
+        self.write(':calc%i:par:count %i'%(self.channel,n))
+    
+    @property
+    def active_trace(self):
+        return int(self.ask(':calc%i:par:sel?'%self.channel))
+    
+    @active_trace.setter
+    def active_trace(self,n):
+        self.write(':calc%i:par%i:sel'%(self.channel, n))
+    
+    @property
+    def trace_format(self):
+        return self.ask('calc%i:form?'%self.channel)
+        
+    @trace_format.setter
+    def trace_format(self, form):
+        self.write(':calc%i:form %s'%(self.channel, form))
+    
+    
+    
+    def get_fdata(self):
+        return npy.array(self.ask_for_values('trs;wfs;:calc%i:data:fdat?'%self.channel))[1:]
+            
+    def get_sdata(self):
+        return npy.array(self.ask_for_values('trs;wfs;:calc%i:data:sdat?'%self.channel))[1:]
+    
+    def get_smem(self):
+        return npy.array(self.ask_for_values('trs;wfs;:calc%i:data:smem?'%self.channel))[1:]
+    
+    
+     
+    def get_all_traces(self):
+        return [self.get_trace(k) for k in range(1, self.ntraces+1)]
+    
+    
+    
+        
         
 class ZVA40_lihan(object):
     '''
