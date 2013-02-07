@@ -52,7 +52,7 @@ from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
-from ..networkSet import NetworkSet
+from ..networkSet import NetworkSet, s_dict_to_ns
 
 
 ## later imports. delayed to solve circular dependencies
@@ -259,7 +259,11 @@ class Calibration(object):
         a dictionary holding all of the output from the calibration
         algorithm
         '''
-        return self._output_from_cal
+        try: 
+            return( self._output_from_cal)
+        except(AttributeError):
+            self.run()
+            return self._output_from_cal
 
 
     @property
@@ -275,6 +279,38 @@ class Calibration(object):
                 TODO:
         '''
         return self.output_from_cal['error coefficients']
+    @property
+    def coefs_ntwks(self):
+        '''
+        
+        for one port cal's
+                'directivity':e00
+                'reflection tracking':e01e10
+                'source match':e11
+        for 7-error term two port cal's
+                TODO
+        '''
+        return s_dict_to_ns(self.output_from_cal['error coefficients'], self.frequency).ntwk_set
+        
+    @property
+    def coefs_ntwks_2p(self):
+        '''
+        coefs: a dictionary holding the calibration coefficients
+
+        for one port cal's
+                'directivity':e00
+                'reflection tracking':e01e10
+                'source match':e11
+        for 7-error term two port cal's
+                TODO
+        '''
+        if self.nports !=2:
+            raise ValueError('Only defined for 2-ports')
+            
+        return (s_dict_to_ns(eight_term_2_one_port_coefs(self.coefs)[0], self.frequency).ntwk_set,
+        s_dict_to_ns(eight_term_2_one_port_coefs(self.coefs)[1], self.frequency).ntwk_set)
+        
+        
     @property
     def residuals(self):
         '''
@@ -658,31 +694,33 @@ class Calibration(object):
         return total_error
 
     ## ploting
-    def plot_coefs_db(self,ax=None,show_legend=True,**kwargs):
+    def plot_coefs(self,attr='s_db',port=None, *args, **kwargs):
         '''
         plot magnitude of the error coeficient dictionary
         '''
 
-        # get current axis if user doesnt supply and axis
-        if ax is None:
-            ax = plb.gca()
-
-
         # plot the desired attribute vs frequency
-        for error_term in self.coefs:
-            error_term_db = complex_2_db(self.coefs[error_term])
-            if plb.rcParams['text.usetex'] and '_' in error_term:
-                error_term = '$'+error_term+'$'
-            ax.plot(self.frequency.f_scaled, error_term_db , label=error_term,**kwargs)
-
-        # label axis
-        plb.xlabel('Frequency ['+ self.frequency.unit +']')
-        plb.ylabel('Magnitude [dB]')
-        plb.axis('tight')
-        #draw legend
-        if show_legend:
-            plb.legend()
-
+        if self.nports == 1:
+            ns = NetworkSet(self.coefs_ntwks)
+        elif self.nports == 2:
+            if port is  None:
+                ns = NetworkSet(self.coefs_ntwks)
+            elif port == 1:
+                ns = NetworkSet(self.coefs_ntwks_2p[0])
+            elif port == 2:
+                ns = NetworkSet(self.coefs_ntwks_2p[1])
+            else:
+                raise(ValueError())
+        else:
+            raise NotImplementedError()
+        
+        return ns.__getattribute__('plot_'+attr)(*args, **kwargs)            
+               
+        
+    def plot_coefs_db(self, *args, **kwargs):
+        return self.plot_coefs(attr='s_db',*args, **kwargs)
+            
+                
     def plot_residuals(self,attribute,*args,**kwargs):
         '''
         plots a component of the residual errors on the  Calibration-plane.

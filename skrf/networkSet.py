@@ -820,6 +820,36 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
 # short hand name for convenience
 fon = func_on_networks
 
+def s_dict_to_ns(d, frequency, *args, **kwargs):
+    '''
+    Converts a dictionary of s-parameters to a NetworkSet
+    
+    The resultant elements of the NetworkSet are named by the keys of
+    the dictionary.
+    
+    Parameters
+    -------------
+    d : dict
+        dictionary of s-parameters data. values of this should be 
+        :class:`numpy.ndarray` assignable to :attr:`skrf.network.Network.s`
+    frequency: :class:`~skrf.frequency.Frequency` object
+        frequency assigned to each network
+    
+    \*args, \*\*kwargs : 
+        passed to Network.__init__ for each key/value pair of d
+    
+    Returns
+    ----------
+    ns : NetworkSet
+    '''
+    return NetworkSet([\
+        Network(
+            s=d[k], 
+            frequency =frequency, 
+            name=k, 
+            *args, **kwargs) 
+        for k in d])
+
 def getset(ntwk_dict, s, *args, **kwargs):
     '''
     Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
