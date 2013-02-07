@@ -768,6 +768,21 @@ class Calibration(object):
                 self.uncertainty_per_standard(*args, **kwargs)]
             plb.ylabel('Standard Deviation (dB)')
     
+    def plot_caled_ntwks(self,attr='s_smith',*args, **kwargs):
+        '''
+        Plot specified parameters the :`caled_ntwks`.
+        
+        Parameters
+        -----------
+        attr : str
+            plotable attribute of a Network object. ie 's_db', 's_smith'
+        
+        \*args, \*\*kwargs : 
+            passed to the plotting method
+        
+        '''
+        [k.__getattribute__('plot_%s'%attr)(*args, **kwargs) \
+            for k in self.caled_ntwks]
     # io
     def write(self, file=None,  *args, **kwargs):
         '''
