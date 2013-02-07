@@ -239,12 +239,15 @@ class VectorStar(GpibInstrument):
         else:
             self.write(':sense%i:hold:func hold'%self.channel)
         
-    def get_twoport_alt(self, *args, **kwargs):
+    def get_twoport_fast(self, *args, **kwargs):
         '''
-        get a two-port using alternative command
+        Get a two-port Network using alternative command
         
-        this command uses the OS2P command, which isnt documented,
-        except for the examples
+        This method uses the `OS2P` command, which isnt documented,
+        except for the examples, but its dang fast.
+        
+        
+        
         '''
         self.write("LANG NATIVE")
         self.write(":FORM:SNP:FREQ HZ")
