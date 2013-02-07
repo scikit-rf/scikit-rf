@@ -338,6 +338,16 @@ class NetworkSet(object):
                 network_property_name,plot_func)
                 
     
+    def to_dict(self):
+        '''
+        Returns a dictionary representation of the NetworkSet
+        
+        The returned dictionary has the Network names for keys, and the 
+        Networks as values.
+        '''
+        return {k.name:k for k in self.ntwk_set}
+        
+    
     def element_wise_method(self,network_method_name, *args, **kwargs):
         '''
         calls a given method of each element and returns the result as
