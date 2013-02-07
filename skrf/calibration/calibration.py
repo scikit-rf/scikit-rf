@@ -298,7 +298,7 @@ class Calibration(object):
         A Network object which represents the error network being
         calibrated out.
         '''
-        if self.nports == 1:
+        if self.nports == 1 or self.nports ==2:
             try: 
                 return( self._error_ntwk)
             except(AttributeError):
@@ -307,7 +307,7 @@ class Calibration(object):
                 
 
         else:
-            raise NotImplementedError('Only defined for 1-port cals.')
+            raise NotImplementedError()
             
     @property
     def Ts(self):
@@ -461,6 +461,8 @@ class Calibration(object):
                     frequency=self.frequency, is_reciprocal=self.is_reciprocal)
         elif self.nports ==2:
             self._Ts = two_port_error_vector_2_Ts(self.coefs)
+            self._error_ntwk = error_dict_2_network(self.coefs, \
+                    frequency=self.frequency, is_reciprocal=self.is_reciprocal)
 
         #reset the residuals
         self._residual_ntwks = None
@@ -886,5 +888,12 @@ def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
         s22 = coefs['source match']
         ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
         return ntwk
+    
+    elif len (coefs.keys()) == 7:
+        coefs_p1, coefs_p2 = eight_term_2_one_port_coefs(coefs)
+        en1 = error_dict_2_network(coefs_p1, frequency, is_reciprocal, **kwargs)
+        en2 = error_dict_2_network(coefs_p2, frequency, is_reciprocal, **kwargs)
+        return en1, en2
+         
     else:
         raise NotImplementedError('sorry')
