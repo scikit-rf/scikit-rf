@@ -120,7 +120,8 @@ class Calibration(object):
                 The two measured switch terms in the order
                 (forward, reverse).  This is only applicable in two-port
                 calibrations. See Roger Mark's paper on switch terms [#]_
-                for explanation of what they are.
+                for explanation of what they are, and [#] for description
+                of measuring them on the Agilent PNA.
 
         name: string
                 the name of calibration, just for your
@@ -150,6 +151,8 @@ class Calibration(object):
         References
         -------------
         .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
+        
+        .. [#] http://tech.groups.yahoo.com/group/mtt-11-on-wafer/message/283
         '''
         # allow them to pass di
         if hasattr(measured, 'keys'):

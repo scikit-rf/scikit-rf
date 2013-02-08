@@ -33,7 +33,7 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
 .. autosummary::
     :toctree: generated/
 
-    PNAX
+    PNA
     ZVA40
     HP8510C
     HP8720
@@ -47,15 +47,15 @@ from ..network import *
 from .. import mathFunctions as mf
 
 
-class PNAX(GpibInstrument):
+class PNA(GpibInstrument):
     '''
-    Agilent PNAX 
+    Agilent PNA[X] 
     
     Examples
     -----------
     
-    >>> from skrf.vi.vna import PNAX 
-    >>> v = PNAX()
+    >>> from skrf.vi.vna import PNA
+    >>> v = PNA()
     >>> dut = v.network
     '''
     def __init__(self, address=16, channel=1,timeout = 3, **kwargs):
@@ -63,7 +63,17 @@ class PNAX(GpibInstrument):
         self.channel=channel
         self.port = 1
         #self.write('calc:par:sel CH1_S11_1')
-        
+    
+    @property
+    def idn(self):
+        return self.ask('*IDN?')
+    
+    def rtl(self):
+        '''
+        Return to local 
+        '''
+        self.write('rtl')
+            
     @property
     def continuous(self):
         return bool(int(self.ask('init:cont?')))
@@ -118,8 +128,10 @@ class PNAX(GpibInstrument):
             
         self.continuous = was_cont
         return ntwk
+    
     def get_power_level(self):
         return float(self.ask('SOURce:POWer?'))
+    
     def set_power_level(self, num, cnum=None, port=None):
         '''
         set the RF power level 
@@ -138,8 +150,7 @@ class PNAX(GpibInstrument):
         
         self.write('SOURce%i:POWer%i %i'%(cnum, port, num))
     
-    def get_idn(self):
-        return self.ask('*IDN?')
+    
     
     def get_data(self, char='SDATA', cnum = None):
         '''
@@ -180,12 +191,106 @@ class PNAX(GpibInstrument):
         self.write('calc:par:sel %s'%(self.get_active_measurement()))
         return npy.array(self.ask_for_values('CALC%i:RData? %s'%(cnum, char)))
     
-    def get_measurements(self):
+    def get_meas_list(self):
         return self.ask("CALC:PAR:CAT?")
     
-    def get_active_measurement(self):
+    def get_active_meas(self):
         return self.ask("SYST:ACT:MEAS?" )
     
+    def delete_meas(self,name):
+        self.write('calc%i:par:del %s'%(self.channel, name))
+    
+    def delete_all_meas(self):
+        self.write('calc%i:par:del:all'%self.channel)
+    
+    
+    def create_meas(self,name, meas):
+        self.write('calc%i:par:def:ext %s, %s'%self.channel, name, meas)
+        self.display_trace(name)
+    
+    def create_meas_hidden(self,name, meas):
+        self.write('calc%i:par:def:ext %s, %s'%self.channel, name, meas)
+        
+    def select_meas(self,name):
+        self.write('calc%i:par:sel %s'%self.channel, meas)
+        
+    def get_snp(self,ports=[1,2]):
+        return self.ask_for_values('calc%i:data:snp:ports? %s'str(ports)[1:-1])
+    
+    def get_switch_terms(self):
+        self.delete_all_meas()
+        self.create_meas('forward', 'R2/B,1')
+        forward = self.get_network()
+        self.delet_all_meas()
+        self.create_meas('reverse', 'R1/A,2')
+        reverse = self.get_network()
+        return forward, reverse
+    
+    def setup_s_parameters(self, ports = [1,2]):
+        self.delete_all_meas()
+        #create traces
+        self.create_meas('s%i%i','s%i%i'%ports[0],ports[0],ports[0],ports[0])
+        self.create_meas('s%i%i','s%i%i'%ports[0],ports[1],ports[0],ports[1])
+        self.create_meas('s%i%i','s%i%i'%ports[1],ports[0],ports[1],ports[0])
+        self.create_meas('s%i%i','s%i%i'%ports[1],ports[1],ports[1],ports[1])
+        
+        # set display to log mag
+        self.set_display_format('mlog')
+    
+    def setup_wave_quantities(self, ports = [1,2]):
+        self.delete_all_meas()
+        #create traces
+        self.create_meas('a%i','a%i, %i'%ports[0],ports[0],ports[0])
+        self.create_meas('b%i','b%i, %i'%ports[0],ports[0],ports[0])
+        self.create_meas('a%i','a%i, %i'%ports[1],ports[1],ports[1])
+        self.create_meas('b%i','b%i, %i'%ports[1],ports[1],ports[1])
+        
+        
+        self.set_display_format('mlog')
+        self.set_yscale_couple()
+        self.rtl()
+    
+    def display_trace(self,  name = '',window_n = None trace_n=None):
+        if window_n is None:
+            window_n =''
+        if trace_n is None:
+            trace_n =''
+        self.write('disp:wind%s:trac%s:feed %s'%(str(window_n), str(trace_n), name))    
+    
+    def set_display_format(self, form):
+        '''
+        set the display format
+        
+        Choose from,
+
+            MLINear
+            MLOGarithmic
+            PHASe
+            UPHase 'Unwrapped phase
+            IMAGinary
+            REAL
+            POLar
+            SMITh
+            SADMittance 'Smith Admittance
+            SWR
+            GDELay 'Group Delay
+            KELVin
+            FAHRenheit
+            CELSius
+        '''
+        self.write('calc%i:form %s'%(self.channel,form))
+    
+    def set_yscale_couple(self, method= 'all' ,window_n = None trace_n=None):
+        '''
+        set y-scale coupling 
+        
+        Parameters
+        ------------
+        method : ['off','all','window']
+            controls the coupling method
+        '''
+        self.write('disp:wind%s:trac%s:coup:meth %s'%(str(window_n), str(trace_n), method))  
+        
 class VectorStar(GpibInstrument):
     '''
     '''
@@ -378,10 +483,6 @@ class VectorStar(GpibInstrument):
     def get_all_traces(self):
         return [self.get_trace(k) for k in range(1, self.ntraces+1)]
     
-    
-    
-        
-        
 class ZVA40_lihan(object):
     '''
     Created on Aug 3, 2010
@@ -894,6 +995,8 @@ class HP8510C(GpibInstrument):
         reverse.name = 'reverse switch term'
 
         return (forward,reverse)
+
+PNAX = PNA
 
 class HP8720(HP8510C):
     def __init__(self, address=16,**kwargs):
