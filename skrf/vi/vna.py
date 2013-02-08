@@ -64,6 +64,7 @@ class PNA(GpibInstrument):
         self.port = 1
         #self.write('calc:par:sel CH1_S11_1')
     
+    ## GPIB
     @property
     def idn(self):
         return self.ask('*IDN?')
@@ -73,7 +74,10 @@ class PNA(GpibInstrument):
         Return to local 
         '''
         self.write('rtl')
-            
+    
+    def opc(self):
+        return self.ask('*OPC?')
+    ## triggering        
     @property
     def continuous(self):
         return bool(int(self.ask('init:cont?')))
@@ -84,51 +88,8 @@ class PNA(GpibInstrument):
         '''
         
         self.write('initiate:continuous '+ str(int(mode)))
-
-    @property
-    def frequency(self, unit='ghz'):
-        '''
-        Gets frequency data, returning a :class:`~skrf.frequency.Frequency` object
-        
-        Gets the
-        
-        '''
-        freq=Frequency( float(self.ask('sens:FREQ:STAR?')),
-                float(self.ask('sens:FREQ:STOP?')),\
-                int(self.ask('sens:sweep:POIN?')),'hz')
-        freq.unit = unit
-        return freq
-
-
     
-    def get_network(self):
-        '''
-        Initiates a sweep and returns a  :class:`~skrf.network.Network` type represting the data.
-
-        If you are taking multiple sweeps, and want the sweep timing to
-        work, put the turn continuous mode off, with  ``pnax.continuous='off'``
-        
-        Examples
-        ----------
-        
-        >>> from skrf.vi.vna import PNAX 
-        >>> v = PNAX()
-        >>> dut = v.network
-        '''
-        was_cont = self.continuous
-        
-        self.continuous = False
-        self.write('init:imm')
-        self.write('*wai')
-        ntwk = Network(
-            s = self.get_sdata(), 
-            frequency = self.frequency,
-            name = self.get_active_measurement(),
-            )
-            
-        self.continuous = was_cont
-        return ntwk
-    
+    ## power 
     def get_power_level(self):
         return float(self.ask('SOURce:POWer?'))
     
@@ -150,7 +111,85 @@ class PNA(GpibInstrument):
         
         self.write('SOURce%i:POWer%i %i'%(cnum, port, num))
     
+    ## DATA IO
+    def get_frequency(self, unit='ghz'):
+        '''
+        Gets frequency data, returning a :class:`~skrf.frequency.Frequency` object
+        
+        Gets the
+        
+        '''
+        freq=Frequency( float(self.ask('sens:FREQ:STAR?')),
+                float(self.ask('sens:FREQ:STOP?')),\
+                int(self.ask('sens:sweep:POIN?')),'hz')
+        freq.unit = unit
+        return freq
     
+    def get_network(self):
+        '''
+        Returns a :class:`~skrf.network.Network` object represting the 
+        active trace.
+
+        
+        
+        Examples
+        ----------
+        
+        >>> from skrf.vi.vna import PNAX 
+        >>> v = PNAX()
+        >>> dut = v.network
+        '''
+        was_cont = self.continuous
+        
+        self.continuous = False
+        self.write('init:imm')
+        self.write('*wai')
+        ntwk = Network(
+            s = self.get_sdata(), 
+            frequency = self.get_frequency(),
+            name = self.get_active_meas(),
+            )
+            
+        self.continuous = was_cont
+        return ntwk
+    def get_network_all_meas(self):
+        out = []
+        for name,parm in self.get_meas_list():
+            self.select_meas(name)
+            out.append(self.get_network())
+        return out
+            
+            
+            
+    def get_oneport(self, port=1, *args, **kwargs):
+        was_cont = self.continuous
+        
+        self.continuous = False
+        self.write('init:imm')
+        self.write('*wai')
+        ntwk = Network(
+            s = self.get_data_snp(port), 
+            frequency = self.get_frequency(),
+            *args, **kwargs
+            )
+            
+        self.continuous = was_cont
+        return ntwk
+        
+    def get_twoport(self, ports=[1,2], *args, **kwargs):
+        was_cont = self.continuous
+        
+        self.continuous = False
+        self.write('init:imm')
+        self.write('*wai')
+        ntwk = Network(
+            s = self.get_data_snp(ports), 
+            frequency = self.get_frequency(),
+            *args, **kwargs
+            )
+            
+        self.continuous = was_cont
+        return ntwk
     
     def get_data(self, char='SDATA', cnum = None):
         '''
@@ -161,7 +200,7 @@ class PNA(GpibInstrument):
         if cnum is None:
             cnum = self.channel
             
-        self.write('calc:par:sel %s'%(self.get_active_measurement()))
+        self.write('calc:par:sel \"%s\"'%(self.get_active_meas()))
         data = npy.array(self.ask_for_values('CALC%i:Data? %s'%(cnum, char)))
         
         if char.lower() == 'sdata':
@@ -170,8 +209,9 @@ class PNA(GpibInstrument):
         return data
     
     def get_sdata(self, *args, **kwargs):
-        return self.get_data(char = 'SDATA', *args, **kwargs)
-    
+        out= self.get_data(char = 'SDATA', *args, **kwargs)
+        
+        return out
     def get_fdata(self, *args, **kwargs):
         return self.get_data(char = 'fDATA', *args, **kwargs)
     
@@ -188,14 +228,80 @@ class PNA(GpibInstrument):
         '''
         if cnum is None:
             cnum = self.channel
-        self.write('calc:par:sel %s'%(self.get_active_measurement()))
+        self.write('calc:par:sel %s'%(self.get_active_meas()))
         return npy.array(self.ask_for_values('CALC%i:RData? %s'%(cnum, char)))
     
+    def get_data_snp(self,ports=[1,2], *args, **kwargs):
+        if type(ports) == int:
+            ports = [ports]
+        
+        d = self.ask_for_values('calc%i:data:snp:ports? \"%s\"'\
+            %(self.channel,str(ports)[1:-1]))
+        a = self.opc()
+        
+        npoints = len(self.get_frequency())
+        nports = len(ports)
+        
+        if nports==2:
+            d = npy.array(d)
+            d = d.reshape(9,-1).T
+            s11 = d[:,1] +1j*d[:,2]
+            s21 = d[:,3] +1j*d[:,4]
+            s12 = d[:,5] +1j*d[:,6]
+            s22 = d[:,7] +1j*d[:,8]
+            s = npy.c_[s11,s12,s21,s22].reshape(-1,2,2)
+        elif nports == 1:
+            d = npy.array(d)
+            d = d.reshape(3,-1).T
+            s = (d[:,1] +1j*d[:,2]).reshape(-1,1,1)
+        else:
+            raise NotImplementedError()
+        return s
+    
+        
+        d = npy.array(d[npoints:]) # cut off frequency vector
+        
+        
+        out = zeros((npoints, nports, nports),dtype=complex)
+        for k in range(len(ports)):
+            out[:,k,]
+        d.reshape((npoints, nports,nports))
+        return (d)
+    
+    def get_switch_terms(self):
+        self.delete_all_meas()
+        self.create_meas('forward', 'R2/B,1')
+        forward = self.get_network()
+        
+        
+        self.delete_all_meas()
+        self.create_meas('reverse', 'R1/A,2')
+        reverse = self.get_network()
+        self.delete_all_meas()
+        return forward, reverse
+    
+    ## MEASUREMENT TRACES
     def get_meas_list(self):
-        return self.ask("CALC:PAR:CAT?")
+        meas_list = self.ask("CALC:PAR:CAT?")
+        meas = meas_list[1:-1].split(',')
+        if len(meas)==0:
+            return None
+        k=0
+        out_list=[]
+        while k < len(meas):
+            if meas[k+1][0].lower() == 's':
+                out_list.append((meas[k],meas[k+1]))
+                k+=2
+            else:
+                out_list.append((meas[k],meas[k+1]+'-'+meas[k+2]))
+                k+=3
+                
+        
+        return out_list
     
     def get_active_meas(self):
-        return self.ask("SYST:ACT:MEAS?" )
+        out = self.ask("SYST:ACT:MEAS?")[1:-1]
+        return out
     
     def delete_meas(self,name):
         self.write('calc%i:par:del %s'%(self.channel, name))
@@ -203,59 +309,22 @@ class PNA(GpibInstrument):
     def delete_all_meas(self):
         self.write('calc%i:par:del:all'%self.channel)
     
-    
     def create_meas(self,name, meas):
-        self.write('calc%i:par:def:ext %s, %s'%self.channel, name, meas)
+        self.write('calc%i:par:def:ext \"%s\", \"%s\"'%(self.channel, name, meas))
         self.display_trace(name)
     
     def create_meas_hidden(self,name, meas):
-        self.write('calc%i:par:def:ext %s, %s'%self.channel, name, meas)
+        self.write('calc%i:par:def:ext %s, %s'%(self.channel, name, meas))
         
     def select_meas(self,name):
-        self.write('calc%i:par:sel %s'%self.channel, meas)
-        
-    def get_snp(self,ports=[1,2]):
-        return self.ask_for_values('calc%i:data:snp:ports? %s'str(ports)[1:-1])
-    
-    def get_switch_terms(self):
-        self.delete_all_meas()
-        self.create_meas('forward', 'R2/B,1')
-        forward = self.get_network()
-        self.delet_all_meas()
-        self.create_meas('reverse', 'R1/A,2')
-        reverse = self.get_network()
-        return forward, reverse
-    
-    def setup_s_parameters(self, ports = [1,2]):
-        self.delete_all_meas()
-        #create traces
-        self.create_meas('s%i%i','s%i%i'%ports[0],ports[0],ports[0],ports[0])
-        self.create_meas('s%i%i','s%i%i'%ports[0],ports[1],ports[0],ports[1])
-        self.create_meas('s%i%i','s%i%i'%ports[1],ports[0],ports[1],ports[0])
-        self.create_meas('s%i%i','s%i%i'%ports[1],ports[1],ports[1],ports[1])
-        
-        # set display to log mag
-        self.set_display_format('mlog')
-    
-    def setup_wave_quantities(self, ports = [1,2]):
-        self.delete_all_meas()
-        #create traces
-        self.create_meas('a%i','a%i, %i'%ports[0],ports[0],ports[0])
-        self.create_meas('b%i','b%i, %i'%ports[0],ports[0],ports[0])
-        self.create_meas('a%i','a%i, %i'%ports[1],ports[1],ports[1])
-        self.create_meas('b%i','b%i, %i'%ports[1],ports[1],ports[1])
-        
-        
-        self.set_display_format('mlog')
-        self.set_yscale_couple()
-        self.rtl()
-    
-    def display_trace(self,  name = '',window_n = None trace_n=None):
+        self.write('calc%i:par:sel \"%s\"'%(self.channel, name))
+
+    def display_trace(self,  name = '',window_n = None, trace_n=None):
         if window_n is None:
             window_n =''
         if trace_n is None:
-            trace_n =''
-        self.write('disp:wind%s:trac%s:feed %s'%(str(window_n), str(trace_n), name))    
+            trace_n =self.ntraces+1
+        self.write('disp:wind%s:trac%s:feed \"%s\"'%(str(window_n), str(trace_n), name))    
     
     def set_display_format(self, form):
         '''
@@ -279,8 +348,36 @@ class PNA(GpibInstrument):
             CELSius
         '''
         self.write('calc%i:form %s'%(self.channel,form))
+    def set_display_format_all(self, form):
+        '''
+        set the display format
+        
+        Choose from,
+
+            MLINear
+            MLOGarithmic
+            PHASe
+            UPHase 'Unwrapped phase
+            IMAGinary
+            REAL
+            POLar
+            SMITh
+            SADMittance 'Smith Admittance
+            SWR
+            GDELay 'Group Delay
+            KELVin
+            FAHRenheit
+            CELSius
+        '''
+        self.func_on_all_traces(self.set_display_format, form)
     
-    def set_yscale_couple(self, method= 'all' ,window_n = None trace_n=None):
+        
+    def func_on_all_traces(self,func, *args, **kwargs):
+        for name,parm in self.get_meas_list():
+            self.select_meas(name)
+            func(*args,**kwargs)
+    
+    def set_yscale_couple(self, method= 'all' ,window_n = None, trace_n=None):
         '''
         set y-scale coupling 
         
@@ -289,7 +386,50 @@ class PNA(GpibInstrument):
         method : ['off','all','window']
             controls the coupling method
         '''
-        self.write('disp:wind%s:trac%s:coup:meth %s'%(str(window_n), str(trace_n), method))  
+        if window_n is None:
+            window_n =''
+        if trace_n is None:
+            trace_n =self.ntraces+1
+        self.write('disp:wind%s:trac%s:y:coup:meth %s'%(str(window_n), str(trace_n), method))  
+        
+    
+    ## HIGH LEVEL
+    def setup_s_parameters(self, ports = [1,2]):
+        self.delete_all_meas()
+        #create traces
+        self.create_meas('s%i%i'%(ports[0],ports[0]),'s%i%i'%(ports[0],ports[0]))
+        self.create_meas('s%i%i'%(ports[0],ports[1]),'s%i%i'%(ports[0],ports[1]))
+        self.create_meas('s%i%i'%(ports[1],ports[0]),'s%i%i'%(ports[1],ports[0]))
+        self.create_meas('s%i%i'%(ports[1],ports[1]),'s%i%i'%(ports[1],ports[1]))
+        
+        # set display to log mag
+        self.set_display_format_all('mlog')
+        self.set_yscale_couple()
+        self.continuous= True
+    
+    def setup_wave_quantities(self, ports = [1,2]):
+        self.delete_all_meas()
+        #create traces
+        self.create_meas('a%i'%ports[0],'a%i, %i'%(ports[0],ports[0]))
+        self.create_meas('b%i'%ports[0],'b%i, %i'%(ports[0],ports[0]))
+        self.create_meas('a%i'%ports[1],'a%i, %i'%(ports[1],ports[1]))
+        self.create_meas('b%i'%ports[1],'b%i, %i'%(ports[1],ports[1]))
+        
+        
+        self.set_display_format_all('mlog')
+        self.set_yscale_couple()
+        self.continuous= True
+        #self.rtl()
+    
+    def get_wave_quantities(self, *args, **kwargs):
+        self.setup_wave_quantities(*args, **kwargs)
+        return self.get_network_all_meas()
+    
+    @property
+    def ntraces(self):
+        return len(self.get_meas_list())
+    
+PNAX = PNA 
         
 class VectorStar(GpibInstrument):
     '''
