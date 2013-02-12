@@ -21,3 +21,6 @@ mime definitions and may be placed in /usr/share/mime/packages/ .
 	
 restart file-manager. 
 
+
+
+xdg-icon-resource install --context mimetypes --size 48 skrf-icon.png skrf-touchstone

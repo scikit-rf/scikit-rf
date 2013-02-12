@@ -38,6 +38,7 @@ def main():
     ax_4 = plb.subplot(224)
 
     for touchstone_filename in args:
+        print touchstone_filename
         ntwk = rf.Network(touchstone_filename)
         ntwk.plot_s_db(ax = ax_1, m=options.m,n=options.n)
         ntwk.plot_s_deg(ax = ax_2, m=options.m,n=options.n)
