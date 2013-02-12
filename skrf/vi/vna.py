@@ -51,34 +51,41 @@ class PNA(GpibInstrument):
     '''
     Agilent PNA[X] 
     
+    Below are lists of some high-level commands sorted by functionality. 
+    
+    Measurement setups
+    
+    .. hlist:: 
+        :columns: 1
+        
+        * :func:`setup_s_parameters`
+        * :func:`setup_wave_quantities`
+    
 
-    High Level Commands
-    ------------------------- 
-    
-    Measurement setup
-    ++++++++++++++++++++
-    * :func:`setup_sparameters`
-    * :func:`setup_wavequantities`
-    
     Object IO
-    ++++++++++++++++++++
-    These IO functions return skrf objects, and handle timing 
     
-    * :func:`get_oneport`
-    * :func:`get_twoport`
-    * :func:`get_frequency`
-    * :func:`get_network`
-    * :func:`get_network_all_meas`
+    .. hlist:: 
+        :columns: 2
+        
+        * :func:`get_oneport`
+        * :func:`get_twoport`
+        * :func:`get_frequency`
+        * :func:`get_network`
+        * :func:`get_network_all_meas`
+    
     
     Simple IO
-    ++++++++++++++++++++
-    These IO functions return arrays of data 
     
-    * :func:`get_snp`
-    * :func:`get_data`
-    * :func:`get_sdata`
-    * :func:`get_fdata`
-    * :func:`get_rdata`
+    .. hlist:: 
+        :columns: 2
+        
+        * :func:`get_data_snp`
+        * :func:`get_data`
+        * :func:`get_sdata`
+        * :func:`get_fdata`
+        * :func:`get_rdata`
+    
+    
     
     
     Examples
@@ -89,9 +96,32 @@ class PNA(GpibInstrument):
     >>> n = v.get_oneport()
     >>> n = v.get_twoport()
     
+    
+    Notes
+    --------
+    This instrument references `measurements` and `traces`. Traces are 
+    displayed traces, while measurements are active measurements on the 
+    VNA which may or may not be displayed on screen.
     '''
     
-    def __init__(self, address=16, channel=1,timeout = 3, **kwargs):
+    def __init__(self, address=16, channel=1,timeout = 3, echo = False, **kwargs):
+        '''
+        Constructor 
+        
+        Parameters
+        -------------
+        address : int
+            GPIB address 
+        channel : int
+            set active channel. Most commands operate on the active channel
+        timeout : number
+            GPIB command timeout in seconds. 
+        echo : Boolean
+            echo  all strings passed to the write command to stdout. 
+            usefule for troubleshooting
+        \*\*kwargs : 
+            passed to :func:`visa.GpibInstrument.__init__`
+        '''
         GpibInstrument.__init__(self,
             'GPIB::'+str(address),
             timeout=timeout,
@@ -103,15 +133,21 @@ class PNA(GpibInstrument):
     
     
     def write(self, msg, *args, **kwargs):
+        '''
+        Write a msg to the instrument. 
+        '''
         if self.echo:
             print msg +'\n'
         return GpibInstrument.write(msg, *args, **kwargs)
     
-    write.__doc__ = GpibInstrument.write.__doc__
+    #write.__doc__ = GpibInstrument.write.__doc__
     
     ## BASIC GPIB
     @property
     def idn(self):
+        '''
+        Identifying string for the instrument
+        '''
         return self.ask('*IDN?')
     
     def rtl(self):
@@ -121,11 +157,17 @@ class PNA(GpibInstrument):
         self.write('rtl')
     
     def opc(self):
+        '''
+        Ask for indication that operations complete
+        '''
         return self.ask('*OPC?')
     
     ## triggering        
     @property
     def continuous(self):
+        '''
+        Set continuous sweeping ON/OFF 
+        '''
         return bool(int(self.ask('init:cont?')))
 
     @continuous.setter
@@ -137,11 +179,14 @@ class PNA(GpibInstrument):
     
     ## power 
     def get_power_level(self):
+        '''
+        Get the RF power level
+        '''
         return float(self.ask('SOURce:POWer?'))
     
     def set_power_level(self, num, cnum=None, port=None):
         '''
-        set the RF power level 
+        Set the RF power level 
         
         Parameters 
         -----------
@@ -160,12 +205,19 @@ class PNA(GpibInstrument):
     ## DATA IO
     def get_frequency(self, unit='ghz'):
         '''
-        Get frequency data for ative trace.  
+        Get frequency data for active meas.  
         
-        This Returns a :class:`~skrf.frequency.Frequency` object
+        This Returns a :class:`~skrf.frequency.Frequency` object.
         
-        Gets the
+        Parameters
+        -------------
+        unit : ['khz','mhz','ghz','thz']
+            the frequency unit of the Frequency object.
         
+        See Also
+        ---------
+        select_meas
+        get_meas_list
         '''
         freq=Frequency( float(self.ask('sens:FREQ:STAR?')),
                 float(self.ask('sens:FREQ:STOP?')),\
@@ -178,7 +230,11 @@ class PNA(GpibInstrument):
         Returns a :class:`~skrf.network.Network` object representing the 
         active trace.
 
-        
+        This can be used to get arbitrary traces, in the form of 
+        Network objects, so that they can be plotted/saved/etc. 
+         
+        If you want to get s-parameter data, use :func:`get_twoport` or
+        :func:`get_oneport`
         
         Examples
         ----------
@@ -186,6 +242,10 @@ class PNA(GpibInstrument):
         >>> from skrf.vi.vna import PNAX 
         >>> v = PNAX()
         >>> dut = v.network
+        
+        See Also
+        ----------
+        get_network_all_meas
         '''
         was_cont = self.continuous
         
@@ -412,6 +472,11 @@ class PNA(GpibInstrument):
 
     
     def get_switch_terms(self):
+        '''
+        Get switch terms and return them as a tuple of Network objects. 
+        
+        Dont use this yet. 
+        '''
         self.delete_all_meas()
         self.create_meas('forward', 'R2/B,1')
         forward = self.get_network()
@@ -426,7 +491,19 @@ class PNA(GpibInstrument):
     ## MEASUREMENT TRACES
     @property
     def ntraces(self):
-        return len(self.get_meas_list())
+        '''
+        The number of measurement traces that exist on the current channel
+        
+        Note that this may not be the same as the number of traces 
+        displayed because a measurement may exist, but not be associated
+        with a trace.
+        
+        '''
+        n = self.get_meas_list()
+        if n is None: 
+            return 0
+        else:
+            return n
         
     def get_meas_list(self):
         '''
@@ -499,12 +576,53 @@ class PNA(GpibInstrument):
         self.display_trace(name)
     
     def create_meas_hidden(self,name, meas):
+        '''
+        Create a new measurement but dont display it.
+        
+        Parameters 
+        ------------
+        name : str
+            name given to measurment
+        meas : str
+            something like 
+            * S11  
+            * a1/b1,1 
+            * A/R1,1
+            * ...
+        
+        Examples
+        ----------
+        >>> p = PNA()
+        >>> p.create_meas('my_meas', 'A/R1,1')     
+        '''
         self.write('calc%i:par:def:ext %s, %s'%(self.channel, name, meas))
         
     def select_meas(self,name):
+        '''
+        Make a specified measurement active
+        
+        Parameters
+        ------------
+        name : str
+            name of measurement. See :func:`get_meas_list`
+        
+        
+        '''
         self.write('calc%i:par:sel \"%s\"'%(self.channel, name))
 
     def display_trace(self,  name = '',window_n = None, trace_n=None):
+        '''
+        Display a given measurment on specified trace number. 
+        
+        Parameters
+        ------------
+        name : str
+            name of measurement. See :func:`get_meas_list`
+        window_n : int
+            window number. If None, active window is used.
+        trace_n : int
+            trace number to display on. If None, a new trace is made.
+        '''
         if window_n is None:
             window_n =''
         if trace_n is None:
@@ -606,10 +724,10 @@ class PNA(GpibInstrument):
         Sets up s-parameter measurements for a given set of ports
         
         This command 
-        * deletes all current measurments
-        * creates s-parameter measurements for the given port set.
-        * sets display format to `form`
-        * couples y-scale
+        1. deletes all current measurments
+        #. creates s-parameter measurements for the given port set.
+        #. sets display format to `form`
+        #. couples y-scale
         
         
         Parameters 
@@ -638,11 +756,12 @@ class PNA(GpibInstrument):
         '''
         Sets up wave-quantitiy measurements for a given set of ports
         
-        This command 
-        * deletes all current measurments
-        * creates a/b wave measurements for the given port set.
-        * sets display format to `form`
-        * couples y-scale
+        This command:
+        
+        1. deletes all current measurments
+        #. creates a/b wave measurements for the given port set.
+        #. sets display format to `form`
+        #. couples y-scale
         
         
         Parameters 
@@ -670,10 +789,6 @@ class PNA(GpibInstrument):
     def get_wave_quantities(self, *args, **kwargs):
         self.setup_wave_quantities(*args, **kwargs)
         return self.get_network_all_meas()
-    
-    
-    
-    
     
 PNAX = PNA 
         

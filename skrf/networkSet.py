@@ -184,7 +184,9 @@ class NetworkSet(object):
         for operator_name in \
                 ['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
             self.__add_a_operator(operator_name)
-
+    
+    
+    
     @classmethod
     def from_zip(cls, zip_file_name, sort_filenames=True, *args, **kwargs):
         '''

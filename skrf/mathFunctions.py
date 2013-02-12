@@ -173,7 +173,7 @@ def magnitude_2_db(input,zero_nan=True):
     if zero_nan:
         out = 20 * npy.log10(npy.array(input))
         out[npy.isnan(out)] = LOG_OF_NEG
-        out[npy.isneginf(out)] = LOG_OF_NEG
+        #out[npy.isneginf(out)] = LOG_OF_NEG
     else:
         out = 20*npy.log10(input)
 

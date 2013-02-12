@@ -39,7 +39,7 @@ Using ipython with the ``pylab`` flag imports several commonly used functions, a
 
 
 
-Throughout this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you.
+Throughout this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you. 
 
 
 .. ipython::
@@ -236,7 +236,7 @@ Virtual Instruments
     The vi module is not well written or tested at this point.
 
 The :mod:`~skrf.vi` module holds  classes
-for GPIB/VISA instruments that are intricately related to skrf, ie mostly VNA's.
+for GPIB/VISA instruments that are intricately related to skrf, mostly VNA's.
 The VNA classes were created for the sole purpose of retrieving data 
 so that calibration and measurements could be carried out offline by skrf, 
 control of most other VNA capabilities is neglected.
@@ -252,7 +252,7 @@ A list of VNA's that have been are partially supported.
     
     * :class:`~vna.HP8510C`
     * :class:`~vna.HP8720`
-    * :class:`~vna.PNAX`
+    * :class:`~vna.PNA`
     * :class:`~vna.ZVA40`
 
 An example usage of the :class:`~vna.HP8510C` class to retrieve some s-parameter data
@@ -276,6 +276,8 @@ Unfortunately, the syntax is different for every VNA class, so the
 above example wont directly translate to other VNA's. Re-writing 
 all of the VNA classes to follow the same convention is on the 
 `TODO list <https://github.com/scikit-rf/scikit-rf/blob/develop/TODO.rst>`_
+
+See the :doc:`virtualInstruments` tutorial for more information.
 
 Calibration
 ----------------------------

@@ -15,6 +15,11 @@ Network
 * incorperate support for c, and connect_s_fast, or remove
 * ABCD parameters
 
+NetworkSet
+------------
+* add tests
+* fix pickling problem. 
+
 IO
 -----
 * Citi files

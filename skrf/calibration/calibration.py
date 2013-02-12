@@ -30,7 +30,7 @@ calibration (:mod:`skrf.calibration.calibration`)
 Contains the Calibration class, and supporting functions
 
 Calibration Class
-===============
+==================
 
 .. autosummary::
    :toctree: generated/
@@ -120,7 +120,7 @@ class Calibration(object):
                 The two measured switch terms in the order
                 (forward, reverse).  This is only applicable in two-port
                 calibrations. See Roger Mark's paper on switch terms [#]_
-                for explanation of what they are, and [#] for description
+                for explanation of what they are, and [#]_ for description
                 of measuring them on the Agilent PNA.
 
         name: string
