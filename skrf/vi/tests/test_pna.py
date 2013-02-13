@@ -27,16 +27,29 @@ class PNATest(unittest.TestCase):
         a = self.vi.continuous
         self.assertEqual(a, False)
     
+    def test_npoints(self):
+        self.vi.npoints = 101
+        self.assertEqual(self.vi.npoints, 101)
+    
     
     def test_get_frequency(self):
         a = self.vi.get_frequency()
+        b = a.f_scaled
     
+    def test_set_yscale_auto(self):
+        a = self.vi.set_yscale_auto()
+        
+    def test_if_bw(self):
+        self.vi.if_bw = 100
+        self.assertEqual(self.vi.if_bw, 100)
     
     def test_get_oneport(self):
         a = self.vi.get_oneport(1)
+        b = a.s
         
     def test_get_twoport(self):
-        a = self.vi.get_twoport()    
+        a = self.vi.get_twoport()   
+        b = a.s 
     
     def test_get_switchterms(self):
         a = self.vi.get_switch_terms()
@@ -50,8 +63,4 @@ class PNATest(unittest.TestCase):
     def test_get_create_meas(self):
         a = self.vi.create_meas('a1','a1')
     
-    def test_setup_s_parameters(self):
-        a = self.vi.setup_s_parameters()
     
-    def test_setup_wave_quantities(self):
-        a = self.vi.setup_wave_quantities()

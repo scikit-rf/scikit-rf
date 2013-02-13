@@ -2047,6 +2047,36 @@ class Network(object):
         '''
         self.s = self.s + amount
 
+    # other
+    def func_on_parameter(self, func, attr= 's',*args, **kwargs):
+        '''
+        Aplies a function parameter matrix, one frequency slice at a time
+        
+        This is useful for functions that can only operate on 2d arrays, 
+        like numpy.linalg.inv. This loops over f and calls 
+        `func(ntwkA.s[f,:,:], *args, **kwargs)`
+        
+        Parameters
+        ------------
+    
+        func : func
+            function to apply to s-parameters, on a single-freqency slice. 
+            (ie func(ntwkA.s[0,:,:], *args, **kwargs)
+        \*args, \*\*kwargs : 
+            passed to the func
+        
+        
+        Examples
+        -----------
+        >>> from numpy.linalg import inv
+        >>> ntwk.func_on_parameter(inv)
+        '''
+        ntwkB= self.copy()
+        p = self.__getattribute__(attr)
+        ntwkB.s = npy.r_[[func(p[k,:,:],*args,**kwargs) \
+            for k in range(len(p))]]
+        return ntwkB
+
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
     '''
@@ -2415,6 +2445,33 @@ def one_port_2_two_port(ntwk):
             npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
     result.s[:,1,0] = result.s[:,0,1]
     return result
+
+def four_oneports_2_twoport(s11,s12,s21,s22, *args, **kwargs):
+            '''
+            Creates a two-port Network from list of 4 one-ports
+            
+            Parameters
+            -----------
+            s11 : one-port :class:`Network`
+                s11 
+            s12 : one-port :class:`Network`
+                s12
+            s21 : one-port :class:`Network`
+                s21
+            s22 : one-port :class:`Network`
+                s22
+            \*args, \*\*kwargs : 
+                passed to :func:`Network.__init__` for the twoport 
+                
+            Returns
+            ----------
+            twoport : two-port :class:`Network`
+                result
+            '''
+            s = npy.c_['2',npy.c_['1',s11.s,s21.s],npy.c_['1',s12.s,s22.s]]
+            z0 = npy.c_[s11.z0, s22.z0]
+            frequency = s11.frequency
+            return Network(s=s, z0=z0, frequency=frequency, *args, **kwargs)
 
 ## Functions operating on s-parameter matrices
 def connect_s(A,k,B,l):
@@ -3206,6 +3263,7 @@ def flip(a):
     else:
         raise IndexError('matricies should be 2x2, or kx2x2')
     return c
+
 
 
 ## COMMON CHECKS (raise exceptions)

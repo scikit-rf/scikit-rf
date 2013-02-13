@@ -47,20 +47,13 @@ from ..network import *
 from .. import mathFunctions as mf
 
 
+
 class PNA(GpibInstrument):
     '''
     Agilent PNA[X] 
     
     Below are lists of some high-level commands sorted by functionality. 
-    
-    Measurement setups
-    
-    .. hlist:: 
-        :columns: 1
-        
-        * :func:`setup_s_parameters`
-        * :func:`setup_wave_quantities`
-    
+
 
     Object IO
     
@@ -86,8 +79,6 @@ class PNA(GpibInstrument):
         * :func:`get_rdata`
     
     
-    
-    
     Examples
     -----------
     
@@ -103,7 +94,6 @@ class PNA(GpibInstrument):
     displayed traces, while measurements are active measurements on the 
     VNA which may or may not be displayed on screen.
     '''
-    
     def __init__(self, address=16, channel=1,timeout = 3, echo = False, **kwargs):
         '''
         Constructor 
@@ -129,8 +119,7 @@ class PNA(GpibInstrument):
             
         self.channel=channel
         self.port = 1
-        self.echo = False
-    
+        self.echo = echo
     
     def write(self, msg, *args, **kwargs):
         '''
@@ -138,9 +127,9 @@ class PNA(GpibInstrument):
         '''
         if self.echo:
             print msg +'\n'
-        return GpibInstrument.write(msg, *args, **kwargs)
+        return GpibInstrument.write(self,msg, *args, **kwargs)
     
-    #write.__doc__ = GpibInstrument.write.__doc__
+    write.__doc__ = GpibInstrument.write.__doc__
     
     ## BASIC GPIB
     @property
@@ -168,16 +157,18 @@ class PNA(GpibInstrument):
         '''
         Set continuous sweeping ON/OFF 
         '''
-        return bool(int(self.ask('init:cont?')))
+        return (self.ask('sense:sweep:mode?')=='CONT')
 
     @continuous.setter
-    def continuous(self, mode):
+    def continuous(self, val):
         '''
         '''
-        
-        self.write('initiate:continuous '+ str(int(mode)))
+        if val:
+            self.write('sense:sweep:mode cont')
+        else:
+            self.write('sense:sweep:mode hold')
     
-    ## power 
+    ## power
     def get_power_level(self):
         '''
         Get the RF power level
@@ -203,6 +194,18 @@ class PNA(GpibInstrument):
         self.write('SOURce%i:POWer%i %i'%(cnum, port, num))
     
     ## DATA IO
+    def sweep(self):
+        '''
+        Initiates a sweep and waits for it to complete before returning
+        
+        If vna is in continuous sweep mode then this puts it back
+        '''
+        was_cont = self.continuous
+        out = bool(self.ask("SENS:SWE:MODE SINGle;*OPC?"))
+        self.continuous = was_cont
+        return out
+        
+        
     def get_frequency(self, unit='ghz'):
         '''
         Get frequency data for active meas.  
@@ -225,7 +228,8 @@ class PNA(GpibInstrument):
         freq.unit = unit
         return freq
     
-    def get_network(self):
+    
+    def get_network(self, sweep=True):
         '''
         Returns a :class:`~skrf.network.Network` object representing the 
         active trace.
@@ -236,28 +240,32 @@ class PNA(GpibInstrument):
         If you want to get s-parameter data, use :func:`get_twoport` or
         :func:`get_oneport`
         
+        Parameters
+        -----------
+        sweep : Boolean
+            trigger a sweep or not. see :func:`sweep`
+        
         Examples
         ----------
-        
         >>> from skrf.vi.vna import PNAX 
         >>> v = PNAX()
-        >>> dut = v.network
+        >>> dut = v.get_network()
         
         See Also
         ----------
         get_network_all_meas
         '''
         was_cont = self.continuous
-        
-        self.continuous = False
-        self.write('init:imm')
-        self.write('*wai')
+        self.continuous= False
+        if sweep:
+            self.sweep()
+            
         ntwk = Network(
             s = self.get_sdata(), 
             frequency = self.get_frequency(),
             name = self.get_active_meas(),
             )
-            
+        
         self.continuous = was_cont
         return ntwk
     
@@ -271,10 +279,15 @@ class PNA(GpibInstrument):
         get_meas_list
         get_network
         '''
+        was_cont = self.continuous
+        self.continuous= False
         out = []
+        self.sweep()
         for name,parm in self.get_meas_list():
             self.select_meas(name)
-            out.append(self.get_network())
+            out.append(self.get_network(sweep=False))
+        
+        self.continuous = was_cont
         return out
             
             
@@ -302,16 +315,13 @@ class PNA(GpibInstrument):
         get_frequency
         '''
         was_cont = self.continuous
-        
-        self.continuous = False
-        self.write('init:imm')
-        self.write('*wai')
+        self.continuous= False
+        self.sweep()
         ntwk = Network(
             s = self.get_data_snp(port), 
             frequency = self.get_frequency(),
             *args, **kwargs
             )
-            
         self.continuous = was_cont
         return ntwk
         
@@ -333,15 +343,13 @@ class PNA(GpibInstrument):
             
         '''
         was_cont = self.continuous
-        self.continuous = False
-        self.write('init:imm')
-        self.write('*wai')
+        self.continuous= False
+        self.sweep()
         ntwk = Network(
             s = self.get_data_snp(ports), 
             frequency = self.get_frequency(),
             *args, **kwargs
             )
-            
         self.continuous = was_cont
         return ntwk
     
@@ -350,10 +358,11 @@ class PNA(GpibInstrument):
         Get n-port, s-parameter data.
         
         Returns s-parameter data of shape FXNXN where F is frequency 
-        length and N is number of ports. 
+        length and N is number of ports. This does not do any timing 
+        see :func:`sweep` for that or use a higher level IO command, 
+        which are listed below in `see also`.
         
-        Note, this uses the  `calc:data:snp:ports` command, and calls 
-        a OPC? for timing.
+        Note, this uses the  `calc:data:snp:ports` command
         
         Parameters
         ------------
@@ -370,9 +379,10 @@ class PNA(GpibInstrument):
         if type(ports) == int:
             ports = [ports]
         
+        
         d = self.ask_for_values('calc%i:data:snp:ports? \"%s\"'\
             %(self.channel,str(ports)[1:-1]))
-        a = self.opc()
+        
         
         npoints = len(self.get_frequency())
         nports = len(ports)
@@ -488,7 +498,21 @@ class PNA(GpibInstrument):
         self.delete_all_meas()
         return forward, reverse
     
-    ## MEASUREMENT TRACES
+    ## MEASUREMENT/TRACES
+    
+    @property
+    def npoints(self):
+        '''
+        Number of points for the measurment
+        '''
+        return int(self.ask('sens%i:swe:poin?'%(self.channel)))
+    @npoints.setter
+    def npoints(self, n):
+        '''
+        Number of points for the measurment
+        '''
+        self.write('sens%i:swe:poin %i'%(self.channel,n))
+    
     @property
     def ntraces(self):
         '''
@@ -503,7 +527,40 @@ class PNA(GpibInstrument):
         if n is None: 
             return 0
         else:
-            return n
+            return len(n)
+    
+    @property
+    def if_bw(self):
+        '''
+        IF bandwidth
+        '''
+        return float(self.ask('sens%i:band?'%self.channel))
+    
+    @if_bw.setter
+    def if_bw(self,n):
+        '''
+        IF bandwidth 
+        '''
+        self.write('sens%i:band %i'%(self.channel,n))
+    
+        
+    def set_yscale_auto(self, window_n=None, trace_n=None):
+        '''
+        Display a given measurment on specified trace number. 
+        
+        Parameters
+        ------------
+        
+        window_n : int
+            window number. If None, active window is used.
+        trace_n : int
+            trace number to display on. If None, a new trace is made.
+        '''
+        if window_n is None:
+            window_n =''
+        if trace_n is None:
+            trace_n =self.ntraces+1
+        self.write('disp:wind%s:trac%s:y:scale:auto'%(str(window_n), str(trace_n))) 
         
     def get_meas_list(self):
         '''
@@ -514,22 +571,15 @@ class PNA(GpibInstrument):
         out :  list 
             list of tuples of the form, (name, measurement)
         '''
-        meas_list = self.ask("CALC:PAR:CAT?")
-        meas = meas_list[1:-1].split(',')
-        if len(meas)==0:
-            return None
-        k=0
-        out_list=[]
-        while k < len(meas):
-            if meas[k+1][0].lower() == 's':
-                out_list.append((meas[k],meas[k+1]))
-                k+=2
-            else:
-                out_list.append((meas[k],meas[k+1]+'-'+meas[k+2]))
-                k+=3
-                
+        meas_list = self.ask("CALC:PAR:CAT:EXT?")
         
-        return out_list
+        meas = meas_list[1:-1].split(',')
+        if len(meas)==1:
+            # if there isnt a single comma, then there arent any measurments
+            return None
+       
+        
+        return [(meas[k],meas[k+1]) for k in range(0,len(meas)-1,2)]
     
     def get_active_meas(self):
         '''
@@ -718,77 +768,7 @@ class PNA(GpibInstrument):
         self.write('disp:wind%s:trac%s:y:coup:meth %s'%(str(window_n), str(trace_n), method))  
         
     
-    ## HIGH LEVEL
-    def setup_s_parameters(self, ports = [1,2], form = 'mlog'):
-        '''
-        Sets up s-parameter measurements for a given set of ports
-        
-        This command 
-        1. deletes all current measurments
-        #. creates s-parameter measurements for the given port set.
-        #. sets display format to `form`
-        #. couples y-scale
-        
-        
-        Parameters 
-        ------------
-        ports : list of ints
-            ports to measure on (ie [1,2]) 
-            
-        form : str
-            the format. see :func:`set_display_format`.
-            
-        
-        '''
-        self.delete_all_meas()
-        
-        port_list = [(y,x) for x in ports for y in ports]
-        #create traces
-        for k in port_list:
-            self.create_meas('s%i%i'%k,'s%i%i'%k)
-        
-        # set display to log mag
-        self.set_display_format_all(form)
-        self.set_yscale_couple()
-        self.continuous= True
     
-    def setup_wave_quantities(self, ports = [1,2], form = 'mlog'):
-        '''
-        Sets up wave-quantitiy measurements for a given set of ports
-        
-        This command:
-        
-        1. deletes all current measurments
-        #. creates a/b wave measurements for the given port set.
-        #. sets display format to `form`
-        #. couples y-scale
-        
-        
-        Parameters 
-        ------------
-        ports : list of ints
-            ports to measure on (ie [1,2]) 
-            
-        form : str
-            the format. see :func:`set_display_format`.
-            
-        
-        '''
-        self.delete_all_meas()
-        #create traces
-        for k in ports:
-            self.create_meas('a%i'%k,'a%i, %i'%(k,k))
-            self.create_meas('b%i'%k,'b%i, %i'%(k,k))
-        
-        
-        self.set_display_format_all(form)
-        self.set_yscale_couple()
-        self.continuous= True
-        #self.rtl()
-    
-    def get_wave_quantities(self, *args, **kwargs):
-        self.setup_wave_quantities(*args, **kwargs)
-        return self.get_network_all_meas()
     
 PNAX = PNA 
         
