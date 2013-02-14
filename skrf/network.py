@@ -2446,32 +2446,63 @@ def one_port_2_two_port(ntwk):
     result.s[:,1,0] = result.s[:,0,1]
     return result
 
+
+def n_oneports_2_nport(ntwk_list, *args, **kwargs):
+    '''
+    Creates a N-port Network from list of N one-ports
+    
+    Parameters
+    -----------
+    ntwk_list : list of :class:`Network` objects
+        must follow left-right, top-bottom order, ie, s11,s12,s21,s22
+    \*args, \*\*kwargs : 
+        passed to :func:`Network.__init__` for the N-port 
+        
+    Returns
+    ----------
+    nport : n-port :class:`Network`
+        result
+    '''
+    nports = int(npy.sqrt(len(ntwk_list)))
+    
+    s_out = npy.concatenate(
+        [npy.concatenate(
+            [ntwk_list[(k+(l*nports))].s for k in range(nports)],2)\
+                for l in range(nports)],1)
+    
+    
+    z0 = npy.concatenate(
+        [ntwk_list[k].z0 for k in range(0,nports**2,nports+1)],1)
+    frequency = ntwk_list[0].frequency
+    return Network(s=s_out, z0=z0, frequency=frequency, *args, **kwargs)
+
 def four_oneports_2_twoport(s11,s12,s21,s22, *args, **kwargs):
-            '''
-            Creates a two-port Network from list of 4 one-ports
-            
-            Parameters
-            -----------
-            s11 : one-port :class:`Network`
-                s11 
-            s12 : one-port :class:`Network`
-                s12
-            s21 : one-port :class:`Network`
-                s21
-            s22 : one-port :class:`Network`
-                s22
-            \*args, \*\*kwargs : 
-                passed to :func:`Network.__init__` for the twoport 
-                
-            Returns
-            ----------
-            twoport : two-port :class:`Network`
-                result
-            '''
-            s = npy.c_['2',npy.c_['1',s11.s,s21.s],npy.c_['1',s12.s,s22.s]]
-            z0 = npy.c_[s11.z0, s22.z0]
-            frequency = s11.frequency
-            return Network(s=s, z0=z0, frequency=frequency, *args, **kwargs)
+    '''
+    Creates a two-port Network from list of 4 one-ports
+    
+    Parameters
+    -----------
+    s11 : one-port :class:`Network`
+        s11 
+    s12 : one-port :class:`Network`
+        s12
+    s21 : one-port :class:`Network`
+        s21
+    s22 : one-port :class:`Network`
+        s22
+    \*args, \*\*kwargs : 
+        passed to :func:`Network.__init__` for the twoport 
+        
+    Returns
+    ----------
+    twoport : two-port :class:`Network`
+        result
+    
+    See Also
+    -----------
+    n_oneports_2_nport
+    '''
+    return n_oneports_2_nport([s11,s12,s21,s22], *args, **kwargs)
 
 ## Functions operating on s-parameter matrices
 def connect_s(A,k,B,l):
