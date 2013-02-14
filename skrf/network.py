@@ -271,7 +271,7 @@ class Network(object):
 
         
     ## CONSTRUCTOR
-    def __init__(self, file = None, name = None , comments = None, **kwargs):
+    def __init__(self, file = None, name = None , comments = None, f_unit=None, **kwargs):
         '''
         Network constructor.
 
@@ -351,7 +351,10 @@ class Network(object):
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
             if kwargs.has_key(attr):
                 self.__setattr__(attr,kwargs[attr])
-
+        
+        
+        if self.frequency is not None and f_unit is not None:
+            self.frequency.unit = f_unit
         
         
         #self.nports = self.number_of_ports
@@ -2503,6 +2506,55 @@ def four_oneports_2_twoport(s11,s12,s21,s22, *args, **kwargs):
     n_oneports_2_nport
     '''
     return n_oneports_2_nport([s11,s12,s21,s22], *args, **kwargs)
+
+def gen_three_port(dir='.',  contains = '', *args, **kwargs):
+    '''
+    Creates 3-port from directory containing three 2-port Networks
+    
+    This function provides a convenient way to build a 3-port Network, 
+    from a set of 2-port measurements, ie you are measuring a coupler 
+    on a 2-port VNA. 
+    
+    The directory must contain 3 Network files (snp or pickle) which 
+    contain port idenificaition in their filenames. For example:
+    p12.s2p, p13.s2p, p23.s2p
+    
+    Parameters
+    --------------
+    dir : str
+        name of directory 
+    
+    contains : str 
+        only files containing this string will be loaded. 
+    \*args,\*\*kwargs :
+        passed to :func:`Network.__init__` for resultant network
+        
+    Returns
+    ------------
+    threeport : 3-port Network 
+    
+    See Also
+    -----------
+    n_oneports_2_nport
+    
+     
+    '''
+    p12 = [Network(k) for k in os.listdir(dir) \
+        if (('12' in k or '21' in k) and contains in k)][0]
+    p13 = [Network(k) for k in os.listdir(dir) \
+        if (('13' in k or '31' in k) and contains in k)][0]
+    p23 = [Network(k) for k in os.listdir(dir) \
+        if (('23' in k or '32' in k) and contains in k)][0]
+    s11,s12,s13 = p12.s11, p12.s12, p13.s12
+    s21,s22,s23 = p12.s21, p12.s22, p23.s12
+    s31,s32,s33 = p13.s21, p23.s21, p23.s11
+
+    threeport = n_oneports_2_nport(
+        [s11,s12,s13,s21,s22,s23,s31,s32,s33], 
+        *args, **kwargs)
+    
+    
+    return threeport
 
 ## Functions operating on s-parameter matrices
 def connect_s(A,k,B,l):
