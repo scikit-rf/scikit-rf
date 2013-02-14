@@ -252,6 +252,7 @@ class Network(object):
             npy.angle(x))),
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
+        'vswr' : lambda x: (1+abs(x))/(1-abs(x))
         }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -267,6 +268,7 @@ class Network(object):
         'rad_unwrap'    : 'Phase (rad)',
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
+        'vswr' : 'VSWR'
         }
 
         
@@ -2507,22 +2509,21 @@ def four_oneports_2_twoport(s11,s12,s21,s22, *args, **kwargs):
     '''
     return n_oneports_2_nport([s11,s12,s21,s22], *args, **kwargs)
 
-def gen_three_port(dir='.',  contains = '', *args, **kwargs):
+def gen_three_port(ntwk_triplet,  *args, **kwargs):
     '''
-    Creates 3-port from directory containing three 2-port Networks
+    Creates 3-port from  three 2-port Networks
     
     This function provides a convenient way to build a 3-port Network, 
     from a set of 2-port measurements, ie you are measuring a coupler 
     on a 2-port VNA. 
     
-    The directory must contain 3 Network files (snp or pickle) which 
-    contain port idenificaition in their filenames. For example:
-    p12.s2p, p13.s2p, p23.s2p
+    The  3 Networks in ntwk_triplet must contain port idenificaition in 
+    their names. For example, their names may be like p12, p13, p23
     
     Parameters
     --------------
-    dir : str
-        name of directory 
+    ntwk_triplet : list of 2-port Network objects
+        list of three 2-ports that contain port indecies in their names
     
     contains : str 
         only files containing this string will be loaded. 
@@ -2537,14 +2538,14 @@ def gen_three_port(dir='.',  contains = '', *args, **kwargs):
     -----------
     n_oneports_2_nport
     
-     
+    Examples
+    -----------
+    >>> rf.gen_three_port(rf.read_all('.').values())
     '''
-    p12 = [Network(k) for k in os.listdir(dir) \
-        if (('12' in k or '21' in k) and contains in k)][0]
-    p13 = [Network(k) for k in os.listdir(dir) \
-        if (('13' in k or '31' in k) and contains in k)][0]
-    p23 = [Network(k) for k in os.listdir(dir) \
-        if (('23' in k or '32' in k) and contains in k)][0]
+    p12 = [k for k in ntwk_triplet if ('12' in k.name or '21' in k.name)][0]
+    p13 = [k for k in ntwk_triplet if ('13' in k.name or '31' in k.name)][0]
+    p23 = [k for k in ntwk_triplet if ('32' in k.name or '23' in k.name)][0]
+    
     s11,s12,s13 = p12.s11, p12.s12, p13.s12
     s21,s22,s23 = p12.s21, p12.s22, p23.s12
     s31,s32,s33 = p13.s21, p23.s21, p23.s11
