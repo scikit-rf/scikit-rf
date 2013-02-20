@@ -1278,6 +1278,19 @@ class Network(object):
 
         '''
         return self.number_of_ports
+    
+    @property
+    def enum_ports(self):
+        '''
+        Returns a list of tuples, for each port index pair
+        
+        A convenience function for the common task fo iterating over 
+        all s-parameters index pairs
+        
+        This just calls:
+        `[(y,x) for x in range(self.nports) for y in range(self.nports)]`
+        '''
+        return [(y,x) for x in range(self.nports) for y in range(self.nports)]
         
     @property
     def passivity(self):
@@ -1822,7 +1835,9 @@ class Network(object):
         self.s[:,to_ports,:] = self.s[:,from_ports,:]  # renumber rows
         self.s[:,:,to_ports] = self.s[:,:,from_ports]  # renumber columns
         self.z0[:,to_ports] = self.z0[:,from_ports]
-
+    
+    
+    
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
             chart_type='z', draw_labels=False, label_axes=False, *args,**kwargs):

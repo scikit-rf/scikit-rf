@@ -166,14 +166,18 @@ class NetworkSet(object):
             ['passivity','s']
 
         # dynamically generate properties. this is slick.
+        max, min = npy.max, npy.min
+        max.__name__ = 'max'
+        min.__name__ = 'min'
         for network_property_name in network_property_list:
-            for func in [npy.mean, npy.std]:
+            for func in [npy.mean, npy.std, max, min]:
                 self.__add_a_func_on_property(func, network_property_name)
 
             if network_property_name != 's_db' and network_property_name != 's':
                 # db uncertainty requires a special function call see 
                 # plot_uncertainty_bounds_s_db
                 self.__add_a_plot_uncertainty(network_property_name)
+                self.__add_a_plot_minmax(network_property_name)
                 
             self.__add_a_element_wise_method('plot_'+network_property_name)
             self.__add_a_element_wise_method('plot_s_db')
@@ -338,7 +342,30 @@ class NetworkSet(object):
     
         setattr(self.__class__,'plot_ub_'+\
                 network_property_name,plot_func)
-                
+    
+    def __add_a_plot_minmax(self,network_property_name):
+        '''
+
+        takes:
+                network_property_name: a property of the Network class,
+                        a string. this must have a matrix output of shape fxnxn
+
+
+
+        example:
+                my_ntwk_set.add_a_func_on_property('s',mean)
+
+
+        '''
+        def plot_func(self,*args, **kwargs):
+            kwargs.update({'attribute':network_property_name})
+            self.plot_minmax_bounds_component(*args,**kwargs)
+
+        setattr(self.__class__,'plot_minmax_bounds_'+\
+                network_property_name,plot_func)
+    
+        setattr(self.__class__,'plot_mm_'+\
+                network_property_name,plot_func)            
     
     def to_dict(self):
         '''
@@ -569,7 +596,96 @@ class NetworkSet(object):
 
         ax.set_ylabel(ylabel_dict.get(attribute,''))
         ax.axis('tight')
+    
+    
+    def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
+            type='shade', alpha=.3, color_error =None,markevery_error=20,
+            ax=None,ppf=None,kwargs_error={},*args,**kwargs):
+        '''
+        plots mean value of the NetworkSet with +- uncertainty bounds
+        in an Network's attribute. This is designed to represent
+        uncertainty in a scalar component of the s-parameter. for example
+        ploting the uncertainty in the magnitude would be expressed by,
 
+                mean(abs(s)) +- std(abs(s))
+
+        the order of mean and abs is important.
+
+
+        takes:
+                attribute: attribute of Network type to analyze [string]
+                m: first index of attribute matrix [int]
+                n: second index of attribute matrix [int]
+                type: ['shade' | 'bar'], type of plot to draw
+                n_deviations: number of std deviations to plot as bounds [number]
+                alpha: passed to matplotlib.fill_between() command. [number, 0-1]
+                color_error: color of the +- std dev fill shading
+                markevery_error: if type=='bar', this controls frequency
+                        of error bars
+                ax: Axes to plot on
+                ppf: post processing function. a function applied to the
+                        upper and low
+                *args,**kwargs: passed to Network.plot_s_re command used
+                        to plot mean response
+                kwargs_error: dictionary of kwargs to pass to the fill_between
+                        or errorbar plot command depending on value of type.
+
+        returns:
+                None
+
+
+        Note:
+                for phase uncertainty you probably want s_deg_unwrap, or
+                similar.  uncerainty for wrapped phase blows up at +-pi.
+
+        '''
+        ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
+                's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
+                's_db':'Magnitude (dB)'}
+
+        ax = plb.gca()
+
+        ntwk_mean = self.__getattribute__('mean_'+attribute)
+        
+
+        lower_bound = self.__getattribute__('min_'+attribute).s_re[:,m,n].squeeze()
+        upper_bound = self.__getattribute__('max_'+attribute).s_re[:,m,n].squeeze()
+       
+        
+        
+        if ppf is not None:
+            if type =='bar':
+                warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
+            ntwk_mean.s = ppf(ntwk_mean.s)
+            upper_bound = ppf(upper_bound)
+            lower_bound = ppf(lower_bound)
+            lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+
+        if type == 'shade':
+            ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+            if color_error is None:
+                color_error = ax.get_lines()[-1].get_color()
+            ax.fill_between(ntwk_mean.frequency.f_scaled, \
+                    lower_bound,upper_bound, alpha=alpha, color=color_error,
+                    **kwargs_error)
+            #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
+        elif type =='bar':
+            raise (NotImplementedError)
+            ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+            if color_error is None:
+                color_error = ax.get_lines()[-1].get_color()
+            ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
+                    ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
+                    yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
+                    color=color_error,**kwargs_error)
+
+        else:
+            raise(ValueError('incorrect plot type'))
+
+        ax.set_ylabel(ylabel_dict.get(attribute,''))
+        ax.axis('tight')
+    
+    
     def plot_uncertainty_bounds_s_db(self,*args, **kwargs):
         '''
         this just calls
@@ -579,7 +695,15 @@ class NetworkSet(object):
         '''
         kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
         self.plot_uncertainty_bounds_component(*args,**kwargs)
+    def plot_minmax_bounds_s_db(self,*args, **kwargs):
+        '''
+        this just calls
+                plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+        see plot_uncertainty_bounds for help
 
+        '''
+        kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
+        self.plot_minmax_bounds_component(*args,**kwargs)
     
     def plot_uncertainty_decomposition(self, m=0,n=0):
         '''
