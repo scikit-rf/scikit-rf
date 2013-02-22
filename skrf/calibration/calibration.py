@@ -481,8 +481,8 @@ class Calibration(object):
                     try:
                         # try to resample our ideals network to match
                         # the meaurement frequency
-                        self.ideals[k].resample(\
-                            self.measured[0].frequency.npoints)
+                        self.ideals[k].interpolate_self(\
+                            self.measured[0].frequency)
                         print ('Success')
                         
                     except:

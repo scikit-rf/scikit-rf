@@ -26,7 +26,7 @@ rectangularWaveguide (:mod:`skrf.media.rectangularWaveguide`)
 
 Rectangular Waveguide class
 '''
-from scipy.constants import  epsilon_0, mu_0,pi
+from scipy.constants import  epsilon_0, mu_0,pi,c
 from numpy import sqrt
 from media import Media
 
@@ -220,7 +220,21 @@ class RectangularWaveguide(Media):
                 cut-off wavenumber
         '''
         return sqrt( self.kx**2 + self.ky**2)
-
+    
+    
+    @property
+    def f_cutoff(self):
+        '''
+        cutoff frequency for this mode
+        
+        .. math::
+        
+            max ( \frac{m \cdot v_p}{2a} , \frac{n \cdot v_p}{2b})
+            
+             
+        
+        '''
+        return max(self.m*self.v_p/(2*self.a) * self.n*self.v_p/(2*self.b))
 
     def kz(self):
         '''

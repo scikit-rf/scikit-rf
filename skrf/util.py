@@ -67,10 +67,27 @@ def now_string():
     '''
     returns a unique sortable string, representing the current time
     
-    nice for generating date-time stamps to be used in file-names 
+    nice for generating date-time stamps to be used in file-names, 
+    the companion function :func:`now_string_2_dt` can be used 
+    to read these string back into datetime objects.
+    
+    See Also
+    ------------
+    now_string_2_dt
     
     '''
     return datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
+
+def now_string_2_dt(s):
+    '''
+    Converts the output of  :func:`now_string` to a datetime object.
+    
+    See Also
+    -----------
+    now_string
+    
+    '''
+    return datetime(*[int(k) for k in s.split('.')])
 
 def find_nearest(array,value):
     '''

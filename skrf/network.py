@@ -1280,7 +1280,7 @@ class Network(object):
         return self.number_of_ports
     
     @property
-    def enum_ports(self):
+    def port_tuples(self):
         '''
         Returns a list of tuples, for each port index pair
         

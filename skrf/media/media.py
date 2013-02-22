@@ -33,6 +33,7 @@ import warnings
 
 import numpy as npy
 from scipy import stats
+from scipy.constants import  c
 
 from ..frequency import Frequency
 from ..network import Network, connect
@@ -219,7 +220,7 @@ class Media(object):
     @propagation_constant.setter
     def propagation_constant(self, new_propagation_constant):
         self._propagation_constant = new_propagation_constant
-
+    
     @property
     def characteristic_impedance(self):
         '''
@@ -303,8 +304,15 @@ class Media(object):
     def z0(self, new_z0):
         self._z0 = new_z0
 
-    
-
+    @property
+    def v_p(self):
+        '''
+        phase velocity (in m/s)
+        
+        this equals omega/propagation constant
+        '''
+        return self.frequency.w/self.propagation_constant
+        
     ## Other Functions
     def theta_2_d(self,theta,deg=True):
         '''
