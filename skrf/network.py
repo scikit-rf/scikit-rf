@@ -254,7 +254,8 @@ class Network(object):
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
-        'time' : lambda x: mf.complex_2_db(fft.ifft(x, axis=0))
+        'time_db' : lambda x: mf.complex_2_db(fft.ifft(x, axis=0)),
+        'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifft(x, axis=0)),
         }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -271,7 +272,8 @@ class Network(object):
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
         'vswr' : 'VSWR',
-        'time': 'Magnitude (dB)', 
+        'time_db': 'Magnitude (dB)', 
+        'time_mag': 'Magnitude', 
         }
 
         
@@ -839,9 +841,12 @@ class Network(object):
             
                             # plot the desired attribute vs frequency
                         if 'time' in attribute: 
-                            xlabel = 'Time (?)'
-                            x = range(len(getattr(self,attribute)[:,m,n]))
-                            ## TODO: make time-units
+                            xlabel = 'Time (ps)'
+                            #x = range(len(getattr(self,attribute)[:,m,n]))
+                            t = 1e12/self.frequency.f[::-1]
+                            t = t-t[0]
+                            x= t
+                            ## TODO: check this
                             
                         else:
                             xlabel = 'Frequency (%s)'%self.frequency.unit
