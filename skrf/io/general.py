@@ -41,6 +41,7 @@ import inspect
 import os 
 import zipfile
 import warnings
+import sys
 
 from ..util import get_extn, get_fid
 from ..network import Network
@@ -49,6 +50,8 @@ from ..media import  Media
 from ..networkSet import NetworkSet
 from ..calibration.calibration import Calibration
 
+from copy import copy
+dir_ = copy(dir)
 
 # file extension conventions for skrf objects.
 global OBJ_EXTN 
@@ -210,7 +213,7 @@ def write(file, obj, overwrite = True):
     pickle.dump(obj, fid, protocol=2)
     fid.close()
     
-def read_all(dir='.', contains = None, f_unit = None):
+def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
     '''
     Read all skrf objects in a directory
     
@@ -228,6 +231,8 @@ def read_all(dir='.', contains = None, f_unit = None):
     f_unit : ['hz','khz','mhz','ghz','thz']
         for all :class:`~skrf.network.Network` objects, set their 
         frequencies's :attr:`~skrf.frequency.Frequency.f_unit` 
+    obj_type : str
+        Name of skrf object types to read (ie 'Network') 
         
     Returns
     ---------
@@ -245,6 +250,11 @@ def read_all(dir='.', contains = None, f_unit = None):
     'one_port': one port Calibration: 'one_port', 500-750 GHz, 201 pts, 4-ideals/4-measured,
     ...
     
+    >>> rf.read_all('skrf/data/', obj_type = 'Network')
+    {'delay_short': 1-Port Network: 'delay_short',  75-110 GHz, 201 pts, z0=[ 50.+0.j],
+    'line': 2-Port Network: 'line',  75-110 GHz, 201 pts, z0=[ 50.+0.j  50.+0.j],
+    'ntwk1': 2-Port Network: 'ntwk1',  1-10 GHz, 91 pts, z0=[ 50.+0.j  50.+0.j],
+    ...
     
     See Also
     ----------
@@ -278,9 +288,28 @@ def read_all(dir='.', contains = None, f_unit = None):
                 out[keyname].frequency.unit = f_unit
             except:
                 pass
+                
+    if obj_type is not None:
+        out = {k:out[k] for k in out if 
+            isinstance(out[k],sys.modules[__name__].__dict__[obj_type])}
     
-            
     return out
+
+
+def read_all_networks(*args, **kwargs):
+    '''
+    Read all networks in a directory
+    
+    This calls:\,
+    
+        `read_all(*args,obj_type='Network', **kwargs)`
+        
+    See Also
+    ----------
+    read_all
+    '''
+    return read_all(*args,obj_type='Network', **kwargs)
+    
         
 def write_all(dict_objs, dir='.', *args, **kwargs):
     '''

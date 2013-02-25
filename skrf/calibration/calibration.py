@@ -96,12 +96,13 @@ class Calibration(object):
         ----------
         measured : list of :class:`~skrf.network.Network` objects
                 Raw measurements of the calibration standards. The order
-                must align with the `ideals` parameter
+                must align with the `ideals` parameter ( or use sloppy_input)
 
         ideals : list of :class:`~skrf.network.Network` objects
                 Predicted ideal response of the calibration standards.
-                The order must align with `ideals` list
-
+                The order must align with `ideals` list ( or use sloppy_input
+        
+        
         Other Parameters
         -----------------
         type : string
@@ -129,7 +130,7 @@ class Calibration(object):
 
         sloppy_input :  Boolean.
                 Allows ideals and measured lists to be 'aligned' based on
-                the network names
+                the network names.
 
         \*\*kwargs : key-word arguments
                 passed to the calibration algorithm, defined by `type`
@@ -141,6 +142,11 @@ class Calibration(object):
         file for documentation on the algorithms themselves. The
         Calibration class accesses those functions through the attribute
         `'calibration_algorihtm_dict'`.
+        
+        It is not required that the  measured Networks have the same 
+        frequency objects as the ideals, but the measured frequency 
+        must be a subset, so that the ideals can be interpolated.
+         
 
         Examples
         ----------

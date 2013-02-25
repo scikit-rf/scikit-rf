@@ -549,3 +549,5 @@ def func_on_all_figs(func, *args, **kwargs):
             fig.add_axes(ax_n) # trick to make axes current
             func(*args, **kwargs)
             plb.draw()
+
+foaf = func_on_all_figs

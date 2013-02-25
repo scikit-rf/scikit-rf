@@ -229,7 +229,7 @@ class Frequency(object):
     @property
     def center(self):
         '''
-        Center frequency.
+        Center frequency in Hz
 
         Returns
         ---------
