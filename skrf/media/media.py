@@ -307,12 +307,23 @@ class Media(object):
     @property
     def v_p(self):
         '''
-        phase velocity (in m/s)
+        complex phase velocity (in m/s)
         
-        this equals omega/propagation constant
+        .. math:: 
+            j \cdot \\omega / \\gamma
+        
+        
+        where:
+        * :math:`\\omega` is angular frequency (rad/s), 
+        * :math:`\\gamma` is complex propagation constant (rad/m)
+        
+        See Also
+        -----------
+        propgation_constant
+        
         '''
-        return self.frequency.w/self.propagation_constant
-        
+        vp=1j*(self.frequency.w/self.propagation_constant)
+        return vp
     ## Other Functions
     def theta_2_d(self,theta,deg=True):
         '''

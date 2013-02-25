@@ -36,6 +36,8 @@ Using ipython with the ``pylab`` flag imports several commonly used functions, a
 	
 	In [147]: clf()
 	
+	
+	
 
 
 

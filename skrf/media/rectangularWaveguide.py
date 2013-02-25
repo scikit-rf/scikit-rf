@@ -229,13 +229,26 @@ class RectangularWaveguide(Media):
         
         .. math::
         
-            max ( \frac{m \cdot v_p}{2a} , \frac{n \cdot v_p}{2b})
+            max ( \frac{m \cdot v}{2a} , \frac{n \cdot v}{2b})
+            
+        where v= sqrt(ep*mu)
             
              
         
         '''
-        return max(self.m*self.v_p/(2*self.a) * self.n*self.v_p/(2*self.b))
-
+        v = 1/sqrt(self.ep*self.mu)
+        if not ( self.m==1 and self.n==0):
+            print ('f_cutoff not verified as correct for this mode ')
+        return max(self.m*v/(2*self.a), self.n*v/(2*self.b))
+    
+    @property
+    def f_norm(self):
+        '''
+        frequency vector normalized to cuttoff
+        '''
+        return self.frequency.f/self.f_cutoff
+        
+    
     def kz(self):
         '''
         The Longitudinal wave number, aka propagation constant.
