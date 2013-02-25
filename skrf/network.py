@@ -840,24 +840,24 @@ class Network(object):
                                 kwargs['label'] = label_string
             
                             # plot the desired attribute vs frequency
-                        if 'time' in attribute: 
-                            xlabel = 'Time (ps)'
-                            #x = range(len(getattr(self,attribute)[:,m,n]))
-                            t = 1e12/self.frequency.f[::-1]
-                            t = t-t[0]
-                            x= t
-                            ## TODO: check this
+                            if 'time' in attribute: 
+                                xlabel = 'Time (ps)'
+                                #x = range(len(getattr(self,attribute)[:,m,n]))
+                                t = 1e12/self.frequency.f[::-1]
+                                t = t-t[0]
+                                x= t
+                                ## TODO: check this
+                                
+                            else:
+                                xlabel = 'Frequency (%s)'%self.frequency.unit
+                                x = self.frequency.f_scaled
                             
-                        else:
-                            xlabel = 'Frequency (%s)'%self.frequency.unit
-                            x = self.frequency.f_scaled
-                        
-                        return plot_rectangular(
-                                x = x,
-                                y = getattr(self,attribute)[:,m,n],
-                                x_label = xlabel,
-                                y_label = y_label,
-                                *args, **kwargs)
+                            plot_rectangular(
+                                    x = x,
+                                    y = getattr(self,attribute)[:,m,n],
+                                    x_label = xlabel,
+                                    y_label = y_label,
+                                    *args, **kwargs)
                             
 
                     #if was_interactive:
