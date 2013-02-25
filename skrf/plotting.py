@@ -218,7 +218,7 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     if ax is None:
         ax = plb.gca()
 
-    ax.plot(x, y, *args, **kwargs)
+    my_plot = ax.plot(x, y, *args, **kwargs)
 
     if x_label is not None:
         ax.set_xlabel(x_label)
@@ -239,6 +239,8 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
         
     if plb.isinteractive():
         plb.draw()
+    
+    return my_plot
 
 def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     show_legend=True, axis_equal=False, ax=None, *args, **kwargs):

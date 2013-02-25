@@ -468,10 +468,11 @@ class Calibration(object):
                 # on their names
                 self.ideals = [ ideal for measure in self.measured\
                     for ideal in self.ideals if ideal.name in measure.name]
-                self.measured = [ measure for measure in self.measured\
-                    for ideal in self.ideals if ideal.name in measure.name]
-                #FIXME: should turn off sloppy_input at this point,
-                # otherwise if self is run() twice it will mess up. 
+                #self.measured = [ measure for measure in self.measured\
+                #    for ideal in self.ideals if ideal.name in measure.name]
+                #TODO: would  like to allow for measured elements to be 
+                # discarded in not in ideals. basically only use a 
+                # straight-up union
                 self.sloppy_input = False
             else:
                 # did they supply the same number of  ideals as measured?

@@ -132,6 +132,7 @@ import numpy as npy
 import pylab as plb
 from scipy import stats         # for Network.add_noise_*
 from scipy.interpolate import interp1d # for Network.interpolate()
+from numpy import fft
 import unittest # fotr unitest.skip 
 import  mathFunctions as mf
 
@@ -252,7 +253,8 @@ class Network(object):
             npy.angle(x))),
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
-        'vswr' : lambda x: (1+abs(x))/(1-abs(x))
+        'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
+        'time' : lambda x: mf.complex_2_db(fft.ifft(x, axis=0))
         }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -268,7 +270,8 @@ class Network(object):
         'rad_unwrap'    : 'Phase (rad)',
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
-        'vswr' : 'VSWR'
+        'vswr' : 'VSWR',
+        'time': 'Magnitude (dB)', 
         }
 
         
@@ -835,13 +838,22 @@ class Network(object):
                                 kwargs['label'] = label_string
             
                             # plot the desired attribute vs frequency
-                            plot_rectangular(
-                                x = self.frequency.f_scaled,
+                        if 'time' in attribute: 
+                            xlabel = 'Time (?)'
+                            x = range(len(getattr(self,attribute)[:,m,n]))
+                            ## TODO: make time-units
+                            
+                        else:
+                            xlabel = 'Frequency (%s)'%self.frequency.unit
+                            x = self.frequency.f_scaled
+                        
+                        return plot_rectangular(
+                                x = x,
                                 y = getattr(self,attribute)[:,m,n],
-                                x_label = 'Frequency (' + \
-                                    self.frequency.unit +')',
+                                x_label = xlabel,
                                 y_label = y_label,
                                 *args, **kwargs)
+                            
 
                     #if was_interactive:
                     #    plb.interactive(True)

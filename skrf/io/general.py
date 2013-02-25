@@ -31,6 +31,7 @@ General io functions for reading and writing skrf objects
     
     read
     read_all
+    read_all_networks
     write
     write_all
     save_sesh
@@ -298,11 +299,11 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
 
 def read_all_networks(*args, **kwargs):
     '''
-    Read all networks in a directory
+    Read all networks in a directory.
     
-    This calls:\,
+    This is a convenience function. It just calls::
     
-        `read_all(*args,obj_type='Network', **kwargs)`
+        read_all(*args,obj_type='Network', **kwargs)
         
     See Also
     ----------
