@@ -309,8 +309,11 @@ def read_all_networks(*args, **kwargs):
     ----------
     read_all
     '''
+    if 'f_unit' not in kwargs:
+        kwargs.update({'f_unit':'ghz'})
     return read_all(*args,obj_type='Network', **kwargs)
-    
+
+ran = read_all_networks
         
 def write_all(dict_objs, dir='.', *args, **kwargs):
     '''

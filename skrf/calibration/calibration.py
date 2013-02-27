@@ -508,11 +508,15 @@ class Calibration(object):
         if self.nports ==1:
             self._error_ntwk = error_dict_2_network(self.coefs, \
                     frequency=self.frequency, is_reciprocal=self.is_reciprocal)
+            self._error_ntwk.name= self.name
         elif self.nports ==2:
             self._Ts = two_port_error_vector_2_Ts(self.coefs)
             self._error_ntwk = error_dict_2_network(self.coefs, \
                     frequency=self.frequency, is_reciprocal=self.is_reciprocal)
-
+            for k in self._error_ntwk:
+                k.name = self.name
+        
+        
         #reset the residuals
         self._residual_ntwks = None
 

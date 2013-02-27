@@ -461,7 +461,7 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
             **kwargs)
 
 
-def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
+def save_all_figs(dir = './', format=None):
     '''
     Save all open Figures to disk.
 
@@ -469,10 +469,10 @@ def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
     ------------
     dir : string
             path to save figures into
-    format : list of strings
+    format : None, or list of strings
             the types of formats to save figures as. The elements of this
             list are passed to :matplotlib:`savefig`. This is a list so that
-            you can save each figure in multiple formats.
+            you can save each figure in multiple formats. 
     '''
     if dir[-1] != '/':
         dir = dir + '/'
@@ -480,9 +480,13 @@ def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
         fileName = plb.figure(fignum).get_axes()[0].get_title()
         if fileName == '':
             fileName = 'unamedPlot'
-        for fmt in format:
-            plb.savefig(dir+fileName+'.'+fmt, format=fmt)
-            print (dir+fileName+'.'+fmt)
+        try:
+            for fmt in format:
+                plb.savefig(dir+fileName, format=fmt)
+                print (dir+fileName)
+        except(TypeError):
+            plb.savefig(dir+fileName, format=format)
+            print (dir+fileName)
 saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):

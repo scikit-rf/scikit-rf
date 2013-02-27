@@ -173,7 +173,7 @@ class NetworkSet(object):
             for func in [npy.mean, npy.std, max, min]:
                 self.__add_a_func_on_property(func, network_property_name)
 
-            if network_property_name != 's_db' and network_property_name != 's':
+            if 'db' in network_property_name:# != 's_db' and network_property_name != 's':
                 # db uncertainty requires a special function call see 
                 # plot_uncertainty_bounds_s_db
                 self.__add_a_plot_uncertainty(network_property_name)
@@ -695,6 +695,7 @@ class NetworkSet(object):
         '''
         kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
         self.plot_uncertainty_bounds_component(*args,**kwargs)
+    
     def plot_minmax_bounds_s_db(self,*args, **kwargs):
         '''
         this just calls
@@ -703,6 +704,26 @@ class NetworkSet(object):
 
         '''
         kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
+        self.plot_minmax_bounds_component(*args,**kwargs)
+    
+    def plot_uncertainty_bounds_s_time_db(self,*args, **kwargs):
+        '''
+        this just calls
+                plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+        see plot_uncertainty_bounds for help
+
+        '''
+        kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
+        self.plot_uncertainty_bounds_component(*args,**kwargs)
+    
+    def plot_minmax_bounds_s_time_db(self,*args, **kwargs):
+        '''
+        this just calls
+                plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+        see plot_uncertainty_bounds for help
+
+        '''
+        kwargs.update({'attribute':'s_time_mag','ppf':mf.magnitude_2_db})
         self.plot_minmax_bounds_component(*args,**kwargs)
     
     def plot_uncertainty_decomposition(self, m=0,n=0):

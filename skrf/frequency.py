@@ -357,7 +357,21 @@ class Frequency(object):
         freq =  Frequency.from_f(self.f, unit='hz')
         freq.unit = self.unit
         return freq
-                
+             
+    @property                
+    def t(self):
+        '''
+        time vector in ps. 
+        
+        not tested
+        '''
+        t = 1e12/self.f[::-1]
+        t = t-t[0]
+        return t
+    
+    
+        
+    
     def labelXAxis(self, ax=None):
         '''
         Label the x-axis of a plot.
