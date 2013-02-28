@@ -151,6 +151,14 @@ class PNA(GpibInstrument):
         '''
         return self.ask('*OPC?')
     
+    def gtl(self):
+        '''
+        Go to local. 
+        '''
+        self._vpp43.gpib_control_ren(
+            self.vi, 
+            self._vpp43.VI_GPIB_RED_DEASSERT_GTL
+            )
     ## triggering        
     @property
     def continuous(self):
