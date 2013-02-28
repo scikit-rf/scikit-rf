@@ -94,7 +94,8 @@ class PNA(GpibInstrument):
     displayed traces, while measurements are active measurements on the 
     VNA which may or may not be displayed on screen.
     '''
-    def __init__(self, address=16, channel=1,timeout = 3, echo = False, **kwargs):
+    def __init__(self, address=16, channel=1,timeout = 3, echo = False,
+        front_panel_lockout= False, **kwargs):
         '''
         Constructor 
         
@@ -109,6 +110,8 @@ class PNA(GpibInstrument):
         echo : Boolean
             echo  all strings passed to the write command to stdout. 
             usefule for troubleshooting
+        front_panel_lockout : Boolean
+            lockout front panel during operation. 
         \*\*kwargs : 
             passed to :func:`visa.GpibInstrument.__init__`
         '''
@@ -120,7 +123,10 @@ class PNA(GpibInstrument):
         self.channel=channel
         self.port = 1
         self.echo = echo
-    
+        if not front_panel_lockout:
+            self.gtl()
+            
+            
     def write(self, msg, *args, **kwargs):
         '''
         Write a msg to the instrument. 
@@ -157,8 +163,9 @@ class PNA(GpibInstrument):
         '''
         self._vpp43.gpib_control_ren(
             self.vi, 
-            self._vpp43.VI_GPIB_RED_DEASSERT_GTL
+            self._vpp43.VI_GPIB_RED_DEASSERT_GTL,
             )
+            
     ## triggering        
     @property
     def continuous(self):
