@@ -145,11 +145,7 @@ class PNA(GpibInstrument):
         '''
         return self.ask('*IDN?')
     
-    def rtl(self):
-        '''
-        Return to local 
-        '''
-        self.write('rtl')
+    
     
     def opc(self):
         '''
@@ -163,7 +159,7 @@ class PNA(GpibInstrument):
         '''
         self._vpp43.gpib_control_ren(
             self.vi, 
-            self._vpp43.VI_GPIB_RED_DEASSERT_GTL,
+            self._vpp43.VI_GPIB_REN_DEASSERT_GTL,
             )
             
     ## triggering        
