@@ -239,6 +239,49 @@ class Network(object):
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
     
+    def passivity(s):
+        '''
+        passivity metric for a multi-port network.
+    
+        This returns a matrix who's diagonals are equal to the total
+        power received at all ports, normalized to the power at a single
+        excitement port.
+    
+        mathmatically, this is a test for unitary-ness of the
+        s-parameter matrix [#]_.
+    
+        for two port this is
+    
+        .. math::
+    
+                ( |S_{11}|^2 + |S_{21}|^2 \, , \, |S_{22}|^2+|S_{12}|^2)
+    
+        in general it is
+    
+        .. math::
+    
+                S^H \\cdot S
+    
+        where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
+        is dot product.
+    
+        Returns
+        ---------
+        passivity : :class:`numpy.ndarray` of shape fxnxn
+    
+        References
+        ------------
+        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
+        '''
+        if s.shape[-1] == 1:
+            raise (ValueError('Doesnt exist for one ports'))
+    
+        pas_mat = s.copy()
+        for f in range(len(s)):
+            pas_mat[f,:,:] = npy.dot(s[f,:,:].conj().T, s[f,:,:])
+        
+        return pas_mat
+    
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
         're'    : npy.real,
@@ -254,6 +297,7 @@ class Network(object):
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
+        'passivity' : passivity,
         'time_db' : lambda x: mf.complex_2_db(fft.ifft(x, axis=0)),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifft(x, axis=0)),
         }
@@ -272,6 +316,7 @@ class Network(object):
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
         'vswr' : 'VSWR',
+        'passivity' : 'Passivity',
         'time_db': 'Magnitude (dB)', 
         'time_mag': 'Magnitude', 
         }
@@ -2708,6 +2753,9 @@ def innerconnect_s(A, k, l):
     C = npy.delete(C, (k,l), 2)
 
     return C
+
+
+
    
 ## network parameter conversion       
 def s2z(s,z0=50):
