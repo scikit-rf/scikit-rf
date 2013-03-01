@@ -465,14 +465,12 @@ class Calibration(object):
 
             if self.sloppy_input == True:
                 # if they gave sloppy input try to align networks based
-                # on their names
+                # on their names. This basically takes the union of the 
+                # two lists. 
+                self.measured = [ measure for measure in self.measured\
+                    for ideal in self.ideals if ideal.name in measure.name]
                 self.ideals = [ ideal for measure in self.measured\
                     for ideal in self.ideals if ideal.name in measure.name]
-                #self.measured = [ measure for measure in self.measured\
-                #    for ideal in self.ideals if ideal.name in measure.name]
-                #TODO: would  like to allow for measured elements to be 
-                # discarded in not in ideals. basically only use a 
-                # straight-up union
                 self.sloppy_input = False
             else:
                 # did they supply the same number of  ideals as measured?
