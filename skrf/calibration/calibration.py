@@ -57,6 +57,7 @@ from ..networkSet import NetworkSet, s_dict_to_ns
 
 ## later imports. delayed to solve circular dependencies
 #from io.general import write
+#from io.general import read_all_networks
 
 
 ## main class
@@ -567,7 +568,8 @@ class Calibration(object):
                 ntwkDict: a dictionary of calibrated measurements, the keys
                         are the filenames.
         '''
-        ntwkDict = load_all_touchstones(dir=dir, contains=contains,\
+        from ..io.general import read_all_networks
+        ntwkDict = read_all_networks(dir=dir, contains=contains,\
                 f_unit=f_unit)
 
         for ntwkKey in ntwkDict:
@@ -838,6 +840,26 @@ class Calibration(object):
         '''
         [k.__getattribute__('plot_%s'%attr)(*args, **kwargs) \
             for k in self.caled_ntwks]
+    
+    def plot_caled_ntwk_sets(self, attr='s_db', *args, **kwargs):
+        '''
+        plots calibrated network sets with uncertainty bounds.
+        
+        For use with redundantly measured calibration standards.  
+        
+        Parameters
+        -----------
+        attr : str
+            plotable uncertainty bounds attribute of a NetworkSet object.
+            ie 's_db', 's_deg'
+        
+        \*args, \*\*kwargs : 
+            passed to the plotting method
+        '''
+        [k.__getattribute__('plot_uncertainty_bounds_%s'%attr)(*args, **kwargs) \
+            for k in self.caled_ntwk_sets.values()]
+        
+    
     # io
     def write(self, file=None,  *args, **kwargs):
         '''

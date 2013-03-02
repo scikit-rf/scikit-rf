@@ -247,7 +247,21 @@ class RectangularWaveguide(Media):
         frequency vector normalized to cuttoff
         '''
         return self.frequency.f/self.f_cutoff
+    
+    @property
+    def lambda_cutoff(self):
+        '''
+        cuttoff wavelength
         
+        .. math:: 
+            
+            f_c * v
+            
+         where v= sqrt(ep*mu) 
+        '''
+        v = 1/sqrt(self.ep*self.mu)
+        return self.f_cutoff*v
+    
     
     def kz(self):
         '''
