@@ -345,7 +345,7 @@ class RectangularWaveguide(Media):
         a,b,w,ep,rho,f_n = self.a, self.b, self.frequency.w, self.ep, \
             self.rho, self.f_norm
             
-        return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+(2.*a)/b * (1/f_n)**2)/\
+        return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+2.*b/a*(1/f_n)**2)/\
             sqrt(1-(1/f_n)**2)
         
 
