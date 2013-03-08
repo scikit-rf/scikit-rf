@@ -361,14 +361,20 @@ class Frequency(object):
     @property                
     def t(self):
         '''
-        time vector in ps. 
+        time vector in s. 
         
-        not tested
+        t_period = 1/f_step
         '''
-        t = 1e12/self.f[::-1]
-        t = t-t[0]
-        return t
-    
+        return linspace(0, 1./self.step, self.npoints)
+        
+    @property                
+    def t_ns(self):
+        '''
+        time vector in ns. 
+        
+        t_period = 1/f_step
+        '''
+        return linspace(0, 1./self.step, self.npoints)*1e9
     
         
     

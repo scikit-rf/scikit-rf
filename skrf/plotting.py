@@ -480,13 +480,14 @@ def save_all_figs(dir = './', format=None):
         fileName = plb.figure(fignum).get_axes()[0].get_title()
         if fileName == '':
             fileName = 'unamedPlot'
-        try:
-            for fmt in format:
-                plb.savefig(dir+fileName, format=fmt)
-                print (dir+fileName)
-        except(TypeError):
-            plb.savefig(dir+fileName, format=format)
+        if format is None:
+            plb.savefig(dir+fileName)
             print (dir+fileName)
+            return None
+        else:
+            for fmt in format:
+                plb.savefig(dir+fileName+'.'+fmt, format=fmt)
+                print (dir+fileName+'.'+fmt)
 saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):

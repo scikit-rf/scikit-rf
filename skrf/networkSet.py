@@ -173,7 +173,7 @@ class NetworkSet(object):
             for func in [npy.mean, npy.std, max, min]:
                 self.__add_a_func_on_property(func, network_property_name)
 
-            if 'db' in network_property_name:# != 's_db' and network_property_name != 's':
+            if 'db' not in network_property_name:# != 's_db' and network_property_name != 's':
                 # db uncertainty requires a special function call see 
                 # plot_uncertainty_bounds_s_db
                 self.__add_a_plot_uncertainty(network_property_name)

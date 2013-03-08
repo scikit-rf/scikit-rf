@@ -53,3 +53,23 @@ wr1p5_line = Network(os.path.join(pwd, 'wr1p5,line.ntwk'))
 wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.ntwk'))
 
 one_port_cal = read(os.path.join(pwd, 'one_port.cal'))
+
+
+
+## material database (taken from wikipedia)
+materials = {
+    'copper':{
+        'resistivity(ohm*m)':1.68e-8,
+        },
+    'aluminum':{
+        'resistivity(ohm*m)':2.82e-8,
+        },
+    'gold':{
+        'resistivity(ohm*m)':2.44e-8,
+        },
+    }
+for k1,k2 in [
+    ('cu', 'copper'), 
+    ('al', 'aluminum'),
+    ('au', 'gold')]:
+    materials[k1] = materials[k2]

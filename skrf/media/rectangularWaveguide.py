@@ -29,6 +29,7 @@ Rectangular Waveguide class
 from scipy.constants import  epsilon_0, mu_0,pi,c
 from numpy import sqrt
 from media import Media
+from ..data import materials
 
 class RectangularWaveguide(Media):
     '''
@@ -52,7 +53,7 @@ class RectangularWaveguide(Media):
 
     '''
     def __init__(self, frequency, a, b=None, mode_type = 'te', m=1, \
-            n=0, ep_r=1, mu_r=1, *args, **kwargs):
+            n=0, ep_r=1, mu_r=1, rho=None, *args, **kwargs):
         '''
         RectangularWaveguide initializer
 
@@ -75,6 +76,10 @@ class RectangularWaveguide(Media):
                 filling material's relative permativity
         mu_r : number, array-like
                 filling material's relative permeability
+        rho : number, array-like, string
+            resistivity (ohm-m) of the conductor walls. If array-like 
+            must be same length as frequency. if str, it must be a key in 
+            `skrf.data.materials`.
         *args,**kwargs : arguments, keywrod arguments
                 passed to :class:`~skrf.media.media.Media`'s constructor
                 (:func:`~skrf.media.media.Media.__init__`
@@ -101,7 +106,7 @@ class RectangularWaveguide(Media):
         self.n = n
         self.ep_r = ep_r
         self.mu_r = mu_r
-
+        self.rho = rho
 
         Media.__init__(self,\
                 frequency = frequency,\
@@ -249,6 +254,35 @@ class RectangularWaveguide(Media):
         return self.frequency.f/self.f_cutoff
     
     @property
+    def rho(self):
+        '''
+        conductivty of sidewalls in ohm*m
+        
+        Parameters
+        --------------
+        val : float, array-like or str
+            the conductivity in ohm*m. If array-like must be same length
+            as self.frequency. if str, it must be a key in 
+            `skrf.data.materials`.
+            
+        Examples
+        ---------
+        >>> wg.rho = 2.8e-8
+        >>> wg.rho = 2.8e-8 * ones(len(wg.frequency))
+        >>> wg.rho = 'al'
+        >>> wg.rho = 'aluminum'
+        '''
+        return self._rho
+        
+    @rho.setter
+    def rho(self, val):
+        if isinstance(val, str):
+            self._rho = materials[val.lower()]['resistivity(ohm*m)']
+        else:
+            self._rho=val
+            
+    
+    @property
     def lambda_cutoff(self):
         '''
         cuttoff wavelength
@@ -288,8 +322,32 @@ class RectangularWaveguide(Media):
         return \
                 1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
                 sqrt(abs(kc**2- k0**2))*(k0<kc) + \
-                0*(kc==k0)
-
+                0*(kc==k0) + self.alpha_c *(self.rho!=None)
+    
+    @property
+    def alpha_c(self):
+        '''
+        loss due to finite conductivity of sidewalls in units of np/m
+        
+        Taken from [#]_
+        
+        See property `rho` for setting conductivity of  side walls
+        
+        References
+        --------------
+        
+        .. [#] Electromagnetic Waves and Antennas by Sophocles J. Orfanidis 
+        http://eceweb1.rutgers.edu/~orfanidi/ewa/
+        '''
+        if self.rho==None: 
+            return 0
+        
+        a,b,w,ep,rho,f_n = self.a, self.b, self.frequency.w, self.ep, \
+            self.rho, self.f_norm
+            
+        return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+(2.*a)/b * (1/f_n)**2)/\
+            sqrt(1-(1/f_n)**2)
+        
 
     def Z0(self):
         '''

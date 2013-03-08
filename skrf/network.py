@@ -886,12 +886,9 @@ class Network(object):
             
                             # plot the desired attribute vs frequency
                             if 'time' in attribute: 
-                                xlabel = 'Time (ps?)'
-                                #x = range(len(getattr(self,attribute)[:,m,n]))
-                                t = 1e12/self.frequency.f[::-1]
-                                t = t-t[0]
-                                x = t
-                                ## TODO: check this
+                                xlabel = 'Time (ns)'
+                                x = self.frequency.t_ns
+                                
                                 
                             else:
                                 xlabel = 'Frequency (%s)'%self.frequency.unit

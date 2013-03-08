@@ -111,6 +111,9 @@ class CalibrationSet(object):
             measured_sets = self.measured_sets,
             *self.args, **self.kwargs)
 
+    
+    
+    
 class Cartesian(CalibrationSet):
     def __init__(self, ideals, measured_sets, *args, **kwargs):
         CalibrationSet.__init__(self,

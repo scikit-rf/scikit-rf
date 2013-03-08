@@ -220,7 +220,7 @@ class Media(object):
     @propagation_constant.setter
     def propagation_constant(self, new_propagation_constant):
         self._propagation_constant = new_propagation_constant
-    
+    gamma = propagation_constant
     @property
     def characteristic_impedance(self):
         '''
@@ -257,7 +257,8 @@ class Media(object):
     @characteristic_impedance.setter
     def characteristic_impedance(self, new_characteristic_impedance):
         self._characteristic_impedance = new_characteristic_impedance
-
+    Z0 = characteristic_impedance
+    
     @property
     def z0(self):
         '''
@@ -303,7 +304,8 @@ class Media(object):
     @z0.setter
     def z0(self, new_z0):
         self._z0 = new_z0
-
+    portz0 = z0
+    
     @property
     def v_p(self):
         '''
@@ -324,6 +326,7 @@ class Media(object):
         '''
         vp=1j*(self.frequency.w/self.propagation_constant)
         return vp
+    
     ## Other Functions
     def theta_2_d(self,theta,deg=True):
         '''
