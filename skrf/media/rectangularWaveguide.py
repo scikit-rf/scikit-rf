@@ -27,9 +27,10 @@ rectangularWaveguide (:mod:`skrf.media.rectangularWaveguide`)
 Rectangular Waveguide class
 '''
 from scipy.constants import  epsilon_0, mu_0,pi,c
-from numpy import sqrt
+from numpy import sqrt, exp
 from media import Media
 from ..data import materials
+from ..tlineFunctions import skin_depth
 
 class RectangularWaveguide(Media):
     '''
@@ -53,7 +54,7 @@ class RectangularWaveguide(Media):
 
     '''
     def __init__(self, frequency, a, b=None, mode_type = 'te', m=1, \
-            n=0, ep_r=1, mu_r=1, rho=None, *args, **kwargs):
+            n=0, ep_r=1, mu_r=1, rho=None, roughness=None, *args, **kwargs):
         '''
         RectangularWaveguide initializer
 
@@ -80,6 +81,10 @@ class RectangularWaveguide(Media):
             resistivity (ohm-m) of the conductor walls. If array-like 
             must be same length as frequency. if str, it must be a key in 
             `skrf.data.materials`.
+        roughness : number, or array-like
+            surface roughness of the conductor walls in units of RMS 
+            deviation from surface
+            
         *args,**kwargs : arguments, keywrod arguments
                 passed to :class:`~skrf.media.media.Media`'s constructor
                 (:func:`~skrf.media.media.Media.__init__`
@@ -107,7 +112,7 @@ class RectangularWaveguide(Media):
         self.ep_r = ep_r
         self.mu_r = mu_r
         self.rho = rho
-
+        self.roughness = roughness
         Media.__init__(self,\
                 frequency = frequency,\
                 propagation_constant = self.kz, \
@@ -272,6 +277,11 @@ class RectangularWaveguide(Media):
         >>> wg.rho = 'al'
         >>> wg.rho = 'aluminum'
         '''
+        if self.roughness != None:
+            delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
+            k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
+            return self._rho*k_w**2
+        
         return self._rho
         
     @rho.setter
@@ -327,11 +337,32 @@ class RectangularWaveguide(Media):
     @property
     def alpha_c(self):
         '''
-        loss due to finite conductivity of sidewalls in units of np/m
+        Loss due to finite conductivity and roughness of sidewalls 
         
-        Taken from [#]_
+        In units of np/m
+        See property `rho` for setting conductivity.
         
-        See property `rho` for setting conductivity of  side walls
+        Effects of finite conductivity are taken from [#]_. If 
+        :attr:`roughness` is not None, then its effects the conductivity
+        by 
+        
+        
+        .. math:: 
+        
+            \\sigma_c = \\frac{\\sigma}{\\k_w^2}
+            
+        where 
+            
+        .. math::
+            
+            k_w = 1 + e^{(-\\delta/2h)^{1.6}}
+        
+            \\delta = skin depth 
+            h = surface roughness 
+            
+        This is taken from Ansoft HFSS help documents.
+        
+        
         
         References
         --------------
@@ -339,11 +370,14 @@ class RectangularWaveguide(Media):
         .. [#] Electromagnetic Waves and Antennas by Sophocles J. Orfanidis 
         http://eceweb1.rutgers.edu/~orfanidi/ewa/
         '''
+        
         if self.rho==None: 
             return 0
         
         a,b,w,ep,rho,f_n = self.a, self.b, self.frequency.w, self.ep, \
             self.rho, self.f_norm
+        
+         
             
         return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+2.*b/a*(1/f_n)**2)/\
             sqrt(1-(1/f_n)**2)
