@@ -33,7 +33,7 @@ Functions for reading and writing standard csv files
     pna_csv_2_ntwks
 '''
 import numpy as npy
-
+import os
 from ..network import Network
 
 def read_pna_csv(filename, *args, **kwargs):
@@ -110,13 +110,31 @@ def pna_csv_2_ntwks(filename):
     #TODO: check the data's format (Real-imag or db/angle , ..)
     header, comments, d = read_pna_csv(filename)
     
-    return [ Network(
-        f = d[:,0]*1e-9, 
-        s = d[:,k*2+1]+1j*d[:,k*2+2],
-        name = header.split('\"')[k*4+1],
-        comments  = comments,
-        ) \
-        for k in range((d.shape[1]-1)/2) ]
+    try:
+        names = [header.split('\"')[k*4+1] for k in range((d.shape[1]-1)/2) ]
+    except(IndexError):
+        try:
+            names = [header.split(',')[k*2+1] for k in range((d.shape[1]-1)/2) ]
+        except(IndexError):
+            names = [os.path.basename(filename).split('.')[-2]+str(k) \
+                for k in range(d.shape[1]-1)/2 ]
+    
+    if 'real' not in header.lower():
+        print ('WARNING: csv data may not be in re/im format, its up to you to  intrepret the resultant network correctly.')
+        
+    ntwk_list = []
+    
+    for k in range((d.shape[1]-1)/2):
+        ntwk_list.append( 
+            Network(
+                f = d[:,0]*1e-9, 
+                s = d[:,k*2+1]+1j*d[:,k*2+2],
+                name = names[k],
+                comments  = comments,
+                )
+            )
+    
+    return ntwk_list
         
 
 def read_vectorstar_csv(filename, *args, **kwargs):

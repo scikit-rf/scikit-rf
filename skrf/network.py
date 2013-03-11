@@ -130,7 +130,8 @@ from copy import deepcopy as copy
 
 import numpy as npy
 import pylab as plb
-from scipy import stats         # for Network.add_noise_*
+from scipy import stats,signal        # for Network.add_noise_*, and Network.windowed
+
 from scipy.interpolate import interp1d # for Network.interpolate()
 from numpy import fft
 import unittest # fotr unitest.skip 
@@ -461,7 +462,7 @@ class Network(object):
             result.s = self.s * other.s
         else:
             # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1,1,1)
+            result.s = self.s * npy.array(other).reshape(-1,self.nports,self.nports)
             
         return result
     
@@ -477,7 +478,7 @@ class Network(object):
             result.s = self.s * other.s
         else:
             # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1,1,1)
+            result.s = self.s * npy.array(other).reshape(-1,self.nports,self.nports)
             
         return result
     
@@ -492,7 +493,7 @@ class Network(object):
             result.s = self.s + other.s
         else:
             # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1,1,1)
+            result.s = self.s + npy.array(other).reshape(-1,self.nports,self.nports)
             
         return result
     
@@ -507,7 +508,7 @@ class Network(object):
             result.s = self.s + other.s
         else:
             # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1,1,1)
+            result.s = self.s + npy.array(other).reshape(-1,self.nports,self.nports)
             
         return result
     
@@ -523,7 +524,7 @@ class Network(object):
             result.s = self.s - other.s
         else:
             # other may be an array or a number
-            result.s = self.s - npy.array(other).reshape(-1,1,1)
+            result.s = self.s - npy.array(other).reshape(-1,self.nports,self.nports)
             
         return result
     
@@ -538,7 +539,7 @@ class Network(object):
             result.s = other.s - self.s
         else:
             # other may be an array or a number
-            result.s = npy.array(other).reshape(-1,1,1) - self.s
+            result.s = npy.array(other).reshape(-1,self.nports,self.nports) - self.s
             
         return result
 
@@ -553,7 +554,7 @@ class Network(object):
             result.s = self.s / other.s
         else:
             # other may be an array or a number
-            result.s = self.s / npy.array(other).reshape(-1,1,1)
+            result.s = self.s / npy.array(other).reshape(-1,self.nports,self.nports)
             
         return result
     
@@ -1895,7 +1896,46 @@ class Network(object):
         self.s[:,:,to_ports] = self.s[:,:,from_ports]  # renumber columns
         self.z0[:,to_ports] = self.z0[:,from_ports]
     
-    
+    def windowed(self, window=('kaiser',6),  normalize = True):
+        '''
+        Return a windowed version of s-matrix. Used in time-domain analysis.
+        
+        When using time domain through :attr:`s_time_db`, 
+        or similar properies, the spectrum is ussually windowed, 
+        before the IFFT is taken. This is done to 
+        compensate for the band-pass nature of a spectrum [#]_ .
+        
+        This function calls :func:`scipy.signal.get_window` which gives
+        more details about the windowing.
+        
+        Parameters
+        -----------
+        window : string, float, or tuple
+            The type of window to create. See :func:`scipy.signal.get_window`
+            for details.
+        normalize : bool
+            Normalize the window to preserve power. ie 
+            sum(ntwk.s,axis=0) == sum(ntwk.windowed().s,axis=0)
+            
+        Examples
+        -----------
+        >>> ntwk = rf.Network('myfile.s2p')
+        >>> ntwk_w = ntwk.windowed()
+        >>> ntwk_w.plot_s_time_db()
+        
+        References
+        -------------
+        .. [#] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
+        
+        '''
+        window = signal.get_window(window, len(self))
+        windowed = self * window
+        if normalize:
+            # normalize the s-parameters to account for power lost in windowing
+            windowed = windowed * npy.sum(self.s_mag,axis=0)/\
+                npy.sum(windowed.s_mag,axis=0)
+        
+        return windowed
     
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\

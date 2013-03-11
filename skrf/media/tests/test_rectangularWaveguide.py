@@ -35,6 +35,11 @@ class MediaTestCase(unittest.TestCase):
 
         
     def test_conductor_loss(self):
+        '''
+        This only compares the magnitude of the generated line, because
+        the loss approximation doesnt account for reactance of field on 
+        sidewalls.
+        '''
         ntwk = rf.Network(os.path.join(self.pwd, 'wr1p5_1in_swg_Al_0rough.s2p'))
         wg = rf.RectangularWaveguide(
             ntwk.frequency, 
@@ -46,6 +51,11 @@ class MediaTestCase(unittest.TestCase):
             max(abs(wg.line(1*rf.inch).s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )
     
     def test_roughness(self):
+        '''
+        This only compares the magnitude of the generated line, because
+        the loss approximation doesnt account for reactance of field on 
+        sidewalls.
+        '''
         ntwk = rf.Network(os.path.join(self.pwd, 'wr1p5_1in_swg_Al_100nm_rough.s2p'))
         wg = rf.RectangularWaveguide(
             ntwk.frequency, 

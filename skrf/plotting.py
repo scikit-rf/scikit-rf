@@ -483,7 +483,6 @@ def save_all_figs(dir = './', format=None):
         if format is None:
             plb.savefig(dir+fileName)
             print (dir+fileName)
-            return None
         else:
             for fmt in format:
                 plb.savefig(dir+fileName+'.'+fmt, format=fmt)
