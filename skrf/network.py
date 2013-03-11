@@ -1929,6 +1929,7 @@ class Network(object):
         
         '''
         window = signal.get_window(window, len(self))
+        window =window.reshape(-1,1,1) * npy.ones((len(self), self.nports, self.nports))
         windowed = self * window
         if normalize:
             # normalize the s-parameters to account for power lost in windowing
