@@ -216,7 +216,46 @@ class PNA(GpibInstrument):
         self.continuous = was_cont
         return out
         
+    ## Frequency related
+    def get_f_start(self):
+        '''
+        Start frequency in Hz
+        '''
+        return float(self.ask('sens%i:FREQ:STAR?'%(self.channel)))
+    
+    def set_f_start(self,f):
+        '''
+        Start frequency in Hz
+        '''
+        self.write('sens%i:FREQ:STAR %f'%(self.channel,f))
         
+    def get_f_stop(self):
+        '''
+        Stop frequency in Hz
+        '''
+        return float(self.ask('sens%i:FREQ:STOP?'%(self.channel)))
+    
+    def set_f_stop(self,f):
+        '''
+        Stop frequency in Hz
+        '''
+        self.write('sens%i:FREQ:STOP %f'%(self.channel,f)))    
+    
+    
+    def get_f_npoints(self):
+        '''
+        Number of points for the measurment
+        '''
+        return int(self.ask('sens%i:swe:poin?'%(self.channel)))
+    
+    
+    def set_f_npoints(self, n):
+        '''
+        Number of points for the measurment
+        '''
+        self.write('sens%i:swe:poin %i'%(self.channel,n))
+    
+            
     def get_frequency(self, unit='ghz'):
         '''
         Get frequency data for active meas.  
@@ -233,10 +272,11 @@ class PNA(GpibInstrument):
         select_meas
         get_meas_list
         '''
-        freq=Frequency( float(self.ask('sens:FREQ:STAR?')),
+        freq = Frequency( float(self.ask('sens:FREQ:STAR?')),
                 float(self.ask('sens:FREQ:STOP?')),\
                 int(self.ask('sens:sweep:POIN?')),'hz')
         freq.unit = unit
+        
         return freq
     
     
@@ -300,8 +340,6 @@ class PNA(GpibInstrument):
         
         self.continuous = was_cont
         return out
-            
-            
             
     def get_oneport(self, port=1, *args, **kwargs):
         '''

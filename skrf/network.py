@@ -140,7 +140,7 @@ import  mathFunctions as mf
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
-from util import get_fid
+from util import get_fid, get_extn
 ## later imports. delayed to solve circular dependencies
 #from io.general import read, write
 #from io import touchstone
@@ -1511,31 +1511,36 @@ class Network(object):
         #TODO: add Network property `comments` which is read from
         # touchstone file. 
     
-    def write_touchstone(self, filename=None, dir = './', write_z0=False):
+    def write_touchstone(self, filename=None, dir = './', write_z0=False, 
+        skrf_comment=True):
         '''
-        write a contents of the :class:`Network` to a touchstone file.
+        Write a contents of the :class:`Network` to a touchstone file.
 
 
         Parameters
         ----------
         filename : a string, optional
-                touchstone filename, without extension. if 'None', then
-                will use the network's :attr:`name`.
+            filename. if 'None', then will use the network's 
+            :attr:`name`.  if filename doesnt have an extension the 
+            correct sNp is appended.
         dir : string, optional
-                the directory to save the file in. Defaults
-                to cwd './'.
-        write_z0 : boolean
+            the directory to save the file in. Defaults
+            to cwd './'.
+        write_z0 : boolean, optional
             write impedance information into touchstone as comments, 
             like Ansoft HFSS does
-
+        skrf_comment : bool, optional
+            write `created by skrf` comment
+            
         Notes
         -------
-                format supported at the moment is,
-                        HZ S RI
+        format supported at the moment is,
+            HZ S RI
 
-                The functionality of this function should take place in the
-                :class:`~skrf.touchstone.touchstone` class.
-
+        The functionality of this function should take place in the
+        :class:`~skrf.touchstone.touchstone` class, and will be moved 
+        in the future.
+        
 
         '''
         if filename is None:
@@ -1543,8 +1548,10 @@ class Network(object):
                 filename= self.name
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
-
-        extension = '.s%ip'%self.number_of_ports
+        if get_extn(filename) is not None:
+            extension = get_extn(filename) 
+        else:
+            extension = '.s%ip'%self.number_of_ports
 
         outputFile = open(dir+'/'+filename+extension,"w")
         
@@ -1559,7 +1566,8 @@ class Network(object):
         # the '#'  line is NOT a comment it is essential and it must be
         #exactly this format, to work
         # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-        outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
+        if skrf_comment:
+            outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
         outputFile.write(commented_header)
         outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
 
