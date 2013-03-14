@@ -217,6 +217,8 @@ class PNA(GpibInstrument):
         return out
         
     ## Frequency related
+    
+    
     def get_f_start(self):
         '''
         Start frequency in Hz
@@ -228,6 +230,8 @@ class PNA(GpibInstrument):
         Start frequency in Hz
         '''
         self.write('sens%i:FREQ:STAR %f'%(self.channel,f))
+    
+    f_start = property(get_f_start, set_f_start)
         
     def get_f_stop(self):
         '''
@@ -241,6 +245,7 @@ class PNA(GpibInstrument):
         '''
         self.write('sens%i:FREQ:STOP %f'%(self.channel,f)))    
     
+    f_stop = property(get_f_stop, set_f_stop)
     
     def get_f_npoints(self):
         '''
@@ -248,14 +253,17 @@ class PNA(GpibInstrument):
         '''
         return int(self.ask('sens%i:swe:poin?'%(self.channel)))
     
-    
     def set_f_npoints(self, n):
         '''
         Number of points for the measurment
         '''
         self.write('sens%i:swe:poin %i'%(self.channel,n))
     
-            
+    f_npoints = property(get_f_npoints, set_f_npoints)
+    npoints = f_npoints        
+    
+    
+    
     def get_frequency(self, unit='ghz'):
         '''
         Get frequency data for active meas.  
@@ -548,19 +556,6 @@ class PNA(GpibInstrument):
         return forward, reverse
     
     ## MEASUREMENT/TRACES
-    
-    @property
-    def npoints(self):
-        '''
-        Number of points for the measurment
-        '''
-        return int(self.ask('sens%i:swe:poin?'%(self.channel)))
-    @npoints.setter
-    def npoints(self, n):
-        '''
-        Number of points for the measurment
-        '''
-        self.write('sens%i:swe:poin %i'%(self.channel,n))
     
     @property
     def ntraces(self):

@@ -189,6 +189,20 @@ def db_2_magnitude(input):
     '''
     return 10**((input)/20.)
 
+
+def magdeg_2_reim(mag,deg):
+    '''
+    converts linear magnitude and phase (in deg) arrays into a complex array
+    '''
+    return mag*npy.exp(1j*deg*pi/180.)
+    
+def dbdeg_2_reim(db,deg):
+    '''
+    converts db magnitude and phase (in deg) arrays into a complex array
+    '''
+    return magdeg_2_reim(db_2_magnitude(db),deg)
+    
+    
 def db_2_np(x):
     '''
     converts a value in nepers to dB
