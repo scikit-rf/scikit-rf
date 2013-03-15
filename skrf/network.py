@@ -299,8 +299,8 @@ class Network(object):
             npy.abs(x),
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
         'passivity' : passivity,
-        'time_db' : lambda x: mf.complex_2_db(fft.ifft(x, axis=0)),
-        'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifft(x, axis=0)),
+        'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0))),
+        'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0))),
         }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -889,7 +889,6 @@ class Network(object):
                             if 'time' in attribute: 
                                 xlabel = 'Time (ns)'
                                 x = self.frequency.t_ns
-                                
                                 
                             else:
                                 xlabel = 'Frequency (%s)'%self.frequency.unit
@@ -1549,7 +1548,7 @@ class Network(object):
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
         if get_extn(filename) is not None:
-            extension = get_extn(filename) 
+            extension = ''
         else:
             extension = '.s%ip'%self.number_of_ports
 

@@ -44,7 +44,7 @@ Frequency Class
 from pylab import linspace, gca
 from numpy import pi
 import numpy as npy
-
+from numpy import fft # used to center attribute `t` at 0
 
 
 class Frequency(object):
@@ -365,7 +365,7 @@ class Frequency(object):
         
         t_period = 1/f_step
         '''
-        return linspace(0, 1./self.step, self.npoints)
+        return linspace(-.5/self.step , .5/self.step, self.npoints)
         
     @property                
     def t_ns(self):
@@ -374,7 +374,7 @@ class Frequency(object):
         
         t_period = 1/f_step
         '''
-        return linspace(0, 1./self.step, self.npoints)*1e9
+        return self.t*1e9
     
         
     

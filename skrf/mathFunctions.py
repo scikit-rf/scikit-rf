@@ -178,7 +178,8 @@ def magnitude_2_db(input,zero_nan=True):
         out = 20*npy.log10(input)
 
     return out
-    
+
+mag_2_db = magnitude_2_db
 def db_2_magnitude(input):
     '''
     converts db to normal magnitude
@@ -189,6 +190,7 @@ def db_2_magnitude(input):
     '''
     return 10**((input)/20.)
 
+db_2_mag = db_2_magnitude
 
 def magdeg_2_reim(mag,deg):
     '''

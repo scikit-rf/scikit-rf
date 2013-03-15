@@ -243,7 +243,7 @@ class PNA(GpibInstrument):
         '''
         Stop frequency in Hz
         '''
-        self.write('sens%i:FREQ:STOP %f'%(self.channel,f)))    
+        self.write('sens%i:FREQ:STOP %f'%(self.channel,f))    
     
     f_stop = property(get_f_stop, set_f_stop)
     
