@@ -170,6 +170,20 @@ def unterminate_switch_terms(two_port, gamma_f, gamma_r):
     unterminated.s = u
     return unterminated
 
+def unterminate_switch_terms_pna_style(ntwk, forward, reverse):
+    '''
+    forward = a2/a1 source on port 1 (aka a2/a1,1)
+    reverse = a1/a2 source on port 2 (aka a1/a2,2)
+    '''
+    unterminated = ntwk.copy()
+    u = unterminated.s
+    s = ntwk.s
+    f = forward.s
+    r = reverse.s
+    
+    for k in range(len(ntwk)):
+        u[k] = npy.dot(s[k], npy.linalg.inv(npy.array([[1,r[k,0,0]],[f[k,0,0],1]])))
+    return unterminated
 
 ## ONE PORT
 def one_port(measured, ideals):

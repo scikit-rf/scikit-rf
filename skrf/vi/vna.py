@@ -145,8 +145,6 @@ class PNA(GpibInstrument):
         '''
         return self.ask('*IDN?')
     
-    
-    
     def opc(self):
         '''
         Ask for indication that operations complete
@@ -179,6 +177,17 @@ class PNA(GpibInstrument):
         else:
             self.write('sense:sweep:mode hold')
     
+    def sweep(self):
+        '''
+        Initiates a sweep and waits for it to complete before returning
+        
+        If vna is in continuous sweep mode then this puts it back
+        '''
+        was_cont = self.continuous
+        out = bool(self.ask("SENS:SWE:MODE SINGle;*OPC?"))
+        self.continuous = was_cont
+        return out
+    
     ## power
     def get_power_level(self):
         '''
@@ -204,21 +213,8 @@ class PNA(GpibInstrument):
         
         self.write('SOURce%i:POWer%i %i'%(cnum, port, num))
     
-    ## DATA IO
-    def sweep(self):
-        '''
-        Initiates a sweep and waits for it to complete before returning
         
-        If vna is in continuous sweep mode then this puts it back
-        '''
-        was_cont = self.continuous
-        out = bool(self.ask("SENS:SWE:MODE SINGle;*OPC?"))
-        self.continuous = was_cont
-        return out
-        
-    ## Frequency related
-    
-    
+    ## IO - Frequency related
     def get_f_start(self):
         '''
         Start frequency in Hz
@@ -262,8 +258,6 @@ class PNA(GpibInstrument):
     f_npoints = property(get_f_npoints, set_f_npoints)
     npoints = f_npoints        
     
-    
-    
     def get_frequency(self, unit='ghz'):
         '''
         Get frequency data for active meas.  
@@ -287,7 +281,7 @@ class PNA(GpibInstrument):
         
         return freq
     
-    
+    ##  IO - S-parameter and  Networks
     def get_network(self, sweep=True):
         '''
         Returns a :class:`~skrf.network.Network` object representing the 
@@ -537,7 +531,6 @@ class PNA(GpibInstrument):
         self.write('calc:par:sel %s'%(self.get_active_meas()))
         return npy.array(self.ask_for_values('CALC%i:RData? %s'%(cnum, char)))
 
-    
     def get_switch_terms(self):
         '''
         Get switch terms and return them as a tuple of Network objects. 
@@ -545,18 +538,17 @@ class PNA(GpibInstrument):
         Dont use this yet. 
         '''
         self.delete_all_meas()
-        self.create_meas('forward', 'R2/B,1')
+        self.create_meas('forward', 'a2/b2,1')
         forward = self.get_network()
         
         
         self.delete_all_meas()
-        self.create_meas('reverse', 'R1/A,2')
+        self.create_meas('reverse', 'b2/a2,2')
         reverse = self.get_network()
         self.delete_all_meas()
         return forward, reverse
     
     ## MEASUREMENT/TRACES
-    
     @property
     def ntraces(self):
         '''
@@ -587,7 +579,7 @@ class PNA(GpibInstrument):
         '''
         self.write('sens%i:band %i'%(self.channel,n))
     
-        
+
     def set_yscale_auto(self, window_n=None, trace_n=None):
         '''
         Display a given measurment on specified trace number. 
@@ -811,7 +803,37 @@ class PNA(GpibInstrument):
             trace_n =self.ntraces+1
         self.write('disp:wind%s:trac%s:y:coup:meth %s'%(str(window_n), str(trace_n), method))  
         
+    def get_corr_state_of_channel(self):
+        '''
+        correction status for give channel
+        '''
+        return bool(int(self.ask('sense%i:corr:state?'%self.channel)))
     
+    def set_corr_state_of_channel(self, val):
+        '''
+        toggle correction for give channel
+        '''
+        val = 'on' if val else 'off'
+        self.write('sense%i:corr:state %s'%(self.channel, val))
+    
+    corr_state_of_channel = property(get_corr_state_of_channel,
+        set_corr_state_of_channel)
+    
+    def get_corr_state_of_meas(self):
+        '''
+        correction status for give channel
+        '''
+        return bool(int(self.ask('calc%i:corr:state?'%self.channel)))
+    
+    def set_corr_state_of_meas(self, val):
+        '''
+        toggle correction for give channel
+        '''
+        val = 'on' if val else 'off'
+        self.write('calc%i:corr:state %s'%(self.channel, val))
+    
+    corr_state_of_meas = property(get_corr_state_of_meas,
+        set_corr_state_of_meas)
     
     
 PNAX = PNA 
