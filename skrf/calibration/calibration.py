@@ -911,28 +911,28 @@ class Calibration2(object):
         self.ideals = ideals
         self.kwargs = kwargs
         
-        
-        def run(self):
-            pass
-        
-        @property
-        def coefs(self):
-            '''
-            '''
-            try:
-                return self._coefs
-            except(AttributeError):
-                self.run()
-                return self._coefs
-        
-        
-        
-        def apply(self):
-            '''
-            '''
-            pass
-        # to support legacy scripts
-        apply_cal = apply    
+    
+    def run(self):
+        pass
+    
+    @property
+    def coefs(self):
+        '''
+        '''
+        try:
+            return self._coefs
+        except(AttributeError):
+            self.run()
+            return self._coefs
+    
+    
+    
+    def apply(self):
+        '''
+        '''
+        pass
+    # to support legacy scripts
+    apply_cal = apply    
 
 class SOLT(Calibration2):
     def __init__(self, measured, ideals, **kwargs):
@@ -959,35 +959,35 @@ class SOLT(Calibration2):
         p2_coefs = port2_cal.coefs
         
         if self.kwargs.get('isolation',None) is not None:
-            p1_coefs['isolation'] = isolation.s21.s
-            p2_coefs['isolation'] = isolation.s12.s
+            p1_coefs['isolation'] = isolation.s21.s.flatten()
+            p2_coefs['isolation'] = isolation.s12.s.flatten()
         
-        p1_coefs['reciever match'] = port1_cal.apply_cal(thru.s11).s
-        p2_coefs['reciever match'] = port2_cal.apply_cal(thru.s22).s
+        p1_coefs['reciever match'] = port1_cal.apply_cal(thru.s11).s.flatten()
+        p2_coefs['reciever match'] = port2_cal.apply_cal(thru.s22).s.flatten()
         
-        
+
         p1_coefs['transmission tracking'] = \
-            thru.s21.s- p1_coefs.get('isolation',0)/\
+            thru.s21.s.flatten() - p1_coefs.get('isolation',0)/\
             (1. - p1_coefs['source match']*p1_coefs['directivity'])
         p2_coefs['transmission tracking'] = \
-            thru.s12.s- p2_coefs.get('isolation',0)/\
+            thru.s12.s.flatten() - p2_coefs.get('isolation',0)/\
             (1. - p2_coefs['source match']*p2_coefs['directivity'])
         coefs = {}
         #import pdb;pdb.set_trace()
-        coefs.update({ 'port1 %s':p1_coefs[k] for k in p1_coefs})
-        coefs.update({ 'port2 %s':p2_coefs[k] for k in p2_coefs})
+        coefs.update({ 'port1 %s'%k:p1_coefs[k] for k in p1_coefs})
+        coefs.update({ 'port2 %s'%k:p2_coefs[k] for k in p2_coefs})
         self._coefs = coefs
         return 0 
     
-    def apply(ntwk):
+    def apply(self,ntwk):
         '''
         '''
         caled = ntwk.copy()
         
-        s11 = ntkw.s[:,0,0]
-        s12 = ntkw.s[:,0,1]
-        s21 = ntkw.s[:,1,0]
-        s22 = ntkw.s[:,1,1]
+        s11 = ntwk.s[:,0,0]
+        s12 = ntwk.s[:,0,1]
+        s21 = ntwk.s[:,1,0]
+        s22 = ntwk.s[:,1,1]
         
         e00 = self.coefs['port1 directivity']
         e11 = self.coefs['port1 source match']
@@ -1010,16 +1010,19 @@ class SOLT(Calibration2):
         
         caled.s[:,0,0] = \
             (((s11-e00)/(e10e01))*(1+(s22-e33_)/(e23e32_)*e22_)-\
-            e22*((s21-e30)/(e10e32))*(s12-e03)/(e23e01_)) /\
-            D
+            e22*((s21-e30)/(e10e32))*(s12-e03_)/(e23e01_)) /D
+            
+        caled.s[:,1,1] = \
+            (((s22-e33_)/(e23e32_))*(1+(s11-e00)/(e10e01)*e11)-\
+            e11_*((s21-e30)/(e10e32))*(s12-e03_)/(e23e01_)) /D
             
         caled.s[:,1,0] = \
-            (((s22-e33_)/(e23e32_))*(1+(s11-e00)/(e10e01)*e11)-\
-            e11_*((s21-e30)/(e10e32))*(s12-e03_)/(e23e01_)) /\
-            D
-        caled.s[:,1,1] = \    
-            
+            ( ((s21 -e30)/(e10e32))*(1+((s22-e33_)/(e23e32_))*(e22_-e22)) )/D
         
+        caled.s[:,0,1] = \
+            ( ((s12 -e03_)/(e23e01_))*(1+((s11-e00)/(e10e01))*(e11-e11_)) )/D    
+        
+        return caled
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):
     ec = error_coefficients
