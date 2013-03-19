@@ -993,9 +993,31 @@ class SOLT(Calibration2):
         e11 = self.coefs['port1 source match']
         e10e01 = self.coefs['port1 reflection tracking']
         e10e32 = self.coefs['port1 transmission tracking']
+        e22 = self.coefs['port1 reciever match']
+        e30 = self.coefs.get('port1 isolation',0)
         
-        #caled.s[:,0,0] = s11- 
+        e33_ = self.coefs['port2 directivity']
+        e11_ = self.coefs['port2 reciever match']
+        e23e32_ = self.coefs['port2 reflection tracking']
+        e23e01_ = self.coefs['port2 transmission tracking']
+        e22_ = self.coefs['port2 source match']
+        e03_ = self.coefs.get('port2 isolation',0)
         
+        
+        D = (1+(s11-e00)/(e10e01)*e11)*(1+(s22-e33_)/(e23e32_)*e22_) -\
+            ((s21-e30)/(e10e32))*((s12-e03_)/(e23e01_))*e22*e11_
+        
+        
+        caled.s[:,0,0] = \
+            (((s11-e00)/(e10e01))*(1+(s22-e33_)/(e23e32_)*e22_)-\
+            e22*((s21-e30)/(e10e32))*(s12-e03)/(e23e01_)) /\
+            D
+            
+        caled.s[:,1,0] = \
+            (((s22-e33_)/(e23e32_))*(1+(s11-e00)/(e10e01)*e11)-\
+            e11_*((s21-e30)/(e10e32))*(s12-e03_)/(e23e01_)) /\
+            D
+        caled.s[:,1,1] = \    
             
         
 ## Functions
