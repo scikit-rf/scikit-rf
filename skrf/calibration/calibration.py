@@ -902,6 +902,102 @@ class Calibration(object):
 
         write(file,self, *args, **kwargs) 
 
+
+class Calibration2(object):
+    def __init__(self, measured, ideals, **kwargs):
+        '''
+        '''
+        self.measured = measured
+        self.ideals = ideals
+        self.kwargs = kwargs
+        
+        
+        def run(self):
+            pass
+        
+        @property
+        def coefs(self):
+            '''
+            '''
+            try:
+                return self._coefs
+            except(AttributeError):
+                self.run()
+                return self._coefs
+        
+        
+        
+        def apply(self):
+            '''
+            '''
+            pass
+        # to support legacy scripts
+        apply_cal = apply    
+
+class SOLT(Calibration2):
+    def __init__(self, measured, ideals, **kwargs):
+        Calibration2.__init__(self, measured, ideals, **kwargs)
+    
+    def run(self):
+        '''
+        '''
+        if len(self.measured) != len(self.ideals): 
+            raise(IndexError('Number of ideals must equal number of measurements'))
+        
+        p1_m = [k.s11 for k in self.measured[:-1]]
+        p2_m = [k.s22 for k in self.measured[:-1]]
+        p1_i = [k.s11 for k in self.ideals[:-1]]
+        p2_i = [k.s22 for k in self.ideals[:-1]]
+        thru = self.measured[-1]
+        
+        # create one port calibration for all but last standard    
+        port1_cal = Calibration(measured = p1_m, ideals = p1_i)
+        port2_cal = Calibration(measured = p2_m, ideals = p2_i)
+        
+        # cal coefficient dictionaries
+        p1_coefs = port1_cal.coefs
+        p2_coefs = port2_cal.coefs
+        
+        if self.kwargs.get('isolation',None) is not None:
+            p1_coefs['isolation'] = isolation.s21.s
+            p2_coefs['isolation'] = isolation.s12.s
+        
+        p1_coefs['reciever match'] = port1_cal.apply_cal(thru.s11).s
+        p2_coefs['reciever match'] = port2_cal.apply_cal(thru.s22).s
+        
+        
+        p1_coefs['transmission tracking'] = \
+            thru.s21.s- p1_coefs.get('isolation',0)/\
+            (1. - p1_coefs['source match']*p1_coefs['directivity'])
+        p2_coefs['transmission tracking'] = \
+            thru.s12.s- p2_coefs.get('isolation',0)/\
+            (1. - p2_coefs['source match']*p2_coefs['directivity'])
+        coefs = {}
+        #import pdb;pdb.set_trace()
+        coefs.update({ 'port1 %s':p1_coefs[k] for k in p1_coefs})
+        coefs.update({ 'port2 %s':p2_coefs[k] for k in p2_coefs})
+        self._coefs = coefs
+        return 0 
+    
+    def apply(ntwk):
+        '''
+        '''
+        caled = ntwk.copy()
+        
+        s11 = ntkw.s[:,0,0]
+        s12 = ntkw.s[:,0,1]
+        s21 = ntkw.s[:,1,0]
+        s22 = ntkw.s[:,1,1]
+        
+        e00 = self.coefs['port1 directivity']
+        e11 = self.coefs['port1 source match']
+        e10e01 = self.coefs['port1 reflection tracking']
+        e10e32 = self.coefs['port1 transmission tracking']
+        
+        #caled.s[:,0,0] = s11- 
+        
+            
+        
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):
     ec = error_coefficients

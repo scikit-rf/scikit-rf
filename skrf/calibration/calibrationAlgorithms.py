@@ -513,8 +513,8 @@ def two_port(measured, ideals, switch_terms = None):
             }
 
     return output
-
-
+    
+    
 ## SELF CALIBRATION
 def parameterized_self_calibration(measured, ideals, showProgress=True,\
         **kwargs):
