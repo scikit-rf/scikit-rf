@@ -54,6 +54,8 @@ from ..calibration.calibration import Calibration
 from copy import copy
 dir_ = copy(dir)
 
+#delayed import: from pandas import DataFrame, Series for ntwk_2_spreadsheet
+
 # file extension conventions for skrf objects.
 global OBJ_EXTN 
 OBJ_EXTN = [
@@ -577,5 +579,52 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         os.rename(new_file_name,file_name)
 
 
-
-
+def ntwk_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', 
+    *args, **kwargs):
+    '''
+    Write a Network object to a spreadsheet, for your boss    
+    
+    
+    '''
+    from pandas import DataFrame, Series # delayed because its not a requirement
+    file_extns = {'csv':'csv','excel':'xls','html':'html'}
+    file_type = file_type.lower()
+    if file_type not in file_extns.keys():
+        raise ValueError('file_type must be `csv`,`html`,`excel` ')
+    if ntwk.name is None and file_name is None:
+        raise(ValueError('Either ntwk must have name or give a file_name'))
+    
+    
+    if file_name is None and 'excel_writer' not in kwargs.keys():
+        file_name = ntwk.name + '.'+file_extns[file_type]
+    
+    d = {}
+    index =ntwk.frequency.f
+    
+    for m,n in ntwk.port_tuples:
+        d['S%i%i Log Mag(dB)'%(m+1,n+1)] = \
+            Series(ntwk.s_db[:,m,n], index = index)
+        d[u'S%i%i Phase(\u2591)'%(m+1,n+1)] = \
+            Series(ntwk.s_deg[:,m,n], index = index)
+    
+    df = DataFrame(d)
+    df.__getattribute__('to_%s'%file_type)(file_name, 
+        index_label='Freq(Hz)', *args, **kwargs)
+    
+def ntwkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel', 
+    *args, **kwargs):
+    '''
+    Write a Network object to a spreadsheet, for your boss.
+    
+    '''
+    from pandas import DataFrame, Series, ExcelWriter # delayed because its not a requirement
+    if ntwkset.name is None and file_name is None:
+        raise(ValueError('Either ntwkset must have name or give a file_name'))
+    
+    if file_type == 'excel':
+        writer = ExcelWriter(file_name)
+        [ntwk_2_spreadsheet(k, writer, sheet_name =k.name, *args, **kwargs) for k in ntwkset]
+        writer.save()
+    else:
+        [ntwk_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
+    

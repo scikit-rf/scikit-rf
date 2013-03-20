@@ -911,6 +911,18 @@ class NetworkSet(object):
 
         write(file,self, *args, **kwargs) 
 
+    
+    def write_spreadsheet(self, *args, **kwargs):
+        '''
+        Write contents of network to a spreadsheet, for your boss to use.
+        
+        See Also 
+        ---------
+        skrf.io.general.ntwk_2_spreadsheet
+        '''
+        from io.general import ntwkset_2_spreadsheet
+        ntwkset_2_spreadsheet(self, *args, **kwargs)
+    
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
 

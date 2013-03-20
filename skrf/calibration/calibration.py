@@ -943,6 +943,32 @@ class Calibration2(object):
     # to support legacy scripts
     apply_cal = apply    
 
+    def apply_to_dir(self, dir='.', contains=None, f_unit = 'ghz'):
+        '''
+        convience function to apply calibration to an entire directory
+        of measurements, and return a dictionary of the calibrated
+        results, optionally the user can 'grep' the direction
+        by using the contains switch.
+
+        takes:
+                dir: directory of measurements (string)
+                contains: will only load measurements who's filename contains
+                        this string.
+                f_unit: frequency unit, to use for all networks. see
+                        frequency.Frequency.unit for info.
+        returns:
+                ntwkDict: a dictionary of calibrated measurements, the keys
+                        are the filenames.
+        '''
+        from ..io.general import read_all_networks
+        ntwkDict = read_all_networks(dir=dir, contains=contains,\
+                f_unit=f_unit)
+
+        for ntwkKey in ntwkDict:
+            ntwkDict[ntwkKey] = self.apply(ntwkDict[ntwkKey])
+
+        return ntwkDict
+
 class SOLT(Calibration2):
     def __init__(self, measured, ideals, **kwargs):
         Calibration2.__init__(self, measured, ideals, **kwargs)
