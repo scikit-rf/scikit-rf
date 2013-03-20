@@ -1568,7 +1568,7 @@ class Network(object):
         if skrf_comment:
             outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
         outputFile.write(commented_header)
-        outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(self.z0[0,0]) +" \n")
+        outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(npy.real(self.z0[0,0])) +" \n")
 
         #write comment line for users (optional)
         outputFile.write ("!freq\t")

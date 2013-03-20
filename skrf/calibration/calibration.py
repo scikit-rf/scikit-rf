@@ -916,6 +916,10 @@ class Calibration2(object):
         pass
     
     @property
+    def frequency(self):
+        return self.measured[0].frequency
+        
+    @property
     def coefs(self):
         '''
         '''
@@ -925,7 +929,12 @@ class Calibration2(object):
             self.run()
             return self._coefs
     
-    
+    @property
+    def coefs_ntwks(self):
+        '''
+        '''
+        return s_dict_to_ns(self.coefs, self.frequency).to_dict()
+        
     
     def apply(self):
         '''
@@ -1023,6 +1032,9 @@ class SOLT(Calibration2):
             ( ((s12 -e03_)/(e23e01_))*(1+((s11-e00)/(e10e01))*(e11-e11_)) )/D    
         
         return caled
+
+
+
 ## Functions
 def two_port_error_vector_2_Ts(error_coefficients):
     ec = error_coefficients
