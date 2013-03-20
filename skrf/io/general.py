@@ -588,7 +588,7 @@ def ntwk_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     file_extns = {'csv':'csv','excel':'xls','html':'html'}
     
     form = form.lower()
-    if form not in ['db','re','ma']:
+    if form not in ['db','ri','ma']:
         raise ValueError('`form` must be either `db`,`ma`,`ri`')
     
     
