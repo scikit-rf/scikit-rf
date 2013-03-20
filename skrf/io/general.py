@@ -579,15 +579,19 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         os.rename(new_file_name,file_name)
 
 
-def ntwk_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', 
+def ntwk_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     *args, **kwargs):
     '''
     Write a Network object to a spreadsheet, for your boss    
-    
-    
     '''
     from pandas import DataFrame, Series # delayed because its not a requirement
     file_extns = {'csv':'csv','excel':'xls','html':'html'}
+    
+    form = form.lower()
+    if form not in ['db','re','ma']:
+        raise ValueError('`form` must be either `db`,`ma`,`ri`')
+    
+    
     file_type = file_type.lower()
     if file_type not in file_extns.keys():
         raise ValueError('file_type must be `csv`,`html`,`excel` ')
@@ -599,17 +603,30 @@ def ntwk_2_spreadsheet(ntwk, file_name =None, file_type= 'excel',
         file_name = ntwk.name + '.'+file_extns[file_type]
     
     d = {}
-    index =ntwk.frequency.f
+    index =ntwk.frequency.f_scaled
     
-    for m,n in ntwk.port_tuples:
-        d['S%i%i Log Mag(dB)'%(m+1,n+1)] = \
-            Series(ntwk.s_db[:,m,n], index = index)
-        d[u'S%i%i Phase(\u2591)'%(m+1,n+1)] = \
-            Series(ntwk.s_deg[:,m,n], index = index)
+    if form =='db':
+        for m,n in ntwk.port_tuples:
+            d['S%i%i Log Mag(dB)'%(m+1,n+1)] = \
+                Series(ntwk.s_db[:,m,n], index = index)
+            d[u'S%i%i Phase(deg)'%(m+1,n+1)] = \
+                Series(ntwk.s_deg[:,m,n], index = index)
+    elif form =='ma':
+        for m,n in ntwk.port_tuples:
+            d['S%i%i Mag(lin)'%(m+1,n+1)] = \
+                Series(ntwk.s_mag[:,m,n], index = index)
+            d[u'S%i%i Phase(deg)'%(m+1,n+1)] = \
+                Series(ntwk.s_deg[:,m,n], index = index)
+    elif form =='ri':
+        for m,n in ntwk.port_tuples:
+            d['S%i%i Real'%(m+1,n+1)] = \
+                Series(ntwk.s_re[:,m,n], index = index)
+            d[u'S%i%i Imag'%(m+1,n+1)] = \
+                Series(ntwk.s_im[:,m,n], index = index)
     
     df = DataFrame(d)
     df.__getattribute__('to_%s'%file_type)(file_name, 
-        index_label='Freq(Hz)', *args, **kwargs)
+        index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
     
 def ntwkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel', 
     *args, **kwargs):
