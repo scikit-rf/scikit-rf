@@ -543,7 +543,7 @@ class PNA(GpibInstrument):
         
         
         self.delete_all_meas()
-        self.create_meas('reverse', 'b2/a2,2')
+        self.create_meas('reverse', 'b1/a1,2')
         reverse = self.get_network()
         self.delete_all_meas()
         return forward, reverse
