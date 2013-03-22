@@ -77,6 +77,7 @@ class Calibration(object):
             'one port parametric':parameterized_self_calibration,\
             'one port parametric bounded':parameterized_self_calibration_bounded,\
             'two port': two_port,\
+            '8-term': two_port,\
             'two port parametric':parameterized_self_calibration,\
             }
     '''
@@ -170,10 +171,39 @@ class Calibration(object):
             ideals = ideals.values()
             sloppy_input = True
             warn('dictionary passed, sloppy_input automatically activated')
+        
         # fill measured and ideals with copied lists of input     
         self.measured = [ntwk.copy() for ntwk in measured]
         self.ideals = [ntwk.copy() for ntwk in ideals]
-
+        
+        if sloppy_input:
+            self.measured, self.ideals = \
+                align_measured_ideals(self.measured, self.ideals)
+        
+        if len(self.measured) != len(self.ideals):
+            raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured.'))
+        
+        
+        # ensure all the measured Networks' frequency's are the same
+        for measure in self.measured:
+            if self.measured[0].frequency != measure.frequency:
+                raise(ValueError('measured Networks dont have matching frequencies.'))
+        # ensure that all ideals have same frequency of the measured
+        # if not, then attempt to interpolate
+        for k in range(len(self.ideals)):
+            if self.ideals[k].frequency != self.measured[0]:
+                print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
+                try:
+                    # try to resample our ideals network to match
+                    # the meaurement frequency
+                    self.ideals[k].interpolate_self(\
+                        self.measured[0].frequency)
+                    print ('Success')
+                    
+                except:
+                    raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
+        
+        
         self.frequency = measured[0].frequency.copy()
         self.type = type
 
@@ -181,8 +211,9 @@ class Calibration(object):
         self.kwargs = kwargs 
         self.name = name
         self.is_reciprocal = is_reciprocal
-        self.sloppy_input= sloppy_input
-
+        
+        
+        
         # initialized internal properties to None
         self._residual_ntwks = None
         self._caled_ntwks =None
@@ -461,45 +492,6 @@ class Calibration(object):
         time. if you change something and want to re-run the calibration
          use this.
         '''
-        # some checking to make sure they gave us consistent data
-        if self.type == 'one port' or self.type == 'two port':
-
-            if self.sloppy_input == True:
-                # if they gave sloppy input try to align networks based
-                # on their names. This basically takes the union of the 
-                # two lists. 
-                self.measured = [ measure for measure in self.measured\
-                    for ideal in self.ideals if ideal.name in measure.name]
-                self.ideals = [ ideal for measure in self.measured\
-                    for ideal in self.ideals if ideal.name in measure.name]
-                self.sloppy_input = False
-            else:
-                # did they supply the same number of  ideals as measured?
-                if len(self.measured) != len(self.ideals):
-                    raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured.'))
-
-            # ensure all the measured Networks' frequency's are the same
-            for measure in self.measured:
-                if self.measured[0].frequency != measure.frequency:
-                    raise(ValueError('measured Networks dont have matching frequencies.'))
-            # ensure that all ideals have same frequency of the measured
-            # if not, then attempt to interpolate
-            for k in range(len(self.ideals)):
-                if self.ideals[k].frequency != self.measured[0]:
-                    print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
-                    try:
-                        # try to resample our ideals network to match
-                        # the meaurement frequency
-                        self.ideals[k].interpolate_self(\
-                            self.measured[0].frequency)
-                        print ('Success')
-                        
-                    except:
-                        raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
-#
-
-
-
         # actually call the algorithm and run the calibration
         self._output_from_cal = \
                 self.calibration_algorithm_dict[self.type](measured = self.measured, ideals = self.ideals,**self.kwargs)
@@ -970,8 +962,9 @@ class Calibration2(object):
         return ntwkDict
 
 class SOLT(Calibration2):
-    def __init__(self, measured, ideals, **kwargs):
-        Calibration2.__init__(self, measured, ideals, **kwargs)
+    def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
+        self.n_thrus = n_thrus
+        Calibration2.__init__(self, measured, ideals, *args, **kwargs)
     
     def run(self):
         '''
@@ -983,7 +976,7 @@ class SOLT(Calibration2):
         p2_m = [k.s22 for k in self.measured[:-1]]
         p1_i = [k.s11 for k in self.ideals[:-1]]
         p2_i = [k.s22 for k in self.ideals[:-1]]
-        thru = self.measured[-1]
+        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
         
         # create one port calibration for all but last standard    
         port1_cal = Calibration(measured = p1_m, ideals = p1_i)
@@ -1062,6 +1055,19 @@ class SOLT(Calibration2):
 
 
 ## Functions
+def align_measured_ideals(measured, ideals):
+    '''
+    Aligns two lists of networks based on the union of their names
+    
+    
+    '''
+    measured = [ measure for measure in measured\
+        for ideal in ideals if ideal.name in measure.name]
+    ideals = [ ideal for measure in measured\
+        for ideal in ideals if ideal.name in measure.name]
+    return measured, ideals
+    
+    
 def two_port_error_vector_2_Ts(error_coefficients):
     ec = error_coefficients
     npoints = len(ec['k'])
