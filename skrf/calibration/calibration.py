@@ -896,12 +896,65 @@ class Calibration(object):
 
 
 class Calibration2(object):
-    def __init__(self, measured, ideals, **kwargs):
+    def __init__(self, measured, ideals, sloppy_input=False,
+        is_reciprocal=True,name=None,*args, **kwargs):
         '''
         '''
-        self.measured = measured
-        self.ideals = ideals
-        self.kwargs = kwargs
+        # allow them to pass di
+        if hasattr(measured, 'keys'):
+            measured = measured.values()
+            sloppy_input = True
+            warn('dictionary passed, sloppy_input automatically activated')
+        if hasattr(ideals, 'keys'):
+            ideals = ideals.values()
+            sloppy_input = True
+            warn('dictionary passed, sloppy_input automatically activated')
+        
+        # fill measured and ideals with copied lists of input     
+        self.measured = [ntwk.copy() for ntwk in measured]
+        self.ideals = [ntwk.copy() for ntwk in ideals]
+        
+        if sloppy_input:
+            self.measured, self.ideals = \
+                align_measured_ideals(self.measured, self.ideals)
+        
+        if len(self.measured) != len(self.ideals):
+            raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured.'))
+        
+        
+        # ensure all the measured Networks' frequency's are the same
+        for measure in self.measured:
+            if self.measured[0].frequency != measure.frequency:
+                raise(ValueError('measured Networks dont have matching frequencies.'))
+        # ensure that all ideals have same frequency of the measured
+        # if not, then attempt to interpolate
+        for k in range(len(self.ideals)):
+            if self.ideals[k].frequency != self.measured[0]:
+                print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
+                try:
+                    # try to resample our ideals network to match
+                    # the meaurement frequency
+                    self.ideals[k].interpolate_self(\
+                        self.measured[0].frequency)
+                    print ('Success')
+                    
+                except:
+                    raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
+        
+        
+        
+
+        # passed to calibration algorithm in run()
+        self.kwargs = kwargs 
+        self.name = name
+        
+        self.is_reciprocal = is_reciprocal
+        
+        # initialized internal properties to None
+        self._residual_ntwks = None
+        self._caled_ntwks =None
+        self._caled_ntwk_sets = None
+        
         
     
     def run(self):
@@ -909,7 +962,7 @@ class Calibration2(object):
     
     @property
     def frequency(self):
-        return self.measured[0].frequency
+        return self.measured[0].frequency.copy()
         
     @property
     def coefs(self):
@@ -927,7 +980,86 @@ class Calibration2(object):
         '''
         return s_dict_to_ns(self.coefs, self.frequency).to_dict()
         
+    @property
+    def residual_ntwks(self):
+        '''
+        returns a the residuals for each calibration standard in the
+        form of a list of Network types.
+
+        these residuals are calculated in the 'calibrated domain',
+        meaning they are
+                r = (E.inv ** m - i)
+
+        where,
+                r: residual network,
+                E: embedding network,
+                m: measured network
+                i: ideal network
+
+        This way the units of the residual networks are meaningful
+
+
+        note:
+                the residuals are only calculated if they are not existent.
+        so, if you want to re-calculate the residual networks then
+        you delete the property '_residual_ntwks'.
+        '''
+        if self._residual_ntwks is None:
+            ntwk_list=\
+                    [ ((self.apply(self.measured[k]))-self.ideals[k]) \
+                            for k in range(len(self.ideals))]
+
+            for k in range(len(ntwk_list)):
+                if self.ideals[k].name  is not None:
+                    name = self.ideals[k].name
+                else:
+                    name='std# %i'%k
+
+                ntwk_list[k].name = self.ideals[k].name
+
+            self._residual_ntwks = ntwk_list
+        return self._residual_ntwks
+
+    @property
+    def caled_ntwks(self):
+        '''
+        list of the calibrated, calibration standards.
+
+
+        '''
+        if self._caled_ntwks is None:
+            ntwk_list=\
+                    [ self.apply(self.measured[k]) \
+                            for k in range(len(self.ideals))]
+            
+            for k in range(len(ntwk_list)):
+                if self.ideals[k].name  is not None:
+                    name = self.ideals[k].name
+                else:
+                    name='std# %i'%k
+
+                ntwk_list[k].name = self.ideals[k].name
+
+            self._caled_ntwks = ntwk_list
+        
+        return self._caled_ntwks
     
+    @property
+    def caled_ntwk_sets(self):
+        '''
+        returns a NetworkSet for each caled_ntwk, based on their names
+        '''
+        if self._caled_ntwk_sets is  None:
+            caled_sets={}
+            std_names = list(set([k.name  for k in self.caled_ntwks ]))
+            for std_name in std_names:
+                caled_sets[std_name] = NetworkSet(
+                    [k for k in self.caled_ntwks if k.name is std_name])
+            self._caled_ntwk_sets = caled_sets
+        
+        return self._caled_ntwk_sets    
+        
+        
     def apply(self):
         '''
         '''
@@ -960,7 +1092,49 @@ class Calibration2(object):
             ntwkDict[ntwkKey] = self.apply(ntwkDict[ntwkKey])
 
         return ntwkDict
+        
+    apply_cal_to_all_in_dir = apply_to_dir
+    
+    def write(self, file=None,  *args, **kwargs):
+        '''
+        Write the Calibration to disk using :func:`~skrf.io.general.write`
+        
+        
+        Parameters
+        -----------
+        file : str or file-object
+            filename or a file-object. If left as None then the 
+            filename will be set to Calibration.name, if its not None. 
+            If both are None, ValueError is raised.
+        \*args, \*\*kwargs : arguments and keyword arguments
+            passed through to :func:`~skrf.io.general.write`
+        
+        Notes
+        ------
+        If the self.name is not None and file is  can left as None
+        and the resultant file will have the `.ntwk` extension appended
+        to the filename. 
+        
+        Examples
+        ---------
+        >>> cal.name = 'my_cal'
+        >>> cal.write()
+        
+        See Also
+        ---------
+        skrf.io.general.write
+        skrf.io.general.read
+        
+        '''
+        # this import is delayed untill here because of a circular depency
+        from ..io.general import write
+        
+        if file is None:
+            if self.name is None:
+                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+            file = self.name
 
+        write(file,self, *args, **kwargs) 
 class SOLT(Calibration2):
     def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
         self.n_thrus = n_thrus
@@ -969,14 +1143,11 @@ class SOLT(Calibration2):
     def run(self):
         '''
         '''
-        if len(self.measured) != len(self.ideals): 
-            raise(IndexError('Number of ideals must equal number of measurements'))
-        
         p1_m = [k.s11 for k in self.measured[:-1]]
         p2_m = [k.s22 for k in self.measured[:-1]]
         p1_i = [k.s11 for k in self.ideals[:-1]]
         p2_i = [k.s22 for k in self.ideals[:-1]]
-        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
+        thru = NetworkSet(self.measured[-self.n_thrus:]).mean_s
         
         # create one port calibration for all but last standard    
         port1_cal = Calibration(measured = p1_m, ideals = p1_i)
@@ -1005,7 +1176,7 @@ class SOLT(Calibration2):
         coefs.update({ 'port1 %s'%k:p1_coefs[k] for k in p1_coefs})
         coefs.update({ 'port2 %s'%k:p2_coefs[k] for k in p2_coefs})
         self._coefs = coefs
-        return 0 
+        return 1
     
     def apply(self,ntwk):
         '''

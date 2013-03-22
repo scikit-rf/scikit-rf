@@ -1199,7 +1199,7 @@ class Network(object):
             return self._z0
 
         except(AttributeError):
-            print 'Warning: z0 is undefined. Defaulting to 50.'
+            #print 'Warning: z0 is undefined. Defaulting to 50.'
             self.z0=50
             return self.z0 #this is not an error, its a recursive call
 
