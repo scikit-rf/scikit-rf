@@ -74,9 +74,11 @@ IO
     
     skrf.io.general.read
     skrf.io.general.write
+    skrf.io.general.ntwk_2_spreadsheet
     Network.write
     Network.write_touchstone
     Network.read
+    Network.write_spreadsheet
     
 Noise
 ============
@@ -144,7 +146,7 @@ from util import get_fid, get_extn
 ## later imports. delayed to solve circular dependencies
 #from io.general import read, write
 #from io import touchstone
-#from io.general import ntwk_2_spreadsheet
+#from io.general import network_2_spreadsheet
 
 
 
@@ -240,6 +242,7 @@ class Network(object):
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
     
+    ## these methods are used in the secondary properties
     def passivity(s):
         '''
         passivity metric for a multi-port network.
@@ -283,6 +286,38 @@ class Network(object):
         
         return pas_mat
     
+    def reciprocity(s):
+        '''
+       reciprocity metric for a multi-port network.
+    
+        This returns the magnitude of the difference between the 
+        s-parameter matrix and its transpose.
+    
+        for two port this is
+    
+        .. math::
+    
+                | S - S^T |
+    
+    
+    
+        where :math:`T` is transpose of S
+    
+        Returns
+        ---------
+        reciprocity : :class:`numpy.ndarray` of shape fxnxn
+        '''
+        if s.shape[-1] == 1:
+            raise (ValueError('Doesnt exist for one ports'))
+    
+        rec_mat = s.copy()
+        for f in range(len(s)):
+            rec_mat[f,:,:] = abs(s[f,:,:]- s[f,:,:].T)
+        
+        return rec_mat
+    
+    
+    
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
         're'    : npy.real,
@@ -299,6 +334,7 @@ class Network(object):
             npy.abs(x),
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
         'passivity' : passivity,
+        'reciprocity' : reciprocity,
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0))),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0))),
         }
@@ -318,6 +354,7 @@ class Network(object):
         'arcl_unwrap'   : 'Arc Length',
         'vswr' : 'VSWR',
         'passivity' : 'Passivity',
+        'reciprocity' : 'Reciprocity',
         'time_db': 'Magnitude (dB)', 
         'time_mag': 'Magnitude', 
         }
@@ -1386,15 +1423,32 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
         '''
-        if self.number_of_ports == 1:
-            raise (ValueError('Doesnt exist for one ports'))
-
-        pas_mat = self.s.copy()
-        for f in range(len(self.s)):
-            pas_mat[f,:,:] = npy.dot(self.s[f,:,:].conj().T, self.s[f,:,:])
-		
-        return pas_mat
+        return passivity(self.s)
+    @property
+    def reciprocity(self):
+        '''
+        reciprocity metric for a multi-port network.
     
+        This returns the difference between the s-parameter matrix 
+        and its transpose.
+    
+        for two port this is
+    
+        .. math::
+    
+                S - S^T
+    
+    
+    
+        where :math:`T` is transpose of S
+    
+        Returns
+        ---------
+        reciprocity : :class:`numpy.ndarray` of shape fxnxn
+    
+        
+        '''
+        return reciprocity(self.s)
     
     
     
@@ -1679,10 +1733,10 @@ class Network(object):
         
         See Also 
         ---------
-        skrf.io.general.ntwk_2_spreadsheet
+        skrf.io.general.network_2_spreadsheet
         '''
-        from io.general import ntwk_2_spreadsheet
-        ntwk_2_spreadsheet(self, *args, **kwargs)
+        from io.general import network_2_spreadsheet
+        network_2_spreadsheet(self, *args, **kwargs)
         
     # interpolation
     def interpolate(self, new_frequency,**kwargs):

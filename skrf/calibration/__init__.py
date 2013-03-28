@@ -57,6 +57,6 @@ import parametricStandard
 import calibrationSet
 
 from parametricStandard import *
-from calibration import Calibration
+from calibration import *
 from calibrationFunctions import *
 from calibrationSet import *

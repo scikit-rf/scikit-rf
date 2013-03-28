@@ -894,7 +894,7 @@ class Calibration(object):
 
         write(file,self, *args, **kwargs) 
 
-
+    
 class Calibration2(object):
     def __init__(self, measured, ideals, sloppy_input=False,
         is_reciprocal=True,name=None,*args, **kwargs):
@@ -955,8 +955,6 @@ class Calibration2(object):
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
         
-        
-    
     def run(self):
         pass
     
@@ -1135,6 +1133,7 @@ class Calibration2(object):
             file = self.name
 
         write(file,self, *args, **kwargs) 
+
 class SOLT(Calibration2):
     def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
         self.n_thrus = n_thrus

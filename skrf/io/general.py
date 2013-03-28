@@ -35,6 +35,17 @@ General io functions for reading and writing skrf objects
     write
     write_all
     save_sesh
+    
+
+Writing output to spreadsheet
+
+.. autosummary::
+    :toctree: generated/
+    
+    network_2_spreadsheet
+    networkset_2_spreadsheet
+
+    
 '''
 import cPickle as pickle
 from cPickle import UnpicklingError
@@ -579,10 +590,42 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         os.rename(new_file_name,file_name)
 
 
-def ntwk_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
+def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     *args, **kwargs):
     '''
     Write a Network object to a spreadsheet, for your boss    
+    
+    Write  the s-parameters  of a network to a spreadsheet, in a variety
+    of forms.This functions makes use of the pandas module, which in 
+    turn makes use of the xlrd module. These are imported during this 
+    function call. For more details about the file-writing functions 
+    see the pandas.DataFrom.to_?? functions.
+    
+    Notes
+    ------
+    The frequency unit used in the spreadsheet is take from 
+    `ntwk.frequency.unit`
+    
+    Parameters
+    -----------
+    ntwk :  :class:`~skrf.network.Network` object
+        the network to write 
+    file_name : str, None
+        the file_name to write. if None,  ntwk.name is used. 
+    file_type : ['csv','excel','html']
+        the type of file to write. See pandas.DataFrame.to_??? functions.
+    form : 'db','ma','ri'
+        format to write data, 
+        * db = db, deg
+        * ma = mag, deg
+        * ri = real, imag
+    \*args, \*\*kwargs :
+        passed to pandas.DataFrame.to_??? functions.
+        
+        
+    See Also
+    ---------
+    networkset_2_spreadsheet : writes a spreadsheet for many networks
     '''
     from pandas import DataFrame, Series # delayed because its not a requirement
     file_extns = {'csv':'csv','excel':'xls','html':'html'}
@@ -628,11 +671,43 @@ def ntwk_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     df.__getattribute__('to_%s'%file_type)(file_name, 
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
     
-def ntwkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel', 
+def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel', 
     *args, **kwargs):
     '''
-    Write a Network object to a spreadsheet, for your boss.
+    Write a NetworkSet object to a spreadsheet, for your boss    
     
+    Write  the s-parameters  of a each network in the networkset to a 
+    spreadsheet. If the `excel` file_type is used, then each network, 
+    is written to its own sheet, with the sheetname taken from the
+    network `name` attribute.
+    This functions makes use of the pandas module, which in turn makes
+    use of the xlrd module. These are imported during this function
+    
+    Notes
+    ------
+    The frequency unit used in the spreadsheet is take from 
+    `ntwk.frequency.unit`
+    
+    Parameters
+    -----------
+    ntwk :  :class:`~skrf.networkSet.NetworkSet` object
+        the network to write 
+    file_name : str, None
+        the file_name to write. if None,  ntwk.name is used. 
+    file_type : ['csv','excel','html']
+        the type of file to write. See pandas.DataFrame.to_??? functions.
+    form : 'db','ma','ri'
+        format to write data, 
+        * db = db, deg
+        * ma = mag, deg
+        * ri = real, imag
+    \*args, \*\*kwargs :
+        passed to pandas.DataFrame.to_??? functions.
+        
+        
+    See Also
+    ---------
+    networkset_2_spreadsheet : writes a spreadsheet for many networks
     '''
     from pandas import DataFrame, Series, ExcelWriter # delayed because its not a requirement
     if ntwkset.name is None and file_name is None:
@@ -640,8 +715,8 @@ def ntwkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
     
     if file_type == 'excel':
         writer = ExcelWriter(file_name)
-        [ntwk_2_spreadsheet(k, writer, sheet_name =k.name, *args, **kwargs) for k in ntwkset]
+        [network_2_spreadsheet(k, writer, sheet_name =k.name, *args, **kwargs) for k in ntwkset]
         writer.save()
     else:
-        [ntwk_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
+        [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
     

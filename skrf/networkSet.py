@@ -918,10 +918,10 @@ class NetworkSet(object):
         
         See Also 
         ---------
-        skrf.io.general.ntwk_2_spreadsheet
+        skrf.io.general.network_2_spreadsheet
         '''
-        from io.general import ntwkset_2_spreadsheet
-        ntwkset_2_spreadsheet(self, *args, **kwargs)
+        from io.general import networkset_2_spreadsheet
+        networkset_2_spreadsheet(self, *args, **kwargs)
     
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
