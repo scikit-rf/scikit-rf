@@ -56,12 +56,15 @@ NetworkSet Class
 import os 
 from network import average as network_average
 from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+
 import mathFunctions as mf
 import zipfile
 from copy import deepcopy
 import warnings
 import numpy as npy
 import pylab as plb
+# delayed imports due to circular dependencies
+# NetworkSet.from_dir : from io.general import read_all_networks 
 
 class NetworkSet(object):
     '''
@@ -239,6 +242,30 @@ class NetworkSet(object):
                 pass
         
         return cls(ntwk_list)
+    
+    @classmethod
+    def from_dir(cls, dir='.', *args, **kwargs):
+        '''
+        Create a NetworkSet from a directory containing  Networks
+        
+        This just calls ::
+        
+            rf.NetworkSet(rf.read_all_networks(dir), *args, **kwargs)
+            
+        Parameters
+        ---------------
+        dir : str
+            directory containing Network files.
+        \*args, \*\*kwargs :
+            passed to NetworkSet constructor
+            
+        Examples
+        ----------
+        
+        >>> my_set = rf.NetworkSet.from_dir('./data/')
+        '''
+        from io.general import read_all_networks
+        return cls(read_all_networks(dir), *args, **kwargs)
     
     def __add_a_operator(self,operator_name):
         '''

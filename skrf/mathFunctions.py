@@ -209,12 +209,12 @@ def db_2_np(x):
     '''
     converts a value in nepers to dB
     '''
-    return (log(10)/20) * x
+    return (npy.log(10)/20) * x
 def np_2_db(x):
     '''
     converts a value in dB to neper's
     '''
-    return 20/log(10) * x
+    return 20/npy.log(10) * x
 
 def radian_2_degree(rad):
     return (rad)*180/pi
