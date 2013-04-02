@@ -139,19 +139,43 @@ def guess_length_of_delay_short( aNtwk,tline):
 
 def unterminate_switch_terms(two_port, gamma_f, gamma_r):
     '''
-    unterminates switch terms from raw measurements.
+    Unterminates switch terms from raw measurements.
+    
+    In order to use the 8-term error model on a VNA which employs a 
+    switched source, the effects of the switch must be accounted for. 
+    This is done through `switch terms` as described in  [#]_ . The 
+    two switch terms are defined as, 
+    
+    .. math :: 
+        
+        \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
+        \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
+    
+    These can be measured by four-sampler VNA's by setting up 
+    user-defined traces onboard the VNA. If the VNA doesnt have  
+    4-samplers, then you can measure switch terms indirectly by using a 
+    two-tier two-port calibration. Firts do a SOLT, then convert 
+    the 12-term error coefs to 8-term, and pull out the switch terms.  
+    
+    Parameters
+    -------------
+    two_port : 2-port Network 
+        the raw measurement
+    gamma_f : 1-port Network
+        the measured forward switch term. 
+        gamma_f = a2/b2 sourced by port1
+    gamma_r : 1-port Network
+        the measured reverse switch term
 
-    takes:
-            two_port: the raw measurement, a 2-port Network type.
-            gamma_f: the measured forward switch term, a 1-port Network type
-            gamma_r: the measured reverse switch term, a 1-port Network type
-
-    returns:
-            un-terminated measurement, a 2-port Network type
-
-    see:
-            'Formulations of the Basic Vector Network Analyzer Error
-            Model including Switch Terms' by Roger B. Marks
+    Returns
+    -----------
+    ntwk :  Network object
+    
+    References
+    ------------
+    
+    .. [#] "Formulations of the Basic Vector Network Analyzer Error
+            Model including Switch Terms" by Roger B. Marks
     '''
     unterminated = two_port.copy()
 

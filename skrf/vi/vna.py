@@ -538,12 +538,12 @@ class PNA(GpibInstrument):
         Dont use this yet. 
         '''
         self.delete_all_meas()
-        self.create_meas('forward', 'a2/b2,1')
+        self.create_meas('forward switch term', 'a2/b2,1')
         forward = self.get_network()
         
         
         self.delete_all_meas()
-        self.create_meas('reverse', 'b1/a1,2')
+        self.create_meas('reverse switch term', 'a1/b1,2')
         reverse = self.get_network()
         self.delete_all_meas()
         return forward, reverse

@@ -973,6 +973,20 @@ class Calibration2(object):
             return self._coefs
     
     @property
+    def coefs_3term(self):
+        '''
+        '''
+        
+    @property
+    def coefs_8term(self):
+        pass
+    
+    @property 
+    def coefs_12term(self):
+        pass
+    
+    
+    @property
     def coefs_ntwks(self):
         '''
         '''
@@ -1134,8 +1148,30 @@ class Calibration2(object):
 
         write(file,self, *args, **kwargs) 
 
+
+
 class SOLT(Calibration2):
+    '''
+    Traditional 12-term, full two-port calibration containg a  Short, 
+    Open, Load, and Thru.
+    
+    SOLT is the traditional, fully determined, two-port calibration. 
+    This implementation is based off of Doug Rytting's work in [#] .
+    Although the acronym SOLT implies the use of 4 standards, skrf's 
+    algorithm can accept any number of reflect standards,  If  
+    more than 3 reflect standards are provided a least-squares solution 
+    is implemented for the one-port stage of the calibration.
+     
+    
+    
+    .. [#] "Network Analyzer Error Models and Calibration Methods" 
+        by Doug Rytting
+    
+    '''
     def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
+        '''
+        
+        '''
         self.n_thrus = n_thrus
         Calibration2.__init__(self, measured, ideals, *args, **kwargs)
     
@@ -1160,8 +1196,8 @@ class SOLT(Calibration2):
             p1_coefs['isolation'] = isolation.s21.s.flatten()
             p2_coefs['isolation'] = isolation.s12.s.flatten()
         
-        p1_coefs['reciever match'] = port1_cal.apply_cal(thru.s11).s.flatten()
-        p2_coefs['reciever match'] = port2_cal.apply_cal(thru.s22).s.flatten()
+        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
+        p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
         
 
         p1_coefs['transmission tracking'] = \
@@ -1172,8 +1208,8 @@ class SOLT(Calibration2):
             (1. - p2_coefs['source match']*p2_coefs['directivity'])
         coefs = {}
         #import pdb;pdb.set_trace()
-        coefs.update({ 'port1 %s'%k:p1_coefs[k] for k in p1_coefs})
-        coefs.update({ 'port2 %s'%k:p2_coefs[k] for k in p2_coefs})
+        coefs.update({ 'forward %s'%k:p1_coefs[k] for k in p1_coefs})
+        coefs.update({ 'reverse %s'%k:p2_coefs[k] for k in p2_coefs})
         self._coefs = coefs
         return 1
     
@@ -1187,19 +1223,19 @@ class SOLT(Calibration2):
         s21 = ntwk.s[:,1,0]
         s22 = ntwk.s[:,1,1]
         
-        e00 = self.coefs['port1 directivity']
-        e11 = self.coefs['port1 source match']
-        e10e01 = self.coefs['port1 reflection tracking']
-        e10e32 = self.coefs['port1 transmission tracking']
-        e22 = self.coefs['port1 reciever match']
-        e30 = self.coefs.get('port1 isolation',0)
+        e00 = self.coefs['forward directivity']
+        e11 = self.coefs['forward source match']
+        e10e01 = self.coefs['forward reflection tracking']
+        e10e32 = self.coefs['forward transmission tracking']
+        e22 = self.coefs['forward load match']
+        e30 = self.coefs.get('forward isolation',0)
         
-        e33_ = self.coefs['port2 directivity']
-        e11_ = self.coefs['port2 reciever match']
-        e23e32_ = self.coefs['port2 reflection tracking']
-        e23e01_ = self.coefs['port2 transmission tracking']
-        e22_ = self.coefs['port2 source match']
-        e03_ = self.coefs.get('port2 isolation',0)
+        e33_ = self.coefs['reverse directivity']
+        e11_ = self.coefs['reverse load match']
+        e23e32_ = self.coefs['reverse reflection tracking']
+        e23e01_ = self.coefs['reverse transmission tracking']
+        e22_ = self.coefs['reverse source match']
+        e03_ = self.coefs.get('reverse isolation',0)
         
         
         D = (1+(s11-e00)/(e10e01)*e11)*(1+(s22-e33_)/(e23e32_)*e22_) -\
@@ -1223,12 +1259,80 @@ class SOLT(Calibration2):
         return caled
 
 
-
+def convert_12term_2_8term(coefs_12term, redundant_k = False):
+    '''
+    Convert the 12-term and 8-term error coefficients.
+    
+    
+    Derivation of this conversion can be found in [#]_ .
+    
+    References
+    ------------
+    
+    .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
+    '''
+    
+    # the nomenclature  here is taken from doug rytting.
+    e00 = coefs_12term['forward directivity']
+    e11 = coefs_12term['forward source match']
+    e10e01 = coefs_12term['forward reflection tracking']
+    e10e32 = coefs_12term['forward transmission tracking']
+    e22 = coefs_12term['forward load match']
+    e30 = coefs_12term.get('forward isolation',0)
+    
+    e33_ = coefs_12term['reverse directivity']
+    e11_ = coefs_12term['reverse load match']
+    e23e32_ = coefs_12term['reverse reflection tracking']
+    e23e01_ = coefs_12term['reverse transmission tracking']
+    e22_ = coefs_12term['reverse source match']
+    e03_ = coefs_12term.get('reverse isolation',0)
+    
+    # these are given in eq (30) - (33) in Marks paper
+    # k = alpha/beta
+    gamma_f = (e22 - e22_)/(e23e32_ + e33_*(e22  - e22_))
+    gamma_r = (e11_ - e11)/(e10e01  + e00 *(e11_ - e11))
+    
+    k_first  =   e10e01/(e23e32_ + e33_*(e22  - e22_) )
+    k_second =1/(e23e32_/(e10e01 + e00 *(e11_ - e11)))
+    k = (k_first +k_second )/2.
+    coefs_8term = {}
+    for k in ['forward directivity','forward source match',
+        'forward reflection tracking','reverse directivity',
+        'reverse reflection tracking','reverse source match']:
+    
+        coefs_8term[k] = coefs_12term[k].copy() 
+    
+    coefs_8term['forward switch term'] = gamma_f
+    coefs_8term['reverse switch term'] = gamma_r
+    coefs_8term['k'] = k
+    if redundant_k:
+        coefs_8term['k first'] = k_first
+        coefs_8term['k second'] = k_second
+    return coefs_8term
+    
+def convert_8term_2_12term(coefs_8term):
+    '''
+    '''
+    e00 = coefs_8term['forward directivity']
+    e11 = coefs_8term['forward source match']
+    e10e01 = coefs_8term['forward reflection tracking']
+    
+    e33_ = coefs_8term['reverse directivity']
+    e23e32_ = coefs_8term['reverse reflection tracking']
+    e22_ = coefs_8term['reverse source match']
+    
+    gamma_f = coefs_8term['forward switch term']
+    gamma_r = coefs_8term['reverse switch term']
+    
+    coefs_12term = {}
+    coefs_12term['forward load match'] = 
+    
+        
+    
 ## Functions
 def align_measured_ideals(measured, ideals):
     '''
-    Aligns two lists of networks based on the union of their names
-    
+    Aligns two lists of networks based on the intersection of their name's.
     
     '''
     measured = [ measure for measure in measured\
