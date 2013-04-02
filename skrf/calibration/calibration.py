@@ -1211,7 +1211,6 @@ class SOLT(Calibration2):
         coefs.update({ 'forward %s'%k:p1_coefs[k] for k in p1_coefs})
         coefs.update({ 'reverse %s'%k:p2_coefs[k] for k in p2_coefs})
         self._coefs = coefs
-        return 1
     
     def apply(self,ntwk):
         '''
@@ -1258,6 +1257,9 @@ class SOLT(Calibration2):
         
         return caled
 
+        
+    
+## Functions
 
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
     '''
@@ -1272,7 +1274,8 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
     '''
     
-    # the nomenclature  here is taken from doug rytting.
+    # the mathematical nomenclature  here is taken from doug rytting, 
+    # but aligns with Marks derivation
     e00 = coefs_12term['forward directivity']
     e11 = coefs_12term['forward source match']
     e10e01 = coefs_12term['forward reflection tracking']
@@ -1287,20 +1290,21 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     e22_ = coefs_12term['reverse source match']
     e03_ = coefs_12term.get('reverse isolation',0)
     
-    # these are given in eq (30) - (33) in Marks paper
-    # k = alpha/beta
+    # these are given in eq (30) - (33) in Roger Marks paper given in 
+    # the docstring
+    # NOTE: k = alpha/beta 
+    #   the 'k' nomenclature is from Soares Speciale
     gamma_f = (e22 - e22_)/(e23e32_ + e33_*(e22  - e22_))
     gamma_r = (e11_ - e11)/(e10e01  + e00 *(e11_ - e11))
     
-    k_first  =   e10e01/(e23e32_ + e33_*(e22  - e22_) )
-    k_second =1/(e23e32_/(e10e01 + e00 *(e11_ - e11)))
-    k = (k_first +k_second )/2.
+    k_first  =   e10e32/(e23e32_ + e33_*(e22  - e22_) )
+    k_second =1/(e23e01_/(e10e01 + e00 *(e11_ - e11)))
+    k = k_first# +k_second )/2.
     coefs_8term = {}
-    for k in ['forward directivity','forward source match',
+    for l in ['forward directivity','forward source match',
         'forward reflection tracking','reverse directivity',
         'reverse reflection tracking','reverse source match']:
-    
-        coefs_8term[k] = coefs_12term[k].copy() 
+        coefs_8term[l] = coefs_12term[l].copy() 
     
     coefs_8term['forward switch term'] = gamma_f
     coefs_8term['reverse switch term'] = gamma_r
@@ -1309,7 +1313,8 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
         coefs_8term['k first'] = k_first
         coefs_8term['k second'] = k_second
     return coefs_8term
-    
+ 
+
 def convert_8term_2_12term(coefs_8term):
     '''
     '''
@@ -1323,13 +1328,49 @@ def convert_8term_2_12term(coefs_8term):
     
     gamma_f = coefs_8term['forward switch term']
     gamma_r = coefs_8term['reverse switch term']
+    k = coefs_8term['k']
+    
+    # taken from eq (36)-(39) in the Roger Marks paper given in the 
+    # docstring
+    e22  = e22_ + (e23e32_*gamma_f)/(1. - e33_ * gamma_f)
+    e11_ = e11  + (e10e01 *gamma_r)/(1. - e00  * gamma_r)
+    e10e32  = ((e22  - e22_)/gamma_f) * k
+    e23e01_ = ((e11_ - e11 )/gamma_r) * 1./k
     
     coefs_12term = {}
-    coefs_12term['forward load match'] = 
-    
+    for l in ['forward directivity','forward source match',
+        'forward reflection tracking','reverse directivity',
+        'reverse reflection tracking','reverse source match']:
+        coefs_12term[l] = coefs_8term[l].copy() 
         
+    coefs_12term['forward load match'] = e22
+    coefs_12term['reverse load match'] = e11_
+    coefs_12term['forward transmission tracking'] =  e10e32
+    coefs_12term['reverse transmission tracking'] =  e23e01_
+    return coefs_12term
+
+def verify_12term(coefs_12term):
+    '''
+    '''
+    e00 = coefs_12term['forward directivity']
+    e11 = coefs_12term['forward source match']
+    e10e01 = coefs_12term['forward reflection tracking']
+    e10e32 = coefs_12term['forward transmission tracking']
+    e22 = coefs_12term['forward load match']
+    e30 = coefs_12term.get('forward isolation',0)
     
-## Functions
+    e33_ = coefs_12term['reverse directivity']
+    e11_ = coefs_12term['reverse load match']
+    e23e32_ = coefs_12term['reverse reflection tracking']
+    e23e01_ = coefs_12term['reverse transmission tracking']
+    e22_ = coefs_12term['reverse source match']
+    e03_ = coefs_12term.get('reverse isolation',0)
+    
+    return e10e32*e23e01_ - \
+        (e23e32_ + e33_*(e22 - e22_))*\
+        (e10e01  + e00 *(e11_ - e11))
+
+
 def align_measured_ideals(measured, ideals):
     '''
     Aligns two lists of networks based on the intersection of their name's.
