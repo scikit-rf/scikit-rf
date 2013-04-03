@@ -597,6 +597,8 @@ class Network(object):
     
 
     def __eq__(self,other):
+        if other is None:
+            return False
         if npy.all(npy.abs(self.s - other.s) < ALMOST_ZERO):
             return True
         else:
