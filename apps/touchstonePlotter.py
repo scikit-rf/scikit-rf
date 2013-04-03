@@ -85,7 +85,8 @@ class TouchstonePlotter(HasTraits):
         Item('plot_tool',style='custom',show_label=False),
         
         resizable=True,
-        width = 800, height = 300,)
+        width = 800, height = 300,
+        title = 'Skrf Touchstone plotter')
 
 
 if __name__  == '__main__':
