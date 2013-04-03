@@ -8,8 +8,8 @@ import os
 from plotTool import PlotTool
 
 class Network2Spreadsheet(HasTraits):
-    input_dir = Directory('/home/alex/tmp/tmp')
-    output_dir = Directory('/home/alex/tmp/tmp')
+    input_dir = Directory('')
+    output_dir = Directory('')
     
     output_filename = String('output.xls')
     ntwk_dict = Property(depends_on = 'input_dir')
