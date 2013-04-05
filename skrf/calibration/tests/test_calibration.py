@@ -2,7 +2,7 @@ import unittest
 import os
 import cPickle as pickle
 import skrf as rf
-
+import numpy as npy
 
 class OnePortStandardCalibration(unittest.TestCase):
     '''
@@ -100,5 +100,34 @@ class OnePortStandardCalibration(unittest.TestCase):
         f.close()
         os.remove(os.path.join(self.test_dir, 'pickled_cal.cal'))
 
-suite = unittest.TestLoader().loadTestsFromTestCase(OnePortStandardCalibration)
-unittest.TextTestRunner(verbosity=2).run(suite)
+
+class TwoPortCalibration8term(unittest.TestCase):
+    def test_twoport_accuracy(self):
+        wg= rf.wr10
+        wg.frequency = rf.F.from_f([1])
+         
+        X = wg.match(nports =2, name = 'X')
+        Y = wg.match(nports =2, name='Y')
+        X.s = rf.rand_c(len(wg.frequency),2,2)
+        Y.s = rf.rand_c(len(wg.frequency),2,2)
+        
+        
+        ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.thru(name='thru'),
+            ]
+        
+        measured = [X**k**Y for k in ideals]
+        
+        cal = rf.Calibration(
+            ideals = ideals,
+            measured = measured,
+            )
+        for k in range(cal.nstandards):
+            self.assertTrue(cal.apply_cal(measured[k]) == ideals[k]) 
+          
+
+#suite = unittest.TestLoader().loadTestsFromTestCase(OnePortStandardCalibration)
+#unittest.TextTestRunner(verbosity=2).run(suite)

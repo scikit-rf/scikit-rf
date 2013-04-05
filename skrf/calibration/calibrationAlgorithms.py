@@ -514,7 +514,8 @@ def two_port(measured, ideals, switch_terms = None):
         error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
         #if len (residualsTmp )==0:
         #       raise ValueError( 'matrix has singular values, check standards')
-
+        
+        
         error_vector[f,:] = error_vector_at_f.flatten()
         residuals[f,:] = residuals_at_f
 
