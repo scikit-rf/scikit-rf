@@ -961,6 +961,15 @@ class Calibration2(object):
     @property
     def frequency(self):
         return self.measured[0].frequency.copy()
+    
+    @property
+    def nstandards(self):
+        '''
+        number of ideal/measurement pairs in calibration
+        '''
+        if len(self.ideals) != len(self.measured):
+            warn('number of ideals and measured dont agree')
+        return len(self.ideals)
         
     @property
     def coefs(self):
@@ -1201,11 +1210,11 @@ class SOLT(Calibration2):
         
 
         p1_coefs['transmission tracking'] = \
-            thru.s21.s.flatten() - p1_coefs.get('isolation',0)/\
-            (1. - p1_coefs['source match']*p1_coefs['directivity'])
+            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
+            (1. - p1_coefs['source match']*p1_coefs['load match'])
         p2_coefs['transmission tracking'] = \
-            thru.s12.s.flatten() - p2_coefs.get('isolation',0)/\
-            (1. - p2_coefs['source match']*p2_coefs['directivity'])
+            (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
+            (1. - p2_coefs['source match']*p2_coefs['load match'])
         coefs = {}
         #import pdb;pdb.set_trace()
         coefs.update({ 'forward %s'%k:p1_coefs[k] for k in p1_coefs})
@@ -1227,14 +1236,14 @@ class SOLT(Calibration2):
         e10e01 = self.coefs['forward reflection tracking']
         e10e32 = self.coefs['forward transmission tracking']
         e22 = self.coefs['forward load match']
-        e30 = self.coefs.get('forward isolation',0)
+        e30 = self.coefs.get('forward isolation',npy.zeros((len(s11),1,1)))
         
         e33_ = self.coefs['reverse directivity']
         e11_ = self.coefs['reverse load match']
         e23e32_ = self.coefs['reverse reflection tracking']
         e23e01_ = self.coefs['reverse transmission tracking']
         e22_ = self.coefs['reverse source match']
-        e03_ = self.coefs.get('reverse isolation',0)
+        e03_ = self.coefs.get('reverse isolation',npy.zeros((len(s11),1,1)))
         
         
         D = (1+(s11-e00)/(e10e01)*e11)*(1+(s22-e33_)/(e23e32_)*e22_) -\
@@ -1256,7 +1265,8 @@ class SOLT(Calibration2):
             ( ((s12 -e03_)/(e23e01_))*(1+((s11-e00)/(e10e01))*(e11-e11_)) )/D    
         
         return caled
-
+    
+    apply_cal = apply
         
     
 ## Functions
