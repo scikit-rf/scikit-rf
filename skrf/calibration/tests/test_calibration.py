@@ -105,6 +105,7 @@ class TwoPortCalibration8term(unittest.TestCase):
     def test_accuracy(self):
         wg= rf.wr10
         wg.frequency = rf.F.from_f([1])
+        
          
         X = wg.match(nports =2, name = 'X')
         Y = wg.match(nports =2, name='Y')
@@ -129,18 +130,30 @@ class TwoPortCalibration8term(unittest.TestCase):
             self.assertTrue(cal.apply_cal(measured[k]) == ideals[k]) 
           
 class TwoPortCalibrationSOLT(unittest.TestCase):
+    '''
+    This test verifys the accuracy of the SOLT calibration. Generating 
+    measured networks requires different error networks for forward and 
+    reverse excitation states, these are described as follows
+    
+    forward excition
+        used for S21 and S11
+        Mf = Xf ** S ** Yf  
+    
+    reverse excition
+        used for S12 and S22
+        Mr = Xr ** S ** Yr
+    
+    
+    '''
     def setUp(self):
         wg= rf.wr10
         wg.frequency = rf.F.from_f([1])
-         
-        self.Xf = wg.match(nports =2, name = 'Xf')
-        self.Xr = wg.match(nports =2, name = 'Xr')
-        self.Yf = wg.match(nports =2, name='Yf')
-        self.Yr = wg.match(nports =2, name='Yr')
-        self.Xf.s = rf.rand_c(len(wg.frequency),2,2)
-        self.Xr.s = rf.rand_c(len(wg.frequency),2,2)
-        self.Yf.s = rf.rand_c(len(wg.frequency),2,2)
-        self.Yr.s = rf.rand_c(len(wg.frequency),2,2)
+        self.wg = wg
+        self.Xf = wg.random(n_ports =2, name = 'Xf')
+        self.Xr = wg.random(n_ports =2, name = 'Xr')
+        self.Yf = wg.random(n_ports =2, name='Yf')
+        self.Yr = wg.random(n_ports =2, name='Yr')
+       
         
         ideals = [
             wg.short(nports=2, name='short'),
@@ -149,21 +162,24 @@ class TwoPortCalibrationSOLT(unittest.TestCase):
             wg.thru(name='thru'),
             ]
         
-        measuredf = [self.Xf**k**self.Yf for k in ideals]
-        measuredr = [self.Xr**k**self.Yr for k in ideals]
-        measured = [ k.copy() for k in measuredf]
-        
-        for m,f,r  in zip(measured,measuredf, measuredr):
-            m.s[:,1,0] = f.s[:,1,0]
-            m.s[:,0,0] = f.s[:,0,0]
-            m.s[:,0,1] = r.s[:,0,1]
-            m.s[:,1,1] = r.s[:,1,1]
+        def measure(ntwk):
+            m = ntwk.copy()
+            mf = self.Xf**ntwk**self.Yf
+            mr = self.Xr**ntwk**self.Yr
+            m.s[:,1,0] = mf.s[:,1,0]
+            m.s[:,0,0] = mf.s[:,0,0]
+            m.s[:,0,1] = mr.s[:,0,1]
+            m.s[:,1,1] = mr.s[:,1,1]
+            return m 
+        self.measure = measure
             
+        measured = [ measure(k) for k in ideals]
+        
         self.cal = rf.SOLT(
             ideals = ideals,
             measured = measured,
             )
-    
+        
     def test_forward_directivity_accuracy(self):
         self.assertEqual(
             self.Xf.s11,
@@ -214,16 +230,26 @@ class TwoPortCalibrationSOLT(unittest.TestCase):
             self.Yr.s12*self.Xr.s12 , 
             self.cal.coefs_ntwks['reverse transmission tracking'])
             
-    def test_correction_accuracy(self):
-        #import pdb;pdb.set_trace()
+    def test_correction_accuracy_of_standards(self):
         for k in range(self.cal.nstandards):
             self.assertEqual(self.cal.apply_cal(self.cal.measured[k]),\
                 self.cal.ideals[k])
     
+    def test_correction_accuracy_of_dut(self):
+        
+        a = self.wg.random(n_ports=2)
+        m = self.measure(a)
+        c = self.cal.apply(m)
+        
+        self.assertEqual(a,c)
+    
     def test_convert_12term_2_8term(self):
         converted = rf.convert_8term_2_12term(
                     rf.convert_12term_2_8term(self.cal.coefs))
-        import pdb;pdb.set_trace()
+        
+        #import pdb;pdb.set_trace()
+        for k in converted:
+            print('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k])))
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
         

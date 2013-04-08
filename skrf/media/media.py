@@ -1064,7 +1064,7 @@ class Media(object):
         '''
         shape = (self.frequency.npoints, n_ports,n_ports)
         s = mf.rand_c(*shape)
-        result = Network(frequeuncy = self.frequency,s = s, **kwargs)
+        result = Network(frequency = self.frequency,s = s, **kwargs)
         return result
         
     ## OTHER METHODS

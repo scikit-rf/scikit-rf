@@ -954,7 +954,9 @@ class Calibration2(object):
         self._residual_ntwks = None
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
-        
+    
+    
+    
     def run(self):
         pass
     
@@ -1028,7 +1030,33 @@ class Calibration2(object):
         '''
         '''
         return s_dict_to_ns(self.coefs, self.frequency).to_dict()
+    
+    @property
+    def verify_12term(self):
+        '''
+        '''
         
+        e00 = self.coefs_12term['forward directivity']
+        e11 = self.coefs_12term['forward source match']
+        e10e01 = self.coefs_12term['forward reflection tracking']
+        e10e32 = self.coefs_12term['forward transmission tracking']
+        e22 = self.coefs_12term['forward load match']
+        e30 = self.coefs_12term.get('forward isolation',0)
+        
+        e33_ = self.coefs_12term['reverse directivity']
+        e11_ = self.coefs_12term['reverse load match']
+        e23e32_ = self.coefs_12term['reverse reflection tracking']
+        e23e01_ = self.coefs_12term['reverse transmission tracking']
+        e22_ = self.coefs_12term['reverse source match']
+        e03_ = self.coefs_12term.get('reverse isolation',0)
+        
+        return e10e32*e23e01_ - \
+            (e23e32_ + e33_*(e22 - e22_))*\
+            (e10e01  + e00 *(e11_ - e11))    
+    @property
+    def verify_12term_ntwk(self):
+        Network(s= self.verify_12term, frequency = self.frequency)
+    
     @property
     def residual_ntwks(self):
         '''
@@ -1341,7 +1369,7 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     
     k_first  =   e10e32/(e23e32_ + e33_*(e22  - e22_) )
     k_second =1/(e23e01_/(e10e01 + e00 *(e11_ - e11)))
-    k = k_first# +k_second )/2.
+    k = k_first #npy.sqrt(k_second*k_first)# (k_first +k_second )/2.
     coefs_8term = {}
     for l in ['forward directivity','forward source match',
         'forward reflection tracking','reverse directivity',
@@ -1391,26 +1419,7 @@ def convert_8term_2_12term(coefs_8term):
     coefs_12term['reverse transmission tracking'] =  e23e01_
     return coefs_12term
 
-def verify_12term(coefs_12term):
-    '''
-    '''
-    e00 = coefs_12term['forward directivity']
-    e11 = coefs_12term['forward source match']
-    e10e01 = coefs_12term['forward reflection tracking']
-    e10e32 = coefs_12term['forward transmission tracking']
-    e22 = coefs_12term['forward load match']
-    e30 = coefs_12term.get('forward isolation',0)
-    
-    e33_ = coefs_12term['reverse directivity']
-    e11_ = coefs_12term['reverse load match']
-    e23e32_ = coefs_12term['reverse reflection tracking']
-    e23e01_ = coefs_12term['reverse transmission tracking']
-    e22_ = coefs_12term['reverse source match']
-    e03_ = coefs_12term.get('reverse isolation',0)
-    
-    return e10e32*e23e01_ - \
-        (e23e32_ + e33_*(e22 - e22_))*\
-        (e10e01  + e00 *(e11_ - e11))
+
 
 
 def align_measured_ideals(measured, ideals):
