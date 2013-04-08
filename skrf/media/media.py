@@ -1043,7 +1043,30 @@ class Media(object):
         result.s = mag_rv*npy.exp(1j*phase_rv)
         return result
 
+    def random(self, n_ports = 1,**kwargs):
+        '''
+        Complex random network.
 
+        Creates a n-port network whose s-matrix is filled with random 
+        complex numbers.
+        
+        Parameters
+        ----------
+        n_ports : int
+                number of ports.
+        \*\*kwargs : passed to :class:`~skrf.network.Network`
+                initializer
+
+        Returns
+        --------
+        result : :class:`~skrf.network.Network` object
+                the network
+        '''
+        shape = (self.frequency.npoints, n_ports,n_ports)
+        s = mf.rand_c(*shape)
+        result = Network(frequeuncy = self.frequency,s = s, **kwargs)
+        return result
+        
     ## OTHER METHODS
     def guess_length_of_delay_short(self, aNtwk):
         '''

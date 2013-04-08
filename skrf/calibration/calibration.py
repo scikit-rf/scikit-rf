@@ -988,11 +988,39 @@ class Calibration2(object):
         
     @property
     def coefs_8term(self):
-        pass
+        return { k:self.coefs.get(k) for k in [\
+            'forward directivity',
+            'forward source match',
+            'forward reflection tracking',
+            'forward isolation',
+
+            'reverse directivity',
+            'reverse load match',
+            'reverse reflection tracking',
+            'reverse isolation',
+            
+            'forward source match',
+            'reverse source match',
+            'k'
+            ]}
     
     @property 
     def coefs_12term(self):
-        pass
+        return { k:self.coefs.get(k) for k in [\
+            'forward directivity',
+            'forward source match',
+            'forward reflection tracking',
+            'forward transmission tracking',
+            'forward load match',
+            'forward isolation',
+
+            'reverse directivity',
+            'reverse load match',
+            'reverse reflection tracking',
+            'reverse transmission tracking',
+            'reverse source match',
+            'reverse isolation',
+            ]}
     
     
     @property
@@ -1219,6 +1247,10 @@ class SOLT(Calibration2):
         #import pdb;pdb.set_trace()
         coefs.update({ 'forward %s'%k:p1_coefs[k] for k in p1_coefs})
         coefs.update({ 'reverse %s'%k:p2_coefs[k] for k in p2_coefs})
+        eight_term_coefs = convert_12term_2_8term(coefs)
+        #import pdb;pdb.set_trace()
+        coefs.update({l:eight_term_coefs[l] for l in \
+            ['forward switch term','reverse switch term','k'] })
         self._coefs = coefs
     
     def apply(self,ntwk):
@@ -1236,14 +1268,14 @@ class SOLT(Calibration2):
         e10e01 = self.coefs['forward reflection tracking']
         e10e32 = self.coefs['forward transmission tracking']
         e22 = self.coefs['forward load match']
-        e30 = self.coefs.get('forward isolation',npy.zeros((len(s11),1,1)))
+        e30 = self.coefs.get('forward isolation',0)
         
         e33_ = self.coefs['reverse directivity']
         e11_ = self.coefs['reverse load match']
         e23e32_ = self.coefs['reverse reflection tracking']
         e23e01_ = self.coefs['reverse transmission tracking']
         e22_ = self.coefs['reverse source match']
-        e03_ = self.coefs.get('reverse isolation',npy.zeros((len(s11),1,1)))
+        e03_ = self.coefs.get('reverse isolation',0)
         
         
         D = (1+(s11-e00)/(e10e01)*e11)*(1+(s22-e33_)/(e23e32_)*e22_) -\

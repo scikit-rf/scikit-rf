@@ -133,10 +133,14 @@ class TwoPortCalibrationSOLT(unittest.TestCase):
         wg= rf.wr10
         wg.frequency = rf.F.from_f([1])
          
-        self.X = wg.match(nports =2, name = 'X')
-        self.Y = wg.match(nports =2, name='Y')
-        self.X.s = rf.rand_c(len(wg.frequency),2,2)
-        self.Y.s = rf.rand_c(len(wg.frequency),2,2)
+        self.Xf = wg.match(nports =2, name = 'Xf')
+        self.Xr = wg.match(nports =2, name = 'Xr')
+        self.Yf = wg.match(nports =2, name='Yf')
+        self.Yr = wg.match(nports =2, name='Yr')
+        self.Xf.s = rf.rand_c(len(wg.frequency),2,2)
+        self.Xr.s = rf.rand_c(len(wg.frequency),2,2)
+        self.Yf.s = rf.rand_c(len(wg.frequency),2,2)
+        self.Yr.s = rf.rand_c(len(wg.frequency),2,2)
         
         ideals = [
             wg.short(nports=2, name='short'),
@@ -145,47 +149,84 @@ class TwoPortCalibrationSOLT(unittest.TestCase):
             wg.thru(name='thru'),
             ]
         
-        measured = [self.X**k**self.Y for k in ideals]
+        measuredf = [self.Xf**k**self.Yf for k in ideals]
+        measuredr = [self.Xr**k**self.Yr for k in ideals]
+        measured = [ k.copy() for k in measuredf]
         
+        for m,f,r  in zip(measured,measuredf, measuredr):
+            m.s[:,1,0] = f.s[:,1,0]
+            m.s[:,0,0] = f.s[:,0,0]
+            m.s[:,0,1] = r.s[:,0,1]
+            m.s[:,1,1] = r.s[:,1,1]
+            
         self.cal = rf.SOLT(
             ideals = ideals,
             measured = measured,
             )
+    
     def test_forward_directivity_accuracy(self):
-        self.assertEqual(self.X.s11,self.cal.coefs_ntwks['forward directivity'])
+        self.assertEqual(
+            self.Xf.s11,
+            self.cal.coefs_ntwks['forward directivity'])
     
     def test_forward_source_match_accuracy(self):
-        self.assertEqual(self.X.s22 , self.cal.coefs_ntwks['forward source match'] )       
+        self.assertEqual(
+            self.Xf.s22 , 
+            self.cal.coefs_ntwks['forward source match'] )       
     
     def test_forward_load_match_accuracy(self):
-        self.assertEqual(self.Y.s11 , self.cal.coefs_ntwks['forward load match'])
+        self.assertEqual(
+            self.Yf.s11 , 
+            self.cal.coefs_ntwks['forward load match'])
     
     def test_forward_reflection_tracking_accuracy(self):
-        self.assertEqual(self.X.s21 * self.X.s12 , self.cal.coefs_ntwks['forward reflection tracking'])
+        self.assertEqual(
+            self.Xf.s21 * self.Xf.s12 , 
+            self.cal.coefs_ntwks['forward reflection tracking'])
     
     def test_forward_transmission_tracking_accuracy(self):
-        self.assertEqual(self.X.s21*self.Y.s21 , self.cal.coefs_ntwks['forward transmission tracking'])
+        self.assertEqual(
+            self.Xf.s21*self.Yf.s21 , 
+            self.cal.coefs_ntwks['forward transmission tracking'])
     
     def test_reverse_source_match_accuracy(self):
-        self.assertEqual(self.Y.s11 , self.cal.coefs_ntwks['reverse source match']   )     
+        self.assertEqual(
+            self.Yr.s11 , 
+            self.cal.coefs_ntwks['reverse source match']   )     
     
     def test_reverse_directivity_accuracy(self):
-        self.assertEqual(self.Y.s22 , self.cal.coefs_ntwks['reverse directivity']  )      
+        self.assertEqual(
+            self.Yr.s22 , 
+            self.cal.coefs_ntwks['reverse directivity']  )      
     
     def test_reverse_load_match_accuracy(self):
-        self.assertEqual(self.X.s22 , self.cal.coefs_ntwks['reverse load match'])
+        self.assertEqual(
+            self.Xr.s22 , 
+            self.cal.coefs_ntwks['reverse load match'])
     
     def test_reverse_reflection_tracking_accuracy(self):
-        self.assertEqual(self.Y.s21 * self.Y.s12 , self.cal.coefs_ntwks['reverse reflection tracking'])
+        self.assertEqual(
+            self.Yr.s21 * self.Yr.s12 , 
+            self.cal.coefs_ntwks['reverse reflection tracking'])
     
     def test_reverse_transmission_tracking_accuracy(self):
-        self.assertEqual(self.Y.s12*self.X.s12 , self.cal.coefs_ntwks['reverse transmission tracking'])
-            
+        self.assertEqual(
+            self.Yr.s12*self.Xr.s12 , 
+            self.cal.coefs_ntwks['reverse transmission tracking'])
             
     def test_correction_accuracy(self):
         #import pdb;pdb.set_trace()
         for k in range(self.cal.nstandards):
             self.assertEqual(self.cal.apply_cal(self.cal.measured[k]),\
                 self.cal.ideals[k])
-#suite = unittest.TestLoader().loadTestsFromTestCase(OnePortStandardCalibration)
-#unittest.TextTestRunner(verbosity=2).run(suite)
+    
+    def test_convert_12term_2_8term(self):
+        converted = rf.convert_8term_2_12term(
+                    rf.convert_12term_2_8term(self.cal.coefs))
+        import pdb;pdb.set_trace()
+        for k in converted:
+            self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
+        
+    
+
+
