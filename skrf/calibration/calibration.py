@@ -1264,7 +1264,6 @@ class SOLT(Calibration2):
         p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
         p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
         
-
         p1_coefs['transmission tracking'] = \
             (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
             (1. - p1_coefs['source match']*p1_coefs['load match'])
@@ -1291,38 +1290,38 @@ class SOLT(Calibration2):
         s21 = ntwk.s[:,1,0]
         s22 = ntwk.s[:,1,1]
         
-        e00 = self.coefs['forward directivity']
-        e11 = self.coefs['forward source match']
-        e10e01 = self.coefs['forward reflection tracking']
-        e10e32 = self.coefs['forward transmission tracking']
-        e22 = self.coefs['forward load match']
-        e30 = self.coefs.get('forward isolation',0)
+        Edf = self.coefs['forward directivity']
+        Esf = self.coefs['forward source match']
+        Erf = self.coefs['forward reflection tracking']
+        Etf = self.coefs['forward transmission tracking']
+        Elf = self.coefs['forward load match']
+        Eif = self.coefs.get('forward isolation',0)
         
-        e33_ = self.coefs['reverse directivity']
-        e11_ = self.coefs['reverse load match']
-        e23e32_ = self.coefs['reverse reflection tracking']
-        e23e01_ = self.coefs['reverse transmission tracking']
-        e22_ = self.coefs['reverse source match']
-        e03_ = self.coefs.get('reverse isolation',0)
+        Edr = self.coefs['reverse directivity']
+        Elr = self.coefs['reverse load match']
+        Err = self.coefs['reverse reflection tracking']
+        Etr = self.coefs['reverse transmission tracking']
+        Esr = self.coefs['reverse source match']
+        Eir = self.coefs.get('reverse isolation',0)
         
         
-        D = (1+(s11-e00)/(e10e01)*e11)*(1+(s22-e33_)/(e23e32_)*e22_) -\
-            ((s21-e30)/(e10e32))*((s12-e03_)/(e23e01_))*e22*e11_
+        D = (1+(s11-Edf)/(Erf)*Esf)*(1+(s22-Edr)/(Err)*Esr) -\
+            ((s21-Eif)/(Etf))*((s12-Eir)/(Etr))*Elf*Elr
         
         
         caled.s[:,0,0] = \
-            (((s11-e00)/(e10e01))*(1+(s22-e33_)/(e23e32_)*e22_)-\
-            e22*((s21-e30)/(e10e32))*(s12-e03_)/(e23e01_)) /D
+            (((s11-Edf)/(Erf))*(1+(s22-Edr)/(Err)*Esr)-\
+            Elf*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
             
         caled.s[:,1,1] = \
-            (((s22-e33_)/(e23e32_))*(1+(s11-e00)/(e10e01)*e11)-\
-            e11_*((s21-e30)/(e10e32))*(s12-e03_)/(e23e01_)) /D
+            (((s22-Edr)/(Err))*(1+(s11-Edf)/(Erf)*Esf)-\
+            Elr*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
             
         caled.s[:,1,0] = \
-            ( ((s21 -e30)/(e10e32))*(1+((s22-e33_)/(e23e32_))*(e22_-e22)) )/D
+            ( ((s21 -Eif)/(Etf))*(1+((s22-Edr)/(Err))*(Esr-Elf)) )/D
         
         caled.s[:,0,1] = \
-            ( ((s12 -e03_)/(e23e01_))*(1+((s11-e00)/(e10e01))*(e11-e11_)) )/D    
+            ( ((s12 -Eir)/(Etr))*(1+((s11-Edf)/(Erf))*(Esf-Elr)) )/D    
         
         return caled
     
@@ -1344,31 +1343,30 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     .. [#] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
     '''
     
-    # the mathematical nomenclature  here is taken from doug rytting, 
-    # but aligns with Marks derivation
-    e00 = coefs_12term['forward directivity']
-    e11 = coefs_12term['forward source match']
-    e10e01 = coefs_12term['forward reflection tracking']
-    e10e32 = coefs_12term['forward transmission tracking']
-    e22 = coefs_12term['forward load match']
-    e30 = coefs_12term.get('forward isolation',0)
+    # Nomenclature taken from Roger Marks
+    Edf = coefs_12term['forward directivity']
+    Esf = coefs_12term['forward source match']
+    Erf = coefs_12term['forward reflection tracking']
+    Etf = coefs_12term['forward transmission tracking']
+    Elf = coefs_12term['forward load match']
+    Eif = coefs_12term.get('forward isolation',0)
     
-    e33_ = coefs_12term['reverse directivity']
-    e11_ = coefs_12term['reverse load match']
-    e23e32_ = coefs_12term['reverse reflection tracking']
-    e23e01_ = coefs_12term['reverse transmission tracking']
-    e22_ = coefs_12term['reverse source match']
-    e03_ = coefs_12term.get('reverse isolation',0)
+    Edr = coefs_12term['reverse directivity']
+    Esr = coefs_12term['reverse source match']
+    Err = coefs_12term['reverse reflection tracking']
+    Elr = coefs_12term['reverse load match']    
+    Etr = coefs_12term['reverse transmission tracking']
+    Eir = coefs_12term.get('reverse isolation',0)
     
-    # these are given in eq (30) - (33) in Roger Marks paper given in 
+    # these are given in eq (30) - (33) in Roger Mark's paper listed in 
     # the docstring
-    # NOTE: k = alpha/beta 
+    # NOTE: k = e10/e23 = alpha/beta 
     #   the 'k' nomenclature is from Soares Speciale
-    gamma_f = (e22 - e22_)/(e23e32_ + e33_*(e22  - e22_))
-    gamma_r = (e11_ - e11)/(e10e01  + e00 *(e11_ - e11))
+    gamma_f = (Elf - Esr)/(Err + Edr*(Elf  - Esr))
+    gamma_r = (Elr - Esf)/(Erf  + Edf *(Elr - Esf))
     
-    k_first  =   e10e32/(e23e32_ + e33_*(e22  - e22_) )
-    k_second =1/(e23e01_/(e10e01 + e00 *(e11_ - e11)))
+    k_first  =   Etf/(Err + Edr*(Elf  - Esr) )
+    k_second =1/(Etr/(Erf + Edf *(Elr - Esf)))
     k = k_first #npy.sqrt(k_second*k_first)# (k_first +k_second )/2.
     coefs_8term = {}
     for l in ['forward directivity','forward source match',
@@ -1388,13 +1386,14 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
 def convert_8term_2_12term(coefs_8term):
     '''
     '''
-    e00 = coefs_8term['forward directivity']
-    e11 = coefs_8term['forward source match']
-    e10e01 = coefs_8term['forward reflection tracking']
+    Edf = coefs_8term['forward directivity']
+    Esf = coefs_8term['forward source match']
+    Erf = coefs_8term['forward reflection tracking']
     
-    e33_ = coefs_8term['reverse directivity']
-    e23e32_ = coefs_8term['reverse reflection tracking']
-    e22_ = coefs_8term['reverse source match']
+    Edr = coefs_8term['reverse directivity']
+    Esr = coefs_8term['reverse source match']
+    Err = coefs_8term['reverse reflection tracking']
+    
     
     gamma_f = coefs_8term['forward switch term']
     gamma_r = coefs_8term['reverse switch term']
@@ -1402,10 +1401,10 @@ def convert_8term_2_12term(coefs_8term):
     
     # taken from eq (36)-(39) in the Roger Marks paper given in the 
     # docstring
-    e22  = e22_ + (e23e32_*gamma_f)/(1. - e33_ * gamma_f)
-    e11_ = e11  + (e10e01 *gamma_r)/(1. - e00  * gamma_r)
-    e10e32  = ((e22  - e22_)/gamma_f) * k
-    e23e01_ = ((e11_ - e11 )/gamma_r) * 1./k
+    Elf  = Esr + (Err*gamma_f)/(1. - Edr * gamma_f)
+    Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
+    Etf  = ((Elf  - Esr)/gamma_f) * k
+    Etr = ((Elr - Esf )/gamma_r) * 1./k
     
     coefs_12term = {}
     for l in ['forward directivity','forward source match',
@@ -1413,10 +1412,10 @@ def convert_8term_2_12term(coefs_8term):
         'reverse reflection tracking','reverse source match']:
         coefs_12term[l] = coefs_8term[l].copy() 
         
-    coefs_12term['forward load match'] = e22
-    coefs_12term['reverse load match'] = e11_
-    coefs_12term['forward transmission tracking'] =  e10e32
-    coefs_12term['reverse transmission tracking'] =  e23e01_
+    coefs_12term['forward load match'] = Elf
+    coefs_12term['reverse load match'] = Elr
+    coefs_12term['forward transmission tracking'] =  Etf
+    coefs_12term['reverse transmission tracking'] =  Etr
     return coefs_12term
 
 
