@@ -950,8 +950,34 @@ class NetworkSet(object):
         from io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
     
+    def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
+        '''
+        Converts an attributes of the Networks within a NetworkSet to a 
+        Pandas DataFrame
+        
+        Examples
+        ---------
+        df = ns.ntwk_attr_2_df('s_db',m=1,n=0)
+        df.to_excel('output.xls') # see Pandas docs for more info
+        
+        '''
+        from pandas import DataFrame, Series, Index
+        index = Index(
+            self[0].frequency.f_scaled, 
+            name='Freq(%s)'%self[0].frequency.unit
+            )
+        df = DataFrame(
+            {'%s'%(k.name):
+                Series(k.__getattribute__(attr)[:,m,n],index=index) 
+                for k in self},
+            index = index,
+            )
+        return df
+    
+    
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
+
 
 
 

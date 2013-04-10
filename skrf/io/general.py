@@ -690,7 +690,7 @@ def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
     
     Parameters
     -----------
-    ntwk :  :class:`~skrf.networkSet.NetworkSet` object
+    ntwkset :  :class:`~skrf.networkSet.NetworkSet` object
         the network to write 
     file_name : str, None
         the file_name to write. if None,  ntwk.name is used. 
@@ -720,3 +720,5 @@ def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
     
+
+
