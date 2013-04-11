@@ -35,6 +35,7 @@ Functions for reading and writing standard csv files
 import numpy as npy
 import os
 from ..network import Network
+from .. import mathFunctions as mf
 
 def read_pna_csv(filename, *args, **kwargs):
     '''
@@ -79,17 +80,72 @@ def read_pna_csv(filename, *args, **kwargs):
         if k == begin_line+1:
             header = line
     
+    footer = k-end_line
+    
     fid.close()
-    # TODO: use end_line to calculate skip_footer
+    
     data = npy.genfromtxt(
         filename, 
         delimiter = ',',
         skip_header = begin_line+2,
-        skip_footer = 1,
+        skip_footer = footer,
         *args, **kwargs
         )
+    # pna uses unicode coding for degree symbol, but we dont need that
+    header = header.replace('\xb0','deg').rstrip('\n').rstrip('\r')
+    
     return header, comments, data 
 
+def pna_csv_2_df(filename, *args, **kwargs):
+    '''
+    Reads data from a csv file written by an Agilient PNA
+
+    '''
+    from pandas import Series, Index, DataFrame
+    header, comments, d = read_pna_csv(filename)
+    f_unit = header.split(',')[0].split(')')[0].split('(')[1]
+    
+    names = header.split(',')
+    
+    index = Index(d[:,0], name = names[0])
+    df=DataFrame({names[k]:d[:,k] for k in range(1,len(names))}, index=index)
+    return df
+    
+def pna_csv_2_ntwks2(filename, *args, **kwargs):    
+    df = pna_csv_2_df(filename, *args, **kwargs)
+    header, comments, d = read_pna_csv(filename)
+    ntwk_dict  = {}
+    param_set=set([k[:3] for k in df.columns])
+    f = df.index.values*1e-9
+    for param in param_set:
+        try:
+            s = mf.dbdeg_2_reim(
+                df['%s Log Mag(dB)'%param].values,
+                df['%s Phase(deg)'%param].values,
+                )
+        except(KeyError):
+            s = mf.dbdeg_2_reim(
+                df['%s (REAL)'%param].values,
+                df['%s (IMAG)'%param].values,
+                )
+        
+        ntwk_dict[param] = Network(f=f, s=s, name=param, comments=comments)
+    
+    
+    try:
+        s=npy.zeros((len(f),2,2), dtype=complex)
+        s[:,0,0] = ntwk_dict['S11'].s.flatten()
+        s[:,1,1] = ntwk_dict['S22'].s.flatten()
+        s[:,1,0] = ntwk_dict['S21'].s.flatten()
+        s[:,0,1] = ntwk_dict['S12'].s.flatten()
+        name  =os.path.splitext(os.path.basename(filename))[0]
+        ntwk = Network(f=f, s=s, name=name, comments=comments)
+    
+        return ntwk
+    except:
+        return ntwk_dict
+    
+    
 def pna_csv_2_ntwks(filename):
     '''
     Reads a PNAX csv file, and returns a list of one-port Networks
@@ -119,19 +175,24 @@ def pna_csv_2_ntwks(filename):
             names = [os.path.basename(filename).split('.')[-2]+str(k) \
                 for k in range(d.shape[1]-1)/2 ]
     
-    if 'real' not in header.lower():
-        print ('WARNING: csv data may not be in re/im format, its up to you to  intrepret the resultant network correctly.')
-        
     ntwk_list = []
     
+    
+    
     for k in range((d.shape[1]-1)/2):
+        f = d[:,0]*1e-9
+        name = names[k]
+        print(names[k], names[k+1])
+        if 'db' in names[k].lower() and 'deg' in names[k+1].lower():
+            s = mf.dbdeg_2_reim(d[:,k*2+1], d[:,k*2+2])
+        elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
+            s = d[:,k*2+1]+1j*d[:,k*2+2]
+        else:
+            print ('WARNING: csv format unrecognized. ts up to you to  intrepret the resultant network correctly.')
+            s = d[:,k*2+1]+1j*d[:,k*2+2]
+        
         ntwk_list.append( 
-            Network(
-                f = d[:,0]*1e-9, 
-                s = d[:,k*2+1]+1j*d[:,k*2+2],
-                name = names[k],
-                comments  = comments,
-                )
+            Network(f=f, s=s, name=name, comments=comments)
             )
     
     return ntwk_list

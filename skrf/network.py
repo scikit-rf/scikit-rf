@@ -2701,7 +2701,7 @@ def gen_three_port(ntwk_triplet,  *args, **kwargs):
     Creates 3-port from  three 2-port Networks
     
     This function provides a convenient way to build a 3-port Network, 
-    from a set of 2-port measurements, ie you are measuring a coupler 
+    from a set of 2-port measurements. occuring when measuring a coupler 
     on a 2-port VNA. 
     
     The  3 Networks in ntwk_triplet must contain port idenificaition in 

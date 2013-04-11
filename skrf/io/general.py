@@ -589,7 +589,6 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file is True:
         os.rename(new_file_name,file_name)
 
-
 def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     *args, **kwargs):
     '''

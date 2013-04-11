@@ -1036,27 +1036,27 @@ class Calibration2(object):
         '''
         '''
         
-        e00 = self.coefs_12term['forward directivity']
-        e11 = self.coefs_12term['forward source match']
-        e10e01 = self.coefs_12term['forward reflection tracking']
-        e10e32 = self.coefs_12term['forward transmission tracking']
-        e22 = self.coefs_12term['forward load match']
-        e30 = self.coefs_12term.get('forward isolation',0)
+        Edf = self.coefs_12term['forward directivity']
+        Esf = self.coefs_12term['forward source match']
+        Erf = self.coefs_12term['forward reflection tracking']
+        Etf = self.coefs_12term['forward transmission tracking']
+        Elf = self.coefs_12term['forward load match']
+        Eif = self.coefs_12term.get('forward isolation',0)
         
-        e33_ = self.coefs_12term['reverse directivity']
-        e11_ = self.coefs_12term['reverse load match']
-        e23e32_ = self.coefs_12term['reverse reflection tracking']
-        e23e01_ = self.coefs_12term['reverse transmission tracking']
-        e22_ = self.coefs_12term['reverse source match']
-        e03_ = self.coefs_12term.get('reverse isolation',0)
+        Edr = self.coefs_12term['reverse directivity']
+        Elr = self.coefs_12term['reverse load match']
+        Err = self.coefs_12term['reverse reflection tracking']
+        Etr = self.coefs_12term['reverse transmission tracking']
+        Esr = self.coefs_12term['reverse source match']
+        Eir = self.coefs_12term.get('reverse isolation',0)
         
-        return e10e32*e23e01_ - \
-            (e23e32_ + e33_*(e22 - e22_))*\
-            (e10e01  + e00 *(e11_ - e11))    
+        return Etf*Etr - \
+            (Err + Edr*(Elf - Esr))*\
+            (Erf  + Edf *(Elr - Esf))    
     @property
     def verify_12term_ntwk(self):
-        Network(s= self.verify_12term, frequency = self.frequency)
-    
+        return Network(s= self.verify_12term, frequency = self.frequency)
+        
     @property
     def residual_ntwks(self):
         '''
