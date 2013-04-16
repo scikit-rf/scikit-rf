@@ -1050,9 +1050,7 @@ class Calibration2(object):
         Esr = self.coefs_12term['reverse source match']
         Eir = self.coefs_12term.get('reverse isolation',0)
         
-        return Etf*Etr - \
-            (Err + Edr*(Elf - Esr))*\
-            (Erf  + Edf *(Elr - Esf))    
+        return Etf*Etr - (Err + Edr*(Elf - Esr))*(Erf  + Edf *(Elr - Esf))    
     @property
     def verify_12term_ntwk(self):
         return Network(s= self.verify_12term, frequency = self.frequency)

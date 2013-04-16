@@ -140,7 +140,7 @@ class NetworkSet(object):
                 from properties of this class.
         '''
         ## type checking
-        if isinstance(ntwk_set, dict):
+        if hasattr(ntwk_set, 'values'):
             ntwk_set = ntwk_set.values()
             
         # did they pass a list of Networks?

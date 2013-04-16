@@ -461,7 +461,7 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
             **kwargs)
 
 
-def save_all_figs(dir = './', format=None):
+def save_all_figs(dir = './', format=None, replace_spaces = True):
     '''
     Save all open Figures to disk.
 
@@ -478,6 +478,8 @@ def save_all_figs(dir = './', format=None):
         dir = dir + '/'
     for fignum in plb.get_fignums():
         fileName = plb.figure(fignum).get_axes()[0].get_title()
+        if replace_spaces:
+            fileName = fileName.replace(' ','_')
         if fileName == '':
             fileName = 'unamedPlot'
         if format is None:
