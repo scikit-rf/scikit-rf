@@ -974,12 +974,8 @@ class NetworkSet(object):
             )
         return df
     
-    
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
-
-
-
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
@@ -1026,8 +1022,6 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         new_ntwk.name = name
 
     return new_ntwk
-
-
 
 # short hand name for convenience
 fon = func_on_networks

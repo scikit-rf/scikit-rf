@@ -56,7 +56,7 @@ import pylab as plb
 import numpy as npy
 from scipy.constants import mil
 from datetime import datetime
-
+import collections, pprint
 
 
 # globals 
@@ -182,5 +182,64 @@ def get_extn(filename):
         return ext[1:]
 
 
+# general purpose objects 
+class ObjectDict(collections.MutableMapping):
+    def __init__(self, d,  attr_list=[], *args, **kwargs):
+        self.store = dict(d,*args, **kwargs)
+        
+        [self.__setattr__(k,self.get_attr(k)) for k in attr_list]
+    
+    def __getitem__(self, key):
+        return self.store[key]
+
+    def __setitem__(self, key, value):
+        self.store[key] = value
+
+    def __delitem__(self, key):
+        del self.store[key]
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
+
+    def __str__(self):
+        return pprint.pformat(self.store)
+    
+    def __repr__(self):
+        return pprint.pformat(self.store)
+        
+    def search(self, **kwargs):
+        for kw_key in kwargs:
+            if kw_key[0] == '_':
+                
+                od = ObjectDict(
+                    {k:self.store[k] for k in self.store if \
+                    self.store[k].__getattribute__(kw_key[1:]) != kwargs[kw_key] }
+                    )
+            else:
+                od = ObjectDict(
+                    {k:self.store[k] for k in self.store if \
+                    self.store[k].__getattribute__(kw_key) == kwargs[kw_key] }
+                    )
+            
+        return od
+    
+    def get_attr(self, attr,  *args, **kwargs):
+        '''
+        get an attribute of each object in the dict. 
+        
+        if args is given, then the attribute is assumed to be a function and called with 
+        *args and **kwargs
+        '''
+        if len(args) !=0 or len(kwargs)!=0:
+            return ObjectDict({k:self.store[k].__getattribute__(attr)(*args, **kwargs) \
+                for k in self.store \
+                if self.store[k].__getattribute__(attr)(*args, **kwargs) is not None})
+        else:    
+            return ObjectDict({k:self.store[k].__getattribute__(attr) \
+                for k in self.store \
+                if self.store[k].__getattribute__(attr) is not None})
 
 

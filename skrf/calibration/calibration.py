@@ -89,7 +89,7 @@ class Calibration(object):
     '''
 
     def __init__(self,measured, ideals, type=None, \
-            is_reciprocal=False,name=None, sloppy_input=False,
+            is_reciprocal=False,name=None, sloppy_input=False,switch_terms=None, 
             **kwargs):
         '''
         Calibration initializer.
@@ -211,7 +211,7 @@ class Calibration(object):
         self.kwargs = kwargs 
         self.name = name
         self.is_reciprocal = is_reciprocal
-        
+        self.switch_terms = switch_terms
         
         
         # initialized internal properties to None
@@ -493,8 +493,13 @@ class Calibration(object):
          use this.
         '''
         # actually call the algorithm and run the calibration
+        if self.switch_terms is not None:
+            self.kwargs.update({'switch_terms':self.switch_terms})
         self._output_from_cal = \
-                self.calibration_algorithm_dict[self.type](measured = self.measured, ideals = self.ideals,**self.kwargs)
+                self.calibration_algorithm_dict[self.type](
+                    measured = self.measured, 
+                    ideals = self.ideals,
+                    **self.kwargs)
 
         if self.nports ==1:
             self._error_ntwk = error_dict_2_network(self.coefs, \
@@ -534,7 +539,14 @@ class Calibration(object):
                 caled.name = input_ntwk.name
 
             elif self.nports == 2:
-                caled = deepcopy(input_ntwk)
+                caled = input_ntwk.copy()
+                if self.switch_terms is not None:
+                    
+                    input_ntwk = input_ntwk.copy()
+                    intput_ntwk=unterminate_switch_terms(input_ntwk, 
+                        self.switch_terms[0], self.switch_terms[1])
+                    
+                
                 T1,T2,T3,T4 = self.Ts
                 dot = npy.dot
                 for f in range(len(input_ntwk.s)):
@@ -1241,11 +1253,12 @@ class SOLT(Calibration2):
     def run(self):
         '''
         '''
-        p1_m = [k.s11 for k in self.measured[:-1]]
-        p2_m = [k.s22 for k in self.measured[:-1]]
-        p1_i = [k.s11 for k in self.ideals[:-1]]
-        p2_i = [k.s22 for k in self.ideals[:-1]]
-        thru = NetworkSet(self.measured[-self.n_thrus:]).mean_s
+        n_thrus = self.n_thrus
+        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
+        p2_m = [k.s22 for k in self.measured[:-n_thrus]]
+        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
+        p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
+        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
         
         # create one port calibration for all but last standard    
         port1_cal = Calibration(measured = p1_m, ideals = p1_i)
