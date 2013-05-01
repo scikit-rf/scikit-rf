@@ -1468,7 +1468,7 @@ def two_port_error_vector_2_Ts(error_coefficients):
             [       zero,                   ec['k']]]).transpose().reshape(-1,2,2)
     return T1,T2,T3,T4
 
-def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
+def error_dict_2_network(coefs,  is_reciprocal=False, **kwargs):
     '''
     convert a dictionary holding standard error terms to a Network
     object.
@@ -1484,9 +1484,7 @@ def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
             # ASSERT: we have one port data
         ntwk = Network(**kwargs)
 
-        if frequency is not None:
-            ntwk.frequency = frequency
-
+        
         if is_reciprocal:
             #TODO: make this better and maybe have a phase continuity
             # functionality
@@ -1505,11 +1503,15 @@ def error_dict_2_network(coefs, frequency=None, is_reciprocal=False, **kwargs):
         ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
         return ntwk
     
-    elif len (coefs.keys()) == 7:
-        coefs_p1, coefs_p2 = eight_term_2_one_port_coefs(coefs)
-        en1 = error_dict_2_network(coefs_p1, frequency, is_reciprocal, **kwargs)
-        en2 = error_dict_2_network(coefs_p2, frequency, is_reciprocal, **kwargs)
-        return en1, en2
-         
     else:
-        raise NotImplementedError('sorry')
+        try:
+            p1,p2 = {},{}
+            for k in ['source match','directivity','reflection tracking']:
+                p1[k] = coefs['forward '+k]
+                p2[k] = coefs['reverse '+k]
+            return error_dict_2_network(p1, name = 'forward', **kwargs), error_dict_2_network(p2, name='reverse', **kwargs)
+        except:
+            raise KeyError('insufficient error data')
+        
+         
+    
