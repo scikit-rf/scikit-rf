@@ -2175,8 +2175,10 @@ class Network(object):
                 standard deviation of phase [in degrees]
 
         '''
+             
         phase_rv= stats.norm(loc=0, scale=phase_dev).rvs(size = self.s.shape)
         mag_rv = stats.norm(loc=0, scale=mag_dev).rvs(size = self.s.shape)
+        
         phase = (self.s_deg+phase_rv)
         mag = self.s_mag + mag_rv
         self.s = mag* npy.exp(1j*npy.pi/180.*phase)

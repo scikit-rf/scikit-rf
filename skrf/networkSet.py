@@ -454,7 +454,86 @@ class NetworkSet(object):
     @property
     def inv(self):
         return NetworkSet( [ntwk.inv for ntwk in self.ntwk_set])
-
+    
+    def animate(self, attr='s_deg',ylims=(-5,5),xlims = None, show=True, 
+        savefigs =False, *args, **kwargs ):
+        '''
+        animate a property of the networkset
+        
+        This loops through all elements in the NetworkSet and calls 
+        a plotting attribute (ie Network.plot_`attr`), with given \*args
+        and \*\*kwargs.  
+        
+        Parameters
+        --------------
+        attr : str
+            plotting property of a Network (ie 's_db', 's_deg', etc)
+        ylims : tuple
+            passed to ylim. needed to have consistent y-limits accross frames
+        xlims : tuple
+            passed to xlim
+        show : bool
+            show each frame as its animated
+        savefigs : bool
+            save each frame as a png
+        
+        \*args, \*\*kwargs : 
+            passed to the Network plotting function
+        
+        Notes
+        --------
+        using `label=None` will speed up animation significantly, 
+        because it prevents the legend from drawing
+        
+        Examples
+        ------------
+        >>>ns.animate('s_deg', ylims=(-5,5),label=None)
+            
+        '''
+        was_interactive = plb.isinteractive()
+        plb.ioff()
+        
+        for idx, k in enumerate(self):
+            plb.clf()
+            if 'time' in attr:
+                tmp_ntwk = k.windowed()
+                tmp_ntwk.__getattribute__('plot_'+attr)( *args, **kwargs)
+            else:
+                k.__getattribute__('plot_'+attr)( *args, **kwargs)
+            if ylims is not None:
+                plb.ylim(ylims)
+            if xlims is not None:
+                plb.xlim(xlims)
+            #rf.legend_off()
+            plb.draw();
+            if show:
+                plb.show()
+            if savefigs:
+                plb.savefig('out_%.5i'%idx+'.png')
+                print ('out_%.5i'%idx+'.png')
+        
+        if savefigs:
+            print '\nto create video paste this:\n\n!ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi\n'
+        if was_interactive:
+            plb.ion()
+        
+        
+        
+    def add_polar_noise(self, ntwk):
+        from scipy import stats
+        from numpy import frompyfunc
+        
+        gimme_norm = lambda x: stats.norm(loc=0,scale=x).rvs(1)[0]
+        ugimme_norm = frompyfunc(gimme_norm,1,1)
+        
+        s_deg_rv = npy.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
+        s_mag_rv = npy.array(map(ugimme_norm, self.std_s_mag.s_re), dtype=float)
+        
+        mag = ntwk.s_mag+s_mag_rv
+        deg = ntwk.s_deg+s_deg_rv
+        ntwk.s = mag* npy.exp(1j*npy.pi/180.*deg)
+        return ntwk
+    
     def set_wise_function(self, func, a_property, *args, **kwargs):
         '''
         calls a function on a specific property of the networks in
