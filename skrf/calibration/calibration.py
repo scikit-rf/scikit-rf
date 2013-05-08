@@ -911,6 +911,17 @@ class Calibration2(object):
     def __init__(self, measured, ideals, sloppy_input=False,
         is_reciprocal=True,name=None,*args, **kwargs):
         '''
+        Calibration initializer.
+
+        Parameters
+        ----------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use sloppy_input)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use sloppy_input
         '''
         # allow them to pass di
         if hasattr(measured, 'keys'):
@@ -952,10 +963,8 @@ class Calibration2(object):
                     
                 except:
                     raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
-        
-        
-        
-
+    
+    
         # passed to calibration algorithm in run()
         self.kwargs = kwargs 
         self.name = name
@@ -967,11 +976,33 @@ class Calibration2(object):
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
     
-    
-    
     def run(self):
+        '''
+        Running this function must populate self._coefs with a 
+        dictionary of error information, that can be used by apply()
+        '''
         pass
     
+    def apply(self):
+        '''
+        Apply correction to a raw measurement or list of raw measurement
+        '''
+        pass
+    
+    
+    @property
+    def output_from_run(self):
+        try:
+            return self._output_from_run
+        except(AttributeError):
+            # maybe i havent run yet
+            self.run()
+            try:
+                return self._output_from_run
+            except(AttributeError):
+                # i did run and there is no output_from_run
+                return None
+        
     @property
     def frequency(self):
         return self.measured[0].frequency.copy()
@@ -996,6 +1027,12 @@ class Calibration2(object):
             return self._coefs
     
     @property
+    def coefs_ntwks(self):
+        '''
+        '''
+        return s_dict_to_ns(self.coefs, self.frequency).to_dict()
+    
+    @property
     def coefs_3term(self):
         '''
         '''
@@ -1006,15 +1043,13 @@ class Calibration2(object):
             'forward directivity',
             'forward source match',
             'forward reflection tracking',
-            'forward isolation',
-
+            
             'reverse directivity',
             'reverse load match',
             'reverse reflection tracking',
-            'reverse isolation',
-            
-            'forward source match',
-            'reverse source match',
+                        
+            'forward switch term',
+            'reverse switch term',
             'k'
             ]}
     
@@ -1037,11 +1072,6 @@ class Calibration2(object):
             ]}
     
     
-    @property
-    def coefs_ntwks(self):
-        '''
-        '''
-        return s_dict_to_ns(self.coefs, self.frequency).to_dict()
     
     @property
     def verify_12term(self):
@@ -1063,6 +1093,7 @@ class Calibration2(object):
         Eir = self.coefs_12term.get('reverse isolation',0)
         
         return Etf*Etr - (Err + Edr*(Elf - Esr))*(Erf  + Edf *(Elr - Esf))    
+    
     @property
     def verify_12term_ntwk(self):
         return Network(s= self.verify_12term, frequency = self.frequency)
@@ -1146,13 +1177,9 @@ class Calibration2(object):
         
         return self._caled_ntwk_sets    
         
-        
-    def apply(self):
-        '''
-        '''
-        pass
-    # to support legacy scripts
-    apply_cal = apply    
+    @property
+    def error_ntwk(self):
+        return error_dict_2_network(self.coefs, is_reciprocal= self.is_reciprocal)
 
     def apply_to_dir(self, dir='.', contains=None, f_unit = 'ghz'):
         '''
@@ -1180,7 +1207,6 @@ class Calibration2(object):
 
         return ntwkDict
         
-    apply_cal_to_all_in_dir = apply_to_dir
     
     def write(self, file=None,  *args, **kwargs):
         '''
@@ -1223,12 +1249,9 @@ class Calibration2(object):
 
         write(file,self, *args, **kwargs) 
 
-
-
 class SOLT(Calibration2):
     '''
-    Traditional 12-term, full two-port calibration containg a  Short, 
-    Open, Load, and Thru.
+    Traditional 12-term, full two-port calibration.
     
     SOLT is the traditional, fully determined, two-port calibration. 
     This implementation is based off of Doug Rytting's work in [#] .
@@ -1236,6 +1259,9 @@ class SOLT(Calibration2):
     algorithm can accept any number of reflect standards,  If  
     more than 3 reflect standards are provided a least-squares solution 
     is implemented for the one-port stage of the calibration.
+    
+    Redundant thru measurements can also be used, through the `n_thrus`
+    parameter. See :func:`__init__`
      
     
     
@@ -1245,6 +1271,13 @@ class SOLT(Calibration2):
     '''
     def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
         '''
+        SOLT initializer 
+        
+        Parameters
+        -------------
+        measured : list or dict of :class:`Network` objects
+            measured Networks. must align with ideals
+            
         
         '''
         self.n_thrus = n_thrus
@@ -1336,9 +1369,297 @@ class SOLT(Calibration2):
         
         return caled
     
-    apply_cal = apply
+class OnePort(Calibration2):
+    '''
+    Standard algorithm for a one port calibration.
+    
+    If more than three standards are supplied then a least square
+    algorithm is applied.
+    '''
+    def __init__(self, measured, ideals,*args, **kwargs):
+        '''
+        One Port initializer
+        
+        If more than three standards are supplied then a least square
+        algorithm is applied.
+        
+        Parameters
+        -----------
+        measured : list of :class:`~....network.Network` objects or numpy.ndarray
+            a list of the measured reflection coefficients. The elements
+            of the list can  either a kxnxn numpy.ndarray, representing a
+            s-matrix, or list of  1-port :class:`~skrf.network.Network`
+            objects.
+        ideals : list of :class:`~skrf.network.Network` objects or numpy.ndarray
+            a list of the ideal reflection coefficients. The elements
+            of the list can  either a kxnxn numpy.ndarray, representing a
+            s-matrix, or list of  1-port :class:`~skrf.network.Network`
+            objects.
+    
+        Returns
+        -----------
+        output : a dictionary
+            output information from the calibration, the keys are
+             * 'error coeffcients': dictionary containing standard error
+               coefficients
+             * 'residuals': a matrix of residuals from the least squared
+               calculation. see numpy.linalg.lstsq() for more info
+    
+    
+        Notes
+        -----
+                uses numpy.linalg.lstsq() for least squares calculation
+        '''
+        Calibration2.__init__(self, measured, ideals, *args, **kwargs)
+    
+    def run(self):
+        '''
+        '''
+        numStds = self.nstandards
+        numCoefs=3
+        
+        mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
+        iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
+        
+        # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
+        fLength = len(mList[0])
+    
+        #initialize outputs
+        abc = npy.zeros((fLength,numCoefs),dtype=complex)
+        residuals =     npy.zeros((fLength,\
+                npy.sign(numStds-numCoefs)),dtype=complex)
+        parameter_variance = npy.zeros((fLength, 3,3),dtype=complex)
+        measurement_variance = npy.zeros((fLength, 1),dtype=complex)
+        # loop through frequencies and form m, a vectors and
+        # the matrix M. where M = i1, 1, i1*m1
+        #                         i2, 1, i2*m2
+        #                                 ...etc
+        for f in range(fLength):
+            #create  m, i, and 1 vectors
+            one = npy.ones(shape=(numStds,1))
+            m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
+            i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
+    
+            # construct the matrix
+            Q = npy.hstack([i, one, i*m])
+            # calculate least squares
+            abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
+            if numStds > 3:
+                measurement_variance[f,:]= residualsTmp/(numStds-numCoefs)
+                parameter_variance[f,:] = \
+                        abs(measurement_variance[f,:])*\
+                        npy.linalg.inv(npy.dot(Q.T,Q))
+    
+            
+            abc[f,:] = abcTmp.flatten()
+            try:
+                residuals[f,:] = residualsTmp
+            except(ValueError):
+                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))
+        
+        # convert the abc vector to standard error coefficients
+        a,b,c = abc[:,0], abc[:,1],abc[:,2]
+        e01e10 = a+b*c
+        e00 = b
+        e11 = c
+        self._coefs = {\
+                'directivity':e00,\
+                'reflection tracking':e01e10, \
+                'source match':e11\
+                }
         
     
+        # output is a dictionary of information
+        self._output_from_run = {
+            'residuals':residuals, 
+            'parameter variance':parameter_variance
+            }
+        
+        return None
+            
+    def apply(self, ntwk):
+        er_ntwk = Network(frequency = self.frequency)
+
+        if self.is_reciprocal:
+            #TODO: make this better and maybe have a phase continuity
+            # functionality
+            tracking  = self.coefs['reflection tracking']
+            s12 = npy.sqrt(tracking)
+            s21 = npy.sqrt(tracking)
+            #s12 =  sqrt_phase_unwrap(tracking)
+            #s21 =  sqrt_phase_unwrap(tracking)
+
+        else:
+            s21 = self.coefs['reflection tracking']
+            s12 = npy.ones(len(s21), dtype=complex)
+
+        s11 = self.coefs['directivity']
+        s22 = self.coefs['source match']
+        er_ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
+        return er_ntwk.inv**ntwk
+        
+class EightTerm(Calibration2):
+    def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
+        '''
+        
+        '''
+        self.switch_terms = switch_terms
+        Calibration2.__init__(self, measured, ideals, *args, **kwargs)
+    
+    
+    def unterminate(self,ntwk):
+        if self.switch_terms is not None:
+            return  unterminate_switch_terms(
+                two_port = ntwk,
+                gamma_f = self.switch_terms[0],
+                gamma_r = self.switch_terms[1]
+                )
+        else:
+            return ntwk
+            
+    def run(self):
+        '''
+        Two port calibration based on the 8-term error model.
+    
+        Takes two
+        ordered lists of measured and ideal responses. Optionally, switch
+        terms [1]_ can be taken into account by passing a tuple containing the
+        forward and reverse switch terms as 1-port Networks. This algorithm
+        is based on the work in [2]_ .
+    
+        Parameters
+        -----------
+        measured : list of 2-port :class:`~skrf.network.Network` objects
+                Raw measurements of the calibration standards. The order
+                must align with the `ideals` parameter
+    
+        ideals : list of 2-port :class:`~skrf.network.Network` objects
+                Predicted ideal response of the calibration standards.
+                The order must align with `ideals` list
+                measured: ordered list of measured networks. list elements
+    
+        switch_terms : tuple of :class:`~skrf.network.Network` objects
+                        The two measured switch terms in the order
+                        (forward, reverse).  This is only applicable in two-port
+                        calibrations. See Roger Mark's paper on switch terms [1]_
+                        for explanation of what they are.
+    
+        Returns
+        ----------
+        output : a dictionary
+                output information, contains the following keys:
+                * 'error coefficients':
+                * 'error vector':
+                * 'residuals':
+    
+        Notes
+        ---------
+        support for gathering switch terms on HP8510C  is in
+        :mod:`skrf.vi.vna`
+    
+    
+        References
+        -------------
+        .. [1] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
+        .. [2] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047
+    
+
+    '''
+        numStds = self.nstandards
+        numCoefs = 7
+
+        
+        mList = [self.unterminate(k).s.reshape((-1,1)) for k in self.measured]
+        iList = [k.s.reshape((-1,1)) for k in self.ideals]
+        
+        fLength = len(mList[0])
+        #initialize outputs
+        error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
+        residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
+        Q = npy.zeros((numStds*4, 7),dtype=complex)
+        M = npy.zeros((numStds*4, 1),dtype=complex)
+        # loop through frequencies and form m, a vectors and
+        # the matrix M. where M =       e00 + S11i
+        #                                                       i2, 1, i2*m2
+        #                                                                       ...etc
+        for f in range(fLength):
+            # loop through standards and fill matrix
+            for k in range(numStds):
+                m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
+                Q[k*4:k*4+4,:] = npy.array([\
+                        [ 1, i[0,0]*m[0,0], -i[0,0], 0 , i[1,0]*m[0,1],         0 ,     0        ],\
+                        [ 0, i[0,1]*m[0,0], -i[0,1], 0 , i[1,1]*m[0,1],         0 ,  -m[0,1] ],\
+                        [ 0, i[0,0]*m[1,0],     0,       0 , i[1,0]*m[1,1], -i[1,0],    0        ],\
+                        [ 0, i[0,1]*m[1,0],     0,       1 , i[1,1]*m[1,1], -i[1,1], -m[1,1] ],\
+                        ])
+                #pdb.set_trace()
+                M[k*4:k*4+4,:] = npy.array([\
+                        [ m[0,0]],\
+                        [       0       ],\
+                        [ m[1,0]],\
+                        [       0       ],\
+                        ])
+    
+            # calculate least squares
+            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
+            #if len (residualsTmp )==0:
+            #       raise ValueError( 'matrix has singular values, check standards')
+            
+            
+            error_vector[f,:] = error_vector_at_f.flatten()
+            residuals[f,:] = residuals_at_f
+    
+        # put the error vector into human readable dictionary
+        self._coefs = {\
+                'e00':error_vector[:,0],\
+                'e11':error_vector[:,1],\
+                'det_X':error_vector[:,2],\
+                'e33':error_vector[:,3]/error_vector[:,6],\
+                'e22':error_vector[:,4]/error_vector[:,6],\
+                'det_Y':error_vector[:,5]/error_vector[:,6],\
+                'k':error_vector[:,6],\
+                }
+    
+        # output is a dictionary of information
+        self.output_from_run = {\
+                'error vector':error_vector, \
+                'residuals':residuals\
+                }
+    
+        return None    
+        
+    def apply(self, ntwk):
+        caled = ntwk.copy()
+        ntwk = self.unterminate(ntwk)    
+        
+        
+        ec = self.coefs
+        npoints = len(ec['k'])
+        one = npy.ones(npoints,dtype=complex)
+        zero = npy.zeros(npoints,dtype=complex)
+    
+        T1 = npy.array([\
+                [       -1*ec['det_X'], zero    ],\
+                [       zero,           -1*ec['k']*ec['det_Y']]]).transpose().reshape(-1,2,2)
+        T2 = npy.array([\
+                [       ec['e00'], zero ],\
+                [       zero,                   ec['k']*ec['e33']]]).transpose().reshape(-1,2,2)
+        T3 = npy.array([\
+                [       -1*ec['e11'], zero      ],\
+                [       zero,                   -1*ec['k']*ec['e22']]]).transpose().reshape(-1,2,2)
+        T4 = npy.array([\
+                [       one, zero       ],\
+                [       zero,                   ec['k']]]).transpose().reshape(-1,2,2)
+        
+        
+        dot = npy.dot
+        for f in range(len(ntwk.s)):
+            t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+                            T4[f,:,:],ntwk.s[f,:,:]
+            caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
+        return caled
+        
+        
 ## Functions
 
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
@@ -1429,7 +1750,62 @@ def convert_8term_2_12term(coefs_8term):
     coefs_12term['reverse transmission tracking'] =  Etr
     return coefs_12term
 
+def unterminate_switch_terms(two_port, gamma_f, gamma_r):
+    '''
+    Unterminates switch terms from raw measurements.
+    
+    In order to use the 8-term error model on a VNA which employs a 
+    switched source, the effects of the switch must be accounted for. 
+    This is done through `switch terms` as described in  [#]_ . The 
+    two switch terms are defined as, 
+    
+    .. math :: 
+        
+        \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
+        \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
+    
+    These can be measured by four-sampler VNA's by setting up 
+    user-defined traces onboard the VNA. If the VNA doesnt have  
+    4-samplers, then you can measure switch terms indirectly by using a 
+    two-tier two-port calibration. Firts do a SOLT, then convert 
+    the 12-term error coefs to 8-term, and pull out the switch terms.  
+    
+    Parameters
+    -------------
+    two_port : 2-port Network 
+        the raw measurement
+    gamma_f : 1-port Network
+        the measured forward switch term. 
+        gamma_f = a2/b2 sourced by port1
+    gamma_r : 1-port Network
+        the measured reverse switch term
 
+    Returns
+    -----------
+    ntwk :  Network object
+    
+    References
+    ------------
+    
+    .. [#] "Formulations of the Basic Vector Network Analyzer Error
+            Model including Switch Terms" by Roger B. Marks
+    '''
+    unterminated = two_port.copy()
+
+    # extract scattering matrices
+    m, gamma_r, gamma_f = two_port.s, gamma_r.s, gamma_f.s
+    u = m.copy()
+
+    one = npy.ones(two_port.frequency.npoints)
+
+    d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
+    u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+    u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
+    u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+    u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
+
+    unterminated.s = u
+    return unterminated
 
 
 def align_measured_ideals(measured, ideals):
@@ -1470,21 +1846,15 @@ def two_port_error_vector_2_Ts(error_coefficients):
 
 def error_dict_2_network(coefs,  is_reciprocal=False, **kwargs):
     '''
-    convert a dictionary holding standard error terms to a Network
-    object.
-
-    takes:
-
-    returns:
+    Create a Network from a dictionary of standard error terms 
 
 
     '''
 
     if len (coefs.keys()) == 3:
-            # ASSERT: we have one port data
+        # ASSERT: we have one port data
         ntwk = Network(**kwargs)
 
-        
         if is_reciprocal:
             #TODO: make this better and maybe have a phase continuity
             # functionality
@@ -1504,14 +1874,9 @@ def error_dict_2_network(coefs,  is_reciprocal=False, **kwargs):
         return ntwk
     
     else:
-        try:
-            p1,p2 = {},{}
-            for k in ['source match','directivity','reflection tracking']:
-                p1[k] = coefs['forward '+k]
-                p2[k] = coefs['reverse '+k]
-            return error_dict_2_network(p1, name = 'forward', **kwargs), error_dict_2_network(p2, name='reverse', **kwargs)
-        except:
-            raise KeyError('insufficient error data')
-        
-         
-    
+        p1,p2 = {},{}
+        for k in ['source match','directivity','reflection tracking']:
+            p1[k] = coefs['forward '+k]
+            p2[k] = coefs['reverse '+k]
+        return (error_dict_2_network(p1, name='forward', **kwargs), 
+            error_dict_2_network(p2, name='reverse', **kwargs))

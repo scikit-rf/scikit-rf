@@ -4,7 +4,7 @@ import cPickle as pickle
 import skrf as rf
 import numpy as npy
 
-class OnePortStandardCalibration(unittest.TestCase):
+class OnePortTest(unittest.TestCase):
     '''
     One-port calibration test.
 
@@ -35,7 +35,7 @@ class OnePortStandardCalibration(unittest.TestCase):
             ideals.append(ntwk)
             measured.append(self.embeding_network ** ntwk)
 
-        cal = rf.Calibration(\
+        cal = rf.OnePort(\
                 ideals = ideals,\
                 measured = measured,\
                 type = 'one port',\
@@ -45,7 +45,7 @@ class OnePortStandardCalibration(unittest.TestCase):
         self.assertEqual(self.embeding_network, cal.error_ntwk)
         # are the de-embeded networks the same as their ideals?
         for ntwk in std_list:
-            self.assertEqual(ntwk, cal.apply_cal(self.embeding_network**ntwk))
+            self.assertEqual(ntwk, cal.apply(self.embeding_network**ntwk))
     
     def test_least_squares_calibration(self):
         ideals, measured = [],[]
@@ -55,7 +55,7 @@ class OnePortStandardCalibration(unittest.TestCase):
             ideals.append(ntwk)
             measured.append(self.embeding_network**ntwk)
 
-        cal = rf.Calibration(\
+        cal = rf.OnePort(\
                 ideals = ideals,\
                 measured = measured,\
                 type = 'one port',\
@@ -65,7 +65,7 @@ class OnePortStandardCalibration(unittest.TestCase):
         self.assertEqual(self.embeding_network, cal.error_ntwk)
         # are the de-embeded networks the same as their ideals?
         for ntwk in std_list:
-            self.assertEqual(ntwk,  cal.apply_cal(self.embeding_network**ntwk))
+            self.assertEqual(ntwk,  cal.apply(self.embeding_network**ntwk))
     
     def test_pickling(self):
         ideals, measured = [], []
@@ -75,7 +75,7 @@ class OnePortStandardCalibration(unittest.TestCase):
             ideals.append(ntwk)
             measured.append(self.embeding_network ** ntwk)
 
-        cal = rf.Calibration(\
+        cal = rf.OnePort(\
                 ideals = ideals,\
                 measured = measured,\
                 type = 'one port',\
@@ -101,7 +101,7 @@ class OnePortStandardCalibration(unittest.TestCase):
         os.remove(os.path.join(self.test_dir, 'pickled_cal.cal'))
 
 
-class TwoPortCalibration8term(unittest.TestCase):
+class EightTermTest(unittest.TestCase):
     def test_accuracy(self):
         wg= rf.wr10
         wg.frequency = rf.F.from_f([1])
@@ -122,14 +122,14 @@ class TwoPortCalibration8term(unittest.TestCase):
         
         measured = [X**k**Y for k in ideals]
         
-        cal = rf.Calibration(
+        cal = rf.EightTerm(
             ideals = ideals,
             measured = measured,
             )
         for k in range(cal.nstandards):
-            self.assertTrue(cal.apply_cal(measured[k]) == ideals[k]) 
+            self.assertTrue(cal.apply(measured[k]) == ideals[k]) 
           
-class TwoPortCalibrationSOLT(unittest.TestCase):
+class SOLTTest(unittest.TestCase):
     '''
     This test verifys the accuracy of the SOLT calibration. Generating 
     measured networks requires different error networks for forward and 
@@ -232,7 +232,7 @@ class TwoPortCalibrationSOLT(unittest.TestCase):
             
     def test_correction_accuracy_of_standards(self):
         for k in range(self.cal.nstandards):
-            self.assertEqual(self.cal.apply_cal(self.cal.measured[k]),\
+            self.assertEqual(self.cal.apply(self.cal.measured[k]),\
                 self.cal.ideals[k])
     
     def test_correction_accuracy_of_dut(self):
