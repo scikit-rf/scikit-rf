@@ -976,18 +976,33 @@ class Calibration2(object):
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
     
+    def __str__(self):
+        if self.name is None:
+            name = ''
+        else:
+            name = self.name
+            
+        output = '%s Calibration: \'%s\', %s, %i-ideals/%i-measured'\
+            %(self.type,name,str(self.measured[0].frequency),\
+            len(self.ideals), len(self.measured))
+            
+        return output
+        
+    def __repr__(self):
+        return self.__str__()    
+        
     def run(self):
         '''
         Running this function must populate self._coefs with a 
         dictionary of error information, that can be used by apply()
         '''
-        pass
+        raise NotImplementedError('The Subclass must implement this')
     
     def apply(self):
         '''
         Apply correction to a raw measurement or list of raw measurement
         '''
-        pass
+        raise NotImplementedError('The Subclass must implement this')
     
     
     @property
@@ -1280,6 +1295,7 @@ class SOLT(Calibration2):
             
         
         '''
+        self.type = 'SOLT'
         self.n_thrus = n_thrus
         Calibration2.__init__(self, measured, ideals, *args, **kwargs)
     
@@ -1410,6 +1426,7 @@ class OnePort(Calibration2):
         -----
                 uses numpy.linalg.lstsq() for least squares calculation
         '''
+        self.type = 'OnePort'
         Calibration2.__init__(self, measured, ideals, *args, **kwargs)
     
     def run(self):
@@ -1503,10 +1520,10 @@ class EightTerm(Calibration2):
         '''
         
         '''
+        self.type = 'EightTerm'
         self.switch_terms = switch_terms
         Calibration2.__init__(self, measured, ideals, *args, **kwargs)
-    
-    
+        
     def unterminate(self,ntwk):
         if self.switch_terms is not None:
             return  unterminate_switch_terms(
@@ -1569,8 +1586,8 @@ class EightTerm(Calibration2):
         numCoefs = 7
 
         
-        mList = [self.unterminate(k).s.reshape((-1,1)) for k in self.measured]
-        iList = [k.s.reshape((-1,1)) for k in self.ideals]
+        mList = [self.unterminate(k).s for k in self.measured]
+        iList = [k.s for k in self.ideals]
         
         fLength = len(mList[0])
         #initialize outputs
@@ -1611,19 +1628,19 @@ class EightTerm(Calibration2):
     
         # put the error vector into human readable dictionary
         self._coefs = {\
-                'e00':error_vector[:,0],\
-                'e11':error_vector[:,1],\
-                'det_X':error_vector[:,2],\
-                'e33':error_vector[:,3]/error_vector[:,6],\
-                'e22':error_vector[:,4]/error_vector[:,6],\
-                'det_Y':error_vector[:,5]/error_vector[:,6],\
-                'k':error_vector[:,6],\
+                'e00':error_vector[:,0],
+                'e11':error_vector[:,1],
+                'det_X':error_vector[:,2],
+                'e33':error_vector[:,3]/error_vector[:,6],
+                'e22':error_vector[:,4]/error_vector[:,6],
+                'det_Y':error_vector[:,5]/error_vector[:,6],
+                'k':error_vector[:,6],
                 }
     
         # output is a dictionary of information
-        self.output_from_run = {\
-                'error vector':error_vector, \
-                'residuals':residuals\
+        self._output_from_run = {
+                'error vector':error_vector, 
+                'residuals':residuals
                 }
     
         return None    
