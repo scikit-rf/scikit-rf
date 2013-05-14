@@ -2270,7 +2270,28 @@ class Network(object):
         ntwkB.s = npy.r_[[func(p[k,:,:],*args,**kwargs) \
             for k in range(len(p))]]
         return ntwkB
-
+    
+    def nonreciprocity(self,m,n):
+        '''
+        Normalized non-reciprocity metrica
+        
+        This is a port-by-port measure of how non-reciprocal a n-port 
+        network is. It is defined by, 
+        
+        .. math:: 
+            
+            (S_{mn} - S_{nm}) / \\sqrt ( S_{mn} S_{nm} )
+        
+        
+        
+        
+        '''
+        forward = self.__getattribute__('s%i%i'%(m,n))
+        reverse = self.__getattribute__('s%i%i'%(n,m))
+        denom = forward*reverse
+        denom.s = npy.sqrt(denom.s)
+        return (forward-reverse)/denom
+    
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
     '''

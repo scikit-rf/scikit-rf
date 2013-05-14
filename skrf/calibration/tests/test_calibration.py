@@ -3,8 +3,39 @@ import os
 import cPickle as pickle
 import skrf as rf
 import numpy as npy
+from nose.tools import nottest
 
-class OnePortTest(unittest.TestCase):
+
+
+class CalibrationTest(object):
+    '''
+    This is the generic Calibration test case which all Calibration 
+    Subclasses should be able to pass. They must implement
+    '''
+    def test_correction_accuracy_of_standards(self):
+        for k in range(self.cal.nstandards):
+            self.assertEqual(self.cal.apply(self.cal.measured[k]),\
+                self.cal.ideals[k])
+    
+    def test_correction_accuracy_of_dut(self):
+        a = self.wg.random(n_ports=1)
+        m = self.measure(a)
+        c = self.cal.apply(m)
+        self.assertEqual(a,c)
+        
+    def test_error_ntwk(self):
+        a= self.cal.error_ntwk 
+    
+    def test_coefs_ntwks(self):
+        a= self.cal.coefs_ntwks
+    
+    def test_caled_ntwks(self):
+        a= self.cal.caled_ntwks
+    
+    def test_residual_ntwks(self):
+        a= self.cal.residual_ntwks
+    
+class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     One-port calibration test.
 
@@ -26,25 +57,33 @@ class OnePortTest(unittest.TestCase):
         measured = [self.measure(k) for k in ideals]
         
         self.cal = rf.OnePort(
+            is_reciprocal = True, 
             ideals = ideals, 
             measured = measured,
             )
         
-        
     def measure(self, ntwk):
         return self.E**ntwk
     
-    def test_correction_accuracy_of_standards(self):
-        for k in range(self.cal.nstandards):
-            self.assertEqual(self.cal.apply(self.cal.measured[k]),\
-                self.cal.ideals[k])
-    
-    def test_correction_accuracy_of_dut(self):
-        a = self.wg.random(n_ports=1)
-        m = self.measure(a)
-        c = self.cal.apply(m)
-        self.assertEqual(a,c)
+    def test_directivity_accuracy(self):
+        self.assertEqual(
+            self.E.s11, 
+            self.cal.coefs_ntwks['directivity'],
+            )
         
+    def test_source_match_accuracy(self):
+        self.assertEqual(
+            self.E.s22, 
+            self.cal.coefs_ntwks['source match'],
+            )
+    
+    def test_directivity_accuracy(self):
+        self.assertEqual(
+            self.E.s21*self.E.s12, 
+            self.cal.coefs_ntwks['reflection tracking'],
+            )
+    
+    
     '''
     def test_pickling(self):
         ideals, measured = [], []
@@ -79,7 +118,8 @@ class OnePortTest(unittest.TestCase):
         f.close()
         os.remove(os.path.join(self.test_dir, 'pickled_cal.cal'))
     '''
-class EightTermTest(unittest.TestCase):
+
+class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.wg= rf.wr10
         wg= self.wg
@@ -102,6 +142,7 @@ class EightTermTest(unittest.TestCase):
             ideals = ideals,
             measured = measured,
             )
+    
     def measure(self,ntwk):
             return self.X**ntwk**self.Y
             
@@ -115,8 +156,44 @@ class EightTermTest(unittest.TestCase):
         m = self.measure(a)
         c = self.cal.apply(m)
         self.assertEqual(a,c)    
+    
         
-class SOLTTest(unittest.TestCase):
+    def test_forward_directivity_accuracy(self):
+        self.assertEqual(
+            self.X.s11,
+            self.cal.coefs_ntwks['forward directivity'])
+    
+    def test_forward_source_match_accuracy(self):
+        self.assertEqual(
+            self.X.s22 , 
+            self.cal.coefs_ntwks['forward source match'] )       
+    
+    
+    
+    def test_forward_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.X.s21 * self.X.s12 , 
+            self.cal.coefs_ntwks['forward reflection tracking'])
+    
+    
+    def test_reverse_source_match_accuracy(self):
+        self.assertEqual(
+            self.Y.s11 , 
+            self.cal.coefs_ntwks['reverse source match']   )     
+    
+    def test_reverse_directivity_accuracy(self):
+        self.assertEqual(
+            self.Y.s22 , 
+            self.cal.coefs_ntwks['reverse directivity']  )      
+    
+  
+    
+    def test_reverse_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.Y.s21 * self.Y.s12 , 
+            self.cal.coefs_ntwks['reverse reflection tracking'])
+        
+class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
     This test verifys the accuracy of the SOLT calibration. Generating 
     measured networks requires different error networks for forward and 
@@ -216,37 +293,25 @@ class SOLTTest(unittest.TestCase):
             self.Yr.s12*self.Xr.s12 , 
             self.cal.coefs_ntwks['reverse transmission tracking'])
             
-    def test_correction_accuracy_of_standards(self):
-        for k in range(self.cal.nstandards):
-            self.assertEqual(self.cal.apply(self.cal.measured[k]),\
-                self.cal.ideals[k])
     
-    def test_correction_accuracy_of_dut(self):
-        
-        a = self.wg.random(n_ports=2)
-        m = self.measure(a)
-        c = self.cal.apply(m)
-        
-        self.assertEqual(a,c)
-    
+    @nottest
     def test_convert_12term_2_8term(self):
         converted = rf.convert_8term_2_12term(
                     rf.convert_12term_2_8term(self.cal.coefs))
         
-        #import pdb;pdb.set_trace()
+        
         for k in converted:
             print('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k])))
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
-        
+    @nottest
     def test_convert_12term_2_8term_correction_accuracy(self):
         converted = rf.convert_8term_2_12term(
                     rf.convert_12term_2_8term(self.cal.coefs))
         
-        #import pdb;pdb.set_trace()
-        for k in converted:
-            print('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k])))
-        for k in converted:
-            self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
-
-
+        self.cal._coefs = converted
+        a = self.wg.random(n_ports=2)
+        m = self.measure(a)
+        c = self.cal.apply(m)
+               
+        self.assertEqual(a,c)

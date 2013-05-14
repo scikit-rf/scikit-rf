@@ -993,17 +993,25 @@ class Calibration2(object):
         
     def run(self):
         '''
-        Running this function must populate self._coefs with a 
-        dictionary of error information, that can be used by apply()
+        Runs the calibration algorithm.
         '''
         raise NotImplementedError('The Subclass must implement this')
     
-    def apply(self):
+    def apply(self,ntwk):
         '''
-        Apply correction to a raw measurement or list of raw measurement
+        Apply correction to a Network
         '''
         raise NotImplementedError('The Subclass must implement this')
     
+    def apply_to_list(self,ntwk_list):
+        '''
+        Apply correction to list of dict of Networks.
+        '''
+        if hasattr(ntwk_list, 'keys'):
+            return {k:self.apply(ntwk_list[k]) for k in ntwk_list}
+        else:
+            return [self.apply(k) for k in ntwk_list]
+        
     
     @property
     def output_from_run(self):
@@ -1076,14 +1084,12 @@ class Calibration2(object):
             'forward reflection tracking',
             'forward transmission tracking',
             'forward load match',
-            'forward isolation',
 
             'reverse directivity',
             'reverse load match',
             'reverse reflection tracking',
             'reverse transmission tracking',
             'reverse source match',
-            'reverse isolation',
             ]}
     
     
@@ -1116,112 +1122,43 @@ class Calibration2(object):
     @property
     def residual_ntwks(self):
         '''
-        returns a the residuals for each calibration standard in the
-        form of a list of Network types.
+        Returns a the residuals for each calibration standard
 
-        these residuals are calculated in the 'calibrated domain',
-        meaning they are
-                r = (E.inv ** m - i)
-
-        where,
-                r: residual network,
-                E: embedding network,
-                m: measured network
-                i: ideal network
-
-        This way the units of the residual networks are meaningful
-
-
-        note:
-                the residuals are only calculated if they are not existent.
-        so, if you want to re-calculate the residual networks then
-        you delete the property '_residual_ntwks'.
+        These residuals are complex differences between the ideal 
+        standards and their corresponding  corrected measurements. 
+        Returned in a list of Netowrk Objects.
         '''
-        if self._residual_ntwks is None:
-            ntwk_list=\
-                    [ ((self.apply(self.measured[k]))-self.ideals[k]) \
-                            for k in range(len(self.ideals))]
-
-            for k in range(len(ntwk_list)):
-                if self.ideals[k].name  is not None:
-                    name = self.ideals[k].name
-                else:
-                    name='std# %i'%k
-
-                ntwk_list[k].name = self.ideals[k].name
-
-            self._residual_ntwks = ntwk_list
-        return self._residual_ntwks
+        return [ideal - caled for (ideal, caled) in zip(self.ideals, self.caled_ntwks)]
 
     @property
     def caled_ntwks(self):
         '''
-        list of the calibrated, calibration standards.
-
-
+        List of the corrected calibration standards
         '''
-        if self._caled_ntwks is None:
-            ntwk_list=\
-                    [ self.apply(self.measured[k]) \
-                            for k in range(len(self.ideals))]
-            
-            for k in range(len(ntwk_list)):
-                if self.ideals[k].name  is not None:
-                    name = self.ideals[k].name
-                else:
-                    name='std# %i'%k
-
-                ntwk_list[k].name = self.ideals[k].name
-
-            self._caled_ntwks = ntwk_list
-        
-        return self._caled_ntwks
+        return self.apply_to_list(self.measured)
     
+        
     @property
     def caled_ntwk_sets(self):
         '''
-        returns a NetworkSet for each caled_ntwk, based on their names
+        Returns a NetworkSet for each caled_ntwk, based on their names
         '''
-        if self._caled_ntwk_sets is  None:
-            caled_sets={}
-            std_names = list(set([k.name  for k in self.caled_ntwks ]))
-            for std_name in std_names:
-                caled_sets[std_name] = NetworkSet(
-                    [k for k in self.caled_ntwks if k.name is std_name])
-            self._caled_ntwk_sets = caled_sets
-        
-        return self._caled_ntwk_sets    
-        
+       
+        caled_sets={}
+        std_names = list(set([k.name  for k in self.caled_ntwks ]))
+        for std_name in std_names:
+            caled_sets[std_name] = NetworkSet(
+                [k for k in self.caled_ntwks if k.name is std_name])
+        return caled_sets
+       
     @property
     def error_ntwk(self):
-        return error_dict_2_network(self.coefs, is_reciprocal= self.is_reciprocal)
-
-    def apply_to_dir(self, dir='.', contains=None, f_unit = 'ghz'):
         '''
-        convience function to apply calibration to an entire directory
-        of measurements, and return a dictionary of the calibrated
-        results, optionally the user can 'grep' the direction
-        by using the contains switch.
-
-        takes:
-                dir: directory of measurements (string)
-                contains: will only load measurements who's filename contains
-                        this string.
-                f_unit: frequency unit, to use for all networks. see
-                        frequency.Frequency.unit for info.
-        returns:
-                ntwkDict: a dictionary of calibrated measurements, the keys
-                        are the filenames.
+        Returns the calculated two-port error Network or Networks
         '''
-        from ..io.general import read_all_networks
-        ntwkDict = read_all_networks(dir=dir, contains=contains,\
-                f_unit=f_unit)
-
-        for ntwkKey in ntwkDict:
-            ntwkDict[ntwkKey] = self.apply(ntwkDict[ntwkKey])
-
-        return ntwkDict
-        
+        return error_dict_2_network(
+            self.coefs, 
+            is_reciprocal= self.is_reciprocal)        
     
     def write(self, file=None,  *args, **kwargs):
         '''
@@ -1318,6 +1255,7 @@ class SOLT(Calibration2):
         p2_coefs = port2_cal.coefs
         
         if self.kwargs.get('isolation',None) is not None:
+            raise NotImplementedError()
             p1_coefs['isolation'] = isolation.s21.s.flatten()
             p2_coefs['isolation'] = isolation.s12.s.flatten()
         
@@ -1625,21 +1563,33 @@ class EightTerm(Calibration2):
             
             error_vector[f,:] = error_vector_at_f.flatten()
             residuals[f,:] = residuals_at_f
-    
+        
+        e = error_vector
         # put the error vector into human readable dictionary
         self._coefs = {\
-                'e00':error_vector[:,0],
-                'e11':error_vector[:,1],
-                'det_X':error_vector[:,2],
-                'e33':error_vector[:,3]/error_vector[:,6],
-                'e22':error_vector[:,4]/error_vector[:,6],
-                'det_Y':error_vector[:,5]/error_vector[:,6],
-                'k':error_vector[:,6],
+                'forward directivity':e[:,0],
+                'forward source match':e[:,1],
+                'forward reflection tracking':(e[:,0]*e[:,1])-e[:,2],
+                'reverse directivity':e[:,3]/e[:,6],
+                'reverse source match':e[:,4]/e[:,6],
+                'reverse reflection tracking':(e[:,4]/e[:,6])*(e[:,3]/e[:,6])- (e[:,5]/e[:,6]),
+                'k':e[:,6],
                 }
-    
+        
+        
+        if self.switch_terms is not None:
+            self._coefs.update({
+                'forward switch term': self.switch_terms[0],
+                'reverse switch term': self.switch_terms[1],
+                })
+        else:
+            self._coefs.update({
+                'forward switch term': npy.zeros(fLength, dtype=complex),
+                'reverse switch term': npy.zeros(fLength, dtype=complex),
+                })
         # output is a dictionary of information
         self._output_from_run = {
-                'error vector':error_vector, 
+                'error vector':e, 
                 'residuals':residuals
                 }
     
@@ -1654,19 +1604,35 @@ class EightTerm(Calibration2):
         npoints = len(ec['k'])
         one = npy.ones(npoints,dtype=complex)
         zero = npy.zeros(npoints,dtype=complex)
-    
+        
+        Edf = self.coefs['forward directivity']
+        Esf = self.coefs['forward source match']
+        Erf = self.coefs['forward reflection tracking']
+        Edr = self.coefs['reverse directivity']
+        Esr = self.coefs['reverse source match']
+        Err = self.coefs['reverse reflection tracking']
+        k = self.coefs['k']
+        
+        detX = Edf*Esf-Erf
+        detY = Edr*Esr-Err
+        
+        
         T1 = npy.array([\
-                [       -1*ec['det_X'], zero    ],\
-                [       zero,           -1*ec['k']*ec['det_Y']]]).transpose().reshape(-1,2,2)
+                [ -1*detX,  zero    ],\
+                [ zero,     -1*k*detY]])\
+                .transpose().reshape(-1,2,2)
         T2 = npy.array([\
-                [       ec['e00'], zero ],\
-                [       zero,                   ec['k']*ec['e33']]]).transpose().reshape(-1,2,2)
+                [ Edf,      zero ],\
+                [ zero,     k*Edr]])\
+                .transpose().reshape(-1,2,2)
         T3 = npy.array([\
-                [       -1*ec['e11'], zero      ],\
-                [       zero,                   -1*ec['k']*ec['e22']]]).transpose().reshape(-1,2,2)
+                [ -1*Esf,   zero ],\
+                [ zero,     -1*k*Esr]])\
+                .transpose().reshape(-1,2,2)
         T4 = npy.array([\
-                [       one, zero       ],\
-                [       zero,                   ec['k']]]).transpose().reshape(-1,2,2)
+                [ one,      zero ],\
+                [ zero,     k ]])\
+                .transpose().reshape(-1,2,2)
         
         
         dot = npy.dot
