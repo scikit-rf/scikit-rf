@@ -14,13 +14,13 @@ class CalibrationTest(object):
     '''
     def test_correction_accuracy_of_standards(self):
         for k in range(self.cal.nstandards):
-            self.assertEqual(self.cal.apply(self.cal.measured[k]),\
+            self.assertEqual(self.cal.apply_cal(self.cal.measured[k]),\
                 self.cal.ideals[k])
     
     def test_correction_accuracy_of_dut(self):
-        a = self.wg.random(n_ports=1)
+        a = self.wg.random(n_ports=self.n_ports)
         m = self.measure(a)
-        c = self.cal.apply(m)
+        c = self.cal.apply_cal(m)
         self.assertEqual(a,c)
         
     def test_error_ntwk(self):
@@ -42,6 +42,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
 
     '''
     def setUp(self):
+        self.n_ports = 1
         self.wg = rf.wr10
         wg = self.wg
         wg.frequency = rf.F.from_f([100])
@@ -121,6 +122,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
+        self.n_ports = 2
         self.wg= rf.wr10
         wg= self.wg
         wg.frequency = rf.F.from_f([100])
@@ -148,13 +150,13 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             
     def test_correction_accuracy_of_standards(self):
         for k in range(self.cal.nstandards):
-            self.assertEqual(self.cal.apply(self.cal.measured[k]),\
+            self.assertEqual(self.cal.apply_cal(self.cal.measured[k]),\
                 self.cal.ideals[k])
     
     def test_correction_accuracy_of_dut(self):
         a = self.wg.random(n_ports=2)
         m = self.measure(a)
-        c = self.cal.apply(m)
+        c = self.cal.apply_cal(m)
         self.assertEqual(a,c)    
     
         
@@ -210,6 +212,7 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
     
     '''
     def setUp(self):
+        self.n_ports = 2
         wg= rf.wr10
         wg.frequency = rf.F.from_f([100])
         self.wg = wg
@@ -312,6 +315,6 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
         self.cal._coefs = converted
         a = self.wg.random(n_ports=2)
         m = self.measure(a)
-        c = self.cal.apply(m)
+        c = self.cal.apply_cal(m)
                
         self.assertEqual(a,c)

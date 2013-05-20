@@ -998,6 +998,9 @@ class Network(object):
                 setattr(self.__class__,'s%i%i'%(m+1,n+1),\
                     property(fget,doc=doc))
 
+    def plot_s_db_time(self,*args,**kwargs):
+        return self.windowed().plot_s_time_db(*args,**kwargs)
+        
     ## PRIMARY PROPERTIES
     @property
     def s(self):
@@ -2271,7 +2274,7 @@ class Network(object):
             for k in range(len(p))]]
         return ntwkB
     
-    def nonreciprocity(self,m,n):
+    def nonreciprocity(self,m,n, normalize = False):
         '''
         Normalized non-reciprocity metrica
         
@@ -2288,9 +2291,12 @@ class Network(object):
         '''
         forward = self.__getattribute__('s%i%i'%(m,n))
         reverse = self.__getattribute__('s%i%i'%(n,m))
-        denom = forward*reverse
-        denom.s = npy.sqrt(denom.s)
-        return (forward-reverse)/denom
+        if normalize:
+            denom = forward*reverse
+            denom.s = npy.sqrt(denom.s)
+            return (forward-reverse)/denom
+        else:
+            return (forward-reverse)
     
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):

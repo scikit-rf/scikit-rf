@@ -516,7 +516,12 @@ class Calibration(object):
         #reset the residuals
         self._residual_ntwks = None
 
-
+    def remove_std(self,prefix):
+        for ideal, measured in zip(self.ideals, self.measured):
+            if prefix in ideal.name:
+                self.ideals.remove(ideal)
+                self.measured.remove(measured)
+    
     ## methods
     def apply_cal(self,input_ntwk):
         '''
@@ -906,6 +911,8 @@ class Calibration(object):
 
         write(file,self, *args, **kwargs) 
 
+
+
     
 class Calibration2(object):
     def __init__(self, measured, ideals, sloppy_input=False,
@@ -933,6 +940,7 @@ class Calibration2(object):
             sloppy_input = True
             warn('dictionary passed, sloppy_input automatically activated')
         
+               
         # fill measured and ideals with copied lists of input     
         self.measured = [ntwk.copy() for ntwk in measured]
         self.ideals = [ntwk.copy() for ntwk in ideals]
@@ -997,7 +1005,7 @@ class Calibration2(object):
         '''
         raise NotImplementedError('The Subclass must implement this')
     
-    def apply(self,ntwk):
+    def apply_cal(self,ntwk):
         '''
         Apply correction to a Network
         '''
@@ -1008,24 +1016,19 @@ class Calibration2(object):
         Apply correction to list of dict of Networks.
         '''
         if hasattr(ntwk_list, 'keys'):
-            return {k:self.apply(ntwk_list[k]) for k in ntwk_list}
+            return {k:self.apply_cal(ntwk_list[k]) for k in ntwk_list}
         else:
-            return [self.apply(k) for k in ntwk_list]
+            return [self.apply_cal(k) for k in ntwk_list]
         
     
-    @property
-    def output_from_run(self):
-        try:
-            return self._output_from_run
-        except(AttributeError):
-            # maybe i havent run yet
-            self.run()
-            try:
-                return self._output_from_run
-            except(AttributeError):
-                # i did run and there is no output_from_run
-                return None
+    def pop(self,index=-1):
+        '''
+        Remove and return tuple of (ideal, measured) at index.
+        '''
+        return (self.ideals.pop(index),  self.measured.pop(index))
+    
         
+    
     @property
     def frequency(self):
         return self.measured[0].frequency.copy()
@@ -1049,6 +1052,20 @@ class Calibration2(object):
             self.run()
             return self._coefs
     
+    
+    @property
+    def output_from_run(self):
+        try:
+            return self._output_from_run
+        except(AttributeError):
+            # maybe i havent run yet
+            self.run()
+            try:
+                return self._output_from_run
+            except(AttributeError):
+                # i did run and there is no output_from_run
+                return None
+        
     @property
     def coefs_ntwks(self):
         '''
@@ -1126,7 +1143,7 @@ class Calibration2(object):
 
         These residuals are complex differences between the ideal 
         standards and their corresponding  corrected measurements. 
-        Returned in a list of Netowrk Objects.
+        
         '''
         return [ideal - caled for (ideal, caled) in zip(self.ideals, self.caled_ntwks)]
 
@@ -1278,7 +1295,7 @@ class SOLT(Calibration2):
             ['forward switch term','reverse switch term','k'] })
         self._coefs = coefs
     
-    def apply(self,ntwk):
+    def apply_cal(self,ntwk):
         '''
         '''
         caled = ntwk.copy()
@@ -1432,21 +1449,11 @@ class OnePort(Calibration2):
         
         return None
             
-    def apply(self, ntwk):
-        er_ntwk = Network(frequency = self.frequency)
-
-        if self.is_reciprocal:
-            #TODO: make this better and maybe have a phase continuity
-            # functionality
-            tracking  = self.coefs['reflection tracking']
-            s12 = npy.sqrt(tracking)
-            s21 = npy.sqrt(tracking)
-            #s12 =  sqrt_phase_unwrap(tracking)
-            #s21 =  sqrt_phase_unwrap(tracking)
-
-        else:
-            s21 = self.coefs['reflection tracking']
-            s12 = npy.ones(len(s21), dtype=complex)
+    def apply_cal(self, ntwk):
+        er_ntwk = Network(frequency = self.frequency, name=ntwk.name)
+        tracking  = self.coefs['reflection tracking']
+        s12 = npy.sqrt(tracking)
+        s21 = npy.sqrt(tracking)
 
         s11 = self.coefs['directivity']
         s22 = self.coefs['source match']
@@ -1463,6 +1470,9 @@ class EightTerm(Calibration2):
         Calibration2.__init__(self, measured, ideals, *args, **kwargs)
         
     def unterminate(self,ntwk):
+        '''
+        unterminate a raw measurement
+        '''
         if self.switch_terms is not None:
             return  unterminate_switch_terms(
                 two_port = ntwk,
@@ -1595,7 +1605,7 @@ class EightTerm(Calibration2):
     
         return None    
         
-    def apply(self, ntwk):
+    def apply_cal(self, ntwk):
         caled = ntwk.copy()
         ntwk = self.unterminate(ntwk)    
         

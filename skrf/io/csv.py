@@ -39,7 +39,11 @@ from .. import mathFunctions as mf
 
 def read_pna_csv(filename, *args, **kwargs):
     '''
-    Reads data from a csv file written by an Agilient PNA
+    Reads data from a csv file written by an Agilient PNA. 
+    
+    This function returns a triplet containing the header, comments, 
+    and data.
+    
     
     Parameters 
     -------------
@@ -70,27 +74,38 @@ def read_pna_csv(filename, *args, **kwargs):
     end_line = -1
     comments = ''
     for k,line in enumerate(fid.readlines()):
-        if line[0]=='!':
-            comments+=line[1:]
-        if line[:5] == 'BEGIN':
+        if line.startswith('!'):
+            comments += line[1:]
+        elif line.startswith('BEGIN'):
             begin_line = k
-        elif line[:3] == 'END':
+        elif line.startswith('END'):
             end_line = k
         
         if k == begin_line+1:
             header = line
     
-    footer = k-end_line
+    footer = k - end_line
     
     fid.close()
     
-    data = npy.genfromtxt(
-        filename, 
-        delimiter = ',',
-        skip_header = begin_line+2,
-        skip_footer = footer,
-        *args, **kwargs
-        )
+    try:
+        data = npy.genfromtxt(
+            filename, 
+            delimiter = ',',
+            skip_header = begin_line + 2,
+            skip_footer = footer,
+            *args, **kwargs
+            )
+    except(ValueError):
+        # carrage returns require a doubling of skiplines
+        data = npy.genfromtxt(
+            filename, 
+            delimiter = ',',
+            skip_header = (begin_line + 2)*2,
+            skip_footer = footer,
+            *args, **kwargs
+            )
+
     # pna uses unicode coding for degree symbol, but we dont need that
     header = header.replace('\xb0','deg').rstrip('\n').rstrip('\r')
     
