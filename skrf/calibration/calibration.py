@@ -1011,7 +1011,7 @@ class Calibration2(object):
         '''
         raise NotImplementedError('The Subclass must implement this')
     
-    def apply_to_list(self,ntwk_list):
+    def apply_cal_to_list(self,ntwk_list):
         '''
         Apply correction to list of dict of Networks.
         '''
@@ -1020,7 +1020,14 @@ class Calibration2(object):
         else:
             return [self.apply_cal(k) for k in ntwk_list]
         
-    
+    def apply_cal_to_all_in_dir(self, *args, **kwargs):
+        '''
+        '''
+        
+        from ..io.general import read_all_networks
+        ntwkDict = read_all_networks(*args, **kwargs)
+        return self.apply_cal_to_list(ntwkDict)
+        
     def pop(self,index=-1):
         '''
         Remove and return tuple of (ideal, measured) at index.

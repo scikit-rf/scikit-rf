@@ -335,6 +335,7 @@ class Network(object):
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
         'passivity' : passivity,
         'reciprocity' : reciprocity,
+        'time' : lambda x: fft.ifftshift(fft.ifft(x, axis=0)),
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0))),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0))),
         }
@@ -355,6 +356,7 @@ class Network(object):
         'vswr' : 'VSWR',
         'passivity' : 'Passivity',
         'reciprocity' : 'Reciprocity',
+        'time': 'Time (real)', 
         'time_db': 'Magnitude (dB)', 
         'time_mag': 'Magnitude', 
         }
@@ -1930,6 +1932,8 @@ class Network(object):
         freq = Frequency.from_f(f,**kwargs)
         self.interpolate_self(freq, **interp_kwargs)
         
+    
+    
         
     def flip(self):
         '''
