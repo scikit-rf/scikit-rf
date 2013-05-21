@@ -395,6 +395,37 @@ class Frequency(object):
             ax = gca()
         ax.set_xlabel('Frequency [%s]' % self.unit )
 
+def overlap(f1,f2, sample_rate_from='f1', *args, **kwargs ):
+    '''
+    Calculates overlapping frequency between f1 and f2
+    
+    Parameters
+    ------------
+    f1 : :class:`Frequency`
+        a  frequency object
+    f2 : :class:`Frequency`
+        a  frequency object
+    sample_rate_from : 'f1', 'f2'
+        resultant frequency uses sample rate from either f1 or f2
+    \*args, \*\*kwargs : 
+        passed to :func:`Frequency.from_f`
+    
+    '''
+    if f1.start > f2.stop:
+        raise ValueError('Out of bounds. f1.start > f2.stop')
+    elif f2.start > f1.stop:
+        raise ValueError('Out of bounds. f2.start > f1.stop')
+    
+         
+    start = max(f1.start, f2.start)
+    stop = min(f1.stop, f2.stop)
+    npoints = sum((f1>=start) & (f1<=stop))
+    f = linspace(start, stop, npoints)
+    return Frequency.from_f(f, *args, **kwargs)
+
+
+
+
 def f_2_frequency(f):
     '''
     converts a frequency vector to a Frequency object
