@@ -394,10 +394,28 @@ class Frequency(object):
         if ax is None:
             ax = gca()
         ax.set_xlabel('Frequency [%s]' % self.unit )
-
-def overlap(f1,f2, sample_rate_from='f1', *args, **kwargs ):
+    
+    def overlap(self,f2):
+        '''
+        Calculates overlapping frequency  between self and f2
+        
+        See Also 
+        ---------
+        
+        overlap_freq
+        
+        '''
+        return overlap_freq(self, f2)
+    
+def overlap_freq(f1,f2):
     '''
-    Calculates overlapping frequency between f1 and f2
+    Calculates  overlapping frequency between f1 and f2.
+    
+    Or, put more accurately, this returns a Frequency that is the part 
+    of f1 that is overlapped by f2. The resultant start frequency is 
+    the smallest f1.f that is greater than f2.f.start, and likewise for 
+    the the stop-frequency. This way the new frequency overlays onto f1.
+    
     
     Parameters
     ------------
@@ -405,11 +423,15 @@ def overlap(f1,f2, sample_rate_from='f1', *args, **kwargs ):
         a  frequency object
     f2 : :class:`Frequency`
         a  frequency object
-    sample_rate_from : 'f1', 'f2'
-        resultant frequency uses sample rate from either f1 or f2
+    
     \*args, \*\*kwargs : 
         passed to :func:`Frequency.from_f`
     
+    Returns 
+    ----------
+    f3 : :class:`Frequency`
+        part of f1 that is overlapped by f2
+        
     '''
     if f1.start > f2.stop:
         raise ValueError('Out of bounds. f1.start > f2.stop')
@@ -419,11 +441,10 @@ def overlap(f1,f2, sample_rate_from='f1', *args, **kwargs ):
          
     start = max(f1.start, f2.start)
     stop = min(f1.stop, f2.stop)
-    npoints = sum((f1>=start) & (f1<=stop))
-    f = linspace(start, stop, npoints)
-    return Frequency.from_f(f, *args, **kwargs)
-
-
+    f = f1.f[(f1.f>=start) & (f1.f<=stop)]
+    freq =  Frequency.from_f(f, unit = 'hz')
+    freq.unit = f1.unit
+    return freq
 
 
 def f_2_frequency(f):

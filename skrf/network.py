@@ -2613,6 +2613,40 @@ def stitch(ntwkA, ntwkB, **kwargs):
     C.frequency.unit = A.frequency.unit
     return C
 
+def overlap(ntwkA, ntwkB):
+    '''
+    Returns the overlapping parts of two Networks, interpolating if needed.
+    
+    If frequency vectors for each ntwk dont perfectly overlap, then 
+    ntwkB is interpolated so that the resultant networks have identical 
+    frequencies.
+    
+    Parameters
+    ------------
+    ntwkA : :class:`Network`
+        a ntwk which overlaps `ntwkB`. (the `dominant` network)
+    ntwkB : :class:`Network`
+        a ntwk which overlaps `ntwkA`.
+        
+    Returns
+    -----------
+    ntwkA_new : :class:`Network`
+        part of `ntwkA` that overlapped `ntwkB`
+    ntwkB_new : :class:`Network`
+        part of `ntwkB` that overlapped `ntwkA`, possibly interpolated
+        
+    
+    See Also
+    ------------
+    
+    :func:`skrf.frequency.overlap_freq`
+    
+    '''
+    
+    new_freq = ntwkA.frequency.overlap(ntwkB.frequency)
+    return ntwkA.interpolate(new_freq),ntwkB.interpolate(new_freq)
+
+
 def average(list_of_networks):
     '''
     Calculates the average network from a list of Networks.
@@ -2670,6 +2704,8 @@ def one_port_2_two_port(ntwk):
             npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
     result.s[:,1,0] = result.s[:,0,1]
     return result
+
+
 
 
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):

@@ -180,7 +180,7 @@ def pna_csv_2_ntwks(filename):
     '''
     #TODO: check the data's format (Real-imag or db/angle , ..)
     header, comments, d = read_pna_csv(filename)
-    
+    import pdb;pdb.set_trace()
     try:
         names = [header.split('\"')[k*4+1] for k in range((d.shape[1]-1)/2) ]
     except(IndexError):
