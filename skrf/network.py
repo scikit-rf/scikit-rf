@@ -55,7 +55,7 @@ Connecting Networks
     flip
 
 
-Interpolation and Stitching
+Interpolation and Combining
 =============================
 
 .. autosummary::
@@ -66,6 +66,7 @@ Interpolation and Stitching
     Network.interpolate_self
     Network.interpolate_from_f
     stitch
+    overlap
 
 IO
 ====

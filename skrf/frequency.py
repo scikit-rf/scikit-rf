@@ -39,6 +39,14 @@ Frequency Class
 
    Frequency
 
+Functions
+=============
+
+.. autosummary::
+    :toctree: generated/
+    
+    overlap_freq
+
 '''
 
 from pylab import linspace, gca
