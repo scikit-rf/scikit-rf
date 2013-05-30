@@ -181,6 +181,11 @@ def get_extn(filename):
     else:
         return ext[1:]
 
+def basename_noext(filename):
+    '''
+    gets the basename and strips extension
+    '''
+    return os.path.splitext(os.path.basename(filename))[0]
 
 # general purpose objects 
 class ObjectDict(collections.MutableMapping):
