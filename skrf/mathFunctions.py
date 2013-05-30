@@ -255,7 +255,29 @@ def sqrt_known_sign(z_squared, z_approx):
         npy.sign(npy.angle(z)) == npy.sign(npy.angle(z_approx)), 
         z, z.conj())
     
+def find_correct_sign(z1,z2,z_approx):
+    '''
+    create new vector from z1, z2 choosing elements with sign matching z_approx
     
+    This is used when you have to make a root choice on a complex number.
+    ie 
+    
+    .. math:: 
+        
+        z1,z2 = \\pm \\sqrt(z^2)
+    
+    
+    Parameters
+    ------------
+    z1 : array-like
+        root 1
+    z2 : array-like
+        root 2
+    z_approx : array-like
+        approximate answer of z
+    '''
+    return npy.where(
+    npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)    
 
 def sqrt_phase_unwrap(input):
     '''
