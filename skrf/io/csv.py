@@ -40,6 +40,9 @@ from ..frequency import Frequency
 from .. import util
 from warnings import warn
 
+# delayed imports 
+# from pandas import Series, Index, DataFrame
+
 def read_pna_csv(filename, *args, **kwargs):
     '''
     Reads data from a csv file written by an Agilient PNA. 
@@ -72,6 +75,7 @@ def read_pna_csv(filename, *args, **kwargs):
     -----------
     >>> header, comments, data = rf.read_pna_csv('myfile.csv')
     '''
+    warn("deprecated", DeprecationWarning)
     fid = open(filename,'r')
     begin_line = -2
     end_line = -1
@@ -119,6 +123,7 @@ def pna_csv_2_df(filename, *args, **kwargs):
     Reads data from a csv file written by an Agilient PNA
 
     '''
+    warn("deprecated", DeprecationWarning)
     from pandas import Series, Index, DataFrame
     header, comments, d = read_pna_csv(filename)
     f_unit = header.split(',')[0].split(')')[0].split('(')[1]
@@ -130,6 +135,7 @@ def pna_csv_2_df(filename, *args, **kwargs):
     return df
     
 def pna_csv_2_ntwks2(filename, *args, **kwargs):    
+    warn("deprecated", DeprecationWarning)
     df = pna_csv_2_df(filename, *args, **kwargs)
     header, comments, d = read_pna_csv(filename)
     ntwk_dict  = {}
@@ -379,7 +385,32 @@ class AgilentCSV(object):
                     )
             
         return ntwk_list
+    
+    @property
+    def dict(self):
+        '''
+        '''
+        return { self.columns[k]:self.data[:,k] \
+            for k in range(self.n_traces+1)}
+    @property
+    def dataframe(self):
+        '''
+        Pandas DataFrame representation of csv file
         
+        obviously this requires pandas
+        '''
+        from pandas import  Index, DataFrame
+        
+        index = Index(
+            self.frequency.f_scaled, 
+            name = 'Frequency(%s)'%self.frequency.unit)
+        
+        return DataFrame(
+                { self.columns[k]:self.data[:,k] \
+                    for k in range(1,self.n_traces+1)}, 
+                index=index,
+                )
+                    
 def pna_csv_header_split(filename):
     '''
     Split a Agilent csv file's header into a list
@@ -401,6 +432,7 @@ def pna_csv_header_split(filename):
     cols : list of str's 
         list of column names
     '''
+    warn("deprecated", DeprecationWarning)
     header, comments, d = read_pna_csv(filename)
     
     n_traces =  d.shape[1] - 1 # because theres is one frequency column
@@ -439,6 +471,7 @@ def pna_csv_2_ntwks(filename):
         list of Networks representing the data contained in column pairs
         
     '''
+    warn("deprecated", DeprecationWarning)
     #TODO: check the data's format (Real-imag or db/angle , ..)
     header, comments, d = read_pna_csv(filename)
     #import pdb;pdb.set_trace()
@@ -477,6 +510,7 @@ def pna_csv_2_ntwks(filename):
     return ntwk_list
 
 def pna_csv_2_freq(filename):
+    warn("deprecated", DeprecationWarning)
     header, comments, d = read_pna_csv(filename)
     #try to pull out frequency unit
     cols = pna_csv_header_split(filename)
@@ -506,7 +540,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
         list of Networks representing the data contained in column pairs
         
     '''
-    
+    warn("deprecated", DeprecationWarning)
     header, comments, d = read_pna_csv(filename)
     
     n_traces =  d.shape[1] - 1 # because theres is one frequency column
