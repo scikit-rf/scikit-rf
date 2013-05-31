@@ -1016,7 +1016,7 @@ class Calibration2(object):
         Apply correction to list of dict of Networks.
         '''
         if hasattr(ntwk_list, 'keys'):
-            return {k:self.apply_cal(ntwk_list[k]) for k in ntwk_list}
+            return dict([(k, self.apply_cal(ntwk_list[k])) for k in ntwk_list])
         else:
             return [self.apply_cal(k) for k in ntwk_list]
         
@@ -1086,7 +1086,7 @@ class Calibration2(object):
         
     @property
     def coefs_8term(self):
-        return { k:self.coefs.get(k) for k in [\
+        return dict([(k, self.coefs.get(k)) for k in [\
             'forward directivity',
             'forward source match',
             'forward reflection tracking',
@@ -1098,11 +1098,11 @@ class Calibration2(object):
             'forward switch term',
             'reverse switch term',
             'k'
-            ]}
+            ]])
     
     @property 
     def coefs_12term(self):
-        return { k:self.coefs.get(k) for k in [\
+        return dict([(k, self.coefs.get(k)) for k in [\
             'forward directivity',
             'forward source match',
             'forward reflection tracking',
@@ -1114,7 +1114,7 @@ class Calibration2(object):
             'reverse reflection tracking',
             'reverse transmission tracking',
             'reverse source match',
-            ]}
+            ]])
     
     
     
@@ -1294,12 +1294,12 @@ class SOLT(Calibration2):
             (1. - p2_coefs['source match']*p2_coefs['load match'])
         coefs = {}
         #import pdb;pdb.set_trace()
-        coefs.update({ 'forward %s'%k:p1_coefs[k] for k in p1_coefs})
-        coefs.update({ 'reverse %s'%k:p2_coefs[k] for k in p2_coefs})
+        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
         eight_term_coefs = convert_12term_2_8term(coefs)
         #import pdb;pdb.set_trace()
-        coefs.update({l:eight_term_coefs[l] for l in \
-            ['forward switch term','reverse switch term','k'] })
+        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
+            ['forward switch term','reverse switch term','k'] ]))
         self._coefs = coefs
     
     def apply_cal(self,ntwk):

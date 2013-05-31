@@ -123,7 +123,7 @@ def pna_csv_2_df(filename, *args, **kwargs):
     names = header.split(',')
     
     index = Index(d[:,0], name = names[0])
-    df=DataFrame({names[k]:d[:,k] for k in range(1,len(names))}, index=index)
+    df=DataFrame(dict([(names[k], d[:,k]) for k in range(1,len(names))]), index=index)
     return df
     
 def pna_csv_2_ntwks2(filename, *args, **kwargs):    
