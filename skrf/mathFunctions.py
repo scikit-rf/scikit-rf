@@ -230,6 +230,55 @@ def unwrap_rad(input):
     '''
     return .5*npy.unwrap(2*input,axis=0)
 
+def sqrt_known_sign(z_squared, z_approx):
+    '''
+    Returns sqrt of complex number, with sign chosen to match `z_approx`
+    
+    Parameters 
+    -------------
+    z_squared : number, array-like  
+        the complex to be square-rooted
+    z_approx : number, array-like
+        the approximate value of z. sign of z is chosen to match that of 
+        z_approx
+    
+    Returns
+    ----------
+    z : number, array-like (same type as z_squared)
+        square root of z_squared. 
+        
+    
+        
+    '''
+    z = npy.sqrt(z_squared)
+    return npy.where(
+        npy.sign(npy.angle(z)) == npy.sign(npy.angle(z_approx)), 
+        z, z.conj())
+    
+def find_correct_sign(z1,z2,z_approx):
+    '''
+    create new vector from z1, z2 choosing elements with sign matching z_approx
+    
+    This is used when you have to make a root choice on a complex number.
+    ie 
+    
+    .. math:: 
+        
+        z1,z2 = \\pm \\sqrt(z^2)
+    
+    
+    Parameters
+    ------------
+    z1 : array-like
+        root 1
+    z2 : array-like
+        root 2
+    z_approx : array-like
+        approximate answer of z
+    '''
+    return npy.where(
+    npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)    
+
 def sqrt_phase_unwrap(input):
     '''
     takes the square root of a complex number with unwraped phase
@@ -238,6 +287,8 @@ def sqrt_phase_unwrap(input):
     '''
     return npy.sqrt(abs(input))*\
             npy.exp(0.5*1j*unwrap_rad(complex_2_radian(input)))
+
+
 
 # mathematical functions
 def dirac_delta(x):
@@ -317,7 +368,10 @@ def complex2MagPhase(complx,deg=False):
 
 def rand_c(*args):
     '''
-    creates a complex random array of  shape s.
+    Creates a complex random array of shape s.
+    
+    The bounds on real and imaginary values are (-1,1)
+    
     
     Parameters
     -----------
@@ -329,8 +383,8 @@ def rand_c(*args):
     >>> x = rf.rand_c(2,2)
     '''
     s = npy.array(args)
-    return npy.random.rand(npy.product(s)).reshape(s) + \
-        1j*npy.random.rand(npy.product(s)).reshape(s)
+    return 1-2*npy.random.rand(npy.product(s)).reshape(s) + \
+        1-2*1j*npy.random.rand(npy.product(s)).reshape(s)
 
 
 def psd2TimeDomain(f,y, windowType='hamming'):

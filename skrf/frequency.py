@@ -432,9 +432,6 @@ def overlap_freq(f1,f2):
     f2 : :class:`Frequency`
         a  frequency object
     
-    \*args, \*\*kwargs : 
-        passed to :func:`Frequency.from_f`
-    
     Returns 
     ----------
     f3 : :class:`Frequency`

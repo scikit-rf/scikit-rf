@@ -1559,10 +1559,10 @@ class EightTerm(Calibration2):
             for k in range(numStds):
                 m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
                 Q[k*4:k*4+4,:] = npy.array([\
-                        [ 1, i[0,0]*m[0,0], -i[0,0], 0 , i[1,0]*m[0,1],         0 ,     0        ],\
-                        [ 0, i[0,1]*m[0,0], -i[0,1], 0 , i[1,1]*m[0,1],         0 ,  -m[0,1] ],\
-                        [ 0, i[0,0]*m[1,0],     0,       0 , i[1,0]*m[1,1], -i[1,0],    0        ],\
-                        [ 0, i[0,1]*m[1,0],     0,       1 , i[1,1]*m[1,1], -i[1,1], -m[1,1] ],\
+                        [ 1, i[0,0]*m[0,0], -i[0,0],    0,  i[1,0]*m[0,1],        0,         0   ],\
+                        [ 0, i[0,1]*m[0,0], -i[0,1],    0,  i[1,1]*m[0,1],        0,     -m[0,1] ],\
+                        [ 0, i[0,0]*m[1,0],     0,      0,  i[1,0]*m[1,1],   -i[1,0],        0   ],\
+                        [ 0, i[0,1]*m[1,0],     0,      1,  i[1,1]*m[1,1],   -i[1,1],    -m[1,1] ],\
                         ])
                 #pdb.set_trace()
                 M[k*4:k*4+4,:] = npy.array([\
@@ -1662,6 +1662,20 @@ class EightTerm(Calibration2):
         
 ## Functions
 
+
+def find_b12(ntwkA, ntwkB):
+    a11,a21,a12,a22 = [ntwkA.s[:,p,q] for p,q in ntwkA.port_tuples]
+    b11,b21,b12,b22 = [ntwkB.s[:,p,q] for p,q in ntwkB.port_tuples]
+    
+    detA = (a11*a22-a12*a21)
+    detB = (b11*b22-b12*b21)
+    fm = (detA + detB - a11*b22 - a11*b22 - b11*a22)/(a12*b21)
+    roots_v = npy.frompyfunc( lambda x,y,z:npy.roots([x,y,z]),3,1 )
+    
+    one = npy.ones(len(a11))
+    b12 = roots_v(one, fm, one)
+    return b12
+    
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
     '''
     Convert the 12-term and 8-term error coefficients.
