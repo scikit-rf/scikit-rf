@@ -257,16 +257,16 @@ def sqrt_known_sign(z_squared, z_approx):
     
 def find_correct_sign(z1,z2,z_approx):
     '''
-    create new vector from z1, z2 choosing elements with sign matching z_approx
+    Create new vector from z1, z2 choosing elements with sign matching z_approx
     
     This is used when you have to make a root choice on a complex number.
-    ie 
+    and you know the approximate value of the root. 
     
     .. math:: 
         
         z1,z2 = \\pm \\sqrt(z^2)
-    
-    
+        
+
     Parameters
     ------------
     z1 : array-like
@@ -275,6 +275,13 @@ def find_correct_sign(z1,z2,z_approx):
         root 2
     z_approx : array-like
         approximate answer of z
+    
+    Returns 
+    ----------
+    z3 : npy.array
+        array build from z1 and z2 by 
+        z1 where sign(z1) == sign(z_approx), z2 else
+    
     '''
     return npy.where(
     npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)    

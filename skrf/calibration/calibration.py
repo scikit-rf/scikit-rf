@@ -48,7 +48,7 @@ from warnings import warn
 import cPickle as pickle
 
 from calibrationAlgorithms import *
-from ..mathFunctions import complex_2_db, sqrt_phase_unwrap
+from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, find_correct_sign
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
@@ -930,15 +930,19 @@ class Calibration2(object):
             Predicted ideal response of the calibration standards.
             The order must align with `ideals` list ( or use sloppy_input
         '''
+        
         # allow them to pass di
         if hasattr(measured, 'keys'):
             measured = measured.values()
-            sloppy_input = True
-            warn('dictionary passed, sloppy_input automatically activated')
+            if sloppy_input == False:
+                warn('dictionary passed, sloppy_input automatically activated')
+                sloppy_input = True
+            
         if hasattr(ideals, 'keys'):
             ideals = ideals.values()
-            sloppy_input = True
-            warn('dictionary passed, sloppy_input automatically activated')
+            if sloppy_input == False:
+                warn('dictionary passed, sloppy_input automatically activated')
+                sloppy_input = True
         
                
         # fill measured and ideals with copied lists of input     
@@ -1159,7 +1163,7 @@ class Calibration2(object):
         '''
         List of the corrected calibration standards
         '''
-        return self.apply_to_list(self.measured)
+        return self.apply_cal_to_list(self.measured)
     
         
     @property
@@ -1470,11 +1474,25 @@ class OnePort(Calibration2):
 class EightTerm(Calibration2):
     def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
         '''
-        
+        Parameters
+        --------------
+        measured : 
+        ideals : 
+        switch_terms : tuple of :class:`~skrf.network.Network` objects
+            the pair of switch terms in the order (forward, reverse)
+            
+        \*args, \*\*kwargs : 
+            
+            
         '''
         self.type = 'EightTerm'
         self.switch_terms = switch_terms
-        Calibration2.__init__(self, measured, ideals, *args, **kwargs)
+        if switch_terms is None:
+            warn('No switch terms provided')
+        Calibration2.__init__(self, 
+            measured = measured, 
+            ideals = ideals, 
+            *args, **kwargs)
         
     def unterminate(self,ntwk):
         '''
@@ -1488,7 +1506,11 @@ class EightTerm(Calibration2):
                 )
         else:
             return ntwk
-            
+    
+    @property
+    def measured_unterminated(self):        
+        return [self.unterminate(k) for k in self.measured]
+        
     def run(self):
         '''
         Two port calibration based on the 8-term error model.
@@ -1659,22 +1681,116 @@ class EightTerm(Calibration2):
             caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
         return caled
         
+
+class TRL(EightTerm):
+    '''
+    Thru Reflect Line 
+    '''
+    
+    def __init__(self, measured, ideals,line_approx=None,*args, **kwargs):
+        '''
+        Init. 
         
+        Parameters
+        --------------
+        measured : 
+        ideals : 
+        switch_terms : tuple of :class:`~skrf.network.Network` objects
+            the pair of switch terms in the order (forward, reverse)
+            
+        \*args, \*\*kwargs : 
+            
+            
+        '''
+        warn('Value of Reflect is not solved for yet.')
+        self.line_approx = line_approx
+        
+        
+        EightTerm.__init__(self, 
+            measured = measured, 
+            ideals = ideals,
+            *args, **kwargs)
+        
+        
+        thru_m, reflect_m, line_m = self.measured_unterminated 
+        self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
+        self.type = 'TRL'
+
 ## Functions
 
 
-def find_b12(ntwkA, ntwkB):
-    a11,a21,a12,a22 = [ntwkA.s[:,p,q] for p,q in ntwkA.port_tuples]
-    b11,b21,b12,b22 = [ntwkB.s[:,p,q] for p,q in ntwkB.port_tuples]
+
+def determine_line(thru_m, line_m, line_approx=None):
+    '''
+    Determine S21 of a matched line. 
     
-    detA = (a11*a22-a12*a21)
-    detB = (b11*b22-b12*b21)
-    fm = (detA + detB - a11*b22 - a11*b22 - b11*a22)/(a12*b21)
+    Given raw measurements of a `thru` and a matched `line` with unknown
+    s21, this will calculate the response of the line. The `line_approx`
+    is an approximation to line, that is needed to choose the correct 
+    root sign. 
+    
+    This is possible because two measurements can be combined to 
+    create a relationship of similar matrices, as shown below. Equating
+    the traces between these measurements allows one to solve for S21 
+    of the line.
+    
+    .. math::
+        
+        M_t = X \\cdot A_t \\cdot Y    
+        M_l = X \\cdot A_l \\cdot Y
+        
+        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}
+        
+        tr(M_t \\cdot M_{l}^{-1}) = tr( A_t \\cdot A_{l}^{-1})
+    
+    which can be solved to form a quadratic in S21 of the line
+    
+    Notes
+    -------
+    This relies on the 8-term error model, which requires that switch
+    terms are accounted for. specifically, thru and line have their 
+    switch terms unterminated. 
+    
+    Parameters
+    -----------
+    thru_m : :class:`~skrf.network.Network`
+        a raw measurement of a thru 
+    line_m : :class:`~skrf.network.Network`
+        a raw measurement of a matched transmissive standard
+    line_approx : :class:`~skrf.network.Network`
+        an approximate network the ideal line response. if None, then 
+        the response is approximated by line_approx = line/thru. This 
+        makes the assumption that the error networks have much larger 
+        transmission than reflection
+        
+        
+    References 
+    --------------
+    
+    '''
+    
+    npts = len(thru_m)    
+    
+    if line_approx is None:
+        # estimate line length, by assumeing error networks are well
+        # matched
+        line_approx = line_m/thru_m
+    
+    
+    fm = [ -1* npy.trace(npy.dot(thru_m.t[f], npy.linalg.inv(line_m.t[f]))) \
+        for f in range(npts)]
+    one = npy.ones(npts)
+    zero = npy.zeros(npts)
+    
     roots_v = npy.frompyfunc( lambda x,y,z:npy.roots([x,y,z]),3,1 )
+    s12 = roots_v(one, fm, one)
+    s12_0 = npy.array([k[0]  for k in s12])
+    s12_1 = npy.array([k[1]  for k in s12])
     
-    one = npy.ones(len(a11))
-    b12 = roots_v(one, fm, one)
-    return b12
+    s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
+    found_line = line_m.copy()
+    found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose().reshape(-1,2,2)
+    return found_line
     
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
     '''
