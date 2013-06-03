@@ -304,8 +304,8 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
                 pass
                 
     if obj_type is not None:
-        out = {k:out[k] for k in out if 
-            isinstance(out[k],sys.modules[__name__].__dict__[obj_type])}
+        out = dict([(k, out[k]) for k in out if 
+            isinstance(out[k],sys.modules[__name__].__dict__[obj_type])])
     
     return out
 
