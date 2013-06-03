@@ -220,13 +220,13 @@ class ObjectDict(collections.MutableMapping):
             if kw_key[0] == '_':
                 
                 od = ObjectDict(
-                    {k:self.store[k] for k in self.store if \
-                    self.store[k].__getattribute__(kw_key[1:]) != kwargs[kw_key] }
+                    dict([(k, self.store[k]) for k in self.store if \
+                    self.store[k].__getattribute__(kw_key[1:]) != kwargs[kw_key] ])
                     )
             else:
                 od = ObjectDict(
-                    {k:self.store[k] for k in self.store if \
-                    self.store[k].__getattribute__(kw_key) == kwargs[kw_key] }
+                    dict([(k, self.store[k]) for k in self.store if \
+                    self.store[k].__getattribute__(kw_key) == kwargs[kw_key] ])
                     )
             
         return od
@@ -239,12 +239,12 @@ class ObjectDict(collections.MutableMapping):
         *args and **kwargs
         '''
         if len(args) !=0 or len(kwargs)!=0:
-            return ObjectDict({k:self.store[k].__getattribute__(attr)(*args, **kwargs) \
+            return ObjectDict(dict([(k, self.store[k].__getattribute__(attr)(*args, **kwargs)) \
                 for k in self.store \
-                if self.store[k].__getattribute__(attr)(*args, **kwargs) is not None})
+                if self.store[k].__getattribute__(attr)(*args, **kwargs) is not None]))
         else:    
-            return ObjectDict({k:self.store[k].__getattribute__(attr) \
+            return ObjectDict(dict([(k, self.store[k].__getattribute__(attr)) \
                 for k in self.store \
-                if self.store[k].__getattribute__(attr) is not None})
+                if self.store[k].__getattribute__(attr) is not None]))
 
 

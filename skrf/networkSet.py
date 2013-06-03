@@ -401,7 +401,7 @@ class NetworkSet(object):
         The returned dictionary has the Network names for keys, and the 
         Networks as values.
         '''
-        return {k.name:k for k in self.ntwk_set}
+        return dict([(k.name, k) for k in self.ntwk_set])
         
     
     def element_wise_method(self,network_method_name, *args, **kwargs):
@@ -1046,9 +1046,9 @@ class NetworkSet(object):
             name='Freq(%s)'%self[0].frequency.unit
             )
         df = DataFrame(
-            {'%s'%(k.name):
-                Series(k.__getattribute__(attr)[:,m,n],index=index) 
-                for k in self},
+            dict([('%s'%(k.name),
+                Series(k.__getattribute__(attr)[:,m,n],index=index))
+                for k in self]),
             index = index,
             )
         return df
