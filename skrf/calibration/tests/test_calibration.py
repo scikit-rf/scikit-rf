@@ -186,7 +186,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             self.Y.s21 * self.Y.s12 , 
             self.cal.coefs_ntwks['reverse reflection tracking'])
         
-class TRL(EightTermTest):
+class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
         self.wg= rf.wr10

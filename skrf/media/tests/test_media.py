@@ -91,14 +91,14 @@ class MediaTestCase(unittest.TestCase):
     def test_write_csv(self):
         fname = os.path.join(self.files_dir,\
                 'out.csv')
-        rf.wr10.write_csv(fname)
+        self.dummy_media.write_csv(fname)
         os.remove(fname)
     
     
     def test_from_csv(self):
         fname = os.path.join(self.files_dir,\
                 'out.csv')
-        rf.wr10.write_csv(fname)
+        self.dummy_media.write_csv(fname)
         a_media = rf.Media.from_csv(fname)
-        self.assertEqual(a_media, rf.wr10)
+        self.assertEqual(a_media,self.dummy_media)
         os.remove(fname)
