@@ -296,7 +296,6 @@ def sqrt_phase_unwrap(input):
             npy.exp(0.5*1j*unwrap_rad(complex_2_radian(input)))
 
 
-
 # mathematical functions
 def dirac_delta(x):
     '''

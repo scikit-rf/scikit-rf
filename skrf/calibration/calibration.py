@@ -1681,7 +1681,6 @@ class EightTerm(Calibration2):
             caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
         return caled
         
-
 class TRL(EightTerm):
     '''
     Thru Reflect Line 

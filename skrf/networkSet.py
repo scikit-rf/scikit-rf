@@ -184,6 +184,7 @@ class NetworkSet(object):
                 
             self.__add_a_element_wise_method('plot_'+network_property_name)
             self.__add_a_element_wise_method('plot_s_db')
+            self.__add_a_element_wise_method('plot_s_db_time')
         for network_method_name in \
                 ['write_touchstone','interpolate','plot_s_smith']:
             self.__add_a_element_wise_method(network_method_name)

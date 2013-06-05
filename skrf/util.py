@@ -57,8 +57,7 @@ import numpy as npy
 from scipy.constants import mil
 from datetime import datetime
 import collections, pprint
-
-
+from subprocess import Popen,PIPE
 # globals 
 
 
@@ -187,15 +186,95 @@ def basename_noext(filename):
     '''
     return os.path.splitext(os.path.basename(filename))[0]
 
+
+# git
+def git_version( modname):
+    '''
+    Returns output 'git describe', executed in a modules root directory.
+    '''
+    mod = __import__(modname)
+    mod_dir =os.path.split(mod.__file__)[0] 
+    p = Popen(['git', 'describe'], stdout = PIPE,stderr=PIPE, cwd =mod_dir )
+    
+    try:
+        out,er = p.communicate()
+    except(OSError):
+        return None
+        
+    out = out.strip('\n')
+    if out == '':
+        return None
+    return out
+    
+
+
+class ObjectList(object):
+    def __init__(self, list_):
+        self.list = list(list_)
+    
+    def __getattr__(self, name):
+        return ObjectList([k.__getattribute__(name) for k in self.list])
+    
+    def __call__(self, *args, **kwargs):
+        return ObjectList([k(*args, **kwargs) for k in self.store])
+
+
 # general purpose objects 
 class ObjectDict(collections.MutableMapping):
-    def __init__(self, d,  attr_list=[], *args, **kwargs):
-        self.store = dict(d,*args, **kwargs)
-        
-        [self.__setattr__(k,self.get_attr(k)) for k in attr_list]
+    '''
+    access elements' properties:
+        a.prop
     
+    access elements' functions:
+        a.func()
+    
+    searching:
+        a[a.prop == value]
+        a[a.prop < value]
+    
+    multiple search:
+        a[set(a.prop==value1) & set( a.prop2==value2)]
+    
+    
+    '''
+    def __init__(self, dict_):
+        self.store = dict(dict_)
+        
+    def __eq__(self, value):
+        return [k for k in self.store if self.store[k] == value ]
+    
+    def __ne__(self, value):
+        return [k for k in self.store if self.store[k] != value ]
+    
+    def __gt__(self, value):
+        return [k for k in self.store if self.store[k] > value ]
+    
+    def __ge__(self, value):
+        return [k for k in self.store if self.store[k] >= value ]
+    
+    def __lt__(self, value):
+        return [k for k in self.store if self.store[k] < value ]
+    
+    def __le__(self, value):
+        return [k for k in self.store if self.store[k] <= value ]
+    
+    
+    
+    def __getattr__(self, name):
+        return ObjectDict(
+            {k: self.store[k].__getattribute__(name) for k in self.store})
+        
     def __getitem__(self, key):
-        return self.store[key]
+        od =   ObjectDict({k:self.store[k] for k in key})
+        if len(od) == 1: 
+            return od.store.values()[0]
+        else: 
+            return od
+            
+    def __call__(self, *args, **kwargs):
+        return ObjectDict(
+            {k: self.store[k](*args, **kwargs) for k in self.store})
+        
 
     def __setitem__(self, key, value):
         self.store[key] = value
@@ -215,36 +294,5 @@ class ObjectDict(collections.MutableMapping):
     def __repr__(self):
         return pprint.pformat(self.store)
         
-    def search(self, **kwargs):
-        for kw_key in kwargs:
-            if kw_key[0] == '_':
-                
-                od = ObjectDict(
-                    dict([(k, self.store[k]) for k in self.store if \
-                    self.store[k].__getattribute__(kw_key[1:]) != kwargs[kw_key] ])
-                    )
-            else:
-                od = ObjectDict(
-                    dict([(k, self.store[k]) for k in self.store if \
-                    self.store[k].__getattribute__(kw_key) == kwargs[kw_key] ])
-                    )
-            
-        return od
     
-    def get_attr(self, attr,  *args, **kwargs):
-        '''
-        get an attribute of each object in the dict. 
-        
-        if args is given, then the attribute is assumed to be a function and called with 
-        *args and **kwargs
-        '''
-        if len(args) !=0 or len(kwargs)!=0:
-            return ObjectDict(dict([(k, self.store[k].__getattribute__(attr)(*args, **kwargs)) \
-                for k in self.store \
-                if self.store[k].__getattribute__(attr)(*args, **kwargs) is not None]))
-        else:    
-            return ObjectDict(dict([(k, self.store[k].__getattribute__(attr)) \
-                for k in self.store \
-                if self.store[k].__getattribute__(attr) is not None]))
-
-
+    

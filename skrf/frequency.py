@@ -401,7 +401,7 @@ class Frequency(object):
         '''
         if ax is None:
             ax = gca()
-        ax.set_xlabel('Frequency [%s]' % self.unit )
+        ax.set_xlabel('Frequency (%s)' % self.unit )
     
     def overlap(self,f2):
         '''

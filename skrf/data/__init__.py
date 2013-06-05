@@ -67,6 +67,26 @@ materials = {
     'gold':{
         'resistivity(ohm*m)':2.44e-8,
         },
+    'mylar':{
+        'relative permativity':1.75,
+        'loss tangent':500e-4,
+        },
+    'quartz':{
+        'relative permativity':1.15,
+        'loss tangent':1.5e-4,
+        },
+    'silicon':{
+        'relative permativity':3.415,
+        'loss tangent':8e-4,
+        },
+    'teflon':{
+        'relative permativity':1.43,
+        'loss tangent':5e-4,
+        },
+    'duroid 5880':{
+        'relative permativity':1.5,
+        'loss tangent':40e-4,
+        },
     }
 for k1,k2 in [
     ('cu', 'copper'), 
