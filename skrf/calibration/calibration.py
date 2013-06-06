@@ -1186,6 +1186,7 @@ class Calibration2(object):
         '''
         return error_dict_2_network(
             self.coefs, 
+            frequency = self.frequency,
             is_reciprocal= self.is_reciprocal)        
     
     def write(self, file=None,  *args, **kwargs):
@@ -1618,8 +1619,8 @@ class EightTerm(Calibration2):
         
         if self.switch_terms is not None:
             self._coefs.update({
-                'forward switch term': self.switch_terms[0],
-                'reverse switch term': self.switch_terms[1],
+                'forward switch term': self.switch_terms[0].s.flatten(),
+                'reverse switch term': self.switch_terms[1].s.flatten(),
                 })
         else:
             self._coefs.update({
@@ -1973,7 +1974,7 @@ def two_port_error_vector_2_Ts(error_coefficients):
             [       zero,                   ec['k']]]).transpose().reshape(-1,2,2)
     return T1,T2,T3,T4
 
-def error_dict_2_network(coefs,  is_reciprocal=False, **kwargs):
+def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
     '''
     Create a Network from a dictionary of standard error terms 
 
@@ -2000,6 +2001,7 @@ def error_dict_2_network(coefs,  is_reciprocal=False, **kwargs):
         s11 = coefs['directivity']
         s22 = coefs['source match']
         ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
+        ntwk.frequency = frequency
         return ntwk
     
     else:
@@ -2007,5 +2009,5 @@ def error_dict_2_network(coefs,  is_reciprocal=False, **kwargs):
         for k in ['source match','directivity','reflection tracking']:
             p1[k] = coefs['forward '+k]
             p2[k] = coefs['reverse '+k]
-        return (error_dict_2_network(p1, name='forward', **kwargs), 
-            error_dict_2_network(p2, name='reverse', **kwargs))
+        return (error_dict_2_network(p1, frequency = frequency, name='forward', **kwargs), 
+            error_dict_2_network(p2,  frequency = frequency,name='reverse', **kwargs))

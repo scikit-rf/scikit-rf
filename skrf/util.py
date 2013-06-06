@@ -220,30 +220,142 @@ class ObjectList(object):
 
 
 # general purpose objects 
-class ObjectDict(collections.MutableMapping):
+
+class HomoList(collections.Sequence):
+        '''
+    A Homogeneous Sequence
+    
+    Provides a class for a list-like object which contains 
+    homogeneous values. Attributes of the values can be accessed through
+    the attributes of HomoList. Searching is done like numpy arrays.
+    
+    Initialized from a list  of all the same type
+    
+    >>> h = HomoDict([Foo(...), Foo(...)])
+    
+    The individual values of `h` can be access in identical fashion to 
+    Lists.
+    
+    >>> h[0]
+    
+    Assuming that `Foo` has property `prop`  and function `func` ...
+    
+    Access elements' properties:
+    
+    >>> h.prop
+    
+    Access elements' functions:
+        
+    >>> h.func()
+    
+    Searching:
+    
+    >>> h[h.prop == value]
+    >>> h[h.prop < value]
+    
+    Multiple search:
+    
+    >>> h[set(h.prop==value1) & set( h.prop2==value2)]
+    
+    Combos:
+    
+    >>> h[h.prop==value].func()
     '''
-    Dictionary containing homogeneous objects for values. Attributes of 
-    the values of ObjectDict can be accessed through the attributes 
-    of ObjectDict. Searching is done like numpy arrays.
+
     
-    initialized from a homogeneous dictionary of elements
-        a = {'a':Foo(...),'b': Foo(...), 'c':Foo(..)}
+    def __init__(self, list_):
+        self.store = list(list_)
+        
+    def __eq__(self, value):
+        return [k for k in range(len(self)) if self.store[k] == value ]
     
-    access elements' properties:
-        a.prop
+    def __ne__(self, value):
+        return [k for k in range(len(self)) if self.store[k] != value ]
     
-    access elements' functions:
-        a.func()
+    def __gt__(self, value):
+        return [k for k in range(len(self)) if self.store[k] > value ]
     
-    searching:
-        a[a.prop == value]
-        a[a.prop < value]
+    def __ge__(self, value):
+        return [k for k in range(len(self)) if self.store[k] >= value ]
     
-    multiple search:
-        a[set(a.prop==value1) & set( a.prop2==value2)]
+    def __lt__(self, value):
+        return [k for k in range(len(self)) if self.store[k] < value ]
     
-    combos:
-        a[a.prop==value].func()
+    def __le__(self, value):
+        return [k for k in range(len(self)) if self.store[k] <= value ]
+    
+    def __getattr__(self, name):
+        return self.__class__(
+            [k.__getattribute__(name) for k in self.store])
+        
+    def __getitem__(self, idx):
+        try: 
+            return self.store[idx]
+        except(TypeError):
+            return self.__class__([self.store[k] for k in idx])
+        
+            
+    def __call__(self, *args, **kwargs):
+        return self.__class__(
+            [k(*args,**kwargs) for k in self.store])
+        
+    def __setitem__(self, idx, value):
+        self.store[idx] = value
+
+    def __delitem__(self, idx):
+        del self.store[idx]
+
+    def __iter__(self):
+        return iter(self.store)
+
+    def __len__(self):
+        return len(self.store)
+
+    def __str__(self):
+        return pprint.pformat(self.store)
+    
+    def __repr__(self):
+        return pprint.pformat(self.store)
+
+class HomoDict(collections.MutableMapping):
+    '''
+    A Homogeneous Mutable Mapping
+    
+    Provides a class for a dictionary-like object which contains 
+    homogeneous values. Attributes of the values can be accessed through
+    the attributes of HomoDict. Searching is done like numpy arrays.
+    
+    Initialized from a dictionary containing values of all the same type
+    
+    >>> h = HomoDict({'a':Foo(...),'b': Foo(...), 'c':Foo(..)})
+    
+    The individual values of `h` can be access in identical fashion to 
+    Dictionaries.
+    
+    >>> h['key']
+    
+    Assuming that `Foo` has property `prop`  and function `func` ...
+    
+    Access elements' properties:
+    
+    >>> h.prop
+    
+    Access elements' functions:
+        
+    >>> h.func()
+    
+    Searching:
+    
+    >>> h[h.prop == value]
+    >>> h[h.prop < value]
+    
+    Multiple search:
+    
+    >>> h[set(h.prop==value1) & set( h.prop2==value2)]
+    
+    Combos:
+    
+    >>> h[h.prop==value].func()
     '''
     def __init__(self, dict_):
         self.store = dict(dict_)
@@ -266,24 +378,21 @@ class ObjectDict(collections.MutableMapping):
     def __le__(self, value):
         return [k for k in self.store if self.store[k] <= value ]
     
-    
-    
     def __getattr__(self, name):
-        return ObjectDict(
+        return self.__class__(
             {k: self.store[k].__getattribute__(name) for k in self.store})
         
     def __getitem__(self, key):
-        od =   ObjectDict({k:self.store[k] for k in key})
-        if len(od) == 1: 
-            return od.store.values()[0]
+        c =   self.__class__({k:self.store[k] for k in key})
+        if len(c) == 1: 
+            return c.store.values()[0]
         else: 
-            return od
+            return c
             
     def __call__(self, *args, **kwargs):
-        return ObjectDict(
+        return self.__class__(
             {k: self.store[k](*args, **kwargs) for k in self.store})
         
-
     def __setitem__(self, key, value):
         self.store[key] = value
 
