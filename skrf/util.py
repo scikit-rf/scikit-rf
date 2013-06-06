@@ -208,17 +208,6 @@ def git_version( modname):
     
 
 
-class ObjectList(object):
-    def __init__(self, list_):
-        self.list = list(list_)
-    
-    def __getattr__(self, name):
-        return ObjectList([k.__getattribute__(name) for k in self.list])
-    
-    def __call__(self, *args, **kwargs):
-        return ObjectList([k(*args, **kwargs) for k in self.store])
-
-
 # general purpose objects 
 
 class HomoList(collections.Sequence):
