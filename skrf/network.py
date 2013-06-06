@@ -740,6 +740,7 @@ class Network(object):
                         # plot the desired attribute vs frequency
                         plot_complex_polar(
                             z = getattr(self,prop_name)[:,m,n],
+ 							show_legend = show_legend, ax = ax,
                             *args, **kwargs)
 
                 if was_interactive:
@@ -831,6 +832,7 @@ class Network(object):
                         # plot the desired attribute vs frequency
                         plot_complex_rectangular(
                             z = getattr(self,prop_name)[:,m,n],
+ 							show_legend = show_legend, ax = ax,
                             *args, **kwargs)
 
                 #if was_interactive:
@@ -941,6 +943,7 @@ class Network(object):
                                     y = getattr(self,attribute)[:,m,n],
                                     x_label = xlabel,
                                     y_label = y_label,
+                                    show_legend = show_legend, ax = ax,
                                     *args, **kwargs)
                             
 
