@@ -143,7 +143,7 @@ import  mathFunctions as mf
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
-from util import get_fid, get_extn
+from util import get_fid, get_extn, find_nearest_index
 ## later imports. delayed to solve circular dependencies
 #from io.general import read, write
 #from io import touchstone
@@ -1933,7 +1933,31 @@ class Network(object):
         freq = Frequency.from_f(f,**kwargs)
         self.interpolate_self(freq, **interp_kwargs)
         
-    
+    def crop(self, f_start, f_stop):
+        '''
+        Crop Network based on start and stop frequencies.
+        
+        No interpolation is done. 
+        
+        
+        Parameters
+        -----------
+        f_start : number 
+            start frequency of crop range, in units of self.frequency.unit
+        f_stop : number
+            stop frequency of crop range, in units of self.frequency.unit
+        
+        
+        '''
+        if f_start < self.frequency.f_scaled.min() or\
+            f_stop > self.frequency.f_scaled.max():
+            raise ValueError('`f_start` or `f_stop` is out of range.')
+            
+        start_idx = find_nearest_index(self.frequency.f_scaled,f_start)
+        stop_idx = find_nearest_index(self.frequency.f_scaled,f_stop)
+        
+        ntwk = self[start_idx:stop_idx+1]
+        self.frequency, self.s,self.z0 = ntwk.frequency, ntwk.s,ntwk.z0
     
         
     def flip(self):

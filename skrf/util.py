@@ -222,6 +222,13 @@ class ObjectList(object):
 # general purpose objects 
 class ObjectDict(collections.MutableMapping):
     '''
+    Dictionary containing homogeneous objects for values. Attributes of 
+    the values of ObjectDict can be accessed through the attributes 
+    of ObjectDict. Searching is done like numpy arrays.
+    
+    initialized from a homogeneous dictionary of elements
+        a = {'a':Foo(...),'b': Foo(...), 'c':Foo(..)}
+    
     access elements' properties:
         a.prop
     
@@ -235,7 +242,8 @@ class ObjectDict(collections.MutableMapping):
     multiple search:
         a[set(a.prop==value1) & set( a.prop2==value2)]
     
-    
+    combos:
+        a[a.prop==value].func()
     '''
     def __init__(self, dict_):
         self.store = dict(dict_)
