@@ -1132,14 +1132,13 @@ class Calibration2(object):
         Erf = self.coefs_12term['forward reflection tracking']
         Etf = self.coefs_12term['forward transmission tracking']
         Elf = self.coefs_12term['forward load match']
-        Eif = self.coefs_12term.get('forward isolation',0)
         
         Edr = self.coefs_12term['reverse directivity']
         Elr = self.coefs_12term['reverse load match']
         Err = self.coefs_12term['reverse reflection tracking']
         Etr = self.coefs_12term['reverse transmission tracking']
         Esr = self.coefs_12term['reverse source match']
-        Eir = self.coefs_12term.get('reverse isolation',0)
+        
         
         return Etf*Etr - (Err + Edr*(Elf - Esr))*(Erf  + Edf *(Elr - Esf))    
     

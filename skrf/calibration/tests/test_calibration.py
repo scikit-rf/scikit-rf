@@ -12,11 +12,6 @@ class CalibrationTest(object):
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement
     '''
-    def test_correction_accuracy_of_standards(self):
-        for k in range(self.cal.nstandards):
-            self.assertEqual(self.cal.apply_cal(self.cal.measured[k]),\
-                self.cal.ideals[k])
-    
     def test_correction_accuracy_of_dut(self):
         a = self.wg.random(n_ports=self.n_ports)
         m = self.measure(a)
@@ -129,6 +124,8 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         
         
         ideals = [
@@ -143,19 +140,36 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.cal = rf.EightTerm(
             ideals = ideals,
             measured = measured,
+            switch_terms = (self.gamma_f, self.gamma_r)
             )
+    def terminate(self, ntwk):
+        '''
+        terminate a measured network with the switch terms
+        '''
+        m = ntwk.copy()
+        ntwk_flip = ntwk.copy()
+        ntwk_flip.flip()
+        
+        m.s[:,0,0] = (ntwk**self.gamma_f).s[:,0,0]
+        m.s[:,1,1] = (ntwk_flip**self.gamma_r).s[:,0,0]
+        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*self.gamma_f.s[:,0,0])
+        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*self.gamma_r.s[:,0,0])
+        return m
     
+    
+        
     def measure(self,ntwk):
-            return self.X**ntwk**self.Y
-            
-    
-    def test_correction_accuracy_of_dut(self):
-        a = self.wg.random(n_ports=2)
+        return self.terminate(self.X**ntwk**self.Y)
+   
+    def test_unterminating(self):
+        a = self.wg.random(n_ports=self.n_ports)
+        #unermintated measurment
+        ut =  self.X**a**self.Y
+        #terminated measurement
         m = self.measure(a)
-        c = self.cal.apply_cal(m)
-        self.assertEqual(a,c)    
+        self.assertEqual(self.cal.unterminate(m), ut)
         
-        
+       
     def test_forward_directivity_accuracy(self):
         self.assertEqual(
             self.X.s11,
@@ -185,6 +199,11 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.assertEqual(
             self.Y.s21 * self.Y.s12 , 
             self.cal.coefs_ntwks['reverse reflection tracking'])
+    
+    @nottest
+    def test_verify_12term(self):
+        self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
+    
         
 class TRLTest(EightTermTest):
     def setUp(self):
@@ -195,7 +214,8 @@ class TRLTest(EightTermTest):
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
-        
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         # make error networks have s21,s12 >> s11,s22 so that TRL
         # can guess at line length
         self.X.s[:,0,0] *=1e-1
@@ -206,7 +226,7 @@ class TRLTest(EightTermTest):
         actuals = [
             wg.thru( name='thru'),
             wg.short(nports=2, name='short'),
-            wg.line(70,'deg',name='line'),
+            wg.line(45,'deg',name='line'),
             ]
         
         ideals = [
@@ -220,8 +240,9 @@ class TRLTest(EightTermTest):
         self.cal = rf.TRL(
             ideals = ideals,
             measured = measured,
+            switch_terms = (self.gamma_f, self.gamma_r)
             )
-        
+       
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
     This test verifys the accuracy of the SOLT calibration. Generating 
@@ -334,6 +355,7 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
             print('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k])))
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
+        
     @nottest
     def test_convert_12term_2_8term_correction_accuracy(self):
         converted = rf.convert_8term_2_12term(
@@ -345,3 +367,91 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
         c = self.cal.apply_cal(m)
                
         self.assertEqual(a,c)
+    
+    def test_verify_12term(self):
+        import ipdb;ipdb.set_trace()
+        self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
+        
+
+class SOLTTest2(SOLTTest):
+    '''
+    This test verifys the accuracy of the SOLT calibration, when used 
+    on an error-box (8-term) model.
+    
+    
+    '''
+    def setUp(self):
+        self.n_ports = 2
+        wg= rf.wr10
+        wg.frequency = rf.F.from_f([100])
+        self.wg = wg
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+        
+        self.Xf = self.X.copy()
+        self.Xr = self.X.copy()
+        self.Yf = self.Y.copy()
+        self.Yr = self.Y.copy()
+        
+        Y_term = self.terminate(self.Y)
+        X_term = self.terminate(self.X)
+        
+        self.Yf.s[:,0,0] = Y_term.s[:,0,0]
+        self.Yf.s[:,1,0] = Y_term.s[:,1,0]
+        self.Xr.s[:,1,1] = X_term.s[:,1,1]
+        self.Xr.s[:,0,1] = X_term.s[:,0,1]
+        
+        
+        ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.thru(name='thru'),
+            ]
+        
+    
+        measured = [ self.measure(k) for k in ideals]
+        
+        self.cal = rf.SOLT(
+            ideals = ideals,
+            measured = measured,
+            )
+    def terminate(self, ntwk):
+        '''
+        terminate a measured network with the switch terms
+        '''
+        m = ntwk.copy()
+        ntwk_flip = ntwk.copy()
+        ntwk_flip.flip()
+        
+        m.s[:,0,0] = (ntwk**self.gamma_f).s[:,0,0]
+        m.s[:,1,1] = (ntwk_flip**self.gamma_r).s[:,0,0]
+        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*self.gamma_f.s[:,0,0])
+        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*self.gamma_r.s[:,0,0])
+        return m
+        
+    def measure(self,ntwk):
+        m = ntwk.copy()
+        mf = self.Xf**ntwk**self.Yf
+        mr = self.Xr**ntwk**self.Yr
+        m.s[:,1,0] = mf.s[:,1,0]
+        m.s[:,0,0] = mf.s[:,0,0]
+        m.s[:,0,1] = mr.s[:,0,1]
+        m.s[:,1,1] = mr.s[:,1,1]
+        return m
+    @nottest
+    def test_12_2_8term(self):
+        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs)
+        coefs = rf.s_dict_to_ns(coefs, self.cal.frequency).to_dict()
+        self.assertEqual(coefs['forward switch term'], self.gamma_f)
+        self.assertEqual(coefs['reverse switch term'], self.gamma_r)
+        self.assertEqual(coefs['k'], self.X.s21*self.Y.s21)
+    
+    
+    def test_verify_12term(self):
+        self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
+        
+if __name__ == "__main__":
+    unittest.main()
