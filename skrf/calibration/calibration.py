@@ -1228,129 +1228,7 @@ class Calibration2(object):
             file = self.name
 
         write(file,self, *args, **kwargs) 
-
-class SOLT(Calibration2):
-    '''
-    Traditional 12-term, full two-port calibration.
-    
-    SOLT is the traditional, fully determined, two-port calibration. 
-    This implementation is based off of Doug Rytting's work in [#] .
-    Although the acronym SOLT implies the use of 4 standards, skrf's 
-    algorithm can accept any number of reflect standards,  If  
-    more than 3 reflect standards are provided a least-squares solution 
-    is implemented for the one-port stage of the calibration.
-    
-    Redundant thru measurements can also be used, through the `n_thrus`
-    parameter. See :func:`__init__`
-     
-    
-    
-    .. [#] "Network Analyzer Error Models and Calibration Methods" 
-        by Doug Rytting
-    
-    '''
-    def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
-        '''
-        SOLT initializer 
-        
-        Parameters
-        -------------
-        measured : list or dict of :class:`Network` objects
-            measured Networks. must align with ideals
-            
-        
-        '''
-        self.type = 'SOLT'
-        self.n_thrus = n_thrus
-        Calibration2.__init__(self, measured, ideals, *args, **kwargs)
-    
-    def run(self):
-        '''
-        '''
-        n_thrus = self.n_thrus
-        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
-        p2_m = [k.s22 for k in self.measured[:-n_thrus]]
-        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
-        p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
-        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
-        
-        # create one port calibration for all but last standard    
-        port1_cal = Calibration(measured = p1_m, ideals = p1_i)
-        port2_cal = Calibration(measured = p2_m, ideals = p2_i)
-        
-        # cal coefficient dictionaries
-        p1_coefs = port1_cal.coefs
-        p2_coefs = port2_cal.coefs
-        
-        if self.kwargs.get('isolation',None) is not None:
-            raise NotImplementedError()
-            p1_coefs['isolation'] = isolation.s21.s.flatten()
-            p2_coefs['isolation'] = isolation.s12.s.flatten()
-        
-        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
-        p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
-        
-        p1_coefs['transmission tracking'] = \
-            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
-            (1. - p1_coefs['source match']*p1_coefs['load match'])
-        p2_coefs['transmission tracking'] = \
-            (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
-            (1. - p2_coefs['source match']*p2_coefs['load match'])
-        coefs = {}
-        #import pdb;pdb.set_trace()
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
-        eight_term_coefs = convert_12term_2_8term(coefs)
-        #import pdb;pdb.set_trace()
-        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
-            ['forward switch term','reverse switch term','k'] ]))
-        self._coefs = coefs
-    
-    def apply_cal(self,ntwk):
-        '''
-        '''
-        caled = ntwk.copy()
-        
-        s11 = ntwk.s[:,0,0]
-        s12 = ntwk.s[:,0,1]
-        s21 = ntwk.s[:,1,0]
-        s22 = ntwk.s[:,1,1]
-        
-        Edf = self.coefs['forward directivity']
-        Esf = self.coefs['forward source match']
-        Erf = self.coefs['forward reflection tracking']
-        Etf = self.coefs['forward transmission tracking']
-        Elf = self.coefs['forward load match']
-        Eif = self.coefs.get('forward isolation',0)
-        
-        Edr = self.coefs['reverse directivity']
-        Elr = self.coefs['reverse load match']
-        Err = self.coefs['reverse reflection tracking']
-        Etr = self.coefs['reverse transmission tracking']
-        Esr = self.coefs['reverse source match']
-        Eir = self.coefs.get('reverse isolation',0)
-        
-        
-        D = (1+(s11-Edf)/(Erf)*Esf)*(1+(s22-Edr)/(Err)*Esr) -\
-            ((s21-Eif)/(Etf))*((s12-Eir)/(Etr))*Elf*Elr
-        
-        
-        caled.s[:,0,0] = \
-            (((s11-Edf)/(Erf))*(1+(s22-Edr)/(Err)*Esr)-\
-            Elf*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
-            
-        caled.s[:,1,1] = \
-            (((s22-Edr)/(Err))*(1+(s11-Edf)/(Erf)*Esf)-\
-            Elr*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
-            
-        caled.s[:,1,0] = \
-            ( ((s21 -Eif)/(Etf))*(1+((s22-Edr)/(Err))*(Esr-Elf)) )/D
-        
-        caled.s[:,0,1] = \
-            ( ((s12 -Eir)/(Etr))*(1+((s11-Edf)/(Erf))*(Esf-Elr)) )/D    
-        
-        return caled
-    
+  
 class OnePort(Calibration2):
     '''
     Standard algorithm for a one port calibration.
@@ -1471,6 +1349,128 @@ class OnePort(Calibration2):
         er_ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
         return er_ntwk.inv**ntwk
         
+class SOLT(Calibration2):
+    '''
+    Traditional 12-term, full two-port calibration.
+    
+    SOLT is the traditional, fully determined, two-port calibration. 
+    This implementation is based off of Doug Rytting's work in [#] .
+    Although the acronym SOLT implies the use of 4 standards, skrf's 
+    algorithm can accept any number of reflect standards,  If  
+    more than 3 reflect standards are provided a least-squares solution 
+    is implemented for the one-port stage of the calibration.
+    
+    Redundant thru measurements can also be used, through the `n_thrus`
+    parameter. See :func:`__init__`
+     
+    
+    
+    .. [#] "Network Analyzer Error Models and Calibration Methods" 
+        by Doug Rytting
+    
+    '''
+    def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
+        '''
+        SOLT initializer 
+        
+        Parameters
+        -------------
+        measured : list or dict of :class:`Network` objects
+            measured Networks. must align with ideals
+            
+        
+        '''
+        self.type = 'SOLT'
+        self.n_thrus = n_thrus
+        Calibration2.__init__(self, measured, ideals, *args, **kwargs)
+    
+    def run(self):
+        '''
+        '''
+        n_thrus = self.n_thrus
+        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
+        p2_m = [k.s22 for k in self.measured[:-n_thrus]]
+        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
+        p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
+        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
+        
+        # create one port calibration for reflective standards  
+        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
+        port2_cal = OnePort(measured = p2_m, ideals = p2_i)
+        
+        # cal coefficient dictionaries
+        p1_coefs = port1_cal.coefs
+        p2_coefs = port2_cal.coefs
+        
+        if self.kwargs.get('isolation',None) is not None:
+            raise NotImplementedError()
+            p1_coefs['isolation'] = isolation.s21.s.flatten()
+            p2_coefs['isolation'] = isolation.s12.s.flatten()
+        
+        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
+        p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
+        
+        p1_coefs['transmission tracking'] = \
+            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
+            (1. - p1_coefs['source match']*p1_coefs['load match'])
+        p2_coefs['transmission tracking'] = \
+            (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
+            (1. - p2_coefs['source match']*p2_coefs['load match'])
+        coefs = {}
+        #import pdb;pdb.set_trace()
+        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        eight_term_coefs = convert_12term_2_8term(coefs)
+        #import pdb;pdb.set_trace()
+        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
+            ['forward switch term','reverse switch term','k'] ]))
+        self._coefs = coefs
+    
+    def apply_cal(self,ntwk):
+        '''
+        '''
+        caled = ntwk.copy()
+        
+        s11 = ntwk.s[:,0,0]
+        s12 = ntwk.s[:,0,1]
+        s21 = ntwk.s[:,1,0]
+        s22 = ntwk.s[:,1,1]
+        
+        Edf = self.coefs['forward directivity']
+        Esf = self.coefs['forward source match']
+        Erf = self.coefs['forward reflection tracking']
+        Etf = self.coefs['forward transmission tracking']
+        Elf = self.coefs['forward load match']
+        Eif = self.coefs.get('forward isolation',0)
+        
+        Edr = self.coefs['reverse directivity']
+        Elr = self.coefs['reverse load match']
+        Err = self.coefs['reverse reflection tracking']
+        Etr = self.coefs['reverse transmission tracking']
+        Esr = self.coefs['reverse source match']
+        Eir = self.coefs.get('reverse isolation',0)
+        
+        
+        D = (1+(s11-Edf)/(Erf)*Esf)*(1+(s22-Edr)/(Err)*Esr) -\
+            ((s21-Eif)/(Etf))*((s12-Eir)/(Etr))*Elf*Elr
+        
+        
+        caled.s[:,0,0] = \
+            (((s11-Edf)/(Erf))*(1+(s22-Edr)/(Err)*Esr)-\
+            Elf*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
+            
+        caled.s[:,1,1] = \
+            (((s22-Edr)/(Err))*(1+(s11-Edf)/(Erf)*Esf)-\
+            Elr*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
+            
+        caled.s[:,1,0] = \
+            ( ((s21 -Eif)/(Etf))*(1+((s22-Edr)/(Err))*(Esr-Elf)) )/D
+        
+        caled.s[:,0,1] = \
+            ( ((s12 -Eir)/(Etr))*(1+((s11-Edf)/(Erf))*(Esf-Elr)) )/D    
+        
+        return caled
+ 
 class EightTerm(Calibration2):
     def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
         '''
@@ -1714,6 +1714,99 @@ class TRL(EightTerm):
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
         self.type = 'TRL'
+
+
+
+class UnknownThru(EightTerm):
+    '''
+    '''
+    def __init__(self, measured, ideals, thru_approx=None, n_thrus=1, *args, **kwargs):
+        '''
+        '''
+        
+        self.n_thrus = n_thrus
+        self.thru_approx = thru_approx
+        
+        EightTerm.__init__(self, 
+            measured = measured, 
+            ideals = ideals,
+            *args, **kwargs)
+        self.type = 'UnknownThru'
+    
+    def run(self):
+        '''
+        '''
+        measured = self.measured_unterminated
+        n_thrus = self.n_thrus
+        p1_m = [k.s11 for k in measured[:-n_thrus]]
+        p2_m = [k.s22 for k in measured[:-n_thrus]]
+        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
+        p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
+        thru = NetworkSet(measured[-n_thrus:]).mean_s
+        
+        # create one port calibration for all reflective standards  
+        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
+        port2_cal = OnePort(measured = p2_m, ideals = p2_i)
+        
+        # cal coefficient dictionaries
+        p1_coefs = port1_cal.coefs.copy()
+        p2_coefs = port2_cal.coefs.copy()
+        
+        # find the apprixmaite thru network, which is needed to determine
+        # the sign of the transmission tracking terms
+        if self.thru_approx is None:
+            # if they dont provide an approximation for the thru, assume
+            # its ideal 
+            self.thru_approx = thru.copy()
+            self.thru_approx.s[:,0,0] = 0
+            self.thru_approx.s[:,1,1] = 0
+            self.thru_approx.s[:,1,0] = 1
+            self.thru_approx.s[:,0,1] = 1
+        thru_approx = self.thru_approx
+        
+    
+        
+        X = port1_cal.error_ntwk
+        Y = port2_cal.error_ntwk
+
+        e_tf_approx = (thru_approx.inv**X.inv**thru**Y.inv).s21
+        e_tr_approx = (thru_approx.inv**X.inv**thru**Y.inv).flipped().s21
+        e_tf_approx.s *= X.s12.s*Y.s12.s
+        e_tr_approx.s *= X.s21.s*Y.s21.s
+        
+        e_rf = port1_cal.coefs_ntwks['reflection tracking']
+        e_rr = port2_cal.coefs_ntwks['reflection tracking']
+
+        e_tf_plus_minus = npy.sqrt((e_rf*e_rr*(thru.s21/thru.s12)).s)
+        e_tr_plus_minus = npy.sqrt((e_rf*e_rr*(thru.s12/thru.s21)).s)
+        
+        e_tf = find_correct_sign(e_tf_plus_minus, -1*e_tf_plus_minus, e_tf_approx.s)
+        e_tr = find_correct_sign(e_tr_plus_minus, -1*e_tr_plus_minus, e_tr_approx.s)
+        
+     
+        k_ = (e_tf/e_rr.s.flatten()).flatten()
+        
+        # create single dictionary for all error terms
+        coefs = {}
+        
+        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        
+        if self.switch_terms is not None:
+            coefs.update({
+                'forward switch term': self.switch_terms[0].s.flatten(),
+                'reverse switch term': self.switch_terms[1].s.flatten(),
+                })
+        else:
+            coefs.update({
+                'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
+                'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
+                })
+        
+        coefs.update({'k':k_})
+        #import ipdb;ipdb.set_trace()   
+        self._coefs = coefs
+        
 
 ## Functions
 
@@ -2008,5 +2101,8 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
         for k in ['source match','directivity','reflection tracking']:
             p1[k] = coefs['forward '+k]
             p2[k] = coefs['reverse '+k]
-        return (error_dict_2_network(p1, frequency = frequency, name='forward', **kwargs), 
-            error_dict_2_network(p2,  frequency = frequency,name='reverse', **kwargs))
+        forward = error_dict_2_network(p1, frequency = frequency, 
+            name='forward', is_reciprocal = is_reciprocal,**kwargs)
+        reverse = error_dict_2_network(p2, frequency = frequency, 
+            name='reverse', is_reciprocal = is_reciprocal,**kwargs)
+        return (forward, reverse)

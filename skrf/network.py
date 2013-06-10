@@ -1971,7 +1971,20 @@ class Network(object):
             self.renumber( [0,1], [1,0] )
         else:
             raise ValueError('you can only flip two-port Networks')
-
+    
+    def flipped(self):
+        '''
+        returns a flipped network, leaves self alone.
+        
+        See Also
+        ---------
+        flip 
+        '''
+        out = self.copy()
+        out.flip()
+        return out
+        
+        
     def renumber(self, from_ports, to_ports):
         '''
         renumbers some ports of a two port Network

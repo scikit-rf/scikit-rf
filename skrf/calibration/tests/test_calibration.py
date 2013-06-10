@@ -155,8 +155,6 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*self.gamma_f.s[:,0,0])
         m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*self.gamma_r.s[:,0,0])
         return m
-    
-    
         
     def measure(self,ntwk):
         return self.terminate(self.X**ntwk**self.Y)
@@ -368,11 +366,43 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
                
         self.assertEqual(a,c)
     
+    @nottest
     def test_verify_12term(self):
-        import ipdb;ipdb.set_trace()
-        self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
         
+        self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
+
+class UnknownThruTest(EightTermTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg= rf.wr10
+        wg= self.wg
+        wg.frequency = rf.F.from_f([100])
+        
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+        
+        
+        ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.line(20,'deg',name='thru'),
+            ]
+        
+    
+        measured = [ self.measure(k) for k in ideals]
+        
+        self.cal = rf.UnknownThru(
+            ideals = ideals,
+            measured = measured,
+            thru_approx = wg.thru(),
+            switch_terms = [self.gamma_f, self.gamma_r]
+            )
+    
+        
 class SOLTTest2(SOLTTest):
     '''
     This test verifys the accuracy of the SOLT calibration, when used 
