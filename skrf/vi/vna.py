@@ -295,9 +295,9 @@ class PNA(GpibInstrument):
         if val.lower() not in ['ma','ri','auto','disp']:
             raise ValueError('bad value for `val`')
         
-        self.write('MMEM:STOR:TRAC:FORM:SNP %s')
+        self.write('MMEM:STOR:TRAC:FORM:SNP %s'%val)
     
-    snp_format = propert(get_snp_format, set_snp_format)
+    snp_format = property(get_snp_format, set_snp_format)
     
     def get_network(self, sweep=True):
         '''
