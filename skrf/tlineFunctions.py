@@ -448,8 +448,8 @@ def input_impedance_at_theta(z0,zl, theta):
     Returns
     ---------
     '''
-    Gamma = load_impedance_2_reflection_coefficient(z0=z0,zl=zl)
-    Gamma_in = reflection_coefficient_at_theta(Gamma=Gamma, theta=theta)
+    Gamma0 = load_impedance_2_reflection_coefficient(z0=z0,zl=zl)
+    Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
     return reflection_coefficient_2_input_impedance(z0=z0, Gamma=Gamma_in)
 
 def load_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
