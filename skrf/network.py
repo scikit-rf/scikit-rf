@@ -3136,10 +3136,8 @@ def s2t(s):
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
-    #TODO: add docstring describing the mathematics of this
     #TODO: check rank(s) ==2
-    # although unintuitive this is calculated by
-    # [[s11, s21],[s12,s22]].T
+    
     t = npy.array([
         [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
             -s[:,1,1]/s[:,1,0]],

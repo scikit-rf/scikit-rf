@@ -13,10 +13,12 @@ class CalibrationTest(object):
     Subclasses should be able to pass. They must implement
     '''
     def test_correction_accuracy_of_dut(self):
-        a = self.wg.random(n_ports=self.n_ports)
+        a = self.wg.random(n_ports=self.n_ports, name = 'actual')
         m = self.measure(a)
         c = self.cal.apply_cal(m)
+        c.name = 'corrected'
         self.assertEqual(a,c)
+        
         
     def test_error_ntwk(self):
         a= self.cal.error_ntwk 
@@ -26,10 +28,11 @@ class CalibrationTest(object):
     
     def test_caled_ntwks(self):
         a= self.cal.caled_ntwks
+        
     
     def test_residual_ntwks(self):
         a= self.cal.residual_ntwks
-    
+@nottest   
 class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     One-port calibration test.
@@ -38,7 +41,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     def setUp(self):
         self.n_ports = 1
-        self.wg = rf.wr10
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
         wg = self.wg
         wg.frequency = rf.F.from_f([100])
         
@@ -118,7 +121,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg= rf.wr10
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
         wg= self.wg
         wg.frequency = rf.F.from_f([100])
         
@@ -157,8 +160,10 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         return m
         
     def measure(self,ntwk):
-        return self.terminate(self.X**ntwk**self.Y)
-   
+        out =  self.terminate(self.X**ntwk**self.Y)
+        out.name = ntwk.name
+        return out
+    
     def test_unterminating(self):
         a = self.wg.random(n_ports=self.n_ports)
         #unermintated measurment
@@ -198,17 +203,21 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             self.Y.s21 * self.Y.s12 , 
             self.cal.coefs_ntwks['reverse reflection tracking'])
     
+    def test_k_accuracy(self):
+        self.assertEqual(
+            self.X.s21/self.Y.s12 , 
+            self.cal.coefs_ntwks['k']  )   
     @nottest
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
     
-        
+@nottest        
 class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg= rf.wr10
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
         wg= self.wg
-        #wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -240,7 +249,7 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-       
+@nottest       
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
     This test verifys the accuracy of the SOLT calibration. Generating 
@@ -259,7 +268,8 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
     def setUp(self):
         self.n_ports = 2
-        wg= rf.wr10
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        wg  = self.wg
         wg.frequency = rf.F.from_f([100])
         self.wg = wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
@@ -375,9 +385,9 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
 class UnknownThruTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg= rf.wr10
-        wg= self.wg
-        wg.frequency = rf.F.from_f([100])
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        wg= self.wg 
+        #   wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -385,22 +395,32 @@ class UnknownThruTest(EightTermTest):
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         
         
+        actuals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='match'),
+            wg.thru()
+            #wg.impedance_mismatch(50,25)**wg.line(20,'deg',name='line')
+
+            ]
+        
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
-            wg.match(nports=2, name='load'),
-            wg.line(20,'deg',name='thru'),
+            wg.match(nports=2, name='match'),
+            wg.thru(name='thru'),
             ]
-        
-    
-        measured = [ self.measure(k) for k in ideals]
+            
+        measured = [self.measure(k) for k in actuals]
         
         self.cal = rf.UnknownThru(
+            is_reciprocal=False,
+            n_thrus = 1,
             ideals = ideals,
             measured = measured,
-            thru_approx = wg.thru(),
             switch_terms = [self.gamma_f, self.gamma_r]
             )
+        
     
         
 class SOLTTest2(SOLTTest):

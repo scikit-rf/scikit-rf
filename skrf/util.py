@@ -374,7 +374,11 @@ class HomoDict(collections.MutableMapping):
             {k: self.store[k].__getattribute__(name) for k in self.store})
         
     def __getitem__(self, key):
-        c =   self.__class__({k:self.store[k] for k in key})
+        if isinstance(key, str):
+            return self.store[key]
+        else:
+            c =   self.__class__({k:self.store[k] for k in key})
+        
         if len(c) == 1: 
             return c.store.values()[0]
         else: 

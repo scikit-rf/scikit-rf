@@ -282,6 +282,23 @@ class PNA(GpibInstrument):
         return freq
     
     ##  IO - S-parameter and  Networks
+    def get_snp_format(self):
+        '''
+        the output format for snp data. 
+        '''
+        return self.ask('MMEM:STOR:TRAC:FORM:SNP?')
+    
+    def set_snp_format(self, val= 'ri'):
+        '''
+        the output format for snp data. 
+        '''
+        if val.lower() not in ['ma','ri','auto','disp']:
+            raise ValueError('bad value for `val`')
+        
+        self.write('MMEM:STOR:TRAC:FORM:SNP %s')
+    
+    snp_format = propert(get_snp_format, set_snp_format)
+    
     def get_network(self, sweep=True):
         '''
         Returns a :class:`~skrf.network.Network` object representing the 

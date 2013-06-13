@@ -1715,8 +1715,6 @@ class TRL(EightTerm):
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
         self.type = 'TRL'
 
-
-
 class UnknownThru(EightTerm):
     '''
     '''
@@ -1734,15 +1732,23 @@ class UnknownThru(EightTerm):
         self.type = 'UnknownThru'
     
     def run(self):
-        '''
-        '''
-        measured = self.measured_unterminated
+        et = EightTerm(
+            measured = self.measured, 
+            ideals = self.ideals,
+            switch_terms= self.switch_terms)
+        #et.run()
+        #self._coefs = et.coefs
+        
+           
         n_thrus = self.n_thrus
-        p1_m = [k.s11 for k in measured[:-n_thrus]]
-        p2_m = [k.s22 for k in measured[:-n_thrus]]
+        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
+        p2_m = [k.s22 for k in self.measured[:-n_thrus]]
         p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
         p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
-        thru = NetworkSet(measured[-n_thrus:]).mean_s
+        
+        thru_m = NetworkSet(self.measured_unterminated[-n_thrus:]).mean_s
+        
+        thru_approx  =  NetworkSet(self.ideals[-n_thrus:]).mean_s
         
         # create one port calibration for all reflective standards  
         port1_cal = OnePort(measured = p1_m, ideals = p1_i)
@@ -1752,39 +1758,29 @@ class UnknownThru(EightTerm):
         p1_coefs = port1_cal.coefs.copy()
         p2_coefs = port2_cal.coefs.copy()
         
-        # find the apprixmaite thru network, which is needed to determine
-        # the sign of the transmission tracking terms
-        if self.thru_approx is None:
-            # if they dont provide an approximation for the thru, assume
-            # its ideal 
-            self.thru_approx = thru.copy()
-            self.thru_approx.s[:,0,0] = 0
-            self.thru_approx.s[:,1,1] = 0
-            self.thru_approx.s[:,1,0] = 1
-            self.thru_approx.s[:,0,1] = 1
-        thru_approx = self.thru_approx
-        
-    
-        
-        X = port1_cal.error_ntwk
-        Y = port2_cal.error_ntwk
-
-        e_tf_approx = (thru_approx.inv**X.inv**thru**Y.inv).s21
-        e_tr_approx = (thru_approx.inv**X.inv**thru**Y.inv).flipped().s21
-        e_tf_approx.s *= X.s12.s*Y.s12.s
-        e_tr_approx.s *= X.s21.s*Y.s21.s
-        
         e_rf = port1_cal.coefs_ntwks['reflection tracking']
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
-
-        e_tf_plus_minus = npy.sqrt((e_rf*e_rr*(thru.s21/thru.s12)).s)
-        e_tr_plus_minus = npy.sqrt((e_rf*e_rr*(thru.s12/thru.s21)).s)
+        X = port1_cal.error_ntwk
+        Y = port2_cal.error_ntwk
         
-        e_tf = find_correct_sign(e_tf_plus_minus, -1*e_tf_plus_minus, e_tf_approx.s)
-        e_tr = find_correct_sign(e_tr_plus_minus, -1*e_tr_plus_minus, e_tr_approx.s)
         
-     
-        k_ = (e_tf/e_rr.s.flatten()).flatten()
+        
+        k_approx = et.coefs_ntwks['k']
+        
+        #_tf_approx =  X.s21#((thru_approx.inv**X.inv**thru_m**Y.inv).s22*(X.s12*Y.s12))
+        #((thru_m.inv**X**thru_approx**Y).s22 * (X.s21*Y.s21))
+        #
+        
+        e_tf_s = npy.sqrt((e_rf*e_rr*(thru_m.s21/thru_m.s12)).s.flatten())
+        
+        e_tf_s = find_correct_sign(
+            e_tf_s,
+            -1* e_tf_s, 
+            (k_approx*e_rr).s.flatten())
+        
+        k_ = (e_tf_s.flatten()/e_rr.s.flatten())
+        
+        #raise ValueError
         
         # create single dictionary for all error terms
         coefs = {}
@@ -1804,14 +1800,11 @@ class UnknownThru(EightTerm):
                 })
         
         coefs.update({'k':k_})
-        #import ipdb;ipdb.set_trace()   
-        self._coefs = coefs
         
+        self._coefs = coefs
+      
 
 ## Functions
-
-
-
 def determine_line(thru_m, line_m, line_approx=None):
     '''
     Determine S21 of a matched line. 
