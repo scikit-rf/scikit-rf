@@ -390,7 +390,7 @@ def rand_c(*args):
     '''
     s = npy.array(args)
     return 1-2*npy.random.rand(npy.product(s)).reshape(s) + \
-        1-2*1j*npy.random.rand(npy.product(s)).reshape(s)
+        1j-2j*npy.random.rand(npy.product(s)).reshape(s)
 
 
 def psd2TimeDomain(f,y, windowType='hamming'):

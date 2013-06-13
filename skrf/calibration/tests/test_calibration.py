@@ -399,8 +399,7 @@ class UnknownThruTest(EightTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='match'),
-            wg.thru()
-            #wg.impedance_mismatch(50,25)**wg.line(20,'deg',name='line')
+            wg.impedance_mismatch(50,25)**wg.line(20,'deg',name='line')**wg.impedance_mismatch(1,50)
 
             ]
         

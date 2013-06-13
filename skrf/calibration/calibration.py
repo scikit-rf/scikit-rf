@@ -1721,7 +1721,6 @@ class UnknownThru(EightTerm):
     def __init__(self, measured, ideals, thru_approx=None, n_thrus=1, *args, **kwargs):
         '''
         '''
-        
         self.n_thrus = n_thrus
         self.thru_approx = thru_approx
         
@@ -1732,14 +1731,6 @@ class UnknownThru(EightTerm):
         self.type = 'UnknownThru'
     
     def run(self):
-        et = EightTerm(
-            measured = self.measured, 
-            ideals = self.ideals,
-            switch_terms= self.switch_terms)
-        #et.run()
-        #self._coefs = et.coefs
-        
-           
         n_thrus = self.n_thrus
         p1_m = [k.s11 for k in self.measured[:-n_thrus]]
         p2_m = [k.s22 for k in self.measured[:-n_thrus]]
@@ -1762,26 +1753,23 @@ class UnknownThru(EightTerm):
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
         X = port1_cal.error_ntwk
         Y = port2_cal.error_ntwk
-        
-        
-        
+                
         k_approx = et.coefs_ntwks['k']
         
-        #_tf_approx =  X.s21#((thru_approx.inv**X.inv**thru_m**Y.inv).s22*(X.s12*Y.s12))
-        #((thru_m.inv**X**thru_approx**Y).s22 * (X.s21*Y.s21))
-        #
         
         e_tf_s = npy.sqrt((e_rf*e_rr*(thru_m.s21/thru_m.s12)).s.flatten())
+        e_tf_s = find_correct_sign(e_tf_s, -1* e_tf_s, (k_approx*e_rr).s.flatten())
         
-        e_tf_s = find_correct_sign(
-            e_tf_s,
-            -1* e_tf_s, 
-            (k_approx*e_rr).s.flatten())
-        
+        # create a fully-determined 8-term cal just get estimate on k's sign
+        # this is really inefficient, i need to fix the math on the 
+        # closed form solution
+        et = EightTerm(
+            measured = self.measured, 
+            ideals = self.ideals,
+            switch_terms= self.switch_terms)
         k_ = (e_tf_s.flatten()/e_rr.s.flatten())
         
-        #raise ValueError
-        
+               
         # create single dictionary for all error terms
         coefs = {}
         
