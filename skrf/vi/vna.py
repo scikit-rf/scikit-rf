@@ -1577,6 +1577,15 @@ class HP8720(HP8510C):
     @property
     def ifbw(self):
         raise ( NotImplementedError)
+    
     @ifbw.setter
     def ifbw(self,value):
         self.write('IFBW %i'%int(value))
+
+    @property
+    def frequency(self, unit='ghz'):
+        f = npy.array(self.ask_for_values('OUTPLIML'))
+        f.shape=(-1,4)
+        freq=Frequency.from_f(f[:,0], unit='hz')
+        freq.unit = unit
+        return freq
