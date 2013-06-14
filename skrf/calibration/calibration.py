@@ -1753,12 +1753,6 @@ class UnknownThru(EightTerm):
         e_rr = port2_cal.coefs_ntwks['reflection tracking']
         X = port1_cal.error_ntwk
         Y = port2_cal.error_ntwk
-                
-        k_approx = et.coefs_ntwks['k']
-        
-        
-        e_tf_s = npy.sqrt((e_rf*e_rr*(thru_m.s21/thru_m.s12)).s.flatten())
-        e_tf_s = find_correct_sign(e_tf_s, -1* e_tf_s, (k_approx*e_rr).s.flatten())
         
         # create a fully-determined 8-term cal just get estimate on k's sign
         # this is really inefficient, i need to fix the math on the 
@@ -1767,6 +1761,13 @@ class UnknownThru(EightTerm):
             measured = self.measured, 
             ideals = self.ideals,
             switch_terms= self.switch_terms)
+        k_approx = et.coefs_ntwks['k']
+        
+        
+        e_tf_s = npy.sqrt((e_rf*e_rr*(thru_m.s21/thru_m.s12)).s.flatten())
+        e_tf_s = find_correct_sign(e_tf_s, -1* e_tf_s, (k_approx*e_rr).s.flatten())
+        
+        
         k_ = (e_tf_s.flatten()/e_rr.s.flatten())
         
                
