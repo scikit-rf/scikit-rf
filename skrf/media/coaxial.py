@@ -26,16 +26,10 @@ A coaxial transmission line defined in terms of its inner/outer diameters and pe
 '''
 
 #from copy import deepcopy
-from scipy.constants import  epsilon_0, mu_0, c,pi, mil
-import numpy as npy
+from scipy.constants import  epsilon_0, mu_0, pi
 from numpy import sqrt, log
 
-#from .media import Media
-
 from distributedCircuit import DistributedCircuit
-
-#from ..tlineFunctions import skin_depth, surface_resistivity
-#from ..tlineFunctions import electrical_length
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
@@ -68,6 +62,12 @@ class Coaxial(DistributedCircuit):
         ----------
         Dint, Dout, epsilon_r, tan_delta, sigma can all be vectors as long as they are the same
         length
+        
+        References
+        ---------
+        .. [#] Pozar, D.M.; , "Microwave Engineering", Wiley India Pvt. Limited, 1 sept. 2009  
+
+
 
         '''
                 
@@ -79,7 +79,8 @@ class Coaxial(DistributedCircuit):
                 
         # surface resistance
         omega = 2.*pi*freq.f
-        Rs = sqrt(omega*mu_0/(2.*self.sigma))
+        mu_r=1.
+        Rs = sqrt(omega*mu_0*mu_r/(2.*self.sigma))
         
         # inner and outer radius
         a = Dint/2. 
