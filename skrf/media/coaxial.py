@@ -36,6 +36,9 @@ INF = 1e99
 
 class Coaxial(DistributedCircuit):
     '''
+    A coaxial transmission line defined in terms of its inner/outer 
+    diameters and permittivity
+    
     '''
     ## CONSTRUCTOR
     def __init__(self, frequency,  Dint, Dout, epsilon_r=1, tan_delta=0, sigma=INF, *args, **kwargs):
