@@ -1,10 +1,12 @@
-<Qucs Schematic 0.0.15>
+<Qucs Schematic 0.0.16>
 <Properties>
-  <View=0,0,800,800,1,0,0>
+  <View=0,0,890,800,1,0,0>
   <Grid=10,10,0>
   <DataSet=distributedCircuit,line.dat>
   <DataDisplay=distributedCircuit,line.sch>
   <OpenDisplay=1>
+  <Script=distributedCircuit,line.m>
+  <RunScript=0>
   <showFrame=0>
   <FrameText0=Title>
   <FrameText1=Drawn By:>
@@ -24,6 +26,9 @@
 	<"S[2,1]" #ff00ff 0 3 0 0 0>
 	<"S[2,2]" #00ff00 0 3 0 0 0>
   </Smith>
+  <Rect 610 310 240 160 3 #c0c0c0 1 00 1 0 0.2 1 1 -0.1 0.5 1.1 1 -0.1 0.5 1.1 315 0 225 "" "" "">
+	<"S[1,1]" #0000ff 0 3 0 0 0>
+  </Rect>
 </Diagrams>
 <Paintings>
 </Paintings>
