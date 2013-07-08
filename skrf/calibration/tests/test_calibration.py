@@ -145,6 +145,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
+    
     def terminate(self, ntwk):
         '''
         terminate a measured network with the switch terms
@@ -164,6 +165,16 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         out.name = ntwk.name
         return out
     
+    
+    
+    def test_embed(self):
+        X,Y = self.cal.error_ntwk
+        gamma_f, gamma_r = self.cal.switch_terms
+        
+        A = self.wg.random(2)
+        
+        M_ut = X**A**Y
+        
     def test_unterminating(self):
         a = self.wg.random(n_ports=self.n_ports)
         #unermintated measurment
@@ -249,6 +260,7 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
+
 @nottest       
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''

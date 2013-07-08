@@ -1962,6 +1962,17 @@ class Network(object):
         ntwk = self[start_idx:stop_idx+1]
         self.frequency, self.s,self.z0 = ntwk.frequency, ntwk.s,ntwk.z0
     
+    def cropped(self, f_start, f_stop):
+        '''
+        returns a cropped network, leaves self alone.
+        
+        See Also
+        ---------
+        crop 
+        '''
+        out = self.copy()
+        out.crop(f_start = f_start, f_stop = f_stop)
+        return out
         
     def flip(self):
         '''
