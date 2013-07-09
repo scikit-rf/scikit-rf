@@ -39,6 +39,7 @@ Calibration Class
 
 '''
 import numpy as npy
+from numpy.linalg import inv
 from numpy import mean, std
 import pylab as plb
 import os
@@ -1600,8 +1601,7 @@ class EightTerm(Calibration2):
         else:
             return ntwk
     
-    
-    
+      
     @property
     def measured_unterminated(self):        
         return [self.unterminate(k) for k in self.measured]
@@ -1733,7 +1733,39 @@ class EightTerm(Calibration2):
         caled = ntwk.copy()
         ntwk = self.unterminate(ntwk)    
         
+        T1,T2,T3,T4 = self.T_matrices
         
+        dot = npy.dot
+        for f in range(len(ntwk.s)):
+            t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+                            T4[f,:,:],ntwk.s[f,:,:]
+            caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
+        return caled
+    
+    def embed(self, ntwk):
+        '''
+        '''
+        embedded = ntwk.copy()
+        dot = npy.dot
+        
+        T1,T2,T3,T4 = self.T_matrices
+        for f in range(len(ntwk.s)):
+            t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+                            T4[f,:,:],ntwk.s[f,:,:]
+            caled.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
+        return caled
+        
+      
+    @property
+    def T_matrices(self):
+        '''
+        Intermediate matrices used for embedding and de-embedding. 
+        
+        Returns
+        --------
+        T1,T2,T3,T4 : numpy ndarray
+        
+        '''
         ec = self.coefs
         npoints = len(ec['k'])
         one = npy.ones(npoints,dtype=complex)
@@ -1767,14 +1799,8 @@ class EightTerm(Calibration2):
                 [ one,      zero ],\
                 [ zero,     k ]])\
                 .transpose().reshape(-1,2,2)
-        
-        
-        dot = npy.dot
-        for f in range(len(ntwk.s)):
-            t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
-                            T4[f,:,:],ntwk.s[f,:,:]
-            caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
-        return caled
+                
+        return T1,T2,T3,T4
         
 class TRL(EightTerm):
     '''
