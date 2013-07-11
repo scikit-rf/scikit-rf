@@ -39,7 +39,7 @@ Calibration Class
 
 '''
 import numpy as npy
-from numpy.linalg import inv
+from numpy import linalg
 from numpy import mean, std
 import pylab as plb
 import os
@@ -1032,6 +1032,12 @@ class Calibration2(object):
         from ..io.general import read_all_networks
         ntwkDict = read_all_networks(*args, **kwargs)
         return self.apply_cal_to_list(ntwkDict)
+    
+    def embed(self,ntwk):
+        '''
+        Embed an ideal response in the estimated error network[s]
+        '''
+        raise NotImplementedError('The Subclass must implement this')
         
     def pop(self,index=-1):
         '''
@@ -1349,6 +1355,12 @@ class OnePort(Calibration2):
         s22 = self.coefs['source match']
         er_ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
         return er_ntwk.inv**ntwk
+    
+    def embed(self,ntwk):
+        embedded = ntwk.copy()
+        embedded = self.error_ntwk**embedded
+        embedded.name = ntwk.name
+        return embedded
         
 class SOLT(Calibration2):
     '''
@@ -1588,15 +1600,15 @@ class EightTerm(Calibration2):
                 Model including Switch Terms" by Roger B. Marks
         '''
         if self.switch_terms is not None:
-            
+            gamma_f, gamma_r = self.switch_terms
             m = ntwk.copy()
             ntwk_flip = ntwk.copy()
             ntwk_flip.flip()
             
-            m.s[:,0,0] = (ntwk**self.gamma_f).s[:,0,0]
-            m.s[:,1,1] = (ntwk_flip**self.gamma_r).s[:,0,0]
-            m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*self.gamma_f.s[:,0,0])
-            m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*self.gamma_r.s[:,0,0])
+            m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
+            m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
+            m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
+            m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
             return m
         else:
             return ntwk
@@ -1731,29 +1743,34 @@ class EightTerm(Calibration2):
         
     def apply_cal(self, ntwk):
         caled = ntwk.copy()
-        ntwk = self.unterminate(ntwk)    
+        inv = linalg.inv
         
         T1,T2,T3,T4 = self.T_matrices
         
-        dot = npy.dot
+        ntwk = self.unterminate(ntwk)  
+        
         for f in range(len(ntwk.s)):
             t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
-            caled.s[f,:,:] = dot(npy.linalg.inv(-1*dot(m,t3)+t1),(dot(m,t4)-t2))
+            caled.s[f,:,:] = inv(-1*m.dot(t3)+t1).dot(m.dot(t4)-t2)
         return caled
     
     def embed(self, ntwk):
         '''
         '''
         embedded = ntwk.copy()
-        dot = npy.dot
+        inv = linalg.inv
         
         T1,T2,T3,T4 = self.T_matrices
+        
         for f in range(len(ntwk.s)):
             t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
-            caled.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
-        return caled
+            embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
+        
+        embedded = self.terminate(embedded)
+        
+        return embedded
         
       
     @property

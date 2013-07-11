@@ -32,7 +32,18 @@ class CalibrationTest(object):
     
     def test_residual_ntwks(self):
         a= self.cal.residual_ntwks
-@nottest   
+    
+    def test_embed_then_apply_cal(self):
+        
+        a = self.wg.random(n_ports=self.n_ports)
+        self.assertEqual(self.cal.apply_cal(self.cal.embed(a)),a)
+        
+    def test_embed_equal_measure(self):
+        
+        a = self.wg.random(n_ports=self.n_ports)
+        self.assertEqual(self.cal.embed(a),self.measure(a))
+        
+   
 class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     One-port calibration test.
@@ -167,13 +178,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     
     
     
-    def test_embed(self):
-        X,Y = self.cal.error_ntwk
-        gamma_f, gamma_r = self.cal.switch_terms
-        
-        A = self.wg.random(2)
-        
-        M_ut = X**A**Y
+    
         
     def test_unterminating(self):
         a = self.wg.random(n_ports=self.n_ports)
@@ -222,7 +227,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
     
-@nottest        
+        
 class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
@@ -261,7 +266,7 @@ class TRLTest(EightTermTest):
             switch_terms = (self.gamma_f, self.gamma_r)
             )
 
-@nottest       
+ 
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
     This test verifys the accuracy of the SOLT calibration. Generating 
