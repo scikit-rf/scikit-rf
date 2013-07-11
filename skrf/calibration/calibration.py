@@ -1483,7 +1483,43 @@ class SOLT(Calibration2):
             ( ((s12 -Eir)/(Etr))*(1+((s11-Edf)/(Erf))*(Esf-Elr)) )/D    
         
         return caled
- 
+    
+    def embed(self, ntwk):
+        measured = ntwk.copy()
+        
+        s11 = ntwk.s[:,0,0]
+        s12 = ntwk.s[:,0,1]
+        s21 = ntwk.s[:,1,0]
+        s22 = ntwk.s[:,1,1]
+        det = s11*s22 - s12*s21
+        
+        Edf = self.coefs['forward directivity']
+        Esf = self.coefs['forward source match']
+        Erf = self.coefs['forward reflection tracking']
+        Etf = self.coefs['forward transmission tracking']
+        Elf = self.coefs['forward load match']
+        Eif = self.coefs.get('forward isolation',0)
+        
+        Edr = self.coefs['reverse directivity']
+        Elr = self.coefs['reverse load match']
+        Err = self.coefs['reverse reflection tracking']
+        Etr = self.coefs['reverse transmission tracking']
+        Esr = self.coefs['reverse source match']
+        Eir = self.coefs.get('reverse isolation',0)
+        
+        
+        measured = ntwk.copy()
+        
+        D1 = (1 - Esf*s11 - Elf*s22 + Esf*Elf*det)
+        D2 = (1 - Elr*s11 - Esr*s22 + Esr*Elr*det)
+        
+        measured.s[:,0,0] =  Edf + Erf * (s11 - Elf*det)/D1 
+        measured.s[:,1,0] =  Eif + Etf * s21/D1 
+        measured.s[:,1,1] =  Edr + Err * (s22 - Elr*det)/D2 
+        measured.s[:,0,1] =  Eir + Etr * s12/D2 
+        
+        return measured
+        
 class EightTerm(Calibration2):
     def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
         '''
