@@ -87,47 +87,40 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
             self.cal.coefs_ntwks['source match'],
             )
     
-    def test_directivity_accuracy(self):
+    def test_reflection_tracking_accuracy(self):
         self.assertEqual(
             self.E.s21*self.E.s12, 
             self.cal.coefs_ntwks['reflection tracking'],
             )
     
-    
-    '''
-    def test_pickling(self):
-        ideals, measured = [], []
-        std_list = [self.short, self.match,self.open]
-
-        for ntwk in std_list:
-            ideals.append(ntwk)
-            measured.append(self.embeding_network ** ntwk)
-
-        cal = rf.OnePort(\
-                ideals = ideals,\
-                measured = measured,\
-                type = 'one port',\
-                is_reciprocal = True,\
-                )
+class SDDLTest(OnePortTest):
+    def setUp(self):
+        self.n_ports = 1
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        wg = self.wg
+        wg.frequency = rf.F.from_f([100])
         
-        original = cal
+        self.E = wg.random(n_ports =2, name = 'E')
         
-        f = open(os.path.join(self.test_dir, 'pickled_cal.cal'),'wb')
-        pickle.dump(original,f)
-        f.close()
-        f = open(os.path.join(self.test_dir, 'pickled_cal.cal'))
-        unpickled = pickle.load(f)
-        a = unpickled.error_ntwk
-        unpickled.run()
+        ideals = [
+                wg.short( name='short'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 10.,'deg',name='qw'),
+                wg.match( name='load'),
+                ]
+        actuals = [
+                wg.short( name='short'),
+                wg.delay_short( 45.,'deg',name='ew'),
+                wg.delay_short( 90.,'deg',name='qw'),
+                wg.match( name='load'),
+                ]
+        measured = [self.measure(k) for k in actuals]
         
-        
-        # TODO: this test should be more extensive 
-        self.assertEqual(original.ideals, unpickled.ideals)
-        self.assertEqual(original.measured, unpickled.measured)
-        
-        f.close()
-        os.remove(os.path.join(self.test_dir, 'pickled_cal.cal'))
-    '''
+        self.cal = rf.OnePort(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):

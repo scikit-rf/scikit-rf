@@ -925,7 +925,7 @@ class Calibration2(object):
         ----------
         measured : list/dict  of :class:`~skrf.network.Network` objects
             Raw measurements of the calibration standards. The order
-            must align with the `ideals` parameter ( or use sloppy_input)
+            must align with the `ideals` parameter ( or use `sloppy_input`)
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
@@ -1361,6 +1361,87 @@ class OnePort(Calibration2):
         embedded = self.error_ntwk**embedded
         embedded.name = ntwk.name
         return embedded
+
+class SDDL(OnePort):
+    '''
+    Short Delay Delay Load (Oneport Calibration)
+    
+    One-port self-calibration, which contains two delays shorts of 
+    unknown phase.
+    
+    
+    References
+    -------------
+    .. [#] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    '''
+    
+    def __init__(self, measured, ideals, *args, **kwargs):
+        '''
+        Short Delay Delay Load initializer
+        
+
+        measured and ideal networks must be in the order: 
+        
+        * short
+        * delay short1
+        * delay short2
+        * load
+        
+        See Also
+        ---------
+        Calibration.__init__
+        
+        '''
+        self.type = 'SDDL'
+        if (len(measured) != 4) or (len(ideals)) != 4:
+            raise IndexError('Incorrect number of standards.')
+        Calibration2.__init__(self, measured, ideals, *args, **kwargs)
+        
+    def run(self):
+        #meaured reflection coefficients
+        w_s = measured[0].s.flatten() # short
+        w_1 = measured[1].s.flatten() # delay short 1
+        w_2 = measured[2].s.flatten() # delay short 2
+        w_l = measured[3].s.flatten() # load
+        
+        # ideal response of reflection coefficients
+        i_s = ideals[0].s.flatten() # short
+        i_1 = ideals[1].s.flatten() # delay short 1
+        i_2 = ideals[2].s.flatten() # delay short 2
+        i_l = ideals[3].s.flatten() # load
+        
+        
+             
+        w_1p  = w_1 - w_s # between (9) and (10)
+        w_2p  = w_2 - w_s
+        w_lp  = w_l - w_s
+        
+        
+        alpha = exp(-1j*2*angle(1./w_2p - 1./w_1p)) # (17)
+        
+        p = alpha*( 1./w_1p - alpha/w_1p.conj() - (1+i_l)/(i_l*w_lp ))**(-1) # (22)
+        q = 1./(alpha* i_l) * p  #(23) (put in terms of p)
+        
+        Bp_re = -1*((1 + (imag(p+q)/real(q-p)) * (imag(q-p)/real(p+q)))/\
+                    (1 + (imag(p+q)/real(q-p))**2)) * real(p+q) # (25)
+        
+        Bp_im = imag(q+p)/real(q-p) * Bp_re #(24)
+        Bp = Bp_re + Bp_im*1j
+        
+        B = Bp + w_s    #(10)
+        C = Bp * (1./w_1p - alpha/w_1p.conj()) + alpha * Bp/Bp.conj() #(20)
+        A = B - w_s + w_s*C #(6)
+            
+        # convert the abc vector to standard error coefficients
+        e01e10 = A - B*C
+        e00 = B
+        e11 = -C
+        
+        self._coefs = {\
+                'directivity':e00,\
+                'reflection tracking':e01e10, \
+                'source match':e11\
+                }
         
 class SOLT(Calibration2):
     '''
