@@ -40,7 +40,7 @@ Calibration Class
 '''
 import numpy as npy
 from numpy import linalg
-from numpy import mean, std
+from numpy import mean, std, angle, real, imag, exp
 import pylab as plb
 import os
 from copy import deepcopy, copy
@@ -49,7 +49,7 @@ from warnings import warn
 import cPickle as pickle
 
 from calibrationAlgorithms import *
-from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, find_correct_sign
+from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, find_correct_sign, ALMOST_ZERO
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
@@ -1398,18 +1398,17 @@ class SDDL(OnePort):
         Calibration2.__init__(self, measured, ideals, *args, **kwargs)
         
     def run(self):
+        
         #meaured reflection coefficients
-        w_s = measured[0].s.flatten() # short
-        w_1 = measured[1].s.flatten() # delay short 1
-        w_2 = measured[2].s.flatten() # delay short 2
-        w_l = measured[3].s.flatten() # load
+        w_s = self.measured[0].s.flatten() # short
+        w_1 = self.measured[1].s.flatten() # delay short 1
+        w_2 = self.measured[2].s.flatten() # delay short 2
+        w_l = self.measured[3].s.flatten() # load
         
         # ideal response of reflection coefficients
-        i_s = ideals[0].s.flatten() # short
-        i_1 = ideals[1].s.flatten() # delay short 1
-        i_2 = ideals[2].s.flatten() # delay short 2
-        i_l = ideals[3].s.flatten() # load
-        
+        G_l = self.ideals[3].s.flatten() # gamma_load
+        # handle singularities
+        G_l[G_l ==0] = ALMOST_ZERO
         
              
         w_1p  = w_1 - w_s # between (9) and (10)
@@ -1419,8 +1418,8 @@ class SDDL(OnePort):
         
         alpha = exp(-1j*2*angle(1./w_2p - 1./w_1p)) # (17)
         
-        p = alpha*( 1./w_1p - alpha/w_1p.conj() - (1+i_l)/(i_l*w_lp ))**(-1) # (22)
-        q = 1./(alpha* i_l) * p  #(23) (put in terms of p)
+        p = alpha/( 1./w_1p - alpha/w_1p.conj() - (1+G_l)/(G_l*w_lp )) # (22)
+        q = p/(alpha* G_l)   #(23) (put in terms of p)
         
         Bp_re = -1*((1 + (imag(p+q)/real(q-p)) * (imag(q-p)/real(p+q)))/\
                     (1 + (imag(p+q)/real(q-p))**2)) * real(p+q) # (25)

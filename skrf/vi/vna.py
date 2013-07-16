@@ -548,19 +548,21 @@ class PNA(GpibInstrument):
         self.write('calc:par:sel %s'%(self.get_active_meas()))
         return npy.array(self.ask_for_values('CALC%i:RData? %s'%(cnum, char)))
 
-    def get_switch_terms(self):
+    def get_switch_terms(self, ports = [1,2]):
         '''
         Get switch terms and return them as a tuple of Network objects. 
         
         Dont use this yet. 
         '''
+        
+        p1,p2 = ports
         self.delete_all_meas()
-        self.create_meas('forward switch term', 'a2/b2,1')
+        self.create_meas('forward switch term', 'a%i/b%i,%i'%(p2,p2,p1))
         forward = self.get_network()
         
         
         self.delete_all_meas()
-        self.create_meas('reverse switch term', 'a1/b1,2')
+        self.create_meas('reverse switch term', 'a%i/b%i,%i'%(p1,p1,p2))
         reverse = self.get_network()
         self.delete_all_meas()
         return forward, reverse

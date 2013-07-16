@@ -76,18 +76,28 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
         return self.E**ntwk
     
     def test_directivity_accuracy(self):
+        print 'directibity'
+        print(self.E.s11.s)
+        print(self.cal.coefs_ntwks['directivity'].s)
         self.assertEqual(
             self.E.s11, 
             self.cal.coefs_ntwks['directivity'],
             )
         
     def test_source_match_accuracy(self):
+        print 'source match'
+        print self.E.s22.s
+        print self.cal.coefs_ntwks['source match'].s
+        
         self.assertEqual(
             self.E.s22, 
             self.cal.coefs_ntwks['source match'],
             )
     
     def test_reflection_tracking_accuracy(self):
+        print 'reflection tracking'
+        print (self.E.s21*self.E.s12).s
+        print self.cal.coefs_ntwks['reflection tracking'].s
         self.assertEqual(
             self.E.s21*self.E.s12, 
             self.cal.coefs_ntwks['reflection tracking'],
@@ -105,18 +115,18 @@ class SDDLTest(OnePortTest):
         ideals = [
                 wg.short( name='short'),
                 wg.delay_short( 10.,'deg',name='ew'),
-                wg.delay_short( 10.,'deg',name='qw'),
-                wg.match( name='load'),
+                wg.delay_short( 90.,'deg',name='qw'),
+                wg.load(0, name='load'),
                 ]
         actuals = [
                 wg.short( name='short'),
                 wg.delay_short( 45.,'deg',name='ew'),
                 wg.delay_short( 90.,'deg',name='qw'),
-                wg.match( name='load'),
+                wg.load(0, name='load'),
                 ]
         measured = [self.measure(k) for k in actuals]
         
-        self.cal = rf.OnePort(
+        self.cal = rf.SDDL(
             is_reciprocal = True, 
             ideals = ideals, 
             measured = measured,
