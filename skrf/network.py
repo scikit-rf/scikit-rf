@@ -418,6 +418,8 @@ class Network(object):
         if kwargs.has_key('touchstone_filename'):
             file = kwargs['touchstone_filename']
         
+        self.name = name
+        self.comments = comments
         
         if file is not None:
             # allows user to pass filename or file obj
@@ -437,8 +439,7 @@ class Network(object):
             if name is None and isinstance(file,basestring):
                 name = os.path.splitext(os.path.basename(file))[0]
         
-        self.name = name
-        self.comments = comments
+       
         
         # allow properties to be set through the constructor 
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
@@ -1575,7 +1576,7 @@ class Network(object):
         #TODO: add Network property `comments` which is read from
         # touchstone file. 
     
-    def write_touchstone(self, filename=None, dir = './', write_z0=False, 
+    def write_touchstone(self, filename=None, dir = None, write_z0=False, 
         skrf_comment=True):
         '''
         Write a contents of the :class:`Network` to a touchstone file.
@@ -1588,8 +1589,7 @@ class Network(object):
             :attr:`name`.  if filename doesnt have an extension the 
             correct sNp is appended.
         dir : string, optional
-            the directory to save the file in. Defaults
-            to cwd './'.
+            the directory to save the file in. 
         write_z0 : boolean, optional
             write impedance information into touchstone as comments, 
             like Ansoft HFSS does
@@ -1612,56 +1612,57 @@ class Network(object):
                 filename= self.name
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
-        if get_extn(filename) is not None:
-            extension = ''
-        else:
-            extension = '.s%ip'%self.number_of_ports
-
-        outputFile = open(dir+'/'+filename+extension,"w")
         
-        # Add '!' Touchstone comment delimiters to the start of every line
-        # in self.comments
-        commented_header = ''
-        if self.comments:
-            for comment_line in self.comments.split('\n'):
-                commented_header += '!{}\n'.format(comment_line)
-
-        # write header file.
-        # the '#'  line is NOT a comment it is essential and it must be
-        #exactly this format, to work
-        # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-        if skrf_comment:
-            outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
-        outputFile.write(commented_header)
-        outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(npy.real(self.z0[0,0])) +" \n")
-
-        #write comment line for users (optional)
-        outputFile.write ("!freq\t")
-        for n in range(self.number_of_ports):
-            for m in range(self.number_of_ports):
-                outputFile.write("Re" +'S'+`m+1`+ `n+1`+  "\tIm"+\
-                'S'+`m+1`+ `n+1`+'\t')
-        outputFile.write('\n')
-
-        # write out data, note: this could be done with matrix
-        #manipulations, but its more readable to me this way
-        for f in range(len(self.f)):
-            outputFile.write(str(self.frequency.f_scaled[f])+'\t')
-
+        if get_extn(filename) is None:
+            filename = filename +'.s%ip'%self.number_of_ports
+        
+        if dir is not None:
+            filename =  os.path.join(dir, filename)
+        
+        with open(filename,"w") as outputFile:
+            # Add '!' Touchstone comment delimiters to the start of every line
+            # in self.comments
+            commented_header = ''
+            if self.comments:
+                for comment_line in self.comments.split('\n'):
+                    commented_header += '!{}\n'.format(comment_line)
+            if skrf_comment:
+                commented_header +='!Created with skrf (http://scikit-rf.org).\n'
+            outputFile.write(commented_header)
+            
+            # write header file.
+            # the '#'  line is NOT a comment it is essential and it must be
+            #exactly this format, to work
+            # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
+            outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(npy.real(self.z0[0,0])) +" \n")
+    
+            #write comment line for users (optional)
+            outputFile.write ("!freq\t")
             for n in range(self.number_of_ports):
                 for m in range(self.number_of_ports):
-                    outputFile.write( str(npy.real(self.s[f,m,n])) + '\t'\
-                     + str(npy.imag(self.s[f,m,n])) +'\t')
-
-            # write out the z0 following hfss's convention if desired
-            if write_z0:
-                outputFile.write('\n')
-                outputFile.write('! Port Impedance\t' )
-                for n in range(self.number_of_ports):
-                    outputFile.write('%.14f\t%.14f\t'%(self.z0[f,n].real, self.z0[f,n].imag))
+                    outputFile.write("Re" +'S'+`m+1`+ `n+1`+  "\tIm"+\
+                    'S'+`m+1`+ `n+1`+'\t')
             outputFile.write('\n')
-
-        outputFile.close()
+    
+            # write out data, note: this could be done with matrix
+            #manipulations, but its more readable to me this way
+            for f in range(len(self.f)):
+                outputFile.write(str(self.frequency.f_scaled[f])+'\t')
+    
+                for n in range(self.number_of_ports):
+                    for m in range(self.number_of_ports):
+                        outputFile.write( str(npy.real(self.s[f,m,n])) + '\t'\
+                         + str(npy.imag(self.s[f,m,n])) +'\t')
+    
+                # write out the z0 following hfss's convention if desired
+                if write_z0:
+                    outputFile.write('\n')
+                    outputFile.write('! Port Impedance\t' )
+                    for n in range(self.number_of_ports):
+                        outputFile.write('%.14f\t%.14f\t'%(self.z0[f,n].real, self.z0[f,n].imag))
+                outputFile.write('\n')
+    
+        
 
     def write(self, file=None, *args, **kwargs):
         '''
