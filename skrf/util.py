@@ -371,18 +371,18 @@ class HomoDict(collections.MutableMapping):
     
     def __getattr__(self, name):
         return self.__class__(
-            {k: self.store[k].__getattribute__(name) for k in self.store})
+            {k: getattr(self.store[k],name) for k in self.store})
         
     def __getitem__(self, key):
         if isinstance(key, str):
             return self.store[key]
         else:
             c =   self.__class__({k:self.store[k] for k in key})
-        
-        if len(c) == 1: 
-            return c.store.values()[0]
-        else: 
-            return c
+        return c
+        #if len(c) == 1: 
+        #    return c.store.values()[0]
+        #else: 
+        #    return c
             
     def __call__(self, *args, **kwargs):
         return self.__class__(
