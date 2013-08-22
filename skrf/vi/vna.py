@@ -211,7 +211,7 @@ class PNA(GpibInstrument):
         if port is None:
             port = self.port
         
-        self.write('SOURce%i:POWer%i %i'%(cnum, port, num))
+        self.write('SOURce%i:POWer%i %f'%(cnum, port, num))
     
         
     ## IO - Frequency related
