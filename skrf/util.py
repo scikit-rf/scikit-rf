@@ -405,6 +405,9 @@ class HomoDict(collections.MutableMapping):
     
     def __repr__(self):
         return pprint.pformat(self.store)
-        
+    
+    def filter_nones(self):
+        self.store =  {k:self.store[k] for k in self.store \
+                        if self.store[k] is not None}
     
     
