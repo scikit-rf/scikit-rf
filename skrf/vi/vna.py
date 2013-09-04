@@ -41,6 +41,7 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
 import numpy as npy
 import visa
 from visa import GpibInstrument
+from warnings import warn
 
 from ..frequency import *
 from ..network import *
@@ -213,6 +214,7 @@ class PNA(GpibInstrument):
         
         self.write('SOURce%i:POWer%i %f'%(cnum, port, num))
     
+    power_level = property(get_power_level, set_power_level)
         
     ## IO - Frequency related
     def get_f_start(self):
@@ -274,12 +276,19 @@ class PNA(GpibInstrument):
         select_meas
         get_meas_list
         '''
-        freq = Frequency( float(self.ask('sens:FREQ:STAR?')),
-                float(self.ask('sens:FREQ:STOP?')),\
-                int(self.ask('sens:sweep:POIN?')),'hz')
+        freq = Frequency(self.f_start,
+                         self.f_stop,
+                         self.f_npoints,'hz')
         freq.unit = unit
         
         return freq
+    
+    def set_frequency(self, freq):
+        self.f_start = freq.start
+        self.f_stop = freq.stop
+        self.f_npoints = freq.npoints
+    
+    frequency = property(get_frequency,set_frequency)
     
     ##  IO - S-parameter and  Networks
     def get_snp_format(self):
@@ -299,7 +308,7 @@ class PNA(GpibInstrument):
     
     snp_format = property(get_snp_format, set_snp_format)
     
-    def get_network(self, sweep=True):
+    def get_network(self, sweep=True, name = None):
         '''
         Returns a :class:`~skrf.network.Network` object representing the 
         active trace.
@@ -325,17 +334,20 @@ class PNA(GpibInstrument):
         ----------
         get_network_all_meas
         '''
+        
         was_cont = self.continuous
-        self.continuous= False
+        self.continuous   = False
         if sweep:
             self.sweep()
             
         ntwk = Network(
             s = self.get_sdata(), 
             frequency = self.get_frequency(),
-            name = self.get_active_meas(),
             )
+        if name is None:
+            name = self.get_active_meas()
         
+        ntwk.name = name
         self.continuous = was_cont
         return ntwk
     
@@ -349,15 +361,13 @@ class PNA(GpibInstrument):
         get_meas_list
         get_network
         '''
-        was_cont = self.continuous
-        self.continuous= False
+        
         out = []
         self.sweep()
         for name,parm in self.get_meas_list():
             self.select_meas(name)
-            out.append(self.get_network(sweep=False))
+            out.append(self.get_network(sweep=False, name= name))
         
-        self.continuous = was_cont
         return out
             
     def get_oneport(self, port=1, *args, **kwargs):
@@ -383,7 +393,7 @@ class PNA(GpibInstrument):
         get_frequency
         '''
         was_cont = self.continuous
-        self.continuous= False
+        self.continuous   = False
         self.sweep()
         ntwk = Network(
             s = self.get_data_snp(port), 
@@ -757,7 +767,6 @@ class PNA(GpibInstrument):
         '''
         self.write('calc%i:form %s'%(self.channel,form))
         
-        
     def set_display_format_all(self, form):
         '''
         Set the display format for all measurements
@@ -782,7 +791,6 @@ class PNA(GpibInstrument):
         '''
         self.func_on_all_traces(self.set_display_format, form)
     
-        
     def func_on_all_traces(self,func, *args, **kwargs):
         '''
         Run a function on all traces are active
@@ -854,8 +862,143 @@ class PNA(GpibInstrument):
     corr_state_of_meas = property(get_corr_state_of_meas,
         set_corr_state_of_meas)
     
-    
 PNAX = PNA 
+    
+class ZVA40(PNA):
+    def sweep(self):
+        '''
+        Initiates a sweep and waits for it to complete before returning
+        
+        If vna is in continuous sweep mode then this puts it back
+        '''
+        was_cont = self.continuous
+        self.continuous = False
+        self.write("INITiate%i:IMMediate;*WAI"%self.channel)
+        self.ask('*OPC?;')
+        self.continuous = was_cont
+        
+    def get_meas_list(self):
+        '''
+        Get a list of existent measurements
+        
+        Returns
+        ----------
+        out :  list 
+            list of tuples of the form, (name, measurement)
+        '''
+        meas_list = self.ask("CALC:PAR:CAT?")
+        
+        meas = meas_list[1:-1].split(',')
+        if len(meas)==1:
+            # if there isnt a single comma, then there arent any measurments
+            return None
+       
+        
+        return [(meas[k],meas[k+1]) for k in range(0,len(meas)-1,2)]
+    
+    def get_data(self, char='SDATA', cnum = None):
+        '''
+        Get data for current active measuremnent
+        
+        Note that this doesnt do any sweep timing. It just gets whatever
+        data is in the registers according to char.  If you want the 
+        data to be returned after a sweep has completed 
+        
+        Parameters 
+        ------------
+        char : [SDATA, FDATA, RDATA]
+            type of data to return 
+            
+            
+        See Also
+        ----------
+        get_sdata
+        get_fdata
+        get_rdata
+        get_snp_data
+        
+        '''
+        if cnum is None:
+            cnum = self.channel
+            
+        data = npy.array(self.ask_for_values('CALC%i:Data? %s'%(cnum, char)))
+        
+        if char.lower() == 'sdata':
+            data = mf.scalar2Complex(data)
+            
+        return data
+        
+    def get_active_meas(self):
+        '''
+        Get the name of the active measurement
+        '''
+        warn('Retriving active trace is not functional. This is a stub.')
+        
+        return ''
+    
+    def create_meas(self,name, meas):
+        '''
+        Create a new measurement. 
+        
+        Parameters 
+        ------------
+        name : str
+            name given to measurment
+        meas : str
+            something like 
+            * S11  
+            * a1/b1,1 
+            * A/R1,1
+            * ...
+        
+        Examples
+        ----------
+        >>> p = PNA()
+        >>> p.create_meas('my_meas', 'A/R1,1')     
+        '''
+        self.write('calc%i:par:sdef \"%s\", \"%s\"'%(self.channel, name, meas))
+        self.display_trace(name)
+    
+    def setup_twoport(self, ports=[1,2]):
+        '''
+        sets up traces appropriate for 2-port s-parameter measurment
+        
+        Parameters 
+        -----------
+        ports : tuple of ints
+            the pair of ports on the VNA used in the measurement
+        
+        
+        '''
+        self.delete_all_meas()
+        
+        port_list = [(y,x) for x in ports for y in ports]
+        #create traces
+        for k in port_list:
+            self.create_meas('s%i%i'%k,'s%i%i'%k)
+    
+    def get_twoport(self, *args, **kwargs):
+        '''
+        
+        '''
+        n = self.get_network_all_meas()
+        twoport = n_oneports_2_nport([n[0],n[2],n[1],n[3]], *args, **kwargs)
+        return twoport
+    
+    def setup_oneport(self, port=1):
+        '''
+        sets up traces appropriate for 1-port s-parameter measurment
+        
+        Parameters 
+        -----------
+        port : int
+            the  port on the VNA used in the measurement
+        
+        '''
+        self.setup_twoport(ports = [port])
+    
+    
+    get_oneport = PNA.get_network
         
 class VectorStar(GpibInstrument):
     '''
@@ -1150,7 +1293,9 @@ class ZVA40_lihan(object):
         npy.savetxt(fid,formatedData,fmt='%10.5f')
         fid.close()
 
-class ZVA40(GpibInstrument):
+
+    
+class ZVA40_old(GpibInstrument):
     '''
     Rohde&Scharz ZVA40
     
@@ -1316,6 +1461,35 @@ class ZVA40(GpibInstrument):
             %(key, port, error_dict[key]))
     
         self.continuous=True
+    
+    def get_port_config(self):
+        raise NotImplementedError
+    
+    
+        
+    def set_port_config(self, ch=1, pt=1, num=1, denom=1, offset=0, 
+                        sweep_type='sweep'):
+        '''
+        Parameters
+        -----------
+        ch : int 
+            channel number
+        pt : int
+            port number
+        num : int
+            numerator 
+        denom : int
+            denominator
+        offset : float 
+            offset frequency [hz]
+        sweep_type: ['sweep','cw','fixed']
+            sweep type. 
+    
+        '''
+        gpib_str = 'SOUR{ch}:FREQ:{pt}:CONV:ARB:IFR {num}, {denom}, {offset}, {sweep_type}'.format(ch = ch, pt = pt, num = num, denom = denom, 
+                      offset = offset, sweep_type = sweep_type)
+        self.write(gpib_str)
+        
         
 class ZVA40_alex(GpibInstrument):
     '''
