@@ -681,7 +681,8 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
     attrs : list Network attributes
         like ['s_db','s_deg']
     ports : list of tuples
-        list of port pairs to write. defaults to ntwk.port_tuples
+        list of port pairs to write. defaults to ntwk.port_tuples 
+        (like [[0,0]])
         
     Returns
     ----------
@@ -695,7 +696,7 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
         ports = ntwk.port_tuples
          
     for attr in attrs:
-        for m,n in ntwk.port_tuples:
+        for m,n in ports:
             d['%s %i%i'%(attr, m+1,n+1)] = \
                 Series(ntwk.__getattribute__(attr)[:,m,n], index = index)
             

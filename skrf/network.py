@@ -1759,7 +1759,7 @@ class Network(object):
         skrf.io.general.network_2_dataframe
         '''
         from io.general import network_2_dataframe
-        network_2_dataframe(self, *args, **kwargs)
+        return network_2_dataframe(self, *args, **kwargs)
         
     # interpolation
     def interpolate(self, new_frequency,**kwargs):
