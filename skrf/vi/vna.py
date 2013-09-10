@@ -997,8 +997,10 @@ class ZVA40(PNA):
         '''
         self.setup_twoport(ports = [port])
     
-    
     get_oneport = PNA.get_network
+
+
+        
         
 class VectorStar(GpibInstrument):
     '''

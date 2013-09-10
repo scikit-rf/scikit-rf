@@ -670,6 +670,37 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     df.__getattribute__('to_%s'%file_type)(file_name, 
         index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
     
+def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
+    '''
+    Convert one or more attributes of a network to a pandas DataFrame
+    
+    Parameters
+    --------------
+    ntwk :  :class:`~skrf.network.Network` object
+        the network to write 
+    attrs : list Network attributes
+        like ['s_db','s_deg']
+    ports : list of tuples
+        list of port pairs to write. defaults to ntwk.port_tuples
+        
+    Returns
+    ----------
+    df : pandas DataFrame Object
+    '''
+    from pandas import DataFrame, Series # delayed because its not a requirement
+    d = {}
+    index =ntwk.frequency.f_scaled
+    
+    if ports is None:
+        ports = ntwk.port_tuples
+         
+    for attr in attrs:
+        for m,n in ntwk.port_tuples:
+            d['%s %i%i'%(attr, m+1,n+1)] = \
+                Series(ntwk.__getattribute__(attr)[:,m,n], index = index)
+            
+    return DataFrame(d)
+    
 def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel', 
     *args, **kwargs):
     '''

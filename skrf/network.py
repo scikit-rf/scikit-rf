@@ -1749,6 +1749,17 @@ class Network(object):
         '''
         from io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
+    
+    def to_dataframe(self, *args, **kwargs):
+        '''
+        Convert attributes of a Network to a pandas DataFrame
+        
+        See Also 
+        ---------
+        skrf.io.general.network_2_dataframe
+        '''
+        from io.general import network_2_dataframe
+        network_2_dataframe(self, *args, **kwargs)
         
     # interpolation
     def interpolate(self, new_frequency,**kwargs):
