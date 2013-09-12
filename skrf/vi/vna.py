@@ -189,6 +189,107 @@ class PNA(GpibInstrument):
         self.continuous = was_cont
         return out
     
+    def get_sweep_type(self):
+        '''
+        Sets the type of analyzer sweep mode. First set sweep type, then set sweep 
+        parameters such as frequency or power settings.
+        
+        Parameters
+        -------------
+        val: str
+            Choose from:
+                LINear | LOGarithmic | POWer | CW | SEGMent | PHASe
+                Note: SWEep TYPE cannot be set to SEGMent if there 
+                are no segments t
+        '''
+        return self.ask('sense%i:sweep:type?'%self.channel)
+    
+    def set_sweep_type(self,val):
+        self.write('sense%i:sweep:type %s'%(self.channel,val))
+        
+    sweep_type = property(get_sweep_type, set_sweep_type)
+    def get_sweep_mode(self):
+        '''
+        Sets the number of trigger signals the specified channel will ACCEPT.
+        See Triggering the PNA Using SCPI.
+        
+        Parameters
+        -------------
+        val: str 
+            Trigger mode. Choose from:
+            HOLD - channel will not trigger
+            CONTinuous - channel triggers indefinitely
+            GROups - channel accepts the number of triggers specified with the last
+            SENS:SWE:GRO:COUN <num>. This is one of the PNA overlapped
+            commands. Learn more.
+            SINGle - channel accepts ONE trigger, then goes to HOLD.
+        '''
+        return self.ask('sense%i:sweep:mode?'%self.channel)
+    
+    def set_sweep_mode(self,val):
+        self.write('sense%i:sweep:mode %s'%(self.channel,val))
+    
+    sweep_mode = property(get_sweep_mode, set_sweep_mode)
+    
+    
+    def get_trigger_mode(self):
+        '''
+        Sets and reads the trigger mode for the specified channel. 
+        This determines what EACH signal will trigger.
+        
+        values
+        ----------
+        
+        ['channel','sweep','point','trace']
+
+        '''
+        return self.ask('sense%i:sweep:trigger:mode?'%self.channel)
+    
+    def set_trigger_mode(self,val):
+        if val.lower() not in ['channel','sweep','point','trace']:
+            raise ValueError('value must be a boolean')
+        
+        self.write('sense%i:sweep:trigger:mode %s'%(self.channel, val))
+    
+    trigger_mode = property(get_trigger_mode, set_trigger_mode)
+    
+    def get_trigger_source(self):
+        '''
+        Sets the source of the sweep trigger signal. This command is 
+        a super-set of INITiate:CONTinuous which can NOT set the 
+        source to External.
+        
+        values
+        --------
+        
+        EXTernal - external (rear panel) source.
+        IMMediate - internal source sends continuous trigger signals
+        MANual - sends one trigger signal when manually triggered from 
+            the front panel or INIT:IMM is sent.
+        '''
+        return self.ask('trigger:sequence:source?')
+    
+    def set_trigger_source(self,val):
+        '''
+        '''
+        self.write('trigger:sequence:source %s'%val)
+    
+    trigger_source = property(get_trigger_source, set_trigger_source)
+    
+    def trigger(self):
+        '''
+        sent a manual trigger signal
+        '''
+        self.write('INIT:IMM')
+    
+    def trigger_and_wait_till_done(self):
+        '''
+        send a manual trigger signal, and dont return untill operation
+        is completed
+        '''
+        self.trigger()
+        self.opc()
+        
     ## power
     def get_power_level(self):
         '''
@@ -289,6 +390,26 @@ class PNA(GpibInstrument):
         self.f_npoints = freq.npoints
     
     frequency = property(get_frequency,set_frequency)
+    
+    def get_frequency_cw(self):
+        '''
+        Sets the Continuous Wave (or Fixed) frequency. Must also send 
+        SENS:SWEEP:TYPE CW to put the analyzer into CW sweep mode.
+        Parameters
+        --------------
+        val : number
+            CW frequency. Choose any number between the minimum and
+            maximum frequency limits of the analyzer. Units are Hz.
+
+        This command will accept MIN or MAX instead of a numeric 
+        parameter. See SCPI Syntax for more information
+        '''
+        return float(self.ask('sens%i:FREQ?'%(self.channel)))
+    
+    def set_frequency_cw(self, val):
+        self.write('sens%i:FREQ %f'%(self.channel,val)) 
+    
+    frequency_cw = property(get_frequency_cw, set_frequency_cw)
     
     ##  IO - S-parameter and  Networks
     def get_snp_format(self):
