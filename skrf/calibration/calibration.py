@@ -2046,6 +2046,11 @@ class UnknownThru(EightTerm):
         
         self._coefs = coefs
 
+class Normalization(Calibration2):
+    def run(self):
+        pass
+    def apply_cal(self, input_ntwk):
+        return input_ntwk/average(self.measured)
 
 
 ## Functions

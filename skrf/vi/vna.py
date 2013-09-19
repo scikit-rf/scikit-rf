@@ -395,6 +395,7 @@ class PNA(GpibInstrument):
         '''
         Sets the Continuous Wave (or Fixed) frequency. Must also send 
         SENS:SWEEP:TYPE CW to put the analyzer into CW sweep mode.
+        
         Parameters
         --------------
         val : number
