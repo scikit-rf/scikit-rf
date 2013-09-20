@@ -110,7 +110,7 @@ class PNA(GpibInstrument):
             GPIB command timeout in seconds. 
         echo : Boolean
             echo  all strings passed to the write command to stdout. 
-            usefule for troubleshooting
+            useful for troubleshooting
         front_panel_lockout : Boolean
             lockout front panel during operation. 
         \*\*kwargs : 
@@ -1124,40 +1124,16 @@ class ZVA40(PNA):
 
         
         
-class VectorStar(GpibInstrument):
+class VectorStar(PNA):
     '''
     '''
-    def __init__(self, address=6, channel = 1, timeout = 5, *args, **kwargs):
-        GpibInstrument.__init__(self,
-            'GPIB::'+str(address),
-            timeout = timeout,
-            *args,**kwargs)
-        self.channel = channel
-        
-    @property
-    def idn(self):
-        return self.ask('*IDN?')
+    
     
     def rtl(self):
         '''
         Return to local 
         '''
         self.write('rtl')
-    
-    @property
-    def frequency(self, unit='ghz'):
-        '''
-        Gets frequency data, returning a :class:`~skrf.frequency.Frequency` object
-        
-        Gets the
-        
-        '''
-        freq=Frequency( float(self.ask('sens:FREQ:STAR?')),
-                float(self.ask('sens:FREQ:STOP?')),\
-                int(self.ask('sens:sweep:POIN?')),'hz')
-        freq.unit = unit
-        return freq
-    
     
     @property
     def continuous(self):
@@ -1176,8 +1152,20 @@ class VectorStar(GpibInstrument):
             self.write(':sense%i:hold:func cont'%self.channel)
         else:
             self.write(':sense%i:hold:func hold'%self.channel)
+    
+    def sweep(self):
+        '''
+        Initiates a sweep and waits for it to complete before returning
         
-    def get_twoport_fast(self, *args, **kwargs):
+        If vna is in continuous sweep mode then this puts it back
+        '''
+        was_cont = self.continuous
+        self.continuous = False
+        out = bool(self.ask("TRS;WFS;*IDN?"))
+        self.continuous = was_cont
+        return out
+        
+    def get_twoport(self, *args, **kwargs):
         '''
         Get a two-port Network using alternative command
         
@@ -1201,16 +1189,16 @@ class VectorStar(GpibInstrument):
         freq = self.frequency
         return Network(s = s, frequency = freq,*args, **kwargs)
     
-    def setup_wave_quantities(self):
-        self.ntraces = 4
-        #create traces
-        self.write(':calc%i:par1:def usr,a1,1,port1'%self.channel)
-        self.write(':calc%i:par2:def usr,b1,1,port1'%self.channel)
-        self.write(':calc%i:par3:def usr,a2,1,port2'%self.channel)
-        self.write(':calc%i:par4:def usr,b2,1,port2'%self.channel)
-        # set display to log mag
-        for k in range(1,5):
-            self.write('calc%i:par%i:form mlog'%(self.channel,k))
+    #def setup_wave_quantities(self):
+        #self.ntraces = 4
+        ##create traces
+        #self.write(':calc%i:par1:def usr,a1,1,port1'%self.channel)
+        #self.write(':calc%i:par2:def usr,b1,1,port1'%self.channel)
+        #self.write(':calc%i:par3:def usr,a2,1,port2'%self.channel)
+        #self.write(':calc%i:par4:def usr,b2,1,port2'%self.channel)
+        ## set display to log mag
+        #for k in range(1,5):
+        #    self.write('calc%i:par%i:form mlog'%(self.channel,k))
     
     def setup_s_parameters(self):
         self.ntraces = 4
@@ -1258,7 +1246,7 @@ class VectorStar(GpibInstrument):
             *args, 
             **kwargs)    
     
-    def get_twoport(self, *args, **kwargs):
+    def get_twoport_slow(self, *args, **kwargs):
         was_cont = self.continuous
         self.continuous = False
         self.setup_s_parameters()
@@ -1275,22 +1263,95 @@ class VectorStar(GpibInstrument):
         freq = self.frequency
         self.continuous=was_cont    
         return Network(s = s, frequency = freq,*args, **kwargs)
+    
+    def get_network_all_meas(self):
+        '''
+        Return list of Network Objects for all measurements.
         
-    @property
-    def ntraces(self):
+        
+        See Also
+        -----------
+        get_meas_list
+        get_network
+        '''
+        
+        out = []
+        self.sweep()
+        for name,parm in self.get_meas_list():
+            self.select_meas(name)
+            out.append(self.get_network(sweep=False, name= parm))
+        
+        return out    
+    
+    def get_ntraces(self):
         return int(self.ask(':calc%i:par:count?'%self.channel))
     
-    @ntraces.setter
-    def ntraces(self,n):
-        self.write(':calc%i:par:count %i'%(self.channel,n))
+    def set_ntraces(self,val):
+        self.write((':calc%i:par:count %i'%(self.channel,int(val))))
     
-    @property
-    def active_trace(self):
+    ntraces = property(get_ntraces, set_ntraces)
+    
+    def get_active_meas(self):
+        '''
+        Get the name of the active measurement
+        '''
+        return self.ask(':calc%i:par%i:def?'%(self.channel, self.active_trace_num))
+    
+    def create_meas(self,name, meas):
+        '''
+        Create a new measurement. 
+        
+        Parameters 
+        ------------
+        name : str
+            name given to measurment
+        meas : str
+            something like 
+            * S11  
+            * a1/b1,1 
+            * A/R1,1
+            * ...
+        
+        Examples
+        ----------
+        >>> p = PNA()
+        >>> p.create_meas('my_meas', 'A/R1,1')     
+        '''
+        # translate agilent's semantics into Anritu's 
+        # TODO: use regex to fully translate all combos
+        translation_dict  = {
+                             '/':',',
+                             'R1':'A1',
+                             'R2':'A2',
+                             'R3':'A3',
+                             'R4':'A4',
+                             }
+                             
+        if meas.lower().startswith('s'):
+            # measuring an s-parameter, es simple.
+            self.write('calc%i:par%i:def %s'%(self.channel,(self.ntraces+1), meas))                  
+        else:
+            # measuring something other than s-parameters, need to do 
+            # some translation .. . 
+            meas, port = meas.split(',')
+            for k in translation_dict:
+                meas = meas.replace(k,translation_dict[k]) 
+        
+            self.write('calc%i:par%i:def:usr %s,%s,port%s'%(self.channel,
+                                                            self.ntraces+1, 
+                                                            meas, port))
+        
+    def get_active_trace_num(self):
         return int(self.ask(':calc%i:par:sel?'%self.channel))
     
-    @active_trace.setter
-    def active_trace(self,n):
+    
+    def set_active_trace_num(self,n):
+        n = int(n)
         self.write(':calc%i:par%i:sel'%(self.channel, n))
+    
+    active_trace_num = property(get_active_trace_num,set_active_trace_num)
+    
+    select_meas = set_active_trace_num
     
     @property
     def trace_format(self):
@@ -1311,10 +1372,37 @@ class VectorStar(GpibInstrument):
     def get_smem(self):
         return npy.array(self.ask_for_values('trs;wfs;:calc%i:data:smem?'%self.channel))[1:]
     
+    def delete_all_meas(self):
+        self.ntraces = 0 
+    
     
      
     def get_all_traces(self):
-        return [self.get_trace(k) for k in range(1, self.ntraces+1)]
+        ntwks = []
+        for k in  range(1, self.ntraces+1):
+            self.active_trace_num =k
+            ntwks.append(self.get_oneport(name = self.get_active_meas()))
+    
+        return ntwks
+    
+    def get_meas_list(self):
+        '''
+        Get a list of existent measurements
+        
+        Returns
+        ----------
+        out :  list 
+            list of tuples of the form, (name, measurement)
+        '''
+        meas_list = []
+        for k in  range(1, self.ntraces+1):
+            self.active_trace_num =k
+            meas_list.append(self.get_active_meas())
+        
+       
+        
+        return [(k+1,meas_list[k]) for k in range(self.ntraces)]
+        
     
 class ZVA40_lihan(object):
     '''
