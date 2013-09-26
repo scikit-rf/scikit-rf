@@ -76,7 +76,7 @@ materials = {
         'loss tangent':1.5e-4,
         },
     'silicon':{
-        'relative permativity'11.68,
+        'relative permativity':11.68,
         'loss tangent':8e-4,
         },
     'teflon':{
