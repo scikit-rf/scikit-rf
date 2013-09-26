@@ -88,9 +88,9 @@ class Freespace(DistributedCircuit):
         Circuit Property                 Field Property
         ===============================  ==============================
         distributed_capacitance          real(ep_0*ep_r)
-        distributed_resistance           imag(ep_0*ep_r)
+        distributed_resistance           :math:`\\omega  imag(ep_0*ep_r)
         distributed_inductance           real(mu_0*mu_r)
-        distributed_conductance          imag(mu_0*mu_r)
+        distributed_conductance          :math:`\\omega  imag(mu_0*mu_r)
         ===============================  ==============================
         '''
         
