@@ -68,23 +68,23 @@ materials = {
         'resistivity(ohm*m)':2.44e-8,
         },
     'mylar':{
-        'relative permativity':1.75,
+        'relative permativity':3.1,
         'loss tangent':500e-4,
         },
     'quartz':{
-        'relative permativity':1.15,
+        'relative permativity':3.8,
         'loss tangent':1.5e-4,
         },
     'silicon':{
-        'relative permativity':3.415,
+        'relative permativity'11.68,
         'loss tangent':8e-4,
         },
     'teflon':{
-        'relative permativity':1.43,
+        'relative permativity':2.1,
         'loss tangent':5e-4,
         },
     'duroid 5880':{
-        'relative permativity':1.5,
+        'relative permativity':2.25,
         'loss tangent':40e-4,
         },
     }
