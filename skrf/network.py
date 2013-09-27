@@ -244,7 +244,7 @@ class Network(object):
     PRIMARY_PROPERTIES = [ 's','z','y','a']
     
     ## these methods are used in the secondary properties
-    def passivity(s):
+    def _passivity(s):
         '''
         passivity metric for a multi-port network.
     
@@ -287,7 +287,7 @@ class Network(object):
         
         return pas_mat
     
-    def reciprocity(s):
+    def _reciprocity(s):
         '''
        reciprocity metric for a multi-port network.
     
@@ -334,8 +334,8 @@ class Network(object):
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
-        'passivity' : passivity,
-        'reciprocity' : reciprocity,
+        'passivity' : _passivity,
+        'reciprocity' : _reciprocity,
         'time' : lambda x: fft.ifftshift(fft.ifft(x, axis=0)),
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0))),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0))),
@@ -1435,7 +1435,8 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
         '''
-        return passivity(self.s)
+        return _passivity(self.s)
+    
     @property
     def reciprocity(self):
         '''
@@ -1460,7 +1461,7 @@ class Network(object):
     
         
         '''
-        return reciprocity(self.s)
+        return _reciprocity(self.s)
     
     
     
@@ -2182,43 +2183,43 @@ class Network(object):
             ax.set_xlabel('Real')
             ax.set_ylabel('Imaginary')
 
-    def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
-        '''
-        plots the passivity of a network, possibly for a specific port.
+    #def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
+        #'''
+        #plots the passivity of a network, possibly for a specific port.
 
 
-        Parameters
-        -----------
-        port: int
-                calculate passivity of a given port
-        ax : matplotlib.Axes object, optional
-                axes to plot on. in case you want to update an existing
-                plot.
-        show_legend : boolean, optional
-                to turn legend show legend of not, optional
-        *args : arguments, optional
-                passed to the matplotlib.plot command
-        **kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
+        #Parameters
+        #-----------
+        #port: int
+                #calculate passivity of a given port
+        #ax : matplotlib.Axes object, optional
+                #axes to plot on. in case you want to update an existing
+                #plot.
+        #show_legend : boolean, optional
+                #to turn legend show legend of not, optional
+        #*args : arguments, optional
+                #passed to the matplotlib.plot command
+        #**kwargs : keyword arguments, optional
+                #passed to the matplotlib.plot command
 
 
-        See Also
-        --------
-        plot_vs_frequency_generic - generic plotting function
-        passivity - passivity property
+        #See Also
+        #--------
+        #plot_vs_frequency_generic - generic plotting function
+        #passivity - passivity property
 
-        Examples
-        ---------
-        >>> myntwk.plot_s_rad()
-        >>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
-        '''
-        if port is None:
-            port = range(self.number_of_ports)
+        #Examples
+        #---------
+        #>>> myntwk.plot_s_rad()
+        #>>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
+        #'''
+        #if port is None:
+            #port = range(self.number_of_ports)
 
-        for mn in list(port):
-            self.plot_vs_frequency_generic(attribute= 'passivity',\
-                    y_label='Passivity', m=mn,n=mn, ax=ax,\
-                    show_legend = show_legend,*args,**kwargs)
+        #for mn in list(port):
+            #self.plot_vs_frequency_generic(attribute= 'passivity',\
+                    #y_label='Passivity', m=mn,n=mn, ax=ax,\
+                    #show_legend = show_legend,*args,**kwargs)
 
     def plot_it_all(self,*args, **kwargs):
         plb.subplot(221)
