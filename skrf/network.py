@@ -2077,10 +2077,55 @@ class Network(object):
         windowed = self * window
         if normalize:
             # normalize the s-parameters to account for power lost in windowing
-            windowed = windowed * npy.sum(self.s_mag,axis=0)/\
+            windowed.s = windowed.s * npy.sum(self.s_mag,axis=0)/\
                 npy.sum(windowed.s_mag,axis=0)
         
         return windowed
+    
+    def time_gate(self, t_start, t_stop, window = ('kaiser',6)):
+        '''
+        Time-gating
+        
+        Parameters 
+        ------------
+        t_start : number 
+            start of time gate, (s)
+        t_stop : number
+            stop of time gate (s)
+        
+        Returns
+        --------
+        ntwk : Network
+            copy of self with time-gated s-parameters
+        '''
+        gated = self.copy()
+        
+        t_2_f = lambda x:fft.ifft(x, axis=0)
+        
+        t = self.frequency.t
+        t_start_idx = find_nearest_index(t,t_start)
+        t_stop_idx = find_nearest_index(t,t_stop)
+        
+        window_width = abs(t_stop_idx-t_start_idx)
+        window = signal.get_window(window, window_width)
+        
+        padded_window = npy.r_[npy.zeros(t_start_idx),
+                               window, 
+                               npy.zeros(len(t)-t_stop_idx)]
+        
+        window_in_f = t_2_f(padded_window)
+        
+        #window_in_freq = window_in_freq.reshape(-1,1,1) * \
+        #                npy.ones((len(self), self.nports, self.nports))
+        for m,n in self.port_tuples:
+            gated.s[:,m,n] = fft.ifftshift(signal.convolve(self.s[:,m,n], window_in_f, mode='same'))
+        
+        #normalize output
+        gated = gated * npy.sum(self.s_mag,axis=0)/\
+                npy.sum(gated.s_mag,axis=0)
+                
+        
+        return gated
     
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\

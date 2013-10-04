@@ -1119,11 +1119,77 @@ class ZVA40(PNA):
         '''
         self.setup_twoport(ports = [port])
     
+    
+    
+    
+    def set_source_freq_conversion(self, port, numer, denom, offset, mode='swe'):
+        '''
+        set source frequency for frequency converted measurments 
+        
+        fs = `numer`/`denom`*fb. + `offset`
+        
+        Parameters
+        --------------
+        numer : int
+            numerator
+        denom : int
+            denominator
+        offset : float 
+            offset frequency in hz
+        mode : ['swe','cw','fixed']
+            sweep type
+        '''
+        self.write('SOUR%i:FREQ%i:CONV:ARB:IFR %i,%i,%f,%s'%\
+            (self.channel, port, numer, denom, offset, mode))
+    
+    def set_source_power_permanent(self, port,val=True):
+        '''
+        set a given port to have its power permantly on 
+        
+        the same as having the 'gen' box checked in the `portconfig` 
+        dialog
+        
+        Examples
+        -----------
+        >>>zva.set_source_power_permant(port =1, val= True)
+        '''
+        if val:
+            val='on'
+        else:
+            val = 'off'
+        self.write('source%i:power%i:perm %s'%(self.channel,port, val))
+    
+    def set_port_power_level(self, port, offset, only =True):
+        '''
+        Parameters
+        -----------
+        port : int
+            port number
+        offset : number 
+            power offset (dB)
+        only : bool
+            if true: only set port power. ignore channel power.
+            if false: the port power is added to channel ower. 
+        '''
+        
+        if only:
+            mode  = 'only'
+        else:
+            mode= 'cpad'
+        self.write('source%i:power%i:offset %f, %s'\
+            %(self.channel,port, offset, mode))
+    
+    
+    
+        
+        
+        
+        
     get_oneport = PNA.get_network
 
 
-        
-        
+
+
 class VectorStar(PNA):
     '''
     '''
