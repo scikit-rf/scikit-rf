@@ -84,7 +84,7 @@ Special Functions
 
 '''
 import numpy as npy
-from numpy import pi,angle
+from numpy import pi,angle,unwrap   
 from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
 
@@ -226,9 +226,8 @@ def unwrap_rad(input):
     '''
     unwraps a phase given in radians
 
-    the normal numpy unwrap is not what you usually want for some reason
     '''
-    return .5*npy.unwrap(2*input,axis=0)
+    return unwrap(input,axis=0)
 
 def sqrt_known_sign(z_squared, z_approx):
     '''

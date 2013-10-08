@@ -1146,7 +1146,7 @@ class ZVA40(PNA):
         '''
         set a given port to have its power permantly on 
         
-        the same as having the 'gen' box checked in the `portconfig` 
+        the same as having the 'gen' box checked in the `port config` 
         dialog
         
         Examples
@@ -1186,9 +1186,6 @@ class ZVA40(PNA):
         
         
     get_oneport = PNA.get_network
-
-
-
 
 class VectorStar(PNA):
     '''
@@ -1469,7 +1466,6 @@ class VectorStar(PNA):
         
         return [(k+1,meas_list[k]) for k in range(self.ntraces)]
         
-    
 class ZVA40_lihan(object):
     '''
     Created on Aug 3, 2010
@@ -1571,8 +1567,6 @@ class ZVA40_lihan(object):
         npy.savetxt(fid,formatedData,fmt='%10.5f')
         fid.close()
 
-
-    
 class ZVA40_old(GpibInstrument):
     '''
     Rohde&Scharz ZVA40
