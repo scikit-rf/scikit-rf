@@ -160,6 +160,12 @@ class PNA(GpibInstrument):
             self.vi, 
             self._vpp43.VI_GPIB_REN_DEASSERT_GTL,
             )
+    
+    def rst(self):
+        '''
+        reset 
+        '''
+        self.write('*RST;')    
             
     ## triggering        
     @property
@@ -316,6 +322,25 @@ class PNA(GpibInstrument):
         self.write('SOURce%i:POWer%i %f'%(cnum, port, num))
     
     power_level = property(get_power_level, set_power_level)
+    
+    def toggle_port_power(self,on=True, port =1):
+        '''
+        Turn a given port's power on or off 
+        
+        Parameters
+        ----------
+        on : bool
+            turn power on or not 
+        port : int 
+            the port (duh)
+        '''
+        if on:
+            mode = 'on'
+        else:
+            mode = 'off'
+        self.write('source%i:power%i:mode %s'%(self.channel,port, mode))
+    
+    
         
     ## IO - Frequency related
     def get_f_start(self):
