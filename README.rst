@@ -26,5 +26,6 @@ set of objects and features which can be used to construct solutions
 to specific problems.  
 
 
-
-
+License
+----------
+scikit-rf is licensed under the BSD-license. See LICENSE.txt for details.

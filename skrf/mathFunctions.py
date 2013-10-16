@@ -1,24 +1,4 @@
 
-#       mathFunctions.py
-#
-#
-#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#       Copyright 2010 lihan chen
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 
 '''
 .. currentmodule:: skrf.mathFunctions
@@ -171,15 +151,43 @@ def magnitude_2_db(input,zero_nan=True):
     where z is a complex number
     '''
     if zero_nan:
-        out = 20 * npy.log10(npy.array(input))
-        out[npy.isnan(out)] = LOG_OF_NEG
-        #out[npy.isneginf(out)] = LOG_OF_NEG
+        out = 20 * npy.log10(input)
+        try:
+            out[npy.isnan(out)] = LOG_OF_NEG
+        except (TypeError):
+            # input is a number not array-like
+            if npy.isnan(out):
+                return LOG_OF_NEG
+            
     else:
         out = 20*npy.log10(input)
 
     return out
 
 mag_2_db = magnitude_2_db
+
+def magnitude_2_db10(input,zero_nan=True):
+    '''
+    converts magnitude to db
+
+     db is given by
+            10*log10(|z|)
+    where z is a complex number
+    '''
+    if zero_nan:
+        out = 10 * npy.log10(input)
+        try:
+            out[npy.isnan(out)] = LOG_OF_NEG
+        except (TypeError):
+            # input is a number not array-like
+            if npy.isnan(out):
+                return LOG_OF_NEG
+            
+    else:
+        out = 10*npy.log10(input)
+
+    return out
+
 def db_2_magnitude(input):
     '''
     converts db to normal magnitude
@@ -191,6 +199,18 @@ def db_2_magnitude(input):
     return 10**((input)/20.)
 
 db_2_mag = db_2_magnitude
+
+
+def db10_2_mag(input):
+    '''
+    converts db to normal magnitude
+
+    returns:
+            10**((z)/10.)
+    where z is a complex number
+    '''
+    return 10**((input)/10.)
+
 
 def magdeg_2_reim(mag,deg):
     '''
