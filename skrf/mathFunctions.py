@@ -94,6 +94,17 @@ def complex_2_db(input):
     '''
     return magnitude_2_db(npy.abs( input))
 
+def complex_2_db10(input):
+    '''
+    returns the magnitude in dB of a complex number.
+
+    returns:
+            10*log10(|z|)
+    where z is a complex number
+    '''
+    return mag_2_db10(npy.abs( input))
+
+
 def complex_2_radian(input):
     '''
     returns the angle complex number in radians.
@@ -144,7 +155,7 @@ def complex_2_reim(z):
 
 def magnitude_2_db(input,zero_nan=True):
     '''
-    converts magnitude to db
+    converts linear magnitude to db
 
      db is given by
             20*log10(|z|)
@@ -166,9 +177,9 @@ def magnitude_2_db(input,zero_nan=True):
 
 mag_2_db = magnitude_2_db
 
-def magnitude_2_db10(input,zero_nan=True):
+def mag_2_db10(input,zero_nan=True):
     '''
-    converts magnitude to db
+    converts linear magnitude to db
 
      db is given by
             10*log10(|z|)
@@ -190,7 +201,7 @@ def magnitude_2_db10(input,zero_nan=True):
 
 def db_2_magnitude(input):
     '''
-    converts db to normal magnitude
+    converts db to linear magnitude. 
 
     returns:
             10**((z)/20.)
@@ -203,7 +214,7 @@ db_2_mag = db_2_magnitude
 
 def db10_2_mag(input):
     '''
-    converts db to normal magnitude
+    converts db to linear magnitude
 
     returns:
             10**((z)/10.)
