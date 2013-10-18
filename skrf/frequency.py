@@ -389,7 +389,7 @@ class Frequency(object):
         if isinstance(val, basestring):
             val = self.multiplier_dict[val.lower()]
         
-        self.f = self.f - npy.mod(self.f,val)
+        self.f = npy.round_(self.f/val)*val
         
             
     
