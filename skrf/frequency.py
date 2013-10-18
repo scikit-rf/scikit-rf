@@ -380,6 +380,10 @@ class Frequency(object):
             (ie 'hz', 'mhz',etc). if its a number, then this returns 
             f = f-f%val
             
+        Examples
+        ---------
+        >>>f = skrf.Frequency.from_f([.1,1.2,3.5],unit='hz')
+        >>>f.round_to('hz')
             
         '''
         if isinstance(val, basestring):
