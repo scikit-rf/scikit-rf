@@ -1947,9 +1947,10 @@ class Network(object):
         
         
         '''
-        if f_start < self.frequency.f_scaled.min() or\
-            f_stop > self.frequency.f_scaled.max():
-            raise ValueError('`f_start` or `f_stop` is out of range.')
+        if f_start < self.frequency.f_scaled.min():
+            raise ValueError('`f_start` is out of range.')
+        elif f_stop > self.frequency.f_scaled.max():
+            raise ValueError('`f_stop` is out of range.')
             
         start_idx = find_nearest_index(self.frequency.f_scaled,f_start)
         stop_idx = find_nearest_index(self.frequency.f_scaled,f_stop)

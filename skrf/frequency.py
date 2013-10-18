@@ -366,7 +366,28 @@ class Frequency(object):
         '''
         return self.t*1e9
     
+    def round_to(self, val = 'hz'):
+        '''
+        Round off frequency values to a specfied precision. 
         
+        This is useful for dealing with finite precision limitations of 
+        VNA's and/or other software
+        
+        Parameters
+        -----------
+        val : string or number
+            if val is a string it should  be a frequency unit 
+            (ie 'hz', 'mhz',etc). if its a number, then this returns 
+            f = f-f%val
+            
+            
+        '''
+        if isinstance(val, basestring):
+            val = self.multiplier_dict[val.lower()]
+        
+        self.f = self.f - npy.mod(self.f,val)
+        
+            
     
     def labelXAxis(self, ax=None):
         '''
