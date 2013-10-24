@@ -1,5 +1,4 @@
 
-
 '''
 .. module:: skrf.network
 ========================================
@@ -1559,93 +1558,163 @@ class Network(object):
         #TODO: add Network property `comments` which is read from
         # touchstone file. 
     
-    def write_touchstone(self, filename=None, dir = None, write_z0=False, 
-        skrf_comment=True):
+    def write_touchstone(self, filename=None, dir = './', write_z0=False):
         '''
-        Write a contents of the :class:`Network` to a touchstone file.
+        write a contents of the :class:`Network` to a touchstone file.
 
 
         Parameters
         ----------
         filename : a string, optional
-            filename. if 'None', then will use the network's 
-            :attr:`name`.  if filename doesnt have an extension the 
-            correct sNp is appended.
+                touchstone filename, without extension. if 'None', then
+                will use the network's :attr:`name`.
         dir : string, optional
-            the directory to save the file in. 
-        write_z0 : boolean, optional
+                the directory to save the file in. Defaults
+                to cwd './'.
+        write_z0 : boolean
             write impedance information into touchstone as comments, 
             like Ansoft HFSS does
-        skrf_comment : bool, optional
-            write `created by skrf` comment
-            
+
         Notes
         -------
-        format supported at the moment is,
-            HZ S RI
+                format supported at the moment is,
+                        HZ S RI
 
-        The functionality of this function should take place in the
-        :class:`~skrf.touchstone.touchstone` class, and will be moved 
-        in the future.
-        
+                The functionality of this function should take place in the
+                :class:`~skrf.touchstone.touchstone` class.
+
 
         '''
+        # according to Touchstone 2.0 spec
+        # [no tab, max. 4 coeffs per line, etc.]
+        
         if filename is None:
             if self.name is not None:
                 filename= self.name
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
+
+        extension = '.s%ip'%self.number_of_ports
+
+        outputFile = open(dir+'/'+filename+extension,"w")
         
-        if get_extn(filename) is None:
-            filename = filename +'.s%ip'%self.number_of_ports
-        
-        if dir is not None:
-            filename =  os.path.join(dir, filename)
-        
-        with open(filename,"w") as outputFile:
-            # Add '!' Touchstone comment delimiters to the start of every line
-            # in self.comments
-            commented_header = ''
-            if self.comments:
-                for comment_line in self.comments.split('\n'):
-                    commented_header += '!{}\n'.format(comment_line)
-            if skrf_comment:
-                commented_header +='!Created with skrf (http://scikit-rf.org).\n'
-            outputFile.write(commented_header)
-            
-            # write header file.
-            # the '#'  line is NOT a comment it is essential and it must be
-            #exactly this format, to work
-            # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-            outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(npy.real(self.z0[0,0])) +" \n")
-    
+        # Add '!' Touchstone comment delimiters to the start of every line
+        # in self.comments
+        commented_header = ''
+        if self.comments:
+            for comment_line in self.comments.split('\n'):
+                commented_header += '!{}\n'.format(comment_line)
+
+        # write header file.
+        # the '#'  line is NOT a comment it is essential and it must be
+        #exactly this format, to work
+        # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
+        outputFile.write('!Created with skrf (http://scikit-rf.org).\n')
+        outputFile.write(commented_header)
+        outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(abs(self.z0[0,0])) +" \n")
+
+        if self.number_of_ports == 1 :
             #write comment line for users (optional)
-            outputFile.write ("!freq\t")
-            for n in range(self.number_of_ports):
-                for m in range(self.number_of_ports):
-                    outputFile.write("Re" +'S'+`m+1`+ `n+1`+  "\tIm"+\
-                    'S'+`m+1`+ `n+1`+'\t')
-            outputFile.write('\n')
-    
-            # write out data, note: this could be done with matrix
-            #manipulations, but its more readable to me this way
+            outputFile.write('!freq ReS11 ImS11\n')
+            # write out data
             for f in range(len(self.f)):
-                outputFile.write(str(self.frequency.f_scaled[f])+'\t')
-    
-                for n in range(self.number_of_ports):
-                    for m in range(self.number_of_ports):
-                        outputFile.write( str(npy.real(self.s[f,m,n])) + '\t'\
-                         + str(npy.imag(self.s[f,m,n])) +'\t')
+                outputFile.write(str(self.frequency.f_scaled[f])+' '\
+                    + str(npy.real(self.s[f,1,1])) + ' '\
+                    + str(npy.imag(self.s[f,1,1])) +'\n')
+                # write out the z0 following hfss's convention if desired
+                if write_z0:
+                    outputFile.write('! Port Impedance ' )
+                    for n in range(self.number_of_ports):
+                        outputFile.write('%.14f %.14f '%(self.z0[f,n].real, self.z0[f,n].imag))
+                    outputFile.write('\n')
+                
+        elif self.number_of_ports == 2 :
+            # 2-port is a special case with 
+            # - single line, and
+            # - S21,S12 in reverse order: legacy ?
+            
+            #write comment line for users (optional)
+            outputFile.write('!freq ReS11 ImS11 ReS21 ImS21 ReS12 ImS12 ReS22 ImS22\n')
+            # write out data
+            for f in range(len(self.f)):
+                outputFile.write(str(self.frequency.f_scaled[f])+' '\
+                    + str(npy.real(self.s[f,1,1])) + ' '\
+                    + str(npy.imag(self.s[f,1,1])) + ' '\
+                    + str(npy.real(self.s[f,2,1])) + ' '\
+                    + str(npy.imag(self.s[f,2,1])) + ' '\
+                    + str(npy.real(self.s[f,1,2])) + ' '\
+                    + str(npy.imag(self.s[f,1,2])) + ' '\
+                    + str(npy.real(self.s[f,2,2])) + ' '\
+                    + str(npy.imag(self.s[f,2,2])) +'\n')
+                # write out the z0 following hfss's convention if desired
+                if write_z0:
+                    outputFile.write('! Port Impedance' )
+                    for n in range(2):
+                        outputFile.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                    outputFile.write('\n')
+                
+        elif self.number_of_ports == 3 :
+            # 3-port is written over 3 lines / matrix order
+        
+            #write comment line for users (optional)
+            outputFile.write ('!freq')
+            for m in range(1,4):
+                for n in range(1,4):
+                    outputFile.write(" Re" +'S'+`m`+ `n`+ " Im"+'S'+`m`+ `n`)
+                outputFile.write('\n!')
+            outputFile.write('\n')
+            # write out data
+            for f in range(len(self.f)):
+                outputFile.write(str(self.frequency.f_scaled[f]))    
+                for m in range(3):
+                    for n in range(3):
+                        outputFile.write( ' ' + str(npy.real(self.s[f,m,n])) + ' '\
+                         + str(npy.imag(self.s[f,m,n])))
+                    outputFile.write('\n')    
+                # write out the z0 following hfss's convention if desired
+                if write_z0:
+                    outputFile.write('! Port Impedance' )
+                    for n in range(3):
+                        outputFile.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                    outputFile.write('\n')
+
+        elif self.number_of_ports >= 4 :
+            # general n-port
+            # - matrix is written line by line
+            # - 4 complex numbers / 8 real numbers max. for a single line
+            # - continuation lines (anything except first) go with indent
+            #   this is not part of the spec, but many tools handle it this way
+            #   -> allows to parse without knowledge of number of ports
+        
+            # write comment line for users (optional)
+            outputFile.write ('!freq')
+            for m in range(1,1+self.number_of_ports):
+                for n in range(1,1+self.number_of_ports):
+                    if (n > 0 and (n%4) == 0 ) :
+                        outputFile.write('\n!')
+                    outputFile.write(' ReS' + `m` + ',' + `n`\
+                        + ' ImS' + `m` + ',' + `n`)
+                outputFile.write('\n!')
+            outputFile.write('\n')
+            # write out data
+            for f in range(len(self.f)):
+                outputFile.write(str(self.frequency.f_scaled[f]))    
+                for m in range(self.number_of_ports):
+                    for n in range(self.number_of_ports):
+                        if (n > 0 and (n%4) == 0 ) :
+                            outputFile.write('\n')
+                        outputFile.write( ' ' + str(npy.real(self.s[f,m,n])) + ' '\
+                         + str(npy.imag(self.s[f,m,n])))
+                    outputFile.write('\n')
     
                 # write out the z0 following hfss's convention if desired
                 if write_z0:
-                    outputFile.write('\n')
-                    outputFile.write('! Port Impedance\t' )
+                    outputFile.write('! Port Impedance' )
                     for n in range(self.number_of_ports):
-                        outputFile.write('%.14f\t%.14f\t'%(self.z0[f,n].real, self.z0[f,n].imag))
-                outputFile.write('\n')
-    
-        
+                        outputFile.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                    outputFile.write('\n')
+
+        outputFile.close()
 
     def write(self, file=None, *args, **kwargs):
         '''
