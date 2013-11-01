@@ -1,4 +1,3 @@
-
 '''
 .. module:: skrf.network
 ========================================
@@ -1619,8 +1618,8 @@ class Network(object):
             # write out data
             for f in range(len(self.f)):
                 outputFile.write(str(self.frequency.f_scaled[f])+' '\
-                    + str(npy.real(self.s[f,1,1])) + ' '\
-                    + str(npy.imag(self.s[f,1,1])) +'\n')
+                    + str(npy.real(self.s[f,0,0])) + ' '\
+                    + str(npy.imag(self.s[f,0,0])) +'\n')
                 # write out the z0 following hfss's convention if desired
                 if write_z0:
                     outputFile.write('! Port Impedance ' )
@@ -1638,14 +1637,14 @@ class Network(object):
             # write out data
             for f in range(len(self.f)):
                 outputFile.write(str(self.frequency.f_scaled[f])+' '\
+                    + str(npy.real(self.s[f,0,0])) + ' '\
+                    + str(npy.imag(self.s[f,0,0])) + ' '\
+                    + str(npy.real(self.s[f,1,0])) + ' '\
+                    + str(npy.imag(self.s[f,1,0])) + ' '\
+                    + str(npy.real(self.s[f,0,1])) + ' '\
+                    + str(npy.imag(self.s[f,0,1])) + ' '\
                     + str(npy.real(self.s[f,1,1])) + ' '\
-                    + str(npy.imag(self.s[f,1,1])) + ' '\
-                    + str(npy.real(self.s[f,2,1])) + ' '\
-                    + str(npy.imag(self.s[f,2,1])) + ' '\
-                    + str(npy.real(self.s[f,1,2])) + ' '\
-                    + str(npy.imag(self.s[f,1,2])) + ' '\
-                    + str(npy.real(self.s[f,2,2])) + ' '\
-                    + str(npy.imag(self.s[f,2,2])) +'\n')
+                    + str(npy.imag(self.s[f,1,1])) +'\n')
                 # write out the z0 following hfss's convention if desired
                 if write_z0:
                     outputFile.write('! Port Impedance' )
