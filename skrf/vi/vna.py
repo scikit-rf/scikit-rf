@@ -1187,7 +1187,23 @@ class ZVA40(PNA):
     
     
     
+    def toggle_port_power(self,on=True, port =1):
+        '''
+        Turn a given port's power on or off 
         
+        This  overides the PNA's implmentation with because 
+        i dont think RS supports it. This uses the permanent power on 
+        option which is equivalent to clicking 'gen' in teh port config
+        window
+        
+        Parameters
+        ----------
+        on : bool
+            turn power on or not 
+        port : int 
+            the port (duh)
+        '''
+        self.set_source_power_permanent(port=port,val=on)  
         
         
         
