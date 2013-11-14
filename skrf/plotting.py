@@ -465,7 +465,7 @@ def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
         if replace_spaces:
             fileName = fileName.replace(' ','_')
         if fileName == '':
-            fileName = 'unamedPlot'
+            fileName = 'unnamedPlot'
         if format is None:
             plb.savefig(dir+fileName)
             if echo:
