@@ -2963,6 +2963,7 @@ def gen_three_port(ntwk_triplet,  *args, **kwargs):
     p12 = None
     p13 = None
     p23 = None
+    s11,s12,s13,s21,s22,s23,s31,s32,s33 = None,None,None,None,None,None,None,None,None
 
     for k in ntwk_triplet:
         if '12' in k.name:
@@ -2996,8 +2997,16 @@ def gen_three_port(ntwk_triplet,  *args, **kwargs):
         s32 = p23.s21
         s33 = p23.s22
 
+    ntwk_list = [s11,s12,s13,s21,s22,s23,s31,s32,s33]
+
+    for k in range(len(ntwk_list)):
+        if ntwk_list[k] == None:
+            ntwk_list[k] = Network(frequency=ntwk_triplet[0].frequency, s = npy.zeros((len(ntwk_triplet[0]),1,1)))
+
+    print ntwk_list
+
     threeport = n_oneports_2_nport(
-        [s11,s12,s13,s21,s22,s23,s31,s32,s33], 
+        ntwk_list, 
         *args, **kwargs)
     
     
