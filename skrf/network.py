@@ -2969,16 +2969,53 @@ def gen_three_port(ntwk_triplet,  *args, **kwargs):
     -----------
     >>> rf.gen_three_port(rf.read_all('.').values())
     '''
-    p12 = [k for k in ntwk_triplet if ('12' in k.name or '21' in k.name)][0]
-    p13 = [k for k in ntwk_triplet if ('13' in k.name or '31' in k.name)][0]
-    p23 = [k for k in ntwk_triplet if ('32' in k.name or '23' in k.name)][0]
-    
-    s11,s12,s13 = p12.s11, p12.s12, p13.s12
-    s21,s22,s23 = p12.s21, p12.s22, p23.s12
-    s31,s32,s33 = p13.s21, p23.s21, p23.s11
+    p12 = None
+    p13 = None
+    p23 = None
+    s11,s12,s13,s21,s22,s23,s31,s32,s33 = None,None,None,None,None,None,None,None,None
+
+    for k in ntwk_triplet:
+        if '12' in k.name:
+            p12 = k
+        elif '13' in k.name:
+            p13 = k
+        elif '23' in k.name:
+            p23 = k
+        elif '21' in k.name:
+            p12 = k.flipped()
+        elif '31' in k.name:
+            p31 = k.flipped()
+        elif '32' in k.name:
+            p23 = k.flipped()
+
+    if p12 != None:
+        s11 = p12.s11
+        s12 = p12.s12
+        s21 = p12.s21
+        s22 = p12.s22
+
+    if p13 != None:
+        s11 = p13.s11
+        s13 = p13.s12
+        s31 = p13.s21
+        s33 = p13.s22
+
+    if p23 != None:
+        s22 = p23.s11
+        s23 = p23.s12
+        s32 = p23.s21
+        s33 = p23.s22
+
+    ntwk_list = [s11,s12,s13,s21,s22,s23,s31,s32,s33]
+
+    for k in range(len(ntwk_list)):
+        if ntwk_list[k] == None:
+            ntwk_list[k] = Network(frequency=ntwk_triplet[0].frequency, s = npy.zeros((len(ntwk_triplet[0]),1,1)))
+
+    print ntwk_list
 
     threeport = n_oneports_2_nport(
-        [s11,s12,s13,s21,s22,s23,s31,s32,s33], 
+        ntwk_list, 
         *args, **kwargs)
     
     
