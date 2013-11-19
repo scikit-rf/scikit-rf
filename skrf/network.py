@@ -2910,7 +2910,7 @@ def n_oneports_2_nport(ntwk_list, *args, **kwargs):
 
 def four_oneports_2_twoport(s11,s12,s21,s22, *args, **kwargs):
     '''
-    Creates a two-port Network from list of 4 one-ports
+    Creates a 2-port Network from list of four 1-ports
     
     Parameters
     -----------
@@ -2933,25 +2933,36 @@ def four_oneports_2_twoport(s11,s12,s21,s22, *args, **kwargs):
     See Also
     -----------
     n_oneports_2_nport
+    three_twoports_2_threeport
     '''
     return n_oneports_2_nport([s11,s12,s21,s22], *args, **kwargs)
 
-def gen_three_port(ntwk_triplet,  *args, **kwargs):
+def three_twoports_2_threeport(ntwk_triplet, auto_order = True,  *args, 
+                               **kwargs):
     '''
     Creates 3-port from  three 2-port Networks
     
-    This function provides a convenient way to build a 3-port Network, 
-    from a set of 2-port measurements. occuring when measuring a coupler 
-    on a 2-port VNA. 
+    This function provides a convenient way to build a 3-port Network 
+    from a set of 2-port measurements. Which may occur when measuring 
+    a three port device on a 2-port VNA. 
     
-    The  3 Networks in ntwk_triplet must contain port idenificaition in 
-    their names. For example, their names may be like p12, p13, p23
+    Notes
+    ---------
+    if `auto_order` is False,  ntwk_triplet must be of port orderings:
+         [p12, p13, p23]
+    
+    else if `auto_order`is True, then the  3 Networks in ntwk_triplet must 
+    contain port idenificaition in their names. 
+    For example, their names may be like `me12`, `me13`, `me23`
     
     Parameters
     --------------
     ntwk_triplet : list of 2-port Network objects
-        list of three 2-ports that contain port indecies in their names
+        list of three 2-ports. see notes about order.
     
+    auto_order : bool
+        if True attempt to inspect port orderings from Network names. 
+        Names must be like 'p12', 'p23', etc
     contains : str 
         only files containing this string will be loaded. 
     \*args,\*\*kwargs :
@@ -2967,27 +2978,32 @@ def gen_three_port(ntwk_triplet,  *args, **kwargs):
     
     Examples
     -----------
-    >>> rf.gen_three_port(rf.read_all('.').values())
+    >>> rf.three_twoports_2_threeport(rf.read_all('.').values())
     '''
-    p12 = None
-    p13 = None
-    p23 = None
-    s11,s12,s13,s21,s22,s23,s31,s32,s33 = None,None,None,None,None,None,None,None,None
-
-    for k in ntwk_triplet:
-        if '12' in k.name:
-            p12 = k
-        elif '13' in k.name:
-            p13 = k
-        elif '23' in k.name:
-            p23 = k
-        elif '21' in k.name:
-            p12 = k.flipped()
-        elif '31' in k.name:
-            p31 = k.flipped()
-        elif '32' in k.name:
-            p23 = k.flipped()
-
+    
+    if auto_order:
+        p12,p13,p23 = None,None,None
+        s11,s12,s13,s21,s22,s23,s31,s32,s33 = None,None,None,None,None,None,None,None,None
+    
+        for k in ntwk_triplet:
+            if '12' in k.name:
+                p12 = k
+            elif '13' in k.name:
+                p13 = k
+            elif '23' in k.name:
+                p23 = k
+            elif '21' in k.name:
+                p12 = k.flipped()
+            elif '31' in k.name:
+                p31 = k.flipped()
+            elif '32' in k.name:
+                p23 = k.flipped()
+    else:
+        p12,p13,p23 = ntwk_triplet
+        p21= p12.flipped()
+        p31= p13.flipped()
+        p32= p23.flipped()
+    
     if p12 != None:
         s11 = p12.s11
         s12 = p12.s12
@@ -3010,15 +3026,11 @@ def gen_three_port(ntwk_triplet,  *args, **kwargs):
 
     for k in range(len(ntwk_list)):
         if ntwk_list[k] == None:
-            ntwk_list[k] = Network(frequency=ntwk_triplet[0].frequency, s = npy.zeros((len(ntwk_triplet[0]),1,1)))
-
-    print ntwk_list
-
-    threeport = n_oneports_2_nport(
-        ntwk_list, 
-        *args, **kwargs)
+            frequency = ntwk_triplet[0].frequency
+            s = s = npy.zeros((len(ntwk_triplet[0]),1,1))
+            ntwk_list[k] = Network(s=s, frequency=frequency)
     
-    
+    threeport = n_oneports_2_nport( ntwk_list, *args, **kwargs)
     return threeport
 
 ## Functions operating on s-parameter matrices
