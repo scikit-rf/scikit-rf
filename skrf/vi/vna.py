@@ -304,21 +304,22 @@ class PNA(GpibInstrument):
     
     power_level = property(get_power_level, set_power_level)
     
-    def toggle_port_power(self,on=True, port =1):
+    def toggle_port_power(self, mode = 'on', port =1):
         '''
-        Turn a given port's power on or off 
+        Turn a given port's power on or off or auto
         
         Parameters
         ----------
-        on : bool
-            turn power on or not 
+        mode  : str
+            ['on','off', 'auto']
         port : int 
             the port (duh)
         '''
-        if on:
+        if mode is True:
             mode = 'on'
-        else:
+        elif mode is False:
             mode = 'off'
+            
         self.write('source%i:power%i:mode %s'%(self.channel,port, mode))
     
     

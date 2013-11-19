@@ -185,8 +185,8 @@ def mag_2_db10(input,zero_nan=True):
             10*log10(|z|)
     where z is a complex number
     '''
+    out = 10 * npy.log10(input)
     if zero_nan:
-        out = 10 * npy.log10(input)
         try:
             out[npy.isnan(out)] = LOG_OF_NEG
         except (TypeError):
@@ -194,9 +194,7 @@ def mag_2_db10(input,zero_nan=True):
             if npy.isnan(out):
                 return LOG_OF_NEG
             
-    else:
-        out = 10*npy.log10(input)
-
+    
     return out
 
 def db_2_magnitude(input):
