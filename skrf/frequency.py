@@ -188,6 +188,21 @@ class Frequency(object):
         '''
         return self.npoints
     
+    def __mul__(self,other):
+        out = self.copy()
+        out.f = self.f*other
+        return out
+    
+    def __rmul__(self,other):
+        out = self.copy()
+        out.f = self.f*other
+        return out
+    
+    def __div__(self,other):
+        out = self.copy()
+        out.f = self.f/other
+        return out
+    
     @property 
     def start(self):
         '''

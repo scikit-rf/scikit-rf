@@ -2773,6 +2773,7 @@ def stitch(ntwkA, ntwkB, **kwargs):
     >>> rf.stitch(wr2p2_line, wr1p5_line)
     2-Port Network: 'wr2p2,line',  330-750 GHz, 402 pts, z0=[ 50.+0.j  50.+0.j]
     '''
+    
     A,B = ntwkA, ntwkB
     C = Network(
         frequency = Frequency.from_f(npy.r_[A.f[:],B.f[:]], unit='hz'), 
