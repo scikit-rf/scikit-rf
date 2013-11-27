@@ -1275,46 +1275,6 @@ class VectorStar(PNA):
         freq = self.frequency
         return Network(s = s, frequency = freq,*args, **kwargs)
     
-    #def setup_wave_quantities(self):
-        #self.ntraces = 4
-        ##create traces
-        #self.write(':calc%i:par1:def usr,a1,1,port1'%self.channel)
-        #self.write(':calc%i:par2:def usr,b1,1,port1'%self.channel)
-        #self.write(':calc%i:par3:def usr,a2,1,port2'%self.channel)
-        #self.write(':calc%i:par4:def usr,b2,1,port2'%self.channel)
-        ## set display to log mag
-        #for k in range(1,5):
-        #    self.write('calc%i:par%i:form mlog'%(self.channel,k))
-    
-    def setup_s_parameters(self):
-        self.ntraces = 4
-        #create traces
-        self.write(':calc%i:par1:def s11'%self.channel)
-        self.write(':calc%i:par2:def s12'%self.channel)
-        self.write(':calc%i:par3:def s21'%self.channel)
-        self.write(':calc%i:par4:def s22'%self.channel)
-        # set display to log mag
-        for k in range(1,5):
-            self.write(':calc%i:par%i:form mlog'%(self.channel,k))
-    
-    def get_wave_quantities(self):
-        self.ntraces = 4
-        #create traces
-        self.write(':calc%i:par1:def usr, a1,1,port1'%self.channel)
-        self.write(':calc%i:par2:def usr, b1,1,port1'%self.channel)
-        self.write(':calc%i:par3:def usr, a2,1,port2'%self.channel)
-        self.write(':calc%i:par4:def usr, b2,1,port2'%self.channel)
-        
-        self.active_trace = 1
-        a1 = self.get_oneport(name = 'a1')
-        self.active_trace = 2
-        b1 = self.get_oneport(name = 'b1')
-        self.active_trace = 3
-        a2 = self.get_oneport(name = 'a2')
-        self.active_trace = 4
-        b2 = self.get_oneport(name = 'b2')
-        return a1,b1,a2,b2
-    
     def get_oneport(self, n=None, *args, **kwargs):
         was_cont = self.continuous
         self.continuous = False
