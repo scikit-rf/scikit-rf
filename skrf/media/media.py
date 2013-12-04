@@ -1042,9 +1042,8 @@ class Media(object):
         result : :class:`~skrf.network.Network` object
                 the network
         '''
-        shape = (self.frequency.npoints, n_ports,n_ports)
-        s = mf.rand_c(*shape)
-        result = Network(frequency = self.frequency,s = s, **kwargs)
+        result = self.match(nports = n_ports, **kwargs)
+        result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
         return result
         
     ## OTHER METHODS
