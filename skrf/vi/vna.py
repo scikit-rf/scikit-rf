@@ -1188,7 +1188,7 @@ class ZVA40(PNA):
     
     
     
-    def toggle_port_power(self,on=True, port =1):
+    def toggle_port_power(self,mode=True, port =1):
         '''
         Turn a given port's power on or off 
         
@@ -1204,7 +1204,9 @@ class ZVA40(PNA):
         port : int 
             the port (duh)
         '''
-        self.set_source_power_permanent(port=port,val=on)  
+        if mode == 'auto':
+            raise ValueError('ZVA dont support this')
+        self.set_source_power_permanent(port=port,val=mode)  
         
         
         
