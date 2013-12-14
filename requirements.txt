@@ -1,4 +1,3 @@
-scikit-rf
 ipython >=1.1
 numpy >= 1.6
 scipy >= 0.12
