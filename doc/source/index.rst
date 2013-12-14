@@ -14,6 +14,7 @@ Tutorials
     
     tutorials/installation
     tutorials/introduction
+    tutorials/Introduction
     tutorials/networks
     tutorials/plotting
     tutorials/networkset

@@ -33,6 +33,12 @@ help:
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
+
+all: notebooks html
+notebooks:
+	cd ./source/tutorials;ipython nbconvert --to rst *.ipynb
+
+
 clean:
 	-rm -rf $(BUILDDIR)/*
 
