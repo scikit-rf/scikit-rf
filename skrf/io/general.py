@@ -1,23 +1,4 @@
 
-#       io.py
-#
-#
-#       Copyright 2012 alex arsenovic <arsenovic@virginia.edu>
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 '''
 .. module:: skrf.io.general
 ========================================
@@ -31,9 +12,21 @@ General io functions for reading and writing skrf objects
     
     read
     read_all
+    read_all_networks
     write
     write_all
     save_sesh
+    
+
+Writing output to spreadsheet
+
+.. autosummary::
+    :toctree: generated/
+    
+    network_2_spreadsheet
+    networkset_2_spreadsheet
+
+    
 '''
 import cPickle as pickle
 from cPickle import UnpicklingError
@@ -41,6 +34,7 @@ import inspect
 import os 
 import zipfile
 import warnings
+import sys
 
 from ..util import get_extn, get_fid
 from ..network import Network
@@ -49,6 +43,10 @@ from ..media import  Media
 from ..networkSet import NetworkSet
 from ..calibration.calibration import Calibration
 
+from copy import copy
+dir_ = copy(dir)
+
+#delayed import: from pandas import DataFrame, Series for ntwk_2_spreadsheet
 
 # file extension conventions for skrf objects.
 global OBJ_EXTN 
@@ -210,7 +208,7 @@ def write(file, obj, overwrite = True):
     pickle.dump(obj, fid, protocol=2)
     fid.close()
     
-def read_all(dir='.', contains = None):
+def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
     '''
     Read all skrf objects in a directory
     
@@ -225,6 +223,11 @@ def read_all(dir='.', contains = None):
         the directory to load from, default  \'.\'
     contains : str, optional
         if not None, only files containing this substring will be loaded
+    f_unit : ['hz','khz','mhz','ghz','thz']
+        for all :class:`~skrf.network.Network` objects, set their 
+        frequencies's :attr:`~skrf.frequency.Frequency.f_unit` 
+    obj_type : str
+        Name of skrf object types to read (ie 'Network') 
         
     Returns
     ---------
@@ -242,6 +245,11 @@ def read_all(dir='.', contains = None):
     'one_port': one port Calibration: 'one_port', 500-750 GHz, 201 pts, 4-ideals/4-measured,
     ...
     
+    >>> rf.read_all('skrf/data/', obj_type = 'Network')
+    {'delay_short': 1-Port Network: 'delay_short',  75-110 GHz, 201 pts, z0=[ 50.+0.j],
+    'line': 2-Port Network: 'line',  75-110 GHz, 201 pts, z0=[ 50.+0.j  50.+0.j],
+    'ntwk1': 2-Port Network: 'ntwk1',  1-10 GHz, 91 pts, z0=[ 50.+0.j  50.+0.j],
+    ...
     
     See Also
     ----------
@@ -267,9 +275,39 @@ def read_all(dir='.', contains = None):
             out[keyname] = Network(fullname)
             continue
         except:
-            pass 
-            
+            pass
+        
+    if f_unit is not None:
+        for keyname in out:
+            try: 
+                out[keyname].frequency.unit = f_unit
+            except:
+                pass
+                
+    if obj_type is not None:
+        out = dict([(k, out[k]) for k in out if 
+            isinstance(out[k],sys.modules[__name__].__dict__[obj_type])])
+    
     return out
+
+
+def read_all_networks(*args, **kwargs):
+    '''
+    Read all networks in a directory.
+    
+    This is a convenience function. It just calls::
+    
+        read_all(*args,obj_type='Network', **kwargs)
+        
+    See Also
+    ----------
+    read_all
+    '''
+    if 'f_unit' not in kwargs:
+        kwargs.update({'f_unit':'ghz'})
+    return read_all(*args,obj_type='Network', **kwargs)
+
+ran = read_all_networks
         
 def write_all(dict_objs, dir='.', *args, **kwargs):
     '''
@@ -532,6 +570,167 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
     if remove_tmp_file is True:
         os.rename(new_file_name,file_name)
 
-
+def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
+    *args, **kwargs):
+    '''
+    Write a Network object to a spreadsheet, for your boss    
+    
+    Write  the s-parameters  of a network to a spreadsheet, in a variety
+    of forms.This functions makes use of the pandas module, which in 
+    turn makes use of the xlrd module. These are imported during this 
+    function call. For more details about the file-writing functions 
+    see the pandas.DataFrom.to_?? functions.
+    
+    Notes
+    ------
+    The frequency unit used in the spreadsheet is take from 
+    `ntwk.frequency.unit`
+    
+    Parameters
+    -----------
+    ntwk :  :class:`~skrf.network.Network` object
+        the network to write 
+    file_name : str, None
+        the file_name to write. if None,  ntwk.name is used. 
+    file_type : ['csv','excel','html']
+        the type of file to write. See pandas.DataFrame.to_??? functions.
+    form : 'db','ma','ri'
+        format to write data, 
+        * db = db, deg
+        * ma = mag, deg
+        * ri = real, imag
+    \*args, \*\*kwargs :
+        passed to pandas.DataFrame.to_??? functions.
+        
+        
+    See Also
+    ---------
+    networkset_2_spreadsheet : writes a spreadsheet for many networks
+    '''
+    from pandas import DataFrame, Series # delayed because its not a requirement
+    file_extns = {'csv':'csv','excel':'xls','html':'html'}
+    
+    form = form.lower()
+    if form not in ['db','ri','ma']:
+        raise ValueError('`form` must be either `db`,`ma`,`ri`')
+    
+    
+    file_type = file_type.lower()
+    if file_type not in file_extns.keys():
+        raise ValueError('file_type must be `csv`,`html`,`excel` ')
+    if ntwk.name is None and file_name is None:
+        raise(ValueError('Either ntwk must have name or give a file_name'))
+    
+    
+    if file_name is None and 'excel_writer' not in kwargs.keys():
+        file_name = ntwk.name + '.'+file_extns[file_type]
+    
+    d = {}
+    index =ntwk.frequency.f_scaled
+    
+    if form =='db':
+        for m,n in ntwk.port_tuples:
+            d['S%i%i Log Mag(dB)'%(m+1,n+1)] = \
+                Series(ntwk.s_db[:,m,n], index = index)
+            d[u'S%i%i Phase(deg)'%(m+1,n+1)] = \
+                Series(ntwk.s_deg[:,m,n], index = index)
+    elif form =='ma':
+        for m,n in ntwk.port_tuples:
+            d['S%i%i Mag(lin)'%(m+1,n+1)] = \
+                Series(ntwk.s_mag[:,m,n], index = index)
+            d[u'S%i%i Phase(deg)'%(m+1,n+1)] = \
+                Series(ntwk.s_deg[:,m,n], index = index)
+    elif form =='ri':
+        for m,n in ntwk.port_tuples:
+            d['S%i%i Real'%(m+1,n+1)] = \
+                Series(ntwk.s_re[:,m,n], index = index)
+            d[u'S%i%i Imag'%(m+1,n+1)] = \
+                Series(ntwk.s_im[:,m,n], index = index)
+    
+    df = DataFrame(d)
+    df.__getattribute__('to_%s'%file_type)(file_name, 
+        index_label='Freq(%s)'%ntwk.frequency.unit, *args, **kwargs)
+    
+def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
+    '''
+    Convert one or more attributes of a network to a pandas DataFrame
+    
+    Parameters
+    --------------
+    ntwk :  :class:`~skrf.network.Network` object
+        the network to write 
+    attrs : list Network attributes
+        like ['s_db','s_deg']
+    ports : list of tuples
+        list of port pairs to write. defaults to ntwk.port_tuples 
+        (like [[0,0]])
+        
+    Returns
+    ----------
+    df : pandas DataFrame Object
+    '''
+    from pandas import DataFrame, Series # delayed because its not a requirement
+    d = {}
+    index =ntwk.frequency.f_scaled
+    
+    if ports is None:
+        ports = ntwk.port_tuples
+         
+    for attr in attrs:
+        for m,n in ports:
+            d['%s %i%i'%(attr, m+1,n+1)] = \
+                Series(ntwk.__getattribute__(attr)[:,m,n], index = index)
+            
+    return DataFrame(d)
+    
+def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel', 
+    *args, **kwargs):
+    '''
+    Write a NetworkSet object to a spreadsheet, for your boss    
+    
+    Write  the s-parameters  of a each network in the networkset to a 
+    spreadsheet. If the `excel` file_type is used, then each network, 
+    is written to its own sheet, with the sheetname taken from the
+    network `name` attribute.
+    This functions makes use of the pandas module, which in turn makes
+    use of the xlrd module. These are imported during this function
+    
+    Notes
+    ------
+    The frequency unit used in the spreadsheet is take from 
+    `ntwk.frequency.unit`
+    
+    Parameters
+    -----------
+    ntwkset :  :class:`~skrf.networkSet.NetworkSet` object
+        the network to write 
+    file_name : str, None
+        the file_name to write. if None,  ntwk.name is used. 
+    file_type : ['csv','excel','html']
+        the type of file to write. See pandas.DataFrame.to_??? functions.
+    form : 'db','ma','ri'
+        format to write data, 
+        * db = db, deg
+        * ma = mag, deg
+        * ri = real, imag
+    \*args, \*\*kwargs :
+        passed to pandas.DataFrame.to_??? functions.
+        
+        
+    See Also
+    ---------
+    networkset_2_spreadsheet : writes a spreadsheet for many networks
+    '''
+    from pandas import DataFrame, Series, ExcelWriter # delayed because its not a requirement
+    if ntwkset.name is None and file_name is None:
+        raise(ValueError('Either ntwkset must have name or give a file_name'))
+    
+    if file_type == 'excel':
+        writer = ExcelWriter(file_name)
+        [network_2_spreadsheet(k, writer, sheet_name =k.name, *args, **kwargs) for k in ntwkset]
+        writer.save()
+    else:
+        [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
+    
 
 

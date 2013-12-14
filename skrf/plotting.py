@@ -1,22 +1,4 @@
 
-#       plotting.py
-#
-#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later version.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 
 '''
 .. module:: skrf.plotting
@@ -218,7 +200,7 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     if ax is None:
         ax = plb.gca()
 
-    ax.plot(x, y, *args, **kwargs)
+    my_plot = ax.plot(x, y, *args, **kwargs)
 
     if x_label is not None:
         ax.set_xlabel(x_label)
@@ -239,6 +221,8 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
         
     if plb.isinteractive():
         plb.draw()
+    
+    return my_plot
 
 def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     show_legend=True, axis_equal=False, ax=None, *args, **kwargs):
@@ -459,7 +443,7 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
             **kwargs)
 
 
-def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
+def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
     '''
     Save all open Figures to disk.
 
@@ -467,20 +451,30 @@ def save_all_figs(dir = './', format=['eps','pdf','svg','png']):
     ------------
     dir : string
             path to save figures into
-    format : list of strings
+    format : None, or list of strings
             the types of formats to save figures as. The elements of this
             list are passed to :matplotlib:`savefig`. This is a list so that
             you can save each figure in multiple formats.
+    echo : bool
+            True prints filenames as they are saved
     '''
     if dir[-1] != '/':
         dir = dir + '/'
     for fignum in plb.get_fignums():
         fileName = plb.figure(fignum).get_axes()[0].get_title()
+        if replace_spaces:
+            fileName = fileName.replace(' ','_')
         if fileName == '':
-            fileName = 'unamedPlot'
-        for fmt in format:
-            plb.savefig(dir+fileName+'.'+fmt, format=fmt)
-            print (dir+fileName+'.'+fmt)
+            fileName = 'unnamedPlot'
+        if format is None:
+            plb.savefig(dir+fileName)
+            if echo:
+                print (dir+fileName)
+        else:
+            for fmt in format:
+                plb.savefig(dir+fileName+'.'+fmt, format=fmt)
+                if echo:
+                    print (dir+fileName+'.'+fmt)
 saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
@@ -549,3 +543,5 @@ def func_on_all_figs(func, *args, **kwargs):
             fig.add_axes(ax_n) # trick to make axes current
             func(*args, **kwargs)
             plb.draw()
+
+foaf = func_on_all_figs

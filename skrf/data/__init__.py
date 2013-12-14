@@ -1,23 +1,4 @@
 
-#       data.py
-#
-#
-#       Copyright 2012 alex arsenovic <arsenovic@virginia.edu>
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 '''
 .. module:: skrf.data
 ========================================
@@ -53,3 +34,43 @@ wr1p5_line = Network(os.path.join(pwd, 'wr1p5,line.ntwk'))
 wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.ntwk'))
 
 one_port_cal = read(os.path.join(pwd, 'one_port.cal'))
+
+
+
+## material database (taken from wikipedia)
+materials = {
+    'copper':{
+        'resistivity(ohm*m)':1.68e-8,
+        },
+    'aluminum':{
+        'resistivity(ohm*m)':2.82e-8,
+        },
+    'gold':{
+        'resistivity(ohm*m)':2.44e-8,
+        },
+    'mylar':{
+        'relative permativity':3.1,
+        'loss tangent':500e-4,
+        },
+    'quartz':{
+        'relative permativity':3.8,
+        'loss tangent':1.5e-4,
+        },
+    'silicon':{
+        'relative permativity':11.68,
+        'loss tangent':8e-4,
+        },
+    'teflon':{
+        'relative permativity':2.1,
+        'loss tangent':5e-4,
+        },
+    'duroid 5880':{
+        'relative permativity':2.25,
+        'loss tangent':40e-4,
+        },
+    }
+for k1,k2 in [
+    ('cu', 'copper'), 
+    ('al', 'aluminum'),
+    ('au', 'gold')]:
+    materials[k1] = materials[k2]

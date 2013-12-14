@@ -1,24 +1,4 @@
 
-#       media.py
-#
-#
-#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 '''
 .. module:: skrf.media.media
 ========================================
@@ -33,6 +13,7 @@ import warnings
 
 import numpy as npy
 from scipy import stats
+from scipy.constants import  c
 
 from ..frequency import Frequency
 from ..network import Network, connect
@@ -219,7 +200,7 @@ class Media(object):
     @propagation_constant.setter
     def propagation_constant(self, new_propagation_constant):
         self._propagation_constant = new_propagation_constant
-
+    gamma = propagation_constant
     @property
     def characteristic_impedance(self):
         '''
@@ -256,7 +237,8 @@ class Media(object):
     @characteristic_impedance.setter
     def characteristic_impedance(self, new_characteristic_impedance):
         self._characteristic_impedance = new_characteristic_impedance
-
+    Z0 = characteristic_impedance
+    
     @property
     def z0(self):
         '''
@@ -302,9 +284,29 @@ class Media(object):
     @z0.setter
     def z0(self, new_z0):
         self._z0 = new_z0
-
+    portz0 = z0
     
-
+    @property
+    def v_p(self):
+        '''
+        complex phase velocity (in m/s)
+        
+        .. math:: 
+            j \cdot \\omega / \\gamma
+        
+        
+        where:
+        * :math:`\\omega` is angular frequency (rad/s), 
+        * :math:`\\gamma` is complex propagation constant (rad/m)
+        
+        See Also
+        -----------
+        propgation_constant
+        
+        '''
+        vp=1j*(self.frequency.w/self.propagation_constant)
+        return vp
+    
     ## Other Functions
     def theta_2_d(self,theta,deg=True):
         '''
@@ -1021,7 +1023,29 @@ class Media(object):
         result.s = mag_rv*npy.exp(1j*phase_rv)
         return result
 
+    def random(self, n_ports = 1,**kwargs):
+        '''
+        Complex random network.
 
+        Creates a n-port network whose s-matrix is filled with random 
+        complex numbers.
+        
+        Parameters
+        ----------
+        n_ports : int
+                number of ports.
+        \*\*kwargs : passed to :class:`~skrf.network.Network`
+                initializer
+
+        Returns
+        --------
+        result : :class:`~skrf.network.Network` object
+                the network
+        '''
+        result = self.match(nports = n_ports, **kwargs)
+        result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
+        return result
+        
     ## OTHER METHODS
     def guess_length_of_delay_short(self, aNtwk):
         '''

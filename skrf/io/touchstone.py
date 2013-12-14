@@ -1,20 +1,5 @@
 
 
-#     Copyright (C) 2008 Werner Hoch, 2012 Alex Arsenovic
-#
-#    This program is free software; you can redistribute it and/or modify
-#    it under the terms of the GNU General Public License as published by
-#    the Free Software Foundation; either version 2 of the License, or
-#    (at your option) any later version.
-#
-#    This program is distributed in the hope that it will be useful,
-#    but WITHOUT ANY WARRANTY; without even the implied warranty of
-#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#    GNU General Public License for more details.
-#
-#    You should have received a copy of the GNU General Public License
-#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 '''
 .. module:: skrf.io.touchstone
 ========================================
@@ -193,6 +178,10 @@ class Touchstone():
                 values = values[:pos*9]
                 self.noise = noise_values.reshape((-1,5))
 
+        if len(values)%(1+2*(self.rank)**2) != 0 :
+            # incomplete data line / matrix found            
+            raise AssertionError
+
         # reshape the values to match the rank
         self.sparameters = values.reshape((-1, 1 + 2*self.rank**2))
         # multiplier from the frequency unit
@@ -312,9 +301,14 @@ class Touchstone():
         elif self.format == 'db':
             v_complex = ((10**(v[:,1::2]/20.0)) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
 
-        # this return is tricky its do the stupid way the touchtone lines are in order like s11,s21, etc. because of this we need the transpose command, and axes specifier
-        return (v[:,0] * self.frequency_mult,
-                numpy.transpose(v_complex.reshape((-1, self.rank, self.rank)),axes=(0,2,1)))
+        if self.rank == 2 :
+            # this return is tricky; it handles the way touchtone lines are 
+            # in case of rank==2: order is s11,s21,s12,s22 
+            return (v[:,0] * self.frequency_mult,
+                    numpy.transpose(v_complex.reshape((-1, self.rank, self.rank)),axes=(0,2,1)))
+        else:
+            return (v[:,0] * self.frequency_mult,
+                    v_complex.reshape((-1, self.rank, self.rank)))
 
     def get_noise_names(self):
         """

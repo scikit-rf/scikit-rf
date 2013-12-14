@@ -1,24 +1,4 @@
 
-#       calibrationAlgorithms.py
-#
-#
-#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 '''
 .. module:: skrf.calibration.calibrationAlgorithms
 ====================================================================================
@@ -139,19 +119,43 @@ def guess_length_of_delay_short( aNtwk,tline):
 
 def unterminate_switch_terms(two_port, gamma_f, gamma_r):
     '''
-    unterminates switch terms from raw measurements.
+    Unterminates switch terms from raw measurements.
+    
+    In order to use the 8-term error model on a VNA which employs a 
+    switched source, the effects of the switch must be accounted for. 
+    This is done through `switch terms` as described in  [#]_ . The 
+    two switch terms are defined as, 
+    
+    .. math :: 
+        
+        \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
+        \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
+    
+    These can be measured by four-sampler VNA's by setting up 
+    user-defined traces onboard the VNA. If the VNA doesnt have  
+    4-samplers, then you can measure switch terms indirectly by using a 
+    two-tier two-port calibration. Firts do a SOLT, then convert 
+    the 12-term error coefs to 8-term, and pull out the switch terms.  
+    
+    Parameters
+    -------------
+    two_port : 2-port Network 
+        the raw measurement
+    gamma_f : 1-port Network
+        the measured forward switch term. 
+        gamma_f = a2/b2 sourced by port1
+    gamma_r : 1-port Network
+        the measured reverse switch term
 
-    takes:
-            two_port: the raw measurement, a 2-port Network type.
-            gamma_f: the measured forward switch term, a 1-port Network type
-            gamma_r: the measured reverse switch term, a 1-port Network type
-
-    returns:
-            un-terminated measurement, a 2-port Network type
-
-    see:
-            'Formulations of the Basic Vector Network Analyzer Error
-            Model including Switch Terms' by Roger B. Marks
+    Returns
+    -----------
+    ntwk :  Network object
+    
+    References
+    ------------
+    
+    .. [#] "Formulations of the Basic Vector Network Analyzer Error
+            Model including Switch Terms" by Roger B. Marks
     '''
     unterminated = two_port.copy()
 
@@ -170,6 +174,20 @@ def unterminate_switch_terms(two_port, gamma_f, gamma_r):
     unterminated.s = u
     return unterminated
 
+def unterminate_switch_terms_pna_style(ntwk, forward, reverse):
+    '''
+    forward = a2/a1 source on port 1 (aka a2/a1,1)
+    reverse = a1/a2 source on port 2 (aka a1/a2,2)
+    '''
+    unterminated = ntwk.copy()
+    u = unterminated.s
+    s = ntwk.s
+    f = forward.s
+    r = reverse.s
+    
+    for k in range(len(ntwk)):
+        u[k] = npy.dot(s[k], npy.linalg.inv(npy.array([[1,r[k,0,0]],[f[k,0,0],1]])))
+    return unterminated
 
 ## ONE PORT
 def one_port(measured, ideals):
@@ -476,7 +494,8 @@ def two_port(measured, ideals, switch_terms = None):
         error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
         #if len (residualsTmp )==0:
         #       raise ValueError( 'matrix has singular values, check standards')
-
+        
+        
         error_vector[f,:] = error_vector_at_f.flatten()
         residuals[f,:] = residuals_at_f
 
@@ -499,8 +518,8 @@ def two_port(measured, ideals, switch_terms = None):
             }
 
     return output
-
-
+    
+    
 ## SELF CALIBRATION
 def parameterized_self_calibration(measured, ideals, showProgress=True,\
         **kwargs):

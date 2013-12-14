@@ -1,24 +1,4 @@
 
-#       mathFunctions.py
-#
-#
-#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#       Copyright 2010 lihan chen
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 
 '''
 .. currentmodule:: skrf.mathFunctions
@@ -84,7 +64,7 @@ Special Functions
 
 '''
 import numpy as npy
-from numpy import pi,angle
+from numpy import pi,angle,unwrap   
 from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
 
@@ -95,7 +75,7 @@ global INF
 INF = 1e99
 
 global ALMOST_ZERO
-ALMOST_ZERO = 1e-6
+ALMOST_ZERO = 1e-12
 
 ## simple conversions
 def complex_2_magnitude(input):
@@ -113,6 +93,17 @@ def complex_2_db(input):
     where z is a complex number
     '''
     return magnitude_2_db(npy.abs( input))
+
+def complex_2_db10(input):
+    '''
+    returns the magnitude in dB of a complex number.
+
+    returns:
+            10*log10(|z|)
+    where z is a complex number
+    '''
+    return mag_2_db10(npy.abs( input))
+
 
 def complex_2_radian(input):
     '''
@@ -164,23 +155,51 @@ def complex_2_reim(z):
 
 def magnitude_2_db(input,zero_nan=True):
     '''
-    converts magnitude to db
+    converts linear magnitude to db
 
      db is given by
             20*log10(|z|)
     where z is a complex number
     '''
     if zero_nan:
-        out = 20 * npy.log10(npy.array(input))
-        out[npy.isnan(out)] = LOG_OF_NEG
+        out = 20 * npy.log10(input)
+        try:
+            out[npy.isnan(out)] = LOG_OF_NEG
+        except (TypeError):
+            # input is a number not array-like
+            if npy.isnan(out):
+                return LOG_OF_NEG
+            
     else:
         out = 20*npy.log10(input)
 
     return out
+
+mag_2_db = magnitude_2_db
+
+def mag_2_db10(input,zero_nan=True):
+    '''
+    converts linear magnitude to db
+
+     db is given by
+            10*log10(|z|)
+    where z is a complex number
+    '''
+    out = 10 * npy.log10(input)
+    if zero_nan:
+        try:
+            out[npy.isnan(out)] = LOG_OF_NEG
+        except (TypeError):
+            # input is a number not array-like
+            if npy.isnan(out):
+                return LOG_OF_NEG
+            
     
+    return out
+
 def db_2_magnitude(input):
     '''
-    converts db to normal magnitude
+    converts db to linear magnitude. 
 
     returns:
             10**((z)/20.)
@@ -188,16 +207,43 @@ def db_2_magnitude(input):
     '''
     return 10**((input)/20.)
 
+db_2_mag = db_2_magnitude
+
+
+def db10_2_mag(input):
+    '''
+    converts db to linear magnitude
+
+    returns:
+            10**((z)/10.)
+    where z is a complex number
+    '''
+    return 10**((input)/10.)
+
+
+def magdeg_2_reim(mag,deg):
+    '''
+    converts linear magnitude and phase (in deg) arrays into a complex array
+    '''
+    return mag*npy.exp(1j*deg*pi/180.)
+    
+def dbdeg_2_reim(db,deg):
+    '''
+    converts db magnitude and phase (in deg) arrays into a complex array
+    '''
+    return magdeg_2_reim(db_2_magnitude(db),deg)
+    
+    
 def db_2_np(x):
     '''
     converts a value in nepers to dB
     '''
-    return (log(10)/20) * x
+    return (npy.log(10)/20) * x
 def np_2_db(x):
     '''
     converts a value in dB to neper's
     '''
-    return 20/log(10) * x
+    return 20/npy.log(10) * x
 
 def radian_2_degree(rad):
     return (rad)*180/pi
@@ -209,9 +255,64 @@ def unwrap_rad(input):
     '''
     unwraps a phase given in radians
 
-    the normal numpy unwrap is not what you usually want for some reason
     '''
-    return .5*npy.unwrap(2*input,axis=0)
+    return unwrap(input,axis=0)
+
+def sqrt_known_sign(z_squared, z_approx):
+    '''
+    Returns sqrt of complex number, with sign chosen to match `z_approx`
+    
+    Parameters 
+    -------------
+    z_squared : number, array-like  
+        the complex to be square-rooted
+    z_approx : number, array-like
+        the approximate value of z. sign of z is chosen to match that of 
+        z_approx
+    
+    Returns
+    ----------
+    z : number, array-like (same type as z_squared)
+        square root of z_squared. 
+        
+    
+        
+    '''
+    z = npy.sqrt(z_squared)
+    return npy.where(
+        npy.sign(npy.angle(z)) == npy.sign(npy.angle(z_approx)), 
+        z, z.conj())
+    
+def find_correct_sign(z1,z2,z_approx):
+    '''
+    Create new vector from z1, z2 choosing elements with sign matching z_approx
+    
+    This is used when you have to make a root choice on a complex number.
+    and you know the approximate value of the root. 
+    
+    .. math:: 
+        
+        z1,z2 = \\pm \\sqrt(z^2)
+        
+
+    Parameters
+    ------------
+    z1 : array-like
+        root 1
+    z2 : array-like
+        root 2
+    z_approx : array-like
+        approximate answer of z
+    
+    Returns 
+    ----------
+    z3 : npy.array
+        array build from z1 and z2 by 
+        z1 where sign(z1) == sign(z_approx), z2 else
+    
+    '''
+    return npy.where(
+    npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)    
 
 def sqrt_phase_unwrap(input):
     '''
@@ -221,6 +322,7 @@ def sqrt_phase_unwrap(input):
     '''
     return npy.sqrt(abs(input))*\
             npy.exp(0.5*1j*unwrap_rad(complex_2_radian(input)))
+
 
 # mathematical functions
 def dirac_delta(x):
@@ -300,7 +402,10 @@ def complex2MagPhase(complx,deg=False):
 
 def rand_c(*args):
     '''
-    creates a complex random array of  shape s.
+    Creates a complex random array of shape s.
+    
+    The bounds on real and imaginary values are (-1,1)
+    
     
     Parameters
     -----------
@@ -312,8 +417,8 @@ def rand_c(*args):
     >>> x = rf.rand_c(2,2)
     '''
     s = npy.array(args)
-    return npy.random.rand(npy.product(s)).reshape(s) + \
-        1j*npy.random.rand(npy.product(s)).reshape(s)
+    return 1-2*npy.random.rand(npy.product(s)).reshape(s) + \
+        1j-2j*npy.random.rand(npy.product(s)).reshape(s)
 
 
 def psd2TimeDomain(f,y, windowType='hamming'):

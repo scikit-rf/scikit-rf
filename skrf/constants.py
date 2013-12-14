@@ -1,24 +1,4 @@
 
-#
-#       constants.py
-#
-#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#       Copyright 2010 lihan chen
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 
 '''
 
@@ -117,29 +97,29 @@ from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
 # pre-initialized classes       
         
-f_wr51  = Frequency(15,22,201, 'ghz')
-f_wr42  = Frequency(17.5,26.5,201, 'ghz')
-f_wr34  = Frequency(22,33,201, 'ghz')
-f_wr28  = Frequency(26.5,40,201, 'ghz')
-f_wr22p4  = Frequency(33,50.5,201, 'ghz')
-f_wr18p8  = Frequency(40,60,201, 'ghz')
-f_wr14p8  = Frequency(50.5,75,201, 'ghz')
-f_wr12p2  = Frequency(60,90,201, 'ghz')
-f_wr10  = Frequency(75,110,201, 'ghz')
-f_wr8  = Frequency(90,140,201, 'ghz')
-f_wr6p5  = Frequency(110,170,201, 'ghz')
-f_wr5p1  = Frequency(140,220,201, 'ghz')
-f_wr4p3  = Frequency(170,260,201, 'ghz')
-f_wr3p4  = Frequency(220,330,201, 'ghz')
-f_wr2p8 = Frequency(260,400,201, 'ghz')
-f_wr2p2 = Frequency(330,500,201, 'ghz')
-f_wr1p9 = Frequency(400,600,201, 'ghz')
-f_wr1p5 = Frequency(500,750,201, 'ghz')
-f_wr1p2   = Frequency(600,900,201, 'ghz')
-f_wr1   = Frequency(750,1100,201, 'ghz')
-f_wr0p8   = Frequency(900,1400,201, 'ghz')
-f_wr0p65  = Frequency(1100,1700,201, 'ghz')
-f_wr0p51   = Frequency(1400,2200,201, 'ghz')
+f_wr51  = Frequency(15,22,1001, 'ghz')
+f_wr42  = Frequency(17.5,26.5,1001, 'ghz')
+f_wr34  = Frequency(22,33,1001, 'ghz')
+f_wr28  = Frequency(26.5,40,1001, 'ghz')
+f_wr22p4  = Frequency(33,50.5,1001, 'ghz')
+f_wr18p8  = Frequency(40,60,1001, 'ghz')
+f_wr14p8  = Frequency(50,75,1001, 'ghz')
+f_wr12p2  = Frequency(60,90,1001, 'ghz')
+f_wr10  = Frequency(75,110,1001, 'ghz')
+f_wr8  = Frequency(90,140,1001, 'ghz')
+f_wr6p5  = Frequency(110,170,1001, 'ghz')
+f_wr5p1  = Frequency(140,220,1001, 'ghz')
+f_wr4p3  = Frequency(170,260,1001, 'ghz')
+f_wr3p4  = Frequency(220,330,1001, 'ghz')
+f_wr2p8 = Frequency(260,400,1001, 'ghz')
+f_wr2p2 = Frequency(330,500,1001, 'ghz')
+f_wr1p9 = Frequency(400,600,1001, 'ghz')
+f_wr1p5 = Frequency(500,750,1001, 'ghz')
+f_wr1p2   = Frequency(600,900,1001, 'ghz')
+f_wr1   = Frequency(750,1100,1001, 'ghz')
+f_wr0p8   = Frequency(900,1400,1001, 'ghz')
+f_wr0p65  = Frequency(1100,1700,1001, 'ghz')
+f_wr0p51   = Frequency(1400,2200,1001, 'ghz')
 
 
 wr51  = RectangularWaveguide(f_wr51.copy(),a=510*mil,b=255*mil,z0=50)

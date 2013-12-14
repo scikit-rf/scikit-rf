@@ -1,22 +1,4 @@
 
-#       frequency.py
-#
-#       Copyright 2010 alex arsenovic <arsenovic@virginia.edu>
-#
-#       This program is free software; you can redistribute it and/or modify
-#       it under the terms of the GNU General Public License as published by
-#       the Free Software Foundation; either version 2 of the License, or
-#       (at your option) any later versionpy.
-#
-#       This program is distributed in the hope that it will be useful,
-#       but WITHOUT ANY WARRANTY; without even the implied warranty of
-#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#       GNU General Public License for more details.
-#
-#       You should have received a copy of the GNU General Public License
-#       along with this program; if not, write to the Free Software
-#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
-#       MA 02110-1301, USA.
 
 '''
 .. currentmodule:: skrf.frequency
@@ -39,12 +21,20 @@ Frequency Class
 
    Frequency
 
+Functions
+=============
+
+.. autosummary::
+    :toctree: generated/
+    
+    overlap_freq
+
 '''
 
 from pylab import linspace, gca
 from numpy import pi
 import numpy as npy
-
+from numpy import fft # used to center attribute `t` at 0
 
 
 class Frequency(object):
@@ -187,7 +177,7 @@ class Frequency(object):
         if len(self.f) != len(other.f):
             return False
         else:
-            return (max(self.f-other.f) < ALMOST_ZER0)
+            return (max(abs(self.f-other.f)) < ALMOST_ZER0)
 
     def __ne__(self,other):
         return (not self.__eq__(other))
@@ -197,6 +187,21 @@ class Frequency(object):
         The number of frequeny points
         '''
         return self.npoints
+    
+    def __mul__(self,other):
+        out = self.copy()
+        out.f = self.f*other
+        return out
+    
+    def __rmul__(self,other):
+        out = self.copy()
+        out.f = self.f*other
+        return out
+    
+    def __div__(self,other):
+        out = self.copy()
+        out.f = self.f/other
+        return out
     
     @property 
     def start(self):
@@ -229,7 +234,7 @@ class Frequency(object):
     @property
     def center(self):
         '''
-        Center frequency.
+        Center frequency in Hz
 
         Returns
         ---------
@@ -357,7 +362,52 @@ class Frequency(object):
         freq =  Frequency.from_f(self.f, unit='hz')
         freq.unit = self.unit
         return freq
-                
+             
+    @property                
+    def t(self):
+        '''
+        time vector in s. 
+        
+        t_period = 1/f_step
+        '''
+        return linspace(-.5/self.step , .5/self.step, self.npoints)
+        
+    @property                
+    def t_ns(self):
+        '''
+        time vector in ns. 
+        
+        t_period = 1/f_step
+        '''
+        return self.t*1e9
+    
+    def round_to(self, val = 'hz'):
+        '''
+        Round off frequency values to a specfied precision. 
+        
+        This is useful for dealing with finite precision limitations of 
+        VNA's and/or other software
+        
+        Parameters
+        -----------
+        val : string or number
+            if val is a string it should  be a frequency unit 
+            (ie 'hz', 'mhz',etc). if its a number, then this returns 
+            f = f-f%val
+            
+        Examples
+        ---------
+        >>>f = skrf.Frequency.from_f([.1,1.2,3.5],unit='hz')
+        >>>f.round_to('hz')
+            
+        '''
+        if isinstance(val, basestring):
+            val = self.multiplier_dict[val.lower()]
+        
+        self.f = npy.round_(self.f/val)*val
+        
+            
+    
     def labelXAxis(self, ax=None):
         '''
         Label the x-axis of a plot.
@@ -373,7 +423,56 @@ class Frequency(object):
         '''
         if ax is None:
             ax = gca()
-        ax.set_xlabel('Frequency [%s]' % self.unit )
+        ax.set_xlabel('Frequency (%s)' % self.unit )
+    
+    def overlap(self,f2):
+        '''
+        Calculates overlapping frequency  between self and f2
+        
+        See Also 
+        ---------
+        
+        overlap_freq
+        
+        '''
+        return overlap_freq(self, f2)
+    
+def overlap_freq(f1,f2):
+    '''
+    Calculates  overlapping frequency between f1 and f2.
+    
+    Or, put more accurately, this returns a Frequency that is the part 
+    of f1 that is overlapped by f2. The resultant start frequency is 
+    the smallest f1.f that is greater than f2.f.start, and likewise for 
+    the the stop-frequency. This way the new frequency overlays onto f1.
+    
+    
+    Parameters
+    ------------
+    f1 : :class:`Frequency`
+        a  frequency object
+    f2 : :class:`Frequency`
+        a  frequency object
+    
+    Returns 
+    ----------
+    f3 : :class:`Frequency`
+        part of f1 that is overlapped by f2
+        
+    '''
+    if f1.start > f2.stop:
+        raise ValueError('Out of bounds. f1.start > f2.stop')
+    elif f2.start > f1.stop:
+        raise ValueError('Out of bounds. f2.start > f1.stop')
+    
+         
+    start = max(f1.start, f2.start)
+    stop = min(f1.stop, f2.stop)
+    f = f1.f[(f1.f>=start) & (f1.f<=stop)]
+    freq =  Frequency.from_f(f, unit = 'hz')
+    freq.unit = f1.unit
+    return freq
+
 
 def f_2_frequency(f):
     '''
