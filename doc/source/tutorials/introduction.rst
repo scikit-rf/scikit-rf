@@ -4,8 +4,6 @@
 Introduction
 *********************
 .. currentmodule:: skrf.network
-.. contents::
-
 
 Introduction
 ------------------
