@@ -34,7 +34,7 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 
-all: notebooks html
+html: notebooks sphinx-html
 notebooks:
 	cd ./source/tutorials;ipython nbconvert --to rst *.ipynb
 
@@ -42,7 +42,7 @@ notebooks:
 clean:
 	-rm -rf $(BUILDDIR)/*
 
-html:
+sphinx-html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
