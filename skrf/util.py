@@ -29,6 +29,8 @@ General
 
 import mathFunctions as mf
 
+
+import matplotlib as mpl
 import warnings
 import os
 import cPickle as pickle
@@ -187,6 +189,15 @@ def git_version( modname):
     return out
     
 
+def stylely():
+    '''
+    loads the rc-params file from skrf.data 
+    '''
+    
+    from skrf.data import mpl_rc_fname # delayed to solve circular import
+    rc = mpl.rc_params_from_file(mpl_rc_fname)
+    mpl.rcParams.update(rc)
+    
 
 
 # general purpose objects 

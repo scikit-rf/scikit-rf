@@ -35,7 +35,7 @@ wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.ntwk'))
 
 one_port_cal = read(os.path.join(pwd, 'one_port.cal'))
 
-
+mpl_rc_fname = os.path.join(pwd, 'skrf.mplstyle')
 
 ## material database (taken from wikipedia)
 materials = {
