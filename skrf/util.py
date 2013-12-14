@@ -386,8 +386,39 @@ class HomoDict(collections.MutableMapping):
     def __repr__(self):
         return pprint.pformat(self.store)
     
+    
+    def copy(self):
+        return HomoDict(self.store)
+        
+        
     def filter_nones(self):
         self.store =  {k:self.store[k] for k in self.store \
                         if self.store[k] is not None}
     
+    def filter(self, **kwargs):
+        '''
+        Filter self based on kwargs
+        
+        This is equivalent to:
+        
+        >>> h = HomoDict(...)
+        >>> for k in kwargs:
+        >>>     h = h[k ==kwargs[k]]
+        >>> return h
+        
+        prefixing the kwarg value with a '!' causes a not equal test (!=)
+        
+        Examples
+        ----------
+        >>> h = HomoDict(...)
+        >>> h.filter(name='jean', age = '18', gender ='!female')
+         
+        '''
+        a = self
+        for k in kwargs:
+            if kwargs[k][0] == '!':
+                a = a[a.__getattr__(k) != kwargs[k][1:]]
+            else:
+                a = a[a.__getattr__(k) == kwargs[k]]
+        return a
     
