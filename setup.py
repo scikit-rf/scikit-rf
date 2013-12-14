@@ -18,6 +18,7 @@ setup(name='scikit-rf',
 	url='http://scikit-rf.org',
 	packages=find_packages(),
 	install_requires = [
+		'ipython',
 		'numpy',
 		'scipy',
 		'matplotlib',
