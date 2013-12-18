@@ -4,10 +4,10 @@ patch.facecolor : 348ABD  # blue
 patch.edgecolor : EEEEEE
 patch.antialiased : True
 
-text.usetex         : True 
-font.family         : serif
-font.size           : 10.0
-font.serif         : New Century Schoolbook
+text.usetex         : False 
+#font.family         : 'serif'
+font.size           : 10
+#font.serif          : New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, ser
 
 axes.facecolor : E5E5E5
 axes.edgecolor : white
@@ -35,7 +35,7 @@ grid.linestyle : -    # solid line
 figure.figsize      : 6, 4
 figure.facecolor : white
 figure.edgecolor : 0.50
-figure.dpi          : 60      
+figure.dpi          : 120      
 figure.subplot.left	    : 0.12 
 figure.subplot.right	: 0.9    
 figure.subplot.bottom	: 0.12
@@ -47,9 +47,12 @@ lines.markersize    : 3
 
 legend.fontsize     : 9  
 legend.loc			: best
+legend.frameon : True
+
+legend.fancybox : True
 
 path.simplify       : True  
 
-savefig.dpi         : 120      
+savefig.dpi         : 300      
 
- 
+interactive :True

@@ -40,12 +40,13 @@ Interpolation and Combining
 .. autosummary::
     :toctree: generated/
     
+    stitch
+    overlap
     Network.resample
     Network.interpolate
     Network.interpolate_self
     Network.interpolate_from_f
-    stitch
-    overlap
+    
 
 IO
 ====
