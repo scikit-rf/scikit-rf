@@ -67,7 +67,7 @@ Smith Chart
 +++++++++++++++++
 
 As a first example, load a :class:`~skrf.network.Network` from the
-``data`` module, and plot all four  s-parameters on the Smith chart.
+`data` module, and plot all four  s-parameters on the Smith chart.
 
 .. ipython::
 
@@ -82,14 +82,14 @@ As a first example, load a :class:`~skrf.network.Network` from the
 
 .. note:: 
 
-    If you dont see any plots after issuing these commands, then you may not have  started ipython with the ``--pylab`` flag. Try ``from pylab import *`` to import the matplotlib commands and ``ion()``  to turn on interactive plotting. See `this page <http://matplotlib.org/users/shell.html>`_ , for more info on ipython's `pylab` mode.
+    If you dont see any plots after issuing these commands, then you may not have  started ipython with the `--pylab` flag. Try `from pylab import *` to import the matplotlib commands and `ion()`  to turn on interactive plotting. See `this page <http://matplotlib.org/users/shell.html>`_ , for more info on ipython's `pylab` mode.
 
 .. note:: 
     
     Why do my plots look different? See  `Formating Plots`_
 
 
-The smith chart can be drawn with some impedance values labeled through the ``draw_labels`` argument.
+The smith chart can be drawn with some impedance values labeled through the `draw_labels` argument.
 
 .. ipython::
     
@@ -99,7 +99,7 @@ The smith chart can be drawn with some impedance values labeled through the ``dr
     In [139]: ring_slot.plot_s_smith(draw_labels=True)
 
 
-Another common option is to draw addmitance contours, instead of impedance. This is controled through the  ``chart_type`` argument.
+Another common option is to draw addmitance contours, instead of impedance. This is controled through the  `chart_type` argument.
 
 .. ipython::
     
@@ -112,7 +112,7 @@ See :func:`~skrf.plotting.smith` for more info on customizing the Smith Chart.
 
 .. note:: 
 
-    If more than one ``plot_s_smith()`` command is issued on a single figure, you may need to call :func:`draw()` to refresh the  chart. 
+    If more than one `plot_s_smith()` command is issued on a single figure, you may need to call :func:`draw()` to refresh the  chart. 
 
 
 Complex Plane 
@@ -145,7 +145,7 @@ frequency as well. To plot the log-magnitude of the s-parameters vs. frequency,
     @savefig plotting-ring_slot,db.png
     In [138]: ring_slot.plot_s_db()
     
-When no arguments are passed to the plotting methods, all parameters are plotted. Single parameters can be plotted by passing indecies ``m`` and ``n`` to the plotting commands (indexing start from 0). Comparing the simulated reflection coefficient off the ring slot to a measurement, 
+When no arguments are passed to the plotting methods, all parameters are plotted. Single parameters can be plotted by passing indecies `m` and `n` to the plotting commands (indexing start from 0). Comparing the simulated reflection coefficient off the ring slot to a measurement, 
 
 .. ipython::
     
@@ -205,7 +205,7 @@ similarly,
 Customizing Plots
 -------------------
 
-The legend entries are automatically filled in with the Network's :attr:`~skrf.network.Network.name`. The entry can be overidden by passing the ``label`` argument to the plot method.
+The legend entries are automatically filled in with the Network's :attr:`~skrf.network.Network.name`. The entry can be overidden by passing the `label` argument to the plot method.
  
 .. ipython::
     
@@ -218,7 +218,7 @@ The legend entries are automatically filled in with the Network's :attr:`~skrf.n
 
 The frequency unit used on the x-axis is automatically filled in from 
 the Networks :attr:`~skrf.network.Network.frequency` attribute. To change
-the label, change the frequency's ``unit``.
+the label, change the frequency's `unit`.
     
 .. ipython::
     
@@ -292,7 +292,7 @@ Formating Plots
 +++++++++++++++++++
 
 It is likely that your plots dont look exactly like the ones in this 
-tutorial. This is because matplotlib supports a vast amount of `customization <http://matplotlib.org/users/customizing.html>`_.  Formating options can be customized `on-the-fly` by modifying values of the ``rcParams`` dictionary. Once these are set to your liking they can be saved to your ``.matplotlibrc`` file. 
+tutorial. This is because matplotlib supports a vast amount of `customization <http://matplotlib.org/users/customizing.html>`_.  Formating options can be customized `on-the-fly` by modifying values of the `rcParams` dictionary. Once these are set to your liking they can be saved to your `.matplotlibrc` file. 
 
 
 

@@ -64,7 +64,7 @@ For debian-based linux users who dont want to install pythonxy_, here is a one-s
 
 	sudo apt-get install python-pyvisa python-numpy python-scipy python-matplotlib ipython python python-setuptools 
 
-Once `setuptools` is installed you can install skrf through ``easy_install`` ::
+Once `setuptools` is installed you can install skrf through `easy_install` ::
 
 	easy_install scikit-rf
 

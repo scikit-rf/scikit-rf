@@ -25,7 +25,7 @@ Media
 Introduction
 -------------
 
-**skrf** supports the  microwave network synthesis based on transmission line models. Network creation is accomplished through methods of the Media class, which represents a transmission line object for a given medium. Once constructed, a :class:`~media.Media` object contains the neccesary properties such as ``propagation constant`` and ``characteristic impedance``, that are needed to generate microwave circuits.
+**skrf** supports the  microwave network synthesis based on transmission line models. Network creation is accomplished through methods of the Media class, which represents a transmission line object for a given medium. Once constructed, a :class:`~media.Media` object contains the neccesary properties such as `propagation constant` and `characteristic impedance`, that are needed to generate microwave circuits.
 
 This tutorial illustrates how created Networks using several different :class:`~media.Media` objects. The basic usage is, 
 
@@ -126,7 +126,7 @@ See :class:`~rectangularWaveguide.RectangularWaveguide` for details.
 
 .. note:: 
 
-	The ``z0`` argument in the Rectangular Waveguide constructor is used
+	The `z0` argument in the Rectangular Waveguide constructor is used
 	to force a specifc port impedance. This is commonly used to match 
 	the port impedance to what a VNA stores in a touchstone file. See 
 	:func:`media.Media.__init__` for more information. 

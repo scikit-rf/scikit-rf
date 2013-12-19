@@ -32,7 +32,7 @@ Creating a :class:`NetworkSet`
 For this example, assume that numerous measurements of a single network 
 are made. These measurements have been retrieved from a VNA and are
 in the form of touchstone files. A set of example data can be found in 
-``scikit-rf/skrf/data/``, with naming convention ``ro,*.s1p``, 
+`scikit-rf/skrf/data/`, with naming convention `ro,*.s1p`, 
 
 .. ipython::
 
@@ -41,7 +41,7 @@ in the form of touchstone files. A set of example data can be found in
     In [24]: ls ../skrf/data/ro*
 
 
-The files ``ro,1.s1p`` , ``ro,2.s1p``, ...  are redundant measurements on 
+The files `ro,1.s1p` , `ro,2.s1p`, ...  are redundant measurements on 
 which we would like to calculate statistics using the :class:`~NetworkSet`
 class.
 
@@ -49,7 +49,7 @@ A :class:`~NetworkSet` is created from a list or dict of
 :class:`~skrf.network.Network`'s. So first we need to load all of the 
 touchstone files. This can be done quickly with 
 :func:`~skrf.io.general.read_all` , which loads all skrf-readable objects
-in a directory. The argument ``contains`` is used to load only files 
+in a directory. The argument `contains` is used to load only files 
 which match a given substring. 
 
 
@@ -96,7 +96,7 @@ Statistical Properties
 
 Statistical quantities can be calculated by accessing 
 properties of the NetworkSet. For example, to calculate the complex 
-average of the set, access the ``mean_s`` property
+average of the set, access the `mean_s` property
 
 
 .. ipython::
@@ -178,7 +178,7 @@ can be ccomplished through the :func:`NetworkSet.write` method.
     
 .. note:: 
 
-    Note that if the NetworkSet's ``name`` attribute is not assigned, then you must provide a filename to :func:`NetworkSet.write`. 
+    Note that if the NetworkSet's `name` attribute is not assigned, then you must provide a filename to :func:`NetworkSet.write`. 
 
 Alternatively, you can write the Network set by directly calling the 
 :func:`~skrf.io.general.write` function. In either case, the resultant 

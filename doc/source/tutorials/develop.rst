@@ -21,10 +21,10 @@ Please see github's page on this for more information http://help.github.com/sen
 
 Contribute Documentation
 -------------------------
-skrf's documentation is generated using `sphinx <http://sphinx.pocoo.org/>`_. The documentation source code is written using reStructed Text, and can be found in ``docs/sphinx/source/``. The reference documentation for the submodules, classes, and functions are documented following the `conventions <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ put forth by Numpy/Scipy. Improvements or new documentation is welcomed, and can be submitted using github as well.
+skrf's documentation is generated using `sphinx <http://sphinx.pocoo.org/>`_. The documentation source code is written using reStructed Text, and can be found in `docs/sphinx/source/`. The reference documentation for the submodules, classes, and functions are documented following the `conventions <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_ put forth by Numpy/Scipy. Improvements or new documentation is welcomed, and can be submitted using github as well.
 
 
 
 Creating Tests
 --------------
-skrf employs the python module `unittest` for testing. The test's are located in ``skrf/testCases/``.
+skrf employs the python module `unittest` for testing. The test's are located in `skrf/testCases/`.

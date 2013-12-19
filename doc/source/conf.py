@@ -1,1 +1,1 @@
-conf-standard.py
+conf-bootstrap.py

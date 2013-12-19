@@ -28,14 +28,14 @@ Networks
 
 Introduction
 -------------------------
-For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you.
+For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as `rf`. Whether or not you follow this convention in your own code is up to you.
 
 
 .. ipython::
 
   In [138]: import skrf as rf
 
-If this produces an error, please see :doc:`installation`.  The code in this tutorial assumes that you are in the directory ``scikit-rf/doc``.
+If this produces an error, please see :doc:`installation`.  The code in this tutorial assumes that you are in the directory `scikit-rf/doc`.
 
 Creating Networks
 -------------------------
@@ -113,7 +113,7 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 * :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
 * ...
 
-To plot all four s-parameters of the ``ring_slot`` on the Smith Chart.
+To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
 .. ipython::
 
@@ -140,7 +140,7 @@ Network Operators
 Linear Operations 
 =========================
 	
-Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the ``data`` module. 
+Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the `data` module. 
 
 .. ipython::
 	
@@ -160,7 +160,7 @@ Element-wise mathematical operations on the scattering parameter matrices are ac
 
 
 
-All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  ``short`` and ``delay_short``,
+All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  `short` and `delay_short`,
 	
 .. ipython::
 	
@@ -197,7 +197,7 @@ Note that if you multiply a Network by an :class:`numpy.ndarray`  be sure to pla
 
 Cascading and De-embedding
 ==================================================
-Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be called through the power operator,  ``**``. To calculate a new network which is the cascaded connection of the two individual Networks ``line`` and ``short``, 
+Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be called through the power operator,  `**`. To calculate a new network which is the cascaded connection of the two individual Networks `line` and `short`, 
 
 .. ipython::
 	
@@ -207,7 +207,7 @@ Cascading and de-embeding 2-port Networks can also be done though operators. The
 	
 	In [22]: delayshort = line ** short
 
-De-embedding  can be accomplished by cascading the *inverse* of a network. The inverse of a network is accessed through the property :attr:`Network.inv`. To de-embed the ``short`` from ``delay_short``,
+De-embedding  can be accomplished by cascading the *inverse* of a network. The inverse of a network is accessed through the property :attr:`Network.inv`. To de-embed the `short` from `delay_short`,
 
 .. ipython::
 	
@@ -289,7 +289,7 @@ While **skrf** supports reading and writing the touchstone file format, it also 
 	@verbatim
 	In [21]: rf.Netwrok('line.ntwk') # read Network using native IO
 
-Frequently there is an entire directory of files that need to be analyzed. The function :func:`~skrf.io.general.read_all` is used to create objects from all files in a directory quickly. Given a directory of skrf-readable files, :func:`~skrf.io.general.read_all`  returns a :class:`dict`  with keys equal to the filenames, and values equal to objects. To load all **skrf** files in the ``skrf/data/`` directory which contain the string ``\'wr2p2\'``.
+Frequently there is an entire directory of files that need to be analyzed. The function :func:`~skrf.io.general.read_all` is used to create objects from all files in a directory quickly. Given a directory of skrf-readable files, :func:`~skrf.io.general.read_all`  returns a :class:`dict`  with keys equal to the filenames, and values equal to objects. To load all **skrf** files in the `skrf/data/` directory which contain the string `\'wr2p2\'`.
 	
 .. ipython::
 	
