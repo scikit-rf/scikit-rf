@@ -189,7 +189,7 @@ def git_version( modname):
     return out
     
 
-def stylely():
+def stylely(rc_dict={}):
     '''
     loads the rc-params file from skrf.data 
     '''
@@ -197,6 +197,8 @@ def stylely():
     from skrf.data import mpl_rc_fname # delayed to solve circular import
     rc = mpl.rc_params_from_file(mpl_rc_fname)
     mpl.rcParams.update(rc)
+    mpl.rcParams.update(rc_dict)
+    
     
 
 

@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -j 4
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = build
@@ -38,7 +38,7 @@ all: notebooks  html
 
 notebooks:
 	for file in ./source/tutorials/*.ipynb; do\
-	  runipy -q --pylab -o $$file;\
+	  runipy  --pylab -o $$file;\
 	done
 	cd ./source/tutorials;ipython nbconvert --to rst *.ipynb
 	sed -i 's/``/`/g' ./source/tutorials/*.rst
