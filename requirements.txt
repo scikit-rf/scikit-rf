@@ -1,6 +1,7 @@
 ipython >=1.1
+runipy >= 0.0.4
 numpy >= 1.6
 scipy >= 0.12
 matplotlib >= 1.0
 sphinx-bootstrap-theme >=3.0
-runipy>=0.0.4
+
