@@ -43,7 +43,7 @@ def go(source_dir):
     print '----- starting NB Evaluation and Conversion'
     
     nb_files = recursive_find_by_filter(source_dir, '*.ipynb')
-    print 'source dir  = %s'%source_dir
+    print 'source dir is  %s'%source_dir
     for nb_file in nb_files:
         print nb_file
         basename = os.path.basename(nb_file)
