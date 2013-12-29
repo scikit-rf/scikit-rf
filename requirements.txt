@@ -1,5 +1,5 @@
-numpy == 1.6
-matplotlib == 1.0
+numpy >= 1.6
+matplotlib >= 1.0
 sphinx-bootstrap-theme >=0.3.0
 pyzmq>=2.2.0
 tornado>=3.1.1
