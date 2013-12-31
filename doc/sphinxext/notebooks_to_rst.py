@@ -5,6 +5,9 @@ from IPython.nbconvert.exporters.rst import RSTExporter
 from IPython.nbconvert.nbconvertapp import NbConvertApp
 from runipy.notebook_runner import NotebookRunner
 
+import logging
+log_format = '%(asctime)s %(message)s'
+log_datefmt = '%m/%d/%Y %I:%M:%S %p'
 
 
 
@@ -41,7 +44,7 @@ def find_replace(filename, pattern, replace):
 
 def go(source_dir):
     print '----- starting NB Evaluation and Conversion'
-    
+    logging.basicConfig(level=logging.DEBUG, format=log_format, datefmt=log_datefmt)
     nb_files = recursive_find_by_filter(source_dir, '*.ipynb')
     print 'source dir is  %s'%source_dir
     for nb_file in nb_files:
@@ -68,5 +71,8 @@ def go(source_dir):
         writer.build_directory = build_directory
         writer.write(output, resources, notebook_name=notebook_name)
         rst_file = nb_file[:nb_file.rfind('.')]+'.'+exporter.file_extension
+        
+        # this could be improved to only change the double quotes from
+        # cross references (ie  :.*:``.*`` -> :.*:`.*`)
         find_replace(rst_file,r'``','`')
         
