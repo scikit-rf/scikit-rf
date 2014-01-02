@@ -2,7 +2,7 @@
 
 .. image:: _static/scikit-rf-title-flat.png
 
-
+|
 .. toctree::
     :maxdepth: 2
     
