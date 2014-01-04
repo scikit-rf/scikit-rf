@@ -1,6 +1,8 @@
 |
 
 .. image:: _static/scikit-rf-title-flat.png
+    :height: 150
+
 
 |
 .. toctree::

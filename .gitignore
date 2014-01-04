@@ -7,7 +7,6 @@
 *generated*
 doc/build/*
 doc/gh-pages
-doc/source/_static/*
 build/
 scikit_rf.egg-info/
 dist/
