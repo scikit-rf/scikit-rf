@@ -1,5 +1,5 @@
 numpy >= 1.6
-matplotlib >= 1.4
+-e git://github.com/matplotlib/matplotlib.git#egg=matplotlib
 sphinx-bootstrap-theme >=0.3.0
 pyzmq>=2.2.0
 tornado>=3.1.1
@@ -8,4 +8,4 @@ ipython == 1.1.0
 runipy >= 0.0.4
 scipy >= 0.10.1
 PyVISA == 1.4
--e git://github.com/matplotlib/matplotlib.git#egg=matplotlib
+
