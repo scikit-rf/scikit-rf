@@ -46,7 +46,7 @@ extensions = [
 
 
 if run_notebooks:
-    source_dir = '.'
+    source_dir = 'source/'
     from notebooks_to_rst import go
     go(source_dir)
 
