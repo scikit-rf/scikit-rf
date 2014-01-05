@@ -4,7 +4,7 @@
 NetworkSet
 ***********************
 .. currentmodule:: skrf.networkSet
-.. contents::
+
 
 
 .. ipython::
@@ -14,17 +14,16 @@ NetworkSet
 	
 	In [145]: ion()
 	
-	In [146]: rcParams['savefig.dpi'] =120
-	
-	In [147]: rcParams['figure.figsize'] = [4,3]
-	
-	In [147]: rcParams['figure.subplot.left'] = 0.15
-	
-	In [147]: clf()
+	In [147]: clf();close('all')
 
-The :class:`~NetworkSet` object
-represents an unordered  set of networks and provides  methods for 
-calculating statistical quantities and displaying uncertainty bounds.
+
+Introduction
+-----------------
+
+
+The :class:`NetworkSet` object represents an unordered  set of networks. It 
+provides  methods for calculating statistical quantities and displaying
+uncertainty bounds on such a set.
 
 Creating a :class:`NetworkSet`
 -------------------------------
@@ -86,6 +85,11 @@ plot the log-magnitude of the s-parameters of each Network,
 (see :doc:`plotting` for details on :class:`~skrf.network.Network`
 ploting methods).
 
+
+.. ipython::
+
+    In [138]: rf.stylely({'savefig.dpi':120})
+  
 .. ipython::
     
     @savefig ns_plot_s_db.png
@@ -106,7 +110,7 @@ average of the set, access the `mean_s` property
 .. note:: 
 
     Because the statistical operator methods are generated upon initialization
-    they are not explicitly documented in this manual. 
+    their API is not explicitly documented in this manual. 
     
 The naming convention of the statistical operator properties are `NetworkSet.function_parameter`, where `function` is the name of the 
 statistical function, and `parameter` is the Network parameter to operate 
@@ -162,29 +166,19 @@ Uncertainty bounds can be plotted through the methods
     @savefig ns_plot_uncertainty_bounds_s_deg.png
     In [24]: ro_ns.plot_uncertainty_bounds_s_deg()
 
+
+Note that the uncertainty bounds plotted above are calculated  **after** 
+the complex number has been projected onto the specified scalar component.
+Thus, the first plot represents uncerainty in the magnitude component **only**.
+
 Reading and Writing
 ---------------------
 
-NetworkSets can be saved to disk using skrf's native IO capabilities. This 
-can be ccomplished through the :func:`NetworkSet.write` method.
+For temporary data storage, NetworkSets can be saved and read from disk 
+using  the functions :func:`~skrf.io.general.read` and :func:`~skrf.io.general.write`. 
+
 
 .. ipython::
     :verbatim:
-    
-    In [24]: ro_set.write()
-    
-    In [24]: ls
-    ro set.ns
-    
-.. note:: 
-
-    Note that if the NetworkSet's `name` attribute is not assigned, then you must provide a filename to :func:`NetworkSet.write`. 
-
-Alternatively, you can write the Network set by directly calling the 
-:func:`~skrf.io.general.write` function. In either case, the resultant 
-file can be read back into memory using :func:`~skrf.io.general.read`.
-    
-.. ipython::
-    :verbatim:
-    
+    In [24]: rf.write('ro set.ns', ro_ns)
     In [24]: ro_ns = rf.read('ro set.ns')

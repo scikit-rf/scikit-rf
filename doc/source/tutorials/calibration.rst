@@ -3,20 +3,19 @@
 Calibration
 ***************
 .. currentmodule:: skrf.calibration.calibration
-.. contents::
 
-Intro
+
+Introduction
 ---------------
 
 This tutorial illustrates how to use **skrf** to calibrate data taken from a VNA. The explanation of calibration theory and calibration kit design is beyond the scope of this  tutorial. Instead, this tutorial  describes how to calibrate a device under test (DUT), assuming you have measured an acceptable set of standards, and have a coresponding set ideal responses.
-
-**skrf**'s default calibration algorithms are generic in that they will work with any set of standards. If you supply more calibration standards than is needed, skrf will implement a simple least-squares solution.
 
 
 Creating a Calibration
 ----------------------------
 
-Calibrations are performed through a :class:`Calibration` class. Creating 
+
+Calibrations are performed through a :class:`Calibration2` class. In General, 
 a :class:`Calibration` object requires at least two pieces of information:
 
 *   a list of measured :class:`~skrf.network.Network`'s
@@ -24,14 +23,16 @@ a :class:`Calibration` object requires at least two pieces of information:
 
 The :class:`~skrf.network.Network` elements in each list must all be similar (same #ports, frequency info, etc) and must be aligned to each other, meaning the first element of ideals list must correspond to the first element of measured list.
 
-Optionally, other information can be provided when relevent such as,
 
-*    calibration algorithm
-*    enforce eciprocity of embedding networks
-*    etc 
+The following algorithms are supported in part or in full. See each class
+for specifics.
 
-When this information is not provided skrf will determine it through 
-inspection, or use a default value.
+* :class:`OnePort`
+* :class:`SOLT`
+* :class:`EightTerm`
+* :class:`TRL`
+
+
 
 Saving and Recalling a Calibration
 -----------------------------------
