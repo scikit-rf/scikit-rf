@@ -3,9 +3,8 @@
 *******************
 Networks
 *******************
-.. currentmodule:: skrf.network
-#.. contents::
 
+.. currentmodule:: skrf.network
 
 
 .. ipython::
@@ -16,13 +15,6 @@ Networks
 	
 	In [145]: ion()
 	
-	In [146]: rcParams['savefig.dpi'] =120
-	
-	In [147]: rcParams['figure.figsize'] = [4,3]
-	
-	In [147]: rcParams['figure.subplot.left'] = 0.15
-	
-	In [147]: clf()
 	
 
 
@@ -35,7 +27,14 @@ For this tutorial, and the rest of the scikit-rf documentation, it is  assumed t
 
   In [138]: import skrf as rf
 
-If this produces an error, please see :doc:`installation`.  The code in this tutorial assumes that you are in the directory `scikit-rf/doc`.
+If this produces an import error, please see :doc:`installation`.  The code in this tutorial assumes that you are in the directory `scikit-rf/doc`.
+
+If you would like to use skrf's plot styling, call stylely.
+
+.. ipython::
+
+  In [138]: rf.stylely()
+
 
 Creating Networks
 -------------------------

@@ -1,7 +1,7 @@
 |
 
 .. image:: _static/scikit-rf-title-flat.png
-    :height: 150
+    :height: 100
 
 
 |

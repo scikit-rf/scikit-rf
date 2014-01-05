@@ -43,6 +43,10 @@ def find_replace(filename, pattern, replace):
     
 
 def go(source_dir):
+    print os.listdir(source_dir)
+    if not os.path.exists(source_dir):
+        raise ValueError ('source_dir doesnt exist')
+        
     print '----- starting NB Evaluation and Conversion'
     logging.basicConfig(level=logging.DEBUG, format=log_format, datefmt=log_datefmt)
     nb_files = recursive_find_by_filter(source_dir, '*.ipynb')

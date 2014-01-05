@@ -14,7 +14,7 @@
 import sys, os
 import sphinx_bootstrap_theme
 
-run_notebooks = True
+run_notebooks = False
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
@@ -46,7 +46,7 @@ extensions = [
 
 
 if run_notebooks:
-    source_dir = 'source/'
+    source_dir = '.'
     from notebooks_to_rst import go
     go(source_dir)
 
@@ -124,10 +124,14 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 html_theme = 'bootstrap'
 html_theme_options = {
+    'navbar_title': "scikit-rf Docs",
     'source_link_position': "footer",
     'bootswatch_theme': "flatly",
     'navbar_sidebarrel': True,
     'bootstrap_version': "3",
+    #'navbar_links': [
+    #    ("Home Page", "http://scikit-rf.org", True),
+    #],
 
     }
 #html_style = 'scipy.css'
