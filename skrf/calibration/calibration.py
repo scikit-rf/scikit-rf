@@ -1,5 +1,3 @@
-
-
 '''
 .. module:: skrf.calibration.calibration
 ================================================================
@@ -7,7 +5,8 @@ calibration (:mod:`skrf.calibration.calibration`)
 ================================================================
 
 
-Contains the Calibration class, and supporting functions
+This module  provides objects for VNA calibration. Specific algorithms 
+inheret from the common :class:`Calibration`.
 
 Calibration Class
 ==================
@@ -62,6 +61,20 @@ from ..networkSet import NetworkSet, s_dict_to_ns
 
     
 class Calibration(object):
+    '''
+    Base class  for calibration objects. 
+    
+    This class implements the common mechanism for all calibration 
+    algorithms. Specific calibration algorithms should inheret this  
+    class and overide the methods:
+        *  :func:`Calibration.run`
+        *  :func:`Calibration.apply_cal`
+        *  :func:`Calibration.embed`
+    
+    implemented in the. 
+    
+    
+    '''
     def __init__(self, measured, ideals, sloppy_input=False,
         is_reciprocal=True,name=None,*args, **kwargs):
         '''
@@ -76,6 +89,24 @@ class Calibration(object):
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
             The order must align with `ideals` list ( or use sloppy_input
+        
+        sloppy_input :  Boolean.
+                Allows ideals and measured lists to be 'aligned' based on
+                the network names.
+        
+        is_reciprocal : Boolean
+                enables the reciprocity assumption on the calculation of the
+                error_network, which is only relevant for one-port
+                calibrations.
+
+        name: string
+                the name of calibration, just for your
+                        convenience [None].
+        
+        \*\*kwargs : key-word arguments
+                stored in self.kwargs, which may be used by specific algorithms
+
+        
         '''
         
         # allow them to pass di
@@ -385,6 +416,20 @@ class Calibration(object):
 class OnePort(Calibration):
     '''
     Standard algorithm for a one port calibration.
+    
+    Solves the linear set of equations:
+    
+    .. math::
+        e_{11}\mathbf{i_1m_1}-\Delta e\,\mathbf{m_1}+e_{00}=\mathbf{i_1}
+        
+        e_{11}\mathbf{i_2m_2}-\Delta e\,\mathbf{m_2}+e_{00}=\mathbf{i_2}
+        
+        e_{11}\mathbf{i_3m_3}-\Delta e\,\mathbf{m_3}+e_{00}=\mathbf{i_3}
+    
+        ...
+    Where m's and i's are the measured and ideal reflection coefficients,
+    respectively. 
+    
     
     If more than three standards are supplied then a least square
     algorithm is applied.
@@ -1084,20 +1129,38 @@ class EightTerm(Calibration):
 class TRL(EightTerm):
     '''
     Thru Reflect Line 
+    
+    .. warning::
+        This version of TRL does not solve for the Reflect standard yet
+
     '''
     
     def __init__(self, measured, ideals,line_approx=None,*args, **kwargs):
         '''
-        Init. 
+        Initialize a TRL calibration 
+        
+        Note that the order of `measured` and `ideals` is strict. 
+        it must be [Thru, Reflect, Line]
+        
+        .. warning::
+            This version of TRL does not solve for the Reflect standard yet
+
+        
+        Notes
+        -------
+        This implementation inherets from :class:`EightTerm`. dont 
+        forget to pass switch_terms.
+        
         
         Parameters
         --------------
-        measured : 
-        ideals : 
-        switch_terms : tuple of :class:`~skrf.network.Network` objects
-            the pair of switch terms in the order (forward, reverse)
+        measured : list of :class:`~skrf.network.Network`
+             must be in order [Thru, Reflect, Line]
+        ideals : list of :class:`~skrf.network.Network`
+            must be in order [Thru, Reflect, Line]
             
-        \*args, \*\*kwargs : 
+        \*args, \*\*kwargs :  passed to EightTerm.__init__
+            dont forget the `switch_terms` argument is important
             
             
         '''
@@ -1324,7 +1387,6 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
         coefs_8term['k second'] = k_second
     return coefs_8term
  
-
 def convert_8term_2_12term(coefs_8term):
     '''
     '''
@@ -1360,10 +1422,6 @@ def convert_8term_2_12term(coefs_8term):
     coefs_12term['reverse transmission tracking'] =  Etr
     return coefs_12term
 
-
-
-
-
 def align_measured_ideals(measured, ideals):
     '''
     Aligns two lists of networks based on the intersection of their name's.
@@ -1374,8 +1432,7 @@ def align_measured_ideals(measured, ideals):
     ideals = [ ideal for measure in measured\
         for ideal in ideals if ideal.name in measure.name]
     return measured, ideals
-    
-    
+        
 def two_port_error_vector_2_Ts(error_coefficients):
     ec = error_coefficients
     npoints = len(ec['k'])

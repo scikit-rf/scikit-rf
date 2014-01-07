@@ -47,6 +47,7 @@ extensions = [
     'ipython_directive',
     'matplotlib.sphinxext.only_directives',
     'matplotlib.sphinxext.plot_directive',
+    #'visa',
     ]
 
 

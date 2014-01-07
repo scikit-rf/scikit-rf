@@ -15,8 +15,8 @@ Creating a Calibration
 ----------------------------
 
 
-Calibrations are performed through a :class:`Calibration2` class. In General, 
-a :class:`Calibration` object requires at least two pieces of information:
+Calibrations are performed through a :class:`Calibration` class. In General, 
+a :class:`Calibration` object requires at least two arguments:
 
 *   a list of measured :class:`~skrf.network.Network`'s
 *   a list of ideal :class:`~skrf.network.Network`'s
