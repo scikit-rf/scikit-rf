@@ -43,6 +43,9 @@ notebooks:
 	cd ./source/tutorials;ipython nbconvert --to rst *.ipynb
 	sed -i 's/``/`/g' ./source/tutorials/*.rst
 
+clean-generated:
+	find source/ -name generated  -exec rm -rf {} \;
+
 clean:
 	-rm -rf $(BUILDDIR)/*
 
