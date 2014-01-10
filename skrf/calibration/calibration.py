@@ -8,24 +8,24 @@ calibration (:mod:`skrf.calibration.calibration`)
 This module  provides objects for VNA calibration. Specific algorithms 
 inheret from the common :class:`Calibration`.
 
-Calibration Class
-==================
+Parent Class
+--------------
 
 .. autosummary::
    :toctree: generated/
 
    Calibration
 
-One port  Classes
-==================
+One port  
+------------------
 
 .. autosummary::
    :toctree: generated/
    
    OnePort
    
-Two port  Classes
-==================
+Two port  
+--------------------
 
 .. autosummary::
    :toctree: generated/
@@ -37,7 +37,7 @@ Two port  Classes
 '''
 import numpy as npy
 from numpy import linalg
-from numpy import mean, std, angle, real, imag, exp
+from numpy import mean, std, angle, real, imag, exp, ones, zeros
 import pylab as plb
 import os
 from copy import deepcopy, copy
@@ -56,8 +56,38 @@ from ..networkSet import NetworkSet, s_dict_to_ns
 #from io.general import write
 #from io.general import read_all_networks
 
-
-
+global coefs_list_12term
+coefs_list_12term =[
+    'forward directivity',
+    'forward source match',
+    'forward reflection tracking',
+    'forward transmission tracking',
+    'forward load match',
+    'reverse directivity',
+    'reverse load match',
+    'reverse reflection tracking',
+    'reverse transmission tracking',
+    'reverse source match',
+    ]
+    
+global coefs_list_8term
+coefs_list_8term = [
+    'forward directivity',
+    'forward source match',
+    'forward reflection tracking',
+    'reverse directivity',
+    'reverse load match',
+    'reverse reflection tracking',
+    'forward switch term',
+    'reverse switch term',
+    'k'
+    ]
+global coefs_list_3term
+coefs_list_3term = [
+    'directivity',
+    'source match',
+    'reflection tracking',
+    ]
 
     
 class Calibration(object):
@@ -240,6 +270,18 @@ class Calibration(object):
     @property
     def coefs(self):
         '''
+        Dictionary or error coefficients in form of numpy arrays
+        
+        The keys of this will be different depending on the 
+        Calibration Model. This dictionary should be populated
+        when the `run()` function is called.  
+        
+        See Also
+        ----------
+        coefs_3term
+        coefs_8term
+        coefs_12term
+        coefs_ntwks
         '''
         try:
             return self._coefs
@@ -247,6 +289,18 @@ class Calibration(object):
             self.run()
             return self._coefs
     
+    @coefs.setter
+    def coefs(self,val):
+        '''
+        '''
+        self._coefs = val
+    
+    def update_coefs(self, coefs_dict):
+        '''
+        update currect dict of error coefficients
+        
+        '''
+        self._coefs.update(coefs_dict)
     
     @property
     def output_from_run(self):
@@ -264,46 +318,121 @@ class Calibration(object):
     @property
     def coefs_ntwks(self):
         '''
+        Dictionary or error coefficients in form of Network objects
         '''
         return s_dict_to_ns(self.coefs, self.frequency).to_dict()
     
     @property
     def coefs_3term(self):
         '''
-        '''
+        Dictionary of error coefficients for One-port Error model 
         
+        Contains the keys:
+            * directivity
+            * forward source match
+            * forward reflection tracking'
+        '''
+        return dict([(k, self.coefs.get(k)) for k in [\
+            'directivity',
+            'source match',
+            'reflection tracking',
+            ]])
+    @property
+    def coefs_3term_ntwks(self):
+        '''
+        Dictionary or error coefficients in form of Network objects
+        '''
+        return s_dict_to_ns(self.coefs_3term, self.frequency).to_dict()
+    
     @property
     def coefs_8term(self):
-        return dict([(k, self.coefs.get(k)) for k in [\
-            'forward directivity',
-            'forward source match',
-            'forward reflection tracking',
-            
-            'reverse directivity',
-            'reverse load match',
-            'reverse reflection tracking',
-                        
-            'forward switch term',
-            'reverse switch term',
-            'k'
-            ]])
+        '''
+        Dictionary of error coefficients for 8-term (Error-box) Model
+        
+        
+        Contains the keys:
+            * forward directivity
+            * forward source match
+            * forward reflection tracking
+            * reverse directivity
+            * reverse load match
+            * reverse reflection tracking
+            * forward switch term
+            * reverse switch term
+            * k
+        
+        Notes
+        --------
+        If this calibration uses the 12-term model, then 
+        :func:`convert_12term_2_8term` is called. See [1]_
+        
+        References 
+        -------------
+        
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
+                Model including Switch Terms" by Roger B. Marks
+          
+        
+        '''
+        
+        d = self.coefs
+        
+        for k in coefs_list_8term:
+            if k not in d:
+                d = convert_12term_2_8term(d)
+                
+        return d
+    @property
+    def coefs_8term_ntwks(self):
+        '''
+        Dictionary or error coefficients in form of Network objects
+        '''
+        return s_dict_to_ns(self.coefs_8term, self.frequency).to_dict()    
     
     @property 
     def coefs_12term(self):
-        return dict([(k, self.coefs.get(k)) for k in [\
-            'forward directivity',
-            'forward source match',
-            'forward reflection tracking',
-            'forward transmission tracking',
-            'forward load match',
-
-            'reverse directivity',
-            'reverse load match',
-            'reverse reflection tracking',
-            'reverse transmission tracking',
-            'reverse source match',
-            ]])
-    
+        '''
+        Dictionary of error coefficients for 12-term Model
+        
+        Contains the keys:
+            * forward directivity
+            * forward source match
+            * forward reflection tracking
+            * forward transmission tracking
+            * forward load match
+            * reverse directivity
+            * reverse load match
+            * reverse reflection tracking
+            * reverse transmission tracking
+            * reverse source match
+        
+        Notes
+        --------
+        If this calibration uses the 8-term model, then 
+        :func:`convert_8term_2_12term` is called. See [1]_
+        
+         
+        References 
+        -------------
+        
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
+                Model including Switch Terms" by Roger B. Marks
+                
+                 
+        '''
+        d = self.coefs
+        
+        for k in coefs_list_12term:
+            if k not in d:
+                d = convert_8term_2_12term(d)
+                
+        return d
+    @property
+    def coefs_12term_ntwks(self):
+        '''
+        Dictionary or error coefficients in form of Network objects
+        '''
+        return s_dict_to_ns(self.coefs_12term, self.frequency).to_dict()
     
     
     @property
@@ -419,6 +548,7 @@ class OnePort(Calibration):
     
     Solves the linear set of equations:
     
+    
     .. math::
         e_{11}\mathbf{i_1m_1}-\Delta e\,\mathbf{m_1}+e_{00}=\mathbf{i_1}
         
@@ -427,12 +557,24 @@ class OnePort(Calibration):
         e_{11}\mathbf{i_3m_3}-\Delta e\,\mathbf{m_3}+e_{00}=\mathbf{i_3}
     
         ...
-    Where m's and i's are the measured and ideal reflection coefficients,
-    respectively. 
+        
+    Where **m**'s and **i**'s are the measured and ideal reflection coefficients,
+    respectively.  
     
     
     If more than three standards are supplied then a least square
     algorithm is applied.
+    
+    See [1]_  and [2]_
+    
+    References 
+    -------------
+    
+    .. [1] http://na.tm.agilent.com/vnahelp/tip20.html
+    
+    .. [2] Bauer, R.F., Jr.; Penfield, Paul, "De-Embedding and Unterminating," Microwave Theory and Techniques, IEEE Transactions on , vol.22, no.3, pp.282,288, Mar 1974 
+        doi: 10.1109/TMTT.1974.1128212 
+        URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1128212&isnumber=25001
     '''
     def __init__(self, measured, ideals,*args, **kwargs):
         '''
@@ -443,16 +585,13 @@ class OnePort(Calibration):
         
         Parameters
         -----------
-        measured : list of :class:`~....network.Network` objects or numpy.ndarray
-            a list of the measured reflection coefficients. The elements
-            of the list can  either a kxnxn numpy.ndarray, representing a
-            s-matrix, or list of  1-port :class:`~skrf.network.Network`
-            objects.
-        ideals : list of :class:`~skrf.network.Network` objects or numpy.ndarray
-            a list of the ideal reflection coefficients. The elements
-            of the list can  either a kxnxn numpy.ndarray, representing a
-            s-matrix, or list of  1-port :class:`~skrf.network.Network`
-            objects.
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use `sloppy_input`)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use sloppy_input
     
         Returns
         -----------
@@ -637,8 +776,10 @@ class SOLT(Calibration):
     '''
     Traditional 12-term, full two-port calibration.
     
-    SOLT is the traditional, fully determined, two-port calibration. 
-    This implementation is based off of Doug Rytting's work in [#] .
+    SOLT is the traditional, fully determined, two-port calibration
+    originally developed in [1]_ , but this implementation is based off 
+    of Doug Rytting's work in [2]_.
+    
     Although the acronym SOLT implies the use of 4 standards, skrf's 
     algorithm can accept any number of reflect standards,  If  
     more than 3 reflect standards are provided a least-squares solution 
@@ -647,22 +788,33 @@ class SOLT(Calibration):
     Redundant thru measurements can also be used, through the `n_thrus`
     parameter. See :func:`__init__`
      
+    References 
+    ------------
+    .. [1] Calibration Process of Automatic Network Analyzer Systems'  by Stig Rehnmark
+    .. [2] "Network Analyzer Error Models and Calibration Methods"  by Doug Rytting
     
-    
-    .. [#] "Network Analyzer Error Models and Calibration Methods" 
-        by Doug Rytting
     
     '''
     def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
         '''
         SOLT initializer 
         
+        The order of the standards must align. The thru standard[s] 
+        must be last in the list. Use the `n_thrus` argument if you 
+        want to use multiple thru standards
+        
         Parameters
         -------------
-        measured : list or dict of :class:`Network` objects
-            measured Networks. must align with ideals
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use `sloppy_input`)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use sloppy_input
             
-        
+        n_thrus : int
+            number of thru measurments
         '''
         self.type = 'SOLT'
         self.n_thrus = n_thrus
@@ -792,18 +944,47 @@ class SOLT(Calibration):
         return measured
         
 class EightTerm(Calibration):
+    '''
+    General EightTerm (aka Error-box) Two-port calibration
+    
+    This is basically an extension of the one-port algorithm to two-port
+    measurements, A least squares estimator is used to determine  the 
+    error coefficients. No self-calibration takes place.  
+    
+    Notes
+    -------
+    An important detail of implementing the error-box 
+    model is that the internal switch must be correctly accounted for. 
+    This is done through what switch_terms.
+        
+    See [1]_ and [2]_ for details 
+    
+    References 
+    ------------
+        
+    .. [1] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047 
+        
+    .. [2] "Network Analyzer Error Models and Calibration Methods" by Doug Rytting
+    
+    '''
     def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
         '''
+        
+        
         Parameters
         --------------
-        measured : 
-        ideals : 
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use `sloppy_input`)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use sloppy_input
+            
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
             
-        \*args, \*\*kwargs : 
-            
-            
+   
         '''
         self.type = 'EightTerm'
         self.switch_terms = switch_terms
@@ -820,7 +1001,7 @@ class EightTerm(Calibration):
         
         In order to use the 8-term error model on a VNA which employs a 
         switched source, the effects of the switch must be accounted for. 
-        This is done through `switch terms` as described in  [#]_ . The 
+        This is done through `switch terms` as described in  [1]_ . The 
         two switch terms are defined as, 
         
         .. math :: 
@@ -851,7 +1032,7 @@ class EightTerm(Calibration):
         References
         ------------
         
-        .. [#] "Formulations of the Basic Vector Network Analyzer Error
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
                 Model including Switch Terms" by Roger B. Marks
         '''
         if self.switch_terms is not None:
@@ -878,7 +1059,9 @@ class EightTerm(Calibration):
     
     def terminate(self, ntwk):
         '''
-        Terminate a  network with  switch terms
+        Terminate a  network with  switch terms 
+        
+        see [1]_
         
         
         Parameters
@@ -903,7 +1086,7 @@ class EightTerm(Calibration):
         References
         ------------
         
-        .. [#] "Formulations of the Basic Vector Network Analyzer Error
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
                 Model including Switch Terms" by Roger B. Marks
         '''
         if self.switch_terms is not None:
@@ -1263,6 +1446,37 @@ class Normalization(Calibration):
 
 
 ## Functions
+
+def ideal_coefs_12term(frequency):
+    '''
+    An ideal set of 12term calibration coeficients 
+    
+    Produces a set of error coefficients, that would result if the 
+    error networks were matched thrus
+    '''
+    
+    zero = zeros(len(frequency), dtype='complex')
+    one = ones(len(frequency), dtype='complex')
+    ideal_coefs = {}
+    ideal_coefs.update({k:zero for k in [\
+        'forward directivity',
+        'forward source match',
+        'forward load match',
+        'reverse directivity',
+        'reverse load match',
+        'reverse source match',
+        ]})
+
+    ideal_coefs.update({k:one for k in [\
+        'forward reflection tracking',
+        'forward transmission tracking',
+        'reverse reflection tracking',
+        'reverse transmission tracking',
+        ]})
+    
+    return ideal_coefs
+    
+    
 def determine_line(thru_m, line_m, line_approx=None):
     '''
     Determine S21 of a matched line. 

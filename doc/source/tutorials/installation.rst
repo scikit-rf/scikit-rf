@@ -77,8 +77,7 @@ Optional
 *    pandas http://pandas.pydata.org/ - for xls spreadsheet export
 *    xlrd/xlwt http://www.python-excel.org/ - for xls reading/writing
 
-.. _Python: http://www.python.org/
-.. _pythonxy: http://code.google.com/p/pythonxy/
+
 
 Debian-Based Linux
 ======================
@@ -92,5 +91,8 @@ Once `setuptools` is installed you can install skrf through `easy_install` ::
 	easy_install scikit-rf
 
 
+.. _pyvisa: http://pyvisa.sourceforge.net/pyvisa/
+.. _Python: http://www.python.org/
+.. _pythonxy: http://code.google.com/p/pythonxy/
 
 

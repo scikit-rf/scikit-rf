@@ -180,5 +180,7 @@ using  the functions :func:`~skrf.io.general.read` and :func:`~skrf.io.general.w
 
 .. ipython::
     :verbatim:
+    
     In [24]: rf.write('ro set.ns', ro_ns)
+    
     In [24]: ro_ns = rf.read('ro set.ns')

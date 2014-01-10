@@ -42,11 +42,11 @@ class PNA(GpibInstrument):
     .. hlist:: 
         :columns: 2
         
-        * :func:`get_oneport`
-        * :func:`get_twoport`
-        * :func:`get_frequency`
-        * :func:`get_network`
-        * :func:`get_network_all_meas`
+        * :func:`~PNA.get_oneport`
+        * :func:`~PNA.get_twoport`
+        * :func:`~PNA.get_frequency`
+        * :func:`~PNA.get_network`
+        * :func:`~PNA.get_network_all_meas`
     
     
     Simple IO
@@ -54,11 +54,11 @@ class PNA(GpibInstrument):
     .. hlist:: 
         :columns: 2
         
-        * :func:`get_data_snp`
-        * :func:`get_data`
-        * :func:`get_sdata`
-        * :func:`get_fdata`
-        * :func:`get_rdata`
+        * :func:`~PNA.et_data_snp`
+        * :func:`~PNA.get_data`
+        * :func:`~PNA.get_sdata`
+        * :func:`~PNA.get_fdata`
+        * :func:`~PNA.get_rdata`
     
     
     Examples
@@ -95,7 +95,7 @@ class PNA(GpibInstrument):
         front_panel_lockout : Boolean
             lockout front panel during operation. 
         \*\*kwargs : 
-            passed to :func:`visa.GpibInstrument.__init__`
+            passed to  `visa.GpibInstrument.__init__`
         '''
         GpibInstrument.__init__(self,
             'GPIB::'+str(address),
