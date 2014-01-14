@@ -199,7 +199,47 @@ def stylely(rc_dict={}):
     mpl.rcParams.update(rc)
     mpl.rcParams.update(rc_dict)
     
+
+def dict_2_recarray(d, delim, dtype):
+    '''
+    Turns a dictionary of structured keys to a record array of objects
     
+    This is useful if you save data-base like meta-data in the form 
+    or file-naming conventions, aka 'the poor-mans database'
+   
+    
+    Examples
+    -------------
+    
+    given a directory of networks like:
+    
+    >>> ls
+    a1,0.0,0.0.s1p    a1,3.0,3.0.s1p    a2,3.0,-3.0.s1p   b1,-3.0,3.0.s1p 
+    ...
+    
+    you can sort based on the values or each field, after defining their
+    type with `dtype`. The `values` field accesses the objects. 
+    
+    
+    >>>d =rf.ran('/tmp/' )
+    >>>delim =','
+    >>>dtype = [('name', object),('voltage',float),('current',float)]
+    >>>ra = dict_2_recarray(d=rf.ran(dir), delim=delim, dtype =dtype)
+    
+    then you can sift like you do with numpy arrays
+    
+    >>>ra[ra['voltage']<3]['values']
+    array([1-Port Network: 'a2,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
+           1-Port Network: 'b1,0.0,3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
+           1-Port Network: 'a1,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
+    '''
+    
+    split_keys = [tuple(k.split(delim)+[d[k]]) for k in d.keys()]
+    x = npy.array(split_keys, dtype=dtype+[('values',object)])
+    return x
+
+
+
 
 
 # general purpose objects 

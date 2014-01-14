@@ -329,8 +329,8 @@ class Calibration(object):
         
         Contains the keys:
             * directivity
-            * forward source match
-            * forward reflection tracking'
+            * source match
+            * reflection tracking'
         '''
         return dict([(k, self.coefs.get(k)) for k in [\
             'directivity',
