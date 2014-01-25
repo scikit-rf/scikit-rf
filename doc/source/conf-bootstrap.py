@@ -14,7 +14,7 @@
 import sys, os
 import sphinx_bootstrap_theme
 
-run_notebooks = False
+run_notebooks = True
 notebook_source_dir = '.'
 if run_notebooks:
     from notebooks_to_rst import go
