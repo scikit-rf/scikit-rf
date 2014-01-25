@@ -1000,9 +1000,9 @@ class EightTerm(Calibration):
     -------
     An important detail of implementing the error-box 
     model is that the internal switch must be correctly accounted for. 
-    This is done through the measurement of  switch_terms [3]_.
+    This is done through the measurement of  :ref:`switch terms`.
         
-    :term:`environment`
+    
     
     References 
     ------------
@@ -1011,7 +1011,7 @@ class EightTerm(Calibration):
         
     .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods. RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
     
-    .. [3] R.B. Marks, "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," in ARFTG Conference Digest-Fall, 50th, 1997, vol. 32, pp. 115-126.
+    
 
     '''
     def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
