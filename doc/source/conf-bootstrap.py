@@ -14,11 +14,6 @@
 import sys, os
 import sphinx_bootstrap_theme
 
-run_notebooks = True
-notebook_source_dir = '.'
-if run_notebooks:
-    from notebooks_to_rst import go
-    go(notebook_source_dir)
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
@@ -34,6 +29,15 @@ if run_notebooks:
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, os.path.abspath('../sphinxext'))
+
+
+run_notebooks = True
+notebook_source_dir = '.'
+if run_notebooks:
+    from notebooks_to_rst import go
+    go(notebook_source_dir)
+
+
 extensions = [
     #'notebook_sphinxext_alex',
     'sphinx.ext.autodoc',
