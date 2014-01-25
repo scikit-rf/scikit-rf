@@ -1000,7 +1000,7 @@ class EightTerm(Calibration):
     -------
     An important detail of implementing the error-box 
     model is that the internal switch must be correctly accounted for. 
-    This is done through the measurement of  :ref:`switch terms`.
+    This is done through the measurement of  :term:`switch terms`.
         
     
     
