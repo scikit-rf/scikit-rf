@@ -142,7 +142,7 @@ class PNA(GpibInstrument):
             self._vpp43.VI_GPIB_REN_DEASSERT_GTL,
             )
     
-    def rst(self):
+    def reset(self):
         '''
         reset 
         '''
@@ -691,7 +691,9 @@ class PNA(GpibInstrument):
         '''
         Get switch terms and return them as a tuple of Network objects. 
         
-        Dont use this yet. 
+        Returns 
+        --------
+        forward, reverse : oneport switch term Networks 
         '''
         
         p1,p2 = ports

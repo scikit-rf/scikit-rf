@@ -100,6 +100,7 @@ Misc Functions
     :toctree: generated/
 
     average
+    two_port_reflect
     Network.nudge
 
 
@@ -3924,8 +3925,7 @@ def impedance_mismatch(z1, z2):
 
 def two_port_reflect(ntwk1, ntwk2):
     '''
-    generates a two-port reflective two-port, from two
-    one-ports.
+    Generates a two-port reflective two-port, from two one-ports.
 
 
     Parameters

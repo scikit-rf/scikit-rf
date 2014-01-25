@@ -6,9 +6,9 @@ calibration (:mod:`skrf.calibration.calibration`)
 
 
 This module  provides objects for VNA calibration. Specific algorithms 
-inheret from the common :class:`Calibration`.
+inheret from the common base class  :class:`Calibration`.
 
-Parent Class
+Base Class
 --------------
 
 .. autosummary::
@@ -16,16 +16,16 @@ Parent Class
 
    Calibration
 
-One port  
-------------------
+One port Calibrations
+----------------------
 
 .. autosummary::
    :toctree: generated/
    
    OnePort
    
-Two port  
---------------------
+Two port Calibrations
+---------------------
 
 .. autosummary::
    :toctree: generated/
@@ -69,7 +69,9 @@ coefs_list_12term =[
     'reverse transmission tracking',
     'reverse source match',
     ]
-    
+
+
+
 global coefs_list_8term
 coefs_list_8term = [
     'forward directivity',
@@ -92,21 +94,24 @@ coefs_list_3term = [
     
 class Calibration(object):
     '''
-    Base class  for calibration objects. 
+    Base class  for all Calibration objects. 
     
-    This class implements the common mechanism for all calibration 
+    This class implements the common mechanisms for all calibration 
     algorithms. Specific calibration algorithms should inheret this  
     class and overide the methods:
         *  :func:`Calibration.run`
         *  :func:`Calibration.apply_cal`
-        *  :func:`Calibration.embed`
+        *  :func:`Calibration.embed` (optional)
     
-    implemented in the. 
+    
+    Generally, the familiy of properties prefixed `coefs` and 
+    `coefs..ntwks`  returns error coefficients. If the property coefs
+    is accessed and empty, then :func:`Calibration.run` is called. 
     
     
     '''
     def __init__(self, measured, ideals, sloppy_input=False,
-        is_reciprocal=True,name=None,*args, **kwargs):
+        is_reciprocal=True,name=None,family='',*args, **kwargs):
         '''
         Calibration initializer.
 
@@ -130,9 +135,14 @@ class Calibration(object):
                 calibrations.
 
         name: string
-                the name of calibration, just for your
-                        convenience [None].
+                the name of this calibration instance, like 'waveguide cal'
+                this is just for convenience [None].
         
+        family : string
+                the name of the calibration algorithm, like 'SOLT'.
+                only used in printing, or if you want to identify the 
+                type of calibration.
+                
         \*\*kwargs : key-word arguments
                 stored in self.kwargs, which may be used by specific algorithms
 
@@ -188,8 +198,8 @@ class Calibration(object):
         # passed to calibration algorithm in run()
         self.kwargs = kwargs 
         self.name = name
-        
         self.is_reciprocal = is_reciprocal
+        self.family = family
         
         # initialized internal properties to None
         self._residual_ntwks = None
@@ -203,7 +213,7 @@ class Calibration(object):
             name = self.name
             
         output = '%s Calibration: \'%s\', %s, %i-ideals/%i-measured'\
-            %(self.type,name,str(self.measured[0].frequency),\
+            %(self.family,name,str(self.measured[0].frequency),\
             len(self.ideals), len(self.measured))
             
         return output
@@ -213,7 +223,8 @@ class Calibration(object):
         
     def run(self):
         '''
-        Runs the calibration algorithm.
+        Runs the calibration algorithm. 
+        
         '''
         raise NotImplementedError('The Subclass must implement this')
     
@@ -256,6 +267,11 @@ class Calibration(object):
     
     @property
     def frequency(self):
+        '''
+        :class:`~skrf.frequency.Frequency` object  of the calibration
+        
+        
+        '''
         return self.measured[0].frequency.copy()
     
     @property
@@ -304,6 +320,14 @@ class Calibration(object):
     
     @property
     def output_from_run(self):
+        '''
+        Returns any output from the :func:`run`.  
+        
+        This just returns whats in  _output_from_run, and calls 
+        :func:`run` if that attribute is  non-existent.
+        finally, returns None if run() is called, and nothing is in 
+        _output_from_run.
+        '''
         try:
             return self._output_from_run
         except(AttributeError):
@@ -318,7 +342,13 @@ class Calibration(object):
     @property
     def coefs_ntwks(self):
         '''
-        Dictionary or error coefficients in form of Network objects
+        Dictionary of error coefficients in form of Network objects
+        
+        See Also 
+        -----------
+        coefs_3term_ntwks
+        coefs_12term_ntwks
+        coefs_8term_ntwks
         '''
         return s_dict_to_ns(self.coefs, self.frequency).to_dict()
     
@@ -337,10 +367,11 @@ class Calibration(object):
             'source match',
             'reflection tracking',
             ]])
+    
     @property
     def coefs_3term_ntwks(self):
         '''
-        Dictionary or error coefficients in form of Network objects
+        Dictionary of error coefficients in form of Network objects
         '''
         return s_dict_to_ns(self.coefs_3term, self.frequency).to_dict()
     
@@ -382,10 +413,11 @@ class Calibration(object):
                 d = convert_12term_2_8term(d)
                 
         return d
+    
     @property
     def coefs_8term_ntwks(self):
         '''
-        Dictionary or error coefficients in form of Network objects
+        Dictionary of error coefficients in form of Network objects
         '''
         return s_dict_to_ns(self.coefs_8term, self.frequency).to_dict()    
     
@@ -427,6 +459,7 @@ class Calibration(object):
                 d = convert_8term_2_12term(d)
                 
         return d
+    
     @property
     def coefs_12term_ntwks(self):
         '''
@@ -462,10 +495,10 @@ class Calibration(object):
     @property
     def residual_ntwks(self):
         '''
-        Returns a the residuals for each calibration standard
+        Dictionary of residual Networks 
 
         These residuals are complex differences between the ideal 
-        standards and their corresponding  corrected measurements. 
+        standards and their corresponding  corrected measurements.
         
         '''
         return [ideal - caled for (ideal, caled) in zip(self.ideals, self.caled_ntwks)]
@@ -494,7 +527,16 @@ class Calibration(object):
     @property
     def error_ntwk(self):
         '''
-        Returns the calculated two-port error Network or Networks
+        The calculated error Network or Network[s] 
+        
+        This will return a single two-port network for a one-port cal. 
+        For a 2-port calibration this will return networks 
+        for forward and reverse  excitation. However, these are not 
+        sufficient to use for embedding, see the :func:`embed` function 
+        for that. 
+        
+        
+        
         '''
         return error_dict_2_network(
             self.coefs, 
@@ -607,9 +649,8 @@ class OnePort(Calibration):
         -----
                 uses numpy.linalg.lstsq() for least squares calculation
         '''
-        self.type = 'OnePort'
         Calibration.__init__(self, measured, ideals, *args, **kwargs)
-    
+        self.family = 'OnePort'
     def run(self):
         '''
         '''
@@ -722,10 +763,11 @@ class SDDL(OnePort):
         Calibration.__init__
         
         '''
-        self.type = 'SDDL'
+        
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured, ideals, *args, **kwargs)
+        self.family = 'SDDL'
         
     def run(self):
         
@@ -790,7 +832,7 @@ class SOLT(Calibration):
      
     References 
     ------------
-    .. [1] Calibration Process of Automatic Network Analyzer Systems'  by Stig Rehnmark
+    .. [1] "Calibration Process of Automatic Network Analyzer Systems"  by Stig Rehnmark
     .. [2] "Network Analyzer Error Models and Calibration Methods"  by Doug Rytting
     
     
@@ -816,10 +858,11 @@ class SOLT(Calibration):
         n_thrus : int
             number of thru measurments
         '''
-        self.type = 'SOLT'
+        
         self.n_thrus = n_thrus
         Calibration.__init__(self, measured, ideals, *args, **kwargs)
-    
+        self.family = 'SOLT'
+        
     def run(self):
         '''
         '''
@@ -950,22 +993,26 @@ class EightTerm(Calibration):
     This is basically an extension of the one-port algorithm to two-port
     measurements, A least squares estimator is used to determine  the 
     error coefficients. No self-calibration takes place.  
+    The concept is presented in [1]_ , but implementation follows that 
+    of  [2]_ .
     
     Notes
     -------
     An important detail of implementing the error-box 
     model is that the internal switch must be correctly accounted for. 
-    This is done through what switch_terms.
+    This is done through the measurement of  switch_terms [3]_.
         
-    See [1]_ and [2]_ for details 
+    :term:`environment`
     
     References 
     ------------
         
     .. [1] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047 
         
-    .. [2] "Network Analyzer Error Models and Calibration Methods" by Doug Rytting
+    .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods. RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
     
+    .. [3] R.B. Marks, "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," in ARFTG Conference Digest-Fall, 50th, 1997, vol. 32, pp. 115-126.
+
     '''
     def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
         '''
@@ -986,7 +1033,7 @@ class EightTerm(Calibration):
             
    
         '''
-        self.type = 'EightTerm'
+        
         self.switch_terms = switch_terms
         if switch_terms is None:
             warn('No switch terms provided')
@@ -994,6 +1041,7 @@ class EightTerm(Calibration):
             measured = measured, 
             ideals = ideals, 
             *args, **kwargs)
+        self.family = 'EightTerm'
         
     def unterminate(self,ntwk):
         '''
@@ -1359,7 +1407,7 @@ class TRL(EightTerm):
         
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
-        self.type = 'TRL'
+        self.family = 'TRL'
 
 class UnknownThru(EightTerm):
     '''
@@ -1374,8 +1422,9 @@ class UnknownThru(EightTerm):
             measured = measured, 
             ideals = ideals,
             *args, **kwargs)
-        self.type = 'UnknownThru'
-    
+        self.family = 'UnknownThru'
+        warn('Not Fully implemented')
+        
     def run(self):
         n_thrus = self.n_thrus
         p1_m = [k.s11 for k in self.measured[:-n_thrus]]
@@ -1439,6 +1488,9 @@ class UnknownThru(EightTerm):
         self._coefs = coefs
 
 class Normalization(Calibration):
+    '''
+    Simple Thru Normalization
+    '''
     def run(self):
         pass
     def apply_cal(self, input_ntwk):

@@ -53,6 +53,6 @@ legend.fancybox : True
 
 path.simplify       : True  
 
-savefig.dpi         : 300      
+savefig.dpi         : 120      
 
 interactive :True

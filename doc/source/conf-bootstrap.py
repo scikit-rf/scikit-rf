@@ -67,7 +67,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'scikit-rf'
-copyright = u'2013, scikit-rf development team'
+copyright = u'2014, scikit-rf development team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -154,7 +154,7 @@ html_title = 'scikit-rf Documentation'
 
 # The name of an image file (relative to this directory) to place at the top
 # of the sidebar.
-html_logo = 'scikit-rf-logo-flat-docs.svg'
+#html_logo = 'scikit-rf-logo-flat-docs-24.png'
 
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
