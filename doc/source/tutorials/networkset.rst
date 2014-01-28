@@ -37,7 +37,7 @@ in the form of touchstone files. A set of example data can be found in
 
     In [24]: import skrf as rf
     
-    In [24]: ls ../skrf/data/ro*
+    In [24]: ls $rf.data.pwd/ro*
 
 
 The files `ro,1.s1p` , `ro,2.s1p`, ...  are redundant measurements on 
@@ -54,13 +54,13 @@ which match a given substring.
 
 .. ipython::
 
-    In [24]: rf.read_all('../skrf/data/', contains='ro')
+    In [24]: rf.read_all(rf.data.pwd, contains='ro')
 
 This can be passed directly to the :class:`NetworkSet` constructor, 
 
 .. ipython::
 
-    In [24]: ro_dict = rf.read_all('../skrf/data/', contains='ro')
+    In [24]: ro_dict = rf.read_all(rf.data.pwd, contains='ro')
     
     In [24]: ro_ns = rf.NetworkSet(ro_dict, name='ro set') #name is optional
     

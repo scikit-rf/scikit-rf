@@ -13,7 +13,7 @@ Networks
 	
 	In [144]: from pylab import *
 	
-	In [145]: ion();clf()
+	In [145]: ion();close('all')
 	
 	
 
@@ -42,7 +42,7 @@ Creating Networks
 
 .. ipython::
 			
-	In [139]: ring_slot = rf.Network('../skrf/data/ring slot.s2p')
+	In [139]: ring_slot = rf.Network(rf.data.pwd+'/ring slot.s2p')
 
  
 	
