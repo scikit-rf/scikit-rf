@@ -316,9 +316,9 @@ class Network(object):
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
         'passivity' : _passivity,
         'reciprocity' : _reciprocity,
-        'time' : lambda x: fft.ifftshift(fft.ifft(x, axis=0)),
-        'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0))),
-        'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0))),
+        'time' : lambda x: fft.ifftshift(fft.ifft(x, axis=0), axes=0),
+        'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
+        'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
         }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
