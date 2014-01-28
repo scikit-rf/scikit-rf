@@ -88,7 +88,9 @@ ploting methods).
 
 .. ipython::
 
-    In [138]: rf.stylely({'savefig.dpi':120})
+    In [138]: import matplotlib as mpl
+  
+    In [138]: mpl.rc_file(rf.data.pwd+ '/skrf.mplstyle'
   
 .. ipython::
     

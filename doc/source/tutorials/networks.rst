@@ -9,13 +9,12 @@ Networks
 
 .. ipython::
 	:suppress:
-	
-	
+
 	In [144]: from pylab import *
-	
+
 	In [145]: ion();close('all')
-	
-	
+
+
 
 
 Introduction
@@ -29,7 +28,7 @@ For this tutorial, and the rest of the scikit-rf documentation, it is  assumed t
 
 .. ipython::
 
-  In [138]: import skrf as rf
+	In [138]: import skrf as rf
 
 If this produces an import error, please see :doc:`installation`.  Loading the  touchstone files referenced in this tutorial assume that you are in the directory `scikit-rf/doc`.
 
@@ -107,11 +106,13 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 * :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
 * ...
 
-If you would like to use skrf's plot styling, call stylely.
+If you would like to use skrf's plot styling,
 
 .. ipython::
 
-  In [138]: rf.stylely({'savefig.dpi':120})
+  In [138]: import matplotlib as mpl
+  
+  In [138]: mpl.rc_file(rf.data.pwd+ '/skrf.mplstyle')
   
 To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 

@@ -8,24 +8,27 @@ Plotting
 
 
 .. ipython::
-	:suppress:
-		
-	In [144]: from pylab import *
-	
-	In [145]: ion()
-	
-	In [147]: clf()
+    :suppress:
+        
+    In [144]: from pylab import *
+    
+    In [145]: ion()
+    
+    In [147]: clf()
     
 
 Introduction
 ---------------
 This tutorial describes **skrf's** plotting features. 
 
-If you would like to use skrf's plot styling, call stylely.
+If you would like to use skrf's plot styling, 
+
 
 .. ipython::
 
-  In [138]: rf.stylely({'savefig.dpi':120})
+    In [138]: import matplotlib as mpl
+  
+    In [138]: mpl.rc_file(rf.data.pwd+ '/skrf.mplstyle')
   
   
 Plotting Methods
