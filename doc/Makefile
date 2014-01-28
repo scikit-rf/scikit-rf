@@ -2,7 +2,7 @@
 #
 
 # You can set these variables from the command line.
-SPHINXOPTS    =
+SPHINXOPTS    = -j 4
 SPHINXBUILD   = sphinx-build
 PAPER         =
 BUILDDIR      = build
@@ -32,6 +32,19 @@ help:
 	@echo "  changes    to make an overview of all changed/added/deprecated items"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
+
+
+all: notebooks  html
+
+notebooks:
+	for file in ./source/tutorials/*.ipynb; do\
+	  runipy  --pylab -o $$file;\
+	done
+	cd ./source/tutorials;ipython nbconvert --to rst *.ipynb
+	sed -i 's/``/`/g' ./source/tutorials/*.rst
+
+clean-generated:
+	find source/ -name generated  -exec rm -rf {} \;
 
 clean:
 	-rm -rf $(BUILDDIR)/*

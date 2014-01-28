@@ -4,7 +4,7 @@
 Plotting  
 *********
 .. currentmodule:: skrf.network
-.. contents::
+
 
 
 .. ipython::
@@ -14,21 +14,24 @@ Plotting
 	
 	In [145]: ion()
 	
-	In [146]: rcParams['savefig.dpi'] = 120 
-	
-	In [147]: rcParams['figure.figsize'] = [4,3]
-	
-	In [147]: rcParams['figure.subplot.left'] = 0.15
-	
 	In [147]: clf()
     
 
+Introduction
+---------------
+This tutorial describes **skrf's** plotting features. 
 
+If you would like to use skrf's plot styling, call stylely.
 
+.. ipython::
+
+  In [138]: rf.stylely({'savefig.dpi':120})
+  
+  
 Plotting Methods
 -----------------------
 
-Network plotting abilities are implemented as methods of the :class:`Network` class. Some of the plotting functions of network s-parameters are, 
+Microwave network plotting functions are implemented as methods of the :class:`Network` class. Some of the plotting functions of network s-parameters are, 
 
 .. hlist::
     :columns: 2
@@ -67,7 +70,7 @@ Smith Chart
 +++++++++++++++++
 
 As a first example, load a :class:`~skrf.network.Network` from the
-``data`` module, and plot all four  s-parameters on the Smith chart.
+`data` module, and plot all four  s-parameters on the Smith chart.
 
 .. ipython::
 
@@ -82,14 +85,14 @@ As a first example, load a :class:`~skrf.network.Network` from the
 
 .. note:: 
 
-    If you dont see any plots after issuing these commands, then you may not have  started ipython with the ``--pylab`` flag. Try ``from pylab import *`` to import the matplotlib commands and ``ion()``  to turn on interactive plotting. See `this page <http://matplotlib.org/users/shell.html>`_ , for more info on ipython's `pylab` mode.
+    If you dont see any plots after issuing these commands, then you may not have  started ipython with the `--pylab` flag. Try **from pylab import \* ** to import the matplotlib commands and `ion()`  to turn on interactive plotting. See `this page <http://matplotlib.org/users/shell.html>`_ , for more info on ipython's `pylab` mode.
 
 .. note:: 
     
     Why do my plots look different? See  `Formating Plots`_
 
 
-The smith chart can be drawn with some impedance values labeled through the ``draw_labels`` argument.
+The smith chart can be drawn with some impedance values labeled through the `draw_labels` argument.
 
 .. ipython::
     
@@ -99,7 +102,7 @@ The smith chart can be drawn with some impedance values labeled through the ``dr
     In [139]: ring_slot.plot_s_smith(draw_labels=True)
 
 
-Another common option is to draw addmitance contours, instead of impedance. This is controled through the  ``chart_type`` argument.
+Another common option is to draw addmitance contours, instead of impedance. This is controled through the  `chart_type` argument.
 
 .. ipython::
     
@@ -112,7 +115,7 @@ See :func:`~skrf.plotting.smith` for more info on customizing the Smith Chart.
 
 .. note:: 
 
-    If more than one ``plot_s_smith()`` command is issued on a single figure, you may need to call :func:`draw()` to refresh the  chart. 
+    If more than one `plot_s_smith()` command is issued on a single figure, you may need to call :func:`draw()` to refresh the  chart. 
 
 
 Complex Plane 
@@ -145,7 +148,7 @@ frequency as well. To plot the log-magnitude of the s-parameters vs. frequency,
     @savefig plotting-ring_slot,db.png
     In [138]: ring_slot.plot_s_db()
     
-When no arguments are passed to the plotting methods, all parameters are plotted. Single parameters can be plotted by passing indecies ``m`` and ``n`` to the plotting commands (indexing start from 0). Comparing the simulated reflection coefficient off the ring slot to a measurement, 
+When no arguments are passed to the plotting methods, all parameters are plotted. Single parameters can be plotted by passing indecies `m` and `n` to the plotting commands (indexing start from 0). Comparing the simulated reflection coefficient off the ring slot to a measurement, 
 
 .. ipython::
     
@@ -205,7 +208,7 @@ similarly,
 Customizing Plots
 -------------------
 
-The legend entries are automatically filled in with the Network's :attr:`~skrf.network.Network.name`. The entry can be overidden by passing the ``label`` argument to the plot method.
+The legend entries are automatically filled in with the Network's :attr:`~skrf.network.Network.name`. The entry can be overidden by passing the `label` argument to the plot method.
  
 .. ipython::
     
@@ -218,7 +221,7 @@ The legend entries are automatically filled in with the Network's :attr:`~skrf.n
 
 The frequency unit used on the x-axis is automatically filled in from 
 the Networks :attr:`~skrf.network.Network.frequency` attribute. To change
-the label, change the frequency's ``unit``.
+the label, change the frequency's `unit`.
     
 .. ipython::
     
@@ -235,7 +238,7 @@ Other key word arguments given to the plotting methods are passed through to the
     In [138]: ring_slot.plot_s_db(m=0,n=0, linewidth = 3, linestyle = '--', label = 'Simulation')
     
     @savefig plotting-ring_slot,db4.png
-    In [138]: ring_slot_meas.plot_s_db(m=0,n=0, marker = 'x', markevery = 10,label = 'Measured')
+    In [138]: ring_slot_meas.plot_s_db(m=0,n=0, marker = 'o', markevery = 10,label = 'Measured')
     
 All components of the plots can be customized through  `matplotlib <http://matplotlib.sourceforge.net>`_  functions. 
 
@@ -259,9 +262,13 @@ All components of the plots can be customized through  `matplotlib <http://matpl
 
 Saving Plots
 -------------
-Plots can be saved in various file formats using the GUI provided by the matplotlib. However, skrf provides a convenience function, called :func:`~skrf.plotting.save_all_figs`,  that allows all open figures to be saved to disk in multiple file formats, with filenames pulled from each figure's title::
+Plots can be saved in various file formats using the GUI provided by the matplotlib. However, skrf provides a convenience function, called :func:`~skrf.plotting.save_all_figs`,  that allows all open figures to be saved to disk in multiple file formats, with filenames pulled from each figure's title
 
-    >>> rf.save_all_figs('.', format=['eps','pdf'])
+
+.. ipython::
+    
+    @verbatim
+    In [138]: rf.save_all_figs('.', format=['png','eps','pdf'])
     ./WR-10 Ringslot Array Simulated vs Measured.eps
     ./WR-10 Ringslot Array Simulated vs Measured.pdf
 
@@ -273,7 +280,7 @@ Adding Markers to Lines
 ++++++++++++++++++++++++++
 
 A common need is to make a color plot, interpretable in greyscale print. 
-There is a convenient function, :func:`~skrf.plotting.add_markers_to_lines`, which  adds markers each line in a plots *after* the plot has been made. In this way, adding markers to an already written set of plotting commands is easy.
+The :func:`~skrf.plotting.add_markers_to_lines`  adds different markers each line in a plots *after* the plot has been made
 
 	
 .. ipython::
@@ -292,30 +299,16 @@ Formating Plots
 +++++++++++++++++++
 
 It is likely that your plots dont look exactly like the ones in this 
-tutorial. This is because matplotlib supports a vast amount of `customization <http://matplotlib.org/users/customizing.html>`_.  Formating options can be customized `on-the-fly` by modifying values of the ``rcParams`` dictionary. Once these are set to your liking they can be saved to your ``.matplotlibrc`` file. 
+tutorial. This is because matplotlib supports a vast amount of `customization <http://matplotlib.org/users/customizing.html>`_.  Formating options can be customized `on-the-fly` by modifying values of the `rcParams` dictionary. Once these are set to your liking they can be saved to your `.matplotlibrc` file. 
 
-
-
-Here are some relevant parameters which should get your plots looking close to the ones in this tutorial::
+The function :func:`skrf.util.stylely` will attempt to update your rcParams so that your plots look like the ones in this tutorial.
     
-    my_params = {
-    'figure.dpi':  120,
-    'figure.figsize': [4,3],
-    'figure.subplot.left' : 0.15,
-    'figure.subplot.right'	: 0.9,    
-    'figure.subplot.bottom'	: 0.12, 
-    'axes.titlesize'    : 'medium',    
-    'axes.labelsize'    : 10 ,
-    'ytick.labelsize'   :'small',
-    'xtick.labelsize'   :'small',
-    'legend.fontsize'   : 8  #small,
-    'legend.loc'	    : 'best',
-    'font.size'         : 10.0,
-    'font.family'       : 'serif',
-    'text.usetex' : True,    # if you have latex
-    }
     
-    rcParams.update(my_params) 
-    
-The project `mpltools <http://tonysyu.github.com/mpltools/>`_ provides a way  to  switch between pre-defined `styles`, and contains other useful plotting-related features. 
+Recently, work as been done to provide for style sheet selection in matplotlib, 
+( see  https://github.com/matplotlib/matplotlib/pull/2236) 
 
+
+.. ipython::
+	:suppress:
+		
+	In [144]: close('all')

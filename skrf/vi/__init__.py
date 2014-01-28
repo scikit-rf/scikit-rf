@@ -5,12 +5,16 @@
 vi (:mod:`skrf.vi`)
 ========================================================
 
-This module holds Virtual Instruments that are intricately related 
-to **skrf**. 
+This module holds Virtual Instruments, which are generally controlled 
+by GPIB/VISA commands. You must have a working VISA to use these 
+classes. See .
+
 
 .. automodule:: skrf.vi.vna
 .. automodule:: skrf.vi.sa
 .. automodule:: skrf.vi.stages
+
+
 
 
 '''

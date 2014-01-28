@@ -3,9 +3,8 @@
 *******************
 Networks
 *******************
-.. currentmodule:: skrf.network
-.. contents::
 
+.. currentmodule:: skrf.network
 
 
 .. ipython::
@@ -14,28 +13,28 @@ Networks
 	
 	In [144]: from pylab import *
 	
-	In [145]: ion()
+	In [145]: ion();clf()
 	
-	In [146]: rcParams['savefig.dpi'] =120
-	
-	In [147]: rcParams['figure.figsize'] = [4,3]
-	
-	In [147]: rcParams['figure.subplot.left'] = 0.15
-	
-	In [147]: clf()
 	
 
 
 Introduction
 -------------------------
-For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you.
+
+This tutorial gives an overview of the microwave network analysis 
+features of **skrf**. 
+
+For this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as `rf`. Whether or not you follow this convention in your own code is up to you.
 
 
 .. ipython::
 
   In [138]: import skrf as rf
 
-If this produces an error, please see :doc:`installation`.  The code in this tutorial assumes that you are in the directory ``scikit-rf/doc``.
+If this produces an import error, please see :doc:`installation`.  Loading the  touchstone files referenced in this tutorial assume that you are in the directory `scikit-rf/doc`.
+
+
+
 
 Creating Networks
 -------------------------
@@ -53,20 +52,15 @@ A short description of the network will be printed out if entered onto the comma
 	
 	In [1]: ring_slot
 
-Networks can also be created from a pickled Network (written by :func:`Network.write`), 
+
+Networks can also be created by directly passing values for the frequency, s-paramters  and z0. 
 
 .. ipython::
 	
-	In [139]: ring_slot = rf.Network('../skrf/data/ring slot.ntwk') 
-	
-or from directly passing values for the frequency, s-paramters  and z0. 
+	In [1]: custom_ntwk = rf.Network(f = [1,2,3], s= [-1, 1j, 0], z0=50) 
+	In [1]: # `f` is interpreted in units of 'ghz'
 
-.. ipython::
-	
-	In [1]: custom_ntwk = rf.Network(f = [1,2,3], s= [-1, 1j, 0], z0=50)
-	# `f` is interpreted in units of 'ghz'
-
-Seen :func:`Network.__init__`  for more informaition on network creation.
+See  :func:`Network.__init__`  for more informaition on network creation.
 
 Network Basics
 -------------------------
@@ -84,7 +78,7 @@ All of the network parameters are represented internally as complex :class:`nump
 			
 	In [139]: shape(ring_slot.s)
 
-Note that the indexing starts at 0, so the first 10 values of :math:`S_{11}` can be accessed with
+Note that the indexing starts at 0, so the first 10 values of :math:`S_{11}` can be accessed with slicing 
 
 .. ipython::
 			
@@ -113,7 +107,13 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 * :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
 * ...
 
-To plot all four s-parameters of the ``ring_slot`` on the Smith Chart.
+If you would like to use skrf's plot styling, call stylely.
+
+.. ipython::
+
+  In [138]: rf.stylely({'savefig.dpi':120})
+  
+To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
 .. ipython::
 
@@ -140,7 +140,7 @@ Network Operators
 Linear Operations 
 =========================
 	
-Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the ``data`` module. 
+Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the `data` module. 
 
 .. ipython::
 	
@@ -160,7 +160,7 @@ Element-wise mathematical operations on the scattering parameter matrices are ac
 
 
 
-All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  ``short`` and ``delay_short``,
+All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  `short` and `delay_short`,
 	
 .. ipython::
 	
@@ -197,7 +197,7 @@ Note that if you multiply a Network by an :class:`numpy.ndarray`  be sure to pla
 
 Cascading and De-embedding
 ==================================================
-Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be called through the power operator,  ``**``. To calculate a new network which is the cascaded connection of the two individual Networks ``line`` and ``short``, 
+Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be called through the power operator,  `**`. To calculate a new network which is the cascaded connection of the two individual Networks `line` and `short`, 
 
 .. ipython::
 	
@@ -207,7 +207,7 @@ Cascading and de-embeding 2-port Networks can also be done though operators. The
 	
 	In [22]: delayshort = line ** short
 
-De-embedding  can be accomplished by cascading the *inverse* of a network. The inverse of a network is accessed through the property :attr:`Network.inv`. To de-embed the ``short`` from ``delay_short``,
+De-embedding  can be accomplished by cascading the *inverse* of a network. The inverse of a network is accessed through the property :attr:`Network.inv`. To de-embed the `short` from `delay_short`,
 
 .. ipython::
 	
@@ -229,7 +229,7 @@ To connect port `1` of the tee, to port `0` of the delay short,
 	
 	In [21]: terminated_tee = rf.connect(tee,1,delayshort,0)
 
-Note that this function takes into account port impedances, and if connecting ports have different port impedances an appropriate impedance mismatch is inserted.
+Note that this function takes into account port impedances. If two connected ports have different port impedances,  an appropriate impedance mismatch is inserted.
 	
 Interpolation and Stitching 
 -----------------------------
@@ -276,20 +276,27 @@ A related application is the need to combine Networks which cover different freq
 	
 Reading and Writing 
 ------------------------------
-While **skrf** supports reading and writing the touchstone file format, it also provides native IO capabilities for any skrf object through the functions :func:`~skrf.io.general.read` and :func:`~skrf.io.general.write`. These functions can also be called through the Network methods :func:`Network.read` and :func:`Network.write`. The Network constructor (:func:`Network.__init__` ) calls :func:`~skrf.io.general.read` implicitly if a skrf file is passed.
+For long term data storage, **skrf** has support for reading and partial support for writing  `touchstone file format <http://en.wikipedia.org/wiki/Touchstone_file>`_ . Reading is accomplished with the Network initializer as shown above and writing with the method  :func:`Network.write_touchstone`.
+
+For temporary data storage, **skrf** object can be `pickled <http://docs.python.org/2/library/pickle.html>`_ with  the functions :func:`~skrf.io.general.read` and :func:`~skrf.io.general.write`. 
 
 .. ipython::
 	
 	In [21]: line = rf.Network('../skrf/data/line.s2p')
 	
 	@verbatim
-	In [21]: line.write() # write out Network using native IO
+	In [21]: rf.write(line) # write out Network using pickline IO
 	line.ntwk
 	
 	@verbatim
-	In [21]: rf.Netwrok('line.ntwk') # read Network using native IO
+	In [21]: rf.Network('line.ntwk') # read Network using native IO
 
-Frequently there is an entire directory of files that need to be analyzed. The function :func:`~skrf.io.general.read_all` is used to create objects from all files in a directory quickly. Given a directory of skrf-readable files, :func:`~skrf.io.general.read_all`  returns a :class:`dict`  with keys equal to the filenames, and values equal to objects. To load all **skrf** files in the ``skrf/data/`` directory which contain the string ``\'wr2p2\'``.
+
+.. warning:: 
+	
+	Pickling methods cant support long term data storage because they require the structure of the object being written to remain unchanged. something that cannot be guarnteed in future versions of skrf.  (see http://docs.python.org/2/library/pickle.html) 
+
+Frequently there is an entire directory of files that need to be analyzed. The function :func:`~skrf.io.general.read_all` is used to create objects from all files in a directory quickly. Given a directory of skrf-readable files, :func:`~skrf.io.general.read_all`  returns a :class:`dict`  with keys equal to the filenames, and values equal to objects. To load all **skrf** files in the \`skrf/data/\` directory which contain the string `\'wr2p2\'`.
 	
 .. ipython::
 	
@@ -348,7 +355,7 @@ A :class:`Network` can be created `from scratch` by  passing values of relevant 
 	
 	In [139]: wr10_short = rf.Network(frequency = frequency, s = s, z0 = 50 )
 
-For more information creating Networks representing transmission line and lumped components, see the :mod:`~skrf.media` module.
+For  information on creating Networks representing transmission line and lumped components, see the :mod:`~skrf.media` module.
 
 .. ipython::
 	:suppress:
@@ -371,3 +378,9 @@ References
 .. [#] Compton, R.C.; , "Perspectives in microwave circuit analysis," Circuits and Systems, 1989., Proceedings of the 32nd Midwest Symposium on , vol., no., pp.716-718 vol.2, 14-16 Aug 1989. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=101955&isnumber=3167
 
 .. _ipython: http://ipython.scipy.org/moin/	
+
+
+.. ipython::
+	:suppress:
+		
+	In [144]: close('all')

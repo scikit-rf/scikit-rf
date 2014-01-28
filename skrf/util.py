@@ -29,6 +29,8 @@ General
 
 import mathFunctions as mf
 
+
+import matplotlib as mpl
 import warnings
 import os
 import cPickle as pickle
@@ -186,6 +188,57 @@ def git_version( modname):
         return None
     return out
     
+
+def stylely(rc_dict={}):
+    '''
+    loads the rc-params file from skrf.data 
+    '''
+    
+    from skrf.data import mpl_rc_fname # delayed to solve circular import
+    rc = mpl.rc_params_from_file(mpl_rc_fname)
+    mpl.rcParams.update(rc)
+    mpl.rcParams.update(rc_dict)
+    
+
+def dict_2_recarray(d, delim, dtype):
+    '''
+    Turns a dictionary of structured keys to a record array of objects
+    
+    This is useful if you save data-base like meta-data in the form 
+    or file-naming conventions, aka 'the poor-mans database'
+   
+    
+    Examples
+    -------------
+    
+    given a directory of networks like:
+    
+    >>> ls
+    a1,0.0,0.0.s1p    a1,3.0,3.0.s1p    a2,3.0,-3.0.s1p   b1,-3.0,3.0.s1p 
+    ...
+    
+    you can sort based on the values or each field, after defining their
+    type with `dtype`. The `values` field accesses the objects. 
+    
+    
+    >>>d =rf.ran('/tmp/' )
+    >>>delim =','
+    >>>dtype = [('name', object),('voltage',float),('current',float)]
+    >>>ra = dict_2_recarray(d=rf.ran(dir), delim=delim, dtype =dtype)
+    
+    then you can sift like you do with numpy arrays
+    
+    >>>ra[ra['voltage']<3]['values']
+    array([1-Port Network: 'a2,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
+           1-Port Network: 'b1,0.0,3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
+           1-Port Network: 'a1,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
+    '''
+    
+    split_keys = [tuple(k.split(delim)+[d[k]]) for k in d.keys()]
+    x = npy.array(split_keys, dtype=dtype+[('values',object)])
+    return x
+
+
 
 
 
@@ -386,6 +439,11 @@ class HomoDict(collections.MutableMapping):
     def __repr__(self):
         return pprint.pformat(self.store)
     
+    
+    def copy(self):
+        return HomoDict(self.store)
+        
+        
     def filter_nones(self):
         self.store =  {k:self.store[k] for k in self.store \
                         if self.store[k] is not None}

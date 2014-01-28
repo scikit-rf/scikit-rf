@@ -40,12 +40,13 @@ Interpolation and Combining
 .. autosummary::
     :toctree: generated/
     
+    stitch
+    overlap
     Network.resample
     Network.interpolate
     Network.interpolate_self
     Network.interpolate_from_f
-    stitch
-    overlap
+    
 
 IO
 ====
@@ -99,6 +100,7 @@ Misc Functions
     :toctree: generated/
 
     average
+    two_port_reflect
     Network.nudge
 
 
@@ -2108,7 +2110,7 @@ class Network(object):
         When using time domain through :attr:`s_time_db`, 
         or similar properies, the spectrum is ussually windowed, 
         before the IFFT is taken. This is done to 
-        compensate for the band-pass nature of a spectrum [#]_ .
+        compensate for the band-pass nature of a spectrum [1]_ .
         
         This function calls :func:`scipy.signal.get_window` which gives
         more details about the windowing.
@@ -2130,11 +2132,13 @@ class Network(object):
         
         References
         -------------
-        .. [#] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
+        .. [1] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
         
         '''
         window = signal.get_window(window, len(self))
-        window =window.reshape(-1,1,1) * npy.ones((len(self), self.nports, self.nports))
+        window =window.reshape(-1,1,1) * npy.ones((len(self), 
+                                                   self.nports, 
+                                                   self.nports))
         windowed = self * window
         if normalize:
             # normalize the s-parameters to account for power lost in windowing
@@ -2143,9 +2147,16 @@ class Network(object):
         
         return windowed
     
+    
+    
+    
+    
+    
     def time_gate(self, t_start, t_stop, window = ('kaiser',6)):
         '''
-        Time-gating
+        Time-gate s-parameters 
+        
+        See Warning!
         
         Parameters 
         ------------
@@ -2158,6 +2169,12 @@ class Network(object):
         --------
         ntwk : Network
             copy of self with time-gated s-parameters
+        
+        .. warning::
+            This is not fully tested, and doesnt appear to be preserve power 
+            correctly
+        
+        
         '''
         gated = self.copy()
         
@@ -2178,12 +2195,16 @@ class Network(object):
         
         #window_in_freq = window_in_freq.reshape(-1,1,1) * \
         #                npy.ones((len(self), self.nports, self.nports))
+        
+        
         for m,n in self.port_tuples:
-            gated.s[:,m,n] = fft.ifftshift(signal.convolve(self.s[:,m,n], window_in_f, mode='same'))
+            x = signal.convolve(self.s[:,m,n], window_in_f, mode='same')
+            gated.s[:,m,n] = fft.ifftshift(x)
         
         #normalize output
-        gated = gated * npy.sum(self.s_mag,axis=0)/\
+        gated.s = gated.s  * npy.sum(self.s_mag,axis=0)/\
                 npy.sum(gated.s_mag,axis=0)
+        
                 
         
         return gated
@@ -3904,8 +3925,7 @@ def impedance_mismatch(z1, z2):
 
 def two_port_reflect(ntwk1, ntwk2):
     '''
-    generates a two-port reflective two-port, from two
-    one-ports.
+    Generates a two-port reflective two-port, from two one-ports.
 
 
     Parameters

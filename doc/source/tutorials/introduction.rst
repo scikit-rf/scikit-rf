@@ -1,23 +1,21 @@
 .. _introduction:
 
 *********************
-Introduction
+Old Introduction
 *********************
 .. currentmodule:: skrf.network
-.. contents::
-
 
 Introduction
 ------------------
 
 This is a brief introduction to **skrf** which highlights a range of features without going into detail on any single one. At the end of each section there are links to other tutorials, that provide more information about a given feature. The intended audience are those who have a working python stack, and are somewhat familiar with python. If you are unfamiliar with python, please see scipy's `Getting Started <http://www.scipy.org/Getting_Started>`_ . 
 
-Although not essential, these tutorials are most easily followed by using the ipython_ shell with the ``--pylab`` flag. ::
+Although not essential, these tutorials are most easily followed by using the ipython_ shell with the `--pylab` flag. ::
 
 	> ipython --pylab
 	In [1]: 
 	
-Using ipython with the ``pylab`` flag imports several commonly used functions, and turns on 
+Using ipython with the `pylab` flag imports several commonly used functions, and turns on 
 `interactive plotting mode <http://matplotlib.org/users/shell.html>`_  which causes  plots to display immediately. 
 
 .. ipython::
@@ -41,7 +39,7 @@ Using ipython with the ``pylab`` flag imports several commonly used functions, a
 
 
 
-Throughout this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as ``rf``. Whether or not you follow this convention in your own code is up to you. 
+Throughout this tutorial, and the rest of the scikit-rf documentation, it is  assumed that **skrf** has been imported as `rf`. Whether or not you follow this convention in your own code is up to you. 
 
 
 .. ipython::
@@ -52,7 +50,7 @@ If this produces an error, please see :doc:`installation`.
 
 .. note::
 
-	The example code in these tutorials make use of files that are distributed with the source package. The working directory for these code snippets is ``scikit-rf/doc/``, hence all data files are referenced relative to that directory. If you do not have the source package, then you may access these files through the ``skrf.data`` module (ie ``from skrf.data import ring_slot``)
+	The example code in these tutorials make use of files that are distributed with the source package. The working directory for these code snippets is `scikit-rf/doc/`, hence all data files are referenced relative to that directory. If you do not have the source package, then you may access these files through the `skrf.data` module (ie `from skrf.data import ring_slot`)
 
 
 Networks
@@ -94,7 +92,7 @@ All of the network parameters are complex :class:`numpy.ndarray` 's of shape *Fx
 Linear Operations 
 =========================
 	
-Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the ``data`` module. 
+Element-wise mathematical operations on the scattering parameter matrices are accessible through overloaded operators. To illustrate their usage, load a couple  Networks stored in the `data` module. 
 
 .. ipython::
 	
@@ -110,7 +108,7 @@ Element-wise mathematical operations on the scattering parameter matrices are ac
 
 Cascading and De-embedding
 ==================================================
-Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be called through the power operator,  ``**``. To calculate a new network which is the cascaded connection of the two individual Networks ``line`` and ``short``, 
+Cascading and de-embeding 2-port Networks can also be done though operators. The :func:`cascade` function can be called through the power operator,  `**`. To calculate a new network which is the cascaded connection of the two individual Networks `line` and `short`, 
 
 .. ipython::
 	
@@ -120,7 +118,7 @@ Cascading and de-embeding 2-port Networks can also be done though operators. The
 	
 	In [22]: delayshort = line ** short
 
-De-embedding  can be accomplished by cascading the *inverse* of a network. The inverse of a network is accessed through the property :attr:`Network.inv`. To de-embed the ``short`` from ``delay_short``,
+De-embedding  can be accomplished by cascading the *inverse* of a network. The inverse of a network is accessed through the property :attr:`Network.inv`. To de-embed the `short` from `delay_short`,
 
 .. ipython::
 	
@@ -139,7 +137,7 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 * :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
 * ...
 
-To plot all four s-parameters of the ``ring_slot`` on the Smith Chart.
+To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
 .. ipython::
 
@@ -161,7 +159,7 @@ calculating statistical quantities and displaying uncertainty bounds.
 A :class:`~skrf.networkset.NetworkSet` is created from a list or dict of 
 :class:`~skrf.network.Network`'s.  This can be done quickly with 
 :func:`~skrf.io.general.read_all` , which loads all skrf-readable objects
-in a directory. The argument ``contains`` is used to load only files 
+in a directory. The argument `contains` is used to load only files 
 which match a given substring. 
 
 
@@ -187,7 +185,7 @@ Statistical Properties
 
 Statistical quantities can be calculated by accessing 
 properties of the NetworkSet. For example, to calculate the complex 
-average of the set, access the ``mean_s`` property
+average of the set, access the `mean_s` property
 
 
 .. ipython::
@@ -330,7 +328,7 @@ Media
 -------------
 .. currentModule:: skrf.media
 
-**skrf** supports the  microwave network synthesis based on transmission line models. Network creation is accomplished through methods of the Media class, which represents a transmission line object for a given medium. Once constructed, a :class:`~media.Media` object contains the neccesary properties such as ``propagation constant`` and ``characteristic impedance``, that are needed to generate microwave circuits.
+**skrf** supports the  microwave network synthesis based on transmission line models. Network creation is accomplished through methods of the Media class, which represents a transmission line object for a given medium. Once constructed, a :class:`~media.Media` object contains the neccesary properties such as `propagation constant` and `characteristic impedance`, that are needed to generate microwave circuits.
 
 The basic usage looks something like this,  
 

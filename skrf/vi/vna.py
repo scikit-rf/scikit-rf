@@ -42,11 +42,11 @@ class PNA(GpibInstrument):
     .. hlist:: 
         :columns: 2
         
-        * :func:`get_oneport`
-        * :func:`get_twoport`
-        * :func:`get_frequency`
-        * :func:`get_network`
-        * :func:`get_network_all_meas`
+        * :func:`~PNA.get_oneport`
+        * :func:`~PNA.get_twoport`
+        * :func:`~PNA.get_frequency`
+        * :func:`~PNA.get_network`
+        * :func:`~PNA.get_network_all_meas`
     
     
     Simple IO
@@ -54,11 +54,11 @@ class PNA(GpibInstrument):
     .. hlist:: 
         :columns: 2
         
-        * :func:`get_data_snp`
-        * :func:`get_data`
-        * :func:`get_sdata`
-        * :func:`get_fdata`
-        * :func:`get_rdata`
+        * :func:`~PNA.et_data_snp`
+        * :func:`~PNA.get_data`
+        * :func:`~PNA.get_sdata`
+        * :func:`~PNA.get_fdata`
+        * :func:`~PNA.get_rdata`
     
     
     Examples
@@ -95,7 +95,7 @@ class PNA(GpibInstrument):
         front_panel_lockout : Boolean
             lockout front panel during operation. 
         \*\*kwargs : 
-            passed to :func:`visa.GpibInstrument.__init__`
+            passed to  `visa.GpibInstrument.__init__`
         '''
         GpibInstrument.__init__(self,
             'GPIB::'+str(address),
@@ -142,7 +142,7 @@ class PNA(GpibInstrument):
             self._vpp43.VI_GPIB_REN_DEASSERT_GTL,
             )
     
-    def rst(self):
+    def reset(self):
         '''
         reset 
         '''
@@ -691,7 +691,9 @@ class PNA(GpibInstrument):
         '''
         Get switch terms and return them as a tuple of Network objects. 
         
-        Dont use this yet. 
+        Returns 
+        --------
+        forward, reverse : oneport switch term Networks 
         '''
         
         p1,p2 = ports
@@ -994,6 +996,16 @@ class PNA(GpibInstrument):
 PNAX = PNA 
     
 class ZVA40(PNA):
+    '''
+    Rohde&Scharz ZVA40
+    
+    Examples
+    -----------
+    
+    >>> from skrf.vi.vna import ZVA40 
+    >>> v = ZVA40()
+    >>> dut = v.network
+    '''
     def sweep(self):
         '''
         Initiates a sweep and waits for it to complete before returning
@@ -1451,397 +1463,6 @@ class VectorStar(PNA):
         
         return [(k+1,meas_list[k]) for k in range(self.ntraces)]
         
-class ZVA40_lihan(object):
-    '''
-    Created on Aug 3, 2010
-    @author: Lihan
-
-    This class is create to remote control Rohde & Schwarz by using pyvisa.
-    For detail about visa please refer to:
-            http://pyvisa.sourceforge.net/
-
-    After installing the pyvisa and necessary driver (GPIB to USB driver,
-     for instance), please follow the pyvisa manual to set up the module
-
-    This class only has several methods. You can add as many methods
-    as possible by reading the Network Analyzer manual
-    Here is an example
-
-    In the manual,
-
-            "CALC:DATA? FDAT"
-
-    This is the SCPI command
-
-            "Query the response values of the created trace. In the FDATa setting, N
-            comma-separated ASCII values are returned."
-
-    This descripes the function of the SCPI command above
-
-    Since this command returns ASCII values, so we can use ask_for_values method in pyvisa
-
-    temp=vna.ask_for_values('CALCulate1:DATA? SDATa')
-
-    vna is a pyvisa.instrument instance
-
-
-    '''
-    def __init__(self,address=20, **kwargs):
-        self.vna=visa.instrument('GPIB::'+str(address),**kwargs)
-        self.spara=npy.array([],dtype=complex)
-
-    def continuousOFF(self):
-        self.vna.write('initiate:continuous OFF')
-
-
-    def continuousON(self):
-        self.vna.write('initiate:continuous ON')
-
-    def displayON(self):
-        self.vna.write('system:display:update ON')
-
-    def setFreqBand(self,StartFreq,StopFreq):
-        '''
-        Set the frequency band in GHz
-        setFreqBand(500,750)
-        Start frequency 500GHz, Stop frequency 750GHz
-        '''
-        self.freqGHz=npy.linspace(StartFreq, StopFreq, 401)
-        self.vna.write('FREQ:STAR '+'StartFreq'+'GHz')
-        self.vna.write('FREQ:STOP '+'StopFreq'+'GHz')
-
-    def sweep(self):
-        '''
-        Initiate a sweep under continuous OFF mode
-        '''
-        self.vna.write('initiate;*WAI')
-
-    def getData(self):
-        '''
-        Get data from current trace
-        '''
-        temp=self.vna.ask_for_values('CALCulate1:DATA? SDATa')
-        temp=npy.array(temp)
-        temp.shape=(-1,2)
-        self.spara=temp[:,0]+1j*temp[:,1]
-        self.spara.shape=(-1,1,1)                       #this array shape is compatible to Network Class
-        return self.spara
-
-    def measure(self):
-        '''
-        Take one-port measurement
-        1.turn continuous mode off
-        2.initiate a single sweep
-        3.get the measurement data
-        4.turn continuous mode on
-        '''
-        self.continuousOFF()
-        self.sweep()
-        temp=self.getData()
-        self.continuousON()
-        return temp
-
-    def saveSpara(self,fileName):
-        '''
-        Take one-port measurement and save the data as touchstone file, .s1p
-        '''
-        temp=self.spara
-        formatedData=npy.array([self.freqGHz[:],temp[:,0,0].real,temp[:,0,0].imag],dtype=float)
-        fid = open(fileName+'.s1p', 'w')
-        fid.write("# GHz S RI R 50\n")
-        npy.savetxt(fid,formatedData,fmt='%10.5f')
-        fid.close()
-
-class ZVA40_old(GpibInstrument):
-    '''
-    Rohde&Scharz ZVA40
-    
-    Examples
-    -----------
-    
-    >>> from skrf.vi.vna import ZVA40 
-    >>> v = ZVA40()
-    >>> dut = v.network
-    '''
-    def __init__(self, address=20, active_channel = 1, continuous=True,\
-            **kwargs):
-        GpibInstrument.__init__(self,address, **kwargs)
-        self.active_channel = active_channel
-        self.continuous = continuous
-        self.traces = []
-        #self.update_trace_list()
-
-    @property
-    def sdata(self):
-        '''
-        unformated s-parameter data [a numpy array]
-        '''
-        return npy.array(self.ask_for_values(\
-                'CALCulate%i:DATA? SDATa'%(self.active_channel)))
-
-    @property
-    def fdata(self):
-        '''
-        formated s-parameter data [a numpy array]
-        '''
-        return npy.array(self.ask_for_values(\
-                'CALCulate%i:DATA? FDATa'%(self.active_channel)))
-
-    @property
-    def continuous(self):
-        '''
-        set/get continuous sweep mode on/off [boolean]
-        '''
-        return self._continuous
-
-    @continuous.setter
-    def continuous(self, value):
-        if value:
-            self.write('INIT%i:CONT ON;'%(self.active_channel))
-            self._continuous = True
-        elif not value:
-            self.write('INIT%i:CONT OFF;'%(self.active_channel))
-            self._continuous = False
-        else:
-            raise ValueError('takes boolean')
-
-
-    @property
-    def frequency(self, unit='ghz'):
-        '''
-        a frequency object, representing the current frequency axis
-        [skrf Frequency object]
-        '''
-        freq=Frequency(0,0,0)
-        freq.f = self.ask_for_values(\
-                'CALC%i:DATA:STIMulus?'%self.active_channel)
-        freq.unit = unit
-        return freq
-
-    @property
-    def one_port(self):
-        '''
-        a network representing the current active trace
-        [skrf Network object]
-        '''
-        self.sweep()
-        s = self.sdata
-        s.shape=(-1,2)
-        s =  s[:,0]+1j*s[:,1]
-        ntwk = Network()
-        ntwk.s = s
-        ntwk.frequency= self.frequency
-        return ntwk
-
-    @property
-    def s11(self):
-        '''
-        this is just for legacy support, there is no gurantee this
-        will return s11. it just returns active trace
-        '''
-        return self.one_port
-
-    @property
-    def error(self):
-        '''
-        returns list errors stored on vna
-        '''
-        return self.ask('OUTPERROR?')
-
-    def initiate(self):
-        '''
-        initiate a sweep on current channel (low level timing)
-        '''
-        self.write('INITiate%i'%self.active_channel)
-
-    def sweep(self):
-        '''
-        initiate a sweep on current channel. if vna is in continous
-        mode it will put in single sweep mode, then request a sweep,
-        and then return sweep mode to continous.
-        '''
-        if self.continuous:
-            self.continuous = False
-            self.write(\
-                    'INITiate%i:IMMediate;*WAI'%self.active_channel)
-            self.continuous = True
-        else:
-            self.write(\
-                    'INITiate%i:IMMediate;*WAI'%self.active_channel)
-
-    def wait(self):
-        '''
-        wait for preceding command to finish before executing subsequent
-        commands
-        '''
-        self.write('*WAIt')
-
-    def add_trace(self, parameter, name):
-        print ('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
-                %(self.active_channel, name, parameter))
-        self.write('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
-                %(self.active_channel, name, parameter))
-        self.traces[name] = parameter
-
-    def set_active_trace(self, name):
-        if name in self.traces:
-            self.write('CALC%i:PAR:SEL %s'%(self.active_channel,name))
-        else:
-            raise ValueError('trace name does exist')
-    def update_trace_list(self):
-        raise(NotImplementedError)
-
-    def upload_cal_data(self, error_data, cal_name='test', port=1):
-        '''
-        for explanation of this code see the 
-        zva manual (v1145.1084.12 p6.193)
-        '''
-        directivity  = error_data.s[:,0,0]
-        source_match  = error_data.s[:,1,1]
-        reflection_tracking  = error_data.s[:,1,0]*error_data.s[:,0,1]
-        
-        def flatten_to_string(z):
-            return ''.join(['%s,'%k for k in mf.complex2Scalar(z)])
-        
-        error_dict={}
-        if port ==1:
-            error_dict['DIRECTIVITY'] = flatten_to_string(directivity)[0:-2]
-            error_dict['SRCMATCH'] = flatten_to_string(source_match)[0:-2]
-            error_dict['REFLTRACK'] = flatten_to_string(reflection_tracking)[0:-2]
-        
-        cal_type = 'FOPort'%port
-        self.write('CORR:COLL:METH:DEF \'%s\', %s, %i'%(cal_name, cal_type,port))
-        self.write('corr:coll:save:sel:def')
-        self.continuous=False
-        for key in error_dict:
-            self.write('corr:dat \'%s\',%i,0,%s'\
-            %(key, port, error_dict[key]))
-    
-        self.continuous=True
-    
-    def get_port_config(self):
-        raise NotImplementedError
-    
-    
-        
-    def set_port_config(self, ch=1, pt=1, num=1, denom=1, offset=0, 
-                        sweep_type='sweep'):
-        '''
-        Parameters
-        -----------
-        ch : int 
-            channel number
-        pt : int
-            port number
-        num : int
-            numerator 
-        denom : int
-            denominator
-        offset : float 
-            offset frequency [hz]
-        sweep_type: ['sweep','cw','fixed']
-            sweep type. 
-    
-        '''
-        gpib_str = 'SOUR{ch}:FREQ:{pt}:CONV:ARB:IFR {num}, {denom}, {offset}, {sweep_type}'.format(ch = ch, pt = pt, num = num, denom = denom, 
-                      offset = offset, sweep_type = sweep_type)
-        self.write(gpib_str)
-        
-        
-class ZVA40_alex(GpibInstrument):
-    '''
-    the rohde Swarz zva40
-    '''
-    class Channel(object):
-        def __init__(self, vna, channel_number):
-            self.number = channel_number
-            self.vna = vna
-            self.traces = {}
-            self.continuous = True
-
-        @property
-        def sdata(self):
-            return npy.array(self.vna.ask_for_values('CALCulate%i:DATA? SDATa'%(self.number)))
-        @property
-        def fdata(self):
-            return npy.array(self.vna.ask_for_values('CALCulate%i:DATA? FDATa'%(self.number)))
-        @property
-        def continuous(self):
-            return self._continuous
-        @continuous.setter
-        def continuous(self, value):
-            if value:
-                self.vna.write('INIT%i:CONT ON;'%(self.number))
-                self._continuous = True
-            elif not value:
-                self.vna.write('INIT%i:CONT OFF;'%(self.number))
-                self._continuous = False
-            else:
-                raise ValueError('takes boolean')
-
-        def initiate(self):
-            self.vna.write('INITiate%i'%self.number)
-
-        def sweep(self):
-            if self.continuous:
-                self.continuous = False
-                self.vna.write('INITiate%i:IMMediate;*WAI'%self.number)
-                self.continuous = True
-            else:
-                self.vna.write('INITiate%i:IMMediate;*WAI'%self.number)
-
-        def add_trace(self, parameter, name):
-            print ('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
-                    %(self.number, name, parameter))
-            self.vna.write('CALC%i:PARA:SDEF \"%s\",\"%s\"'\
-                    %(self.number, name, parameter))
-            self.traces[name] = parameter
-
-        def select_trace(self, name):
-            if name in self.traces.keys():
-                self.vna.write('CALC%i:PAR:SEL %s'%(self.number,name))
-            else:
-                raise ValueError('trace name does exist')
-
-        @property
-        def frequency(self, unit='ghz'):
-            freq=Frequency(0,0,0)
-            freq.f = self.vna.ask_for_values('CALC%i:DATA:STIMulus?'%self.number)
-            freq.unit = unit
-            return freq
-        @property
-        def one_port(self):
-            self.sweep()
-            s = self.sdata
-            s.shape=(-1,2)
-            s =  s[:,0]+1j*s[:,1]
-            ntwk = Network()
-            ntwk.s = s
-            ntwk.frequency= self.frequency
-            return ntwk
-
-    def __init__(self, address=20,**kwargs):
-        GpibInstrument.__init__(self,address, **kwargs)
-        self.add_channel(1)
-
-    def _set_property(self, name, value):
-        setattr(self, '_' + name, value)
-    def _get_property(self, name):
-        return getattr(self, '_' + name)
-
-    @property
-    def error(self):
-        return self.ask('OUTPERROR?')
-    def add_channel(self,channel_number):
-        channel = self.Channel(self, channel_number)
-        fget = lambda self: self._get_property('ch'+str(channel_number))
-        setattr(self.__class__,'ch'+str(channel_number), property(fget))
-        setattr(self, '_'+'ch'+str(channel_number), channel)
-
-
-
-    def wait(self):
-        self.write('*WAIt')
 
 class HP8510C(GpibInstrument):
     '''
