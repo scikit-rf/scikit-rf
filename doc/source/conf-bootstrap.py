@@ -31,7 +31,7 @@ import sphinx_bootstrap_theme
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 
-run_notebooks = False
+run_notebooks = True
 notebook_source_dir = '.'
 if run_notebooks:
     from notebooks_to_rst import go

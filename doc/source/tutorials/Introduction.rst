@@ -58,31 +58,6 @@ appear like the ones shown in these tutorials.
 
 .. code:: python
 
-    from skrf.data import mpl_rc_fname # delayed to solve circular import
-    print mpl_rc_fname
-
-.. parsed-literal::
-
-    /home/alex/data/docs/code/path/skrf/data/skrf.mplstyle
-
-
-.. code:: python
-
-    import os
-    import matplotlib as mpl
-    print os.path.exists(mpl_rc_fname)
-
-.. parsed-literal::
-
-    True
-
-
-.. code:: python
-
-    rc = mpl.rc_params_from_file(mpl_rc_fname)
-    mpl.rcParams.update(rc)
-.. code:: python
-
     rf.stylely()
 A Note about the data used in this example
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -228,7 +203,7 @@ the Smith Chart.
     ring_slot.plot_s_db()
 
 
-.. image:: Introduction_files/output_37_0.png
+.. image:: Introduction_files/output_34_0.png
 
 
 .. code:: python
@@ -236,7 +211,7 @@ the Smith Chart.
     ring_slot.plot_s_deg()
 
 
-.. image:: Introduction_files/output_38_0.png
+.. image:: Introduction_files/output_35_0.png
 
 
 .. code:: python
@@ -244,7 +219,7 @@ the Smith Chart.
     ring_slot.plot_s_smith()
 
 
-.. image:: Introduction_files/output_39_0.png
+.. image:: Introduction_files/output_36_0.png
 
 
 For more detailed information about plotting see the :doc:`plotting`
@@ -342,7 +317,7 @@ Network. To plot the magnitude of the standard deviation of the set,
     title('Standard Deviation of RO');
 
 
-.. image:: Introduction_files/output_53_0.png
+.. image:: Introduction_files/output_50_0.png
 
 
 Plotting Uncertainty Bounds
@@ -372,7 +347,7 @@ methods
 
 
 
-.. image:: Introduction_files/output_56_1.png
+.. image:: Introduction_files/output_53_1.png
 
 
 See the :doc:`networkset` tutorial for more information.
