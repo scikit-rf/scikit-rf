@@ -34,8 +34,8 @@ Connecting Networks
     flip
 
 
-Interpolation and Combining
-=============================
+Interpolation and Concatenation Along Frequency Axis 
+=====================================================
 
 .. autosummary::
     :toctree: generated/
@@ -47,7 +47,17 @@ Interpolation and Combining
     Network.interpolate_self
     Network.interpolate_from_f
     
+Combining Networks 
+===================================
 
+.. autosummary::
+    :toctree: generated/ 
+       
+    n_oneports_2_nport
+    four_oneports_2_twoport
+    three_twoports_2_threeport
+    
+    
 IO
 ====
 
@@ -92,6 +102,7 @@ Supporting Functions
     t2s
     t2z
     t2y
+    fix_z0_shape
 
 
 Misc Functions
@@ -113,6 +124,9 @@ from copy import deepcopy as copy
 
 
 import numpy as npy
+
+from numpy.linalg import inv as npy_inv
+
 import pylab as plb
 from scipy import stats,signal        # for Network.add_noise_*, and Network.windowed
 
@@ -3760,18 +3774,36 @@ def t2y(t):
 def renormalize_s(s, z_old, z_new):
     '''
     Renormalize a s-parameter matrix given old and new port impedances
+    
+    See QUCS Technical docs.
     '''
-    if npy.isscalar(z_old):
-        z_old = npy.array(s.shape[0]*[s.shape[1] * [z_old]])
+    
+    
+    
+    nfreqs, nports, nports = s.shape
+    z_old = fix_z0_shape(z_old, nfreqs, nports)
+    z_new = fix_z0_shape(z_new, nfreqs, nports)
         
+    #reflection coeffient vector 
+    r = 1.0*(z_new-z_old)/(z_new +z_old)
+    # unamed vector
+    a = (npy.sqrt(z_new)/z_old ) * 1./(z_new+z_old)
+    
+    r = r.reshape(nfreqs,nports,1)
+    a = a.reshape(nfreqs,nports,1)
+    
+    # identity matrix 
+    E = npy.eye(nports,dtype=complex).reshape((-1,nports,nports)).repeat(nfreqs,0) 
+    
+    R = r*E # reflection coefficient Matrix
+    A = a*E
+    
+    s_new = s.copy()
+    for f in xrange(nfreqs):
+        dummy = (s[f]- R[f]).dot(npy_inv(E[f]-R[f].dot(s[f])))
+        s_new[f] = npy_inv(A[f]).dot(dummy).dot(A[f])
+    return s_new
         
-    s = npy.zeros(z.shape, dtype='complex')
-    I = npy.mat(npy.identity(z.shape[1]))
-    for fidx in xrange(z.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
-        s[fidx] = (sqrty0*z[fidx]*sqrty0 - I) * (sqrty0*z[fidx]*sqrty0 + I)**-1
-    return s
-
 def fix_z0_shape( z0, nfreqs, nports):
     '''
     Make a port impedance of correct shape for a given network's matrix 
@@ -3814,7 +3846,7 @@ def fix_z0_shape( z0, nfreqs, nports):
     
     if npy.shape(z0) == (nfreqs, nports):
         # z0 is of correct shape. super duper.return it quick.
-        return z0 
+        return z0.copy() 
     
     elif npy.isscalar(z0):
         # z0 is a single number
