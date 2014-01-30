@@ -37,6 +37,7 @@ If this produces an import error, please see :doc:`installation`.  Loading the  
 
 Creating Networks
 -------------------------
+
 **skrf** provides an object for a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file.
 
 .. ipython::
@@ -49,16 +50,16 @@ A short description of the network will be printed out if entered onto the comma
 	
 .. ipython::
 	
-	In [1]: ring_slot
+	In [139]: ring_slot
 
 
 Networks can also be created by directly passing values for the frequency, s-paramters  and z0. 
 
 .. ipython::
 	
-	In [1]: custom_ntwk = rf.Network(f = [1,2,3], s= [-1, 1j, 0], z0=50) 
-	In [1]: # `f` is interpreted in units of 'ghz'
-
+	In [139]: custom_ntwk = rf.Network(f = [1,2,3], s= [-1, 1j, 0], z0=50) 
+	
+	
 See  :func:`Network.__init__`  for more informaition on network creation.
 
 Network Basics
@@ -109,29 +110,29 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 If you would like to use skrf's plot styling,
 
 .. ipython::
-
-  In [138]: import matplotlib as mpl
-  
-  In [138]: mpl.rc_file(rf.data.pwd+ '/skrf.mplstyle')
-  
+	
+	In [138]: import matplotlib as mpl
+	
+	In [138]: mpl.rc_file(rf.data.pwd+ '/skrf.mplstyle')
+	
 To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
 .. ipython::
-
-   @savefig ring_slot,smith.png 
-   In [151]: ring_slot.plot_s_smith();
+	
+	@savefig ring_slot,smith.png 
+	In [151]: ring_slot.plot_s_smith();
 
 
 Or plot a pair of s-parameters individually, in log magnitude 
 
 .. ipython::
-
-   In [153]: figure();
-   
-   In [153]: ring_slot.plot_s_db(m=1, n=0);	# s21
-   
-   @savefig ring_slot,db.png 
-   In [153]: ring_slot.plot_s_db(m=0, n=0); # s11
+	
+	In [153]: figure();
+	
+	In [153]: ring_slot.plot_s_db(m=1, n=0); # s21
+	
+	@savefig ring_slot,db.png 
+	In [153]: ring_slot.plot_s_db(m=0, n=0); # s11
 
 For more detailed information about plotting see :doc:`plotting`.   
 

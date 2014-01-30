@@ -3181,7 +3181,7 @@ def innerconnect_s(A, k, l):
 ## network parameter conversion       
 def s2z(s,z0=50):
     '''
-    Convert scattering parameters [#]_ to impedance parameters [#]_
+    Convert scattering parameters [1]_ to impedance parameters [2]_
 
 
     .. math::
@@ -3192,40 +3192,24 @@ def s2z(s,z0=50):
     s : complex array-like
         scattering parameters
     z0 : complex array-like or number 
-        port impedances                                         
+        port impedances.                                         
 
     Returns
     ---------
     z : complex array-like
         impedance parameters
 
-    See Also
-    ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
-    y2z
-    t2s 
-    t2z
-    t2y
-    Network.s
-    Network.y
-    Network.z
-    Network.t
+    
         
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/S-parameters
-    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+    .. [1] http://en.wikipedia.org/wiki/S-parameters
+    .. [2] http://en.wikipedia.org/wiki/impedance_parameters
     
     '''
-    if npy.isscalar(z0):
-        z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
+    nfreqs, nports, nports = s.shape
+    z0 = fix_z0_shape(z0, nfreqs, nports)
+    
     z = npy.zeros(s.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
     s = s.copy() # to prevent the original array from being altered
@@ -3281,8 +3265,8 @@ def s2y(s,z0=50):
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     '''
 
-    if npy.isscalar(z0):
-        z0 = npy.array(s.shape[0]*[s.shape[1] * [z0]])
+    nfreqs, nports, nports = s.shape
+    z0 = fix_z0_shape(z0, nfreqs, nports)
     y = npy.zeros(s.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
     s = s.copy() # to prevent the original array from being altered
@@ -3390,8 +3374,8 @@ def z2s(z, z0=50):
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     '''
-    if npy.isscalar(z0):
-        z0 = npy.array(z.shape[0]*[z.shape[1] * [z0]])
+    nfreqs, nports, nports = z.shape
+    z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(z.shape, dtype='complex')
     I = npy.mat(npy.identity(z.shape[1]))
     for fidx in xrange(z.shape[0]):
@@ -3533,8 +3517,8 @@ def y2s(y, z0=50):
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     '''
-    if npy.isscalar(z0):
-        z0 = npy.array(y.shape[0]*[y.shape[1] * [z0]])
+    nfreqs, nports, nports = y.shape
+    z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(y.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
     for fidx in xrange(s.shape[0]):
@@ -3770,6 +3754,85 @@ def t2y(t):
     
     '''
     raise (NotImplementedError)
+
+
+## renormalize 
+def renormalize_s(s, z_old, z_new):
+    '''
+    Renormalize a s-parameter matrix given old and new port impedances
+    '''
+    if npy.isscalar(z_old):
+        z_old = npy.array(s.shape[0]*[s.shape[1] * [z_old]])
+        
+        
+    s = npy.zeros(z.shape, dtype='complex')
+    I = npy.mat(npy.identity(z.shape[1]))
+    for fidx in xrange(z.shape[0]):
+        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+        s[fidx] = (sqrty0*z[fidx]*sqrty0 - I) * (sqrty0*z[fidx]*sqrty0 + I)**-1
+    return s
+
+def fix_z0_shape( z0, nfreqs, nports):
+    '''
+    Make a port impedance of correct shape for a given network's matrix 
+    
+    This attempts to broadcast z0 to satisy
+        npy.shape(z0) == (nfreqs,nports)
+    
+    Parameters 
+    --------------
+    z0 : number, array-like
+        z0 can be: 
+        * a number (same at all ports and frequencies)
+        * an array-like of length == number ports.
+        * an array-like of length == number frequency points.
+        * the correct shape ==(nfreqs,nports)
+    
+    nfreqs : int
+        number of frequency points
+    nportrs : int
+        number of ports
+        
+    Returns
+    ----------
+    z0 : array of shape ==(nfreqs,nports)
+        z0  with the right shape for a nport Network
+
+    Examples
+    ----------
+    For a two-port network with 201 frequency points, possible uses may
+    be
+    
+    >>> z0 = rf.fix_z0_shape(50 , 201,2)
+    >>> z0 = rf.fix_z0_shape([50,25] , 201,2)
+    >>> z0 = rf.fix_z0_shape(range(201) , 201,2)
+
+        
+    '''
+    
+    
+    
+    if npy.shape(z0) == (nfreqs, nports):
+        # z0 is of correct shape. super duper.return it quick.
+        return z0 
+    
+    elif npy.isscalar(z0):
+        # z0 is a single number
+        return npy.array(nfreqs*[nports * [z0]])
+    
+    elif len(z0)  == nports:
+        # assume z0 is a list of impedances for each port, 
+        # but constant with frequency 
+        return npy.array(nfreqs*[z0])
+        
+    elif len(z0) == nfreqs:
+        # assume z0 is a list of impedances for each frequency,
+        # but constant with respect to ports
+        return npy.array(nports * [z0]).T
+        
+    else: 
+        raise IndexError('z0 is not acceptable shape')
+
 
 ## cascading assistance functions
 def inv(s):

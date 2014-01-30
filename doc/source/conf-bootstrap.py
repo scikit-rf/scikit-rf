@@ -42,7 +42,7 @@ extensions = [
     #'notebook_sphinxext_alex',
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
-    #'sphinx.ext.intersphinx',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
     'numpydoc',
