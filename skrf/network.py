@@ -103,6 +103,7 @@ Supporting Functions
     t2z
     t2y
     fix_z0_shape
+    renormalize_s
 
 
 Misc Functions
@@ -113,6 +114,7 @@ Misc Functions
     average
     two_port_reflect
     Network.nudge
+    Network.renormalize
 
 
 '''
@@ -2085,6 +2087,22 @@ class Network(object):
         out.flip()
         return out
         
+    def renormalize(self, z_new):
+        '''
+        Renormalize s-parameter matrix given to new port impedances
+        
+        Parameters
+        ---------------
+        z_new : complex array of shape FxN, F, N or a  scalar 
+            new port impedances
+        
+        See Also
+        ----------
+        renormalize_s
+        fix_z0_shape
+        '''
+        self.s = renormalize_s(self.s, self.z0, z_new)
+        self.z0 = fix_z0_shape(z_new,self.frequency.npoints, self.nports)
         
     def renumber(self, from_ports, to_ports):
         '''
@@ -3347,7 +3365,7 @@ def s2t(s):
 
 def z2s(z, z0=50):
     '''
-    convert impedance parameters [#]_ to scattering parameters [#]_
+    convert impedance parameters [1]_ to scattering parameters [2]_
 
     .. math::
         s = (\\sqrt{y_0} \\cdot z \\cdot \\sqrt{y_0} - I)(\\sqrt{y_0} \\cdot z \\cdot\\sqrt{y_0} + I)^{-1}
@@ -3364,29 +3382,12 @@ def z2s(z, z0=50):
     s : complex array-like
         scattering parameters
 
-    See Also
-    ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
-    y2z
-    t2s 
-    t2z
-    t2y
-    Network.s
-    Network.y
-    Network.z
-    Network.t
+    
     
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
-    .. [#] http://en.wikipedia.org/wiki/S-parameters
+    .. [1] http://en.wikipedia.org/wiki/impedance_parameters
+    .. [2] http://en.wikipedia.org/wiki/S-parameters
     '''
     nfreqs, nports, nports = z.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -3775,34 +3776,56 @@ def renormalize_s(s, z_old, z_new):
     '''
     Renormalize a s-parameter matrix given old and new port impedances
     
-    See QUCS Technical docs.
+    In the Parameters descriptions, F,N,N = shape(s).
+    
+    Parameters
+    ---------------
+    s : complex array of shape FxNxN
+        s-parameter matrix 
+    
+    z_old : complex array of shape FxN, F, N or a  scalar
+        old (original) port impedances
+    
+    z_new : complex array of shape FxN, F, N or a  scalar 
+        new port impedances
+    
+    
+    Notes
+    ------
+    The impedance renormalizeation. This just calls ::
+    
+        z2s(s2z(s,z0 = z_old), z0 = z_new)
+    
+    However, you can see ref [1]_ or [2]_ for some theoretical background.
+    
+    Examples
+    ------------
+    >>> s = zeros(shape=(101,2,2))
+    >>> renormalize_s(s, 50,25)
+    
+    
+    References
+    -------------
+    .. [1] A Rigorous Technique for Measuring the Scattering Matrix of
+      a Multiport Device with a 2-Port Network Analyzer
+      John C. TIPPET, Ross A. SPECIALE
+      Microwave Theory and Techniques, IEEE Transactions on,
+      Vol.82, Iss.5, May 1982
+      Pages: 661- 666
+     
+    .. [2] http://www.anritsu.com/en-gb/downloads/application-notes/application-note/dwl1334.aspx
+    See Also
+    ----------
+    fix_z0_shape
+    ssz 
+    z2s
+    
     '''
+    # thats a heck of a one-liner!
+    return z2s(s2z(s, z0=z_old), z0=z_new)
     
     
     
-    nfreqs, nports, nports = s.shape
-    z_old = fix_z0_shape(z_old, nfreqs, nports)
-    z_new = fix_z0_shape(z_new, nfreqs, nports)
-        
-    #reflection coeffient vector 
-    r = 1.0*(z_new-z_old)/(z_new +z_old)
-    # unamed vector
-    a = (npy.sqrt(z_new)/z_old ) * 1./(z_new+z_old)
-    
-    r = r.reshape(nfreqs,nports,1)
-    a = a.reshape(nfreqs,nports,1)
-    
-    # identity matrix 
-    E = npy.eye(nports,dtype=complex).reshape((-1,nports,nports)).repeat(nfreqs,0) 
-    
-    R = r*E # reflection coefficient Matrix
-    A = a*E
-    
-    s_new = s.copy()
-    for f in xrange(nfreqs):
-        dummy = (s[f]- R[f]).dot(npy_inv(E[f]-R[f].dot(s[f])))
-        s_new[f] = npy_inv(A[f]).dot(dummy).dot(A[f])
-    return s_new
         
 def fix_z0_shape( z0, nfreqs, nports):
     '''
