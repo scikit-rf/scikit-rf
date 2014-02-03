@@ -46,7 +46,7 @@ Transmission Line Classes
     ~rectangularWaveguide.RectangularWaveguide
     ~cpw.CPW
     ~freespace.Freespace
-
+    ~coaxial.Coaxial
 
 
 .. _DistributedCircuit: :class:`~skrf.media.distributedCircuit.DistributedCircuit`
