@@ -376,6 +376,13 @@ class Calibration(object):
         return s_dict_to_ns(self.coefs_3term, self.frequency).to_dict()
     
     @property
+    def normalized_directivity(self):
+        '''
+        the directivity normalized to the reflection tracking
+        '''
+        raise NotImplementedError
+        
+    @property
     def coefs_8term(self):
         '''
         Dictionary of error coefficients for 8-term (Error-box) Model

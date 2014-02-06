@@ -289,11 +289,15 @@ class Media(object):
     @property
     def v_p(self):
         '''
-        complex phase velocity (in m/s)
+        Complex phase velocity (in m/s)
         
         .. math:: 
             j \cdot \\omega / \\gamma
         
+        Notes
+        -------
+        The `j` is used so that real phase velocity corresponds to 
+        propagation
         
         where:
         * :math:`\\omega` is angular frequency (rad/s), 
@@ -304,8 +308,33 @@ class Media(object):
         propgation_constant
         
         '''
-        vp=1j*(self.frequency.w/self.propagation_constant)
-        return vp
+        return 1j*(self.frequency.w/self.propagation_constant)
+        
+    
+    @property
+    def v_g(self):
+        '''
+        Complex group velocity (in m/s)
+        
+        .. math:: 
+            j \cdot d \\omega / d \\gamma
+        
+        
+        where:
+        * :math:`\\omega` is angular frequency (rad/s), 
+        * :math:`\\gamma` is complex propagation constant (rad/m)
+        
+        See Also
+        -----------
+        propgation_constant
+        v_p
+        '''
+        
+        dw = npy.diff(self.frequency.w)
+        dk = npy.diff(self.propagation_constant)
+        
+        return 1j*dw/dk
+            
     
     ## Other Functions
     def theta_2_d(self,theta,deg=True):
