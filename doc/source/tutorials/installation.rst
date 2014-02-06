@@ -63,7 +63,7 @@ Requirements
 Necessary
 =============
 
-*    python (>=2.6) http://www.python.org/
+*    python (>= 2.6 < 3.0 ) http://www.python.org/
 *    numpy http://numpy.scipy.org/
 *    scipy http://www.scipy.org/
 *    matplotlib http://matplotlib.sourceforge.net/

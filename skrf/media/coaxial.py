@@ -12,7 +12,7 @@ A coaxial transmission line defined in terms of its inner/outer diameters and pe
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi
 from numpy import sqrt, log
-
+from ..tlineFunctions import surface_resistivity
 from distributedCircuit import DistributedCircuit
 
 # used as substitutes to handle mathematical singularities.
@@ -65,9 +65,12 @@ class Coaxial(DistributedCircuit):
         self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
                 
         # surface resistance
-        omega = 2.*pi*freq.f
+        omega = freq.w
+        f = freq.f
         mu_r=1.
-        Rs = sqrt(omega*mu_0*mu_r/(2.*self.sigma))
+        rho= 1./sigma
+        
+        Rs = surface_resistivity(f,rho, mu_r)
         
         # inner and outer radius
         a = Dint/2. 
