@@ -4065,9 +4065,8 @@ def two_port_reflect(ntwk1, ntwk2):
     
     Examples
     ---------
-
-    >>>short,open = rf.Network('short.s1p', rf.Network('open.s1p')
-    >>>rf.two_port_reflect(short,open)
+    >>> short,open = rf.Network('short.s1p', rf.Network('open.s1p')
+    >>> rf.two_port_reflect(short,open)
     '''
     result = ntwk1.copy()
     s11 = ntwk1.s[:,0,0]
