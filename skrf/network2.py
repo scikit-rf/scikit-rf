@@ -9,48 +9,200 @@ from .plotting import plot_complex_rectangular,plot_rectangular
 import numpy as npy
 import pylab as plb
 
+from IPython.display import Image, SVG, Math
+from IPython.core.pylabtools import print_figure
+
+
+
+
 class Projection(object):
     '''
     a scalar projection of a parameter
     '''
-    def __init__(self,network, param, func):
+    def __init__(self,network, param, func, name, y_label):
         self.network = network
         self.param = param
         self.func = func
-    
+        self.name = name
+        self.y_label = y_label
+        self._png_data = None
+        self._svg_data = None
+        
+        
     @property
     def val(self):
         return self.func(self.param.val)
     
-    def plot(self):
-        
-        return plot_rectangular(self.network.frequency.f_scaled, 
-                                self.val.flatten())
-    
+    def plot(self,  m=None, n=None, ax=None, show_legend=True,*args, 
+             **kwargs):
 
-class Param(object):
+        # create index lists, if not provided by user
+        if m is None:
+            M = range(self.network.nports)
+        else:
+            M = [m]
+        if n is None:
+            N = range(self.network.nports)
+        else:
+            N = [n]
+
+        if 'label'  not in kwargs.keys():
+            gen_label = True
+        else:
+            gen_label = False
+
+        lines = [] #list of mpl lines
+        for m in M:
+            for n in N:
+                # set the legend label for this trace to the networks
+                # name if it exists, and they didnt pass a name key in
+                # the kwargs
+                if gen_label:
+                    if self.name is None:
+                        if plb.rcParams['text.usetex']:
+                            label_string = '$%s_{%i%i}$'%\
+                            (self.param.name.upper(),m+1,n+1)
+                        else:
+                            label_string = '%s%i%i'%\
+                            (self.param.name.upper(),m+1,n+1)
+                    else:
+                        if plb.rcParams['text.usetex']:
+                            label_string = self.network.name+', $%s_{%i%i}$'%\
+                            (self.param.name.upper(),m+1,n+1)
+                        else:
+                            label_string = self.network.name+', %s%i%i'%\
+                            (self.param.name.upper(),m+1,n+1)
+                    kwargs['label'] = label_string
+
+                # plot the desired attribute vs frequency
+                if 'time' in self.param.name: 
+                    x_label = 'Time (ns)'
+                    x = self.network.frequency.t_ns
+                    
+                else:
+                    x_label = 'Frequency (%s)'%self.network.frequency.unit
+                    x = self.network.frequency.f_scaled
+                
+                
+                lines.append(plot_rectangular(
+                        x = x,
+                        y = self.val[:,m,n],
+                        x_label = x_label,
+                        y_label = self.y_label,
+                        show_legend = show_legend, ax = ax,
+                        *args, **kwargs)[0])
+        return lines
+    
+    def _figure_data(self, format):
+        fig, ax = plb.subplots()
+        self.plot(ax=ax)
+        data = print_figure(fig, format)
+        plb.close(fig)
+        return data
+    
+    def _repr_png_(self):
+        if self._png_data is None:
+            self._png_data = self._figure_data('png')
+        return self._png_data
+    
+    @property
+    def png(self):
+        return Image(self._repr_png_(), embed=True)
+        
+class Parameter(object):
     '''
     a complex network parameter
     '''
-    def __init__(self,  network, from_s, **kwargs):
-        self.from_s = from_s
+    def __init__(self,  network,  name, **kwargs):
+        self.name = name
         self.network = network
-    
+        self._png_data = None
+        self._svg_data = None
     
     @property
     def val(self):
-        return self.from_s(self.network.s.val)
+        raise NotImplementedError('Subclass Must implement me')
     
-        
     @property
     def db10(self):
-        return Projection(self.network, self,complex_2_db10)
+        return Projection(self.network, self,complex_2_db10, 
+                          name= 'dB10',y_label='Magnitude (dB)')
     
-    def plot(self):
-        return plot_complex_rectangular(self.val.flatten())
+    @property
+    def deg(self):
+        return Projection(self.network, self,complex_2_degree, 
+                          name= 'deg',y_label='Phase (deg)')
     
+    def plot(self, m=None, n=None, ax=None, show_legend=True,*args, 
+             **kwargs):
 
-class S(Param):
+        # create index lists, if not provided by user
+        if m is None:
+            M = range(self.network.nports)
+        else:
+            M = [m]
+        if n is None:
+            N = range(self.network.nports)
+        else:
+            N = [n]
+
+        if 'label'  not in kwargs.keys():
+            gen_label = True
+        else:
+            gen_label = False
+
+        
+        #was_interactive = plb.isinteractive
+        #if was_interactive:
+        #    plb.interactive(False)
+        lines = []
+        for m in M:
+            for n in N:
+                # set the legend label for this trace to the networks
+                # name if it exists, and they didnt pass a name key in
+                # the kwargs
+                if gen_label:
+                    if self.name is None:
+                        if plb.rcParams['text.usetex']:
+                            label_string = '$%s_{%i%i}$'%\
+                            (self.name.upper(),m+1,n+1)
+                        else:
+                            label_string = '%s%i%i'%\
+                            (self.name.upper(),m+1,n+1)
+                    else:
+                        if plb.rcParams['text.usetex']:
+                            label_string = self.network.name+', $%s_{%i%i}$'%\
+                            (self.name.upper(),m+1,n+1)
+                        else:
+                            label_string = self.network.name+', %s%i%i'%\
+                            (self.name.upper(),m+1,n+1)
+                    kwargs['label'] = label_string
+
+                # plot the desired attribute vs frequency
+                lines.append(plot_complex_rectangular(
+                    z = self.val[:,m,n],
+                    show_legend = show_legend, ax = ax,
+                    *args, **kwargs)[0])
+        return lines
+    
+    def _figure_data(self, format):
+        fig, ax = plb.subplots()
+        self.plot(ax=ax)
+        data = print_figure(fig, format)
+        plb.close(fig)
+        return data
+    
+    def _repr_png_(self):
+        if self._png_data is None:
+            self._png_data = self._figure_data('png')
+        return self._png_data
+    
+    @property
+    def png(self):
+        return Image(self._repr_png_(), embed=True)
+    
+    
+class S(Parameter):
     '''
     s parameters 
     
@@ -60,6 +212,7 @@ class S(Param):
     def __init__(self,  network, s):
         
         s_shape= npy.shape(s)
+        # shaping array 
         if len(s_shape) <3:
             if len(s_shape) == 2:
                 # reshape to kx1x1, this simplifies indexing in function
@@ -69,25 +222,54 @@ class S(Param):
 
         self._val= npy.array(s,dtype=complex)
         self.network = network
-        
-        
+        self.name = 's'
+        self._png_data = None
+        self._svg_data = None
     
     @property
     def val(self):
         return self._val
-    
-    
-    
-    
-    
-class Network(object):
-    def __init__(self, s, frequency):
-        
-        self.frequency = frequency
-        self.s = S(self, s)
-        self.z = Param(self, s2z)
 
+
+class Z(Parameter):
+    @property
+    def val(self):
+        return s2z(self.network.s.val)
+
+class Network(object):
+    def __init__(self, s, frequency, name = ''):
+        self.frequency = frequency
+        self.s = S(self, s,name = 's')
+        self.z = Z(self, name='z')
+        self.name = name
     
+    @classmethod
+    def from_z(cls, z, z0=50, **kwargs):
+        return cls(s = z2s(z,z0), **kwargs)
+        
+    @classmethod
+    def from_old_Network( cls, network):
+        return cls(frequency = network.frequency,
+                   s = network.s,
+                   name = network.name,
+                   )
+        
+        
+    @property
+    def nports(self):
+        '''
+        the number of ports the network has.
+
+        Returns
+        --------
+        nports : number
+                the number of ports the network has.
+
+        '''
+        try:
+            return self.s.val.shape[1]
+        except (AttributeError):
+            return 0
 
 
        
