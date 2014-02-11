@@ -91,9 +91,13 @@ from media import RectangularWaveguide, Media
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
 
-
 # globals 
-
+global ALMOST_ZERO
+ALMOST_ZERO = 1e-12
+global ALMOST_INF
+ALMOST_INF = 1e99
+global ALMOST_ONE
+ALMOST_ONE = 1.0 + 1/1e14
 
 # pre-initialized classes       
         

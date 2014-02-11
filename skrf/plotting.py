@@ -314,10 +314,11 @@ def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
     '''
     x = npy.real(z)
     y = npy.imag(z)
-    plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
+    plt= plot_rectangular(x=x, y=y, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
-
+    return plt
+    
 def plot_complex_polar(z, x_label=None, y_label=None,
     title=None, show_legend=True, axis_equal=False, ax=None,
     *args, **kwargs):
@@ -403,13 +404,14 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
         if len(ax.patches) == 0:
             smith(ax=ax, smithR = smith_r, chart_type=chart_type)
 
-    plot_complex_rectangular(z, x_label=x_label, y_label=y_label,
+    plt=plot_complex_rectangular(z, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
     ax.axis(smith_r*npy.array([-1.1, 1.1, -1.1, 1.1]))
     if plb.isinteractive():
         plb.draw()
+    return plt
 
 def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
     '''
