@@ -113,8 +113,7 @@ class Parameter(object):
     '''
     a complex network parameter
     '''
-    def __init__(self,  network,  name, **kwargs):
-        self.name = name
+    def __init__(self,  network, **kwargs):
         self.network = network
         self._png_data = None
         self._svg_data = None
@@ -210,7 +209,6 @@ class S(Parameter):
     
     '''
     def __init__(self,  network, s):
-        
         s_shape= npy.shape(s)
         # shaping array 
         if len(s_shape) <3:
@@ -225,22 +223,25 @@ class S(Parameter):
         self.name = 's'
         self._png_data = None
         self._svg_data = None
-    
+    name = 's'
     @property
     def val(self):
         return self._val
 
 
 class Z(Parameter):
+    name = 'z'
+    
     @property
     def val(self):
         return s2z(self.network.s.val)
-
+    
+    
 class Network(object):
     def __init__(self, s, frequency, name = ''):
         self.frequency = frequency
-        self.s = S(self, s,name = 's')
-        self.z = Z(self, name='z')
+        self.s = S(self, s)
+        self.z = Z(self)
         self.name = name
     
     @classmethod
