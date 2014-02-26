@@ -795,6 +795,16 @@ class NetworkSet(object):
         kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
         self.plot_minmax_bounds_component(*args,**kwargs)
     
+    def plot_minmax_bounds_s_db10(self,*args, **kwargs):
+        '''
+        this just calls
+                plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+        see plot_uncertainty_bounds for help
+
+        '''
+        kwargs.update({'attribute':'s_mag','ppf':mf.mag_2_db10})
+        self.plot_minmax_bounds_component(*args,**kwargs)
+    
     def plot_uncertainty_bounds_s_time_db(self,*args, **kwargs):
         '''
         this just calls
