@@ -21,6 +21,7 @@ Functions related to reading/writing touchstones.
 
     hfss_touchstone_2_gamma_z0
     hfss_touchstone_2_media
+    hfss_touchstone_2_network
 '''
 
 import numpy
@@ -382,7 +383,7 @@ def hfss_touchstone_2_gamma_z0(filename):
 
 def hfss_touchstone_2_media(filename, f_unit='ghz'):
     '''
-    Creates a :class:`~skrf.media.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments 
+    Creates a :class:`~skrf.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments 
     
     Parameters
     ------------
@@ -424,3 +425,32 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
         
         
     return media_list 
+
+def hfss_touchstone_2_network(filename, f_unit='ghz'):
+    '''
+    Creates a :class:`~skrf.Network` object from a a HFSS-style touchstone file
+    
+    Parameters
+    ------------
+    filename : string 
+        the HFSS-style touchstone file
+    f_unit : ['hz','khz','mhz','ghz']
+        passed to f_unit parameters of Frequency constructor
+    
+    Returns
+    --------
+    my_network : skrf.Network object
+        the n-port network model 
+    
+    Examples
+    ----------
+    >>> my_network = rf.hfss_touchstone_2_network('DUT.s2p')
+    
+    See Also
+    ---------
+    hfss_touchstone_2_gamma_z0 : returns gamma, and z0 
+    '''
+    my_network = Network(file=filename, f_unit=f_unit)
+    f,gamm,z0 = hfss_touchstone_2_gamma_z0(filename=filename)
+    my_network.z0 = z0
+    return(my_network)
