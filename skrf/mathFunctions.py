@@ -67,7 +67,7 @@ import numpy as npy
 from numpy import pi,angle,unwrap   
 from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
-import math 
+
 
 global LOG_OF_NEG
 LOG_OF_NEG = -100
@@ -420,13 +420,6 @@ def rand_c(*args):
     s = npy.array(args)
     return 1-2*npy.random.rand(npy.product(s)).reshape(s) + \
         1j-2j*npy.random.rand(npy.product(s)).reshape(s)
-
-def nCk(n,k):
-    '''
-    n choose k (aka binomial coefficient)
-    '''
-    f = math.factorial
-    return f(n) / f(k) / f(n-k)*1.0
 
 
 
