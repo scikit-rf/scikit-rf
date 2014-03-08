@@ -3,9 +3,14 @@
 import numpy as npy
 import ctypes as ct
 import os
+import platform 
 
 src_path = os.path.dirname(__file__)
-connect_lib = npy.ctypeslib.load_library('libconnect.so.1.0.1', src_path)
+if platform.system() == 'Windows':
+    lib_name = 'connect.pyd'
+else:
+    lib_name = 'connect.so'
+connect_lib = npy.ctypeslib.load_library(lib_name, src_path)
 
 def connect_s_fast(A,k,B,l):
     '''

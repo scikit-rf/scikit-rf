@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <complex.h>
 
+void initconnect()
+{    } 
+
 /*
  ==============================
  Array flattening convention: 
