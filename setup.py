@@ -3,6 +3,7 @@
 import ez_setup
 ez_setup.use_setuptools()
 from setuptools import setup, find_packages
+from distutils.core import Extension
 
 VERSION = '0.15dev'
 LONG_DESCRIPTION = """
@@ -23,6 +24,7 @@ setup(name='scikit-rf',
 		'scipy',
 		'matplotlib',
 		],
+	ext_modules=[Extension('skrf.src.connect', ['skrf/src/connect.c', ], export_symbols=['innerconnect_s','connect_s'])],
 	package_dir={'skrf':'skrf'},
 	include_package_data = True,
 	#exclude_package_data = {'':'doc/*'},
