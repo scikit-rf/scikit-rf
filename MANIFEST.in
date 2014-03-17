@@ -1,7 +1,8 @@
 include README.rst INSTALL.txt COPYING.txt ez_setup.py
 
 recursive-include doc * 
-recursive-include skrf *.py *.s1p *.s2p *.p *.cal *.ntwk *.csv *.c *.mplstyle
+recursive-include skrf *.py *.s?p *.p *.cal *.ntwk *.csv *.c *.mplstyle
+recursive-include data 
 
 include doc/Makefile
 recursive-include doc/source *.rst

@@ -24,13 +24,16 @@ import sphinx_bootstrap_theme
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
+
 #from subprocess import call
 #call(['make','notebooks'])
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, os.path.abspath('../sphinxext'))
+sys.path.insert(0, os.path.abspath('../../build/lib.linux-x86_64-2.7/'))
 
-
+import skrf 
+print skrf 
 run_notebooks = False
 notebook_source_dir = '.'
 if run_notebooks:

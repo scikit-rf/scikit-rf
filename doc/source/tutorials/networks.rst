@@ -30,7 +30,7 @@ For this tutorial, and the rest of the scikit-rf documentation, it is  assumed t
 
 	In [138]: import skrf as rf
 
-If this produces an import error, please see :doc:`installation`.  Loading the  touchstone files referenced in this tutorial assume that you are in the directory `scikit-rf/doc`.
+If this produces an import error, please see :doc:`installation`.  Sample touchstone files referenced in this tutorial can be found in the directory `skrf\data\`. The absolute path to this directory on your system is stored in the variable, `skrf.data.pwd`. 
 
 
 
@@ -111,9 +111,7 @@ If you would like to use skrf's plot styling,
 
 .. ipython::
 	
-	In [138]: import matplotlib as mpl
-	
-	In [138]: mpl.rc_file(rf.data.pwd+ '/skrf.mplstyle')
+	In [138]: rf.stylely()
 	
 To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
@@ -162,7 +160,7 @@ Element-wise mathematical operations on the scattering parameter matrices are ac
 
 
 
-All of these operations return :class:`Network` types, so the methods and properties of a :class:`Network` are available on the result.  For example, to plot the complex difference  between  `short` and `delay_short`,
+All of these operations return :class:`Network` types.  For example, to plot the complex difference  between  `short` and `delay_short`,
 	
 .. ipython::
 	
@@ -222,7 +220,7 @@ Connecting Multi-ports
 
 .. ipython::
 	
-	In [21]: tee = rf.Network('../skrf/data/tee.s3p')
+	In [21]: tee = rf.data.tee
 	
 
 To connect port `1` of the tee, to port `0` of the delay short,
@@ -284,7 +282,7 @@ For temporary data storage, **skrf** object can be `pickled <http://docs.python.
 
 .. ipython::
 	
-	In [21]: line = rf.Network('../skrf/data/line.s2p')
+	In [21]: line = rf.Network(rf.data.pwd+'/line.s2p')
 	
 	@verbatim
 	In [21]: rf.write(line) # write out Network using pickline IO
@@ -302,7 +300,7 @@ Frequently there is an entire directory of files that need to be analyzed. The f
 	
 .. ipython::
 	
-	In [21]: dict_o_ntwks = rf.read_all('../skrf/data/', contains = 'wr2p2')
+	In [21]: dict_o_ntwks = rf.read_all(rf.data.pwd, contains = 'wr2p2')
 	
 	In [21]: dict_o_ntwks
 	
@@ -382,7 +380,4 @@ References
 .. _ipython: http://ipython.scipy.org/moin/	
 
 
-.. ipython::
-	:suppress:
-		
-	In [144]: close('all')
+
