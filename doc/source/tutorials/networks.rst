@@ -8,11 +8,10 @@ Networks
 
 
 .. ipython::
-	:suppress:
 
 	In [144]: from pylab import *
 
-	In [145]: ion();close('all')
+
 
 
 
@@ -29,6 +28,8 @@ For this tutorial, and the rest of the scikit-rf documentation, it is  assumed t
 .. ipython::
 
 	In [138]: import skrf as rf
+    
+    In [138]: rf
 
 If this produces an import error, please see :doc:`installation`.  Sample touchstone files referenced in this tutorial can be found in the directory `skrf\data\`. The absolute path to this directory on your system is stored in the variable, `skrf.data.pwd`. 
 
@@ -236,7 +237,8 @@ Interpolation and Stitching
 A common need is to change the number of frequency points of a :class:`Network`. For instance, to use the operators and cascading functions the networks involved must have matching frequencies. If two networks have different frequency information, then an error will be raised, 
 
 .. ipython::
-	
+	:okexcept: 
+    
 	In [21]: line = rf.data.wr2p2_line.copy()
 	
 	In [21]: line1 = rf.data.wr2p2_line1.copy()

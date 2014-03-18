@@ -3,19 +3,18 @@
 *********
 Plotting  
 *********
+
 .. currentmodule:: skrf.network
 
 
 
 .. ipython::
-    :suppress:
-        
-    In [144]: from pylab import *
+
+	In [144]: from pylab import *
     
-    In [145]: ion()
+	In [145]: import skrf as rf
     
-    In [147]: clf()
-    
+	In [145]: ioff();close('all')
 
 Introduction
 ---------------
@@ -25,10 +24,8 @@ If you would like to use skrf's plot styling,
 
 
 .. ipython::
-
-    In [138]: import matplotlib as mpl
-  
-    In [138]: mpl.rc_file(rf.data.pwd+ '/skrf.mplstyle')
+	
+	In [138]: rf.stylely()
   
   
 Plotting Methods
