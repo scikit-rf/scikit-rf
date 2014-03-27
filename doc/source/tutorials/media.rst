@@ -6,21 +6,14 @@ Media
 .. currentModule:: skrf.media
 
 .. ipython::
-	:suppress:
+    :suppress:
+    
+    In [138]: import skrf as rf
+    
+    In [138]: from pylab import * 
+    
 	
-	In [144]: from pylab import *
-	
-	In [145]: ion()
-	
-	In [146]: rcParams['savefig.dpi'] =120
-	
-	In [147]: rcParams['figure.figsize'] = [4,3]
-	
-	In [147]: rcParams['figure.subplot.left'] = 0.15
-	
-	In [147]: clf()
-	
-.. contents::
+
 
 Introduction
 -------------

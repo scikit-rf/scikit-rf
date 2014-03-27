@@ -5,6 +5,15 @@ Old Introduction
 *********************
 .. currentmodule:: skrf.network
 
+.. ipython::
+    :suppress:
+    
+    In [138]: import skrf as rf
+    
+    In [138]: from pylab import * 
+    
+    
+
 Introduction
 ------------------
 
@@ -18,22 +27,7 @@ Although not essential, these tutorials are most easily followed by using the ip
 Using ipython with the `pylab` flag imports several commonly used functions, and turns on 
 `interactive plotting mode <http://matplotlib.org/users/shell.html>`_  which causes  plots to display immediately. 
 
-.. ipython::
-	:suppress:
-	
-	
-	In [144]: from pylab import *
-	
-	In [145]: ion()
-	
-	In [146]: rcParams['savefig.dpi'] =120
-	
-	In [147]: rcParams['figure.figsize'] = [4,3]
-	
-	In [147]: rcParams['figure.subplot.left'] = 0.15
-	
-	In [147]: clf()
-	
+
 	
 	
 
@@ -140,9 +134,11 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 To plot all four s-parameters of the `ring_slot` on the Smith Chart.
 
 .. ipython::
-
-   @savefig ring_slot,smith.png 
-   In [151]: ring_slot.plot_s_smith();
+    
+    In [151]: rf.stylely() # sets plot styleling  (optional)
+    
+    @savefig ring_slot,smith.png 
+    In [151]: ring_slot.plot_s_smith();
 
 
 For more detailed information about plotting see the  :doc:`plotting` tutorial
@@ -152,11 +148,11 @@ For more detailed information about plotting see the  :doc:`plotting` tutorial
 NetworkSet 
 --------------
 
-The :class:`~skrf.networkset.NetworkSet` object
+The :class:`~skrf.networkSet.NetworkSet` object
 represents an unordered  set of networks and provides  methods for 
 calculating statistical quantities and displaying uncertainty bounds.
 
-A :class:`~skrf.networkset.NetworkSet` is created from a list or dict of 
+A :class:`~skrf.networkSet.NetworkSet` is created from a list or dict of 
 :class:`~skrf.network.Network`'s.  This can be done quickly with 
 :func:`~skrf.io.general.read_all` , which loads all skrf-readable objects
 in a directory. The argument `contains` is used to load only files 
@@ -218,6 +214,7 @@ Uncertainty bounds on any network parameter can be plotted through the methods
 
 
 .. ipython::
+    :okwarning: 
     
     In [24]: figure();
     
@@ -403,7 +400,9 @@ Or to create a :math:`90^{\circ}` section of cpw line,
 
 See :doc:`media` for more information about the Media object and network creation.
 
+.. ipython:: 
 
+	In [144]: close('all')
 
 .. _ipython: http://ipython.scipy.org/moin/	
 .. _QUCS: http://www.qucs.sourceforge.net

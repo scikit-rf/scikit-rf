@@ -4,7 +4,13 @@ Virtual Instruments
 ********************
 .. currentmodule:: skrf.vi
 
-
+.. ipython::
+    :suppress:
+    
+    In [138]: import skrf as rf
+    
+    In [138]: from pylab import * 
+    
 Introduction
 ---------------
 

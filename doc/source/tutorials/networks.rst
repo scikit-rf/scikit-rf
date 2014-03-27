@@ -6,21 +6,12 @@ Networks
 
 .. currentmodule:: skrf.network
 
-
 .. ipython::
-
-	In [144]: from pylab import *
+    :suppress:
     
-	In [144]: close('all')
-	
-    In [144]: ioff()
+    In [138]: import skrf as rf
     
-    
-
-
-
-
-
+    In [138]: from pylab import * 
 
 Introduction
 -------------------------
@@ -32,12 +23,11 @@ For this tutorial, and the rest of the scikit-rf documentation, it is  assumed t
 
 
 .. ipython::
-
+	
 	In [138]: import skrf as rf
-    
-    In [138]: rf
 
-If this produces an import error, please see :doc:`installation`.  Sample touchstone files referenced in this tutorial can be found in the directory `skrf\data\`. The absolute path to this directory on your system is stored in the variable, `skrf.data.pwd`. 
+
+If this produces an import error, please see :doc:`installation`.
 
 
 
@@ -45,7 +35,7 @@ If this produces an import error, please see :doc:`installation`.  Sample touchs
 Creating Networks
 -------------------------
 
-**skrf** provides an object for a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file.
+**skrf** provides an object for a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file. There are some examples touchstone files shipped with skrf in the data module.
 
 .. ipython::
 			
@@ -64,7 +54,9 @@ Networks can also be created by directly passing values for the frequency, s-par
 
 .. ipython::
 	
-	In [139]: custom_ntwk = rf.Network(f = [1,2,3], s= [-1, 1j, 0], z0=50) 
+	In [139]: f = rf.Frequency(1,10,101,'ghz')
+	
+	In [139]: custom_ntwk = rf.Network(frequency = f, s= [-1, 1j, 0], z0=50) 
 	
 	
 See  :func:`Network.__init__`  for more informaition on network creation.
@@ -172,6 +164,10 @@ All of these operations return :class:`Network` types.  For example, to plot the
 .. ipython::
 	
 	In [21]: figure();
+	
+	In [21]: short
+	
+	In [21]: delayshort
 	
 	In [21]: difference = (short- delayshort)
 	

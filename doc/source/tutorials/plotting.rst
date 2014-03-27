@@ -6,15 +6,13 @@ Plotting
 
 .. currentmodule:: skrf.network
 
-
-
 .. ipython::
+    :suppress:
+    
+    In [138]: import skrf as rf
+    
+    In [138]: from pylab import * 
 
-	In [144]: from pylab import *
-    
-	In [145]: import skrf as rf
-    
-	In [145]: ioff();close('all')
 
 Introduction
 ---------------
@@ -80,7 +78,7 @@ As a first example, load a :class:`~skrf.network.Network` from the
     
     In [139]: ring_slot
     
-    @savefig plotting-ring_slot,smith.png
+    @savefig plotting-ring_slotx,smith.png
     In [139]: ring_slot.plot_s_smith()
 
 .. note:: 

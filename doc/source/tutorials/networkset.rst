@@ -5,16 +5,13 @@ NetworkSet
 ***********************
 .. currentmodule:: skrf.networkSet
 
-
-
 .. ipython::
-	:suppress:
-	
-	In [144]: from pylab import *
-	
-	In [145]: ion()
-	
-	In [147]: clf();close('all')
+    :suppress:
+    
+    In [138]: import skrf as rf
+    
+    In [138]: from pylab import * 
+
 
 
 Introduction
