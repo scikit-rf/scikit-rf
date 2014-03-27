@@ -6,7 +6,6 @@ Tutorials
    :maxdepth: 1
    
     installation
-    introduction
     networks
     plotting
     networkset

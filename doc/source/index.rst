@@ -10,7 +10,6 @@
     :maxdepth: 2
     
     tutorials
-    examples
     reference
 
     

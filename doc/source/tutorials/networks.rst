@@ -10,6 +10,12 @@ Networks
 .. ipython::
 
 	In [144]: from pylab import *
+    
+	In [144]: close('all')
+	
+    In [144]: ioff()
+    
+    
 
 
 
