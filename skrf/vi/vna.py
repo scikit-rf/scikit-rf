@@ -1202,13 +1202,14 @@ class ZVA40(PNA):
         
         Parameters
         ----------
-        on : bool
+        mode : bool
             turn power on or not 
         port : int 
             the port (duh)
         '''
         if mode == 'auto':
-            raise ValueError('ZVA dont support this')
+            warn('ZVA dont support \'auto\' power mode. using \'on\'')
+            mode = True
         self.set_source_power_permanent(port=port,val=mode)  
         
     def get_switch_terms(self, ports = [1,2]):
