@@ -1050,14 +1050,6 @@ class ZVA40(PNA):
         char : [SDATA, FDATA, RDATA]
             type of data to return 
             
-            
-        See Also
-        ----------
-        get_sdata
-        get_fdata
-        get_rdata
-        get_snp_data
-        
         '''
         if cnum is None:
             cnum = self.channel
@@ -1086,23 +1078,15 @@ class ZVA40(PNA):
         name : str
             name given to measurment
         meas : str
-            something like 
-            * S11  
-            * a1/b1,1 
-            * A/R1,1
-            * ...
-        
-        Examples
-        ----------
-        >>> p = PNA()
-        >>> p.create_meas('my_meas', 'A/R1,1')     
+           measurement string
+            
         '''
         self.write('calc%i:par:sdef \"%s\", \"%s\"'%(self.channel, name, meas))
         self.display_trace(name)
     
     def setup_twoport(self, ports=[1,2]):
         '''
-        sets up traces appropriate for 2-port s-parameter measurment
+        Sets up traces appropriate for 2-port s-parameter measurment
         
         Parameters 
         -----------
@@ -1120,7 +1104,14 @@ class ZVA40(PNA):
     
     def get_twoport(self, *args, **kwargs):
         '''
+        Retrieves a two-port  Network.
         
+        This requires that all 4 s-parameters are already defined, and 
+        in correct order. see below for setup.
+        
+        See Also
+        ----------
+        setup_twoport
         '''
         n = self.get_network_all_meas()
         twoport = n_oneports_2_nport([n[0],n[2],n[1],n[3]], *args, **kwargs)
@@ -1220,7 +1211,26 @@ class ZVA40(PNA):
             raise ValueError('ZVA dont support this')
         self.set_source_power_permanent(port=port,val=mode)  
         
+    def get_switch_terms(self, ports = [1,2]):
+        '''
+        Get switch terms and return them as a tuple of Network objects. 
         
+        Returns 
+        --------
+        forward, reverse : oneport switch term Networks 
+        '''
+        
+        p1,p2 = ports
+        self.delete_all_meas()
+        self.create_meas('forward switch term', 'A%iD%i/B%iD%I'%(p2,p1,p2,p1))
+        forward = self.get_network()
+        
+        
+        self.delete_all_meas()
+        self.create_meas('reverse switch term', 'A%iD%i/B%iD%I'%(p1,p2,p1,p2))
+        reverse = self.get_network()
+        self.delete_all_meas()
+        return forward, reverse    
         
     get_oneport = PNA.get_network
 

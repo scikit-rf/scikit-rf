@@ -24,6 +24,12 @@ If you would like to use skrf's plot styling,
 .. ipython::
 	
 	In [138]: rf.stylely()
+    
+    In [138]: rf
+    
+    In [138]: rf
+    
+    
   
   
 Plotting Methods
