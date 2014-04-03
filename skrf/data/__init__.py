@@ -49,6 +49,12 @@ materials = {
     'gold':{
         'resistivity(ohm*m)':2.44e-8,
         },
+    'lead':{
+        'resistivity(ohm*m)':1/4.56e6, # from pozar appendix F
+        },
+    'steel(stainless)':{
+        'resistivity(ohm*m)':1/1.1e6, # from pozar appendix F
+        },
     'mylar':{
         'relative permativity':3.1,
         'loss tangent':500e-4,
@@ -69,6 +75,7 @@ materials = {
         'relative permativity':2.25,
         'loss tangent':40e-4,
         },
+    
     }
 for k1,k2 in [
     ('cu', 'copper'), 
