@@ -582,7 +582,9 @@ class Network(object):
             result.s = npy.array(other).reshape(-1,self.nports,self.nports) - self.s
             
         return result
-
+    def __truediv__(self,other):
+        return self.__div__(other)
+        
     def __div__(self,other):
         '''
         Element-wise complex multiplication of s-matrix
