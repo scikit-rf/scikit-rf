@@ -45,7 +45,8 @@ import itertools
 from warnings import warn
 import cPickle as pickle
 
-from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, find_correct_sign, ALMOST_ZERO
+from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
+    find_correct_sign, ALMOST_ZERO, rand_c
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
@@ -110,8 +111,9 @@ class Calibration(object):
     
     
     '''
+    family = ''
     def __init__(self, measured, ideals, sloppy_input=False,
-        is_reciprocal=True,name=None,family='',*args, **kwargs):
+        is_reciprocal=True,name=None,*args, **kwargs):
         '''
         Calibration initializer.
 
@@ -199,7 +201,6 @@ class Calibration(object):
         self.kwargs = kwargs 
         self.name = name
         self.is_reciprocal = is_reciprocal
-        self.family = family
         
         # initialized internal properties to None
         self._residual_ntwks = None
@@ -211,10 +212,14 @@ class Calibration(object):
             name = ''
         else:
             name = self.name
-            
-        output = '%s Calibration: \'%s\', %s, %i-ideals/%i-measured'\
-            %(self.family,name,str(self.measured[0].frequency),\
-            len(self.ideals), len(self.measured))
+        
+        if 'fromcoefs' in self.family.lower():
+            output = '%s Calibration: \'%s\', %s'\
+                %(self.family,name,str(self.frequency))
+        else:    
+            output = '%s Calibration: \'%s\', %s, %i-standards'\
+                %(self.family,name,str(self.frequency),\
+                len(self.measured))
             
         return output
         
@@ -263,8 +268,20 @@ class Calibration(object):
         '''
         return (self.ideals.pop(index),  self.measured.pop(index))
     
+    @classmethod 
+    def from_coefs(cls, frequency, coefs):
+        # assigning this measured network is  a hack so that 
+        # * `calibration.frequency` property evaluates correctly      
+        # * TRL.__init__() will not throw an error
+        n = Network(frequency = frequency,
+                    s = rand_c(frequency.npoints,2,2))
+        measured = [n,n,n]
         
-    
+        cal = cls(measured, measured)
+        cal.coefs = coefs
+        cal.family += '(fromCoefs)'
+        return  cal
+        
     @property
     def frequency(self):
         '''
@@ -625,6 +642,8 @@ class OnePort(Calibration):
         doi: 10.1109/TMTT.1974.1128212 
         URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1128212&isnumber=25001
     '''
+    
+    family = 'OnePort'
     def __init__(self, measured, ideals,*args, **kwargs):
         '''
         One Port initializer
@@ -656,8 +675,8 @@ class OnePort(Calibration):
         -----
                 uses numpy.linalg.lstsq() for least squares calculation
         '''
-        Calibration.__init__(self, measured, ideals, *args, **kwargs)
-        self.family = 'OnePort'
+        Calibration.__init__(self, measured, ideals, 
+                             *args, **kwargs)
     
     def run(self):
         '''
@@ -753,7 +772,7 @@ class SDDL(OnePort):
     -------------
     .. [#] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
     '''
-    
+    family = 'SDDL'
     def __init__(self, measured, ideals, *args, **kwargs):
         '''
         Short Delay Delay Load initializer
@@ -775,7 +794,7 @@ class SDDL(OnePort):
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured, ideals, *args, **kwargs)
-        self.family = 'SDDL'
+        
         
     def run(self):
         
@@ -845,6 +864,7 @@ class SOLT(Calibration):
     
     
     '''
+    family = 'SOLT'
     def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
         '''
         SOLT initializer 
@@ -868,9 +888,11 @@ class SOLT(Calibration):
         '''
         
         self.n_thrus = n_thrus
-        Calibration.__init__(self, measured, ideals, *args, **kwargs)
-        self.family = 'SOLT'
+        Calibration.__init__(self, measured, ideals,
+                             *args, **kwargs)
         
+    
+      
     def run(self):
         '''
         '''
@@ -1022,7 +1044,9 @@ class EightTerm(Calibration):
     
 
     '''
-    def __init__(self, measured, ideals, switch_terms=None,*args, **kwargs):
+    family = 'EightTerm'
+    def __init__(self, measured, ideals, switch_terms=None,
+                 *args, **kwargs):
         '''
         
         
@@ -1049,7 +1073,7 @@ class EightTerm(Calibration):
             measured = measured, 
             ideals = ideals, 
             *args, **kwargs)
-        self.family = 'EightTerm'
+        
         
     def unterminate(self,ntwk):
         '''
@@ -1373,8 +1397,9 @@ class TRL(EightTerm):
         This version of TRL does not solve for the Reflect standard yet
 
     '''
-    
-    def __init__(self, measured, ideals,line_approx=None,*args, **kwargs):
+    family = 'TRL'
+    def __init__(self, measured, ideals,line_approx=None,
+                 *args, **kwargs):
         '''
         Initialize a TRL calibration 
         
@@ -1415,12 +1440,14 @@ class TRL(EightTerm):
         
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
-        self.family = 'TRL'
+        
 
 class UnknownThru(EightTerm):
     '''
     '''
-    def __init__(self, measured, ideals, thru_approx=None, n_thrus=1, *args, **kwargs):
+    family = 'UnknownThru'
+    def __init__(self, measured, ideals, thru_approx=None, n_thrus=1, 
+                 *args, **kwargs):
         '''
         '''
         self.n_thrus = n_thrus
@@ -1430,7 +1457,7 @@ class UnknownThru(EightTerm):
             measured = measured, 
             ideals = ideals,
             *args, **kwargs)
-        self.family = 'UnknownThru'
+        
         warn('Not Fully implemented')
         
     def run(self):

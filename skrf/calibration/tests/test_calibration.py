@@ -43,7 +43,11 @@ class CalibrationTest(object):
         a = self.wg.random(n_ports=self.n_ports)
         self.assertEqual(self.cal.embed(a),self.measure(a))
         
-   
+    def test_from_coefs(self):
+        cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
+        #a = self.wg.random(n_ports=self.n_ports)
+        #self.assertEqual(self.cal_from_coefs.apply_cal(self.cal.embed(a)),a)
+    
 class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     One-port calibration test.
@@ -132,6 +136,8 @@ class SDDLTest(OnePortTest):
             ideals = ideals, 
             measured = measured,
             )
+
+    
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
@@ -230,8 +236,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     @nottest
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
-    
-        
+            
 class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
@@ -269,7 +274,6 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-
  
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
@@ -441,8 +445,6 @@ class UnknownThruTest(EightTermTest):
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r]
             )
-        
-    
         
 class SOLTTest2(SOLTTest):
     '''

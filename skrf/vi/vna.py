@@ -23,10 +23,13 @@ import numpy as npy
 import visa
 from visa import GpibInstrument
 from warnings import warn
+from itertools import product
 
 from ..frequency import *
 from ..network import *
+from ..calibration.calibration import Calibration
 from .. import mathFunctions as mf
+
 
 
 
@@ -992,6 +995,77 @@ class PNA(GpibInstrument):
     
     corr_state_of_meas = property(get_corr_state_of_meas,
         set_corr_state_of_meas)
+    
+    
+    def get_cset_list(self, form = 'name'):
+        '''
+        Get list of calsets on current channel
+        
+        Parameters 
+        ------------
+        form : 'name','guid'
+            format of returned values
+        
+        Returns
+        ---------
+        cset : list 
+            list of csets by guid or name
+        '''
+        return self.ask_for_values(\
+            'SENSE%i:CORRection:CSET:CATalog? %s'(%self.channel,form))
+    
+    def create_cset(self, name='skrfCal'):
+        '''
+        Creates an empty calset
+        '''
+        self.write('SENS%i:CORR:CSET:CRE \'%s\''%(self.channel,names))
+               
+    def get_cal_coefs(self,ports=[1,2]):
+        '''
+        Get calibration coefficients for a given list of ports.
+        
+        Parameters 
+        ------------
+        ports : list
+            list of ports to retrive error coefficients from.
+            
+        Returns
+        ----------
+        coefs : dict
+            values are complex numpy.arrays
+        '''
+        coefs = {}
+        
+        # temp function to retrieve complex data for a eterm
+        def get_term(term, pa,pb):
+            data = self.ask_for_values('sense%i:corr:cset:data %s,%i,%i'\
+                                        %(self.channel,term, pa,pb))
+            return mf.scalar2Complex(data)
+            
+        
+        for pa,pb in product(ports,ports):
+            if pa==pb:
+                # get reflective terms 
+                for term in ['ELDM','ETRT','EXTLK']:
+                    coefs['%s,%i,%i'%(term,pa,pb)]=get_term(term,pa,pb)
+            else:
+                # get transmissive terms
+                for term in ['EDIR','ESRM','ERFT']:
+                    coefs['%s,%i,%i'%(term,pa,pb)]=get_term(term,pa,pb)
+        return coefs
+        
+    def get_calibration(self,ports = [1,2],**kwargs):
+        coefs = self.get_cal_coefs(ports=ports)
+        freq = self.get_frequency
+        
+        raise NotImplementedError
+        if len(coefs) == 12:
+            return SOLT.from_coefs(frequency, coefs_skrf)
+            
+    def set_cal_coefs(self, coefs):
+        '''
+        '''
+        raise NotImplementedError
     
 PNAX = PNA 
     

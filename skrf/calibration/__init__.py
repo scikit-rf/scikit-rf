@@ -15,11 +15,11 @@ module.
 '''
 
 import calibration
-import calibrationFunctions
-import parametricStandard
+#import calibrationFunctions
+#import parametricStandard
 import calibrationSet
 
-from parametricStandard import *
+#from parametricStandard import *
 from calibration import *
-from calibrationFunctions import *
-from calibrationSet import *
+#from calibrationFunctions import *
+#from calibrationSet import *
