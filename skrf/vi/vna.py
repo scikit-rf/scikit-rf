@@ -24,10 +24,12 @@ import visa
 from visa import GpibInstrument
 from warnings import warn
 from itertools import product
+import re 
 
 from ..frequency import *
 from ..network import *
-from ..calibration.calibration import Calibration
+from ..calibration.calibration import Calibration, SOLT, OnePort, \
+                                      convert_pnacoefs_2_skrf
 from .. import mathFunctions as mf
 
 
@@ -1011,61 +1013,75 @@ class PNA(GpibInstrument):
         cset : list 
             list of csets by guid or name
         '''
-        return self.ask_for_values(\
-            'SENSE%i:CORRection:CSET:CATalog? %s'(%self.channel,form))
+        a =  self.ask(\
+            'SENSE%i:CORRection:CSET:CATalog? %s'%(self.channel,form))
+        return a[1:-1].split(',')
     
     def create_cset(self, name='skrfCal'):
         '''
         Creates an empty calset
         '''
-        self.write('SENS%i:CORR:CSET:CRE \'%s\''%(self.channel,names))
+        self.write('SENS%i:CORR:CSET:CRE \'%s\''%(self.channel,name))
                
-    def get_cal_coefs(self,ports=[1,2]):
+    def get_cal_coefs(self):
         '''
-        Get calibration coefficients for a given list of ports.
+        Get calibration coefficients for current calset
         
-        Parameters 
-        ------------
-        ports : list
-            list of ports to retrive error coefficients from.
             
         Returns
         ----------
         coefs : dict
-            values are complex numpy.arrays
+            keys are cal terms and values are complex numpy.arrays
+            
+        See Also 
+        -----------
+        get_calibration
+        get_cset
+        create_cset
         '''
         coefs = {}
+        for k in self.cal_coefs_list:
+            s = 'sense%i:corr:cset:eterm:data? \"%s\"'%(self.channel,k)
+            coefs[k] = self.ask_for_values(s)
         
-        # temp function to retrieve complex data for a eterm
-        def get_term(term, pa,pb):
-            data = self.ask_for_values('sense%i:corr:cset:data %s,%i,%i'\
-                                        %(self.channel,term, pa,pb))
-            return mf.scalar2Complex(data)
-            
-        
-        for pa,pb in product(ports,ports):
-            if pa==pb:
-                # get reflective terms 
-                for term in ['ELDM','ETRT','EXTLK']:
-                    coefs['%s,%i,%i'%(term,pa,pb)]=get_term(term,pa,pb)
-            else:
-                # get transmissive terms
-                for term in ['EDIR','ESRM','ERFT']:
-                    coefs['%s,%i,%i'%(term,pa,pb)]=get_term(term,pa,pb)
         return coefs
+    
+    def get_cal_coefs_list(self):
+        '''
+        Get list of calibration coefficients for current calset
         
-    def get_calibration(self,ports = [1,2],**kwargs):
-        coefs = self.get_cal_coefs(ports=ports)
-        freq = self.get_frequency
+        '''
+        out = self.ask('SENS%i:CORR:CSET:ETERM:cat?'%self.channel)[1:-1]
+        # agilent mixes the delimiter with values! this requires that 
+        # we use regex to only split on comma's that follow parenthesis
+        return re.split('(?<=\)),',out) 
+    
+    cal_coefs_list = property(get_cal_coefs_list)
         
-        raise NotImplementedError
-        if len(coefs) == 12:
-            return SOLT.from_coefs(frequency, coefs_skrf)
+    def get_calibration(self,**kwargs):
+        freq = self.frequency
+        coefs = self.get_cal_coefs()
+        skrf_coefs = convert_pnacoefs_2_skrf(coefs)
+        
+        if len(skrf_coefs) ==12:
+            return SOLT.from_coefs(frequency = freq,
+                               coefs = skrf_coefs,
+                               **kwargs)
+        if len(skrf_coefs) ==6:
+            return OnePort.from_coefs(frequency = freq,
+                               coefs = skrf_coefs,
+                               **kwargs)
+        else: 
+            raise NotImplementedError
             
     def set_cal_coefs(self, coefs):
         '''
         '''
         raise NotImplementedError
+
+
+
+
     
 PNAX = PNA 
     

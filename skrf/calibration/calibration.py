@@ -64,11 +64,13 @@ coefs_list_12term =[
     'forward reflection tracking',
     'forward transmission tracking',
     'forward load match',
+    'forward isolation',
     'reverse directivity',
     'reverse load match',
     'reverse reflection tracking',
     'reverse transmission tracking',
     'reverse source match',
+    'reverse isolation'
     ]
 
 
@@ -1722,6 +1724,49 @@ def convert_8term_2_12term(coefs_8term):
     coefs_12term['forward transmission tracking'] =  Etf
     coefs_12term['reverse transmission tracking'] =  Etr
     return coefs_12term
+
+def convert_pnacoefs_2_skrf(coefs):
+    '''
+    Convert  PNA error coefficients to skrf error coefficients
+    
+    Parameters 
+    ------------
+    coefs : dict 
+        coefficients as retrieved from PNA
+    ports : tuple
+        port indecies. in order (forward, reverse)
+    
+    Returns
+    ----------
+    skrf_coefs : dict
+        same error coefficients but with keys matching skrf's convention
+    
+    '''
+    
+    coefs_map ={'Directivity':'directivity',
+                'SourceMatch':'source match',
+                'ReflectionTracking':'reflection tracking',
+                'LoadMatch':'load match',
+                'TransmissionTracking':'transmission tracking',
+                'CrossTalk':'isolation'}
+    
+    ports = list(set([k[-2] for k in coefs]))
+    ports.list(key=int)
+    port_map ={ports[0]: 'forward',
+               ports[1]: 'reverse'}
+    skrf_coefs = {}
+    for k in coefs:
+        coef,p1,p2 = k.split(',') 
+        # the source port has a different position for reflective
+        # and transmissive standards
+        if coef in ['Directivity','SourceMatch','ReflectionTracking']:
+            coef_key = port_map[p1]+' '+coefs_map[coef]
+        elif coef in ['LoadMatch','TransmissionTracking','CrossTalk']:
+            coef_key = port_map[p2]+' '+coefs_map[coef]
+        skrf_coefs[coef_key] = coefs[k]
+        
+    return skrf_coefs
+    
 
 def align_measured_ideals(measured, ideals):
     '''
