@@ -1313,12 +1313,12 @@ class ZVA40(PNA):
         
         p1,p2 = ports
         self.delete_all_meas()
-        self.create_meas('forward switch term', 'A%iD%i/B%iD%I'%(p2,p1,p2,p1))
+        self.create_meas('forward switch term', 'A%iD%i/B%iD%i'%(p2,p1,p2,p1))
         forward = self.get_network()
         
         
         self.delete_all_meas()
-        self.create_meas('reverse switch term', 'A%iD%i/B%iD%I'%(p1,p2,p1,p2))
+        self.create_meas('reverse switch term', 'A%iD%i/B%iD%i'%(p1,p2,p1,p2))
         reverse = self.get_network()
         self.delete_all_meas()
         return forward, reverse    
