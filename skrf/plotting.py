@@ -435,13 +435,14 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     '''
     cmap = plb.cm.get_cmap(cmap)
+    axis = plb.axis()
     for k in range(len(edges)-1):
         plb.fill_between(
             [edges[k],edges[k+1]], 
             y_range[0], y_range[1], 
             color = cmap(1.0*k/len(edges)),
             **kwargs)
-
+    plb.axis(axis)
 
 def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
     '''

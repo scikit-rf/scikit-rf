@@ -115,6 +115,31 @@ def find_nearest_index(array,value):
     '''
     return (npy.abs(array-value)).argmin()
 
+def slice_domain(x,domain):
+    '''
+    Returns a slice object closest to the `domain` of `x`
+    
+    domain = x[slice_domain(x, start, stop)]
+    
+    Parameters
+    -----------
+    vector : array-like
+        an array of values
+    domain : tuple
+        tuple of (start,stop) values defining the domain over 
+        which to slice
+    
+    Examples
+    -----------
+    >>> x = linspace(0,10,101)
+    >>> idx = slice_domain(x, 2,6)
+    >>> x[idx]
+
+    '''
+    start = find_nearest_index(x, domain[0])
+    stop = find_nearest_index(x, domain[1])
+    return slice(start,stop)
+
 # file IO
 
 def get_fid(file, *args, **kwargs):

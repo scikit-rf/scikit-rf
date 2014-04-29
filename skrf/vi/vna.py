@@ -643,7 +643,7 @@ class PNA(GpibInstrument):
         if cnum is None:
             cnum = self.channel
             
-        self.write('calc:par:sel \"%s\"'%(self.get_active_meas()))
+        self.write('calc%i:par:sel \"%s\"'%(cnum, self.get_active_meas()))
         data = npy.array(self.ask_for_values('CALC%i:Data? %s'%(cnum, char)))
         
         if char.lower() == 'sdata':
@@ -772,7 +772,7 @@ class PNA(GpibInstrument):
         out :  list 
             list of tuples of the form, (name, measurement)
         '''
-        meas_list = self.ask("CALC:PAR:CAT:EXT?")
+        meas_list = self.ask("CALC%i:PAR:CAT:EXT?"%self.channel)
         
         meas = meas_list[1:-1].split(',')
         if len(meas)==1:
@@ -1117,7 +1117,7 @@ class ZVA40(PNA):
         out :  list 
             list of tuples of the form, (name, measurement)
         '''
-        meas_list = self.ask("CALC:PAR:CAT?")
+        meas_list = self.ask("CALC%i:PAR:CAT?"%self.channel)
         
         meas = meas_list[1:-1].split(',')
         if len(meas)==1:
