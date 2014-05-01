@@ -1,7 +1,7 @@
 .. _introduction:
 
 *********************
-Old Introduction
+Introduction
 *********************
 .. currentmodule:: skrf.network
 

@@ -40,6 +40,7 @@ class PNA(GpibInstrument):
     '''
     Agilent PNA[X] 
     
+    
     Below are lists of some high-level commands sorted by functionality. 
 
 
@@ -68,6 +69,7 @@ class PNA(GpibInstrument):
     
     
     Calibration 
+    
     .. hlist::
         :columns: 2
         
