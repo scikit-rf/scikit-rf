@@ -271,7 +271,7 @@ class Calibration(object):
         return (self.ideals.pop(index),  self.measured.pop(index))
     
     @classmethod 
-    def from_coefs(cls, frequency, coefs):
+    def from_coefs(cls, frequency, coefs, **kwargs):
         # assigning this measured network is  a hack so that 
         # * `calibration.frequency` property evaluates correctly      
         # * TRL.__init__() will not throw an error
@@ -279,7 +279,7 @@ class Calibration(object):
                     s = rand_c(frequency.npoints,2,2))
         measured = [n,n,n]
         
-        cal = cls(measured, measured)
+        cal = cls(measured, measured, **kwargs)
         cal.coefs = coefs
         cal.family += '(fromCoefs)'
         return  cal
@@ -1750,24 +1750,105 @@ def convert_pnacoefs_2_skrf(coefs):
                 'TransmissionTracking':'transmission tracking',
                 'CrossTalk':'isolation'}
     
-    ports = list(set([k[-2] for k in coefs]))
-    ports.sort(key=int)
-    port_map ={ports[0]: 'forward',
-               ports[1]: 'reverse'}
     skrf_coefs = {}
-    for k in coefs:
-        coef,p1,p2 = k[:-5],k[-4],k[-2]
-        # the source port has a different position for reflective
-        # and transmissive standards
-        if coef in ['Directivity','SourceMatch','ReflectionTracking']:
-            coef_key = port_map[p1]+' '+coefs_map[coef]
-        elif coef in ['LoadMatch','TransmissionTracking','CrossTalk']:
-            coef_key = port_map[p2]+' '+coefs_map[coef]
-        skrf_coefs[coef_key] = coefs[k]
+    
+    if len(coefs) ==3:
+        for k in coefs:
+            coef= k[:-5]
+            coef_key = coefs_map[coef]
+            skrf_coefs[coef_key] = coefs[k]
+    
+    else:
+        ports = list(set([k[-2] for k in coefs]))
+        ports.sort(key=int)
+        port_map ={ports[0]: 'forward',
+                   ports[1]: 'reverse'}
         
+        for k in coefs:
+            coef,p1,p2 = k[:-5],k[-4],k[-2]
+            # the source port has a different position for reflective
+            # and transmissive standards
+            if coef in ['Directivity','SourceMatch','ReflectionTracking']:
+                coef_key = port_map[p1]+' '+coefs_map[coef]
+            elif coef in ['LoadMatch','TransmissionTracking','CrossTalk']:
+                coef_key = port_map[p2]+' '+coefs_map[coef]
+            skrf_coefs[coef_key] = coefs[k]
+        
+            
+            
     return skrf_coefs
     
+def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
+    '''
+    Convert  skrf error coefficients to pna error coefficients
+    
+    Notes
+    --------
+    The skrf calibration terms can be found in variables
+        * skrf.calibration.coefs_list_3term
+        * skrf.calibration.coefs_list_12term
+        
+    
+    Parameters 
+    ------------
+    coefs : dict 
+        complex ndarrays for the cal coefficients as defined  by skrf 
+    ports : tuple
+        port indecies. in order (forward, reverse)
+    
+    Returns
+    ----------
+    pna_coefs : dict
+        same error coefficients but with keys matching skrf's convention
+    
+    
+    '''
+    if not hasattr(ports, '__len__'):
+        ports = ports,
+    
+    coefs_map ={'directivity':'Directivity',
+                'source match':'SourceMatch',
+                'reflection tracking':'ReflectionTracking',
+                'load match':'LoadMatch',
+                'transmission tracking':'TransmissionTracking',
+                'isolation':'CrossTalk'}
+    
+    pna_coefs = {}
+    
+    if len(coefs)==3:
+        for k in coefs:
+            coef_key = coefs_map[k] + '(%i,%i)'%(ports[0],ports[0])
+            pna_coefs[coef_key] = coefs[k]
+            
+    
+    else:
+        port_map_trans ={'forward':ports[1],
+                         'reverse':ports[0]}
+        port_map_refl  ={'forward':ports[0],
+                         'reverse':ports[1]}
+        
+        for k in coefs:
+            fr = k.split(' ')[0] # remove 'forward|reverse-ness'
+            eterm = coefs_map[k.lstrip(fr)[1:] ]
+            # the source port has a different position for reflective
+            # and transmissive standards
+            if eterm  in ['Directivity','SourceMatch','ReflectionTracking']:
+                coef_key= eterm+'(%i,%i)'%(port_map_refl[fr],
+                                           port_map_refl[fr])
+                
+                
+            elif eterm in ['LoadMatch','TransmissionTracking','CrossTalk']:
+                receiver_port = port_map_trans[fr]
+                source_port = port_map_refl[fr]
+                coef_key= eterm+'(%i,%i)'%(receiver_port,source_port)
+            pna_coefs[coef_key] = coefs[k]
+            
 
+    return pna_coefs
+    
+    
+    
+    
 def align_measured_ideals(measured, ideals):
     '''
     Aligns two lists of networks based on the intersection of their name's.

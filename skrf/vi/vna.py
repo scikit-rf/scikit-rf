@@ -29,7 +29,8 @@ import re
 from ..frequency import *
 from ..network import *
 from ..calibration.calibration import Calibration, SOLT, OnePort, \
-                                      convert_pnacoefs_2_skrf
+                                      convert_pnacoefs_2_skrf,\
+                                      convert_skrfcoefs_2_pna
 from .. import mathFunctions as mf
 
 
@@ -65,6 +66,15 @@ class PNA(GpibInstrument):
         * :func:`~PNA.get_fdata`
         * :func:`~PNA.get_rdata`
     
+    
+    Calibration 
+    .. hlist::
+        :columns: 2
+        
+        * :func:`~PNA.get_calibration`
+        * :func:`~PNA.set_calibration`
+        * :func:`~PNA.get_cal_coefs`
+        * more below
     
     Examples
     -----------
@@ -965,7 +975,9 @@ class PNA(GpibInstrument):
         if trace_n is None:
             trace_n =self.ntraces+1
         self.write('disp:wind%s:trac%s:y:coup:meth %s'%(str(window_n), str(trace_n), method))  
-        
+    
+    
+    ## Correction related operations    
     def get_corr_state_of_channel(self):
         '''
         correction status for give channel
@@ -1023,13 +1035,19 @@ class PNA(GpibInstrument):
         '''
         self.write('SENS%i:CORR:CSET:CRE \'%s\''%(self.channel,name))
     
-    def get_cset(self,channel =None, form = 'name'):
+    def delete_cset(self, name):
+        '''
+        Deletes a given calset
+        '''
+        self.write('SENS%i:CORR:CSET:DEL \'%s\''%(self.channel,name))
+    
+    def get_active_cset(self,channel =None, form = 'name'):
         '''
         Get the active calset name for a give channel. 
         
         Parameters 
         -------------
-        channel : int
+        chawornnel : int
             channel to apply cset to 
         form : 'name' or 'guid'
             form of `cset` argument
@@ -1041,17 +1059,17 @@ class PNA(GpibInstrument):
         if form not in ['name','guid']:
             raise ValueError ('bad value for `form`')
             
-        out = self.ask('SENS%i:CORR:CSET:ACT ? %s'\
-                    %(channel,form) ))
+        out = self.ask('SENS%i:CORR:CSET:ACT? %s'\
+                    %(channel,form) )[1:-1]
         
-        if out =="No Calset Selected":
+        if out =='No Cal Set selected':
             return None
         else:
             return out
         
-    def set_cset(self, cset, channel=None, apply_stim_values=True ):
+    def set_active_cset(self, cset, channel=None, apply_stim_values=True ):
         '''
-        Set the current calset.
+        Set the current  active calset.
         
         Parameters 
         -------------
@@ -1066,13 +1084,18 @@ class PNA(GpibInstrument):
             channel  = self.channel
         
         available_csets = self.get_cset_list()
-        if name not in available_csets:
+        if cset not in available_csets:
             raise ValueError('%s not in list of available csets'%cset)
         
         self.write('SENS%i:CORR:CSET:ACT \'%s\',%i'\
                     %(channel,cset,int(apply_stim_values) ))
-    
-        
+    def save_active_cset(self,channel=None):
+        '''
+        Save the activer calset
+        '''
+        if channel is None:
+            channel  = self.channel
+        self.write('sense%i:correction:cset:save'%channel)
         
     def get_cal_coefs(self):
         '''
@@ -1091,12 +1114,41 @@ class PNA(GpibInstrument):
         create_cset
         '''
         coefs = {}
-        for k in self.cal_coefs_list:
-            s = 'sense%i:corr:cset:eterm:data? \"%s\"'%(self.channel,k)
-            coefs[k] = self.ask_for_values(s)
+        coefs_list = self.cal_coefs_list
+        if len(coefs_list) ==1:
+            return None
+        
+        for k in coefs_list:
+            s_ask = 'sense%i:corr:cset:eterm? \"%s\"'%(self.channel,k)
+            data = self.ask_for_values(s_ask)
+            coefs[k] = mf.scalar2Complex(data)
         
         return coefs
     
+    
+    def set_cal_coefs(self, coefs, channel=None):
+        '''
+        Set calibration coefficients for current calset
+        
+        See Also 
+        -----------
+        get_cal_coefs
+        '''
+        if channel is None:
+            channel  = self.channel
+            
+        for k in coefs:
+            try: 
+                data = coefs[k].s
+            except (AttributeError):
+                data = coefs[k]
+            data_flat = mf.complex2Scalar(data)
+            data_str = ''.join([str(l)+',' for l in data_flat])[:-1]
+            self.write('sense%i:corr:cset:eterm \"%s\",%s'\
+                        %(channel,k, data_str))
+            self.write('sense%i:corr:cset:save'%(channel))
+        
+       
     def get_cal_coefs_list(self):
         '''
         Get list of calibration coefficients for current calset
@@ -1109,31 +1161,95 @@ class PNA(GpibInstrument):
     
     cal_coefs_list = property(get_cal_coefs_list)
         
-    def get_calibration(self,**kwargs):
+    def get_calibration(self,channel = None, **kwargs):
+        '''
+        Get :class:`~skrf.calibration.calibration.Calibration` object 
+        for the active cal set on a given channel.
+        '''
+        if channel is None:
+            channel  = self.channel
+            
+        name = self.get_active_cset()
+        if name is None:
+            # there is no active calibration
+            return None
+        #if name not in **kwargs
+        
         freq = self.frequency
         coefs = self.get_cal_coefs()
+        
         skrf_coefs = convert_pnacoefs_2_skrf(coefs)
         
-        if len(skrf_coefs) ==12:
+        if len(skrf_coefs) == 12:
             return SOLT.from_coefs(frequency = freq,
                                coefs = skrf_coefs,
+                               name = name, 
                                **kwargs)
-        if len(skrf_coefs) ==6:
+        if len(skrf_coefs) == 3:
             return OnePort.from_coefs(frequency = freq,
                                coefs = skrf_coefs,
+                               name = name, 
                                **kwargs)
         else: 
             raise NotImplementedError
     
+    def set_calibration(self,cal, ports = (1,2), channel = None, 
+                        name =None, create_new=True):
+        '''
+        Upload class:`~skrf.calibration.calibration.Calibration` object 
+        to the active cal set on a given channel.
         
-    def set_cal_coefs(self, coefs):
+        Parameters
+        -----------
+        cal :  :class:`~skrf.calibration.calibration.Calibration` object
+            the calibration to upload to the VNA
+        ports : tuple
+            ports which to apply calibration to. with respect to the 
+            skrf calibration the ports arein order (forward,reverse)
+        channel : int
+            channel on VNA to assign calibration
+        name : str
+            name of the cset on the VNA
+        create_new : bool
+            create a new cset called `name`, even if one exists.
+        
+        Examples 
+        ---------
+        >>> p = PNA()
+        >>> my_cal =  p.get_calbration()
+        >>> p.set_calibration(my_cal, ports = (1,2)
+        
+        See Also
+        --------
+        get_calibration
         '''
-        '''
-        raise NotImplementedError
+        if channel is None:
+            channel  = self.channel
+        
+        # figure out  a name for this calibration 
+        if name is None:
+            if cal.name is None:
+                name = 'skrfCal'
+            else:
+                name = cal.name
 
-
-
-
+        if create_new:
+            if name in self.get_cset_list():
+                self.delete_cset(name)
+            
+            self.create_cset(name = name)
+        
+        if len(cal.coefs)==3:
+            pna_coefs = convert_skrfcoefs_2_pna(cal.coefs_3term, 
+                                                ports = ports)
+        else:
+            pna_coefs = convert_skrfcoefs_2_pna(cal.coefs_12term, 
+                                                ports = ports)
+        
+        self.set_cal_coefs(pna_coefs, channel = channel)
+        self.frequency = cal.frequency
+        self.save_active_cset()
+        
     
 PNAX = PNA 
     
