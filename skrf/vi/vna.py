@@ -1022,7 +1022,58 @@ class PNA(GpibInstrument):
         Creates an empty calset
         '''
         self.write('SENS%i:CORR:CSET:CRE \'%s\''%(self.channel,name))
-               
+    
+    def get_cset(self,channel =None, form = 'name'):
+        '''
+        Get the active calset name for a give channel. 
+        
+        Parameters 
+        -------------
+        channel : int
+            channel to apply cset to 
+        form : 'name' or 'guid'
+            form of `cset` argument
+        '''
+        if channel is None:
+            channel  = self.channel
+        
+        form = form.lower()
+        if form not in ['name','guid']:
+            raise ValueError ('bad value for `form`')
+            
+        out = self.ask('SENS%i:CORR:CSET:ACT ? %s'\
+                    %(channel,form) ))
+        
+        if out =="No Calset Selected":
+            return None
+        else:
+            return out
+        
+    def set_cset(self, cset, channel=None, apply_stim_values=True ):
+        '''
+        Set the current calset.
+        
+        Parameters 
+        -------------
+        cset: str
+            name of calset 
+        channel : int
+            channel to apply cset to 
+        apply_stim_values : bool
+            should the cset stimulus values be applied to the channel.
+        '''
+        if channel is None:
+            channel  = self.channel
+        
+        available_csets = self.get_cset_list()
+        if name not in available_csets:
+            raise ValueError('%s not in list of available csets'%cset)
+        
+        self.write('SENS%i:CORR:CSET:ACT \'%s\',%i'\
+                    %(channel,cset,int(apply_stim_values) ))
+    
+        
+        
     def get_cal_coefs(self):
         '''
         Get calibration coefficients for current calset
@@ -1073,7 +1124,8 @@ class PNA(GpibInstrument):
                                **kwargs)
         else: 
             raise NotImplementedError
-            
+    
+        
     def set_cal_coefs(self, coefs):
         '''
         '''

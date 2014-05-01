@@ -1751,12 +1751,12 @@ def convert_pnacoefs_2_skrf(coefs):
                 'CrossTalk':'isolation'}
     
     ports = list(set([k[-2] for k in coefs]))
-    ports.list(key=int)
+    ports.sort(key=int)
     port_map ={ports[0]: 'forward',
                ports[1]: 'reverse'}
     skrf_coefs = {}
     for k in coefs:
-        coef,p1,p2 = k.split(',') 
+        coef,p1,p2 = k[:-5],k[-4],k[-2]
         # the source port has a different position for reflective
         # and transmissive standards
         if coef in ['Directivity','SourceMatch','ReflectionTracking']:
