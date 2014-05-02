@@ -32,8 +32,10 @@ import sphinx_bootstrap_theme
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 #sys.path.insert(0, os.path.abspath('../../build/lib.linux-x86_64-2.7/'))
 
-import skrf 
-print skrf 
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
+
 run_notebooks = False
 notebook_source_dir = '.'
 if run_notebooks:
