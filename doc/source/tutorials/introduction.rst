@@ -53,15 +53,19 @@ Networks
 The :class:`Network`  object represents a N-port microwave :class:`Network`. A :class:`Network` can be created in a number of ways. One way is from data stored in a touchstone file.
 
 .. ipython::
-			
-	In [139]: ring_slot = rf.Network('../skrf/data/ring slot.s2p')
+
+    In [138]: import os 
+    
+    In [138]:touchstone_file = os.path.join(rf.data.pwd,'ring slot.s2p')
+    
+    In [138]:ring_slot = rf.Network(touchstone_file)
  
 	
 A short description of the network will be printed out if entered onto the command line
 	
 .. ipython::
 	
-	In [1]: ring_slot
+    In [1]: ring_slot
 
 
 he basic attributes of a microwave :class:`Network` are provided by the 
