@@ -18,18 +18,13 @@ Introduction
 ---------------
 This tutorial describes **skrf's** plotting features. 
 
-If you would like to use skrf's plot styling, 
+If you would like to use skrf's plot styling, use stylely
 
 
 .. ipython::
 	
 	In [138]: rf.stylely()
-    
-    In [138]: rf
-    
-    In [138]: rf
-    
-    
+
   
   
 Plotting Methods
