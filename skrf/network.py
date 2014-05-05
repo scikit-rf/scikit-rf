@@ -625,10 +625,12 @@ class Network(object):
             re_hyphen = re.compile('\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
             
-            freq_unit = re.findall(re_letters,key)[0]
+            freq_unit = re.findall(re_letters,key)
             
             if len(freq_unit) == 0:
                 freq_unit = self.frequency.unit
+            else:
+                freq_unit = freq_unit[0]
             
             key_nounit = re.sub(re_letters,'',key)
             
