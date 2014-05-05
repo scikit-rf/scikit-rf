@@ -11,6 +11,8 @@ NetworkSet
     In [138]: import skrf as rf
     
     In [138]: from pylab import * 
+    
+    In [138]: close('all')
 
 
 

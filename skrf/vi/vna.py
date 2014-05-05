@@ -61,7 +61,7 @@ class PNA(GpibInstrument):
     .. hlist:: 
         :columns: 2
         
-        * :func:`~PNA.et_data_snp`
+        * :func:`~PNA.get_data_snp`
         * :func:`~PNA.get_data`
         * :func:`~PNA.get_sdata`
         * :func:`~PNA.get_fdata`

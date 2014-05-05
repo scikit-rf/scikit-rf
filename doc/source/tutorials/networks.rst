@@ -241,7 +241,6 @@ Interpolation and Stitching
 A common need is to change the number of frequency points of a :class:`Network`. For instance, to use the operators and cascading functions the networks involved must have matching frequencies. If two networks have different frequency information, then an error will be raised, 
 
 .. ipython::
-	:okexcept: 
     
 	In [21]: line = rf.data.wr2p2_line.copy()
 	
