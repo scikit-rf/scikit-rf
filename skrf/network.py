@@ -123,7 +123,7 @@ import warnings
 import cPickle as pickle    
 from cPickle import UnpicklingError
 from copy import deepcopy as copy
-
+import re
 
 import numpy as npy
 
@@ -140,7 +140,7 @@ import  mathFunctions as mf
 from frequency import Frequency
 from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from tlineFunctions import zl_2_Gamma0
-from util import get_fid, get_extn, find_nearest_index
+from util import get_fid, get_extn, find_nearest_index,slice_domain
 ## later imports. delayed to solve circular dependencies
 #from io.general import read, write
 #from io import touchstone
@@ -618,6 +618,39 @@ class Network(object):
         '''
         a = self.z0# HACK: to force getter for z0 to re-shape it
         output = self.copy()
+        
+        if isinstance(key, str):
+            # they passed a string try and do some interpretation
+            re_numbers = re.compile('.*\d')
+            re_hyphen = re.compile('\s*-\s*')
+            re_letters = re.compile('[a-zA-Z]+')
+            
+            freq_unit = re.findall(re_letters,key)[0]
+            
+            if len(freq_unit) == 0:
+                freq_unit = self.frequency.unit
+            
+            key_nounit = re.sub(re_letters,'',key)
+            
+            edges  = re.split(re_hyphen,key_nounit)
+            
+            if len(edges)==2:
+                
+                edges_freq = Frequency.from_f([float(k) for k in edges], 
+                                        unit = freq_unit)
+                slicer=slice_domain(output.frequency.f, edges_freq.f)
+                
+            elif len(edges)==1:
+                slicer = slice(edges)
+            else:
+                raise ValueError()
+            output.s = output.s[slicer,:,:]
+            output.z0 = output.z0[slicer,:]
+            output.frequency.f = npy.array(output.frequency.f[slicer]).reshape(-1)
+            return output
+            
+        
+        
         output.s = output.s[key,:,:]
         output.z0 = output.z0[key,:]
         output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)

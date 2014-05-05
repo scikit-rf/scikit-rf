@@ -119,7 +119,7 @@ def slice_domain(x,domain):
     '''
     Returns a slice object closest to the `domain` of `x`
     
-    domain = x[slice_domain(x, start, stop)]
+    domain = x[slice_domain(x, (start, stop))]
     
     Parameters
     -----------
