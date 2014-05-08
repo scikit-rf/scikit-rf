@@ -165,18 +165,18 @@ class Calibration(object):
             if sloppy_input == False:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
-        
-               
+            
         # fill measured and ideals with copied lists of input     
         self.measured = [ntwk.copy() for ntwk in measured]
         self.ideals = [ntwk.copy() for ntwk in ideals]
+        
         
         if sloppy_input:
             self.measured, self.ideals = \
                 align_measured_ideals(self.measured, self.ideals)
         
         if len(self.measured) != len(self.ideals):
-            raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured.'))
+            raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured. If you are using `sloppy_input` ensure the names are uniquely alignable.'))
         
         
         # ensure all the measured Networks' frequency's are the same

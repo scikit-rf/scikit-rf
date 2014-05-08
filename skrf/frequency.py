@@ -31,7 +31,7 @@ Functions
 
 '''
 
-from pylab import linspace, gca
+from pylab import linspace, gca,plot
 from numpy import pi
 import numpy as npy
 from numpy import fft # used to center attribute `t` at 0
@@ -437,6 +437,18 @@ class Frequency(object):
         '''
         return overlap_freq(self, f2)
     
+    
+    def plot(self, *args, **kwargs):
+        '''
+        Plot something vs this frequency
+        
+        This plots whateve is given vs. `self.f_scaled` and then 
+        calls `labelXAxis`.
+        
+        '''
+        plot(self.f_scaled, *args, **kwargs)
+        self.labelXAxis()
+        
 def overlap_freq(f1,f2):
     '''
     Calculates  overlapping frequency between f1 and f2.
