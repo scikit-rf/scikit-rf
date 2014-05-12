@@ -270,10 +270,17 @@ class Calibration(object):
         
         Parameters 
         -------------
-        
         std : int or str
             the integer of calibration standard to remove, or the name 
             of the ideal calibration standard to remove.
+        
+        
+        Returns
+        -----------
+        ideal,measured : tuple of skrf.Networks
+            the ideal and measured networks which were popped out of the 
+            calibration
+            
         '''
         
         if isinstance(std, str):
