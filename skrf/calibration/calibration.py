@@ -264,11 +264,27 @@ class Calibration(object):
         '''
         raise NotImplementedError('The Subclass must implement this')
         
-    def pop(self,index=-1):
+    def pop(self,std=-1):
         '''
         Remove and return tuple of (ideal, measured) at index.
+        
+        Parameters 
+        -------------
+        
+        std : int or str
+            the integer of calibration standard to remove, or the name 
+            of the ideal calibration standard to remove.
         '''
-        return (self.ideals.pop(index),  self.measured.pop(index))
+        
+        if isinstance(std, str):
+            for idx,ideal in enumerate(self.ideals):
+                if std  == ideal.name:
+                    std = idx
+        
+        if isinstance(std, str):
+            raise (ValueError('standard %s not found in ideals'%std))
+        
+        return (self.ideals.pop(std),  self.measured.pop(std))
     
     @classmethod 
     def from_coefs(cls, frequency, coefs, **kwargs):
