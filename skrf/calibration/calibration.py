@@ -940,7 +940,10 @@ class SOLT(Calibration):
             raise NotImplementedError()
             p1_coefs['isolation'] = isolation.s21.s.flatten()
             p2_coefs['isolation'] = isolation.s12.s.flatten()
-        
+        else:
+            p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
+            p2_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
+            
         p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
         p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
         
@@ -951,11 +954,11 @@ class SOLT(Calibration):
             (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
             (1. - p2_coefs['source match']*p2_coefs['load match'])
         coefs = {}
-        #import pdb;pdb.set_trace()
+        
         coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
         coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
         eight_term_coefs = convert_12term_2_8term(coefs)
-        #import pdb;pdb.set_trace()
+        
         coefs.update(dict([(l, eight_term_coefs[l]) for l in \
             ['forward switch term','reverse switch term','k'] ]))
         self._coefs = coefs
