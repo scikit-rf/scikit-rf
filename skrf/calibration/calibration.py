@@ -1474,11 +1474,11 @@ class UnknownThru(EightTerm):
     '''
     '''
     family = 'UnknownThru'
-    def __init__(self, measured, ideals, thru_approx=None, n_thrus=1, 
+    def __init__(self, measured, ideals, thru_approx=None, 
                  *args, **kwargs):
         '''
         '''
-        self.n_thrus = n_thrus
+        
         self.thru_approx = thru_approx
         
         EightTerm.__init__(self, 
@@ -1489,15 +1489,15 @@ class UnknownThru(EightTerm):
         warn('Not Fully implemented')
         
     def run(self):
-        n_thrus = self.n_thrus
-        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
-        p2_m = [k.s22 for k in self.measured[:-n_thrus]]
-        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
-        p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
         
-        thru_m = NetworkSet(self.measured_unterminated[-n_thrus:]).mean_s
+        p1_m = [k.s11 for k in self.measured[:-1]]
+        p2_m = [k.s22 for k in self.measured[:-1]]
+        p1_i = [k.s11 for k in self.ideals[:-1]]
+        p2_i = [k.s22 for k in self.ideals[:-1]]
         
-        thru_approx  =  NetworkSet(self.ideals[-n_thrus:]).mean_s
+        thru_m = self.measured_unterminated[-1]
+        
+        thru_approx  =  self.ideals[-1]
         
         # create one port calibration for all reflective standards  
         port1_cal = OnePort(measured = p1_m, ideals = p1_i)
@@ -1515,7 +1515,7 @@ class UnknownThru(EightTerm):
         # create a fully-determined 8-term cal just get estimate on k's sign
         # this is really inefficient, i need to fix the math on the 
         # closed form solution
-        et = EightTerm(
+        '''et = EightTerm(
             measured = self.measured, 
             ideals = self.ideals,
             switch_terms= self.switch_terms)
@@ -1527,7 +1527,21 @@ class UnknownThru(EightTerm):
         
         
         k_ = (e_tf_s.flatten()/e_rr.s.flatten())
+        '''
         
+        alpha = npy.zeros(len(X), dtype= complex)
+        k_ = npy.zeros(len(X), dtype= complex)
+        for f in range(len(X)):
+            M = thru_m.t[f]
+            A = X.t[f]
+            B = Y.t[f]
+            alpha = npy.sqrt(det(M)*det(B)/det(A))
+            
+            
+            
+        
+        k_ = e_tf_squared/e_rr.s.flatten()
+        #k_ =  
                
         # create single dictionary for all error terms
         coefs = {}
@@ -1541,6 +1555,7 @@ class UnknownThru(EightTerm):
                 'reverse switch term': self.switch_terms[1].s.flatten(),
                 })
         else:
+            warn('No switch terms provided')
             coefs.update({
                 'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
                 'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
