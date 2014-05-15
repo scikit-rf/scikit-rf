@@ -32,6 +32,7 @@ Two port Calibrations
    
    SOLT
    EightTerm
+   UnknownThru
    TRL
 
 '''
@@ -76,6 +77,15 @@ coefs_list_12term =[
 
 
 global coefs_list_8term
+'''
+There are vairous notations used for this same model. Given that all
+measurements have been unterminated properly the error box model holds
+and the following equalities hold:
+
+k = e01/e23    # in s-param
+k = alpha/beta # in mark's notation
+beta/alpha *1/Err = 1/(e10e32)  # marks -> rytting notation
+'''
 coefs_list_8term = [
     'forward directivity',
     'forward source match',
@@ -1076,7 +1086,7 @@ class EightTerm(Calibration):
     def __init__(self, measured, ideals, switch_terms=None,
                  *args, **kwargs):
         '''
-        
+        Initializer
         
         Parameters
         --------------
@@ -1217,53 +1227,6 @@ class EightTerm(Calibration):
         return [self.unterminate(k) for k in self.measured]
         
     def run(self):
-        '''
-        Two port calibration based on the 8-term error model.
-    
-        Takes two
-        ordered lists of measured and ideal responses. Optionally, switch
-        terms [1]_ can be taken into account by passing a tuple containing the
-        forward and reverse switch terms as 1-port Networks. This algorithm
-        is based on the work in [2]_ .
-    
-        Parameters
-        -----------
-        measured : list of 2-port :class:`~skrf.network.Network` objects
-                Raw measurements of the calibration standards. The order
-                must align with the `ideals` parameter
-    
-        ideals : list of 2-port :class:`~skrf.network.Network` objects
-                Predicted ideal response of the calibration standards.
-                The order must align with `ideals` list
-                measured: ordered list of measured networks. list elements
-    
-        switch_terms : tuple of :class:`~skrf.network.Network` objects
-                        The two measured switch terms in the order
-                        (forward, reverse).  This is only applicable in two-port
-                        calibrations. See Roger Mark's paper on switch terms [1]_
-                        for explanation of what they are.
-    
-        Returns
-        ----------
-        output : a dictionary
-                output information, contains the following keys:
-                * 'error coefficients':
-                * 'error vector':
-                * 'residuals':
-    
-        Notes
-        ---------
-        support for gathering switch terms on HP8510C  is in
-        :mod:`skrf.vi.vna`
-    
-    
-        References
-        -------------
-        .. [1] Marks, Roger B.; , "Formulations of the Basic Vector Network Analyzer Error Model including Switch-Terms," ARFTG Conference Digest-Fall, 50th , vol.32, no., pp.115-126, Dec. 1997. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4119948&isnumber=4119931
-        .. [2] Speciale, R.A.; , "A Generalization of the TSD Network-Analyzer Calibration Procedure, Covering n-Port Scattering-Parameter Measurements, Affected by Leakage Errors," Microwave Theory and Techniques, IEEE Transactions on , vol.25, no.12, pp. 1100- 1115, Dec 1977. URL: http://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=1129282&isnumber=25047
-    
-
-    '''
         numStds = self.nstandards
         numCoefs = 7
 
@@ -1472,24 +1435,50 @@ class TRL(EightTerm):
 
 class UnknownThru(EightTerm):
     '''
+    Two-Port Self-Calibration allowing the *thru* standard to be unknown.
+    
+    This algorithm was originally developed in  [1]_, and  
+    is based on the 8-term error model (:class:`EightTerm`). It allows 
+    the thru 
+    
+    It is useful when when a well-known thru is not realizable. 
+    
+    
+    References
+    -----------
+    .. [1] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`" IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
+
     '''
     family = 'UnknownThru'
-    def __init__(self, measured, ideals, thru_approx=None, 
-                 *args, **kwargs):
+    def __init__(self, measured, ideals,  *args, **kwargs):
         '''
+        Initializer
+        
+        Note that the *thru* standard must be last in both measured, and 
+        ideal lists. The ideal for the *thru* is only used to choose, 
+        the sign of a square root. It only has to be have s21, s12
+        known within :math:`\pi` phase.
+        
+        
+        Parameters
+        --------------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use `sloppy_input`)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use sloppy_input
+        
+        switch_terms : tuple of :class:`~skrf.network.Network` objects
+            the pair of switch terms in the order (forward, reverse)
         '''
         
-        self.thru_approx = thru_approx
+        EightTerm.__init__(self, measured = measured, ideals = ideals,
+                           *args, **kwargs)
         
-        EightTerm.__init__(self, 
-            measured = measured, 
-            ideals = ideals,
-            *args, **kwargs)
-        
-        warn('Not Fully implemented')
         
     def run(self):
-        
         p1_m = [k.s11 for k in self.measured_unterminated[:-1]]
         p2_m = [k.s22 for k in self.measured_unterminated[:-1]]
         p1_i = [k.s11 for k in self.ideals[:-1]]
@@ -1513,21 +1502,23 @@ class UnknownThru(EightTerm):
         Y = port2_cal.error_ntwk
         
         # create a fully-determined 8-term cal just get estimate on k's sign
-        # this is really inefficient, i need to fix the math on the 
+        # this is really inefficient, i need to work out the math on the 
         # closed form solution
-        #import ipdb;ipdb.set_trace()
         et = EightTerm(
             measured = self.measured, 
             ideals = self.ideals,
             switch_terms= self.switch_terms)
         k_approx = et.coefs['k'].flatten()
         
-        
+        # this is equivalent to sqrt(detX*detY/detM)
         e10e32 = npy.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
-        k_ = e10e32/e_rr.s.flatten()
-        #k_sign = thru_approx.inv**X.inv**thru_m**Y.inv.s[:,0,0].flatten()
         
+        k_ = e10e32/e_rr.s.flatten()
         k_ = find_correct_sign(k_, -1*k_, k_approx)
+        
+        import pylab as plb
+        plot(abs(k_-k_approx))
+        plb.show()
         # create single dictionary for all error terms
         coefs = {}
         
