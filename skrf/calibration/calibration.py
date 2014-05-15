@@ -47,7 +47,7 @@ from warnings import warn
 import cPickle as pickle
 
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
-    find_correct_sign, ALMOST_ZERO, rand_c
+    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
@@ -1514,11 +1514,11 @@ class UnknownThru(EightTerm):
         e10e32 = npy.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
         
         k_ = e10e32/e_rr.s.flatten()
-        k_ = find_correct_sign(k_, -1*k_, k_approx)
+        k_ = find_closest(k_, -1*k_, k_approx)
         
-        import pylab as plb
-        plot(abs(k_-k_approx))
-        plb.show()
+        #import pylab as plb
+        #plot(abs(k_-k_approx))
+        #plb.show()
         # create single dictionary for all error terms
         coefs = {}
         

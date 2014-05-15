@@ -308,12 +308,37 @@ def find_correct_sign(z1,z2,z_approx):
     Returns 
     ----------
     z3 : npy.array
-        array build from z1 and z2 by 
+        array built from z1 and z2 by 
         z1 where sign(z1) == sign(z_approx), z2 else
     
     '''
     return npy.where(
     npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)    
+
+def find_closest(z1,z2,z_approx):
+    '''
+    Returns z1 or z2  depending on which is  closer to z_approx
+    
+    
+    Parameters
+    ------------
+    z1 : array-like
+        root 1
+    z2 : array-like
+        root 2
+    z_approx : array-like
+        approximate answer of z
+    
+    Returns 
+    ----------
+    z3 : npy.array
+        array built from z1 and z2
+        
+    '''
+    z1_dist = abs(z1-z_approx)
+    z2_dist = abs(z2-z_approx)
+    
+    return npy.where(z1_dist<z2_dist,z1, z2)  
 
 def sqrt_phase_unwrap(input):
     '''
