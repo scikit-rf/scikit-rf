@@ -1268,7 +1268,7 @@ class EightTerm(Calibration):
         numCoefs = 7
 
         
-        mList = [self.unterminate(k).s for k in self.measured]
+        mList = [k.s  for k in self.measured_unterminated]
         iList = [k.s for k in self.ideals]
         
         fLength = len(mList[0])
@@ -1490,8 +1490,8 @@ class UnknownThru(EightTerm):
         
     def run(self):
         
-        p1_m = [k.s11 for k in self.measured[:-1]]
-        p2_m = [k.s22 for k in self.measured[:-1]]
+        p1_m = [k.s11 for k in self.measured_unterminated[:-1]]
+        p2_m = [k.s22 for k in self.measured_unterminated[:-1]]
         p1_i = [k.s11 for k in self.ideals[:-1]]
         p2_i = [k.s22 for k in self.ideals[:-1]]
         
@@ -1515,34 +1515,19 @@ class UnknownThru(EightTerm):
         # create a fully-determined 8-term cal just get estimate on k's sign
         # this is really inefficient, i need to fix the math on the 
         # closed form solution
-        '''et = EightTerm(
+        #import ipdb;ipdb.set_trace()
+        et = EightTerm(
             measured = self.measured, 
             ideals = self.ideals,
             switch_terms= self.switch_terms)
-        k_approx = et.coefs_ntwks['k']
+        k_approx = et.coefs['k'].flatten()
         
         
-        e_tf_s = npy.sqrt((e_rf*e_rr*(thru_m.s21/thru_m.s12)).s.flatten())
-        e_tf_s = find_correct_sign(e_tf_s, -1* e_tf_s, (k_approx*e_rr).s.flatten())
+        e10e32 = npy.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
+        k_ = e10e32/e_rr.s.flatten()
+        #k_sign = thru_approx.inv**X.inv**thru_m**Y.inv.s[:,0,0].flatten()
         
-        
-        k_ = (e_tf_s.flatten()/e_rr.s.flatten())
-        '''
-        
-        alpha = npy.zeros(len(X), dtype= complex)
-        k_ = npy.zeros(len(X), dtype= complex)
-        for f in range(len(X)):
-            M = thru_m.t[f]
-            A = X.t[f]
-            B = Y.t[f]
-            alpha = npy.sqrt(det(M)*det(B)/det(A))
-            
-            
-            
-        
-        k_ = e_tf_squared/e_rr.s.flatten()
-        #k_ =  
-               
+        k_ = find_correct_sign(k_, -1*k_, k_approx)
         # create single dictionary for all error terms
         coefs = {}
         

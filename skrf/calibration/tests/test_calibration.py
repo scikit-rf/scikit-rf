@@ -20,6 +20,7 @@ class CalibrationTest(object):
         self.assertEqual(a,c)
         
         
+        
     def test_error_ntwk(self):
         a= self.cal.error_ntwk 
     
@@ -142,7 +143,7 @@ class SDDLTest(OnePortTest):
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,3), a=100*rf.mil,z0=50)
         wg= self.wg
         wg.frequency = rf.F.from_f([100])
         
@@ -230,6 +231,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             self.cal.coefs_ntwks['reverse reflection tracking'])
     
     def test_k_accuracy(self):
+        [k.plot_s_mag() for k in [(self.X.s21/self.Y.s12),self.cal.coefs_ntwks['k'] ]]
+        
+        import pylab as plb;plb.show()
         self.assertEqual(
             self.X.s21/self.Y.s12 , 
             self.cal.coefs_ntwks['k']  )   
@@ -406,12 +410,11 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
         
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
-
 class UnknownThruTest(EightTermTest):
     def setUp(self):
-        raise SkipTest('Doesnt work yet')
+        #raise SkipTest('Doesnt work yet')
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
         wg= self.wg 
         #   wg.frequency = rf.F.from_f([100])
         
@@ -425,7 +428,7 @@ class UnknownThruTest(EightTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='match'),
-            wg.impedance_mismatch(50,25)**wg.line(20,'deg',name='line')**wg.impedance_mismatch(1,50)
+            wg.impedance_mismatch(50,45)**wg.line(20,'deg',name='line')**wg.impedance_mismatch(45,50)
 
             ]
         
@@ -445,6 +448,7 @@ class UnknownThruTest(EightTermTest):
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r]
             )
+        
         
 class SOLTTest2(SOLTTest):
     '''
