@@ -104,7 +104,8 @@ Supporting Functions
     t2y
     fix_z0_shape
     renormalize_s
-
+    passivity
+    reciprocity
 
 Misc Functions
 =====================
@@ -240,82 +241,6 @@ class Network(object):
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
     
-    ## these methods are used in the secondary properties
-    def _passivity(s):
-        '''
-        passivity metric for a multi-port network.
-    
-        This returns a matrix who's diagonals are equal to the total
-        power received at all ports, normalized to the power at a single
-        excitement port.
-    
-        mathmatically, this is a test for unitary-ness of the
-        s-parameter matrix [#]_.
-    
-        for two port this is
-    
-        .. math::
-    
-                ( |S_{11}|^2 + |S_{21}|^2 \, , \, |S_{22}|^2+|S_{12}|^2)
-    
-        in general it is
-    
-        .. math::
-    
-                S^H \\cdot S
-    
-        where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
-        is dot product.
-    
-        Returns
-        ---------
-        passivity : :class:`numpy.ndarray` of shape fxnxn
-    
-        References
-        ------------
-        .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
-        '''
-        if s.shape[-1] == 1:
-            raise (ValueError('Doesnt exist for one ports'))
-    
-        pas_mat = s.copy()
-        for f in range(len(s)):
-            pas_mat[f,:,:] = npy.dot(s[f,:,:].conj().T, s[f,:,:])
-        
-        return pas_mat
-    
-    def _reciprocity(s):
-        '''
-       reciprocity metric for a multi-port network.
-    
-        This returns the magnitude of the difference between the 
-        s-parameter matrix and its transpose.
-    
-        for two port this is
-    
-        .. math::
-    
-                | S - S^T |
-    
-    
-    
-        where :math:`T` is transpose of S
-    
-        Returns
-        ---------
-        reciprocity : :class:`numpy.ndarray` of shape fxnxn
-        '''
-        if s.shape[-1] == 1:
-            raise (ValueError('Doesnt exist for one ports'))
-    
-        rec_mat = s.copy()
-        for f in range(len(s)):
-            rec_mat[f,:,:] = abs(s[f,:,:]- s[f,:,:].T)
-        
-        return rec_mat
-    
-    
-    
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
         're'    : npy.real,
@@ -332,8 +257,6 @@ class Network(object):
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
-        'passivity' : _passivity,
-        'reciprocity' : _reciprocity,
         'time' : lambda x: fft.ifftshift(fft.ifft(x, axis=0), axes=0),
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
@@ -1241,7 +1164,6 @@ class Network(object):
     def a(self, value):
         raise (NotImplementedError)
     
-    
         
     @property
     def z0(self):
@@ -1486,7 +1408,7 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
         '''
-        return _passivity(self.s)
+        return passivity(self.s)
     
     @property
     def reciprocity(self):
@@ -1512,11 +1434,9 @@ class Network(object):
     
         
         '''
-        return _reciprocity(self.s)
-    
-    
-    
-	## NETWORK CLASIFIER
+        return reciprocity(self.s)
+        
+	## NETWORK CLASIFIERs
 	def is_reciprocal(self):
 		'''
 		test for reciprocity
@@ -1541,6 +1461,45 @@ class Network(object):
 		'''
 		raise(NotImplementedError)	
     
+    ## specific ploting functions 
+    def plot_passivity(self, *args, **kwargs):
+        '''
+        Plot passivity metric
+        
+        See Also
+        -----------
+        passivity
+        '''
+        for k in range(self.nports):
+            self.frequency.plot(mf.complex_2_db(self.passivity[:,k,k]),
+                                label = 'port %i'%(k+1),
+                                *args, **kwargs)
+                                
+        plb.legend()
+        plb.draw()
+    
+    def plot_reciprocity(self, db= False, *args, **kwargs):
+        '''
+        Plot reciprocity metric
+        
+        See Also
+        -----------
+        reciprocity
+        '''
+       
+        
+        for m in range(self.nports):
+            for n in range(self.nports):
+                if m>n:
+                    if 'label'  not in kwargs.keys():
+                        kwargs['label'] = 'ports %i%i'%(m,n)
+                    y = self.reciprocity[:,m,n].flatten()
+                    if db: 
+                        y = mf.complex_2_db(y)
+                    self.frequency.plot(y,*args, **kwargs)
+                                
+        plb.legend()
+        plb.draw()
     ## CLASS METHODS
     def copy(self):
         '''
@@ -3833,6 +3792,80 @@ def t2y(t):
     
     '''
     raise (NotImplementedError)
+
+## these methods are used in the secondary properties
+def passivity(s):
+    '''
+    Passivity metric for a multi-port network.
+
+    This returns a matrix who's diagonals are equal to the total
+    power received at all ports, normalized to the power at a single
+    excitement port.
+
+    mathmatically, this is a test for unitary-ness of the
+    s-parameter matrix [#]_.
+
+    for two port this is
+
+    .. math::
+
+            ( |S_{11}|^2 + |S_{21}|^2 \, , \, |S_{22}|^2+|S_{12}|^2)
+
+    in general it is
+
+    .. math::
+
+            S^H \\cdot S
+
+    where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
+    is dot product.
+
+    Returns
+    ---------
+    passivity : :class:`numpy.ndarray` of shape fxnxn
+
+    References
+    ------------
+    .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
+    '''
+    if s.shape[-1] == 1:
+        raise (ValueError('Doesnt exist for one ports'))
+
+    pas_mat = s.copy()
+    for f in range(len(s)):
+        pas_mat[f,:,:] = npy.dot(s[f,:,:].conj().T, s[f,:,:])
+    
+    return pas_mat
+
+def reciprocity(s):
+        '''
+        Reciprocity metric for a multi-port network.
+    
+        This returns the magnitude of the difference between the 
+        s-parameter matrix and its transpose.
+    
+        for two port this is
+    
+        .. math::
+    
+                | S - S^T |
+    
+    
+    
+        where :math:`T` is transpose of S
+    
+        Returns
+        ---------
+        reciprocity : :class:`numpy.ndarray` of shape fxnxn
+        '''
+        if s.shape[-1] == 1:
+            raise (ValueError('Doesnt exist for one ports'))
+    
+        rec_mat = s.copy()
+        for f in range(len(s)):
+            rec_mat[f,:,:] = abs(s[f,:,:]- s[f,:,:].T)
+        
+        return rec_mat
 
 
 ## renormalize 

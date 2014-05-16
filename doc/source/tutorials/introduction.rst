@@ -12,6 +12,9 @@ Introduction
     
     In [138]: from pylab import * 
     
+    In [138]: close('all') 
+    
+    
     
 
 Introduction

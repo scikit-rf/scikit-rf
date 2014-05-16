@@ -1,4 +1,4 @@
-'''
+''' 
 .. module:: skrf.calibration.calibration
 ================================================================
 calibration (:mod:`skrf.calibration.calibration`)
@@ -82,9 +82,9 @@ There are vairous notations used for this same model. Given that all
 measurements have been unterminated properly the error box model holds
 and the following equalities hold:
 
-k = e01/e23    # in s-param
+k = e10/e23    # in s-param
 k = alpha/beta # in mark's notation
-beta/alpha *1/Err = 1/(e10e32)  # marks -> rytting notation
+1/(k*Err)= beta/alpha *1/Err = 1/(e10e32) # marks -> rytting notation
 '''
 coefs_list_8term = [
     'forward directivity',
@@ -97,6 +97,7 @@ coefs_list_8term = [
     'reverse switch term',
     'k'
     ]
+    
 global coefs_list_3term
 coefs_list_3term = [
     'directivity',
@@ -125,7 +126,7 @@ class Calibration(object):
     '''
     family = ''
     def __init__(self, measured, ideals, sloppy_input=False,
-        is_reciprocal=True,name=None,*args, **kwargs):
+        is_reciprocal=True,name=None,run_now = True, *args, **kwargs):
         '''
         Calibration initializer.
 
@@ -218,6 +219,8 @@ class Calibration(object):
         self._residual_ntwks = None
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
+        if run_now:
+            self.run()
     
     def __str__(self):
         if self.name is None:
@@ -1104,15 +1107,23 @@ class EightTerm(Calibration):
    
         '''
         
-        self.switch_terms = switch_terms
-        if switch_terms is None:
-            warn('No switch terms provided')
+        # store switch terms temporarily untill we run()
+        self._switch_terms_tmp = switch_terms
+        
         Calibration.__init__(self, 
             measured = measured, 
             ideals = ideals, 
             *args, **kwargs)
-        
-        
+            
+    @property
+    def switch_terms(self):
+        return (self.coefs['forward switch term'], 
+                self.coefs['reverse switch term'])
+    @property
+    def switch_terms_ntwks(self):
+        return (self.coefs_ntwks['forward switch term'], 
+                self.coefs_ntwks['reverse switch term'])
+                
     def unterminate(self,ntwk):
         '''
         Unterminates switch terms from a raw measurement.
@@ -1153,27 +1164,26 @@ class EightTerm(Calibration):
         .. [1] "Formulations of the Basic Vector Network Analyzer Error
                 Model including Switch Terms" by Roger B. Marks
         '''
-        if self.switch_terms is not None:
-            gamma_f, gamma_r = self.switch_terms
-            
-            unterminated = ntwk.copy()
-            
-            # extract scattering matrices
-            m, gamma_r, gamma_f = ntwk.s, gamma_r.s, gamma_f.s
-            u = m.copy()
-            
-            one = npy.ones(ntwk.frequency.npoints)
-            
-            d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
-            u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-            u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
-            u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-            u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
-            
-            unterminated.s = u
-            return unterminated
-        else:
-            return ntwk
+        
+        gamma_f, gamma_r = self.switch_terms
+        
+        unterminated = ntwk.copy()
+        
+        # extract scattering matrices
+        m = ntwk.s
+        u = m.copy()
+        
+        one = npy.ones(ntwk.frequency.npoints)
+        
+        d = one - m[:,0,1]*m[:,1,0]*gamma_r*gamma_f
+        u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f)/(d)
+        u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r)/(d)
+        u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f)/(d)
+        u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r)/(d)
+        
+        unterminated.s = u
+        return unterminated
+        
     
     def terminate(self, ntwk):
         '''
@@ -1207,19 +1217,17 @@ class EightTerm(Calibration):
         .. [1] "Formulations of the Basic Vector Network Analyzer Error
                 Model including Switch Terms" by Roger B. Marks
         '''
-        if self.switch_terms is not None:
-            gamma_f, gamma_r = self.switch_terms
-            m = ntwk.copy()
-            ntwk_flip = ntwk.copy()
-            ntwk_flip.flip()
-            
-            m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
-            m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
-            m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
-            m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
-            return m
-        else:
-            return ntwk
+        
+        gamma_f, gamma_r = self.switch_terms_ntwks
+        m = ntwk.copy()
+        ntwk_flip = ntwk.copy()
+        ntwk_flip.flip()
+        
+        m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
+        m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
+        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
+        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
+        return m
     
       
     @property
@@ -1227,6 +1235,21 @@ class EightTerm(Calibration):
         return [self.unterminate(k) for k in self.measured]
         
     def run(self):
+        fLength = len(self.frequency)
+        switch_terms = self._switch_terms_tmp
+        
+        if switch_terms is None:
+            warn('No switch terms provided')
+            self.coefs={
+                'forward switch term': npy.zeros(fLength, dtype=complex),
+                'reverse switch term': npy.zeros(fLength, dtype=complex),
+                }
+        else:
+            self.coefs={
+                'forward switch term': switch_terms[0].s.flatten(),
+                'reverse switch term': switch_terms[1].s.flatten(),
+                }
+        
         numStds = self.nstandards
         numCoefs = 7
 
@@ -1234,7 +1257,8 @@ class EightTerm(Calibration):
         mList = [k.s  for k in self.measured_unterminated]
         iList = [k.s for k in self.ideals]
         
-        fLength = len(mList[0])
+        #fLength = len(mList[0])
+        print fLength, len(mList[0])
         #initialize outputs
         error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
         residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
@@ -1273,7 +1297,7 @@ class EightTerm(Calibration):
         
         e = error_vector
         # put the error vector into human readable dictionary
-        self._coefs = {\
+        self.update_coefs({\
                 'forward directivity':e[:,0],
                 'forward source match':e[:,1],
                 'forward reflection tracking':(e[:,0]*e[:,1])-e[:,2],
@@ -1281,19 +1305,10 @@ class EightTerm(Calibration):
                 'reverse source match':e[:,4]/e[:,6],
                 'reverse reflection tracking':(e[:,4]/e[:,6])*(e[:,3]/e[:,6])- (e[:,5]/e[:,6]),
                 'k':e[:,6],
-                }
+                })
         
         
-        if self.switch_terms is not None:
-            self._coefs.update({
-                'forward switch term': self.switch_terms[0].s.flatten(),
-                'reverse switch term': self.switch_terms[1].s.flatten(),
-                })
-        else:
-            self._coefs.update({
-                'forward switch term': npy.zeros(fLength, dtype=complex),
-                'reverse switch term': npy.zeros(fLength, dtype=complex),
-                })
+       
         # output is a dictionary of information
         self._output_from_run = {
                 'error vector':e, 
@@ -1439,9 +1454,8 @@ class UnknownThru(EightTerm):
     
     This algorithm was originally developed in  [1]_, and  
     is based on the 8-term error model (:class:`EightTerm`). It allows 
-    the thru 
-    
-    It is useful when when a well-known thru is not realizable. 
+    the *thru* to be unknown, other than it must be reciprocal. This 
+    is useful when when a well-known thru is not realizable. 
     
     
     References
@@ -1455,8 +1469,8 @@ class UnknownThru(EightTerm):
         Initializer
         
         Note that the *thru* standard must be last in both measured, and 
-        ideal lists. The ideal for the *thru* is only used to choose, 
-        the sign of a square root. It only has to be have s21, s12
+        ideal lists. The ideal for the *thru* is only used to choose
+        the sign of a square root. Thus, it only has to be have s21, s12
         known within :math:`\pi` phase.
         
         
@@ -1516,9 +1530,7 @@ class UnknownThru(EightTerm):
         k_ = e10e32/e_rr.s.flatten()
         k_ = find_closest(k_, -1*k_, k_approx)
         
-        #import pylab as plb
-        #plot(abs(k_-k_approx))
-        #plb.show()
+        
         # create single dictionary for all error terms
         coefs = {}
         
