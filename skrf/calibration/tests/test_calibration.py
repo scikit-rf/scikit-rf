@@ -16,10 +16,7 @@ class CalibrationTest(object):
         a = self.wg.random(n_ports=self.n_ports, name = 'actual')
         m = self.measure(a)
         c = self.cal.apply_cal(m)
-        c.name = 'corrected'
-        
-        
-        
+        c.name = 'corrected'   
         
     def test_error_ntwk(self):
         a= self.cal.error_ntwk 
@@ -46,9 +43,11 @@ class CalibrationTest(object):
         
     def test_from_coefs(self):
         cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
-        #a = self.wg.random(n_ports=self.n_ports)
-        #self.assertEqual(self.cal_from_coefs.apply_cal(self.cal.embed(a)),a)
-    
+        ntwk = self.wg.random(n_ports=self.n_ports)
+        if cal_from_coefs.apply_cal(self.cal.embed(ntwk))!= ntwk:
+            raise ValueError
+        self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
+        
 class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     One-port calibration test.
@@ -138,8 +137,6 @@ class SDDLTest(OnePortTest):
             measured = measured,
             )
 
-    
-
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
@@ -167,7 +164,8 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-    
+        
+        
     def terminate(self, ntwk):
         '''
         terminate a measured network with the switch terms
@@ -409,11 +407,11 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
 
 class UnknownThruTest(EightTermTest):
     def setUp(self):
-        #raise SkipTest('Doesnt work yet')
+        
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
         wg= self.wg 
-        #   wg.frequency = rf.F.from_f([100])
+        #wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -443,7 +441,6 @@ class UnknownThruTest(EightTermTest):
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r]
             )
-        
         
 class SOLTTest2(SOLTTest):
     '''
