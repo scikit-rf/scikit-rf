@@ -219,8 +219,8 @@ class Calibration(object):
         self._residual_ntwks = None
         self._caled_ntwks =None
         self._caled_ntwk_sets = None
-        if run_now:
-            self.run()
+        #if run_now:
+        #    self.run()
     
     def __str__(self):
         if self.name is None:
@@ -1233,11 +1233,16 @@ class EightTerm(Calibration):
     @property
     def measured_unterminated(self):        
         return [self.unterminate(k) for k in self.measured]
+    
+    def assign_switch_terms(self):
         
+            
     def run(self):
         fLength = len(self.frequency)
         switch_terms = self._switch_terms_tmp
         
+        # set switch term error coef first, because we need this to 
+        # unterminate all measurements
         if switch_terms is None:
             warn('No switch terms provided')
             self.coefs={
@@ -1250,15 +1255,14 @@ class EightTerm(Calibration):
                 'reverse switch term': switch_terms[1].s.flatten(),
                 }
         
+        
         numStds = self.nstandards
         numCoefs = 7
 
-        
         mList = [k.s  for k in self.measured_unterminated]
         iList = [k.s for k in self.ideals]
         
-        #fLength = len(mList[0])
-        print fLength, len(mList[0])
+        
         #initialize outputs
         error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
         residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
@@ -1278,7 +1282,7 @@ class EightTerm(Calibration):
                         [ 0, i[0,0]*m[1,0],     0,      0,  i[1,0]*m[1,1],   -i[1,0],        0   ],\
                         [ 0, i[0,1]*m[1,0],     0,      1,  i[1,1]*m[1,1],   -i[1,1],    -m[1,1] ],\
                         ])
-                #pdb.set_trace()
+                
                 M[k*4:k*4+4,:] = npy.array([\
                         [ m[0,0]],\
                         [       0       ],\
@@ -1288,12 +1292,14 @@ class EightTerm(Calibration):
     
             # calculate least squares
             error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
-            #if len (residualsTmp )==0:
-            #       raise ValueError( 'matrix has singular values, check standards')
-            
-            
             error_vector[f,:] = error_vector_at_f.flatten()
-            residuals[f,:] = residuals_at_f
+            #residuals[f,:] = residuals_at_f
+        # output is a dictionary of information
+        #self._output_from_run = {
+        #        'error vector':e, 
+        #        'residuals':residuals
+        #        }
+        
         
         e = error_vector
         # put the error vector into human readable dictionary
@@ -1307,15 +1313,7 @@ class EightTerm(Calibration):
                 'k':e[:,6],
                 })
         
-        
-       
-        # output is a dictionary of information
-        self._output_from_run = {
-                'error vector':e, 
-                'residuals':residuals
-                }
-    
-        return None    
+        return True    
         
     def apply_cal(self, ntwk):
         caled = ntwk.copy()
@@ -1537,21 +1535,10 @@ class UnknownThru(EightTerm):
         coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
         coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
         
-        if self.switch_terms is not None:
-            coefs.update({
-                'forward switch term': self.switch_terms[0].s.flatten(),
-                'reverse switch term': self.switch_terms[1].s.flatten(),
-                })
-        else:
-            warn('No switch terms provided')
-            coefs.update({
-                'forward switch term': npy.zeros(len(self.frequency), dtype=complex),
-                'reverse switch term': npy.zeros(len(self.frequency), dtype=complex),
-                })
         
         coefs.update({'k':k_})
         
-        self._coefs = coefs
+        self.update_coefs (coefs)
 
 class Normalization(Calibration):
     '''
