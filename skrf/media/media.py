@@ -604,8 +604,8 @@ class Media(object):
 
     def impedance_mismatch(self, z1, z2, **kwargs):
         '''
-        Two-port network for an impedance miss-match
-
+        Two-port network for a an impedance miss-match
+        
 
         Parameters
         ----------
@@ -693,7 +693,7 @@ class Media(object):
                     (npy.ones((n,n))-npy.eye(n))
         return result
 
-
+        
     # transmission line
     def thru(self, **kwargs):
         '''
@@ -1015,7 +1015,62 @@ class Media(object):
         '''
         return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
 
-
+    def attenuator(self, s21,db=True,  **kwargs):
+        '''
+        Ideal matched attenuator 
+        
+        Parameters 
+        ----------
+        s21 : number, array-like
+            the attenutation
+        
+        db : bool
+            is s21 in db? otherwise assumes linear
+        
+        Returns
+        --------
+        ntwk : :class:`~skrf.network.Network` object
+                2-port attentuator
+                
+        '''
+        if db:
+            s21 = mf.db_2_magnitude(s21)
+            
+        result = self.match(nports=2,**kwargs)      
+        result.s[:,0,1] = s21
+        result.s[:,1,0] = s21
+        return result
+    
+    def lossless_mismatch(self,s11,db=True,  **kwargs):
+        '''
+        Ideal matched attenuator 
+        
+        Parameters 
+        ----------
+        s11 : number, array-like
+            the reflection coefficient. if db==True, then phase is ignored
+        
+        db : bool
+            is s11 in db? otherwise assumes linear
+        
+        Returns
+        --------
+        ntwk : :class:`~skrf.network.Network` object
+                2-port attentuator
+                
+        '''
+        result = self.match(nports=2,**kwargs) 
+        if db:
+            s11 = mf.db_2_magnitude(s11)
+            
+        result.s[:,0,0] = s11
+        result.s[:,1,1] = s11
+        ## HACK: TODO: verify this mathematically
+        result.s[:,0,1] = npy.sqrt(1- npy.abs(s11)**2)*\
+                npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
+        result.s[:,1,0] = result.s[:,0,1]
+        return result   
+        
     ## Noise Networks
     def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
         '''
