@@ -2117,7 +2117,7 @@ class Network(object):
         
     def renumber(self, from_ports, to_ports):
         '''
-        renumbers some ports of a two port Network
+        renumbers  ports of a  Network
 
         Parameters
         -----------
@@ -2619,8 +2619,20 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     # if we're connecting more than one port, call innerconnect to finish the job
     if num>1:
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports-1+l, num-1)
-
+    
+    # if ntwkB is a 2port, then keep port indecies where you expect.
+    if ntwkB.nports == 2 and ntwkA.nports>2:
+        from_ports = range(ntwkC.nports)
+        to_ports = range(ntwkC.nports)
+        to_ports.pop(k); 
+        to_ports.append(k)
+        
+        ntwkC.renumber(from_ports=from_ports,
+                       to_ports=to_ports)
+    
     return ntwkC
+    
+    
 
 def connect_fast(ntwkA, k, ntwkB, l):
     '''

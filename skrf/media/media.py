@@ -1015,17 +1015,24 @@ class Media(object):
         '''
         return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
 
-    def attenuator(self, s21,db=True,  **kwargs):
+    def attenuator(self, s21, db=True, d =0, unit='m', **kwargs):
         '''
-        Ideal matched attenuator 
+        Ideal matched attenuator of a given length
         
         Parameters 
         ----------
         s21 : number, array-like
             the attenutation
-        
         db : bool
             is s21 in db? otherwise assumes linear
+        d : number
+            length of attenuator
+        
+        unit : ['m','deg','rad']
+                the units of d. possible options are:
+                 * *m* : meters, physical length in meters (default)
+                 * *deg* :degrees, electrical length in degrees
+                 * *rad* :radians, electrical length in radians
         
         Returns
         --------
@@ -1035,15 +1042,16 @@ class Media(object):
         '''
         if db:
             s21 = mf.db_2_magnitude(s21)
-            
-        result = self.match(nports=2,**kwargs)      
+         
+        result = self.match(nports=2)    
         result.s[:,0,1] = s21
         result.s[:,1,0] = s21
+        result = result**self.line(d=d, unit = unit, **kwargs)      
         return result
     
     def lossless_mismatch(self,s11,db=True,  **kwargs):
         '''
-        Ideal matched attenuator 
+        Lossless mismatch  defined by its return loss
         
         Parameters 
         ----------
@@ -1056,7 +1064,7 @@ class Media(object):
         Returns
         --------
         ntwk : :class:`~skrf.network.Network` object
-                2-port attentuator
+                2-port lossless mismatch
                 
         '''
         result = self.match(nports=2,**kwargs) 
@@ -1065,7 +1073,7 @@ class Media(object):
             
         result.s[:,0,0] = s11
         result.s[:,1,1] = s11
-        ## HACK: TODO: verify this mathematically
+        
         result.s[:,0,1] = npy.sqrt(1- npy.abs(s11)**2)*\
                 npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
         result.s[:,1,0] = result.s[:,0,1]
