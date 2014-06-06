@@ -125,7 +125,7 @@ import cPickle as pickle
 from cPickle import UnpicklingError
 from copy import deepcopy as copy
 import re
-
+from itertools import product
 import numpy as npy
 
 from numpy.linalg import inv as npy_inv
@@ -2967,10 +2967,10 @@ def one_port_2_two_port(ntwk):
     
 
 
-
+## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):
     '''
-    Creates a N-port Network from list of N one-ports
+    Builds a N-port Network from list of N one-ports
     
     Parameters
     -----------
@@ -2997,9 +2997,55 @@ def n_oneports_2_nport(ntwk_list, *args, **kwargs):
     frequency = ntwk_list[0].frequency
     return Network(s=s_out, z0=z0, frequency=frequency, *args, **kwargs)
 
+
+def n_twoports_2_nport(ntwk_list,nports, offby=1, **kwargs):
+    '''
+    Builds a N-port Network from list of two-ports
+    
+    By default all entries of result.s are filled with 0's, in case  you 
+    dont fully specify the entire s-matrix of the resultant ntwk.
+    
+    Parameters
+    -----------
+    ntwk_list : list of :class:`Network` objects
+        the names must contain the port index, ie 'p12' or 'p43'
+    offby : int
+        starting value for s-parameters idecies. ie  a value of `1`, 
+        assumes that a s21 = ntwk.s[:,1,0] 
+    
+    \*args, \*\*kwargs : 
+        passed to :func:`Network.__init__` for the N-port 
+        
+    Returns
+    ----------
+    nport : n-port :class:`Network`
+        result
+    '''
+
+    frequency = ntwk_list[0].frequency    
+    nport = Network(frequency = frequency ,
+                    s=npy.zeros(shape=(frequency.npoints,nports,nports)),
+                    **kwargs)
+                       
+    for subntwk in ntwk_list:
+        for m,n in nport.port_tuples:
+            if m!=n and m>n:
+                if '%i%i'%(m+offby,n+offby) in subntwk.name:
+                    pass
+                elif '%i%i'%(n+offby,m+offby)  in subntwk.name:
+                    subntwk = subntwk.flipped()
+                else:
+                    continue
+            
+                for mn,jk in zip(product((m,n), repeat=2),product((0,1), repeat=2)):
+                    m,n,j,k = mn[0],mn[1],jk[0],jk[1]
+                    nport.s[:,m,n] = subntwk.s[:,j,k]
+                    nport.z0[:,m] = subntwk.z0[:,j]
+    return nport
+    
 def four_oneports_2_twoport(s11,s12,s21,s22, *args, **kwargs):
     '''
-    Creates a 2-port Network from list of four 1-ports
+    Builds a 2-port Network from list of four 1-ports
     
     Parameters
     -----------
@@ -3069,7 +3115,7 @@ def three_twoports_2_threeport(ntwk_triplet, auto_order = True,  *args,
     -----------
     >>> rf.three_twoports_2_threeport(rf.read_all('.').values())
     '''
-    
+    raise DeprecationWarning('Use n_twoports_2_nport instead')
     if auto_order:
         p12,p13,p23 = None,None,None
         s11,s12,s13,s21,s22,s23,s31,s32,s33 = None,None,None,None,None,None,None,None,None
@@ -3116,11 +3162,14 @@ def three_twoports_2_threeport(ntwk_triplet, auto_order = True,  *args,
     for k in range(len(ntwk_list)):
         if ntwk_list[k] == None:
             frequency = ntwk_triplet[0].frequency
-            s = s = npy.zeros((len(ntwk_triplet[0]),1,1))
+            s = npy.zeros((len(ntwk_triplet[0]),1,1))
             ntwk_list[k] = Network(s=s, frequency=frequency)
     
     threeport = n_oneports_2_nport( ntwk_list, *args, **kwargs)
     return threeport
+
+
+
 
 ## Functions operating on s-parameter matrices
 def connect_s(A,k,B,l):
