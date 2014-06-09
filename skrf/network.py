@@ -2098,21 +2098,33 @@ class Network(object):
         out.flip()
         return out
         
-    def renormalize(self, z_new):
+    def renormalize(self, z_new, powerwave=False):
         '''
-        Renormalize s-parameter matrix given to new port impedances
+        Renormalize s-parameter matrix given a new port impedances
+        
         
         Parameters
         ---------------
         z_new : complex array of shape FxN, F, N or a  scalar 
             new port impedances
         
+        powerwave : bool
+            if true this calls :func:`renormalize_s_pw`, which assumes 
+            a powerwave formulation. Otherwise it calls 
+            :func:`renormalize_s` which implements the default psuedowave
+            formuation. If z_new or self.z0 is complex, then these
+            produce different results. 
+        
         See Also
         ----------
         renormalize_s
+        renormalize_s_pw
         fix_z0_shape
         '''
-        self.s = renormalize_s(self.s, self.z0, z_new)
+        if powerwave:
+            self.s = renormalize_s_pw(self.s, self.z0, z_new)
+        else:
+            self.s = renormalize_s(self.s, self.z0, z_new)
         self.z0 = fix_z0_shape(z_new,self.frequency.npoints, self.nports)
         
     def renumber(self, from_ports, to_ports):
@@ -3936,6 +3948,14 @@ def renormalize_s(s, z_old, z_new):
     
     In the Parameters descriptions, F,N,N = shape(s).
     
+    Notes
+    ------
+    This re-normalization assumes psuedo-wave formulation. The 
+    function :func:`renormalize_s_pw` implementes the power-wave 
+    formulation. However, the two implementation are only different 
+    for complex characteristic impedances. 
+    See the [1]_ and [2]_ for more details. 
+    
     Parameters
     ---------------
     s : complex array of shape FxNxN
@@ -3956,33 +3976,113 @@ def renormalize_s(s, z_old, z_new):
     
     However, you can see ref [1]_ or [2]_ for some theoretical background.
     
+    
+    
+    See Also
+    --------
+    renormalize_s_pw : renormalize using power wave formulation
+    Network.renormalize : method of Network  to renormalize s
+    fix_z0_shape
+    ssz 
+    z2s
+    
+    References
+    -------------
+    .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
+
+     
+    .. [2] http://www.anritsu.com/en-gb/downloads/application-notes/application-note/dwl1334.aspx
+    
     Examples
     ------------
     >>> s = zeros(shape=(101,2,2))
     >>> renormalize_s(s, 50,25)
-    
-    
-    References
-    -------------
-    .. [1] A Rigorous Technique for Measuring the Scattering Matrix of
-      a Multiport Device with a 2-Port Network Analyzer
-      John C. TIPPET, Ross A. SPECIALE
-      Microwave Theory and Techniques, IEEE Transactions on,
-      Vol.82, Iss.5, May 1982
-      Pages: 661- 666
-     
-    .. [2] http://www.anritsu.com/en-gb/downloads/application-notes/application-note/dwl1334.aspx
-    See Also
-    ----------
-    fix_z0_shape
-    ssz 
-    z2s
+   
     
     '''
     # thats a heck of a one-liner!
     return z2s(s2z(s, z0=z_old), z0=z_new)
     
+def renormalize_s_pw(s, z_old, z_new):
+    '''
+    Renormalize a s-parameter matrix given old and new port impedances
+    by the power wave renormalization
     
+    In the Parameters descriptions, F,N,N = shape(s).
+    
+    Parameters
+    ---------------
+    s : complex array of shape FxNxN
+        s-parameter matrix 
+    
+    z_old : complex array of shape FxN, F, N or a  scalar
+        old (original) port impedances
+    
+    z_new : complex array of shape FxN, F, N or a  scalar 
+        new port impedances
+    
+    
+    Notes
+    ------
+    This re-normalization assumes psuedo-wave formulation. The 
+    function :func:`renormalize_s_pw` implementes the power-wave 
+    formulation. However, the two implementation are only different 
+    for complex characteristic impedances. 
+    See the [1]_ and [2]_ for more details. 
+    
+    
+    
+    References
+    -------------
+    .. [1] http://www.anritsu.com/en-gb/downloads/application-notes/application-note/dwl1334.aspx
+        power-wave Eq 10,11,12 in page 10
+
+    See Also
+    ----------
+    renormalize_s : renormalize using psuedo wave formulation
+    Network.renormalize : method of Network  to renormalize s
+    fix_z0_shape
+    fix_z0_shape
+    ssz 
+    z2s
+    
+    Examples
+    ------------
+    >>> z_old = 50.+0.j # original reference impedance
+	>>> z_new = 50.+50.j # new reference impedance to change to
+	>>> load = rf.wr10.load(0.+0.j, nports=1, z0=z_old)
+	>>> s = load.s
+	>>> renormalize_s_powerwave(s, z_old, z_new)
+    '''
+
+    nfreqs, nports, nports = s.shape
+    A = fix_z0_shape(z_old, nfreqs, nports)
+    B = fix_z0_shape(z_new, nfreqs, nports)
+
+    S_pw = npy.zeros(s.shape, dtype='complex')
+    I = npy.mat(npy.identity(s.shape[1]))
+    s = s.copy() # to prevent the original array from being altered
+    s[s==1.] = 1. + 1e-12 # solve numerical singularity
+    s[s==-1.] = -1. + 1e-12 # solve numerical singularity
+    # make sure real part of impedance is not zero
+    A[A.real==0] = 1e-12 + 1.j*A.imag[A.real<=0]
+    B[B.real==0] = 1e-12 + 1.j*B.imag[B.real<=0]
+
+    for fidx in xrange(s.shape[0]):
+        A_ii = A[fidx]
+        B_ii = B[fidx]
+
+        # Eq. 11, Eq. 12
+        Q_ii = npy.sqrt(npy.absolute(B_ii.real/A_ii.real)) * (A_ii + A_ii.conj()) / (B_ii.conj() + A_ii) # Eq(11)
+        G_ii = (B_ii - A_ii) / (B_ii + A_ii.conj()) # Eq(12)
+
+        Q = npy.mat(npy.diagflat(Q_ii))
+        G = npy.mat(npy.diagflat(G_ii))
+        S = s[fidx]
+
+        # Eq. 10
+        S_pw[fidx] = Q**-1 * (S - G.conj().T) * (I - G*S)**-1 * Q.conj().T
+    return S_pw    
     
         
 def fix_z0_shape( z0, nfreqs, nports):
