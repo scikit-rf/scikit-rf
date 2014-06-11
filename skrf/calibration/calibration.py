@@ -568,7 +568,20 @@ class Calibration(object):
         
         '''
         return [ideal - caled for (ideal, caled) in zip(self.ideals, self.caled_ntwks)]
-
+    
+    @property
+    def residual_ntwk_sets(self):
+        '''
+        Returns a NetworkSet for each `residual_ntwk`, grouped by their names
+        '''
+       
+        residual_sets={}
+        std_names = list(set([k.name  for k in self.ideals ]))
+        for std_name in std_names:
+            residual_sets[std_name] = NetworkSet(
+                [k for k in self.residual_ntwks if k.name.startswith(std_name)])
+        return residual_sets
+    
     @property
     def caled_ntwks(self):
         '''
@@ -580,16 +593,125 @@ class Calibration(object):
     @property
     def caled_ntwk_sets(self):
         '''
-        Returns a NetworkSet for each caled_ntwk, based on their names
+        Returns a NetworkSet for each `caled_ntwk`, grouped by their names
         '''
        
         caled_sets={}
-        std_names = list(set([k.name  for k in self.caled_ntwks ]))
+        std_names = list(set([k.name  for k in self.ideals ]))
         for std_name in std_names:
             caled_sets[std_name] = NetworkSet(
-                [k for k in self.caled_ntwks if k.name is std_name])
+                [k for k in self.caled_ntwks if k.name.startswith(std_name)])
         return caled_sets
-       
+    
+    @property
+    def biased_error(self):
+        '''
+        Estimate of biased error for overdetermined calibration with
+        multiple connections of each standard
+
+        Returns
+        ----------
+        biased_error : skrf.Network
+            Network with s_mag is proportional to the biased error 
+
+        Notes
+        -------
+        Mathematically, this is
+            
+            mean_s(|mean_c(r)|)
+            
+        Where:
+        
+        * r: complex residual errors
+        * mean_c: complex mean taken accross connection
+        * mean_s: complex mean taken accross standard
+        
+        See Also
+        ---------
+        biased_error
+        unbiased_error
+        total_error
+        
+        '''
+        rns = self.residual_ntwk_sets
+        return NetworkSet([rns[k].mean_s for k in rns]).mean_s_mag
+    
+    @property
+    def unbiased_error(self):
+        '''
+        Estimate of unbiased error for overdetermined calibration with
+        multiple connections of each standard
+
+        Returns
+        ----------
+        unbiased_error : skrf.Network
+            Network with s_mag is proportional to the unbiased error 
+
+        Notes
+        -------
+        Mathematically, this is
+        
+            mean_s(std_c(r))
+        
+        where:
+        * r : complex residual errors
+        * std_c : standard deviation taken accross  connections
+        * mean_s : complex mean taken accross  standards
+        
+        See Also
+        ---------
+        biased_error
+        unbiased_error
+        total_error
+        '''
+        rns = self.residual_ntwk_sets
+        return NetworkSet([rns[k].std_s for k in rns]).mean_s_mag
+    
+    @property
+    def total_error(self):
+        '''
+        Estimate of total error for overdetermined calibration with
+        multiple connections of each standard.This is the combined
+        effects of both biased and un-biased errors
+
+        Returns
+        ----------
+        total_error : skrf.Network
+            Network with s_mag is proportional to the total error 
+
+        Notes
+        -------
+        Mathematically, this is
+        
+            std_cs(r)
+                
+        where:
+        * r : complex residual errors
+        * std_cs : standard deviation taken accross connections
+                and standards
+        
+        See Also
+        ---------
+        biased_error
+        unbiased_error
+        total_error
+        '''
+        return NetworkSet(self.residual_ntwks).mean_s_mag
+    
+    def plot_errors(self, **kwargs):
+        '''
+        Plots biased, unbiased and total error in dB scaled
+        
+        See Also
+        ---------
+        biased_error
+        unbiased_error
+        total_error
+        '''
+        self.unbiased_error.plot_s_db(label='Unbiased',**kwargs)
+        self.biased_error.plot_s_db(label='Biased',**kwargs)
+        self.total_error.plot_s_db(label='Total',**kwargs)
+    
     @property
     def error_ntwk(self):
         '''
@@ -637,9 +759,31 @@ class Calibration(object):
                 plb.subplot(221+k)
                 plb.title('S%i%i'%(mn[0]+1,mn[1]+1))
                 ns.__getattribute__('plot_'+attr)(*mn, **kwargs)
-
+        else: 
+            raise NotImplementedError
         plb.tight_layout()
     
+    def plot_residuals(self, attr='s_db', **kwargs):
+        '''
+        Plot residual networks.
+        
+        Given that the calibration is overdetermined, this may be used 
+        as a metric of the calibration's  *goodness of fit*
+        
+        Parameters
+        ------------------
+        attr : str
+            Network property to plot, ie 's_db', 's_smith', etc
+        \\*\\*kwargs : kwargs
+            passed to the plot method of Network
+            
+        See Also
+        --------
+        Calibration.residual_networks
+        '''
+        
+        NetworkSet(self.caled_ntwks).__getattribute__('plot_'+attr)(**kwargs)
+        
     def write(self, file=None,  *args, **kwargs):
         '''
         Write the Calibration to disk using :func:`~skrf.io.general.write`
