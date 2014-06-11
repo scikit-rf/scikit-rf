@@ -2201,12 +2201,7 @@ class Network(object):
                 npy.sum(windowed.s_mag,axis=0)
         
         return windowed
-    
-    
-    
-    
-    
-    
+     
     def time_gate(self, t_start, t_stop, window = ('kaiser',6)):
         '''
         Time-gate s-parameters 
@@ -2643,8 +2638,6 @@ def connect(ntwkA, k, ntwkB, l, num=1):
                        to_ports=to_ports)
     
     return ntwkC
-    
-    
 
 def connect_fast(ntwkA, k, ntwkB, l):
     '''
