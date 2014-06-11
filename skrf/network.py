@@ -2259,6 +2259,18 @@ class Network(object):
         
         return gated
     
+    def chopnhalf(self):
+        '''
+        Takes a symmetric 2-port and chops it in half, returning half.
+         
+        '''
+        if self.nports != 2:
+            raise ValueError('Only valid on 2ports')
+        out = self.copy()
+        out.s[:,0,1] = mf.sqrt_phase_unwrap(self.s[:,0,1])
+        out.s[:,1,0] = mf.sqrt_phase_unwrap(self.s[:,1,0])
+        return out
+    
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
             chart_type='z', draw_labels=False, label_axes=False, *args,**kwargs):

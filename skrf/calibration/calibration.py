@@ -634,7 +634,9 @@ class Calibration(object):
         
         '''
         rns = self.residual_ntwk_sets
-        return NetworkSet([rns[k].mean_s for k in rns]).mean_s_mag
+        out =  NetworkSet([rns[k].mean_s for k in rns]).mean_s_mag
+        out.name = 'Biased Error'
+        return out
     
     @property
     def unbiased_error(self):
@@ -665,7 +667,9 @@ class Calibration(object):
         total_error
         '''
         rns = self.residual_ntwk_sets
-        return NetworkSet([rns[k].std_s for k in rns]).mean_s_mag
+        out = NetworkSet([rns[k].std_s for k in rns]).mean_s_mag
+        out.name = 'Unbiased Error'
+        return out
     
     @property
     def total_error(self):
@@ -696,9 +700,11 @@ class Calibration(object):
         unbiased_error
         total_error
         '''
-        return NetworkSet(self.residual_ntwks).mean_s_mag
+        out = NetworkSet(self.residual_ntwks).mean_s_mag
+        out.name = 'Total Error'
+        return out
     
-    def plot_errors(self, **kwargs):
+    def plot_errors(self, *args, **kwargs):
         '''
         Plots biased, unbiased and total error in dB scaled
         
@@ -708,10 +714,15 @@ class Calibration(object):
         unbiased_error
         total_error
         '''
-        self.unbiased_error.plot_s_db(label='Unbiased',**kwargs)
-        self.biased_error.plot_s_db(label='Biased',**kwargs)
-        self.total_error.plot_s_db(label='Total',**kwargs)
-    
+        port_list = self.biased_error.port_tuples
+        for m,n in port_list:
+            plb.figure()
+            plb.title('S%i%i'%(m+1,n+1))
+            self.unbiased_error.plot_s_db(m,n,**kwargs)
+            self.biased_error.plot_s_db(m,n,**kwargs)
+            self.total_error.plot_s_db(m,n,**kwargs)
+            plb.ylim(-100,0)
+
     @property
     def error_ntwk(self):
         '''
