@@ -56,6 +56,8 @@ Combining Networks
     n_oneports_2_nport
     four_oneports_2_twoport
     three_twoports_2_threeport
+    n_twoports_2_nport
+    
     
     
 IO
@@ -114,8 +116,10 @@ Misc Functions
 
     average
     two_port_reflect
+    chopnhalf
     Network.nudge
     Network.renormalize
+    
 
 
 '''
@@ -125,6 +129,7 @@ import cPickle as pickle
 from cPickle import UnpicklingError
 from copy import deepcopy as copy
 import re
+from numbers import Number
 from itertools import product
 import numpy as npy
 
@@ -384,6 +389,12 @@ class Network(object):
         port 1 of this network is connected to port 0 or the other
         network
         '''
+        # if they pass a number then use power operator
+        if isinstance(other, Number):
+            out = self.copy()
+            out.s = out.s**other
+            return out
+        # else connect the two 
         return connect(self,1,other,0)
 
     def __floordiv__(self,other):
@@ -1462,17 +1473,21 @@ class Network(object):
 		raise(NotImplementedError)	
     
     ## specific ploting functions 
-    def plot_passivity(self, *args, **kwargs):
+    def plot_passivity(self, label_prefix=None,  *args, **kwargs):
         '''
-        Plot passivity metric
+        Plot dB(passivity metric) vs frequency
         
         See Also
         -----------
         passivity
         '''
+        name = '' if self.name is None else self.name
+            
         for k in range(self.nports):
+            if label_prefix==None:
+                label = name +', port %i'%(k+1)
             self.frequency.plot(mf.complex_2_db(self.passivity[:,k,k]),
-                                label = 'port %i'%(k+1),
+                                label=label,
                                 *args, **kwargs)
                                 
         plb.legend()
@@ -1929,11 +1944,12 @@ class Network(object):
 
     def interpolate_self_npoints(self, npoints, **kwargs):
         '''
+        
         Interpolate network based on a new number of frequency points
 
         
         Parameters
-        ----------
+        -----------
         npoints : int
                 number of frequency points
         **kwargs : keyword arguments
@@ -1978,6 +1994,7 @@ class Network(object):
     def interpolate_self(self, new_frequency, **kwargs):
         '''
         Interpolates s-parameters given a new
+        
         :class:'~skrf.frequency.Frequency' object.
 
         See :func:`~Network.interpolate` for more information. 
@@ -2258,18 +2275,6 @@ class Network(object):
                 
         
         return gated
-    
-    def chopnhalf(self):
-        '''
-        Takes a symmetric 2-port and chops it in half, returning half.
-         
-        '''
-        if self.nports != 2:
-            raise ValueError('Only valid on 2ports')
-        out = self.copy()
-        out.s[:,0,1] = mf.sqrt_phase_unwrap(self.s[:,0,1])
-        out.s[:,1,0] = mf.sqrt_phase_unwrap(self.s[:,1,0])
-        return out
     
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
@@ -2982,7 +2987,53 @@ def one_port_2_two_port(ntwk):
     result.s[:,1,0] = result.s[:,0,1]
     return result
     
-
+def chopnhalf(ntwk, *args, **kwargs):
+        '''
+        Chops a sandwich of identical,recicprocal 2-ports in half. 
+        
+        Given two identical, reciprocal 2-ports measured in series, 
+        this returns one. 
+        
+        
+        Notes
+        --------
+        In other words, given
+        
+        .. math::
+            
+            B = A\\cdot\\cdotA 
+        
+        Return A, where A port2 is connected to A port1. The result may
+        be found through signal flow graph analysis and is, 
+        
+        .. math::
+            
+            a_{11} = \frac{b_{11}}{1+b_{12}}
+            
+            a_{22} = \frac{b_{22}}{1+b_{12}}
+            
+            a_{12}^2 = b_{21}(1-\frac{b_{11}b_{22}}{(1+b_{12})^2}
+        
+        Parameters
+        ------------
+        ntwk : :class:`Network`
+            a 2-port  that is equal to two identical two-ports in cascade
+        
+        
+        '''
+        if ntwk.nports != 2:
+            raise ValueError('Only valid on 2ports')
+        
+        b11,b22,b12 = ntwk.s11,ntwk.s22,ntwk.s12
+        kwargs['name'] = kwargs.get('name', ntwk.name)
+        
+        a11 = b11/(1+b12)
+        a22 = b22/(1+b12)
+        a21 = b12*(1-b11*b22/(1+b12)**2) # this is a21^2 here 
+        a21.s = mf.sqrt_phase_unwrap(a21.s)
+        A = n_oneports_2_nport([a11,a21,a21,a22], *args, **kwargs)
+        
+        return A
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):
