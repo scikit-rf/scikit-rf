@@ -3887,13 +3887,13 @@ def passivity(s):
 
     .. math::
 
-            ( |S_{11}|^2 + |S_{21}|^2 \, , \, |S_{22}|^2+|S_{12}|^2)
+            \sqrt( |S_{11}|^2 + |S_{21}|^2 \, , \, |S_{22}|^2+|S_{12}|^2)
 
     in general it is
 
     .. math::
 
-            S^H \\cdot S
+            \\sqrt( S^H \\cdot S)
 
     where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
     is dot product.
@@ -3911,7 +3911,7 @@ def passivity(s):
 
     pas_mat = s.copy()
     for f in range(len(s)):
-        pas_mat[f,:,:] = npy.dot(s[f,:,:].conj().T, s[f,:,:])
+        pas_mat[f,:,:] = npy.sqrt(npy.dot(s[f,:,:].conj().T, s[f,:,:]))
     
     return pas_mat
 
