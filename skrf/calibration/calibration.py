@@ -1248,6 +1248,103 @@ class SOLT(Calibration):
         return measured
         
         
+class EnhancedResponse(SOLT):
+    '''
+    Enhanced Response Calibration, its like a  One-path SOLT
+    
+    This correction is used when you dont have a full two-port system.
+    It assumes you can measure a1,b1, and b2. Given this data systematic 
+    errors can be partially removed. 
+    
+    '''
+    family = 'EnhancedResponse'
+    
+    def __init__(self, measured, ideals, n_thrus=1, source_port=1, 
+                 *args, **kwargs):
+        '''
+        EnhancedResponse initializer 
+        
+        The order of the standards must align. The thru standard[s] 
+        must be last in the list. Use the `n_thrus` argument if you 
+        want to use multiple thru standards. Note all 
+        
+        Parameters
+        -------------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use `sloppy_input`)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use sloppy_input
+            
+        n_thrus : int
+            number of thru measurments
+            
+        source_port : [1,2]
+            The port on which the source is active.
+            
+        '''
+        
+        
+        
+        self.sp = source_port-1 
+        self.rp = [0,1].remove(source_port) # reciever port
+        super(EnhancedResponse,self).__init__(self, measured, ideals,
+                                              n_thrus,*args, **kwargs)
+    def run(self):
+        '''
+        '''
+        if self.sp !=0:
+            raise NotImplementedError('not implemented yet. you can just flip() all you data though. ')
+        n_thrus = self.n_thrus
+        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
+        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
+        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
+        
+        # create one port calibration for reflective standards  
+        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
+        
+        # cal coefficient dictionaries
+        p1_coefs = port1_cal.coefs
+        
+        if self.kwargs.get('isolation',None) is not None:
+            raise NotImplementedError()
+            p1_coefs['isolation'] = isolation.s21.s.flatten()
+        else:
+            p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
+        
+        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
+        p1_coefs['transmission tracking'] = \
+            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
+            (1. - p1_coefs['source match']*p1_coefs['load match'])
+        
+        coefs = {}
+        zero_coef = npy.zeros(len(thru), dtype=complex)
+        one_coef = npy.ones(len(thru), dtype=complex)
+        
+        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        # fill all reverse coefficients with zeros or ones
+        coefs.update(dict([('reverse %s'%k, zero_coef) for k in p1_coefs]))
+        coefs.update({'reverse reflection tracking':one_coef})
+        coefs.update({'reverse transmission tracking':one_coef})
+        
+        
+        self._coefs = coefs
+    
+    def apply_cal(self,ntwk):
+        ntwk = ntwk.copy()
+        sp,rp = self.sp,self.rp
+        ntwk.s[:,rc,rc] = 0
+        ntwk.s[:,sp,rc] = 0
+        out = super(TwoPortOnePath,self).apply_cal(ntwk)
+        out.s[:,rc,rc] = 0
+        out.s[:,sp,rc] = 0
+        return out
+    
+    
+    
+               
         
 
 class EightTerm(Calibration):
