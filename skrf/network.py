@@ -116,7 +116,7 @@ Misc Functions
 
     average
     two_port_reflect
-    chopnhalf
+    chopinhalf
     Network.nudge
     Network.renormalize
     
@@ -2929,7 +2929,7 @@ def overlap(ntwkA, ntwkB):
     return ntwkA.interpolate(new_freq),ntwkB.interpolate(new_freq)
 
 
-def average(list_of_networks):
+def average(list_of_networks, polar = False):
     '''
     Calculates the average network from a list of Networks.
 
@@ -2958,11 +2958,16 @@ def average(list_of_networks):
     >>> mean_ntwk = rf.average(ntwk_list)
     '''
     out_ntwk = list_of_networks[0].copy()
+    
+    if polar:
+        # average the mag/phase components individually
+        raise NotImplementedError
+    else:
+        # average the re/im components individually
+        for a_ntwk in list_of_networks[1:]:
+            out_ntwk += a_ntwk
 
-    for a_ntwk in list_of_networks[1:]:
-        out_ntwk += a_ntwk
-
-    out_ntwk.s = out_ntwk.s/(len(list_of_networks))
+        out_ntwk.s = out_ntwk.s/(len(list_of_networks))
 
     return out_ntwk
 
@@ -2987,7 +2992,7 @@ def one_port_2_two_port(ntwk):
     result.s[:,1,0] = result.s[:,0,1]
     return result
     
-def chopnhalf(ntwk, *args, **kwargs):
+def chopinhalf(ntwk, *args, **kwargs):
         '''
         Chops a sandwich of identical,recicprocal 2-ports in half. 
         
