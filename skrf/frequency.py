@@ -146,8 +146,9 @@ class Frequency(object):
     @classmethod
     def from_f(cls,f, *args,**kwargs):
         '''
-        Alternative constructor of a Frequency object from a frequency
-        vector, the unit of which is set by kwarg 'unit'
+        Construct Frequency object from a frequency vector.
+        
+        The unit of  is set by kwarg 'unit'
 
         Parameters
         -----------

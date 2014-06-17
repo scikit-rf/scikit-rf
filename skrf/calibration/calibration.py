@@ -120,7 +120,7 @@ class Calibration(object):
     This class implements the common mechanisms for all calibration 
     algorithms. Specific calibration algorithms should inheret this  
     class and overide the methods:
-        *  :func:`Calibration.run`
+        *  :func:`Calibration.run` 
         *  :func:`Calibration.apply_cal`
         *  :func:`Calibration.embed` (optional)
     
@@ -896,20 +896,13 @@ class OnePort(Calibration):
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
             The order must align with `ideals` list ( or use sloppy_input
-    
-        Returns
-        -----------
-        output : a dictionary
-            output information from the calibration, the keys are
-             * 'error coeffcients': dictionary containing standard error
-               coefficients
-             * 'residuals': a matrix of residuals from the least squared
-               calculation. see numpy.linalg.lstsq() for more info
-    
+        
+        args, kwargs : 
+            passed to func:`Calibration.__init__`
     
         Notes
         -----
-                uses numpy.linalg.lstsq() for least squares calculation
+        This uses numpy.linalg.lstsq() for least squares calculation
         '''
         Calibration.__init__(self, measured, ideals, 
                              *args, **kwargs)
@@ -1001,12 +994,13 @@ class SDDL(OnePort):
     Short Delay Delay Load (Oneport Calibration)
     
     One-port self-calibration, which contains two delays shorts of 
-    unknown phase.
+    unknown phase. Originally designed to be resistant to flange 
+    misalignment, see [1]_.
     
     
     References
     -------------
-    .. [#] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
     '''
     family = 'SDDL'
     def __init__(self, measured, ideals, *args, **kwargs):
@@ -1029,11 +1023,11 @@ class SDDL(OnePort):
         
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
-        Calibration.__init__(self, measured, ideals, *args, **kwargs)
+        Calibration.__init__(self, measured =  measured, 
+                             ideals =ideals, *args, **kwargs)
         
         
     def run(self):
-        
         #meaured reflection coefficients
         w_s = self.measured[0].s.flatten() # short
         w_1 = self.measured[1].s.flatten() # delay short 1
@@ -1045,15 +1039,17 @@ class SDDL(OnePort):
         # handle singularities
         G_l[G_l ==0] = ALMOST_ZERO
         
-             
+        
         w_1p  = w_1 - w_s # between (9) and (10)
         w_2p  = w_2 - w_s
         w_lp  = w_l - w_s
         
         
-        alpha = exp(-1j*2*angle(1./w_2p - 1./w_1p)) # (17)
+        ## NOTE: the published equation has an incorrect sign on this argument
+        ## perhaps because they assume arg to measure clockwise angle??
+        alpha = exp(1j*2*angle(1./w_2p - 1./w_1p)) # (17) 
         
-        p = alpha/( 1./w_1p - alpha/w_1p.conj() - (1+G_l)/(G_l*w_lp )) # (22)
+        p = alpha/( 1./w_1p - alpha/w_1p.conj() - (1.+G_l)/(G_l*w_lp )) # (22)
         q = p/(alpha* G_l)   #(23) (put in terms of p)
         
         Bp_re = -1*((1 + (imag(p+q)/real(q-p)) * (imag(q-p)/real(p+q)))/\
@@ -1067,9 +1063,9 @@ class SDDL(OnePort):
         A = B - w_s + w_s*C #(6)
             
         # convert the abc vector to standard error coefficients
-        e01e10 = A - B*C
         e00 = B
         e11 = -C
+        e01e10 = A + e00*e11
         
         self._coefs = {\
                 'directivity':e00,\

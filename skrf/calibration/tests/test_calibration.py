@@ -12,11 +12,14 @@ class CalibrationTest(object):
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement
     '''
-    def test_correction_accuracy_of_dut(self):
+    def test_accuracy_of_dut_correction(self):
         a = self.wg.random(n_ports=self.n_ports, name = 'actual')
         m = self.measure(a)
         c = self.cal.apply_cal(m)
         c.name = 'corrected'   
+        self.assertEqual(c,a)
+        
+        
         
     def test_error_ntwk(self):
         a= self.cal.error_ntwk 
@@ -77,31 +80,23 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
             )
         
     def measure(self, ntwk):
-        return self.E**ntwk
+        out = self.E**ntwk
+        out.name = ntwk.name
+        return out
     
-    def test_directivity_accuracy(self):
-        print 'directibity'
-        print(self.E.s11.s)
-        print(self.cal.coefs_ntwks['directivity'].s)
+    def test_accuracy_of_directivity(self):
         self.assertEqual(
             self.E.s11, 
             self.cal.coefs_ntwks['directivity'],
             )
         
-    def test_source_match_accuracy(self):
-        print 'source match'
-        print self.E.s22.s
-        print self.cal.coefs_ntwks['source match'].s
-        
+    def test_accuracy_of_source_match(self):
         self.assertEqual(
             self.E.s22, 
             self.cal.coefs_ntwks['source match'],
             )
     
-    def test_reflection_tracking_accuracy(self):
-        print 'reflection tracking'
-        print (self.E.s21*self.E.s12).s
-        print self.cal.coefs_ntwks['reflection tracking'].s
+    def test_accuracy_of_reflection_tracking(self):
         self.assertEqual(
             self.E.s21*self.E.s12, 
             self.cal.coefs_ntwks['reflection tracking'],
@@ -109,25 +104,27 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
     
 class SDDLTest(OnePortTest):
     def setUp(self):
-        raise SkipTest('Doesnt work yet')
+        #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
         self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
         wg = self.wg
         wg.frequency = rf.F.from_f([100])
         
         self.E = wg.random(n_ports =2, name = 'E')
+        #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
+        #print self.E.s[0]
         
         ideals = [
                 wg.short( name='short'),
-                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 45.,'deg',name='ew'),
                 wg.delay_short( 90.,'deg',name='qw'),
-                wg.load(0, name='load'),
+                wg.load(.2+.2j, name='load'),
                 ]
         actuals = [
                 wg.short( name='short'),
-                wg.delay_short( 45.,'deg',name='ew'),
-                wg.delay_short( 90.,'deg',name='qw'),
-                wg.load(0, name='load'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 33.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
                 ]
         measured = [self.measure(k) for k in actuals]
         
@@ -136,6 +133,9 @@ class SDDLTest(OnePortTest):
             ideals = ideals, 
             measured = measured,
             )
+    
+    def test_from_coefs(self):
+        raise SkipTest('not applicable ')
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
