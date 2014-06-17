@@ -16,7 +16,7 @@ Base Class
 
    Calibration
 
-One port Calibrations
+One-port Calibrations
 ----------------------
 
 .. autosummary::
@@ -24,7 +24,7 @@ One port Calibrations
    
    OnePort
    
-Two port Calibrations
+Two-port Calibrations
 ---------------------
 
 .. autosummary::
@@ -34,6 +34,14 @@ Two port Calibrations
    EightTerm
    UnknownThru
    TRL
+
+Partial Calibrations 
+++++++++++++++++++++++++
+
+.. autosummary::
+   :toctree: generated/
+
+   EnhancedResponse
 
 '''
 import numpy as npy
@@ -1116,8 +1124,9 @@ class SOLT(Calibration):
         '''
         
         self.n_thrus = n_thrus
-        Calibration.__init__(self, measured, ideals,
-                             *args, **kwargs)
+        kwargs.update({'measured':measured,
+                       'ideals':ideals})
+        Calibration.__init__(self, *args, **kwargs)
         
     
       
@@ -1247,15 +1256,16 @@ class SOLT(Calibration):
         
         return measured
         
-        
 class EnhancedResponse(SOLT):
     '''
     Enhanced Response Calibration, its like a  One-path SOLT
     
-    This correction is used when you dont have a full two-port system.
+    This algorithm is used when you dont have a full two-port system. 
     It assumes you can measure a1,b1, and b2. Given this data systematic 
     errors can be partially removed. 
     
+    Accuracy of correct measurements will rely on having a good match
+    at the passive side of the DUT. 
     '''
     family = 'EnhancedResponse'
     
@@ -1282,16 +1292,20 @@ class EnhancedResponse(SOLT):
             number of thru measurments
             
         source_port : [1,2]
-            The port on which the source is active.
+            The port on which the source is active. should be 1 or 2
             
         '''
         
         
         
         self.sp = source_port-1 
-        self.rp = [0,1].remove(source_port) # reciever port
-        super(EnhancedResponse,self).__init__(self, measured, ideals,
-                                              n_thrus,*args, **kwargs)
+        self.rp = 1 if self.sp == 0 else 0
+        kwargs.update({'measured':measured,
+                       'ideals':ideals,
+                       'n_thrus':n_thrus})
+        SOLT.__init__(self,*args, **kwargs)
+                                              
+                                              
     def run(self):
         '''
         '''
@@ -1305,7 +1319,7 @@ class EnhancedResponse(SOLT):
         # create one port calibration for reflective standards  
         port1_cal = OnePort(measured = p1_m, ideals = p1_i)
         
-        # cal coefficient dictionaries
+        # cal coefficient pdictionaries
         p1_coefs = port1_cal.coefs
         
         if self.kwargs.get('isolation',None) is not None:
@@ -1320,11 +1334,11 @@ class EnhancedResponse(SOLT):
             (1. - p1_coefs['source match']*p1_coefs['load match'])
         
         coefs = {}
+        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        
+        # fill all reverse coefficients with zeros or ones
         zero_coef = npy.zeros(len(thru), dtype=complex)
         one_coef = npy.ones(len(thru), dtype=complex)
-        
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        # fill all reverse coefficients with zeros or ones
         coefs.update(dict([('reverse %s'%k, zero_coef) for k in p1_coefs]))
         coefs.update({'reverse reflection tracking':one_coef})
         coefs.update({'reverse transmission tracking':one_coef})
@@ -1335,18 +1349,14 @@ class EnhancedResponse(SOLT):
     def apply_cal(self,ntwk):
         ntwk = ntwk.copy()
         sp,rp = self.sp,self.rp
-        ntwk.s[:,rc,rc] = 0
-        ntwk.s[:,sp,rc] = 0
-        out = super(TwoPortOnePath,self).apply_cal(ntwk)
-        out.s[:,rc,rc] = 0
-        out.s[:,sp,rc] = 0
+        
+        ntwk.s[:,rp,rp] = 0
+        ntwk.s[:,sp,rp] = 0
+        out = SOLT.apply_cal(self, ntwk)
+        out.s[:,rp,rp] = 0
+        out.s[:,sp,rp] = 0
         return out
     
-    
-    
-               
-        
-
 class EightTerm(Calibration):
     '''
     General EightTerm (aka Error-box) Two-port calibration
@@ -1356,6 +1366,8 @@ class EightTerm(Calibration):
     error coefficients. No self-calibration takes place.  
     The concept is presented in [1]_ , but implementation follows that 
     of  [2]_ .
+    
+    See :func:`__init__`
     
     Notes
     -------
@@ -1379,7 +1391,7 @@ class EightTerm(Calibration):
     def __init__(self, measured, ideals, switch_terms=None,
                  *args, **kwargs):
         '''
-        Initializer
+        EightTerm Initializer
         
         Parameters
         --------------
