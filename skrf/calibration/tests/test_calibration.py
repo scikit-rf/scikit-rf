@@ -441,6 +441,50 @@ class UnknownThruTest(EightTermTest):
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r]
             )
+
+class MRCTest(EightTermTest):
+    def setUp(self):
+        
+        self.n_ports = 2
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
+        wg= self.wg 
+        #wg.frequency = rf.F.from_f([100])
+        
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+        
+        
+        def delay_shorts(d1,d2):
+            ds1 = wg.delay_short(d1,'deg')
+            ds2 = wg.delay_short(d2,'deg')
+            return rf.two_port_reflect(ds1,ds2)
+        
+        actuals = [
+            wg.short(nports=2, name='short'),
+            delay_shorts(65,130),
+            delay_shorts(120,75),
+            wg.load(.2+.2j,nports=2, name='match'),
+            wg.impedance_mismatch(50,45)**wg.line(20,'deg',name='line')**wg.impedance_mismatch(45,50)
+
+            ]
+        
+        ideals = [
+            wg.short(nports=2, name='short'),
+            delay_shorts(45,90),
+            delay_shorts(90,45),
+            wg.load(.2+.2j,nports=2, name='match'),
+            wg.thru(name='thru'),
+            ]
+            
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.MRC(
+            ideals = ideals,
+            measured = measured,
+            switch_terms = [self.gamma_f, self.gamma_r]
+            )
         
 class SOLTTest2(SOLTTest):
     '''
