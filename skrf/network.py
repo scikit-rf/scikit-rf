@@ -1501,14 +1501,45 @@ class Network(object):
         -----------
         reciprocity
         '''
-       
-        
         for m in range(self.nports):
             for n in range(self.nports):
                 if m>n:
                     if 'label'  not in kwargs.keys():
                         kwargs['label'] = 'ports %i%i'%(m,n)
                     y = self.reciprocity[:,m,n].flatten()
+                    if db: 
+                        y = mf.complex_2_db(y)
+                    self.frequency.plot(y,*args, **kwargs)
+                                
+        plb.legend()
+        plb.draw()
+    
+    def plot_reciprocity2(self, db= False, *args, **kwargs):
+        '''
+        Plot reciprocity metric #2
+        
+        this is distance of the determinant of the wave-cascading matrix
+        from unity. 
+        
+        .. math::
+    
+                abs(1 - S/S^T )
+                
+        
+        
+        See Also
+        -----------
+        reciprocity
+        '''
+        
+        rr = abs(1-self.s/self.s.swapaxes(1,2))   #reciprocity ratio
+        
+        for m in range(self.nports):
+            for n in range(self.nports):
+                if m>n:
+                    if 'label'  not in kwargs.keys():
+                        kwargs['label'] = 'ports %i%i'%(m,n)
+                    y = rr[:,m,n].flatten()
                     if db: 
                         y = mf.complex_2_db(y)
                     self.frequency.plot(y,*args, **kwargs)
@@ -2377,44 +2408,7 @@ class Network(object):
             ax.set_xlabel('Real')
             ax.set_ylabel('Imaginary')
 
-    #def plot_passivity(self,port=None, ax = None, show_legend=True,*args,**kwargs):
-        #'''
-        #plots the passivity of a network, possibly for a specific port.
-
-
-        #Parameters
-        #-----------
-        #port: int
-                #calculate passivity of a given port
-        #ax : matplotlib.Axes object, optional
-                #axes to plot on. in case you want to update an existing
-                #plot.
-        #show_legend : boolean, optional
-                #to turn legend show legend of not, optional
-        #*args : arguments, optional
-                #passed to the matplotlib.plot command
-        #**kwargs : keyword arguments, optional
-                #passed to the matplotlib.plot command
-
-
-        #See Also
-        #--------
-        #plot_vs_frequency_generic - generic plotting function
-        #passivity - passivity property
-
-        #Examples
-        #---------
-        #>>> myntwk.plot_s_rad()
-        #>>> myntwk.plot_s_rad(m=0,n=1,color='b', marker='x')
-        #'''
-        #if port is None:
-            #port = range(self.number_of_ports)
-
-        #for mn in list(port):
-            #self.plot_vs_frequency_generic(attribute= 'passivity',\
-                    #y_label='Passivity', m=mn,n=mn, ax=ax,\
-                    #show_legend = show_legend,*args,**kwargs)
-
+    
     def plot_it_all(self,*args, **kwargs):
         plb.subplot(221)
         getattr(self,'plot_s_db')(*args, **kwargs)
