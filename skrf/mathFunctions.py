@@ -398,6 +398,28 @@ def inf_to_num(x):
         x[npy.isneginf(x)] = -1*INF
     
 
+def cross_ratio(a,b,c,d):
+    '''
+    The cross ratio
+    
+    
+    defined as 
+    
+    .. math::     
+        
+        \frac{(a-b)(c-d)}{(a-d)*(c-b)}
+    
+    
+    Parameters
+    -------------
+    a,b,c,d : complex numbers, or arrays
+        mm
+    
+    
+    '''
+    return ((a-b)*(c-d))/((a-d)*(c-b))
+
+
 
 # old functions just for reference
 def complex2Scalar(input):

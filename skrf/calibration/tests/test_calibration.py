@@ -137,6 +137,42 @@ class SDDLTest(OnePortTest):
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
 
+class SDDL2Test(OnePortTest):
+    def setUp(self):
+        #raise SkipTest('Doesnt work yet')
+        self.n_ports = 1
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        wg = self.wg
+        wg.frequency = rf.F.from_f([100])
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
+        #print self.E.s[0]
+        
+        ideals = [
+                wg.short( name='short'),
+                wg.delay_short( 45.,'deg',name='ew'),
+                wg.delay_short( 90.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
+                ]
+        actuals = [
+                wg.short( name='short'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 80.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
+                ]
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.SDDL2(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+    
+    def test_from_coefs(self):
+        raise SkipTest('not applicable ')
+
+
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2

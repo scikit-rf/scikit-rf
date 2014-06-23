@@ -55,7 +55,7 @@ from warnings import warn
 import cPickle as pickle
 
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
-    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c
+    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c,cross_ratio
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
@@ -1085,7 +1085,80 @@ class SDDL(OnePort):
                 'reflection tracking':e01e10, \
                 'source match':e11\
                 }
+
+class SDDL2(OnePort):
+    '''
+    Short Delay Delay Load (Oneport Calibration)
+    
+    One-port self-calibration, which contains a short, a load, and 
+    two delays shorts of unity magnitude but unknown phase. Originally 
+    designed to be resistant to flange misalignment, see [1]_.
+    
+    
+    References
+    -------------
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    '''
+    family = 'SDDL'
+    def __init__(self, measured, ideals, *args, **kwargs):
+        '''
+        Short Delay Delay Load initializer
         
+
+        measured and ideal networks must be in the order: 
+        
+        * short
+        * delay short1
+        * delay short2
+        * load
+        
+        Parameters
+        -----------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use `sloppy_input`)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use sloppy_input
+        
+        args, kwargs : 
+            passed to func:`Calibration.__init__`
+        
+        See Also
+        ---------
+        Calibration.__init__
+        
+        '''
+        
+        if (len(measured) != 4) or (len(ideals)) != 4:
+            raise IndexError('Incorrect number of standards.')
+        Calibration.__init__(self, measured =  measured, 
+                             ideals =ideals, *args, **kwargs)
+        
+        
+    def run(self):
+        
+        #meaured impedances
+        d = s2z(self.measured[0].s,1) # short
+        a = s2z(self.measured[1].s,1) # delay short 1
+        b = s2z(self.measured[2].s,1) # delay short 2
+        c = s2z(self.measured[3].s,1) # load
+        l = s2z(self.ideals[-1].s,1) # ideal def of load
+        cr_alpha = cross_ratio(b,a,c,d)
+        cr_beta = cross_ratio(a,b,c,d)
+        
+        
+        alpha = imag(cr_alpha)/real(cr_alpha/l)
+        beta = imag(cr_beta)/real(cr_beta/l)
+        
+        
+        self.ideals[1].s = z2s(alpha*1j,1)
+        self.ideals[2].s = z2s(beta*1j,1)
+    
+        OnePort.run(self)
+        
+
 class SOLT(Calibration):
     '''
     Traditional 12-term, full two-port calibration.
@@ -1406,11 +1479,11 @@ class EightTerm(Calibration):
         --------------
         measured : list/dict  of :class:`~skrf.network.Network` objects
             Raw measurements of the calibration standards. The order
-            must align with the `ideals` parameter ( or use `sloppy_input`)
+            must align with the `ideals` parameter 
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list
             
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
@@ -1746,7 +1819,6 @@ class TRL(EightTerm):
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
         
-
 class UnknownThru(EightTerm):
     '''
     Two-Port Self-Calibration allowing the *thru* standard to be unknown.
@@ -1771,6 +1843,7 @@ class UnknownThru(EightTerm):
         ideal lists. The ideal for the *thru* is only used to choose
         the sign of a square root. Thus, it only has to be have s21, s12
         known within :math:`\pi` phase.
+        
         
         
         Parameters
@@ -1858,20 +1931,34 @@ class MRC(UnknownThru):
     '''
     Misalignment Resistance Calibration
     
+    This is an error-box based calibration that is a  combination of the 
+    SDDL[1]_ and the UnknownThru[2]_, algorithms. 
+    The self-calibration aspects of these two algorithms alleviate the
+    need to know the phase of the delay shorts, as well as the exact
+    response of the thru. Thus the calibration is resistant to 
+    waveguide flangemisalignment.
     
     
     References
     -----------
-    .. [1] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`" IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
-
+    .. [1] Z. Liu and R. M. Weikle, "A reflectometer calibration method resistant to waveguide flange misalignment," Microwave Theory and Techniques, IEEE Transactions on, vol. 54, no. 6, pp. 2447-2452, Jun. 2006.
+    
+    .. [2] A. Ferrero and U. Pisani, "Two-port network analyzer calibration using an unknown `thru,`" IEEE Microwave and Guided Wave Letters, vol. 2, no. 12, pp. 505-507, 1992.
+    
+    
     '''
     family = 'MRC'
     def __init__(self, measured, ideals,  *args, **kwargs):
         '''
         Initializer
         
-        Note that the *thru* standard must be last in both measured, and 
-        ideal lists. The ideal for the *thru* is only used to choose
+        This calibration takes exactly 5 standards, which must be in the
+        order:  
+            
+            [Short, DelayShort1, DelayShort1, Load, Thru]
+            
+        The ideals for the delay shorts are not used and the ideal for 
+        the *thru* is only used to choose
         the sign of a square root. Thus, it only has to be have s21, s12
         known within :math:`\pi` phase.
         
@@ -1880,11 +1967,11 @@ class MRC(UnknownThru):
         --------------
         measured : list/dict  of :class:`~skrf.network.Network` objects
             Raw measurements of the calibration standards. The order
-            must align with the `ideals` parameter ( or use `sloppy_input`)
+            must align with the `ideals` parameter 
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list
         
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
@@ -1893,7 +1980,7 @@ class MRC(UnknownThru):
         UnknownThru.__init__(self, measured = measured, ideals = ideals,
                            *args, **kwargs)
         
-        
+
     def run(self):
         p1_m = [k.s11 for k in self.measured_unterminated[:-1]]
         p2_m = [k.s22 for k in self.measured_unterminated[:-1]]

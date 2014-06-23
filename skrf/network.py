@@ -1446,6 +1446,21 @@ class Network(object):
         
         '''
         return reciprocity(self.s)
+    
+    @property
+    def reciprocity2(self):
+        '''
+        Reciprocity metric #2
+        
+        this is distance of the determinant of the wave-cascading matrix
+        from unity. 
+        
+        .. math::
+    
+                abs(1 - S/S^T )
+        
+        '''
+        return abs(1-self.s/self.s.swapaxes(1,2))
         
 	## NETWORK CLASIFIERs
 	def is_reciprocal(self):
@@ -1471,6 +1486,9 @@ class Network(object):
 		test for losslessness
 		'''
 		raise(NotImplementedError)	
+    
+    
+    
     
     ## specific ploting functions 
     def plot_passivity(self, label_prefix=None,  *args, **kwargs):
@@ -1530,16 +1548,13 @@ class Network(object):
         See Also
         -----------
         reciprocity
-        '''
-        
-        rr = abs(1-self.s/self.s.swapaxes(1,2))   #reciprocity ratio
-        
+        '''        
         for m in range(self.nports):
             for n in range(self.nports):
                 if m>n:
                     if 'label'  not in kwargs.keys():
                         kwargs['label'] = 'ports %i%i'%(m,n)
-                    y = rr[:,m,n].flatten()
+                    y = self.reciprocity2[:,m,n].flatten()
                     if db: 
                         y = mf.complex_2_db(y)
                     self.frequency.plot(y,*args, **kwargs)
