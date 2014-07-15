@@ -149,6 +149,102 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
         return ntwk
     except:
         return ntwk_dict
+        
+def pna_csv_2_ntwks3(filename):
+    '''
+    Read a CSV file exported from an Agilent PNA in dB/deg format
+    
+    Parameters
+    --------------
+    filename : str
+    	full path or filename
+        
+    Returns
+    ---------
+    out : n
+        2-Port Network
+    
+    Examples
+    ----------
+    
+    '''
+    header, comments, d = read_pna_csv(filename)
+    col_headers = pna_csv_header_split(filename)
+
+    # set impedance to 50 Ohm (doesn't matter for now)
+    z0 = npy.ones((npy.shape(d)[0]))*50
+    # read f values, convert to GHz
+    f = d[:,0]/1e9
+    
+    name = os.path.splitext(os.path.basename(filename))[0]
+    
+    if 'db' in header.lower() and 'deg' in header.lower():
+    	# this is a cvs in DB/DEG format
+    	# -> convert db/deg values to real/imag values
+        s = npy.zeros((len(f),2,2), dtype=complex)
+        
+        for k, h in enumerate(col_headers[1:]):
+            if 's11' in h.lower() and 'db' in h.lower():
+                s[:,0,0] = mf.dbdeg_2_reim(d[:,k+1], d[:,k+2])
+            elif 's21' in h.lower() and 'db' in h.lower():
+                s[:,1,0] = mf.dbdeg_2_reim(d[:,k+1], d[:,k+2])
+            elif 's12' in h.lower() and 'db' in h.lower():
+                s[:,0,1] = mf.dbdeg_2_reim(d[:,k+1], d[:,k+2])
+            elif 's22' in h.lower() and 'db' in h.lower():
+                s[:,1,1] = mf.dbdeg_2_reim(d[:,k+1], d[:,k+2])
+        
+        n = Network(f=f,s=s,z0=z0, name = name)
+        return n
+    
+    else:
+        warn("File does not seem to be formatted properly (only dB/deg supported for now)")
+
+def read_all_csv(dir='.', contains = None):
+    '''
+    Read all CSV files in a directory
+    
+    Parameters
+    --------------
+    dir : str, optional
+        the directory to load from, default  \'.\'
+    contains : str, optional
+        if not None, only files containing this substring will be loaded
+        
+    Returns
+    ---------
+    out : dictionary
+        dictionary containing all loaded CSV objects. keys are the 
+        filenames without extensions, and the values are the objects
+        
+    
+    Examples
+    ----------
+
+    
+    See Also
+    ----------
+
+    '''
+    
+    out={}
+    for filename in os.listdir(dir):
+        if contains is not None and contains not in filename:
+            continue
+        fullname = os.path.join(dir,filename)
+        keyname = os.path.splitext(filename)[0]
+        try: 
+            out[keyname] = pna_csv_2_ntwks3(fullname)
+            continue
+        except:
+            pass
+        
+        try:
+            out[keyname] = Network(fullname)
+            continue
+        except:
+            pass
+        
+    return out
 
 
 class AgilentCSV(object):
