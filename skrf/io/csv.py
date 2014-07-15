@@ -657,6 +657,162 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
     return ntwk_list
         
 
+
+        
+def read_zva_dat(filename, *args, **kwargs):
+    '''
+    Reads data from a dat file written by a R&S ZVA in dB/deg or re/im format
+    
+    This function returns a triplet containing header, comments and data.
+    
+    
+    Parameters 
+    -------------
+    filename : str
+        the file
+    \*args, \*\*kwargs : 
+    
+    Returns
+    ---------
+    header : str
+        The header string, which is the line following the 'BEGIN'
+    data : :class:`numpy.ndarray`
+        An array containing the data. The meaning of which depends on 
+        the header. 
+
+    '''
+    #warn("deprecated", DeprecationWarning)
+    fid = open(filename,'r')
+    begin_line = -2
+    comments = ''
+    for k,line in enumerate(fid.readlines()):
+        if line.startswith('%'):
+            comments += line[1:]
+            header = line
+            begin_line = k+1
+            
+    fid.close()
+    
+    data = npy.genfromtxt(
+		filename, 
+		delimiter = ',',
+		skip_header = begin_line,
+		*args, **kwargs
+		)
+    
+    return header, comments, data 
+    
+def zva_dat_2_ntwks(filename):
+    '''
+    Read a dat file exported from a R&S ZVA in dB/deg or re/im format
+    
+    Parameters
+    --------------
+    filename : str
+    	full path or filename
+        
+    Returns
+    ---------
+    out : n
+        2-Port Network
+    
+    Examples
+    ----------
+    
+    '''
+    header, comments, d = read_zva_dat(filename)
+    col_headers = header.split(',')
+
+    # set impedance to 50 Ohm (doesn't matter for now)
+    z0 = npy.ones((npy.shape(d)[0]))*50
+    # read f values, convert to GHz
+    f = d[:,0]/1e9
+    
+    name = os.path.splitext(os.path.basename(filename))[0]
+    
+    if 're' in header.lower() and 'im' in header.lower():
+    	# this is a cvs in re/im format
+    	# -> no conversion required
+        s = npy.zeros((len(f),2,2), dtype=complex)
+        
+        for k, h in enumerate(col_headers):
+            if 's11' in h.lower() and 're' in h.lower():
+                s[:,0,0] = d[:,k] + 1j*d[:,k+1]
+            elif 's21' in h.lower() and 're' in h.lower():
+                s[:,1,0] = d[:,k] + 1j*d[:,k+1]
+            elif 's12' in h.lower() and 're' in h.lower():
+                s[:,0,1] = d[:,k+1] #+ 1j*d[:,k+2]
+            elif 's22' in h.lower() and 're' in h.lower():
+                s[:,1,1] = d[:,k+1] #+ 1j*d[:,k+2]
+        
+    elif 'db' in header.lower() and not 'deg' in header.lower():
+    	# this is a cvs in db format (no deg values)
+    	# -> conversion required
+        s = npy.zeros((len(f),2,2), dtype=complex)
+        
+        for k, h in enumerate(col_headers):
+        	# this doesn't always work! (depends on no. of channels, sequence of adding traces etc. 
+        	# -> Needs changing!
+            if 's11' in h.lower() and 'db' in h.lower():
+                s[:,0,0] = mf.dbdeg_2_reim(d[:,k], d[:,k+2])
+            elif 's21' in h.lower() and 'db' in h.lower():
+                s[:,1,0] = mf.dbdeg_2_reim(d[:,k], d[:,k+2])
+        	
+        n = Network(f=f,s=s,z0=z0, name = name)
+        return n
+    
+    else:
+        warn("File does not seem to be formatted properly (dB/deg or re/im)")
+
+def read_all_zva_dat(dir='.', contains = None):
+    '''
+    Read all DAT files in a directory (from R&S ZVA)
+    
+    Parameters
+    --------------
+    dir : str, optional
+        the directory to load from, default  \'.\'
+    contains : str, optional
+        if not None, only files containing this substring will be loaded
+        
+    Returns
+    ---------
+    out : dictionary
+        dictionary containing all loaded DAT objects. keys are the 
+        filenames without extensions, and the values are the objects
+        
+    
+    Examples
+    ----------
+
+    
+    See Also
+    ----------
+
+    '''
+    
+    out={}
+    for filename in os.listdir(dir):
+        if contains is not None and contains not in filename:
+            continue
+        fullname = os.path.join(dir,filename)
+        keyname = os.path.splitext(filename)[0]
+        try: 
+            out[keyname] = zva_dat_2_ntwks(fullname)
+            continue
+        except:
+            pass
+        
+        try:
+            out[keyname] = Network(fullname)
+            continue
+        except:
+            pass
+        
+    return out
+
+
+
 def read_vectorstar_csv(filename, *args, **kwargs):
     '''
     Reads data from a csv file written by an Anritsu VectorStar
