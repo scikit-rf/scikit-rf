@@ -214,13 +214,13 @@ def git_version( modname):
     return out
     
 
-def stylely(rc_dict={}):
+def stylely(rc_dict={}, style_file = 'skrf.mplstyle'):
     '''
-    loads the rc-params file from skrf.data 
+    loads the rc-params from the specified file (file must be located in skrf/data)
     '''
     
-    from skrf.data import mpl_rc_fname # delayed to solve circular import
-    rc = mpl.rc_params_from_file(mpl_rc_fname)
+    from skrf.data import pwd # delayed to solve circular import
+    rc = mpl.rc_params_from_file(os.path.join(pwd, style_file))
     mpl.rcParams.update(rc)
     mpl.rcParams.update(rc_dict)
     
