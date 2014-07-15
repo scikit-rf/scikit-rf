@@ -60,14 +60,19 @@ def read_pna_csv(filename, *args, **kwargs):
     fid = open(filename,'r')
     begin_line = -2
     end_line = -1
+    n_END = 0
     comments = ''
     for k,line in enumerate(fid.readlines()):
         if line.startswith('!'):
             comments += line[1:]
-        elif line.startswith('BEGIN'):
+        elif line.startswith('BEGIN') and n_END == 0:
             begin_line = k
         elif line.startswith('END'):
-            end_line = k
+        	if n_END == 0:
+        	#first END spotted -> set end_line to read first data block only
+        		end_line = k
+        	#increment n_END to allow for CR correction in genfromtxt
+        	n_END += 1
         
         if k == begin_line+1:
             header = line
@@ -81,7 +86,7 @@ def read_pna_csv(filename, *args, **kwargs):
             filename, 
             delimiter = ',',
             skip_header = begin_line + 2,
-            skip_footer = footer,
+            skip_footer = footer - (n_END-1)*2,
             *args, **kwargs
             )
     except(ValueError):
