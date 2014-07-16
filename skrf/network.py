@@ -1491,7 +1491,7 @@ class Network(object):
     
     
     ## specific ploting functions 
-    def plot_passivity(self, label_prefix=None,  *args, **kwargs):
+    def plot_passivity(self, port = None,label_prefix=None,  *args, **kwargs):
         '''
         Plot dB(passivity metric) vs frequency
         
@@ -1500,10 +1500,16 @@ class Network(object):
         passivity
         '''
         name = '' if self.name is None else self.name
-            
-        for k in range(self.nports):
+        
+        if port is None:
+            ports = range(self.nports)
+        else:
+            ports = [port]
+        for k in ports:
             if label_prefix==None:
                 label = name +', port %i'%(k+1)
+            else:
+                label = label_prefix+', port %i'%(k+1)
             self.frequency.plot(mf.complex_2_db(self.passivity[:,k,k]),
                                 label=label,
                                 *args, **kwargs)

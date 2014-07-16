@@ -290,9 +290,10 @@ class Calibration(object):
         -------------
         std : int or str
             the integer of calibration standard to remove, or the name 
-            of the ideal calibration standard to remove.
+            of the ideal or measured calibration standard to remove.
         
-        
+       
+            
         Returns
         -----------
         ideal,measured : tuple of skrf.Networks
@@ -304,6 +305,11 @@ class Calibration(object):
         if isinstance(std, str):
             for idx,ideal in enumerate(self.ideals):
                 if std  == ideal.name:
+                    std = idx
+        
+        if isinstance(std, str):
+            for idx,measured in enumerate(self.measured):
+                if std  == measured.name:
                     std = idx
         
         if isinstance(std, str):
