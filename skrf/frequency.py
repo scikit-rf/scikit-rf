@@ -439,7 +439,7 @@ class Frequency(object):
         return overlap_freq(self, f2)
     
     
-    def plot(self, *args, **kwargs):
+    def plot(self, y, *args, **kwargs):
         '''
         Plot something vs this frequency
         
@@ -447,7 +447,16 @@ class Frequency(object):
         calls `labelXAxis`.
         
         '''
-        plot(self.f_scaled, *args, **kwargs)
+        try:
+            if len(y)==len(self):
+                pass
+            else:
+                raise IndexError(['thing to plot doesnt have same'
+                                 ' number of points as f'])
+        except(TypeError):
+            y = y*npy.ones(len(self))
+            
+        plot(self.f_scaled, y,*args, **kwargs)
         autoscale(axis='x', tight=True)
         self.labelXAxis()
         

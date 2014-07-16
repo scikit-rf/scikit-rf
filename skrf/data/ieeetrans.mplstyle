@@ -52,4 +52,3 @@ path.simplify       : True
 
 savefig.dpi         : 120      
 
-text.usetex         : True  
