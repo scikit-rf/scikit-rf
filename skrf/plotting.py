@@ -217,7 +217,8 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
             ax.legend()
 
     if axis is not None:
-        ax.axis(axis)
+        ax.autoscale(True, 'x', True)
+        ax.autoscale(True, 'y', False)
         
     if plb.isinteractive():
         plb.draw()
