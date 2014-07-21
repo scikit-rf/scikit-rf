@@ -32,6 +32,7 @@ Misc Functions
     add_markers_to_lines
     legend_off
     func_on_all_figs
+    scrape_legend
 
 '''
 import pylab as plb
@@ -521,6 +522,32 @@ def legend_off(ax=None):
         plb.gca().legend_.set_visible(0)
     else:
         ax.legend_.set_visible(0)
+
+def scrape_legend(n=None, ax=None):
+    '''
+    scrapes a legend with redundent labels
+    
+    Given a legend of m entries of n groups, this will remove all but 
+    every m/nth entry. This is used when you plot many lines representing
+    the same thing, and only want one label entry in the legend  for the
+    whole ensemble of lines
+    
+    '''
+    
+    if ax is None:
+        ax = plb.gca()
+    
+    handles, labels = ax.get_legend_handles_labels()
+    
+    if n is None:
+        n =len ( set(labels))
+    
+    if n>len(handles):
+        raise ValueError('number of entries is too large')
+    
+    k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
+    ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
+
 
 def func_on_all_figs(func, *args, **kwargs):
     '''
