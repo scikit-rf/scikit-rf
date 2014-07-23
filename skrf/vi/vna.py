@@ -20,8 +20,8 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
     HP8720
 '''
 import numpy as npy
-import visa
-from visa import GpibInstrument
+from pyvisa.legacy import vpp43
+from pyvisa.highlevel import Instrument
 from warnings import warn
 from itertools import product
 import re 
@@ -36,7 +36,7 @@ from .. import mathFunctions as mf
 
 
 
-class PNA(GpibInstrument):
+class PNA(Instrument):
     '''
     Agilent PNA[X] 
     
@@ -93,35 +93,40 @@ class PNA(GpibInstrument):
     displayed traces, while measurements are active measurements on the 
     VNA which may or may not be displayed on screen.
     '''
-    def __init__(self, address=16, channel=1,timeout = 3, echo = False,
+    def __init__(self, address='GPIB::16', channel=1, timeout = 3, echo = False,
         front_panel_lockout= False, **kwargs):
         '''
         Constructor 
         
         Parameters
         -------------
-        address : int
-            GPIB address 
+        address : string
+            VISA identifier of instrument (e.g. GPIB::16 or TCPIP0::192.168.0.xxx) 
         channel : int
             set active channel. Most commands operate on the active channel
         timeout : number
-            GPIB command timeout in seconds. 
+            VISA command timeout in seconds. 
         echo : Boolean
             echo  all strings passed to the write command to stdout. 
             useful for troubleshooting
         front_panel_lockout : Boolean
-            lockout front panel during operation. 
+            lockout front panel during operation (for GPIB only) 
         \*\*kwargs : 
-            passed to  `visa.GpibInstrument.__init__`
+            passed to  `visa.Instrument.__init__`
         '''
-        GpibInstrument.__init__(self,
-            'GPIB::'+str(address),
+        Instrument.__init__(self,
+            address,
             timeout=timeout,
             **kwargs)
             
         self.channel=channel
         self.port = 1
         self.echo = echo
+        
+        #workaround for CR issue
+        #tested with pyvisa 1.5 / NI-VISA 5.4.1 / Agilent N5224A on Win7 & MacOS 10.9.3
+        self.term_chars = '\n' 
+        
         if not front_panel_lockout:
             self.gtl()
             
@@ -132,9 +137,9 @@ class PNA(GpibInstrument):
         '''
         if self.echo:
             print msg 
-        return GpibInstrument.write(self,msg, *args, **kwargs)
+        return Instrument.write(self,msg, *args, **kwargs)
     
-    write.__doc__ = GpibInstrument.write.__doc__
+    write.__doc__ = Instrument.write.__doc__
     
     ## BASIC GPIB
     @property
@@ -152,12 +157,12 @@ class PNA(GpibInstrument):
     
     def gtl(self):
         '''
-        Go to local. 
+        Go to local (GPIB only)
         '''
-        self._vpp43.gpib_control_ren(
-            self.vi, 
-            self._vpp43.VI_GPIB_REN_DEASSERT_GTL,
-            )
+        if 'GPIB' in self.resource_name:
+            vpp43.gpib_constrol_ren(self.session, 6)
+        else:
+            warn('Go to local is only supported for GPIB')
     
     def reset(self):
         '''
@@ -1735,12 +1740,12 @@ class VectorStar(PNA):
         return [(k+1,meas_list[k]) for k in range(self.ntraces)]
         
 
-class HP8510C(GpibInstrument):
+class HP8510C(Instrument):
     '''
     good ole 8510
     '''
     def __init__(self, address=16,**kwargs):
-        GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+        Instrument.__init__(self,'GPIB::'+str(address),**kwargs)
         self.write('FORM4;')
 
 
