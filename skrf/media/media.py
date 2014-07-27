@@ -13,7 +13,7 @@ import warnings
 
 import numpy as npy
 from scipy import stats
-from scipy.constants import  c
+from scipy.constants import  c, inch, mil
 
 from ..frequency import Frequency
 from ..network import Network, connect
@@ -695,6 +695,40 @@ class Media(object):
 
         
     # transmission line
+    
+    def to_meters(self, d, unit='m'):
+        '''
+        Translate various  units of distance into meters 
+        
+        This is a method of media to allow for electrical lengths as 
+        inputs
+        
+        Parameters
+        ------------
+        d : number or array-like
+            the value
+        unit : str
+            the unit to that x is in:
+            ['deg','rad','m','cm','um','in','mil','s']
+            
+        '''
+        unit = unit.lower()
+        d_dict ={'deg':self.theta_2_d(d,deg=True),
+                 'rad':self.theta_2_d(d,deg=False),
+                 'm':d,
+                 'cm':1e-2*d,
+                 'mm':1e-3*d,
+                 'um':1e-6*d,
+                 'in':d/inch,
+                 'mil': d/mil,
+                 's':d*c,
+                 }
+        try:
+                return d_dict[unit]
+        except(KeyError):
+                raise(ValueError('Incorrect unit'))
+        
+        
     def thru(self, **kwargs):
         '''
         Matched transmission line of length 0.
@@ -715,23 +749,28 @@ class Media(object):
         line : this just calls line(0)
         '''
         return self.line(0,**kwargs)
-
-    def line(self,d, unit='m',**kwargs):
+        
+    def line(self,d, unit='m',z0=None, embed = False, **kwargs):
         '''
-        Matched transmission line of given length
+        Transmission line of a given length and impedance
 
         The units of `length` are interpreted according to the value
-        of `unit`.
+        of `unit`. If `z0` is not None, then a line specified  impedance
+        is produced. if `embed`  is also True, then the line is embedded 
+        in this media's z0 environment, creating a mismatched line. 
 
         Parameters
         ----------
         d : number
                 the length of transmissin line (see unit argument)
-        unit : ['m','deg','rad']
-                the units of d. possible options are:
-                 * *m* : meters, physical length in meters (default)
-                 * *deg* :degrees, electrical length in degrees
-                 * *rad* :radians, electrical length in radians
+        unit : ['deg','rad','m','cm','um','in','mil','s']
+                the units of d.  See :func:`to_meters`, for details
+        z0 : number, or array-like
+                the impedance of the line (if different form z0)
+        embed : bool
+                if `z` is given, should the line be embedded in z0 
+                environment? or left in a `z` environment. if embedded, 
+                there will be reflections 
         \*\*kwargs : key word arguments
                 passed to :func:`match`, which is called initially to create a
                 'blank' network.
@@ -741,29 +780,29 @@ class Media(object):
         line : :class:`~skrf.network.Network` object
                 matched tranmission line of given length
 
-
         Examples
         ----------
-        >>> my_media.line(90, 'deg', z0=50)
+        >>> my_media.line(90, 'deg', z0=100)
 
         '''
-        if unit not in ['m','deg','rad']:
-            raise (ValueError('unit must be one of the following:\'m\',\'rad\',\'deg\''))
-
+        
+        kwargs.update({'z0':z0})
         result = self.match(nports=2,**kwargs)
 
-        d_dict ={\
-                'deg':self.theta_2_d(d,deg=True),\
-                'rad':self.theta_2_d(d,deg=False),\
-                'm':d\
-                }
-
-        theta = self.electrical_length(d_dict[unit])
+        theta = self.electrical_length(self.to_meters(d, unit))
 
         s11 = npy.zeros(self.frequency.npoints, dtype=complex)
         s21 = npy.exp(-1*theta)
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+        
+        if  embed:
+                # create mismatchs at each end
+                m1 = self.impedance_mismatch(self.z0,z0)
+                m1.name = result.name
+                m2 = self.impedance_mismatch(z0,self.z0)
+                result = m1**result**m2
+                
         return result
 
     def delay_load(self,Gamma0,d,unit='m',**kwargs):
