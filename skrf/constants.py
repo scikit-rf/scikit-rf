@@ -101,7 +101,7 @@ def to_meters( d, unit='m'):
         the value
     unit : str
         the unit to that x is in:
-        ['m','cm','um','in','mil','s']
+        ['m','cm','um','in','mil','s','us','ns','ps']
     
     
     Examples
@@ -116,7 +116,11 @@ def to_meters( d, unit='m'):
              'nm':1e-9*d,
              'in':d/inch,
              'mil': d/mil,
-             's':d*c}
+             's':d*c,
+             'us':d*1e-6*c,
+             'ns':d*1e-9*c,
+             'ps':d*1e-12*c,
+             }
     try:
         return d_dict[unit]
     except(KeyError):

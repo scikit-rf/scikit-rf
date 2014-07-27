@@ -709,7 +709,7 @@ class Media(object):
             the value
         unit : str
             the unit to that x is in:
-            ['deg','rad','m','cm','um','in','mil','s']
+            ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             
         '''
         unit = unit.lower()
@@ -722,6 +722,9 @@ class Media(object):
                  'in':d/inch,
                  'mil': d/mil,
                  's':d*c,
+                 'us':d*1e-6*c,
+                 'ns':d*1e-9*c,
+                 'ps':d*1e-12*c,
                  }
         try:
                 return d_dict[unit]
