@@ -1,31 +1,23 @@
 
-=================
 
 
-HomePage
---------
-http://www.scikit-rf.org
-
-Documentation
--------------
-http://scikit-rf.org/documentation.html
-
-Mailing List
-------------
-http://groups.google.com/group/scikit-rf
-
-Development
-------------
-https://github.com/scikit-rf/scikit-rf/wiki/Development
-
-Summary
---------
-**sckit-rf** is an object-oriented approach to RF/Microwave engineering 
-implemented in the Python programming language. It provides a general 
-set of objects and features which can be used to construct solutions 
-to specific problems.  
+scikit-rf (aka skrf) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented 
+in the Python programming language. It provides a modern, object-oriented library which is both 
+flexible and scalable.  
 
 
-License
-----------
-scikit-rf is licensed under the BSD-license. See LICENSE.txt for details.
+![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
+
+![Image of Yaktocat](https://octodex.github.com/images/yaktocat.png)
+
+
+
+
+[Home Page](http://www.scikit-rf.org)
+
+[Docs](http://scikit-rf.org/documentation.html)
+
+[Mailing List](http://groups.google.com/group/scikit-rf)
+
+[Development](https://github.com/scikit-rf/scikit-rf/wiki/Development)
+
