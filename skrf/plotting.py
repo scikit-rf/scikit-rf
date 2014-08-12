@@ -413,7 +413,7 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
     if plb.isinteractive():
         plb.draw()
 
-def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
+def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     '''
     Shades frequency bands.
     
@@ -437,6 +437,7 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     '''
     cmap = plb.cm.get_cmap(cmap)
+    y_range=plb.gca().get_ylim()
     axis = plb.axis()
     for k in range(len(edges)-1):
         plb.fill_between(

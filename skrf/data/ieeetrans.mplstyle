@@ -37,9 +37,9 @@ figure.edgecolor : 0.50
 figure.dpi          : 300
       
 figure.subplot.left	    : 0.18
-figure.subplot.right	: 0.99    
+figure.subplot.right	: 0.95    
 figure.subplot.bottom	: 0.15
-figure.subplot.top      : 0.98  
+figure.subplot.top      : 0.985 
 
 
 lines.linewidth     : 1     

@@ -19,8 +19,6 @@ class CalibrationTest(object):
         c.name = 'corrected'   
         self.assertEqual(c,a)
         
-        
-        
     def test_error_ntwk(self):
         a= self.cal.error_ntwk 
     

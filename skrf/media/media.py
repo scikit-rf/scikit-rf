@@ -337,7 +337,7 @@ class Media(object):
             
     
     ## Other Functions
-    def theta_2_d(self,theta,deg=True):
+    def theta_2_d(self,theta,deg=True, bc = True):
         '''
         Converts electrical length to physical distance.
 
@@ -349,24 +349,29 @@ class Media(object):
                 electrical length, at band center (see deg for unit)
         deg : Boolean
                 is theta in degrees?
-
+        
+        bc : bool
+                evaluate only at band center, or across the entire band?
+                
         Returns
         --------
-        d : number
+        d : number, array-like
                 physical distance in meters
 
-
+        
         '''
         if deg == True:
             theta = mf.degree_2_radian(theta)
 
         gamma = self.propagation_constant
-        return 1.0*theta/npy.imag(gamma[gamma.size/2])
+        if bc:
+                return 1.0*theta/npy.imag(gamma[gamma.size/2])
+        else:
+                return 1.0*theta/npy.imag(gamma)
 
     def electrical_length(self, d,deg=False):
         '''
-        calculates the electrical length for a given distance, at
-        the center frequency.
+        calculates the electrical length for a given distance
 
         Parameters
         ----------
