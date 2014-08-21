@@ -356,7 +356,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
         title=title, show_legend=show_legend, axis_equal=axis_equal,
         ax=ax, *args, **kwargs)
 
-def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
+def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imaginary', title='Complex Plane', show_legend=True,
     axis='equal', ax=None, force_chart = False, *args, **kwargs):
     '''
@@ -364,8 +364,8 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
 
     Parameters
     ------------
-    z : array-like, of complex data
-        data to plot
+    s : complex array-like
+        reflection-coeffient-like data to plot
     smith_r : number
         radius of smith chart
     chart_type : ['z','y']
@@ -405,7 +405,7 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
         if len(ax.patches) == 0:
             smith(ax=ax, smithR = smith_r, chart_type=chart_type)
 
-    plot_complex_rectangular(z, x_label=x_label, y_label=y_label,
+    plot_complex_rectangular(s, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
