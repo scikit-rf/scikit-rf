@@ -2431,6 +2431,32 @@ class Network(object):
 
     
     def plot_it_all(self,*args, **kwargs):
+    	'''
+    	Plots dB, deg, smith, and complex in subplots
+
+    	Plots the magnitude in dB in subplot 1, the phase in degrees in
+    	subplot 2, a smith chart in subplot 3, and a complex plot in
+    	subplot 4.
+    	
+    	Parameters
+        -----------
+        \*args : arguments, optional
+                passed to the matplotlib.plot command
+        \*\*kwargs : keyword arguments, optional
+                passed to the matplotlib.plot command
+                
+        See Also
+        --------
+        plot_s_db - plot magnitude (in dB) of s-parameters vs frequency
+        plot_s_deg - plot phase of s-parameters (in degrees) vs frequency
+        plot_s_smith - plot complex s-parameters on smith chart
+        plot_s_complex - plot complex s-parameters in the complex plane
+
+        Examples
+        ---------
+        >>> from skrf.data import ring_slot
+        >>> ring_slot.plot_it_all()
+    	'''
         plb.subplot(221)
         getattr(self,'plot_s_db')(*args, **kwargs)
         plb.subplot(222)
