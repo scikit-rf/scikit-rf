@@ -372,7 +372,8 @@ class Media(object):
     def electrical_length(self, d,deg=False):
         '''
         calculates the electrical length for a given distance
-
+        
+        
         Parameters
         ----------
         d: number or array-like
