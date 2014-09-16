@@ -600,7 +600,7 @@ class NetworkSet(object):
 
         return (ntwk_mean, lower_bound, upper_bound)
 
-    def plot_uncertainty_bounds_component(self,attribute,m=0,n=0,\
+    def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
             type='shade',n_deviations=3, alpha=.3, color_error =None,markevery_error=20,
             ax=None,ppf=None,kwargs_error={},*args,**kwargs):
         '''
@@ -641,50 +641,64 @@ class NetworkSet(object):
                 similar.  uncerainty for wrapped phase blows up at +-pi.
 
         '''
-        ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
-                's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                's_db':'Magnitude (dB)'}
-
-        ax = plb.gca()
-
-        ntwk_mean = self.__getattribute__('mean_'+attribute)
-        ntwk_std = self.__getattribute__('std_'+attribute)
-        ntwk_std.s = n_deviations * ntwk_std.s
-
-        upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
-        lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
         
-        
-        if ppf is not None:
-            if type =='bar':
-                warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
-            ntwk_mean.s = ppf(ntwk_mean.s)
-            upper_bound = ppf(upper_bound)
-            lower_bound = ppf(lower_bound)
-            lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
-
-        if type == 'shade':
-            ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
-            if color_error is None:
-                color_error = ax.get_lines()[-1].get_color()
-            ax.fill_between(ntwk_mean.frequency.f_scaled, \
-                    lower_bound,upper_bound, alpha=alpha, color=color_error,
-                    **kwargs_error)
-            #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
-        elif type =='bar':
-            ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
-            if color_error is None:
-                color_error = ax.get_lines()[-1].get_color()
-            ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
-                    ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
-                    yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
-                    color=color_error,**kwargs_error)
-
+        if m is None:
+            M = range(self[0].number_of_ports)
         else:
-            raise(ValueError('incorrect plot type'))
+            M = [m]
+        if n is None:
+            N = range(self[0].number_of_ports)
+        else:
+            N = [n]
 
-        ax.set_ylabel(ylabel_dict.get(attribute,''))
-        ax.axis('tight')
+        for m in M:
+            for n in N:
+                
+        
+                ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
+                        's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
+                        's_db':'Magnitude (dB)'}
+
+                ax = plb.gca()
+
+                ntwk_mean = self.__getattribute__('mean_'+attribute)
+                ntwk_std = self.__getattribute__('std_'+attribute)
+                ntwk_std.s = n_deviations * ntwk_std.s
+
+                upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
+                lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
+                
+                
+                if ppf is not None:
+                    if type =='bar':
+                        warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
+                    ntwk_mean.s = ppf(ntwk_mean.s)
+                    upper_bound = ppf(upper_bound)
+                    lower_bound = ppf(lower_bound)
+                    lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+
+                if type == 'shade':
+                    ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+                    if color_error is None:
+                        color_error = ax.get_lines()[-1].get_color()
+                    ax.fill_between(ntwk_mean.frequency.f_scaled, \
+                            lower_bound,upper_bound, alpha=alpha, color=color_error,
+                            **kwargs_error)
+                    #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
+                elif type =='bar':
+                    ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+                    if color_error is None:
+                        color_error = ax.get_lines()[-1].get_color()
+                    ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
+                            ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
+                            yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
+                            color=color_error,**kwargs_error)
+
+                else:
+                    raise(ValueError('incorrect plot type'))
+
+                ax.set_ylabel(ylabel_dict.get(attribute,''))
+                ax.axis('tight')
     
     
     def plot_minmax_bounds_component(self,attribute,m=0,n=0,\

@@ -513,7 +513,7 @@ class Network(object):
     @property
     def s(self):
         '''
-        my docstring
+        Scattering Parameters
         '''
         return self._s
         
@@ -575,6 +575,9 @@ class Network(object):
 
     @property
     def z0(self):
+        '''
+        The port impedance
+        '''
         return self._z0
     
     @z0.setter
