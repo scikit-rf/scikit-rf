@@ -166,9 +166,11 @@ Uncertainty bounds can be plotted through the methods
     In [24]: ro_ns.plot_uncertainty_bounds_s_deg()
 
 
-Note that the uncertainty bounds plotted above are calculated  **after** 
-the complex number has been projected onto the specified scalar component.
-Thus, the first plot represents uncerainty in the magnitude component **only**.
+.. note::
+
+    The uncertainty bounds plotted above are calculated  **after** 
+    the complex number has been projected onto the specified scalar component.
+    Thus, the first plot represents uncerainty in the magnitude component **only**.
 
 Reading and Writing
 ---------------------
