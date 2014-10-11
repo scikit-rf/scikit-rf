@@ -85,12 +85,46 @@ References
 
 
 
-from frequency import Frequency
-from media import RectangularWaveguide, Media
+from . frequency import Frequency
+from . media import RectangularWaveguide, Media
 
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
+def to_meters( d, unit='m'):
+    '''
+    Translate various  units of distance into meters 
 
+ 
+    Parameters
+    ------------
+    d : number or array-like
+        the value
+    unit : str
+        the unit to that x is in:
+        ['m','cm','um','in','mil','s','us','ns','ps']
+    
+    
+    Examples
+    ---------
+    >>> x = rf.to_meters(3,'um')    
+    '''
+    unit = unit.lower()
+    d_dict ={'m':d,
+             'cm':1e-2*d,
+             'mm':1e-3*d,
+             'um':1e-6*d,
+             'nm':1e-9*d,
+             'in':d*inch,
+             'mil': d*mil,
+             's':d*c,
+             'us':d*1e-6*c,
+             'ns':d*1e-9*c,
+             'ps':d*1e-12*c,
+             }
+    try:
+        return d_dict[unit]
+    except(KeyError):
+        raise(ValueError('Incorrect unit'))
 
 # globals 
 

@@ -32,6 +32,7 @@ Misc Functions
     add_markers_to_lines
     legend_off
     func_on_all_figs
+    scrape_legend
 
 '''
 import pylab as plb
@@ -134,7 +135,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     if not border: 
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
         
     
@@ -142,7 +143,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         #Clear axis
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
 
         #Will make annotations only if the radius is 1 and it is the impedance smith chart
@@ -217,7 +218,8 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
             ax.legend()
 
     if axis is not None:
-        ax.axis(axis)
+        ax.autoscale(True, 'x', True)
+        ax.autoscale(True, 'y', False)
         
     if plb.isinteractive():
         plb.draw()
@@ -411,7 +413,7 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
     if plb.isinteractive():
         plb.draw()
 
-def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
+def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     '''
     Shades frequency bands.
     
@@ -435,13 +437,15 @@ def shade_bands(edges, y_range=[-1e5,1e5],cmap='prism', **kwargs):
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     '''
     cmap = plb.cm.get_cmap(cmap)
+    y_range=plb.gca().get_ylim()
+    axis = plb.axis()
     for k in range(len(edges)-1):
         plb.fill_between(
             [edges[k],edges[k+1]], 
             y_range[0], y_range[1], 
             color = cmap(1.0*k/len(edges)),
             **kwargs)
-
+    plb.axis(axis)
 
 def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
     '''
@@ -469,12 +473,12 @@ def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
         if format is None:
             plb.savefig(dir+fileName)
             if echo:
-                print (dir+fileName)
+                print((dir+fileName))
         else:
             for fmt in format:
                 plb.savefig(dir+fileName+'.'+fmt, format=fmt)
                 if echo:
-                    print (dir+fileName+'.'+fmt)
+                    print((dir+fileName+'.'+fmt))
 saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
@@ -519,6 +523,32 @@ def legend_off(ax=None):
         plb.gca().legend_.set_visible(0)
     else:
         ax.legend_.set_visible(0)
+
+def scrape_legend(n=None, ax=None):
+    '''
+    scrapes a legend with redundent labels
+    
+    Given a legend of m entries of n groups, this will remove all but 
+    every m/nth entry. This is used when you plot many lines representing
+    the same thing, and only want one label entry in the legend  for the
+    whole ensemble of lines
+    
+    '''
+    
+    if ax is None:
+        ax = plb.gca()
+    
+    handles, labels = ax.get_legend_handles_labels()
+    
+    if n is None:
+        n =len ( set(labels))
+    
+    if n>len(handles):
+        raise ValueError('number of entries is too large')
+    
+    k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
+    ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
+
 
 def func_on_all_figs(func, *args, **kwargs):
     '''

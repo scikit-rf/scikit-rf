@@ -13,10 +13,11 @@ import warnings
 
 import numpy as npy
 from scipy import stats
-from scipy.constants import  c
+from scipy.constants import  c, inch, mil
 
 from ..frequency import Frequency
 from ..network import Network, connect
+
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
 from ..mathFunctions import ALMOST_ZERO
@@ -337,7 +338,7 @@ class Media(object):
             
     
     ## Other Functions
-    def theta_2_d(self,theta,deg=True):
+    def theta_2_d(self,theta,deg=True, bc = True):
         '''
         Converts electrical length to physical distance.
 
@@ -349,24 +350,29 @@ class Media(object):
                 electrical length, at band center (see deg for unit)
         deg : Boolean
                 is theta in degrees?
-
+        
+        bc : bool
+                evaluate only at band center, or across the entire band?
+                
         Returns
         --------
-        d : number
+        d : number, array-like
                 physical distance in meters
 
-
+        
         '''
         if deg == True:
             theta = mf.degree_2_radian(theta)
 
         gamma = self.propagation_constant
-        return 1.0*theta/npy.imag(gamma[gamma.size/2])
+        if bc:
+                return 1.0*theta/npy.imag(gamma[gamma.size/2])
+        else:
+                return 1.0*theta/npy.imag(gamma)
 
     def electrical_length(self, d,deg=False):
         '''
-        calculates the electrical length for a given distance, at
-        the center frequency.
+        calculates the electrical length for a given distance
 
         Parameters
         ----------
@@ -604,8 +610,8 @@ class Media(object):
 
     def impedance_mismatch(self, z1, z2, **kwargs):
         '''
-        Two-port network for an impedance miss-match
-
+        Two-port network for a an impedance miss-match
+        
 
         Parameters
         ----------
@@ -693,8 +699,45 @@ class Media(object):
                     (npy.ones((n,n))-npy.eye(n))
         return result
 
-
+        
     # transmission line
+    
+    def to_meters(self, d, unit='m'):
+        '''
+        Translate various  units of distance into meters 
+        
+        This is a method of media to allow for electrical lengths as 
+        inputs
+        
+        Parameters
+        ------------
+        d : number or array-like
+            the value
+        unit : str
+            the unit to that x is in:
+            ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+            
+        '''
+        unit = unit.lower()
+        d_dict ={'deg':self.theta_2_d(d,deg=True),
+                 'rad':self.theta_2_d(d,deg=False),
+                 'm':d,
+                 'cm':1e-2*d,
+                 'mm':1e-3*d,
+                 'um':1e-6*d,
+                 'in':d*inch,
+                 'mil': d*mil,
+                 's':d*c,
+                 'us':d*1e-6*c,
+                 'ns':d*1e-9*c,
+                 'ps':d*1e-12*c,
+                 }
+        try:
+                return d_dict[unit]
+        except(KeyError):
+                raise(ValueError('Incorrect unit'))
+        
+        
     def thru(self, **kwargs):
         '''
         Matched transmission line of length 0.
@@ -715,23 +758,28 @@ class Media(object):
         line : this just calls line(0)
         '''
         return self.line(0,**kwargs)
-
-    def line(self,d, unit='m',**kwargs):
+        
+    def line(self,d, unit='m',z0=None, embed = False, **kwargs):
         '''
-        Matched transmission line of given length
+        Transmission line of a given length and impedance
 
         The units of `length` are interpreted according to the value
-        of `unit`.
+        of `unit`. If `z0` is not None, then a line specified  impedance
+        is produced. if `embed`  is also True, then the line is embedded 
+        in this media's z0 environment, creating a mismatched line. 
 
         Parameters
         ----------
         d : number
                 the length of transmissin line (see unit argument)
-        unit : ['m','deg','rad']
-                the units of d. possible options are:
-                 * *m* : meters, physical length in meters (default)
-                 * *deg* :degrees, electrical length in degrees
-                 * *rad* :radians, electrical length in radians
+        unit : ['deg','rad','m','cm','um','in','mil','s']
+                the units of d.  See :func:`to_meters`, for details
+        z0 : number, or array-like
+                the impedance of the line (if different form z0)
+        embed : bool
+                if `z` is given, should the line be embedded in z0 
+                environment? or left in a `z` environment. if embedded, 
+                there will be reflections 
         \*\*kwargs : key word arguments
                 passed to :func:`match`, which is called initially to create a
                 'blank' network.
@@ -741,29 +789,29 @@ class Media(object):
         line : :class:`~skrf.network.Network` object
                 matched tranmission line of given length
 
-
         Examples
         ----------
-        >>> my_media.line(90, 'deg', z0=50)
+        >>> my_media.line(90, 'deg', z0=100)
 
         '''
-        if unit not in ['m','deg','rad']:
-            raise (ValueError('unit must be one of the following:\'m\',\'rad\',\'deg\''))
-
+        
+        kwargs.update({'z0':z0})
         result = self.match(nports=2,**kwargs)
 
-        d_dict ={\
-                'deg':self.theta_2_d(d,deg=True),\
-                'rad':self.theta_2_d(d,deg=False),\
-                'm':d\
-                }
-
-        theta = self.electrical_length(d_dict[unit])
+        theta = self.electrical_length(self.to_meters(d, unit))
 
         s11 = npy.zeros(self.frequency.npoints, dtype=complex)
         s21 = npy.exp(-1*theta)
         result.s = \
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
+        
+        if  embed:
+                # create mismatchs at each end
+                m1 = self.impedance_mismatch(self.z0,z0)
+                m1.name = result.name
+                m2 = self.impedance_mismatch(z0,self.z0)
+                result = m1**result**m2
+                
         return result
 
     def delay_load(self,Gamma0,d,unit='m',**kwargs):
@@ -1015,7 +1063,70 @@ class Media(object):
         '''
         return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
 
-
+    def attenuator(self, s21, db=True, d =0, unit='m', **kwargs):
+        '''
+        Ideal matched attenuator of a given length
+        
+        Parameters 
+        ----------
+        s21 : number, array-like
+            the attenutation
+        db : bool
+            is s21 in db? otherwise assumes linear
+        d : number
+            length of attenuator
+        
+        unit : ['m','deg','rad']
+                the units of d. possible options are:
+                 * *m* : meters, physical length in meters (default)
+                 * *deg* :degrees, electrical length in degrees
+                 * *rad* :radians, electrical length in radians
+        
+        Returns
+        --------
+        ntwk : :class:`~skrf.network.Network` object
+                2-port attentuator
+                
+        '''
+        if db:
+            s21 = mf.db_2_magnitude(s21)
+         
+        result = self.match(nports=2)    
+        result.s[:,0,1] = s21
+        result.s[:,1,0] = s21
+        result = result**self.line(d=d, unit = unit, **kwargs)      
+        return result
+    
+    def lossless_mismatch(self,s11,db=True,  **kwargs):
+        '''
+        Lossless mismatch  defined by its return loss
+        
+        Parameters 
+        ----------
+        s11 : number, array-like
+            the reflection coefficient. if db==True, then phase is ignored
+        
+        db : bool
+            is s11 in db? otherwise assumes linear
+        
+        Returns
+        --------
+        ntwk : :class:`~skrf.network.Network` object
+                2-port lossless mismatch
+                
+        '''
+        result = self.match(nports=2,**kwargs) 
+        if db:
+            s11 = mf.db_2_magnitude(s11)
+            
+        result.s[:,0,0] = s11
+        result.s[:,1,1] = s11
+        
+        result.s[:,0,1] = npy.sqrt(1- npy.abs(s11)**2)*\
+                npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
+        result.s[:,1,0] = result.s[:,0,1]
+        return result   
+        
     ## Noise Networks
     def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
         '''
@@ -1098,9 +1209,9 @@ class Media(object):
 
         A = npy.vstack((2*beta,npy.ones(len(beta)))).transpose()
         B = thetaM
-        print A.shape
-        print B.shape
-        print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
+        print(A.shape)
+        print(B.shape)
+        print(npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta))
         return npy.linalg.lstsq(A, B)[0][0]
 
     

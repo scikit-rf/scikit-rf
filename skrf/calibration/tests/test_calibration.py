@@ -1,6 +1,9 @@
 import unittest
 import os
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
 import skrf as rf
 import numpy as npy
 from nose.tools import nottest
@@ -12,13 +15,12 @@ class CalibrationTest(object):
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement
     '''
-    def test_correction_accuracy_of_dut(self):
+    def test_accuracy_of_dut_correction(self):
         a = self.wg.random(n_ports=self.n_ports, name = 'actual')
         m = self.measure(a)
         c = self.cal.apply_cal(m)
-        c.name = 'corrected'
-        self.assertEqual(a,c)
-        
+        c.name = 'corrected'   
+        self.assertEqual(c,a)
         
     def test_error_ntwk(self):
         a= self.cal.error_ntwk 
@@ -43,7 +45,13 @@ class CalibrationTest(object):
         a = self.wg.random(n_ports=self.n_ports)
         self.assertEqual(self.cal.embed(a),self.measure(a))
         
-   
+    def test_from_coefs(self):
+        cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
+        ntwk = self.wg.random(n_ports=self.n_ports)
+        if cal_from_coefs.apply_cal(self.cal.embed(ntwk))!= ntwk:
+            raise ValueError
+        self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
+        
 class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     One-port calibration test.
@@ -73,31 +81,23 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
             )
         
     def measure(self, ntwk):
-        return self.E**ntwk
+        out = self.E**ntwk
+        out.name = ntwk.name
+        return out
     
-    def test_directivity_accuracy(self):
-        print 'directibity'
-        print(self.E.s11.s)
-        print(self.cal.coefs_ntwks['directivity'].s)
+    def test_accuracy_of_directivity(self):
         self.assertEqual(
             self.E.s11, 
             self.cal.coefs_ntwks['directivity'],
             )
         
-    def test_source_match_accuracy(self):
-        print 'source match'
-        print self.E.s22.s
-        print self.cal.coefs_ntwks['source match'].s
-        
+    def test_accuracy_of_source_match(self):
         self.assertEqual(
             self.E.s22, 
             self.cal.coefs_ntwks['source match'],
             )
     
-    def test_reflection_tracking_accuracy(self):
-        print 'reflection tracking'
-        print (self.E.s21*self.E.s12).s
-        print self.cal.coefs_ntwks['reflection tracking'].s
+    def test_accuracy_of_reflection_tracking(self):
         self.assertEqual(
             self.E.s21*self.E.s12, 
             self.cal.coefs_ntwks['reflection tracking'],
@@ -105,25 +105,27 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
     
 class SDDLTest(OnePortTest):
     def setUp(self):
-        raise SkipTest('Doesnt work yet')
+        #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
         self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
         wg = self.wg
         wg.frequency = rf.F.from_f([100])
         
         self.E = wg.random(n_ports =2, name = 'E')
+        #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
+        #print self.E.s[0]
         
         ideals = [
                 wg.short( name='short'),
-                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 45.,'deg',name='ew'),
                 wg.delay_short( 90.,'deg',name='qw'),
-                wg.load(0, name='load'),
+                wg.load(.2+.2j, name='load'),
                 ]
         actuals = [
                 wg.short( name='short'),
-                wg.delay_short( 45.,'deg',name='ew'),
-                wg.delay_short( 90.,'deg',name='qw'),
-                wg.load(0, name='load'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 33.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
                 ]
         measured = [self.measure(k) for k in actuals]
         
@@ -132,11 +134,50 @@ class SDDLTest(OnePortTest):
             ideals = ideals, 
             measured = measured,
             )
+    
+    def test_from_coefs(self):
+        raise SkipTest('not applicable ')
+
+class SDDL2Test(OnePortTest):
+    def setUp(self):
+        #raise SkipTest('Doesnt work yet')
+        self.n_ports = 1
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        wg = self.wg
+        wg.frequency = rf.F.from_f([100])
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
+        #print self.E.s[0]
+        
+        ideals = [
+                wg.short( name='short'),
+                wg.delay_short( 45.,'deg',name='ew'),
+                wg.delay_short( 90.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
+                ]
+        actuals = [
+                wg.short( name='short'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 80.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
+                ]
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.SDDL2(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+    
+    def test_from_coefs(self):
+        raise SkipTest('not applicable ')
+
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,3), a=100*rf.mil,z0=50)
         wg= self.wg
         wg.frequency = rf.F.from_f([100])
         
@@ -160,7 +201,8 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-    
+        
+        
     def terminate(self, ntwk):
         '''
         terminate a measured network with the switch terms
@@ -230,8 +272,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     @nottest
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
-    
-        
+            
 class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
@@ -269,7 +310,6 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-
  
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
@@ -402,14 +442,13 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
         
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
-
 class UnknownThruTest(EightTermTest):
     def setUp(self):
-        raise SkipTest('Doesnt work yet')
+        
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
         wg= self.wg 
-        #   wg.frequency = rf.F.from_f([100])
+        #wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -421,7 +460,7 @@ class UnknownThruTest(EightTermTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='match'),
-            wg.impedance_mismatch(50,25)**wg.line(20,'deg',name='line')**wg.impedance_mismatch(1,50)
+            wg.impedance_mismatch(50,45)**wg.line(20,'deg',name='line')**wg.impedance_mismatch(45,50)
 
             ]
         
@@ -435,14 +474,54 @@ class UnknownThruTest(EightTermTest):
         measured = [self.measure(k) for k in actuals]
         
         self.cal = rf.UnknownThru(
-            is_reciprocal=False,
-            n_thrus = 1,
             ideals = ideals,
             measured = measured,
             switch_terms = [self.gamma_f, self.gamma_r]
             )
+
+class MRCTest(EightTermTest):
+    def setUp(self):
         
-    
+        self.n_ports = 2
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
+        wg= self.wg 
+        #wg.frequency = rf.F.from_f([100])
+        
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+        
+        
+        def delay_shorts(d1,d2):
+            ds1 = wg.delay_short(d1,'deg')
+            ds2 = wg.delay_short(d2,'deg')
+            return rf.two_port_reflect(ds1,ds2)
+        
+        actuals = [
+            wg.short(nports=2, name='short'),
+            delay_shorts(65,130),
+            delay_shorts(120,75),
+            wg.load(.2+.2j,nports=2, name='match'),
+            wg.impedance_mismatch(50,45)**wg.line(20,'deg',name='line')**wg.impedance_mismatch(45,50)
+
+            ]
+        
+        ideals = [
+            wg.short(nports=2, name='short'),
+            delay_shorts(45,90),
+            delay_shorts(90,45),
+            wg.load(.2+.2j,nports=2, name='match'),
+            wg.thru(name='thru'),
+            ]
+            
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.MRC(
+            ideals = ideals,
+            measured = measured,
+            switch_terms = [self.gamma_f, self.gamma_r]
+            )
         
 class SOLTTest2(SOLTTest):
     '''

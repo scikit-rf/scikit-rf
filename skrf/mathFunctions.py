@@ -1,5 +1,3 @@
-
-
 '''
 .. currentmodule:: skrf.mathFunctions
 =============================================
@@ -67,6 +65,7 @@ import numpy as npy
 from numpy import pi,angle,unwrap   
 from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
+
 
 global LOG_OF_NEG
 LOG_OF_NEG = -100
@@ -307,12 +306,37 @@ def find_correct_sign(z1,z2,z_approx):
     Returns 
     ----------
     z3 : npy.array
-        array build from z1 and z2 by 
+        array built from z1 and z2 by 
         z1 where sign(z1) == sign(z_approx), z2 else
     
     '''
     return npy.where(
     npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)    
+
+def find_closest(z1,z2,z_approx):
+    '''
+    Returns z1 or z2  depending on which is  closer to z_approx
+    
+    
+    Parameters
+    ------------
+    z1 : array-like
+        root 1
+    z2 : array-like
+        root 2
+    z_approx : array-like
+        approximate answer of z
+    
+    Returns 
+    ----------
+    z3 : npy.array
+        array built from z1 and z2
+        
+    '''
+    z1_dist = abs(z1-z_approx)
+    z2_dist = abs(z2-z_approx)
+    
+    return npy.where(z1_dist<z2_dist,z1, z2)  
 
 def sqrt_phase_unwrap(input):
     '''
@@ -372,6 +396,28 @@ def inf_to_num(x):
         x[npy.isneginf(x)] = -1*INF
     
 
+def cross_ratio(a,b,c,d):
+    '''
+    The cross ratio
+    
+    
+    defined as 
+    
+    .. math::     
+        
+        \frac{(a-b)(c-d)}{(a-d)*(c-b)}
+    
+    
+    Parameters
+    -------------
+    a,b,c,d : complex numbers, or arrays
+        mm
+    
+    
+    '''
+    return ((a-b)*(c-d))/((a-d)*(c-b))
+
+
 
 # old functions just for reference
 def complex2Scalar(input):
@@ -421,6 +467,7 @@ def rand_c(*args):
         1j-2j*npy.random.rand(npy.product(s)).reshape(s)
 
 
+
 def psd2TimeDomain(f,y, windowType='hamming'):
     '''convert a one sided complex spectrum into a real time-signal.
     takes
@@ -439,7 +486,7 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     # apply window function
     #TODO: make sure windowType exists in scipy.signal
     if (windowType != 'rect' ):
-        exec "window = signal.%s(%i)" % (windowType,len(f))
+        exec("window = signal.%s(%i)" % (windowType,len(f)))
         y = y * window
 
     #create other half of spectrum

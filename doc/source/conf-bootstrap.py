@@ -24,12 +24,17 @@ import sphinx_bootstrap_theme
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.0'
+
 #from subprocess import call
 #call(['make','notebooks'])
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, os.path.abspath('../sphinxext'))
+#sys.path.insert(0, os.path.abspath('../../build/lib.linux-x86_64-2.7/'))
 
+import matplotlib
+# Force matplotlib to not use any Xwindows backend.
+matplotlib.use('Agg')
 
 run_notebooks = False
 notebook_source_dir = '.'
@@ -47,12 +52,11 @@ extensions = [
     'sphinx.ext.viewcode',
     'numpydoc',
     #'inheritance_diagram',
-    'ipython_console_highlighting',
-    'ipython_directive',
+    'IPython.sphinxext.ipython_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
     'matplotlib.sphinxext.only_directives',
     'matplotlib.sphinxext.plot_directive',
     ]
-
 
 
 
