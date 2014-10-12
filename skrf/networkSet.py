@@ -36,10 +36,10 @@ NetworkSet Class
 '''
 
 import os 
-from network import average as network_average
-from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+from . network import average as network_average
+from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 
-import mathFunctions as mf
+from . import mathFunctions as mf
 import zipfile
 from copy import deepcopy
 import warnings
@@ -493,10 +493,10 @@ class NetworkSet(object):
                 plb.show()
             if savefigs:
                 plb.savefig('out_%.5i'%idx+'.png')
-                print ('out_%.5i'%idx+'.png')
+                print(('out_%.5i'%idx+'.png'))
         
         if savefigs:
-            print '\nto create video paste this:\n\n!ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi\n'
+            print('\nto create video paste this:\n\n!ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi\n')
         if was_interactive:
             plb.ion()
         
@@ -600,7 +600,7 @@ class NetworkSet(object):
 
         return (ntwk_mean, lower_bound, upper_bound)
 
-    def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
+    def plot_uncertainty_bounds_component(self,attribute,m=0,n=0,\
             type='shade',n_deviations=3, alpha=.3, color_error =None,markevery_error=20,
             ax=None,ppf=None,kwargs_error={},*args,**kwargs):
         '''
@@ -641,64 +641,50 @@ class NetworkSet(object):
                 similar.  uncerainty for wrapped phase blows up at +-pi.
 
         '''
+        ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
+                's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
+                's_db':'Magnitude (dB)'}
+
+        ax = plb.gca()
+
+        ntwk_mean = self.__getattribute__('mean_'+attribute)
+        ntwk_std = self.__getattribute__('std_'+attribute)
+        ntwk_std.s = n_deviations * ntwk_std.s
+
+        upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
+        lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
         
-        if m is None:
-            M = range(self[0].number_of_ports)
-        else:
-            M = [m]
-        if n is None:
-            N = range(self[0].number_of_ports)
-        else:
-            N = [n]
-
-        for m in M:
-            for n in N:
-                
         
-                ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
-                        's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                        's_db':'Magnitude (dB)'}
+        if ppf is not None:
+            if type =='bar':
+                warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
+            ntwk_mean.s = ppf(ntwk_mean.s)
+            upper_bound = ppf(upper_bound)
+            lower_bound = ppf(lower_bound)
+            lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
 
-                ax = plb.gca()
+        if type == 'shade':
+            ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+            if color_error is None:
+                color_error = ax.get_lines()[-1].get_color()
+            ax.fill_between(ntwk_mean.frequency.f_scaled, \
+                    lower_bound,upper_bound, alpha=alpha, color=color_error,
+                    **kwargs_error)
+            #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
+        elif type =='bar':
+            ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+            if color_error is None:
+                color_error = ax.get_lines()[-1].get_color()
+            ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
+                    ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
+                    yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
+                    color=color_error,**kwargs_error)
 
-                ntwk_mean = self.__getattribute__('mean_'+attribute)
-                ntwk_std = self.__getattribute__('std_'+attribute)
-                ntwk_std.s = n_deviations * ntwk_std.s
+        else:
+            raise(ValueError('incorrect plot type'))
 
-                upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
-                lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
-                
-                
-                if ppf is not None:
-                    if type =='bar':
-                        warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
-                    ntwk_mean.s = ppf(ntwk_mean.s)
-                    upper_bound = ppf(upper_bound)
-                    lower_bound = ppf(lower_bound)
-                    lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
-
-                if type == 'shade':
-                    ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
-                    if color_error is None:
-                        color_error = ax.get_lines()[-1].get_color()
-                    ax.fill_between(ntwk_mean.frequency.f_scaled, \
-                            lower_bound,upper_bound, alpha=alpha, color=color_error,
-                            **kwargs_error)
-                    #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
-                elif type =='bar':
-                    ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
-                    if color_error is None:
-                        color_error = ax.get_lines()[-1].get_color()
-                    ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
-                            ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
-                            yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
-                            color=color_error,**kwargs_error)
-
-                else:
-                    raise(ValueError('incorrect plot type'))
-
-                ax.set_ylabel(ylabel_dict.get(attribute,''))
-                ax.axis('tight')
+        ax.set_ylabel(ylabel_dict.get(attribute,''))
+        ax.axis('tight')
     
     
     def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
@@ -1175,5 +1161,5 @@ def getset(ntwk_dict, s, *args, **kwargs):
     if len(ntwk_list) > 0:
         return NetworkSet( ntwk_list,*args, **kwargs)
     else:
-        print 'Warning: No keys in ntwk_dict contain \'%s\''%s
+        print('Warning: No keys in ntwk_dict contain \'%s\''%s)
         return None 

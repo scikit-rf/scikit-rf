@@ -131,7 +131,7 @@ class PNA(GpibInstrument):
         Write a msg to the instrument. 
         '''
         if self.echo:
-            print msg 
+            print(msg)
         return GpibInstrument.write(self,msg, *args, **kwargs)
     
     write.__doc__ = GpibInstrument.write.__doc__

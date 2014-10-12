@@ -7,7 +7,7 @@ The naming convention for these classes is
         Standard_UnknownQuantity
 '''
 
-from parametricStandard import ParametricStandard
+from . parametricStandard import ParametricStandard
 
 class Parameterless(ParametricStandard):
     '''

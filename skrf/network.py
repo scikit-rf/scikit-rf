@@ -1,4 +1,3 @@
-
 '''
 .. module:: skrf.network
 ========================================
@@ -123,10 +122,17 @@ Misc Functions
 
 
 '''
+from six.moves import xrange
+
 import os
 import warnings
-import cPickle as pickle    
-from cPickle import UnpicklingError
+try:
+    import cPickle as pickle    
+    from cPickle import UnpicklingError
+except ImportError:
+    import pickle as pickle
+    from pickle import UnpicklingError
+
 from copy import deepcopy as copy
 import re
 from numbers import Number
@@ -141,17 +147,18 @@ from scipy import stats,signal        # for Network.add_noise_*, and Network.win
 from scipy.interpolate import interp1d # for Network.interpolate()
 from numpy import fft
 import unittest # fotr unitest.skip 
-import  mathFunctions as mf
 
-from frequency import Frequency
-from plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
-from tlineFunctions import zl_2_Gamma0
-from util import get_fid, get_extn, find_nearest_index,slice_domain
+from . import mathFunctions as mf
+    
+from . frequency import Frequency
+
+from . plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
+from . tlineFunctions import zl_2_Gamma0
+from . util import get_fid, get_extn, find_nearest_index,slice_domain
 ## later imports. delayed to solve circular dependencies
 #from io.general import read, write
 #from io import touchstone
 #from io.general import network_2_spreadsheet
-
 
 
 
@@ -342,7 +349,7 @@ class Network(object):
         '''
         
         # allow for old kwarg for backward compatability
-        if kwargs.has_key('touchstone_filename'):
+        if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
         
         self.name = name
@@ -363,14 +370,14 @@ class Network(object):
                 fid = get_fid(file)
                 self.read_touchstone(fid)
             
-            if name is None and isinstance(file,basestring):
+            if name is None and isinstance(file,str):
                 name = os.path.splitext(os.path.basename(file))[0]
         
        
         
         # allow properties to be set through the constructor 
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
-            if kwargs.has_key(attr):
+            if attr in kwargs:
                 self.__setattr__(attr,kwargs[attr])
         
         
@@ -726,7 +733,7 @@ class Network(object):
                         # plot the desired attribute vs frequency
                         plot_complex_polar(
                             z = getattr(self,prop_name)[:,m,n],
- 							show_legend = show_legend, ax = ax,
+                             show_legend = show_legend, ax = ax,
                             *args, **kwargs)
 
                 if was_interactive:
@@ -818,7 +825,7 @@ class Network(object):
                         # plot the desired attribute vs frequency
                         plot_complex_rectangular(
                             z = getattr(self,prop_name)[:,m,n],
- 							show_legend = show_legend, ax = ax,
+                             show_legend = show_legend, ax = ax,
                             *args, **kwargs)
 
                 #if was_interactive:
@@ -1207,7 +1214,7 @@ class Network(object):
                     #try and re-shape z0 to match s
                     self._z0=self._z0*npy.ones(self.s.shape[:-1])
                 except(AttributeError):
-                    print ('Warning: Network has improper \'z0\' shape.')
+                    print('Warning: Network has improper \'z0\' shape.')
                     #they have yet to set s .
 
             elif len(npy.shape(self._z0)) ==1:
@@ -1232,7 +1239,7 @@ class Network(object):
             return self._z0
 
         except(AttributeError):
-            #print 'Warning: z0 is undefined. Defaulting to 50.'
+            #print('Warning: z0 is undefined. Defaulting to 50.')
             self.z0=50
             return self.z0 #this is not an error, its a recursive call
 
@@ -1244,7 +1251,7 @@ class Network(object):
                         #try and re-shape z0 to match s
                         z0=z0*npy.ones(self.s.shape[:-1])
                 except(AttributeError):
-                        print ('Warning: you should store a Network\'s \'s\' matrix before its \'z0\'')
+                        print('Warning: you should store a Network\'s \'s\' matrix before its \'z0\'')
                         #they have yet to set s .
                         pass
         '''
@@ -1462,30 +1469,30 @@ class Network(object):
         '''
         return abs(1-self.s/self.s.swapaxes(1,2))
         
-	## NETWORK CLASIFIERs
-	def is_reciprocal(self):
-		'''
-		test for reciprocity
-		'''
-		raise(NotImplementedError)
-	
-	def is_symmetric(self):
-		'''
-		test for symmetry
-		'''
-		raise(NotImplementedError)
-	
-	def is_passive(self):
-		'''
-		test for passivity 
-		'''
-		raise(NotImplementedError)		
-	
-	def is_lossless(self):
-		'''
-		test for losslessness
-		'''
-		raise(NotImplementedError)	
+    ## NETWORK CLASIFIERs
+    def is_reciprocal(self):
+        '''
+        test for reciprocity
+        '''
+        raise(NotImplementedError)
+    
+    def is_symmetric(self):
+        '''
+        test for symmetry
+        '''
+        raise(NotImplementedError)
+    
+    def is_passive(self):
+        '''
+        test for passivity 
+        '''
+        raise(NotImplementedError)        
+    
+    def is_lossless(self):
+        '''
+        test for losslessness
+        '''
+        raise(NotImplementedError)    
     
     
     
@@ -1625,7 +1632,7 @@ class Network(object):
 
 
         '''
-        from io import touchstone
+        from .io import touchstone
         touchstoneFile = touchstone.Touchstone(filename)
         
         if touchstoneFile.get_format().split()[1] != 's':
@@ -1648,7 +1655,7 @@ class Network(object):
             try: 
                 self.name = os.path.basename( os.path.splitext(touchstoneFile.filename)[0])
             except():
-                print 'warning: couldnt inspect network name'
+                print('warning: couldnt inspect network name')
                 self.name=''
             pass
         #TODO: add Network property `comments` which is read from
@@ -1766,7 +1773,7 @@ class Network(object):
                 outputFile.write ('!freq')
                 for m in range(1,4):
                     for n in range(1,4):
-                        outputFile.write(" Re" +'S'+`m`+ `n`+ " Im"+'S'+`m`+ `n`)
+                        outputFile.write(" ReS{m}{n}  ImS{m}{n}".format(m=m, n=n))
                     outputFile.write('\n!')
                 outputFile.write('\n')
                 # write out data
@@ -1798,8 +1805,7 @@ class Network(object):
                     for n in range(1,1+self.number_of_ports):
                         if (n > 0 and (n%4) == 0 ) :
                             outputFile.write('\n!')
-                        outputFile.write(' ReS' + `m` + ',' + `n`\
-                            + ' ImS' + `m` + ',' + `n`)
+                            outputFile.write(" ReS{m}{n}  ImS{m}{n}".format(m=m, n=n))
                     outputFile.write('\n!')
                 outputFile.write('\n')
                 # write out data
@@ -1893,7 +1899,7 @@ class Network(object):
         skrf.io.general.write
         skrf.io.general.read
         '''
-        from io.general import read
+        from .io.general import read
         self.copy_from(read(*args, **kwargs))
         
     def write_spreadsheet(self, *args, **kwargs):
@@ -1904,7 +1910,7 @@ class Network(object):
         ---------
         skrf.io.general.network_2_spreadsheet
         '''
-        from io.general import network_2_spreadsheet
+        from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
     
     def to_dataframe(self, *args, **kwargs):
@@ -1915,7 +1921,7 @@ class Network(object):
         ---------
         skrf.io.general.network_2_dataframe
         '''
-        from io.general import network_2_dataframe
+        from .io.general import network_2_dataframe
         return network_2_dataframe(self, *args, **kwargs)
         
     # interpolation
@@ -2431,32 +2437,6 @@ class Network(object):
 
     
     def plot_it_all(self,*args, **kwargs):
-    	'''
-    	Plots dB, deg, smith, and complex in subplots
-
-    	Plots the magnitude in dB in subplot 1, the phase in degrees in
-    	subplot 2, a smith chart in subplot 3, and a complex plot in
-    	subplot 4.
-    	
-    	Parameters
-        -----------
-        \*args : arguments, optional
-                passed to the matplotlib.plot command
-        \*\*kwargs : keyword arguments, optional
-                passed to the matplotlib.plot command
-                
-        See Also
-        --------
-        plot_s_db - plot magnitude (in dB) of s-parameters vs frequency
-        plot_s_deg - plot phase of s-parameters (in degrees) vs frequency
-        plot_s_smith - plot complex s-parameters on smith chart
-        plot_s_complex - plot complex s-parameters in the complex plane
-
-        Examples
-        ---------
-        >>> from skrf.data import ring_slot
-        >>> ring_slot.plot_it_all()
-    	'''
         plb.subplot(221)
         getattr(self,'plot_s_db')(*args, **kwargs)
         plb.subplot(222)
@@ -2671,15 +2651,15 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
         ntwkC.z0[:,k:] = npy.hstack((ntwkC.z0[:,k+1:], ntwkB.z0[:,[l]]))
-        ntwkC.renumber(from_ports= [ntwkC.nports-1] + range(k, ntwkC.nports-1),
-                       to_ports=range(k, ntwkC.nports))
+        ntwkC.renumber(from_ports= [ntwkC.nports-1] + list(range(k, ntwkC.nports-1)),
+                       to_ports=list(range(k, ntwkC.nports)))
 
     # call s-matrix connection function
     ntwkC.s = connect_s(ntwkC.s,k,ntwkB.s,l)
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = npy.hstack(
-        (npy.delete(ntwkA.z0, range(k,k+num), 1), npy.delete(ntwkB.z0, range(l,l+num), 1)))
+        (npy.delete(ntwkA.z0, list(range(k,k+num)), 1), npy.delete(ntwkB.z0, list(range(l,l+num)), 1)))
 
     # if we're connecting more than one port, call innerconnect to finish the job
     if num>1:
@@ -2687,8 +2667,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     
     # if ntwkB is a 2port, then keep port indecies where you expect.
     if ntwkB.nports == 2 and ntwkA.nports>2:
-        from_ports = range(ntwkC.nports)
-        to_ports = range(ntwkC.nports)
+        from_ports = list(range(ntwkC.nports))
+        to_ports = list(range(ntwkC.nports))
         to_ports.pop(k); 
         to_ports.append(k)
         
@@ -4151,10 +4131,10 @@ def renormalize_s_pw(s, z_old, z_new):
     Examples
     ------------
     >>> z_old = 50.+0.j # original reference impedance
-	>>> z_new = 50.+50.j # new reference impedance to change to
-	>>> load = rf.wr10.load(0.+0.j, nports=1, z0=z_old)
-	>>> s = load.s
-	>>> renormalize_s_powerwave(s, z_old, z_new)
+    >>> z_new = 50.+50.j # new reference impedance to change to
+    >>> load = rf.wr10.load(0.+0.j, nports=1, z0=z_old)
+    >>> s = load.s
+    >>> renormalize_s_powerwave(s, z_old, z_new)
     '''
 
     nfreqs, nports, nports = s.shape

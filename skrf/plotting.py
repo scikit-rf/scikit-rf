@@ -135,7 +135,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     if not border: 
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
         
     
@@ -143,7 +143,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         #Clear axis
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
 
         #Will make annotations only if the radius is 1 and it is the impedance smith chart
@@ -356,7 +356,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
         title=title, show_legend=show_legend, axis_equal=axis_equal,
         ax=ax, *args, **kwargs)
 
-def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
+def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imaginary', title='Complex Plane', show_legend=True,
     axis='equal', ax=None, force_chart = False, *args, **kwargs):
     '''
@@ -364,8 +364,8 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
 
     Parameters
     ------------
-    s : complex array-like
-        reflection-coeffient-like data to plot
+    z : array-like, of complex data
+        data to plot
     smith_r : number
         radius of smith chart
     chart_type : ['z','y']
@@ -405,7 +405,7 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
         if len(ax.patches) == 0:
             smith(ax=ax, smithR = smith_r, chart_type=chart_type)
 
-    plot_complex_rectangular(s, x_label=x_label, y_label=y_label,
+    plot_complex_rectangular(z, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
@@ -473,12 +473,12 @@ def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
         if format is None:
             plb.savefig(dir+fileName)
             if echo:
-                print (dir+fileName)
+                print((dir+fileName))
         else:
             for fmt in format:
                 plb.savefig(dir+fileName+'.'+fmt, format=fmt)
                 if echo:
-                    print (dir+fileName+'.'+fmt)
+                    print((dir+fileName+'.'+fmt))
 saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):

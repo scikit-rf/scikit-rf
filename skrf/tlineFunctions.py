@@ -108,7 +108,7 @@ from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
          interp, linspace, shape,zeros, reshape
 
 from scipy.constants import mu_0
-import mathFunctions as mf
+from . import mathFunctions as mf
 
 INF = 1e99
 ONE = 1.0 + 1/1e14
@@ -419,7 +419,7 @@ def reflection_coefficient_at_theta(Gamma0,theta):
     '''
     Gamma0 = array(Gamma0, dtype=complex).reshape(-1)
     theta = array(theta, dtype=complex).reshape(-1)
-    return Gamma0 * exp(-2j* theta)
+    return Gamma0 * exp(2j* theta)
 
 def input_impedance_at_theta(z0,zl, theta):
     '''
