@@ -9,7 +9,7 @@ Rectangular Waveguide class
 from scipy.constants import  epsilon_0, mu_0,pi,c
 from numpy import sqrt, exp, sinc
 import numpy as npy
-from media import Media
+from .media import Media
 from ..data import materials
 from ..tlineFunctions import skin_depth
 from ..network import s2y,y2s
@@ -230,7 +230,7 @@ class RectangularWaveguide(Media):
         '''
         v = 1/sqrt(self.ep*self.mu)
         if not ( self.m==1 and self.n==0):
-            print ('f_cutoff not verified as correct for this mode ')
+            print('f_cutoff not verified as correct for this mode ')
         return max(self.m*v/(2*self.a), self.n*v/(2*self.b))
     
     @property

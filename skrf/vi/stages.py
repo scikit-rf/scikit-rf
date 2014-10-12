@@ -29,7 +29,7 @@ class ESP300(GpibInstrument):
         esp = ESP300()
         esp.current_axis = 1
         esp.position = 10
-        print esp.position
+        print(esp.position)
     '''
     UNIT_DICT = {\
             'enoder count':0,\

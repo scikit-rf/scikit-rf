@@ -13,7 +13,7 @@ A coaxial transmission line defined in terms of its inner/outer diameters and pe
 from scipy.constants import  epsilon_0, mu_0, pi
 from numpy import sqrt, log
 from ..tlineFunctions import surface_resistivity
-from distributedCircuit import DistributedCircuit
+from .distributedCircuit import DistributedCircuit
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99

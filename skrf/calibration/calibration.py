@@ -52,10 +52,13 @@ import os
 from copy import deepcopy, copy
 import itertools
 from warnings import warn
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
 
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
-    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c,cross_ratio
+    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c, cross_ratio
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
@@ -203,7 +206,7 @@ class Calibration(object):
                 raise(ValueError('measured Networks dont have matching frequencies.'))
         # ensure that all ideals have same frequency of the measured
         # if not, then attempt to interpolate
-        for k in range(len(self.ideals)):
+        for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0]:
                 print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
                 try:
@@ -211,7 +214,7 @@ class Calibration(object):
                     # the meaurement frequency
                     self.ideals[k].interpolate_self(\
                         self.measured[0].frequency)
-                    print ('Success')
+                    print('Success')
                     
                 except:
                     raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
@@ -919,8 +922,8 @@ class OnePort(Calibration):
         numStds = self.nstandards
         numCoefs=3
         
-        mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
-        iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
+        mList = [self.measured[k].s.reshape((-1,1)) for k in list(range(numStds))]
+        iList = [self.ideals[k].s.reshape((-1,1)) for k in list(range(numStds))]
         
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
@@ -935,11 +938,11 @@ class OnePort(Calibration):
         # the matrix M. where M = i1, 1, i1*m1
         #                         i2, 1, i2*m2
         #                                 ...etc
-        for f in range(fLength):
+        for f in list(range(fLength)):
             #create  m, i, and 1 vectors
             one = npy.ones(shape=(numStds,1))
-            m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
-            i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
+            m = npy.array([ mList[k][f] for k in list(range(numStds))]).reshape(-1,1)# m-vector at f
+            i = npy.array([ iList[k][f] for k in list(range(numStds))]).reshape(-1,1)# i-vector at f
     
             # construct the matrix
             Q = npy.hstack([i, one, i*m])
@@ -1637,9 +1640,9 @@ class EightTerm(Calibration):
         # the matrix M. where M =       e00 + S11i
         #                                                       i2, 1, i2*m2
         #                                                                       ...etc
-        for f in range(fLength):
+        for f in list(range(fLength)):
             # loop through standards and fill matrix
-            for k in range(numStds):
+            for k in list(range(numStds)):
                 m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
                 Q[k*4:k*4+4,:] = npy.array([\
                         [ 1, i[0,0]*m[0,0], -i[0,0],    0,  i[1,0]*m[0,1],        0,         0   ],\
@@ -1703,7 +1706,7 @@ class EightTerm(Calibration):
         
         ntwk = self.unterminate(ntwk)  
         
-        for f in range(len(ntwk.s)):
+        for f in list(range(len(ntwk.s))):
             t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
             caled.s[f,:,:] = inv(-1*m.dot(t3)+t1).dot(m.dot(t4)-t2)
@@ -1717,7 +1720,7 @@ class EightTerm(Calibration):
         
         T1,T2,T3,T4 = self.T_matrices
         
-        for f in range(len(ntwk.s)):
+        for f in list(range(len(ntwk.s))):
             t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
             embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
@@ -2150,7 +2153,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     
     
     fm = [ -1* npy.trace(npy.dot(thru_m.t[f], npy.linalg.inv(line_m.t[f]))) \
-        for f in range(npts)]
+        for f in list(range(npts))]
     one = npy.ones(npts)
     zero = npy.zeros(npts)
     

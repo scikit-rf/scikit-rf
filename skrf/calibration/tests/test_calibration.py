@@ -1,6 +1,9 @@
 import unittest
 import os
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
 import skrf as rf
 import numpy as npy
 from nose.tools import nottest
