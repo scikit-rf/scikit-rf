@@ -339,16 +339,19 @@ class RectangularWaveguide(Media):
         
         .. math:: 
         
-            \\sigma_c = \\frac{\\sigma}{\\k_w^2}
+            \\sigma_c = \\frac{\\sigma}{k_w^2}
+            
             
         where 
             
         .. math::
             
-            k_w = 1 + e^{(-\\delta/2h)^{1.6}}
-        
-            \\delta = skin depth 
-            h = surface roughness 
+            k_w = 1 + e^{(-\\delta/2h)^{1.6}} 
+            
+            \\delta = \\mbox{skin depth} 
+            
+            h = \\mbox{surface roughness } 
+            
             
         This is taken from Ansoft HFSS help documents.
         
@@ -357,7 +360,7 @@ class RectangularWaveguide(Media):
         References
         --------------
         
-        .. [#] Electromagnetic Waves and Antennas by Sophocles J. Orfanidis 
+        .. [#] Chapter 9, (eq 9.8.1) of Electromagnetic Waves and Antennas by Sophocles J. Orfanidis 
         http://eceweb1.rutgers.edu/~orfanidi/ewa/
         '''
         

@@ -38,6 +38,7 @@ Misc Functions
 import pylab as plb
 import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
+from matplotlib.pyplot import quiver
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
 
@@ -549,7 +550,6 @@ def scrape_legend(n=None, ax=None):
     k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
     ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
 
-
 def func_on_all_figs(func, *args, **kwargs):
     '''
     runs a function after making all open figures current. 
@@ -575,3 +575,10 @@ def func_on_all_figs(func, *args, **kwargs):
             plb.draw()
 
 foaf = func_on_all_figs
+
+def plot_vector(a, off=0+0j, *args, **kwargs):
+    '''
+    plot a 2d vector 
+    '''
+    return quiver(off.real,off.imag,a.real,a.imag,scale_units ='xy', 
+           angles='xy',scale=1, *args, **kwargs)
