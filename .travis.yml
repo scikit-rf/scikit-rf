@@ -15,22 +15,20 @@ before_install:
     
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-  
-# Create the basic testing environment
-  # ------------------------------------
+   
   - conda config --set always_yes yes --set changeps1 no
   - conda update conda
+  
+
+install: 
+
+
   - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
 
-  # Customise the testing environment
-  # ---------------------------------
-  - conda config --add channels rsignell
-  - conda install numpy matplotlib scipy
-# command to install dependencies
-install: 
+  - conda install numpy matplotlib scipy pandas
   - pip install -r tools/travis-requirements.txt
   - python setup.py install
 # command to run tests
 script: 
-  - nosetests --exclude-dir=vi
+  - nosetests --exclude-dir=skrf/vi
