@@ -4,14 +4,29 @@ python:
 
 before_install:
   # Install conda
-  - sudo pip install conda
-  # install deps
-  - sudo conda init
-  - sudo conda update --yes  conda 
-  - deps='pip numpy pandas requests nose numpydoc sphinx'
-  - conda create -p $HOME/py --yes $deps "python=$TRAVIS_PYTHON_VERSION"
-  - export PATH=$HOME/py/bin:$PATH
+  - sudo apt-get update 
+  # Install miniconda
+  # -----------------
+  - if [[ "$TRAVIS_PYTHON_VERSION" == 2* ]]; then
+      wget http://repo.continuum.io/miniconda/Miniconda-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget http://repo.continuum.io/miniconda/Miniconda3-3.4.2-Linux-x86_64.sh -O miniconda.sh;
+    fi
+    
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
   
+# Create the basic testing environment
+  # ------------------------------------
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update conda
+  - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
+  - source activate test-environment
+
+  # Customise the testing environment
+  # ---------------------------------
+  - conda config --add channels rsignell
+  - conda install numpy matplotlib scipy
 # command to install dependencies
 install: 
   - pip install -r tools/travis-requirements.txt
