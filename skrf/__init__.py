@@ -11,6 +11,7 @@ methods. It does this in two ways; import all into the current namespace,
 and import modules themselves for coherent  structured referencing
 '''
 
+__version__ = '0.15.1'
 ## Import all  module names for coherent reference of name-space
 import media
 import calibration
