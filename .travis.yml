@@ -36,5 +36,5 @@ script:
   - python -c "import scipy; print('scipy %s' % scipy.__version__)"
   - python -c "import skrf; print('skrf %s' % skrf.__version__)"
   # move somewhere so that nosetests skrf tests the module, not the dir
-  - cd tools/
+  #- cd tools/
   - nosetests skrf --exclude-dir=../skrf/vi
