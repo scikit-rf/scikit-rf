@@ -39,4 +39,4 @@ script:
   - python -c "import skrf; print('skrf %s' % skrf.__version__)"
   # move somewhere so that nosetests skrf tests the module, not the dir
   #- cd tools/
-  - nosetests skrf --exclude-dir=skrf/vi
+  - nosetests skrf -c nose.cfg

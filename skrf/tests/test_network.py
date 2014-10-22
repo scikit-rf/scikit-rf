@@ -3,8 +3,7 @@ import os
 import numpy as npy
 import cPickle as pickle 
 import skrf as rf
-
-
+from nose.plugins.skip import SkipTest
 class NetworkTestCase(unittest.TestCase):
     '''
     Network class operation test case.
@@ -71,7 +70,9 @@ class NetworkTestCase(unittest.TestCase):
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
     
+    
     def test_connect_fast(self):
+        raise SkipTest('not supporting this function currently ')
         self.assertEqual(rf.connect_fast(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
 

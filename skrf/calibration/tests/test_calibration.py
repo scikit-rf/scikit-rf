@@ -2,7 +2,7 @@ import unittest
 import os
 import cPickle as pickle
 import skrf as rf
-import numpy as npy
+import numpy as npyski
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
