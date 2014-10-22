@@ -1,5 +1,6 @@
 
 xlwt-future>=0.8.0
 xlrd>=0.6.1
+setuptools>=0.7.0
 nose-exclude
 coveralls
