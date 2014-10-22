@@ -28,7 +28,7 @@ install:
   - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
 
-  - conda install numpy matplotlib scipy pandas nose pip setuptools
+  - conda install numpy matplotlib scipy pandas nose pip 
   - pip install -r tools/travis-requirements.txt
   - python setup.py install
 # command to run tests
