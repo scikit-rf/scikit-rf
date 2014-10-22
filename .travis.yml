@@ -40,3 +40,6 @@ script:
   # move somewhere so that nosetests skrf tests the module, not the dir
   #- cd tools/
   - nosetests skrf -c nose.cfg
+
+after_success:
+  - coveralls
