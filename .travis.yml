@@ -26,7 +26,7 @@ install:
   - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
   - source activate test-environment
 
-  - conda install numpy matplotlib scipy pandas
+  - conda install numpy matplotlib scipy pandas nose pip 
   - pip install -r tools/travis-requirements.txt
   - python setup.py install
 # command to run tests
@@ -37,4 +37,4 @@ script:
   - python -c "import skrf; print('skrf %s' % skrf.__version__)"
   # move somewhere so that nosetests skrf tests the module, not the dir
   #- cd tools/
-  - nosetests skrf --exclude-dir=../skrf/vi
+  - nosetests skrf --exclude-dir=skrf/vi
