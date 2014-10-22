@@ -1,5 +1,6 @@
 
 [![Build Status](https://travis-ci.org/scikit-rf/scikit-rf.svg?branch=master)](https://travis-ci.org/scikit-rf/scikit-rf)
+[![Coverage Status](https://coveralls.io/repos/scikit-rf/scikit-rf/badge.png)](https://coveralls.io/r/scikit-rf/scikit-rf)
 ##Description 
 
 **scikit-rf** (aka `skrf`) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented 
