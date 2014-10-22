@@ -3,6 +3,7 @@ python:
   - 2.7
 
 before_install:
+  - "export DISPLAY=:99.0"
   # Install conda
   - sudo apt-get update 
   # Install miniconda
