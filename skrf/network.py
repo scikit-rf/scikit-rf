@@ -367,15 +367,14 @@ class Network(object):
                 name = os.path.splitext(os.path.basename(file))[0]
         
        
+        if self.frequency is not None and f_unit is not None:
+            self.frequency.unit = f_unit
+        
         
         # allow properties to be set through the constructor 
         for attr in PRIMARY_PROPERTIES + ['frequency','z0','f']:
             if kwargs.has_key(attr):
                 self.__setattr__(attr,kwargs[attr])
-        
-        
-        if self.frequency is not None and f_unit is not None:
-            self.frequency.unit = f_unit
         
         
         #self.nports = self.number_of_ports
