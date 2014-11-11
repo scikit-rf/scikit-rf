@@ -995,7 +995,7 @@ class OnePort(Calibration):
         embedded.name = ntwk.name
         return embedded
 
-class SDDL(OnePort):
+class SDDLWeikle(OnePort):
     '''
     Short Delay Delay Load (Oneport Calibration)
     
@@ -1092,7 +1092,7 @@ class SDDL(OnePort):
                 'source match':e11\
                 }
 
-class SDDL2(OnePort):
+class SDDL(OnePort):
     '''
     Short Delay Delay Load (Oneport Calibration)
     
@@ -1164,7 +1164,7 @@ class SDDL2(OnePort):
         
 class PHN(OnePort):
     '''
-    Pair of Half Known (One Port self-calibration)
+    Pair of Half Knowns (One Port self-calibration)
     '''
     family = 'PHN'
     def __init__(self, measured, ideals, *args, **kwargs):
@@ -1172,7 +1172,6 @@ class PHN(OnePort):
         
         
         '''
-        
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         
@@ -1212,18 +1211,15 @@ class PHN(OnePort):
             p =  poly1d([A[k],B[k],C[k]])
             b1[k],b2[k] = p.r
         
-        # temporarily translate into s-parameters to aviod infinity
-        #b1_s = z2s(b1.reshape(-1,1,1),1).flatten()
-        #b2_s = z2s(b2.reshape(-1,1,1),1).flatten()
+        # temporarily translate into s-parameters so make the root-choice
+        #  choosing a root in impedance doesnt generally work for typical
+        # calibration standards 
+        b1_s = z2s(b1.reshape(-1,1,1),1)
+        b2_s = z2s(b2.reshape(-1,1,1),1)
+        b_guess = z2s(b.reshape(-1,1,1),1)
+        b_found_s = find_closest(b1_s,b2_s,b_guess)
         
-        #b_guess = self.ideals[1].s.flatten()
-        #b_found_s = find_closest(b1_s,b2_s,b_guess)
-        
-        #b_found = s2z(b_found_s.reshape(-1,1,1),1).flatten()
-        
-        
-        
-        b_found = find_closest(b1,b2,b)
+        b_found = s2z(b_found_s.reshape(-1,1,1),1).flatten()
         a_found = -(f*b_found + g)/(z*b_found + e)
         
         self.ideals[0].s = z2s(a_found.reshape(-1,1,1),1)

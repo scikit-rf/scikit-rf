@@ -135,7 +135,7 @@ class SDDLTest(OnePortTest):
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
 
-class SDDL2Test(OnePortTest):
+class SDDLWeikle(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
@@ -161,7 +161,7 @@ class SDDL2Test(OnePortTest):
                 ]
         measured = [self.measure(k) for k in actuals]
         
-        self.cal = rf.SDDL2(
+        self.cal = rf.SDDLWeikle(
             is_reciprocal = True, 
             ideals = ideals, 
             measured = measured,
@@ -194,7 +194,7 @@ class SDDMTest(OnePortTest):
                 ]
         measured = [self.measure(k) for k in actuals]
         
-        self.cal = rf.SDDL2(
+        self.cal = rf.SDDL(
             is_reciprocal = True, 
             ideals = ideals, 
             measured = measured,
@@ -216,14 +216,14 @@ class PHNTest(OnePortTest):
         known2 = wg.load(-.5-.2j)#random()
         
         ideals = [
-                wg.delay_short( 45.,'deg',name='ew'),
-                wg.delay_short( 90.,'deg',name='qw'),
+                wg.delay_short( 45.,'deg',name='ideal ew'),
+                wg.delay_short( 90.,'deg',name='ideal qw'),
                 known1,
                 known2,
                 ]
         actuals = [
-                wg.delay_short( 45.,'deg',name='ew'),
-                wg.delay_short( 120.,'deg',name='qw'),
+                wg.delay_short( 30.,'deg',name='true ew'),
+                wg.delay_short( 95.,'deg',name='true qw'),
                 known1,
                 known2,
                 ]
@@ -234,14 +234,7 @@ class PHNTest(OnePortTest):
             ideals = ideals, 
             measured = measured,
             )
-            
-        self.cal.run()
-        from pylab import * 
-        actuals[0].plot_s_smith()
-        actuals[1].plot_s_smith()
-        self.cal.ideals[0].plot_s_smith()
-        self.cal.ideals[1].plot_s_smith()
-        draw();show()
+        
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
 
