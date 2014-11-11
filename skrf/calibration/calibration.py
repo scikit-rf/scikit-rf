@@ -46,7 +46,7 @@ Partial Calibrations
 '''
 import numpy as npy
 from numpy import linalg
-from numpy import mean, std, angle, real, imag, exp, ones, zeros
+from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d
 import pylab as plb
 import os
 from copy import deepcopy, copy
@@ -1154,17 +1154,83 @@ class SDDL2(OnePort):
         cr_alpha = cross_ratio(b,a,c,d)
         cr_beta = cross_ratio(a,b,c,d)
         
-        
         alpha = imag(cr_alpha)/real(cr_alpha/l)
         beta = imag(cr_beta)/real(cr_beta/l)
-        
         
         self.ideals[1].s = z2s(alpha*1j,1)
         self.ideals[2].s = z2s(beta*1j,1)
     
         OnePort.run(self)
         
-
+class PHN(OnePort):
+    '''
+    Pair of Half Known (One Port self-calibration)
+    '''
+    family = 'PHN'
+    def __init__(self, measured, ideals, *args, **kwargs):
+        '''
+        
+        
+        '''
+        
+        if (len(measured) != 4) or (len(ideals)) != 4:
+            raise IndexError('Incorrect number of standards.')
+        
+        Calibration.__init__(self, measured =  measured, 
+                             ideals =ideals, *args, **kwargs)
+        
+        
+    def run(self):
+        
+        # ideals (in impedance)
+        a = s2z(self.ideals[0].s,1).flatten() # half known 
+        b = s2z(self.ideals[1].s,1).flatten() # half known
+        c = s2z(self.ideals[2].s,1).flatten() # fully known
+        d = s2z(self.ideals[3].s,1).flatten() # fully known
+        
+        # meaured (in impedances)
+        a_ = s2z(self.measured[0].s,1).flatten() # half known
+        b_ = s2z(self.measured[1].s,1).flatten() # half known
+        c_ = s2z(self.measured[2].s,1).flatten() # fully known
+        d_ = s2z(self.measured[3].s,1).flatten() # fully known
+        
+        z = cross_ratio(a_,b_,c_,d_)
+        
+        # intermediate variables
+        e = c-d-c*z
+        f = d-c-d*z
+        g = c*d*z
+        
+        A = -real(f*z.conj())
+        B = 1j*imag( f*e.conj() + g.conj()*z)
+        C = real( g*e.conj()) 
+        
+        npts = len(A)
+        b1,b2 = zeros(npts, dtype=complex), zeros(npts, dtype=complex)
+        
+        for k in range(npts):
+            p =  poly1d([A[k],B[k],C[k]])
+            b1[k],b2[k] = p.r
+        
+        # temporarily translate into s-parameters to aviod infinity
+        #b1_s = z2s(b1.reshape(-1,1,1),1).flatten()
+        #b2_s = z2s(b2.reshape(-1,1,1),1).flatten()
+        
+        #b_guess = self.ideals[1].s.flatten()
+        #b_found_s = find_closest(b1_s,b2_s,b_guess)
+        
+        #b_found = s2z(b_found_s.reshape(-1,1,1),1).flatten()
+        
+        
+        
+        b_found = find_closest(b1,b2,b)
+        a_found = -(f*b_found + g)/(z*b_found + e)
+        
+        self.ideals[0].s = z2s(a_found.reshape(-1,1,1),1)
+        self.ideals[1].s = z2s(b_found.reshape(-1,1,1),1)
+    
+        OnePort.run(self)
+        
 class SOLT(Calibration):
     '''
     Traditional 12-term, full two-port calibration.

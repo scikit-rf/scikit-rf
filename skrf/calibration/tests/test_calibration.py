@@ -6,7 +6,7 @@ import numpy as npyski
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
-
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm
 class CalibrationTest(object):
     '''
     This is the generic Calibration test case which all Calibration 
@@ -170,6 +170,80 @@ class SDDL2Test(OnePortTest):
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
 
+class SDDMTest(OnePortTest):
+    def setUp(self):
+        
+        self.n_ports = 1
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,1001), a=100*rf.mil,z0=50)
+        wg = self.wg
+        #wg.frequency = rf.F.from_f([100])
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        
+        ideals = [
+                wg.short( name='short'),
+                wg.delay_short( 45.,'deg',name='ew'),
+                wg.delay_short( 90.,'deg',name='qw'),
+                wg.match( name='load'),
+                ]
+        actuals = [
+                wg.short( name='short'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 80.,'deg',name='qw'),
+                wg.match(name='load'),
+                ]
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.SDDL2(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+    
+    def test_from_coefs(self):
+        raise SkipTest('not applicable ')
+
+class PHNTest(OnePortTest):
+    def setUp(self):
+        
+        self.n_ports = 1
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        wg = self.wg
+        #wg.frequency = rf.F.from_f([100])
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        known1 = wg.load(.1+.1j)#random()
+        known2 = wg.load(-.5-.2j)#random()
+        
+        ideals = [
+                wg.delay_short( 45.,'deg',name='ew'),
+                wg.delay_short( 90.,'deg',name='qw'),
+                known1,
+                known2,
+                ]
+        actuals = [
+                wg.delay_short( 45.,'deg',name='ew'),
+                wg.delay_short( 120.,'deg',name='qw'),
+                known1,
+                known2,
+                ]
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = PHN(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+            
+        self.cal.run()
+        from pylab import * 
+        actuals[0].plot_s_smith()
+        actuals[1].plot_s_smith()
+        self.cal.ideals[0].plot_s_smith()
+        self.cal.ideals[1].plot_s_smith()
+        draw();show()
+    def test_from_coefs(self):
+        raise SkipTest('not applicable ')
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
