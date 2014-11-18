@@ -1,5 +1,7 @@
 
 [![Build Status](https://travis-ci.org/scikit-rf/scikit-rf.svg?branch=master)](https://travis-ci.org/scikit-rf/scikit-rf)
+[![Documentation Status](https://readthedocs.org/projects/scikit-rf/badge/?version=latest)](https://readthedocs.org/projects/scikit-rf/?badge=latest)
+
 [![Coverage Status](https://coveralls.io/repos/scikit-rf/scikit-rf/badge.png)](https://coveralls.io/r/scikit-rf/scikit-rf)
 ##Description 
 
