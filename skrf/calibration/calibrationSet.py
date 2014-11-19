@@ -52,17 +52,16 @@ class CalibrationSet(object):
     '''
     '''
 
-    def __init__(self, ideals, measured_sets, combinatoric_func,
-        *args, **kwargs):
+    def __init__(self, cal_class, ideals, measured_sets,*args, **kwargs):
         '''
         
         '''
+        self.cal_class = cal_class
         self.ideals = ideals
         self.measured_sets = measured_sets
         self.args = args
         self.kwargs = kwargs
-        self.combinatoric_func = combinatoric_func
-        self.run()
+        self.run(*args, **kwargs)
         
     def apply_cal(self, raw_ntwk, *args, **kwargs):
         '''
@@ -86,27 +85,24 @@ class CalibrationSet(object):
                 for k in self.measured_sets]
 
     def run(self):
-        self.cal_list = self.combinatoric_func(
-            ideals = self.ideals,
-            measured_sets = self.measured_sets,
-            *self.args, **self.kwargs)
-
+        NotImplementedError('SubClass must implement this')
     
     
     
-class Cartesian(CalibrationSet):
-    def __init__(self, ideals, measured_sets, *args, **kwargs):
-        CalibrationSet.__init__(self,
-            ideals = ideals,
-            measured_sets = measured_sets,
-            combinatoric_func = cartesian_product,
-            *args, **kwargs)
-            
 class Dot(CalibrationSet):
-    def __init__(self, ideals, measured_sets, *args, **kwargs):
-        CalibrationSet.__init__(self,
-            ideals = ideals,
-            measured_sets = measured_sets,
-            combinatoric_func = dot_product,
-            *args, **kwargs)
+    
+    def run(self, *args, **kwargs):
+        ideals = self.ideals
+        measured_sets = self.measured_sets
+        if len(set(map(len, measured_sets))) !=1:
+            raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
+
+        self.cal_list = []
+        for k in range(len(measured_sets[0])):
+            measured = [measured_set[k] for measured_set in measured_sets]
+            cal = self.cal_class(ideals=ideals, measured= measured,
+                                 *args,**kwargs)
+            self.cal_list.append(cal)
+            
+        
 

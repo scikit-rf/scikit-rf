@@ -2,11 +2,13 @@ import unittest
 import os
 import cPickle as pickle
 import skrf as rf
-import numpy as npyski
+import numpy as npy
+from numpy.random  import rand
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
 from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm
+
 class CalibrationTest(object):
     '''
     This is the generic Calibration test case which all Calibration 
@@ -171,12 +173,17 @@ class SDDLWeikle(OnePortTest):
         raise SkipTest('not applicable ')
 
 class SDDMTest(OnePortTest):
+    '''
+    This is a specific test of SDDL to verify it works when the load is 
+    a matched load. This test has been used to show that the SDDLWeikle 
+    variant fails, with a perfect matched load. 
+    '''
     def setUp(self):
         
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,1001), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
         wg = self.wg
-        #wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100]) # speeds up test
         
         self.E = wg.random(n_ports =2, name = 'E')
         
@@ -204,16 +211,18 @@ class SDDMTest(OnePortTest):
         raise SkipTest('not applicable ')
 
 class PHNTest(OnePortTest):
+    '''
+    '''
     def setUp(self):
         
         self.n_ports = 1
         self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
         wg = self.wg
-        #wg.frequency = rf.F.from_f([100])
+        #wg.frequency = rf.F.from_f([100]) # speeds up testing
         
         self.E = wg.random(n_ports =2, name = 'E')
-        known1 = wg.load(.1+.1j)#random()
-        known2 = wg.load(-.5-.2j)#random()
+        known1 = wg.short()#wg.load(0)#wg.random()
+        known2 = wg.load(rand() + rand()*1j) #wg.random()
         
         ideals = [
                 wg.delay_short( 45.,'deg',name='ideal ew'),
@@ -222,19 +231,26 @@ class PHNTest(OnePortTest):
                 known2,
                 ]
         actuals = [
-                wg.delay_short( 30.,'deg',name='true ew'),
-                wg.delay_short( 95.,'deg',name='true qw'),
+                wg.delay_short( 20.,'deg',name='true ew'),
+                wg.delay_short( 110.,'deg',name='true qw'),
                 known1,
                 known2,
                 ]
         measured = [self.measure(k) for k in actuals]
+        self.actuals = actuals 
         
         self.cal = PHN(
             is_reciprocal = True, 
             ideals = ideals, 
             measured = measured,
             )
+       
         
+    def test_determine_ideals(self):
+        self.cal.run()
+        self.assertEqual(self.actuals[0], self.cal.ideals[0])
+        self.assertEqual(self.actuals[1], self.cal.ideals[1])
+            
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
 

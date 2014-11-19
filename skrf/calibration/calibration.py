@@ -1877,6 +1877,8 @@ class TRL(EightTerm):
         warn('Value of Reflect is not solved for yet.')
         self.line_approx = line_approx
         
+        # TODO: allow them to pass None for the ideal thru, and create
+        #       if they do, create  it. perhaps the line also
         
         EightTerm.__init__(self, 
             measured = measured, 

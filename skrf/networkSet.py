@@ -290,7 +290,12 @@ class NetworkSet(object):
         '''
         returns an element of the network set
         '''
-        return self.ntwk_set[key]
+        if isinstance(key, str):
+            # if they pass a string then slice each network in this set
+            return NetworkSet([k[key] for k in self.ntwk_set], 
+                              name = self.name)
+        else:
+            return self.ntwk_set[key]
 
     def __len__(self):
         '''
