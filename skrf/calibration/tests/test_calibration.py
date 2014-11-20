@@ -390,6 +390,27 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
+    def test_init_with_nones(self):
+        wg= self.wg
+        actuals = [
+            wg.thru( name='thru'),
+            wg.short(nports=2, name='short'),
+            wg.line(45,'deg',name='line'),
+            ]
+        
+        ideals = [
+            None,
+            wg.short(nports=2, name='short'),
+            None,
+            ]
+            
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.TRL(
+            ideals = ideals,
+            measured = measured,
+            switch_terms = (self.gamma_f, self.gamma_r)
+            )
  
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''

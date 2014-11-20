@@ -1839,13 +1839,29 @@ class TRL(EightTerm):
     '''
     Thru Reflect Line 
     
+    Classic two-port self-calibration algorithm developed by Engen and
+    Hoer [1]_, reformulated into a more matrix form in [2]_.
+    
+    
+    
+    See Also
+    ------------
+    determine_line  function which actually determines the line s-parameters
+    
     .. warning::
         This version of TRL does not solve for the Reflect standard yet
+        
+    References
+    ------------
+    .. [1] G. F. Engen and C. A. Hoer, "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer," IEEE Transactions on Microwave Theory and Techniques, vol. 27, no. 12, pp. 987-993, 1979.
+    
+    .. [2] H.-J. Eul and B. Schiek, "A generalized theory and new calibration procedures for network analyzer self-calibration," IEEE Transactions on Microwave Theory and Techniques, vol. 39, no. 4, pp. 724-731, 1991.
+
 
     '''
     family = 'TRL'
-    def __init__(self, measured, ideals,line_approx=None,
-                 *args, **kwargs):
+    def __init__(self, measured, ideals, estimate_line=False, *args, 
+                 **kwargs):
         '''
         Initialize a TRL calibration 
         
@@ -1866,19 +1882,53 @@ class TRL(EightTerm):
         --------------
         measured : list of :class:`~skrf.network.Network`
              must be in order [Thru, Reflect, Line]
+        
         ideals : list of :class:`~skrf.network.Network`
             must be in order [Thru, Reflect, Line]
-            
+        
+        estimate_line : bool
+            Estimates the length of the line standard from raw measurements. 
+            This is only used if the ideal response of the line is 
+            `None`. Also, this will only work if your embedding networks
+            are reasonably well matched. 
+        
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
             
             
         '''
         warn('Value of Reflect is not solved for yet.')
-        self.line_approx = line_approx
+        
         
         # TODO: allow them to pass None for the ideal thru, and create
         #       if they do, create  it. perhaps the line also
+        
+        if ideals[0] is None:
+            # lets make an ideal flush thru for them 
+            ideal_thru = measured[0].copy()
+            ideal_thru.s[:,0,0] = 0 
+            ideal_thru.s[:,1,1] = 0
+            ideal_thru.s[:,1,0] = 1
+            ideal_thru.s[:,0,1] = 1
+            ideals[0] = ideal_thru
+        
+        if ideals[2] is None:
+            line_approx=None # this forces the line length to be 
+            #                  estimated from measurements
+            # lets make an 90deg line for them 
+            ideal_line = measured[2].copy()
+            ideal_line.s[:,0,0] = 0 
+            ideal_line.s[:,1,1] = 0
+            ideal_line.s[:,1,0] = -1j
+            ideal_line.s[:,0,1] = -1j
+            ideals[2] = ideal_thru
+            
+            if not estimate_line:
+                line_approx = ideals[2]
+            
+        else: 
+            line_approx = ideals[2]
+        
         
         EightTerm.__init__(self, 
             measured = measured, 
