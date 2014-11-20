@@ -50,10 +50,34 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
 
 class CalibrationSet(object):
     '''
+    A set of Calibrations
+    
+    This is designed to support experimental uncertainty analysis [1]_.
+    
+    References
+    -----------
+    
+    .. [1] A. Arsenovic, L. Chen, M. F. Bauwens, H. Li, N. S. Barker, and R. M. Weikle, "An Experimental Technique for Calibration Uncertainty Analysis," IEEE Transactions on Microwave Theory and Techniques, vol. 61, no. 1, pp. 263-269, 2013.
+
     '''
 
     def __init__(self, cal_class, ideals, measured_sets,*args, **kwargs):
         '''
+        Parameters 
+        ----------
+        cal_class : a Calibration class 
+            this is the class of calibration to use on the set. This 
+            argument is the actual class itself like OnePort, TRL, SOLT, etc
+        
+        ideals : list of Networks
+            
+        measured_set :  list of NetworkSets, or list of lists
+            each element in this list should be a corresponding measured
+            set to the ideals element of the same index. The sets 
+            themselves  can be anything list-like 
+        
+        \\*args\\**kargs : 
+            passed to self.run(), 
         
         '''
         self.cal_class = cal_class

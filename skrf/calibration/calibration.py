@@ -453,7 +453,21 @@ class Calibration(object):
         '''
         the directivity normalized to the reflection tracking
         '''
-        raise NotImplementedError
+        try:
+            return self.coefs_ntwks['directivity']/\
+                   self.coefs_ntwks['reflection tracking']
+        except: 
+            pass
+        try:
+            out = {}
+            for direction in ['forward','reverse']:
+                out[direction + ' normalized directvity'] =\
+                    self.coefs_ntwks[direction + ' directivity']/\
+                    self.coefs_ntwks[direction + ' reflection tracking']
+            return out
+        except: 
+            raise ValueError('cant find error coefs')
+            
         
     @property
     def coefs_8term(self):
