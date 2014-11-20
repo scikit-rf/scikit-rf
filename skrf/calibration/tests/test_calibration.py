@@ -134,6 +134,33 @@ class SDDLTest(OnePortTest):
             measured = measured,
             )
     
+    def test_init_with_nones(self):
+        wg=self.wg
+        wg.frequency = rf.F.from_f([100])
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        
+        ideals = [
+                wg.short( name='short'),
+                None, 
+                None,
+                wg.load(.2+.2j, name='load'),
+                ]
+        actuals = [
+                wg.short( name='short'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 33.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
+                ]
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.SDDL(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+        self.cal.run()
+    
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
 
@@ -411,6 +438,8 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
+        self.cal.run()
+        
  
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''

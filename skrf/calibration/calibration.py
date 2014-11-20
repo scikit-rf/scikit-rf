@@ -1111,12 +1111,12 @@ class SDDL(OnePort):
         Short Delay Delay Load initializer
         
 
-        measured and ideal networks must be in the order: 
+        Measured and ideal networks must be in the order: 
         
-        * short
-        * delay short1
-        * delay short2
-        * load
+        [ Short, Delay short1, Delay short2, Load] 
+        
+        The ideal delay shorts can be set to `None`, as they are 
+        determined during the calibration. 
         
         Parameters
         -----------
@@ -1136,7 +1136,15 @@ class SDDL(OnePort):
         Calibration.__init__
         
         '''
-        
+        # if they pass None for the ideal responses for delay shorts
+        # then we will copy the short standard in their place. this is 
+        # only to avoid throwing an error when initializing the cal, the 
+        # values are not used. 
+        if ideals[1] is None:
+            ideals[1] = ideals[0].copy()
+        if ideals[2] is None:    
+            ideals[2] = ideals[0].copy()
+            
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured =  measured, 
@@ -1842,14 +1850,15 @@ class TRL(EightTerm):
     Classic two-port self-calibration algorithm developed by Engen and
     Hoer [1]_, reformulated into a more matrix form in [2]_.
     
+    .. warning::
+        This version of TRL does not solve for the Reflect standard yet
     
     
     See Also
     ------------
     determine_line  function which actually determines the line s-parameters
     
-    .. warning::
-        This version of TRL does not solve for the Reflect standard yet
+    
         
     References
     ------------
@@ -1866,7 +1875,14 @@ class TRL(EightTerm):
         Initialize a TRL calibration 
         
         Note that the order of `measured` and `ideals` is strict. 
-        it must be [Thru, Reflect, Line]
+        It must be [Thru, Reflect, Line]. 
+        
+        If the ideal response for the 
+        Thru and Line is  `None`, it is assumed that the you have a 
+        flush thru, and a 90deg line. Alternatively, the 
+        `estimate_line` option can be used to estimate the line length
+        from measurements (see below).
+        
         
         .. warning::
             This version of TRL does not solve for the Reflect standard yet
@@ -1884,7 +1900,8 @@ class TRL(EightTerm):
              must be in order [Thru, Reflect, Line]
         
         ideals : list of :class:`~skrf.network.Network`
-            must be in order [Thru, Reflect, Line]
+            must be in order [Thru, Reflect, Line]. The Thru and Line 
+            may be set to None.
         
         estimate_line : bool
             Estimates the length of the line standard from raw measurements. 
@@ -1894,8 +1911,8 @@ class TRL(EightTerm):
         
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
-            
-            
+        
+                   
         '''
         warn('Value of Reflect is not solved for yet.')
         
