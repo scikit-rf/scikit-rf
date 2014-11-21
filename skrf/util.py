@@ -32,7 +32,7 @@ import mathFunctions as mf
 
 import matplotlib as mpl
 import warnings
-import os
+import os, fnmatch
 import cPickle as pickle
 import pylab as plb
 import numpy as npy
@@ -265,6 +265,25 @@ def dict_2_recarray(d, delim, dtype):
 
 
 
+def findReplace(directory, find, replace, filePattern):
+    '''
+    Find/replace some txt in all files in a directory, recursively 
+    
+    This was found in [1]_.
+    
+    Examples
+    -----------
+    findReplace("some_dir", "find this", "replace with this", "*.txt")
+    .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
+    '''
+    for path, dirs, files in os.walk(os.path.abspath(directory)):
+        for filename in fnmatch.filter(files, filePattern):
+            filepath = os.path.join(path, filename)
+            with open(filepath) as f:
+                s = f.read()
+            s = s.replace(find, replace)
+            with open(filepath, "w") as f:
+                f.write(s)
 
 
 # general purpose objects 

@@ -59,7 +59,7 @@ from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
-from ..networkSet import NetworkSet, s_dict_to_ns
+from ..networkSet import NetworkSet
 
 
 ## later imports. delayed to solve circular dependencies
@@ -316,6 +316,33 @@ class Calibration(object):
             raise (ValueError('standard %s not found in ideals'%std))
         
         return (self.ideals.pop(std),  self.measured.pop(std))
+    
+    @classmethod 
+    def from_coefs_ntwks(cls, coefs_ntwks, **kwargs):
+        # assigning this measured network is  a hack so that 
+        # * `calibration.frequency` property evaluates correctly      
+        # * TRL.__init__() will not throw an error
+        if not hasattr(coefs_ntwks,'keys'):
+            # maybe they passed a list?
+            coefs_ntwks = NetworkSet(coefs_ntwks).to_dict()
+        
+        frequency = coefs_ntwks.values()[0].frequency
+        
+        n = Network(frequency = frequency,
+                    s = rand_c(frequency.npoints,2,2))
+        measured = [n,n,n]
+        
+        if 'forward switch term' in coefs:
+            switch_terms = (Network(frequency = frequency, 
+                                    s=coefs['forward switch term']),
+                            Network(frequency = frequency, 
+                                    s=coefs['reverse switch term']))  
+            cal =cls(measured, measured, switch_terms = switch_terms, **kwargs)
+        else:
+            cal = cls(measured, measured, **kwargs)
+        cal.coefs = coefs
+        cal.family += '(fromCoefs)'
+        return  cal
     
     @classmethod 
     def from_coefs(cls, frequency, coefs, **kwargs):

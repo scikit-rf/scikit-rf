@@ -175,8 +175,6 @@ class NetworkSet(object):
                 ['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
             self.__add_a_operator(operator_name)
     
-    
-    
     @classmethod
     def from_zip(cls, zip_file_name, sort_filenames=True, *args, **kwargs):
         '''
@@ -249,6 +247,38 @@ class NetworkSet(object):
         '''
         from io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
+    
+    @classmethod
+    def from_s_dict(cls,d, frequency, *args, **kwargs):
+        '''
+        Create a NetworkSet from a dictionary of s-parameters
+        
+        The resultant elements of the NetworkSet are named by the keys of
+        the dictionary.
+        
+        Parameters
+        -------------
+        d : dict
+            dictionary of s-parameters data. values of this should be 
+            :class:`numpy.ndarray` assignable to :attr:`skrf.network.Network.s`
+        frequency: :class:`~skrf.frequency.Frequency` object
+            frequency assigned to each network
+        
+        \*args, \*\*kwargs : 
+            passed to Network.__init__ for each key/value pair of d
+        
+        Returns
+        ----------
+        ns : NetworkSet
+        
+        See Also
+        ----------
+        NetworkSet.to_s_dict
+        '''
+        return cls([Network(s=d[k], frequency=frequency, name=k, 
+                            *args, **kwargs)  for k in d]) 
+        
+    
     
     def __add_a_operator(self,operator_name):
         '''
@@ -391,6 +421,39 @@ class NetworkSet(object):
         '''
         return dict([(k.name, k) for k in self.ntwk_set])
         
+    def to_s_dict(ns, *args, **kwargs):
+        '''
+        Converts a NetworkSet to a dictionary of s-parameters  
+        
+        The resultant  keys of the dictionary are the names of the Networks
+        in NetworkSet
+        
+        Parameters
+        -------------
+        ns : NetworkSet
+            dictionary of s-parameters data. values of this should be 
+            :class:`numpy.ndarray` assignable to :attr:`skrf.network.Network.s`
+        frequency: :class:`~skrf.frequency.Frequency` object
+            frequency assigned to each network
+        
+        \*args, \*\*kwargs : 
+            passed to Network.__init__ for each key/value pair of d
+        
+        Returns
+        ----------
+        s_dict : dictionary
+            contains s-parameters in the form of complex numpy arrays
+            
+        See Also
+        --------
+        NetworkSet.from_s_dict
+        '''
+        d = ns.to_dict()
+        for k in d:
+            d[k] = d[k].s
+        return d
+        
+    
     
     def element_wise_method(self,network_method_name, *args, **kwargs):
         '''
@@ -1117,36 +1180,7 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
 # short hand name for convenience
 fon = func_on_networks
 
-def s_dict_to_ns(d, frequency, *args, **kwargs):
-    '''
-    Converts a dictionary of s-parameters to a NetworkSet
     
-    The resultant elements of the NetworkSet are named by the keys of
-    the dictionary.
-    
-    Parameters
-    -------------
-    d : dict
-        dictionary of s-parameters data. values of this should be 
-        :class:`numpy.ndarray` assignable to :attr:`skrf.network.Network.s`
-    frequency: :class:`~skrf.frequency.Frequency` object
-        frequency assigned to each network
-    
-    \*args, \*\*kwargs : 
-        passed to Network.__init__ for each key/value pair of d
-    
-    Returns
-    ----------
-    ns : NetworkSet
-    '''
-    return NetworkSet([\
-        Network(
-            s=d[k], 
-            frequency =frequency, 
-            name=k, 
-            *args, **kwargs) 
-        for k in d])
-
 def getset(ntwk_dict, s, *args, **kwargs):
     '''
     Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
