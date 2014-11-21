@@ -724,7 +724,9 @@ class SOLTTest2(SOLTTest):
     @nottest
     def test_12_2_8term(self):
         coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs)
-        coefs = rf.s_dict_to_ns(coefs, self.cal.frequency).to_dict()
+        coefs = NetworkSet.from_s_dict(d=self.cal.coefs,
+                                    frequency=self.cal.frequency).to_dict()
+        
         self.assertEqual(coefs['forward switch term'], self.gamma_f)
         self.assertEqual(coefs['reverse switch term'], self.gamma_r)
         self.assertEqual(coefs['k'], self.X.s21*self.Y.s21)

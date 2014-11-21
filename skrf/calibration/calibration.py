@@ -450,7 +450,9 @@ class Calibration(object):
         coefs_12term_ntwks
         coefs_8term_ntwks
         '''
-        return s_dict_to_ns(self.coefs, self.frequency).to_dict()
+        ns = NetworkSet.from_s_dict(d=self.coefs,
+                                    frequency=self.frequency)
+        return ns.to_dict()
     
     @property
     def coefs_3term(self):
@@ -473,7 +475,9 @@ class Calibration(object):
         '''
         Dictionary of error coefficients in form of Network objects
         '''
-        return s_dict_to_ns(self.coefs_3term, self.frequency).to_dict()
+        ns = NetworkSet.from_s_dict(d=self.coefs_3term,
+                                    frequency=self.frequency)
+        return ns.to_dict()
     
     @property
     def normalized_directivity(self):
@@ -540,7 +544,9 @@ class Calibration(object):
         '''
         Dictionary of error coefficients in form of Network objects
         '''
-        return s_dict_to_ns(self.coefs_8term, self.frequency).to_dict()    
+        ns = NetworkSet.from_s_dict(d=self.coefs_8term,
+                                    frequency=self.frequency)
+        return ns.to_dict()    
     
     @property 
     def coefs_12term(self):
@@ -586,8 +592,9 @@ class Calibration(object):
         '''
         Dictionary or error coefficients in form of Network objects
         '''
-        return s_dict_to_ns(self.coefs_12term, self.frequency).to_dict()
-    
+        ns = NetworkSet.from_s_dict(d=self.coefs_12term,
+                                    frequency=self.frequency)
+        return ns.to_dict()
     
     @property
     def verify_12term(self):
