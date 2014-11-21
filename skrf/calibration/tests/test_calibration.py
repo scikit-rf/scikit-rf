@@ -51,6 +51,14 @@ class CalibrationTest(object):
             raise ValueError
         self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
         
+    def test_from_coefs_ntwks(self):
+        cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
+        
+        ntwk = self.wg.random(n_ports=self.n_ports)
+        if cal_from_coefs.apply_cal(self.cal.embed(ntwk))!= ntwk:
+            raise ValueError
+        self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
+        
 class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     One-port calibration test.
@@ -163,6 +171,8 @@ class SDDLTest(OnePortTest):
     
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
+    def test_from_coefs_ntwks(self):
+        raise SkipTest('not applicable ')
 
 class SDDLWeikle(OnePortTest):
     def setUp(self):
@@ -198,7 +208,8 @@ class SDDLWeikle(OnePortTest):
     
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
-
+    def test_from_coefs_ntwks(self):
+        raise SkipTest('not applicable ')
 class SDDMTest(OnePortTest):
     '''
     This is a specific test of SDDL to verify it works when the load is 
@@ -236,7 +247,10 @@ class SDDMTest(OnePortTest):
     
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
-
+    
+    def test_from_coefs_ntwks(self):
+        raise SkipTest('not applicable ')
+    
 class PHNTest(OnePortTest):
     '''
     '''
@@ -245,7 +259,7 @@ class PHNTest(OnePortTest):
         self.n_ports = 1
         self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
         wg = self.wg
-        #wg.frequency = rf.F.from_f([100]) # speeds up testing
+        wg.frequency = rf.F.from_f([100]) # speeds up testing
         
         self.E = wg.random(n_ports =2, name = 'E')
         known1 = wg.short()#wg.load(0)#wg.random()
@@ -279,8 +293,9 @@ class PHNTest(OnePortTest):
         self.assertEqual(self.actuals[1], self.cal.ideals[1])
             
     def test_from_coefs(self):
+        raise SkipTest('not applicable')
+    def test_from_coefs_ntwks(self):
         raise SkipTest('not applicable ')
-
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
@@ -578,7 +593,7 @@ class UnknownThruTest(EightTermTest):
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
         wg= self.wg 
-        #wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -615,7 +630,7 @@ class MRCTest(EightTermTest):
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
         wg= self.wg 
-        #wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')

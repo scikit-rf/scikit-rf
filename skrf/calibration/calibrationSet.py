@@ -87,6 +87,10 @@ class CalibrationSet(object):
         self.kwargs = kwargs
         self.run(*args, **kwargs)
         
+    def __getitem__(self, key):
+        return self.cal_list[key]
+    
+        
     def apply_cal(self, raw_ntwk, *args, **kwargs):
         '''
         '''

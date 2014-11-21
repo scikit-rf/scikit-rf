@@ -319,33 +319,49 @@ class Calibration(object):
     
     @classmethod 
     def from_coefs_ntwks(cls, coefs_ntwks, **kwargs):
+        '''
+        Creates a calibration from its error coefficients
+        
+        Parameters 
+        -------------
+        coefs_ntwks :  dict of Networks objects
+            error coefficients for the calibration
+            
+        See Also
+        ----------
+        Calibration.from_coefs
+        '''
         # assigning this measured network is  a hack so that 
         # * `calibration.frequency` property evaluates correctly      
         # * TRL.__init__() will not throw an error
         if not hasattr(coefs_ntwks,'keys'):
-            # maybe they passed a list?
+            # maybe they passed a list? lets try and make a dict from it
             coefs_ntwks = NetworkSet(coefs_ntwks).to_dict()
+        
+        coefs = NetworkSet(coefs_ntwks).to_s_dict()
         
         frequency = coefs_ntwks.values()[0].frequency
         
-        n = Network(frequency = frequency,
-                    s = rand_c(frequency.npoints,2,2))
-        measured = [n,n,n]
-        
-        if 'forward switch term' in coefs:
-            switch_terms = (Network(frequency = frequency, 
-                                    s=coefs['forward switch term']),
-                            Network(frequency = frequency, 
-                                    s=coefs['reverse switch term']))  
-            cal =cls(measured, measured, switch_terms = switch_terms, **kwargs)
-        else:
-            cal = cls(measured, measured, **kwargs)
-        cal.coefs = coefs
-        cal.family += '(fromCoefs)'
-        return  cal
+        cal= cls.from_coefs(frequency=frequency, coefs=coefs, **kwargs)
+        return cal
     
     @classmethod 
     def from_coefs(cls, frequency, coefs, **kwargs):
+        '''
+        Creates a calibration from its error coefficients
+        
+        Parameters 
+        -------------
+        frequency : :class:`~skrf.frequency.Frequency` 
+            frequency info, (duh)
+        coefs :  dict of numpy arrays
+            error coefficients for the calibration
+            
+        See Also
+        ----------
+        Calibration.from_coefs_ntwks
+        
+        '''
         # assigning this measured network is  a hack so that 
         # * `calibration.frequency` property evaluates correctly      
         # * TRL.__init__() will not throw an error
@@ -358,9 +374,10 @@ class Calibration(object):
                                     s=coefs['forward switch term']),
                             Network(frequency = frequency, 
                                     s=coefs['reverse switch term']))  
-            cal =cls(measured, measured, switch_terms = switch_terms, **kwargs)
-        else:
-            cal = cls(measured, measured, **kwargs)
+            kwargs['switch_terms'] = switch_terms
+            
+        
+        cal = cls(measured, measured, **kwargs)
         cal.coefs = coefs
         cal.family += '(fromCoefs)'
         return  cal
@@ -392,6 +409,11 @@ class Calibration(object):
         Calibration Model. This dictionary should be populated
         when the `run()` function is called.  
         
+        Notes
+        -------
+        when setting this, property, the numpy arrays are flattened. 
+        this makes accessing the coefs more concise in the code. 
+        
         See Also
         ----------
         coefs_3term
@@ -406,17 +428,22 @@ class Calibration(object):
             return self._coefs
     
     @coefs.setter
-    def coefs(self,val):
+    def coefs(self,d):
         '''
         '''
-        self._coefs = val
+        for k in d: 
+            d[k] = d[k].flatten()
+        self._coefs = d
     
-    def update_coefs(self, coefs_dict):
+    def update_coefs(self, d):
         '''
         update currect dict of error coefficients
         
         '''
-        self._coefs.update(coefs_dict)
+        for k in d: 
+            d[k] = d[k].flatten()
+        
+        self._coefs.update(d)
     
     @property
     def output_from_run(self):
@@ -2003,7 +2030,9 @@ class TRL(EightTerm):
         
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
-        
+    
+    
+    
 class UnknownThru(EightTerm):
     '''
     Two-Port Self-Calibration allowing the *thru* standard to be unknown.
