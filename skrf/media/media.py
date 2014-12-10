@@ -1163,7 +1163,7 @@ class Media(object):
         result.s = mag_rv*npy.exp(1j*phase_rv)
         return result
 
-    def random(self, n_ports = 1,**kwargs):
+    def random(self, n_ports=1, reciprocal=False, **kwargs):
         '''
         Complex random network.
 
@@ -1173,7 +1173,10 @@ class Media(object):
         Parameters
         ----------
         n_ports : int
-                number of ports.
+            number of ports.
+        reciprocal : bool
+            makes s-matrix symmetric (S_{mn} = S_{nm})
+            
         \*\*kwargs : passed to :class:`~skrf.network.Network`
                 initializer
 
@@ -1184,6 +1187,13 @@ class Media(object):
         '''
         result = self.match(nports = n_ports, **kwargs)
         result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
+        if reciprocal and n_ports>1:
+            for m in range(n_ports):
+                for n in range(n_ports):
+                    if m>n:
+                        result.s[:,m,n] = result.s[:,n,m]
+            
+        
         return result
         
     ## OTHER METHODS

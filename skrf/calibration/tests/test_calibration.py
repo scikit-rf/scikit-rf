@@ -259,7 +259,7 @@ class PHNTest(OnePortTest):
         self.n_ports = 1
         self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
         wg = self.wg
-        wg.frequency = rf.F.from_f([100]) # speeds up testing
+        #wg.frequency = rf.F.from_f([100]) # speeds up testing
         
         self.E = wg.random(n_ports =2, name = 'E')
         known1 = wg.short()#wg.load(0)#wg.random()
