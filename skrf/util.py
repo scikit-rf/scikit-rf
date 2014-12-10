@@ -132,13 +132,13 @@ def slice_domain(x,domain):
     Examples
     -----------
     >>> x = linspace(0,10,101)
-    >>> idx = slice_domain(x, 2,6)
+    >>> idx = slice_domain(x, (2,6))
     >>> x[idx]
 
     '''
     start = find_nearest_index(x, domain[0])
     stop = find_nearest_index(x, domain[1])
-    return slice(start,stop)
+    return slice(start,stop+1)
 
 # file IO
 

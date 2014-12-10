@@ -192,6 +192,15 @@ class NetworkTestCase(unittest.TestCase):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
         a.interpolate_from_f(npy.linspace(1,2,4), unit='ghz')
         # TODO: numerically test for correct interpolation   
+    
+    def test_slicer(self):
+        a = rf.Network(f=[1,2,4,5,6],
+                       s=[1,1,1,1,1],
+                       z0=50 )
+                       
+        b = a['2-5ghz']
+        tinyfloat = 1e-12
+        self.assertTrue((abs(b.frequency.f - [2e9,4e9,5e9]) < tinyfloat).all())
         
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

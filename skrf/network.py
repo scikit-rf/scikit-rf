@@ -551,8 +551,9 @@ class Network(object):
         
         Parameters
         -----------
-        key : str, or int
-            if int; then it is interpreted as the index of the frequency
+        key : str, or slice
+            if slice; like [2-10] then it is interpreted as the index of 
+            the frequency.
             if str, then should be like '50.1-75.5ghz', or just '50'. 
             If the frequency unit is omited then self.frequency.unit is 
             used.  
@@ -564,48 +565,9 @@ class Network(object):
         >>> a.plot_s_db()
         '''
         a = self.z0# HACK: to force getter for z0 to re-shape it
-        output = self.copy()
+        sliced_frequency = self.frequency[key]
+        return self.interpolate(sliced_frequency)
         
-        if isinstance(key, str):
-            # they passed a string try and do some interpretation
-            re_numbers = re.compile('.*\d')
-            re_hyphen = re.compile('\s*-\s*')
-            re_letters = re.compile('[a-zA-Z]+')
-            
-            freq_unit = re.findall(re_letters,key)
-            
-            if len(freq_unit) == 0:
-                freq_unit = self.frequency.unit
-            else:
-                freq_unit = freq_unit[0]
-            
-            key_nounit = re.sub(re_letters,'',key)
-            edges  = re.split(re_hyphen,key_nounit)
-            
-            edges_freq = Frequency.from_f([float(k) for k in edges], 
-                                        unit = freq_unit)
-            if len(edges_freq) ==2:   
-                slicer=slice_domain(output.frequency.f, edges_freq.f)
-            elif len(edges_freq)==1:
-                key = find_nearest_index(output.frequency.f, edges_freq.f[0])
-                slicer = slice(key,key+1,1)
-            else:
-                raise ValueError()
-            try:
-                output.s = output.s[slicer,:,:]
-                output.z0 = output.z0[slicer,:]
-                output.frequency.f = npy.array(output.frequency.f[slicer]).reshape(-1)
-                return output
-            except(IndexError):
-                raise IndexError('slicing frequency is incorrect')
-            
-        
-        
-        output.s = output.s[key,:,:]
-        output.z0 = output.z0[key,:]
-        output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
-
-        return output
 
     def __str__(self):
         '''

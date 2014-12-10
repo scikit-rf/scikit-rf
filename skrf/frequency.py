@@ -35,7 +35,8 @@ from pylab import linspace, gca,plot, autoscale
 from numpy import pi
 import numpy as npy
 from numpy import fft # used to center attribute `t` at 0
-
+import re
+from util import slice_domain
 
 class Frequency(object):
     '''
@@ -140,7 +141,63 @@ class Frequency(object):
         '''
         '''
         return self.__str__()
+    
+    def __getitem__(self,key):
+        '''
+        Slices a Frequency object based on an index, or human readable string
+        
+        Parameters
+        -----------
+        key : str, orslice
+            if int; then it is interpreted as the index of the frequency
+            if str, then should be like '50.1-75.5ghz', or just '50'. 
+            If the frequency unit is omited then self.frequency.unit is 
+            used.  
+            
+        Examples
+        -----------
+        >>> b = rf.Frequency(50,100,101,'ghz')
+        >>> a = b['80-90ghz']
+        >>> a.plot_s_db()
+        '''
+       
+        output = self.copy()
+        
+        if isinstance(key, str):
+            # they passed a string try and do some interpretation
+            re_numbers = re.compile('.*\d')
+            re_hyphen = re.compile('\s*-\s*')
+            re_letters = re.compile('[a-zA-Z]+')
+            
+            freq_unit = re.findall(re_letters,key)
+            
+            if len(freq_unit) == 0:
+                freq_unit = self.unit
+            else:
+                freq_unit = freq_unit[0]
+            
+            key_nounit = re.sub(re_letters,'',key)
+            edges  = re.split(re_hyphen,key_nounit)
+            
+            edges_freq = Frequency.from_f([float(k) for k in edges], 
+                                        unit = freq_unit)
+            if len(edges_freq) ==2:   
+                slicer=slice_domain(output.f, edges_freq.f)
+            elif len(edges_freq)==1:
+                key = find_nearest_index(output.f, edges_freq.f[0])
+                slicer = slice(key,key+1,1)
+            else:
+                raise ValueError()
+            try:
+                output.f = npy.array(output.f[slicer]).reshape(-1)
+                return output
+            except(IndexError):
+                raise IndexError('slicing frequency is incorrect')
+            
+        
+        frequency.f = npy.array(output.f[key]).reshape(-1)
 
+        return output
 
 
     @classmethod
