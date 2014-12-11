@@ -195,7 +195,7 @@ class Frequency(object):
                 raise IndexError('slicing frequency is incorrect')
             
         
-        frequency.f = npy.array(output.f[key]).reshape(-1)
+        output.f = npy.array(output.f[key]).reshape(-1)
 
         return output
 

@@ -86,11 +86,10 @@ class CalibrationSet(object):
         self.args = args
         self.kwargs = kwargs
         self.run(*args, **kwargs)
-        
+    
     def __getitem__(self, key):
         return self.cal_list[key]
     
-        
     def apply_cal(self, raw_ntwk, *args, **kwargs):
         '''
         '''
@@ -115,6 +114,16 @@ class CalibrationSet(object):
     def run(self):
         NotImplementedError('SubClass must implement this')
     
+    @property
+    def corrected_sets(self):
+        '''
+        The set of corrected networks, each is corrected by its corresponding 
+        element in the cal_list 
+        '''
+        n_meas = len(self.cal_list[0].measured)
+        mat = [k.caled_ntwks for k in self.cal_list]
+        return [NetworkSet([k[l] for k in mat]) for l in range(n_meas)]
+        
     
     
 class Dot(CalibrationSet):
