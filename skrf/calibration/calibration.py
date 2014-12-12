@@ -1655,61 +1655,14 @@ class EightTerm(Calibration):
         '''
         Unterminates switch terms from a raw measurement.
         
-        In order to use the 8-term error model on a VNA which employs a 
-        switched source, the effects of the switch must be accounted for. 
-        This is done through `switch terms` as described in  [1]_ . The 
-        two switch terms are defined as, 
-        
-        .. math :: 
-            
-            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
-            \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
-        
-        These can be measured by four-sampler VNA's by setting up 
-        user-defined traces onboard the VNA. If the VNA doesnt have  
-        4-samplers, then you can measure switch terms indirectly by using a 
-        two-tier two-port calibration. Firts do a SOLT, then convert 
-        the 12-term error coefs to 8-term, and pull out the switch terms.  
-        
-        Parameters
-        -------------
-        two_port : 2-port Network 
-            the raw measurement
-        gamma_f : 1-port Network
-            the measured forward switch term. 
-            gamma_f = a2/b2 sourced by port1
-        gamma_r : 1-port Network
-            the measured reverse switch term
-        
-        Returns
-        -----------
-        ntwk :  Network object
-        
-        References
-        ------------
-        
-        .. [1] "Formulations of the Basic Vector Network Analyzer Error
-                Model including Switch Terms" by Roger B. Marks
+        See Also
+        ---------
+        calibration.unterminate
         '''
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
+            return unterminate(ntwk, gamma_f, gamma_r)
             
-            unterminated = ntwk.copy()
-            
-            # extract scattering matrices
-            m, gamma_r, gamma_f = ntwk.s, gamma_r.s, gamma_f.s
-            u = m.copy()
-            
-            one = npy.ones(ntwk.frequency.npoints)
-            
-            d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
-            u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-            u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
-            u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-            u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
-            
-            unterminated.s = u
-            return unterminated
         else:
             return ntwk
     
@@ -1717,45 +1670,13 @@ class EightTerm(Calibration):
         '''
         Terminate a  network with  switch terms 
         
-        see [1]_
-        
-        
-        Parameters
-        -------------
-        two_port : 2-port Network 
-            an unterminated network
-        gamma_f : 1-port Network
-            measured forward switch term. 
-            gamma_f = a2/b2 sourced by port1
-        gamma_r : 1-port Network
-            measured reverse switch term
-            gamma_r = a1/b1 sourced by port1
-        
-        Returns
-        -----------
-        ntwk :  Network object
-        
         See Also
         --------
-        unterminate_switch_terms 
-        
-        References
-        ------------
-        
-        .. [1] "Formulations of the Basic Vector Network Analyzer Error
-                Model including Switch Terms" by Roger B. Marks
+        calibration.terminate
         '''
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
-            m = ntwk.copy()
-            ntwk_flip = ntwk.copy()
-            ntwk_flip.flip()
-            
-            m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
-            m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
-            m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
-            m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
-            return m
+            return terminate(ntwk, gamma_f, gamma_r)
         else:
             return ntwk
     
@@ -2298,8 +2219,110 @@ def ideal_coefs_12term(frequency):
         ]})
     
     return ideal_coefs
-    
-    
+
+
+def unterminate(ntwk, gamma_f, gamma_r):
+        '''
+        Unterminates switch terms from a raw measurement.
+        
+        In order to use the 8-term error model on a VNA which employs a 
+        switched source, the effects of the switch must be accounted for. 
+        This is done through `switch terms` as described in  [1]_ . The 
+        two switch terms are defined as, 
+        
+        .. math :: 
+            
+            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
+            \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
+        
+        These can be measured by four-sampler VNA's by setting up 
+        user-defined traces onboard the VNA. If the VNA doesnt have  
+        4-samplers, then you can measure switch terms indirectly by using a 
+        two-tier two-port calibration. Firts do a SOLT, then convert 
+        the 12-term error coefs to 8-term, and pull out the switch terms.  
+        
+        Parameters
+        -------------
+        two_port : 2-port Network 
+            the raw measurement
+        gamma_f : 1-port Network
+            the measured forward switch term. 
+            gamma_f = a2/b2 sourced by port1
+        gamma_r : 1-port Network
+            the measured reverse switch term
+        
+        Returns
+        -----------
+        ntwk :  Network object
+        
+        References
+        ------------
+        
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
+                Model including Switch Terms" by Roger B. Marks
+        '''
+        
+            
+        unterminated = ntwk.copy()
+        
+        # extract scattering matrices
+        m, gamma_r, gamma_f = ntwk.s, gamma_r.s, gamma_f.s
+        u = m.copy()
+        
+        one = npy.ones(ntwk.frequency.npoints)
+        
+        d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
+        u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+        u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
+        u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+        u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
+        
+        unterminated.s = u
+        return unterminated
+
+def terminate(ntwk, gamma_f, gamma_r):
+        '''
+        Terminate a  network with  switch terms 
+        
+        see [1]_
+        
+        
+        Parameters
+        -------------
+        two_port : 2-port Network 
+            an unterminated network
+        gamma_f : 1-port Network
+            measured forward switch term. 
+            gamma_f = a2/b2 sourced by port1
+        gamma_r : 1-port Network
+            measured reverse switch term
+            gamma_r = a1/b1 sourced by port1
+        
+        Returns
+        -----------
+        ntwk :  Network object
+        
+        See Also
+        --------
+        unterminate_switch_terms 
+        
+        References
+        ------------
+        
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
+                Model including Switch Terms" by Roger B. Marks
+        '''
+        
+        m = ntwk.copy()
+        ntwk_flip = ntwk.copy()
+        ntwk_flip.flip()
+        
+        m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
+        m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
+        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
+        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
+        return m
+        
 def determine_line(thru_m, line_m, line_approx=None):
     '''
     Determine S21 of a matched line. 
