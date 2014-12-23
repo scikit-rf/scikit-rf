@@ -2646,7 +2646,7 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     if num>1:
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports-1+l, num-1)
     
-    # if ntwkB is a 2port, then keep port indecies where you expect.
+    # if ntwkB is a 2port, then keep port indices where you expect.
     if ntwkB.nports == 2 and ntwkA.nports>2:
         from_ports = range(ntwkC.nports)
         to_ports = range(ntwkC.nports)
