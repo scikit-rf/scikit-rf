@@ -11,7 +11,7 @@ LONG_DESCRIPTION = """
 """
 setup(name='scikit-rf',
 	version=VERSION,
-	license='gpl',
+	license='new BSD',
 	description='Object Oriented Microwave Engineering',
 	long_description=LONG_DESCRIPTION,
 	author='Alex Arsenovic',
