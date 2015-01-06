@@ -302,7 +302,7 @@ alex arsenovic (603):
       huge changes, many deletions. need to break up files next. and do some testing.
       moving/deleting
       had to revert to version 58  because 59 missing ntwk(). fixed bugs.
-      changed waveguide std create type, its not a ntwk     is the all the freq parameters in the ntwk type needed?     made some convience improvements to ntwk.plot*, so one ports dont need to specify indecies.
+      changed waveguide std create type, its not a ntwk     is the all the freq parameters in the ntwk type needed?     made some convenience improvements to ntwk.plot*, so one ports dont need to specify indices.
       fixed some calibrations ruitines to be able to take ntwk instance.     started to change the vna vi, probably broke it.
       just learned about how to copy a class.  used this in returning a new ntwk () instance for the applyABC function . might want to make a ntwk.copy.
       minor changes

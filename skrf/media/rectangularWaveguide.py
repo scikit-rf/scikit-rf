@@ -20,7 +20,7 @@ class RectangularWaveguide(Media):
 
     Represents a single mode of a homogeneously filled rectangular
     waveguide of cross-section `a` x `b`. The mode is determined by
-    mode-type (te or tm) and mode indecies ( m and n ).
+    mode-type (te or tm) and mode indices ( m and n ).
 
 
     ====================================  =============  ===============

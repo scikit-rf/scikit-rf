@@ -14,11 +14,11 @@ connect_lib = npy.ctypeslib.load_library(lib_name, src_path)
 
 def connect_s_fast(A,k,B,l):
     '''
-    connect two n-port networks' s-matricies together.
+    connect two n-port networks' s-matrices together.
 
     specifically, connect port `k` on network `A` to port `l` on network
     `B`. The resultant network has nports = (A.rank + B.rank-2). This
-    function operates on, and returns s-matricies. The function
+    function operates on, and returns s-matrices. The function
     :func:`connect` operates on :class:`Network` types.
 
     Parameters
@@ -26,7 +26,7 @@ def connect_s_fast(A,k,B,l):
     A : numpy.ndarray
             S-parameter matrix of `A`, shape is fxnxn
     k : int
-            port index on `A` (port indecies start from 0)
+            port index on `A` (port indices start from 0)
     B : numpy.ndarray
             S-parameter matrix of `B`, shape is fxnxn
     l : int
@@ -53,7 +53,7 @@ def connect_s_fast(A,k,B,l):
 
     '''
     if k > A.shape[-1]-1 or l>B.shape[-1]-1:
-        raise(ValueError('port indecies are out of range'))
+        raise(ValueError('port indices are out of range'))
 
     freq = npy.ones(len(A)) 
     nFreq = len (freq)

@@ -7,7 +7,7 @@ ring_slot_meas = rf.Network('ring slot array measured.s2p')
 
 pylab.figure(1)
 pylab.title('WR-10 Ringslot Array Simulated vs Measured')
-# if no indecies are passed to the plot command it will plot all
+# if no indices are passed to the plot command it will plot all
 # available s-parameters
 ring_slot_sim.plot_s_db(0,0, label='Simulated')
 ring_slot_meas.plot_s_db(0,0, label='Measured')

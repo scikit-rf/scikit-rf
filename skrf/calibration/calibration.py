@@ -2491,7 +2491,7 @@ def convert_pnacoefs_2_skrf(coefs):
     coefs : dict 
         coefficients as retrieved from PNA
     ports : tuple
-        port indecies. in order (forward, reverse)
+        port indices. in order (forward, reverse)
     
     Returns
     ----------
@@ -2551,7 +2551,7 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
     coefs : dict 
         complex ndarrays for the cal coefficients as defined  by skrf 
     ports : tuple
-        port indecies. in order (forward, reverse)
+        port indices. in order (forward, reverse)
     
     Returns
     ----------

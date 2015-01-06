@@ -47,7 +47,7 @@ touchstone files, as would be created from the previous script.
     
     # length of frequency vector of each network
     f_len = data[keys[0]].frequency.npoints
-    # frequency vector indecies at which we will calculate the statistics
+    # frequency vector indices at which we will calculate the statistics
     f_vector = [int(k) for k in linspace(0,f_len-1, npoints)]
     
     #loop through the frequencies of interest and calculate statistics
