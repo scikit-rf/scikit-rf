@@ -81,7 +81,7 @@ class Touchstone():
         ## reference impedance for each s-parameter
         self.reference = None
 
-        ## numpy array of original sparameter data
+        ## numpy array of original s-parameter data
         self.sparameters = None
         ## numpy array of original noise data
         self.noise = None
@@ -103,7 +103,7 @@ class Touchstone():
         try:
             self.rank = int(extention[1:-1])
         except (ValueError):
-            raise (ValueError("filename does not have a s-parameter extention. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
+            raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
 
 
         linenr = 0
@@ -164,7 +164,7 @@ class Touchstone():
             # we're seperating them later
             values.extend([ float(v) for v in line.split() ])
 
-        # let's do some postprocessing to the read values
+        # let's do some post-processing to the read values
         # for s2p parameters there may be noise parameters in the value list
         values = numpy.asarray(values)
         if self.rank == 2:
@@ -212,7 +212,7 @@ class Touchstone():
     def get_format(self, format="ri"):
         """
         returns the file format string used for the given format.
-        This is usefull to get some informations.
+        This is useful to get some information.
         """
         if format == 'orig':
             frequency = self.frequency_unit
@@ -243,7 +243,7 @@ class Touchstone():
 
     def get_sparameter_data(self, format='ri'):
         """
-        get the data of the sparameter with the given format.
+        get the data of the s-parameter with the given format.
         supported formats are:
           orig:  unmodified s-parameter data
           ri:    data in real/imaginary
@@ -286,9 +286,9 @@ class Touchstone():
 
     def get_sparameter_arrays(self):
         """
-        returns the sparameters as a tuple of arrays, where the first element is
+        Returns the s-parameters as a tuple of arrays, where the first element is
         the frequency vector (in Hz) and the s-parameters are a 3d numpy array.
-        The values of the sparameters are complex number.
+        The values of the s-parameters are complex number.
         usage:
           f,a = self.sgetparameter_arrays()
           s11 = a[:,0,0]

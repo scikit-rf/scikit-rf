@@ -1,7 +1,7 @@
 These docs are built using sphinx with  `make html` or `make latexpdf`. 
 Once built, the docs exist in `build/html/` and `build/latex/`.
 
-The docs can be uploaded to github autmatically, using the gh-pages.py 
+The docs can be uploaded to github automatically, using the gh-pages.py 
 script. `python gh-pages [tag]`, where `tag` is a release tag or `dev`.
 An example session
 

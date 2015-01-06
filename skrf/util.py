@@ -146,7 +146,7 @@ def get_fid(file, *args, **kwargs):
     '''
     Returns a file object, given a filename or file object
     
-    Useful  when you want to allow the arguments of a function to
+    Useful when you want to allow the arguments of a function to
     be either files or filenames
     
     Parameters
@@ -166,7 +166,7 @@ def get_extn(filename):
     Get the extension from a filename.
     
     The extension is defined as everything passed the last '.'.
-    Returns None if it aint got one
+    Returns None if it ain't got one
     
     Parameters
     ------------
@@ -177,7 +177,7 @@ def get_extn(filename):
     --------
     ext : string, None
         either the extension (not including '.') or None if there 
-        isnt one
+        isn't one
         
 
     '''
@@ -197,7 +197,7 @@ def basename_noext(filename):
 # git
 def git_version( modname):
     '''
-    Returns output 'git describe', executed in a modules root directory.
+    Returns output 'git describe', executed in a module's root directory.
     '''
     mod = __import__(modname)
     mod_dir =os.path.split(mod.__file__)[0] 

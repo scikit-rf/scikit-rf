@@ -419,13 +419,13 @@ def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     Shades frequency bands.
     
     when plotting data over a set of frequency bands it is nice to 
-    have each band visually seperated from the other. The kwarg `alpha`
+    have each band visually separated from the other. The kwarg `alpha`
     is useful.
     
     Parameters 
     --------------
     edges : array-like
-        x-values seperating regions of a given shade
+        x-values separating regions of a given shade
     y_range : tuple 
         y-values to shade in 
     cmap : str
@@ -527,7 +527,7 @@ def legend_off(ax=None):
 
 def scrape_legend(n=None, ax=None):
     '''
-    scrapes a legend with redundent labels
+    scrapes a legend with redundant labels
     
     Given a legend of m entries of n groups, this will remove all but 
     every m/nth entry. This is used when you plot many lines representing

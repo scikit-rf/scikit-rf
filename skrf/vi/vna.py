@@ -204,7 +204,7 @@ class PNA(GpibInstrument):
             Choose from:
                 LINear | LOGarithmic | POWer | CW | SEGMent | PHASe
                 Note: SWEep TYPE cannot be set to SEGMent if there 
-                are no segments t
+                are no segments turned ON.
         '''
         return self.ask('sense%i:sweep:type?'%self.channel)
     
@@ -288,7 +288,7 @@ class PNA(GpibInstrument):
     
     def trigger_and_wait_till_done(self):
         '''
-        send a manual trigger signal, and dont return untill operation
+        send a manual trigger signal, and don't return until operation
         is completed
         '''
         self.trigger()
@@ -372,13 +372,13 @@ class PNA(GpibInstrument):
     
     def get_f_npoints(self):
         '''
-        Number of points for the measurment
+        Number of points for the measurement
         '''
         return int(self.ask('sens%i:swe:poin?'%(self.channel)))
     
     def set_f_npoints(self, n):
         '''
-        Number of points for the measurment
+        Number of points for the measurement
         '''
         self.write('sens%i:swe:poin %i'%(self.channel,n))
     
@@ -1207,7 +1207,7 @@ class PNA(GpibInstrument):
             the calibration to upload to the VNA
         ports : tuple
             ports which to apply calibration to. with respect to the 
-            skrf calibration the ports arein order (forward,reverse)
+            skrf calibration the ports are in order (forward,reverse)
         channel : int
             channel on VNA to assign calibration
         name : str
@@ -1379,7 +1379,7 @@ class ZVA40(PNA):
     
     def setup_oneport(self, port=1):
         '''
-        sets up traces appropriate for 1-port s-parameter measurment
+        sets up traces appropriate for 1-port s-parameter measurement
         
         Parameters 
         -----------
@@ -1394,7 +1394,7 @@ class ZVA40(PNA):
     
     def set_source_freq_conversion(self, port, numer, denom, offset, mode='swe'):
         '''
-        set source frequency for frequency converted measurments 
+        set source frequency for frequency converted measurements 
         
         fs = `numer`/`denom`*fb. + `offset`
         
@@ -1414,7 +1414,7 @@ class ZVA40(PNA):
     
     def set_source_power_permanent(self, port,val=True):
         '''
-        set a given port to have its power permantly on 
+        set a given port to have its power permanently on 
         
         the same as having the 'gen' box checked in the `port config` 
         dialog
@@ -1455,8 +1455,8 @@ class ZVA40(PNA):
         '''
         Turn a given port's power on or off 
         
-        This  overides the PNA's implmentation with because 
-        i dont think RS supports it. This uses the permanent power on 
+        This  overides the PNA's implementation with because 
+        I dont think RS supports it. This uses the permanent power on 
         option which is equivalent to clicking 'gen' in teh port config
         window
         
@@ -1540,7 +1540,7 @@ class VectorStar(PNA):
         '''
         Get a two-port Network using alternative command
         
-        This method uses the `OS2P` command, which isnt documented,
+        This method uses the `OS2P` command, which isn't documented,
         except for the examples, but its dang fast.
         
         
@@ -1635,7 +1635,7 @@ class VectorStar(PNA):
         Parameters 
         ------------
         name : str
-            name given to measurment
+            name given to measurement
         meas : str
             something like 
             * S11  
@@ -1648,7 +1648,7 @@ class VectorStar(PNA):
         >>> p = PNA()
         >>> p.create_meas('my_meas', 'A/R1,1')     
         '''
-        # translate agilent's semantics into Anritu's 
+        # translate agilent's semantics into Anritsu's 
         # TODO: use regex to fully translate all combos
         translation_dict  = {
                              '/':',',
@@ -1784,10 +1784,10 @@ class HP8510C(GpibInstrument):
     @property
     def one_port(self):
         '''
-        Initiates a sweep and returns a  Network type represting the
+        Initiates a sweep and returns a  Network type representing the
         data.
 
-        if you are taking multiple sweeps, and want the sweep timing to
+        If you are taking multiple sweeps, and want the sweep timing to
         work, put the turn continuous mode off. like pnax.continuous='off'
         '''
         #tmp_continuous = self.continuous
@@ -1806,10 +1806,10 @@ class HP8510C(GpibInstrument):
     @property
     def two_port(self):
         '''
-        Initiates a sweep and returns a  Network type represting the
+        Initiates a sweep and returns a  Network type representing the
         data.
 
-        if you are taking multiple sweeps, and want the sweep timing to
+        If you are taking multiple sweeps, and want the sweep timing to
         work, put the turn continuous mode off. like pnax.continuous='off'
         '''
         print ('s11')

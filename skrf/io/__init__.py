@@ -8,7 +8,7 @@ io (:mod:`skrf.io`)
 
 This Package provides functions and objects for input/output. 
 
-The  general functions  :func:`~general.read` and :func:`~general.write` 
+The general functions :func:`~general.read` and :func:`~general.write` 
 can be used to read and write [almost] any skrf object to disk, using the 
 :mod:`pickle` module.
 

@@ -75,7 +75,7 @@ class HP8500(GpibInstrument):
         :class:`~skrf.network.Network` allows  all the plotting methods
         and IO functions of that class to be used. Not all the methods 
         of Network make sense for this type of data (scalar), but we 
-        assume the user is knows this.
+        assume the user knows this.
         
         Parameters
         ------------

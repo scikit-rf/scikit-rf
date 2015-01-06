@@ -43,9 +43,9 @@ class Frequency(object):
     A frequency band.
 
     The frequency object provides a convenient way to work with and
-    access a frequency band. It contains  a fruequency vector as well as
+    access a frequency band. It contains  a frequency vector as well as
     a frequency unit. This allows a frequency vector in a given unit
-    to be available (:attr:`f_scaled`), as well as an absolute frquency
+    to be available (:attr:`f_scaled`), as well as an absolute frequency
     axis in 'Hz'  (:attr:`f`).
     
     A Frequency object can be created from either (start, stop, npoints)
@@ -205,7 +205,7 @@ class Frequency(object):
         '''
         Construct Frequency object from a frequency vector.
         
-        The unit of  is set by kwarg 'unit'
+        The unit is set by kwarg 'unit'
 
         Parameters
         -----------
@@ -471,7 +471,7 @@ class Frequency(object):
         Label the x-axis of a plot.
 
         Sets the labels of a plot using :func:`matplotlib.x_label` with
-        string containing the frequency  unit.
+        string containing the frequency unit.
 
         Parameters
         ---------------
@@ -508,7 +508,7 @@ class Frequency(object):
             if len(y)==len(self):
                 pass
             else:
-                raise IndexError(['thing to plot doesnt have same'
+                raise IndexError(['thing to plot doesn\'t have same'
                                  ' number of points as f'])
         except(TypeError):
             y = y*npy.ones(len(self))
@@ -519,7 +519,7 @@ class Frequency(object):
         
 def overlap_freq(f1,f2):
     '''
-    Calculates  overlapping frequency between f1 and f2.
+    Calculates overlapping frequency between f1 and f2.
     
     Or, put more accurately, this returns a Frequency that is the part 
     of f1 that is overlapped by f2. The resultant start frequency is 
@@ -561,9 +561,9 @@ def f_2_frequency(f):
     Depricated
     -------------
     Use the class method :func:`Frequency.from_f`
-    convienience function
+    convenience function
 
 
-    !depricated, use classmethod from_f instead.
+    !deprecated, use classmethod from_f instead.
     '''
     return Frequency(start=f[0], stop=f[-1],npoints = len(f), unit='hz')

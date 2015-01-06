@@ -86,7 +86,7 @@ coefs_list_12term =[
 
 global coefs_list_8term
 '''
-There are vairous notations used for this same model. Given that all
+There are various notations used for this same model. Given that all
 measurements have been unterminated properly the error box model holds
 and the following equalities hold:
 
@@ -115,7 +115,7 @@ coefs_list_3term = [
     
 class Calibration(object):
     '''
-    Base class  for all Calibration objects. 
+    Base class for all Calibration objects. 
     
     This class implements the common mechanisms for all calibration 
     algorithms. Specific calibration algorithms should inheret this  
@@ -205,7 +205,7 @@ class Calibration(object):
         # if not, then attempt to interpolate
         for k in range(len(self.ideals)):
             if self.ideals[k].frequency != self.measured[0]:
-                print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
+                print('Warning: Frequency information doesn\'t match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
                 try:
                     # try to resample our ideals network to match
                     # the meaurement frequency
@@ -331,7 +331,7 @@ class Calibration(object):
         ----------
         Calibration.from_coefs
         '''
-        # assigning this measured network is  a hack so that 
+        # assigning this measured network is a hack so that 
         # * `calibration.frequency` property evaluates correctly      
         # * TRL.__init__() will not throw an error
         if not hasattr(coefs_ntwks,'keys'):
@@ -362,7 +362,7 @@ class Calibration(object):
         Calibration.from_coefs_ntwks
         
         '''
-        # assigning this measured network is  a hack so that 
+        # assigning this measured network is a hack so that 
         # * `calibration.frequency` property evaluates correctly      
         # * TRL.__init__() will not throw an error
         n = Network(frequency = frequency,
@@ -385,7 +385,7 @@ class Calibration(object):
     @property
     def frequency(self):
         '''
-        :class:`~skrf.frequency.Frequency` object  of the calibration
+        :class:`~skrf.frequency.Frequency` object of the calibration
         
         
         '''
@@ -397,7 +397,7 @@ class Calibration(object):
         number of ideal/measurement pairs in calibration
         '''
         if len(self.ideals) != len(self.measured):
-            warn('number of ideals and measured dont agree')
+            warn('number of ideals and measured don\'t agree')
         return len(self.ideals)
         
     @property
@@ -819,7 +819,7 @@ class Calibration(object):
         
         This will return a single two-port network for a one-port cal. 
         For a 2-port calibration this will return networks 
-        for forward and reverse  excitation. However, these are not 
+        for forward and reverse excitation. However, these are not 
         sufficient to use for embedding, see the :func:`embed` function 
         for that. 
         
@@ -837,7 +837,7 @@ class Calibration(object):
         Plots corrected calibration standards 
         
         Given that the calibration is overdetermined, this may be used 
-        as a hueristic verification of calibration quality.
+        as a heuristic verification of calibration quality.
         
         Parameters
         ------------------
@@ -868,7 +868,7 @@ class Calibration(object):
         Plot residual networks.
         
         Given that the calibration is overdetermined, this may be used 
-        as a metric of the calibration's  *goodness of fit*
+        as a metric of the calibration's *goodness of fit*
         
         Parameters
         ------------------
@@ -1543,7 +1543,7 @@ class EnhancedResponse(SOLT):
         '''
         '''
         if self.sp !=0:
-            raise NotImplementedError('not implemented yet. you can just flip() all you data though. ')
+            raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
         n_thrus = self.n_thrus
         p1_m = [k.s11 for k in self.measured[:-n_thrus]]
         p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
@@ -1595,7 +1595,7 @@ class EightTerm(Calibration):
     General EightTerm (aka Error-box) Two-port calibration
     
     This is basically an extension of the one-port algorithm to two-port
-    measurements, A least squares estimator is used to determine  the 
+    measurements, A least squares estimator is used to determine the 
     error coefficients. No self-calibration takes place.  
     The concept is presented in [1]_ , but implementation follows that 
     of  [2]_ .
@@ -1606,7 +1606,7 @@ class EightTerm(Calibration):
     -------
     An important detail of implementing the error-box 
     model is that the internal switch must be correctly accounted for. 
-    This is done through the measurement of  :term:`switch terms`.
+    This is done through the measurement of :term:`switch terms`.
         
     
     
@@ -1931,7 +1931,7 @@ class TRL(EightTerm):
     
     See Also
     ------------
-    determine_line  function which actually determines the line s-parameters
+    determine_line function which actually determines the line s-parameters
     
     
         
@@ -1965,7 +1965,7 @@ class TRL(EightTerm):
         
         Notes
         -------
-        This implementation inherets from :class:`EightTerm`. dont 
+        This implementation inherits from :class:`EightTerm`. dont 
         forget to pass switch_terms.
         
         
@@ -1993,7 +1993,7 @@ class TRL(EightTerm):
         
         
         # TODO: allow them to pass None for the ideal thru, and create
-        #       if they do, create  it. perhaps the line also
+        #       if they do, create it. perhaps the line also
         
         if ideals[0] is None:
             # lets make an ideal flush thru for them 
@@ -2145,7 +2145,7 @@ class MRC(UnknownThru):
     '''
     Misalignment Resistance Calibration
     
-    This is an error-box based calibration that is a  combination of the 
+    This is an error-box based calibration that is a combination of the 
     SDDL[1]_ and the UnknownThru[2]_, algorithms. 
     The self-calibration aspects of these two algorithms alleviate the
     need to know the phase of the delay shorts, as well as the exact
@@ -2272,7 +2272,7 @@ class Normalization(Calibration):
 
 def ideal_coefs_12term(frequency):
     '''
-    An ideal set of 12term calibration coeficients 
+    An ideal set of 12term calibration coefficients 
     
     Produces a set of error coefficients, that would result if the 
     error networks were matched thrus
@@ -2585,7 +2585,7 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
     
 def align_measured_ideals(measured, ideals):
     '''
-    Aligns two lists of networks based on the intersection of their name's.
+    Aligns two lists of networks based on the intersection of their names.
     
     '''
     measured = [ measure for measure in measured\
@@ -2630,7 +2630,7 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
         ntwk = Network(**kwargs)
 
         if is_reciprocal:
-            #TODO: make this better and maybe have a phase continuity
+            #TODO: make this better and maybe have phase continuity
             # functionality
             tracking  = coefs['reflection tracking']
             s12 = npy.sqrt(tracking)

@@ -61,7 +61,7 @@ class NetworkSet(object):
     bounds for a set of :class:`~skrf.network.Network`.
 
     The names of the :class:`NetworkSet` properties are generated
-    dynamically upon ititialization, and thus documentation for
+    dynamically upon initialization, and thus documentation for
     individual properties and methods is not available. However, the
     properties do follow the convention::
 
@@ -73,7 +73,7 @@ class NetworkSet(object):
 
             >>> my_network_set.mean_s
 
-    This accesses the  property 's', for each element in the
+    This accesses the property 's', for each element in the
     set, and **then** calculates the 'mean' of the resultant set. The
     order of operations is important.
 
@@ -85,7 +85,7 @@ class NetworkSet(object):
             >>> my_network_set.mean_s.write_touchstone('mean_response')
 
     If you are calculating functions that return scalar variables, then
-    the result is accessable through the Network property .s_re. For
+    the result is accessible through the Network property .s_re. For
     example::
 
             >>> std_s_deg = my_network_set.std_s_deg
@@ -185,7 +185,7 @@ class NetworkSet(object):
         zip_file_name : string
             name of zipfile
         sort_filenames: Boolean
-            sort the filenames in teh zip file before constructing the 
+            sort the filenames in the zip file before constructing the 
             NetworkSet
         \\*args,\\*\\*kwargs : arguments
             passed to NetworkSet constructor
@@ -227,7 +227,7 @@ class NetworkSet(object):
     @classmethod
     def from_dir(cls, dir='.', *args, **kwargs):
         '''
-        Create a NetworkSet from a directory containing  Networks
+        Create a NetworkSet from a directory containing Networks
         
         This just calls ::
         
@@ -294,7 +294,7 @@ class NetworkSet(object):
         def operator_func(self, other):
             if isinstance(other, NetworkSet):
                 if len(other) != len(self):
-                    raise(ValueError('Network sets must be of same length to be casacaded'))
+                    raise(ValueError('Network sets must be of same length to be cascaded'))
                 return NetworkSet([self.ntwk_set[k].__getattribute__(operator_name)(other.ntwk_set[k]) for k in range(len(self))])
 
             elif isinstance(other, Network):
@@ -478,7 +478,7 @@ class NetworkSet(object):
         the mean magnitude in dB.
 
         note:
-                the mean is taken on the magnitude before convertedto db, so
+                the mean is taken on the magnitude before converted to db, so
                         magnitude_2_db( mean(s_mag))
                 which is NOT the same as
                         mean(s_db)
@@ -493,7 +493,7 @@ class NetworkSet(object):
         the mean magnitude in dB.
 
         note:
-                the mean is taken on the magnitude before convertedto db, so
+                the mean is taken on the magnitude before converted to db, so
                         magnitude_2_db( mean(s_mag))
                 which is NOT the same as
                         mean(s_db)
@@ -675,7 +675,7 @@ class NetworkSet(object):
         plots mean value of the NetworkSet with +- uncertainty bounds
         in an Network's attribute. This is designed to represent
         uncertainty in a scalar component of the s-parameter. for example
-        ploting the uncertainty in the magnitude would be expressed by,
+        plotting the uncertainty in the magnitude would be expressed by,
 
                 mean(abs(s)) +- std(abs(s))
 
@@ -706,7 +706,7 @@ class NetworkSet(object):
 
         Note:
                 for phase uncertainty you probably want s_deg_unwrap, or
-                similar.  uncerainty for wrapped phase blows up at +-pi.
+                similar. uncerainty for wrapped phase blows up at +-pi.
 
         '''
         
@@ -776,7 +776,7 @@ class NetworkSet(object):
         plots mean value of the NetworkSet with +- uncertainty bounds
         in an Network's attribute. This is designed to represent
         uncertainty in a scalar component of the s-parameter. for example
-        ploting the uncertainty in the magnitude would be expressed by,
+        plotting the uncertainty in the magnitude would be expressed by,
 
                 mean(abs(s)) +- std(abs(s))
 
@@ -807,7 +807,7 @@ class NetworkSet(object):
 
         Note:
                 for phase uncertainty you probably want s_deg_unwrap, or
-                similar.  uncerainty for wrapped phase blows up at +-pi.
+                similar.  uncertainty for wrapped phase blows up at +-pi.
 
         '''
         ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
@@ -826,7 +826,7 @@ class NetworkSet(object):
         
         if ppf is not None:
             if type =='bar':
-                warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
+                warnings.warn('the \'ppf\' options don\'t work correctly with the bar-type error plots')
             ntwk_mean.s = ppf(ntwk_mean.s)
             upper_bound = ppf(upper_bound)
             lower_bound = ppf(lower_bound)
@@ -930,7 +930,7 @@ class NetworkSet(object):
 
     def plot_uncertainty_bounds_s(self, multiplier =200, *args, **kwargs):
         '''
-        Plots complex uncertianty bounds plot on smith chart. 
+        Plots complex uncertainty bounds plot on smith chart. 
         
         This function plots the complex uncertainty of a NetworkSet 
         as circles on the smith chart. At each frequency a circle  
@@ -1082,7 +1082,7 @@ class NetworkSet(object):
         skrf.io.general.read
         
         '''
-        # this import is delayed untill here because of a circular depency
+        # this import is delayed until here because of a circular dependency
         from io.general import write
         
         if file is None:

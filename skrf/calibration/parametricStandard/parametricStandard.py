@@ -17,7 +17,7 @@ class ParametricStandard(object):
     '''
     A parametric standard represents a calibration standard which
     has uncertainty in its response. This uncertainty is functionally
-    known, and      represented by a parametric function, where the
+    known, and represented by a parametric function, where the
     uknown quantity is the adjustable parameter.
 
     This class presents an abstract interface to a general Parametric

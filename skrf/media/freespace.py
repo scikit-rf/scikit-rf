@@ -16,9 +16,9 @@ from .distributedCircuit import DistributedCircuit
 class Freespace(DistributedCircuit):
     '''
     Represents a plane-wave in a homogeneous freespace, defined by
-    the space's relative permativity and relative permeability.
+    the space's relative permittivity and relative permeability.
 
-    The field properties of space are related to a disctributed
+    The field properties of space are related to a distributed
     circuit transmission line model given in circuit theory by:
 
     ===============================  ==============================
@@ -56,9 +56,9 @@ class Freespace(DistributedCircuit):
         frequency : :class:`~skrf.frequency.Frequency` object
                 frequency band of this transmission line medium
         ep_r : number, array-like
-                complex relative permativity
+                complex relative permittivity
         mu_r : number, array-like
-                possibly complex, relative permiability
+                possibly complex, relative permeability
         \*args, \*\*kwargs : arguments and keyword arguments
 
         Notes

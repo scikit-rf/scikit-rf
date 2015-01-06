@@ -342,7 +342,7 @@ def find_closest(z1,z2,z_approx):
 
 def sqrt_phase_unwrap(input):
     '''
-    takes the square root of a complex number with unwraped phase
+    takes the square root of a complex number with unwrapped phase
 
     this idea came from Lihan Chen
     '''
@@ -353,7 +353,7 @@ def sqrt_phase_unwrap(input):
 # mathematical functions
 def dirac_delta(x):
     '''
-    the dirac function.
+    the Dirac function.
 
     can take numpy arrays or numbers
     returns 1 or 0 '''
@@ -474,7 +474,7 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     '''convert a one sided complex spectrum into a real time-signal.
     takes
             f: frequency array,
-            y: complex PSD arary
+            y: complex PSD array
             windowType: windowing function, defaults to rect
 
     returns in the form:
@@ -505,8 +505,8 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     signalVector= npy.real(signalVector)
     # the response of frequency shifting is
     # exp(1j*2*pi*timeVector*f[0])
-    # but i would have to manually undo this for the inverse, which is just
-    # another  variable to require. the reason you need this is because
-    # you canttransform to a bandpass signal, only a lowpass.
+    # but I would have to manually undo this for the inverse, which is just
+    # another variable to require. The reason you need this is because
+    # you can't transform to a bandpass signal, only a lowpass.
     #
     return timeVector, signalVector

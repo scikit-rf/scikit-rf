@@ -37,7 +37,7 @@ class Network2TestCase(unittest.TestCase):
     def test_init_from_ntwkv1(self):
         n2.Network.from_ntwkv1(rf.data.ring_slot)
     
-    ## existance of parameters 
+    ## existence of parameters 
     def test_z(self):
         self.n.z
     
@@ -50,7 +50,7 @@ class Network2TestCase(unittest.TestCase):
     def test_z(self):
         self.n.s_time
         
-    ## existance of parameters 
+    ## existence of parameters 
     def test_db(self):
         self.n.s.db
     
