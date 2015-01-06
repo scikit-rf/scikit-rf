@@ -462,11 +462,11 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
     measured networks requires different error networks for forward and 
     reverse excitation states, these are described as follows
     
-    forward excition
+    forward excitation
         used for S21 and S11
         Mf = Xf ** S ** Yf  
     
-    reverse excition
+    reverse excitation
         used for S12 and S22
         Mr = Xr ** S ** Yr
     
@@ -670,7 +670,7 @@ class MRCTest(EightTermTest):
         
 class SOLTTest2(SOLTTest):
     '''
-    This test verifys the accuracy of the SOLT calibration, when used 
+    This test verifies the accuracy of the SOLT calibration, when used 
     on an error-box (8-term) model.
     
     

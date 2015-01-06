@@ -15,7 +15,7 @@ class Parameterless(ParametricStandard):
 
             note:
             this is needed so that the calibration algorithm doesnt have to
-            handle more than one class type for  standards
+            handle more than one class type for standards
             '''
     def __init__(self, ideal_network):
         '''

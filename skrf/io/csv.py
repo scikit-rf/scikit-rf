@@ -360,7 +360,7 @@ class AgilentCSV(object):
         List of column names : list of str
         
         This function is needed because Agilent allows the delimiter
-        of a csv file (ie `'`) to be present in the header name. rediculous.
+        of a csv file (ie `'`) to be present in the header name. ridiculous.
         
         If splitting the header fails, then a suitable list is returned of 
         the correct length, which looks like 
@@ -381,8 +381,8 @@ class AgilentCSV(object):
                 # last columns
                 cols =  [col + ')'  for col in cols[:-1]] + [cols[-1]]
             else:
-                # i dont know how to seperate column names
-                warn('Cant decipher header, so im creating one. check output. ')
+                # I dont know how to seperate column names
+                warn('Cant decipher header, so I\'m creating one. check output. ')
                 cols = ['Freq(?),']+['%s-%i'%(util.basename_noext(filename),k) \
                     for k in range(n_traces)]
         return cols 
@@ -458,7 +458,7 @@ class AgilentCSV(object):
                 elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
                 else:
-                    warn('CSV format unrecognized. its up to you to  intrepret the resultant network correctly.')
+                    warn('CSV format unrecognized. It\'s up to you to intrepret the resultant network correctly.')
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
                 
                 ntwk_list.append( 
@@ -498,7 +498,7 @@ def pna_csv_header_split(filename):
     Split a Agilent csv file's header into a list
     
     This function is needed because Agilent allows the delimiter
-    of a csv file (ie `'`) to be present in the header name. rediculous.
+    of a csv file (ie `'`) to be present in the header name. ridiculous.
     
     If splitting the header fails, then a suitable list is returned of 
     the correct length, which looks like 

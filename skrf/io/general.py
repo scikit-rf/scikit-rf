@@ -118,7 +118,7 @@ def write(file, obj, overwrite = True):
     
     This uses the :mod:`pickle` module to write skrf objects to a file.
     Note that you can write any pickl-able python object. For example, 
-    you can write  a list or dictionary of :class:`~skrf.network.Network`
+    you can write a list or dictionary of :class:`~skrf.network.Network`
     objects
     or :class:`~skrf.calibration.calibration.Calibration` objects. This 
     will write out a single file. If you would like to write out a 
@@ -502,7 +502,7 @@ def read_csv(filename):
     Read a 2-port s-parameter data from a csv file.
 
     Specifically, this reads a two-port csv file saved from a Rohde Shcwarz
-    ZVA-40, and possibly other network analyzers. It returns  into a 
+    ZVA-40, and possibly other network analyzers. It returns into a 
     :class:`Network` object.
 
     Parameters
@@ -575,8 +575,8 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     '''
     Write a Network object to a spreadsheet, for your boss    
     
-    Write  the s-parameters  of a network to a spreadsheet, in a variety
-    of forms.This functions makes use of the pandas module, which in 
+    Write the s-parameters  of a network to a spreadsheet, in a variety
+    of forms. This functions makes use of the pandas module, which in 
     turn makes use of the xlrd module. These are imported during this 
     function call. For more details about the file-writing functions 
     see the pandas.DataFrom.to_?? functions.

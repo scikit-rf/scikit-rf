@@ -128,7 +128,7 @@ def skin_depth(f,rho, mu_r):
     rho : number of array-like
             bulk resistivity of material, in ohm*m
     mu_r : number or array-like
-            relative permiability of material
+            relative permeability of material
     
     Returns
     ----------
@@ -156,7 +156,7 @@ def surface_resistivity(f,rho,mu_r):
     rho : number or array-like
             bulk resistivity of material, in ohm*m
     mu_r : number or array-like
-            relative permiability of material
+            relative permeability of material
 
     Returns
     ----------
@@ -206,7 +206,7 @@ def distributed_circuit_2_propagation_impedance( distributed_admittance,\
 def propagation_impedance_2_distributed_circuit(propagation_constant, \
         characteristic_impedance):
     '''
-    Converts wave quantities to distrubuted circuit values.
+    Converts wave quantities to distributed circuit values.
 
     Converts complex propagation constant and characteristic impedance
     to distributed impedance and admittance. The relation is,
@@ -367,7 +367,7 @@ def load_impedance_2_reflection_coefficient(z0, zl):
 def reflection_coefficient_2_input_impedance(z0,Gamma):
     '''
     calculates the input impedance given a reflection coefficient and
-    characterisitc impedance
+    characteristic impedance
 
     .. math::
             Z_0 (\\frac {1 + \\Gamma}{1-\\Gamma})
@@ -447,7 +447,7 @@ def load_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
 def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
     '''
     calculates the input impedance at electrical length theta, given a
-    reflection coefficient and characterisitc impedance of the medium
+    reflection coefficient and characteristic impedance of the medium
     Parameters
     ----------
             z0 - characteristic impedance.
@@ -459,8 +459,8 @@ def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
     Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
     zin = reflection_coefficient_2_input_impedance(z0=z0,Gamma=Gamma_in)
     return zin
-# short hand convinience.
-# admitantly these follow no logical naming scheme, but they closely
+# short hand convenience.
+# admittedly these follow no logical naming scheme, but they closely
 # correspond to common symbolic conventions, and are convenient
 theta = electrical_length
 distance_2_electrical_length = electrical_length

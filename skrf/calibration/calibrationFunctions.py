@@ -109,7 +109,7 @@ def binomial_coefficient_calibration_set( ideals, measured, n,  *args, **kwargs)
     '''
     Produces a ensemble of calibration instances based on choosing
     sub-sets of the ideal/measurement lists from an overdetermined
-    calibration. This concept is described in 'De-embeding and
+    calibration. This concept is described in 'De-embedding and
     Un-terminating' by Penfield and Baurer.
 
     so, if the calibration ideals and measured lists have length 'm'

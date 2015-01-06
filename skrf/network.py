@@ -182,7 +182,7 @@ class Network(object):
     Although these docs focus on s-parameters, other equivalent network 
     representations such as :attr:`z` and  :attr:`y` are 
     available. Scalar projections of the complex network parameters 
-    are accesable through properties as well. These also return 
+    are accessible through properties as well. These also return 
     :class:`numpy.ndarray`'s.
 
     =====================  =============================================
@@ -351,13 +351,13 @@ class Network(object):
         if file is not None:
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and 
-            # upickle it first
+            # unpickle it first
             fid = get_fid(file,'rb') 
             
             try: 
                 self.read(fid)
             except(UnpicklingError):
-                # if unpickling doesnt work then, close fid, reopen in 
+                # if unpickling doesn't work then, close fid, reopen in 
                 # non-binary mode and try to read it as touchstone
                 fid.close()
                 fid = get_fid(file)
@@ -612,8 +612,8 @@ class Network(object):
     def __generate_secondary_properties(self):
         '''
         creates numerous `secondary properties` which are various
-        different scalar projects of the promary properties. the primary
-        properties are  s,z, and y.
+        different scalar projects of the primary properties. the primary
+        properties are s,z, and y.
         '''
         for prop_name in PRIMARY_PROPERTIES:
             for func_name in COMPONENT_FUNC_DICT:
@@ -1188,7 +1188,7 @@ class Network(object):
 
                 except(AttributeError):
                     # there is no self.frequency, or self.number_of_ports
-                    raise(AttributeError('Error: i cant reshape z0 through inspection. you must provide correctly shaped z0, or s-matrix first.'))
+                    raise(AttributeError('Error: I cant reshape z0 through inspection. you must provide correctly shaped z0, or s-matrix first.'))
 
             return self._z0
 
@@ -1261,7 +1261,7 @@ class Network(object):
         '''
         a :class:`Network` object with 'inverse' s-parameters.
 
-        This is used for de-embeding. It is defined so that the inverse
+        This is used for de-embedding. It is defined so that the inverse
         of a Network cascaded with itself is unity.
 
         Returns
@@ -1354,7 +1354,7 @@ class Network(object):
         power received at all ports, normalized to the power at a single
         excitement port.
 
-        mathmatically, this is a test for unitary-ness of the
+        mathematically, this is a test for unitary-ness of the
         s-parameter matrix [#]_.
 
         for two port this is
@@ -1675,13 +1675,13 @@ class Network(object):
             
             # write header file.
             # the '#'  line is NOT a comment it is essential and it must be
-            #exactly this format, to work
+            # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
             
             outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(abs(self.z0[0,0])) +" \n")
     
             if self.number_of_ports == 1 :
-                #write comment line for users (optional)
+                # write comment line for users (optional)
                 outputFile.write('!freq ReS11 ImS11\n')
                 # write out data
                 for f in range(len(self.f)):
@@ -1700,7 +1700,7 @@ class Network(object):
                 # - single line, and
                 # - S21,S12 in reverse order: legacy ?
                 
-                #write comment line for users (optional)
+                # write comment line for users (optional)
                 outputFile.write('!freq ReS11 ImS11 ReS21 ImS21 ReS12 ImS12 ReS22 ImS22\n')
                 # write out data
                 for f in range(len(self.f)):
@@ -1723,7 +1723,7 @@ class Network(object):
             elif self.number_of_ports == 3 :
                 # 3-port is written over 3 lines / matrix order
             
-                #write comment line for users (optional)
+                # write comment line for users (optional)
                 outputFile.write ('!freq')
                 for m in range(1,4):
                     for n in range(1,4):
@@ -1817,7 +1817,7 @@ class Network(object):
         skrf.io.general.write : write any skrf object
         skrf.io.general.read : read any skrf object
         '''
-        # this import is delayed untill here because of a circular depency
+        # this import is delayed until here because of a circular depency
         from io.general import write
         
         if file is None:
@@ -2193,7 +2193,7 @@ class Network(object):
         Return a windowed version of s-matrix. Used in time-domain analysis.
         
         When using time domain through :attr:`s_time_db`, 
-        or similar properies, the spectrum is ussually windowed, 
+        or similar properies, the spectrum is usually windowed, 
         before the IFFT is taken. This is done to 
         compensate for the band-pass nature of a spectrum [1]_ .
         
@@ -2512,7 +2512,7 @@ class Network(object):
     # other
     def func_on_parameter(self, func, attr= 's',*args, **kwargs):
         '''
-        Aplies a function parameter matrix, one frequency slice at a time
+        Applies a function parameter matrix, one frequency slice at a time
         
         This is useful for functions that can only operate on 2d arrays, 
         like numpy.linalg.inv. This loops over f and calls 
@@ -2541,7 +2541,7 @@ class Network(object):
     
     def nonreciprocity(self,m,n, normalize = False):
         '''
-        Normalized non-reciprocity metrica
+        Normalized non-reciprocity metric.
         
         This is a port-by-port measure of how non-reciprocal a n-port 
         network is. It is defined by, 
@@ -2849,7 +2849,7 @@ def de_embed(ntwkA,ntwkB):
     Returns
     --------
     C : Network
-            the resultant network of  ntwkB de-embeded from ntwkA
+            the resultant network of ntwkB de-embeded from ntwkA
 
     See Also
     ---------
@@ -2862,7 +2862,7 @@ def stitch(ntwkA, ntwkB, **kwargs):
     '''
     Stitches ntwkA and ntwkB together.
     
-    Concatenates  two networks' data.  Given two networks that cover 
+    Concatenates two networks' data. Given two networks that cover 
     different frequency bands this can be used to combine their data 
     into a single network. 
     
@@ -2975,11 +2975,11 @@ def average(list_of_networks, polar = False):
 
 def one_port_2_two_port(ntwk):
     '''
-    calculates the two-port network given a  symetric, reciprocal and
+    calculates the two-port network given a symmetric, reciprocal and
     lossless one-port network.
 
     takes:
-            ntwk: a symetric, reciprocal and lossless one-port network.
+            ntwk: a symmetric, reciprocal and lossless one-port network.
     returns:
             ntwk: the resultant two-port Network
     '''
@@ -3162,7 +3162,7 @@ def three_twoports_2_threeport(ntwk_triplet, auto_order = True,  *args,
          [p12, p13, p23]
     
     else if `auto_order`is True, then the  3 Networks in ntwk_triplet must 
-    contain port idenificaition in their names. 
+    contain port identification in their names. 
     For example, their names may be like `me12`, `me13`, `me23`
     
     Parameters
@@ -3310,7 +3310,7 @@ def innerconnect_s(A, k, l):
 
     Specifically, connect port `k`  to port `l` on `A`. This results in
     a (n-2)-port network.  This     function operates on, and returns
-    s-matricies. The function :func:`innerconnect` operates on
+    s-matrices. The function :func:`innerconnect` operates on
     :class:`Network` types.
 
     Parameters
@@ -3791,7 +3791,7 @@ def t2s(t):
     '''
     converts scattering transfer parameters [#]_ to scattering parameters [#]_
 
-    transfer parameters are also refered to as
+    transfer parameters are also referred to as
     'wave cascading matrix', this function only operates on 2-port
     networks. this function only operates on 2-port scattering
     parameters.
@@ -3965,7 +3965,7 @@ def passivity(s):
     .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
     '''
     if s.shape[-1] == 1:
-        raise (ValueError('Doesnt exist for one ports'))
+        raise (ValueError('Doesn\'t exist for one ports'))
 
     pas_mat = s.copy()
     for f in range(len(s)):
@@ -3995,7 +3995,7 @@ def reciprocity(s):
         reciprocity : :class:`numpy.ndarray` of shape fxnxn
         '''
         if s.shape[-1] == 1:
-            raise (ValueError('Doesnt exist for one ports'))
+            raise (ValueError('Doesn\'t exist for one ports'))
     
         rec_mat = s.copy()
         for f in range(len(s)):
@@ -4033,7 +4033,7 @@ def renormalize_s(s, z_old, z_new):
     
     Notes
     ------
-    The impedance renormalizeation. This just calls ::
+    The impedance renormalization. This just calls ::
     
         z2s(s2z(s,z0 = z_old), z0 = z_new)
     
@@ -4207,13 +4207,13 @@ def fix_z0_shape( z0, nfreqs, nports):
         return npy.array(nports * [z0]).T
         
     else: 
-        raise IndexError('z0 is not acceptable shape')
+        raise IndexError('z0 is not an acceptable shape')
 
 
 ## cascading assistance functions
 def inv(s):
     '''
-    Calculates 'inverse' s-parameter matrix, used for de-embeding
+    Calculates 'inverse' s-parameter matrix, used for de-embedding
 
     This is not literally the inverse of the s-parameter matrix. Instead, it
     is defined such that the inverse of the s-matrix cascaded
@@ -4283,7 +4283,7 @@ def flip(a):
         c[0,1] = a[1,0]
         c[1,0] = a[0,1]
     else:
-        raise IndexError('matricies should be 2x2, or kx2x2')
+        raise IndexError('matrices should be 2x2, or kx2x2')
     return c
 
 
@@ -4382,7 +4382,7 @@ def two_port_reflect(ntwk1, ntwk2):
     Notes
     -------
         The resultant Network is copied from `ntwk1`, so its various 
-    properties(name, frequency, etc) are inhereted from that Network.
+    properties(name, frequency, etc) are inherited from that Network.
     
     Examples
     ---------

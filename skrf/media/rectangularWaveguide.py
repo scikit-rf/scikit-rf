@@ -56,7 +56,7 @@ class RectangularWaveguide(Media):
         n : int
                 mode index in 'b'-direction
         ep_r : number, array-like,
-                filling material's relative permativity
+                filling material's relative permittivity
         mu_r : number, array-like
                 filling material's relative permeability
         rho : number, array-like, string
@@ -129,7 +129,7 @@ class RectangularWaveguide(Media):
         Returns
         -------
         ep : number
-                filling material's relative permativity
+                filling material's relative permittivity
         '''
         return self.ep_r * epsilon_0
 
@@ -236,7 +236,7 @@ class RectangularWaveguide(Media):
     @property
     def f_norm(self):
         '''
-        frequency vector normalized to cuttoff
+        frequency vector normalized to cutoff
         '''
         return self.frequency.f/self.f_cutoff
     

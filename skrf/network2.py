@@ -649,7 +649,7 @@ def fix_z0_shape( z0, nfreqs, nports):
     '''
     Make a port impedance of correct shape for a given network's matrix 
     
-    This attempts to broadcast z0 to satisy
+    This attempts to broadcast z0 to satisfy
         npy.shape(z0) == (nfreqs,nports)
     
     Parameters 

@@ -1,6 +1,6 @@
 
 '''
-Provides  parametric standards used in self-calibration routines
+Provides parametric standards used in self-calibration routines
 
 '''
 import generic
