@@ -1413,12 +1413,12 @@ class Network(object):
         '''
         Reciprocity metric #2
         
-        this is distance of the determinant of the wave-cascading matrix
-        from unity. 
-        
         .. math::
     
                 abs(1 - S/S^T )
+                
+        for the two port case, this evaluates to the distance of the 
+        determinant of the wave-cascading matrix from unity. 
         
         '''
         return abs(1-self.s/self.s.swapaxes(1,2))
