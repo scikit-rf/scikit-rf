@@ -2334,7 +2334,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     
     This is possible because two measurements can be combined to 
     create a relationship of similar matrices, as shown below. Equating
-    the traces between these measurements allows one to solve for S21 
+    the eigenvalues between these measurements allows one to solve for S21 
     of the line.
     
     .. math::
@@ -2344,7 +2344,7 @@ def determine_line(thru_m, line_m, line_approx=None):
         
         M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}
         
-        tr(M_t \\cdot M_{l}^{-1}) = tr( A_t \\cdot A_{l}^{-1})
+        eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})
     
     which can be solved to form a quadratic in S21 of the line
     
@@ -2373,6 +2373,8 @@ def determine_line(thru_m, line_m, line_approx=None):
     '''
     
     npts = len(thru_m)    
+    one = npy.ones(npts)
+    zero = npy.zeros(npts)
     
     if line_approx is None:
         # estimate line length, by assumeing error networks are well
@@ -2380,15 +2382,12 @@ def determine_line(thru_m, line_m, line_approx=None):
         line_approx = line_m/thru_m
     
     
-    fm = [ -1* npy.trace(npy.dot(thru_m.t[f], npy.linalg.inv(line_m.t[f]))) \
-        for f in range(npts)]
-    one = npy.ones(npts)
-    zero = npy.zeros(npts)
+    C = thru_m.inv**line_m 
+    # the eigen values of the matrix C, are equal to s12,conj(s12)
+    # but so we to choose the correct one 
+    w,v = linalg.eig(C.t)
     
-    roots_v = npy.frompyfunc( lambda x,y,z:npy.roots([x,y,z]),3,1 )
-    s12 = roots_v(one, fm, one)
-    s12_0 = npy.array([k[0]  for k in s12])
-    s12_1 = npy.array([k[1]  for k in s12])
+    s12_0, s12_1 = w[:,0], w[:,1]
     
     s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
     found_line = line_m.copy()
