@@ -26,7 +26,7 @@ class Media(object):
     '''
     The base-class for all transmission line mediums.
 
-    The :class:`Media` object provides generic methods to produce   :class:`~skrf.network.Network`'s for any transmision line medium, such  as :func:`line` and :func:`delay_short`.
+    The :class:`Media` object provides generic methods to produce :class:`~skrf.network.Network`'s for any transmission line medium, such as :func:`line` and :func:`delay_short`.
 
     The initializer for this class has flexible argument types. This
     allows for the important attributes of the :class:`Media` object
@@ -244,7 +244,7 @@ class Media(object):
         '''
         Port Impedance
 
-        The port impedance  is usually equal to the
+        The port impedance is usually equal to the
         :attr:`characteristic_impedance`. Therefore, if the port
         impedance is `None` then this will return
         :attr:`characteristic_impedance`.
@@ -272,7 +272,7 @@ class Media(object):
         except(TypeError):
             try:
                 if len(self._z0) != len(self.characteristic_impedance):
-                    raise(IndexError('z0 and characterisitc impedance have different shapes '))                        
+                    raise(IndexError('z0 and characteristic impedance have different shapes '))                        
             except(TypeError):
                 # z0 has no len,  must be a number, so vectorize it
                 return self._z0 *npy.ones(len(self.characteristic_impedance))
@@ -610,7 +610,7 @@ class Media(object):
 
     def impedance_mismatch(self, z1, z2, **kwargs):
         '''
-        Two-port network for a an impedance miss-match
+        Two-port network for an impedance mismatch
         
 
         Parameters
@@ -626,7 +626,7 @@ class Media(object):
         Returns
         --------
         missmatch : :class:`~skrf.network.Network` object
-                a 2-port network representing the impedance missmatch
+                a 2-port network representing the impedance mismatch
 
         Notes
         --------
@@ -872,7 +872,7 @@ class Media(object):
         Parameters
         ----------
         d : number
-                the length of transmissin line (see unit argument)
+                the length of transmission line (see unit argument)
         unit : ['m','deg','rad']
                 the units of d. possible options are:
                  * *m* : meters, physical length in meters (default)
@@ -902,7 +902,7 @@ class Media(object):
         Parameters
         ----------
         d : number
-                the length of transmissin line (see unit argument)
+                the length of transmission line (see unit argument)
         unit : ['m','deg','rad']
                 the units of d. possible options are:
                  * *m* : meters, physical length in meters (default)
@@ -1099,7 +1099,7 @@ class Media(object):
     
     def lossless_mismatch(self,s11,db=True,  **kwargs):
         '''
-        Lossless mismatch  defined by its return loss
+        Lossless mismatch defined by its return loss
         
         Parameters 
         ----------
@@ -1163,7 +1163,7 @@ class Media(object):
         result.s = mag_rv*npy.exp(1j*phase_rv)
         return result
 
-    def random(self, n_ports = 1,**kwargs):
+    def random(self, n_ports=1, reciprocal=False, **kwargs):
         '''
         Complex random network.
 
@@ -1173,7 +1173,10 @@ class Media(object):
         Parameters
         ----------
         n_ports : int
-                number of ports.
+            number of ports.
+        reciprocal : bool
+            makes s-matrix symmetric (S_{mn} = S_{nm})
+            
         \*\*kwargs : passed to :class:`~skrf.network.Network`
                 initializer
 
@@ -1184,6 +1187,13 @@ class Media(object):
         '''
         result = self.match(nports = n_ports, **kwargs)
         result.s = mf.rand_c(self.frequency.npoints, n_ports,n_ports)
+        if reciprocal and n_ports>1:
+            for m in range(n_ports):
+                for n in range(n_ports):
+                    if m>n:
+                        result.s[:,m,n] = result.s[:,n,m]
+            
+        
         return result
         
     ## OTHER METHODS

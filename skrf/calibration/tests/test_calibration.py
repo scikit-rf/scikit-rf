@@ -3,9 +3,11 @@ import os
 import cPickle as pickle
 import skrf as rf
 import numpy as npy
+from numpy.random  import rand
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm
 
 class CalibrationTest(object):
     '''
@@ -44,6 +46,14 @@ class CalibrationTest(object):
         
     def test_from_coefs(self):
         cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
+        ntwk = self.wg.random(n_ports=self.n_ports)
+        if cal_from_coefs.apply_cal(self.cal.embed(ntwk))!= ntwk:
+            raise ValueError
+        self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
+        
+    def test_from_coefs_ntwks(self):
+        cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
+        
         ntwk = self.wg.random(n_ports=self.n_ports)
         if cal_from_coefs.apply_cal(self.cal.embed(ntwk))!= ntwk:
             raise ValueError
@@ -132,10 +142,39 @@ class SDDLTest(OnePortTest):
             measured = measured,
             )
     
+    def test_init_with_nones(self):
+        wg=self.wg
+        wg.frequency = rf.F.from_f([100])
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        
+        ideals = [
+                wg.short( name='short'),
+                None, 
+                None,
+                wg.load(.2+.2j, name='load'),
+                ]
+        actuals = [
+                wg.short( name='short'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 33.,'deg',name='qw'),
+                wg.load(.2+.2j, name='load'),
+                ]
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.SDDL(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+        self.cal.run()
+    
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
+    def test_from_coefs_ntwks(self):
+        raise SkipTest('not applicable ')
 
-class SDDL2Test(OnePortTest):
+class SDDLWeikle(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
@@ -161,7 +200,7 @@ class SDDL2Test(OnePortTest):
                 ]
         measured = [self.measure(k) for k in actuals]
         
-        self.cal = rf.SDDL2(
+        self.cal = rf.SDDLWeikle(
             is_reciprocal = True, 
             ideals = ideals, 
             measured = measured,
@@ -169,8 +208,94 @@ class SDDL2Test(OnePortTest):
     
     def test_from_coefs(self):
         raise SkipTest('not applicable ')
-
-
+    def test_from_coefs_ntwks(self):
+        raise SkipTest('not applicable ')
+class SDDMTest(OnePortTest):
+    '''
+    This is a specific test of SDDL to verify it works when the load is 
+    a matched load. This test has been used to show that the SDDLWeikle 
+    variant fails, with a perfect matched load. 
+    '''
+    def setUp(self):
+        
+        self.n_ports = 1
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        wg = self.wg
+        wg.frequency = rf.F.from_f([100]) # speeds up test
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        
+        ideals = [
+                wg.short( name='short'),
+                wg.delay_short( 45.,'deg',name='ew'),
+                wg.delay_short( 90.,'deg',name='qw'),
+                wg.match( name='load'),
+                ]
+        actuals = [
+                wg.short( name='short'),
+                wg.delay_short( 10.,'deg',name='ew'),
+                wg.delay_short( 80.,'deg',name='qw'),
+                wg.match(name='load'),
+                ]
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.SDDL(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+    
+    def test_from_coefs(self):
+        raise SkipTest('not applicable ')
+    
+    def test_from_coefs_ntwks(self):
+        raise SkipTest('not applicable ')
+    
+class PHNTest(OnePortTest):
+    '''
+    '''
+    def setUp(self):
+        
+        self.n_ports = 1
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        wg = self.wg
+        #wg.frequency = rf.F.from_f([100]) # speeds up testing
+        
+        self.E = wg.random(n_ports =2, name = 'E')
+        known1 = wg.short()#wg.load(0)#wg.random()
+        known2 = wg.load(rand() + rand()*1j) #wg.random()
+        
+        ideals = [
+                wg.delay_short( 45.,'deg',name='ideal ew'),
+                wg.delay_short( 90.,'deg',name='ideal qw'),
+                known1,
+                known2,
+                ]
+        actuals = [
+                wg.delay_short( 20.,'deg',name='true ew'),
+                wg.delay_short( 110.,'deg',name='true qw'),
+                known1,
+                known2,
+                ]
+        measured = [self.measure(k) for k in actuals]
+        self.actuals = actuals 
+        
+        self.cal = PHN(
+            is_reciprocal = True, 
+            ideals = ideals, 
+            measured = measured,
+            )
+       
+        
+    def test_determine_ideals(self):
+        self.cal.run()
+        self.assertEqual(self.actuals[0], self.cal.ideals[0])
+        self.assertEqual(self.actuals[1], self.cal.ideals[1])
+            
+    def test_from_coefs(self):
+        raise SkipTest('not applicable')
+    def test_from_coefs_ntwks(self):
+        raise SkipTest('not applicable ')
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
@@ -307,6 +432,29 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
+    def test_init_with_nones(self):
+        wg= self.wg
+        actuals = [
+            wg.thru( name='thru'),
+            wg.short(nports=2, name='short'),
+            wg.line(45,'deg',name='line'),
+            ]
+        
+        ideals = [
+            None,
+            wg.short(nports=2, name='short'),
+            None,
+            ]
+            
+        measured = [self.measure(k) for k in actuals]
+        
+        self.cal = rf.TRL(
+            ideals = ideals,
+            measured = measured,
+            switch_terms = (self.gamma_f, self.gamma_r)
+            )
+        self.cal.run()
+        
  
 class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
@@ -314,11 +462,11 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
     measured networks requires different error networks for forward and 
     reverse excitation states, these are described as follows
     
-    forward excition
+    forward excitation
         used for S21 and S11
         Mf = Xf ** S ** Yf  
     
-    reverse excition
+    reverse excitation
         used for S12 and S22
         Mr = Xr ** S ** Yr
     
@@ -445,7 +593,7 @@ class UnknownThruTest(EightTermTest):
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
         wg= self.wg 
-        #wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -482,7 +630,7 @@ class MRCTest(EightTermTest):
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
         wg= self.wg 
-        #wg.frequency = rf.F.from_f([100])
+        wg.frequency = rf.F.from_f([100])
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -522,7 +670,7 @@ class MRCTest(EightTermTest):
         
 class SOLTTest2(SOLTTest):
     '''
-    This test verifys the accuracy of the SOLT calibration, when used 
+    This test verifies the accuracy of the SOLT calibration, when used 
     on an error-box (8-term) model.
     
     
@@ -591,7 +739,9 @@ class SOLTTest2(SOLTTest):
     @nottest
     def test_12_2_8term(self):
         coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs)
-        coefs = rf.s_dict_to_ns(coefs, self.cal.frequency).to_dict()
+        coefs = NetworkSet.from_s_dict(d=self.cal.coefs,
+                                    frequency=self.cal.frequency).to_dict()
+        
         self.assertEqual(coefs['forward switch term'], self.gamma_f)
         self.assertEqual(coefs['reverse switch term'], self.gamma_r)
         self.assertEqual(coefs['k'], self.X.s21*self.Y.s21)

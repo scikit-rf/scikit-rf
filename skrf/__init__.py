@@ -8,9 +8,10 @@ calibration, VNA data acquisition, circuit design and much more.
 
 This is the main module file for skrf. it simply imports classes and
 methods. It does this in two ways; import all into the current namespace,
-and import modules themselves for coherent  structured referencing
+and import modules themselves for coherent structured referencing
 '''
 
+__version__ = '0.15.1'
 ## Import all  module names for coherent reference of name-space
 import media
 import calibration
@@ -28,7 +29,7 @@ import util
 try:
     import data
 except:
-    print 'warning: data module didnt load. dont worry about it.'
+    print 'warning: data module didn\'t load. dont worry about it.'
     pass 
 # Import contents into current namespace for ease of calling
 from frequency import *

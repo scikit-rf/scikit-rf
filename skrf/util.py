@@ -32,7 +32,7 @@ import mathFunctions as mf
 
 import matplotlib as mpl
 import warnings
-import os
+import os, fnmatch
 import cPickle as pickle
 import pylab as plb
 import numpy as npy
@@ -132,13 +132,13 @@ def slice_domain(x,domain):
     Examples
     -----------
     >>> x = linspace(0,10,101)
-    >>> idx = slice_domain(x, 2,6)
+    >>> idx = slice_domain(x, (2,6))
     >>> x[idx]
 
     '''
     start = find_nearest_index(x, domain[0])
     stop = find_nearest_index(x, domain[1])
-    return slice(start,stop)
+    return slice(start,stop+1)
 
 # file IO
 
@@ -146,7 +146,7 @@ def get_fid(file, *args, **kwargs):
     '''
     Returns a file object, given a filename or file object
     
-    Useful  when you want to allow the arguments of a function to
+    Useful when you want to allow the arguments of a function to
     be either files or filenames
     
     Parameters
@@ -166,7 +166,7 @@ def get_extn(filename):
     Get the extension from a filename.
     
     The extension is defined as everything passed the last '.'.
-    Returns None if it aint got one
+    Returns None if it ain't got one
     
     Parameters
     ------------
@@ -177,7 +177,7 @@ def get_extn(filename):
     --------
     ext : string, None
         either the extension (not including '.') or None if there 
-        isnt one
+        isn't one
         
 
     '''
@@ -197,7 +197,7 @@ def basename_noext(filename):
 # git
 def git_version( modname):
     '''
-    Returns output 'git describe', executed in a modules root directory.
+    Returns output 'git describe', executed in a module's root directory.
     '''
     mod = __import__(modname)
     mod_dir =os.path.split(mod.__file__)[0] 
@@ -265,6 +265,25 @@ def dict_2_recarray(d, delim, dtype):
 
 
 
+def findReplace(directory, find, replace, filePattern):
+    '''
+    Find/replace some txt in all files in a directory, recursively 
+    
+    This was found in [1]_.
+    
+    Examples
+    -----------
+    findReplace("some_dir", "find this", "replace with this", "*.txt")
+    .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
+    '''
+    for path, dirs, files in os.walk(os.path.abspath(directory)):
+        for filename in fnmatch.filter(files, filePattern):
+            filepath = os.path.join(path, filename)
+            with open(filepath) as f:
+                s = f.read()
+            s = s.replace(find, replace)
+            with open(filepath, "w") as f:
+                f.write(s)
 
 
 # general purpose objects 

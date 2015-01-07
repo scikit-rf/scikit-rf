@@ -35,16 +35,17 @@ from pylab import linspace, gca,plot, autoscale
 from numpy import pi
 import numpy as npy
 from numpy import fft # used to center attribute `t` at 0
-
+import re
+from util import slice_domain
 
 class Frequency(object):
     '''
     A frequency band.
 
     The frequency object provides a convenient way to work with and
-    access a frequency band. It contains  a fruequency vector as well as
+    access a frequency band. It contains  a frequency vector as well as
     a frequency unit. This allows a frequency vector in a given unit
-    to be available (:attr:`f_scaled`), as well as an absolute frquency
+    to be available (:attr:`f_scaled`), as well as an absolute frequency
     axis in 'Hz'  (:attr:`f`).
     
     A Frequency object can be created from either (start, stop, npoints)
@@ -140,7 +141,63 @@ class Frequency(object):
         '''
         '''
         return self.__str__()
+    
+    def __getitem__(self,key):
+        '''
+        Slices a Frequency object based on an index, or human readable string
+        
+        Parameters
+        -----------
+        key : str, orslice
+            if int; then it is interpreted as the index of the frequency
+            if str, then should be like '50.1-75.5ghz', or just '50'. 
+            If the frequency unit is omited then self.frequency.unit is 
+            used.  
+            
+        Examples
+        -----------
+        >>> b = rf.Frequency(50,100,101,'ghz')
+        >>> a = b['80-90ghz']
+        >>> a.plot_s_db()
+        '''
+       
+        output = self.copy()
+        
+        if isinstance(key, str):
+            # they passed a string try and do some interpretation
+            re_numbers = re.compile('.*\d')
+            re_hyphen = re.compile('\s*-\s*')
+            re_letters = re.compile('[a-zA-Z]+')
+            
+            freq_unit = re.findall(re_letters,key)
+            
+            if len(freq_unit) == 0:
+                freq_unit = self.unit
+            else:
+                freq_unit = freq_unit[0]
+            
+            key_nounit = re.sub(re_letters,'',key)
+            edges  = re.split(re_hyphen,key_nounit)
+            
+            edges_freq = Frequency.from_f([float(k) for k in edges], 
+                                        unit = freq_unit)
+            if len(edges_freq) ==2:   
+                slicer=slice_domain(output.f, edges_freq.f)
+            elif len(edges_freq)==1:
+                key = find_nearest_index(output.f, edges_freq.f[0])
+                slicer = slice(key,key+1,1)
+            else:
+                raise ValueError()
+            try:
+                output.f = npy.array(output.f[slicer]).reshape(-1)
+                return output
+            except(IndexError):
+                raise IndexError('slicing frequency is incorrect')
+            
+        
+        output.f = npy.array(output.f[key]).reshape(-1)
 
+        return output
 
 
     @classmethod
@@ -148,7 +205,7 @@ class Frequency(object):
         '''
         Construct Frequency object from a frequency vector.
         
-        The unit of  is set by kwarg 'unit'
+        The unit is set by kwarg 'unit'
 
         Parameters
         -----------
@@ -414,7 +471,7 @@ class Frequency(object):
         Label the x-axis of a plot.
 
         Sets the labels of a plot using :func:`matplotlib.x_label` with
-        string containing the frequency  unit.
+        string containing the frequency unit.
 
         Parameters
         ---------------
@@ -451,7 +508,7 @@ class Frequency(object):
             if len(y)==len(self):
                 pass
             else:
-                raise IndexError(['thing to plot doesnt have same'
+                raise IndexError(['thing to plot doesn\'t have same'
                                  ' number of points as f'])
         except(TypeError):
             y = y*npy.ones(len(self))
@@ -462,7 +519,7 @@ class Frequency(object):
         
 def overlap_freq(f1,f2):
     '''
-    Calculates  overlapping frequency between f1 and f2.
+    Calculates overlapping frequency between f1 and f2.
     
     Or, put more accurately, this returns a Frequency that is the part 
     of f1 that is overlapped by f2. The resultant start frequency is 
@@ -504,9 +561,9 @@ def f_2_frequency(f):
     Depricated
     -------------
     Use the class method :func:`Frequency.from_f`
-    convienience function
+    convenience function
 
 
-    !depricated, use classmethod from_f instead.
+    !deprecated, use classmethod from_f instead.
     '''
     return Frequency(start=f[0], stop=f[-1],npoints = len(f), unit='hz')

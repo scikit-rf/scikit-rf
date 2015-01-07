@@ -155,7 +155,7 @@ class ESP300(GpibInstrument):
          takes:
                 input: a string, describing the units here are a list of
                         possibilities.
-                         'enoder count'
+                        'encoder count'
                         'motor step'
                         'millimeter'
                         'micrometer'

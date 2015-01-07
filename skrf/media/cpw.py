@@ -30,7 +30,7 @@ class CPW(Media):
     def __init__(self, frequency, w , s, ep_r, t=None, rho=None, \
             *args, **kwargs):
         '''
-        Coplanar Waveguide  initializer
+        Coplanar Waveguide initializer
 
         Parameters
         -------------

@@ -32,7 +32,13 @@ class FrequencyTestCase(unittest.TestCase):
         rando_sweep_ntwk = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         self.assertTrue((rando_sweep_ntwk.f == \
             npy.array([1,4,10,20])).all())
-
+    
+    def test_slicer(self):
+        a = rf.Frequency.from_f([1,2,4,5,6])
+                       
+        b = a['2-5ghz']
+        tinyfloat = 1e-12
+        self.assertTrue((abs(b.f - [2e9,4e9,5e9]) < tinyfloat).all())
 
 suite = unittest.TestLoader().loadTestsFromTestCase(FrequencyTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

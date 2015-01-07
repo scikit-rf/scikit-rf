@@ -38,12 +38,12 @@ class AgilentCSVTestCase(unittest.TestCase):
 
     def test_networks(self):
         '''
-        ths only tess for execution, not accuracy
+        this only tests for execution, not accuracy
         '''
         a = self.acsv.networks
 
     def test_scalar_networks(self):
         '''
-        ths only tess for execution, not accuracy
+        this only tests for execution, not accuracy
         '''
         a = self.acsv.scalar_networks

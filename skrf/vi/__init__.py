@@ -18,7 +18,7 @@ classes. See .
 
 
 '''
-
+__test__=False
 all = ['vna','sa','stages']
 
 

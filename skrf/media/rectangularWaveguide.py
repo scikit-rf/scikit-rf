@@ -20,7 +20,7 @@ class RectangularWaveguide(Media):
 
     Represents a single mode of a homogeneously filled rectangular
     waveguide of cross-section `a` x `b`. The mode is determined by
-    mode-type (te or tm) and mode indecies ( m and n ).
+    mode-type (te or tm) and mode indices ( m and n ).
 
 
     ====================================  =============  ===============
@@ -56,7 +56,7 @@ class RectangularWaveguide(Media):
         n : int
                 mode index in 'b'-direction
         ep_r : number, array-like,
-                filling material's relative permativity
+                filling material's relative permittivity
         mu_r : number, array-like
                 filling material's relative permeability
         rho : number, array-like, string
@@ -129,7 +129,7 @@ class RectangularWaveguide(Media):
         Returns
         -------
         ep : number
-                filling material's relative permativity
+                filling material's relative permittivity
         '''
         return self.ep_r * epsilon_0
 
@@ -236,7 +236,7 @@ class RectangularWaveguide(Media):
     @property
     def f_norm(self):
         '''
-        frequency vector normalized to cuttoff
+        frequency vector normalized to cutoff
         '''
         return self.frequency.f/self.f_cutoff
     
@@ -339,16 +339,19 @@ class RectangularWaveguide(Media):
         
         .. math:: 
         
-            \\sigma_c = \\frac{\\sigma}{\\k_w^2}
+            \\sigma_c = \\frac{\\sigma}{k_w^2}
+            
             
         where 
             
         .. math::
             
-            k_w = 1 + e^{(-\\delta/2h)^{1.6}}
-        
-            \\delta = skin depth 
-            h = surface roughness 
+            k_w = 1 + e^{(-\\delta/2h)^{1.6}} 
+            
+            \\delta = \\mbox{skin depth} 
+            
+            h = \\mbox{surface roughness } 
+            
             
         This is taken from Ansoft HFSS help documents.
         
@@ -357,7 +360,7 @@ class RectangularWaveguide(Media):
         References
         --------------
         
-        .. [#] Electromagnetic Waves and Antennas by Sophocles J. Orfanidis 
+        .. [#] Chapter 9, (eq 9.8.1) of Electromagnetic Waves and Antennas by Sophocles J. Orfanidis 
         http://eceweb1.rutgers.edu/~orfanidi/ewa/
         '''
         

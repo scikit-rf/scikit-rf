@@ -1,5 +1,5 @@
 
-from traits.api import  *
+
 
 from .frequency import Frequency
 from .mathFunctions import *
@@ -513,7 +513,7 @@ class Network(object):
     @property
     def s(self):
         '''
-        my docstring
+        Scattering Parameters
         '''
         return self._s
         
@@ -575,6 +575,9 @@ class Network(object):
 
     @property
     def z0(self):
+        '''
+        The port impedance
+        '''
         return self._z0
     
     @z0.setter
@@ -646,7 +649,7 @@ def fix_z0_shape( z0, nfreqs, nports):
     '''
     Make a port impedance of correct shape for a given network's matrix 
     
-    This attempts to broadcast z0 to satisy
+    This attempts to broadcast z0 to satisfy
         npy.shape(z0) == (nfreqs,nports)
     
     Parameters 

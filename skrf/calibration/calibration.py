@@ -46,7 +46,7 @@ Partial Calibrations
 '''
 import numpy as npy
 from numpy import linalg
-from numpy import mean, std, angle, real, imag, exp, ones, zeros
+from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d
 import pylab as plb
 import os
 from copy import deepcopy, copy
@@ -59,7 +59,7 @@ from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
-from ..networkSet import NetworkSet, s_dict_to_ns
+from ..networkSet import NetworkSet
 
 
 ## later imports. delayed to solve circular dependencies
@@ -86,7 +86,7 @@ coefs_list_12term =[
 
 global coefs_list_8term
 '''
-There are vairous notations used for this same model. Given that all
+There are various notations used for this same model. Given that all
 measurements have been unterminated properly the error box model holds
 and the following equalities hold:
 
@@ -115,7 +115,7 @@ coefs_list_3term = [
     
 class Calibration(object):
     '''
-    Base class  for all Calibration objects. 
+    Base class for all Calibration objects. 
     
     This class implements the common mechanisms for all calibration 
     algorithms. Specific calibration algorithms should inheret this  
@@ -205,7 +205,7 @@ class Calibration(object):
         # if not, then attempt to interpolate
         for k in range(len(self.ideals)):
             if self.ideals[k].frequency != self.measured[0]:
-                print('Warning: Frequency information doesnt match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
+                print('Warning: Frequency information doesn\'t match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
                 try:
                     # try to resample our ideals network to match
                     # the meaurement frequency
@@ -318,8 +318,51 @@ class Calibration(object):
         return (self.ideals.pop(std),  self.measured.pop(std))
     
     @classmethod 
+    def from_coefs_ntwks(cls, coefs_ntwks, **kwargs):
+        '''
+        Creates a calibration from its error coefficients
+        
+        Parameters 
+        -------------
+        coefs_ntwks :  dict of Networks objects
+            error coefficients for the calibration
+            
+        See Also
+        ----------
+        Calibration.from_coefs
+        '''
+        # assigning this measured network is a hack so that 
+        # * `calibration.frequency` property evaluates correctly      
+        # * TRL.__init__() will not throw an error
+        if not hasattr(coefs_ntwks,'keys'):
+            # maybe they passed a list? lets try and make a dict from it
+            coefs_ntwks = NetworkSet(coefs_ntwks).to_dict()
+        
+        coefs = NetworkSet(coefs_ntwks).to_s_dict()
+        
+        frequency = coefs_ntwks.values()[0].frequency
+        
+        cal= cls.from_coefs(frequency=frequency, coefs=coefs, **kwargs)
+        return cal
+    
+    @classmethod 
     def from_coefs(cls, frequency, coefs, **kwargs):
-        # assigning this measured network is  a hack so that 
+        '''
+        Creates a calibration from its error coefficients
+        
+        Parameters 
+        -------------
+        frequency : :class:`~skrf.frequency.Frequency` 
+            frequency info, (duh)
+        coefs :  dict of numpy arrays
+            error coefficients for the calibration
+            
+        See Also
+        ----------
+        Calibration.from_coefs_ntwks
+        
+        '''
+        # assigning this measured network is a hack so that 
         # * `calibration.frequency` property evaluates correctly      
         # * TRL.__init__() will not throw an error
         n = Network(frequency = frequency,
@@ -331,9 +374,10 @@ class Calibration(object):
                                     s=coefs['forward switch term']),
                             Network(frequency = frequency, 
                                     s=coefs['reverse switch term']))  
-            cal =cls(measured, measured, switch_terms = switch_terms, **kwargs)
-        else:
-            cal = cls(measured, measured, **kwargs)
+            kwargs['switch_terms'] = switch_terms
+            
+        
+        cal = cls(measured, measured, **kwargs)
         cal.coefs = coefs
         cal.family += '(fromCoefs)'
         return  cal
@@ -341,7 +385,7 @@ class Calibration(object):
     @property
     def frequency(self):
         '''
-        :class:`~skrf.frequency.Frequency` object  of the calibration
+        :class:`~skrf.frequency.Frequency` object of the calibration
         
         
         '''
@@ -353,7 +397,7 @@ class Calibration(object):
         number of ideal/measurement pairs in calibration
         '''
         if len(self.ideals) != len(self.measured):
-            warn('number of ideals and measured dont agree')
+            warn('number of ideals and measured don\'t agree')
         return len(self.ideals)
         
     @property
@@ -364,6 +408,11 @@ class Calibration(object):
         The keys of this will be different depending on the 
         Calibration Model. This dictionary should be populated
         when the `run()` function is called.  
+        
+        Notes
+        -------
+        when setting this, property, the numpy arrays are flattened. 
+        this makes accessing the coefs more concise in the code. 
         
         See Also
         ----------
@@ -379,17 +428,22 @@ class Calibration(object):
             return self._coefs
     
     @coefs.setter
-    def coefs(self,val):
+    def coefs(self,d):
         '''
         '''
-        self._coefs = val
+        for k in d: 
+            d[k] = d[k].flatten()
+        self._coefs = d
     
-    def update_coefs(self, coefs_dict):
+    def update_coefs(self, d):
         '''
         update currect dict of error coefficients
         
         '''
-        self._coefs.update(coefs_dict)
+        for k in d: 
+            d[k] = d[k].flatten()
+        
+        self._coefs.update(d)
     
     @property
     def output_from_run(self):
@@ -423,7 +477,9 @@ class Calibration(object):
         coefs_12term_ntwks
         coefs_8term_ntwks
         '''
-        return s_dict_to_ns(self.coefs, self.frequency).to_dict()
+        ns = NetworkSet.from_s_dict(d=self.coefs,
+                                    frequency=self.frequency)
+        return ns.to_dict()
     
     @property
     def coefs_3term(self):
@@ -446,14 +502,30 @@ class Calibration(object):
         '''
         Dictionary of error coefficients in form of Network objects
         '''
-        return s_dict_to_ns(self.coefs_3term, self.frequency).to_dict()
+        ns = NetworkSet.from_s_dict(d=self.coefs_3term,
+                                    frequency=self.frequency)
+        return ns.to_dict()
     
     @property
     def normalized_directivity(self):
         '''
         the directivity normalized to the reflection tracking
         '''
-        raise NotImplementedError
+        try:
+            return self.coefs_ntwks['directivity']/\
+                   self.coefs_ntwks['reflection tracking']
+        except: 
+            pass
+        try:
+            out = {}
+            for direction in ['forward','reverse']:
+                out[direction + ' normalized directvity'] =\
+                    self.coefs_ntwks[direction + ' directivity']/\
+                    self.coefs_ntwks[direction + ' reflection tracking']
+            return out
+        except: 
+            raise ValueError('cant find error coefs')
+            
         
     @property
     def coefs_8term(self):
@@ -499,7 +571,9 @@ class Calibration(object):
         '''
         Dictionary of error coefficients in form of Network objects
         '''
-        return s_dict_to_ns(self.coefs_8term, self.frequency).to_dict()    
+        ns = NetworkSet.from_s_dict(d=self.coefs_8term,
+                                    frequency=self.frequency)
+        return ns.to_dict()    
     
     @property 
     def coefs_12term(self):
@@ -545,8 +619,9 @@ class Calibration(object):
         '''
         Dictionary or error coefficients in form of Network objects
         '''
-        return s_dict_to_ns(self.coefs_12term, self.frequency).to_dict()
-    
+        ns = NetworkSet.from_s_dict(d=self.coefs_12term,
+                                    frequency=self.frequency)
+        return ns.to_dict()
     
     @property
     def verify_12term(self):
@@ -744,7 +819,7 @@ class Calibration(object):
         
         This will return a single two-port network for a one-port cal. 
         For a 2-port calibration this will return networks 
-        for forward and reverse  excitation. However, these are not 
+        for forward and reverse excitation. However, these are not 
         sufficient to use for embedding, see the :func:`embed` function 
         for that. 
         
@@ -762,7 +837,7 @@ class Calibration(object):
         Plots corrected calibration standards 
         
         Given that the calibration is overdetermined, this may be used 
-        as a hueristic verification of calibration quality.
+        as a heuristic verification of calibration quality.
         
         Parameters
         ------------------
@@ -793,7 +868,7 @@ class Calibration(object):
         Plot residual networks.
         
         Given that the calibration is overdetermined, this may be used 
-        as a metric of the calibration's  *goodness of fit*
+        as a metric of the calibration's *goodness of fit*
         
         Parameters
         ------------------
@@ -995,7 +1070,7 @@ class OnePort(Calibration):
         embedded.name = ntwk.name
         return embedded
 
-class SDDL(OnePort):
+class SDDLWeikle(OnePort):
     '''
     Short Delay Delay Load (Oneport Calibration)
     
@@ -1092,7 +1167,7 @@ class SDDL(OnePort):
                 'source match':e11\
                 }
 
-class SDDL2(OnePort):
+class SDDL(OnePort):
     '''
     Short Delay Delay Load (Oneport Calibration)
     
@@ -1111,12 +1186,12 @@ class SDDL2(OnePort):
         Short Delay Delay Load initializer
         
 
-        measured and ideal networks must be in the order: 
+        Measured and ideal networks must be in the order: 
         
-        * short
-        * delay short1
-        * delay short2
-        * load
+        [ Short, Delay short1, Delay short2, Load] 
+        
+        The ideal delay shorts can be set to `None`, as they are 
+        determined during the calibration. 
         
         Parameters
         -----------
@@ -1136,7 +1211,15 @@ class SDDL2(OnePort):
         Calibration.__init__
         
         '''
-        
+        # if they pass None for the ideal responses for delay shorts
+        # then we will copy the short standard in their place. this is 
+        # only to avoid throwing an error when initializing the cal, the 
+        # values are not used. 
+        if ideals[1] is None:
+            ideals[1] = ideals[0].copy()
+        if ideals[2] is None:    
+            ideals[2] = ideals[0].copy()
+            
         if (len(measured) != 4) or (len(ideals)) != 4:
             raise IndexError('Incorrect number of standards.')
         Calibration.__init__(self, measured =  measured, 
@@ -1154,17 +1237,79 @@ class SDDL2(OnePort):
         cr_alpha = cross_ratio(b,a,c,d)
         cr_beta = cross_ratio(a,b,c,d)
         
-        
         alpha = imag(cr_alpha)/real(cr_alpha/l)
         beta = imag(cr_beta)/real(cr_beta/l)
-        
         
         self.ideals[1].s = z2s(alpha*1j,1)
         self.ideals[2].s = z2s(beta*1j,1)
     
         OnePort.run(self)
         
-
+class PHN(OnePort):
+    '''
+    Pair of Half Knowns (One Port self-calibration)
+    '''
+    family = 'PHN'
+    def __init__(self, measured, ideals, *args, **kwargs):
+        '''
+        
+        
+        '''
+        if (len(measured) != 4) or (len(ideals)) != 4:
+            raise IndexError('Incorrect number of standards.')
+        
+        Calibration.__init__(self, measured =  measured, 
+                             ideals =ideals, *args, **kwargs)
+        
+        
+    def run(self):
+        
+        # ideals (in impedance)
+        a = s2z(self.ideals[0].s,1).flatten() # half known 
+        b = s2z(self.ideals[1].s,1).flatten() # half known
+        c = s2z(self.ideals[2].s,1).flatten() # fully known
+        d = s2z(self.ideals[3].s,1).flatten() # fully known
+        
+        # meaured (in impedances)
+        a_ = s2z(self.measured[0].s,1).flatten() # half known
+        b_ = s2z(self.measured[1].s,1).flatten() # half known
+        c_ = s2z(self.measured[2].s,1).flatten() # fully known
+        d_ = s2z(self.measured[3].s,1).flatten() # fully known
+        
+        z = cross_ratio(a_,b_,c_,d_)
+        
+        # intermediate variables
+        e = c-d-c*z
+        f = d-c-d*z
+        g = c*d*z
+        
+        A = -real(f*z.conj())
+        B = 1j*imag( f*e.conj() + g.conj()*z)
+        C = real( g*e.conj()) 
+        
+        npts = len(A)
+        b1,b2 = zeros(npts, dtype=complex), zeros(npts, dtype=complex)
+        
+        for k in range(npts):
+            p =  poly1d([A[k],B[k],C[k]])
+            b1[k],b2[k] = p.r
+        
+        # temporarily translate into s-parameters so make the root-choice
+        #  choosing a root in impedance doesnt generally work for typical
+        # calibration standards 
+        b1_s = z2s(b1.reshape(-1,1,1),1)
+        b2_s = z2s(b2.reshape(-1,1,1),1)
+        b_guess = z2s(b.reshape(-1,1,1),1)
+        b_found_s = find_closest(b1_s,b2_s,b_guess)
+        
+        b_found = s2z(b_found_s.reshape(-1,1,1),1).flatten()
+        a_found = -(f*b_found + g)/(z*b_found + e)
+        
+        self.ideals[0].s = z2s(a_found.reshape(-1,1,1),1)
+        self.ideals[1].s = z2s(b_found.reshape(-1,1,1),1)
+    
+        OnePort.run(self)
+        
 class SOLT(Calibration):
     '''
     Traditional 12-term, full two-port calibration.
@@ -1398,7 +1543,7 @@ class EnhancedResponse(SOLT):
         '''
         '''
         if self.sp !=0:
-            raise NotImplementedError('not implemented yet. you can just flip() all you data though. ')
+            raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
         n_thrus = self.n_thrus
         p1_m = [k.s11 for k in self.measured[:-n_thrus]]
         p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
@@ -1450,7 +1595,7 @@ class EightTerm(Calibration):
     General EightTerm (aka Error-box) Two-port calibration
     
     This is basically an extension of the one-port algorithm to two-port
-    measurements, A least squares estimator is used to determine  the 
+    measurements, A least squares estimator is used to determine the 
     error coefficients. No self-calibration takes place.  
     The concept is presented in [1]_ , but implementation follows that 
     of  [2]_ .
@@ -1461,7 +1606,7 @@ class EightTerm(Calibration):
     -------
     An important detail of implementing the error-box 
     model is that the internal switch must be correctly accounted for. 
-    This is done through the measurement of  :term:`switch terms`.
+    This is done through the measurement of :term:`switch terms`.
         
     
     
@@ -1510,61 +1655,14 @@ class EightTerm(Calibration):
         '''
         Unterminates switch terms from a raw measurement.
         
-        In order to use the 8-term error model on a VNA which employs a 
-        switched source, the effects of the switch must be accounted for. 
-        This is done through `switch terms` as described in  [1]_ . The 
-        two switch terms are defined as, 
-        
-        .. math :: 
-            
-            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
-            \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
-        
-        These can be measured by four-sampler VNA's by setting up 
-        user-defined traces onboard the VNA. If the VNA doesnt have  
-        4-samplers, then you can measure switch terms indirectly by using a 
-        two-tier two-port calibration. Firts do a SOLT, then convert 
-        the 12-term error coefs to 8-term, and pull out the switch terms.  
-        
-        Parameters
-        -------------
-        two_port : 2-port Network 
-            the raw measurement
-        gamma_f : 1-port Network
-            the measured forward switch term. 
-            gamma_f = a2/b2 sourced by port1
-        gamma_r : 1-port Network
-            the measured reverse switch term
-        
-        Returns
-        -----------
-        ntwk :  Network object
-        
-        References
-        ------------
-        
-        .. [1] "Formulations of the Basic Vector Network Analyzer Error
-                Model including Switch Terms" by Roger B. Marks
+        See Also
+        ---------
+        calibration.unterminate
         '''
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
+            return unterminate(ntwk, gamma_f, gamma_r)
             
-            unterminated = ntwk.copy()
-            
-            # extract scattering matrices
-            m, gamma_r, gamma_f = ntwk.s, gamma_r.s, gamma_f.s
-            u = m.copy()
-            
-            one = npy.ones(ntwk.frequency.npoints)
-            
-            d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
-            u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-            u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
-            u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-            u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
-            
-            unterminated.s = u
-            return unterminated
         else:
             return ntwk
     
@@ -1572,45 +1670,13 @@ class EightTerm(Calibration):
         '''
         Terminate a  network with  switch terms 
         
-        see [1]_
-        
-        
-        Parameters
-        -------------
-        two_port : 2-port Network 
-            an unterminated network
-        gamma_f : 1-port Network
-            measured forward switch term. 
-            gamma_f = a2/b2 sourced by port1
-        gamma_r : 1-port Network
-            measured reverse switch term
-            gamma_r = a1/b1 sourced by port1
-        
-        Returns
-        -----------
-        ntwk :  Network object
-        
         See Also
         --------
-        unterminate_switch_terms 
-        
-        References
-        ------------
-        
-        .. [1] "Formulations of the Basic Vector Network Analyzer Error
-                Model including Switch Terms" by Roger B. Marks
+        calibration.terminate
         '''
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
-            m = ntwk.copy()
-            ntwk_flip = ntwk.copy()
-            ntwk_flip.flip()
-            
-            m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
-            m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
-            m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
-            m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
-            return m
+            return terminate(ntwk, gamma_f, gamma_r)
         else:
             return ntwk
     
@@ -1777,18 +1843,42 @@ class TRL(EightTerm):
     '''
     Thru Reflect Line 
     
+    Classic two-port self-calibration algorithm developed by Engen and
+    Hoer [1]_, reformulated into a more matrix form in [2]_.
+    
     .. warning::
         This version of TRL does not solve for the Reflect standard yet
+    
+    
+    See Also
+    ------------
+    determine_line function which actually determines the line s-parameters
+    
+    
+        
+    References
+    ------------
+    .. [1] G. F. Engen and C. A. Hoer, "Thru-Reflect-Line: An Improved Technique for Calibrating the Dual Six-Port Automatic Network Analyzer," IEEE Transactions on Microwave Theory and Techniques, vol. 27, no. 12, pp. 987-993, 1979.
+    
+    .. [2] H.-J. Eul and B. Schiek, "A generalized theory and new calibration procedures for network analyzer self-calibration," IEEE Transactions on Microwave Theory and Techniques, vol. 39, no. 4, pp. 724-731, 1991.
+
 
     '''
     family = 'TRL'
-    def __init__(self, measured, ideals,line_approx=None,
-                 *args, **kwargs):
+    def __init__(self, measured, ideals, estimate_line=False, *args, 
+                 **kwargs):
         '''
         Initialize a TRL calibration 
         
         Note that the order of `measured` and `ideals` is strict. 
-        it must be [Thru, Reflect, Line]
+        It must be [Thru, Reflect, Line]. 
+        
+        If the ideal response for the 
+        Thru and Line is  `None`, it is assumed that the you have a 
+        flush thru, and a 90deg line. Alternatively, the 
+        `estimate_line` option can be used to estimate the line length
+        from measurements (see below).
+        
         
         .. warning::
             This version of TRL does not solve for the Reflect standard yet
@@ -1796,7 +1886,7 @@ class TRL(EightTerm):
         
         Notes
         -------
-        This implementation inherets from :class:`EightTerm`. dont 
+        This implementation inherits from :class:`EightTerm`. dont 
         forget to pass switch_terms.
         
         
@@ -1804,16 +1894,53 @@ class TRL(EightTerm):
         --------------
         measured : list of :class:`~skrf.network.Network`
              must be in order [Thru, Reflect, Line]
+        
         ideals : list of :class:`~skrf.network.Network`
-            must be in order [Thru, Reflect, Line]
-            
+            must be in order [Thru, Reflect, Line]. The Thru and Line 
+            may be set to None.
+        
+        estimate_line : bool
+            Estimates the length of the line standard from raw measurements. 
+            This is only used if the ideal response of the line is 
+            `None`. Also, this will only work if your embedding networks
+            are reasonably well matched. 
+        
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
-            
-            
+        
+                   
         '''
         warn('Value of Reflect is not solved for yet.')
-        self.line_approx = line_approx
+        
+        
+        # TODO: allow them to pass None for the ideal thru, and create
+        #       if they do, create it. perhaps the line also
+        
+        if ideals[0] is None:
+            # lets make an ideal flush thru for them 
+            ideal_thru = measured[0].copy()
+            ideal_thru.s[:,0,0] = 0 
+            ideal_thru.s[:,1,1] = 0
+            ideal_thru.s[:,1,0] = 1
+            ideal_thru.s[:,0,1] = 1
+            ideals[0] = ideal_thru
+        
+        if ideals[2] is None:
+            line_approx=None # this forces the line length to be 
+            #                  estimated from measurements
+            # lets make an 90deg line for them 
+            ideal_line = measured[2].copy()
+            ideal_line.s[:,0,0] = 0 
+            ideal_line.s[:,1,1] = 0
+            ideal_line.s[:,1,0] = -1j
+            ideal_line.s[:,0,1] = -1j
+            ideals[2] = ideal_thru
+            
+            if not estimate_line:
+                line_approx = ideals[2]
+            
+        else: 
+            line_approx = ideals[2]
         
         
         EightTerm.__init__(self, 
@@ -1824,7 +1951,9 @@ class TRL(EightTerm):
         
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
-        
+    
+    
+    
 class UnknownThru(EightTerm):
     '''
     Two-Port Self-Calibration allowing the *thru* standard to be unknown.
@@ -1937,7 +2066,7 @@ class MRC(UnknownThru):
     '''
     Misalignment Resistance Calibration
     
-    This is an error-box based calibration that is a  combination of the 
+    This is an error-box based calibration that is a combination of the 
     SDDL[1]_ and the UnknownThru[2]_, algorithms. 
     The self-calibration aspects of these two algorithms alleviate the
     need to know the phase of the delay shorts, as well as the exact
@@ -2064,7 +2193,7 @@ class Normalization(Calibration):
 
 def ideal_coefs_12term(frequency):
     '''
-    An ideal set of 12term calibration coeficients 
+    An ideal set of 12term calibration coefficients 
     
     Produces a set of error coefficients, that would result if the 
     error networks were matched thrus
@@ -2090,8 +2219,110 @@ def ideal_coefs_12term(frequency):
         ]})
     
     return ideal_coefs
-    
-    
+
+
+def unterminate(ntwk, gamma_f, gamma_r):
+        '''
+        Unterminates switch terms from a raw measurement.
+        
+        In order to use the 8-term error model on a VNA which employs a 
+        switched source, the effects of the switch must be accounted for. 
+        This is done through `switch terms` as described in  [1]_ . The 
+        two switch terms are defined as, 
+        
+        .. math :: 
+            
+            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
+            \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
+        
+        These can be measured by four-sampler VNA's by setting up 
+        user-defined traces onboard the VNA. If the VNA doesnt have  
+        4-samplers, then you can measure switch terms indirectly by using a 
+        two-tier two-port calibration. Firts do a SOLT, then convert 
+        the 12-term error coefs to 8-term, and pull out the switch terms.  
+        
+        Parameters
+        -------------
+        two_port : 2-port Network 
+            the raw measurement
+        gamma_f : 1-port Network
+            the measured forward switch term. 
+            gamma_f = a2/b2 sourced by port1
+        gamma_r : 1-port Network
+            the measured reverse switch term
+        
+        Returns
+        -----------
+        ntwk :  Network object
+        
+        References
+        ------------
+        
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
+                Model including Switch Terms" by Roger B. Marks
+        '''
+        
+            
+        unterminated = ntwk.copy()
+        
+        # extract scattering matrices
+        m, gamma_r, gamma_f = ntwk.s, gamma_r.s, gamma_f.s
+        u = m.copy()
+        
+        one = npy.ones(ntwk.frequency.npoints)
+        
+        d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
+        u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+        u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
+        u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
+        u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
+        
+        unterminated.s = u
+        return unterminated
+
+def terminate(ntwk, gamma_f, gamma_r):
+        '''
+        Terminate a  network with  switch terms 
+        
+        see [1]_
+        
+        
+        Parameters
+        -------------
+        two_port : 2-port Network 
+            an unterminated network
+        gamma_f : 1-port Network
+            measured forward switch term. 
+            gamma_f = a2/b2 sourced by port1
+        gamma_r : 1-port Network
+            measured reverse switch term
+            gamma_r = a1/b1 sourced by port1
+        
+        Returns
+        -----------
+        ntwk :  Network object
+        
+        See Also
+        --------
+        unterminate_switch_terms 
+        
+        References
+        ------------
+        
+        .. [1] "Formulations of the Basic Vector Network Analyzer Error
+                Model including Switch Terms" by Roger B. Marks
+        '''
+        
+        m = ntwk.copy()
+        ntwk_flip = ntwk.copy()
+        ntwk_flip.flip()
+        
+        m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
+        m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
+        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
+        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
+        return m
+        
 def determine_line(thru_m, line_m, line_approx=None):
     '''
     Determine S21 of a matched line. 
@@ -2260,7 +2491,7 @@ def convert_pnacoefs_2_skrf(coefs):
     coefs : dict 
         coefficients as retrieved from PNA
     ports : tuple
-        port indecies. in order (forward, reverse)
+        port indices. in order (forward, reverse)
     
     Returns
     ----------
@@ -2320,7 +2551,7 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
     coefs : dict 
         complex ndarrays for the cal coefficients as defined  by skrf 
     ports : tuple
-        port indecies. in order (forward, reverse)
+        port indices. in order (forward, reverse)
     
     Returns
     ----------
@@ -2377,7 +2608,7 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
     
 def align_measured_ideals(measured, ideals):
     '''
-    Aligns two lists of networks based on the intersection of their name's.
+    Aligns two lists of networks based on the intersection of their names.
     
     '''
     measured = [ measure for measure in measured\
@@ -2422,7 +2653,7 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
         ntwk = Network(**kwargs)
 
         if is_reciprocal:
-            #TODO: make this better and maybe have a phase continuity
+            #TODO: make this better and maybe have phase continuity
             # functionality
             tracking  = coefs['reflection tracking']
             s12 = npy.sqrt(tracking)

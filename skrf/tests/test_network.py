@@ -3,8 +3,7 @@ import os
 import numpy as npy
 import cPickle as pickle 
 import skrf as rf
-
-
+from nose.plugins.skip import SkipTest
 class NetworkTestCase(unittest.TestCase):
     '''
     Network class operation test case.
@@ -71,7 +70,9 @@ class NetworkTestCase(unittest.TestCase):
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
     
+    
     def test_connect_fast(self):
+        raise SkipTest('not supporting this function currently ')
         self.assertEqual(rf.connect_fast(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
 
@@ -191,6 +192,15 @@ class NetworkTestCase(unittest.TestCase):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
         a.interpolate_from_f(npy.linspace(1,2,4), unit='ghz')
         # TODO: numerically test for correct interpolation   
+    
+    def test_slicer(self):
+        a = rf.Network(f=[1,2,4,5,6],
+                       s=[1,1,1,1,1],
+                       z0=50 )
+                       
+        b = a['2-5ghz']
+        tinyfloat = 1e-12
+        self.assertTrue((abs(b.frequency.f - [2e9,4e9,5e9]) < tinyfloat).all())
         
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

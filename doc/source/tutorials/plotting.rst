@@ -149,7 +149,7 @@ frequency as well. To plot the log-magnitude of the s-parameters vs. frequency,
     @savefig plotting-ring_slot,db.png
     In [138]: ring_slot.plot_s_db()
     
-When no arguments are passed to the plotting methods, all parameters are plotted. Single parameters can be plotted by passing indecies `m` and `n` to the plotting commands (indexing start from 0). Comparing the simulated reflection coefficient off the ring slot to a measurement, 
+When no arguments are passed to the plotting methods, all parameters are plotted. Single parameters can be plotted by passing indices `m` and `n` to the plotting commands (indexing start from 0). Comparing the simulated reflection coefficient off the ring slot to a measurement, 
 
 .. ipython::
     
