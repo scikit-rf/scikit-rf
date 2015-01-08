@@ -589,47 +589,7 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
 
 
 
-class EnhancedResponseTest(unittest.TestCase):
-    def setUp(self):
-        self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
-        wg  = self.wg
-        wg.frequency = rf.F.from_f([100])
-        self.wg = wg
-        self.Xf = wg.random(n_ports =2, name = 'Xf')
-        self.Yf = wg.random(n_ports =2, name='Yf')
-        
-        ideals = [
-            wg.short(nports=2, name='short'),
-            wg.open(nports=2, name='open'),
-            wg.match(nports=2, name='load'),
-            wg.thru(name='thru'),
-            ]
-        
-    
-        measured = [ self.measure(k) for k in ideals]
-        
-        self.cal = EnhancedResponse(
-            ideals = ideals,
-            measured = measured,
-            source_port=1,
-            )
-    def measure(self,ntwk):
-        r= self.wg.random(2)
-        m = ntwk.copy()
-        mf = self.Xf**ntwk**self.Yf
-        m.s[:,1,0] = mf.s[:,1,0]
-        m.s[:,0,0] = mf.s[:,0,0]
-        m.s[:,1,1] = r.s[:,1,1]
-        m.s[:,0,1] = r.s[:,0,1]
-        return m
-        
-    def test_accuracy_of_dut_correction(self):
-        a = self.wg.random(n_ports=self.n_ports, name = 'actual')
-        c = self.measure(a)
-        c.name = 'corrected'   
-        self.assertEqual(c.s11,a.s11)
-        self.assertEqual(c.s21,a.s21)
+
 
 class TwoPortOnePathTest(SOLTTest):
     def setUp(self):
