@@ -23,6 +23,8 @@ One-port Calibrations
    :toctree: generated/
    
    OnePort
+   SDDL
+   PHN
    
 Two-port Calibrations
 ---------------------
@@ -34,14 +36,15 @@ Two-port Calibrations
    EightTerm
    UnknownThru
    TRL
-   TwoPortOnePath
+   
 
-Partial Calibrations 
+1.5 port Calibrations 
 ------------------------
 
 .. autosummary::
    :toctree: generated/
-
+    
+   TwoPortOnePath
    EnhancedResponse
    
 
@@ -1508,8 +1511,6 @@ class SOLT(Calibration):
         
         return measured
         
-
-
 class TwoPortOnePath(SOLT):
     '''
     Two Port One Path Calibration (aka poor man's SOLT)
@@ -1632,8 +1633,6 @@ class TwoPortOnePath(SOLT):
             
             return out
 
-
-
 class EnhancedResponse(TwoPortOnePath):
     '''
     Enhanced Response Partial Calibration 
@@ -1651,9 +1650,6 @@ class EnhancedResponse(TwoPortOnePath):
     '''
     family = 'EnhancedResponse'
     
-
-
-
 class EightTerm(Calibration):
     '''
     General EightTerm (aka Error-box) Two-port calibration
@@ -2016,8 +2012,6 @@ class TRL(EightTerm):
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
     
-    
-    
 class UnknownThru(EightTerm):
     '''
     Two-Port Self-Calibration allowing the *thru* standard to be unknown.
@@ -2283,7 +2277,6 @@ def ideal_coefs_12term(frequency):
         ]})
     
     return ideal_coefs
-
 
 def unterminate(ntwk, gamma_f, gamma_r):
         '''
@@ -2666,9 +2659,6 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
             
 
     return pna_coefs
-    
-    
-    
     
 def align_measured_ideals(measured, ideals):
     '''
