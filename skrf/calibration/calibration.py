@@ -59,8 +59,8 @@ PNA interaction
 .. autosummary::
    :toctree: generated/   
    
-   convert_pnacoefs_to_skrf
-   convert_skrfcoefs_to_pna
+   convert_skrfcoefs_2_pna
+   convert_pnacoefs_2_skrf
 
 '''
 import numpy as npy
@@ -2296,13 +2296,13 @@ def unterminate(ntwk, gamma_f, gamma_r):
         
         .. math :: 
             
-            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
+            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}\\
             \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
         
         These can be measured by four-sampler VNA's by setting up 
         user-defined traces onboard the VNA. If the VNA doesnt have  
         4-samplers, then you can measure switch terms indirectly by using a 
-        two-tier two-port calibration. Firts do a SOLT, then convert 
+        two-tier two-port calibration. First do a SOLT, then convert 
         the 12-term error coefs to 8-term, and pull out the switch terms.  
         
         Parameters
@@ -2314,6 +2314,7 @@ def unterminate(ntwk, gamma_f, gamma_r):
             gamma_f = a2/b2 sourced by port1
         gamma_r : 1-port Network
             the measured reverse switch term
+            gamma_r = a1/b1 sourced by port2
         
         Returns
         -----------
@@ -2360,7 +2361,7 @@ def terminate(ntwk, gamma_f, gamma_r):
             gamma_f = a2/b2 sourced by port1
         gamma_r : 1-port Network
             measured reverse switch term
-            gamma_r = a1/b1 sourced by port1
+            gamma_r = a1/b1 sourced by port2
         
         Returns
         -----------
@@ -2403,14 +2404,14 @@ def determine_line(thru_m, line_m, line_approx=None):
     
     .. math::
         
-        M_t = X \\cdot A_t \\cdot Y    
-        M_l = X \\cdot A_l \\cdot Y
+        M_t = X \\cdot A_t \\cdot Y    \\
+        M_l = X \\cdot A_l \\cdot Y\\
         
-        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}
+        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}\\
         
-        eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})
+        eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})\\
     
-    which can be solved to form a quadratic in S21 of the line
+    which can be solved to yield S21 of the line
     
     Notes
     -------
@@ -2421,11 +2422,11 @@ def determine_line(thru_m, line_m, line_approx=None):
     Parameters
     -----------
     thru_m : :class:`~skrf.network.Network`
-        a raw measurement of a thru 
+        raw measurement of a thru 
     line_m : :class:`~skrf.network.Network`
-        a raw measurement of a matched transmissive standard
+        raw measurement of a matched transmissive standard
     line_approx : :class:`~skrf.network.Network`
-        an approximate network the ideal line response. if None, then 
+        approximate network the ideal line response. if None, then 
         the response is approximated by line_approx = line/thru. This 
         makes the assumption that the error networks have much larger 
         transmission than reflection
