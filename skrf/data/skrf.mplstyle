@@ -18,6 +18,8 @@ axes.labelsize : 11
 axes.labelcolor : 555555
 axes.axisbelow : True     
 axes.color_cycle : 348ABD, b74331,8EBA42, FBC15E, 988ED5,  FFB5B8, 777777
+axes.xmargin: 0
+axes.ymargin: .2
 
 xtick.color : 555555
 xtick.direction : out

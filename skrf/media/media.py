@@ -1163,12 +1163,12 @@ class Media(object):
         result.s = mag_rv*npy.exp(1j*phase_rv)
         return result
 
-    def random(self, n_ports=1, reciprocal=False, **kwargs):
+    def random(self, n_ports=1, reciprocal=False, matched=False, **kwargs):
         '''
         Complex random network.
 
         Creates a n-port network whose s-matrix is filled with random 
-        complex numbers.
+        complex numbers. Optionaly, result can be matched or reciprocal. 
         
         Parameters
         ----------
@@ -1176,6 +1176,8 @@ class Media(object):
             number of ports.
         reciprocal : bool
             makes s-matrix symmetric (S_{mn} = S_{nm})
+        matched : bool
+            makes diagonals of s-matrix zero
             
         \*\*kwargs : passed to :class:`~skrf.network.Network`
                 initializer
@@ -1192,7 +1194,12 @@ class Media(object):
                 for n in range(n_ports):
                     if m>n:
                         result.s[:,m,n] = result.s[:,n,m]
-            
+        
+        if matched:
+            for m in range(n_ports):
+                for n in range(n_ports):
+                    if m==n:
+                        result.s[:,m,n] = 0
         
         return result
         

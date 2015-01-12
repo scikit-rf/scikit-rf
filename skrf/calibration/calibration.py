@@ -34,14 +34,33 @@ Two-port Calibrations
    EightTerm
    UnknownThru
    TRL
+   TwoPortOnePath
 
 Partial Calibrations 
-++++++++++++++++++++++++
+------------------------
 
 .. autosummary::
    :toctree: generated/
 
    EnhancedResponse
+   
+
+Generic Methods
+----------------
+.. autosummary::
+   :toctree: generated/
+
+   terminate
+   unterminate
+   determine_line
+   
+PNA interaction 
+----------------
+.. autosummary::
+   :toctree: generated/   
+   
+   convert_skrfcoefs_2_pna
+   convert_pnacoefs_2_skrf
 
 '''
 import numpy as npy
@@ -1489,27 +1508,31 @@ class SOLT(Calibration):
         
         return measured
         
-class EnhancedResponse(SOLT):
+
+
+class TwoPortOnePath(SOLT):
     '''
-    Enhanced Response Calibration, its like a  One-path SOLT
+    Two Port One Path Calibration (aka poor man's SOLT)
     
-    This algorithm is used when you dont have a full two-port system. 
-    It assumes you can measure a1,b1, and b2. Given this data systematic 
-    errors can be partially removed. 
+    This algorithm is used when you have a TXRX-RX system, ie 
+    you can only measure the waves a1,b1,and b2. Given this architecture,
+    the DUT must be flipped and measured twice to be fully corrected. 
     
-    Accuracy of correct measurements will rely on having a good match
-    at the passive side of the DUT. 
+    To allow for this, the `apply_cal` method takes a tuple of 
+    measurements in the order  (forward,reverse), and creates a composite
+    measurement that is correctable.
+    
     '''
-    family = 'EnhancedResponse'
+    family = 'TwoPortOnePath'
     
     def __init__(self, measured, ideals, n_thrus=1, source_port=1, 
                  *args, **kwargs):
         '''
-        EnhancedResponse initializer 
+        initializer 
         
         The order of the standards must align. The thru standard[s] 
         must be last in the list. Use the `n_thrus` argument if you 
-        want to use multiple thru standards. Note all 
+        want to use multiple thru standards. 
         
         Parameters
         -------------
@@ -1568,28 +1591,69 @@ class EnhancedResponse(SOLT):
         
         coefs = {}
         coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        
-        # fill all reverse coefficients with zeros or ones
-        zero_coef = npy.zeros(len(thru), dtype=complex)
-        one_coef = npy.ones(len(thru), dtype=complex)
-        coefs.update(dict([('reverse %s'%k, zero_coef) for k in p1_coefs]))
-        coefs.update({'reverse reflection tracking':one_coef})
-        coefs.update({'reverse transmission tracking':one_coef})
-        
+        coefs.update(dict([('reverse %s'%k, p1_coefs[k]) for k in p1_coefs]))
         
         self._coefs = coefs
     
-    def apply_cal(self,ntwk):
-        ntwk = ntwk.copy()
-        sp,rp = self.sp,self.rp
+    def apply_cal(self, ntwk_tuple):
+        '''
+        apply the calibration to a measuremnt
         
-        ntwk.s[:,rp,rp] = 0
-        ntwk.s[:,sp,rp] = 0
-        out = SOLT.apply_cal(self, ntwk)
-        out.s[:,rp,rp] = 0
-        out.s[:,sp,rp] = 0
-        return out
+        Parameters
+        -----------
+        network_tuple: tuple
+            tuple of 2-port Networks in order (forward, reverse)
+        
+        
+        
+        '''
+        if isinstance(ntwk_tuple,tuple) or isinstance(ntwk_tuple,list):
+            f,r = ntwk_tuple[0].copy(), ntwk_tuple[1].copy()
+            sp,rp = self.sp,self.rp
+            ntwk = f.copy()
+            ntwk.s[:,sp,sp] = f.s[:,sp,sp]
+            ntwk.s[:,rp,sp] = f.s[:,rp,sp]
+            ntwk.s[:,rp,rp] = r.s[:,sp,sp]
+            ntwk.s[:,sp,rp] = r.s[:,rp,sp]
+           
+            out = SOLT.apply_cal(self, ntwk)
+            return out
+        
+        else:
+            warnings.warn('only gave a single measurement orientation, error correction is partial without a tuple')
+            ntwk = ntwk_tuple.copy()
+            sp,rp = self.sp,self.rp
+            
+            ntwk.s[:,rp,rp] = 0
+            ntwk.s[:,sp,rp] = 0
+            out = SOLT.apply_cal(self, ntwk)
+            out.s[:,rp,rp] = 0
+            out.s[:,sp,rp] = 0
+            
+            return out
+
+
+
+class EnhancedResponse(TwoPortOnePath):
+    '''
+    Enhanced Response Partial Calibration 
     
+    Why are you using this?
+    For full error you correction, you can measure  the DUT in both 
+    orientations and instead use TwoPortOnePath
+    
+    Accuracy of correct measurements will rely on having a good match
+    at the passive side of the DUT. 
+    
+    For code-structuring reasons, this is a dummy placeholder class. 
+    Its just TwoPortOnePath, which defaults to enhancedresponse correction
+    when you correct a network, and not a tuple of networks
+    '''
+    family = 'EnhancedResponse'
+    
+
+
+
 class EightTerm(Calibration):
     '''
     General EightTerm (aka Error-box) Two-port calibration
@@ -2232,13 +2296,13 @@ def unterminate(ntwk, gamma_f, gamma_r):
         
         .. math :: 
             
-            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}
+            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}\\
             \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
         
         These can be measured by four-sampler VNA's by setting up 
         user-defined traces onboard the VNA. If the VNA doesnt have  
         4-samplers, then you can measure switch terms indirectly by using a 
-        two-tier two-port calibration. Firts do a SOLT, then convert 
+        two-tier two-port calibration. First do a SOLT, then convert 
         the 12-term error coefs to 8-term, and pull out the switch terms.  
         
         Parameters
@@ -2250,6 +2314,7 @@ def unterminate(ntwk, gamma_f, gamma_r):
             gamma_f = a2/b2 sourced by port1
         gamma_r : 1-port Network
             the measured reverse switch term
+            gamma_r = a1/b1 sourced by port2
         
         Returns
         -----------
@@ -2296,7 +2361,7 @@ def terminate(ntwk, gamma_f, gamma_r):
             gamma_f = a2/b2 sourced by port1
         gamma_r : 1-port Network
             measured reverse switch term
-            gamma_r = a1/b1 sourced by port1
+            gamma_r = a1/b1 sourced by port2
         
         Returns
         -----------
@@ -2334,19 +2399,19 @@ def determine_line(thru_m, line_m, line_approx=None):
     
     This is possible because two measurements can be combined to 
     create a relationship of similar matrices, as shown below. Equating
-    the traces between these measurements allows one to solve for S21 
+    the eigenvalues between these measurements allows one to solve for S21 
     of the line.
     
     .. math::
         
-        M_t = X \\cdot A_t \\cdot Y    
-        M_l = X \\cdot A_l \\cdot Y
+        M_t = X \\cdot A_t \\cdot Y    \\
+        M_l = X \\cdot A_l \\cdot Y\\
         
-        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}
+        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}\\
         
-        tr(M_t \\cdot M_{l}^{-1}) = tr( A_t \\cdot A_{l}^{-1})
+        eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})\\
     
-    which can be solved to form a quadratic in S21 of the line
+    which can be solved to yield S21 of the line
     
     Notes
     -------
@@ -2357,11 +2422,11 @@ def determine_line(thru_m, line_m, line_approx=None):
     Parameters
     -----------
     thru_m : :class:`~skrf.network.Network`
-        a raw measurement of a thru 
+        raw measurement of a thru 
     line_m : :class:`~skrf.network.Network`
-        a raw measurement of a matched transmissive standard
+        raw measurement of a matched transmissive standard
     line_approx : :class:`~skrf.network.Network`
-        an approximate network the ideal line response. if None, then 
+        approximate network the ideal line response. if None, then 
         the response is approximated by line_approx = line/thru. This 
         makes the assumption that the error networks have much larger 
         transmission than reflection
@@ -2373,6 +2438,8 @@ def determine_line(thru_m, line_m, line_approx=None):
     '''
     
     npts = len(thru_m)    
+    one = npy.ones(npts)
+    zero = npy.zeros(npts)
     
     if line_approx is None:
         # estimate line length, by assumeing error networks are well
@@ -2380,15 +2447,12 @@ def determine_line(thru_m, line_m, line_approx=None):
         line_approx = line_m/thru_m
     
     
-    fm = [ -1* npy.trace(npy.dot(thru_m.t[f], npy.linalg.inv(line_m.t[f]))) \
-        for f in range(npts)]
-    one = npy.ones(npts)
-    zero = npy.zeros(npts)
+    C = thru_m.inv**line_m 
+    # the eigen values of the matrix C, are equal to s12,conj(s12)
+    # but so we to choose the correct one 
+    w,v = linalg.eig(C.t)
     
-    roots_v = npy.frompyfunc( lambda x,y,z:npy.roots([x,y,z]),3,1 )
-    s12 = roots_v(one, fm, one)
-    s12_0 = npy.array([k[0]  for k in s12])
-    s12_1 = npy.array([k[1]  for k in s12])
+    s12_0, s12_1 = w[:,0], w[:,1]
     
     s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
     found_line = line_m.copy()
