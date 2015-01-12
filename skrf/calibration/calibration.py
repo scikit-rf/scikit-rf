@@ -2400,7 +2400,7 @@ def determine_line(thru_m, line_m, line_approx=None):
         M_t = X \\cdot A_t \\cdot Y    \\
         M_l = X \\cdot A_l \\cdot Y\\
         
-        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}\\
+        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}\\\\
         
         eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})\\
     

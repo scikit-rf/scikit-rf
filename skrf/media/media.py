@@ -772,7 +772,7 @@ class Media(object):
         ----------
         d : number
                 the length of transmissin line (see unit argument)
-        unit : ['deg','rad','m','cm','um','in','mil','s']
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
         z0 : number, or array-like
                 the impedance of the line (if different form z0)
@@ -827,11 +827,8 @@ class Media(object):
                 reflection coefficient of load (not in dB)
         d : number
                 the length of transmissin line (see unit argument)
-        unit : ['m','deg','rad']
-                the units of d. possible options are:
-                 * *m* : meters, physical length in meters (default)
-                 * *deg* :degrees, electrical length in degrees
-                 * *rad* :radians, electrical length in radians
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+                the units of d.  See :func:`to_meters`, for details
         \*\*kwargs : key word arguments
                 passed to :func:`match`, which is called initially to create a
                 'blank' network.
@@ -873,11 +870,8 @@ class Media(object):
         ----------
         d : number
                 the length of transmission line (see unit argument)
-        unit : ['m','deg','rad']
-                the units of d. possible options are:
-                 * *m* : meters, physical length in meters (default)
-                 * *deg* :degrees, electrical length in degrees
-                 * *rad* :radians, electrical length in radians
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+                the units of d.  See :func:`to_meters`, for details
         \*\*kwargs : key word arguments
                 passed to :func:`match`, which is called initially to create a
                 'blank' network.
@@ -903,11 +897,8 @@ class Media(object):
         ----------
         d : number
                 the length of transmission line (see unit argument)
-        unit : ['m','deg','rad']
-                the units of d. possible options are:
-                 * *m* : meters, physical length in meters (default)
-                 * *deg* :degrees, electrical length in degrees
-                 * *rad* :radians, electrical length in radians
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+                the units of d.  See :func:`to_meters`, for details
         \*\*kwargs : key word arguments
                 passed to :func:`match`, which is called initially to create a
                 'blank' network.
@@ -1076,11 +1067,8 @@ class Media(object):
         d : number
             length of attenuator
         
-        unit : ['m','deg','rad']
-                the units of d. possible options are:
-                 * *m* : meters, physical length in meters (default)
-                 * *deg* :degrees, electrical length in degrees
-                 * *rad* :radians, electrical length in radians
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+                the units of d.  See :func:`to_meters`, for details
         
         Returns
         --------
