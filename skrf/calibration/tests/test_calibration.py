@@ -7,7 +7,16 @@ from numpy.random  import rand
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm
+
+from skrf.networkSet import NetworkSet
+
+# number of frequency points to test calibration at 
+# i choose 1 for speed, but given that many tests employ *random* 
+# networks values <100 are better for  initialy verification
+global NPTS  
+NPTS = 1
+
 
 class CalibrationTest(object):
     '''
@@ -67,10 +76,9 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     def setUp(self):
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg = self.wg
-        wg.frequency = rf.F.from_f([100])
-        
+                
         self.E = wg.random(n_ports =2, name = 'E')
         
         ideals = [
@@ -114,9 +122,8 @@ class SDDLTest(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg = self.wg
-        wg.frequency = rf.F.from_f([100])
         
         self.E = wg.random(n_ports =2, name = 'E')
         #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
@@ -178,10 +185,8 @@ class SDDLWeikle(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg = self.wg
-        wg.frequency = rf.F.from_f([100])
-        
         self.E = wg.random(n_ports =2, name = 'E')
         #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
         #print self.E.s[0]
@@ -210,6 +215,7 @@ class SDDLWeikle(OnePortTest):
         raise SkipTest('not applicable ')
     def test_from_coefs_ntwks(self):
         raise SkipTest('not applicable ')
+
 class SDDMTest(OnePortTest):
     '''
     This is a specific test of SDDL to verify it works when the load is 
@@ -219,9 +225,8 @@ class SDDMTest(OnePortTest):
     def setUp(self):
         
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg = self.wg
-        wg.frequency = rf.F.from_f([100]) # speeds up test
         
         self.E = wg.random(n_ports =2, name = 'E')
         
@@ -257,9 +262,8 @@ class PHNTest(OnePortTest):
     def setUp(self):
         
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,101), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg = self.wg
-        #wg.frequency = rf.F.from_f([100]) # speeds up testing
         
         self.E = wg.random(n_ports =2, name = 'E')
         known1 = wg.short()#wg.load(0)#wg.random()
@@ -296,12 +300,13 @@ class PHNTest(OnePortTest):
         raise SkipTest('not applicable')
     def test_from_coefs_ntwks(self):
         raise SkipTest('not applicable ')
+
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,3), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg= self.wg
-        wg.frequency = rf.F.from_f([100])
+        
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -398,9 +403,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
 class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg= self.wg
-        wg.frequency = rf.F.from_f([100])
+        
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -455,8 +460,7 @@ class TRLTest(EightTermTest):
             )
         self.cal.run()
         
- 
-class SOLTTest(unittest.TestCase, CalibrationTest):
+class TwelveTermTest(unittest.TestCase, CalibrationTest):
     '''
     This test verifys the accuracy of the SOLT calibration. Generating 
     measured networks requires different error networks for forward and 
@@ -474,10 +478,8 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
     '''
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg  = self.wg
-        wg.frequency = rf.F.from_f([100])
-        self.wg = wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Xr = wg.random(n_ports =2, name = 'Xr')
         self.Yf = wg.random(n_ports =2, name='Yf')
@@ -487,15 +489,17 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.thru(name='thru'),
+            wg.random(2,name='thru'),
+            wg.random(2,name='thru'),
             ]
         
     
         measured = [ self.measure(k) for k in ideals]
         
-        self.cal = rf.SOLT(
+        self.cal = rf.TwelveTerm(
             ideals = ideals,
             measured = measured,
+            n_thrus=2, 
             )
     
     def measure(self,ntwk):
@@ -587,17 +591,82 @@ class SOLTTest(unittest.TestCase, CalibrationTest):
         
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
+class TwelveTermSloppyInitTest(TwelveTermTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        wg  = self.wg
+        self.Xf = wg.random(n_ports =2, name = 'Xf')
+        self.Xr = wg.random(n_ports =2, name = 'Xr')
+        self.Yf = wg.random(n_ports =2, name='Yf')
+        self.Yr = wg.random(n_ports =2, name='Yr')
+       
+        ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.attenuator(-20,name='atten'),
+            wg.line(45,'deg',name = 'line') ,          
+            ]
+        
+    
+        measured = [ self.measure(k) for k in ideals]
+        
+        
+        self.cal= TwelveTerm(
+            ideals = NetworkSet(ideals).to_dict(), 
+            measured = NetworkSet(measured).to_dict(),
+            n_thrus=None,
+            )
+     
+    def measure(self,ntwk):
+        m = ntwk.copy()
+        mf = self.Xf**ntwk**self.Yf
+        mr = self.Xr**ntwk**self.Yr
+        m.s[:,1,0] = mf.s[:,1,0]
+        m.s[:,0,0] = mf.s[:,0,0]
+        m.s[:,0,1] = mr.s[:,0,1]
+        m.s[:,1,1] = mr.s[:,1,1]
+        return m    
+    
 
-
-
+class SOLTTest(TwelveTermTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        wg  = self.wg
+        self.Xf = wg.random(n_ports =2, name = 'Xf')
+        self.Xr = wg.random(n_ports =2, name = 'Xr')
+        self.Yf = wg.random(n_ports =2, name='Yf')
+        self.Yr = wg.random(n_ports =2, name='Yr')
+       
+        ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            None,            
+            ]
+        actuals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.thru(),            
+            ]
+    
+        measured = [ self.measure(k) for k in actuals]
+        
+        self.cal = SOLT(
+            ideals = ideals,
+            measured = measured,
+            n_thrus=1,
+            )
+        
 
 class TwoPortOnePathTest(SOLTTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg  = self.wg
-        wg.frequency = rf.F.from_f([100])
-        self.wg = wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Yf = wg.random(n_ports =2, name='Yf')
         
@@ -660,10 +729,8 @@ class TwoPortOnePathTest(SOLTTest):
 class TwoPortOnePathIsEnhancedResponseTest(unittest.TestCase):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg  = self.wg
-        wg.frequency = rf.F.from_f([100])
-        self.wg = wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Yf = wg.random(n_ports =2, name='Yf')
         
@@ -710,10 +777,8 @@ class UnknownThruTest(EightTermTest):
     def setUp(self):
         
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg= self.wg 
-        wg.frequency = rf.F.from_f([100])
-        
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
@@ -747,10 +812,8 @@ class MRCTest(EightTermTest):
     def setUp(self):
         
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,2), a=100*rf.mil,z0=50)
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg= self.wg 
-        wg.frequency = rf.F.from_f([100])
-        
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')

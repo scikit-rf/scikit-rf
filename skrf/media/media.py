@@ -1054,7 +1054,7 @@ class Media(object):
         '''
         return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
 
-    def attenuator(self, s21, db=True, d =0, unit='m', **kwargs):
+    def attenuator(self, s21, db=True, d =0, unit='m', name='',**kwargs):
         '''
         Ideal matched attenuator of a given length
         
@@ -1083,6 +1083,7 @@ class Media(object):
         result.s[:,0,1] = s21
         result.s[:,1,0] = s21
         result = result**self.line(d=d, unit = unit, **kwargs)      
+        result.name = name
         return result
     
     def lossless_mismatch(self,s11,db=True,  **kwargs):
