@@ -489,8 +489,8 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.random(2,name='thru'),
-            wg.random(2,name='thru'),
+            wg.random(2,name='rand1'),
+            wg.random(2,name='rand2'),
             ]
         
     
@@ -592,6 +592,14 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
 class TwelveTermSloppyInitTest(TwelveTermTest):
+    '''
+    Test the TwelveTerm.__init__'s ability to 
+    1) determine the number of thrus (n_thrus) hueristically
+    2) put the standards in correct order if they use sloppy_input
+    
+    It must be a entirely seperate test because we want to ensure it 
+    creates an accurate calibration.
+    '''
     def setUp(self):
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
@@ -662,23 +670,22 @@ class SOLTTest(TwelveTermTest):
             )
         
 
-class TwoPortOnePathTest(SOLTTest):
+class TwoPortOnePathTest(TwelveTermTest):
     def setUp(self):
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg  = self.wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Yf = wg.random(n_ports =2, name='Yf')
+        self.Xr = wg.random(n_ports =2, name = 'Xr')
+        self.Yr = wg.random(n_ports =2, name='Yr')
         
-        # the reverse error networks are not used, but allows for 
-        # reverse error tests to pass
-        self.Xr = self.Yf.flipped() 
-        self.Yr = self.Xf.flipped() # 
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
             wg.match(nports=2, name='load'),
-            wg.thru(name='thru'),
+            wg.random(2,name='rand1'),
+            wg.random(2,name='rand2'),
             ]
         
     
@@ -688,6 +695,7 @@ class TwoPortOnePathTest(SOLTTest):
             ideals = ideals,
             measured = measured,
             source_port=1,
+            #n_thrus=2,
             )
     def measure(self,ntwk):
         r= self.wg.random(2)
@@ -716,7 +724,7 @@ class TwoPortOnePathTest(SOLTTest):
         self.assertEqual(self.cal.apply_cal((f,r)),a)
         
     def test_embed_equal_measure(self):
-        # measurment procedure is different so this tests doesnt apply
+        # measurment procedure is different so this test doesnt apply
         raise SkipTest()
     
     def test_from_coefs(self):
@@ -725,6 +733,22 @@ class TwoPortOnePathTest(SOLTTest):
     
     def test_from_coefs_ntwks(self):
         cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
+    def test_reverse_source_match_accuracy(self):
+        raise SkipTest()   
+    
+    def test_reverse_directivity_accuracy(self):
+        raise SkipTest()      
+    
+    def test_reverse_load_match_accuracy(self):
+        raise SkipTest()  
+    
+    def test_reverse_reflection_tracking_accuracy(self):
+        raise SkipTest()  
+    
+    def test_reverse_transmission_tracking_accuracy(self):
+        raise SkipTest()  
+    
+    
     
 class TwoPortOnePathIsEnhancedResponseTest(unittest.TestCase):
     def setUp(self):

@@ -195,6 +195,7 @@ class Calibration(object):
         '''
         
         # allow them to pass di
+        # lets make an ideal flush thru for them :
         if hasattr(measured, 'keys'):
             measured = measured.values()
             if sloppy_input == False:
@@ -1359,7 +1360,8 @@ class TwelveTerm(Calibration):
     
     '''
     family = 'TwelveTerm'
-    def __init__(self, measured, ideals, n_thrus=1, trans_thres=-40, *args, **kwargs):
+    def __init__(self, measured, ideals, n_thrus=None, trans_thres=-40, 
+                 *args, **kwargs):
         '''
         TwelveTerm initializer 
         
@@ -1396,6 +1398,7 @@ class TwelveTerm(Calibration):
         
         # if they didnt tell us the number of thrus, then lets 
         # hueristcally determine it
+        
         if n_thrus is None:
             warn('n_thrus is None, guessing which stds are transmissive')
             n_thrus=0
@@ -1636,10 +1639,18 @@ class SOLT(TwelveTerm):
             number of thru measurments
         '''
         
-        self.n_thrus = n_thrus
+        
+        
+        
+        
+        # see if they passed a None for the thru, and if so lets
+        # make an ideal flush thru for them 
         for k in range(-n_thrus,len(ideals)):
             if ideals[k] is None:
-                # lets make an ideal flush thru for them 
+                if (n_thrus is None) or (hasattr(ideals, 'keys')) or \
+                   (hasattr(measured, 'keys')):
+                    raise ValueError('Cant use sloppy_input and have the ideal thru be None. measured and ideals must be lists, or dont use None for the thru ideal.')
+                
                 ideal_thru = measured[0].copy()
                 ideal_thru.s[:,0,0] = 0 
                 ideal_thru.s[:,1,1] = 0
@@ -1648,9 +1659,10 @@ class SOLT(TwelveTerm):
                 ideals[k] = ideal_thru
         
         kwargs.update({'measured':measured,
-                       'ideals':ideals})
+                       'ideals':ideals,
+                       'n_thrus':n_thrus})
         
-        TwelveTerm.__init__(self, *args, **kwargs)
+        TwelveTerm.__init__(self,*args, **kwargs)
         
     
       
@@ -1714,7 +1726,7 @@ class TwoPortOnePath(TwelveTerm):
     '''
     family = 'TwoPortOnePath'
     
-    def __init__(self, measured, ideals, n_thrus=1, source_port=1, 
+    def __init__(self, measured, ideals,n_thrus=None,  source_port=1, 
                  *args, **kwargs):
         '''
         initializer 
@@ -1753,7 +1765,7 @@ class TwoPortOnePath(TwelveTerm):
                                               
     def run(self):
         '''
-        '''
+        
         if self.sp !=0:
             raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
         n_thrus = self.n_thrus
@@ -1778,11 +1790,30 @@ class TwoPortOnePath(TwelveTerm):
             (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
             (1. - p1_coefs['source match']*p1_coefs['load match'])
         
-        coefs = {}
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        coefs = {}'''
         
-        self._coefs = coefs
+        # run a full twelve term then just copy all forward error terms
+        # over reverse error terms
+        TwelveTerm.run(self)
+        
+        
+        out_coefs = self.coefs.copy()
+        
+        if self.sp ==0:
+            forward = 'forward'
+            reverse = 'reverse'
+        elif self.sp ==1:
+            forward = 'reverse'
+            reverse = 'forward'
+        else:
+            raise('source_port is out of range. should be 1 or 2.')
+        for k in self.coefs:
+            if k.startswith(forward):
+                k_out = k.replace(forward,reverse)
+                out_coefs[k_out] = self.coefs[k]
+                
+               
+        self._coefs = out_coefs
     
     def apply_cal(self, ntwk_tuple):
         '''
