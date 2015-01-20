@@ -148,7 +148,7 @@ class Calibration(object):
         *  :func:`Calibration.embed` (optional)
     
     
-    Generally, the familiy of properties prefixed `coefs` and 
+    The familiy of properties prefixed `coefs` and 
     `coefs..ntwks`  returns error coefficients. If the property coefs
     is accessed and empty, then :func:`Calibration.run` is called. 
     
@@ -159,7 +159,22 @@ class Calibration(object):
         is_reciprocal=True,name=None,*args, **kwargs):
         '''
         Calibration initializer.
-
+        
+        
+        Notes
+        -------
+        About the order of supplied standards,
+        
+        If the measured and ideals parameters are lists of Networks and 
+        `sloppy_input=False`, then their elements must align. However, 
+        if the measured and ideals are dictionaries, or 
+        `sloppy_input=True`, then we will try to align them for you 
+        based on the names of the networks (see `func:`align_measured_ideals`).
+        
+        You do not want to use this `sloppy_input` feature if the 
+        calibration depends on the standard order (like TRL). 
+        
+        
         Parameters
         ----------
         measured : list/dict  of :class:`~skrf.network.Network` objects
@@ -168,28 +183,24 @@ class Calibration(object):
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list ( or use `sloppy_input`)
         
         sloppy_input :  Boolean.
-                Allows ideals and measured lists to be 'aligned' based on
-                the network names.
+            Allows ideals and measured lists to be 'aligned' based on
+            the network names.
         
         is_reciprocal : Boolean
-                enables the reciprocity assumption on the calculation of the
-                error_network, which is only relevant for one-port
-                calibrations.
+            enables the reciprocity assumption on the calculation of the
+            error_network, which is only relevant for one-port
+            calibrations.
 
         name: string
-                the name of this calibration instance, like 'waveguide cal'
-                this is just for convenience [None].
-        
-        family : string
-                the name of the calibration algorithm, like 'SOLT'.
-                only used in printing, or if you want to identify the 
-                type of calibration.
-                
-        \*\*kwargs : key-word arguments
-                stored in self.kwargs, which may be used by specific algorithms
+            the name of this calibration instance, like 'waveguide cal'
+            this is just for convenience [None].
+              
+        \*args, \*\*kwargs : key-word arguments
+            stored in self.kwargs, which may be used by sub-classes
+            most likely in `run`.
 
         
         '''
@@ -992,6 +1003,12 @@ class OnePort(Calibration):
         If more than three standards are supplied then a least square
         algorithm is applied.
         
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  
+        automatic standards alignment (aka `sloppy_input`)
+        
+        
         Parameters
         -----------
         measured : list/dict  of :class:`~skrf.network.Network` objects
@@ -1000,7 +1017,7 @@ class OnePort(Calibration):
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list ( or use `sloppy_input`)
         
         args, kwargs : 
             passed to func:`Calibration.__init__`
@@ -1008,6 +1025,10 @@ class OnePort(Calibration):
         Notes
         -----
         This uses numpy.linalg.lstsq() for least squares calculation
+        
+        See Also
+        ---------
+        Calibration.__init__ 
         '''
         Calibration.__init__(self, measured, ideals, 
                              *args, **kwargs)
@@ -1335,6 +1356,7 @@ class PHN(OnePort):
         OnePort.run(self)
         
 
+## Two Ports 
 
 class TwelveTerm(Calibration):
     '''
@@ -1348,11 +1370,10 @@ class TwelveTerm(Calibration):
     
     * If more than 3 reflect standards are provided, a least-squares 
         solution  is implemented for the one-port stage of the calibration. 
-    * If more than 1 transmissive standard is given a the `load match`, 
-        and `transmission tracking` terms are average. 
+    * If more than 1 transmissive standard is given the `load match`, 
+        and `transmission tracking` terms are calculated multiple times 
+        and averaged. 
     
-    To use multiple thru measurements see the `n_thrus` parameter in :func:`__init__`
-     
     References 
     ------------
     .. [1] "Calibration Process of Automatic Network Analyzer Systems"  by Stig Rehnmark
@@ -1365,9 +1386,15 @@ class TwelveTerm(Calibration):
         '''
         TwelveTerm initializer 
         
-        The order of the standards must align. The thru standard[s] 
-        must be last in the list. Use the `n_thrus` argument if you 
-        want to use multiple transmissive standards
+        Use the  `n_thrus` argument to explicity define the number of 
+        transmissive standards. Otherwise, if `n_thrus=None`, then we 
+        will try and guess which are transmissive, by comparing the mean
+        |s21| and |s12| responses (in dB) to `trans_thres`.
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
         
         Parameters
         -------------
@@ -1388,6 +1415,12 @@ class TwelveTerm(Calibration):
             the threshold for categorizing a transmissive standard. 
             Compared to the measured s21,s12  meaned over frequency
             Only use if n_thrus=None.
+        
+        See Also
+        -----------
+        Calibration.__init__
+        
+        
         '''
 
         kwargs.update({'measured':measured,
@@ -1618,11 +1651,21 @@ class SOLT(TwelveTerm):
         '''
         SOLT initializer 
         
-        The order of the standards must align. The thru standard[s] 
-        must be last in the list. If the ideal thru is set to None,
-        a flush thru is assumed. If your `thru` is not flush you need 
-        to use `TwelveTerm` instead of SOLT. Use the `n_thrus` argument
-        to use multiple measurements of the flush thru standard.
+        If you arent using `sloppy_input`, then the order of the 
+        standards must align. 
+        
+        If `n_thrus!=None`, then the thru standard[s] must be last in 
+        the list. The `n_thrus` argument can be used to allow  multiple 
+        measurements of the flush thru standard.
+        
+        If the ideal element for the thru is set to None, a flush thru 
+        is assumed. If your `thru` is not flush you need 
+        to use `TwelveTerm` instead of SOLT. Use 
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
         
         Parameters
         -------------
@@ -1637,12 +1680,12 @@ class SOLT(TwelveTerm):
             
         n_thrus : int
             number of thru measurments
+            
+        See Also
+        ------------
+        TwelveTerm.__init__
         '''
-        
-        
-        
-        
-        
+
         # see if they passed a None for the thru, and if so lets
         # make an ideal flush thru for them 
         for k in range(-n_thrus,len(ideals)):
@@ -1731,9 +1774,15 @@ class TwoPortOnePath(TwelveTerm):
         '''
         initializer 
         
-        The order of the standards must align. The thru standard[s] 
-        must be last in the list. Use the `n_thrus` argument if you 
-        want to use multiple thru standards. 
+        Use the  `n_thrus` argument to explicity define the number of 
+        transmissive standards. Otherwise, if `n_thrus=None`, then we 
+        will try and guess which are transmissive, by comparing the mean
+        |s21| and |s12| responses (in dB) to `trans_thres`.
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
         
         Parameters
         -------------
@@ -1750,7 +1799,12 @@ class TwoPortOnePath(TwelveTerm):
             
         source_port : [1,2]
             The port on which the source is active. should be 1 or 2
-            
+
+
+        
+        See Also
+        ------------
+        TwelveTerm.__init__
         '''
         
         
@@ -1904,6 +1958,11 @@ class EightTerm(Calibration):
                  *args, **kwargs):
         '''
         EightTerm Initializer
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
         
         Parameters
         --------------
