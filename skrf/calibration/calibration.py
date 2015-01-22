@@ -16,32 +16,36 @@ Base Class
 
    Calibration
 
-One-port Calibrations
+One-port 
 ----------------------
 
 .. autosummary::
    :toctree: generated/
    
    OnePort
+   SDDL
+   PHN
    
-Two-port Calibrations
+Two-port 
 ---------------------
 
 .. autosummary::
    :toctree: generated/
    
+   TwelveTerm
    SOLT
    EightTerm
    UnknownThru
    TRL
-   TwoPortOnePath
+   
 
-Partial Calibrations 
-------------------------
+Three Reciever (1.5 port)  
+----------------------------------------------
 
 .. autosummary::
    :toctree: generated/
-
+    
+   TwoPortOnePath
    EnhancedResponse
    
 
@@ -144,7 +148,7 @@ class Calibration(object):
         *  :func:`Calibration.embed` (optional)
     
     
-    Generally, the familiy of properties prefixed `coefs` and 
+    The familiy of properties prefixed `coefs` and 
     `coefs..ntwks`  returns error coefficients. If the property coefs
     is accessed and empty, then :func:`Calibration.run` is called. 
     
@@ -155,7 +159,22 @@ class Calibration(object):
         is_reciprocal=True,name=None,*args, **kwargs):
         '''
         Calibration initializer.
-
+        
+        
+        Notes
+        -------
+        About the order of supplied standards,
+        
+        If the measured and ideals parameters are lists of Networks and 
+        `sloppy_input=False`, then their elements must align. However, 
+        if the measured and ideals are dictionaries, or 
+        `sloppy_input=True`, then we will try to align them for you 
+        based on the names of the networks (see `func:`align_measured_ideals`).
+        
+        You do not want to use this `sloppy_input` feature if the 
+        calibration depends on the standard order (like TRL). 
+        
+        
         Parameters
         ----------
         measured : list/dict  of :class:`~skrf.network.Network` objects
@@ -164,33 +183,30 @@ class Calibration(object):
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list ( or use `sloppy_input`)
         
         sloppy_input :  Boolean.
-                Allows ideals and measured lists to be 'aligned' based on
-                the network names.
+            Allows ideals and measured lists to be 'aligned' based on
+            the network names.
         
         is_reciprocal : Boolean
-                enables the reciprocity assumption on the calculation of the
-                error_network, which is only relevant for one-port
-                calibrations.
+            enables the reciprocity assumption on the calculation of the
+            error_network, which is only relevant for one-port
+            calibrations.
 
         name: string
-                the name of this calibration instance, like 'waveguide cal'
-                this is just for convenience [None].
-        
-        family : string
-                the name of the calibration algorithm, like 'SOLT'.
-                only used in printing, or if you want to identify the 
-                type of calibration.
-                
-        \*\*kwargs : key-word arguments
-                stored in self.kwargs, which may be used by specific algorithms
+            the name of this calibration instance, like 'waveguide cal'
+            this is just for convenience [None].
+              
+        \*args, \*\*kwargs : key-word arguments
+            stored in self.kwargs, which may be used by sub-classes
+            most likely in `run`.
 
         
         '''
         
         # allow them to pass di
+        # lets make an ideal flush thru for them :
         if hasattr(measured, 'keys'):
             measured = measured.values()
             if sloppy_input == False:
@@ -207,7 +223,7 @@ class Calibration(object):
         self.measured = [ntwk.copy() for ntwk in measured]
         self.ideals = [ntwk.copy() for ntwk in ideals]
         
-        
+        self.sloppy_input=sloppy_input
         if sloppy_input:
             self.measured, self.ideals = \
                 align_measured_ideals(self.measured, self.ideals)
@@ -987,6 +1003,12 @@ class OnePort(Calibration):
         If more than three standards are supplied then a least square
         algorithm is applied.
         
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  
+        automatic standards alignment (aka `sloppy_input`)
+        
+        
         Parameters
         -----------
         measured : list/dict  of :class:`~skrf.network.Network` objects
@@ -995,7 +1017,7 @@ class OnePort(Calibration):
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
-            The order must align with `ideals` list ( or use sloppy_input
+            The order must align with `ideals` list ( or use `sloppy_input`)
         
         args, kwargs : 
             passed to func:`Calibration.__init__`
@@ -1003,6 +1025,10 @@ class OnePort(Calibration):
         Notes
         -----
         This uses numpy.linalg.lstsq() for least squares calculation
+        
+        See Also
+        ---------
+        Calibration.__init__ 
         '''
         Calibration.__init__(self, measured, ideals, 
                              *args, **kwargs)
@@ -1329,37 +1355,46 @@ class PHN(OnePort):
     
         OnePort.run(self)
         
-class SOLT(Calibration):
+
+## Two Ports 
+
+class TwelveTerm(Calibration):
     '''
-    Traditional 12-term, full two-port calibration.
+    12-term, full two-port calibration.
     
-    SOLT is the traditional, fully determined, two-port calibration
-    originally developed in [1]_ , but this implementation is based off 
-    of Doug Rytting's work in [2]_.
+    `TwelveTerm` is the traditional, fully determined, two-port calibration
+    originally developed in [1]_.
     
-    Although the acronym SOLT implies the use of 4 standards, skrf's 
-    algorithm can accept any number of reflect standards,  If  
-    more than 3 reflect standards are provided a least-squares solution 
-    is implemented for the one-port stage of the calibration.
+    `TwelveTerm` can accept any number of reflect and transmissive standards,
+    as well as arbitrary (non-flush) transmissive standards. 
     
-    Redundant thru measurements can also be used, through the `n_thrus`
-    parameter. See :func:`__init__`
-     
+    * If more than 3 reflect standards are provided, a least-squares 
+        solution  is implemented for the one-port stage of the calibration. 
+    * If more than 1 transmissive standard is given the `load match`, 
+        and `transmission tracking` terms are calculated multiple times 
+        and averaged. 
+    
     References 
     ------------
     .. [1] "Calibration Process of Automatic Network Analyzer Systems"  by Stig Rehnmark
-    .. [2] "Network Analyzer Error Models and Calibration Methods"  by Doug Rytting
     
     
     '''
-    family = 'SOLT'
-    def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
+    family = 'TwelveTerm'
+    def __init__(self, measured, ideals, n_thrus=None, trans_thres=-40, 
+                 *args, **kwargs):
         '''
-        SOLT initializer 
+        TwelveTerm initializer 
         
-        The order of the standards must align. The thru standard[s] 
-        must be last in the list. Use the `n_thrus` argument if you 
-        want to use multiple thru standards
+        Use the  `n_thrus` argument to explicity define the number of 
+        transmissive standards. Otherwise, if `n_thrus=None`, then we 
+        will try and guess which are transmissive, by comparing the mean
+        |s21| and |s12| responses (in dB) to `trans_thres`.
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
         
         Parameters
         -------------
@@ -1372,16 +1407,61 @@ class SOLT(Calibration):
             The order must align with `ideals` list ( or use sloppy_input
             
         n_thrus : int
-            number of thru measurments
-        '''
+            Number of transmissve standards. If None, we will try and 
+            guess for you by comparing measure transmission to trans_thres,
         
-        self.n_thrus = n_thrus
+        trans_thres: float 
+            The  minimum transmission magnitude (in dB) that is 
+            the threshold for categorizing a transmissive standard. 
+            Compared to the measured s21,s12  meaned over frequency
+            Only use if n_thrus=None.
+        
+        See Also
+        -----------
+        Calibration.__init__
+        
+        
+        '''
+
         kwargs.update({'measured':measured,
                        'ideals':ideals})
+        
+        # note: this will enable sloppy_input and align stds if neccesary
         Calibration.__init__(self, *args, **kwargs)
         
-    
-      
+        # if they didnt tell us the number of thrus, then lets 
+        # hueristcally determine it
+        
+        if n_thrus is None:
+            warn('n_thrus is None, guessing which stds are transmissive')
+            n_thrus=0
+            for k in self.ideals:
+                mean_trans = NetworkSet([k.s21, k.s12]).mean_s_mag
+                trans_db = npy.mean(mean_trans.s_db.flatten())
+                
+                # this number is arbitrary but reasonable
+                if trans_db > trans_thres and not npy.isneginf(trans_db).all(): 
+                    n_thrus +=1
+                    
+            
+            if n_thrus ==0:
+                raise ValueError('couldnt find a transimssive standard. check your data, or explicitly use `n_thrus` argument')
+        self.n_thrus = n_thrus
+        
+        # if they didntly give explicit order, lets try and put the 
+        # more transmissive standards last, by sorted measured/ideals
+        # based on mean s21
+        if self.sloppy_input is True:
+            trans = [npy.mean(k.s21.s_mag) for k in self.ideals]
+            # see http://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
+            # get order of indecies of sorted means s21
+            order = [x for (y,x) in sorted(zip(trans, range(len(trans))),\
+                                           key=lambda pair: pair[0])] 
+            self.measured = [self.measured[k] for k in order]
+            self.ideals = [self.ideals[k] for k in order]
+        
+        
+        
     def run(self):
         '''
         '''
@@ -1390,33 +1470,62 @@ class SOLT(Calibration):
         p2_m = [k.s22 for k in self.measured[:-n_thrus]]
         p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
         p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
-        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
+        thrus = self.measured[-n_thrus:]
+        ideal_thrus = self.ideals[-n_thrus:]
         
         # create one port calibration for reflective standards  
         port1_cal = OnePort(measured = p1_m, ideals = p1_i)
         port2_cal = OnePort(measured = p2_m, ideals = p2_i)
         
         # cal coefficient dictionaries
-        p1_coefs = port1_cal.coefs
-        p2_coefs = port2_cal.coefs
+        p1_coefs = dict(port1_cal.coefs)
+        p2_coefs = dict(port2_cal.coefs)
         
         if self.kwargs.get('isolation',None) is not None:
             raise NotImplementedError()
             p1_coefs['isolation'] = isolation.s21.s.flatten()
             p2_coefs['isolation'] = isolation.s12.s.flatten()
         else:
-            p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
-            p2_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
-            
-        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
-        p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
+            p1_coefs['isolation'] = npy.zeros(len(self.frequency), dtype=complex)
+            p2_coefs['isolation'] = npy.zeros(len(self.frequency), dtype=complex)
         
-        p1_coefs['transmission tracking'] = \
-            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
-            (1. - p1_coefs['source match']*p1_coefs['load match'])
-        p2_coefs['transmission tracking'] = \
-            (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
-            (1. - p2_coefs['source match']*p2_coefs['load match'])
+        
+        # loop thru thrus, and calculate error terms for each one
+        # load match and transmission tracking for ports 1 and 2
+        lm1, lm2,tt1, tt2 = [],[],[],[]
+        for thru, thru_i in zip(thrus, ideal_thrus):
+            lm1.append(thru_i.inv**port1_cal.apply_cal(thru.s11))
+            lm2.append(thru_i.flipped().inv**port2_cal.apply_cal(thru.s22))
+            
+            # forward transmission tracking
+            g = lm1[-1].s
+            d = p1_coefs['source match'].reshape(-1,1,1)
+            e,f,b,h = thru_i.s11.s, thru_i.s22.s,thru_i.s21.s,thru_i.s12.s
+            m = thru.s21.s
+            
+            ac = m*1./b * (1 - (d*e + f*g + b*g*h*d) + (d*e*f*g) )
+            tt1.append(ac[:])
+            
+            # reverse transmission tracking
+            thru.flip(),thru_i.flip() # flip thrus to keep same ports as above
+            g = lm2[-1].s
+            d = p2_coefs['source match'].reshape(-1,1,1)
+            
+            e,f,b,h = thru_i.s11.s, thru_i.s22.s,thru_i.s21.s,thru_i.s12.s
+            m = thru.s21.s
+            
+            ac = m*1./b * (1 - (d*e+f*g+b*g*h*d) + d*e*f*g)
+            tt2.append(ac[:])
+            
+            thru.flip(), thru_i.flip() # flip em back
+        
+        p1_coefs['transmission tracking'] = npy.mean(npy.array(tt1),axis=0).flatten()
+        p2_coefs['transmission tracking'] = npy.mean(npy.array(tt2),axis=0).flatten()
+        p1_coefs['load match'] = NetworkSet(lm1).mean_s.s.flatten()
+        p2_coefs['load match'] = NetworkSet(lm2).mean_s.s.flatten()
+        
+        
+        # update coefs
         coefs = {}
         
         coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
@@ -1426,7 +1535,7 @@ class SOLT(Calibration):
         coefs.update(dict([(l, eight_term_coefs[l]) for l in \
             ['forward switch term','reverse switch term','k'] ]))
         self._coefs = coefs
-    
+            
     def apply_cal(self,ntwk):
         '''
         '''
@@ -1508,13 +1617,148 @@ class SOLT(Calibration):
         
         return measured
         
-
-
-class TwoPortOnePath(SOLT):
+class SOLT(TwelveTerm):
     '''
-    Two Port One Path Calibration (aka poor man's SOLT)
+    Short Open Load Thru, Full two-port calibration.
     
-    This algorithm is used when you have a TXRX-RX system, ie 
+    SOLT is the traditional, fully determined, two-port calibration
+    originally developed in [1]_ , but this implementation is based off 
+    of Doug Rytting's work in [2]_.
+    
+    Although the acronym SOLT implies the use of 4 standards, skrf's 
+    algorithm can accept any number of reflect standards,  If  
+    more than 3 reflect standards are provided a least-squares solution 
+    is implemented for the one-port stage of the calibration.
+    
+    If your `thru` is not flush you need to use `TwelveTerm` instead of 
+    SOLT.
+    
+    Redundant flush thru measurements can also be used, through the `n_thrus`
+    parameter. See :func:`__init__`
+     
+    References 
+    ------------
+    .. [1] "Calibration Process of Automatic Network Analyzer Systems"  by Stig Rehnmark
+    .. [2] "Network Analyzer Error Models and Calibration Methods"  by Doug Rytting
+    
+    See Also
+    ---------
+    TwelveTerm
+    
+    '''
+    family = 'SOLT'
+    def __init__(self, measured, ideals, n_thrus=1, *args, **kwargs):
+        '''
+        SOLT initializer 
+        
+        If you arent using `sloppy_input`, then the order of the 
+        standards must align. 
+        
+        If `n_thrus!=None`, then the thru standard[s] must be last in 
+        the list. The `n_thrus` argument can be used to allow  multiple 
+        measurements of the flush thru standard.
+        
+        If the ideal element for the thru is set to None, a flush thru 
+        is assumed. If your `thru` is not flush you need 
+        to use `TwelveTerm` instead of SOLT. Use 
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
+        
+        Parameters
+        -------------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter ( or use `sloppy_input`)
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list ( or use `sloppy_input`)
+            The thru standard can be None
+            
+        n_thrus : int
+            number of thru measurments
+            
+        See Also
+        ------------
+        TwelveTerm.__init__
+        '''
+
+        # see if they passed a None for the thru, and if so lets
+        # make an ideal flush thru for them 
+        for k in range(-n_thrus,len(ideals)):
+            if ideals[k] is None:
+                if (n_thrus is None) or (hasattr(ideals, 'keys')) or \
+                   (hasattr(measured, 'keys')):
+                    raise ValueError('Cant use sloppy_input and have the ideal thru be None. measured and ideals must be lists, or dont use None for the thru ideal.')
+                
+                ideal_thru = measured[0].copy()
+                ideal_thru.s[:,0,0] = 0 
+                ideal_thru.s[:,1,1] = 0
+                ideal_thru.s[:,1,0] = 1
+                ideal_thru.s[:,0,1] = 1
+                ideals[k] = ideal_thru
+        
+        kwargs.update({'measured':measured,
+                       'ideals':ideals,
+                       'n_thrus':n_thrus})
+        
+        TwelveTerm.__init__(self,*args, **kwargs)
+        
+    
+      
+    def run(self):
+        '''
+        '''
+        n_thrus = self.n_thrus
+        p1_m = [k.s11 for k in self.measured[:-n_thrus]]
+        p2_m = [k.s22 for k in self.measured[:-n_thrus]]
+        p1_i = [k.s11 for k in self.ideals[:-n_thrus]]
+        p2_i = [k.s22 for k in self.ideals[:-n_thrus]]
+        thru = NetworkSet(self.measured[-n_thrus:]).mean_s
+        
+        # create one port calibration for reflective standards  
+        port1_cal = OnePort(measured = p1_m, ideals = p1_i)
+        port2_cal = OnePort(measured = p2_m, ideals = p2_i)
+        
+        # cal coefficient dictionaries
+        p1_coefs = port1_cal.coefs
+        p2_coefs = port2_cal.coefs
+        
+        if self.kwargs.get('isolation',None) is not None:
+            raise NotImplementedError()
+            p1_coefs['isolation'] = isolation.s21.s.flatten()
+            p2_coefs['isolation'] = isolation.s12.s.flatten()
+        else:
+            p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
+            p2_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
+            
+        p1_coefs['load match'] = port1_cal.apply_cal(thru.s11).s.flatten()
+        p2_coefs['load match'] = port2_cal.apply_cal(thru.s22).s.flatten()
+        
+        p1_coefs['transmission tracking'] = \
+            (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
+            (1. - p1_coefs['source match']*p1_coefs['load match'])
+        p2_coefs['transmission tracking'] = \
+            (thru.s12.s.flatten() - p2_coefs.get('isolation',0))*\
+            (1. - p2_coefs['source match']*p2_coefs['load match'])
+        coefs = {}
+        
+        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+        eight_term_coefs = convert_12term_2_8term(coefs)
+        
+        coefs.update(dict([(l, eight_term_coefs[l]) for l in \
+            ['forward switch term','reverse switch term','k'] ]))
+        self._coefs = coefs        
+        
+class TwoPortOnePath(TwelveTerm):
+    '''
+    Two Port One Path Calibration (aka poor man's TwelveTerm)
+    
+    This algorithm is used when you have a three reciever system, ie 
     you can only measure the waves a1,b1,and b2. Given this architecture,
     the DUT must be flipped and measured twice to be fully corrected. 
     
@@ -1525,14 +1769,20 @@ class TwoPortOnePath(SOLT):
     '''
     family = 'TwoPortOnePath'
     
-    def __init__(self, measured, ideals, n_thrus=1, source_port=1, 
+    def __init__(self, measured, ideals,n_thrus=None,  source_port=1, 
                  *args, **kwargs):
         '''
         initializer 
         
-        The order of the standards must align. The thru standard[s] 
-        must be last in the list. Use the `n_thrus` argument if you 
-        want to use multiple thru standards. 
+        Use the  `n_thrus` argument to explicity define the number of 
+        transmissive standards. Otherwise, if `n_thrus=None`, then we 
+        will try and guess which are transmissive, by comparing the mean
+        |s21| and |s12| responses (in dB) to `trans_thres`.
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
         
         Parameters
         -------------
@@ -1549,7 +1799,12 @@ class TwoPortOnePath(SOLT):
             
         source_port : [1,2]
             The port on which the source is active. should be 1 or 2
-            
+
+
+        
+        See Also
+        ------------
+        TwelveTerm.__init__
         '''
         
         
@@ -1559,12 +1814,12 @@ class TwoPortOnePath(SOLT):
         kwargs.update({'measured':measured,
                        'ideals':ideals,
                        'n_thrus':n_thrus})
-        SOLT.__init__(self,*args, **kwargs)
+        TwelveTerm.__init__(self,*args, **kwargs)
                                               
                                               
     def run(self):
         '''
-        '''
+        
         if self.sp !=0:
             raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
         n_thrus = self.n_thrus
@@ -1589,11 +1844,30 @@ class TwoPortOnePath(SOLT):
             (thru.s21.s.flatten() - p1_coefs.get('isolation',0))*\
             (1. - p1_coefs['source match']*p1_coefs['load match'])
         
-        coefs = {}
-        coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
-        coefs.update(dict([('reverse %s'%k, p1_coefs[k]) for k in p1_coefs]))
+        coefs = {}'''
         
-        self._coefs = coefs
+        # run a full twelve term then just copy all forward error terms
+        # over reverse error terms
+        TwelveTerm.run(self)
+        
+        
+        out_coefs = self.coefs.copy()
+        
+        if self.sp ==0:
+            forward = 'forward'
+            reverse = 'reverse'
+        elif self.sp ==1:
+            forward = 'reverse'
+            reverse = 'forward'
+        else:
+            raise('source_port is out of range. should be 1 or 2.')
+        for k in self.coefs:
+            if k.startswith(forward):
+                k_out = k.replace(forward,reverse)
+                out_coefs[k_out] = self.coefs[k]
+                
+               
+        self._coefs = out_coefs
     
     def apply_cal(self, ntwk_tuple):
         '''
@@ -1616,7 +1890,7 @@ class TwoPortOnePath(SOLT):
             ntwk.s[:,rp,rp] = r.s[:,sp,sp]
             ntwk.s[:,sp,rp] = r.s[:,rp,sp]
            
-            out = SOLT.apply_cal(self, ntwk)
+            out = TwelveTerm.apply_cal(self, ntwk)
             return out
         
         else:
@@ -1626,13 +1900,11 @@ class TwoPortOnePath(SOLT):
             
             ntwk.s[:,rp,rp] = 0
             ntwk.s[:,sp,rp] = 0
-            out = SOLT.apply_cal(self, ntwk)
+            out = TwelveTerm.apply_cal(self, ntwk)
             out.s[:,rp,rp] = 0
             out.s[:,sp,rp] = 0
             
             return out
-
-
 
 class EnhancedResponse(TwoPortOnePath):
     '''
@@ -1651,9 +1923,6 @@ class EnhancedResponse(TwoPortOnePath):
     '''
     family = 'EnhancedResponse'
     
-
-
-
 class EightTerm(Calibration):
     '''
     General EightTerm (aka Error-box) Two-port calibration
@@ -1689,6 +1958,11 @@ class EightTerm(Calibration):
                  *args, **kwargs):
         '''
         EightTerm Initializer
+        
+        Notes
+        ------
+        See func:`Calibration.__init__` for details about  automatic 
+        standards alignment (aka `sloppy_input`).
         
         Parameters
         --------------
@@ -2016,8 +2290,6 @@ class TRL(EightTerm):
         thru_m, reflect_m, line_m = self.measured_unterminated 
         self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line 
     
-    
-    
 class UnknownThru(EightTerm):
     '''
     Two-Port Self-Calibration allowing the *thru* standard to be unknown.
@@ -2284,7 +2556,6 @@ def ideal_coefs_12term(frequency):
     
     return ideal_coefs
 
-
 def unterminate(ntwk, gamma_f, gamma_r):
         '''
         Unterminates switch terms from a raw measurement.
@@ -2404,12 +2675,12 @@ def determine_line(thru_m, line_m, line_approx=None):
     
     .. math::
         
-        M_t = X \\cdot A_t \\cdot Y    \\
-        M_l = X \\cdot A_l \\cdot Y\\
+        M_t = X \\cdot A_t \\cdot Y    \\\\
+        M_l = X \\cdot A_l \\cdot Y\\\\
         
-        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}\\
+        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}\\\\
         
-        eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})\\
+        eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})\\\\
     
     which can be solved to yield S21 of the line
     
@@ -2666,9 +2937,6 @@ def convert_skrfcoefs_2_pna(coefs, ports = (1,2)):
             
 
     return pna_coefs
-    
-    
-    
     
 def align_measured_ideals(measured, ideals):
     '''
