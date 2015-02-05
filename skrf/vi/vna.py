@@ -20,8 +20,8 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
     HP8720
 '''
 import numpy as npy
-import visa
-from visa import GpibInstrument
+#import visa
+#from visa import Driver
 from warnings import warn
 from itertools import product
 import re 
@@ -34,9 +34,12 @@ from ..calibration.calibration import Calibration, SOLT, OnePort, \
 from .. import mathFunctions as mf
 
 
+from ivi import Driver 
+Driver.ask_for_values = Driver._ask_for_values
+Driver.ask = Driver._ask
+Driver.write = Driver._write
 
-
-class PNA(GpibInstrument):
+class PNA(Driver):
     '''
     Agilent PNA[X] 
     
@@ -93,15 +96,15 @@ class PNA(GpibInstrument):
     displayed traces, while measurements are active measurements on the 
     VNA which may or may not be displayed on screen.
     '''
-    def __init__(self, address=16, channel=1,timeout = 3, echo = False,
+    def __init__(self, address, channel=1,timeout = 3, echo = False,
         front_panel_lockout= False, **kwargs):
         '''
         Constructor 
         
         Parameters
         -------------
-        address : int
-            GPIB address 
+        address : int or str
+            GPIB address , or resource string
         channel : int
             set active channel. Most commands operate on the active channel
         timeout : number
@@ -112,18 +115,21 @@ class PNA(GpibInstrument):
         front_panel_lockout : Boolean
             lockout front panel during operation. 
         \*\*kwargs : 
-            passed to  `visa.GpibInstrument.__init__`
+            passed to  `visa.Driver.__init__`
         '''
-        GpibInstrument.__init__(self,
-            'GPIB::'+str(address),
-            timeout=timeout,
-            **kwargs)
+        
+        if isinstance(address,int):
+            resource = 'GPIB::%i::INSTR'%address
+        else:
+            resource = address
+            
+        Driver.__init__(self,resource = resource, **kwargs)
             
         self.channel=channel
         self.port = 1
         self.echo = echo
         if not front_panel_lockout:
-            self.gtl()
+            pass#self.gtl()
             
             
     def write(self, msg, *args, **kwargs):
@@ -132,9 +138,9 @@ class PNA(GpibInstrument):
         '''
         if self.echo:
             print msg 
-        return GpibInstrument.write(self,msg, *args, **kwargs)
+        return Driver.write(self,msg, *args, **kwargs)
     
-    write.__doc__ = GpibInstrument.write.__doc__
+    write.__doc__ = Driver.write.__doc__
     
     ## BASIC GPIB
     @property
@@ -150,14 +156,14 @@ class PNA(GpibInstrument):
         '''
         return self.ask('*OPC?')
     
-    def gtl(self):
-        '''
+    '''def gtl(self):
+        ''''''
         Go to local. 
-        '''
+        ''''''
         self._vpp43.gpib_control_ren(
             self.vi, 
             self._vpp43.VI_GPIB_REN_DEASSERT_GTL,
-            )
+            )'''
     
     def reset(self):
         '''
@@ -497,7 +503,7 @@ class PNA(GpibInstrument):
         self.continuous = was_cont
         return ntwk
     
-    def get_network_all_meas(self):
+    def get_network_all_meas(self,sweep=True):
         '''
         Return list of Network Objects for all measurements.
         
@@ -509,7 +515,8 @@ class PNA(GpibInstrument):
         '''
         
         out = []
-        self.sweep()
+        if sweep:
+            self.sweep()
         for name,parm in self.get_meas_list():
             self.select_meas(name)
             out.append(self.get_network(sweep=False, name= name))
@@ -1735,12 +1742,12 @@ class VectorStar(PNA):
         return [(k+1,meas_list[k]) for k in range(self.ntraces)]
         
 
-class HP8510C(GpibInstrument):
+class HP8510C(Driver):
     '''
     good ole 8510
     '''
     def __init__(self, address=16,**kwargs):
-        GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+        Driver.__init__(self,'GPIB::'+str(address),**kwargs)
         self.write('FORM4;')
 
 
