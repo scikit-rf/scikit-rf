@@ -328,7 +328,8 @@ class Network(object):
         Create a blank network, then fill in values
         
         >>> n = rf.Network() 
-        >>> n.f, n.s, n.z0 = [1,2,3],[1,2,3], [1,2,3]
+        >>> freq = rf.Frequency(1,3,3,'ghz')
+        >>> n.frequency, n.s, n.z0 = freq,[1,2,3], [1,2,3]
         
         Directly from values
         
