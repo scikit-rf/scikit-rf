@@ -2640,7 +2640,7 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = npy.hstack(
-        (npy.delete(ntwkA.z0, range(k,k+num), 1), npy.delete(ntwkB.z0, range(l,l+num), 1)))
+        (npy.delete(ntwkA.z0, range(k,k+1), 1), npy.delete(ntwkB.z0, range(l,l+1), 1)))
 
     # if we're connecting more than one port, call innerconnect to finish the job
     if num>1:
