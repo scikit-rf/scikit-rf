@@ -8,8 +8,15 @@ Jinja2>=2.7.1
 ipython==1.1.0
 runipy>=0.0.4
 scipy>=0.10.1
-PyVISA==1.4
 pandas>=0.11.0
 xlwt>=0.7.4
 xlrd>=0.6.1
 nose-exclude
+
+## optional (for machine control
+# python-ivi
+
+## and a suitable backend
+# python-vxi11
+# PyVisa==1.4
+

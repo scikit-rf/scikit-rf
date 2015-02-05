@@ -70,7 +70,19 @@ class NetworkTestCase(unittest.TestCase):
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
     
-    
+    def test_connect_multiports(self):
+        a = rf.Network()
+        a.frequency=(1,)
+        a.s = npy.arange(16).reshape(4,4)
+        a.z0 = range(4)
+
+        b = rf.Network()
+        b.frequency=(1,)
+        b.s = npy.arange(16).reshape(4,4)
+        b.z0 = npy.arange(4)+10
+        c=rf.connect(a,2,b,0,2)
+        self.assertTrue((c.z0==[0,1,12,13]).all())
+
     def test_connect_fast(self):
         raise SkipTest('not supporting this function currently ')
         self.assertEqual(rf.connect_fast(self.ntwk1, 1, self.ntwk2, 0) , \

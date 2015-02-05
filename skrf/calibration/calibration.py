@@ -1622,9 +1622,7 @@ class SOLT(TwelveTerm):
     Short Open Load Thru, Full two-port calibration.
     
     SOLT is the traditional, fully determined, two-port calibration
-    originally developed in [1]_ , but this implementation is based off 
-    of Doug Rytting's work in [2]_.
-    
+    originally developed in [1]_.     
     Although the acronym SOLT implies the use of 4 standards, skrf's 
     algorithm can accept any number of reflect standards,  If  
     more than 3 reflect standards are provided a least-squares solution 
@@ -1638,8 +1636,8 @@ class SOLT(TwelveTerm):
      
     References 
     ------------
-    .. [1] "Calibration Process of Automatic Network Analyzer Systems"  by Stig Rehnmark
-    .. [2] "Network Analyzer Error Models and Calibration Methods"  by Doug Rytting
+    .. [1] W. Kruppa and K. F. Sodomsky, "An Explicit Solution for the Scattering Parameters of a Linear Two-Port Measured with an Imperfect Test Set (Correspondence)," IEEE Transactions on Microwave Theory and Techniques, vol. 19, no. 1, pp. 122-123, Jan. 1971.
+
     
     See Also
     ---------
@@ -1866,7 +1864,9 @@ class TwoPortOnePath(TwelveTerm):
                 k_out = k.replace(forward,reverse)
                 out_coefs[k_out] = self.coefs[k]
                 
-               
+        eight_term_coefs = convert_12term_2_8term(out_coefs)
+        out_coefs.update(dict([(l, eight_term_coefs[l]) for l in \
+            ['forward switch term','reverse switch term','k'] ]))       
         self._coefs = out_coefs
     
     def apply_cal(self, ntwk_tuple):
@@ -2762,8 +2762,8 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     # the docstring
     # NOTE: k = e10/e23 = alpha/beta 
     #   the 'k' nomenclature is from Soares Speciale
-    gamma_f = (Elf - Esr)/(Err + Edr*(Elf  - Esr))
-    gamma_r = (Elr - Esf)/(Erf  + Edf *(Elr - Esf))
+    gamma_f = (Elf - Esr)/(Err + Edr*(Elf - Esr))
+    gamma_r = (Elr - Esf)/(Erf + Edf*(Elr - Esf))
     
     k_first  =   Etf/(Err + Edr*(Elf  - Esr) )
     k_second =1/(Etr/(Erf + Edf *(Elr - Esf)))

@@ -7,13 +7,13 @@ from numpy.random  import rand
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, terminate
 
 from skrf.networkSet import NetworkSet
 
 # number of frequency points to test calibration at 
 # i choose 1 for speed, but given that many tests employ *random* 
-# networks values <100 are better for  initialy verification
+# networks values >100 are better for  initialy verification
 global NPTS  
 NPTS = 1
 
@@ -334,15 +334,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         '''
         terminate a measured network with the switch terms
         '''
-        m = ntwk.copy()
-        ntwk_flip = ntwk.copy()
-        ntwk_flip.flip()
-        
-        m.s[:,0,0] = (ntwk**self.gamma_f).s[:,0,0]
-        m.s[:,1,1] = (ntwk_flip**self.gamma_r).s[:,0,0]
-        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*self.gamma_f.s[:,0,0])
-        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*self.gamma_r.s[:,0,0])
-        return m
+        return terminate(ntwk,self.gamma_f, self.gamma_r)
         
     def measure(self,ntwk):
         out =  self.terminate(self.X**ntwk**self.Y)
@@ -459,6 +451,58 @@ class TRLTest(EightTermTest):
             switch_terms = (self.gamma_f, self.gamma_r)
             )
         self.cal.run()
+        
+        
+class TREightTermTest(unittest.TestCase, CalibrationTest):
+    def setUp(self):
+        raise SkipTest()
+        self.n_ports = 2
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        wg= self.wg
+        
+        
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        
+        
+        ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.thru(name='thru'),
+            ]
+            
+        measured = [self.measure(k) for k in ideals]
+        
+        cal1 = rf.TwelveTerm(
+            ideals = ideals,
+            measured = measured,
+            n_thrus=1, 
+            )
+        #coefs = rf.convert_12term_2_8term(cal1.coefs)
+        #gamma_f = wg.load(coefs['forward switch term'])
+        gamma_f, gamma_r = (cal1.coefs_ntwks['forward switch term'],
+                           cal1.coefs_ntwks['reverse switch term'])
+        self.cal = rf.EightTerm(
+            ideals = ideals,
+            measured = measured,
+            switch_terms = [gamma_f, gamma_r], 
+            )
+        
+        
+    def measure(self,ntwk):
+        
+        m = ntwk.copy()
+        mf = self.X**ntwk**self.Y
+        mr = self.X**ntwk.flipped()**self.Y
+        
+        m.s[:,1,0] = mf.s[:,1,0]
+        m.s[:,0,0] = mf.s[:,0,0]
+        m.s[:,1,1] = mr.s[:,0,0]
+        m.s[:,0,1] = mr.s[:,1,0]
+        return m
+        
+
         
 class TwelveTermTest(unittest.TestCase, CalibrationTest):
     '''
@@ -590,6 +634,79 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
     def test_verify_12term(self):
         
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
+
+
+class TRTwelveTermTest(TwelveTermTest):
+    '''
+    This test verifys the accuracy of the SOLT calibration. Generating 
+    measured networks requires different error networks for forward and 
+    reverse excitation states, these are described as follows
+    
+    forward excitation
+        used for S21 and S11
+        Mf = Xf ** S ** Yf  
+    
+    reverse excitation
+        used for S12 and S22
+        Mr = Xr ** S ** Yr
+    
+    
+    '''
+    def setUp(self):
+        raise SkipTest()
+        self.n_ports = 2
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        wg  = self.wg
+        self.Xf = wg.random(n_ports =2, name = 'Xf')
+        
+        self.Yf = wg.random(n_ports =2, name='Yf')
+        
+       
+        ideals = [
+            wg.short(nports=2, name='short'),
+            wg.open(nports=2, name='open'),
+            wg.match(nports=2, name='load'),
+            wg.random(2,name='rand1'),
+            wg.random(2,name='rand2'),
+            ]
+        
+    
+        measured = [ self.measure(k) for k in ideals]
+        
+        self.cal = rf.TwelveTerm(
+            ideals = ideals,
+            measured = measured,
+            n_thrus=2, 
+            )
+    
+    def measure(self,ntwk):
+        m = ntwk.copy()
+        mf = self.Xf**ntwk**self.Yf
+        mr = self.Xf**ntwk.flipped()**self.Yf
+        m.s[:,1,0] = mf.s[:,1,0]
+        m.s[:,0,0] = mf.s[:,0,0]
+        m.s[:,0,1] = mr.s[:,1,0]
+        m.s[:,1,1] = mr.s[:,0,0]
+        return m
+    
+    def test_from_coefs_ntwks(self):
+        cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
+    def test_reverse_source_match_accuracy(self):
+        raise SkipTest()   
+    
+    def test_reverse_directivity_accuracy(self):
+        raise SkipTest()      
+    
+    def test_reverse_load_match_accuracy(self):
+        raise SkipTest()  
+    
+    def test_reverse_reflection_tracking_accuracy(self):
+        raise SkipTest()  
+    
+    def test_reverse_transmission_tracking_accuracy(self):
+        raise SkipTest()  
+    
+    
 
 class TwelveTermSloppyInitTest(TwelveTermTest):
     '''
@@ -874,7 +991,7 @@ class MRCTest(EightTermTest):
             switch_terms = [self.gamma_f, self.gamma_r]
             )
         
-class SOLTTest2(SOLTTest):
+class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     '''
     This test verifies the accuracy of the SOLT calibration, when used 
     on an error-box (8-term) model.
@@ -891,19 +1008,6 @@ class SOLTTest2(SOLTTest):
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         
-        self.Xf = self.X.copy()
-        self.Xr = self.X.copy()
-        self.Yf = self.Y.copy()
-        self.Yr = self.Y.copy()
-        
-        Y_term = self.terminate(self.Y)
-        X_term = self.terminate(self.X)
-        
-        self.Yf.s[:,0,0] = Y_term.s[:,0,0]
-        self.Yf.s[:,1,0] = Y_term.s[:,1,0]
-        self.Xr.s[:,1,1] = X_term.s[:,1,1]
-        self.Xr.s[:,0,1] = X_term.s[:,0,1]
-        
         
         ideals = [
             wg.short(nports=2, name='short'),
@@ -915,42 +1019,29 @@ class SOLTTest2(SOLTTest):
     
         measured = [ self.measure(k) for k in ideals]
         
-        self.cal = rf.SOLT(
+        self.cal = rf.TwelveTerm(
             ideals = ideals,
             measured = measured,
             )
-    def terminate(self, ntwk):
-        '''
-        terminate a measured network with the switch terms
-        '''
-        m = ntwk.copy()
-        ntwk_flip = ntwk.copy()
-        ntwk_flip.flip()
         
-        m.s[:,0,0] = (ntwk**self.gamma_f).s[:,0,0]
-        m.s[:,1,1] = (ntwk_flip**self.gamma_r).s[:,0,0]
-        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*self.gamma_f.s[:,0,0])
-        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*self.gamma_r.s[:,0,0])
-        return m
+        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs, redundant_k=1)
+        coefs = NetworkSet.from_s_dict(coefs,
+                                    frequency=self.cal.frequency).to_dict()
+        self.coefs= coefs
         
     def measure(self,ntwk):
         m = ntwk.copy()
-        mf = self.Xf**ntwk**self.Yf
-        mr = self.Xr**ntwk**self.Yr
-        m.s[:,1,0] = mf.s[:,1,0]
-        m.s[:,0,0] = mf.s[:,0,0]
-        m.s[:,0,1] = mr.s[:,0,1]
-        m.s[:,1,1] = mr.s[:,1,1]
-        return m
+        return terminate(m, self.gamma_f, self.gamma_r) 
+    
+    
+    def test_forward_switch_term(self):
+        self.assertEqual(self.coefs['forward switch term'], self.gamma_f)
+    
+    def test_forward_switch_term(self):
+        self.assertEqual(self.coefs['reverse switch term'], self.gamma_r)
     @nottest
-    def test_12_2_8term(self):
-        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs)
-        coefs = NetworkSet.from_s_dict(d=self.cal.coefs,
-                                    frequency=self.cal.frequency).to_dict()
-        
-        self.assertEqual(coefs['forward switch term'], self.gamma_f)
-        self.assertEqual(coefs['reverse switch term'], self.gamma_r)
-        self.assertEqual(coefs['k'], self.X.s21*self.Y.s21)
+    def test_k(self):
+        self.assertEqual(self.coefs['k'], self.X.s21/self.Y.s12 )
     
     
     def test_verify_12term(self):
