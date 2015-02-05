@@ -455,6 +455,7 @@ class TRLTest(EightTermTest):
         
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
+        raise SkipTest()
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg= self.wg
@@ -652,6 +653,7 @@ class TRTwelveTermTest(TwelveTermTest):
     
     '''
     def setUp(self):
+        raise SkipTest()
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg  = self.wg
