@@ -31,11 +31,12 @@ A list of VNA's that have been are partially supported.
 
 .. hlist::
     :columns: 2
-    
+
+    * :class:`~vna.PNA`
+    * :class:`~vna.ZVA40`    
     * :class:`~vna.HP8510C`
     * :class:`~vna.HP8720`
-    * :class:`~vna.PNA`
-    * :class:`~vna.ZVA40`
+
 
 An example usage of the :class:`~vna.HP8510C` class to retrieve some s-parameter data
 
