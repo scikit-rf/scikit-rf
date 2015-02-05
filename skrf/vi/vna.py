@@ -20,8 +20,8 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
     HP8720
 '''
 import numpy as npy
-import visa
-from visa import GpibInstrument
+from pyvisa.legacy import vpp43
+from pyvisa.highlevel import Instrument
 from warnings import warn
 from itertools import product
 import re 
@@ -36,7 +36,7 @@ from .. import mathFunctions as mf
 
 
 
-class PNA(GpibInstrument):
+class PNA(Instrument):
     '''
     Agilent PNA[X] 
     
@@ -93,35 +93,40 @@ class PNA(GpibInstrument):
     displayed traces, while measurements are active measurements on the 
     VNA which may or may not be displayed on screen.
     '''
-    def __init__(self, address=16, channel=1,timeout = 3, echo = False,
+    def __init__(self, address='GPIB::16', channel=1, timeout = 3, echo = False,
         front_panel_lockout= False, **kwargs):
         '''
         Constructor 
         
         Parameters
         -------------
-        address : int
-            GPIB address 
+        address : string
+            VISA identifier of instrument (e.g. GPIB::16 or TCPIP0::192.168.0.xxx) 
         channel : int
             set active channel. Most commands operate on the active channel
         timeout : number
-            GPIB command timeout in seconds. 
+            VISA command timeout in seconds. 
         echo : Boolean
             echo  all strings passed to the write command to stdout. 
             useful for troubleshooting
         front_panel_lockout : Boolean
-            lockout front panel during operation. 
+            lockout front panel during operation (for GPIB only) 
         \*\*kwargs : 
-            passed to  `visa.GpibInstrument.__init__`
+            passed to  `visa.Instrument.__init__`
         '''
-        GpibInstrument.__init__(self,
-            'GPIB::'+str(address),
+        Instrument.__init__(self,
+            address,
             timeout=timeout,
             **kwargs)
             
         self.channel=channel
         self.port = 1
         self.echo = echo
+        
+        #workaround for CR issue
+        #tested with pyvisa 1.5 / NI-VISA 5.4.1 / Agilent N5224A on Win7 & MacOS 10.9.3
+        self.term_chars = '\n' 
+        
         if not front_panel_lockout:
             self.gtl()
             
@@ -132,9 +137,9 @@ class PNA(GpibInstrument):
         '''
         if self.echo:
             print msg 
-        return GpibInstrument.write(self,msg, *args, **kwargs)
+        return Instrument.write(self,msg, *args, **kwargs)
     
-    write.__doc__ = GpibInstrument.write.__doc__
+    write.__doc__ = Instrument.write.__doc__
     
     ## BASIC GPIB
     @property
@@ -152,12 +157,12 @@ class PNA(GpibInstrument):
     
     def gtl(self):
         '''
-        Go to local. 
+        Go to local (GPIB only)
         '''
-        self._vpp43.gpib_control_ren(
-            self.vi, 
-            self._vpp43.VI_GPIB_REN_DEASSERT_GTL,
-            )
+        if 'GPIB' in self.resource_name:
+            vpp43.gpib_constrol_ren(self.session, 6)
+        else:
+            warn('Go to local is only supported for GPIB')
     
     def reset(self):
         '''
@@ -775,6 +780,22 @@ class PNA(GpibInstrument):
             trace_n =self.ntraces+1
         self.write('disp:wind%s:trac%s:y:scale:auto'%(str(window_n), str(trace_n))) 
         
+    def get_win_trace(self, meas=''):
+        '''
+        Get window number and trace number either for the current measurement
+        (if meas is empty) or for a specific measurement
+        
+        Returns
+        ----------
+        out :  tuple 
+            tuple of the form (window_n, trace_n)
+        '''
+        if meas:
+            self.select_meas(meas) 
+        window_n = int(self.ask('CALC:PAR:WNUM?')[1:])
+        trace_n = int(self.ask('CALC:PAR:TNUM?')[1:])
+        return (window_n, trace_n)
+        
     def get_meas_list(self):
         '''
         Get a list of existent measurements
@@ -793,6 +814,24 @@ class PNA(GpibInstrument):
        
         
         return [(meas[k],meas[k+1]) for k in range(0,len(meas)-1,2)]
+        
+    def get_window_list(self):
+        '''
+        Get list of existing window numbers
+        
+        Returns
+        ----------
+        out :  list 
+            list of window numbers
+        '''
+        window_list = self.ask("DISP:CAT?")
+        
+        windows = window_list[1:-1].split(',')
+        if 'EMPTY' in window_list:
+            # no windows defined
+            return None
+            
+        return [int(k) for k in windows]
     
     def get_active_meas(self):
         '''
@@ -872,10 +911,30 @@ class PNA(GpibInstrument):
         
         '''
         self.write('calc%i:par:sel \"%s\"'%(self.channel, name))
+		
+    def set_window_arrangement(self, arr='overlay'):
+		'''
+        Set window arrangement for currently active measurements.
+        
+        Parameters
+        ------------
+        arr : str
+            Window arrangement. 
+		
+		Choose from:
+   
+		* TILE - tiles existing windows
+		* CASCade - overlaps existing windows
+		* OVERlay - all traces placed in 1 window
+		* STACk - 2 windows
+		* SPLit - 3 windows
+		* QUAD - 4 windows
+		'''
+		self.write('disp:arr %s'%str(arr))
 
-    def display_trace(self,  name = '',window_n = None, trace_n=None):
+    def display_trace(self,  name = '',window_n = None, trace_n=None, form='MLOG'):
         '''
-        Display a given measurment on specified trace number. 
+        Display a given measurement on specified trace number. 
         
         Parameters
         ------------
@@ -885,12 +944,16 @@ class PNA(GpibInstrument):
             window number. If None, active window is used.
         trace_n : int
             trace number to display on. If None, a new trace is made.
+        form : str
+            display format (see set_display_format())
         '''
         if window_n is None:
             window_n =''
         if trace_n is None:
             trace_n =self.ntraces+1
-        self.write('disp:wind%s:trac%s:feed \"%s\"'%(str(window_n), str(trace_n), name))    
+        self.write('disp:wind%s:trac%s:feed \"%s\"'%(str(window_n), str(trace_n), name)) 
+        self.select_meas(name)
+        self.set_display_format(form)
     
     def set_display_format(self, form):
         '''
@@ -963,6 +1026,109 @@ class PNA(GpibInstrument):
             self.select_meas(name)
             func(*args,**kwargs)
     
+    def normalize(self, meas=[], op='DIV', write_memory=True):
+        '''
+        normalizes current measurement or specific measurements
+        
+        Parameters
+        ------------
+        meas : list of strings or single string
+            measurements to normalize
+        op : string
+            math operation to be applied. 
+            Choose from:
+            
+            * normal (no normalization active)
+            * add
+            * subtract
+            * multiply
+            * DIVide
+        write_memory: bool
+            write current trace to memory (True) or just activate normalisation (False)
+        '''
+        if not meas:
+            meas = self.get_active_meas()
+        else: self.select_meas(meas)
+        if write_memory:
+            self.write('CALC:MATH:MEM')
+        self.write('CALC:MATH:FUNC %s'%str(op))
+
+    def enable_transform(self, meas=[], center=0, span=2e-9):
+        '''
+        Enables time domain transform for current trace
+        
+        Parameters
+        ------------
+        meas : list of strings or single string
+            measurements to activate transform for
+        center : float
+            center time in [s]
+        span : float
+            span time in [s]
+        '''
+        if not meas:
+            meas = self.get_active_meas() 
+        else: self.select_meas(meas)
+        self.write('CALC:TRAN:TIME:CENT %e'%center)
+        self.write('CALC:TRAN:TIME:SPAN %e'%span)
+        self.write('CALC:TRAN:TIME:STAT ON')
+        
+    def enable_gating(self, meas=[], center=0, span=0.5e-9):
+        '''
+        Enables time domain gating for current measurement or specified measurements
+        
+        Parameters
+        ------------
+        meas : list of strings or single string
+            measurements to enable gating for
+        center : float
+            center time in [s]
+        span : float
+            span time in [s]
+        '''
+        if not meas:
+            meas = self.get_active_meas() 
+        else: self.select_meas(meas)
+        self.write('CALC:FILT:TIME:CENT %e'%center)
+        self.write('CALC:FILT:TIME:SPAN %e'%span)
+        self.write('CALC:FILT:TIME:STAT ON')
+        
+    def disable_gating(self, meas=[]):
+        '''
+        Disables time domain gating for current measurement or specified measurements
+        
+        Parameters
+        ------------
+        meas : list of strings or single string
+            measurements to disable gating for
+
+        '''
+        if not meas:
+            meas = self.get_active_meas() 
+        else: self.select_meas(meas)
+        self.write('CALC:FILT:TIME:STAT OFF')
+
+    def set_yscale(self, meas='', pdiv=5, rlev=0, rpos=8):
+        '''
+        set y-scale 'per division' value for current measurement or the one specified if 
+        no measurement identifier is given.
+        
+        Parameters
+        ------------
+        pdiv : float
+            per division 
+        rlev : float
+            reference level
+        rpos : int
+            reference position on y-scale
+        '''
+        if not meas:
+            meas = self.get_active_meas() 
+        (w, t) = self.get_win_trace(meas=meas)
+        self.write('DISP:WIND%i:TRAC%i:Y:PDIV %f'%(w, t, pdiv))
+        self.write('DISP:WIND%i:TRAC%i:Y:RLEV %f'%(w, t, rlev))
+        self.write('DISP:WIND%i:TRAC%i:Y:RPOS %f'%(w, t, rpos))
+        
     def set_yscale_couple(self, method= 'all' ,window_n = None, trace_n=None):
         '''
         set y-scale coupling 
@@ -1735,12 +1901,12 @@ class VectorStar(PNA):
         return [(k+1,meas_list[k]) for k in range(self.ntraces)]
         
 
-class HP8510C(GpibInstrument):
+class HP8510C(Instrument):
     '''
     good ole 8510
     '''
     def __init__(self, address=16,**kwargs):
-        GpibInstrument.__init__(self,'GPIB::'+str(address),**kwargs)
+        Instrument.__init__(self,'GPIB::'+str(address),**kwargs)
         self.write('FORM4;')
 
 
