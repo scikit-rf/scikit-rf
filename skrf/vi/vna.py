@@ -35,15 +35,7 @@ from .. import mathFunctions as mf
 
 
 from ivi import Driver 
-def ask_for_values(self,msg, delim=',', converter=float, array = True):
-    s = self._ask(msg)
-    s_split = s.split(delim)
-    out = map(converter, s_split)
-    if array:
-        out = npy.array(out)
-    return out
-
-Driver.ask_for_values = ask_for_values
+Driver.ask_for_values = Driver._ask_for_values
 Driver.ask = Driver._ask
 Driver.write = Driver._write
 
@@ -511,7 +503,7 @@ class PNA(Driver):
         self.continuous = was_cont
         return ntwk
     
-    def get_network_all_meas(self):
+    def get_network_all_meas(self,sweep=True):
         '''
         Return list of Network Objects for all measurements.
         
@@ -523,7 +515,8 @@ class PNA(Driver):
         '''
         
         out = []
-        self.sweep()
+        if sweep:
+            self.sweep()
         for name,parm in self.get_meas_list():
             self.select_meas(name)
             out.append(self.get_network(sweep=False, name= name))
