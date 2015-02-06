@@ -13,7 +13,7 @@ the appropriate options to ``use_setuptools()``.
 
 This file can also be run as a script to install or upgrade setuptools.
 """
-import sys
+import sys, os
 DEFAULT_VERSION = "0.6c11"
 DEFAULT_URL = "http://pypi.python.org/packages/%s/s/setuptools/" % sys.version[:3]
 
@@ -62,7 +62,6 @@ md5_data = {
     'setuptools-0.6c9-py2.6.egg': 'ca37b1ff16fa2ede6e19383e7b59245a',
 }
 
-import sys, os
 try:
     from hashlib import md5
 except ImportError:
@@ -163,13 +162,11 @@ and place it in this directory before rerunning this script.)
             # Read/write all in one block, so we don't create a corrupt file
             # if the download is interrupted.
             data = _validate_md5(egg_name, src.read())
-            dst = open(saveto, "wb")
-            dst.write(data)
+            with open(saveto, "wb") as dst:
+                dst.write(data)
         finally:
             if src:
                 src.close()
-            if dst:
-                dst.close()
     return os.path.realpath(saveto)
 
 
@@ -255,9 +252,8 @@ def update_md5(filenames):
 
     for name in filenames:
         base = os.path.basename(name)
-        f = open(name, 'rb')
-        md5_data[base] = md5(f.read()).hexdigest()
-        f.close()
+        with open(name, 'rb') as f:
+            md5_data[base] = md5(f.read()).hexdigest()
 
     data = ["    %r: %r,\n" % it for it in md5_data.items()]
     data.sort()
@@ -265,7 +261,8 @@ def update_md5(filenames):
 
     import inspect
     srcfile = inspect.getsourcefile(sys.modules[__name__])
-    f = open(srcfile, 'rb'); src = f.read(); f.close()
+    with open(srcfile, 'rb') as f:
+        src = f.read()
 
     match = re.search("\nmd5_data = {\n([^}]+)}", src)
     if not match:
@@ -273,9 +270,8 @@ def update_md5(filenames):
         sys.exit(2)
 
     src = src[:match.start(1)] + repl + src[match.end(1):]
-    f = open(srcfile, 'w')
-    f.write(src)
-    f.close()
+    with open(srcfile, 'w') as f:
+        f.write(src)
 
 
 if __name__ == '__main__':
