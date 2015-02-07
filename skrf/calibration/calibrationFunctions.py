@@ -22,7 +22,7 @@ from numpy import array
 import pdb
 
 
-def cartesian_product_calibration_set( ideals, measured, *args, **kwargs):
+def cartesian_product_calibration_set(ideals, measured, *args, **kwargs):
     '''
     This function is used for calculating calibration uncertainty due
     to un-biased, non-systematic errors.
@@ -61,15 +61,14 @@ def cartesian_product_calibration_set( ideals, measured, *args, **kwargs):
     [network.plot_s_smith() for network in network_ensemble]
     '''
     measured_iterable = \
-            [[ measure for measure in measured \
+            [[measure for measure in measured \
                     if ideal.name in measure.name] for ideal in ideals]
     measured_product = product(*measured_iterable)
-
-    return [Calibration(ideals =ideals, measured = list(product_element),\
+    return [Calibration(ideals=ideals, measured=list(product_element),\
             *args, **kwargs)\
             for product_element in measured_product]
 
-def dot_product_calibration_set( ideals, measured, *args, **kwargs):
+def dot_product_calibration_set(ideals, measured, *args, **kwargs):
     '''
     This function is used for calculating calibration uncertainty due
     to un-biased, non-systematic errors.
@@ -93,19 +92,18 @@ def dot_product_calibration_set( ideals, measured, *args, **kwargs):
     # of the Network element names
     measured_range = range(len(measured))
     name_list = [k.name for k in measured]
-    sorted_index = sorted(measured_range, key = lambda k:name_list[k])
+    sorted_index = sorted(measured_range, key=lambda k: name_list[k])
     measured = [measured[k] for k in sorted_index]
 
     measured_iterable = \
-            [[ measure for measure in measured \
+            [[measure for measure in measured \
                     if ideal.name in measure.name] for ideal in ideals]
-    m_array= array( measured_iterable)
-    
-    return [Calibration(ideals = ideals, measured = list(m_array[:,k]),\
+    m_array = array(measured_iterable)
+    return [Calibration(ideals=ideals, measured=list(m_array[:, k]),\
             *args, **kwargs)\
             for k in range(m_array.shape[1])]
 
-def binomial_coefficient_calibration_set( ideals, measured, n,  *args, **kwargs):
+def binomial_coefficient_calibration_set(ideals, measured, n, *args, **kwargs):
     '''
     Produces a ensemble of calibration instances based on choosing
     sub-sets of the ideal/measurement lists from an overdetermined
@@ -114,7 +112,6 @@ def binomial_coefficient_calibration_set( ideals, measured, n,  *args, **kwargs)
 
     so, if the calibration ideals and measured lists have length 'm'
     then the resultant ensemble of calibrations is 'm choose n' long.
-
 
     takes:
             ideals: list of ideal Networks
@@ -125,21 +122,17 @@ def binomial_coefficient_calibration_set( ideals, measured, n,  *args, **kwargs)
 
     returns:
             cal_ensemble: a list of Calibration instances.
-
-
-
     '''
     if n >= len(ideals):
         raise ValueError('n must be larger than # of standards')
 
     ideal_subsets = \
-            [ ideal_subset for ideal_subset in combinations(ideals,n)]
+            [ideal_subset for ideal_subset in combinations(ideals, n)]
     measured_subsets = \
-            [ measured_subset for measured_subset in combinations(measured,n)]
+            [measured_subset for measured_subset in combinations(measured, n)]
 
-    return  [Calibration(ideals = list(k[0]), measured=list(k[1]),\
+    return  [Calibration(ideals=list(k[0]), measured=list(k[1]),\
             *args, **kwargs) for k in zip(ideal_subsets, measured_subsets)]
-
 
 # for backward compatability
 zip_calibration_ensemble = dot_product_calibration_set
