@@ -26,7 +26,6 @@ such as :func:`~media.cpw.CPW.cpw_short` and
 in those object
 
 
-    
 
 Media base-class
 -------------------------
