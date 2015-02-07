@@ -22,8 +22,7 @@ class Parameterless(ParametricStandard):
         takes:
                 ideal_network: a Network instance of the standard
         '''
-        ParametricStandard.__init__(self, \
-                function  = lambda: ideal_network)
+        ParametricStandard.__init__(self, function=lambda: ideal_network)
 
 class Line_UnknownLength(ParametricStandard):
     '''
@@ -31,7 +30,7 @@ class Line_UnknownLength(ParametricStandard):
 
     initial guess for length should be given to constructor
     '''
-    def __init__(self, media, d,**kwargs):
+    def __init__(self, media, d, **kwargs):
         '''
         takes:
                 media: a skrf.Media type
@@ -44,8 +43,8 @@ class Line_UnknownLength(ParametricStandard):
 
         '''
         ParametricStandard.__init__(self, \
-                function = media.line,\
-                parameters = {'d':d},\
+                function=media.line,\
+                parameter={'d': d},\
                 **kwargs\
                 )
 
@@ -53,7 +52,7 @@ class DelayLoad_UnknownLength(ParametricStandard):
     '''
     A  Delayed Termination of unknown length, but known termination
     '''
-    def __init__(self, media,d,Gamma0,**kwargs):
+    def __init__(self, media, d, Gamma0, **kwargs):
         '''
         takes:
                 media: a skrf.Media type
@@ -69,8 +68,8 @@ class DelayLoad_UnknownLength(ParametricStandard):
         kwargs.update({'Gamma0':Gamma0})
 
         ParametricStandard.__init__(self, \
-                function = media.delay_load,\
-                parameters = {'d':d},\
+                function=media.delay_load,\
+                parameters={'d': d},\
                 **kwargs\
                 )
 
@@ -79,7 +78,7 @@ class DelayShort_UnknownLength(DelayLoad_UnknownLength):
     A delay short of unknown length
 
     '''
-    def __init__(self, media,d,**kwargs):
+    def __init__(self, media, d, **kwargs):
         '''
         This calls DelayLoad_UnknownLength. see that class for more info.
 
@@ -89,17 +88,17 @@ class DelayShort_UnknownLength(DelayLoad_UnknownLength):
                 **kwargs: passed to self.function
         '''
         DelayLoad_UnknownLength.__init__(self,\
-                media= media,
-                d=d,
-                Gamma0=-1,
-                **kwargs)
+                                         media=media,
+                                         d=d,
+                                         Gamma0=-1,
+                                         **kwargs)
 
 class DelayOpen_UnknownLength(DelayLoad_UnknownLength):
     '''
     A delay open of unknown length
 
     '''
-    def __init__(self, media,d,**kwargs):
+    def __init__(self, media, d, **kwargs):
         '''
         This calls DelayLoad_UnknownLength. see that class for more info.
 
@@ -109,16 +108,16 @@ class DelayOpen_UnknownLength(DelayLoad_UnknownLength):
                 **kwargs: passed to self.function
         '''
         DelayLoad_UnknownLength.__init__(self,\
-                media= media,
-                d=d,
-                Gamma0=1,
-                **kwargs)
+                                         media=media,
+                                         d=d,
+                                         Gamma0=1,
+                                         **kwargs)
 
 class DelayLoad_UnknownLoad(ParametricStandard):
     '''
     A  Delayed Load of unknown Load. Assumes load is frequency independent
     '''
-    def __init__(self, media,d,Gamma0,**kwargs):
+    def __init__(self, media, d, Gamma0, **kwargs):
         '''
         takes:
                 media: a Media type
@@ -129,8 +128,8 @@ class DelayLoad_UnknownLoad(ParametricStandard):
         '''
         kwargs.update({'d':d})
         ParametricStandard.__init__(self, \
-                function = media.delay_load,\
-                parameters = {'Gamma0':Gamma0},\
+                function=media.delay_load,\
+                parameters={'Gamma0': Gamma0},\
                 **kwargs\
                 )
 
@@ -139,7 +138,7 @@ class DelayLoad_UnknownLength_UnknownLoad(ParametricStandard):
     A  Delayed load of unknown length or reflection coefficient.
     Assumes the load is frequency independent
     '''
-    def __init__(self, media,d,Gamma0,**kwargs):
+    def __init__(self, media, d, Gamma0, **kwargs):
         '''
         takes:
                 media: a Media type
@@ -150,18 +149,16 @@ class DelayLoad_UnknownLength_UnknownLoad(ParametricStandard):
         '''
 
         ParametricStandard.__init__(self, \
-                function = media.delay_load,\
-                parameters = {'d':d,'Gamma0':Gamma0},\
+                function=media.delay_load,\
+                parameters={'d': d, 'Gamma0': Gamma0},\
                 **kwargs\
                 )
-
-
 
 class UnknownShuntCapacitance(ParametricStandard):
     '''
     A Network with unknown connector capacitance
     '''
-    def __init__(self, media,C,ntwk,**kwargs):
+    def __init__(self, media, C, ntwk, **kwargs):
         '''
         takes:
                 media: a skrf.Media type
@@ -178,15 +175,16 @@ class UnknownShuntCapacitance(ParametricStandard):
             return media.shunt_capacitor(*args, **kwargs)**ntwk
 
         ParametricStandard.__init__(self, \
-                function = func,\
-                parameters = {'C':C},\
+                function=func,\
+                parameters={'C': C},\
                 **kwargs\
                 )
+
 class UnknownShuntInductance(ParametricStandard):
     '''
     A Network with unknown connector inductance
     '''
-    def __init__(self, media,L,ntwk,**kwargs):
+    def __init__(self, media, L, ntwk, **kwargs):
         '''
         takes:
                 media: a skrf.Media type
@@ -203,8 +201,8 @@ class UnknownShuntInductance(ParametricStandard):
             return media.shunt_inductor(*args, **kwargs)**ntwk
 
         ParametricStandard.__init__(self, \
-                function = func,\
-                parameters = {'L':L},\
+                function=func,\
+                parameters={'L': L},\
                 **kwargs\
                 )
 
@@ -212,7 +210,7 @@ class UnknownShuntCapacitanceInductance(ParametricStandard):
     '''
     A Network with unknown connector inductance and capacitance
     '''
-    def __init__(self, media,C,L,ntwk,**kwargs):
+    def __init__(self, media, C, L, ntwk, **kwargs):
         '''
         takes:
                 media: a skrf.Media type
@@ -226,12 +224,12 @@ class UnknownShuntCapacitanceInductance(ParametricStandard):
                 the Media.line function can take the kwarg 'unit', in case
                 you want to specify the line length in electrical length
         '''
-        def func(L,C, **kwargs):
+        def func(L, C, **kwargs):
             return media.shunt_inductor(L, **kwargs)**\
                     media.shunt_capacitor(C, **kwargs)**ntwk
 
         ParametricStandard.__init__(self, \
-                function = func,\
-                parameters = {'C':C,'L':L},\
+                function=func,\
+                parameters={'C': C, 'L': L},\
                 **kwargs\
                 )
