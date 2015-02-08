@@ -30,7 +30,7 @@ try:
     import data
 except:
     print 'warning: data module didn\'t load. dont worry about it.'
-    pass 
+    pass
 # Import contents into current namespace for ease of calling
 from frequency import *
 from network import *
@@ -40,16 +40,16 @@ from util import *
 from plotting import  *
 from mathFunctions import *
 from tlineFunctions import *
-from io import * 
-from constants import * 
+from io import *
+from constants import *
+
 
 # Try to import vi, but if except if pyvisa not installed
 try:
     import vi
     from vi import *
-except(ImportError):
+except ImportError:
     print '\nWARNING: pyvisa not installed, virtual instruments will not be available\n'
-
 
 
 ## built-in imports
@@ -63,5 +63,5 @@ N = Network
 NS = NetworkSet
 C = Calibration
 lat = load_all_touchstones
-saf  = save_all_figs
+saf = save_all_figs
 
