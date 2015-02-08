@@ -53,7 +53,6 @@ So, to clarify the confusion,
         Z_{in}= Z_{l},\\qquad\\qquad
         \\Gamma_{in}=\\Gamma_l \\text{ at }  \\theta=0
 
-
 Short names
 +++++++++++++
 .. autosummary::
@@ -83,9 +82,6 @@ Long-names
         load_impedance_2_reflection_coefficient
         load_impedance_2_reflection_coefficient_at_theta
 
-
-
-
 Distributed Circuit and Wave Quantities
 ----------------------------------------
 .. autosummary::
@@ -102,19 +98,16 @@ Transmission Line Physics
         skin_depth
         surface_resistivity
 '''
-
 import numpy as npy
-from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
-         interp, linspace, shape,zeros, reshape
-
+from numpy import pi, sqrt, exp, array, tan, sin, cos, inf, log, real, imag,\
+         interp, linspace, shape, zeros, reshape
 from scipy.constants import mu_0
 import mathFunctions as mf
 
 INF = 1e99
 ONE = 1.0 + 1/1e14
 
-
-def skin_depth(f,rho, mu_r):
+def skin_depth(f, rho, mu_r):
     '''
 
     the skin depth for a material.
@@ -129,21 +122,21 @@ def skin_depth(f,rho, mu_r):
             bulk resistivity of material, in ohm*m
     mu_r : number or array-like
             relative permeability of material
-    
+
     Returns
     ----------
     skin depth : number or array-like
             the skin depth, in m
-    
-    References 
+
+    References
     --------------
-    
+
     .. [1] http://en.wikipedia.org/wiki/Skin_effect
-    
+
     '''
     return sqrt(rho/(pi*f*mu_r*mu_0))
 
-def surface_resistivity(f,rho,mu_r):
+def surface_resistivity(f, rho, mu_r):
     '''
     surface resistivity.
 
@@ -161,13 +154,11 @@ def surface_resistivity(f,rho,mu_r):
     Returns
     ----------
     surface resistivity: ohms/square
-
-
     '''
-    return rho/skin_depth(rho=rho,f = f, mu_r=mu_r)
+    return rho/skin_depth(rho=rho, f=f, mu_r=mu_r)
 
-def distributed_circuit_2_propagation_impedance( distributed_admittance,\
-        distributed_impedance):
+def distributed_circuit_2_propagation_impedance(distributed_admittance,
+                                                distributed_impedance):
     '''
     Converts distrubuted circuit values to wave quantities.
 
@@ -197,14 +188,13 @@ def distributed_circuit_2_propagation_impedance( distributed_admittance,\
     ----------
             propagation_impedance_2_distributed_circuit : opposite conversion
     '''
-    propagation_constant = \
-            sqrt(distributed_impedance*distributed_admittance)
-    characteristic_impedance = \
-            sqrt(distributed_impedance/distributed_admittance)
+    propagation_constant = sqrt(distributed_impedance*distributed_admittance)
+    characteristic_impedance = sqrt(distributed_impedance/
+                                    distributed_admittance)
     return (propagation_constant, characteristic_impedance)
 
-def propagation_impedance_2_distributed_circuit(propagation_constant, \
-        characteristic_impedance):
+def propagation_impedance_2_distributed_circuit(propagation_constant,
+                                                characteristic_impedance):
     '''
     Converts wave quantities to distributed circuit values.
 
@@ -229,16 +219,15 @@ def propagation_impedance_2_distributed_circuit(propagation_constant, \
     distributed_impedance :  number, array-like
             distributed impedance
 
-
     See Also
     ----------
             distributed_circuit_2_propagation_impedance : opposite conversion
     '''
     distributed_admittance = propagation_constant/characteristic_impedance
     distributed_impedance = propagation_constant*characteristic_impedance
-    return (distributed_admittance,distributed_impedance)
+    return (distributed_admittance, distributed_impedance)
 
-def electrical_length(gamma, f , d, deg=False):
+def electrical_length(gamma, f, d, deg=False):
     '''
     Calculates the electrical length of a section of transmission line.
 
@@ -273,17 +262,15 @@ def electrical_length(gamma, f , d, deg=False):
     represented by the positive imaginary part of the value returned by
     the gamma function
     '''
-
     # typecast to a 1D array
     f = array(f, dtype=float).reshape(-1)
     d = array(d, dtype=float).reshape(-1)
-
     if deg == False:
         return  gamma(f)*d
     elif deg == True:
-        return  mf.radian_2_degree(gamma(f)*d )
+        return  mf.radian_2_degree(gamma(f)*d)
 
-def electrical_length_2_distance(theta, gamma, f0,deg=True):
+def electrical_length_2_distance(theta, gamma, f0, deg=True):
     '''
     Convert electrical length to a physical distance.
 
@@ -332,14 +319,12 @@ def load_impedance_2_reflection_coefficient(z0, zl):
     .. math::
             \\Gamma = \\frac {Z_l - Z_0}{Z_l + Z_0}
 
-
     Parameters
     ----------
     z0 :  number or array-like
             characteristic impedance
     zl :  number or array-like
             load impedance (aka input impedance)
-
 
     Returns
     --------
@@ -350,7 +335,6 @@ def load_impedance_2_reflection_coefficient(z0, zl):
     ----------
             Gamma0_2_zl : reflection coefficient to load impedance
 
-
     Notes
     ------
             inputs are typecasted to 1D complex array
@@ -358,21 +342,18 @@ def load_impedance_2_reflection_coefficient(z0, zl):
     # typecast to a complex 1D array. this makes everything easier
     z0 = array(z0, dtype=complex).reshape(-1)
     zl = array(zl, dtype=complex).reshape(-1)
-
     # handle singularity  by numerically representing inf as big number
-    zl[(zl==npy.inf)] = INF
+    zl[(zl == npy.inf)] = INF
 
-    return ((zl -z0 )/(zl+z0))
+    return (zl -z0)/(zl+z0)
 
-def reflection_coefficient_2_input_impedance(z0,Gamma):
+def reflection_coefficient_2_input_impedance(z0, Gamma):
     '''
     calculates the input impedance given a reflection coefficient and
     characteristic impedance
 
     .. math::
             Z_0 (\\frac {1 + \\Gamma}{1-\\Gamma})
-
-
 
     Parameters
     ----------
@@ -385,19 +366,15 @@ def reflection_coefficient_2_input_impedance(z0,Gamma):
     --------
     zin : number or array-like
             input impedance
-
-
     '''
     # typecast to a complex 1D array. this makes everything easier
     Gamma = array(Gamma, dtype=complex).reshape(-1)
     z0 = array(z0, dtype=complex).reshape(-1)
-
     #handle singularity by numerically representing inf as close to 1
     Gamma[(Gamma == 1)] = ONE
+    return z0*((1.0+Gamma)/(1.0-Gamma))
 
-    return z0*((1.0+Gamma )/(1.0-Gamma))
-
-def reflection_coefficient_at_theta(Gamma0,theta):
+def reflection_coefficient_at_theta(Gamma0, theta):
     '''
     reflection coefficient at a given electrical length.
 
@@ -415,13 +392,12 @@ def reflection_coefficient_at_theta(Gamma0,theta):
     ----------
     Gamma_in : number or array-like
             input reflection coefficient
-
     '''
     Gamma0 = array(Gamma0, dtype=complex).reshape(-1)
     theta = array(theta, dtype=complex).reshape(-1)
     return Gamma0 * exp(-2j* theta)
 
-def input_impedance_at_theta(z0,zl, theta):
+def input_impedance_at_theta(z0, zl, theta):
     '''
     input impedance of load impedance zl at a given electrical length,
     given characteristic impedance z0.
@@ -435,12 +411,13 @@ def input_impedance_at_theta(z0,zl, theta):
     Returns
     ---------
     '''
-    Gamma0 = load_impedance_2_reflection_coefficient(z0=z0,zl=zl)
+    Gamma0 = load_impedance_2_reflection_coefficient(z0=z0, zl=zl)
     Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
     return reflection_coefficient_2_input_impedance(z0=z0, Gamma=Gamma_in)
 
 def load_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
-    Gamma0 = load_impedance_2_reflection_coefficient(z0=z0,zl=zl)
+
+    Gamma0 = load_impedance_2_reflection_coefficient(z0=z0, zl=zl)
     Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
     return Gamma_in
 
@@ -457,23 +434,20 @@ def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
             zin: input impedance at theta
     '''
     Gamma_in = reflection_coefficient_at_theta(Gamma0=Gamma0, theta=theta)
-    zin = reflection_coefficient_2_input_impedance(z0=z0,Gamma=Gamma_in)
+    zin = reflection_coefficient_2_input_impedance(z0=z0, Gamma=Gamma_in)
     return zin
 # short hand convenience.
 # admittedly these follow no logical naming scheme, but they closely
 # correspond to common symbolic conventions, and are convenient
 theta = electrical_length
 distance_2_electrical_length = electrical_length
-
+#
 zl_2_Gamma0 = load_impedance_2_reflection_coefficient
 Gamma0_2_zl = reflection_coefficient_2_input_impedance
-
+#
 zl_2_zin = input_impedance_at_theta
 zl_2_Gamma_in = load_impedance_2_reflection_coefficient_at_theta
 
 Gamma0_2_Gamma_in = reflection_coefficient_at_theta
 Gamma0_2_zin = reflection_coefficient_2_input_impedance_at_theta
-
-
-
 
