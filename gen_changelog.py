@@ -18,7 +18,7 @@ def sh(cmd):
     """Execute command in a subshell, return status code."""
     return check_call(cmd, shell=True)
 
-def sh2(cmd, ignore_retcode = False):
+def sh2(cmd, ignore_retcode=False):
     """Execute command in a subshell, return stdout.
 
     Stderr is unbuffered from the subshell.x"""
@@ -34,15 +34,16 @@ def sh2(cmd, ignore_retcode = False):
             return out.rstrip()
 
 ## Start
-fid = file(changelog_filename,'w')
+fid = file(changelog_filename, 'w')
 fid.write(header)
 tags = sh2('git tag').split('\n')
 
 
 for k in range(len(tags))[1::-1]:
-    fid.write('\n\n-------------------------------- %s ---------------------------------\n\n'%tags[k+1])
-    fid.write(sh2('git shortlog -n %s..%s'%(tags[k],tags[k+1]), ignore_retcode=True))
-    
-fid.write ('\n----------------------------------- %s ---------------------------------\n\n'%tags[0])
+    fid.write('\n\n-------------------------------- %s ---------------------------------\n\n'%
+              tags[k+1])
+    fid.write(sh2('git shortlog -n %s..%s' % (tags[k], tags[k+1]), ignore_retcode=True))
+
+fid.write('\n----------------------------------- %s ---------------------------------\n\n' % tags[0])
 fid.write(sh2('git shortlog -n %s'%(tags[0]), ignore_retcode=True))
 

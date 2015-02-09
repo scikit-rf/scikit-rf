@@ -12,10 +12,8 @@ Modules
 ----------
 .. toctree::
    :maxdepth: 1
-
-   
 '''
-import os 
+import os
 
 from  ..network import Network
 from ..io.general import read
@@ -75,10 +73,9 @@ materials = {
         'relative permativity':2.25,
         'loss tangent':40e-4,
         },
-    
     }
-for k1,k2 in [
-    ('cu', 'copper'), 
-    ('al', 'aluminum'),
-    ('au', 'gold')]:
+
+for k1, k2 in [('cu', 'copper'),
+               ('al', 'aluminum'),
+               ('au', 'gold')]:
     materials[k1] = materials[k2]

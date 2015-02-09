@@ -1,3 +1,4 @@
+
 import pylab
 import skrf as rf
 
@@ -9,4 +10,5 @@ pylab.title('WR-10 Ringslot Array Simulated, Mag')
 # if no indices are passed to the plot command it will plot all
 # available s-parameters
 ring_slot.plot_s_db()
+
 pylab.show()

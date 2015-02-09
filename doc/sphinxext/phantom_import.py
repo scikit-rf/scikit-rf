@@ -1,3 +1,4 @@
+
 """
 ==============
 phantom_import
@@ -22,7 +23,7 @@ def setup(app):
 
 def initialize(app):
     fn = app.config.phantom_import_file
-    if (fn and os.path.isfile(fn)):
+    if fn and os.path.isfile(fn):
         print "[numpydoc] Phantom importing modules from", fn, "..."
         import_phantom_module(fn)
 
@@ -49,18 +50,16 @@ def import_phantom_module(xml_file):
 
     """
     import lxml.etree as etree
-
     object_cache = {}
-
     tree = etree.parse(xml_file)
     root = tree.getroot()
-
     # Sort items so that
     # - Base classes come before classes inherited from them
     # - Modules come before their contents
     all_nodes = dict([(n.attrib['id'], n) for n in root])
 
     def _get_bases(node, recurse=False):
+
         bases = [x.attrib['ref'] for x in node.findall('base')]
         if recurse:
             j = 0
@@ -76,9 +75,9 @@ def import_phantom_module(xml_file):
     type_index = ['module', 'class', 'callable', 'object']
 
     def base_cmp(a, b):
+
         x = cmp(type_index.index(a.tag), type_index.index(b.tag))
         if x != 0: return x
-
         if a.tag == 'class' and b.tag == 'class':
             a_bases = _get_bases(a, recurse=True)
             b_bases = _get_bases(b, recurse=True)
@@ -86,7 +85,6 @@ def import_phantom_module(xml_file):
             if x != 0: return x
             if a.attrib['id'] in b_bases: return -1
             if b.attrib['id'] in a_bases: return 1
-
         return cmp(a.attrib['id'].count('.'), b.attrib['id'].count('.'))
 
     nodes = root.getchildren()
@@ -97,7 +95,6 @@ def import_phantom_module(xml_file):
         name = node.attrib['id']
         doc = (node.text or '').decode('string-escape') + "\n"
         if doc == "\n": doc = ""
-
         # create parent, if missing
         parent = name
         while True:
@@ -107,7 +104,6 @@ def import_phantom_module(xml_file):
             obj = imp.new_module(parent)
             object_cache[parent] = obj
             sys.modules[parent] = obj
-
         # create object
         if node.tag == 'module':
             obj = imp.new_module(name)
@@ -142,12 +138,10 @@ def import_phantom_module(xml_file):
             if inspect.isclass(object_cache[parent]):
                 obj.__get__ = lambda: None
         object_cache[name] = obj
-
         if parent:
             if inspect.ismodule(object_cache[parent]):
                 obj.__module__ = parent
                 setattr(object_cache[parent], name.split('.')[-1], obj)
-
     # Populate items
     for node in root:
         obj = object_cache.get(node.attrib['id'])
@@ -160,3 +154,4 @@ def import_phantom_module(xml_file):
             else:
                 setattr(obj, ref.attrib['name'],
                         object_cache.get(ref.attrib['ref']))
+

@@ -1,3 +1,4 @@
+
 """
 =========
 traitsdoc
@@ -31,70 +32,66 @@ class SphinxTraitsDoc(SphinxClassDoc):
         if not inspect.isclass(cls):
             raise ValueError("Initialise using a class. Got %r" % cls)
         self._cls = cls
-
         if modulename and not modulename.endswith('.'):
             modulename += '.'
         self._mod = modulename
         self._name = cls.__name__
         self._func_doc = func_doc
-
         docstring = pydoc.getdoc(cls)
         docstring = docstring.split('\n')
-
         # De-indent paragraph
         try:
             indent = min(len(s) - len(s.lstrip()) for s in docstring
                          if s.strip())
         except ValueError:
             indent = 0
-
-        for n,line in enumerate(docstring):
+        for n, line in enumerate(docstring):
             docstring[n] = docstring[n][indent:]
-
         self._doc = docscrape.Reader(docstring)
-        self._parsed_data = {
-            'Signature': '',
-            'Summary': '',
-            'Description': [],
-            'Extended Summary': [],
-            'Parameters': [],
-            'Returns': [],
-            'Raises': [],
-            'Warns': [],
-            'Other Parameters': [],
-            'Traits': [],
-            'Methods': [],
-            'See Also': [],
-            'Notes': [],
-            'References': '',
-            'Example': '',
-            'Examples': '',
-            'index': {}
-            }
-
+        self._parsed_data = {'Signature': '',
+                             'Summary': '',
+                             'Description': [],
+                             'Extended Summary': [],
+                             'Parameters': [],
+                             'Returns': [],
+                             'Raises': [],
+                             'Warns': [],
+                             'Other Parameters': [],
+                             'Traits': [],
+                             'Methods': [],
+                             'See Also': [],
+                             'Notes': [],
+                             'References': '',
+                             'Example': '',
+                             'Examples': '',
+                             'index': {}
+                            }
         self._parse()
 
     def _str_summary(self):
+
         return self['Summary'] + ['']
 
     def _str_extended_summary(self):
+
         return self['Description'] + self['Extended Summary'] + ['']
 
     def __str__(self, indent=0, func_role="func"):
+
         out = []
         out += self._str_signature()
         out += self._str_index() + ['']
         out += self._str_summary()
         out += self._str_extended_summary()
         for param_list in ('Parameters', 'Traits', 'Methods',
-                           'Returns','Raises'):
+                           'Returns', 'Raises'):
             out += self._str_param_list(param_list)
         out += self._str_see_also("obj")
         out += self._str_section('Notes')
         out += self._str_references()
         out += self._str_section('Example')
         out += self._str_section('Examples')
-        out = self._str_indent(out,indent)
+        out = self._str_indent(out, indent)
         return '\n'.join(out)
 
 def looks_like_issubclass(obj, classname):
@@ -112,6 +109,7 @@ def looks_like_issubclass(obj, classname):
     return False
 
 def get_doc_object(obj, what=None, config=None):
+
     if what is None:
         if inspect.isclass(obj):
             what = 'class'
@@ -135,5 +133,7 @@ def get_doc_object(obj, what=None, config=None):
         return SphinxDocString(pydoc.getdoc(obj), config=config)
 
 def setup(app):
+
     # init numpydoc
     numpydoc.setup(app, get_doc_object)
+

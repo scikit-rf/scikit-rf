@@ -45,9 +45,8 @@ class Freespace(DistributedCircuit):
             :class:`~skrf.media.media.Media`->
             :class:`~skrf.media.distributedCircuit.DistributedCircuit`->
             :class:`~skrf.media.freespace.Freespace`
-
     '''
-    def __init__(self, frequency,  ep_r=1+0j, mu_r=1+0j,  *args, **kwargs):
+    def __init__(self, frequency, ep_r=1+0j, mu_r=1+0j, *args, **kwargs):
         '''
         Freespace initializer
 
@@ -75,22 +74,22 @@ class Freespace(DistributedCircuit):
         distributed_conductance          :math:`\\omega  imag(mu_0*mu_r)
         ===============================  ==============================
         '''
-        
-        DistributedCircuit.__init__(self,\
-                frequency = frequency, \
-                C = real(epsilon_0*ep_r),\
-                G = frequency.w *imag(epsilon_0*ep_r),\
-                I = real(mu_0*mu_r),\
-                R = frequency.w *imag(mu_0*mu_r),\
-                *args, **kwargs
-                )
+        DistributedCircuit.__init__(self,
+                                    frequency=frequency,
+                                    C=real(epsilon_0*ep_r),
+                                    G=frequency.w*imag(epsilon_0*ep_r),
+                                    I=real(mu_0*mu_r),
+                                    R=frequency.w *imag(mu_0*mu_r),
+                                    *args, **kwargs)
 
     def __str__(self):
-        f=self.frequency
-        output =  \
-                'Freespace  Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)
+
+        f = self.frequency
+        output = 'Freespace  Media.  %i-%i %s.  %i points'%\
+                 (f.f_scaled[0], f.f_scaled[-1], f.unit, f.npoints)
         return output
 
     def __repr__(self):
+
         return self.__str__()
+

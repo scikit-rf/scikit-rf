@@ -1,3 +1,4 @@
+
 """
 Defines a docutils directive for inserting inheritance diagrams.
 
@@ -46,7 +47,7 @@ def my_import(name):
     """Module importer - taken from the python documentation.
 
     This function allows importing names with dots in them."""
-    
+
     mod = __import__(name)
     components = name.split('.')
     for comp in components[1:]:
@@ -101,11 +102,9 @@ class InheritanceGraph(object):
             # second call will force the equivalent of 'import a.b' to happen
             # after the top-level import above.
             my_import(fullname)
-            
         except ImportError:
             raise ValueError(
                 "Could not import class or module '%s' specified for inheritance diagram" % name)
-
         try:
             todoc = module
             for comp in fullname.split('.')[1:]:
@@ -140,7 +139,6 @@ class InheritanceGraph(object):
         Return a list of all classes that are ancestors of *classes*.
         """
         all_classes = {}
-
         def recurse(cls):
             all_classes[cls] = None
             for c in cls.__bases__:
@@ -149,7 +147,6 @@ class InheritanceGraph(object):
 
         for cls in classes:
             recurse(cls)
-
         return all_classes.keys()
 
     def class_name(self, cls, parts=0):
@@ -175,25 +172,25 @@ class InheritanceGraph(object):
         return [self.class_name(x) for x in self.all_classes]
 
     # These are the default options for graphviz
-    default_graph_options = {
-        "rankdir": "LR",
-        "size": '"8.0, 12.0"'
-        }
-    default_node_options = {
-        "shape": "box",
-        "fontsize": 10,
-        "height": 0.25,
-        "fontname": "Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans",
-        "style": '"setlinewidth(0.5)"'
-        }
-    default_edge_options = {
-        "arrowsize": 0.5,
-        "style": '"setlinewidth(0.5)"'
-        }
+    default_graph_options = {"rankdir": "LR",
+                             "size": '"8.0, 12.0"'
+                            }
+    default_node_options = {"shape": "box",
+                            "fontsize": 10,
+                            "height": 0.25,
+                            "fontname": "Vera Sans, DejaVu Sans, Liberation Sans, Arial, Helvetica, sans",
+                            "style": '"setlinewidth(0.5)"'
+                           }
+    default_edge_options = {"arrowsize": 0.5,
+                            "style": '"setlinewidth(0.5)"'
+                           }
 
     def _format_node_options(self, options):
+
         return ','.join(["%s=%s" % x for x in options.items()])
+
     def _format_graph_options(self, options):
+
         return ''.join(["%s=%s;\n" % x for x in options.items()])
 
     def generate_dot(self, fd, name, parts=0, urls={},
@@ -219,16 +216,12 @@ class InheritanceGraph(object):
         n_options.update(node_options)
         e_options = self.default_edge_options.copy()
         e_options.update(edge_options)
-
         fd.write('digraph %s {\n' % name)
         fd.write(self._format_graph_options(g_options))
-
         for cls in self.all_classes:
             if not self.show_builtins and cls in __builtins__.values():
                 continue
-
             name = self.class_name(cls, parts)
-
             # Write the node
             this_node_options = n_options.copy()
             url = urls.get(self.class_name(cls))
@@ -236,12 +229,10 @@ class InheritanceGraph(object):
                 this_node_options['URL'] = '"%s"' % url
             fd.write('  "%s" [%s];\n' %
                      (name, self._format_node_options(this_node_options)))
-
             # Write the edges
             for base in cls.__bases__:
                 if not self.show_builtins and base in __builtins__.values():
                     continue
-
                 base_name = self.class_name(base, parts)
                 fd.write('  "%s" -> "%s" [%s];\n' %
                          (base_name, name,
@@ -297,12 +288,9 @@ def inheritance_diagram_directive(name, arguments, options, content, lineno,
     Run when the inheritance_diagram directive is first encountered.
     """
     node = inheritance_diagram()
-
     class_names = arguments
-
     # Create a graph starting with the list of classes
     graph = InheritanceGraph(class_names)
-
     # Create xref nodes for each target of the graph's image map and
     # add them to the doc tree so that Sphinx can resolve the
     # references to real URLs later.  These nodes will eventually be
@@ -320,6 +308,7 @@ def inheritance_diagram_directive(name, arguments, options, content, lineno,
     return [node]
 
 def get_graph_hash(node):
+
     return md5(node['content'] + str(node['parts'])).hexdigest()[-10:]
 
 def html_output_graph(self, node):
@@ -329,7 +318,6 @@ def html_output_graph(self, node):
     """
     graph = node['graph']
     parts = node['parts']
-
     graph_hash = get_graph_hash(node)
     name = "inheritance%s" % graph_hash
     path = '_images'
@@ -338,7 +326,6 @@ def html_output_graph(self, node):
         os.makedirs(dest_path)
     png_path = os.path.join(dest_path, name + ".png")
     path = setup.app.builder.imgpath
-
     # Create a mapping from fully-qualified class names to URLs.
     urls = {}
     for child in node:
@@ -346,7 +333,6 @@ def html_output_graph(self, node):
             urls[child['reftitle']] = child.get('refuri')
         elif child.get('refid') is not None:
             urls[child['reftitle']] = '#' + child.get('refid')
-
     # These arguments to dot will save a PNG file to disk and write
     # an HTML image map to stdout.
     image_map = graph.run_dot(['-Tpng', '-o%s' % png_path, '-Tcmapx'],
@@ -367,7 +353,6 @@ def latex_output_graph(self, node):
     if not os.path.exists(dest_path):
         os.makedirs(dest_path)
     pdf_path = os.path.abspath(os.path.join(dest_path, name + ".pdf"))
-
     graph.run_dot(['-Tpdf', '-o%s' % pdf_path],
                   name, parts, graph_options={'size': '"6.0,6.0"'})
     return '\n\\includegraphics{%s}\n\n' % pdf_path
@@ -397,11 +382,11 @@ def do_nothing(self, node):
 def setup(app):
     setup.app = app
     setup.confdir = app.confdir
-
     app.add_node(
         inheritance_diagram,
         latex=(visit_inheritance_diagram(latex_output_graph), do_nothing),
         html=(visit_inheritance_diagram(html_output_graph), do_nothing))
     app.add_directive(
         'inheritance-diagram', inheritance_diagram_directive,
-        False, (1, 100, 0), parts = directives.nonnegative_int)
+        False, (1, 100, 0), parts=directives.nonnegative_int)
+

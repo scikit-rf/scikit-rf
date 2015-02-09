@@ -1,3 +1,4 @@
+
 """
 ========
 numpydoc
@@ -22,6 +23,7 @@ import inspect
 
 def mangle_docstrings(app, what, name, obj, options, lines,
                       reference_offset=[0]):
+
     if what == 'module':
         # Strip top title
         title_re = re.compile(r'^\s*[#*=]{4,}\n[a-z0-9 -]+\n[#*=]{4,}\s*',
@@ -50,7 +52,6 @@ def mangle_docstrings(app, what, name, obj, options, lines,
                 references.append(int(l[len('.. ['):l.index(']')]))
             except ValueError:
                 print "WARNING: invalid reference in %s docstring" % name
-
     # Start renaming from the biggest number, otherwise we may
     # overwrite references.
     references.sort()
@@ -62,33 +63,34 @@ def mangle_docstrings(app, what, name, obj, options, lines,
                                             '[%d]_' % new_r)
                 lines[i] = lines[i].replace('.. [%d]' % r,
                                             '.. [%d]' % new_r)
-
     reference_offset[0] += len(references)
 
 def mangle_signature(app, what, name, obj, options, sig, retann):
+
     # Do not try to inspect classes that don't define `__init__`
     if (inspect.isclass(obj) and
-        'initializes x; see ' in pydoc.getdoc(obj.__init__)):
+            'initializes x; see ' in pydoc.getdoc(obj.__init__)):
         return '', ''
-
-    if not (callable(obj) or hasattr(obj, '__argspec_is_invalid_')): return
-    if not hasattr(obj, '__doc__'): return
-
+    if not (callable(obj) or hasattr(obj, '__argspec_is_invalid_')):
+        return
+    if not hasattr(obj, '__doc__'):
+        return
     doc = SphinxDocString(pydoc.getdoc(obj))
     if doc['Signature']:
         sig = re.sub("^[^(]*", "", doc['Signature'])
         return sig, ''
 
 def initialize(app):
+
     try:
         app.connect('autodoc-process-signature', mangle_signature)
     except:
         monkeypatch_sphinx_ext_autodoc()
 
 def setup(app, get_doc_object_=get_doc_object):
+
     global get_doc_object
     get_doc_object = get_doc_object_
-    
     app.connect('autodoc-process-docstring', mangle_docstrings)
     app.connect('builder-inited', initialize)
     app.add_config_value('numpydoc_edit_link', None, True)
@@ -98,6 +100,7 @@ def setup(app, get_doc_object_=get_doc_object):
 #------------------------------------------------------------------------------
 
 def monkeypatch_sphinx_ext_autodoc():
+
     global _original_format_signature
     import sphinx.ext.autodoc
 
@@ -109,8 +112,10 @@ def monkeypatch_sphinx_ext_autodoc():
     sphinx.ext.autodoc.format_signature = our_format_signature
 
 def our_format_signature(what, obj):
+
     r = mangle_signature(None, what, None, obj, None, None, None)
     if r is not None:
         return r[0]
     else:
         return _original_format_signature(what, obj)
+

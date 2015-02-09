@@ -3,7 +3,7 @@
 import numpy as npy
 import ctypes as ct
 import os
-import platform 
+import platform
 
 src_path = os.path.dirname(__file__)
 if platform.system() == 'Windows':
@@ -12,7 +12,7 @@ else:
     lib_name = 'connect.so'
 connect_lib = npy.ctypeslib.load_library(lib_name, src_path)
 
-def connect_s_fast(A,k,B,l):
+def connect_s_fast(A, k, B, l):
     '''
     connect two n-port networks' s-matrices together.
 
@@ -37,7 +37,6 @@ def connect_s_fast(A,k,B,l):
     C : numpy.ndarray
             new S-parameter matrix
 
-
     Notes
     -------
     internally, this function creates a larger composite network
@@ -49,27 +48,24 @@ def connect_s_fast(A,k,B,l):
             connect : operates on :class:`Network` types
             innerconnect_s : function which implements the connection
                     connection algorithm
-
-
     '''
-    if k > A.shape[-1]-1 or l>B.shape[-1]-1:
+    if k > A.shape[-1]-1 or l > B.shape[-1]-1:
         raise(ValueError('port indices are out of range'))
-
-    freq = npy.ones(len(A)) 
-    nFreq = len (freq)
+    freq = npy.ones(len(A))
+    nFreq = len(freq)
     nA = A.shape[2]
     nB = B.shape[2]
     C = B.copy()
     nC = nA+nB-2
-    connect_lib.connect_s(
-        freq.ctypes.data_as(ct.POINTER(ct.c_float)), 
-        nFreq,
-        A.ctypes.data_as(ct.POINTER(ct.c_float)),
-        nA,
-        k,
-        B.ctypes.data_as(ct.POINTER(ct.c_float)),
-        nB,
-        l,
-        C.ctypes.data_as(ct.POINTER(ct.c_float)),
-        nC)
+    connect_lib.connect_s(freq.ctypes.data_as(ct.POINTER(ct.c_float)),
+                          nFreq,
+                          A.ctypes.data_as(ct.POINTER(ct.c_float)),
+                          nA,
+                          k,
+                          B.ctypes.data_as(ct.POINTER(ct.c_float)),
+                          nB,
+                          l,
+                          C.ctypes.data_as(ct.POINTER(ct.c_float)),
+                          nC)
     return C
+
