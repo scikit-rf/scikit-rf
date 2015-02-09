@@ -230,8 +230,8 @@ htmlhelp_basename = 'skrfdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'scikit-rf.tex', u'scikit-rf Documentation',
-   u'Alex Arsenovic', 'manual'),
+    ('index', 'scikit-rf.tex', u'scikit-rf Documentation',
+     u'Alex Arsenovic', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -257,7 +257,7 @@ latex_preamble = '\usepackage{epstopdf}'
 # If false, no module index is generated.
 #latex_domain_indices = True
 
-autosummary_generate=True
+autosummary_generate = True
 # -- Options for manual page output --------------------------------------------
 
 # One entry per manual page. List of tuples
