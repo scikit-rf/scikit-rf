@@ -88,7 +88,6 @@ if __name__ == '__main__':
             tag = sh2('git describe --exact-match')
         except CalledProcessError:
             tag = "dev"   # Fallback
-    
     startdir = os.getcwdu()
     if not os.path.exists(pages_dir):
         # init the repo
@@ -99,16 +98,13 @@ if __name__ == '__main__':
         sh('git checkout gh-pages')
         sh('git pull')
         cd(startdir)
-
     dest = pjoin(pages_dir, tag)
-
     # don't `make html` here, because gh-pages already depends on html in Makefile
     # sh('make html')
     if tag != 'dev':
         # only build pdf for non-dev targets
         #sh2('make pdf')
         pass
-
     # This is pretty unforgiving: we unconditionally nuke the destination
     # directory, and then copy the html tree in there
     shutil.rmtree(dest, ignore_errors=True)
@@ -116,7 +112,6 @@ if __name__ == '__main__':
     if copy_pdf == True:
         shutil.copy(pjoin(pdf_dir, pdf_filename), pjoin(dest, pdf_filename))
         pass
-
     try:
         cd(pages_dir)
         status = sh2('git status | head -1')
@@ -125,7 +120,6 @@ if __name__ == '__main__':
             e = 'On %r, git branch is %r, MUST be "gh-pages"' % (pages_dir,
                                                                  branch)
             raise RuntimeError(e)
-
         sh('git add -A %s' % tag)
         sh('git commit -m"Updated doc release: %s"' % tag)
         print
@@ -134,7 +128,6 @@ if __name__ == '__main__':
         sh('git --no-pager log --oneline HEAD~3..')
     finally:
         cd(startdir)
-
     print
     print 'Now verify the build in: %r' % dest
     print "If everything looks good, 'git push'"
