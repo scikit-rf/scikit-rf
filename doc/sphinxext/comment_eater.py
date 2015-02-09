@@ -28,7 +28,7 @@ class Comment(object):
 
     def __repr__(self):
         return '%s(%r, %r, %r)' % (self.__class__.__name__, self.start_lineno,
-            self.end_lineno, self.text)
+                                   self.end_lineno, self.text)
 
 
 class NonComment(object):
@@ -49,7 +49,7 @@ class NonComment(object):
 
     def __repr__(self):
         return '%s(%r, %r)' % (self.__class__.__name__, self.start_lineno,
-            self.end_lineno)
+                               self.end_lineno)
 
 
 class CommentBlocker(object):
