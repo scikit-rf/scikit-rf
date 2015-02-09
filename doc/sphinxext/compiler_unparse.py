@@ -1,3 +1,4 @@
+
 """ Turn compiler.ast structures back into executable python code.
 
     The unparse method takes a compiler.ast tree and transforms it back into
@@ -16,23 +17,25 @@ import cStringIO
 from compiler.ast import Const, Name, Tuple, Div, Mul, Sub, Add
 
 def unparse(ast, single_line_functions=False):
+
     s = cStringIO.StringIO()
     UnparseCompilerAst(ast, s, single_line_functions)
     return s.getvalue().lstrip()
 
-op_precedence = { 'compiler.ast.Power':3, 'compiler.ast.Mul':2, 'compiler.ast.Div':2,
-                  'compiler.ast.Add':1, 'compiler.ast.Sub':1 }
+op_precedence = {'compiler.ast.Power': 3,
+                 'compiler.ast.Mul': 2,
+                 'compiler.ast.Div': 2,
+                 'compiler.ast.Add': 1,
+                 'compiler.ast.Sub': 1}
 
 class UnparseCompilerAst:
     """ Methods in this class recursively traverse an AST and
         output source code for the abstract syntax; original formatting
         is disregarged.
     """
-
     #########################################################################
     # object interface.
     #########################################################################
-
     def __init__(self, tree, file = sys.stdout, single_line_functions=False):
         """ Unparser(tree, file=sys.stdout) -> None.
 
@@ -143,7 +146,7 @@ class UnparseCompilerAst:
         self._dispatch(last_element)
 
     def _AugAssign(self, t):
-        """ +=,-=,*=,/=,**=, etc. operations
+        """ +=, -=, *=, /=, **=, etc. operations
         """
 
         self._fill()
@@ -198,6 +201,7 @@ class UnparseCompilerAst:
         self._write(")")
 
     def _Compare(self, t):
+
         self._dispatch(t.expr)
         for op, expr in t.ops:
             self._write(" " + op + " ")
@@ -215,6 +219,7 @@ class UnparseCompilerAst:
             self._dispatch(node)
 
     def _Dict(self, t):
+
         self._write("{")
         for  i, (k, v) in enumerate(t.items):
             self._dispatch(k)
@@ -231,9 +236,11 @@ class UnparseCompilerAst:
         self._dispatch(t.expr)
 
     def _Div(self, t):
+
         self.__binary_op(t, '/')
 
     def _Ellipsis(self, t):
+
         self._write("...")
 
     def _From(self, t):
@@ -243,7 +250,7 @@ class UnparseCompilerAst:
         self._fill("from ")
         self._write(t.modname)
         self._write(" import ")
-        for i, (name,asname) in enumerate(t.names):
+        for i, (name, asname) in enumerate(t.names):
             if i != 0:
                 self._write(", ")
             self._write(name)
@@ -286,9 +293,9 @@ class UnparseCompilerAst:
         self._write('.'+t.attrname)
 
     def _If(self, t):
-        self._fill()
 
-        for i, (compare,code) in enumerate(t.tests):
+        self._fill()
+        for i, (compare, code) in enumerate(t.tests):
             if i == 0:
                 self._write("if ")
             else:
@@ -299,7 +306,6 @@ class UnparseCompilerAst:
             self._dispatch(code)
             self._leave()
             self._write("\n")
-
         if t.else_ is not None:
             self._write("else")
             self._enter()
@@ -309,10 +315,10 @@ class UnparseCompilerAst:
             self._write("\n")
 
     def _IfExp(self, t):
+
         self._dispatch(t.then)
         self._write(" if ")
         self._dispatch(t.test)
-
         if t.else_ is not None:
             self._write(" else (")
             self._dispatch(t.else_)
@@ -322,8 +328,7 @@ class UnparseCompilerAst:
         """ Handle "import xyz.foo".
         """
         self._fill("import ")
-
-        for i, (name,asname) in enumerate(t.names):
+        for i, (name, asname) in enumerate(t.names):
             if i != 0:
                 self._write(", ")
             self._write(name)
@@ -338,33 +343,40 @@ class UnparseCompilerAst:
         self._dispatch(t.expr)
 
     def _List(self, t):
+
         self._write("[")
-        for  i,node in enumerate(t.nodes):
+        for  i, node in enumerate(t.nodes):
             self._dispatch(node)
             if i < len(t.nodes)-1:
                 self._write(", ")
         self._write("]")
 
     def _Module(self, t):
+
         if t.doc is not None:
             self._dispatch(t.doc)
         self._dispatch(t.node)
 
     def _Mul(self, t):
+
         self.__binary_op(t, '*')
 
     def _Name(self, t):
+
         self._write(t.name)
 
     def _NoneType(self, t):
+
         self._write("None")
 
     def _Not(self, t):
+
         self._write('not (')
         self._dispatch(t.expr)
         self._write(')')
 
     def _Or(self, t):
+
         self._write(" (")
         for i, node in enumerate(t.nodes):
             self._dispatch(node)
@@ -373,9 +385,11 @@ class UnparseCompilerAst:
         self._write(")")
 
     def _Pass(self, t):
+
         self._write("pass\n")
 
     def _Printnl(self, t):
+
         self._fill("print ")
         if t.dest:
             self._write(">> ")
@@ -388,9 +402,11 @@ class UnparseCompilerAst:
             self._dispatch(node)
 
     def _Power(self, t):
+
         self.__binary_op(t, '**')
 
     def _Return(self, t):
+
         self._fill("return ")
         if t.value:
             if isinstance(t.value, Tuple):
@@ -402,6 +418,7 @@ class UnparseCompilerAst:
                 self._write('; ')
 
     def _Slice(self, t):
+
         self._dispatch(t.expr)
         self._write("[")
         if t.lower:
@@ -415,6 +432,7 @@ class UnparseCompilerAst:
         self._write("]")
 
     def _Sliceobj(self, t):
+
         for i, node in enumerate(t.nodes):
             if i != 0:
                 self._write(":")
@@ -422,13 +440,16 @@ class UnparseCompilerAst:
                 self._dispatch(node)
 
     def _Stmt(self, tree):
+
         for node in tree.nodes:
             self._dispatch(node)
 
     def _Sub(self, t):
+
         self.__binary_op(t, '-')
 
     def _Subscript(self, t):
+
         self._dispatch(t.expr)
         self._write("[")
         for i, value in enumerate(t.subs):
@@ -438,11 +459,11 @@ class UnparseCompilerAst:
         self._write("]")
 
     def _TryExcept(self, t):
+
         self._fill("try")
         self._enter()
         self._dispatch(t.body)
         self._leave()
-
         for handler in t.handlers:
             self._fill('except ')
             self._dispatch(handler[0])
@@ -452,7 +473,6 @@ class UnparseCompilerAst:
             self._enter()
             self._dispatch(handler[2])
             self._leave()
-
         if t.else_:
             self._fill("else")
             self._enter()
@@ -466,27 +486,27 @@ class UnparseCompilerAst:
             self._write("()")
         else:
             self._write("(")
-
             # _write each elements, separated by a comma.
             for element in t.nodes[:-1]:
                 self._dispatch(element)
                 self._write(", ")
-
             # Handle the last one without writing comma
             last_element = t.nodes[-1]
             self._dispatch(last_element)
-
             self._write(")")
 
     def _UnaryAdd(self, t):
+
         self._write("+")
         self._dispatch(t.expr)
 
     def _UnarySub(self, t):
+
         self._write("-")
         self._dispatch(t.expr)
 
     def _With(self, t):
+
         self._fill('with ')
         self._dispatch(t.expr)
         if t.vars:
@@ -498,9 +518,11 @@ class UnparseCompilerAst:
         self._write('\n')
 
     def _int(self, t):
+
         self._write(repr(t))
 
     def __binary_op(self, t, symbol):
+
         # Check if parenthesis are needed on left side and then dispatch
         has_paren = False
         left_class = str(t.left.__class__)
@@ -527,14 +549,17 @@ class UnparseCompilerAst:
             self._write(')')
 
     def _float(self, t):
+
         # if t is 0.1, str(t)->'0.1' while repr(t)->'0.1000000000001'
         # We prefer str here.
         self._write(str(t))
 
     def _str(self, t):
+
         self._write(repr(t))
 
     def _tuple(self, t):
+
         self._write(str(t))
 
     #########################################################################
@@ -783,7 +808,7 @@ class UnparseCompilerAst:
 #            self._dispatch(v)
 #        self._write(")")
 #
-#    def _Attribute(self,t):
+#    def _Attribute(self, t):
 #        self._dispatch(t.value)
 #        self._write(".")
 #        self._write(t.attr)
@@ -830,7 +855,7 @@ class UnparseCompilerAst:
 #            if first:first = False
 #            else: self._write(", ")
 #            self._dispatch(a)
-#        for a,d in zip(t.args[nonDef:], t.defaults):
+#        for a, d in zip(t.args[nonDef:], t.defaults):
 #            if first:first = False
 #            else: self._write(", ")
 #            self._dispatch(a),
