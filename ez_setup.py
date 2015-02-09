@@ -170,40 +170,6 @@ and place it in this directory before rerunning this script.)
     return os.path.realpath(saveto)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 def main(argv, version=DEFAULT_VERSION):
     """Install or upgrade setuptools and EasyInstall"""
     try:
@@ -225,7 +191,6 @@ def main(argv, version=DEFAULT_VERSION):
                 "remove it from your system entirely before rerunning this script."
                 )
             sys.exit(2)
-
     req = "setuptools>="+version
     import pkg_resources
     try:
@@ -247,28 +212,22 @@ def main(argv, version=DEFAULT_VERSION):
 
 def update_md5(filenames):
     """Update our built-in md5 registry"""
-
     import re
-
     for name in filenames:
         base = os.path.basename(name)
         with open(name, 'rb') as f:
             md5_data[base] = md5(f.read()).hexdigest()
-
     data = ["    %r: %r,\n" % it for it in md5_data.items()]
     data.sort()
     repl = "".join(data)
-
     import inspect
     srcfile = inspect.getsourcefile(sys.modules[__name__])
     with open(srcfile, 'rb') as f:
         src = f.read()
-
     match = re.search("\nmd5_data = {\n([^}]+)}", src)
     if not match:
         print >>sys.stderr, "Internal error!"
         sys.exit(2)
-
     src = src[:match.start(1)] + repl + src[match.end(1):]
     with open(srcfile, 'w') as f:
         f.write(src)
@@ -279,9 +238,4 @@ if __name__ == '__main__':
         update_md5(sys.argv[2:])
     else:
         main(sys.argv[1:])
-
-
-
-
-
 
