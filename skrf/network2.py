@@ -21,34 +21,34 @@ import re
 
 
 ##
-      
+
 class Parameter(object):
     '''
     a complex network parameter
     '''
-    
+
     def __init__(self,  network):
         self._network = network
-        
+
     def __len__(self):
         '''
         length of frequency axis
         '''
-        return len(self.val)   
-         
+        return len(self.val)
+
     def __getattr__(self,name):
-        return getattr(self.val,name)  
-    
+        return getattr(self.val,name)
+
     def __getitem__(self,key):
         return self.val[key]
-    
+
     @property
     def val(self):
         raise NotImplementedError()
-    
+
     @property
-    def _xaxis(self):return 'frequency' 
-    
+    def _xaxis(self):return 'frequency'
+
     ## projections
     @property
     def re(self): return Re(self)
@@ -66,8 +66,8 @@ class Parameter(object):
     def db20(self): return Db20(self)
     @property
     def db(self): return Db20(self)
-        
-    def plot(self, m=None, n=None, ax=None, show_legend=True,*args, 
+
+    def plot(self, m=None, n=None, ax=None, show_legend=True,*args,
              **kwargs):
 
         # create index lists, if not provided by user
@@ -85,7 +85,7 @@ class Parameter(object):
         else:
             gen_label = False
 
-        
+
         #was_interactive = plb.isinteractive
         #if was_interactive:
         #    plb.interactive(False)
@@ -116,58 +116,58 @@ class Parameter(object):
                 lines.append(plot_complex_rectangular(
                     z = self.val[:,m,n],
                     show_legend = show_legend, ax = ax,
-                    *args, **kwargs))#[0]) ## fix 
+                    *args, **kwargs))#[0]) ## fix
         #return lines ## fix
     def plot_smith(self, **kwargs):
         self.plot(**kwargs)
         smith()
-    
-    
-    ## notebook display    
+
+
+    ## notebook display
     def _figure_data(self, format):
         fig, ax = plb.subplots()
         self.plot(ax=ax)
         data = print_figure(fig, format)
         plb.close(fig)
         return data
-    
+
     def _repr_png_(self):
         return self._figure_data('png')
-    
+
     @property
     def png(self):
         return Image(self._repr_png_(), embed=True)
 
 class S(Parameter):
     '''
-    S parameters 
-    
-    This Parameter is special, because they are the internal storage format 
-    
+    S parameters
+
+    This Parameter is special, because they are the internal storage format
+
     '''
     def __init__(self,  network, s):
         Parameter.__init__(self, network)
         s = fix_parameter_shape(s)
         self._val= npy.array(s,dtype=complex)
-    
+
     def __getattr__(self,name):
         return getattr(self.val,name)
-    
+
     def __str__(self): return 's'
-    
+
     @property
     def val(self):
         return self._val
-    
-    
+
+
     def plot(self, *args, **kwargs):
         out = Parameter.plot(self,*args, **kwargs)
         smith()
         return out
-        
+
     def plot_complex(self, *args, **kwargs):
         return Parameter.plot(self,*args, **kwargs)
-        
+
 class Z(Parameter):
     '''
     Impedance parameters
@@ -176,7 +176,7 @@ class Z(Parameter):
     @property
     def val(self):
         return s2z(self._network.s.val)
-        
+
 class Y(Parameter):
     '''
     Admittance Parameters
@@ -188,8 +188,8 @@ class Y(Parameter):
 
 class T(Parameter):
     '''
-    Wave Cascading Parameters 
-    
+    Wave Cascading Parameters
+
     Only exists for 2-ports
     '''
     def __str__(self): return 't'
@@ -203,31 +203,31 @@ class STime(Parameter):
     '''
     def __str__(self): return 's'
     @property
-    def _xaxis(self):return 'time' 
+    def _xaxis(self):return 'time'
     @property
     def val(self):
         return s2time(self._network.s.val)
-## 
+##
 
 class Projection(object):
     '''
     a scalar projection of a parameter
     '''
     def __init__(self, param):
-        self._param = param 
-        self._network = param._network 
-    
+        self._param = param
+        self._network = param._network
+
     def __getitem__(self,key):
         return self.val[key]
-    
+
     def __getattr__(self,name):
         return getattr(self.val,name)
-    
+
     @property
     def val(self):
         raise NotImplementedError()
-    
-    def plot(self,  m=None, n=None, ax=None, show_legend=True,*args, 
+
+    def plot(self,  m=None, n=None, ax=None, show_legend=True,*args,
              **kwargs):
 
         # create index lists, if not provided by user
@@ -269,15 +269,15 @@ class Projection(object):
                     kwargs['label'] = label_string
 
                 # plot the desired attribute vs frequency
-                if  self._param._xaxis=='time': 
+                if  self._param._xaxis=='time':
                     x_label = 'Time (ns)'
                     x = self._network.frequency.t_ns
-                    
+
                 elif self._param._xaxis=='frequency':
                     x_label = 'Frequency (%s)'%self._network.frequency.unit
                     x = self._network.frequency.f_scaled
-                
-                
+
+
                 lines.append(plot_rectangular(
                         x = x,
                         y = self.val[:,m,n],
@@ -286,17 +286,17 @@ class Projection(object):
                         show_legend = show_legend, ax = ax,
                         *args, **kwargs)[0])
         return lines
-    
+
     def _figure_data(self, format):
         fig, ax = plb.subplots()
         self.plot(ax=ax)
         data = print_figure(fig, format)
         plb.close(fig)
         return data
-    
+
     def _repr_png_(self):
         return self._figure_data('png')
-    
+
     @property
     def png(self):
         return Image(self._repr_png_(), embed=True)
@@ -308,7 +308,7 @@ class Mag(Projection):
         return ''
     def __repr__(self):
         return '{self._param}{self}'.format(self=self)
-    
+
     @property
     def val(self):
         return abs(self._param.val)
@@ -320,7 +320,7 @@ class Db10(Projection):
         return 'dB'
     def __repr__(self):
         return '{self._param}{self}'.format(self=self)
-    
+
     @property
     def val(self):
         return complex_2_db10(self._param.val)
@@ -335,7 +335,7 @@ class Db20(Projection):
     @property
     def val(self):
         return complex_2_db(self._param.val)
-                
+
 class Deg(Projection):
     y_label = 'Phase (deg)'
     unit = 'deg'
@@ -380,8 +380,8 @@ class Im(Projection):
     def val(self):
         return self._param.val.imag
 
-## 
-  
+##
+
 class Network(object):
     def __init__(self, frequency=None, z0=50, name='', comments='',
                  *args,  **kw):
@@ -395,12 +395,12 @@ class Network(object):
             self.s = y2s(kw['y'],z0)
         else:
             s=zeros(len(frequency))
-        
+
         self.frequency = frequency
         self.z0 = z0
         self.name = name
         self.comments = comments
-    
+
     @classmethod
     def from_ntwkv1( cls, network):
         return cls(frequency = network.frequency,
@@ -424,60 +424,60 @@ class Network(object):
         output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.nports, name, str(f), z0)
 
         return output
-    
+
     def __repr__(self):
         return self.__str__()
-    
+
     def __call__(self, i,j):
         n = self.copy()
         n.s = n.s[:,i,j]
         return n
-    
+
     def __len__(self):
         '''
         length of frequency axis
         '''
         return len(self.frequency)
-    
+
     def __getitem__(self,key):
         '''
         Slices a Network object based on an index, or human readable string
-        
+
         Parameters
         -----------
         key : str, or int
             if int; then it is interpreted as the index of the frequency
-            if str, then should be like '50.1-75.5ghz', or just '50'. 
-            If the frequency unit is omited then self.frequency.unit is 
-            used.  
-            
+            if str, then should be like '50.1-75.5ghz', or just '50'.
+            If the frequency unit is omited then self.frequency.unit is
+            used.
+
         Examples
         -----------
         >>> from skrf.data import ring_slot
         >>> a = ring_slot['80-90ghz']
         >>> a.plot_s_db()
         '''
-        
+
         if isinstance(key, str):
-            # they passed a string. try to read the string and convert 
+            # they passed a string. try to read the string and convert
             # it into a  slice. then slice self on that
             re_numbers = re.compile('.*\d')
             re_hyphen = re.compile('\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
-            
+
             freq_unit = re.findall(re_letters,key)
-            
+
             if len(freq_unit) == 0:
                 freq_unit = self.frequency.unit
             else:
                 freq_unit = freq_unit[0]
-            
+
             key_nounit = re.sub(re_letters,'',key)
             edges  = re.split(re_hyphen,key_nounit)
-            
-            edges_freq = Frequency.from_f([float(k) for k in edges], 
+
+            edges_freq = Frequency.from_f([float(k) for k in edges],
                                         unit = freq_unit)
-            if len(edges_freq) ==2:   
+            if len(edges_freq) ==2:
                 slicer=slice_domain(self.frequency.f, edges_freq.f)
             elif len(edges_freq)==1:
                 key = find_nearest_index(self.frequency.f, edges_freq.f[0])
@@ -488,18 +488,18 @@ class Network(object):
             key = slicer
 
         try:
-            
+
             output = self.copy()
             output.frequency.f = npy.array(output.frequency.f[key]).reshape(-1)
             output.z0 = output.z0[key,:]
             output.s = output.s[key,:,:]
             return output
-            
+
         except(IndexError):
             raise IndexError('slicing frequency/index is incorrect')
 
-        
-    
+
+
     def copy(self):
         ntwk = Network(frequency =self.frequency.copy(),
                        s = self.s.val.copy(),
@@ -507,56 +507,56 @@ class Network(object):
                        name = self.name,
                        comments = self.comments,
                        )
-       
-        return ntwk 
-        
+
+        return ntwk
+
     @property
     def s(self):
         '''
         Scattering Parameters
         '''
         return self._s
-        
+
     @s.setter
     def s(self,s):
         self._s = S(self, s)
-    
+
     @property
     def z(self):
         return Z(self)
-        
+
     @z.setter
     def z(self,z):
         self.s = z2s(z,self.z0)
-        
+
     @property
     def y(self):
         return Y(self)
-        
+
     @y.setter
     def y(self,y):
         self.s = y2s(y,self.z0)
-    
+
     @property
     def t(self):
         return T(self)
-        
+
     @t.setter
     def t(self,t):
         raise NotImplementedError()
-    
+
     @property
     def s_time(self):
         return STime(self)
-    
+
     @s_time.setter
     def s_time(self):
         raise NotImplementedError()
-        
-    
-    
-        
-        
+
+
+
+
+
     @property
     def nports(self):
         '''
@@ -579,93 +579,93 @@ class Network(object):
         The port impedance
         '''
         return self._z0
-    
+
     @z0.setter
     def z0(self,z0):
         self._z0 = fix_z0_shape(z0, len(self.frequency),nports=self.nports)
-        
+
     @property
     def port_tuples(self):
         '''
         Returns a list of tuples, for each port index pair
-        
-        A convenience function for the common task fo iterating over 
+
+        A convenience function for the common task fo iterating over
         all s-parameters index pairs
-        
+
         This just calls:
         `[(y,x) for x in range(self.nports) for y in range(self.nports)]`
         '''
         return [(y,x) for x in range(self.nports) for y in range(self.nports)]
-        
+
     def windowed(self, window=('kaiser',6),  normalize = True):
         '''
         Return a windowed version of s-matrix. Used in time-domain analysis.
-        
-        When using time domain through :attr:`s_time_db`, 
-        or similar properies, the spectrum is ussually windowed, 
-        before the IFFT is taken. This is done to 
+
+        When using time domain through :attr:`s_time_db`,
+        or similar properies, the spectrum is ussually windowed,
+        before the IFFT is taken. This is done to
         compensate for the band-pass nature of a spectrum [1]_ .
-        
+
         This function calls :func:`scipy.signal.get_window` which gives
         more details about the windowing.
-        
+
         Parameters
         -----------
         window : string, float, or tuple
             The type of window to create. See :func:`scipy.signal.get_window`
             for details.
         normalize : bool
-            Normalize the window to preserve power. ie 
+            Normalize the window to preserve power. ie
             sum(ntwk.s,axis=0) == sum(ntwk.windowed().s,axis=0)
-            
+
         Examples
         -----------
         >>> ntwk = rf.Network('myfile.s2p')
         >>> ntwk_w = ntwk.windowed()
         >>> ntwk_w.plot_s_time_db()
-        
+
         References
         -------------
         .. [1] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
-        
+
         '''
-        
+
         windowed = self.copy()
         window = signal.get_window(window, len(self))
-        window =window.reshape(-1,1,1) * npy.ones((len(self), 
-                                                   self.nports, 
+        window =window.reshape(-1,1,1) * npy.ones((len(self),
+                                                   self.nports,
                                                    self.nports))
         windowed.s  = windowed.s[:] * window
         if normalize:
             # normalize the s-parameters to account for power lost in windowing
             windowed.s = windowed.s[:] * npy.sum(self.s.mag[:],axis=0)/\
                 npy.sum(windowed.s.mag[:],axis=0)
-        
+
         return windowed
-    
-    
-    
+
+
+
 def fix_z0_shape( z0, nfreqs, nports):
     '''
-    Make a port impedance of correct shape for a given network's matrix 
-    
+    Make a port impedance of correct shape for a given network's matrix
+
     This attempts to broadcast z0 to satisfy
         npy.shape(z0) == (nfreqs,nports)
-    
-    Parameters 
+
+    Parameters
     --------------
     z0 : number, array-like
-        z0 can be: 
+        z0 can be:
         * a number (same at all ports and frequencies)
         * an array-like of length == number ports.
         * an array-like of length == number frequency points.
         * the correct shape ==(nfreqs,nports)
-    
+
     nfreqs : int
         number of frequency points
     nportrs : int
         number of ports
-        
+
     Returns
     ----------
     z0 : array of shape ==(nfreqs,nports)
@@ -675,35 +675,35 @@ def fix_z0_shape( z0, nfreqs, nports):
     ----------
     For a two-port network with 201 frequency points, possible uses may
     be
-    
+
     >>> z0 = rf.fix_z0_shape(50 , 201,2)
     >>> z0 = rf.fix_z0_shape([50,25] , 201,2)
     >>> z0 = rf.fix_z0_shape(range(201) , 201,2)
 
-        
+
     '''
-    
-    
-    
+
+
+
     if npy.shape(z0) == (nfreqs, nports):
         # z0 is of correct shape. super duper.return it quick.
-        return z0.copy() 
-    
+        return z0.copy()
+
     elif npy.isscalar(z0):
         # z0 is a single number
         return npy.array(nfreqs*[nports * [z0]])
-    
+
     elif len(z0)  == nports:
-        # assume z0 is a list of impedances for each port, 
-        # but constant with frequency 
+        # assume z0 is a list of impedances for each port,
+        # but constant with frequency
         return npy.array(nfreqs*[z0])
-        
+
     elif len(z0) == nfreqs:
         # assume z0 is a list of impedances for each frequency,
         # but constant with respect to ports
         return npy.array(nports * [z0]).T
-        
-    else: 
+
+    else:
         raise IndexError('z0 is not acceptable shape')
 
 def fix_parameter_shape(s):
@@ -715,9 +715,9 @@ def fix_parameter_shape(s):
         else:
             s = npy.reshape(s,(-1,1,1))
     return s
-  
-## network parameter conversion       
-  
+
+## network parameter conversion
+
 def s2z(s,z0=50):
     '''
     Convert scattering parameters [1]_ to impedance parameters [2]_
@@ -730,30 +730,30 @@ def s2z(s,z0=50):
     ------------
     s : complex array-like
         scattering parameters
-    z0 : complex array-like or number 
-        port impedances.                                         
+    z0 : complex array-like or number
+        port impedances.
 
     Returns
     ---------
     z : complex array-like
         impedance parameters
 
-    
-        
+
+
     References
     ----------
     .. [1] http://en.wikipedia.org/wiki/S-parameters
     .. [2] http://en.wikipedia.org/wiki/impedance_parameters
-    
+
     '''
     s = s.copy() # to prevent the original array from being altered
     s = fix_parameter_shape(s)
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    
+
     z = npy.zeros(s.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
-    
+
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
     for fidx in xrange(s.shape[0]):
@@ -768,38 +768,38 @@ def s2y(s,z0=50):
 
     .. math::
         y = \\sqrt {y_0} \\cdot (I - s)(I + s)^{-1} \\cdot \\sqrt{y_0}
-    
+
     Parameters
     ------------
     s : complex array-like
         scattering parameters
     z0 : complex array-like or number
-        port impedances                                                                                             
+        port impedances
 
     Returns
     ---------
-    y : complex array-like 
+    y : complex array-like
         admittance parameters
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
@@ -839,24 +839,24 @@ def s2t(s):
     See Also
     ---------
     inv : calculates inverse s-parameters
-    
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     -----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
@@ -871,7 +871,7 @@ def s2t(s):
         [s[:,0,0]/s[:,1,0],
             1/s[:,1,0] ]
         ]).transpose()
-    return t   
+    return t
 
 def s2time(s,window =('kaiser',6),  normalize = True):
     '''
@@ -879,8 +879,8 @@ def s2time(s,window =('kaiser',6),  normalize = True):
     s = s.copy() # to prevent the original array from being altered
     s = fix_parameter_shape(s)
     nfreqs, nports, nports = s.shape
-    
-    
+
+
     window = signal.get_window(window,nfreqs)
     window =window.reshape(-1,1,1) * npy.ones(s.shape)
     windowed = s * window
@@ -889,7 +889,7 @@ def s2time(s,window =('kaiser',6),  normalize = True):
         norm_factor = npy.sum(abs(s),axis=0)/\
                       npy.sum(abs(windowed),axis=0)
         windowed = windowed*norm_factor
-    
+
     time = fft.ifftshift(fft.ifft(windowed, axis=0), axes=0)
     return time
 
@@ -906,15 +906,15 @@ def z2s(z, z0=50):
     z : complex array-like
         impedance parameters
     z0 : complex array-like or number
-        port impedances                                                                                             
+        port impedances
 
     Returns
     ---------
     s : complex array-like
         scattering parameters
 
-    
-    
+
+
     References
     ----------
     .. [1] http://en.wikipedia.org/wiki/impedance_parameters
@@ -946,28 +946,28 @@ def z2y(z):
 
     Returns
     ---------
-    y : complex array-like 
+    y : complex array-like
         admittance parameters
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
@@ -976,13 +976,13 @@ def z2y(z):
     z = z.copy() # to prevent the original array from being altered
     z = fix_parameter_shape(z)
     return npy.array([npy.mat(z[f,:,:])**-1 for f in xrange(z.shape[0])])
-    
+
 def z2t(z):
     '''
     Not Implemented yet
-    
+
     convert impedance parameters [#]_ to scattering transfer parameters [#]_
-    
+
 
     Parameters
     ------------
@@ -996,24 +996,24 @@ def z2t(z):
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
-    
+
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
@@ -1035,7 +1035,7 @@ def y2s(y, z0=50):
         admittance parameters
 
     z0 : complex array-like or number
-        port impedances                                                                                             
+        port impedances
 
     Returns
     ---------
@@ -1044,24 +1044,24 @@ def y2s(y, z0=50):
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
-    
+
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
@@ -1088,7 +1088,7 @@ def y2z(y):
 
     Parameters
     ------------
-    y : complex array-like 
+    y : complex array-like
         admittance parameters
 
     Returns
@@ -1098,23 +1098,23 @@ def y2z(y):
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
@@ -1126,8 +1126,8 @@ def y2z(y):
 
 def y2t(y):
     '''
-    Not Implemented Yet 
-    
+    Not Implemented Yet
+
     convert admittance parameters [#]_ to scattering-transfer parameters [#]_
 
 
@@ -1143,23 +1143,23 @@ def y2t(y):
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
@@ -1189,23 +1189,23 @@ def t2s(t):
     See Also
     ---------
     inv : calculates inverse s-parameters
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
-    t2y    
+    t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
@@ -1224,8 +1224,8 @@ def t2s(t):
 
 def t2z(t):
     '''
-    Not Implemented  Yet 
-    
+    Not Implemented  Yet
+
     Convert scattering transfer parameters [#]_ to impedance parameters [#]_
 
 
@@ -1242,23 +1242,23 @@ def t2z(t):
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
@@ -1269,7 +1269,7 @@ def t2z(t):
 def t2y(t):
     '''
     Not Implemented Yet
-    
+
     Convert scattering transfer parameters to admittance parameters [#]_
 
 
@@ -1287,26 +1287,26 @@ def t2y(t):
 
     See Also
     ----------
-    s2z 
-    s2y 
-    s2t 
-    z2s 
-    z2y 
-    z2t 
-    y2s 
-    y2z 
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
     y2z
-    t2s 
+    y2z
+    t2s
     t2z
     t2y
     Network.s
     Network.y
     Network.z
     Network.t
-    
+
     References
     ----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
-    
+
     '''
     raise (NotImplementedError)
