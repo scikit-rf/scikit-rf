@@ -75,7 +75,7 @@ class Freespace(DistributedCircuit):
         distributed_conductance          :math:`\\omega  imag(mu_0*mu_r)
         ===============================  ==============================
         '''
-        
+
         DistributedCircuit.__init__(self,\
                 frequency = frequency, \
                 C = real(epsilon_0*ep_r),\

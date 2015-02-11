@@ -6,8 +6,8 @@ calibration (:mod:`skrf.calibration`)
 ========================================
 
 
-This Package provides functionality for performing and testing 
-calibration algorithms. Most functionality is in the :mod:`calibration` 
+This Package provides functionality for performing and testing
+calibration algorithms. Most functionality is in the :mod:`calibration`
 module.
 
 .. automodule:: skrf.calibration.calibration

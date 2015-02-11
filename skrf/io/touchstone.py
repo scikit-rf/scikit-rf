@@ -12,7 +12,7 @@ Touchstone class
     :toctree: generated/
 
     Touchstone
-    
+
 
 Functions related to reading/writing touchstones.
 
@@ -35,29 +35,29 @@ from .. import mathFunctions as mf
 class Touchstone():
     '''
     class to read touchstone s-parameter files
-    
+
     The reference for writing this class is the draft of the
     Touchstone(R) File Format Specification Rev 2.0 [#]_
-    
+
     .. [#] http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
     '''
     def __init__(self,file):
         '''
         constructor
-        
+
         Parameters
         -------------
         file : str or file-object
             touchstone file to load
-            
+
         Examples
         ---------
-        From filename 
-        
+        From filename
+
         >>> t = rf.Touchstone('network.s2p')
-        
+
         From file-object
-        
+
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
         '''
@@ -95,9 +95,9 @@ class Touchstone():
         """
         Load the touchstone file into the interal data structures
         """
-        
+
         filename=self.filename
-        
+
         extention = filename.split('.')[-1].lower()
         #self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
         try:
@@ -120,11 +120,11 @@ class Touchstone():
                 if self.comments == None:
                     self.comments = ''
                 self.comments = self.comments + line[1]
-            
+
             # remove the comment (if any) so rest of line can be processed.
             # touchstone files are case-insensitive
             line = line[0].strip().lower()
-            
+
             # skip the line if there was nothing except comments
             if len(line) == 0:
                 continue
@@ -180,7 +180,7 @@ class Touchstone():
                 self.noise = noise_values.reshape((-1,5))
 
         if len(values)%(1+2*(self.rank)**2) != 0 :
-            # incomplete data line / matrix found            
+            # incomplete data line / matrix found
             raise AssertionError
 
         # reshape the values to match the rank
@@ -198,17 +198,17 @@ class Touchstone():
         containing ignored comments are removed.  By default these are comments
         which contain special meaning withing skrf and are not user comments.
         """
-        processed_comments = '' 
+        processed_comments = ''
         if self.comments is None:
-            self.comments = ''    
+            self.comments = ''
         for comment_line in self.comments.split('\n'):
             for ignored_comment in ignored_comments:
                 if ignored_comment in comment_line:
                         comment_line = None
             if comment_line:
                 processed_comments = processed_comments + comment_line + '\n'
-        return processed_comments                
-        
+        return processed_comments
+
     def get_format(self, format="ri"):
         """
         returns the file format string used for the given format.
@@ -221,7 +221,7 @@ class Touchstone():
             frequency = 'hz'
         return "%s %s %s r %s" %(frequency, self.parameter,
                                  format, self.resistance)
-                                 
+
 
     def get_sparameter_names(self, format="ri"):
         """
@@ -303,8 +303,8 @@ class Touchstone():
             v_complex = ((10**(v[:,1::2]/20.0)) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
 
         if self.rank == 2 :
-            # this return is tricky; it handles the way touchtone lines are 
-            # in case of rank==2: order is s11,s21,s12,s22 
+            # this return is tricky; it handles the way touchtone lines are
+            # in case of rank==2: order is s11,s21,s12,s22
             return (v[:,0] * self.frequency_mult,
                     numpy.transpose(v_complex.reshape((-1, self.rank, self.rank)),axes=(0,2,1)))
         else:
@@ -333,16 +333,16 @@ class Touchstone():
 def hfss_touchstone_2_gamma_z0(filename):
     '''
     Extracts Z0 and Gamma comments from touchstone file
-    
-    Takes a HFSS-style touchstone file with Gamma and Z0 comments and 
+
+    Takes a HFSS-style touchstone file with Gamma and Z0 comments and
     extracts a triplet of arrays being: (frequency, Gamma, Z0)
-    
+
     Parameters
     ------------
-    filename : string 
+    filename : string
         the HFSS-style touchstone file
-    
-    
+
+
     Returns
     --------
     f : numpy.ndarray
@@ -351,17 +351,17 @@ def hfss_touchstone_2_gamma_z0(filename):
         complex  propagation constant
     z0 : numpy.ndarray
         complex port impedance
-    
+
     Examples
     ----------
     >>> f,gamm,z0 = rf.hfss_touchstone_2_gamma_z0('line.s2p')
     '''
-    #TODO: make this work for different HFSS versions. and arbitrary 
+    #TODO: make this work for different HFSS versions. and arbitrary
     # number of ports
     ntwk = Network(filename)
     f= open(filename)
     gamma, z0 = [],[]
-    
+
     def line2ComplexVector(s):
         return mf.scalar2Complex(\
             npy.array(\
@@ -369,86 +369,86 @@ def hfss_touchstone_2_gamma_z0(filename):
                 dtype='float'
                 )
             )
-            
+
     for line in f:
         if '! Gamma' in line:
             gamma.append(line2ComplexVector(line))
         if '! Port Impedance' in line:
             z0.append(line2ComplexVector(line))
-    
+
     if len (z0) ==0:
         raise(ValueError('Touchstone does not contain valid gamma, port impedance comments'))
-        
+
     return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
 
 def hfss_touchstone_2_media(filename, f_unit='ghz'):
     '''
-    Creates a :class:`~skrf.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments 
-    
+    Creates a :class:`~skrf.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments
+
     Parameters
     ------------
-    filename : string 
+    filename : string
         the HFSS-style touchstone file
     f_unit : ['hz','khz','mhz','ghz']
         passed to f_unit parameters of Frequency constructor
-    
+
     Returns
     --------
     my_media : skrf.media.Media object
-        the transmission line model defined by the gamma, and z0 
+        the transmission line model defined by the gamma, and z0
         comments in the HFSS file.
-    
+
     Examples
     ----------
     >>> port1_media, port2_media = rf.hfss_touchstone_2_media('line.s2p')
-    
+
     See Also
     ---------
-    hfss_touchstone_2_gamma_z0 : returns gamma, and z0 
+    hfss_touchstone_2_gamma_z0 : returns gamma, and z0
     '''
     f, gamma, z0 = hfss_touchstone_2_gamma_z0(filename)
-    
+
     freq = Frequency.from_f(f)
     freq.unit = f_unit
-    
-    
+
+
     media_list = []
-    
+
     for port_n in range(gamma.shape[1]):
         media_list.append(\
             Media(
-                frequency = freq, 
+                frequency = freq,
                 propagation_constant =  gamma[:, port_n],
                 characteristic_impedance = z0[:, port_n]
                 )
             )
-        
-        
-    return media_list 
+
+
+    return media_list
 
 def hfss_touchstone_2_network(filename, f_unit='ghz'):
     '''
     Creates a :class:`~skrf.Network` object from a a HFSS-style touchstone file
-    
+
     Parameters
     ------------
-    filename : string 
+    filename : string
         the HFSS-style touchstone file
     f_unit : ['hz','khz','mhz','ghz']
         passed to f_unit parameters of Frequency constructor
-    
+
     Returns
     --------
     my_network : skrf.Network object
-        the n-port network model 
-    
+        the n-port network model
+
     Examples
     ----------
     >>> my_network = rf.hfss_touchstone_2_network('DUT.s2p')
-    
+
     See Also
     ---------
-    hfss_touchstone_2_gamma_z0 : returns gamma, and z0 
+    hfss_touchstone_2_gamma_z0 : returns gamma, and z0
     '''
     my_network = Network(file=filename, f_unit=f_unit)
     f,gamm,z0 = hfss_touchstone_2_gamma_z0(filename=filename)

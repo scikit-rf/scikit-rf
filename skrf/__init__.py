@@ -30,7 +30,7 @@ try:
     import data
 except:
     print 'warning: data module didn\'t load. dont worry about it.'
-    pass 
+    pass
 # Import contents into current namespace for ease of calling
 from frequency import *
 from network import *
@@ -40,8 +40,8 @@ from util import *
 from plotting import  *
 from mathFunctions import *
 from tlineFunctions import *
-from io import * 
-from constants import * 
+from io import *
+from constants import *
 
 # Try to import vi, but if except if pyvisa not installed
 try:
