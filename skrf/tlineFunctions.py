@@ -129,17 +129,17 @@ def skin_depth(f,rho, mu_r):
             bulk resistivity of material, in ohm*m
     mu_r : number or array-like
             relative permeability of material
-    
+
     Returns
     ----------
     skin depth : number or array-like
             the skin depth, in m
-    
-    References 
+
+    References
     --------------
-    
+
     .. [1] http://en.wikipedia.org/wiki/Skin_effect
-    
+
     '''
     return sqrt(rho/(pi*f*mu_r*mu_0))
 
