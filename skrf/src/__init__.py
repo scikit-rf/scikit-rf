@@ -3,7 +3,7 @@
 import numpy as npy
 import ctypes as ct
 import os
-import platform 
+import platform
 
 src_path = os.path.dirname(__file__)
 if platform.system() == 'Windows':
@@ -55,14 +55,14 @@ def connect_s_fast(A,k,B,l):
     if k > A.shape[-1]-1 or l>B.shape[-1]-1:
         raise(ValueError('port indices are out of range'))
 
-    freq = npy.ones(len(A)) 
+    freq = npy.ones(len(A))
     nFreq = len (freq)
     nA = A.shape[2]
     nB = B.shape[2]
     C = B.copy()
     nC = nA+nB-2
     connect_lib.connect_s(
-        freq.ctypes.data_as(ct.POINTER(ct.c_float)), 
+        freq.ctypes.data_as(ct.POINTER(ct.c_float)),
         nFreq,
         A.ctypes.data_as(ct.POINTER(ct.c_float)),
         nA,
