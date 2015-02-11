@@ -88,7 +88,7 @@ if __name__ == '__main__':
             tag = sh2('git describe --exact-match')
         except CalledProcessError:
             tag = "dev"   # Fallback
-    
+
     startdir = os.getcwdu()
     if not os.path.exists(pages_dir):
         # init the repo
