@@ -63,7 +63,7 @@ class PlotTool(HasTraits):
                 Item('draw_show', show_label=False),
                 ),
             HSplit(
-                Item('apply_title', label='Formating\t'),
+                Item('apply_title', label='Formatting\t'),
                 Item('title', show_label=False),
                 ),
             HSplit(

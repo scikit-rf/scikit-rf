@@ -90,7 +90,7 @@ As a first example, load a :class:`~skrf.network.Network` from the
 
 .. note:: 
     
-    Why do my plots look different? See  `Formating Plots`_
+    Why do my plots look different? See  `Formatting Plots`_
 
 
 The smith chart can be drawn with some impedance values labeled through the `draw_labels` argument.
@@ -296,11 +296,11 @@ The :func:`~skrf.plotting.add_markers_to_lines`  adds different markers each lin
     In [138]: rf.add_markers_to_lines()
 
 
-Formating Plots
+Formatting Plots
 +++++++++++++++++++
 
 It is likely that your plots dont look exactly like the ones in this 
-tutorial. This is because matplotlib supports a vast amount of `customization <http://matplotlib.org/users/customizing.html>`_.  Formating options can be customized `on-the-fly` by modifying values of the `rcParams` dictionary. Once these are set to your liking they can be saved to your `.matplotlibrc` file. 
+tutorial. This is because matplotlib supports a vast amount of `customization <http://matplotlib.org/users/customizing.html>`_.  Formatting options can be customized `on-the-fly` by modifying values of the `rcParams` dictionary. Once these are set to your liking they can be saved to your `.matplotlibrc` file. 
 
 The function :func:`skrf.util.stylely` will attempt to update your rcParams so that your plots look like the ones in this tutorial.
     
