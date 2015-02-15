@@ -685,7 +685,7 @@ class PNA(Driver):
 
     def get_fdata(self, *args, **kwargs):
         '''
-        Get formated data
+        Get formatted data
 
         See Also
         ----------
