@@ -359,25 +359,23 @@ def hfss_touchstone_2_gamma_z0(filename):
     #TODO: make this work for different HFSS versions. and arbitrary
     # number of ports
     ntwk = Network(filename)
-    f= open(filename)
-    gamma, z0 = [],[]
 
     def line2ComplexVector(s):
-        return mf.scalar2Complex(\
-            npy.array(\
-                [k for k in s.strip().split(' ') if k != ''][ntwk.nports*-2:],\
-                dtype='float'
-                )
-            )
+        return mf.scalar2Complex(npy.array([k for k in s.strip().split(' ')
+                                            if k != ''][ntwk.nports*-2:],
+                                            dtype='float'))
 
-    for line in f:
-        if '! Gamma' in line:
-            gamma.append(line2ComplexVector(line))
-        if '! Port Impedance' in line:
-            z0.append(line2ComplexVector(line))
+    with open(filename) as f:
+        gamma, z0 = [],[]
 
-    if len (z0) ==0:
-        raise(ValueError('Touchstone does not contain valid gamma, port impedance comments'))
+        for line in f:
+            if '! Gamma' in line:
+                gamma.append(line2ComplexVector(line))
+            if '! Port Impedance' in line:
+                z0.append(line2ComplexVector(line))
+
+    if len(z0) == 0:
+        raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
 
     return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
 
