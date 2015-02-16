@@ -4,6 +4,7 @@
 *~
 *.swp
 *.bak
+*.p
 *generated*
 doc/build/*
 doc/gh-pages
