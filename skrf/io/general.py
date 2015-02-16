@@ -200,13 +200,13 @@ def write(file, obj, overwrite = True):
                 warnings.warn('file exists, and overwrite option is False. Not writing.')
                 return
 
-        fid = open(file, 'wb')
+        with open(file, 'wb') as fid:
+            pickle.dump(obj, fid, protocol=2)
 
     else:
         fid = file
-
-    pickle.dump(obj, fid, protocol=2)
-    fid.close()
+        pickle.dump(obj, fid, protocol=2)
+        fid.close()
 
 def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
     '''
@@ -367,12 +367,11 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
                     break
             filename = filename + '.' + extn
         try:
-            file = open(os.path.join(dir+'/',filename),'w')
-            write(file, obj,*args, **kwargs)
-            file.close()
+            with open(os.path.join(dir+'/', filename), 'w') as fid:
+                write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print inst
-            warnings.warn('couldnt write %s: %s'%(k,inst.strerror))
+            warnings.warn('couldnt write %s: %s'%(k, inst.strerror))
             pass
 
 def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
@@ -559,13 +558,11 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         new_file_name = 'tmp-'+file_name
         remove_tmp_file = True
 
-    old_file = file(file_name,'r')
-    new_file = open(new_file_name,'w')
-    new_file.write('%s\n'%header_string)
-    for line in old_file:
-        new_file.write(line)
-    new_file.close()
-    old_file.close()
+    # This breaks compatibility with python 2.6 and older
+    with file(file_name, 'r') as old_file, open(new_file_name, 'w') as new_file: 
+        new_file.write('%s\n'%header_string)
+        for line in old_file:
+            new_file.write(line)
 
     if remove_tmp_file is True:
         os.rename(new_file_name,file_name)
@@ -619,7 +616,7 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     if file_type not in file_extns.keys():
         raise ValueError('file_type must be `csv`,`html`,`excel` ')
     if ntwk.name is None and file_name is None:
-        raise(ValueError('Either ntwk must have name or give a file_name'))
+        raise ValueError('Either ntwk must have name or give a file_name')
 
 
     if file_name is None and 'excel_writer' not in kwargs.keys():
