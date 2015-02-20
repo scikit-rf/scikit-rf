@@ -225,7 +225,7 @@ class NetworkSet(object):
         return cls(ntwk_list)
 
     @classmethod
-    def from_dir(cls, dir='.', *args, **kwargs):
+    def from_dir(cls, dir='.',*args, **kwargs):
         '''
         Create a NetworkSet from a directory containing Networks
 
@@ -237,6 +237,7 @@ class NetworkSet(object):
         ---------------
         dir : str
             directory containing Network files.
+        
         \*args, \*\*kwargs :
             passed to NetworkSet constructor
 
@@ -247,6 +248,8 @@ class NetworkSet(object):
         '''
         from io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
+        
+        
 
     @classmethod
     def from_s_dict(cls,d, frequency, *args, **kwargs):
@@ -278,7 +281,8 @@ class NetworkSet(object):
         return cls([Network(s=d[k], frequency=frequency, name=k,
                             *args, **kwargs)  for k in d])
 
-
+    
+        
 
     def __add_a_operator(self,operator_name):
         '''
@@ -471,7 +475,27 @@ class NetworkSet(object):
         copies each network of the network set.
         '''
         return NetworkSet([k.copy() for k in self.ntwk_set])
-
+    
+    def sort(self, key=lambda x: x.name, **kwargs):
+        '''
+        sort this network set. 
+        
+        Parameters
+        -------------
+        **kwargs : dict
+            keyword args passed to builtin sorted acting on self.ntwk_set
+            
+        Examples
+        -----------
+        >>> ns = rf.NetworkSet.from_dir('mydir')
+        >>> ns.sort()
+        
+        Sort by other property 
+        >>> ns.sort(key= lambda x: x.voltage)
+        '''
+        self.ntwk_set = sorted(self.ntwk_set, key = key, **kwargs)
+        
+    
     @property
     def mean_s_db(self):
         '''

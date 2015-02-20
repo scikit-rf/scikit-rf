@@ -36,7 +36,7 @@ from numpy import pi
 import numpy as npy
 from numpy import fft # used to center attribute `t` at 0
 import re
-from util import slice_domain
+from util import slice_domain,find_nearest_index
 
 class Frequency(object):
     '''

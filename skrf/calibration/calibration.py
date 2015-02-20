@@ -69,6 +69,7 @@ PNA interaction
 '''
 import numpy as npy
 from numpy import linalg
+from numpy.linalg import det
 from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d
 import pylab as plb
 import os
@@ -2526,6 +2527,12 @@ class Normalization(Calibration):
 
 
 ## Functions
+
+
+
+    
+
+
 
 def ideal_coefs_12term(frequency):
     '''

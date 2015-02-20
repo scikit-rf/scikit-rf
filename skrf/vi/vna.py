@@ -1420,7 +1420,6 @@ class PNA(Driver):
         self.frequency = cal.frequency
         self.save_active_cset()
 
-
 PNAX = PNA
 
 class ZVA40(PNA):
@@ -1902,7 +1901,6 @@ class VectorStar(PNA):
 
         return [(k+1,meas_list[k]) for k in range(self.ntraces)]
 
-
 class HP8510C(Driver):
     '''
     good ole 8510
@@ -2052,8 +2050,6 @@ class HP8510C(Driver):
         reverse.name = 'reverse switch term'
 
         return (forward,reverse)
-
-PNAX = PNA
 
 class HP8720(HP8510C):
     def __init__(self, address=16,**kwargs):
