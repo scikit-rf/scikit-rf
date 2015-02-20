@@ -57,29 +57,25 @@ def read_pna_csv(filename, *args, **kwargs):
     >>> header, comments, data = rf.read_pna_csv('myfile.csv')
     '''
     warn("deprecated", DeprecationWarning)
-    fid = open(filename,'r')
-    begin_line = -2
-    end_line = -1
-    n_END = 0
-    comments = ''
-    for k,line in enumerate(fid.readlines()):
-        if line.startswith('!'):
-            comments += line[1:]
-        elif line.startswith('BEGIN') and n_END == 0:
-            begin_line = k
-        elif line.startswith('END'):
-            if n_END == 0:
-            #first END spotted -> set end_line to read first data block only
-                end_line = k
-            #increment n_END to allow for CR correction in genfromtxt
-            n_END += 1
-
-        if k == begin_line+1:
-            header = line
-
-    footer = k - end_line
-
-    fid.close()
+    with open(filename,'r') as fid:
+        begin_line = -2
+        end_line = -1
+        n_END = 0
+        comments = ''
+        for k,line in enumerate(fid.readlines()):
+            if line.startswith('!'):
+                comments += line[1:]
+            elif line.startswith('BEGIN') and n_END == 0:
+                begin_line = k
+            elif line.startswith('END'):
+                if n_END == 0:
+                #first END spotted -> set end_line to read first data block only
+                    end_line = k
+                #increment n_END to allow for CR correction in genfromtxt
+                n_END += 1
+            if k == begin_line+1:
+                header = line
+        footer = k - end_line
 
     try:
         data = npy.genfromtxt(
@@ -291,24 +287,22 @@ class AgilentCSV(object):
             An array containing the data. The meaning of which depends on
             the header.
         '''
-        fid = open(self.filename, 'r')
-        begin_line = -2
-        end_line = -1
-        comments = ''
-        for k,line in enumerate(fid.readlines()):
-            if line.startswith('!'):
-                comments += line[1:]
-            elif line.startswith('BEGIN'):
-                begin_line = k
-            elif line.startswith('END'):
-                end_line = k
+        with open(self.filename, 'r') as fid:
+            begin_line = -2
+            end_line = -1
+            comments = ''
+            for k,line in enumerate(fid.readlines()):
+                if line.startswith('!'):
+                    comments += line[1:]
+                elif line.startswith('BEGIN'):
+                    begin_line = k
+                elif line.startswith('END'):
+                    end_line = k
 
-            if k == begin_line+1:
-                header = line
+                if k == begin_line+1:
+                    header = line
 
-        footer = k - end_line
-
-        fid.close()
+            footer = k - end_line
 
         try:
             data = npy.genfromtxt(
@@ -682,16 +676,14 @@ def read_zva_dat(filename, *args, **kwargs):
 
     '''
     #warn("deprecated", DeprecationWarning)
-    fid = open(filename,'r')
-    begin_line = -2
-    comments = ''
-    for k,line in enumerate(fid.readlines()):
-        if line.startswith('%'):
-            comments += line[1:]
-            header = line
-            begin_line = k+1
-
-    fid.close()
+    with open(filename,'r') as fid:
+        begin_line = -2
+        comments = ''
+        for k,line in enumerate(fid.readlines()):
+            if line.startswith('%'):
+                comments += line[1:]
+                header = line
+                begin_line = k+1
 
     data = npy.genfromtxt(
         filename,
@@ -835,18 +827,18 @@ def read_vectorstar_csv(filename, *args, **kwargs):
 
 
     '''
-    fid = open(filename,'r')
-    comments = ''.join([line for line in fid if line.startswith('!')])
-    fid.seek(0)
-    header = [line for line in fid if line.startswith('PNT')]
-    fid.close()
-    data = npy.genfromtxt(
-        filename,
-        comments='!',
-        delimiter =',',
-        skip_header = 1)[1:]
-    comments = comments.replace('\r','')
-    comments = comments.replace('!','')
+    with open(filename,'r') as fid:
+        comments = ''.join([line for line in fid if line.startswith('!')])
+        fid.seek(0)
+        header = [line for line in fid if line.startswith('PNT')]
+        fid.close()
+        data = npy.genfromtxt(
+            filename,
+            comments='!',
+            delimiter =',',
+            skip_header = 1)[1:]
+        comments = comments.replace('\r','')
+        comments = comments.replace('!','')
 
     return header, comments, data
 

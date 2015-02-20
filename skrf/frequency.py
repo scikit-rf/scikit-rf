@@ -401,7 +401,7 @@ class Frequency(object):
     @property
     def multiplier(self):
         '''
-        Multiplier for formating axis
+        Multiplier for formatting axis
 
         This accesses the internal dictionary `multiplier_dict` using
         the value of :attr:`unit`
