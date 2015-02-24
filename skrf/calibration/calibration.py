@@ -2204,7 +2204,7 @@ class TRL(EightTerm):
 
     '''
     family = 'TRL'
-    def __init__(self, measured, ideals, estimate_line=False, *args,
+    def __init__(self, measured, ideals=None, estimate_line=False, *args,
                  **kwargs):
         '''
         Initialize a TRL calibration
@@ -2212,11 +2212,19 @@ class TRL(EightTerm):
         Note that the order of `measured` and `ideals` is strict.
         It must be [Thru, Reflect, Line].
 
-        If the ideal response for the
-        Thru and Line is  `None`, it is assumed that the you have a
-        flush thru, and a 90deg line. Alternatively, the
-        `estimate_line` option can be used to estimate the line length
-        from measurements (see below).
+        All of the ideals can be indivdually set to None, or the entire
+        list set to None (`ideals=None`). For each ideal set to None 
+        the following assumptions are made: 
+        
+        * thru : flush thru 
+        * reflect : flush shorts 
+        * line : and approximaitly  90deg  matched line (can be lossy)
+        
+        Note you can also use the `estimate_line` option  to 
+        automatically  estimate the initial guess for the line length 
+        from measurements (see below). This is sensible
+        if you have no idea what the line length is, but your **error 
+        networks** are well macthed (S_ij >>S_ii)
 
 
         .. warning::
@@ -2234,15 +2242,13 @@ class TRL(EightTerm):
         measured : list of :class:`~skrf.network.Network`
              must be in order [Thru, Reflect, Line]
 
-        ideals : list of :class:`~skrf.network.Network`
-            must be in order [Thru, Reflect, Line]. The Thru and Line
-            may be set to None.
+        ideals : list of :class:`~skrf.network.Network`, None
+            must be in order [Thru, Reflect, Line]. Each element in the 
+            list may be None, or equivalently, the list may be None
 
         estimate_line : bool
             Estimates the length of the line standard from raw measurements.
-            This is only used if the ideal response of the line is
-            `None`. Also, this will only work if your embedding networks
-            are reasonably well matched.
+            
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
@@ -2254,7 +2260,9 @@ class TRL(EightTerm):
 
         # TODO: allow them to pass None for the ideal thru, and create
         #       if they do, create it. perhaps the line also
-
+        if ideals is None:
+            ideals = [None,None,None]
+            
         if ideals[0] is None:
             # lets make an ideal flush thru for them
             ideal_thru = measured[0].copy()
@@ -2263,23 +2271,34 @@ class TRL(EightTerm):
             ideal_thru.s[:,1,0] = 1
             ideal_thru.s[:,0,1] = 1
             ideals[0] = ideal_thru
-
+        
+        if ideals[1] is None:
+            # assume they are using flushshorts
+            ideal_reflect = measured[0].copy()
+            ideal_reflect.s[:,0,0] = -1
+            ideal_reflect.s[:,1,1] = -1
+            ideal_reflect.s[:,1,0] = 0
+            ideal_reflect.s[:,0,1] = 0
+            ideals[1] = ideal_reflect
+            
         if ideals[2] is None:
-            line_approx=None # this forces the line length to be
-            #                  estimated from measurements
             # lets make an 90deg line for them
             ideal_line = measured[2].copy()
             ideal_line.s[:,0,0] = 0
             ideal_line.s[:,1,1] = 0
             ideal_line.s[:,1,0] = -1j
             ideal_line.s[:,0,1] = -1j
-            ideals[2] = ideal_thru
+            ideals[2] = ideal_line
 
-            if not estimate_line:
-                line_approx = ideals[2]
-
+        
+        if estimate_line:
+            # setting line_approx  to None causes determine_line() to 
+            # estimate the line length from raw measurements
+            line_approx = None
         else:
             line_approx = ideals[2]
+        
+        
 
 
         EightTerm.__init__(self,
@@ -2671,9 +2690,12 @@ def determine_line(thru_m, line_m, line_approx=None):
     Determine S21 of a matched line.
 
     Given raw measurements of a `thru` and a matched `line` with unknown
-    s21, this will calculate the response of the line. The `line_approx`
-    is an approximation to line, that is needed to choose the correct
-    root sign.
+    s21, this will calculate the response of the line. This works for 
+    lossy lines, and attentuators. The `line_approx`
+    is an approximation to line, this used  to choose the correct
+    root sign. If left as None, it will be estimated from raw measurements, 
+    which requires your error networks to be well matched  (S_ij >>S_ii). 
+    
 
     This is possible because two measurements can be combined to
     create a relationship of similar matrices, as shown below. Equating
@@ -2726,16 +2748,18 @@ def determine_line(thru_m, line_m, line_approx=None):
 
 
     C = thru_m.inv**line_m
-    # the eigen values of the matrix C, are equal to s12,conj(s12)
-    # but so we to choose the correct one
+    # the eigen values of the matrix C, are equal to s12,s12^-1)
+    # we need to choose the correct one
     w,v = linalg.eig(C.t)
 
     s12_0, s12_1 = w[:,0], w[:,1]
 
     s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
+    
     found_line = line_m.copy()
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose().reshape(-1,2,2)
     return found_line
+
 
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
     '''

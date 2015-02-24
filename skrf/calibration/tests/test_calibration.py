@@ -405,17 +405,18 @@ class TRLTest(EightTermTest):
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         # make error networks have s21,s12 >> s11,s22 so that TRL
         # can guess at line length
-        self.X.s[:,0,0] *=1e-1
-        self.Y.s[:,0,0] *=1e-1
-        self.X.s[:,1,1] *=1e-1 
-        self.Y.s[:,1,1] *=1e-1 
+        #self.X.s[:,0,0] *=1e-1
+        #self.Y.s[:,0,0] *=1e-1
+        #self.X.s[:,1,1] *=1e-1 
+        #self.Y.s[:,1,1] *=1e-1 
         
         actuals = [
             wg.thru( name='thru'),
             wg.short(nports=2, name='short'),
-            wg.line(45,'deg',name='line'),
+            wg.attenuator(-3,True, 45,'deg')
+            #wg.line(45,'deg',name='line'),
             ]
-        
+        self.actuals=actuals
         ideals = [
             wg.thru( name='thru'),
             wg.short(nports=2, name='short'),
@@ -429,20 +430,42 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-    def test_init_with_nones(self):
+
+    
+    def test_found_line(self):
+        self.cal.run()
+        self.assertTrue(self.cal.ideals[2]==self.actuals[2])
+            
+
+class TRLWithNoIdealsTest(EightTermTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
         wg= self.wg
+        
+        
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+        # make error networks have s21,s12 >> s11,s22 so that TRL
+        # can guess at line length
+        #self.X.s[:,0,0] *=1e-1
+        #self.Y.s[:,0,0] *=1e-1
+        #self.X.s[:,1,1] *=1e-1 
+        #self.Y.s[:,1,1] *=1e-1 
+        
+        ideals =  None
+        
         actuals = [
             wg.thru( name='thru'),
             wg.short(nports=2, name='short'),
-            wg.line(45,'deg',name='line'),
+            wg.attenuator(-3,True, 45,'deg')
             ]
+        self.actuals=actuals
         
-        ideals = [
-            None,
-            wg.short(nports=2, name='short'),
-            None,
-            ]
-            
+        
+        
         measured = [self.measure(k) for k in actuals]
         
         self.cal = rf.TRL(
@@ -450,8 +473,11 @@ class TRLTest(EightTermTest):
             measured = measured,
             switch_terms = (self.gamma_f, self.gamma_r)
             )
+    
+    
+    def test_found_line(self):
         self.cal.run()
-        
+        self.assertTrue(self.cal.ideals[2]==self.actuals[2])
         
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
