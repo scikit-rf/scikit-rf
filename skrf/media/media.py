@@ -1152,7 +1152,8 @@ class Media(object):
         result.s = mag_rv*npy.exp(1j*phase_rv)
         return result
 
-    def random(self, n_ports=1, reciprocal=False, matched=False, **kwargs):
+    def random(self, n_ports=1, reciprocal=False, matched=False, 
+               symmetric=False, **kwargs):
         '''
         Complex random network.
 
@@ -1164,7 +1165,9 @@ class Media(object):
         n_ports : int
             number of ports.
         reciprocal : bool
-            makes s-matrix symmetric (S_{mn} = S_{nm})
+            makes s-matrix symmetric ($S_{mn} = S_{nm}$)
+        symmetric : bool
+            makes s-matrix diagonal have single value ($S_{mm}=S_{nn}$)
         matched : bool
             makes diagonals of s-matrix zero
 
@@ -1183,7 +1186,11 @@ class Media(object):
                 for n in range(n_ports):
                     if m>n:
                         result.s[:,m,n] = result.s[:,n,m]
-
+        if symmetric:
+            for m in range(n_ports):
+                for n in range(n_ports):
+                    if m==n:
+                        result.s[:,m,n] = result.s[:,0,0] 
         if matched:
             for m in range(n_ports):
                 for n in range(n_ports):
