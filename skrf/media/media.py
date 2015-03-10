@@ -1115,7 +1115,26 @@ class Media(object):
                 npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
         result.s[:,1,0] = result.s[:,0,1]
         return result
-
+    
+    def isolator(self,source_port=0,**kwargs):
+        '''
+        two-port isolator 
+        
+        
+        Parameters
+        -------------
+        source_port: [0,1]
+            port at which power can flow from.
+        '''
+        result = self.thru(**kwargs)
+        if source_port==0:
+            result.s[:,0,1]=0
+        elif source_port==1:
+            result.s[:,1,0]=0
+        return result
+            
+        
+    
     ## Noise Networks
     def white_gaussian_polar(self,phase_dev, mag_dev,n_ports=1,**kwargs):
         '''

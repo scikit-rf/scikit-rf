@@ -39,6 +39,7 @@ import pylab as plb
 import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
 from matplotlib.pyplot import quiver
+from matplotlib import rcParams
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
 
@@ -582,3 +583,7 @@ def plot_vector(a, off=0+0j, *args, **kwargs):
     '''
     return quiver(off.real,off.imag,a.real,a.imag,scale_units ='xy', 
            angles='xy',scale=1, *args, **kwargs)
+
+
+def colors():
+    return rcParams['axes.color_cycle']
