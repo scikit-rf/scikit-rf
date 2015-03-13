@@ -124,10 +124,11 @@ class PNA(Driver):
             resource = address
 
         Driver.__init__(self,resource = resource, **kwargs)
-
+        
         self.channel=channel
         self.port = 1
         self.echo = echo
+        self.timeout=timeout
         if not front_panel_lockout:
             pass#self.gtl()
 
@@ -141,7 +142,14 @@ class PNA(Driver):
         return Driver.write(self,msg, *args, **kwargs)
 
     write.__doc__ = Driver.write.__doc__
-
+    
+    @property
+    def timeout(self):
+        return self._interface.timeout/1000.
+    @timeout.setter
+    def timeout(self,val):
+        self._interface.timeout=val*1000.
+        
     ## BASIC GPIB
     @property
     def idn(self):
