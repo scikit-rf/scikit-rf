@@ -495,6 +495,19 @@ class NetworkSet(object):
         '''
         self.ntwk_set = sorted(self.ntwk_set, key = key, **kwargs)
         
+    def rand(self,n=1):
+        '''
+        return `n` random samples from this NetworkSet
+        
+        Parameters
+        ----------
+        n : int
+            number of samples to return 
+        '''
+        idx = npy.randint(0,len(self), n)
+        return [self.ntwk_set[k] for k in idx]
+        
+        
     
     @property
     def mean_s_db(self):
