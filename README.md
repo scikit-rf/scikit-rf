@@ -9,7 +9,7 @@ in the Python programming language. It provides a modern, object-oriented librar
 flexible and scalable.  
 
 * [Home Page](http://www.scikit-rf.org)
-* [Docs](http://scikit-rf.org/documentation.html)
+* [Docs](http://scikit-rf.readthedocs.org/)
 * [Mailing List](http://groups.google.com/group/scikit-rf)
 * [Development](https://github.com/scikit-rf/scikit-rf/wiki/Development)
 

@@ -504,8 +504,14 @@ class NetworkSet(object):
         n : int
             number of samples to return 
         '''
-        idx = npy.randint(0,len(self), n)
-        return [self.ntwk_set[k] for k in idx]
+        idx = npy.random.randint(0,len(self), n)
+        out = [self.ntwk_set[k] for k in idx]
+        
+        if n ==1:
+            return out[0]
+        else:
+            return out
+        
         
         
     

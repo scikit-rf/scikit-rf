@@ -1,6 +1,7 @@
 # requirements to build docs
 #
 -r base.pip
+-r vi.pip
 sphinx-bootstrap-theme>=0.3.0
 pyzmq>=2.2.0
 tornado>=3.1.1
