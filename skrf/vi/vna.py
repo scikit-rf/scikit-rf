@@ -564,7 +564,7 @@ class PNA(Driver):
         self.continuous = was_cont
         return ntwk
 
-    def get_twoport(self, ports=[1,2], *args, **kwargs):
+    def get_twoport(self, ports=[1,2], sweep=True, single=True, *args, **kwargs):
         '''
         Get a two-port Network object for given ports.
 
@@ -581,15 +581,18 @@ class PNA(Driver):
             passed to Network init
 
         '''
-        was_cont = self.continuous
-        self.continuous= False
-        self.sweep()
+        if single:
+            was_cont = self.continuous
+            self.continuous= False
+        if sweep:
+            self.sweep()
         ntwk = Network(
             s = self.get_data_snp(ports),
             frequency = self.get_frequency(),
             *args, **kwargs
             )
-        self.continuous = was_cont
+        if single:
+            self.continuous = was_cont
         return ntwk
 
     def get_data_snp(self,ports=[1,2]):
