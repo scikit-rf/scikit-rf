@@ -8,5 +8,5 @@ pandas>=0.11.0
 sphinx-bootstrap-theme>=0.3.0
 python-ivi==0.14.9
 
-
+ipython==1.1.0
 
