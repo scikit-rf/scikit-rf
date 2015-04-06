@@ -56,7 +56,7 @@ class Network2Spreadsheet(HasTraits):
             self.active_ntwk,
             file_name = file_name,
             form = form )
-        print ('{} --> {}'.format(self.active_ntwk_name,file_name))
+        print(('{} --> {}'.format(self.active_ntwk_name,file_name)))
 
     def _export_all_networks_fired(self):
         form_dict = {
@@ -73,7 +73,7 @@ class Network2Spreadsheet(HasTraits):
             form = form
             )
         for k in [ '{} --> {}'.format(k.name,file_name) for k in ns.ntwk_set]:
-            print k
+            print(k)
 
 
     view = View(

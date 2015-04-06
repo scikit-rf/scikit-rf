@@ -370,7 +370,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
             with open(os.path.join(dir+'/', filename), 'w') as fid:
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
-            print inst
+            print(inst)
             warnings.warn('couldnt write %s: %s'%(k, inst.strerror))
             pass
 
@@ -410,7 +410,7 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
 
     '''
     objects = {}
-    print ('pickling: '),
+    print(('pickling: '), end=' ')
     for k in dict_objs:
         try:
             if module  in inspect.getmodule(dict_objs[k]).__name__:
@@ -418,14 +418,14 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
                     pickle.dumps(dict_objs[k])
                     if k[0] != '_':
                         objects[k] = dict_objs[k]
-                        print k+', ',
+                        print(k+', ', end=' ')
                 finally:
                     pass
 
         except(AttributeError, TypeError):
             pass
     if len (objects ) == 0:
-        print 'nothing'
+        print('nothing')
 
     write(file, objects)
 

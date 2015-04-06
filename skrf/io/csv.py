@@ -570,7 +570,7 @@ def pna_csv_2_ntwks(filename):
         for k in range((d.shape[1]-1)/2):
             f = d[:,0]*1e-9
             name = names[k]
-            print(names[k], names[k+1])
+            print((names[k], names[k+1]))
             if 'db' in names[k].lower() and 'deg' in names[k+1].lower():
                 s = mf.dbdeg_2_reim(d[:,k*2+1], d[:,k*2+2])
             elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():

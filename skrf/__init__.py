@@ -29,7 +29,7 @@ import util
 try:
     import data
 except:
-    print 'warning: data module didn\'t load. dont worry about it.'
+    print('warning: data module didn\'t load. dont worry about it.')
     pass
 # Import contents into current namespace for ease of calling
 from frequency import *
@@ -48,7 +48,7 @@ try:
     import vi
     from vi import *
 except(ImportError):
-    print '\nWARNING: pyvisa not installed, virtual instruments will not be available\n'
+    print('\nWARNING: pyvisa not installed, virtual instruments will not be available\n')
 
 
 

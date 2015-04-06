@@ -1241,9 +1241,9 @@ class Media(object):
 
         A = npy.vstack((2*beta,npy.ones(len(beta)))).transpose()
         B = thetaM
-        print A.shape
-        print B.shape
-        print npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta)
+        print(A.shape)
+        print(B.shape)
+        print(npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta))
         return npy.linalg.lstsq(A, B)[0][0]
 
 

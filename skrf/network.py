@@ -1610,7 +1610,7 @@ class Network(object):
             try:
                 self.name = os.path.basename( os.path.splitext(touchstoneFile.filename)[0])
             except():
-                print 'warning: couldnt inspect network name'
+                print('warning: couldnt inspect network name')
                 self.name=''
             pass
         #TODO: add Network property `comments` which is read from
