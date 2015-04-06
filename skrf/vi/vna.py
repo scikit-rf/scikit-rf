@@ -138,7 +138,7 @@ class PNA(Driver):
         Write a msg to the instrument.
         '''
         if self.echo:
-            print msg
+            print(msg)
         return Driver.write(self,msg, *args, **kwargs)
 
     write.__doc__ = Driver.write.__doc__

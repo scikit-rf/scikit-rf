@@ -650,7 +650,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         
         
         for k in converted:
-            print('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k])))
+            print(('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k]))))
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
         

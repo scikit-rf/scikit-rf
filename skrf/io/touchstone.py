@@ -149,13 +149,13 @@ class Touchstone():
                 self.format = toks[2]
                 self.resistance = toks[4]
                 if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
-                    print 'ERROR: illegal frequency_unit [%s]',  self.frequency_unit
+                    print('ERROR: illegal frequency_unit [%s]',  self.frequency_unit)
                     # TODO: Raise
                 if self.parameter not in 'syzgh':
-                    print 'ERROR: illegal parameter value [%s]', self.parameter
+                    print('ERROR: illegal parameter value [%s]', self.parameter)
                     # TODO: Raise
                 if self.format not in ['ma', 'db', 'ri']:
-                    print 'ERROR: illegal format value [%s]', self.format
+                    print('ERROR: illegal format value [%s]', self.format)
                     # TODO: Raise
 
                 continue
