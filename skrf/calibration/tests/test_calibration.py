@@ -498,24 +498,34 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
             wg.thru(name='thru'),
             ]
             
-        measured = [self.measure(k) for k in ideals]
+        measured = [self.measure_std(k) for k in ideals]
         
-        cal1 = rf.TwelveTerm(
+        cal1 = rf.TwoPortOnePath(
             ideals = ideals,
-            measured = measured,
-            n_thrus=1, 
+            measured = measured
             )
-        #coefs = rf.convert_12term_2_8term(cal1.coefs)
-        #gamma_f = wg.load(coefs['forward switch term'])
-        gamma_f, gamma_r = (cal1.coefs_ntwks['forward switch term'],
-                           cal1.coefs_ntwks['reverse switch term'])
+        switch_terms = (cal1.coefs_ntwks['forward switch term'],
+                        cal1.coefs_ntwks['reverse switch term'])
+        
+        
+        measured = [self.measure(k) for k in ideals]
         self.cal = rf.EightTerm(
             ideals = ideals,
             measured = measured,
-            switch_terms = [gamma_f, gamma_r], 
+            switch_terms = switch_terms, 
             )
+        raise ValueError()
         
+    def measure_std(self,ntwk):
+        r= self.wg.random(2)
+        m = ntwk.copy()
+        mf = self.X**ntwk**self.Y
         
+        m.s[:,1,0] = mf.s[:,1,0]
+        m.s[:,0,0] = mf.s[:,0,0]
+        m.s[:,1,1] = r.s[:,1,1]
+        m.s[:,0,1] = r.s[:,0,1]
+        return m    
     def measure(self,ntwk):
         
         m = ntwk.copy()
@@ -662,78 +672,6 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
 
-class TRTwelveTermTest(TwelveTermTest):
-    '''
-    This test verifys the accuracy of the SOLT calibration. Generating 
-    measured networks requires different error networks for forward and 
-    reverse excitation states, these are described as follows
-    
-    forward excitation
-        used for S21 and S11
-        Mf = Xf ** S ** Yf  
-    
-    reverse excitation
-        used for S12 and S22
-        Mr = Xr ** S ** Yr
-    
-    
-    '''
-    def setUp(self):
-        raise SkipTest()
-        self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
-        wg  = self.wg
-        self.Xf = wg.random(n_ports =2, name = 'Xf')
-        
-        self.Yf = wg.random(n_ports =2, name='Yf')
-        
-       
-        ideals = [
-            wg.short(nports=2, name='short'),
-            wg.open(nports=2, name='open'),
-            wg.match(nports=2, name='load'),
-            wg.random(2,name='rand1'),
-            wg.random(2,name='rand2'),
-            ]
-        
-    
-        measured = [ self.measure(k) for k in ideals]
-        
-        self.cal = rf.TwelveTerm(
-            ideals = ideals,
-            measured = measured,
-            n_thrus=2, 
-            )
-    
-    def measure(self,ntwk):
-        m = ntwk.copy()
-        mf = self.Xf**ntwk**self.Yf
-        mr = self.Xf**ntwk.flipped()**self.Yf
-        m.s[:,1,0] = mf.s[:,1,0]
-        m.s[:,0,0] = mf.s[:,0,0]
-        m.s[:,0,1] = mr.s[:,1,0]
-        m.s[:,1,1] = mr.s[:,0,0]
-        return m
-    
-    def test_from_coefs_ntwks(self):
-        cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
-    def test_reverse_source_match_accuracy(self):
-        raise SkipTest()   
-    
-    def test_reverse_directivity_accuracy(self):
-        raise SkipTest()      
-    
-    def test_reverse_load_match_accuracy(self):
-        raise SkipTest()  
-    
-    def test_reverse_reflection_tracking_accuracy(self):
-        raise SkipTest()  
-    
-    def test_reverse_transmission_tracking_accuracy(self):
-        raise SkipTest()  
-    
-    
-
 class TwelveTermSloppyInitTest(TwelveTermTest):
     '''
     Test the TwelveTerm.__init__'s ability to 
@@ -820,8 +758,7 @@ class TwoPortOnePathTest(TwelveTermTest):
         wg  = self.wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Yf = wg.random(n_ports =2, name='Yf')
-        self.Xr = wg.random(n_ports =2, name = 'Xr')
-        self.Yr = wg.random(n_ports =2, name='Yr')
+        
         
         ideals = [
             wg.short(nports=2, name='short'),
@@ -893,52 +830,7 @@ class TwoPortOnePathTest(TwelveTermTest):
     
     
     
-class TwoPortOnePathIsEnhancedResponseTest(unittest.TestCase):
-    def setUp(self):
-        self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
-        wg  = self.wg
-        self.Xf = wg.random(n_ports =2, name = 'Xf')
-        self.Yf = wg.random(n_ports =2, name='Yf')
-        
-        ideals = [
-            wg.short(nports=2, name='short'),
-            wg.open(nports=2, name='open'),
-            wg.match(nports=2, name='load'),
-            wg.thru(name='thru'),
-            ]
-        
     
-        measured = [ self.measure(k) for k in ideals]
-        
-        self.cal = TwoPortOnePath(
-            ideals = ideals,
-            measured = measured,
-            source_port=1,
-            )
-        self.cal2 = EnhancedResponse(
-            ideals = ideals,
-            measured = measured,
-            source_port=1,
-            )
-    def measure(self,ntwk):
-        r= self.wg.random(2)
-        m = ntwk.copy()
-        mf = self.Xf**ntwk**self.Yf
-        m.s[:,1,0] = mf.s[:,1,0]
-        m.s[:,0,0] = mf.s[:,0,0]
-        m.s[:,1,1] = r.s[:,1,1]
-        m.s[:,0,1] = r.s[:,0,1]
-        return m
-        
-    def test_equivalence(self):
-        a = self.wg.random(n_ports=self.n_ports, name = 'actual')
-        f = self.measure(a)
-        
-        c = self.cal.apply_cal(f)
-        c2 = self.cal2.apply_cal(f)
-        
-        self.assertEqual(c,c2)        
 
 class UnknownThruTest(EightTermTest):
     def setUp(self):
