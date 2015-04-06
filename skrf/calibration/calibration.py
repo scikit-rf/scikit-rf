@@ -1461,8 +1461,6 @@ class TwelveTerm(Calibration):
             self.measured = [self.measured[k] for k in order]
             self.ideals = [self.ideals[k] for k in order]
 
-
-
     def run(self):
         '''
         '''
@@ -1617,6 +1615,7 @@ class TwelveTerm(Calibration):
         measured.s[:,0,1] =  Eir + Etr * s12/D2
 
         return measured
+
 
 class SOLT(TwelveTerm):
     '''
