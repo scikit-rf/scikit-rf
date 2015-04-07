@@ -27,13 +27,17 @@ General
 
 
 
-import mathFunctions as mf
+from . import mathFunctions as mf
 
 
 import matplotlib as mpl
 import warnings
 import os
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
+
 import pylab as plb
 import numpy as npy
 from scipy.constants import mil
@@ -156,7 +160,7 @@ def get_fid(file, *args, **kwargs):
     \*args, \*\*kwargs : arguments and keyword arguments
         passed through to pickle.load
     '''
-    if isinstance(file, basestring):
+    if isinstance(file, str):
         return open(file, *args, **kwargs)
     else:
         return file

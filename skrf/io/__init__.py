@@ -25,10 +25,10 @@ through the Network constructor, :func:`~skrf.network.Network.__init__`
    
 '''
 
-import general
-import csv
-import touchstone
+#import general
+#import csv
+#import touchstone
 
-from general import * 
-from csv import * 
-from touchstone import * 
+from .general import * 
+from .csv import * 
+from .touchstone import * 

@@ -135,7 +135,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     if not border: 
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
         
     
@@ -143,7 +143,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         #Clear axis
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
 
         #Will make annotations only if the radius is 1 and it is the impedance smith chart
@@ -473,12 +473,12 @@ def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
         if format is None:
             plb.savefig(dir+fileName)
             if echo:
-                print (dir+fileName)
+                print((dir+fileName))
         else:
             for fmt in format:
                 plb.savefig(dir+fileName+'.'+fmt, format=fmt)
                 if echo:
-                    print (dir+fileName+'.'+fmt)
+                    print((dir+fileName+'.'+fmt))
 saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):

@@ -17,7 +17,7 @@ Functions which operate on or pertain to :class:`~skrf.calibration.calibration.C
 
 '''
 from itertools import product, combinations, permutations
-from calibration import Calibration
+from . calibration import Calibration
 from numpy import array
 import pdb
 
@@ -91,7 +91,7 @@ def dot_product_calibration_set( ideals, measured, *args, **kwargs):
     '''
     # this is a way to sort the measured list by alphabetically ordering
     # of the Network element names
-    measured_range = range(len(measured))
+    measured_range = list(range(len(measured)))
     name_list = [k.name for k in measured]
     sorted_index = sorted(measured_range, key = lambda k:name_list[k])
     measured = [measured[k] for k in sorted_index]
@@ -103,7 +103,7 @@ def dot_product_calibration_set( ideals, measured, *args, **kwargs):
     
     return [Calibration(ideals = ideals, measured = list(m_array[:,k]),\
             *args, **kwargs)\
-            for k in range(m_array.shape[1])]
+            for k in list(range(m_array.shape[1]))]
 
 def binomial_coefficient_calibration_set( ideals, measured, n,  *args, **kwargs):
     '''

@@ -36,10 +36,10 @@ NetworkSet Class
 '''
 
 import os 
-from network import average as network_average
-from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+from . network import average as network_average
+from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 
-import mathFunctions as mf
+from . import mathFunctions as mf
 import zipfile
 from copy import deepcopy
 import warnings
@@ -493,10 +493,10 @@ class NetworkSet(object):
                 plb.show()
             if savefigs:
                 plb.savefig('out_%.5i'%idx+'.png')
-                print ('out_%.5i'%idx+'.png')
+                print(('out_%.5i'%idx+'.png'))
         
         if savefigs:
-            print '\nto create video paste this:\n\n!ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi\n'
+            print('\nto create video paste this:\n\n!ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi\n')
         if was_interactive:
             plb.ion()
         
@@ -1161,5 +1161,5 @@ def getset(ntwk_dict, s, *args, **kwargs):
     if len(ntwk_list) > 0:
         return NetworkSet( ntwk_list,*args, **kwargs)
     else:
-        print 'Warning: No keys in ntwk_dict contain \'%s\''%s
+        print('Warning: No keys in ntwk_dict contain \'%s\''%s)
         return None 
