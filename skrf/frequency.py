@@ -33,7 +33,7 @@ Functions
 
 from pylab import linspace, gca,plot, autoscale
 from numpy import pi
-import numpy as npy
+import numpy as np
 from numpy import fft # used to center attribute `t` at 0
 import re
 from util import slice_domain,find_nearest_index
@@ -226,7 +226,7 @@ class Frequency(object):
         >>> rf.Frequency.from_f(f, unit='ghz')
         '''
         temp_freq =  cls(0,0,0,*args, **kwargs)
-        temp_freq.f = npy.array(f) * temp_freq.multiplier
+        temp_freq.f = np.array(f) * temp_freq.multiplier
         return temp_freq
 
     def __eq__(self, other):
@@ -338,7 +338,7 @@ class Frequency(object):
         '''
         sets the frequency object by passing a vector in Hz
         '''
-        self._f = npy.array(new_f)
+        self._f = np.array(new_f)
 
 
     @property
@@ -459,10 +459,10 @@ class Frequency(object):
         >>>f.round_to('hz')
 
         '''
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             val = self.multiplier_dict[val.lower()]
 
-        self.f = npy.round_(self.f/val)*val
+        self.f = np.round_(self.f/val)*val
 
 
 
@@ -511,7 +511,7 @@ class Frequency(object):
                 raise IndexError(['thing to plot doesn\'t have same'
                                  ' number of points as f'])
         except(TypeError):
-            y = y*npy.ones(len(self))
+            y = y*np.ones(len(self))
 
         plot(self.f_scaled, y,*args, **kwargs)
         autoscale(axis='x', tight=True)

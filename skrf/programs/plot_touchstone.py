@@ -6,7 +6,7 @@ import pylab as plb
 try:
     import skrf as rf
 except (ImportError):
-    print ('IMPORT ERROR: skrf is not installed correctly. Check you path.')
+    print('IMPORT ERROR: skrf is not installed correctly. Check you path.')
 
 
 def main():

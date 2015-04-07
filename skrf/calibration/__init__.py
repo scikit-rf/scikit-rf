@@ -14,12 +14,11 @@ module.
 
 '''
 
-import calibration
-#import calibrationFunctions
-#import parametricStandard
-import calibrationSet
 
 #from parametricStandard import *
-from calibration import *
-#from calibrationFunctions import *
-#from calibrationSet import *
+from . import calibration
+from . import calibrationSet
+
+from .calibration import *
+from .calibrationFunctions import *
+from .calibrationSet import *

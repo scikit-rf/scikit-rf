@@ -17,6 +17,7 @@ from scipy.constants import  c, inch, mil
 
 from ..frequency import Frequency
 from ..network import Network, connect
+
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
 from ..mathFunctions import ALMOST_ZERO

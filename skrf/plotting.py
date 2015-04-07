@@ -137,7 +137,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     if not border: 
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
         
     
@@ -145,7 +145,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         #Clear axis
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
 
         #Will make annotations only if the radius is 1 and it is the impedance smith chart

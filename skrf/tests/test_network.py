@@ -1,7 +1,10 @@
 import unittest
 import os
 import numpy as npy
-import cPickle as pickle
+try:
+    import cPickle as pickle 
+except ImportError:
+    import pickle as pickle
 import skrf as rf
 from nose.plugins.skip import SkipTest
 class NetworkTestCase(unittest.TestCase):

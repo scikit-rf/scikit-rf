@@ -36,10 +36,10 @@ NetworkSet Class
 '''
 
 import os
-from network import average as network_average
-from network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+from . network import average as network_average
+from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 
-import mathFunctions as mf
+from . import mathFunctions as mf
 import zipfile
 from copy import deepcopy
 import warnings
