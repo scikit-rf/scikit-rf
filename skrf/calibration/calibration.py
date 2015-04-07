@@ -253,7 +253,7 @@ class Calibration(object):
                     print('Success')
 
                 except:
-                    raise(IndexError('Failed to interpolate. Check frequency of ideals[{}].'.format(k))
+                    raise(IndexError('Failed to interpolate. Check frequency of ideals[{}].'.format(k)))
 
 
         # passed to calibration algorithm in run()
