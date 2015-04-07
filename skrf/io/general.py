@@ -415,8 +415,7 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
 
     '''
     objects = {}
-    print('pickling: '),
-    print(('pickling: '), end=' ')
+    print('pickling: ', end=' ')
     for k in dict_objs:
         try:
             if module  in inspect.getmodule(dict_objs[k]).__name__:
