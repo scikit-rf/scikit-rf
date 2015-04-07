@@ -415,7 +415,7 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
 
     '''
     objects = {}
-    print('pickling: ', end=' ')
+    print('pickling: ')
     for k in dict_objs:
         try:
             if module  in inspect.getmodule(dict_objs[k]).__name__:
@@ -423,7 +423,7 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
                     pickle.dumps(dict_objs[k])
                     if k[0] != '_':
                         objects[k] = dict_objs[k]
-                        print(k+', ', end=' ')
+                        print(k+', ')
                 finally:
                     pass
 

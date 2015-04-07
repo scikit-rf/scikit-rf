@@ -244,7 +244,7 @@ class Calibration(object):
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0]:
-                print(('Warning: Frequency information doesn\'t match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)), end=' ')
+                print('Warning: Frequency information doesn\'t match on ideals[{}], attempting to interpolate the ideal[{}] Network ..'.format(k,k))
                 try:
                     # try to resample our ideals network to match
                     # the meaurement frequency
@@ -253,7 +253,7 @@ class Calibration(object):
                     print('Success')
 
                 except:
-                    raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
+                    raise(IndexError('Failed to interpolate. Check frequency of ideals[{}].'.format(k))
 
 
         # passed to calibration algorithm in run()
