@@ -379,7 +379,7 @@ class Calibration(object):
 
         coefs = NetworkSet(coefs_ntwks).to_s_dict()
 
-        frequency = coefs_ntwks.values()[0].frequency
+        frequency = list(coefs_ntwks.values())[0].frequency
 
         cal= cls.from_coefs(frequency=frequency, coefs=coefs, **kwargs)
         return cal

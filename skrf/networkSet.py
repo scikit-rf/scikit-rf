@@ -123,7 +123,7 @@ class NetworkSet(object):
         '''
         ## type checking
         if hasattr(ntwk_set, 'values'):
-            ntwk_set = ntwk_set.values()
+            ntwk_set = list(ntwk_set.values())
 
         # did they pass a list of Networks?
         if not isinstance(ntwk_set[0], Network):
