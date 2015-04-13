@@ -6,7 +6,7 @@ distribute>=0.6.28
 #scipy>=0.10.1
 #pandas>=0.11.0
 sphinx-bootstrap-theme>=0.3.0
-python-ivi==0.14.9
+-e git://github.com/python-ivi/python-ivi.git#egg=python-ivi
 
 ipython==1.1.0
 

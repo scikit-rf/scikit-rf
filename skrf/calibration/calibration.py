@@ -1873,10 +1873,24 @@ class TwoPortOnePath(TwelveTerm):
         '''
         apply the calibration to a measuremnt
 
+        Notes
+        -------
+        Full correction is possible given you have measured your DUT 
+        in both orientations. Meaning, you have measured the device, 
+        then physically flipped the device and made a second measurement. 
+        
+        This tuple of 2-port Networks is what is meant by
+        (forward,reverse), in the docstring below
+        
+        If you pass a single 2-port Network, then the measurement will 
+        only be partially corrected using what is known as the 
+        `EnhancedResponse` calibration. 
+
         Parameters
         -----------
-        network_tuple: tuple
-            tuple of 2-port Networks in order (forward, reverse)
+        network_tuple: tuple, or Network
+            tuple of 2-port Networks in order (forward, reverse) OR 
+            a single 2-port Network. 
 
 
 
@@ -1919,7 +1933,8 @@ class EnhancedResponse(TwoPortOnePath):
 
     For code-structuring reasons, this is a dummy placeholder class.
     Its just TwoPortOnePath, which defaults to enhancedresponse correction
-    when you correct a network, and not a tuple of networks
+    when you apply the calirbation to a single network, and not a tuple 
+    of networks.
     '''
     family = 'EnhancedResponse'
 
