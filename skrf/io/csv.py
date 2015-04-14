@@ -439,11 +439,11 @@ class AgilentCSV(object):
         header, comments, d= self.header,self.comments, self.data
 
         ntwk_list = []
-        if (self.n_traces)/2 == 0 :
+        if (self.n_traces)//2 == 0 : # / --> // for Python3 compatibility
             # this isnt complex data
             return self.scalar_networks
         else:
-            for k in range((self.n_traces)/2):
+            for k in range((self.n_traces)//2):
 
                 name = names[k*2+1]
                 #print(names[k], names[k+1])
@@ -570,13 +570,13 @@ def pna_csv_2_ntwks(filename):
         for k in range((d.shape[1]-1)/2):
             f = d[:,0]*1e-9
             name = names[k]
-            print(names[k], names[k+1])
+            print((names[k], names[k+1]))
             if 'db' in names[k].lower() and 'deg' in names[k+1].lower():
                 s = mf.dbdeg_2_reim(d[:,k*2+1], d[:,k*2+2])
             elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
             else:
-                print ('WARNING: csv format unrecognized. ts up to you to  intrepret the resultant network correctly.')
+                print('WARNING: csv format unrecognized. ts up to you to  intrepret the resultant network correctly.')
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
 
             ntwk_list.append(

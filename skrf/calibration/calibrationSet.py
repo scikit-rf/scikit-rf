@@ -19,7 +19,7 @@ CalibrationSet Class
 
 '''
 from itertools import product, combinations, permutations
-from calibration import Calibration
+from .calibration import Calibration
 from ..networkSet import NetworkSet
 
 
@@ -39,7 +39,7 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
             raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
 
     cal_list = []
-    for k in range(len(measured_sets[0])):
+    for k in list(range(len(measured_sets[0]))):
         measured = [measured_set[k] for measured_set in measured_sets]
         cal_list.append(
             Calibration(ideals=ideals, measured= measured,

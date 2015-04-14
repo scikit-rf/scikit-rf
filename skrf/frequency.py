@@ -36,7 +36,7 @@ from numpy import pi
 import numpy as npy
 from numpy import fft # used to center attribute `t` at 0
 import re
-from util import slice_domain,find_nearest_index
+from .util import slice_domain,find_nearest_index
 
 class Frequency(object):
     '''
@@ -222,7 +222,7 @@ class Frequency(object):
 
         Examples
         -----------
-        >>> f = np.linspace(75,100,101)
+        >>> f = npy.linspace(75,100,101)
         >>> rf.Frequency.from_f(f, unit='ghz')
         '''
         temp_freq =  cls(0,0,0,*args, **kwargs)
@@ -459,7 +459,7 @@ class Frequency(object):
         >>>f.round_to('hz')
 
         '''
-        if isinstance(val, basestring):
+        if isinstance(val, str):
             val = self.multiplier_dict[val.lower()]
 
         self.f = npy.round_(self.f/val)*val

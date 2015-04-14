@@ -8,7 +8,7 @@ class Dummy(object):
 		pass 
 	
 	def __getattr__(self,name):
-		print 'tried to get %s'%name
+		print('tried to get %s'%name)
 		return Dummy1()
 
 class Dummy1(object):
@@ -16,7 +16,7 @@ class Dummy1(object):
 		pass 
 	
 	def __getattr__(self,name):
-		print 'tried to get %s'%name
+		print('tried to get %s'%name)
 		return Dummy2()
 	
 	def __call__(self, *args, **kwargs):
@@ -27,7 +27,7 @@ class Dummy2(object):
 		pass 
 	
 	def __getattr__(self,name):
-		print 'tried to get %s'%name
+		print('tried to get %s'%name)
 		return Dummy3()
 	
 	def __call__(self, *args, **kwargs):
@@ -38,7 +38,7 @@ class Dummy3(object):
 		pass 
 	
 	def __getattr__(self,name):
-		print 'tried to get %s'%name
+		print('tried to get %s'%name)
 		return 1
 
 		
@@ -50,7 +50,7 @@ class GpibInstrument(Dummy):
 		'''
 		dummy doc
 		'''
-		print msg
+		print(msg)
 		pass
 	
 	

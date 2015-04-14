@@ -1,6 +1,9 @@
 import unittest
 import os
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand
@@ -650,7 +653,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         
         
         for k in converted:
-            print('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k])))
+            print(('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k]))))
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
         

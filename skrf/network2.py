@@ -1,10 +1,10 @@
 
-
+from six.moves import xrange # for Python3 compatibility
 
 from .frequency import Frequency
 from .mathFunctions import *
 from .plotting import plot_complex_rectangular,plot_rectangular, smith
-from util import get_fid, get_extn, find_nearest_index,slice_domain
+from .util import get_fid, get_extn, find_nearest_index,slice_domain
 
 from scipy import  signal
 import numpy as npy
