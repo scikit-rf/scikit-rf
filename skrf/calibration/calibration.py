@@ -1759,9 +1759,10 @@ class TwoPortOnePath(TwelveTerm):
     '''
     Two Port One Path Calibration (aka poor man's TwelveTerm)
 
-    This algorithm is used when you have a three reciever system, ie
-    you can only measure the waves a1,b1,and b2. Given this architecture,
-    the DUT must be flipped and measured twice to be fully corrected.
+    Provides full errror correction  on a switchless three reciever 
+    system, ie you can only measure the waves a1,b1,and b2. 
+    Given this architecture, the DUT must be flipped and measured 
+    twice to be fully corrected.
 
     To allow for this, the `apply_cal` method takes a tuple of
     measurements in the order  (forward,reverse), and creates a composite
@@ -2199,9 +2200,10 @@ class TRL(EightTerm):
     '''
     Thru Reflect Line
 
-    Classic two-port self-calibration algorithm developed by Engen and
-    Hoer [1]_, reformulated into a more matrix form in [2]_.
-
+    A Similar self-calibration algorithm as developed by Engen and
+    Hoer [1]_, more closely following into a more matrix form in [2]_.
+    
+    
     .. warning::
         This version of TRL does not solve for the Reflect standard yet
 
@@ -2221,15 +2223,17 @@ class TRL(EightTerm):
 
     '''
     family = 'TRL'
-    def __init__(self, measured, ideals=None, estimate_line=False, *args,
-                 **kwargs):
+    def __init__(self, measured, ideals=None, estimate_line=False, 
+                n_reflects=1,*args,**kwargs):
         '''
         Initialize a TRL calibration
 
         Note that the order of `measured` and `ideals` is strict.
-        It must be [Thru, Reflect, Line].
+        It must be [Thru, Reflect, Line]. A multiline algorithms is 
+        used if more than one line is passed. Multiple reflects can
+        also be used, see `n_reflects` argument.
 
-        All of the ideals can be indivdually set to None, or the entire
+        All of the `ideals` can be indivdually set to None, or the entire
         list set to None (`ideals=None`). For each ideal set to None 
         the following assumptions are made: 
         
@@ -2239,9 +2243,9 @@ class TRL(EightTerm):
         
         Note you can also use the `estimate_line` option  to 
         automatically  estimate the initial guess for the line length 
-        from measurements (see below). This is sensible
+        from measurements . This is sensible
         if you have no idea what the line length is, but your **error 
-        networks** are well macthed (S_ij >>S_ii)
+        networks** are well macthed (E_ij >>E_ii).
 
 
         .. warning::
@@ -2266,6 +2270,8 @@ class TRL(EightTerm):
         estimate_line : bool
             Estimates the length of the line standard from raw measurements.
             
+        n_reflects :  1
+            number of reflective standards 
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
@@ -2274,11 +2280,10 @@ class TRL(EightTerm):
         '''
         warn('Value of Reflect is not solved for yet.')
 
-
-        # TODO: allow them to pass None for the ideal thru, and create
-        #       if they do, create it. perhaps the line also
+        n_stds = len(measured)
+            
         if ideals is None:
-            ideals = [None,None,None]
+            ideals = [None]*len(measured)
             
         if ideals[0] is None:
             # lets make an ideal flush thru for them
@@ -2289,33 +2294,26 @@ class TRL(EightTerm):
             ideal_thru.s[:,0,1] = 1
             ideals[0] = ideal_thru
         
-        if ideals[1] is None:
-            # assume they are using flushshorts
-            ideal_reflect = measured[0].copy()
-            ideal_reflect.s[:,0,0] = -1
-            ideal_reflect.s[:,1,1] = -1
-            ideal_reflect.s[:,1,0] = 0
-            ideal_reflect.s[:,0,1] = 0
-            ideals[1] = ideal_reflect
-            
-        if ideals[2] is None:
-            # lets make an 90deg line for them
-            ideal_line = measured[2].copy()
-            ideal_line.s[:,0,0] = 0
-            ideal_line.s[:,1,1] = 0
-            ideal_line.s[:,1,0] = -1j
-            ideal_line.s[:,0,1] = -1j
-            ideals[2] = ideal_line
+        for k in range(1,n_reflects+1):
+            if ideals[k] is None:
+                # assume they are using flushshorts
+                ideal_reflect = measured[k].copy()
+                ideal_reflect.s[:,0,0] = -1
+                ideal_reflect.s[:,1,1] = -1
+                ideal_reflect.s[:,1,0] = 0
+                ideal_reflect.s[:,0,1] = 0
+                ideals[k] = ideal_reflect
+        
+        for k in range(n_reflects+1,n_stds):
+            if ideals[k] is None:
+                # lets make an 90deg line for them
+                ideal_line = measured[k].copy()
+                ideal_line.s[:,0,0] = 0
+                ideal_line.s[:,1,1] = 0
+                ideal_line.s[:,1,0] = -1j
+                ideal_line.s[:,0,1] = -1j
+                ideals[k] = ideal_line
 
-        
-        if estimate_line:
-            # setting line_approx  to None causes determine_line() to 
-            # estimate the line length from raw measurements
-            line_approx = None
-        else:
-            line_approx = ideals[2]
-        
-        
 
 
         EightTerm.__init__(self,
@@ -2324,8 +2322,21 @@ class TRL(EightTerm):
             *args, **kwargs)
 
 
-        thru_m, reflect_m, line_m = self.measured_unterminated
-        self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line
+        m_ut = self.measured_unterminated
+        for k in range(n_reflects+1,n_stds):
+            if estimate_line:
+                # setting line_approx  to None causes determine_line() to 
+                # estimate the line length from raw measurements
+                line_approx = None
+            else:
+                line_approx = ideals[k]
+            
+            self.ideals[k] = determine_line(m_ut[0], m_ut[k], line_approx) # find line
+
+MultilineTRL = TRL
+
+    
+    
 
 class UnknownThru(EightTerm):
     '''
