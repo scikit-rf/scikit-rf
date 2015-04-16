@@ -4369,7 +4369,7 @@ def impedance_mismatch(z1, z2):
     result[:,0,1] = (1-gamma)*npy.sqrt(1.0*z2/z1)
     return result
 
-def two_port_reflect(ntwk1, ntwk2):
+def two_port_reflect(ntwk1, ntwk2=None):
     '''
     Generates a two-port reflective two-port, from two one-ports.
 
@@ -4378,8 +4378,8 @@ def two_port_reflect(ntwk1, ntwk2):
     ----------
     ntwk1 : one-port Network object
             network seen from port 1
-    ntwk2 : one-port Network object
-            network seen from port 2
+    ntwk2 : one-port Network object, or None
+            network seen from port 2. if None then will use ntwk1. 
 
     Returns
     -------
@@ -4397,6 +4397,8 @@ def two_port_reflect(ntwk1, ntwk2):
     >>> rf.two_port_reflect(short,open)
     '''
     result = ntwk1.copy()
+    if ntwk2 is None:
+        ntwk2 =ntwk1
     s11 = ntwk1.s[:,0,0]
     s22 = ntwk2.s[:,0,0]
     s21 = npy.zeros(ntwk1.frequency.npoints, dtype=complex)
