@@ -415,6 +415,35 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     if plb.isinteractive():
         plb.draw()
 
+
+def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,  
+                   add_titles=True, keep_it_tight=True,  subplot_kw={}, *args, **kw):
+    '''
+    Plot all networks parameters individually on subplots
+    
+    Parameters
+    --------------
+    
+    
+    '''
+    if newfig:
+        f,axs= plb.subplots(ntwk.nports,ntwk.nports,
+                            figsize =(size_per_port*ntwk.nports,
+                                      size_per_port*ntwk.nports ),
+                                      **subplot_kw)
+    else:
+        f = plb.gcf() 
+        axs = npy.array(f.get_axes())
+
+    for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
+        plot_func = ntwk.__getattribute__('plot_%s_%s'%(param, proj))
+        plot_func(m=ports[0], n=ports[1], ax=ax,*args, **kw)
+        if add_titles:
+            ax.set_title('%s%i%i'%(param.upper(),ports[0]+1, ports[1]+1))
+    if keep_it_tight:
+       plb.tight_layout()
+    return f,axs
+
 def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     '''
     Shades frequency bands.
