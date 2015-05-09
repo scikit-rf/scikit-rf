@@ -3941,7 +3941,9 @@ def passivity(s):
     '''
     Passivity metric for a multi-port network.
 
-    This returns a matrix who's diagonals are equal to the total
+    A metric which is proportional to the amount of power lost in a 
+    multiport network, depending on the excitation port. Specifically, 
+    this returns a matrix who's diagonals are equal to the total
     power received at all ports, normalized to the power at a single
     excitement port.
 
@@ -3962,6 +3964,14 @@ def passivity(s):
 
     where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
     is dot product.
+    
+    Notes
+    ---------
+    The total amount of power disipated in a network depends on the 
+    port matches. For example, given a matched attenuator, this metric 
+    will yield the attenuation value. However, if the attenuator is 
+    cascaded with a mismatch, the power disipated will not be equivalent
+    to the attenuator value, nor equal for each excitation port.
 
     Returns
     ---------
