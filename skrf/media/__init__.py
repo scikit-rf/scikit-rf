@@ -53,9 +53,9 @@ Transmission Line Classes
 
 '''
 
-from media import Media
-from distributedCircuit import DistributedCircuit
-from freespace import Freespace
-from cpw import CPW
-from rectangularWaveguide import RectangularWaveguide
-from coaxial import Coaxial
+from .media import Media
+from .distributedCircuit import DistributedCircuit
+from .freespace import Freespace
+from .cpw import CPW
+from .rectangularWaveguide import RectangularWaveguide
+from .coaxial import Coaxial

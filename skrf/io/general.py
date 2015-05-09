@@ -28,8 +28,12 @@ Writing output to spreadsheet
 
 
 '''
-import cPickle as pickle
-from cPickle import UnpicklingError
+try:
+    import cPickle as pickle
+    from cPickle import UnpicklingError
+except ImportError:
+    import pickle as pickle
+    from pickle import UnpicklingError
 import inspect
 import os
 import zipfile
@@ -97,16 +101,16 @@ def read(file, *args, **kwargs):
     fid = get_fid(file, mode='rb')
     try:
         obj = pickle.load(fid, *args, **kwargs)
-    except(UnpicklingError):
+    except (UnpicklingError, UnicodeDecodeError) as e:
         # if fid is seekable then reset to beginning of file
         fid.seek(0)
 
-        if isinstance(file, basestring):
+        if isinstance(file, str):
             # we created the fid so close it
             fid.close()
         raise
 
-    if isinstance(file, basestring):
+    if isinstance(file, str):
         # we created the fid so close it
         fid.close()
 
@@ -185,7 +189,7 @@ def write(file, obj, overwrite = True):
 
 
     '''
-    if isinstance(file, basestring):
+    if isinstance(file, str):
         extn = get_extn(file)
         if extn is None:
             # if there is not extension add one
@@ -370,8 +374,9 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
             with open(os.path.join(dir+'/', filename), 'w') as fid:
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
-            print inst
-            warnings.warn('couldnt write %s: %s'%(k, inst.strerror))
+            print(inst)
+            warnings.warn('couldnt write %s: %s'%(k,inst.strerror))
+
             pass
 
 def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
@@ -410,7 +415,7 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
 
     '''
     objects = {}
-    print ('pickling: '),
+    print('pickling: ')
     for k in dict_objs:
         try:
             if module  in inspect.getmodule(dict_objs[k]).__name__:
@@ -418,14 +423,14 @@ def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
                     pickle.dumps(dict_objs[k])
                     if k[0] != '_':
                         objects[k] = dict_objs[k]
-                        print k+', ',
+                        print(k+', ')
                 finally:
                     pass
 
         except(AttributeError, TypeError):
             pass
     if len (objects ) == 0:
-        print 'nothing'
+        print('nothing')
 
     write(file, objects)
 

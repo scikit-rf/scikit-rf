@@ -85,8 +85,8 @@ References
 
 
 
-from frequency import Frequency
-from media import RectangularWaveguide, Media
+from . frequency import Frequency
+from . media import RectangularWaveguide, Media
 
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 

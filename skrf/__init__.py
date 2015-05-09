@@ -10,38 +10,48 @@ This is the main module file for skrf. it simply imports classes and
 methods. It does this in two ways; import all into the current namespace,
 and import modules themselves for coherent structured referencing
 '''
+# Python 3 compatibility
+from __future__ import absolute_import, print_function, division
+from six.moves import xrange 
 
 __version__ = '0.15.1'
 ## Import all  module names for coherent reference of name-space
-import media
-import calibration
-import io
+#import io
 
-import frequency
-import network
-import networkSet
-import plotting
-import mathFunctions
-import tlineFunctions
-import constants
-import util
+from . import frequency
+from . import network
+from . import networkSet
+from . import media
+
+from . import calibration
+from . import plotting
+from . import mathFunctions
+from . import tlineFunctions
+from . import constants
+from . import util
+from . import io
 
 try:
     import data
 except:
+<<<<<<< HEAD
     print('warning: data module didn\'t load. dont worry about it.')
     pass
+=======
+    print('warning: data module didnt load. dont worry about it.')
+    pass 
+>>>>>>> bf12cd6ff9d832b4a9d344dfc8b9568f2b955a02
 # Import contents into current namespace for ease of calling
-from frequency import *
-from network import *
-from networkSet import *
-from calibration import *
-from util import *
-from plotting import  *
-from mathFunctions import *
-from tlineFunctions import *
-from io import *
-from constants import *
+from .frequency import *
+from .network import *
+from .networkSet import *
+from .calibration import *
+from .util import *
+from .plotting import  *
+from .mathFunctions import *
+from .tlineFunctions import *
+from .io import * 
+from .constants import * 
 
 # Try to import vi, but if except if pyvisa not installed
 try:

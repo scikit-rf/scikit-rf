@@ -76,10 +76,13 @@ import os
 from copy import deepcopy, copy
 import itertools
 from warnings import warn
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
 
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
-    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c,cross_ratio
+    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c, cross_ratio
 from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
@@ -239,18 +242,18 @@ class Calibration(object):
                 raise(ValueError('measured Networks dont have matching frequencies.'))
         # ensure that all ideals have same frequency of the measured
         # if not, then attempt to interpolate
-        for k in range(len(self.ideals)):
+        for k in list(range(len(self.ideals))):
             if self.ideals[k].frequency != self.measured[0]:
-                print('Warning: Frequency information doesn\'t match on ideals[%i], attempting to interpolate the ideal[%i] Network ..'%(k,k)),
+                print('Warning: Frequency information doesn\'t match on ideals[{}], attempting to interpolate the ideal[{}] Network ..'.format(k,k))
                 try:
                     # try to resample our ideals network to match
                     # the meaurement frequency
                     self.ideals[k].interpolate_self(\
                         self.measured[0].frequency)
-                    print ('Success')
+                    print('Success')
 
                 except:
-                    raise(IndexError('Failed to interpolate. Check frequency of ideals[%i].'%k))
+                    raise(IndexError('Failed to interpolate. Check frequency of ideals[{}].'.format(k)))
 
 
         # passed to calibration algorithm in run()
@@ -376,7 +379,7 @@ class Calibration(object):
 
         coefs = NetworkSet(coefs_ntwks).to_s_dict()
 
-        frequency = coefs_ntwks.values()[0].frequency
+        frequency = list(coefs_ntwks.values())[0].frequency
 
         cal= cls.from_coefs(frequency=frequency, coefs=coefs, **kwargs)
         return cal
@@ -1040,8 +1043,8 @@ class OnePort(Calibration):
         numStds = self.nstandards
         numCoefs=3
 
-        mList = [self.measured[k].s.reshape((-1,1)) for k in range(numStds)]
-        iList = [self.ideals[k].s.reshape((-1,1)) for k in range(numStds)]
+        mList = [self.measured[k].s.reshape((-1,1)) for k in list(range(numStds))]
+        iList = [self.ideals[k].s.reshape((-1,1)) for k in list(range(numStds))]
 
         # ASSERT: mList and aList are now kx1x1 matrices, where k in frequency
         fLength = len(mList[0])
@@ -1056,11 +1059,11 @@ class OnePort(Calibration):
         # the matrix M. where M = i1, 1, i1*m1
         #                         i2, 1, i2*m2
         #                                 ...etc
-        for f in range(fLength):
+        for f in list(range(fLength)):
             #create  m, i, and 1 vectors
             one = npy.ones(shape=(numStds,1))
-            m = npy.array([ mList[k][f] for k in range(numStds)]).reshape(-1,1)# m-vector at f
-            i = npy.array([ iList[k][f] for k in range(numStds)]).reshape(-1,1)# i-vector at f
+            m = npy.array([ mList[k][f] for k in list(range(numStds))]).reshape(-1,1)# m-vector at f
+            i = npy.array([ iList[k][f] for k in list(range(numStds))]).reshape(-1,1)# i-vector at f
 
             # construct the matrix
             Q = npy.hstack([i, one, i*m])
@@ -1461,8 +1464,6 @@ class TwelveTerm(Calibration):
             self.measured = [self.measured[k] for k in order]
             self.ideals = [self.ideals[k] for k in order]
 
-
-
     def run(self):
         '''
         '''
@@ -1618,6 +1619,7 @@ class TwelveTerm(Calibration):
 
         return measured
 
+
 class SOLT(TwelveTerm):
     '''
     Short Open Load Thru, Full two-port calibration.
@@ -1757,9 +1759,10 @@ class TwoPortOnePath(TwelveTerm):
     '''
     Two Port One Path Calibration (aka poor man's TwelveTerm)
 
-    This algorithm is used when you have a three reciever system, ie
-    you can only measure the waves a1,b1,and b2. Given this architecture,
-    the DUT must be flipped and measured twice to be fully corrected.
+    Provides full errror correction  on a switchless three reciever 
+    system, ie you can only measure the waves a1,b1,and b2. 
+    Given this architecture, the DUT must be flipped and measured 
+    twice to be fully corrected.
 
     To allow for this, the `apply_cal` method takes a tuple of
     measurements in the order  (forward,reverse), and creates a composite
@@ -1874,10 +1877,24 @@ class TwoPortOnePath(TwelveTerm):
         '''
         apply the calibration to a measuremnt
 
+        Notes
+        -------
+        Full correction is possible given you have measured your DUT 
+        in both orientations. Meaning, you have measured the device, 
+        then physically flipped the device and made a second measurement. 
+        
+        This tuple of 2-port Networks is what is meant by
+        (forward,reverse), in the docstring below
+        
+        If you pass a single 2-port Network, then the measurement will 
+        only be partially corrected using what is known as the 
+        `EnhancedResponse` calibration. 
+
         Parameters
         -----------
-        network_tuple: tuple
-            tuple of 2-port Networks in order (forward, reverse)
+        network_tuple: tuple, or Network
+            tuple of 2-port Networks in order (forward, reverse) OR 
+            a single 2-port Network. 
 
 
 
@@ -1920,7 +1937,8 @@ class EnhancedResponse(TwoPortOnePath):
 
     For code-structuring reasons, this is a dummy placeholder class.
     Its just TwoPortOnePath, which defaults to enhancedresponse correction
-    when you correct a network, and not a tuple of networks
+    when you apply the calirbation to a single network, and not a tuple 
+    of networks.
     '''
     family = 'EnhancedResponse'
 
@@ -2042,9 +2060,9 @@ class EightTerm(Calibration):
         # the matrix M. where M =       e00 + S11i
         #                                                       i2, 1, i2*m2
         #                                                                       ...etc
-        for f in range(fLength):
+        for f in list(range(fLength)):
             # loop through standards and fill matrix
-            for k in range(numStds):
+            for k in list(range(numStds)):
                 m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
                 Q[k*4:k*4+4,:] = npy.array([\
                         [ 1, i[0,0]*m[0,0], -i[0,0],    0,  i[1,0]*m[0,1],        0,         0   ],\
@@ -2108,7 +2126,7 @@ class EightTerm(Calibration):
 
         ntwk = self.unterminate(ntwk)
 
-        for f in range(len(ntwk.s)):
+        for f in list(range(len(ntwk.s))):
             t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
             caled.s[f,:,:] = inv(-1*m.dot(t3)+t1).dot(m.dot(t4)-t2)
@@ -2122,7 +2140,7 @@ class EightTerm(Calibration):
 
         T1,T2,T3,T4 = self.T_matrices
 
-        for f in range(len(ntwk.s)):
+        for f in list(range(len(ntwk.s))):
             t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
             embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
@@ -2182,9 +2200,10 @@ class TRL(EightTerm):
     '''
     Thru Reflect Line
 
-    Classic two-port self-calibration algorithm developed by Engen and
-    Hoer [1]_, reformulated into a more matrix form in [2]_.
-
+    A Similar self-calibration algorithm as developed by Engen and
+    Hoer [1]_, more closely following into a more matrix form in [2]_.
+    
+    
     .. warning::
         This version of TRL does not solve for the Reflect standard yet
 
@@ -2204,15 +2223,17 @@ class TRL(EightTerm):
 
     '''
     family = 'TRL'
-    def __init__(self, measured, ideals=None, estimate_line=False, *args,
-                 **kwargs):
+    def __init__(self, measured, ideals=None, estimate_line=False, 
+                n_reflects=1,*args,**kwargs):
         '''
         Initialize a TRL calibration
 
         Note that the order of `measured` and `ideals` is strict.
-        It must be [Thru, Reflect, Line].
+        It must be [Thru, Reflect, Line]. A multiline algorithms is 
+        used if more than one line is passed. Multiple reflects can
+        also be used, see `n_reflects` argument.
 
-        All of the ideals can be indivdually set to None, or the entire
+        All of the `ideals` can be indivdually set to None, or the entire
         list set to None (`ideals=None`). For each ideal set to None 
         the following assumptions are made: 
         
@@ -2222,9 +2243,9 @@ class TRL(EightTerm):
         
         Note you can also use the `estimate_line` option  to 
         automatically  estimate the initial guess for the line length 
-        from measurements (see below). This is sensible
+        from measurements . This is sensible
         if you have no idea what the line length is, but your **error 
-        networks** are well macthed (S_ij >>S_ii)
+        networks** are well macthed (E_ij >>E_ii).
 
 
         .. warning::
@@ -2249,6 +2270,8 @@ class TRL(EightTerm):
         estimate_line : bool
             Estimates the length of the line standard from raw measurements.
             
+        n_reflects :  1
+            number of reflective standards 
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
@@ -2257,11 +2280,10 @@ class TRL(EightTerm):
         '''
         warn('Value of Reflect is not solved for yet.')
 
-
-        # TODO: allow them to pass None for the ideal thru, and create
-        #       if they do, create it. perhaps the line also
+        n_stds = len(measured)
+            
         if ideals is None:
-            ideals = [None,None,None]
+            ideals = [None]*len(measured)
             
         if ideals[0] is None:
             # lets make an ideal flush thru for them
@@ -2272,33 +2294,26 @@ class TRL(EightTerm):
             ideal_thru.s[:,0,1] = 1
             ideals[0] = ideal_thru
         
-        if ideals[1] is None:
-            # assume they are using flushshorts
-            ideal_reflect = measured[0].copy()
-            ideal_reflect.s[:,0,0] = -1
-            ideal_reflect.s[:,1,1] = -1
-            ideal_reflect.s[:,1,0] = 0
-            ideal_reflect.s[:,0,1] = 0
-            ideals[1] = ideal_reflect
-            
-        if ideals[2] is None:
-            # lets make an 90deg line for them
-            ideal_line = measured[2].copy()
-            ideal_line.s[:,0,0] = 0
-            ideal_line.s[:,1,1] = 0
-            ideal_line.s[:,1,0] = -1j
-            ideal_line.s[:,0,1] = -1j
-            ideals[2] = ideal_line
+        for k in range(1,n_reflects+1):
+            if ideals[k] is None:
+                # assume they are using flushshorts
+                ideal_reflect = measured[k].copy()
+                ideal_reflect.s[:,0,0] = -1
+                ideal_reflect.s[:,1,1] = -1
+                ideal_reflect.s[:,1,0] = 0
+                ideal_reflect.s[:,0,1] = 0
+                ideals[k] = ideal_reflect
+        
+        for k in range(n_reflects+1,n_stds):
+            if ideals[k] is None:
+                # lets make an 90deg line for them
+                ideal_line = measured[k].copy()
+                ideal_line.s[:,0,0] = 0
+                ideal_line.s[:,1,1] = 0
+                ideal_line.s[:,1,0] = -1j
+                ideal_line.s[:,0,1] = -1j
+                ideals[k] = ideal_line
 
-        
-        if estimate_line:
-            # setting line_approx  to None causes determine_line() to 
-            # estimate the line length from raw measurements
-            line_approx = None
-        else:
-            line_approx = ideals[2]
-        
-        
 
 
         EightTerm.__init__(self,
@@ -2307,8 +2322,21 @@ class TRL(EightTerm):
             *args, **kwargs)
 
 
-        thru_m, reflect_m, line_m = self.measured_unterminated
-        self.ideals[2] = determine_line(thru_m, line_m, line_approx) # find line
+        m_ut = self.measured_unterminated
+        for k in range(n_reflects+1,n_stds):
+            if estimate_line:
+                # setting line_approx  to None causes determine_line() to 
+                # estimate the line length from raw measurements
+                line_approx = None
+            else:
+                line_approx = ideals[k]
+            
+            self.ideals[k] = determine_line(m_ut[0], m_ut[k], line_approx) # find line
+
+MultilineTRL = TRL
+
+    
+    
 
 class UnknownThru(EightTerm):
     '''
@@ -2756,6 +2784,18 @@ def determine_line(thru_m, line_m, line_approx=None):
 
     s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
     
+    
+    fm = [ -1* npy.trace(npy.dot(thru_m.t[f], npy.linalg.inv(line_m.t[f]))) \
+        for f in list(range(npts))]
+    one = npy.ones(npts)
+    zero = npy.zeros(npts)
+    
+    roots_v = npy.frompyfunc( lambda x,y,z:npy.roots([x,y,z]),3,1 )
+    s12 = roots_v(one, fm, one)
+    s12_0 = npy.array([k[0]  for k in s12])
+    s12_1 = npy.array([k[1]  for k in s12])
+    
+    s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
     found_line = line_m.copy()
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose().reshape(-1,2,2)
     return found_line

@@ -1,7 +1,11 @@
 import unittest
 import os
+import six
 import numpy as npy
-import cPickle as pickle
+try:
+    import cPickle as pickle 
+except ImportError:
+    import pickle as pickle
 import skrf as rf
 from nose.plugins.skip import SkipTest
 class NetworkTestCase(unittest.TestCase):
@@ -31,7 +35,8 @@ class NetworkTestCase(unittest.TestCase):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
 
     def test_constructor_from_pickle(self):
-        rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
+        if six.PY2:
+            rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
 
 
     def test_open_saved_touchstone(self):
@@ -41,15 +46,16 @@ class NetworkTestCase(unittest.TestCase):
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
 
     def test_pickling(self):
-        original_ntwk = self.ntwk1
-        f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'),'wb')
-        pickle.dump(original_ntwk,f)
-        f.close()
-        f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
-        unpickled = pickle.load(f)
-        self.assertEqual(original_ntwk, unpickled)
-        f.close()
-        os.remove(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
+        if six.PY2:
+            original_ntwk = self.ntwk1
+            f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'),'wb')
+            pickle.dump(original_ntwk,f)
+            f.close()
+            f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
+            unpickled = pickle.load(f)
+            self.assertEqual(original_ntwk, unpickled)
+            f.close()
+            os.remove(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
 
     def test_stitch(self):
         tmp = self.ntwk1.copy()
