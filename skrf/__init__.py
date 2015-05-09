@@ -34,13 +34,9 @@ from . import io
 try:
     import data
 except:
-<<<<<<< HEAD
     print('warning: data module didn\'t load. dont worry about it.')
     pass
-=======
-    print('warning: data module didnt load. dont worry about it.')
-    pass 
->>>>>>> bf12cd6ff9d832b4a9d344dfc8b9568f2b955a02
+
 # Import contents into current namespace for ease of calling
 from .frequency import *
 from .network import *
