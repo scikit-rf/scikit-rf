@@ -268,6 +268,7 @@ class Network(object):
             npy.angle(x))),
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
+        'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0],
         'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
         'time' : lambda x: fft.ifftshift(fft.ifft(x, axis=0), axes=0),
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
@@ -288,6 +289,7 @@ class Network(object):
         'rad_unwrap'    : 'Phase (rad)',
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
+        'gd' : 'Group Delay',
         'vswr' : 'VSWR',
         'passivity' : 'Passivity',
         'reciprocity' : 'Reciprocity',
@@ -626,9 +628,12 @@ class Network(object):
         for prop_name in PRIMARY_PROPERTIES:
             for func_name in COMPONENT_FUNC_DICT:
                 func = COMPONENT_FUNC_DICT[func_name]
-                def fget(self, f=func, p = prop_name):
-                    return f(getattr(self,p))
-
+                if 'gd' in func_name: # scaling of gradient by frequency
+                    def fget(self, f=func, p = prop_name):
+                        return f(getattr(self,p)) / (2 * npy.pi * self.frequency.step)
+                else:
+                    def fget(self, f=func, p = prop_name):
+                        return f(getattr(self,p))
                 doc = '''
                 The %s component of the %s-matrix
 
