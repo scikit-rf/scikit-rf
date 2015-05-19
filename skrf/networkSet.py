@@ -768,7 +768,7 @@ class NetworkSet(object):
 
                 ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
                         's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                        's_db':'Magnitude (dB)'}
+                        's_db':'Magnitude (dB)','s_gd':'Group Delay (s)'}
 
                 ax = plb.gca()
 
@@ -855,7 +855,7 @@ class NetworkSet(object):
         '''
         ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
                 's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                's_db':'Magnitude (dB)'}
+                's_db':'Magnitude (dB)','s_gd':'Group Delay (s)'}
 
         ax = plb.gca()
 
