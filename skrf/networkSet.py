@@ -787,6 +787,11 @@ class NetworkSet(object):
                     upper_bound = ppf(upper_bound)
                     lower_bound = ppf(lower_bound)
                     lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+                    if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                        if attribute is 's_mag':
+                            attribute = 's_db'
+                        elif attribute is 's_time_mag':
+                            attribute = 's_time_db'
 
                 if type == 'shade':
                     ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
@@ -874,6 +879,11 @@ class NetworkSet(object):
             upper_bound = ppf(upper_bound)
             lower_bound = ppf(lower_bound)
             lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+            if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                if attribute is 's_mag':
+                    attribute = 's_db'
+                elif attribute is 's_time_mag':
+                    attribute = 's_time_db'
 
         if type == 'shade':
             ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
