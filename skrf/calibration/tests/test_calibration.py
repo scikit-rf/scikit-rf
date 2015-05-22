@@ -269,8 +269,10 @@ class PHNTest(OnePortTest):
         wg = self.wg
         
         self.E = wg.random(n_ports =2, name = 'E')
-        known1 = wg.short()#wg.load(0)#wg.random()
-        known2 = wg.load(rand() + rand()*1j) #wg.random()
+        known1 = wg.random()
+        known2 = wg.random()
+        #known1 = wg.short()
+        #known2 = wg.load(rand() + rand()*1j) 
         
         ideals = [
                 wg.delay_short( 45.,'deg',name='ideal ew'),
@@ -279,8 +281,8 @@ class PHNTest(OnePortTest):
                 known2,
                 ]
         actuals = [
-                wg.delay_short( 20.,'deg',name='true ew'),
-                wg.delay_short( 110.,'deg',name='true qw'),
+                wg.delay_short( 40.,'deg',name='true ew'),
+                wg.delay_short( 95.,'deg',name='true qw'),
                 known1,
                 known2,
                 ]
