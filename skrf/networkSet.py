@@ -808,7 +808,7 @@ class NetworkSet(object):
                 else:
                     raise(ValueError('incorrect plot type'))
 
-                ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))
+                ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
                 ax.axis('tight')
 
 
@@ -898,7 +898,7 @@ class NetworkSet(object):
         else:
             raise(ValueError('incorrect plot type'))
 
-        ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))
+        ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
         ax.axis('tight')
 
 
