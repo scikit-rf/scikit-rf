@@ -200,6 +200,7 @@ class Network(object):
     :attr:`s_mag`          magnitude of the s-matrix
     :attr:`s_db`           magnitude in log scale of the s-matrix
     :attr:`s_deg`          phase of the s-matrix in degrees
+    :attr:`s_gd`           group delay derived from the s-matrix
     =====================  =============================================
 
     The following operations act on the networks s-matrix.
@@ -230,6 +231,7 @@ class Network(object):
     :func:`plot_s_db`          plot magnitude (in dB) of s-parameters vs frequency
     :func:`plot_s_deg`         plot phase of s-parameters (in degrees) vs frequency
     :func:`plot_s_deg_unwrap`  plot phase of s-parameters (in unwrapped degrees) vs frequency
+    :func:`plot_s_gd`          plot group delay of s-parameters (in s) vs frequency
     =========================  =============================================
 
     :class:`Network`  objects can be  created from a touchstone or pickle
@@ -289,7 +291,7 @@ class Network(object):
         'rad_unwrap'    : 'Phase (rad)',
         'arcl'  : 'Arc Length',
         'arcl_unwrap'   : 'Arc Length',
-        'gd' : 'Group Delay',
+        'gd' : 'Group Delay (s)',
         'vswr' : 'VSWR',
         'passivity' : 'Passivity',
         'reciprocity' : 'Reciprocity',
