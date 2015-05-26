@@ -1613,18 +1613,19 @@ class Network(object):
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
 
-        try:
-            self.name = os.path.basename( os.path.splitext(filename)[0])
-            # this may not work if filename is a file object
-        except(AttributeError):
-            # in case they pass a file-object instead of file name,
-            # get the name from the touchstone file
+        if self.name is None:
             try:
-                self.name = os.path.basename( os.path.splitext(touchstoneFile.filename)[0])
-            except():
-                print('warning: couldnt inspect network name')
-                self.name=''
-            pass
+                self.name = os.path.basename( os.path.splitext(filename)[0])
+                # this may not work if filename is a file object
+            except(AttributeError):
+                # in case they pass a file-object instead of file name,
+                # get the name from the touchstone file
+                try:
+                    self.name = os.path.basename( os.path.splitext(touchstoneFile.filename)[0])
+                except():
+                    print('warning: couldnt inspect network name')
+                    self.name=''
+                pass
         #TODO: add Network property `comments` which is read from
         # touchstone file.
 
