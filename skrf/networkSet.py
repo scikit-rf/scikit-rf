@@ -37,7 +37,7 @@ NetworkSet Class
 
 import os
 from . network import average as network_average
-from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT, Y_LABEL_DICT
 
 from . import mathFunctions as mf
 import zipfile
@@ -765,11 +765,6 @@ class NetworkSet(object):
         for m in M:
             for n in N:
 
-
-                ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
-                        's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                        's_db':'Magnitude (dB)','s_gd':'Group Delay (s)'}
-
                 ax = plb.gca()
 
                 ntwk_mean = self.__getattribute__('mean_'+attribute)
@@ -787,6 +782,11 @@ class NetworkSet(object):
                     upper_bound = ppf(upper_bound)
                     lower_bound = ppf(lower_bound)
                     lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+                    if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                        if attribute is 's_mag':
+                            attribute = 's_db'
+                        elif attribute is 's_time_mag':
+                            attribute = 's_time_db'
 
                 if type == 'shade':
                     ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
@@ -808,7 +808,7 @@ class NetworkSet(object):
                 else:
                     raise(ValueError('incorrect plot type'))
 
-                ax.set_ylabel(ylabel_dict.get(attribute,''))
+                ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
                 ax.axis('tight')
 
 
@@ -853,9 +853,6 @@ class NetworkSet(object):
                 similar.  uncertainty for wrapped phase blows up at +-pi.
 
         '''
-        ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
-                's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                's_db':'Magnitude (dB)','s_gd':'Group Delay (s)'}
 
         ax = plb.gca()
 
@@ -874,6 +871,11 @@ class NetworkSet(object):
             upper_bound = ppf(upper_bound)
             lower_bound = ppf(lower_bound)
             lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+            if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                if attribute is 's_mag':
+                    attribute = 's_db'
+                elif attribute is 's_time_mag':
+                    attribute = 's_time_db'
 
         if type == 'shade':
             ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
@@ -896,7 +898,7 @@ class NetworkSet(object):
         else:
             raise(ValueError('incorrect plot type'))
 
-        ax.set_ylabel(ylabel_dict.get(attribute,''))
+        ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
         ax.axis('tight')
 
 
