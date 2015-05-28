@@ -258,7 +258,8 @@ class SDDMTest(OnePortTest):
     
     def test_from_coefs_ntwks(self):
         raise SkipTest('not applicable ')
-    
+
+@SkipTest
 class PHNTest(OnePortTest):
     '''
     '''
