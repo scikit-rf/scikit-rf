@@ -3771,6 +3771,7 @@ def s2a(s,z0):
     -------
     abcd : numpy.ndarray
         scattering transfer parameters (aka wave cascading matrix)
+    '''
     return z2a(s2z(s,z0))
     
 def y2s(y, z0=50):

@@ -2767,7 +2767,6 @@ def determine_line(thru_m, line_m, line_approx=None):
     '''
 
     npts = len(thru_m)
-    one = npy.ones(npts)
     zero = npy.zeros(npts)
 
     if line_approx is None:
@@ -2780,22 +2779,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     # the eigen values of the matrix C, are equal to s12,s12^-1)
     # we need to choose the correct one
     w,v = linalg.eig(C.t)
-
     s12_0, s12_1 = w[:,0], w[:,1]
-
-    s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
-    
-    
-    fm = [ -1* npy.trace(npy.dot(thru_m.t[f], npy.linalg.inv(line_m.t[f]))) \
-        for f in list(range(npts))]
-    one = npy.ones(npts)
-    zero = npy.zeros(npts)
-    
-    roots_v = npy.frompyfunc( lambda x,y,z:npy.roots([x,y,z]),3,1 )
-    s12 = roots_v(one, fm, one)
-    s12_0 = npy.array([k[0]  for k in s12])
-    s12_1 = npy.array([k[1]  for k in s12])
-    
     s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
     found_line = line_m.copy()
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose().reshape(-1,2,2)
