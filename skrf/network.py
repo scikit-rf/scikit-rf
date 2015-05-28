@@ -19,6 +19,17 @@ Network Class
 
     Network
 
+Network Representations
+============================
+
+.. autosummary::
+    :toctree: generated/
+
+    Network.s
+    Network.z
+    Network.y
+    Network.a
+    Network.t
 
 Connecting Networks
 ===============================
@@ -94,9 +105,11 @@ Supporting Functions
     s2z
     s2y
     s2t
+    s2a
     z2s
     z2y
     z2t
+    z2a
     y2s
     y2z
     y2t
@@ -1118,7 +1131,7 @@ class Network(object):
         return s2t(self.s)
 
     @property
-    def a(self):
+    def sa(self):
         '''
         Active scattering parameter matrix.
 
@@ -1145,10 +1158,43 @@ class Network(object):
         '''
         return 1/self.s
 
+    @sa.setter
+    def sa(self, value):
+        raise (NotImplementedError)
+
+    @property
+    def a(self):
+        '''
+        abcd parameter matrix. Used to cascade two-ports
+
+        The abcd-matrix  [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
+        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        Note that indexing starts at 0, so abcd11 can be accessed by
+        taking the slice `abcd[:,0,0]`.
+
+
+        Returns
+        ---------
+        abcd : complex :class:`numpy.ndarray` of shape `fxnxn`
+                the Impedance parameter matrix.
+
+        See Also
+        ------------
+        s
+        y
+        z
+        t
+        a
+        abcd
+
+        References
+        ------------
+        .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+        '''
+        return s2a(self.s, self.z0)
     @a.setter
     def a(self, value):
         raise (NotImplementedError)
-
 
     @property
     def z0(self):
@@ -3530,9 +3576,10 @@ def s2t(s):
         [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
             -s[:,1,1]/s[:,1,0]],
         [s[:,0,0]/s[:,1,0],
-            1/s[:,1,0] ]
+            1./s[:,1,0] ]
         ]).transpose()
     return t
+
 
 def z2s(z, z0=50):
     '''
@@ -3657,6 +3704,73 @@ def z2t(z):
     '''
     raise (NotImplementedError)
 
+def z2a(z):
+    '''
+    Converts impedance parameters to abcd  parameters [#]_ .
+
+   
+    Parameters
+    -----------
+    z : :class:`numpy.ndarray` (shape fx2x2)
+        impedance parameter matrix
+
+    Returns
+    -------
+    abcd : numpy.ndarray
+        scattering transfer parameters (aka wave cascading matrix)
+
+    See Also
+    ---------
+    inv : calculates inverse s-parameters
+
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
+    y2z
+    y2z
+    t2s
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+
+    References
+    -----------
+    .. [#] https://en.wikipedia.org/wiki/Two-port_network
+    '''
+    abcd = npy.array([
+        [z[:,0,0]/z[:,1,0],
+            1./z[:,1,0]],
+        [(z[:,0,0]*z[:,1,1]- z[:,1,0]*z[:,0,1])/z[:,1,0],
+            z[:,1,1]/z[:,1,0]],
+        ]).transpose()
+    return abcd
+
+def s2a(s,z0):
+    '''
+    Converts scattering parameters to abcd  parameters [#]_ .
+
+   
+    Parameters
+    -----------
+    s : :class:`numpy.ndarray` (shape fx2x2)
+        impedance parameter matrix
+        
+    z0: number or, :class:`numpy.ndarray` (shape fx2)
+        port impedance
+
+    Returns
+    -------
+    abcd : numpy.ndarray
+        scattering transfer parameters (aka wave cascading matrix)
+    return z2a(s2z(s,z0))
+    
 def y2s(y, z0=50):
     '''
     convert admittance parameters [#]_ to scattering parameters [#]_
