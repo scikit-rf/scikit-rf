@@ -9,7 +9,7 @@ Rectangular Waveguide class
 from scipy.constants import  epsilon_0, mu_0,pi,c
 from numpy import sqrt, exp, sinc
 import numpy as npy
-from media import Media
+from .media import Media
 from ..data import materials
 from ..tlineFunctions import skin_depth
 from ..network import s2y,y2s
@@ -20,7 +20,7 @@ class RectangularWaveguide(Media):
 
     Represents a single mode of a homogeneously filled rectangular
     waveguide of cross-section `a` x `b`. The mode is determined by
-    mode-type (te or tm) and mode indecies ( m and n ).
+    mode-type (te or tm) and mode indices ( m and n ).
 
 
     ====================================  =============  ===============
@@ -56,17 +56,17 @@ class RectangularWaveguide(Media):
         n : int
                 mode index in 'b'-direction
         ep_r : number, array-like,
-                filling material's relative permativity
+                filling material's relative permittivity
         mu_r : number, array-like
                 filling material's relative permeability
         rho : number, array-like, string
-            resistivity (ohm-m) of the conductor walls. If array-like 
-            must be same length as frequency. if str, it must be a key in 
+            resistivity (ohm-m) of the conductor walls. If array-like
+            must be same length as frequency. if str, it must be a key in
             `skrf.data.materials`.
         roughness : number, or array-like
-            surface roughness of the conductor walls in units of RMS 
+            surface roughness of the conductor walls in units of RMS
             deviation from surface
-            
+
         *args,**kwargs : arguments, keywrod arguments
                 passed to :class:`~skrf.media.media.Media`'s constructor
                 (:func:`~skrf.media.media.Media.__init__`
@@ -112,15 +112,15 @@ class RectangularWaveguide(Media):
 
     def __repr__(self):
         return self.__str__()
-    
+
     def __getstate__(self):
         '''
         method needed to allow for pickling
         '''
         return dict([(k, self.__dict__[k]) for k in \
             ['frequency','_z0','kz','a','b','mode_type','m','n','ep_r','mu_r']])
-        
-    
+
+
     @property
     def ep(self):
         '''
@@ -129,7 +129,7 @@ class RectangularWaveguide(Media):
         Returns
         -------
         ep : number
-                filling material's relative permativity
+                filling material's relative permittivity
         '''
         return self.ep_r * epsilon_0
 
@@ -212,46 +212,46 @@ class RectangularWaveguide(Media):
                 cut-off wavenumber
         '''
         return sqrt( self.kx**2 + self.ky**2)
-    
-    
+
+
     @property
     def f_cutoff(self):
         '''
         cutoff frequency for this mode
-        
+
         .. math::
-        
+
             max ( \frac{m \cdot v}{2a} , \frac{n \cdot v}{2b})
-            
+
         where v= sqrt(ep*mu)
-            
-             
-        
+
+
+
         '''
         v = 1/sqrt(self.ep*self.mu)
         if not ( self.m==1 and self.n==0):
-            print ('f_cutoff not verified as correct for this mode ')
+            print('f_cutoff not verified as correct for this mode ')
         return max(self.m*v/(2*self.a), self.n*v/(2*self.b))
-    
+
     @property
     def f_norm(self):
         '''
-        frequency vector normalized to cuttoff
+        frequency vector normalized to cutoff
         '''
         return self.frequency.f/self.f_cutoff
-    
+
     @property
     def rho(self):
         '''
         conductivty of sidewalls in ohm*m
-        
+
         Parameters
         --------------
         val : float, array-like or str
             the conductivity in ohm*m. If array-like must be same length
-            as self.frequency. if str, it must be a key in 
+            as self.frequency. if str, it must be a key in
             `skrf.data.materials`.
-            
+
         Examples
         ---------
         >>> wg.rho = 2.8e-8
@@ -263,40 +263,40 @@ class RectangularWaveguide(Media):
             delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
             k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
             return self._rho*k_w**2
-        
+
         return self._rho
-        
+
     @rho.setter
     def rho(self, val):
         if isinstance(val, str):
             self._rho = materials[val.lower()]['resistivity(ohm*m)']
         else:
             self._rho=val
-            
+
     @property
     def lambda_guide(self):
         '''
-        guide wavelength 
-        
+        guide wavelength
+
         the distance in which the phase of the field increases by 2 pi
         '''
         return 2*pi/self.propagation_constant.imag
-    
+
     @property
     def lambda_cutoff(self):
         '''
         cuttoff wavelength
-        
-        .. math:: 
-            
+
+        .. math::
+
             f_c * v
-            
-         where v= sqrt(ep*mu) 
+
+         where v= sqrt(ep*mu)
         '''
         v = 1/sqrt(self.ep*self.mu)
         return self.f_cutoff*v
-    
-    
+
+
     def kz(self):
         '''
         The Longitudinal wave number, aka propagation constant.
@@ -323,55 +323,58 @@ class RectangularWaveguide(Media):
                 1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
                 sqrt(abs(kc**2- k0**2))*(k0<kc) + \
                 0*(kc==k0) + self.alpha_c *(self.rho!=None)
-    
+
     @property
     def alpha_c(self):
         '''
-        Loss due to finite conductivity and roughness of sidewalls 
-        
+        Loss due to finite conductivity and roughness of sidewalls
+
         In units of np/m
         See property `rho` for setting conductivity.
-        
-        Effects of finite conductivity are taken from [#]_. If 
+
+        Effects of finite conductivity are taken from [#]_. If
         :attr:`roughness` is not None, then its effects the conductivity
-        by 
-        
-        
-        .. math:: 
-        
-            \\sigma_c = \\frac{\\sigma}{\\k_w^2}
-            
-        where 
-            
+        by
+
+
         .. math::
-            
+
+            \\sigma_c = \\frac{\\sigma}{k_w^2}
+
+
+        where
+
+        .. math::
+
             k_w = 1 + e^{(-\\delta/2h)^{1.6}}
-        
-            \\delta = skin depth 
-            h = surface roughness 
-            
+
+            \\delta = \\mbox{skin depth}
+
+            h = \\mbox{surface roughness }
+
+
         This is taken from Ansoft HFSS help documents.
-        
-        
-        
+
+
+
         References
         --------------
-        
-        .. [#] Electromagnetic Waves and Antennas by Sophocles J. Orfanidis 
+
+        .. [#] Chapter 9, (eq 9.8.1) of Electromagnetic Waves and Antennas by Sophocles J. Orfanidis
         http://eceweb1.rutgers.edu/~orfanidi/ewa/
         '''
-        
-        if self.rho==None: 
+
+        if self.rho==None:
             return 0
-        
+
         a,b,w,ep,rho,f_n = self.a, self.b, self.frequency.w, self.ep, \
             self.rho, self.f_norm
-        
-         
-            
+
+
+
         return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+2.*b/a*(1/f_n)**2)/\
             sqrt(1-(1/f_n)**2)
-        
+
 
     def Z0(self):
         '''
@@ -387,4 +390,4 @@ class RectangularWaveguide(Media):
 
         return impedance_dict[self.mode_type]
 
-   
+

@@ -7,7 +7,7 @@
 constants (:mod:`skrf.constants`)
 ========================================
 
-This module contains pre-initialized objects's. 
+This module contains pre-initialized objects's.
 
 
 
@@ -18,7 +18,7 @@ Standard Waveguide Bands
 ++++++++++++++++++++++++++++++++++++++++++++
 These are predefined :class:`~skrf.frequency.Frequency` objects
 that correspond to standard waveguide bands. This information is taken
-from the VDI Application Note 1002 [#]_ . 
+from the VDI Application Note 1002 [#]_ .
 
 
 =======================  ===============================================
@@ -35,7 +35,7 @@ f_wr1                    WR-1, 750-1100 GHz
 
 :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`  Objects
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-These are predefined :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide` 
+These are predefined :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`
 objects for  standard waveguide bands.
 
 =======================  ===============================================
@@ -49,15 +49,15 @@ wr1                      WR-1, 750-1100 GHz
 ...                      ...
 =======================  ===============================================
 
-Shorthand Names 
+Shorthand Names
 ----------------
 
-Below is a list of shorthand object names which can be use to save some 
+Below is a list of shorthand object names which can be use to save some
 typing. These names are defined in the main `__init__` module.
 
 
 ============ ================
-Shorthand    Full Object Name   
+Shorthand    Full Object Name
 ============ ================
 F            :class:`~skrf.frequency.Frequency`
 N            :class:`~skrf.network.Network`
@@ -70,11 +70,11 @@ The following are shorthand names for commonly used, but unfortunately
 longwinded functions.
 
 ============ ================
-Shorthand    Full Object Name   
+Shorthand    Full Object Name
 ============ ================
 saf          :func:`~skrf.util.save_all_figs`
 ============ ================
- 
+
 
 
 
@@ -85,16 +85,16 @@ References
 
 
 
-from frequency import Frequency
-from media import RectangularWaveguide, Media
+from . frequency import Frequency
+from . media import RectangularWaveguide, Media
 
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
 def to_meters( d, unit='m'):
     '''
-    Translate various  units of distance into meters 
+    Translate various  units of distance into meters
 
- 
+
     Parameters
     ------------
     d : number or array-like
@@ -102,11 +102,11 @@ def to_meters( d, unit='m'):
     unit : str
         the unit to that x is in:
         ['m','cm','um','in','mil','s','us','ns','ps']
-    
-    
+
+
     Examples
     ---------
-    >>> x = rf.to_meters(3,'um')    
+    >>> x = rf.to_meters(3,'um')
     '''
     unit = unit.lower()
     d_dict ={'m':d,
@@ -126,11 +126,11 @@ def to_meters( d, unit='m'):
     except(KeyError):
         raise(ValueError('Incorrect unit'))
 
-# globals 
+# globals
 
 
-# pre-initialized classes       
-        
+# pre-initialized classes
+
 f_wr51  = Frequency(15,22,1001, 'ghz')
 f_wr42  = Frequency(17.5,26.5,1001, 'ghz')
 f_wr34  = Frequency(22,33,1001, 'ghz')

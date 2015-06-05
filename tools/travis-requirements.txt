@@ -1,0 +1,5 @@
+
+xlwt-future>=0.8.0
+xlrd>=0.6.1
+nose-exclude
+coveralls

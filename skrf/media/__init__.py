@@ -12,9 +12,9 @@ by specific transmission line instances, such as
 :class:`~freespace.Freespace`, or
 :class:`~rectangularWaveguide.RectangularWaveguide`. The
 :class:`~media.Media` object provides generic methods to produce
-:class:`~skrf.network.Network`'s for any transmision line medium, such
+:class:`~skrf.network.Network`'s for any transmission line medium, such
 as :func:`~media.Media.line` and :func:`~media.Media.delay_short`. These
-methods are inherited by the specific tranmission line classes,
+methods are inherited by the specific transmission line classes,
 which interally define relevant quantities such as propagation constant,
 and characteristic impedance. This allows the specific transmission line
 mediums to produce networks without re-implementing methods for
@@ -26,7 +26,7 @@ such as :func:`~media.cpw.CPW.cpw_short` and
 in those object
 
 
-    
+
 
 Media base-class
 -------------------------
@@ -53,9 +53,9 @@ Transmission Line Classes
 
 '''
 
-from media import Media
-from distributedCircuit import DistributedCircuit
-from freespace import Freespace
-from cpw import CPW
-from rectangularWaveguide import RectangularWaveguide
-from coaxial import Coaxial
+from .media import Media
+from .distributedCircuit import DistributedCircuit
+from .freespace import Freespace
+from .cpw import CPW
+from .rectangularWaveguide import RectangularWaveguide
+from .coaxial import Coaxial

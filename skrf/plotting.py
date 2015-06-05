@@ -38,6 +38,8 @@ Misc Functions
 import pylab as plb
 import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
+from matplotlib.pyplot import quiver
+from matplotlib import rcParams
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
 
@@ -135,7 +137,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     if not border: 
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
         
     
@@ -143,7 +145,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         #Clear axis
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.iteritems():
+        for loc, spine in ax1.spines.items():
             spine.set_color('none')
 
         #Will make annotations only if the radius is 1 and it is the impedance smith chart
@@ -384,7 +386,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
         title=title, show_legend=show_legend, axis_equal=axis_equal,
         ax=ax, *args, **kwargs)
 
-def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
+def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imaginary', title='Complex Plane', show_legend=True,
     axis='equal', ax=None, force_chart = False, *args, **kwargs):
     '''
@@ -392,8 +394,8 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
 
     Parameters
     ------------
-    z : array-like, of complex data
-        data to plot
+    s : complex array-like
+        reflection-coeffient-like data to plot
     smith_r : number
         radius of smith chart
     chart_type : ['z','y']
@@ -433,7 +435,7 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
         if len(ax.patches) == 0:
             smith(ax=ax, smithR = smith_r, chart_type=chart_type)
 
-    plot_complex_rectangular(z, x_label=x_label, y_label=y_label,
+    plot_complex_rectangular(s, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
@@ -441,18 +443,47 @@ def plot_smith(z, smith_r=1, chart_type='z', x_label='Real',
     if plb.isinteractive():
         plb.draw()
 
+
+def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,  
+                   add_titles=True, keep_it_tight=True,  subplot_kw={}, *args, **kw):
+    '''
+    Plot all networks parameters individually on subplots
+    
+    Parameters
+    --------------
+    
+    
+    '''
+    if newfig:
+        f,axs= plb.subplots(ntwk.nports,ntwk.nports,
+                            figsize =(size_per_port*ntwk.nports,
+                                      size_per_port*ntwk.nports ),
+                                      **subplot_kw)
+    else:
+        f = plb.gcf() 
+        axs = npy.array(f.get_axes())
+
+    for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
+        plot_func = ntwk.__getattribute__('plot_%s_%s'%(param, proj))
+        plot_func(m=ports[0], n=ports[1], ax=ax,*args, **kw)
+        if add_titles:
+            ax.set_title('%s%i%i'%(param.upper(),ports[0]+1, ports[1]+1))
+    if keep_it_tight:
+       plb.tight_layout()
+    return f,axs
+
 def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     '''
     Shades frequency bands.
     
     when plotting data over a set of frequency bands it is nice to 
-    have each band visually seperated from the other. The kwarg `alpha`
+    have each band visually separated from the other. The kwarg `alpha`
     is useful.
     
     Parameters 
     --------------
     edges : array-like
-        x-values seperating regions of a given shade
+        x-values separating regions of a given shade
     y_range : tuple 
         y-values to shade in 
     cmap : str
@@ -501,12 +532,12 @@ def save_all_figs(dir = './', format=None, replace_spaces = True, echo = True):
         if format is None:
             plb.savefig(dir+fileName)
             if echo:
-                print (dir+fileName)
+                print((dir+fileName))
         else:
             for fmt in format:
                 plb.savefig(dir+fileName+'.'+fmt, format=fmt)
                 if echo:
-                    print (dir+fileName+'.'+fmt)
+                    print((dir+fileName+'.'+fmt))
 saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
@@ -554,7 +585,7 @@ def legend_off(ax=None):
 
 def scrape_legend(n=None, ax=None):
     '''
-    scrapes a legend with redundent labels
+    scrapes a legend with redundant labels
     
     Given a legend of m entries of n groups, this will remove all but 
     every m/nth entry. This is used when you plot many lines representing
@@ -576,7 +607,6 @@ def scrape_legend(n=None, ax=None):
     
     k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
     ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
-
 
 def func_on_all_figs(func, *args, **kwargs):
     '''
@@ -603,3 +633,14 @@ def func_on_all_figs(func, *args, **kwargs):
             plb.draw()
 
 foaf = func_on_all_figs
+
+def plot_vector(a, off=0+0j, *args, **kwargs):
+    '''
+    plot a 2d vector 
+    '''
+    return quiver(off.real,off.imag,a.real,a.imag,scale_units ='xy', 
+           angles='xy',scale=1, *args, **kwargs)
+
+
+def colors():
+    return rcParams['axes.color_cycle']

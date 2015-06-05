@@ -165,7 +165,7 @@ def test_examples():
 
 def test_index():
     assert_equal(doc['index']['default'], 'random')
-    print doc['index']
+    print(doc['index'])
     assert_equal(len(doc['index']), 2)
     assert_equal(len(doc['index']['refguide']), 2)
 

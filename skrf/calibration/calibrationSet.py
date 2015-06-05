@@ -19,7 +19,7 @@ CalibrationSet Class
 
 '''
 from itertools import product, combinations, permutations
-from calibration import Calibration
+from .calibration import Calibration
 from ..networkSet import NetworkSet
 
 
@@ -39,31 +39,57 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
             raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
 
     cal_list = []
-    for k in range(len(measured_sets[0])):
+    for k in list(range(len(measured_sets[0]))):
         measured = [measured_set[k] for measured_set in measured_sets]
         cal_list.append(
             Calibration(ideals=ideals, measured= measured,
             *args,**kwargs)
             )
-        
+
     return cal_list
 
 class CalibrationSet(object):
     '''
+    A set of Calibrations
+
+    This is designed to support experimental uncertainty analysis [1]_.
+
+    References
+    -----------
+
+    .. [1] A. Arsenovic, L. Chen, M. F. Bauwens, H. Li, N. S. Barker, and R. M. Weikle, "An Experimental Technique for Calibration Uncertainty Analysis," IEEE Transactions on Microwave Theory and Techniques, vol. 61, no. 1, pp. 263-269, 2013.
+
     '''
 
-    def __init__(self, ideals, measured_sets, combinatoric_func,
-        *args, **kwargs):
+    def __init__(self, cal_class, ideals, measured_sets,*args, **kwargs):
         '''
-        
+        Parameters
+        ----------
+        cal_class : a Calibration class
+            this is the class of calibration to use on the set. This
+            argument is the actual class itself like OnePort, TRL, SOLT, etc
+
+        ideals : list of Networks
+
+        measured_set :  list of NetworkSets, or list of lists
+            each element in this list should be a corresponding measured
+            set to the ideals element of the same index. The sets
+            themselves  can be anything list-like
+
+        \\*args\\**kargs :
+            passed to self.run(),
+
         '''
+        self.cal_class = cal_class
         self.ideals = ideals
         self.measured_sets = measured_sets
         self.args = args
         self.kwargs = kwargs
-        self.combinatoric_func = combinatoric_func
-        self.run()
-        
+        self.run(*args, **kwargs)
+
+    def __getitem__(self, key):
+        return self.cal_list[key]
+
     def apply_cal(self, raw_ntwk, *args, **kwargs):
         '''
         '''
@@ -86,27 +112,34 @@ class CalibrationSet(object):
                 for k in self.measured_sets]
 
     def run(self):
-        self.cal_list = self.combinatoric_func(
-            ideals = self.ideals,
-            measured_sets = self.measured_sets,
-            *self.args, **self.kwargs)
+        NotImplementedError('SubClass must implement this')
 
-    
-    
-    
-class Cartesian(CalibrationSet):
-    def __init__(self, ideals, measured_sets, *args, **kwargs):
-        CalibrationSet.__init__(self,
-            ideals = ideals,
-            measured_sets = measured_sets,
-            combinatoric_func = cartesian_product,
-            *args, **kwargs)
-            
+    @property
+    def corrected_sets(self):
+        '''
+        The set of corrected networks, each is corrected by its corresponding
+        element in the cal_list
+        '''
+        n_meas = len(self.cal_list[0].measured)
+        mat = [k.caled_ntwks for k in self.cal_list]
+        return [NetworkSet([k[l] for k in mat]) for l in range(n_meas)]
+
+
+
 class Dot(CalibrationSet):
-    def __init__(self, ideals, measured_sets, *args, **kwargs):
-        CalibrationSet.__init__(self,
-            ideals = ideals,
-            measured_sets = measured_sets,
-            combinatoric_func = dot_product,
-            *args, **kwargs)
+
+    def run(self, *args, **kwargs):
+        ideals = self.ideals
+        measured_sets = self.measured_sets
+        if len(set(map(len, measured_sets))) !=1:
+            raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
+
+        self.cal_list = []
+        for k in range(len(measured_sets[0])):
+            measured = [measured_set[k] for measured_set in measured_sets]
+            cal = self.cal_class(ideals=ideals, measured= measured,
+                                 *args,**kwargs)
+            self.cal_list.append(cal)
+
+
 

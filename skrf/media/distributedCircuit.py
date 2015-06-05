@@ -42,7 +42,7 @@ class DistributedCircuit(Media):
 
     From these, the following quantities may be calculated, which
     are functions of angular frequency (:math:`\omega`):
-    
+
     ===================================  ==================================================  ==============================
     Quantity                             Symbol                                              Property
     ===================================  ==================================================  ==============================
@@ -66,7 +66,7 @@ class DistributedCircuit(Media):
 
     .. math::
         +\\Re e\\{\\gamma\\} = \\text{attenuation}
-    
+
         -\\Im m\\{\\gamma\\} = \\text{forward propagation}
 
 
@@ -140,7 +140,7 @@ class DistributedCircuit(Media):
         d = self.__dict__.copy()
         del d['delay'] # cant pickle instance methods
         return(d)
-            
+
     @classmethod
     def from_Media(cls, my_media, *args, **kwargs):
         '''
@@ -185,9 +185,9 @@ class DistributedCircuit(Media):
     def Y(self):
         '''
         Distributed Admittance, :math:`Y^{'}`
-        
+
         Defined as
-        
+
         .. math::
                 Y^{'} = G^{'} + j \\omega C^{'}
 

@@ -1,5 +1,3 @@
-
-
 '''
 .. currentmodule:: skrf.mathFunctions
 =============================================
@@ -64,7 +62,7 @@ Special Functions
 
 '''
 import numpy as npy
-from numpy import pi,angle,unwrap   
+from numpy import pi,angle,unwrap
 from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
 
@@ -170,7 +168,7 @@ def magnitude_2_db(input,zero_nan=True):
             # input is a number not array-like
             if npy.isnan(out):
                 return LOG_OF_NEG
-            
+
     else:
         out = 20*npy.log10(input)
 
@@ -194,13 +192,13 @@ def mag_2_db10(input,zero_nan=True):
             # input is a number not array-like
             if npy.isnan(out):
                 return LOG_OF_NEG
-            
-    
+
+
     return out
 
 def db_2_magnitude(input):
     '''
-    converts db to linear magnitude. 
+    converts db to linear magnitude.
 
     returns:
             10**((z)/20.)
@@ -227,14 +225,14 @@ def magdeg_2_reim(mag,deg):
     converts linear magnitude and phase (in deg) arrays into a complex array
     '''
     return mag*npy.exp(1j*deg*pi/180.)
-    
+
 def dbdeg_2_reim(db,deg):
     '''
     converts db magnitude and phase (in deg) arrays into a complex array
     '''
     return magdeg_2_reim(db_2_magnitude(db),deg)
-    
-    
+
+
 def db_2_np(x):
     '''
     converts a value in nepers to dB
@@ -262,39 +260,39 @@ def unwrap_rad(input):
 def sqrt_known_sign(z_squared, z_approx):
     '''
     Returns sqrt of complex number, with sign chosen to match `z_approx`
-    
-    Parameters 
+
+    Parameters
     -------------
-    z_squared : number, array-like  
+    z_squared : number, array-like
         the complex to be square-rooted
     z_approx : number, array-like
-        the approximate value of z. sign of z is chosen to match that of 
+        the approximate value of z. sign of z is chosen to match that of
         z_approx
-    
+
     Returns
     ----------
     z : number, array-like (same type as z_squared)
-        square root of z_squared. 
-        
-    
-        
+        square root of z_squared.
+
+
+
     '''
     z = npy.sqrt(z_squared)
     return npy.where(
-        npy.sign(npy.angle(z)) == npy.sign(npy.angle(z_approx)), 
+        npy.sign(npy.angle(z)) == npy.sign(npy.angle(z_approx)),
         z, z.conj())
-    
+
 def find_correct_sign(z1,z2,z_approx):
     '''
     Create new vector from z1, z2 choosing elements with sign matching z_approx
-    
+
     This is used when you have to make a root choice on a complex number.
-    and you know the approximate value of the root. 
-    
-    .. math:: 
-        
+    and you know the approximate value of the root.
+
+    .. math::
+
         z1,z2 = \\pm \\sqrt(z^2)
-        
+
 
     Parameters
     ------------
@@ -304,22 +302,22 @@ def find_correct_sign(z1,z2,z_approx):
         root 2
     z_approx : array-like
         approximate answer of z
-    
-    Returns 
+
+    Returns
     ----------
     z3 : npy.array
-        array built from z1 and z2 by 
+        array built from z1 and z2 by
         z1 where sign(z1) == sign(z_approx), z2 else
-    
+
     '''
     return npy.where(
-    npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)    
+    npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)
 
 def find_closest(z1,z2,z_approx):
     '''
     Returns z1 or z2  depending on which is  closer to z_approx
-    
-    
+
+
     Parameters
     ------------
     z1 : array-like
@@ -328,21 +326,21 @@ def find_closest(z1,z2,z_approx):
         root 2
     z_approx : array-like
         approximate answer of z
-    
-    Returns 
+
+    Returns
     ----------
     z3 : npy.array
         array built from z1 and z2
-        
+
     '''
     z1_dist = abs(z1-z_approx)
     z2_dist = abs(z2-z_approx)
-    
-    return npy.where(z1_dist<z2_dist,z1, z2)  
+
+    return npy.where(z1_dist<z2_dist,z1, z2)
 
 def sqrt_phase_unwrap(input):
     '''
-    takes the square root of a complex number with unwraped phase
+    takes the square root of a complex number with unwrapped phase
 
     this idea came from Lihan Chen
     '''
@@ -353,7 +351,7 @@ def sqrt_phase_unwrap(input):
 # mathematical functions
 def dirac_delta(x):
     '''
-    the dirac function.
+    the Dirac function.
 
     can take numpy arrays or numbers
     returns 1 or 0 '''
@@ -396,26 +394,26 @@ def inf_to_num(x):
         x = npy.array(x)
         x[npy.isposinf(x)] = INF
         x[npy.isneginf(x)] = -1*INF
-    
+
 
 def cross_ratio(a,b,c,d):
     '''
     The cross ratio
-    
-    
-    defined as 
-    
-    .. math::     
-        
+
+
+    defined as
+
+    .. math::
+
         \frac{(a-b)(c-d)}{(a-d)*(c-b)}
-    
-    
+
+
     Parameters
     -------------
     a,b,c,d : complex numbers, or arrays
         mm
-    
-    
+
+
     '''
     return ((a-b)*(c-d))/((a-d)*(c-b))
 
@@ -451,15 +449,15 @@ def complex2MagPhase(complx,deg=False):
 def rand_c(*args):
     '''
     Creates a complex random array of shape s.
-    
+
     The bounds on real and imaginary values are (-1,1)
-    
-    
+
+
     Parameters
     -----------
     s : list-like
-        shape of array 
-    
+        shape of array
+
     Examples
     ---------
     >>> x = rf.rand_c(2,2)
@@ -474,7 +472,7 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     '''convert a one sided complex spectrum into a real time-signal.
     takes
             f: frequency array,
-            y: complex PSD arary
+            y: complex PSD array
             windowType: windowing function, defaults to rect
 
     returns in the form:
@@ -488,7 +486,7 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     # apply window function
     #TODO: make sure windowType exists in scipy.signal
     if (windowType != 'rect' ):
-        exec "window = signal.%s(%i)" % (windowType,len(f))
+        exec("window = signal.%s(%i)" % (windowType,len(f)))
         y = y * window
 
     #create other half of spectrum
@@ -505,8 +503,8 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     signalVector= npy.real(signalVector)
     # the response of frequency shifting is
     # exp(1j*2*pi*timeVector*f[0])
-    # but i would have to manually undo this for the inverse, which is just
-    # another  variable to require. the reason you need this is because
-    # you canttransform to a bandpass signal, only a lowpass.
+    # but I would have to manually undo this for the inverse, which is just
+    # another variable to require. The reason you need this is because
+    # you can't transform to a bandpass signal, only a lowpass.
     #
     return timeVector, signalVector

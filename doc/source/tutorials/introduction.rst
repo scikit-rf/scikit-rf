@@ -372,7 +372,7 @@ electrical properties. Below is a list of mediums types supported by skrf,
     * :class:`~media.Media`
 
 
-Network Compoents 
+Network Components 
 ==================
 Here is a brief
 list of some generic network components skrf supports,

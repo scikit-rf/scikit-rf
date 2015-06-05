@@ -11,7 +11,7 @@ These tests are most easily run using nosetests, like so ::
 Using QUCS for test-cases
 --------------------------
 
-skrf's media classes are tested by comparison with those produced by qucs (http://qucs.sourceforge.net/). The directory `qucs_prj/` is a qucs project directory which contains the projects used to generate the various touchstone files that are considered  correct. The easiest way to use this project in qucs is to symbolically link to the `qucs_prj` directory in your qucs directory (~/.qucs/ by default). So for example, if you are in this directory ::
+skrf's media classes are tested by comparison with those produced by qucs (http://qucs.sourceforge.net/). The directory `qucs_prj/` is a qucs project directory which contains the projects used to generate the various touchstone files that are considered correct. The easiest way to use this project in qucs is to symbolically link to the `qucs_prj` directory in your qucs directory (~/.qucs/ by default). So for example, if you are in this directory ::
 
     ln -s skrf/media/tests/qucs_prj ~/.qucs/
 
@@ -27,7 +27,7 @@ can be run.
 Structure of tests
 -------------------
 
-The test module `test_all_construction.py` tests that all media classes can call network creation methods that are inheritted from the `Media` class. 
+The test module `test_all_construction.py` tests that all media classes can call network creation methods that are inherited from the `Media` class. 
 
 In addition to this, each media class should have a seperate test module that tests its functionality. 
 

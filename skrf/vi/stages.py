@@ -24,12 +24,12 @@ class ESP300(GpibInstrument):
 
     all axis control commands are sent to the number axis given by the
     local variable self.current_axis. An example usage ::
-        
+
         from skrf.vi.stages import ESP300
         esp = ESP300()
         esp.current_axis = 1
         esp.position = 10
-        print esp.position
+        print(esp.position)
     '''
     UNIT_DICT = {\
             'enoder count':0,\
@@ -49,13 +49,13 @@ class ESP300(GpibInstrument):
     def __init__(self, address=1, current_axis=1,\
             always_wait_for_stop=True,delay=0,**kwargs):
         '''
-        Initializer 
-        
+        Initializer
+
         Parameters
         -------------
         address :   int
             Gpib address
-        current_axis :   int 
+        current_axis :   int
             number of current axis
         always_wait_for_stop :   Boolean
             wait for stage to stop before
@@ -155,7 +155,7 @@ class ESP300(GpibInstrument):
          takes:
                 input: a string, describing the units here are a list of
                         possibilities.
-                         'enoder count'
+                        'encoder count'
                         'motor step'
                         'millimeter'
                         'micrometer'

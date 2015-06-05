@@ -5,8 +5,8 @@
 vi (:mod:`skrf.vi`)
 ========================================================
 
-This module holds Virtual Instruments, which are generally controlled 
-by GPIB/VISA commands. You must have a working VISA to use these 
+This module holds Virtual Instruments, which are generally controlled
+by GPIB/VISA commands. You must have a working VISA to use these
 classes. See .
 
 
@@ -18,7 +18,7 @@ classes. See .
 
 
 '''
-
+__test__=False
 all = ['vna','sa','stages']
 
 
