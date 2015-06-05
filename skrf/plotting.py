@@ -43,7 +43,7 @@ from matplotlib.patches import Circle   # for drawing smith chart
 
 
 def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False, 
-    ax=None):
+    ax=None, ref_imm = 1.0): #TODO: Submit these changes!
     '''
     plots the smith chart of a given radius
 
@@ -153,23 +153,51 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
 
             #Annotate real part
             for value in rLightList:
-                rho = (value - 1)/(value + 1)
-                ax1.annotate(str(value), xy=((rho-0.12)*smithR, 0.01*smithR), \
-                    xytext=((rho-0.12)*smithR, 0.01*smithR))
+                rho = (value - 1)/(value + 1) - 0.01
+                ax1.annotate(str(value*ref_imm), xy=(rho*smithR, 0.01),
+                    xytext=(rho*smithR, 0.01), ha = "right", va = "baseline")
+#                ax1.annotate(str(value*RefImm), xy=((rho-0.12)*smithR, 0.01*smithR), \
+#                    xytext=((rho-0.12)*smithR, 0.01*smithR))
 
             #Annotate imaginary part
-            deltax = plb.array([-0.17, -0.14, -0.06,  0., 0.02, -0.2, -0.2, -0.08, 0., 0.03])
-            deltay = plb.array([0., 0.03, 0.01, 0.02, 0., -0.02, -0.06, -0.09, -0.08, -0.05])
-            for value, dx, dy in zip(xLightList, deltax, deltay):
+#            deltax = plb.array([-0.17, -0.14, -0.06,  0., 0.02, -0.2, -0.2, -0.08, 0., 0.03])
+#            deltay = plb.array([0., 0.03, 0.01, 0.02, 0., -0.02, -0.06, -0.09, -0.08, -0.05])
+#            for value, dx, dy in zip(xLightList, deltax, deltay):
+            radialFactor = 1.01 # Scale radius of text label by this factor
+            for value in xLightList:
                 #Transforms from complex to cartesian and adds a delta to x and y values
-                rhox = (-value**2 + 1)/(-value**2 - 1) * smithR * y_flip_sign + dx
-                rhoy = (-2*value)/(-value**2 - 1) * smithR + dy
+                S = (1j*value - 1) / (1j*value + 1)
+                S *= radialFactor * smithR
+                rhox = S.real
+                rhoy = S.imag * y_flip_sign
+                if ((value == 1.0) or (value == -1.0)):
+                    halignstyle = "center"
+                elif (rhox < 0.0):
+                    halignstyle = "right"
+                else:
+                    halignstyle = "left"
+                
+                if (rhoy < 0):
+                    valignstyle = "top"
+                else:
+                    valignstyle = "bottom"
                 #Annotate value
-                ax1.annotate(str(value) + 'j', xy=(rhox, rhoy), xytext=(rhox, rhoy))
+                ax1.annotate(str(value*ref_imm) + 'j', xy=(rhox, rhoy),
+                             xytext=(rhox, rhoy), ha = halignstyle, va = valignstyle)
+#                #Transforms from complex to cartesian and adds a delta to x and y values
+#                rhox = (-value**2 + 1)/(-value**2 - 1) * smithR * y_flip_sign + dx
+#                rhoy = (-2*value)/(-value**2 - 1) * smithR + dy
+#                #Annotate value
+#                ax1.annotate(str(value*RefImm) + 'j', xy=(rhox, rhoy), xytext=(rhox, rhoy),
+#                             ha = "right")
 
             #Annotate 0 and inf
-            ax1.annotate('0.0', xy=(-1.15, -0.02), xytext=(-1.15, -0.02))
-            ax1.annotate('$\infty$', xy=(1.02, -0.02), xytext=(1.02, -0.02))
+            ax1.annotate('0.0', xy=(-1.02, 0), xytext=(-1.02, 0),
+                         ha = "right", va = "center")
+            ax1.annotate('$\infty$', xy=(radialFactor, 0), xytext=(radialFactor, 0),
+                         ha = "left", va = "center")
+#            ax1.annotate('0.0', xy=(-1.15, -0.02), xytext=(-1.15, -0.02))
+#            ax1.annotate('$\infty$', xy=(1.02, -0.02), xytext=(1.02, -0.02))
 
     # loop though contours and draw them on the given axes
     for currentContour in contour:
