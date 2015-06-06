@@ -703,7 +703,7 @@ class Media(object):
 
     # transmission line
 
-    def to_meters(self, d, unit='m'):
+    def to_meters(self, d, unit='deg'):
         '''
         Translate various  units of distance into meters
 
@@ -760,7 +760,7 @@ class Media(object):
         '''
         return self.line(0,**kwargs)
 
-    def line(self,d, unit='m',z0=None, embed = False, **kwargs):
+    def line(self,d, unit='deg',z0=None, embed = False, **kwargs):
         '''
         Transmission line of a given length and impedance
 
@@ -815,7 +815,7 @@ class Media(object):
 
         return result
 
-    def delay_load(self,Gamma0,d,unit='m',**kwargs):
+    def delay_load(self,Gamma0,d,unit='deg',**kwargs):
         '''
         Delayed load
 
@@ -861,7 +861,7 @@ class Media(object):
         return self.line(d=d, unit=unit,**kwargs)**\
                 self.load(Gamma0=Gamma0,**kwargs)
 
-    def delay_short(self,d,unit='m',**kwargs):
+    def delay_short(self,d,unit='deg',**kwargs):
         '''
         Delayed Short
 
@@ -890,7 +890,7 @@ class Media(object):
         '''
         return self.delay_load(Gamma0=-1., d=d, unit=unit, **kwargs)
 
-    def delay_open(self,d,unit='m',**kwargs):
+    def delay_open(self,d,unit='deg',**kwargs):
         '''
         Delayed open transmission line
 
@@ -1055,7 +1055,7 @@ class Media(object):
         '''
         return self.shunt(self.inductor(L=L,*args,**kwargs)**self.short())
 
-    def attenuator(self, s21, db=True, d =0, unit='m', name='',**kwargs):
+    def attenuator(self, s21, db=True, d =0, unit='deg', name='',**kwargs):
         '''
         Ideal matched attenuator of a given length
 

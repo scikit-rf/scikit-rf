@@ -29,7 +29,7 @@ class MediaTestCase(unittest.TestCase):
             frequency = qucs_ntwk.frequency,
             a = 100*rf.mil
             )
-        skrf_ntwk = wg.thru(z0=50)**wg.line(200*rf.mil)**wg.thru(z0=50)
+        skrf_ntwk = wg.thru(z0=50)**wg.line(200*rf.mil,'m')**wg.thru(z0=50)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
 
 
@@ -48,7 +48,7 @@ class MediaTestCase(unittest.TestCase):
             rho = 1/(3.8e7),
             )
         self.assertTrue(
-            max(abs(wg.line(1*rf.inch).s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )
+            max(abs(wg.line(1,'in').s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )
 
     def test_roughness(self):
         '''
@@ -65,4 +65,4 @@ class MediaTestCase(unittest.TestCase):
             roughness = 100e-9,
             )
         self.assertTrue(
-            max(abs(wg.line(1*rf.inch).s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )
+            max(abs(wg.line(1,'in').s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )

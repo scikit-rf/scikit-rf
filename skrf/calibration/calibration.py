@@ -1343,18 +1343,29 @@ class PHN(OnePort):
         for k in range(npts):
             p =  poly1d([A[k],B[k],C[k]])
             b1[k],b2[k] = p.r
+        
+        a1 = -(f*b1 + g)/(z*b1 + e)
+        a2 = -(f*b2 + g)/(z*b2 + e)
 
         # temporarily translate into s-parameters so make the root-choice
         #  choosing a root in impedance doesnt generally work for typical
         # calibration standards
         b1_s = z2s(b1.reshape(-1,1,1),1)
         b2_s = z2s(b2.reshape(-1,1,1),1)
+        a1_s = z2s(a1.reshape(-1,1,1),1)
+        a2_s = z2s(a2.reshape(-1,1,1),1)
+        
         b_guess = z2s(b.reshape(-1,1,1),1)
-        b_found_s = find_closest(b1_s,b2_s,b_guess)
-
-        b_found = s2z(b_found_s.reshape(-1,1,1),1).flatten()
-        a_found = -(f*b_found + g)/(z*b_found + e)
-
+        a_guess = z2s(a.reshape(-1,1,1),1)
+        
+        distance1 = abs(a1_s - a_guess) + abs(b1_s - b_guess)
+        distance2 = abs(a2_s - a_guess) + abs(b2_s - b_guess)
+        
+        
+        b_found = npy.where(distance1<distance2, b1, b2)
+        a_found = npy.where(distance1<distance2, a1, a2)
+        
+        
         self.ideals[0].s = z2s(a_found.reshape(-1,1,1),1)
         self.ideals[1].s = z2s(b_found.reshape(-1,1,1),1)
 

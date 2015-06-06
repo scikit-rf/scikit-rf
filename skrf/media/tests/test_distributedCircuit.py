@@ -28,7 +28,7 @@ class MediaTestCase(unittest.TestCase):
             frequency = qucs_ntwk.frequency,
             R=1e5, G=1, I=1e-6, C=8e-12
             )
-        skrf_ntwk = a_media.thru(z0=50)**a_media.line(1e-3)\
+        skrf_ntwk = a_media.thru(z0=50)**a_media.line(1e-3,'m')\
                     **a_media.thru(z0=50)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
 

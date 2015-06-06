@@ -259,7 +259,7 @@ class SDDMTest(OnePortTest):
     def test_from_coefs_ntwks(self):
         raise SkipTest('not applicable ')
 
-@SkipTest
+#@SkipTest
 class PHNTest(OnePortTest):
     '''
     '''
@@ -282,8 +282,8 @@ class PHNTest(OnePortTest):
                 known2,
                 ]
         actuals = [
-                wg.delay_short( 40.,'deg',name='true ew'),
-                wg.delay_short( 95.,'deg',name='true qw'),
+                wg.delay_short( 33.,'deg',name='true ew'),
+                wg.delay_short( 110.,'deg',name='true qw'),
                 known1,
                 known2,
                 ]
@@ -299,6 +299,7 @@ class PHNTest(OnePortTest):
         
     def test_determine_ideals(self):
         self.cal.run()
+        
         self.assertEqual(self.actuals[0], self.cal.ideals[0])
         self.assertEqual(self.actuals[1], self.cal.ideals[1])
             
