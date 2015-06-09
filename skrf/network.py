@@ -2624,6 +2624,104 @@ class Network(object):
         else:
             return (forward-reverse)
 
+    # generalized mixed mode transformations
+    #TODO: documentation
+    #TODO: automated test cases
+    def se2gmm(self, p, z0_mm=None):
+        #TODO: assumes 'proper' order (differential ports, single ended ports)
+        if z0_mm is not None:
+            self.z0_mm = z0_mm
+        elif not hasattr(self, 'z0_mm'):
+            #TODO: choose z0mm automagically
+            raise NotImplementedError
+        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p)
+        A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
+        B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
+        self.s = npy.transpose(npy.linalg.solve(npy.transpose(B, (0,2,1)).conj(), npy.transpose(A, (0,2,1)).conj()),  (0,2,1)).conj()  # (34)
+
+    def gmm2se(self, p, z0_se=None):
+        #TODO: testing of reverse transformation
+        #TODO: assumes 'proper' order (differential ports, single ended ports)
+        if z0_se is not None:
+            self.z0 = z0_se
+        elif not hasattr(self, '_z0'):
+            #TODO: choose z0mm automagically
+            raise NotImplementedError
+        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p)
+        A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
+        B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
+        self.s = npy.linalg.solve(A, B)  # (35)
+        
+    # generalized mixed mode helpers
+    #TODO: simplification
+    _T = npy.array([[1, 0 , -1, 0], [0, 0.5, 0, -0.5], [0.5, 0, 0.5, 0], [0, 1, 0, 1]])  # (5)
+    
+    def _m(self, z0):
+        scaling = npy.sqrt(z0.real) / (2 * npy.abs(z0))
+        Z = npy.ones((z0.shape[0], 2, 2), dtype=npy.complex128)
+        Z[:,0,1] = z0
+        Z[:,1,1] = -z0
+        return scaling[:,npy.newaxis,npy.newaxis] * Z
+    
+    def _M(self, j, k):  # (14)
+        M = npy.zeros((self.f.shape[0],4,4), dtype=npy.complex128)
+        M[:,:2,:2] = self._m(self.z0[:,j])
+        M[:,2:,2:] = self._m(self.z0[:,k])
+        return M
+    
+    def _M_circle(self, j, k):  # (12)
+        M = npy.zeros((self.f.shape[0],4,4), dtype=npy.complex128)
+        M[:,:2,:2] = self._m(self.z0_mm[:,j])
+        M[:,2:,2:] = self._m(self.z0_mm[:,k])
+        return M
+    
+    def _X(self, j, k):  # (15)
+        return npy.einsum('...ij,...jk->...ik', self._M_circle(j, k).dot(self._T), npy.linalg.inv(self._M(j,k)))  # matrix multiplication elementwise for each frequency
+    
+    def _P(self, p):  # (27) (28)
+        n = self.nports
+    
+        Pda = npy.zeros((p,2*n), dtype=npy.bool)
+        Pdb = npy.zeros((p,2*n), dtype=npy.bool)
+        Pca = npy.zeros((p,2*n), dtype=npy.bool)
+        Pcb = npy.zeros((p,2*n), dtype=npy.bool)
+        Pa = npy.zeros((n-2*p,2*n), dtype=npy.bool)
+        Pb = npy.zeros((n-2*p,2*n), dtype=npy.bool)
+        for l in npy.arange(p):
+            Pda[l,4*(l+1)-3-1] = True
+            Pca[l,4*(l+1)-1-1] = True
+            Pdb[l,4*(l+1)-2-1] = True
+            Pcb[l,4*(l+1)-1] = True
+            if Pa.shape[0] is not 0:
+                Pa[l,4*p+2*(l+1)-1-1] = True
+                Pb[l,4*p+2*(l+1)-1] = True
+        return npy.concatenate((Pda, Pca, Pa, Pdb, Pcb, Pb))
+    
+    def _Q(self):  # (29) error corrected
+        n = self.nports
+    
+        Qa = npy.zeros((n,2*n), dtype=npy.bool)
+        Qb = npy.zeros((n,2*n), dtype=npy.bool)
+        for l in npy.arange(n):
+            Qa[l,2*(l+1)-1-1] = True
+            Qb[l,2*(l+1)-1] = True
+        return npy.concatenate((Qa, Qb))
+    
+    def _Xi(self, p):  # (24)
+        n = self.nports
+        Xi = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * npy.eye(2*n, dtype=npy.complex128)
+        for l in npy.arange(p):
+            Xi[:,4*l:4*l+4,4*l:4*l+4] = self._X(l*2, l*2+1)
+        return Xi
+    
+    def _Xi_tilde(self, p):  # (31)
+        n = self.nports
+        P = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * self._P(p)
+        QT = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * self._Q().T
+        Xi = self._Xi(p)
+        Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
+        return Xi_tilde[:,:n,:n], Xi_tilde[:,:n,n:], Xi_tilde[:,n:,:n], Xi_tilde[:,n:,n:]
+
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
     '''
@@ -4425,6 +4523,7 @@ def flip(a):
     else:
         raise IndexError('matrices should be 2x2, or kx2x2')
     return c
+
 
 
 
