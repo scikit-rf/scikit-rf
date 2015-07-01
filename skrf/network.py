@@ -2629,28 +2629,26 @@ class Network(object):
     #TODO: automated test cases
     def se2gmm(self, p, z0_mm=None):
         #TODO: assumes 'proper' order (differential ports, single ended ports)
-        if z0_mm is not None:
-            self.z0_mm = z0_mm
-        elif not hasattr(self, 'z0_mm'):
+        if z0_mm is None:
             #TODO: choose z0mm automagically
             raise NotImplementedError
-        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p)
+        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm)
         A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
         B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
         self.s = npy.transpose(npy.linalg.solve(npy.transpose(B, (0,2,1)).conj(), npy.transpose(A, (0,2,1)).conj()),  (0,2,1)).conj()  # (34)
+        self.z0 = z0_mm
 
     def gmm2se(self, p, z0_se=None):
         #TODO: testing of reverse transformation
         #TODO: assumes 'proper' order (differential ports, single ended ports)
-        if z0_se is not None:
-            self.z0 = z0_se
-        elif not hasattr(self, '_z0'):
+        if z0_se is None:
             #TODO: choose z0mm automagically
             raise NotImplementedError
-        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p)
+        Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
         self.s = npy.linalg.solve(A, B)  # (35)
+        self.z0 = z0_se
         
     # generalized mixed mode helpers
     #TODO: simplification
@@ -2663,20 +2661,21 @@ class Network(object):
         Z[:,1,1] = -z0
         return scaling[:,npy.newaxis,npy.newaxis] * Z
     
-    def _M(self, j, k):  # (14)
+    def _M(self, j, k, z0_se):  # (14)
         M = npy.zeros((self.f.shape[0],4,4), dtype=npy.complex128)
-        M[:,:2,:2] = self._m(self.z0[:,j])
-        M[:,2:,2:] = self._m(self.z0[:,k])
+        M[:,:2,:2] = self._m(z0_se[:,j])
+        M[:,2:,2:] = self._m(z0_se[:,k])
         return M
     
-    def _M_circle(self, j, k):  # (12)
+    def _M_circle(self, l, p, z0_mm):  # (12)
         M = npy.zeros((self.f.shape[0],4,4), dtype=npy.complex128)
-        M[:,:2,:2] = self._m(self.z0_mm[:,j])
-        M[:,2:,2:] = self._m(self.z0_mm[:,k])
+        # XXX; choosing wrong impedances
+        M[:,:2,:2] = self._m(z0_mm[:,l])    # differential mode impedance of port pair
+        M[:,2:,2:] = self._m(z0_mm[:,p+l])  # common mode impedance of port pair
         return M
     
-    def _X(self, j, k):  # (15)
-        return npy.einsum('...ij,...jk->...ik', self._M_circle(j, k).dot(self._T), npy.linalg.inv(self._M(j,k)))  # matrix multiplication elementwise for each frequency
+    def _X(self, j, k, l, p, z0_se, z0_mm):  # (15)
+        return npy.einsum('...ij,...jk->...ik', self._M_circle(l, p, z0_mm).dot(self._T), npy.linalg.inv(self._M(j,k, z0_se)))  # matrix multiplication elementwise for each frequency
     
     def _P(self, p):  # (27) (28)
         n = self.nports
@@ -2707,18 +2706,18 @@ class Network(object):
             Qb[l,2*(l+1)-1] = True
         return npy.concatenate((Qa, Qb))
     
-    def _Xi(self, p):  # (24)
+    def _Xi(self, p, z0_se, z0_mm):  # (24)
         n = self.nports
         Xi = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * npy.eye(2*n, dtype=npy.complex128)
         for l in npy.arange(p):
-            Xi[:,4*l:4*l+4,4*l:4*l+4] = self._X(l*2, l*2+1)
+            Xi[:,4*l:4*l+4,4*l:4*l+4] = self._X(l*2, l*2+1, l, p, z0_se, z0_mm)
         return Xi
     
-    def _Xi_tilde(self, p):  # (31)
+    def _Xi_tilde(self, p, z0_se, z0_mm):  # (31)
         n = self.nports
         P = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * self._P(p)
         QT = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * self._Q().T
-        Xi = self._Xi(p)
+        Xi = self._Xi(p, z0_se, z0_mm)
         Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:,:n,:n], Xi_tilde[:,:n,n:], Xi_tilde[:,n:,:n], Xi_tilde[:,n:,n:]
 
