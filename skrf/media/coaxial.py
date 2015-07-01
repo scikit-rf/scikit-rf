@@ -38,7 +38,7 @@ class Coaxial(DistributedCircuit):
             outer conductor diameter, in m
         epsilon_r=1 : number, or array-like
             relative permittivity of the dielectric medium
-        tan_delta=0 : numbe, or array-like
+        tan_delta=0 : number, or array-like
             loss tangent of the dielectric medium
         sigma=infinity : number, or array-like
             conductors electrical conductivity, in S/m
