@@ -3103,6 +3103,28 @@ def chopinhalf(ntwk, *args, **kwargs):
 
         return A
 
+def cascade_list(l):
+    '''
+    cascade a list of 2-port networks
+    
+    all networks must have same frequency
+    
+    Parameters
+    --------------
+    l : list-like
+        (ordered) list of networks 
+    
+    Returns
+    ----------
+    out : 2-port Network
+        the results of casacading all networks in the list `l`
+        
+    '''
+    out = l[0].copy()
+    for k in l[1:]:
+        out = out**k
+    return out
+
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):
     '''

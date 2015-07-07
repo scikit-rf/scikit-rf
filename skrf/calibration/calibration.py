@@ -3055,10 +3055,10 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
             #TODO: make this better and maybe have phase continuity
             # functionality
             tracking  = coefs['reflection tracking']
-            s12 = npy.sqrt(tracking)
-            s21 = npy.sqrt(tracking)
-            #s12 =  sqrt_phase_unwrap(tracking)
-            #s21 =  sqrt_phase_unwrap(tracking)
+            #s12 = npy.sqrt(tracking)
+            #s21 = npy.sqrt(tracking)
+            s12 =  sqrt_phase_unwrap(tracking)
+            s21 =  sqrt_phase_unwrap(tracking)
 
         else:
             s21 = coefs['reflection tracking']

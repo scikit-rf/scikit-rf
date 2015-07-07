@@ -27,9 +27,11 @@ from . import calibration
 from . import plotting
 from . import mathFunctions
 from . import tlineFunctions
+from . import taper
 from . import constants
 from . import util
 from . import io
+
 
 try:
     import data
@@ -47,6 +49,7 @@ from .mathFunctions import *
 from .tlineFunctions import *
 from .io import * 
 from .constants import * 
+from .taper import * 
 
 # Try to import vi, but if except if pyvisa not installed
 try:

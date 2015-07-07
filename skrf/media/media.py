@@ -1089,11 +1089,11 @@ class Media(object):
 
     def lossless_mismatch(self,s11,db=True,  **kwargs):
         '''
-        Lossless mismatch defined by its return loss
+        Lossless, symmetric mismatch defined by its return loss
 
         Parameters
         ----------
-        s11 : number, array-like
+        s11 : complex number, number, or array-like
             the reflection coefficient. if db==True, then phase is ignored
 
         db : bool
