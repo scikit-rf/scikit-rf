@@ -33,25 +33,7 @@ from ..calibration.calibration import Calibration, SOLT, OnePort, \
                                       convert_skrfcoefs_2_pna
 from .. import mathFunctions as mf
 
-
-from ivi import Driver
-
-try:
-    # rename the ivi method so our legacy VI's still work
-    Driver.ask_for_values = Driver._ask_for_values
-except:
-    # if they dont have git version of python-ivi 
-    def ask_for_values(self,msg, delim=',', converter=float, array = True):
-        s = self._ask(msg)
-        s_split = s.split(delim)
-        out = map(converter, s_split)
-        if array:
-            out = npy.array(out)
-        return out
-    Driver.ask_for_values = ask_for_values
-    
-Driver.ask = Driver._ask
-Driver.write = Driver._write
+from . ivihack import Driver
 
 class PNA(Driver):
     '''

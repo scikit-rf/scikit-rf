@@ -15,10 +15,11 @@ Stages  (:mod:`skrf.vi.stages`)
 '''
 from time import sleep
 import numpy as npy
-from visa import GpibInstrument
+
+from . ivihack import Driver
 
 
-class ESP300(GpibInstrument):
+class ESP300(Driver):
     '''
     Newport Universal Motion Controller/Driver Model ESP300
 
