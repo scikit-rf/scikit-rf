@@ -48,7 +48,10 @@ class Taper1D(object):
         self.length =length
         self.n_sections= n_sections
         self.kw = kw
-
+    
+    def __str__(self):
+        return 'Taper: {classname}: {param} from {start}-{stop}'
+        
     
     @property
     def section_length(self):

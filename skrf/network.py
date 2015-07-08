@@ -2678,6 +2678,11 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     # some checking
     check_frequency_equal(ntwkA,ntwkB)
 
+    if (k+num-1> ntwkA.nports-1):
+        raise IndexError('Port `k` out of range')
+    if (l+num-1> ntwkB.nports-1):
+        raise IndexError('Port `l` out of range')
+
     # create output Network, from copy of input
     ntwkC = ntwkA.copy()
 
@@ -2703,7 +2708,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     ntwkC.z0 = npy.hstack(
         (npy.delete(ntwkA.z0, range(k,k+1), 1), npy.delete(ntwkB.z0, range(l,l+1), 1)))
 
-    # if we're connecting more than one port, call innerconnect to finish the job
+    # if we're connecting more than one port, call innerconnect recursively
+    # untill all connections are made to finish the job
     if num>1:
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports-1+l, num-1)
 
@@ -2839,6 +2845,13 @@ def innerconnect(ntwkA, k, l, num=1):
     >>> ntwkC = rf.innerconnect(ntwkA, 0,1)
 
     '''
+    
+    if (k+num-1> ntwkA.nports-1):
+        raise IndexError('Port `k` out of range')
+    if (l+num-1> ntwkA.nports-1):
+        raise IndexError('Port `l` out of range')
+        
+        
     # create output Network, from copy of input
     ntwkC = ntwkA.copy()
 
@@ -2859,7 +2872,7 @@ def innerconnect(ntwkA, k, l, num=1):
     ntwkC.s = innerconnect_s(ntwkC.s,k,l)
 
     # update the characteristic impedance matrix
-    ntwkC.z0 = npy.delete(ntwkC.z0, list(range(k,k+num)) + list(range(l,l+num)),1)
+    ntwkC.z0 = npy.delete(ntwkC.z0, list(range(k,k+1)) + list(range(l,l+1)),1)
 
     # recur if we're connecting more than one port
     if num>1:
