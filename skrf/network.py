@@ -2861,7 +2861,7 @@ def innerconnect(ntwkA, k, l, num=1):
         # effect of differing port impedances
         mismatch = impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l])
         ntwkC.s = connect_s( ntwkA.s,k, mismatch, 0)
-        print 'mismatch %i-%i'%(k,l)
+        #print 'mismatch %i-%i'%(k,l)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
