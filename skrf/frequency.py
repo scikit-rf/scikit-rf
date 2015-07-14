@@ -268,19 +268,34 @@ class Frequency(object):
         '''
         return self.f[0]
 
+    @property 
+    def start_scaled(self):
+        '''
+        starting frequency in :attr:`unit`'s
+        '''
+        return self.f_scaled[0]
+    @property 
+    def stop_scaled(self):
+        '''
+        stop frequency in :attr:`unit`'s
+        '''
+        return self.f_scaled[-1]
+    
+        
     @property
     def stop(self):
         '''
-        starting frequency in Hz
+        stop frequency in Hz
         '''
         return self.f[-1]
 
     @property
     def npoints(self):
         '''
-        starting frequency in Hz
+        number of points in the frequency
         '''
         return len(self.f)
+    
     @npoints.setter
     def npoints(self, n):
         '''
@@ -288,7 +303,8 @@ class Frequency(object):
         '''
         self.f = linspace(self.start, self.stop, n)
 
-
+    
+    
     @property
     def center(self):
         '''
@@ -297,9 +313,28 @@ class Frequency(object):
         Returns
         ---------
         center : number
-                the exact center frequency in units of :attr:`unit`
+                the exact center frequency in units of hz
         '''
         return self.start + (self.stop-self.start)/2.
+    
+    @property
+    def center_idx(self):
+        '''
+        closes idx of :attr:`f` to the center frequency
+        '''
+        return int(self.npoints)/2
+        
+    @property
+    def center_scaled(self):
+        '''
+        Center frequency in :attr:`unit`'s
+
+        Returns
+        ---------
+        center : number
+                the exact center frequency in units of :attr:`unit`'s
+        '''
+        return self.start_scaled + (self.stop_scaled-self.start_scaled)/2.
 
     @property
     def step(self):
@@ -307,13 +342,27 @@ class Frequency(object):
         the inter-frequency step size
         '''
         return self.span/(self.npoints-1.)
-
+    
+    @property
+    def step_scaled(self):
+        '''
+        the inter-frequency step size in
+        '''
+        return self.span_scaled/(self.npoints-1.)
+    
     @property
     def span(self):
         '''
         the frequency span
         '''
         return abs(self.stop-self.start)
+    
+    @property
+    def span_scaled(self):
+        '''
+        the frequency span
+        '''
+        return abs(self.stop_scaled-self.start_scaled)
 
     @property
     def f(self):

@@ -65,7 +65,12 @@ class ESP300(Driver):
             passed to GpibInstrument initializer
         '''
 
-        GpibInstrument.__init__(self,address,**kwargs)
+        if isinstance(address,int):
+            resource = 'GPIB::%i::INSTR'%address
+        else:
+            resource = address
+
+        Driver.__init__(self,resource = resource, **kwargs)
         self.current_axis = current_axis
         self.always_wait_for_stop = always_wait_for_stop
         self.delay=delay

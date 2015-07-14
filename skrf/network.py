@@ -2855,12 +2855,13 @@ def innerconnect(ntwkA, k, l, num=1):
     # create output Network, from copy of input
     ntwkC = ntwkA.copy()
 
-    # connect a impedance mismatch, which will takes into account the
-    # effect of differing port impedances
+    
     if not (ntwkA.z0[:,k] == ntwkA.z0[:,l]).all():
-        ntwkC.s = connect_s(\
-            ntwkA.s,k, \
-            impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l]), 0)
+        # connect a impedance mismatch, which will takes into account the
+        # effect of differing port impedances
+        mismatch = impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l])
+        ntwkC.s = connect_s( ntwkA.s,k, mismatch, 0)
+        print 'mismatch %i-%i'%(k,l)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.

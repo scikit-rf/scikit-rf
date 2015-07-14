@@ -120,7 +120,32 @@ class RectangularWaveguide(Media):
         return dict([(k, self.__dict__[k]) for k in \
             ['frequency','_z0','kz','a','b','mode_type','m','n','ep_r','mu_r']])
 
-
+    @classmethod
+    def from_z0(cls,frequency, z0,f, m=1,n=0,ep_r=1, mu_r=1, **kw):
+        '''
+        Initialize from specfied impedance at a given frequency.
+        
+        Parameters
+        -------------
+        frequency : Frequency Object
+        z0 : number /array
+            scharacteristic impedance to create at `f`
+        f : number 
+            frequency (in Hz) that the resultant waveguide has z0=z0
+        '''
+        if n !=0: 
+            raise NotImplemented()
+        
+        
+        mu = mu_0*mu_r
+        ep = epsilon_0*ep_r
+        w = 2*pi*f
+        a =pi/(w*mu) * 1./sqrt((1/(z0*1j)**2+ep/mu))
+        
+        kw.update(dict(frequency=frequency,a=a, m=m, n=n, ep_r=ep_r, mu_r=mu_r))
+        
+        return cls(**kw)
+    
     @property
     def ep(self):
         '''
