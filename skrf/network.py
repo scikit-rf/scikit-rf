@@ -1515,7 +1515,13 @@ class Network(object):
     ## specific ploting functions
     def plot_passivity(self, port = None,label_prefix=None,  *args, **kwargs):
         '''
-        Plot dB(passivity metric) vs frequency
+        Plot dB(diag(passivity metric)) vs frequency
+        
+        Notes
+        -------
+        This plot does not completely capture the passivity metric, which 
+        is a test for `unitary-ness` of the s-matrix. However, it may
+        be  used to display a measure of power disapated in a network. 
 
         See Also
         -----------

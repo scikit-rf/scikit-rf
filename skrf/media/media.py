@@ -1112,8 +1112,11 @@ class Media(object):
         result.s[:,0,0] = s11
         result.s[:,1,1] = s11
 
-        result.s[:,0,1] = npy.sqrt(1- npy.abs(s11)**2)*\
-                npy.exp(1j*(npy.angle(s11)+npy.pi/2.*(npy.angle(s11)<0) -npy.pi/2*(npy.angle(s11)>0)))
+        s21_mag = npy.sqrt(1- npy.abs(s11)**2)
+        s21_phase = (npy.angle(s11) \
+                   + npy.pi/2 *(npy.angle(s11)<0) \
+                   - npy.pi/2 *(npy.angle(s11)>0))
+        result.s[:,0,1] =  s21_mag* npy.exp(1j*s21_phase)
         result.s[:,1,0] = result.s[:,0,1]
         return result
     
