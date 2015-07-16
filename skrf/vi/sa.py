@@ -52,9 +52,9 @@ class HP8500(Driver):
         address : int
             GPIB address
         \*args, \*\*kwargs :
-            passed to ``visa.GpibInstrument.__init__``
+            passed to ``ivi.Driver.__init__``
         '''
-        GpibInstrument.__init__(self,'GPIB::'+str(address),*args,**kwargs)
+        Driver.__init__(self,'GPIB::'+str(address),*args,**kwargs)
 
     @property
     def frequency(self):
