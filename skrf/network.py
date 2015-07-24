@@ -2915,6 +2915,25 @@ def cascade(ntwkA,ntwkB):
     '''
     return connect(ntwkA,1, ntwkB,0)
 
+def cascade_list(l):
+    '''
+    cascade a list of 2-port networks
+    
+    all networks must have same frequency
+    
+    Parameters
+    --------------
+    l : list-like
+        (ordered) list of networks 
+    
+    Returns
+    ----------
+    out : 2-port Network
+        the results of casacading all networks in the list `l`
+        
+    '''
+    return reduce(cascade, l)
+
 def de_embed(ntwkA,ntwkB):
     '''
     De-embed `ntwkA` from `ntwkB`.
@@ -3126,27 +3145,7 @@ def chopinhalf(ntwk, *args, **kwargs):
 
         return A
 
-def cascade_list(l):
-    '''
-    cascade a list of 2-port networks
-    
-    all networks must have same frequency
-    
-    Parameters
-    --------------
-    l : list-like
-        (ordered) list of networks 
-    
-    Returns
-    ----------
-    out : 2-port Network
-        the results of casacading all networks in the list `l`
-        
-    '''
-    out = l[0].copy()
-    for k in l[1:]:
-        out = out**k
-    return out
+
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):
