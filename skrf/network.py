@@ -403,7 +403,9 @@ class Network(object):
 
 
         #self.nports = self.number_of_ports
+        ##TODO: remove this as it takes up ~70% cpu time of this init
         self.__generate_plot_functions()
+        
 
     ## OPERATORS
     def __pow__(self,other):
@@ -1603,10 +1605,11 @@ class Network(object):
         Needed to allow pass-by-value for a Network instead of
         pass-by-reference
         '''
-        ntwk = Network()
-        ntwk.frequency = self.frequency.copy()
-        ntwk.s = self.s.copy()
-        ntwk.z0 = self.z0.copy()
+        ntwk = Network(s = self.s,
+                       frequency = self.frequency.copy(),
+                       z0 = self.z0,
+                       )
+        
         ntwk.name = self.name
         return ntwk
 
