@@ -2,13 +2,16 @@ from . network import cascade_list
 from scipy  import linspace
 
 class Taper1D(object):
-    def __init__(self, med, param, start, stop, n_sections, length,f,kw={}):
+    def __init__(self, med, param, start, stop, n_sections, f,
+                 length, length_unit='m', f_is_normed=True, 
+                 med_kw={}, f_kw={}):
         '''
         
         Parameters 
         ------------
         med : skrf.media.Media
-            the class used to generate the transmission line
+            the class used to generate the transmission line. see 
+            `med_kw` for arguments.
         param : str
             name of the parameter of `med` that varies along the taper
         start : number
@@ -18,11 +21,24 @@ class Taper1D(object):
         n_sections : int
             number of sections in taper
         length : number
-            physical length of the taper (in meters)
+            physical length of the taper (in `length_unit`)
+        length_unit : str 
+            unit of length variable. see `skrf.to_meters`
+            
         f : function
-            function defining the taper transition.  domain and range 
-            should both be between (0,1)
-        kw : dict
+            function defining the taper transition. must take either 
+            no arguments  or  take (x,length, start, stop). 
+            see `f_is_normed` arguments
+        f_is_normed: bool
+            is `f` scalable and normalized. ie can f just be scaled
+            to fit different start/stop conditions? if so then f is 
+            called with no arguments, and must  have domain and raings
+            of [0,1], and [0,1]
+        
+        f_kw : dict
+            passed to `f()` when  called    
+        
+        med_kw : dict
             passed to `med.__init__` when an instance is created
         
         
@@ -38,16 +54,20 @@ class Taper1D(object):
                             length=1*inch,
                             n_sections=20,
                             f=lambda x: x,
-                            kw={'frequency':Frequency(75,110,101,'ghz')})
+                            f_is_normed=True,
+                            med_kw={'frequency':Frequency(75,110,101,'ghz')})
         '''
         self.med = med
         self.param = param
         self.start = start
         self.stop = stop
         self.f = f
+        self.f_is_normed = f_is_normed
         self.length =length
+        self.length_unit = length_unit
         self.n_sections= n_sections
-        self.kw = kw
+        self.med_kw = med_kw
+        self.f_kw = f_kw
     
     def __str__(self):
         return 'Taper: {classname}: {param} from {start}-{stop}'
@@ -59,22 +79,28 @@ class Taper1D(object):
     
     @property
     def value_vector(self):
-        x = linspace(0,1,self.n_sections)
-        return self.f(x)*(self.stop-self.start) + self.start
+        if self.f_is_normed ==True:
+            x = linspace(0,1,self.n_sections)
+            y = self.f(x, **self.f_kw)*(self.stop-self.start) + self.start
+        else:
+            x = linspace(0,self.length,self.n_sections)
+            y = self.f(length, start, stop, **f_kw)
+        return y
     
     def media_at(self, val):
         '''
         creates a media instance for the taper with parameter value `val`
         '''
-        kw = self.kw.copy() 
-        kw.update({self.param:val})
-        return self.med(**kw)
+        med_kw = self.med_kw.copy() 
+        med_kw.update({self.param:val})
+        return self.med(**med_kw)
     
     def section_at(self,val):
         '''
         creates a single section of the taper with parameter value `val`
         '''
-        return self.media_at(val).line(self.section_length,unit='m')
+        return self.media_at(val).line(self.section_length,
+                                       unit=self.length_unit)
     
     @property
     def sections(self):
@@ -85,5 +111,40 @@ class Taper1D(object):
         return cascade_list(self.sections)
     
     
+
+class Linear(Taper1D):
+    '''
+    A linear Taper
+    
+    f(x)=x
+    '''
+    def __init__(self, **kw):
+        opts = dict(f = lambda x:x, f_is_normed = True)
+        kw.update(opts)
+        super(Linear,self).__init__(**kw)
+
+
+class Exponential(Taper1D):
+    '''
+    An exponential Taper
+    
+    f(x) = f0*e**(x/x1 * ln(f1/f0))
+    
+    where 
+        f0: star param value
+        f1: stop param value
+        x: independent variable (position allong taper)
+        x1: length of taper 
+    
+    '''
+    def __init__(self,**kw):
+        
+        def f(x,length, start, stop):
+            return start*exp(x/length*(log(stop/start)))
+        
+        opts = dict(f = f, f_is_normed = False)
+        kw.update(opts)
+        super(Exponential,self).__init__(**kw)
+
 
 
