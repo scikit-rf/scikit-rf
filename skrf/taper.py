@@ -1,17 +1,21 @@
 from . network import cascade_list
 from scipy  import linspace
-
+from numpy import exp, log
 class Taper1D(object):
-    def __init__(self, med, param, start, stop, n_sections, f,
-                 length, length_unit='m', f_is_normed=True, 
+    def __init__(self, med,  start, stop, n_sections, f,
+                 length, length_unit='m', param='z0',f_is_normed=True, 
                  med_kw={}, f_kw={}):
         '''
         
         Parameters 
         ------------
         med : skrf.media.Media
-            the class used to generate the transmission line. see 
-            `med_kw` for arguments.
+            the media class, or a `@classmethod` `__init__`,  used to 
+            generate the transmission line. see `med_kw` for arguments.
+            examples: 
+                * skrf.media.RectangularWaveguide # a class 
+                * skrf.media.RectangularWaveguide.from_z0 # an init
+            
         param : str
             name of the parameter of `med` that varies along the taper
         start : number
@@ -42,9 +46,19 @@ class Taper1D(object):
             passed to `med.__init__` when an instance is created
         
         
+        Notes
+        -------
+        the default behaviour should is to taper based on impedance. 
+        to do this we inspect the `med` class for a `from_z0` 
+        init method, and if it exists, we assign it to `med` attribute, 
+        in `__init__`.
+        addmitantly having `med` be a class or a method is abuse,
+        it makes for a intuitive operation
+    
         Examples
         ------------
         Create a linear taper from 100 to 1000mil
+        
         
         >>> from skrf import Frequency, RectangularWaveguide, Taper1D, mil, inch
         >>> taper = Taper1D(med= RectangularWaveguide, 
@@ -68,6 +82,15 @@ class Taper1D(object):
         self.n_sections= n_sections
         self.med_kw = med_kw
         self.f_kw = f_kw
+        
+        # the default behaviour should be to taper based on impedance. 
+        # to do this we inspect the media class for a `from_z0` 
+        # init method, and if it exists, we assign it to `med` attribute
+        # addmitantly having `med` be a class or a method is abuse,
+        # it makes for a intuitive operation
+        if param =='z0':
+            if hasattr(self.med, 'from_z0'):
+                self.med = getattr(self.med, 'from_z0')
     
     def __str__(self):
         return 'Taper: {classname}: {param} from {start}-{stop}'
@@ -84,7 +107,7 @@ class Taper1D(object):
             y = self.f(x, **self.f_kw)*(self.stop-self.start) + self.start
         else:
             x = linspace(0,self.length,self.n_sections)
-            y = self.f(length, start, stop, **f_kw)
+            y = self.f(x,self.length, self.start, self.stop, **self.f_kw)
         return y
     
     def media_at(self, val):
@@ -147,4 +170,22 @@ class Exponential(Taper1D):
         super(Exponential,self).__init__(**kw)
 
 
+class SmoothStep(Taper1D):
+    '''
+    A smoothstep Taper
+    
+    There is no analytical basis for this in the EE world that i know 
+    of. it is just a reasonable smooth curve, that is easy to implement.
+    
+    f(x) = (3*x**2 - 2*x**3) 
+    
+    https://en.wikipedia.org/wiki/Smoothstep
+    
+    '''
+    def __init__(self,**kw):
+        
+        f = lambda x:  3*x**2 - 2*x**3
+        opts = dict(f=f, f_is_normed = True)
+        kw.update(opts)
+        super(SmoothStep,self).__init__(**kw)
 
