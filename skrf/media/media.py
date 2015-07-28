@@ -12,6 +12,7 @@ Contains Media class.
 import warnings
 
 import numpy as npy
+from numpy import real, imag
 from scipy import stats
 from scipy.constants import  c, inch, mil
 
@@ -50,13 +51,13 @@ class Media(object):
 
 
     '''
-    def __init__(self, frequency,  propagation_constant,
-            characteristic_impedance, z0=None):
+    def __init__(self, frequency,  gamma,
+            characteristic_impedance, port_z0=None):
         '''
         The Media initializer.
 
         This initializer has flexible argument types. The parameters
-        `propagation_constant`, `characterisitc_impedance` and `z0` can
+        `gamma`, `characterisitc_impedance` and `port_z0` can
         all be either static or dynamic. This is achieved by allowing
         those arguments to be either:
          * functions which take no arguments or
@@ -64,7 +65,7 @@ class Media(object):
 
         In the case where the media's propagation constant may change
         after initialization, because you adjusted a parameter of the
-        media, then passing the propagation_constant as a function
+        media, then passing the gamma as a function
         allows it to change when the media's parameters do.
 
         Parameters
@@ -72,17 +73,17 @@ class Media(object):
         frequency : :class:`~skrf.frequency.Frequency` object
                 frequency band of this transmission line medium
 
-        propagation_constant : number, array-like, or a function
+        gamma : number, array-like, or a function
                 propagation constant for the medium.
 
         characteristic_impedance : number,array-like, or a function
                 characteristic impedance of transmission line medium.
 
-        z0 : number, array-like, or a function
+        port_z0 : number, array-like, or a function
                 the port impedance for media , IF its different
                 from the characterisitc impedance of the transmission
                 line medium  (None) [a number].
-                if z0= None then will set to characterisitc_impedance
+                if port_z0= None then will set to characterisitc_impedance
 
         See Also
         ---------
@@ -93,24 +94,24 @@ class Media(object):
 
         Notes
         ------
-        `propagation_constant` must adhere to the following convention,
+        `gamma` must adhere to the following convention,
          * positive real(gamma) = attenuation
          * positive imag(gamma) = forward propagation
 
-        the z0 parameter is needed in some cases. For example, the
+        the port_z0 parameter is needed in some cases. For example, the
         :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`
         is an example  where you may need this, because the
         characteristic impedance is frequency dependent, but the
-        touchstone's created by most VNA's have z0=1
+        touchstone's created by most VNA's have port_z0=1
         '''
         self.frequency = frequency.copy()
 
-        self.propagation_constant = propagation_constant
+        self.gamma = gamma
         self.characteristic_impedance = characteristic_impedance
 
-        if z0 is None:
-            z0 = characteristic_impedance
-        self.z0 = z0
+        if port_z0 is None:
+            port_z0 = characteristic_impedance
+        self.port_z0 = port_z0
 
         # convinience names
         self.delay = self.line
@@ -123,7 +124,7 @@ class Media(object):
         del d['delay'] # cant pickle instance methods
         return(d)
         #return {k: self.__dict__[k] for k in \
-        #    ['frequency','_characteristic_impedance','_propagation_constant','_z0']}
+        #    ['frequency','_characteristic_impedance','_gamma','_port_z0']}
 
     def __eq__(self,other):
         '''
@@ -137,11 +138,11 @@ class Media(object):
                 other.characteristic_impedance)) > ALMOST_ZERO:
             return False
 
-        if max(abs(self.propagation_constant - \
-                other.propagation_constant)) > ALMOST_ZERO:
+        if max(abs(self.gamma - \
+                other.gamma)) > ALMOST_ZERO:
             return False
 
-        if max(abs(self.z0 - other.z0)) > ALMOST_ZERO:
+        if max(abs(self.port_z0 - other.port_z0)) > ALMOST_ZERO:
             return False
 
         return True
@@ -154,12 +155,12 @@ class Media(object):
 
     ## Properties
     # note these are made so that a Media type can be constructed with
-    # propagation_constant, characteristic_impedance, and z0 either as:
+    # gamma, characteristic_impedance, and port_z0 either as:
     #       dynamic properties (if they pass a function)
     #       static ( if they pass values)
 
     @property
-    def propagation_constant(self):
+    def gamma(self):
         '''
         Propagation constant
 
@@ -171,37 +172,51 @@ class Media(object):
 
         Returns
         ---------
-        propagation_constant : :class:`numpy.ndarray`
+        gamma : :class:`numpy.ndarray`
                 complex propagation constant for this media
 
         Notes
         ------
-        `propagation_constant` must adhere to the following convention,
-         * positive real(propagation_constant) = attenuation
-         * positive imag(propagation_constant) = forward propagation
+        `gamma` must adhere to the following convention,
+         * positive real(gamma) = attenuation
+         * positive imag(gamma) = forward propagation
         '''
         try:
-            return self._propagation_constant()
+            return self._gamma()
         except(TypeError):
-            # _propagation_constant is not a function, so it is
+            # _gamma is not a function, so it is
             # either a number or a vector. do some
             # shape checking and vectorize it if its a number
             try:
-                if len(self._propagation_constant) != \
+                if len(self._gamma) != \
                     len(self.frequency):
-                    raise(IndexError('frequency and propagation_constant impedance have different lengths '))
+                    raise(IndexError('frequency and gamma impedance have different lengths '))
             except(TypeError):
-                # _propagation_constant has no len,  must be a
+                # _gamma has no len,  must be a
                 # number, return a vectorized copy
-                return self._propagation_constant *\
+                return self._gamma *\
                     npy.ones(len(self.frequency))
 
-            return self._propagation_constant
+            return self._gamma
 
-    @propagation_constant.setter
-    def propagation_constant(self, new_propagation_constant):
-        self._propagation_constant = new_propagation_constant
-    gamma = propagation_constant
+    @gamma.setter
+    def gamma(self, new_gamma):
+        self._gamma = new_gamma
+    
+    @property
+    def alpha(self):
+        '''
+        real (attenuation) component of gamma
+        '''
+        return real(self.gamma)
+        
+    @property
+    def beta(self):
+        '''
+        imaginary (propagating) component of gamma
+        '''
+        return imag(self.gamma)
+    
     @property
     def characteristic_impedance(self):
         '''
@@ -241,7 +256,7 @@ class Media(object):
     Z0 = characteristic_impedance
 
     @property
-    def z0(self):
+    def port_z0(self):
         '''
         Port Impedance
 
@@ -267,25 +282,25 @@ class Media(object):
                 the media's port impedance
         '''
         try:
-            result =  self._z0()
+            result =  self._port_z0()
             return result
 
         except(TypeError):
             try:
-                if len(self._z0) != len(self.characteristic_impedance):
-                    raise(IndexError('z0 and characteristic impedance have different shapes '))
+                if len(self._port_z0) != len(self.characteristic_impedance):
+                    raise(IndexError('port_z0 and characteristic impedance have different shapes '))
             except(TypeError):
-                # z0 has no len,  must be a number, so vectorize it
-                return self._z0 *npy.ones(len(self.characteristic_impedance))
+                # port_z0 has no len,  must be a number, so vectorize it
+                return self._port_z0 *npy.ones(len(self.characteristic_impedance))
 
 
 
-        return self._z0
+        return self._port_z0
 
-    @z0.setter
-    def z0(self, new_z0):
-        self._z0 = new_z0
-    portz0 = z0
+    @port_z0.setter
+    def port_z0(self, new_port_z0):
+        self._port_z0 = new_port_z0
+    
 
     @property
     def v_p(self):
@@ -309,7 +324,7 @@ class Media(object):
         propgation_constant
 
         '''
-        return 1j*(self.frequency.w/self.propagation_constant)
+        return 1j*(self.frequency.w/self.gamma)
 
 
     @property
@@ -332,7 +347,7 @@ class Media(object):
         '''
 
         dw = npy.diff(self.frequency.w)
-        dk = npy.diff(self.propagation_constant)
+        dk = npy.diff(self.gamma)
 
         return 1j*dw/dk
 
@@ -364,7 +379,7 @@ class Media(object):
         if deg == True:
             theta = mf.degree_2_radian(theta)
 
-        gamma = self.propagation_constant
+        gamma = self.gamma
         if bc:
                 return 1.0*theta/npy.imag(gamma[gamma.size/2])
         else:
@@ -389,7 +404,7 @@ class Media(object):
             electrical length in radians or degrees, depending on
             value of deg.
         '''
-        gamma = self.propagation_constant
+        gamma = self.gamma
 
         if deg == False:
             return  gamma*d
@@ -399,7 +414,7 @@ class Media(object):
     ## Network creation
 
     # lumped elements
-    def match(self,nports=1, z0=None, **kwargs):
+    def match(self,nports=1, port_z0=None, **kwargs):
         '''
         Perfect matched load (:math:`\\Gamma_0 = 0`).
 
@@ -407,9 +422,9 @@ class Media(object):
         ----------
         nports : int
                 number of ports
-        z0 : number, or array-like
+        port_z0 : number, or array-like
                 characterisitc impedance. Default is
-                None, in which case the Media's :attr:`z0` is used.
+                None, in which case the Media's :attr:`port_z0` is used.
                 This sets the resultant Network's
                 :attr:`~skrf.network.Network.z0`.
         \*\*kwargs : key word arguments
@@ -423,16 +438,16 @@ class Media(object):
 
         Examples
         ------------
-                >>> my_match = my_media.match(2,z0 = 50, name='Super Awesome Match')
+                >>> my_match = my_media.match(2,port_z0 = 50, name='Super Awesome Match')
 
         '''
         result = Network(**kwargs)
         result.frequency = self.frequency
         result.s =  npy.zeros((self.frequency.npoints,nports, nports),\
                 dtype=complex)
-        if z0 is None:
-            z0 = self.z0
-        result.z0=z0
+        if port_z0 is None:
+            port_z0 = self.port_z0
+        result.z0=port_z0
         return result
 
     def load(self,Gamma0,nports=1,**kwargs):
@@ -767,7 +782,7 @@ class Media(object):
         The units of `length` are interpreted according to the value
         of `unit`. If `z0` is not None, then a line specified  impedance
         is produced. if `embed`  is also True, then the line is embedded
-        in this media's z0 environment, creating a mismatched line.
+        in this media's port_z0 environment, creating a mismatched line.
 
         Parameters
         ----------
@@ -776,9 +791,9 @@ class Media(object):
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
         z0 : number, or array-like
-                the impedance of the line (if different form z0)
+                the impedance of the line (if different from port_z0)
         embed : bool
-                if `z` is given, should the line be embedded in z0
+                if `z0` is given, should the line be embedded in port_z0
                 environment? or left in a `z` environment. if embedded,
                 there will be reflections
         \*\*kwargs : key word arguments
@@ -796,7 +811,7 @@ class Media(object):
 
         '''
 
-        kwargs.update({'z0':z0})
+        kwargs.update({'port_z0':z0})
         result = self.match(nports=2,**kwargs)
 
         theta = self.electrical_length(self.to_meters(d, unit))
@@ -808,9 +823,9 @@ class Media(object):
 
         if  embed:
                 # create mismatchs at each end
-                m1 = self.impedance_mismatch(self.z0,z0)
+                m1 = self.impedance_mismatch(self.port_z0,z0)
                 m1.name = result.name
-                m2 = self.impedance_mismatch(z0,self.z0)
+                m2 = self.impedance_mismatch(z0,self.port_z0)
                 result = m1**result**m2
 
         return result
@@ -1228,7 +1243,7 @@ class Media(object):
         Guess physical length of a delay short.
 
         Unwraps the phase and determines the slope, which is then used
-        in conjunction with :attr:`propagation_constant` to estimate the
+        in conjunction with :attr:`gamma` to estimate the
         physical distance to the short.
 
         Parameters
@@ -1240,7 +1255,7 @@ class Media(object):
 
         '''
         warnings.warn(DeprecationWarning('I have yet to update this for Media class'))
-        beta = npy.real(self.propagation_constant)
+        beta = npy.real(self.gamma)
         thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
 
         A = npy.vstack((2*beta,npy.ones(len(beta)))).transpose()
@@ -1282,14 +1297,14 @@ class Media(object):
         return cls(
             frequency = Frequency.from_f(f, unit=f_unit),
             characteristic_impedance = z_re+1j*z_im,
-            propagation_constant = g_re+1j*g_im,
-            z0 = pz_re+1j*pz_im,
+            gamma = g_re+1j*g_im,
+            port_z0 = pz_re+1j*pz_im,
             *args, **kwargs
             )
 
-    def write_csv(self, filename='f,gamma,z0.csv'):
+    def write_csv(self, filename='f,gamma,z0,port_z0.csv'):
         '''
-        write this media's frequency, z0, and gamma to a csv file.
+        write this media's frequency,gamma,z0, and port_z0 to a csv file.
 
         Parameters
         -------------
@@ -1305,8 +1320,8 @@ class Media(object):
         header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
         f.write(header)
 
-        g,z,pz  = self.propagation_constant, \
-                self.characteristic_impedance, self.z0
+        g,z,pz  = self.gamma, \
+                self.characteristic_impedance, self.port_z0
 
         data = npy.vstack(\
                 [self.frequency.f_scaled, z.real, z.imag, \

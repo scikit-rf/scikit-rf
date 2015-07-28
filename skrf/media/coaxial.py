@@ -59,58 +59,52 @@ class Coaxial(DistributedCircuit):
 
         '''
 
-        freq = frequency.copy()
+        self.frequency = frequency
         self.Dint, self.Dout = Dint,Dout
         self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
         self.epsilon_prime = epsilon_0*self.epsilon_r
         self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
 
-        # surface resistance
-        omega = freq.w
-        
-        
-        
-            
-        @property
-        def Rs(self):
-            f  = self.frequency.f
-            rho = 1./self.sigma
-            mu_r =1
-            return surface_resistivity(f=f,rho=rho, mu_r=mu_r)
-
-
         # inner and outer radius
 
-        @property
-        def a(self):
-            return self.Dint/2.
-        
-        @property
-        def b(self):
-            return self.Dout/2.
-
-
-        # derivation of distributed circuit parameters
-        @property
-        def R(self):
-            return self.Rs/(2.*pi)*(1./self.a + 1./self.b)
-        
-        @property
-        def L(self):
-            return mu_0/(2.*pi)*log(self.b/self.a)
-        
-        @property
-        def C(self):
-            return 2.*pi*self.epsilon_prime/log(self.b/self.a)
-        
-        @property
-        def G(self):
-            f =  self.frequency.f
-            return f*self.epsilon_second/log(self.b/self.a)
 
         DistributedCircuit.__init__(self,\
-                freq, C, L, R, G, \
+                frequency, self.C, self.L, self.R, self.G, \
                 *args, **kwargs)
+
+
+    @property
+    def Rs(self):
+        f  = self.frequency.f
+        rho = 1./self.sigma
+        mu_r =1
+        return surface_resistivity(f=f,rho=rho, mu_r=mu_r)
+    @property
+    def a(self):
+        return self.Dint/2.
+    
+    @property
+    def b(self):
+        return self.Dout/2.
+
+
+    # derivation of distributed circuit parameters
+    @property
+    def R(self):
+        return self.Rs/(2.*pi)*(1./self.a + 1./self.b)
+    
+    @property
+    def L(self):
+        return mu_0/(2.*pi)*log(self.b/self.a)
+    
+    @property
+    def C(self):
+        return 2.*pi*self.epsilon_prime/log(self.b/self.a)
+    
+    @property
+    def G(self):
+        f =  self.frequency.f
+        return f*self.epsilon_second/log(self.b/self.a)
 
 
     def __str__(self):
