@@ -1,9 +1,13 @@
 import unittest
 import os
-import skrf as rf
 import numpy as npy
 
-class MediaTestCase(unittest.TestCase):
+
+from skrf.media import DefinedGammaZ0
+from skrf.network import Network
+from skrf.frequency import Frequency
+
+class DefinedGammaZ0TestCase(unittest.TestCase):
     '''
 
     '''
@@ -15,10 +19,10 @@ class MediaTestCase(unittest.TestCase):
             os.path.dirname(os.path.abspath(__file__)),
             'qucs_prj'
             )
-        self.dummy_media = rf.media.Media(
-            frequency = rf.Frequency(1,100,21,'ghz'),
-            propagation_constant=1j,
-            characteristic_impedance = 50 ,
+        self.dummy_media = DefinedGammaZ0(
+            frequency = Frequency(1,100,21,'ghz'),
+            gamma=1j,
+            z0 = 50 ,
             )
 
     def test_impedance_mismatch(self):
@@ -26,7 +30,7 @@ class MediaTestCase(unittest.TestCase):
         '''
         fname = os.path.join(self.files_dir,\
                 'impedanceMismatch,50to25.s2p')
-        qucs_ntwk = rf.Network(fname)
+        qucs_ntwk = Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
         skrf_ntwk = self.dummy_media.thru(z0=50)**\
             self.dummy_media.thru(z0=25)
@@ -38,7 +42,7 @@ class MediaTestCase(unittest.TestCase):
         '''
         fname = os.path.join(self.files_dir,\
                 'resistor,1ohm.s2p')
-        qucs_ntwk = rf.Network(fname)
+        qucs_ntwk = Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
         skrf_ntwk = self.dummy_media.resistor(1)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
@@ -48,7 +52,7 @@ class MediaTestCase(unittest.TestCase):
         '''
         fname = os.path.join(self.files_dir,\
                 'capacitor,p01pF.s2p')
-        qucs_ntwk = rf.Network(fname)
+        qucs_ntwk = Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
         skrf_ntwk = self.dummy_media.capacitor(.01e-12)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
@@ -59,7 +63,7 @@ class MediaTestCase(unittest.TestCase):
         '''
         fname = os.path.join(self.files_dir,\
                 'inductor,p1nH.s2p')
-        qucs_ntwk = rf.Network(fname)
+        qucs_ntwk = Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
         skrf_ntwk = self.dummy_media.inductor(.1e-9)
         self.assertEqual(qucs_ntwk, skrf_ntwk)
@@ -69,10 +73,7 @@ class MediaTestCase(unittest.TestCase):
         '''
         test ability to create a Media from scalar quanties for gamma/z0
         '''
-        a_media = rf.media.Media(rf.f_wr10,
-            propagation_constant = 1j ,
-            characteristic_impedance = 50 ,
-            )
+        a_media = DefinedGammaZ0 (Frequency(1,10,101),gamma=1j,z0 = 50)
         self.assertEqual(a_media.line(1),a_media.line(1))
 
 
@@ -80,10 +81,11 @@ class MediaTestCase(unittest.TestCase):
         '''
         test ability to create a Media from vector quanties for gamma/z0
         '''
-        a_media = rf.media.Media(rf.f_wr10,
-            propagation_constant = 1j*npy.ones(len(rf.f_wr10)) ,
-            characteristic_impedance =  50*npy.ones(len(rf.f_wr10)),
-            )
+        freq = Frequency(1,10,101)
+        a_media = DefinedGammaZ0(freq,
+                                 gamma = 1j*npy.ones(len(freq)) ,
+                                 z0 =  50*npy.ones(len(freq)),
+                                )
 
         self.assertEqual(a_media.line(1),a_media.line(1))
 

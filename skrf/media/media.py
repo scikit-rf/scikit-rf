@@ -12,7 +12,7 @@ Contains Media class.
 import warnings
 
 import numpy as npy
-from numpy import real, imag
+from numpy import real, imag, ones
 from scipy import stats
 from scipy.constants import  c, inch, mil
 
@@ -24,19 +24,15 @@ from .. import mathFunctions as mf
 from ..mathFunctions import ALMOST_ZERO
 
 
+from abc import ABCMeta, abstractmethod, abstractproperty
+
+    
+
 class Media(object):
     '''
     The base-class for all transmission line mediums.
 
     The :class:`Media` object provides generic methods to produce :class:`~skrf.network.Network`'s for any transmission line medium, such as :func:`line` and :func:`delay_short`.
-
-    The initializer for this class has flexible argument types. This
-    allows for the important attributes of the :class:`Media` object
-    to be dynamic. For example, if a Media object's propagation constant
-    is a function of some attribute of that object, say `conductor_width`,
-    then the propagation constant will change when that attribute
-    changes. See :func:`__init__` for details.
-
 
     The network creation methods build off of each other. For example,
     the specicial load cases, suc as :func:`short` and :func:`open` call
@@ -48,42 +44,23 @@ class Media(object):
     calling :func:`match` to create a 'blank'
     :class:`~skrf.network.Network`, and then fill in the s-matrix.
 
-
-
     '''
-    def __init__(self, frequency,  gamma,
-            characteristic_impedance, port_z0=None):
+    __metaclass__ = ABCMeta
+    def __init__(self, frequency=None, port_z0=None):
         '''
         The Media initializer.
-
-        This initializer has flexible argument types. The parameters
-        `gamma`, `characterisitc_impedance` and `port_z0` can
-        all be either static or dynamic. This is achieved by allowing
-        those arguments to be either:
-         * functions which take no arguments or
-         * values (numbers or arrays)
-
-        In the case where the media's propagation constant may change
-        after initialization, because you adjusted a parameter of the
-        media, then passing the gamma as a function
-        allows it to change when the media's parameters do.
 
         Parameters
         --------------
         frequency : :class:`~skrf.frequency.Frequency` object
                 frequency band of this transmission line medium
 
-        gamma : number, array-like, or a function
-                propagation constant for the medium.
-
-        characteristic_impedance : number,array-like, or a function
-                characteristic impedance of transmission line medium.
 
         port_z0 : number, array-like, or a function
                 the port impedance for media , IF its different
                 from the characterisitc impedance of the transmission
                 line medium  (None) [a number].
-                if port_z0= None then will set to characterisitc_impedance
+                if port_z0= None then will set to z0
 
         See Also
         ---------
@@ -104,17 +81,12 @@ class Media(object):
         characteristic impedance is frequency dependent, but the
         touchstone's created by most VNA's have port_z0=1
         '''
+        if frequency is None:
+            frequency = Frequency(1,10,101,'ghz')
+        
         self.frequency = frequency.copy()
-
-        self.gamma = gamma
-        self.characteristic_impedance = characteristic_impedance
-
-        if port_z0 is None:
-            port_z0 = characteristic_impedance
         self.port_z0 = port_z0
 
-        # convinience names
-        self.delay = self.line
 
     def __getstate__(self):
         '''
@@ -123,9 +95,7 @@ class Media(object):
         d = self.__dict__.copy()
         del d['delay'] # cant pickle instance methods
         return(d)
-        #return {k: self.__dict__[k] for k in \
-        #    ['frequency','_characteristic_impedance','_gamma','_port_z0']}
-
+        
     def __eq__(self,other):
         '''
         test for numerical equality (up to skrf.mathFunctions.ALMOST_ZERO)
@@ -134,8 +104,8 @@ class Media(object):
         if self.frequency != other.frequency:
             return False
 
-        if max(abs(self.characteristic_impedance - \
-                other.characteristic_impedance)) > ALMOST_ZERO:
+        if max(abs(self.z0 - \
+                other.z0)) > ALMOST_ZERO:
             return False
 
         if max(abs(self.gamma - \
@@ -151,24 +121,23 @@ class Media(object):
         '''
         length of frequency axis
         '''
-        return len(frequency)
+        return len(self.frequency)
 
-    ## Properties
-    # note these are made so that a Media type can be constructed with
-    # gamma, characteristic_impedance, and port_z0 either as:
-    #       dynamic properties (if they pass a function)
-    #       static ( if they pass values)
 
     @property
+    def port_z0(self):
+        if self._port_z0 is None:
+            return self.z0
+        return self._port_z0*ones(len(self))
+        
+    @port_z0.setter
+    def port_z0(self, val):
+        self._port_z0 = val
+
+    @abstractproperty
     def gamma(self):
         '''
         Propagation constant
-
-        The propagation constant can be either a number, array-like, or
-        a function. If it is a function is must take no arguments. The
-        reason to make it a function is if you want the propagation
-        constant to be dynamic, meaning changing with some attribute
-        of the media. See :func:`__init__` for more explanation.
 
         Returns
         ---------
@@ -181,28 +150,12 @@ class Media(object):
          * positive real(gamma) = attenuation
          * positive imag(gamma) = forward propagation
         '''
-        try:
-            return self._gamma()
-        except(TypeError):
-            # _gamma is not a function, so it is
-            # either a number or a vector. do some
-            # shape checking and vectorize it if its a number
-            try:
-                if len(self._gamma) != \
-                    len(self.frequency):
-                    raise(IndexError('frequency and gamma impedance have different lengths '))
-            except(TypeError):
-                # _gamma has no len,  must be a
-                # number, return a vectorized copy
-                return self._gamma *\
-                    npy.ones(len(self.frequency))
-
-            return self._gamma
-
-    @gamma.setter
-    def gamma(self, new_gamma):
-        self._gamma = new_gamma
+        return None
     
+    @gamma.setter
+    def gamma(self, val):
+        pass
+        
     @property
     def alpha(self):
         '''
@@ -217,90 +170,15 @@ class Media(object):
         '''
         return imag(self.gamma)
     
-    @property
-    def characteristic_impedance(self):
-        '''
-        Characterisitc impedance
-
-        The characteristic_impedance can be either a number, array-like, or
-        a function. If it is a function is must take no arguments. The
-        reason to make it a function is if you want the characterisitc
-        impedance to be dynamic, meaning changing with some attribute
-        of the media. See :func:`__init__` for more explanation.
-
-        Returns
-        ----------
-        characteristic_impedance : :class:`numpy.ndarray`
-        '''
-        try:
-            return self._characteristic_impedance()
-        except(TypeError):
-            # _characteristic_impedance is not a function, so it is
-            # either a number or a vector. do some
-            # shape checking and vectorize it if its a number
-            try:
-                if len(self._characteristic_impedance) != \
-                    len(self.frequency):
-                    raise(IndexError('frequency and characteristic_impedance have different lengths '))
-            except(TypeError):
-                # _characteristic_impedance has no len,  must be a
-                # number, return a vectorized copy
-                return self._characteristic_impedance *\
-                    npy.ones(len(self.frequency))
-
-            return self._characteristic_impedance
-
-    @characteristic_impedance.setter
-    def characteristic_impedance(self, new_characteristic_impedance):
-        self._characteristic_impedance = new_characteristic_impedance
-    Z0 = characteristic_impedance
-
-    @property
-    def port_z0(self):
-        '''
-        Port Impedance
-
-        The port impedance is usually equal to the
-        :attr:`characteristic_impedance`. Therefore, if the port
-        impedance is `None` then this will return
-        :attr:`characteristic_impedance`.
-
-        However, in some cases such as rectangular waveguide, the port
-        impedance is traditionally set to 1 (normalized). In such a case
-        this property may be used.
-
-        The Port Impedance can be either a number, array-like, or
-        a function. If it is a function is must take no arguments. The
-        reason to make it a function is if you want the Port Impedance
-        to be dynamic, meaning changing with some attribute
-        of the media. See :func:`__init__` for more explanation.
-
-
-        Returns
-        ----------
-        port_impedance : :class:`numpy.ndarray`
-                the media's port impedance
-        '''
-        try:
-            result =  self._port_z0()
-            return result
-
-        except(TypeError):
-            try:
-                if len(self._port_z0) != len(self.characteristic_impedance):
-                    raise(IndexError('port_z0 and characteristic impedance have different shapes '))
-            except(TypeError):
-                # port_z0 has no len,  must be a number, so vectorize it
-                return self._port_z0 *npy.ones(len(self.characteristic_impedance))
-
-
-
-        return self._port_z0
-
-    @port_z0.setter
-    def port_z0(self, new_port_z0):
-        self._port_z0 = new_port_z0
+    @abstractproperty
+    def z0(self):
+        return None
     
+    @z0.setter
+    def z0(self, val):
+        pass 
+        
+
 
     @property
     def v_p(self):
@@ -441,6 +319,7 @@ class Media(object):
                 >>> my_match = my_media.match(2,port_z0 = 50, name='Super Awesome Match')
 
         '''
+        
         result = Network(**kwargs)
         result.frequency = self.frequency
         result.s =  npy.zeros((self.frequency.npoints,nports, nports),\
@@ -1296,7 +1175,7 @@ class Media(object):
 
         return cls(
             frequency = Frequency.from_f(f, unit=f_unit),
-            characteristic_impedance = z_re+1j*z_im,
+            z0 = z_re+1j*z_im,
             gamma = g_re+1j*g_im,
             port_z0 = pz_re+1j*pz_im,
             *args, **kwargs
@@ -1321,7 +1200,7 @@ class Media(object):
         f.write(header)
 
         g,z,pz  = self.gamma, \
-                self.characteristic_impedance, self.port_z0
+                self.z0, self.port_z0
 
         data = npy.vstack(\
                 [self.frequency.f_scaled, z.real, z.imag, \
@@ -1331,3 +1210,45 @@ class Media(object):
         f.close()
 
 
+
+class DefinedGammaZ0(Media):
+    def __init__(self, frequency=None, port_z0=None, gamma=1j, z0=50):
+        
+        super(DefinedGammaZ0, self).__init__(frequency=frequency, 
+                                             port_z0=port_z0)
+        self.gamma= gamma
+        self.z0 = z0
+        
+        import pdb;pdb.set_trace()
+    @property
+    def z0(self):
+        '''
+        Characteristic Impedance 
+        '''
+        return self._z0
+    
+    @z0.setter
+    def z0(self, val):
+        self._z0 = val*ones(len(self))
+    
+    @property
+    def gamma(self):
+        '''
+        Propagation constant
+
+        Returns
+        ---------
+        gamma : :class:`numpy.ndarray`
+            complex propagation constant for this media
+
+        Notes
+        ------
+        `gamma` must adhere to the following convention,
+         * positive real(gamma) = attenuation
+         * positive imag(gamma) = forward propagation
+        '''
+        return self._gamma
+    
+    @gamma.setter
+    def gamma(self, val):
+        self._gamma = val*ones(len(self))

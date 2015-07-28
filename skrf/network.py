@@ -1226,6 +1226,7 @@ class Network(object):
         # case we dont know how to re-shape the z0 to fxn. to solve this
         # i attempt to do the re-shaping when z0 is accessed, not when
         # it is set. this is what makes this function confusing.
+        
         try:
             if len(npy.shape(self._z0)) ==0:
                 try:

@@ -53,7 +53,7 @@ Transmission Line Classes
 
 '''
 
-from .media import Media
+from .media import Media, DefinedGammaZ0
 from .distributedCircuit import DistributedCircuit
 from .freespace import Freespace
 from .cpw import CPW
