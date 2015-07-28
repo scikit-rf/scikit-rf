@@ -42,7 +42,8 @@ class Coaxial(DistributedCircuit):
             loss tangent of the dielectric medium
         sigma=infinity : number, or array-like
             conductors electrical conductivity, in S/m
-
+    
+        TODO: refactor code so properties can be updated after __init__
         TODO : different conductivity in case of different conductor kind
 
         Notes
@@ -66,21 +67,46 @@ class Coaxial(DistributedCircuit):
 
         # surface resistance
         omega = freq.w
-        f = freq.f
-        mu_r=1.
-        rho= 1./sigma
+        
+        
+        
+            
+        @property
+        def Rs(self):
+            f  = self.frequency.f
+            rho = 1./self.sigma
+            mu_r =1
+            return surface_resistivity(f=f,rho=rho, mu_r=mu_r)
 
-        Rs = surface_resistivity(f,rho, mu_r)
 
         # inner and outer radius
-        a = Dint/2.
-        b = Dout/2.
+
+        @property
+        def a(self):
+            return self.Dint/2.
+        
+        @property
+        def b(self):
+            return self.Dout/2.
+
 
         # derivation of distributed circuit parameters
-        R = Rs/(2.*pi)*(1./a + 1./b)
-        L = mu_0/(2.*pi)*log(b/a)
-        C = 2.*pi*self.epsilon_prime/log(b/a)
-        G = 2.*pi*omega*self.epsilon_second/log(b/a)
+        @property
+        def R(self):
+            return self.Rs/(2.*pi)*(1./self.a + 1./self.b)
+        
+        @property
+        def L(self):
+            return mu_0/(2.*pi)*log(self.b/self.a)
+        
+        @property
+        def C(self):
+            return 2.*pi*self.epsilon_prime/log(self.b/self.a)
+        
+        @property
+        def G(self):
+            f =  self.frequency.f
+            return f*self.epsilon_second/log(self.b/self.a)
 
         DistributedCircuit.__init__(self,\
                 freq, C, L, R, G, \

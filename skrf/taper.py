@@ -126,6 +126,10 @@ class Taper1D(object):
                                        unit=self.length_unit)
     
     @property
+    def medias(self):
+        return [self.media_at(k) for k in self.value_vector]
+    
+    @property
     def sections(self):
         return [self.section_at(k) for k in self.value_vector]
     
