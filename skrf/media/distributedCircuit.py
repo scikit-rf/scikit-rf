@@ -6,7 +6,51 @@
 distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 ============================================================
 
-A transmission line defined in terms of distributed circuit components
+:class:`DistributedCircuit` is `Media` object representing a 
+transmission line mode defined in terms of  distributed impedance
+and admittance values. 
+
+A Distributed Circuit may be defined in terms
+of the following attributes,
+
+================================  ================  ================
+Quantity                          Symbol            Property
+================================  ================  ================
+Distributed Capacitance           :math:`C^{'}`     :attr:`C`
+Distributed Inductance            :math:`L^{'}`     :attr:`L`
+Distributed Resistance            :math:`R^{'}`     :attr:`R`
+Distributed Conductance           :math:`G^{'}`     :attr:`G`
+================================  ================  ================
+
+
+The following quantities may be calculated, which are functions of 
+angular frequency (:math:`\omega`):
+
+===================================  ==================================================  ==============================
+Quantity                             Symbol                                              Property
+===================================  ==================================================  ==============================
+Distributed Impedance                :math:`Z^{'} = R^{'} + j \\omega L^{'}`              :attr:`Z`
+Distributed Admittance               :math:`Y^{'} = G^{'} + j \\omega C^{'}`              :attr:`Y`
+===================================  ==================================================  ==============================
+
+
+The properties which define their wave behavior:
+
+===================================  ============================================  ==============================
+Quantity                             Symbol                                        Method
+===================================  ============================================  ==============================
+Characteristic Impedance             :math:`Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}`     :func:`Z0`
+Propagation Constant                 :math:`\\gamma = \\sqrt{ Z^{'}  Y^{'}}`         :func:`gamma`
+===================================  ============================================  ==============================
+
+Given the following definitions, the components of propagation
+constant are interpreted as follows:
+
+.. math::
+    +\\Re e\\{\\gamma\\} = \\text{attenuation}
+
+    -\\Im m\\{\\gamma\\} = \\text{forward propagation}
+
 '''
 
 from copy import deepcopy
@@ -16,103 +60,46 @@ from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
          interp, linspace, shape,zeros, reshape
 
 from ..tlineFunctions import electrical_length
-from .media import Media
-# used as substitutes to handle mathematical singularities.
-INF = 1e99
-ONE = 1.0 + 1/1e14
+from .media import Media, DefinedGammaZ0
 
+
+from ..constants import INF, ONE, ZERO
 
 class DistributedCircuit(Media):
     '''
-    Generic, distributed circuit TEM transmission line
+    A transmission line mode defined in terms of distributed impedance
+    and admittance values. 
 
-    A TEM transmission line, defined in terms of  distributed impedance
-    and admittance values. A Distributed Circuit may be defined in terms
-    of the following attributes,
-
-    ================================  ================  ================
-    Quantity                          Symbol            Property
-    ================================  ================  ================
-    Distributed Capacitance           :math:`C^{'}`     :attr:`C`
-    Distributed Inductance            :math:`I^{'}`     :attr:`I`
-    Distributed Resistance            :math:`R^{'}`     :attr:`R`
-    Distributed Conductance           :math:`G^{'}`     :attr:`G`
-    ================================  ================  ================
-
-
-    From these, the following quantities may be calculated, which
-    are functions of angular frequency (:math:`\omega`):
-
-    ===================================  ==================================================  ==============================
-    Quantity                             Symbol                                              Property
-    ===================================  ==================================================  ==============================
-    Distributed Impedance                :math:`Z^{'} = R^{'} + j \\omega I^{'}`              :attr:`Z`
-    Distributed Admittance               :math:`Y^{'} = G^{'} + j \\omega C^{'}`              :attr:`Y`
-    ===================================  ==================================================  ==============================
+    Parameters
+    ------------
+    frequency : :class:`~skrf.frequency.Frequency` object
+        frequency band of the media
+    C : number, or array-like
+            distributed capacitance, in F/m
+    L : number, or array-like
+            distributed inductance, in  H/m
+    R : number, or array-like
+            distributed resistance, in Ohm/m
+    G : number, or array-like
+            distributed conductance, in S/m
 
 
-    From these we can calculate properties which define their wave
-    behavior:
+    Notes
+    ----------
+    if C,I,R,G are vectors they should be the same length
 
-    ===================================  ============================================  ==============================
-    Quantity                             Symbol                                        Method
-    ===================================  ============================================  ==============================
-    Characteristic Impedance             :math:`Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}`     :func:`Z0`
-    Propagation Constant                 :math:`\\gamma = \\sqrt{ Z^{'}  Y^{'}}`         :func:`gamma`
-    ===================================  ============================================  ==============================
-
-    Given the following definitions, the components of propagation
-    constant are interpreted as follows:
-
-    .. math::
-        +\\Re e\\{\\gamma\\} = \\text{attenuation}
-
-        -\\Im m\\{\\gamma\\} = \\text{forward propagation}
-
-
+    See Also 
+    --------
+    from_media
 
     '''
-    ## CONSTRUCTOR
-    def __init__(self, frequency,  C, I, R, G,*args, **kwargs):
-        '''
-        Distributed Circuit constructor.
-
-        Parameters
-        ------------
-        frequency : :class:`~skrf.frequency.Frequency` object
-        C : number, or array-like
-                distributed capacitance, in F/m
-        I : number, or array-like
-                distributed inductance, in  H/m
-        R : number, or array-like
-                distributed resistance, in Ohm/m
-        G : number, or array-like
-                distributed conductance, in S/m
-
-
-        Notes
-        ----------
-        C,I,R,G can all be vectors as long as they are the same
-        length
-
-        This object can be constructed from a Media instance too, see
-        the classmethod :func:`from_Media`
-        '''
-
-        self.frequency = frequency.copy()
+    
+    def __init__(self, frequency=None, port_z0=None, C=90e-12, L=280e-9, R=0, G=0,
+                *args, **kwargs):
+        super(DistributedCircuit, self).__init__(frequency=frequency, 
+                                                 port_z0=port_z0)
         self.C, self.L, self.R, self.G = C,L,R,G
 
-        # for unambiguousness
-        self.distributed_resistance = self.R
-        self.distributed_capacitance = self.C
-        self.distributed_inductance = self.L
-        self.distributed_conductance = self.G
-
-        Media.__init__(self,\
-                frequency = frequency,\
-                propagation_constant = self.gamma, \
-                characteristic_impedance = self.Z0,\
-                *args, **kwargs)
 
     def __str__(self):
         f=self.frequency
@@ -133,16 +120,8 @@ class DistributedCircuit(Media):
     def __repr__(self):
         return self.__str__()
 
-    def __getstate__(self):
-        '''
-        method needed to allow for pickling
-        '''
-        d = self.__dict__.copy()
-        del d['delay'] # cant pickle instance methods
-        return(d)
-
     @classmethod
-    def from_Media(cls, my_media, *args, **kwargs):
+    def from_media(cls, my_media, *args, **kwargs):
         '''
         Initializes a DistributedCircuit from an existing
         :class:'~skrf.media.media.Media' instance.
@@ -152,15 +131,22 @@ class DistributedCircuit(Media):
         '''
 
         w  =  my_media.frequency.w
-        gamma = my_media.propagation_constant
-        Z0 = my_media.characteristic_impedance
+        gamma = my_media.gamma
+        z0 = my_media.z0
+        port_z0 = my_media.port_z0
 
-        Y = gamma/Z0
-        Z = gamma*Z0
+        Y = gamma/z0
+        Z = gamma*z0
         G,C = real(Y), imag(Y)/w
         R,L = real(Z), imag(Z)/w
-        return cls(my_media.frequency, C=C, L=L, R=R, G=G, *args, **kwargs)
-
+        return cls(frequency = my_media.frequency, 
+                   port_z0 = port_z0, 
+                   C=C, L=L, R=R, G=G, *args, **kwargs)
+    
+    @classmethod
+    def from_csv(self, *args, **kw):
+        d = DefinedGammaZ0.from_csv(*args,**kw)
+        return self.from_media(d)
 
     @property
     def Z(self):
@@ -178,7 +164,7 @@ class DistributedCircuit(Media):
         Z : numpy.ndarray
                 Distributed impedance in units of ohm/m
         '''
-        w  = 2*npy.pi * self.frequency.f
+        w  = self.frequency.w
         return self.R + 1j*w*self.L
 
     @property
@@ -197,11 +183,11 @@ class DistributedCircuit(Media):
                 Distributed Admittance in units of S/m
         '''
 
-        w = 2*npy.pi*self.frequency.f
+        w  = self.frequency.w
         return self.G + 1j*w*self.C
 
-
-    def Z0(self):
+    @property
+    def z0(self):
         '''
         Characteristic Impedance, :math:`Z0`
 
@@ -216,7 +202,7 @@ class DistributedCircuit(Media):
 
         return sqrt(self.Z/self.Y)
 
-
+    @property
     def gamma(self):
         '''
         Propagation Constant, :math:`\\gamma`

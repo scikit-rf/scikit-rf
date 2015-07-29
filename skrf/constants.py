@@ -86,9 +86,16 @@ References
 
 
 from . frequency import Frequency
-from . media import RectangularWaveguide, Media
+#from . media import RectangularWaveguide, Media
 
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
+
+
+
+# used as substitutes to handle mathematical singularities.
+INF = 1e99
+ONE = 1.0 + 1/1e14
+ZERO = 1e-6
 
 def to_meters( d, unit='m'):
     '''
@@ -130,7 +137,7 @@ def to_meters( d, unit='m'):
 
 
 # pre-initialized classes
-
+'''
 f_wr51  = Frequency(15,22,1001, 'ghz')
 f_wr42  = Frequency(17.5,26.5,1001, 'ghz')
 f_wr34  = Frequency(22,33,1001, 'ghz')
@@ -180,4 +187,4 @@ wr0p8   = RectangularWaveguide(f_wr0p8.copy(),a=8*mil,b=4*mil,z0=50)
 wr0p65  = RectangularWaveguide(f_wr0p65.copy(),a=6.5*mil,b=3.25*mil,z0=50)
 wr0p51   = RectangularWaveguide(f_wr0p51.copy(),a=5.1*mil,b=2.55*mil,z0=50)
 
-
+'''
