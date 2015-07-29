@@ -46,8 +46,8 @@ class CPW(Media):
             resistivity of conductor (None)
 
     '''
-    def __init__(self, frequency=None, port_z0=None, w=10e-6, s=5e-6, 
-                 ep_r=5, t=None, rho=None,  *args, **kwargs):
+    def __init__(self, frequency=None, port_z0=None, w=70, s=4, 
+                 ep_r=3, t=None, rho=None,  *args, **kwargs):
         Media.__init__(self, frequency=frequency,port_z0=port_z0)
         
         self.w, self.s, self.ep_r, self.t, self.rho =\

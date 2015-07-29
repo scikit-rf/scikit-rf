@@ -76,13 +76,6 @@ class Media(object):
         self.port_z0 = port_z0
 
 
-    def __getstate__(self):
-        '''
-        method needed to allow for pickling
-        '''
-        d = self.__dict__.copy()
-        del d['delay'] # cant pickle instance methods
-        return(d)
         
     def __eq__(self,other):
         '''
