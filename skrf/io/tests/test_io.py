@@ -100,10 +100,10 @@ class IOTestCase(unittest.TestCase):
         os.remove(self.pickle_file)
 
     def test_readwrite_media(self):
-        a_media = rf.media.Media(
+        a_media = rf.media.DefinedGammaZ0(
             frequency = self.freq,
-            propagation_constant = 1j*npy.ones(101) ,
-            characteristic_impedance =  50*npy.ones(101),
+            gamma = 1j*npy.ones(101) ,
+            z0 =  50*npy.ones(101),
             )
         self.read_write(a_media)
     @unittest.skip

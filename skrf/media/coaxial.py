@@ -14,77 +14,103 @@ from scipy.constants import  epsilon_0, mu_0, pi
 from numpy import sqrt, log
 from ..tlineFunctions import surface_resistivity
 from .distributedCircuit import DistributedCircuit
+from .media import Media
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
 
-class Coaxial(DistributedCircuit):
+class Coaxial( DistributedCircuit,Media ):
     '''
     A coaxial transmission line defined in terms of its inner/outer
     diameters and permittivity
 
-    '''
+    
+
+    Parameters
+    ----------
+    frequency : :class:`~skrf.frequency.Frequency` object
+    
+    port_z0 : number, array-like, or None
+        the port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+        line. if port_z0 is None then will default to z0
+    Dint : number, or array-like
+        inner conductor diameter, in m
+    Dout : number, or array-like
+        outer conductor diameter, in m
+    epsilon_r=1 : number, or array-like
+        relative permittivity of the dielectric medium
+    tan_delta=0 : number, or array-like
+        loss tangent of the dielectric medium
+    sigma=infinity : number, or array-like
+        conductors electrical conductivity, in S/m
+
+    
+    TODO : different conductivity in case of different conductor kind
+
+    Notes
+    ----------
+    Dint, Dout, epsilon_r, tan_delta, sigma can all be vectors as long 
+    as they are the same length
+
+    References
+    ---------
+    .. [#] Pozar, D.M.; , "Microwave Engineering", Wiley India Pvt. Limited, 1 sept. 2009
+
+
+
+        '''
     ## CONSTRUCTOR
-    def __init__(self, frequency,  Dint, Dout, epsilon_r=1, tan_delta=0, sigma=INF, *args, **kwargs):
-        '''
-        coaxial transmission line constructor.
-
-        Parameters
-        ----------
-        frequency : :class:`~skrf.frequency.Frequency` object
-        Dint : number, or array-like
-            inner conductor diameter, in m
-        Dout : number, or array-like
-            outer conductor diameter, in m
-        epsilon_r=1 : number, or array-like
-            relative permittivity of the dielectric medium
-        tan_delta=0 : number, or array-like
-            loss tangent of the dielectric medium
-        sigma=infinity : number, or array-like
-            conductors electrical conductivity, in S/m
-
-        TODO : different conductivity in case of different conductor kind
-
-        Notes
-        ----------
-        Dint, Dout, epsilon_r, tan_delta, sigma can all be vectors as long as they are the same
-        length
-
-        References
-        ---------
-        .. [#] Pozar, D.M.; , "Microwave Engineering", Wiley India Pvt. Limited, 1 sept. 2009
-
-
-
-        '''
-
-        freq = frequency.copy()
+    def __init__(self, frequency=None,  port_z0=None, Dint=.81e-3, 
+                 Dout=5e-3, epsilon_r=1, tan_delta=0, sigma=INF, 
+                 *args, **kwargs):
+        
+        
+        
+        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        
         self.Dint, self.Dout = Dint,Dout
         self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
         self.epsilon_prime = epsilon_0*self.epsilon_r
         self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
 
-        # surface resistance
-        omega = freq.w
-        f = freq.f
-        mu_r=1.
-        rho= 1./sigma
-
-        Rs = surface_resistivity(f,rho, mu_r)
-
         # inner and outer radius
-        a = Dint/2.
-        b = Dout/2.
 
-        # derivation of distributed circuit parameters
-        R = Rs/(2.*pi)*(1./a + 1./b)
-        L = mu_0/(2.*pi)*log(b/a)
-        C = 2.*pi*self.epsilon_prime/log(b/a)
-        G = 2.*pi*omega*self.epsilon_second/log(b/a)
+        
 
-        DistributedCircuit.__init__(self,\
-                freq, C, L, R, G, \
-                *args, **kwargs)
+
+    @property
+    def Rs(self):
+        f  = self.frequency.f
+        rho = 1./self.sigma
+        mu_r =1
+        return surface_resistivity(f=f,rho=rho, mu_r=mu_r)
+    @property
+    def a(self):
+        return self.Dint/2.
+    
+    @property
+    def b(self):
+        return self.Dout/2.
+
+
+    # derivation of distributed circuit parameters
+    @property
+    def R(self):
+        return self.Rs/(2.*pi)*(1./self.a + 1./self.b)
+    
+    @property
+    def L(self):
+        return mu_0/(2.*pi)*log(self.b/self.a)
+    
+    @property
+    def C(self):
+        return 2.*pi*self.epsilon_prime/log(self.b/self.a)
+    
+    @property
+    def G(self):
+        f =  self.frequency.f
+        return f*self.epsilon_second/log(self.b/self.a)
 
 
     def __str__(self):

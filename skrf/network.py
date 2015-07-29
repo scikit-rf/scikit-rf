@@ -174,7 +174,7 @@ from . util import get_fid, get_extn, find_nearest_index,slice_domain
 #from io import touchstone
 #from io.general import network_2_spreadsheet
 
-
+from .constants import ZERO
 
 class Network(object):
     '''
@@ -262,9 +262,7 @@ class Network(object):
     ------------
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     '''
-    # used for testing s-parameter equivalence
-    global ALMOST_ZERO
-    ALMOST_ZERO = 1e-6
+    
 
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
@@ -565,7 +563,7 @@ class Network(object):
     def __eq__(self,other):
         if other is None:
             return False
-        if npy.all(npy.abs(self.s - other.s) < ALMOST_ZERO):
+        if npy.all(npy.abs(self.s - other.s) < ZERO):
             return True
         else:
             return False
@@ -1226,6 +1224,7 @@ class Network(object):
         # case we dont know how to re-shape the z0 to fxn. to solve this
         # i attempt to do the re-shaping when z0 is accessed, not when
         # it is set. this is what makes this function confusing.
+        
         try:
             if len(npy.shape(self._z0)) ==0:
                 try:

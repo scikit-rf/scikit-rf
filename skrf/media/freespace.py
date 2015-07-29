@@ -7,84 +7,139 @@
 freespace (:mod:`skrf.media.freespace`)
 ========================================
 
-A Plane-wave in Freespace.
+A plane-wave (TEM Mode) in Freespace.
+
+Represents a plane-wave in a homogeneous freespace, defined by
+the space's relative permittivity and relative permeability.
+
+The field properties of space are related to a distributed
+circuit transmission line model given in circuit theory by:
+
+===============================  ==============================
+Circuit Property                 Field Property
+===============================  ==============================
+distributed_capacitance          real(ep_0*ep_r)
+distributed_resistance           imag(ep_0*ep_r)
+distributed_inductance           real(mu_0*mu_r)
+distributed_conductance          imag(mu_0*mu_r)
+===============================  ==============================
+
+========================  =============  =================  ================================================
+               Circuit Property                 Field Property
+---------------------------------------  -------------------------------------------------------------------
+Variable                  Symbol         Variable           Symbol
+========================  =============  =================  ================================================
+distributed_capacitance   :math:`C^{'}`  real(ep_0*ep_r)    :math:`\\Re e \{\\epsilon_{0} \\epsilon_{r} \}`
+distributed_resistance    :math:`R^{'}`  imag(ep_0*ep_r)    :math:`\\Im m \{\\epsilon_{0} \\epsilon_{r} \}`
+distributed_inductance    :math:`L^{'}`  real(mu_0*mu_r)    :math:`\\Re e \{\\mu_{0} \\mu_{r} \}`
+distributed_conductance   :math:`G^{'}`  imag(mu_0*mu_r)    :math:`\\Im m \{\\mu_{0} \\mu_{r} \}`
+========================  =============  =================  ================================================
+
 '''
 from scipy.constants import  epsilon_0, mu_0
-from numpy import real, imag
+from numpy import real, imag, cos
 from .distributedCircuit import DistributedCircuit
+from .media import Media
 
-class Freespace(DistributedCircuit):
+class Freespace(DistributedCircuit, Media):
     '''
-    Represents a plane-wave in a homogeneous freespace, defined by
-    the space's relative permittivity and relative permeability.
+    A plane-wave (TEM Mode) in Freespace.
 
-    The field properties of space are related to a distributed
-    circuit transmission line model given in circuit theory by:
+    Parameters
+    -----------
+    frequency : :class:`~skrf.frequency.Frequency` object
+            frequency band of this transmission line medium
+    port_z0 : number, array-like, or None
+        the port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+        line. if port_z0 is None then will default to z0
+    ep_r : number, array-like
+            complex relative permittivity
+    mu_r : number, array-like
+            possibly complex, relative permeability
+    mode_type: ['tem','te','tm']
+        the type of mode 
+    angle : float
+        If mode_type != 'tem', this sets mode the angle in radians, from 
+        the direction the mode is transverse to 
+            
+    \*args, \*\*kwargs : arguments and keyword arguments
 
-    ===============================  ==============================
-    Circuit Property                 Field Property
-    ===============================  ==============================
-    distributed_capacitance          real(ep_0*ep_r)
-    distributed_resistance           imag(ep_0*ep_r)
-    distributed_inductance           real(mu_0*mu_r)
-    distributed_conductance          imag(mu_0*mu_r)
-    ===============================  ==============================
-
-    .. ========================  =============  =================  ================================================
-                           Circuit Property                 Field Property
-            ---------------------------------------  -------------------------------------------------------------------
-            Variable                  Symbol         Variable           Symbol
-            ========================  =============  =================  ================================================
-            distributed_capacitance   :math:`C^{'}`  real(ep_0*ep_r)    :math:`\\Re e \{\\epsilon_{0} \\epsilon_{r} \}`
-            distributed_resistance    :math:`R^{'}`  imag(ep_0*ep_r)    :math:`\\Im m \{\\epsilon_{0} \\epsilon_{r} \}`
-            distributed_inductance    :math:`I^{'}`  real(mu_0*mu_r)    :math:`\\Re e \{\\mu_{0} \\mu_{r} \}`
-            distributed_conductance   :math:`G^{'}`  imag(mu_0*mu_r)    :math:`\\Im m \{\\mu_{0} \\mu_{r} \}`
-            ========================  =============  =================  ================================================
-
-    This class's inheritence is;
-            :class:`~skrf.media.media.Media`->
-            :class:`~skrf.media.distributedCircuit.DistributedCircuit`->
-            :class:`~skrf.media.freespace.Freespace`
-
+    
     '''
-    def __init__(self, frequency,  ep_r=1+0j, mu_r=1+0j,  *args, **kwargs):
+    def __init__(self, frequency=None, port_z0=None,  ep_r=1+0j, 
+                 mu_r=1+0j, mode_type='tem', angle=0, *args, **kwargs):
+        
+        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        self.ep_r  = ep_r
+        self.mu_r  = mu_r
+        self.mode_type = mode_type.lower()
+        self.angle = angle
+        
+
+
+    @property
+    def R(self):
+        return self.frequency.w *imag(mu_0*self.mu_r)
+    
+    @property
+    def L(self):
+        return real(mu_0*self.mu_r)
+    
+    @property
+    def C(self):
+        return real(epsilon_0*self.ep_r)
+    
+    @property
+    def G(self):
+        return self.frequency.w *imag(epsilon_0*self.ep_r)
+        
+    @property
+    def z0(self):
         '''
-        Freespace initializer
+        Characteristic Impedance, :math:`Z0`
 
-        Parameters
-        -----------
-        frequency : :class:`~skrf.frequency.Frequency` object
-                frequency band of this transmission line medium
-        ep_r : number, array-like
-                complex relative permittivity
-        mu_r : number, array-like
-                possibly complex, relative permeability
-        \*args, \*\*kwargs : arguments and keyword arguments
+        .. math::
+                Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
+
+        Returns
+        --------
+        Z0 : numpy.ndarray
+                Characteristic Impedance in units of ohms
+        '''
+        z0 = DistributedCircuit.z0.fget(self)
+        z0_dict = {'te':z0/cos(self.angle),
+                   'tm':z0*cos(self.angle),
+                   'tem':z0}
+        return z0_dict[self.mode_type]
+            
+            
+
+    @property
+    def gamma(self):
+        '''
+        Propagation Constant, :math:`\\gamma`
+
+        Defined as,
+
+        .. math::
+                \\gamma =  \\sqrt{ Z^{'}  Y^{'}}
+
+        Returns
+        --------
+        gamma : numpy.ndarray
+                Propagation Constant,
 
         Notes
-        ------
-        The distributed circuit parameters are related to a space's
-        field properties by
+        ---------
+        The components of propagation constant are interpreted as follows:
 
-        ===============================  ==============================
-        Circuit Property                 Field Property
-        ===============================  ==============================
-        distributed_capacitance          real(ep_0*ep_r)
-        distributed_resistance           :math:`\\omega  imag(ep_0*ep_r)
-        distributed_inductance           real(mu_0*mu_r)
-        distributed_conductance          :math:`\\omega  imag(mu_0*mu_r)
-        ===============================  ==============================
+        positive real(gamma) = attenuation
+        positive imag(gamma) = forward propagation
         '''
-
-        DistributedCircuit.__init__(self,\
-                frequency = frequency, \
-                C = real(epsilon_0*ep_r),\
-                G = frequency.w *imag(epsilon_0*ep_r),\
-                I = real(mu_0*mu_r),\
-                R = frequency.w *imag(mu_0*mu_r),\
-                *args, **kwargs
-                )
-
+        return  DistributedCircuit.gamma.fget(self)*cos(self.angle)
+        
+    
     def __str__(self):
         f=self.frequency
         output =  \

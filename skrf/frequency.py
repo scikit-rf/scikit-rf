@@ -572,8 +572,10 @@ def overlap_freq(f1,f2):
 
     Or, put more accurately, this returns a Frequency that is the part
     of f1 that is overlapped by f2. The resultant start frequency is
-    the smallest f1.f that is greater than f2.f.start, and likewise for
-    the the stop-frequency. This way the new frequency overlays onto f1.
+    the smallest f1.f that is greater than f2.f.start, and the stop 
+    frequency is the largest f1.f that is smaller than f2.f.stop.
+    
+    This way the new frequency overlays onto f1.
 
 
     Parameters
