@@ -1,7 +1,7 @@
 import unittest
 import os
-import skrf as rf
-
+from skrf.media import DistributedCircuit
+from skrf.network import Network
 class MediaTestCase(unittest.TestCase):
     '''
 
@@ -22,9 +22,9 @@ class MediaTestCase(unittest.TestCase):
         '''
         fname = os.path.join(self.files_dir,\
                 'distributedCircuit,line1mm.s2p')
-        qucs_ntwk = rf.Network(fname)
+        qucs_ntwk = Network(fname)
 
-        a_media = rf.media.DistributedCircuit(
+        a_media = DistributedCircuit(
             frequency = qucs_ntwk.frequency,
             R=1e5, G=1, I=1e-6, C=8e-12
             )

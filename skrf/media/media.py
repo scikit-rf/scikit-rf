@@ -12,7 +12,7 @@ Contains Media class.
 import warnings
 
 import numpy as npy
-from numpy import real, imag, ones
+from numpy import real, imag, ones, any, array
 from scipy import stats
 from scipy.constants import  c, inch, mil
 
@@ -30,57 +30,45 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 class Media(object):
     '''
-    The base-class for all transmission line mediums.
+    Base-class for a single mode on a transmission line media.
+    
+    Sub-classes must implement the properties:
+        * `gamma`
+        * `z0`
+    
+    Which define the properties of the media. `gamma` must adhere to 
+    the following convention,
+     * positive real(gamma) = attenuation
+     * positive imag(gamma) = forward propagation
+    
+    `gamma` and `z0` should return complex arrays of the same length as
+    `frequency`.
+ 
+    Parameters
+    --------------
+    frequency : :class:`~skrf.frequency.Frequency` object
+        frequency band of this transmission line medium. If None, will 
+        default to  1-10ghz, 
 
-    The :class:`Media` object provides generic methods to produce :class:`~skrf.network.Network`'s for any transmission line medium, such as :func:`line` and :func:`delay_short`.
 
-    The network creation methods build off of each other. For example,
-    the specicial load cases, suc as :func:`short` and :func:`open` call
-    :func:`load` with given arguments for Gamma0, and the delay_ and
-    shunt_ functions call :func:`line` and :func:`shunt` respectively.
-    This minimizes re-implementation.
+    port_z0 : number, array-like, or None
+        the port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+        line. if port_z0 is None then will default to z0
 
-    Most methods initialize the :class:`~skrf.network.Network` by
-    calling :func:`match` to create a 'blank'
-    :class:`~skrf.network.Network`, and then fill in the s-matrix.
 
+    Notes
+    --------
+    The port_z0 parameter is needed in some cases. 
+    :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`
+    is an example  where you may need this, because the
+    characteristic impedance is frequency dependent, but the
+    touchstone's created by most VNA's have port_z0=1, or 50. so to 
+    prevent accidental impedance mis-match, you may want to manually
+    set the port_z0 .
     '''
     __metaclass__ = ABCMeta
     def __init__(self, frequency=None, port_z0=None):
-        '''
-        The Media initializer.
-
-        Parameters
-        --------------
-        frequency : :class:`~skrf.frequency.Frequency` object
-                frequency band of this transmission line medium
-
-
-        port_z0 : number, array-like, or a function
-                the port impedance for media , IF its different
-                from the characterisitc impedance of the transmission
-                line medium  (None) [a number].
-                if port_z0= None then will set to z0
-
-        See Also
-        ---------
-
-        :func:`from_csv` : function to create a
-            Media object from a csv file containing gamma/z0
-
-
-        Notes
-        ------
-        `gamma` must adhere to the following convention,
-         * positive real(gamma) = attenuation
-         * positive imag(gamma) = forward propagation
-
-        the port_z0 parameter is needed in some cases. For example, the
-        :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`
-        is an example  where you may need this, because the
-        characteristic impedance is frequency dependent, but the
-        touchstone's created by most VNA's have port_z0=1
-        '''
         if frequency is None:
             frequency = Frequency(1,10,101,'ghz')
         
@@ -123,7 +111,13 @@ class Media(object):
         '''
         return len(self.frequency)
 
-
+    @property
+    def npoints(self):
+        return self.frequency.npoints
+    @npoints.setter
+    def npoints(self,val):
+        self.frequency.npoints = val
+    
     @property
     def port_z0(self):
         if self._port_z0 is None:
@@ -229,6 +223,16 @@ class Media(object):
 
         return 1j*dw/dk
 
+
+    def get_array_of(self,x):
+        try:
+            if len(x)!= len(self):
+                # we have to make a decision
+                pass
+        except(TypeError):
+            y = x* ones(len(self))
+        
+        return y
 
     ## Other Functions
     def theta_2_d(self,theta,deg=True, bc = True):
@@ -1146,40 +1150,7 @@ class Media(object):
 
 
 
-    @classmethod
-    def from_csv(cls, filename, *args, **kwargs):
-        '''
-        create a Media from numerical values stored in a csv file.
-
-        the csv file format must be written by the function write_csv()
-        which produces the following format
-
-            f[$unit], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)
-            1, 1, 1, 1, 1, 1, 1
-            2, 1, 1, 1, 1, 1, 1
-            .....
-
-        '''
-        try:
-            f = open(filename)
-        except(TypeError):
-            # they may have passed a file
-            f = filename
-
-        header = f.readline()
-        # this is not the correct way to do this ... but whatever
-        f_unit = header.split(',')[0].split('[')[1].split(']')[0]
-
-        f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
-                npy.loadtxt(f,  delimiter=',').T
-
-        return cls(
-            frequency = Frequency.from_f(f, unit=f_unit),
-            z0 = z_re+1j*z_im,
-            gamma = g_re+1j*g_im,
-            port_z0 = pz_re+1j*pz_im,
-            *args, **kwargs
-            )
+    
 
     def write_csv(self, filename='f,gamma,z0,port_z0.csv'):
         '''
@@ -1212,24 +1183,110 @@ class Media(object):
 
 
 class DefinedGammaZ0(Media):
-    def __init__(self, frequency=None, port_z0=None, gamma=1j, z0=50):
+    '''
+    A media directly defined by its propagation constant and 
+    characteristic impedance
+    
+    Parameters
+    --------------
+    frequency : :class:`~skrf.frequency.Frequency` object
+        frequency band of this transmission line medium. If None, will 
+        default to  1-10ghz, 
+
+
+    port_z0 : number, array-like, or None
+        The port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+        line. if `port_z0` is `None` then it will default to `z0`
+ 
+    gamma : number, array-like
+        complex propagation constant. `gamma` must adhere to 
+        the following convention,
+            * positive real(gamma) = attenuation
+            * positive imag(gamma) = forward propagation
         
+    z0 : number, array-like
+        complex characteristic impedance.
+    '''
+    def __init__(self, frequency=None, port_z0=None, gamma=1j, z0=50):
+        '''
+        '''
         super(DefinedGammaZ0, self).__init__(frequency=frequency, 
                                              port_z0=port_z0)
         self.gamma= gamma
         self.z0 = z0
+    
+    @classmethod
+    def from_csv(cls, filename, *args, **kwargs):
+        '''
+        create a Media from numerical values stored in a csv file.
+
+        the csv file format must be written by the function write_csv(),
+        or similar method  which produces the following format
+
+            f[$unit], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)
+            1, 1, 1, 1, 1, 1, 1
+            2, 1, 1, 1, 1, 1, 1
+            .....
+
+        '''
+        try:
+            f = open(filename)
+        except(TypeError):
+            # they may have passed a file
+            f = filename
+
+        header = f.readline()
+        # this is not the correct way to do this ... but whatever
+        f_unit = header.split(',')[0].split('[')[1].split(']')[0]
+
+        f,z_re,z_im,g_re,g_im,pz_re,pz_im = \
+                npy.loadtxt(f,  delimiter=',').T
+
+        return cls(
+            frequency = Frequency.from_f(f, unit=f_unit),
+            z0 = z_re+1j*z_im,
+            gamma = g_re+1j*g_im,
+            port_z0 = pz_re+1j*pz_im,
+            *args, **kwargs
+            )
+    @property
+    def npoints(self):
+        return self.frequency.npoints
+    
+    @npoints.setter
+    def npoints(self,val):
+        # this is done to trigger checks on vector lengths for 
+        # gamma/z0/port_z0
+        new_freq= self.frequency.copy()
+        new_freq.npoints = val
+        self.frequency = new_freq
         
-        import pdb;pdb.set_trace()
+    
+    @property
+    def frequency(self):
+        return self._frequency
+        
+    @frequency.setter
+    def frequency(self, val):
+        if hasattr(self, '_frequency') and self._frequency is not None:
+            
+            # they are updating the frequency, we may have to do somethign
+            attrs_to_test = [self._gamma, self._z0, self._port_z0]
+            if any([has_len(k) for k in attrs_to_test]):
+                 raise NotImplementedError('updating a Media frequency, with non-constant gamma/z0/port_z0 is not worked out yet')
+        self._frequency = val
+        
     @property
     def z0(self):
         '''
         Characteristic Impedance 
         '''
-        return self._z0
+        return self._z0*ones(len(self))
     
     @z0.setter
     def z0(self, val):
-        self._z0 = val*ones(len(self))
+        self._z0 = val
     
     @property
     def gamma(self):
@@ -1247,8 +1304,20 @@ class DefinedGammaZ0(Media):
          * positive real(gamma) = attenuation
          * positive imag(gamma) = forward propagation
         '''
-        return self._gamma
+        return self._gamma*ones(len(self))
     
     @gamma.setter
     def gamma(self, val):
-        self._gamma = val*ones(len(self))
+        self._gamma = val
+
+def has_len(x):
+    '''
+    test of x  has any length  (ie is a vector)
+    
+    this is slightly non-trivial because [3] has len() but is 
+    doesnt really have any length
+    '''
+    try:
+        return (len(array(x))>1)
+    except TypeError:
+        return False

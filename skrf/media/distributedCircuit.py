@@ -100,12 +100,12 @@ class DistributedCircuit(Media):
         '''
 
         self.frequency = frequency.copy()
-        self.C, self.I, self.R, self.G = C,I,R,G
+        self.C, self.L, self.R, self.G = C,L,R,G
 
         # for unambiguousness
         self.distributed_resistance = self.R
         self.distributed_capacitance = self.C
-        self.distributed_inductance = self.I
+        self.distributed_inductance = self.L
         self.distributed_conductance = self.G
 
         Media.__init__(self,\
@@ -120,14 +120,14 @@ class DistributedCircuit(Media):
             output =  \
                 'Distributed Circuit Media.  %i-%i %s.  %i points'%\
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nI\'= %.2f, C\'= %.2f,R\'= %.2f, G\'= %.2f, '% \
-                (self.I, self.C,self.R, self.G)
+                '\nL\'= %.2f, C\'= %.2f,R\'= %.2f, G\'= %.2f, '% \
+                (self.L, self.C,self.R, self.G)
         except(TypeError):
             output =  \
                 'Distributed Circuit Media.  %i-%i %s.  %i points'%\
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
-                '\nI\'= %.2f.., C\'= %.2f..,R\'= %.2f.., G\'= %.2f.., '% \
-                (self.I[0], self.C[0],self.R[0], self.G[0])
+                '\nL\'= %.2f.., C\'= %.2f..,R\'= %.2f.., G\'= %.2f.., '% \
+                (self.L[0], self.C[0],self.R[0], self.G[0])
         return output
 
     def __repr__(self):
@@ -158,8 +158,8 @@ class DistributedCircuit(Media):
         Y = gamma/Z0
         Z = gamma*Z0
         G,C = real(Y), imag(Y)/w
-        R,I = real(Z), imag(Z)/w
-        return cls(my_media.frequency, C=C, I=I, R=R, G=G, *args, **kwargs)
+        R,L = real(Z), imag(Z)/w
+        return cls(my_media.frequency, C=C, L=L, R=R, G=G, *args, **kwargs)
 
 
     @property
@@ -170,7 +170,7 @@ class DistributedCircuit(Media):
         Defined as
 
         .. math::
-                Z^{'} = R^{'} + j \\omega I^{'}
+                Z^{'} = R^{'} + j \\omega L^{'}
 
 
         Returns
@@ -179,7 +179,7 @@ class DistributedCircuit(Media):
                 Distributed impedance in units of ohm/m
         '''
         w  = 2*npy.pi * self.frequency.f
-        return self.R + 1j*w*self.I
+        return self.R + 1j*w*self.L
 
     @property
     def Y(self):
