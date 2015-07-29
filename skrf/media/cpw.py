@@ -6,7 +6,16 @@
 cpw (:mod:`skrf.media.cpw`)
 ========================================
 
-contains CPW class
+Coplanar waveguide class
+
+
+This class was made from the technical documentation [#]_ provided
+by the qucs project [#]_ .
+The variables  and properties of this class are coincident with
+their derivations.
+
+.. [#] http://qucs.sourceforge.net/docs/technical.pdf
+.. [#] http://www.qucs.sourceforge.net/
 '''
 from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
@@ -16,47 +25,34 @@ from ..tlineFunctions import skin_depth, surface_resistivity
 
 class CPW(Media):
     '''
-    Coplanar waveguide class
+    Coplanar Waveguide initializer
 
+    Parameters
+    -------------
+    frequency : :class:`~skrf.frequency.Frequency` object
+        frequency band of the media
+    port_z0 : number, array-like, or None
+        the port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+    w : number, or array-like
+            width of center conductor, in m.
+    s : number, or array-like
+            width of gap, in m.
+    ep_r : number, or array-like
+            relative permativity of substrate
+    t : number, or array-like, optional
+            conductor thickness, in m.
+    rho: number, or array-like, optional
+            resistivity of conductor (None)
 
-    This class was made from the technical documentation [#]_ provided
-    by the qucs project [#]_ .
-    The variables  and properties of this class are coincident with
-    their derivations.
-
-    .. [#] http://qucs.sourceforge.net/docs/technical.pdf
-    .. [#] http://www.qucs.sourceforge.net/
     '''
-    def __init__(self, frequency, w , s, ep_r, t=None, rho=None, \
-            *args, **kwargs):
-        '''
-        Coplanar Waveguide initializer
+    def __init__(self, frequency=None, port_z0=None, w=10e-6, s=5e-6, 
+                 ep_r=5, t=None, rho=None,  *args, **kwargs):
+        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        
+        self.w, self.s, self.ep_r, self.t, self.rho =\
+                w, s, ep_r, t, rho
 
-        Parameters
-        -------------
-        frequency : :class:`~skrf.frequency.Frequency` object
-                frequency band of this transmission line medium
-        w : number, or array-like
-                width of center conductor, in m.
-        s : number, or array-like
-                width of gap, in m.
-        ep_r : number, or array-like
-                relative permativity of substrate
-        t : number, or array-like, optional
-                conductor thickness, in m.
-        rho: number, or array-like, optional
-                resistivity of conductor (None)
-
-
-        '''
-        self.frequency, self.w, self.s, self.ep_r, self.t, self.rho =\
-                frequency, w, s, ep_r, t, rho
-
-        Media.__init__(self,\
-                frequency = frequency,\
-                propagation_constant = self.gamma, \
-                characteristic_impedance = self.Z0,\
-                *args, **kwargs)
 
     def __str__(self):
         f=self.frequency
@@ -129,14 +125,14 @@ class CPW(Media):
 
 
 
-
-    def Z0(self):
+    @property
+    def z0(self):
         '''
         Characterisitc impedance
         '''
         return (30.*pi / sqrt(self.ep_re) * self.K_ratio)*ones(len(self.frequency.f), dtype='complex')
 
-
+    @property
     def gamma(self):
         '''
         Propagation constant

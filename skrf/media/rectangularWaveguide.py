@@ -4,7 +4,22 @@
 rectangularWaveguide (:mod:`skrf.media.rectangularWaveguide`)
 ================================================================
 
-Rectangular Waveguide class
+Represents a single mode of a homogeneously filled rectangular
+waveguide of cross-section `a` x `b`. The mode is determined by
+`mode-type` (`'te'` or `'tm'`) and mode indices ( `m` and `n` ).
+
+
+====================================  =============  ===============
+Quantity                              Symbol         Variable
+====================================  =============  ===============
+Characteristic Wave Number            :math:`k_0`    :attr:`k0`
+Cut-off Wave Number                   :math:`k_c`    :attr:`kc`
+Longitudinal Wave Number              :math:`k_z`    :attr:`gamma`
+Transverse Wave Number (a)            :math:`k_x`    :attr:`kx`
+Transverse Wave Number (b)            :math:`k_y`    :attr:`ky`
+Characteristic Impedance              :math:`z_0`    :attr:`z0`
+====================================  =============  ===============
+
 '''
 from scipy.constants import  epsilon_0, mu_0,pi,c
 from numpy import sqrt, exp, sinc
@@ -12,80 +27,68 @@ import numpy as npy
 from .media import Media
 from ..data import materials
 from ..tlineFunctions import skin_depth
-from ..network import s2y,y2s
+
 
 class RectangularWaveguide(Media):
     '''
-    Rectangular Waveguide medium.
+    A single mode of a homogeneously filled rectangular waveguide
 
-    Represents a single mode of a homogeneously filled rectangular
-    waveguide of cross-section `a` x `b`. The mode is determined by
-    mode-type (te or tm) and mode indices ( m and n ).
+    Parameters
+    ----------
+    frequency : :class:`~skrf.frequency.Frequency` object
+            frequency band of this transmission line medium
+    port_z0 : number, array-like, or None
+        the port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+        line. if port_z0 is None then will default to z0
+    a : number
+            width of waveguide, in meters.
+    b : number
+            height of waveguide, in meters. If `None` defaults to a/2
+    mode_type : ['te','tm']
+            mode type, transverse electric (te) or transverse magnetic
+            (tm) to-z. where z is direction of propagation
+    m : int
+            mode index in 'a'-direction
+    n : int
+            mode index in 'b'-direction
+    ep_r : number, array-like,
+            filling material's relative permittivity
+    mu_r : number, array-like
+            filling material's relative permeability
+    rho : number, array-like, string
+        resistivity (ohm-m) of the conductor walls. If array-like
+        must be same length as frequency. if str, it must be a key in
+        `skrf.data.materials`.
+    roughness : number, or array-like
+        surface roughness of the conductor walls in units of RMS
+        deviation from surface
+
+    *args,**kwargs : arguments, keywrod arguments
+            passed to :class:`~skrf.media.media.Media`'s constructor
+            (:func:`~skrf.media.media.Media.__init__`
 
 
-    ====================================  =============  ===============
-    Quantity                              Symbol         Variable
-    ====================================  =============  ===============
-    Characteristic Wave Number            :math:`k_0`    :attr:`k0`
-    Cut-off Wave Number                   :math:`k_c`    :attr:`kc`
-    Longitudinal Wave Number              :math:`k_z`    :attr:`kz`
-    Transverse Wave Number (a)            :math:`k_x`    :attr:`kx`
-    Transverse Wave Number (b)            :math:`k_y`    :attr:`ky`
-    Characteristic Impedance              :math:`Z_0`    :attr:`Z0`
-    ====================================  =============  ===============
+    Examples
+    ------------
+    Most common usage is standard aspect ratio (2:1) dominant
+    mode, TE10 mode of wr10 waveguide can be constructed by
 
+    >>> freq = rf.Frequency(75,110,101,'ghz')
+    >>> rf.RectangularWaveguide(freq,a= 100*mil)
     '''
-    def __init__(self, frequency, a, b=None, mode_type = 'te', m=1, \
-            n=0, ep_r=1, mu_r=1, rho=None, roughness=None, *args, **kwargs):
-        '''
-        RectangularWaveguide initializer
-
-        Parameters
-        ----------
-        frequency : class:`~skrf.frequency.Frequency` object
-                frequency band for this media
-        a : number
-                width of waveguide, in meters.
-        b : number
-                height of waveguide, in meters. If `None` defaults to a/2
-        mode_type : ['te','tm']
-                mode type, transverse electric (te) or transverse magnetic
-                (tm) to-z. where z is direction of propagation
-        m : int
-                mode index in 'a'-direction
-        n : int
-                mode index in 'b'-direction
-        ep_r : number, array-like,
-                filling material's relative permittivity
-        mu_r : number, array-like
-                filling material's relative permeability
-        rho : number, array-like, string
-            resistivity (ohm-m) of the conductor walls. If array-like
-            must be same length as frequency. if str, it must be a key in
-            `skrf.data.materials`.
-        roughness : number, or array-like
-            surface roughness of the conductor walls in units of RMS
-            deviation from surface
-
-        *args,**kwargs : arguments, keywrod arguments
-                passed to :class:`~skrf.media.media.Media`'s constructor
-                (:func:`~skrf.media.media.Media.__init__`
-
-
-        Examples
-        ------------
-        Most common usage is standard aspect ratio (2:1) dominant
-        mode, TE10 mode of wr10 waveguide can be constructed by
-
-        >>> freq = rf.Frequency(75,110,101,'ghz')
-        >>> rf.RectangularWaveguide(freq, 100*mil)
-        '''
+    def __init__(self, frequency=None, port_z0=None, a=1, b=None,
+                 mode_type = 'te', m=1, n=0, ep_r=1, mu_r=1, rho=None, 
+                 roughness=None, *args, **kwargs):
+        
+        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        
         if b is None:
             b = a/2.
         if mode_type.lower() not in ['te','tm']:
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
-        self.frequency = frequency
+        
         self.a = a
         self.b = b
         self.mode_type = mode_type
@@ -95,11 +98,7 @@ class RectangularWaveguide(Media):
         self.mu_r = mu_r
         self.rho = rho
         self.roughness = roughness
-        Media.__init__(self,\
-                frequency = frequency,\
-                propagation_constant = self.kz, \
-                characteristic_impedance = self.Z0,\
-                *args, **kwargs)
+        
 
     def __str__(self):
         f=self.frequency
@@ -113,13 +112,7 @@ class RectangularWaveguide(Media):
     def __repr__(self):
         return self.__str__()
 
-    def __getstate__(self):
-        '''
-        method needed to allow for pickling
-        '''
-        return dict([(k, self.__dict__[k]) for k in \
-            ['frequency','_z0','kz','a','b','mode_type','m','n','ep_r','mu_r']])
-
+    
     @classmethod
     def from_z0(cls,frequency, z0,f, m=1,n=0,ep_r=1, mu_r=1, **kw):
         '''
@@ -321,10 +314,10 @@ class RectangularWaveguide(Media):
         v = 1/sqrt(self.ep*self.mu)
         return self.f_cutoff*v
 
-
-    def kz(self):
+    @property
+    def gamma(self):
         '''
-        The Longitudinal wave number, aka propagation constant.
+        The propagation constant (aka Longitudinal wave number)
 
         Defined as
 
@@ -338,14 +331,13 @@ class RectangularWaveguide(Media):
 
         Returns
         --------
-        kz :  number
+        gamma :  number
                 The propagation constant
 
 
         '''
         k0,kc = self.k0, self.kc
-        return \
-                1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
+        return  1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
                 sqrt(abs(kc**2- k0**2))*(k0<kc) + \
                 0*(kc==k0) + self.alpha_c *(self.rho!=None)
 
@@ -400,14 +392,14 @@ class RectangularWaveguide(Media):
         return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+2.*b/a*(1/f_n)**2)/\
             sqrt(1-(1/f_n)**2)
 
-
-    def Z0(self):
+    @property
+    def z0(self):
         '''
         The characteristic impedance
         '''
         omega = self.frequency.w
-        impedance_dict = {'te':   omega*self.mu/(-1*self.kz()),
-                          'tm':   -1*self.kz()/(omega*self.ep),\
+        impedance_dict = {'te':   omega*self.mu/(-1*self.gamma),
+                          'tm':   -1*self.gamma/(omega*self.ep),\
                          }
 
         return impedance_dict[self.mode_type]

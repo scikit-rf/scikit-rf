@@ -7,7 +7,7 @@ implemented in Python.
 from __future__ import absolute_import, print_function, division
 from six.moves import xrange 
 
-__version__ = '0.15.1-dev'
+__version__ = '0.16-dev'
 ## Import all  module names for coherent reference of name-space
 #import io
 
@@ -21,10 +21,10 @@ from . import plotting
 from . import mathFunctions
 from . import tlineFunctions
 from . import taper
-#from . import constants
+from . import constants
 from . import util
 from . import io
-
+from . import instances
 
 
 # Import contents into current namespace for ease of calling
@@ -37,8 +37,9 @@ from .plotting import  *
 from .mathFunctions import *
 from .tlineFunctions import *
 from .io import * 
-#from .constants import * 
+from .constants import * 
 from .taper import * 
+from .instances import * 
 
 # Try to import vi, but if except if pyvisa not installed
 try:

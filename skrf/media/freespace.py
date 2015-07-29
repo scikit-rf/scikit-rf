@@ -35,10 +35,6 @@ distributed_inductance    :math:`L^{'}`  real(mu_0*mu_r)    :math:`\\Re e \{\\mu
 distributed_conductance   :math:`G^{'}`  imag(mu_0*mu_r)    :math:`\\Im m \{\\mu_{0} \\mu_{r} \}`
 ========================  =============  =================  ================================================
 
-This class's inheritence is;
-        :class:`~skrf.media.media.Media`->
-        :class:`~skrf.media.distributedCircuit.DistributedCircuit`->
-        :class:`~skrf.media.freespace.Freespace`
 '''
 from scipy.constants import  epsilon_0, mu_0
 from numpy import real, imag, cos

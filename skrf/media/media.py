@@ -21,8 +21,8 @@ from ..network import Network, connect
 
 from .. import tlineFunctions as tf
 from .. import mathFunctions as mf
-from ..mathFunctions import ALMOST_ZERO
 
+from ..constants import to_meters ,ZERO
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 
@@ -86,21 +86,21 @@ class Media(object):
         
     def __eq__(self,other):
         '''
-        test for numerical equality (up to skrf.mathFunctions.ALMOST_ZERO)
+        test for numerical equality (up to skrf.mathFunctions.ZERO)
         '''
 
         if self.frequency != other.frequency:
             return False
 
         if max(abs(self.z0 - \
-                other.z0)) > ALMOST_ZERO:
+                other.z0)) > ZERO:
             return False
 
         if max(abs(self.gamma - \
-                other.gamma)) > ALMOST_ZERO:
+                other.gamma)) > ZERO:
             return False
 
-        if max(abs(self.port_z0 - other.port_z0)) > ALMOST_ZERO:
+        if max(abs(self.port_z0 - other.port_z0)) > ZERO:
             return False
 
         return True
@@ -616,26 +616,21 @@ class Media(object):
             the unit to that x is in:
             ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
 
+        See Also0
+        ----------
+        skrf.constants.to_meters
         '''
         unit = unit.lower()
+        #import pdb;pdb.set_trace()
+        
         d_dict ={'deg':self.theta_2_d(d,deg=True),
                  'rad':self.theta_2_d(d,deg=False),
-                 'm':d,
-                 'cm':1e-2*d,
-                 'mm':1e-3*d,
-                 'um':1e-6*d,
-                 'in':d*inch,
-                 'mil': d*mil,
-                 's':d*c,
-                 'us':d*1e-6*c,
-                 'ns':d*1e-9*c,
-                 'ps':d*1e-12*c,
                  }
-        try:
-                return d_dict[unit]
-        except(KeyError):
-                raise(ValueError('Incorrect unit'))
-
+        
+        if unit in d_dict: 
+            return d_dict[unit]
+        else:
+            return to_meters(d=d,unit=unit)
 
     def thru(self, **kwargs):
         '''
@@ -697,7 +692,7 @@ class Media(object):
         kwargs.update({'port_z0':z0})
         result = self.match(nports=2,**kwargs)
 
-        theta = self.electrical_length(self.to_meters(d, unit))
+        theta = self.electrical_length(self.to_meters(d=d, unit=unit))
 
         s11 = npy.zeros(self.frequency.npoints, dtype=complex)
         s21 = npy.exp(-1*theta)

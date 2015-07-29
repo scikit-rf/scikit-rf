@@ -41,15 +41,13 @@ Transmission Line Classes
 .. autosummary::
     :toctree: generated/
     :nosignatures:
-
+    
+    ~media.DefinedGammaZ0
     ~distributedCircuit.DistributedCircuit
     ~rectangularWaveguide.RectangularWaveguide
     ~cpw.CPW
     ~freespace.Freespace
     ~coaxial.Coaxial
-
-
-.. _DistributedCircuit: :class:`~skrf.media.distributedCircuit.DistributedCircuit`
 
 '''
 
