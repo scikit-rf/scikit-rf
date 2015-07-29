@@ -14,52 +14,61 @@ from scipy.constants import  epsilon_0, mu_0, pi
 from numpy import sqrt, log
 from ..tlineFunctions import surface_resistivity
 from .distributedCircuit import DistributedCircuit
+from .media import Media
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
 
-class Coaxial(DistributedCircuit):
+class Coaxial( DistributedCircuit,Media ):
     '''
     A coaxial transmission line defined in terms of its inner/outer
     diameters and permittivity
 
-    '''
-    ## CONSTRUCTOR
-    def __init__(self, frequency,  Dint, Dout, epsilon_r=1, tan_delta=0, sigma=INF, *args, **kwargs):
-        '''
-        coaxial transmission line constructor.
-
-        Parameters
-        ----------
-        frequency : :class:`~skrf.frequency.Frequency` object
-        Dint : number, or array-like
-            inner conductor diameter, in m
-        Dout : number, or array-like
-            outer conductor diameter, in m
-        epsilon_r=1 : number, or array-like
-            relative permittivity of the dielectric medium
-        tan_delta=0 : number, or array-like
-            loss tangent of the dielectric medium
-        sigma=infinity : number, or array-like
-            conductors electrical conductivity, in S/m
     
-        TODO: refactor code so properties can be updated after __init__
-        TODO : different conductivity in case of different conductor kind
 
-        Notes
-        ----------
-        Dint, Dout, epsilon_r, tan_delta, sigma can all be vectors as long as they are the same
-        length
+    Parameters
+    ----------
+    frequency : :class:`~skrf.frequency.Frequency` object
+    
+    port_z0 : number, array-like, or None
+        the port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+        line. if port_z0 is None then will default to z0
+    Dint : number, or array-like
+        inner conductor diameter, in m
+    Dout : number, or array-like
+        outer conductor diameter, in m
+    epsilon_r=1 : number, or array-like
+        relative permittivity of the dielectric medium
+    tan_delta=0 : number, or array-like
+        loss tangent of the dielectric medium
+    sigma=infinity : number, or array-like
+        conductors electrical conductivity, in S/m
 
-        References
-        ---------
-        .. [#] Pozar, D.M.; , "Microwave Engineering", Wiley India Pvt. Limited, 1 sept. 2009
+    
+    TODO : different conductivity in case of different conductor kind
+
+    Notes
+    ----------
+    Dint, Dout, epsilon_r, tan_delta, sigma can all be vectors as long 
+    as they are the same length
+
+    References
+    ---------
+    .. [#] Pozar, D.M.; , "Microwave Engineering", Wiley India Pvt. Limited, 1 sept. 2009
 
 
 
         '''
-
-        self.frequency = frequency
+    ## CONSTRUCTOR
+    def __init__(self, frequency=None,  port_z0=None, Dint=.81e-3, 
+                 Dout=5e-3, epsilon_r=1, tan_delta=0, sigma=INF, 
+                 *args, **kwargs):
+        
+        
+        
+        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        
         self.Dint, self.Dout = Dint,Dout
         self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
         self.epsilon_prime = epsilon_0*self.epsilon_r
@@ -67,10 +76,7 @@ class Coaxial(DistributedCircuit):
 
         # inner and outer radius
 
-
-        DistributedCircuit.__init__(self,\
-                frequency, self.C, self.L, self.R, self.G, \
-                *args, **kwargs)
+        
 
 
     @property

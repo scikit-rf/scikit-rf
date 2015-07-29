@@ -74,6 +74,10 @@ class DistributedCircuit(Media):
     ------------
     frequency : :class:`~skrf.frequency.Frequency` object
         frequency band of the media
+    port_z0 : number, array-like, or None
+        the port impedance for media. Only needed if  its different
+        from the characterisitc impedance of the transmission
+        line. if port_z0 is None then will default to z0
     C : number, or array-like
             distributed capacitance, in F/m
     L : number, or array-like

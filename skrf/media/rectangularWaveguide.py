@@ -406,12 +406,9 @@ class RectangularWaveguide(Media):
         The characteristic impedance
         '''
         omega = self.frequency.w
-        impedance_dict = {\
-                'tez':  omega*self.mu/(-1*self.kz()),\
-                'te':   omega*self.mu/(-1*self.kz()),\
-                'tmz':  -1*self.kz()/(omega*self.ep),\
-                'tm':   -1*self.kz()/(omega*self.ep),\
-                }
+        impedance_dict = {'te':   omega*self.mu/(-1*self.kz()),
+                          'tm':   -1*self.kz()/(omega*self.ep),\
+                         }
 
         return impedance_dict[self.mode_type]
 
