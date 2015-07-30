@@ -49,22 +49,37 @@ objects are given below.
 Media's Supported by skrf
 ==========================
 
-The base-class, :class:`~media.Media`,  is constructed directly from 
-values of propagation constant and characteristic impedance. Specific 
+The base-class, :class:`~media.Media`,  is an abstract base-class that 
+provides generic circuits and intermediary methods. Specific 
 instances of Media objects can be created from relevant physical and 
 electrical properties. Below is a list of mediums types supported by skrf,
 
+* :class:`~media.DefinedGammaZ0`
+* :class:`~distributedCircuit.DistributedCircuit`
+* :class:`~freespace.Freespace`
 * :class:`~cpw.CPW`
 * :class:`~rectangularWaveguide.RectangularWaveguide`
-* :class:`~freespace.Freespace`
-* :class:`~distributedCircuit.DistributedCircuit`
-* :class:`~media.Media`
+* :class:`~coaxial.Coaxial`
 
 
 Creating :class:`~media.Media` Objects
 ---------------------------------------------
 
-Typically, network analysis is done within a given frequency band. When a :class:`~media.Media` object is created, it must be given  a  :class:`~skrf.frequency.Frequency` object. This prevent having to repitously provide frequency information for each new network created. 
+Two arguments are common to all media constructors
+
+* `frequency`
+*  `port_z0`
+
+`frequency` is  a :class:`~skrf.frequency.Frequency` object,  is needed
+to calculate the fundamental parameters of the media, and `Network`
+representations of various circuits. 
+
+`port_z0` is the port impedance. Frequently, this is the same as the 
+media's characteristic impedance, in which case, `port_z0` may be left as 
+`None`. This causes the media to default its port impedance to the characteristic 
+impedance (`z0`).
+
+
 
 Coplanar Waveguide
 ====================
@@ -89,7 +104,8 @@ See :class:`~cpw.CPW` for details on that class.
 Freespace
 ==============
 
-Here is another example, this time constructing a plane-wave in freespace from 10-20GHz 
+Here is another example, this time constructing a plane-wave in freespace from 10-20GHz.
+
 
 .. ipython:: 
 	
@@ -111,7 +127,7 @@ or a WR-10 Rectangular Waveguide
 
 	In [144]: freq = rf.Frequency(75,110,101,'ghz')
 	
-	In [144]: wg = rf.media.RectangularWaveguide(freq, a=100*rf.mil,z0=50) # see note below about z0
+	In [144]: wg = rf.media.RectangularWaveguide(freq, a=100*rf.mil,port_z0=50) # see note below about z0
 	
 	In [144]: wg
 
@@ -121,18 +137,17 @@ See :class:`~rectangularWaveguide.RectangularWaveguide` for details.
 
 	The `z0` argument in the Rectangular Waveguide constructor is used
 	to force a specifc port impedance. This is commonly used to match 
-	the port impedance to what a VNA stores in a touchstone file. See 
-	:func:`media.Media.__init__` for more information. 
+	the port impedance to what a VNA stores in a touchstone file. 
 	
 
 
 Working with Media's
 ---------------------
 
-Once constructed, the pertinent wave quantities of the media such as 
+Once constructed, the fundamental quantities of the media such as 
 propagation constant and characteristic impedance can be accessed through
-the properties :attr:`~media.Media.propagation_constant` and 
-:attr:`~media.Media.characteristic_impedance`. These properties return 
+the properties :attr:`~media.Media.gamma` and 
+:attr:`~media.Media.z0`, respectively. These properties return 
 complex :class:`numpy.ndarray`'s, 
 
 .. ipython:: 
@@ -141,11 +156,14 @@ complex :class:`numpy.ndarray`'s,
 
 	In [144]: cpw.characteristic_impedance[:3]
 
-As an example, plot the cpw's propagation constant vs frequency.
+As an example, plot the cpw's propagation constant vs frequency. The 
+real and imaginary parts of `gamma` may be directly accessed through the 
+attributes `beta` and `alpha`, where `beta` represents the propagating 
+component and `alpha` represents the loss.
 
 .. ipython:: 
 	
-	In [144]: plot(cpw.frequency.f_scaled, cpw.propagation_constant.imag);
+	In [144]: cpw.frequency.plot(cpw.beta);
 	
 	In [144]: xlabel('Frequency [GHz]');
 	
@@ -162,7 +180,7 @@ of the cpw line change. To illustrate this, plot the propagation constant of the
 
 	In [47]: for ep_r in [9,10,11]:
 	   ....:     cpw.ep_r = ep_r
-	   ....:     plot(cpw.frequency.f_scaled, cpw.propagation_constant.imag, label='er=%.1f'%ep_r)
+	   ....:     cpw.frequency.plot(cpw.beta, label='er=%.1f'%ep_r)
 	
 	In [144]: xlabel('Frequency [GHz]');
 	
@@ -210,8 +228,8 @@ Or to create a :math:`90^{\circ}` section of cpw line,
 	and :func:`~media.Media.open` are ideal short and opens with
 	:math:`\Gamma = -1` and :math:`\Gamma = 1`, i.e. they dont take 
 	into account sophisticated effects of the discontinuties.
-	Effects of discontinuities are implemented as methods specific to a 
-	given Media, like :func:`CPW.cpw_short <cpw.CPW.cpw_short>`.
+	Eventually, these more complex networks may be implemented with  
+    methods specific to a given Media, ie `CPW.cpw_short`
 	
 
 Building Cicuits
@@ -250,8 +268,7 @@ use a function to create the circuit. This can be done most quickly using lamba
 	
 	In [144]: delay_short(90)
 	
-This is how many of **skrf**'s network creation methods are made internally.
-
+Most Media's methods use this approach to prevent redundant functionality.
 A more useful example may be to create a function for a shunt-stub tuner,
 that will work for any media object
 
