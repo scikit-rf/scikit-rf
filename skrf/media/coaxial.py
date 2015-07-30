@@ -30,10 +30,10 @@ class Coaxial( DistributedCircuit,Media ):
     ----------
     frequency : :class:`~skrf.frequency.Frequency` object
     
-    port_z0 : number, array-like, or None
+    z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if port_z0 is None then will default to z0
+        line. if z0 is None then will default to Z0
     Dint : number, or array-like
         inner conductor diameter, in m
     Dout : number, or array-like
@@ -61,13 +61,13 @@ class Coaxial( DistributedCircuit,Media ):
 
         '''
     ## CONSTRUCTOR
-    def __init__(self, frequency=None,  port_z0=None, Dint=.81e-3, 
+    def __init__(self, frequency=None,  z0=None, Dint=.81e-3, 
                  Dout=5e-3, epsilon_r=1, tan_delta=0, sigma=INF, 
                  *args, **kwargs):
         
         
         
-        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        Media.__init__(self, frequency=frequency,z0=z0)
         
         self.Dint, self.Dout = Dint,Dout
         self.epsilon_r, self.tan_delta, self.sigma = epsilon_r, tan_delta, sigma
@@ -122,7 +122,7 @@ class Coaxial( DistributedCircuit,Media ):
                 '\nDint= %.2f mm, Dout= %.2f mm '% \
                 (self.Dint*1e3, self.Dout*1e3) +\
                 '\nCharacteristic Impedance='+str(self.characteristic_impedance)+' Ohm' \
-                '\nPort impedance Z0='+str(self.z0)+' Ohm'
+                '\nPort impedance Z0='+str(self.Z0)+' Ohm'
         except(TypeError):
             output =  \
                 'Coaxial Transmission Line.  %i-%i %s.  %i points'%\
@@ -130,5 +130,5 @@ class Coaxial( DistributedCircuit,Media ):
                 '\nDint= %.2f mm, Dout= %.2f mm '% \
                 (self.Dint[0]*1e3, self.Dout[0]*1e3) +\
                 '\nCharacteristic Impedance='+str(self.characteristic_impedance[0])+' Ohm' \
-                '\nPort impedance Z0='+str(self.z0[0])+' Ohm'
+                '\nPort impedance Z0='+str(self.Z0[0])+' Ohm'
         return output

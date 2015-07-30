@@ -74,10 +74,10 @@ class DistributedCircuit(Media):
     ------------
     frequency : :class:`~skrf.frequency.Frequency` object
         frequency band of the media
-    port_z0 : number, array-like, or None
+    z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if port_z0 is None then will default to z0
+        line. if z0 is None then will default to Z0
     C : number, or array-like
             distributed capacitance, in F/m
     L : number, or array-like
@@ -98,10 +98,10 @@ class DistributedCircuit(Media):
 
     '''
     
-    def __init__(self, frequency=None, port_z0=None, C=90e-12, L=280e-9, R=0, G=0,
+    def __init__(self, frequency=None, z0=None, C=90e-12, L=280e-9, R=0, G=0,
                 *args, **kwargs):
         super(DistributedCircuit, self).__init__(frequency=frequency, 
-                                                 port_z0=port_z0)
+                                                 z0=z0)
         self.C, self.L, self.R, self.G = C,L,R,G
 
 
@@ -136,15 +136,15 @@ class DistributedCircuit(Media):
 
         w  =  my_media.frequency.w
         gamma = my_media.gamma
+        Z0 = my_media.Z0
         z0 = my_media.z0
-        port_z0 = my_media.port_z0
 
-        Y = gamma/z0
-        Z = gamma*z0
+        Y = gamma/Z0
+        Z = gamma*Z0
         G,C = real(Y), imag(Y)/w
         R,L = real(Z), imag(Z)/w
         return cls(frequency = my_media.frequency, 
-                   port_z0 = port_z0, 
+                   z0 = z0, 
                    C=C, L=L, R=R, G=G, *args, **kwargs)
     
     @classmethod
@@ -191,7 +191,7 @@ class DistributedCircuit(Media):
         return self.G + 1j*w*self.C
 
     @property
-    def z0(self):
+    def Z0(self):
         '''
         Characteristic Impedance, :math:`Z0`
 

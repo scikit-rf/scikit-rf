@@ -31,7 +31,7 @@ class CPW(Media):
     -------------
     frequency : :class:`~skrf.frequency.Frequency` object
         frequency band of the media
-    port_z0 : number, array-like, or None
+    z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
     w : number, or array-like
@@ -46,9 +46,9 @@ class CPW(Media):
             resistivity of conductor (None)
 
     '''
-    def __init__(self, frequency=None, port_z0=None, w=70, s=4, 
+    def __init__(self, frequency=None, z0=None, w=70, s=4, 
                  ep_r=3, t=None, rho=None,  *args, **kwargs):
-        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        Media.__init__(self, frequency=frequency,z0=z0)
         
         self.w, self.s, self.ep_r, self.t, self.rho =\
                 w, s, ep_r, t, rho
@@ -126,7 +126,7 @@ class CPW(Media):
 
 
     @property
-    def z0(self):
+    def Z0(self):
         '''
         Characterisitc impedance
         '''

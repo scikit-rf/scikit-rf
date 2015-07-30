@@ -30,20 +30,24 @@ from abc import ABCMeta, abstractmethod, abstractproperty
 
 class Media(object):
     '''
-    Base-class for a single mode on a transmission line media.
+    Abstract Base Class for a single mode on a transmission line media.
     
-    Sub-classes must implement the properties:
-        * `gamma`
-        * `z0`
     
-    Which define the properties of the media. `gamma` must adhere to 
-    the following convention,
-     * positive real(gamma) = attenuation
-     * positive imag(gamma) = forward propagation
+    This class init's with `frequency` and `z0` (the port impedance);
+    attributes shared by all media. Methods defined here make use of the 
+    properties :
     
-    `gamma` and `z0` should return complex arrays of the same length as
-    `frequency`.
- 
+    * `gamma` - (complex) propgation constant
+    * `Z0` - (complex) characteristic impedance
+    
+    Which define the properties of specific media. Any sub-class of Media 
+    must implement these properties. `gamma` and `Z0` should return 
+    complex arrays of the same length as `frequency`. `gamma` must 
+    follow the convention,
+    
+    * positive real(gamma) = attenuation
+    * positive imag(gamma) = forward propagation
+    
     Parameters
     --------------
     frequency : :class:`~skrf.frequency.Frequency` object
@@ -51,29 +55,29 @@ class Media(object):
         default to  1-10ghz, 
 
 
-    port_z0 : number, array-like, or None
+    z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if port_z0 is None then will default to z0
+        line. if z0 is None then will default to Z0
 
 
     Notes
     --------
-    The port_z0 parameter is needed in some cases. 
+    The z0 parameter is needed in some cases. 
     :class:`~skrf.media.rectangularWaveguide.RectangularWaveguide`
     is an example  where you may need this, because the
     characteristic impedance is frequency dependent, but the
-    touchstone's created by most VNA's have port_z0=1, or 50. so to 
+    touchstone's created by most VNA's have z0=1, or 50. so to 
     prevent accidental impedance mis-match, you may want to manually
-    set the port_z0 .
+    set the z0 .
     '''
     __metaclass__ = ABCMeta
-    def __init__(self, frequency=None, port_z0=None):
+    def __init__(self, frequency=None, z0=None):
         if frequency is None:
             frequency = Frequency(1,10,101,'ghz')
         
         self.frequency = frequency.copy()
-        self.port_z0 = port_z0
+        self.z0 = z0
 
 
         
@@ -85,15 +89,15 @@ class Media(object):
         if self.frequency != other.frequency:
             return False
 
-        if max(abs(self.z0 - \
-                other.z0)) > ZERO:
+        if max(abs(self.Z0 - \
+                other.Z0)) > ZERO:
             return False
 
         if max(abs(self.gamma - \
                 other.gamma)) > ZERO:
             return False
 
-        if max(abs(self.port_z0 - other.port_z0)) > ZERO:
+        if max(abs(self.z0 - other.z0)) > ZERO:
             return False
 
         return True
@@ -112,14 +116,14 @@ class Media(object):
         self.frequency.npoints = val
     
     @property
-    def port_z0(self):
-        if self._port_z0 is None:
-            return self.z0
-        return self._port_z0*ones(len(self))
+    def z0(self):
+        if self._z0 is None:
+            return self.Z0
+        return self._z0*ones(len(self))
         
-    @port_z0.setter
-    def port_z0(self, val):
-        self._port_z0 = val
+    @z0.setter
+    def z0(self, val):
+        self._z0 = val
 
     @abstractproperty
     def gamma(self):
@@ -158,11 +162,11 @@ class Media(object):
         return imag(self.gamma)
     
     @abstractproperty
-    def z0(self):
+    def Z0(self):
         return None
     
-    @z0.setter
-    def z0(self, val):
+    @Z0.setter
+    def Z0(self, val):
         pass 
         
 
@@ -289,7 +293,7 @@ class Media(object):
     ## Network creation
 
     # lumped elements
-    def match(self,nports=1, port_z0=None, **kwargs):
+    def match(self,nports=1, z0=None, **kwargs):
         '''
         Perfect matched load (:math:`\\Gamma_0 = 0`).
 
@@ -297,9 +301,9 @@ class Media(object):
         ----------
         nports : int
                 number of ports
-        port_z0 : number, or array-like
-                characterisitc impedance. Default is
-                None, in which case the Media's :attr:`port_z0` is used.
+        z0 : number, or array-like
+                port impedance. Default is
+                None, in which case the Media's :attr:`z0` is used.
                 This sets the resultant Network's
                 :attr:`~skrf.network.Network.z0`.
         \*\*kwargs : key word arguments
@@ -313,7 +317,7 @@ class Media(object):
 
         Examples
         ------------
-                >>> my_match = my_media.match(2,port_z0 = 50, name='Super Awesome Match')
+                >>> my_match = my_media.match(2,z0 = 50, name='Super Awesome Match')
 
         '''
         
@@ -321,9 +325,9 @@ class Media(object):
         result.frequency = self.frequency
         result.s =  npy.zeros((self.frequency.npoints,nports, nports),\
                 dtype=complex)
-        if port_z0 is None:
-            port_z0 = self.port_z0
-        result.z0=port_z0
+        if z0 is None:
+            z0 = self.z0
+        result.z0=z0
         return result
 
     def load(self,Gamma0,nports=1,**kwargs):
@@ -646,14 +650,14 @@ class Media(object):
         '''
         return self.line(0,**kwargs)
 
-    def line(self,d, unit='deg',z0=None, embed = False, **kwargs):
+    def line(self,d, unit='deg',Z0=None, embed = False, **kwargs):
         '''
         Transmission line of a given length and impedance
 
         The units of `length` are interpreted according to the value
-        of `unit`. If `z0` is not None, then a line specified  impedance
+        of `unit`. If `Z0` is not None, then a line specified  impedance
         is produced. if `embed`  is also True, then the line is embedded
-        in this media's port_z0 environment, creating a mismatched line.
+        in this media's z0 environment, creating a mismatched line.
 
         Parameters
         ----------
@@ -661,10 +665,10 @@ class Media(object):
                 the length of transmissin line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
-        z0 : number, or array-like
-                the impedance of the line (if different from port_z0)
+        Z0 : number, or array-like
+                the impedance of the line (if different from z0)
         embed : bool
-                if `z0` is given, should the line be embedded in port_z0
+                if `Z0` is given, should the line be embedded in z0
                 environment? or left in a `z` environment. if embedded,
                 there will be reflections
         \*\*kwargs : key word arguments
@@ -678,11 +682,11 @@ class Media(object):
 
         Examples
         ----------
-        >>> my_media.line(90, 'deg', z0=100)
+        >>> my_media.line(90, 'deg', Z0=100)
 
         '''
 
-        kwargs.update({'port_z0':z0})
+        kwargs.update({'z0':Z0})
         result = self.match(nports=2,**kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
@@ -694,9 +698,9 @@ class Media(object):
 
         if  embed:
                 # create mismatchs at each end
-                m1 = self.impedance_mismatch(self.port_z0,z0)
+                m1 = self.impedance_mismatch(self.z0,Z0)
                 m1.name = result.name
-                m2 = self.impedance_mismatch(z0,self.port_z0)
+                m2 = self.impedance_mismatch(Z0,self.z0)
                 result = m1**result**m2
 
         return result
@@ -728,7 +732,7 @@ class Media(object):
 
         Examples
         ----------
-        >>> my_media.delay_load(-.5, 90, 'deg', z0=50)
+        >>> my_media.delay_load(-.5, 90, 'deg', Z0=50)
 
 
         Notes
@@ -1140,9 +1144,9 @@ class Media(object):
 
     
 
-    def write_csv(self, filename='f,gamma,z0,port_z0.csv'):
+    def write_csv(self, filename='f,gamma,Z0,z0.csv'):
         '''
-        write this media's frequency,gamma,z0, and port_z0 to a csv file.
+        write this media's frequency,gamma,Z0, and z0 to a csv file.
 
         Parameters
         -------------
@@ -1159,7 +1163,7 @@ class Media(object):
         f.write(header)
 
         g,z,pz  = self.gamma, \
-                self.z0, self.port_z0
+                self.Z0, self.z0
 
         data = npy.vstack(\
                 [self.frequency.f_scaled, z.real, z.imag, \
@@ -1182,10 +1186,10 @@ class DefinedGammaZ0(Media):
         default to  1-10ghz, 
 
 
-    port_z0 : number, array-like, or None
+    z0 : number, array-like, or None
         The port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if `port_z0` is `None` then it will default to `z0`
+        line. if `z0` is `None` then it will default to `Z0`
  
     gamma : number, array-like
         complex propagation constant. `gamma` must adhere to 
@@ -1193,16 +1197,16 @@ class DefinedGammaZ0(Media):
             * positive real(gamma) = attenuation
             * positive imag(gamma) = forward propagation
         
-    z0 : number, array-like
+    Z0 : number, array-like
         complex characteristic impedance.
     '''
-    def __init__(self, frequency=None, port_z0=None, gamma=1j, z0=50):
+    def __init__(self, frequency=None, z0=None, gamma=1j, Z0=50):
         '''
         '''
         super(DefinedGammaZ0, self).__init__(frequency=frequency, 
-                                             port_z0=port_z0)
+                                             z0=z0)
         self.gamma= gamma
-        self.z0 = z0
+        self.Z0 = Z0
     
     @classmethod
     def from_csv(cls, filename, *args, **kwargs):
@@ -1233,9 +1237,9 @@ class DefinedGammaZ0(Media):
 
         return cls(
             frequency = Frequency.from_f(f, unit=f_unit),
-            z0 = z_re+1j*z_im,
+            Z0 = z_re+1j*z_im,
             gamma = g_re+1j*g_im,
-            port_z0 = pz_re+1j*pz_im,
+            z0 = pz_re+1j*pz_im,
             *args, **kwargs
             )
     @property
@@ -1245,7 +1249,7 @@ class DefinedGammaZ0(Media):
     @npoints.setter
     def npoints(self,val):
         # this is done to trigger checks on vector lengths for 
-        # gamma/z0/port_z0
+        # gamma/Z0/z0
         new_freq= self.frequency.copy()
         new_freq.npoints = val
         self.frequency = new_freq
@@ -1260,21 +1264,21 @@ class DefinedGammaZ0(Media):
         if hasattr(self, '_frequency') and self._frequency is not None:
             
             # they are updating the frequency, we may have to do somethign
-            attrs_to_test = [self._gamma, self._z0, self._port_z0]
+            attrs_to_test = [self._gamma, self._Z0, self._z0]
             if any([has_len(k) for k in attrs_to_test]):
-                 raise NotImplementedError('updating a Media frequency, with non-constant gamma/z0/port_z0 is not worked out yet')
+                 raise NotImplementedError('updating a Media frequency, with non-constant gamma/Z0/z0 is not worked out yet')
         self._frequency = val
         
     @property
-    def z0(self):
+    def Z0(self):
         '''
         Characteristic Impedance 
         '''
-        return self._z0*ones(len(self))
+        return self._Z0*ones(len(self))
     
-    @z0.setter
-    def z0(self, val):
-        self._z0 = val
+    @Z0.setter
+    def Z0(self, val):
+        self._Z0 = val
     
     @property
     def gamma(self):

@@ -17,7 +17,7 @@ Cut-off Wave Number                   :math:`k_c`    :attr:`kc`
 Longitudinal Wave Number              :math:`k_z`    :attr:`gamma`
 Transverse Wave Number (a)            :math:`k_x`    :attr:`kx`
 Transverse Wave Number (b)            :math:`k_y`    :attr:`ky`
-Characteristic Impedance              :math:`z_0`    :attr:`z0`
+Characteristic Impedance              :math:`z_0`    :attr:`Z0`
 ====================================  =============  ===============
 
 '''
@@ -37,10 +37,10 @@ class RectangularWaveguide(Media):
     ----------
     frequency : :class:`~skrf.frequency.Frequency` object
             frequency band of this transmission line medium
-    port_z0 : number, array-like, or None
+    z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if port_z0 is None then will default to z0
+        line. if z0 is None then will default to Z0
     a : number
             width of waveguide, in meters.
     b : number
@@ -77,11 +77,11 @@ class RectangularWaveguide(Media):
     >>> freq = rf.Frequency(75,110,101,'ghz')
     >>> rf.RectangularWaveguide(freq,a= 100*mil)
     '''
-    def __init__(self, frequency=None, port_z0=None, a=1, b=None,
+    def __init__(self, frequency=None, z0=None, a=1, b=None,
                  mode_type = 'te', m=1, n=0, ep_r=1, mu_r=1, rho=None, 
                  roughness=None, *args, **kwargs):
         
-        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        Media.__init__(self, frequency=frequency,z0=z0)
         
         if b is None:
             b = a/2.
@@ -114,17 +114,17 @@ class RectangularWaveguide(Media):
 
     
     @classmethod
-    def from_z0(cls,frequency, z0,f, m=1,n=0,ep_r=1, mu_r=1, **kw):
+    def from_Z0(cls,frequency, Z0,f, m=1,n=0,ep_r=1, mu_r=1, **kw):
         '''
         Initialize from specfied impedance at a given frequency.
         
         Parameters
         -------------
         frequency : Frequency Object
-        z0 : number /array
+        Z0 : number /array
             scharacteristic impedance to create at `f`
         f : number 
-            frequency (in Hz) that the resultant waveguide has z0=z0
+            frequency (in Hz) that the resultant waveguide has Z0=Z0
         '''
         if n !=0: 
             raise NotImplemented()
@@ -133,7 +133,7 @@ class RectangularWaveguide(Media):
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
-        a =pi/(w*mu) * 1./sqrt((1/(z0*1j)**2+ep/mu))
+        a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
         
         kw.update(dict(frequency=frequency,a=a, m=m, n=n, ep_r=ep_r, mu_r=mu_r))
         
@@ -393,7 +393,7 @@ class RectangularWaveguide(Media):
             sqrt(1-(1/f_n)**2)
 
     @property
-    def z0(self):
+    def Z0(self):
         '''
         The characteristic impedance
         '''

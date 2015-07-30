@@ -68,16 +68,16 @@ Creating :class:`~media.Media` Objects
 Two arguments are common to all media constructors
 
 * `frequency`
-*  `port_z0`
+*  `z0`
 
 `frequency` is  a :class:`~skrf.frequency.Frequency` object,  is needed
 to calculate the fundamental parameters of the media, and `Network`
 representations of various circuits. 
 
-`port_z0` is the port impedance. Frequently, this is the same as the 
-media's characteristic impedance, in which case, `port_z0` may be left as 
+`z0` is the port impedance. Frequently, this is the same as the 
+media's characteristic impedance, in which case, `z0` may be left as 
 `None`. This causes the media to default its port impedance to the characteristic 
-impedance (`z0`).
+impedance (`Z0`).
 
 
 
@@ -127,7 +127,7 @@ or a WR-10 Rectangular Waveguide
 
 	In [144]: freq = rf.Frequency(75,110,101,'ghz')
 	
-	In [144]: wg = rf.media.RectangularWaveguide(freq, a=100*rf.mil,port_z0=50) # see note below about z0
+	In [144]: wg = rf.media.RectangularWaveguide(freq, a=100*rf.mil,z0=50) # see note below about z0
 	
 	In [144]: wg
 
@@ -147,7 +147,7 @@ Working with Media's
 Once constructed, the fundamental quantities of the media such as 
 propagation constant and characteristic impedance can be accessed through
 the properties :attr:`~media.Media.gamma` and 
-:attr:`~media.Media.z0`, respectively. These properties return 
+:attr:`~media.Media.Z0`, respectively. These properties return 
 complex :class:`numpy.ndarray`'s, 
 
 .. ipython:: 

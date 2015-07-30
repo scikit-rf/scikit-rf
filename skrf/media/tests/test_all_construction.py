@@ -13,8 +13,8 @@ class MediaTestCase():
     def test_gamma(self):
         self.media.gamma
 
-    def test_z0_value(self):
-        self.media.z0
+    def test_Z0_value(self):
+        self.media.Z0
 
     def test_match(self):
         self.media.match()
@@ -81,9 +81,9 @@ class FreespaceTestCase(MediaTestCase, unittest.TestCase):
         self.frequency = rf.Frequency(75,110,101,'ghz')
         self.media = rf.media.Freespace(self.frequency)
 
-    def test_z0_value(self):
+    def test_Z0_value(self):
         self.assertEqual(round(\
-            self.media.z0[0].real), 377)
+            self.media.Z0[0].real), 377)
 
 
 class CPWTestCase(MediaTestCase, unittest.TestCase):

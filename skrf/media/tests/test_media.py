@@ -16,7 +16,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media = DefinedGammaZ0(
             frequency = Frequency(1,100,21,'ghz'),
             gamma=1j,
-            z0 = 50 ,
+            Z0 = 50 ,
             )
 
     def test_impedance_mismatch(self):
@@ -26,8 +26,8 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
                 'impedanceMismatch,50to25.s2p')
         qucs_ntwk = Network(fname)
         self.dummy_media.frequency = qucs_ntwk.frequency
-        skrf_ntwk = self.dummy_media.thru(z0=50)**\
-            self.dummy_media.thru(z0=25)
+        skrf_ntwk = self.dummy_media.thru(Z0=50)**\
+            self.dummy_media.thru(Z0=25)
 
         self.assertEqual(qucs_ntwk, skrf_ntwk)
 
@@ -63,29 +63,29 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.assertEqual(qucs_ntwk, skrf_ntwk)
 
 
-    def test_scalar_gamma_z0_media(self):
+    def test_scalar_gamma_Z0_media(self):
         '''
-        test ability to create a Media from scalar quanties for gamma/z0
+        test ability to create a Media from scalar quanties for gamma/Z0
         and change frequency resolution
         '''
-        a = DefinedGammaZ0 (Frequency(1,10,101),gamma=1j,z0 = 50)
+        a = DefinedGammaZ0 (Frequency(1,10,101),gamma=1j,Z0 = 50)
         self.assertEqual(a.line(1),a.line(1))
         
         # we should be able to re-sample the media 
         a.npoints = 21
         self.assertEqual(len(a.gamma), len(a))
+        self.assertEqual(len(a.Z0), len(a))
         self.assertEqual(len(a.z0), len(a))
-        self.assertEqual(len(a.port_z0), len(a))
 
 
-    def test_vector_gamma_z0_media(self):
+    def test_vector_gamma_Z0_media(self):
         '''
-        test ability to create a Media from vector quanties for gamma/z0
+        test ability to create a Media from vector quanties for gamma/Z0
         '''
         freq = Frequency(1,10,101)
         a = DefinedGammaZ0(freq,
                            gamma = 1j*npy.ones(len(freq)) ,
-                           z0 =  50*npy.ones(len(freq)),
+                           Z0 =  50*npy.ones(len(freq)),
                             )
     
         

@@ -49,10 +49,10 @@ class Freespace(DistributedCircuit, Media):
     -----------
     frequency : :class:`~skrf.frequency.Frequency` object
             frequency band of this transmission line medium
-    port_z0 : number, array-like, or None
+    z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if port_z0 is None then will default to z0
+        line. if z0 is None then will default to Z0
     ep_r : number, array-like
             complex relative permittivity
     mu_r : number, array-like
@@ -67,10 +67,10 @@ class Freespace(DistributedCircuit, Media):
 
     
     '''
-    def __init__(self, frequency=None, port_z0=None,  ep_r=1+0j, 
+    def __init__(self, frequency=None, z0=None,  ep_r=1+0j, 
                  mu_r=1+0j, mode_type='tem', angle=0, *args, **kwargs):
         
-        Media.__init__(self, frequency=frequency,port_z0=port_z0)
+        Media.__init__(self, frequency=frequency,z0=z0)
         self.ep_r  = ep_r
         self.mu_r  = mu_r
         self.mode_type = mode_type.lower()
@@ -95,7 +95,7 @@ class Freespace(DistributedCircuit, Media):
         return self.frequency.w *imag(epsilon_0*self.ep_r)
         
     @property
-    def z0(self):
+    def Z0(self):
         '''
         Characteristic Impedance, :math:`Z0`
 
@@ -107,11 +107,11 @@ class Freespace(DistributedCircuit, Media):
         Z0 : numpy.ndarray
                 Characteristic Impedance in units of ohms
         '''
-        z0 = DistributedCircuit.z0.fget(self)
-        z0_dict = {'te':z0/cos(self.angle),
-                   'tm':z0*cos(self.angle),
-                   'tem':z0}
-        return z0_dict[self.mode_type]
+        Z0 = DistributedCircuit.Z0.fget(self)
+        Z0_dict = {'te':Z0/cos(self.angle),
+                   'tm':Z0*cos(self.angle),
+                   'tem':Z0}
+        return Z0_dict[self.mode_type]
             
             
 

@@ -20,7 +20,7 @@ from skrf.networkSet import NetworkSet
 global NPTS  
 NPTS = 1
 
-WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,port_z0=50)
+WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
 
 class CalibrationTest(object):
     '''
