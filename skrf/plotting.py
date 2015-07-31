@@ -45,7 +45,7 @@ from matplotlib import rcParams
 
 
 def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False, 
-    ax=None, ref_imm = 1.0): #TODO: Submit these changes!
+    ax=None, ref_imm = 1.0):
     '''
     plots the smith chart of a given radius
 
