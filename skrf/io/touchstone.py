@@ -29,7 +29,7 @@ import numpy as npy
 from ..util import get_fid
 from ..network import Network
 from ..frequency import Frequency
-from ..media import  Media
+from ..media import  Media, DefinedGammaZ0
 from .. import mathFunctions as mf
 
 class Touchstone():
@@ -414,10 +414,10 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
 
     for port_n in range(gamma.shape[1]):
         media_list.append(\
-            Media(
+            DefinedGammaZ0(
                 frequency = freq,
-                propagation_constant =  gamma[:, port_n],
-                characteristic_impedance = z0[:, port_n]
+                gamma =  gamma[:, port_n],
+                z0 = z0[:, port_n]
                 )
             )
 

@@ -10,11 +10,11 @@ from scipy.constants import *
 
 class MediaTestCase():
     """Base class, contains tests for all media."""
-    def test_propagation_constant(self):
-        self.media.propagation_constant
+    def test_gamma(self):
+        self.media.gamma
 
-    def test_characterisitc_impedance_value(self):
-        self.media.characteristic_impedance
+    def test_Z0_value(self):
+        self.media.Z0
 
     def test_match(self):
         self.media.match()
@@ -81,9 +81,9 @@ class FreespaceTestCase(MediaTestCase, unittest.TestCase):
         self.frequency = rf.Frequency(75,110,101,'ghz')
         self.media = rf.media.Freespace(self.frequency)
 
-    def test_characterisitc_impedance_value(self):
+    def test_Z0_value(self):
         self.assertEqual(round(\
-            self.media.characteristic_impedance[0].real), 377)
+            self.media.Z0[0].real), 377)
 
 
 class CPWTestCase(MediaTestCase, unittest.TestCase):
@@ -112,7 +112,7 @@ class DistributedCircuitTestCase(MediaTestCase, unittest.TestCase):
         self.frequency = rf.Frequency(75,110,101,'ghz')
         self.media = rf.media.DistributedCircuit(\
             frequency=self.frequency,
-            I=1,C=1,R=0,G=0
+            L=1,C=1,R=0,G=0
             )
 
 

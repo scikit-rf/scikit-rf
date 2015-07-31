@@ -51,7 +51,7 @@ legend.fontsize     : 9
 legend.loc			: best
 legend.frameon : True
 
-legend.fancybox : True
+legend.fancybox : False
 
 path.simplify       : True  
 

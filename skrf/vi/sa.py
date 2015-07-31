@@ -15,15 +15,15 @@ Spectrum Analyzers  (:mod:`skrf.vi.sa`)
 
 
 import numpy as npy
-import visa
-from visa import GpibInstrument
+
 
 from ..frequency import Frequency
 from ..network import Network
 from .. import mathFunctions as mf
 
+from . ivihack import Driver
 
-class HP8500(GpibInstrument):
+class HP8500(Driver):
     '''
     HP8500's series Spectrum Analyzers
 
@@ -52,9 +52,9 @@ class HP8500(GpibInstrument):
         address : int
             GPIB address
         \*args, \*\*kwargs :
-            passed to ``visa.GpibInstrument.__init__``
+            passed to ``ivi.Driver.__init__``
         '''
-        GpibInstrument.__init__(self,'GPIB::'+str(address),*args,**kwargs)
+        Driver.__init__(self,'GPIB::'+str(address),*args,**kwargs)
 
     @property
     def frequency(self):

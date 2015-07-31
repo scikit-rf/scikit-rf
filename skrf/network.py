@@ -40,6 +40,7 @@ Connecting Networks
     connect
     innerconnect
     cascade
+    cascade_list
     de_embed
     flip
 
@@ -173,7 +174,7 @@ from . util import get_fid, get_extn, find_nearest_index,slice_domain
 #from io import touchstone
 #from io.general import network_2_spreadsheet
 
-
+from .constants import ZERO
 
 class Network(object):
     '''
@@ -261,9 +262,7 @@ class Network(object):
     ------------
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     '''
-    # used for testing s-parameter equivalence
-    global ALMOST_ZERO
-    ALMOST_ZERO = 1e-6
+    
 
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
@@ -403,7 +402,9 @@ class Network(object):
 
 
         #self.nports = self.number_of_ports
+        ##TODO: remove this as it takes up ~70% cpu time of this init
         self.__generate_plot_functions()
+        
 
     ## OPERATORS
     def __pow__(self,other):
@@ -562,7 +563,7 @@ class Network(object):
     def __eq__(self,other):
         if other is None:
             return False
-        if npy.all(npy.abs(self.s - other.s) < ALMOST_ZERO):
+        if npy.all(npy.abs(self.s - other.s) < ZERO):
             return True
         else:
             return False
@@ -1223,6 +1224,7 @@ class Network(object):
         # case we dont know how to re-shape the z0 to fxn. to solve this
         # i attempt to do the re-shaping when z0 is accessed, not when
         # it is set. this is what makes this function confusing.
+        
         try:
             if len(npy.shape(self._z0)) ==0:
                 try:
@@ -1515,7 +1517,13 @@ class Network(object):
     ## specific ploting functions
     def plot_passivity(self, port = None,label_prefix=None,  *args, **kwargs):
         '''
-        Plot dB(passivity metric) vs frequency
+        Plot dB(diag(passivity metric)) vs frequency
+        
+        Notes
+        -------
+        This plot does not completely capture the passivity metric, which 
+        is a test for `unitary-ness` of the s-matrix. However, it may
+        be  used to display a measure of power disapated in a network. 
 
         See Also
         -----------
@@ -1597,10 +1605,11 @@ class Network(object):
         Needed to allow pass-by-value for a Network instead of
         pass-by-reference
         '''
-        ntwk = Network()
-        ntwk.frequency = self.frequency.copy()
-        ntwk.s = self.s.copy()
-        ntwk.z0 = self.z0.copy()
+        ntwk = Network(s = self.s,
+                       frequency = self.frequency.copy(),
+                       z0 = self.z0,
+                       )
+        
         ntwk.name = self.name
         return ntwk
 
@@ -2678,6 +2687,11 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     # some checking
     check_frequency_equal(ntwkA,ntwkB)
 
+    if (k+num-1> ntwkA.nports-1):
+        raise IndexError('Port `k` out of range')
+    if (l+num-1> ntwkB.nports-1):
+        raise IndexError('Port `l` out of range')
+
     # create output Network, from copy of input
     ntwkC = ntwkA.copy()
 
@@ -2703,7 +2717,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     ntwkC.z0 = npy.hstack(
         (npy.delete(ntwkA.z0, range(k,k+1), 1), npy.delete(ntwkB.z0, range(l,l+1), 1)))
 
-    # if we're connecting more than one port, call innerconnect to finish the job
+    # if we're connecting more than one port, call innerconnect recursively
+    # untill all connections are made to finish the job
     if num>1:
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports-1+l, num-1)
 
@@ -2839,15 +2854,23 @@ def innerconnect(ntwkA, k, l, num=1):
     >>> ntwkC = rf.innerconnect(ntwkA, 0,1)
 
     '''
+    
+    if (k+num-1> ntwkA.nports-1):
+        raise IndexError('Port `k` out of range')
+    if (l+num-1> ntwkA.nports-1):
+        raise IndexError('Port `l` out of range')
+        
+        
     # create output Network, from copy of input
     ntwkC = ntwkA.copy()
 
-    # connect a impedance mismatch, which will takes into account the
-    # effect of differing port impedances
+    
     if not (ntwkA.z0[:,k] == ntwkA.z0[:,l]).all():
-        ntwkC.s = connect_s(\
-            ntwkA.s,k, \
-            impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l]), 0)
+        # connect a impedance mismatch, which will takes into account the
+        # effect of differing port impedances
+        mismatch = impedance_mismatch(ntwkA.z0[:,k], ntwkA.z0[:,l])
+        ntwkC.s = connect_s( ntwkA.s,k, mismatch, 0)
+        #print 'mismatch %i-%i'%(k,l)
         # the connect_s() put the mismatch's output port at the end of
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
@@ -2859,7 +2882,7 @@ def innerconnect(ntwkA, k, l, num=1):
     ntwkC.s = innerconnect_s(ntwkC.s,k,l)
 
     # update the characteristic impedance matrix
-    ntwkC.z0 = npy.delete(ntwkC.z0, list(range(k,k+num)) + list(range(l,l+num)),1)
+    ntwkC.z0 = npy.delete(ntwkC.z0, list(range(k,k+1)) + list(range(l,l+1)),1)
 
     # recur if we're connecting more than one port
     if num>1:
@@ -2891,6 +2914,25 @@ def cascade(ntwkA,ntwkB):
     connect : connects two Networks together at arbitrary ports.
     '''
     return connect(ntwkA,1, ntwkB,0)
+
+def cascade_list(l):
+    '''
+    cascade a list of 2-port networks
+    
+    all networks must have same frequency
+    
+    Parameters
+    --------------
+    l : list-like
+        (ordered) list of networks 
+    
+    Returns
+    ----------
+    out : 2-port Network
+        the results of casacading all networks in the list `l`
+        
+    '''
+    return reduce(cascade, l)
 
 def de_embed(ntwkA,ntwkB):
     '''
@@ -3102,6 +3144,8 @@ def chopinhalf(ntwk, *args, **kwargs):
         A = n_oneports_2_nport([a11,a21,a21,a22], *args, **kwargs)
 
         return A
+
+
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):

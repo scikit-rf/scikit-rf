@@ -86,8 +86,14 @@ class NetworkTestCase(unittest.TestCase):
         b.frequency=(1,)
         b.s = npy.arange(16).reshape(4,4)
         b.z0 = npy.arange(4)+10
+        
         c=rf.connect(a,2,b,0,2)
         self.assertTrue((c.z0==[0,1,12,13]).all())
+        
+        d=rf.connect(a,0,b,0,3)
+        self.assertTrue((d.z0==[3,13]).all())
+        
+    
 
     def test_connect_fast(self):
         raise SkipTest('not supporting this function currently ')
