@@ -45,7 +45,7 @@ from matplotlib import rcParams
 
 
 def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False, 
-    ax=None):
+    ax=None, ref_imm = 1.0):
     '''
     plots the smith chart of a given radius
 
@@ -66,6 +66,10 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     
     ax : matplotlib.axes object
             existing axes to draw smith chart on
+    
+    ref_imm : number
+            Reference immittance for center of Smith chart. Only changes
+            labels, if printed.
 
 
     '''
@@ -129,9 +133,9 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     ax1.axhline(0, color='k', lw=.1, clip_path=clipc)
     ax1.axvline(1*y_flip_sign, color='k', clip_path=clipc)
     ax1.grid(0)
-    #set axis limits
-    ax1.axis('equal')
-    ax1.axis(smithR*npy.array([-1.1, 1.1, -1.1, 1.1]))     
+    # Set axis limits by plotting white points so zooming works properly
+    ax1.plot(smithR*npy.array([-1.1, 1.1]), smithR*npy.array([-1.1, 1.1]), 'w.', markersize = 0)
+    ax1.axis('image') # Combination of 'equal' and 'tight'
     
     
     if not border: 
@@ -148,30 +152,57 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         for loc, spine in ax1.spines.items():
             spine.set_color('none')
 
-        #Will make annotations only if the radius is 1 and it is the impedance smith chart
-        if smithR is 1 and y_flip_sign is 1:
+        # Make annotations only if the radius is 1
+        if smithR is 1:
             #Make room for annotation
-            ax1.axis(smithR*npy.array([-1., 1., -1.2, 1.2]))
+            ax1.plot(npy.array([-1.25, 1.25]), npy.array([-1.1, 1.1]), 'w.', markersize = 0)
+            ax1.axis('image')
 
             #Annotate real part
             for value in rLightList:
-                rho = (value - 1)/(value + 1)
-                ax1.annotate(str(value), xy=((rho-0.12)*smithR, 0.01*smithR), \
-                    xytext=((rho-0.12)*smithR, 0.01*smithR))
+                # Set radius of real part's label; offset slightly left (Z
+                # chart, y_flip_sign == 1) or right (Y chart, y_flip_sign == -1)
+                # so label doesn't overlap chart's circles
+                rho = (value - 1)/(value + 1) - y_flip_sign*0.01
+                if y_flip_sign is 1:
+                    halignstyle = "right"
+                else:
+                    halignstyle = "left"
+                ax1.annotate(str(value*ref_imm), xy=(rho*smithR, 0.01),
+                    xytext=(rho*smithR, 0.01), ha = halignstyle, va = "baseline")
 
             #Annotate imaginary part
-            deltax = plb.array([-0.17, -0.14, -0.06,  0., 0.02, -0.2, -0.2, -0.08, 0., 0.03])
-            deltay = plb.array([0., 0.03, 0.01, 0.02, 0., -0.02, -0.06, -0.09, -0.08, -0.05])
-            for value, dx, dy in zip(xLightList, deltax, deltay):
-                #Transforms from complex to cartesian and adds a delta to x and y values
-                rhox = (-value**2 + 1)/(-value**2 - 1) * smithR * y_flip_sign + dx
-                rhoy = (-2*value)/(-value**2 - 1) * smithR + dy
+            radialScaleFactor = 1.01 # Scale radius of label position by this
+                                     # factor. Making it >1 places the label
+                                     # outside the Smith chart's circle
+            for value in xLightList:
+                #Transforms from complex to cartesian
+                S = (1j*value - 1) / (1j*value + 1)
+                S *= smithR * radialScaleFactor
+                rhox = S.real
+                rhoy = S.imag * y_flip_sign
+                
+                # Choose alignment anchor point based on label's value
+                if ((value == 1.0) or (value == -1.0)):
+                    halignstyle = "center"
+                elif (rhox < 0.0):
+                    halignstyle = "right"
+                else:
+                    halignstyle = "left"
+                
+                if (rhoy < 0):
+                    valignstyle = "top"
+                else:
+                    valignstyle = "bottom"
                 #Annotate value
-                ax1.annotate(str(value) + 'j', xy=(rhox, rhoy), xytext=(rhox, rhoy))
+                ax1.annotate(str(value*ref_imm) + 'j', xy=(rhox, rhoy),
+                             xytext=(rhox, rhoy), ha = halignstyle, va = valignstyle)
 
             #Annotate 0 and inf
-            ax1.annotate('0.0', xy=(-1.15, -0.02), xytext=(-1.15, -0.02))
-            ax1.annotate('$\infty$', xy=(1.02, -0.02), xytext=(1.02, -0.02))
+            ax1.annotate('0.0', xy=(-1.02, 0), xytext=(-1.02, 0),
+                         ha = "right", va = "center")
+            ax1.annotate('$\infty$', xy=(radialScaleFactor, 0), xytext=(radialScaleFactor, 0),
+                         ha = "left", va = "center")
 
     # loop though contours and draw them on the given axes
     for currentContour in contour:
