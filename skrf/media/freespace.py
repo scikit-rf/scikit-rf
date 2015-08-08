@@ -60,7 +60,7 @@ class Freespace(DistributedCircuit, Media):
     mode_type: ['tem','te','tm']
         the type of mode 
     angle : float
-        If mode_type != 'tem', this sets mode the angle in radians, from 
+        If mode_type != 'tem', this sets mode the angle (in radians) from 
         the direction the mode is transverse to 
             
     \*args, \*\*kwargs : arguments and keyword arguments

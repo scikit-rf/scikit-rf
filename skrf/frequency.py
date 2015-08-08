@@ -235,7 +235,7 @@ class Frequency(object):
         if len(self.f) != len(other.f):
             return False
         else:
-            return (max(abs(self.f_scaled-other.f_scaled)) < ZERO)
+            return (max(abs(self.f-other.f)) < ZERO)
 
     def __ne__(self,other):
         return (not self.__eq__(other))

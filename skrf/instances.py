@@ -57,8 +57,17 @@ References
 '''
 
 from . frequency import Frequency
-from . media import RectangularWaveguide
+from . media import RectangularWaveguide, Freespace, DefinedGammaZ0
 from .constants import mil
+
+
+
+
+air = Freespace()
+air50 = Freespace(z0=50)
+
+
+######## waveguide bands
 f_wr51  = Frequency(15,22,1001, 'ghz')
 f_wr42  = Frequency(17.5,26.5,1001, 'ghz')
 f_wr34  = Frequency(22,33,1001, 'ghz')
@@ -107,4 +116,5 @@ wr1   = RectangularWaveguide(f_wr1.copy(),a=10*mil,b=5*mil,z0=50)
 wr0p8   = RectangularWaveguide(f_wr0p8.copy(),a=8*mil,b=4*mil,z0=50)
 wr0p65  = RectangularWaveguide(f_wr0p65.copy(),a=6.5*mil,b=3.25*mil,z0=50)
 wr0p51   = RectangularWaveguide(f_wr0p51.copy(),a=5.1*mil,b=2.55*mil,z0=50)
+
 

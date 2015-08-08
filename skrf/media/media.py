@@ -26,7 +26,7 @@ from ..constants import to_meters ,ZERO
 
 from abc import ABCMeta, abstractmethod, abstractproperty
 import re
-    
+from copy import deepcopy as copy
 
 class Media(object):
     '''
@@ -79,11 +79,23 @@ class Media(object):
         self.frequency = frequency.copy()
         self.z0 = z0
 
-
+    def mode(self,  **kw):
+        '''
+        create another mode in this medium 
         
+        convenient way to copy this media object, with 
+        '''
+        out = copy(self)
+        for k in kw:
+            setattr(self, k, kw[k])
+        return out
+
+    def copy(self):
+        return copy(self)
+            
     def __eq__(self,other):
         '''
-        test for numerical equality (up to skrf.mathFunctions.ZERO)
+        test for numerical equality (up to skrf.constants.ZERO)
         '''
 
         if self.frequency != other.frequency:
@@ -167,7 +179,7 @@ class Media(object):
     def Z0(self, val):
         pass 
         
-
+    
 
     @property
     def v_p(self):
@@ -328,16 +340,7 @@ class Media(object):
         if z0 is None:
             z0 = self.z0
         elif isinstance(z0,str):
-            # they passed a string for z0, try to parse it 
-            re_numbers = re.compile('\d+')
-            numbers = re.findall(re_numbers, z0)
-            if len(numbers)==2:
-                z0 = float(numbers[0]) +1j*float(numbers[1])
-            elif len(numbers)==1:
-                z0 = float(numbers[0])
-            else:
-                raise ValueError('couldnt parse z0 string')
-            z0_norm=True
+            z0 = parse_z0(z0)* self.z0
             
         if z0_norm:
             z0 = z0*self.z0
@@ -701,6 +704,9 @@ class Media(object):
 
         '''
         
+        if isinstance(z0,str):
+            z0 = parse_z0(z0)* self.z0
+            
         kwargs.update({'z0':z0})
         result = self.match(nports=2,**kwargs)
 
@@ -712,11 +718,7 @@ class Media(object):
                 npy.array([[s11, s21],[s21,s11]]).transpose().reshape(-1,2,2)
 
         if  embed:
-                # create mismatchs at each end
-                m1 = self.impedance_mismatch(self.z0,z0)
-                m1.name = result.name
-                m2 = self.impedance_mismatch(z0,self.z0)
-                result = m1**result**m2
+            result = self.thru()**result**self.thru()
 
         return result
 
@@ -1155,7 +1157,8 @@ class Media(object):
         print(npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta))
         return npy.linalg.lstsq(A, B)[0][0]
 
-
+    def plot(self, *args, **kw):
+        return self.frequency.plot(*args, **kw)
 
     
 
@@ -1328,3 +1331,16 @@ def has_len(x):
         return (len(array(x))>1)
     except TypeError:
         return False
+
+def parse_z0(s):
+    # they passed a string for z0, try to parse it 
+    re_numbers = re.compile('\d+')
+    numbers = re.findall(re_numbers, s)
+    if len(numbers)==2:
+        out = float(numbers[0]) +1j*float(numbers[1])
+    elif len(numbers)==1:
+        out = float(numbers[0])
+    else:
+        raise ValueError('couldnt parse z0 string')
+    return out
+    
