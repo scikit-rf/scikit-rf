@@ -25,7 +25,7 @@ from .. import mathFunctions as mf
 from ..constants import to_meters ,ZERO
 
 from abc import ABCMeta, abstractmethod, abstractproperty
-
+import re
     
 
 class Media(object):
@@ -293,7 +293,7 @@ class Media(object):
     ## Network creation
 
     # lumped elements
-    def match(self,nports=1, z0=None, **kwargs):
+    def match(self,nports=1, z0=None, z0_norm=False, **kwargs):
         '''
         Perfect matched load (:math:`\\Gamma_0 = 0`).
 
@@ -306,6 +306,8 @@ class Media(object):
                 None, in which case the Media's :attr:`z0` is used.
                 This sets the resultant Network's
                 :attr:`~skrf.network.Network.z0`.
+        z0_norm :bool
+            is z0  normalized to this media's `z0`?
         \*\*kwargs : key word arguments
                 passed to :class:`~skrf.network.Network` initializer
 
@@ -327,6 +329,21 @@ class Media(object):
                 dtype=complex)
         if z0 is None:
             z0 = self.z0
+        elif isinstance(z0,str):
+            # they passed a string for z0, try to parse it like
+            re_numbers = re.compile('\d+')
+            numbers = re.findall(re_numbers, z0)
+            if len(numbers)==2:
+                z0 = float(numbers[0]) +1j*float(numbers[1])
+            elif len(numbers)==1:
+                z0 = float(numbers[0])
+            else:
+                raise ValueError('couldnt parse z0 string')
+            z0_norm=True
+            
+        if z0_norm:
+            z0 = z0*self.z0
+        
         result.z0=z0
         return result
 
@@ -650,12 +667,12 @@ class Media(object):
         '''
         return self.line(0,**kwargs)
 
-    def line(self,d, unit='deg',Z0=None, embed = False, **kwargs):
+    def line(self,d, unit='deg',z0=None, embed = False, **kwargs):
         '''
         Transmission line of a given length and impedance
 
         The units of `length` are interpreted according to the value
-        of `unit`. If `Z0` is not None, then a line specified  impedance
+        of `unit`. If `z0` is not None, then a line specified  impedance
         is produced. if `embed`  is also True, then the line is embedded
         in this media's z0 environment, creating a mismatched line.
 
@@ -665,8 +682,8 @@ class Media(object):
                 the length of transmissin line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
-        Z0 : number, or array-like
-                the impedance of the line (if different from z0)
+        z0 : number, or array-like
+                the characteristic impedance of the line (if different from self.z0)
         embed : bool
                 if `Z0` is given, should the line be embedded in z0
                 environment? or left in a `z` environment. if embedded,
@@ -682,11 +699,11 @@ class Media(object):
 
         Examples
         ----------
-        >>> my_media.line(90, 'deg', Z0=100)
+        >>> my_media.line(90, 'deg', z0=100)
 
         '''
-
-        kwargs.update({'z0':Z0})
+        
+        kwargs.update({'z0':z0})
         result = self.match(nports=2,**kwargs)
 
         theta = self.electrical_length(self.to_meters(d=d, unit=unit))
@@ -698,9 +715,9 @@ class Media(object):
 
         if  embed:
                 # create mismatchs at each end
-                m1 = self.impedance_mismatch(self.z0,Z0)
+                m1 = self.impedance_mismatch(self.z0,z0)
                 m1.name = result.name
-                m2 = self.impedance_mismatch(Z0,self.z0)
+                m2 = self.impedance_mismatch(z0,self.z0)
                 result = m1**result**m2
 
         return result

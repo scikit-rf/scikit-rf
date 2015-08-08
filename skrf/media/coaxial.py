@@ -11,13 +11,12 @@ A coaxial transmission line defined in terms of its inner/outer diameters and pe
 
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi
-from numpy import sqrt, log
+from numpy import sqrt, log, imag,exp
 from ..tlineFunctions import surface_resistivity
 from .distributedCircuit import DistributedCircuit
 from .media import Media
+from ..constants import INF
 
-# used as substitutes to handle mathematical singularities.
-INF = 1e99
 
 class Coaxial( DistributedCircuit,Media ):
     '''
@@ -74,11 +73,43 @@ class Coaxial( DistributedCircuit,Media ):
         self.epsilon_prime = epsilon_0*self.epsilon_r
         self.epsilon_second = epsilon_0*self.epsilon_r*self.tan_delta
 
-        # inner and outer radius
-
+    
+    @classmethod
+    def from_Z0_Dout(cls, frequency=None, z0=None,Z0=50,  epsilon_r=1, 
+                     Dout=5e-3, **kw):
+        '''
+        Init from characteristic impedance and outer diameter
         
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency` object
 
-
+        z0 : number, array-like, or None
+            the port impedance for media. Only needed if  its different
+            from the characterisitc impedance of the transmission
+            line. if z0 is None then will default to Z0
+        Z0 : number 
+            desired characteristic impedance
+        Dout : number, or array-like
+            outer conductor diameter, in m
+        epsilon_r=1 : number, or array-like
+            relative permittivity of the dielectric medium
+        **kw : 
+            passed to __init__
+        '''
+        ep= epsilon_0*epsilon_r
+        
+        if imag(Z0) !=0:
+            raise NotImplementedError()
+        
+        b = Dout/2.
+        b_over_a = exp(2*pi*Z0*sqrt(ep/mu_0))
+        a = b/b_over_a
+        Dint = 2*a
+        return cls(frequency=frequency, z0 = z0, Dint=Dint, Dout=Dout, 
+                    epsilon_r=epsilon_r, **kw)
+    
+    
     @property
     def Rs(self):
         f  = self.frequency.f
@@ -112,7 +143,6 @@ class Coaxial( DistributedCircuit,Media ):
         f =  self.frequency.f
         return f*self.epsilon_second/log(self.b/self.a)
 
-
     def __str__(self):
         f=self.frequency
         try:
@@ -121,14 +151,14 @@ class Coaxial( DistributedCircuit,Media ):
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
                 '\nDint= %.2f mm, Dout= %.2f mm '% \
                 (self.Dint*1e3, self.Dout*1e3) +\
-                '\nCharacteristic Impedance='+str(self.characteristic_impedance)+' Ohm' \
-                '\nPort impedance Z0='+str(self.Z0)+' Ohm'
+                '\nCharacteristic Impedance=%.1f-%.1f Ohm'%(self.Z0[0],self.Z0[-1]) +\
+                '\nPort impedance Z0=%.1f-%.1f Ohm'%(self.z0[0],self.z0[-1]) 
         except(TypeError):
             output =  \
                 'Coaxial Transmission Line.  %i-%i %s.  %i points'%\
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
                 '\nDint= %.2f mm, Dout= %.2f mm '% \
                 (self.Dint[0]*1e3, self.Dout[0]*1e3) +\
-                '\nCharacteristic Impedance='+str(self.characteristic_impedance[0])+' Ohm' \
-                '\nPort impedance Z0='+str(self.Z0[0])+' Ohm'
+                '\nCharacteristic Impedance=%.1f-%.1f Ohm'%(self.Z0[0],self.Z0[-1]) +\
+                '\nPort impedance Z0=%.1f-%.1f Ohm'%(self.z0[0],self.z0[-1]) 
         return output

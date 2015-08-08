@@ -37,6 +37,7 @@ import numpy as npy
 from numpy import fft # used to center attribute `t` at 0
 import re
 from .util import slice_domain,find_nearest_index
+from .constants import ZERO
 
 class Frequency(object):
     '''
@@ -71,8 +72,7 @@ class Frequency(object):
             'ghz':1e9,\
             'thz':1e12\
             }
-    global ALMOST_ZER0
-    ALMOST_ZER0=1e-4
+    
 
     def __init__(self,start=0, stop=0, npoints=0, unit='ghz', sweep_type='lin'):
         '''
@@ -235,7 +235,7 @@ class Frequency(object):
         if len(self.f) != len(other.f):
             return False
         else:
-            return (max(abs(self.f-other.f)) < ALMOST_ZER0)
+            return (max(abs(self.f-other.f)) < ZERO)
 
     def __ne__(self,other):
         return (not self.__eq__(other))

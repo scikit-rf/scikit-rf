@@ -132,6 +132,8 @@ class DistributedCircuit(Media):
 
         Parameters
         ------------
+        my_media : :class:'~skrf.media.media.Media' instance.
+            the media object
         '''
 
         w  =  my_media.frequency.w

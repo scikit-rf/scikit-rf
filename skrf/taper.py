@@ -1,6 +1,8 @@
 from . network import cascade_list
 from scipy  import linspace
 from numpy import exp, log
+
+
 class Taper1D(object):
     def __init__(self, med,  start, stop, n_sections, f,
                  length, length_unit='m', param='z0',f_is_normed=True, 
