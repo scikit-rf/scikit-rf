@@ -89,12 +89,10 @@ class Media(object):
         if self.frequency != other.frequency:
             return False
 
-        if max(abs(self.Z0 - \
-                other.Z0)) > ZERO:
+        if max(abs(self.Z0 - other.Z0)) > ZERO:
             return False
 
-        if max(abs(self.gamma - \
-                other.gamma)) > ZERO:
+        if max(abs(self.gamma - other.gamma)) > ZERO:
             return False
 
         if max(abs(self.z0 - other.z0)) > ZERO:
@@ -330,7 +328,7 @@ class Media(object):
         if z0 is None:
             z0 = self.z0
         elif isinstance(z0,str):
-            # they passed a string for z0, try to parse it like
+            # they passed a string for z0, try to parse it 
             re_numbers = re.compile('\d+')
             numbers = re.findall(re_numbers, z0)
             if len(numbers)==2:

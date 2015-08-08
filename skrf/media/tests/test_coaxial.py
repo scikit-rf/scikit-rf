@@ -29,8 +29,8 @@ class MediaTestCase(unittest.TestCase):
             Dint=1e-3, Dout=3e-3, epsilon_r=2.29, \
             tan_delta=4e-4, sigma=1./1.68e-8 \
             )
-        skrf_ntwk = a_media.thru(Z0=50)**a_media.line(200e-3,'m')\
-                    **a_media.thru(Z0=50)
+        skrf_ntwk = a_media.thru(z0=50)**a_media.line(200e-3,'m')\
+                    **a_media.thru(z0=50)
         # Equal assertion fails if tan_delta or resistivity are non-zero
         #self.assertEqual(qucs_ntwk, skrf_ntwk)
         self.assertTrue(
