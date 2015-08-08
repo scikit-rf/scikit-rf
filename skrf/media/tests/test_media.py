@@ -6,6 +6,8 @@ import numpy as npy
 from skrf.media import DefinedGammaZ0, Media
 from skrf.network import Network
 from skrf.frequency import Frequency
+import skrf
+
 
 class DefinedGammaZ0TestCase(unittest.TestCase):
     def setUp(self):
@@ -99,7 +101,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.dummy_media.write_csv(fname)
         os.remove(fname)
 
-
+    
     def test_from_csv(self):
         fname = os.path.join(self.files_dir,\
                 'out.csv')
