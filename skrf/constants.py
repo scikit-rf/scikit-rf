@@ -21,6 +21,19 @@ INF = 1e99
 ONE = 1.0 + 1/1e14
 ZERO = 1e-6
 
+global distance_dict
+distance_dict = {'m':1.,
+                 'cm':1e-2,
+                 'mm':1e-3,
+                 'um':1e-6,
+                 'in':inch,
+                 'mil': mil,
+                 's':c,
+                 'us':1e-6*c,
+                 'ns':1e-9*c,
+                 'ps':1e-12*c,
+                 }
+
 def to_meters( d, unit='m'):
     '''
     Translate various  units of distance into meters
@@ -37,19 +50,9 @@ def to_meters( d, unit='m'):
 
     '''
     unit = unit.lower()
-    d_dict ={'m':d,
-             'cm':1e-2*d,
-             'mm':1e-3*d,
-             'um':1e-6*d,
-             'in':d*inch,
-             'mil': d*mil,
-             's':d*c,
-             'us':d*1e-6*c,
-             'ns':d*1e-9*c,
-             'ps':d*1e-12*c,
-             }
+    global distance_dict
     try:
-        return d_dict[unit]
+        return distance_dict[unit]*d
     except(KeyError):
         raise(ValueError('Incorrect unit'))
 

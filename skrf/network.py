@@ -2329,7 +2329,7 @@ class Network(object):
         '''
         gated = self.copy()
 
-        t_2_f = lambda x:fft.ifft(x, axis=0)
+        t_2_f = lambda x:fft.fft(x, axis=0)
 
         t = self.frequency.t
         t_start_idx = find_nearest_index(t,t_start)
@@ -2341,13 +2341,14 @@ class Network(object):
         padded_window = npy.r_[npy.zeros(t_start_idx),
                                window,
                                npy.zeros(len(t)-t_stop_idx)]
-
+        padded_window = padded_window.reshape(-1,1,1) *\
+                        npy.ones((len(gated), gated.nports, gated.nports))
         window_in_f = t_2_f(padded_window)
-
+    
         #window_in_freq = window_in_freq.reshape(-1,1,1) * \
         #                npy.ones((len(self), self.nports, self.nports))
 
-
+        '''
         for m,n in self.port_tuples:
             x = signal.convolve(self.s[:,m,n], window_in_f, mode='same')
             gated.s[:,m,n] = fft.ifftshift(x)
@@ -2356,8 +2357,9 @@ class Network(object):
         gated.s = gated.s  * npy.sum(self.s_mag,axis=0)/\
                 npy.sum(gated.s_mag,axis=0)
 
-
-
+        '''
+        s_time_windowed = gated.s_time*padded_window
+        gated.s = t_2_f(s_time_windowed)
         return gated
 
     # plotting
