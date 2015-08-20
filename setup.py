@@ -16,7 +16,7 @@ setup(name='scikit-rf',
 	long_description=LONG_DESCRIPTION,
 	author='Alex Arsenovic',
 	author_email='arsenovic@virginia.edu',
-	url='http://scikit-rf.org',
+	url='http://www.scikit-rf.org',
 	packages=find_packages(),
 	install_requires = [
 		'ipython',
