@@ -5,7 +5,13 @@
 from setuptools import setup, find_packages
 from distutils.core import Extension
 
-VERSION = '0.14.1'
+
+with open('skrf/__init__.py') as fid:
+    for line in fid:
+        if line.startswith('__version__'):
+            VERSION = line.strip().split()[-1][1:-1]
+            break
+
 LONG_DESCRIPTION = """
 	sckit-rf is an open source approach to RF/Microwave engineering implemented in the Python programming language.
 """
