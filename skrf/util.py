@@ -160,7 +160,7 @@ def get_fid(file, *args, **kwargs):
     \*args, \*\*kwargs : arguments and keyword arguments
         passed through to pickle.load
     '''
-    if isinstance(file, str):
+    if isinstance(file, basestring):
         return open(file, *args, **kwargs)
     else:
         return file

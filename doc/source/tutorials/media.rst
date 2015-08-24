@@ -152,9 +152,9 @@ complex :class:`numpy.ndarray`'s,
 
 .. ipython:: 
 	
-	In [144]: cpw.propagation_constant[:3]
+	In [144]: cpw.gamma[:3]
 
-	In [144]: cpw.characteristic_impedance[:3]
+	In [144]: cpw.Z0[:3]
 
 As an example, plot the cpw's propagation constant vs frequency. The 
 real and imaginary parts of `gamma` may be directly accessed through the 
