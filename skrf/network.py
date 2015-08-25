@@ -1688,7 +1688,8 @@ class Network(object):
         # touchstone file.
 
     def write_touchstone(self, filename=None, dir = None,
-                         write_z0=False,skrf_comment=True):
+                         write_z0=False,skrf_comment=True,
+                         form='ri'):
         '''
         Write a contents of the :class:`Network` to a touchstone file.
 
@@ -1705,12 +1706,17 @@ class Network(object):
             like Ansoft HFSS does
         skrf_comment : bool, optional
             write `created by skrf` comment
-
+        form : 'db','ma','ri'
+            format to write data,
+            * db = db, deg
+            * ma = mag, deg
+            * ri = real, imag
 
         Notes
         -------
-        format supported at the moment is,
-                HZ S RI
+        format supported at the moment are,
+                [Hz/kHz/MHz/GHz] S [DB/MA/RI]
+        Frequency unit can be changed by setting Network.frequency.unit property
 
         The functionality of this function should take place in the
         :class:`~skrf.touchstone.touchstone` class.
@@ -1733,6 +1739,23 @@ class Network(object):
         if dir is not None:
             filename =  os.path.join(dir, filename)
 
+        # set internal varialbes according to form
+        form = form.lower()
+        if form == "ri":
+            formatDic = {"labelA":"Re", "labelB":"Im"}
+            funcA = npy.real
+            funcB = npy.imag
+        elif form == "db":
+            formatDic = {"labelA":"dB", "labelB":"ang"}
+            funcA = mf.complex_2_db
+            funcB = mf.complex_2_degree
+        elif form == "ma":
+            formatDic = {"labelA":"mag", "labelB":"ang"}
+            funcA = mf.complex_2_magnitude
+            funcB = mf.complex_2_degree
+        else:
+            raise ValueError('`form` must be either `db`,`ma`,`ri`')
+
         with open(filename,"w") as outputFile:
             # Add '!' Touchstone comment delimiters to the start of every line
             # in self.comments
@@ -1749,17 +1772,16 @@ class Network(object):
             # the '#'  line is NOT a comment it is essential and it must be
             # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-
-            outputFile.write('# ' + self.frequency.unit + ' S RI R ' + str(abs(self.z0[0,0])) +" \n")
+            outputFile.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0,0]))))
 
             if self.number_of_ports == 1 :
                 # write comment line for users (optional)
-                outputFile.write('!freq ReS11 ImS11\n')
+                outputFile.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
                     outputFile.write(str(self.frequency.f_scaled[f])+' '\
-                        + str(npy.real(self.s[f,0,0])) + ' '\
-                        + str(npy.imag(self.s[f,0,0])) +'\n')
+                        + str(funcA(self.s[f,0,0])) + ' '\
+                        + str(funcB(self.s[f,0,0])) +'\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         outputFile.write('! Port Impedance ' )
@@ -1773,18 +1795,18 @@ class Network(object):
                 # - S21,S12 in reverse order: legacy ?
 
                 # write comment line for users (optional)
-                outputFile.write('!freq ReS11 ImS11 ReS21 ImS21 ReS12 ImS12 ReS22 ImS22\n')
+                outputFile.write('!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 {labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
                     outputFile.write(str(self.frequency.f_scaled[f])+' '\
-                        + str(npy.real(self.s[f,0,0])) + ' '\
-                        + str(npy.imag(self.s[f,0,0])) + ' '\
-                        + str(npy.real(self.s[f,1,0])) + ' '\
-                        + str(npy.imag(self.s[f,1,0])) + ' '\
-                        + str(npy.real(self.s[f,0,1])) + ' '\
-                        + str(npy.imag(self.s[f,0,1])) + ' '\
-                        + str(npy.real(self.s[f,1,1])) + ' '\
-                        + str(npy.imag(self.s[f,1,1])) +'\n')
+                        + str(funcA(self.s[f,0,0])) + ' '\
+                        + str(funcB(self.s[f,0,0])) + ' '\
+                        + str(funcA(self.s[f,1,0])) + ' '\
+                        + str(funcB(self.s[f,1,0])) + ' '\
+                        + str(funcA(self.s[f,0,1])) + ' '\
+                        + str(funcB(self.s[f,0,1])) + ' '\
+                        + str(funcA(self.s[f,1,1])) + ' '\
+                        + str(funcB(self.s[f,1,1])) +'\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         outputFile.write('! Port Impedance' )
@@ -1799,7 +1821,7 @@ class Network(object):
                 outputFile.write ('!freq')
                 for m in range(1,4):
                     for n in range(1,4):
-                        outputFile.write(" ReS{m}{n}  ImS{m}{n}".format(m=m, n=n))
+                        outputFile.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
                     outputFile.write('\n!')
                 outputFile.write('\n')
                 # write out data
@@ -1807,8 +1829,8 @@ class Network(object):
                     outputFile.write(str(self.frequency.f_scaled[f]))
                     for m in range(3):
                         for n in range(3):
-                            outputFile.write( ' ' + str(npy.real(self.s[f,m,n])) + ' '\
-                             + str(npy.imag(self.s[f,m,n])))
+                            outputFile.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
+                             + str(funcB(self.s[f,m,n])))
                         outputFile.write('\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
@@ -1831,7 +1853,7 @@ class Network(object):
                     for n in range(1,1+self.number_of_ports):
                         if (n > 0 and (n%4) == 0 ) :
                             outputFile.write('\n!')
-                            outputFile.write(" ReS{m}{n}  ImS{m}{n}".format(m=m, n=n))
+                            outputFile.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
                     outputFile.write('\n!')
                 outputFile.write('\n')
                 # write out data
@@ -1841,8 +1863,8 @@ class Network(object):
                         for n in range(self.number_of_ports):
                             if (n > 0 and (n%4) == 0 ) :
                                 outputFile.write('\n')
-                            outputFile.write( ' ' + str(npy.real(self.s[f,m,n])) + ' '\
-                             + str(npy.imag(self.s[f,m,n])))
+                            outputFile.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
+                             + str(funcB(self.s[f,m,n])))
                         outputFile.write('\n')
 
                     # write out the z0 following hfss's convention if desired
