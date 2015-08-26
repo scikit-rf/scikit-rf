@@ -25,8 +25,6 @@ General
 
 '''
 
-
-
 from . import mathFunctions as mf
 
 
