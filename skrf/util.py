@@ -26,7 +26,7 @@ General
 '''
 
 from . import mathFunctions as mf
-
+from .p3k import basestring
 
 import matplotlib as mpl
 import warnings
