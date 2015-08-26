@@ -1740,16 +1740,16 @@ class Network(object):
             filename =  os.path.join(dir, filename)
 
         # set internal varialbes according to form
-        form = form.lower()
-        if form == "ri":
+        form = form.upper()
+        if form == "RI":
             formatDic = {"labelA":"Re", "labelB":"Im"}
             funcA = npy.real
             funcB = npy.imag
-        elif form == "db":
+        elif form == "DB":
             formatDic = {"labelA":"dB", "labelB":"ang"}
             funcA = mf.complex_2_db
             funcB = mf.complex_2_degree
-        elif form == "ma":
+        elif form == "MA":
             formatDic = {"labelA":"mag", "labelB":"ang"}
             funcA = mf.complex_2_magnitude
             funcB = mf.complex_2_degree
