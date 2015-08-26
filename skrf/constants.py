@@ -11,6 +11,8 @@ This module contains constants, numerical approximations, and unit conversions
 
 
 '''
+from __future__ import division
+from past.utils import old_div
 
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
@@ -18,7 +20,7 @@ from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
-ONE = 1.0 + 1/1e14
+ONE = 1.0 + old_div(1,1e14)
 ZERO = 1e-6
 
 global distance_dict
@@ -54,5 +56,5 @@ def to_meters( d, unit='m'):
     try:
         return distance_dict[unit]*d
     except(KeyError):
-        raise(ValueError('Incorrect unit'))
+        raise ValueError
 

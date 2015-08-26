@@ -18,6 +18,9 @@ CalibrationSet Class
    CalibrationSet
 
 '''
+from builtins import map
+from builtins import range
+from builtins import object
 from itertools import product, combinations, permutations
 from .calibration import Calibration
 from ..networkSet import NetworkSet
@@ -36,7 +39,7 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
     '''
     for measured_set in measured_sets:
         if len(measured_set) != len(measured_sets[0]):
-            raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
+            raise IndexError
 
     cal_list = []
     for k in list(range(len(measured_sets[0]))):
@@ -132,7 +135,7 @@ class Dot(CalibrationSet):
         ideals = self.ideals
         measured_sets = self.measured_sets
         if len(set(map(len, measured_sets))) !=1:
-            raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
+            raise IndexError
 
         self.cal_list = []
         for k in range(len(measured_sets[0])):

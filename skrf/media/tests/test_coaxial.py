@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import unittest
 import os
 import skrf as rf
@@ -27,7 +29,7 @@ class MediaTestCase(unittest.TestCase):
         a_media = rf.media.Coaxial(
             frequency = qucs_ntwk.frequency,
             Dint=1e-3, Dout=3e-3, epsilon_r=2.29, \
-            tan_delta=4e-4, sigma=1./1.68e-8 \
+            tan_delta=4e-4, sigma=old_div(1.,1.68e-8) \
             )
         skrf_ntwk = a_media.thru(z0=50)**a_media.line(200e-3,'m')\
                     **a_media.thru(z0=50)

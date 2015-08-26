@@ -9,6 +9,11 @@ Contains Media class.
 
 
 '''
+from __future__ import division
+from __future__ import print_function
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import warnings
 
 import numpy as npy
@@ -27,8 +32,9 @@ from ..constants import to_meters ,ZERO
 from abc import ABCMeta, abstractmethod, abstractproperty
 import re
 from copy import deepcopy as copy
+from future.utils import with_metaclass
 
-class Media(object):
+class Media(with_metaclass(ABCMeta, object)):
     '''
     Abstract Base Class for a single mode on a transmission line media.
     
@@ -71,7 +77,6 @@ class Media(object):
     prevent accidental impedance mis-match, you may want to manually
     set the z0 .
     '''
-    __metaclass__ = ABCMeta
     def __init__(self, frequency=None, z0=None):
         if frequency is None:
             frequency = Frequency(1,10,101,'ghz')
@@ -203,7 +208,7 @@ class Media(object):
         propgation_constant
 
         '''
-        return 1j*(self.frequency.w/self.gamma)
+        return 1j*(old_div(self.frequency.w,self.gamma))
 
 
     @property
@@ -270,7 +275,7 @@ class Media(object):
 
         gamma = self.gamma
         if bc:
-                return 1.0*theta/npy.imag(gamma[gamma.size/2])
+                return 1.0*theta/npy.imag(gamma[old_div(gamma.size,2)])
         else:
                 return 1.0*theta/npy.imag(gamma)
 
@@ -450,10 +455,10 @@ class Media(object):
         '''
         result = self.match(nports=2, *args, **kwargs)
         y= npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1./R
-        y[:,1,1] = 1./R
-        y[:,0,1] = -1./R
-        y[:,1,0] = -1./R
+        y[:,0,0] = old_div(1.,R)
+        y[:,1,1] = old_div(1.,R)
+        y[:,0,1] = old_div(-1.,R)
+        y[:,1,0] = old_div(-1.,R)
         result.y = y
         return result
 
@@ -515,10 +520,10 @@ class Media(object):
         result = self.match(nports=2, **kwargs)
         w = self.frequency.w
         y = npy.zeros(shape=result.s.shape, dtype=complex)
-        y[:,0,0] = 1./(1j*w*L)
-        y[:,1,1] = 1./(1j*w*L)
-        y[:,0,1] = -1./(1j*w*L)
-        y[:,1,0] = -1./(1j*w*L)
+        y[:,0,0] = old_div(1.,(1j*w*L))
+        y[:,1,1] = old_div(1.,(1j*w*L))
+        y[:,0,1] = old_div(-1.,(1j*w*L))
+        y[:,1,0] = old_div(-1.,(1j*w*L))
         result.y = y
         return result
 
@@ -609,7 +614,7 @@ class Media(object):
 
         for f in range(self.frequency.npoints):
             result.s[f,:,:] =  (2*1./n-1)*npy.eye(n) + \
-                    npy.sqrt((1-((2.-n)/n)**2)/(n-1))*\
+                    npy.sqrt(old_div((1-(old_div((2.-n),n))**2),(n-1)))*\
                     (npy.ones((n,n))-npy.eye(n))
         return result
 
@@ -1154,7 +1159,7 @@ class Media(object):
         B = thetaM
         print(A.shape)
         print(B.shape)
-        print(npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta))
+        print(old_div(npy.linalg.lstsq(A, B)[1],npy.dot(beta,beta)))
         return npy.linalg.lstsq(A, B)[0][0]
 
     def plot(self, *args, **kw):
@@ -1162,7 +1167,7 @@ class Media(object):
 
     
 
-    def write_csv(self, filename='f,gamma,Z0,z0.csv'):
+    def write_csv(self, fname):
         '''
         write this media's frequency,gamma,Z0, and z0 to a csv file.
 
@@ -1176,10 +1181,9 @@ class Media(object):
         from_csv : class method to initialize Media object from a
             csv file written from this function
         '''
-        f = open(filename,'w')
+        
         header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
-        f.write(header)
-
+        
         g,z,pz  = self.gamma, \
                 self.Z0, self.z0
 
@@ -1187,8 +1191,8 @@ class Media(object):
                 [self.frequency.f_scaled, z.real, z.imag, \
                 g.real, g.imag, pz.real, pz.imag]).T
 
-        npy.savetxt(f,data,delimiter=',')
-        f.close()
+        npy.savetxt(fname=fname,X=data,delimiter=',', header=header)
+        
 
 
 

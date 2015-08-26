@@ -30,6 +30,9 @@ Functions
     overlap_freq
 
 '''
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 
 from pylab import linspace, gca,plot, autoscale
 from numpy import pi
@@ -260,7 +263,7 @@ class Frequency(object):
 
     def __div__(self,other):
         out = self.copy()
-        out.f = self.f/other
+        out.f = old_div(self.f,other)
         return out
 
     @property
@@ -317,14 +320,14 @@ class Frequency(object):
         center : number
                 the exact center frequency in units of hz
         '''
-        return self.start + (self.stop-self.start)/2.
+        return self.start + old_div((self.stop-self.start),2.)
     
     @property
     def center_idx(self):
         '''
         closes idx of :attr:`f` to the center frequency
         '''
-        return int(self.npoints)/2
+        return old_div(int(self.npoints),2)
         
     @property
     def center_scaled(self):
@@ -336,21 +339,21 @@ class Frequency(object):
         center : number
                 the exact center frequency in units of :attr:`unit`'s
         '''
-        return self.start_scaled + (self.stop_scaled-self.start_scaled)/2.
+        return self.start_scaled + old_div((self.stop_scaled-self.start_scaled),2.)
 
     @property
     def step(self):
         '''
         the inter-frequency step size
         '''
-        return self.span/(self.npoints-1.)
+        return old_div(self.span,(self.npoints-1.))
     
     @property
     def step_scaled(self):
         '''
         the inter-frequency step size in
         '''
-        return self.span_scaled/(self.npoints-1.)
+        return old_div(self.span_scaled,(self.npoints-1.))
     
     @property
     def span(self):
@@ -407,7 +410,7 @@ class Frequency(object):
                 f : frequency vector in Hz
                 w : frequency vector in rad/s
         '''
-        return self.f/self.multiplier
+        return old_div(self.f,self.multiplier)
 
     @property
     def w(self):
@@ -479,7 +482,7 @@ class Frequency(object):
 
         t_period = 1/f_step
         '''
-        return linspace(-.5/self.step , .5/self.step, self.npoints)
+        return linspace(old_div(-.5,self.step) , old_div(.5,self.step), self.npoints)
 
     @property
     def t_ns(self):
@@ -513,7 +516,7 @@ class Frequency(object):
         if isinstance(val, str):
             val = self.multiplier_dict[val.lower()]
 
-        self.f = npy.round_(self.f/val)*val
+        self.f = npy.round_(old_div(self.f,val))*val
 
 
 

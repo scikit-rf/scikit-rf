@@ -34,6 +34,11 @@ NetworkSet Class
 
 
 '''
+from __future__ import print_function
+from __future__ import absolute_import
+from builtins import map
+from builtins import range
+from builtins import object
 
 import os
 from . network import average as network_average
@@ -127,16 +132,16 @@ class NetworkSet(object):
 
         # did they pass a list of Networks?
         if not isinstance(ntwk_set[0], Network):
-            raise(TypeError('input must be list of Network types'))
+            raise TypeError
 
         # do all Networks have the same # ports?
         if len (set([ntwk.number_of_ports for ntwk in ntwk_set])) >1:
-            raise(ValueError('All elements in list of Networks must have same number of ports'))
+            raise ValueError
 
         # is all frequency information the same?
         if npy.all([(ntwk_set[0].frequency == ntwk.frequency) \
                 for ntwk in ntwk_set]) == False:
-            raise(ValueError('All elements in list of Networks must have same frequency information'))
+            raise ValueError
 
         ## initialization
         # we are good to go
@@ -147,7 +152,7 @@ class NetworkSet(object):
         # create a statistical properties of this set
         network_property_list = [k+'_'+l \
             for k in PRIMARY_PROPERTIES \
-            for l in COMPONENT_FUNC_DICT.keys()] + \
+            for l in list(COMPONENT_FUNC_DICT.keys())] + \
             ['passivity','s']
 
         # dynamically generate properties. this is slick.
@@ -246,7 +251,7 @@ class NetworkSet(object):
 
         >>> my_set = rf.NetworkSet.from_dir('./data/')
         '''
-        from io.general import read_all_networks
+        from .io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
         
         
@@ -298,14 +303,14 @@ class NetworkSet(object):
         def operator_func(self, other):
             if isinstance(other, NetworkSet):
                 if len(other) != len(self):
-                    raise(ValueError('Network sets must be of same length to be cascaded'))
+                    raise ValueError
                 return NetworkSet([self.ntwk_set[k].__getattribute__(operator_name)(other.ntwk_set[k]) for k in range(len(self))])
 
             elif isinstance(other, Network):
                 return NetworkSet([ntwk.__getattribute__(operator_name)(other) for ntwk in self.ntwk_set])
 
             else:
-                raise(TypeError('NetworkSet operators operate on either Network, or NetworkSet types'))
+                raise TypeError
         setattr(self.__class__,operator_name,operator_func)
 
 
@@ -620,8 +625,8 @@ class NetworkSet(object):
         gimme_norm = lambda x: stats.norm(loc=0,scale=x).rvs(1)[0]
         ugimme_norm = frompyfunc(gimme_norm,1,1)
 
-        s_deg_rv = npy.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
-        s_mag_rv = npy.array(map(ugimme_norm, self.std_s_mag.s_re), dtype=float)
+        s_deg_rv = npy.array(list(map(ugimme_norm, self.std_s_deg.s_re)), dtype=float)
+        s_mag_rv = npy.array(list(map(ugimme_norm, self.std_s_mag.s_re)), dtype=float)
 
         mag = ntwk.s_mag+s_mag_rv
         deg = ntwk.s_deg+s_deg_rv
@@ -754,11 +759,11 @@ class NetworkSet(object):
         '''
 
         if m is None:
-            M = range(self[0].number_of_ports)
+            M = list(range(self[0].number_of_ports))
         else:
             M = [m]
         if n is None:
-            N = range(self[0].number_of_ports)
+            N = list(range(self[0].number_of_ports))
         else:
             N = [n]
 
@@ -806,7 +811,7 @@ class NetworkSet(object):
                             color=color_error,**kwargs_error)
 
                 else:
-                    raise(ValueError('incorrect plot type'))
+                    raise ValueError
 
                 ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
                 ax.axis('tight')
@@ -896,7 +901,7 @@ class NetworkSet(object):
                     color=color_error,**kwargs_error)
 
         else:
-            raise(ValueError('incorrect plot type'))
+            raise ValueError
 
         ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
         ax.axis('tight')
@@ -1128,11 +1133,11 @@ class NetworkSet(object):
 
         '''
         # this import is delayed until here because of a circular dependency
-        from io.general import write
+        from .io.general import write
 
         if file is None:
             if self.name is None:
-                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+                 raise ValueError
             file = self.name
 
         write(file,self, *args, **kwargs)
@@ -1146,7 +1151,7 @@ class NetworkSet(object):
         ---------
         skrf.io.general.network_2_spreadsheet
         '''
-        from io.general import networkset_2_spreadsheet
+        from .io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
 
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):

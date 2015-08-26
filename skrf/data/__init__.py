@@ -15,6 +15,8 @@ Modules
 
 
 '''
+from __future__ import division
+from past.utils import old_div
 import os
 import six
 
@@ -58,10 +60,10 @@ materials = {
         'resistivity(ohm*m)':2.44e-8,
         },
     'lead':{
-        'resistivity(ohm*m)':1/4.56e6, # from pozar appendix F
+        'resistivity(ohm*m)':old_div(1,4.56e6), # from pozar appendix F
         },
     'steel(stainless)':{
-        'resistivity(ohm*m)':1/1.1e6, # from pozar appendix F
+        'resistivity(ohm*m)':old_div(1,1.1e6), # from pozar appendix F
         },
     'mylar':{
         'relative permativity':3.1,

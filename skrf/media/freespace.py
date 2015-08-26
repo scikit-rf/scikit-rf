@@ -36,6 +36,8 @@ distributed_conductance   :math:`G^{'}`  imag(mu_0*mu_r)    :math:`\\Im m \{\\mu
 ========================  =============  =================  ================================================
 
 '''
+from __future__ import division
+from past.utils import old_div
 from scipy.constants import  epsilon_0, mu_0
 from numpy import real, imag, cos
 from .distributedCircuit import DistributedCircuit
@@ -108,7 +110,7 @@ class Freespace(DistributedCircuit, Media):
                 Characteristic Impedance in units of ohms
         '''
         Z0 = DistributedCircuit.Z0.fget(self)
-        Z0_dict = {'te':Z0/cos(self.angle),
+        Z0_dict = {'te':old_div(Z0,cos(self.angle)),
                    'tm':Z0*cos(self.angle),
                    'tem':Z0}
         return Z0_dict[self.mode_type]

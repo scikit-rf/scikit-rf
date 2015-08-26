@@ -53,7 +53,7 @@ def connect_s_fast(A,k,B,l):
 
     '''
     if k > A.shape[-1]-1 or l>B.shape[-1]-1:
-        raise(ValueError('port indices are out of range'))
+        raise ValueError
 
     freq = npy.ones(len(A))
     nFreq = len (freq)

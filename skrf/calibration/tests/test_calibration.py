@@ -1,7 +1,14 @@
+from __future__ import division
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from past.utils import old_div
+from builtins import object
 import unittest
 import os
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle as pickle
 import skrf as rf
@@ -394,7 +401,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     
     def test_k_accuracy(self):
         self.assertEqual(
-            self.X.s21/self.Y.s12 , 
+            old_div(self.X.s21,self.Y.s12) , 
             self.cal.coefs_ntwks['k']  )   
     @nottest
     def test_verify_12term(self):
@@ -1014,7 +1021,7 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
         self.assertEqual(self.coefs['reverse switch term'], self.gamma_r)
     @nottest
     def test_k(self):
-        self.assertEqual(self.coefs['k'], self.X.s21/self.Y.s12 )
+        self.assertEqual(self.coefs['k'], old_div(self.X.s21,self.Y.s12) )
     
     
     def test_verify_12term(self):

@@ -102,6 +102,8 @@ Transmission Line Physics
         skin_depth
         surface_resistivity
 '''
+from __future__ import division
+from past.utils import old_div
 
 import numpy as npy
 from numpy import pi, sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
@@ -111,7 +113,7 @@ from scipy.constants import mu_0
 from . import mathFunctions as mf
 
 INF = 1e99
-ONE = 1.0 + 1/1e14
+ONE = 1.0 + old_div(1,1e14)
 
 
 def skin_depth(f,rho, mu_r):
@@ -141,7 +143,7 @@ def skin_depth(f,rho, mu_r):
     .. [1] http://en.wikipedia.org/wiki/Skin_effect
 
     '''
-    return sqrt(rho/(pi*f*mu_r*mu_0))
+    return sqrt(old_div(rho,(pi*f*mu_r*mu_0)))
 
 def surface_resistivity(f,rho,mu_r):
     '''
@@ -164,7 +166,7 @@ def surface_resistivity(f,rho,mu_r):
 
 
     '''
-    return rho/skin_depth(rho=rho,f = f, mu_r=mu_r)
+    return old_div(rho,skin_depth(rho=rho,f = f, mu_r=mu_r))
 
 def distributed_circuit_2_propagation_impedance( distributed_admittance,\
         distributed_impedance):
@@ -200,7 +202,7 @@ def distributed_circuit_2_propagation_impedance( distributed_admittance,\
     propagation_constant = \
             sqrt(distributed_impedance*distributed_admittance)
     characteristic_impedance = \
-            sqrt(distributed_impedance/distributed_admittance)
+            sqrt(old_div(distributed_impedance,distributed_admittance))
     return (propagation_constant, characteristic_impedance)
 
 def propagation_impedance_2_distributed_circuit(propagation_constant, \
@@ -234,7 +236,7 @@ def propagation_impedance_2_distributed_circuit(propagation_constant, \
     ----------
             distributed_circuit_2_propagation_impedance : opposite conversion
     '''
-    distributed_admittance = propagation_constant/characteristic_impedance
+    distributed_admittance = old_div(propagation_constant,characteristic_impedance)
     distributed_impedance = propagation_constant*characteristic_impedance
     return (distributed_admittance,distributed_impedance)
 
@@ -318,7 +320,7 @@ def electrical_length_2_distance(theta, gamma, f0,deg=True):
     '''
     if deg == True:
         theta = mf.degree_2_radian(theta)
-    return theta/imag(gamma(f0))
+    return old_div(theta,imag(gamma(f0)))
 
 def load_impedance_2_reflection_coefficient(z0, zl):
     '''
@@ -362,7 +364,7 @@ def load_impedance_2_reflection_coefficient(z0, zl):
     # handle singularity  by numerically representing inf as big number
     zl[(zl==npy.inf)] = INF
 
-    return ((zl -z0 )/(zl+z0))
+    return (old_div((zl -z0 ),(zl+z0)))
 
 def reflection_coefficient_2_input_impedance(z0,Gamma):
     '''
@@ -395,7 +397,7 @@ def reflection_coefficient_2_input_impedance(z0,Gamma):
     #handle singularity by numerically representing inf as close to 1
     Gamma[(Gamma == 1)] = ONE
 
-    return z0*((1.0+Gamma )/(1.0-Gamma))
+    return z0*(old_div((1.0+Gamma ),(1.0-Gamma)))
 
 def reflection_coefficient_at_theta(Gamma0,theta):
     '''

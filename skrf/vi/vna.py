@@ -19,6 +19,11 @@ Vector Network Analyzers (:mod:`skrf.vi.vna`)
     HP8510C
     HP8720
 '''
+from __future__ import division
+from __future__ import print_function
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import numpy as npy
 #import visa
 #from visa import Driver
@@ -141,7 +146,7 @@ class PNA(Driver):
     
     @property
     def timeout(self):
-        return self._interface.timeout/1000.
+        return old_div(self._interface.timeout,1000.)
     @timeout.setter
     def timeout(self,val):
         self._interface.timeout=val*1000.
@@ -1934,7 +1939,7 @@ class HP8510C(Driver):
         elif not choice:
             self.write('SING;')
         else:
-            raise(ValueError('takes a boolean'))
+            raise ValueError
     @property
     def averaging(self):
         '''

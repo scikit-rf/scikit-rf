@@ -1,3 +1,8 @@
+from __future__ import division
+from builtins import str
+from builtins import range
+from past.utils import old_div
+from builtins import object
 
 from six.moves import xrange # for Python3 compatibility
 
@@ -72,15 +77,15 @@ class Parameter(object):
 
         # create index lists, if not provided by user
         if m is None:
-            M = range(self._network.nports)
+            M = list(range(self._network.nports))
         else:
             M = [m]
         if n is None:
-            N = range(self._network.nports)
+            N = list(range(self._network.nports))
         else:
             N = [n]
 
-        if 'label'  not in kwargs.keys():
+        if 'label'  not in list(kwargs.keys()):
             gen_label = True
         else:
             gen_label = False
@@ -232,15 +237,15 @@ class Projection(object):
 
         # create index lists, if not provided by user
         if m is None:
-            M = range(self._network.nports)
+            M = list(range(self._network.nports))
         else:
             M = [m]
         if n is None:
-            N = range(self._network.nports)
+            N = list(range(self._network.nports))
         else:
             N = [n]
 
-        if 'label'  not in kwargs.keys():
+        if 'label'  not in list(kwargs.keys()):
             gen_label = True
         else:
             gen_label = False
@@ -756,7 +761,7 @@ def s2z(s,z0=50):
 
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
         z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
     return z
@@ -813,8 +818,8 @@ def s2y(s,z0=50):
     I = npy.mat(npy.identity(s.shape[1]))
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
-    for fidx in xrange(s.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+    for fidx in range(s.shape[0]):
+        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(old_div(1.0,z0[fidx]))))
         y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
     return y
 
@@ -867,9 +872,9 @@ def s2t(s):
     s = fix_parameter_shape(s)
     t = npy.array([
         [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
-            -s[:,1,1]/s[:,1,0]],
-        [s[:,0,0]/s[:,1,0],
-            1/s[:,1,0] ]
+            old_div(-s[:,1,1],s[:,1,0])],
+        [old_div(s[:,0,0],s[:,1,0]),
+            old_div(1,s[:,1,0]) ]
         ]).transpose()
     return t
 
@@ -886,8 +891,8 @@ def s2time(s,window =('kaiser',6),  normalize = True):
     windowed = s * window
     if normalize:
         # normalize the s-parameters to account for power lost in windowing
-        norm_factor = npy.sum(abs(s),axis=0)/\
-                      npy.sum(abs(windowed),axis=0)
+        norm_factor = old_div(npy.sum(abs(s),axis=0),\
+                      npy.sum(abs(windowed),axis=0))
         windowed = windowed*norm_factor
 
     time = fft.ifftshift(fft.ifft(windowed, axis=0), axes=0)
@@ -926,8 +931,8 @@ def z2s(z, z0=50):
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(z.shape, dtype='complex')
     I = npy.mat(npy.identity(z.shape[1]))
-    for fidx in xrange(z.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+    for fidx in range(z.shape[0]):
+        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(old_div(1.0,z0[fidx]))))
         s[fidx] = (sqrty0*z[fidx]*sqrty0 - I) * (sqrty0*z[fidx]*sqrty0 + I)**-1
     return s
 
@@ -975,7 +980,7 @@ def z2y(z):
     '''
     z = z.copy() # to prevent the original array from being altered
     z = fix_parameter_shape(z)
-    return npy.array([npy.mat(z[f,:,:])**-1 for f in xrange(z.shape[0])])
+    return npy.array([npy.mat(z[f,:,:])**-1 for f in range(z.shape[0])])
 
 def z2t(z):
     '''
@@ -1073,7 +1078,7 @@ def y2s(y, z0=50):
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(y.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
         s[fidx] = (I - sqrtz0*y[fidx]*sqrtz0) * (I + sqrtz0*y[fidx]*sqrtz0)**-1
     return s
@@ -1122,7 +1127,7 @@ def y2z(y):
     '''
     y = y.copy() # to prevent the original array from being altered
     y = fix_parameter_shape(y)
-    return npy.array([npy.mat(y[f,:,:])**-1 for f in xrange(y.shape[0])])
+    return npy.array([npy.mat(y[f,:,:])**-1 for f in range(y.shape[0])])
 
 def y2t(y):
     '''
@@ -1215,9 +1220,9 @@ def t2s(t):
     t = t.copy() # to prevent the original array from being altered
     t = fix_parameter_shape(t)
     s = npy.array([
-        [t[:,0,1]/t[:,1,1],
-             1/t[:,1,1]],
-        [(t[:,0,0]*t[:,1,1]- t[:,1,0]*t[:,0,1])/t[:,1,1],
+        [old_div(t[:,0,1],t[:,1,1]),
+             old_div(1,t[:,1,1])],
+        [old_div((t[:,0,0]*t[:,1,1]- t[:,1,0]*t[:,0,1]),t[:,1,1]),
             -1*t[:,1,0]/t[:,1,1] ]
         ]).transpose()
     return s

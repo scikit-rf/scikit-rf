@@ -23,6 +23,11 @@ Functions related to reading/writing touchstones.
     hfss_touchstone_2_media
     hfss_touchstone_2_network
 '''
+from __future__ import division
+from __future__ import print_function
+from builtins import range
+from builtins import object
+from past.utils import old_div
 
 import numpy
 import numpy as npy
@@ -32,7 +37,7 @@ from ..frequency import Frequency
 from ..media import  Media, DefinedGammaZ0
 from .. import mathFunctions as mf
 
-class Touchstone():
+class Touchstone(object):
     '''
     class to read touchstone s-parameter files
 
@@ -103,7 +108,7 @@ class Touchstone():
         try:
             self.rank = int(extention[1:-1])
         except (ValueError):
-            raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
+            raise ValueError
 
 
         linenr = 0
@@ -149,13 +154,13 @@ class Touchstone():
                 self.format = toks[2]
                 self.resistance = toks[4]
                 if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
-                    print('ERROR: illegal frequency_unit [%s]',  self.frequency_unit)
+                    print(('ERROR: illegal frequency_unit [%s]',  self.frequency_unit))
                     # TODO: Raise
                 if self.parameter not in 'syzgh':
-                    print('ERROR: illegal parameter value [%s]', self.parameter)
+                    print(('ERROR: illegal parameter value [%s]', self.parameter))
                     # TODO: Raise
                 if self.format not in ['ma', 'db', 'ri']:
-                    print('ERROR: illegal format value [%s]', self.format)
+                    print(('ERROR: illegal format value [%s]', self.format))
                     # TODO: Raise
 
                 continue
@@ -235,8 +240,8 @@ class Touchstone():
         if format == 'orig':
             format = self.format
         ext1, ext2 = {'ri':('R','I'),'ma':('M','A'), 'db':('DB','A')}.get(format)
-        for r1 in xrange(self.rank):
-            for r2 in xrange(self.rank):
+        for r1 in range(self.rank):
+            for r2 in range(self.rank):
                 names.append("S%i%i%s"%(r1+1,r2+1,ext1))
                 names.append("S%i%i%s"%(r1+1,r2+1,ext2))
         return names
@@ -259,9 +264,9 @@ class Touchstone():
             # use frequency in hz unit
             values[:,0] = values[:,0]*self.frequency_mult
             if (self.format == 'db') and (format == 'ma'):
-                values[:,1::2] = 10**(values[:,1::2]/20.0)
+                values[:,1::2] = 10**(old_div(values[:,1::2],20.0))
             elif (self.format == 'db') and (format == 'ri'):
-                v_complex = ((10**values[:,1::2]/20.0)
+                v_complex = ((old_div(10**values[:,1::2],20.0))
                              * numpy.exp(1j*numpy.pi/180 * values[:,2::2]))
                 values[:,1::2] = numpy.real(v_complex)
                 values[:,2::2] = numpy.imag(v_complex)
@@ -274,11 +279,11 @@ class Touchstone():
             elif (self.format == 'ri') and (format == 'ma'):
                 v_complex = numpy.absolute(values[:,1::2] + 1j* self.sparameters[:,2::2])
                 values[:,1::2] = numpy.absolute(v_complex)
-                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
+                values[:,2::2] = numpy.angle(v_complex)*(old_div(180,numpy.pi))
             elif (self.format == 'ri') and (format == 'db'):
                 v_complex = numpy.absolute(values[:,1::2] + 1j* self.sparameters[:,2::2])
                 values[:,1::2] = 20*numpy.log10(numpy.absolute(v_complex))
-                values[:,2::2] = numpy.angle(v_complex)*(180/numpy.pi)
+                values[:,2::2] = numpy.angle(v_complex)*(old_div(180,numpy.pi))
 
         for i,n in enumerate(self.get_sparameter_names(format=format)):
             ret[n] = values[:,i]
@@ -300,7 +305,7 @@ class Touchstone():
         elif self.format == 'ma':
             v_complex = (v[:,1::2] * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
         elif self.format == 'db':
-            v_complex = ((10**(v[:,1::2]/20.0)) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
+            v_complex = ((10**(old_div(v[:,1::2],20.0))) * numpy.exp(1j*numpy.pi/180 * v[:,2::2]))
 
         if self.rank == 2 :
             # this return is tricky; it handles the way touchtone lines are

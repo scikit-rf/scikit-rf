@@ -3,12 +3,13 @@ this test on tests ability for all media class to pass construction
 of all general circuit components
 
 '''
+from builtins import object
 import unittest
 import skrf as rf
 from scipy.constants import *
 
 
-class MediaTestCase():
+class MediaTestCase(object):
     """Base class, contains tests for all media."""
     def test_gamma(self):
         self.media.gamma

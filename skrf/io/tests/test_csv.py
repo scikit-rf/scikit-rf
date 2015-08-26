@@ -33,7 +33,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         ''' 
         This tests reading of comment lines in the test file.
         '''
-        self.assertEqual(self.acsv.comments, 'this is a comment\r\nline\r\n')
+        self.assertEqual(self.acsv.comments, 'this is a comment\nline\n')
 
     def test_data(self):
         '''

@@ -1,3 +1,4 @@
+from builtins import object
 #import skrf as rf
 from skrf.vi.lifetimeProbeTester import LifeTimeProbeTester
 from skrf import Network
@@ -7,7 +8,7 @@ from time import sleep
 import numpy as npy
 
 
-class Private():
+class Private(object):
     def __init__(self):
         self.lpt = None
         self.logger = multiprocessing.get_logger()

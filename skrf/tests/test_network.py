@@ -1,9 +1,14 @@
+from __future__ import division
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from past.utils import old_div
 import unittest
 import os
 import six
 import numpy as npy
 try:
-    import cPickle as pickle 
+    import pickle as pickle 
 except ImportError:
     import pickle as pickle
 import skrf as rf
@@ -80,7 +85,7 @@ class NetworkTestCase(unittest.TestCase):
         a = rf.Network()
         a.frequency=(1,)
         a.s = npy.arange(16).reshape(4,4)
-        a.z0 = range(4)
+        a.z0 = list(range(4))
 
         b = rf.Network()
         b.frequency=(1,)
@@ -186,11 +191,11 @@ class NetworkTestCase(unittest.TestCase):
     def test_div(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
         # operating on  networks
-        self.assertTrue( ((a/a).s == npy.array([[[1+0j]],[[1+0j]]])).all())
+        self.assertTrue( ((old_div(a,a)).s == npy.array([[[1+0j]],[[1+0j]]])).all())
         # operating on numbers
-        self.assertTrue( ((a/2.).s == npy.array([[[.5+1j]],[[3/2.+2j]]])).all())
+        self.assertTrue( ((old_div(a,2.)).s == npy.array([[[.5+1j]],[[old_div(3,2.)+2j]]])).all())
         # operating on list
-        self.assertTrue( ((a/[1,2]).s == npy.array([[[1+2j]],[[3/2.+2j]]])).all())
+        self.assertTrue( ((old_div(a,[1,2])).s == npy.array([[[1+2j]],[[old_div(3,2.)+2j]]])).all())
 
     def test_add(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)

@@ -17,6 +17,8 @@ their derivations.
 .. [#] http://qucs.sourceforge.net/docs/technical.pdf
 .. [#] http://www.qucs.sourceforge.net/
 '''
+from __future__ import division
+from past.utils import old_div
 from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
 from numpy import real, imag,pi,sqrt,log,zeros, ones
@@ -71,14 +73,14 @@ class CPW(Media):
         '''
         intermediary parameter. see qucs docs on cpw lines.
         '''
-        return (self.ep_r+1)/2.
+        return old_div((self.ep_r+1),2.)
 
     @property
     def k1(self):
         '''
         intermediary parameter. see qucs docs on cpw lines.
         '''
-        return self.w/(self.w +2*self.s)
+        return old_div(self.w,(self.w +2*self.s))
 
     @property
     def K_ratio(self):
@@ -87,10 +89,10 @@ class CPW(Media):
         '''
         k1 = self.k1
 
-        if (0 <= k1 <= 1/sqrt(2)):
-            return pi/(log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))
-        elif (1/sqrt(2) < k1 <= 1):
-            return (log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))/pi
+        if (0 <= k1 <= old_div(1,sqrt(2))):
+            return old_div(pi,(log(2*(1+sqrt(k1))/(1-sqrt(k1)) )))
+        elif (old_div(1,sqrt(2)) < k1 <= 1):
+            return old_div((log(2*(1+sqrt(k1))/(1-sqrt(k1)) )),pi)
 
 
 
@@ -109,19 +111,19 @@ class CPW(Media):
         surface_resistivity : calculates surface resistivity
         '''
         if self.rho is None or self.t is None:
-            raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
+            raise AttributeError
 
         t, k1, ep_re = self.t, self.k1,self.ep_re
         r_s = surface_resistivity(f=self.frequency.f, rho=self.rho, \
                 mu_r=1)
-        a = self.w/2.
-        b = self.s+self.w/2.
+        a = old_div(self.w,2.)
+        b = self.s+old_div(self.w,2.)
         K = ellipk      # complete elliptical integral of first kind
         K_p = lambda x: ellipk(sqrt(1-x**2)) # ellipk's compliment
 
         return ((r_s * sqrt(ep_re)/(480*pi*K(k1)*K_p(k1)*(1-k1**2) ))*\
-                (1./a * (pi+log((8*pi*a*(1-k1))/(t*(1+k1)))) +\
-                 1./b * (pi+log((8*pi*b*(1-k1))/(t*(1+k1))))))
+                (1./a * (pi+log(old_div((8*pi*a*(1-k1)),(t*(1+k1))))) +\
+                 1./b * (pi+log(old_div((8*pi*b*(1-k1)),(t*(1+k1)))))))
 
 
 

@@ -1,3 +1,6 @@
+from __future__ import division
+from builtins import object
+from past.utils import old_div
 from . network import cascade_list
 from scipy  import linspace
 from numpy import exp, log
@@ -100,7 +103,7 @@ class Taper1D(object):
     
     @property
     def section_length(self):
-        return  self.length/self.n_sections
+        return  old_div(self.length,self.n_sections)
     
     @property
     def value_vector(self):
@@ -169,7 +172,7 @@ class Exponential(Taper1D):
     def __init__(self,**kw):
         
         def f(x,length, start, stop):
-            return start*exp(x/length*(log(stop/start)))
+            return start*exp(x/length*(log(old_div(stop,start))))
         
         opts = dict(f = f, f_is_normed = False)
         kw.update(opts)

@@ -68,6 +68,15 @@ PNA interaction
    convert_pnacoefs_2_skrf
 
 '''
+from __future__ import division
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import str
+from builtins import zip
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import numpy as npy
 from numpy import linalg
 from numpy.linalg import det
@@ -78,7 +87,7 @@ from copy import deepcopy, copy
 import itertools
 from warnings import warn
 try:
-    import cPickle as pickle
+    import pickle as pickle
 except ImportError:
     import pickle as pickle
 
@@ -213,13 +222,13 @@ class Calibration(object):
         # allow them to pass di
         # lets make an ideal flush thru for them :
         if hasattr(measured, 'keys'):
-            measured = measured.values()
+            measured = list(measured.values())
             if sloppy_input == False:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
 
         if hasattr(ideals, 'keys'):
-            ideals = ideals.values()
+            ideals = list(ideals.values())
             if sloppy_input == False:
                 warn('dictionary passed, sloppy_input automatically activated')
                 sloppy_input = True
@@ -234,13 +243,13 @@ class Calibration(object):
                 align_measured_ideals(self.measured, self.ideals)
 
         if len(self.measured) != len(self.ideals):
-            raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured. If you are using `sloppy_input` ensure the names are uniquely alignable.'))
+            raise IndexError
 
 
         # ensure all the measured Networks' frequency's are the same
         for measure in self.measured:
             if self.measured[0].frequency != measure.frequency:
-                raise(ValueError('measured Networks dont have matching frequencies.'))
+                raise ValueError
         # ensure that all ideals have same frequency of the measured
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
@@ -254,7 +263,7 @@ class Calibration(object):
                     print('Success')
 
                 except:
-                    raise(IndexError('Failed to interpolate. Check frequency of ideals[{}].'.format(k)))
+                    raise IndexError
 
 
         # passed to calibration algorithm in run()
@@ -353,7 +362,7 @@ class Calibration(object):
                     std = idx
 
         if isinstance(std, str):
-            raise (ValueError('standard %s not found in ideals'%std))
+            raise ValueError
 
         return (self.ideals.pop(std),  self.measured.pop(std))
 
@@ -552,16 +561,16 @@ class Calibration(object):
         the directivity normalized to the reflection tracking
         '''
         try:
-            return self.coefs_ntwks['directivity']/\
-                   self.coefs_ntwks['reflection tracking']
+            return old_div(self.coefs_ntwks['directivity'],\
+                   self.coefs_ntwks['reflection tracking'])
         except:
             pass
         try:
             out = {}
             for direction in ['forward','reverse']:
                 out[direction + ' normalized directvity'] =\
-                    self.coefs_ntwks[direction + ' directivity']/\
-                    self.coefs_ntwks[direction + ' reflection tracking']
+                    old_div(self.coefs_ntwks[direction + ' directivity'],\
+                    self.coefs_ntwks[direction + ' reflection tracking'])
             return out
         except:
             raise ValueError('cant find error coefs')
@@ -960,7 +969,7 @@ class Calibration(object):
 
         if file is None:
             if self.name is None:
-                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+                 raise ValueError
             file = self.name
 
         write(file,self, *args, **kwargs)
@@ -1071,7 +1080,7 @@ class OnePort(Calibration):
             # calculate least squares
             abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
             if numStds > 3:
-                measurement_variance[f,:]= residualsTmp/(numStds-numCoefs)
+                measurement_variance[f,:]= old_div(residualsTmp,(numStds-numCoefs))
                 parameter_variance[f,:] = \
                         abs(measurement_variance[f,:])*\
                         npy.linalg.inv(npy.dot(Q.T,Q))
@@ -1081,7 +1090,7 @@ class OnePort(Calibration):
             try:
                 residuals[f,:] = residualsTmp
             except(ValueError):
-                raise(ValueError('matrix has singular values. ensure standards are far enough away on smith chart'))
+                raise ValueError
 
         # convert the abc vector to standard error coefficients
         a,b,c = abc[:,0], abc[:,1],abc[:,2]
@@ -1191,19 +1200,19 @@ class SDDLWeikle(OnePort):
 
         ## NOTE: the published equation has an incorrect sign on this argument
         ## perhaps because they assume arg to measure clockwise angle??
-        alpha = exp(1j*2*angle(1./w_2p - 1./w_1p)) # (17)
+        alpha = exp(1j*2*angle(old_div(1.,w_2p) - old_div(1.,w_1p))) # (17)
 
-        p = alpha/( 1./w_1p - alpha/w_1p.conj() - (1.+G_l)/(G_l*w_lp )) # (22)
-        q = p/(alpha* G_l)   #(23) (put in terms of p)
+        p = old_div(alpha,( old_div(1.,w_1p) - old_div(alpha,w_1p.conj()) - old_div((1.+G_l),(G_l*w_lp )))) # (22)
+        q = old_div(p,(alpha* G_l))   #(23) (put in terms of p)
 
-        Bp_re = -1*((1 + (imag(p+q)/real(q-p)) * (imag(q-p)/real(p+q)))/\
-                    (1 + (imag(p+q)/real(q-p))**2)) * real(p+q) # (25)
+        Bp_re = -1*(old_div((1 + (old_div(imag(p+q),real(q-p))) * (old_div(imag(q-p),real(p+q)))),\
+                    (1 + (old_div(imag(p+q),real(q-p)))**2))) * real(p+q) # (25)
 
         Bp_im = imag(q+p)/real(q-p) * Bp_re #(24)
         Bp = Bp_re + Bp_im*1j
 
         B = Bp + w_s    #(10)
-        C = Bp * (1./w_1p - alpha/w_1p.conj()) + alpha * Bp/Bp.conj() #(20)
+        C = Bp * (old_div(1.,w_1p) - old_div(alpha,w_1p.conj())) + alpha * Bp/Bp.conj() #(20)
         A = B - w_s + w_s*C #(6)
 
         # convert the abc vector to standard error coefficients
@@ -1287,8 +1296,8 @@ class SDDL(OnePort):
         cr_alpha = cross_ratio(b,a,c,d)
         cr_beta = cross_ratio(a,b,c,d)
 
-        alpha = imag(cr_alpha)/real(cr_alpha/l)
-        beta = imag(cr_beta)/real(cr_beta/l)
+        alpha = old_div(imag(cr_alpha),real(old_div(cr_alpha,l)))
+        beta = old_div(imag(cr_beta),real(old_div(cr_beta,l)))
 
         self.ideals[1].s = z2s(alpha*1j,1)
         self.ideals[2].s = z2s(beta*1j,1)
@@ -1344,8 +1353,8 @@ class PHN(OnePort):
             p =  poly1d([A[k],B[k],C[k]])
             b1[k],b2[k] = p.r
         
-        a1 = -(f*b1 + g)/(z*b1 + e)
-        a2 = -(f*b2 + g)/(z*b2 + e)
+        a1 = old_div(-(f*b1 + g),(z*b1 + e))
+        a2 = old_div(-(f*b2 + g),(z*b2 + e))
 
         # temporarily translate into s-parameters so make the root-choice
         #  choosing a root in impedance doesnt generally work for typical
@@ -1471,7 +1480,7 @@ class TwelveTerm(Calibration):
             trans = [npy.mean(k.s21.s_mag) for k in self.ideals]
             # see http://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
             # get order of indecies of sorted means s21
-            order = [x for (y,x) in sorted(zip(trans, range(len(trans))),\
+            order = [x for (y,x) in sorted(zip(trans, list(range(len(trans)))),\
                                            key=lambda pair: pair[0])]
             self.measured = [self.measured[k] for k in order]
             self.ideals = [self.ideals[k] for k in order]
@@ -1576,22 +1585,22 @@ class TwelveTerm(Calibration):
 
 
         D = (1+(s11-Edf)/(Erf)*Esf)*(1+(s22-Edr)/(Err)*Esr) -\
-            ((s21-Eif)/(Etf))*((s12-Eir)/(Etr))*Elf*Elr
+            (old_div((s21-Eif),(Etf)))*(old_div((s12-Eir),(Etr)))*Elf*Elr
 
 
         caled.s[:,0,0] = \
-            (((s11-Edf)/(Erf))*(1+(s22-Edr)/(Err)*Esr)-\
-            Elf*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
+            old_div(((old_div((s11-Edf),(Erf)))*(1+(s22-Edr)/(Err)*Esr)-\
+            Elf*(old_div((s21-Eif),(Etf)))*(s12-Eir)/(Etr)),D)
 
         caled.s[:,1,1] = \
-            (((s22-Edr)/(Err))*(1+(s11-Edf)/(Erf)*Esf)-\
-            Elr*((s21-Eif)/(Etf))*(s12-Eir)/(Etr)) /D
+            old_div(((old_div((s22-Edr),(Err)))*(1+(s11-Edf)/(Erf)*Esf)-\
+            Elr*(old_div((s21-Eif),(Etf)))*(s12-Eir)/(Etr)),D)
 
         caled.s[:,1,0] = \
-            ( ((s21 -Eif)/(Etf))*(1+((s22-Edr)/(Err))*(Esr-Elf)) )/D
+            old_div(( (old_div((s21 -Eif),(Etf)))*(1+(old_div((s22-Edr),(Err)))*(Esr-Elf)) ),D)
 
         caled.s[:,0,1] = \
-            ( ((s12 -Eir)/(Etr))*(1+((s11-Edf)/(Erf))*(Esf-Elr)) )/D
+            old_div(( (old_div((s12 -Eir),(Etr)))*(1+(old_div((s11-Edf),(Erf)))*(Esf-Elr)) ),D)
 
         return caled
 
@@ -2105,9 +2114,9 @@ class EightTerm(Calibration):
                 'forward directivity':e[:,0],
                 'forward source match':e[:,1],
                 'forward reflection tracking':(e[:,0]*e[:,1])-e[:,2],
-                'reverse directivity':e[:,3]/e[:,6],
-                'reverse source match':e[:,4]/e[:,6],
-                'reverse reflection tracking':(e[:,4]/e[:,6])*(e[:,3]/e[:,6])- (e[:,5]/e[:,6]),
+                'reverse directivity':old_div(e[:,3],e[:,6]),
+                'reverse source match':old_div(e[:,4],e[:,6]),
+                'reverse reflection tracking':(old_div(e[:,4],e[:,6]))*(old_div(e[:,3],e[:,6]))- (old_div(e[:,5],e[:,6])),
                 'k':e[:,6],
                 }
 
@@ -2430,7 +2439,7 @@ class UnknownThru(EightTerm):
         # this is equivalent to sqrt(detX*detY/detM)
         e10e32 = npy.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
 
-        k_ = e10e32/e_rr.s.flatten()
+        k_ = old_div(e10e32,e_rr.s.flatten())
         k_ = find_closest(k_, -1*k_, k_approx)
 
         #import pylab as plb
@@ -2547,7 +2556,7 @@ class MRC(UnknownThru):
         # this is equivalent to sqrt(detX*detY/detM)
         e10e32 = npy.sqrt((e_rf*e_rr*thru_m.s21/thru_m.s12).s.flatten())
 
-        k_ = e10e32/e_rr.s.flatten()
+        k_ = old_div(e10e32,e_rr.s.flatten())
         k_ = find_closest(k_, -1*k_, k_approx)
 
         #import pylab as plb
@@ -2582,7 +2591,7 @@ class Normalization(Calibration):
     def run(self):
         pass
     def apply_cal(self, input_ntwk):
-        return input_ntwk/average(self.measured)
+        return old_div(input_ntwk,average(self.measured))
 
 
 ## Functions
@@ -2674,10 +2683,10 @@ def unterminate(ntwk, gamma_f, gamma_r):
         one = npy.ones(ntwk.frequency.npoints)
 
         d = one - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]*gamma_f[:,0,0]
-        u[:,0,0] = (m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-        u[:,0,1] = (m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0])/(d)
-        u[:,1,0] = (m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0])/(d)
-        u[:,1,1] = (m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0])/(d)
+        u[:,0,0] = old_div((m[:,0,0] - m[:,0,1]*m[:,1,0]*gamma_f[:,0,0]),(d))
+        u[:,0,1] = old_div((m[:,0,1] - m[:,0,0]*m[:,0,1]*gamma_r[:,0,0]),(d))
+        u[:,1,0] = old_div((m[:,1,0] - m[:,1,1]*m[:,1,0]*gamma_f[:,0,0]),(d))
+        u[:,1,1] = old_div((m[:,1,1] - m[:,0,1]*m[:,1,0]*gamma_r[:,0,0]),(d))
 
         unterminated.s = u
         return unterminated
@@ -2721,8 +2730,8 @@ def terminate(ntwk, gamma_f, gamma_r):
 
         m.s[:,0,0] = (ntwk**gamma_f).s[:,0,0]
         m.s[:,1,1] = (ntwk_flip**gamma_r).s[:,0,0]
-        m.s[:,1,0] = ntwk.s[:,1,0]/(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0])
-        m.s[:,0,1] = ntwk.s[:,0,1]/(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0])
+        m.s[:,1,0] = old_div(ntwk.s[:,1,0],(1-ntwk.s[:,1,1]*gamma_f.s[:,0,0]))
+        m.s[:,0,1] = old_div(ntwk.s[:,0,1],(1-ntwk.s[:,0,0]*gamma_r.s[:,0,0]))
         return m
 
 def determine_line(thru_m, line_m, line_approx=None):
@@ -2783,7 +2792,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     if line_approx is None:
         # estimate line length, by assumeing error networks are well
         # matched
-        line_approx = line_m/thru_m
+        line_approx = old_div(line_m,thru_m)
 
 
     C = thru_m.inv**line_m
@@ -2829,11 +2838,11 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     # the docstring
     # NOTE: k = e10/e23 = alpha/beta
     #   the 'k' nomenclature is from Soares Speciale
-    gamma_f = (Elf - Esr)/(Err + Edr*(Elf - Esr))
-    gamma_r = (Elr - Esf)/(Erf + Edf*(Elr - Esf))
+    gamma_f = old_div((Elf - Esr),(Err + Edr*(Elf - Esr)))
+    gamma_r = old_div((Elr - Esf),(Erf + Edf*(Elr - Esf)))
 
-    k_first  =   Etf/(Err + Edr*(Elf  - Esr) )
-    k_second =1/(Etr/(Erf + Edf *(Elr - Esf)))
+    k_first  =   old_div(Etf,(Err + Edr*(Elf  - Esr) ))
+    k_second =old_div(1,(old_div(Etr,(Erf + Edf *(Elr - Esf)))))
     k = k_first #npy.sqrt(k_second*k_first)# (k_first +k_second )/2.
     coefs_8term = {}
     for l in ['forward directivity','forward source match',
@@ -2867,10 +2876,10 @@ def convert_8term_2_12term(coefs_8term):
 
     # taken from eq (36)-(39) in the Roger Marks paper given in the
     # docstring
-    Elf  = Esr + (Err*gamma_f)/(1. - Edr * gamma_f)
-    Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
-    Etf  = ((Elf  - Esr)/gamma_f) * k
-    Etr = ((Elr - Esf )/gamma_r) * 1./k
+    Elf  = Esr + old_div((Err*gamma_f),(1. - Edr * gamma_f))
+    Elr = Esf  + old_div((Erf *gamma_r),(1. - Edf  * gamma_r))
+    Etf  = (old_div((Elf  - Esr),gamma_f)) * k
+    Etr = (old_div((Elr - Esf ),gamma_r)) * 1./k
 
     coefs_12term = {}
     for l in ['forward directivity','forward source match',
@@ -3047,7 +3056,7 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
 
     '''
 
-    if len (coefs.keys()) == 3:
+    if len (list(coefs.keys())) == 3:
         # ASSERT: we have one port data
         ntwk = Network(**kwargs)
 

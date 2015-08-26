@@ -13,6 +13,11 @@ Functions for reading and writing standard csv files
     read_pna_csv
     pna_csv_2_ntwks
 '''
+from __future__ import division
+from __future__ import print_function
+from builtins import range
+from builtins import object
+from past.utils import old_div
 import numpy as npy
 import os
 from ..network import Network
@@ -175,7 +180,7 @@ def pna_csv_2_ntwks3(filename):
     # set impedance to 50 Ohm (doesn't matter for now)
     z0 = npy.ones((npy.shape(d)[0]))*50
     # read f values, convert to GHz
-    f = d[:,0]/1e9
+    f = old_div(d[:,0],1e9)
 
     name = os.path.splitext(os.path.basename(filename))[0]
 
@@ -557,7 +562,7 @@ def pna_csv_2_ntwks(filename):
     ntwk_list = []
 
 
-    if (d.shape[1]-1)/2 == 0 :
+    if old_div((d.shape[1]-1),2) == 0 :
         # this isnt complex data
         f = d[:,0]*1e-9
         if 'db' in header.lower():
@@ -567,7 +572,7 @@ def pna_csv_2_ntwks(filename):
         name = os.path.splitext(os.path.basename(filename))[0]
         return Network(f=f, s=s, name=name, comments=comments)
     else:
-        for k in range((d.shape[1]-1)/2):
+        for k in range(old_div((d.shape[1]-1),2)):
             f = d[:,0]*1e-9
             name = names[k]
             print((names[k], names[k+1]))
@@ -718,7 +723,7 @@ def zva_dat_2_ntwks(filename):
     # set impedance to 50 Ohm (doesn't matter for now)
     z0 = npy.ones((npy.shape(d)[0]))*50
     # read f values, convert to GHz
-    f = d[:,0]/1e9
+    f = old_div(d[:,0],1e9)
 
     name = os.path.splitext(os.path.basename(filename))[0]
 
@@ -871,6 +876,6 @@ def vectorstar_csv_2_ntwks(filename):
         z0 = 50,
         name = names[k].rstrip(),
         comments = comments,
-        ) for k in range(d.shape[1]/3)]
+        ) for k in range(old_div(d.shape[1],3))]
 
 

@@ -8,6 +8,8 @@ coaxial (:mod:`skrf.media.coaxial`)
 
 A coaxial transmission line defined in terms of its inner/outer diameters and permittivity
 '''
+from __future__ import division
+from past.utils import old_div
 
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi
@@ -102,9 +104,9 @@ class Coaxial( DistributedCircuit,Media ):
         if imag(Z0) !=0:
             raise NotImplementedError()
         
-        b = Dout/2.
-        b_over_a = exp(2*pi*Z0*sqrt(ep/mu_0))
-        a = b/b_over_a
+        b = old_div(Dout,2.)
+        b_over_a = exp(2*pi*Z0*sqrt(old_div(ep,mu_0)))
+        a = old_div(b,b_over_a)
         Dint = 2*a
         return cls(frequency=frequency, z0 = z0, Dint=Dint, Dout=Dout, 
                     epsilon_r=epsilon_r, **kw)
@@ -113,35 +115,35 @@ class Coaxial( DistributedCircuit,Media ):
     @property
     def Rs(self):
         f  = self.frequency.f
-        rho = 1./self.sigma
+        rho = old_div(1.,self.sigma)
         mu_r =1
         return surface_resistivity(f=f,rho=rho, mu_r=mu_r)
     @property
     def a(self):
-        return self.Dint/2.
+        return old_div(self.Dint,2.)
     
     @property
     def b(self):
-        return self.Dout/2.
+        return old_div(self.Dout,2.)
 
 
     # derivation of distributed circuit parameters
     @property
     def R(self):
-        return self.Rs/(2.*pi)*(1./self.a + 1./self.b)
+        return self.Rs/(2.*pi)*(old_div(1.,self.a) + old_div(1.,self.b))
     
     @property
     def L(self):
-        return mu_0/(2.*pi)*log(self.b/self.a)
+        return mu_0/(2.*pi)*log(old_div(self.b,self.a))
     
     @property
     def C(self):
-        return 2.*pi*self.epsilon_prime/log(self.b/self.a)
+        return 2.*pi*self.epsilon_prime/log(old_div(self.b,self.a))
     
     @property
     def G(self):
         f =  self.frequency.f
-        return f*self.epsilon_second/log(self.b/self.a)
+        return f*self.epsilon_second/log(old_div(self.b,self.a))
 
     def __str__(self):
         f=self.frequency

@@ -12,6 +12,7 @@ Spectrum Analyzers  (:mod:`skrf.vi.sa`)
 
     HP8500
 '''
+from builtins import str
 
 
 import numpy as npy

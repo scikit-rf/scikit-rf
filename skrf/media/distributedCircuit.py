@@ -52,6 +52,8 @@ constant are interpreted as follows:
     -\\Im m\\{\\gamma\\} = \\text{forward propagation}
 
 '''
+from __future__ import division
+from past.utils import old_div
 
 from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, c,pi, mil
@@ -141,10 +143,10 @@ class DistributedCircuit(Media):
         Z0 = my_media.Z0
         z0 = my_media.z0
 
-        Y = gamma/Z0
+        Y = old_div(gamma,Z0)
         Z = gamma*Z0
-        G,C = real(Y), imag(Y)/w
-        R,L = real(Z), imag(Z)/w
+        G,C = real(Y), old_div(imag(Y),w)
+        R,L = real(Z), old_div(imag(Z),w)
         return cls(frequency = my_media.frequency, 
                    z0 = z0, 
                    C=C, L=L, R=R, G=G, *args, **kwargs)
@@ -206,7 +208,7 @@ class DistributedCircuit(Media):
                 Characteristic Impedance in units of ohms
         '''
 
-        return sqrt(self.Z/self.Y)
+        return sqrt(old_div(self.Z,self.Y))
 
     @property
     def gamma(self):

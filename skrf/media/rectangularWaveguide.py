@@ -21,6 +21,9 @@ Characteristic Impedance              :math:`z_0`    :attr:`Z0`
 ====================================  =============  ===============
 
 '''
+from __future__ import division
+from __future__ import print_function
+from past.utils import old_div
 from scipy.constants import  epsilon_0, mu_0,pi,c
 from numpy import sqrt, exp, sinc
 import numpy as npy
@@ -84,7 +87,7 @@ class RectangularWaveguide(Media):
         Media.__init__(self, frequency=frequency,z0=z0)
         
         if b is None:
-            b = a/2.
+            b = old_div(a,2.)
         if mode_type.lower() not in ['te','tm']:
             raise ValueError('mode_type must be either \'te\' or \'tm\'')
 
@@ -133,7 +136,7 @@ class RectangularWaveguide(Media):
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
-        a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
+        a =pi/(w*mu) * 1./sqrt((old_div(1,(Z0*1j)**2)+old_div(ep,mu)))
         
         kw.update(dict(frequency=frequency,a=a, m=m, n=n, ep_r=ep_r, mu_r=mu_r))
         
@@ -246,7 +249,7 @@ class RectangularWaveguide(Media):
 
 
         '''
-        v = 1/sqrt(self.ep*self.mu)
+        v = old_div(1,sqrt(self.ep*self.mu))
         if not ( self.m==1 and self.n==0):
             print('f_cutoff not verified as correct for this mode ')
         return max(self.m*v/(2*self.a), self.n*v/(2*self.b))
@@ -256,7 +259,7 @@ class RectangularWaveguide(Media):
         '''
         frequency vector normalized to cutoff
         '''
-        return self.frequency.f/self.f_cutoff
+        return old_div(self.frequency.f,self.f_cutoff)
 
     @property
     def rho(self):
@@ -279,7 +282,7 @@ class RectangularWaveguide(Media):
         '''
         if self.roughness != None:
             delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
-            k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
+            k_w = 1. +exp(-(old_div(delta,(2*self.roughness)))**1.6)
             return self._rho*k_w**2
 
         return self._rho
@@ -311,7 +314,7 @@ class RectangularWaveguide(Media):
 
          where v= sqrt(ep*mu)
         '''
-        v = 1/sqrt(self.ep*self.mu)
+        v = old_div(1,sqrt(self.ep*self.mu))
         return self.f_cutoff*v
 
     @property
@@ -389,8 +392,8 @@ class RectangularWaveguide(Media):
 
 
 
-        return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+2.*b/a*(1/f_n)**2)/\
-            sqrt(1-(1/f_n)**2)
+        return 1./b * sqrt( old_div((w*ep),(old_div(2.,rho))) ) * (1+2.*b/a*(old_div(1,f_n))**2)/\
+            sqrt(1-(old_div(1,f_n))**2)
 
     @property
     def Z0(self):

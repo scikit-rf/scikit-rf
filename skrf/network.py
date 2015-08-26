@@ -136,13 +136,24 @@ Misc Functions
 
 
 '''
+from __future__ import division
+from __future__ import print_function
+from __future__ import absolute_import
+from future import standard_library
+from functools import reduce
+standard_library.install_aliases()
+from builtins import zip
+from builtins import str
+from builtins import range
+from builtins import object
+from past.utils import old_div
 from six.moves import xrange
 
 import os
 import warnings
 try:
-    import cPickle as pickle    
-    from cPickle import UnpicklingError
+    import pickle as pickle    
+    from pickle import UnpicklingError
 except ImportError:
     import pickle as pickle
     from pickle import UnpicklingError
@@ -283,7 +294,7 @@ class Network(object):
         'arcl_unwrap'   : lambda x: mf.unwrap_rad(npy.angle(x)) *\
             npy.abs(x),
         'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0],
-        'vswr' : lambda x: (1+abs(x))/(1-abs(x)),
+        'vswr' : lambda x: old_div((1+abs(x)),(1-abs(x))),
         'time' : lambda x: fft.ifftshift(fft.ifft(x, axis=0), axes=0),
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
@@ -553,10 +564,10 @@ class Network(object):
 
         if isinstance(other, Network):
             self.__compatable_for_scalar_operation_test(other)
-            result.s = self.s / other.s
+            result.s = old_div(self.s, other.s)
         else:
             # other may be an array or a number
-            result.s = self.s / npy.array(other).reshape(-1,self.nports,self.nports)
+            result.s = old_div(self.s, npy.array(other).reshape(-1,self.nports,self.nports))
 
         return result
 
@@ -647,7 +658,7 @@ class Network(object):
                 func = COMPONENT_FUNC_DICT[func_name]
                 if 'gd' in func_name: # scaling of gradient by frequency
                     def fget(self, f=func, p = prop_name):
-                        return f(getattr(self,p)) / (2 * npy.pi * self.frequency.step)
+                        return old_div(f(getattr(self,p)), (2 * npy.pi * self.frequency.step))
                 else:
                     def fget(self, f=func, p = prop_name):
                         return f(getattr(self,p))
@@ -674,15 +685,15 @@ class Network(object):
 
                 # create index lists, if not provided by user
                 if m is None:
-                    M = range(self.number_of_ports)
+                    M = list(range(self.number_of_ports))
                 else:
                     M = [m]
                 if n is None:
-                    N = range(self.number_of_ports)
+                    N = list(range(self.number_of_ports))
                 else:
                     N = [n]
 
-                if 'label'  not in kwargs.keys():
+                if 'label'  not in list(kwargs.keys()):
                     gen_label = True
                 else:
                     gen_label = False
@@ -766,15 +777,15 @@ class Network(object):
 
                 # create index lists, if not provided by user
                 if m is None:
-                    M = range(self.number_of_ports)
+                    M = list(range(self.number_of_ports))
                 else:
                     M = [m]
                 if n is None:
-                    N = range(self.number_of_ports)
+                    N = list(range(self.number_of_ports))
                 else:
                     N = [n]
 
-                if 'label'  not in kwargs.keys():
+                if 'label'  not in list(kwargs.keys()):
                     gen_label = True
                 else:
                     gen_label = False
@@ -863,15 +874,15 @@ class Network(object):
 
                     # create index lists, if not provided by user
                     if m is None:
-                        M = range(self.number_of_ports)
+                        M = list(range(self.number_of_ports))
                     else:
                         M = [m]
                     if n is None:
-                        N = range(self.number_of_ports)
+                        N = list(range(self.number_of_ports))
                     else:
                         N = [n]
 
-                    if 'label'  not in kwargs.keys():
+                    if 'label'  not in list(kwargs.keys()):
                         gen_label = True
                     else:
                         gen_label = False
@@ -1160,7 +1171,7 @@ class Network(object):
         t
         a
         '''
-        return 1/self.s
+        return old_div(1,self.s)
 
     @sa.setter
     def sa(self, value):
@@ -1248,11 +1259,11 @@ class Network(object):
                                 (self.frequency.npoints,self.number_of_ports))
 
                     else:
-                        raise(IndexError('z0 has bad shape'))
+                        raise IndexError
 
                 except(AttributeError):
                     # there is no self.frequency, or self.number_of_ports
-                    raise(AttributeError('Error: I cant reshape z0 through inspection. you must provide correctly shaped z0, or s-matrix first.'))
+                    raise AttributeError
 
             return self._z0
 
@@ -1338,7 +1349,7 @@ class Network(object):
                 inv : function which implements the inverse s-matrix
         '''
         if self.number_of_ports <2:
-            raise(TypeError('One-Port Networks dont have inverses'))
+            raise TypeError
         out = self.copy()
         out.s = inv(self.s)
         return out
@@ -1485,7 +1496,7 @@ class Network(object):
         determinant of the wave-cascading matrix from unity.
 
         '''
-        return abs(1-self.s/self.s.swapaxes(1,2))
+        return abs(1-old_div(self.s,self.s.swapaxes(1,2)))
 
     ## NETWORK CLASIFIERs
     def is_reciprocal(self):
@@ -1533,7 +1544,7 @@ class Network(object):
         name = '' if self.name is None else self.name
 
         if port is None:
-            ports = range(self.nports)
+            ports = list(range(self.nports))
         else:
             ports = [port]
         for k in ports:
@@ -1559,7 +1570,7 @@ class Network(object):
         for m in range(self.nports):
             for n in range(self.nports):
                 if m>n:
-                    if 'label'  not in kwargs.keys():
+                    if 'label'  not in list(kwargs.keys()):
                         kwargs['label'] = 'ports %i%i'%(m,n)
                     y = self.reciprocity[:,m,n].flatten()
                     if db:
@@ -1589,7 +1600,7 @@ class Network(object):
         for m in range(self.nports):
             for n in range(self.nports):
                 if m>n:
-                    if 'label'  not in kwargs.keys():
+                    if 'label'  not in list(kwargs.keys()):
                         kwargs['label'] = 'ports %i%i'%(m,n)
                     y = self.reciprocity2[:,m,n].flatten()
                     if db:
@@ -1889,11 +1900,11 @@ class Network(object):
         skrf.io.general.read : read any skrf object
         '''
         # this import is delayed until here because of a circular depency
-        from io.general import write
+        from .io.general import write
 
         if file is None:
             if self.name is None:
-                 raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
+                 raise ValueError
             file = self.name
 
         write(file,self,*args, **kwargs)
@@ -2417,15 +2428,15 @@ class Network(object):
 
 
         if m is None:
-            M = range(self.number_of_ports)
+            M = list(range(self.number_of_ports))
         else:
             M = [m]
         if n is None:
-            N = range(self.number_of_ports)
+            N = list(range(self.number_of_ports))
         else:
             N = [n]
 
-        if 'label'  not in kwargs.keys():
+        if 'label'  not in list(kwargs.keys()):
             generate_label=True
         else:
             generate_label=False
@@ -2632,7 +2643,7 @@ class Network(object):
         if normalize:
             denom = forward*reverse
             denom.s = npy.sqrt(denom.s)
-            return (forward-reverse)/denom
+            return old_div((forward-reverse),denom)
         else:
             return (forward-reverse)
 
@@ -2718,7 +2729,7 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = npy.hstack(
-        (npy.delete(ntwkA.z0, range(k,k+1), 1), npy.delete(ntwkB.z0, range(l,l+1), 1)))
+        (npy.delete(ntwkA.z0, list(range(k,k+1)), 1), npy.delete(ntwkB.z0, list(range(l,l+1)), 1)))
 
     # if we're connecting more than one port, call innerconnect recursively
     # untill all connections are made to finish the job
@@ -2785,7 +2796,7 @@ def connect_fast(ntwkA, k, ntwkB, l):
 
     '''
     num = 1
-    from src import connect_s_fast
+    from .src import connect_s_fast
 
     # some checking
     check_frequency_equal(ntwkA,ntwkB)
@@ -2805,15 +2816,15 @@ def connect_fast(ntwkA, k, ntwkB, l):
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
         ntwkC.z0[:,k:] = npy.hstack((ntwkC.z0[:,k+1:], ntwkB.z0[:,[l]]))
-        ntwkC.renumber(from_ports= [ntwkC.nports-1] + range(k, ntwkC.nports-1),
-                       to_ports=range(k, ntwkC.nports))
+        ntwkC.renumber(from_ports= [ntwkC.nports-1] + list(range(k, ntwkC.nports-1)),
+                       to_ports=list(range(k, ntwkC.nports)))
 
     # call s-matrix connection function
     ntwkC.s = connect_s_fast(ntwkC.s,k,ntwkB.s,l)
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = npy.hstack(
-        (npy.delete(ntwkA.z0, range(k,k+num), 1), npy.delete(ntwkB.z0, range(l,l+num), 1)))
+        (npy.delete(ntwkA.z0, list(range(k,k+num)), 1), npy.delete(ntwkB.z0, list(range(l,l+num)), 1)))
 
 
     return ntwkC
@@ -3075,7 +3086,7 @@ def average(list_of_networks, polar = False):
         for a_ntwk in list_of_networks[1:]:
             out_ntwk += a_ntwk
 
-        out_ntwk.s = out_ntwk.s/(len(list_of_networks))
+        out_ntwk.s = old_div(out_ntwk.s,(len(list_of_networks)))
 
     return out_ntwk
 
@@ -3140,8 +3151,8 @@ def chopinhalf(ntwk, *args, **kwargs):
         b11,b22,b12 = ntwk.s11,ntwk.s22,ntwk.s12
         kwargs['name'] = kwargs.get('name', ntwk.name)
 
-        a11 = b11/(1+b12)
-        a22 = b22/(1+b12)
+        a11 = old_div(b11,(1+b12))
+        a22 = old_div(b22,(1+b12))
         a21 = b12*(1-b11*b22/(1+b12)**2) # this is a21^2 here
         a21.s = mf.sqrt_phase_unwrap(a21.s)
         A = n_oneports_2_nport([a11,a21,a21,a22], *args, **kwargs)
@@ -3397,7 +3408,7 @@ def connect_s(A,k,B,l):
     '''
 
     if k > A.shape[-1]-1 or l > B.shape[-1] - 1:
-        raise(ValueError('port indices are out of range'))
+        raise ValueError
 
     nf = A.shape[0]     # num frequency points
     nA = A.shape[1]     # num ports on A
@@ -3451,7 +3462,7 @@ def innerconnect_s(A, k, l):
     '''
 
     if k > A.shape[-1] - 1 or l > A.shape[-1] - 1:
-        raise(ValueError('port indices are out of range'))
+        raise ValueError
 
     nA = A.shape[1]  # num of ports on input s-matrix
     # create an empty s-matrix, to store the result
@@ -3462,11 +3473,11 @@ def innerconnect_s(A, k, l):
         for j in range(nA):
             C[:,i,j] = \
                 A[:,i,j] + \
-                ( A[:,k,j] * A[:,i,l] * (1 - A[:,l,k]) + \
+                old_div(( A[:,k,j] * A[:,i,l] * (1 - A[:,l,k]) + \
                 A[:,l,j] * A[:,i,k] * (1 - A[:,k,l]) +\
                 A[:,k,j] * A[:,l,l] * A[:,i,k] + \
-                A[:,l,j] * A[:,k,k] * A[:,i,l])/\
-                ((1 - A[:,k,l]) * (1 - A[:,l,k]) - A[:,k,k] * A[:,l,l])
+                A[:,l,j] * A[:,k,k] * A[:,i,l]),\
+                ((1 - A[:,k,l]) * (1 - A[:,l,k]) - A[:,k,k] * A[:,l,l]))
 
     # remove ports that were `connected`
     C = npy.delete(C, (k,l), 1)
@@ -3514,7 +3525,7 @@ def s2z(s,z0=50):
     s = s.copy() # to prevent the original array from being altered
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
         z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
     return z
@@ -3571,8 +3582,8 @@ def s2y(s,z0=50):
     s = s.copy() # to prevent the original array from being altered
     s[s==-1.] = -1. + 1e-12 # solve numerical singularity
     s[s==1.] = 1. + 1e-12 # solve numerical singularity
-    for fidx in xrange(s.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+    for fidx in range(s.shape[0]):
+        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(old_div(1.0,z0[fidx]))))
         y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
     return y
 
@@ -3624,9 +3635,9 @@ def s2t(s):
 
     t = npy.array([
         [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
-            -s[:,1,1]/s[:,1,0]],
-        [s[:,0,0]/s[:,1,0],
-            1./s[:,1,0] ]
+            old_div(-s[:,1,1],s[:,1,0])],
+        [old_div(s[:,0,0],s[:,1,0]),
+            old_div(1.,s[:,1,0]) ]
         ]).transpose()
     return t
 
@@ -3661,8 +3672,8 @@ def z2s(z, z0=50):
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(z.shape, dtype='complex')
     I = npy.mat(npy.identity(z.shape[1]))
-    for fidx in xrange(z.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0/z0[fidx])))
+    for fidx in range(z.shape[0]):
+        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(old_div(1.0,z0[fidx]))))
         s[fidx] = (sqrty0*z[fidx]*sqrty0 - I) * (sqrty0*z[fidx]*sqrty0 + I)**-1
     return s
 
@@ -3708,7 +3719,7 @@ def z2y(z):
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     '''
-    return npy.array([npy.mat(z[f,:,:])**-1 for f in xrange(z.shape[0])])
+    return npy.array([npy.mat(z[f,:,:])**-1 for f in range(z.shape[0])])
 
 def z2t(z):
     '''
@@ -3795,10 +3806,10 @@ def z2a(z):
     .. [#] https://en.wikipedia.org/wiki/Two-port_network
     '''
     abcd = npy.array([
-        [z[:,0,0]/z[:,1,0],
-            1./z[:,1,0]],
-        [(z[:,0,0]*z[:,1,1]- z[:,1,0]*z[:,0,1])/z[:,1,0],
-            z[:,1,1]/z[:,1,0]],
+        [old_div(z[:,0,0],z[:,1,0]),
+            old_div(1.,z[:,1,0])],
+        [old_div((z[:,0,0]*z[:,1,1]- z[:,1,0]*z[:,0,1]),z[:,1,0]),
+            old_div(z[:,1,1],z[:,1,0])],
         ]).transpose()
     return abcd
 
@@ -3872,7 +3883,7 @@ def y2s(y, z0=50):
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(y.shape, dtype='complex')
     I = npy.mat(npy.identity(s.shape[1]))
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
         s[fidx] = (I - sqrtz0*y[fidx]*sqrtz0) * (I + sqrtz0*y[fidx]*sqrtz0)**-1
     return s
@@ -3919,7 +3930,7 @@ def y2z(y):
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
-    return npy.array([npy.mat(y[f,:,:])**-1 for f in xrange(y.shape[0])])
+    return npy.array([npy.mat(y[f,:,:])**-1 for f in range(y.shape[0])])
 
 def y2t(y):
     '''
@@ -4010,9 +4021,9 @@ def t2s(t):
     '''
     #TODO: check rank(s) ==2
     s = npy.array([
-        [t[:,0,1]/t[:,1,1],
-             1/t[:,1,1]],
-        [(t[:,0,0]*t[:,1,1]- t[:,1,0]*t[:,0,1])/t[:,1,1],
+        [old_div(t[:,0,1],t[:,1,1]),
+             old_div(1,t[:,1,1])],
+        [old_div((t[:,0,0]*t[:,1,1]- t[:,1,0]*t[:,0,1]),t[:,1,1]),
             -1*t[:,1,0]/t[:,1,1] ]
         ]).transpose()
     return s
@@ -4152,7 +4163,7 @@ def passivity(s):
     .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
     '''
     if s.shape[-1] == 1:
-        raise (ValueError('Doesn\'t exist for one ports'))
+        raise ValueError
 
     pas_mat = s.copy()
     for f in range(len(s)):
@@ -4182,7 +4193,7 @@ def reciprocity(s):
         reciprocity : :class:`numpy.ndarray` of shape fxnxn
         '''
         if s.shape[-1] == 1:
-            raise (ValueError('Doesn\'t exist for one ports'))
+            raise ValueError
 
         rec_mat = s.copy()
         for f in range(len(s)):
@@ -4318,13 +4329,13 @@ def renormalize_s_pw(s, z_old, z_new):
     A[A.real==0] = 1e-12 + 1.j*A.imag[A.real<=0]
     B[B.real==0] = 1e-12 + 1.j*B.imag[B.real<=0]
 
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         A_ii = A[fidx]
         B_ii = B[fidx]
 
         # Eq. 11, Eq. 12
-        Q_ii = npy.sqrt(npy.absolute(B_ii.real/A_ii.real)) * (A_ii + A_ii.conj()) / (B_ii.conj() + A_ii) # Eq(11)
-        G_ii = (B_ii - A_ii) / (B_ii + A_ii.conj()) # Eq(12)
+        Q_ii = npy.sqrt(npy.absolute(old_div(B_ii.real,A_ii.real))) * (A_ii + A_ii.conj()) / (B_ii.conj() + A_ii) # Eq(11)
+        G_ii = old_div((B_ii - A_ii), (B_ii + A_ii.conj())) # Eq(12)
 
         Q = npy.mat(npy.diagflat(Q_ii))
         G = npy.mat(npy.diagflat(G_ii))

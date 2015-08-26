@@ -8,6 +8,7 @@ instrument backends will be cleaned up soon.
 
 
 '''
+from builtins import map
 from ivi import Driver
 
 try:
@@ -18,7 +19,7 @@ except:
     def ask_for_values(self,msg, delim=',', converter=float, array = True):
         s = self._ask(msg)
         s_split = s.split(delim)
-        out = map(converter, s_split)
+        out = list(map(converter, s_split))
         if array:
             out = npy.array(out)
         return out

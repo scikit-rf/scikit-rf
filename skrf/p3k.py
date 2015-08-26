@@ -3,6 +3,8 @@ Python 3 compatibility tools.
 
 """
 from __future__ import division, absolute_import, print_function
+from builtins import str
+from past.builtins import basestring
 
 __all__ = ['bytes', 'asbytes', 'isfileobj', 'getexception', 'strchar',
            'unicode', 'asunicode', 'asbytes_nested', 'asunicode_nested',
@@ -17,7 +19,7 @@ if sys.version_info[0] >= 3:
     long = int
     integer_types = (int,)
     basestring = str
-    unicode = str
+    str = str
     bytes = bytes
 
     def asunicode(s):
@@ -49,10 +51,10 @@ if sys.version_info[0] >= 3:
 
 else:
     bytes = str
-    long = long
+    long = int
     basestring = basestring
-    unicode = unicode
-    integer_types = (int, long)
+    str = str
+    integer_types = (int, int)
     asbytes = str
     asstr = str
     strchar = 'S'
@@ -61,7 +63,7 @@ else:
         return isinstance(f, file)
 
     def asunicode(s):
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             return s
         return str(s).decode('ascii')
 
@@ -69,20 +71,20 @@ else:
         return open(filename, mode=mode)
 
     def sixu(s):
-        return unicode(s, 'unicode_escape')
+        return str(s, 'unicode_escape')
 
 
 def getexception():
     return sys.exc_info()[1]
 
 def asbytes_nested(x):
-    if hasattr(x, '__iter__') and not isinstance(x, (bytes, unicode)):
+    if hasattr(x, '__iter__') and not isinstance(x, (bytes, str)):
         return [asbytes_nested(y) for y in x]
     else:
         return asbytes(x)
 
 def asunicode_nested(x):
-    if hasattr(x, '__iter__') and not isinstance(x, (bytes, unicode)):
+    if hasattr(x, '__iter__') and not isinstance(x, (bytes, str)):
         return [asunicode_nested(y) for y in x]
     else:
         return asunicode(x)

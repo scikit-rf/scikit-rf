@@ -1,10 +1,12 @@
+from builtins import range
+from builtins import object
 #import skrf as rf
 from skrf.vi import vna as mv_vna
 from skrf import Network
 import pdb
 import multiprocessing
 
-class Private():
+class Private(object):
     def __init__(self):
         self.network = None
         self.vna = None

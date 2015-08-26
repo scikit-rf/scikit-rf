@@ -1,3 +1,5 @@
+from __future__ import division
+from past.utils import old_div
 import unittest
 import os
 from skrf.media.rectangularWaveguide import RectangularWaveguide
@@ -47,7 +49,7 @@ class MediaTestCase(unittest.TestCase):
             frequency = ntwk.frequency,
             a=15*mil,
             z0=50,
-            rho = 1/(3.8e7),
+            rho = old_div(1,(3.8e7)),
             )
         self.assertTrue(
             max(abs(wg.line(1,'in').s_mag[:,1,0] - ntwk.s_mag[:,1,0]))<1e-3 )
@@ -63,7 +65,7 @@ class MediaTestCase(unittest.TestCase):
             ntwk.frequency,
             a=15*mil,
             z0=50,
-            rho = 1/(3.8e7),
+            rho = old_div(1,(3.8e7)),
             roughness = 100e-9,
             )
         self.assertTrue(

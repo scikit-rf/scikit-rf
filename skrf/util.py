@@ -24,6 +24,10 @@ General
 
 
 '''
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
+from past.builtins import basestring
 
 from . import mathFunctions as mf
 from .p3k import basestring
@@ -32,7 +36,7 @@ import matplotlib as mpl
 import warnings
 import os, fnmatch
 try:
-	import cPickle as pickle
+	import pickle as pickle
 except ImportError:
     import pickle as pickle
 
@@ -261,7 +265,7 @@ def dict_2_recarray(d, delim, dtype):
            1-Port Network: 'a1,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
     '''
 
-    split_keys = [tuple(k.split(delim)+[d[k]]) for k in d.keys()]
+    split_keys = [tuple(k.split(delim)+[d[k]]) for k in list(d.keys())]
     x = npy.array(split_keys, dtype=dtype+[('values',object)])
     return x
 

@@ -61,6 +61,9 @@ Special Functions
         null
 
 '''
+from __future__ import division
+from builtins import range
+from past.utils import old_div
 import numpy as npy
 from numpy import pi,angle,unwrap, real, imag, array
 from scipy.fftpack import ifft, ifftshift, fftshift
@@ -204,7 +207,7 @@ def db_2_magnitude(input):
             10**((z)/20.)
     where z is a complex number
     '''
-    return 10**((input)/20.)
+    return 10**(old_div((input),20.))
 
 db_2_mag = db_2_magnitude
 
@@ -217,7 +220,7 @@ def db10_2_mag(input):
             10**((z)/10.)
     where z is a complex number
     '''
-    return 10**((input)/10.)
+    return 10**(old_div((input),10.))
 
 
 def magdeg_2_reim(mag,deg):
@@ -237,7 +240,7 @@ def db_2_np(x):
     '''
     converts a value in nepers to dB
     '''
-    return (npy.log(10)/20) * x
+    return (old_div(npy.log(10),20)) * x
 def np_2_db(x):
     '''
     converts a value in dB to neper's
@@ -415,7 +418,7 @@ def cross_ratio(a,b,c,d):
 
 
     '''
-    return ((a-b)*(c-d))/((a-d)*(c-b))
+    return old_div(((a-b)*(c-d)),((a-d)*(c-b)))
 
 
 
@@ -520,8 +523,8 @@ def psd2TimeDomain(f,y, windowType='hamming'):
 
     # do the transform
     df = abs(f[1]-f[0])
-    T = 1./df
-    timeVector = npy.linspace(-T/2.,T/2,2*len(f)-1)
+    T = old_div(1.,df)
+    timeVector = npy.linspace(old_div(-T,2.),old_div(T,2),2*len(f)-1)
     signalVector = ifftshift(ifft(ifftshift(spectrum)))
 
     #the imaginary part of this signal should be from fft errors only,

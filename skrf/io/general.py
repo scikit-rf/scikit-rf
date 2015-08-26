@@ -28,9 +28,13 @@ Writing output to spreadsheet
 
 
 '''
+from __future__ import print_function
+from future import standard_library
+standard_library.install_aliases()
+from builtins import range
 try:
-    import cPickle as pickle
-    from cPickle import UnpicklingError
+    import pickle as pickle
+    from pickle import UnpicklingError
 except ImportError:
     import pickle as pickle
     from pickle import UnpicklingError
@@ -375,8 +379,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
-            warnings.warn('couldnt write %s: %s'%(k,inst.strerror))
-
+            warnings.warn('couldnt write %s'%(k))
             pass
 
 def save_sesh(dict_objs, file='skrfSesh.p', module='skrf', exclude_prefix='_'):
@@ -523,7 +526,7 @@ def read_csv(filename):
     ntwk = Network(name=filename[:-4])
     try:
         data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
-                usecols=range(9))
+                usecols=list(range(9)))
         s11 = data[:,1] +1j*data[:,2]
         s21 = data[:,3] +1j*data[:,4]
         s12 = data[:,5] +1j*data[:,6]
@@ -531,7 +534,7 @@ def read_csv(filename):
         ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
     except(IndexError):
         data = npy.loadtxt(filename, skiprows=3,delimiter=',',\
-                usecols=range(3))
+                usecols=list(range(3)))
         ntwk.s = data[:,1] +1j*data[:,2]
 
     ntwk.frequency.f = data[:,0]
@@ -618,13 +621,13 @@ def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
 
 
     file_type = file_type.lower()
-    if file_type not in file_extns.keys():
+    if file_type not in list(file_extns.keys()):
         raise ValueError('file_type must be `csv`,`html`,`excel` ')
     if ntwk.name is None and file_name is None:
         raise ValueError('Either ntwk must have name or give a file_name')
 
 
-    if file_name is None and 'excel_writer' not in kwargs.keys():
+    if file_name is None and 'excel_writer' not in list(kwargs.keys()):
         file_name = ntwk.name + '.'+file_extns[file_type]
 
     d = {}
@@ -725,7 +728,7 @@ def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
     '''
     from pandas import DataFrame, Series, ExcelWriter # delayed because its not a requirement
     if ntwkset.name is None and file_name is None:
-        raise(ValueError('Either ntwkset must have name or give a file_name'))
+        raise ValueError
 
     if file_type == 'excel':
         writer = ExcelWriter(file_name)

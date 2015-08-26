@@ -35,6 +35,12 @@ Misc Functions
     scrape_legend
 
 '''
+from __future__ import division
+from __future__ import print_function
+from builtins import zip
+from builtins import str
+from builtins import range
+from past.utils import old_div
 import pylab as plb
 import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
@@ -98,7 +104,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
 
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
-        rMax = (1.+smithR)/(1.-smithR)
+        rMax = old_div((1.+smithR),(1.-smithR))
         rLightList = plb.hstack([ plb.linspace(0,rMax,11)  , rLightList ])
 
     if chart_type is 'y':
@@ -109,20 +115,20 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     # for analysis of this see R.M. Weikles Microwave II notes (from uva)
     for r in rLightList:
         center = (r/(1.+r)*y_flip_sign,0 )
-        radius = 1./(1+r)
+        radius = old_div(1.,(1+r))
         contour.append( Circle( center, radius, ec='grey',fc = 'none'))
     for x in xLightList:
-        center = (1*y_flip_sign,1./x)
-        radius = 1./x
+        center = (1*y_flip_sign,old_div(1.,x))
+        radius = old_div(1.,x)
         contour.append( Circle( center, radius, ec='grey',fc = 'none'))
 
     for r in rHeavyList:
         center = (r/(1.+r)*y_flip_sign,0 )
-        radius = 1./(1+r)
+        radius = old_div(1.,(1+r))
         contour.append( Circle( center, radius, ec= 'black', fc = 'none'))
     for x in xHeavyList:
-        center = (1*y_flip_sign,1./x)
-        radius = 1./x
+        center = (1*y_flip_sign,old_div(1.,x))
+        radius = old_div(1.,x)
         contour.append( Circle( center, radius, ec='black',fc = 'none'))
 
     # clipping circle
@@ -141,7 +147,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     if not border: 
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.items():
+        for loc, spine in list(ax1.spines.items()):
             spine.set_color('none')
         
     
@@ -149,7 +155,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         #Clear axis
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
-        for loc, spine in ax1.spines.items():
+        for loc, spine in list(ax1.spines.items()):
             spine.set_color('none')
 
         # Make annotations only if the radius is 1
@@ -163,7 +169,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                 # Set radius of real part's label; offset slightly left (Z
                 # chart, y_flip_sign == 1) or right (Y chart, y_flip_sign == -1)
                 # so label doesn't overlap chart's circles
-                rho = (value - 1)/(value + 1) - y_flip_sign*0.01
+                rho = old_div((value - 1),(value + 1)) - y_flip_sign*0.01
                 if y_flip_sign is 1:
                     halignstyle = "right"
                 else:
@@ -177,7 +183,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                                      # outside the Smith chart's circle
             for value in xLightList:
                 #Transforms from complex to cartesian
-                S = (1j*value - 1) / (1j*value + 1)
+                S = old_div((1j*value - 1), (1j*value + 1))
                 S *= smithR * radialScaleFactor
                 rhox = S.real
                 rhoy = S.imag * y_flip_sign
