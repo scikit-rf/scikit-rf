@@ -2303,18 +2303,22 @@ class Network(object):
 
         return windowed
 
-    def time_gate(self, t_start, t_stop, window = ('kaiser',6)):
+    def time_gate(self, t_start, t_stop=None, window = ('kaiser',6)):
         '''
         Time-gate s-parameters
 
+        The gate can be defined with start/stop times, or by the gate 
+        width. If `t_stop` is None, the it will default to -`t_start`. 
+        In this case `t_start`== gate width/2
         See Warning!
 
         Parameters
         ------------
         t_start : number
-            start of time gate, (s)
+            start of time gate, (s). Or, if t_stop==None, then it is 
+            1/2*gate width.
         t_stop : number
-            stop of time gate (s)
+            stop of time gate (s), if None  will be -t_start.
 
         Returns
         --------
@@ -2327,39 +2331,39 @@ class Network(object):
 
 
         '''
-        gated = self.copy()
-
-        t_2_f = lambda x:fft.fft(x, axis=0)
-
+        if t_stop is None:
+            t_stop = -1*t_start
+        
+        if t_start >t_stop:
+            t_start *=-1
+            t_stop *=-1
+        
+        # find start/stop gate indecies
         t = self.frequency.t
         t_start_idx = find_nearest_index(t,t_start)
-        t_stop_idx = find_nearest_index(t,t_stop)
+        t_stop_idx  = find_nearest_index(t,t_stop)
 
+        # create window
         window_width = abs(t_stop_idx-t_start_idx)
         window = signal.get_window(window, window_width)
-
+        
+        # create the gate by padding the window with zeros
         padded_window = npy.r_[npy.zeros(t_start_idx),
                                window,
                                npy.zeros(len(t)-t_stop_idx)]
+        
+        # reshape the gate array so it operates on all s-parameters
         padded_window = padded_window.reshape(-1,1,1) *\
-                        npy.ones((len(gated), gated.nports, gated.nports))
-        window_in_f = t_2_f(padded_window)
-    
-        #window_in_freq = window_in_freq.reshape(-1,1,1) * \
-        #                npy.ones((len(self), self.nports, self.nports))
-
-        '''
-        for m,n in self.port_tuples:
-            x = signal.convolve(self.s[:,m,n], window_in_f, mode='same')
-            gated.s[:,m,n] = fft.ifftshift(x)
-
-        #normalize output
-        gated.s = gated.s  * npy.sum(self.s_mag,axis=0)/\
-                npy.sum(gated.s_mag,axis=0)
-
-        '''
-        s_time_windowed = gated.s_time*padded_window
-        gated.s = t_2_f(s_time_windowed)
+                        npy.ones((len(self), self.nports, self.nports))
+        
+        
+        
+        s_time = fft.ifftshift(fft.ifft(self.s, axis=0), axes=0)
+        s_time_windowed = self.s_time*padded_window
+        s_freq = fft.fft(fft.fftshift(s_time_windowed, axes=0), axis=0)
+        
+        gated = self.copy()
+        gated.s = s_freq
         return gated
 
     # plotting
