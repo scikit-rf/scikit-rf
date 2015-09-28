@@ -2625,13 +2625,30 @@ class Network(object):
             return (forward-reverse)
 
     # generalized mixed mode transformations
-    #TODO: documentation
-    #TODO: automated test cases
+    # XXX: experimental implementation of gmm s parameters
+    # TODO: automated test cases
     def se2gmm(self, p, z0_mm=None):
-        #TODO: assumes 'proper' order (differential ports, single ended ports)
-        if z0_mm is None:
-            #TODO: choose z0mm automagically
-            raise NotImplementedError
+        '''
+        Transform network from single ended parameters to generalized mixed mode parameters [1]
+
+        [1] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
+            Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+
+        Parameters
+        ------------
+
+        p : int, number of differential ports
+        z0_mm: f x n x n matrix of mixed mode impedances, optional
+            if input is None, 100 Ohms differentail and 25 Ohms common mode reference impedance
+        
+        .. warning::
+            This is not fully tested, and should be considered as experimental
+        '''
+        #XXX: assumes 'proper' order (first differential ports, then single ended ports)
+        if z0_mm is None: 
+            z0_mm = self.z0.copy()
+            z0_mm[:,0:2*p:2] = 100 # differential mode impedance
+            z0_mm[:,1:2*p+1:2] = 25 # common mode impedance
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm)
         A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
         B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
@@ -2639,19 +2656,34 @@ class Network(object):
         self.z0 = z0_mm
 
     def gmm2se(self, p, z0_se=None):
-        #TODO: testing of reverse transformation
-        #TODO: assumes 'proper' order (differential ports, single ended ports)
+        '''
+        Transform network from generalized mixed mode parameters [1] to single ended parameters
+
+        [1] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
+            Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+
+        Parameters
+        ------------
+
+        p : int, number of differential ports
+        z0_mm: f x n x n matrix of single ended impedances, optional
+            if input is None, assumes 50 Ohm reference impedance
+        
+        .. warning::
+            This is not fully tested, and should be considered as experimental
+        '''
+        # TODO: testing of reverse transformation
+        # XXX: assumes 'proper' order (differential ports, single ended ports)
         if z0_se is None:
-            #TODO: choose z0mm automagically
-            raise NotImplementedError
+            z0_se = self.z0.copy()
+            z0_se = 50
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
         self.s = npy.linalg.solve(A, B)  # (35)
         self.z0 = z0_se
         
-    # generalized mixed mode helpers
-    #TODO: simplification
+    # generalized mixed mode supplement functions
     _T = npy.array([[1, 0 , -1, 0], [0, 0.5, 0, -0.5], [0.5, 0, 0.5, 0], [0, 1, 0, 1]])  # (5)
     
     def _m(self, z0):
@@ -2669,7 +2701,6 @@ class Network(object):
     
     def _M_circle(self, l, p, z0_mm):  # (12)
         M = npy.zeros((self.f.shape[0],4,4), dtype=npy.complex128)
-        # XXX; choosing wrong impedances
         M[:,:2,:2] = self._m(z0_mm[:,l])    # differential mode impedance of port pair
         M[:,2:,2:] = self._m(z0_mm[:,p+l])  # common mode impedance of port pair
         return M
