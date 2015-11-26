@@ -153,7 +153,7 @@ def get_fid(file, *args, **kwargs):
 
     Parameters
     -------------
-    file : str or file-object
+    file : str/unicode or file-object
         file to open
     \*args, \*\*kwargs : arguments and keyword arguments
         passed through to pickle.load
