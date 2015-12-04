@@ -155,8 +155,8 @@ def get_fid(file, *args, **kwargs):
     -------------
     file : str/unicode or file-object
         file to open
-    \*args, \*\*kwargs : arguments and keyword arguments
-        passed through to pickle.load
+    \*args, \*\*kwargs : arguments and keyword arguments to `open()`
+        
     '''
     if isinstance(file, basestring):
         return open(file, *args, **kwargs)

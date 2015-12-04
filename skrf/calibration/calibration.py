@@ -357,6 +357,40 @@ class Calibration(object):
 
         return (self.ideals.pop(std),  self.measured.pop(std))
 
+    def remove_and_cal(self, std):
+        '''
+        Remove a cal standard and correct it, returning correct and ideal
+        
+        This requires requires overdetermination. Useful in 
+        troubleshooting a calibration in which one standard is junk, but 
+        you dont know which. 
+        
+        Parameters
+        -------------
+        std : int or str
+            the integer of calibration standard to remove, or the name
+            of the ideal or measured calibration standard to remove.
+
+        Returns
+        ---------
+        ideal,corrected : tuple of skrf.Networks
+            the ideal and corrected networks which were removed out of the
+            calibration
+            
+        '''
+        measured, ideals = copy(self.measured), copy(self.ideals)
+        i,m  = self.pop(std)
+        self.run()
+        c = self.apply_cal(m)
+        self.measured = measured
+        self.ideals = ideals
+        self.run()
+        return c,i
+        
+        
+        
+        
+    
     @classmethod
     def from_coefs_ntwks(cls, coefs_ntwks, **kwargs):
         '''
