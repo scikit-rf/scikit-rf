@@ -159,7 +159,7 @@ import pylab as plb
 from scipy import stats,signal        # for Network.add_noise_*, and Network.windowed
 
 from scipy.interpolate import interp1d # for Network.interpolate()
-from numpy import fft
+from numpy import fft, gradient, reshape, shape,ones
 import unittest # fotr unitest.skip
 
 from . import mathFunctions as mf
@@ -1487,6 +1487,33 @@ class Network(object):
         '''
         return abs(1-self.s/self.s.swapaxes(1,2))
 
+    @property
+    def group_delay(self):
+        '''
+        The group delay
+        
+        Usually used as a measure of dispersion (or distortion). 
+        
+        Defined as the derivative of the unwrapped s-parameter phase 
+        (in rad) with respect to the frequency. 
+        
+        -d(self.s_rad_unwrap)/d(self.frequency.f)
+        
+        
+        https://en.wikipedia.org/wiki/Group_delay_and_phase_delay
+        '''
+
+        phi = self.s_rad_unwrap
+        dw = gradient(self.frequency.w)
+        dw = dw.reshape([-1,1,1])*ones(shape(self.s)) # make shapes work
+        gd = gradient(phi.squeeze(),dw.squeeze()) # squeeze if dims are 1
+        
+        if self.nports >1:
+            gd = gd[0] # return gradient along frequency axis
+        else:
+            gd = gd.reshape(-1,1,1) # keep shape consistent with s,z,etc
+        return gd*-1.0
+
     ## NETWORK CLASIFIERs
     def is_reciprocal(self):
         '''
@@ -1513,9 +1540,15 @@ class Network(object):
         raise(NotImplementedError)
 
 
-
+    
 
     ## specific ploting functions
+    def plot_vs_f(self, *args, **kw):
+        '''
+        plot somthing vs frequency
+        '''
+        return self.frequency.plot(*args, **kw)
+    
     def plot_passivity(self, port = None,label_prefix=None,  *args, **kwargs):
         '''
         Plot dB(diag(passivity metric)) vs frequency

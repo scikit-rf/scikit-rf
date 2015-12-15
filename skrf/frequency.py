@@ -34,7 +34,7 @@ Functions
 from pylab import linspace, gca,plot, autoscale
 from numpy import pi
 import numpy as npy
-from numpy import fft # used to center attribute `t` at 0
+from numpy import fft, shape # used to center attribute `t` at 0
 import re
 from .util import slice_domain,find_nearest_index
 #from .constants import ZERO
@@ -555,10 +555,21 @@ class Frequency(object):
         calls `labelXAxis`.
 
         '''
+        
         try:
+            if len(shape(y))>2:
+                # perhapsthe dimensions are empty, try to squeeze it down
+                y= y.squeeze()
+                if len(shape(y))>2:
+                    # the dimensions are full, so lets loop and plot each
+                    for m in range(shape(y)[1]):
+                        for n in range(shape(y)[2]):
+                            self.plot(y[:,m,n], *args, **kwargs)
+                    return
             if len(y)==len(self):
                 pass
             else:
+                
                 raise IndexError(['thing to plot doesn\'t have same'
                                  ' number of points as f'])
         except(TypeError):
