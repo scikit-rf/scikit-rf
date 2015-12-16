@@ -2685,8 +2685,8 @@ class Network(object):
         #XXX: assumes 'proper' order (first differential ports, then single ended ports)
         if z0_mm is None: 
             z0_mm = self.z0.copy()
-            z0_mm[:,0:2*p:2] = 100 # differential mode impedance
-            z0_mm[:,1:2*p+1:2] = 25 # common mode impedance
+            z0_mm[:,0:p] = 100 # differential mode impedance
+            z0_mm[:,p:2*p] = 25 # common mode impedance
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm)
         A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
         B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
