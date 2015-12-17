@@ -12,7 +12,7 @@ Contains Media class.
 import warnings
 
 import numpy as npy
-from numpy import real, imag, ones, any, array
+from numpy import real, imag, ones, any, gradient
 from scipy import stats
 from scipy.constants import  c, inch, mil
 
@@ -1130,32 +1130,40 @@ class Media(object):
         return result
 
     ## OTHER METHODS
-    def guess_length_of_delay_short(self, aNtwk):
+    def extract_distance(self,ntwk):
         '''
-        Guess physical length of a delay short.
+        Determines physical distance from a transmission or reflection ntwk
+        
+        Given a matched transmission or reflection measurment the 
+        physical distance is estimated based on the phase of the ntwk
+        and propagation constant.
 
-        Unwraps the phase and determines the slope, which is then used
-        in conjunction with :attr:`gamma` to estimate the
-        physical distance to the short.
-
+        Notes
+        -------
+        if the ntwk is a reflect measurement the returned distance will  be 
+        twice the physical distance will be 
+        
         Parameters
+        -----------
+        ntwk : `Network`
+            A one-port network of either the reflection or the transmission.
+            if
+        
+        Example
         ----------
-        aNtwk : :class:`~skrf.network.Network` object
-                (note: if this is a measurment
-                it needs to be normalized to the reference plane)
-
-
+        >>>air = rf.air50
+        >>>l = air.line(1,'cm')
+        >>>d_found = air.extract_distance(l.s21) 
+        >>>d_found
         '''
-        warnings.warn(DeprecationWarning('I have yet to update this for Media class'))
-        beta = npy.real(self.gamma)
-        thetaM = npy.unwrap(npy.angle(-1*aNtwk.s).flatten())
+        if ntwk.nports ==1:
+            dphi = gradient(ntwk.s_rad_unwrap.flatten())
+            dgamma = gradient(self.gamma.imag)
+            return  -dphi/dgamma
+        else:
+            raise ValueError('ntwk must be one-port. Select s21 or s12 for a two-port.')
+    
 
-        A = npy.vstack((2*beta,npy.ones(len(beta)))).transpose()
-        B = thetaM
-        print(A.shape)
-        print(B.shape)
-        print(npy.linalg.lstsq(A, B)[1]/npy.dot(beta,beta))
-        return npy.linalg.lstsq(A, B)[0][0]
 
     def plot(self, *args, **kw):
         return self.frequency.plot(*args, **kw)

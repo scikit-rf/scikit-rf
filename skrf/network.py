@@ -1543,7 +1543,7 @@ class Network(object):
     
 
     ## specific ploting functions
-    def plot_vs_f(self, *args, **kw):
+    def plot(self, *args, **kw):
         '''
         plot somthing vs frequency
         '''
