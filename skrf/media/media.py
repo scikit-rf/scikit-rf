@@ -12,7 +12,7 @@ Contains Media class.
 import warnings
 
 import numpy as npy
-from numpy import real, imag, ones, any, gradient
+from numpy import real, imag, ones, any, gradient, array
 from scipy import stats
 from scipy.constants import  c, inch, mil
 
