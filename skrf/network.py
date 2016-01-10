@@ -141,7 +141,7 @@ from six.moves import xrange
 import os
 import warnings
 try:
-    import cPickle as pickle
+    import cPickle as pickle    
     from cPickle import UnpicklingError
 except ImportError:
     import pickle as pickle
@@ -163,7 +163,7 @@ from numpy import fft, gradient, reshape, shape,ones
 import unittest # fotr unitest.skip
 
 from . import mathFunctions as mf
-
+    
 from . frequency import Frequency
 
 from . plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
@@ -262,7 +262,7 @@ class Network(object):
     ------------
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     '''
-
+    
 
     global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = [ 's','z','y','a']
@@ -404,7 +404,7 @@ class Network(object):
         #self.nports = self.number_of_ports
         ##TODO: remove this as it takes up ~70% cpu time of this init
         self.__generate_plot_functions()
-
+        
 
     ## OPERATORS
     def __pow__(self,other):
@@ -541,7 +541,7 @@ class Network(object):
             result.s = npy.array(other).reshape(-1,self.nports,self.nports) - self.s
 
         return result
-
+    
     def __truediv__(self,other):
         return self.__div__(other)
 
@@ -1225,7 +1225,7 @@ class Network(object):
         # case we dont know how to re-shape the z0 to fxn. to solve this
         # i attempt to do the re-shaping when z0 is accessed, not when
         # it is set. this is what makes this function confusing.
-
+        
         try:
             if len(npy.shape(self._z0)) ==0:
                 try:
@@ -1491,15 +1491,15 @@ class Network(object):
     def group_delay(self):
         '''
         The group delay
-
-        Usually used as a measure of dispersion (or distortion).
-
-        Defined as the derivative of the unwrapped s-parameter phase
-        (in rad) with respect to the frequency.
-
+        
+        Usually used as a measure of dispersion (or distortion). 
+        
+        Defined as the derivative of the unwrapped s-parameter phase 
+        (in rad) with respect to the frequency. 
+        
         -d(self.s_rad_unwrap)/d(self.frequency.f)
-
-
+        
+        
         https://en.wikipedia.org/wiki/Group_delay_and_phase_delay
         '''
 
@@ -1507,7 +1507,7 @@ class Network(object):
         dw = gradient(self.frequency.w)
         dw = dw.reshape([-1,1,1])*ones(shape(self.s)) # make shapes work
         gd = gradient(phi.squeeze(),dw.squeeze()) # squeeze if dims are 1
-
+        
         if self.nports >1:
             gd = gd[0] # return gradient along frequency axis
         else:
@@ -1540,7 +1540,7 @@ class Network(object):
         raise(NotImplementedError)
 
 
-
+    
 
     ## specific ploting functions
     def plot(self, *args, **kw):
@@ -1548,16 +1548,16 @@ class Network(object):
         plot somthing vs frequency
         '''
         return self.frequency.plot(*args, **kw)
-
+    
     def plot_passivity(self, port = None,label_prefix=None,  *args, **kwargs):
         '''
         Plot dB(diag(passivity metric)) vs frequency
-
+        
         Notes
         -------
-        This plot does not completely capture the passivity metric, which
+        This plot does not completely capture the passivity metric, which 
         is a test for `unitary-ness` of the s-matrix. However, it may
-        be  used to display a measure of power disapated in a network.
+        be  used to display a measure of power disapated in a network. 
 
         See Also
         -----------
@@ -1643,7 +1643,7 @@ class Network(object):
                        frequency = self.frequency.copy(),
                        z0 = self.z0,
                        )
-
+        
         ntwk.name = self.name
         return ntwk
 
@@ -2362,15 +2362,15 @@ class Network(object):
         '''
         Time-gate s-parameters
 
-        The gate can be defined with start/stop times, or by the gate
-        width. If `t_stop` is None, the it will default to -`t_start`.
+        The gate can be defined with start/stop times, or by the gate 
+        width. If `t_stop` is None, the it will default to -`t_start`. 
         In this case `t_start`== gate width/2
         See Warning!
 
         Parameters
         ------------
         t_start : number
-            start of time gate, (s). Or, if t_stop==None, then it is
+            start of time gate, (s). Or, if t_stop==None, then it is 
             1/2*gate width.
         t_stop : number
             stop of time gate (s), if None  will be -t_start.
@@ -2388,11 +2388,11 @@ class Network(object):
         '''
         if t_stop is None:
             t_stop = -1*t_start
-
+        
         if t_start >t_stop:
             t_start *=-1
             t_stop *=-1
-
+        
         # find start/stop gate indecies
         t = self.frequency.t
         t_start_idx = find_nearest_index(t,t_start)
@@ -2401,22 +2401,22 @@ class Network(object):
         # create window
         window_width = abs(t_stop_idx-t_start_idx)
         window = signal.get_window(window, window_width)
-
+        
         # create the gate by padding the window with zeros
         padded_window = npy.r_[npy.zeros(t_start_idx),
                                window,
                                npy.zeros(len(t)-t_stop_idx)]
-
+        
         # reshape the gate array so it operates on all s-parameters
         padded_window = padded_window.reshape(-1,1,1) *\
                         npy.ones((len(self), self.nports, self.nports))
-
-
-
+        
+        
+        
         s_time = fft.ifftshift(fft.ifft(self.s, axis=0), axes=0)
         s_time_windowed = self.s_time*padded_window
         s_freq = fft.fft(fft.fftshift(s_time_windowed, axes=0), axis=0)
-
+        
         gated = self.copy()
         gated.s = s_freq
         return gated
@@ -2713,12 +2713,12 @@ class Network(object):
         p : int, number of differential ports
         z0_mm: f x n x n matrix of mixed mode impedances, optional
             if input is None, 100 Ohms differentail and 25 Ohms common mode reference impedance
-
+        
         .. warning::
             This is not fully tested, and should be considered as experimental
         '''
         #XXX: assumes 'proper' order (first differential ports, then single ended ports)
-        if z0_mm is None:
+        if z0_mm is None: 
             z0_mm = self.z0.copy()
             z0_mm[:,0:p] = 100 # differential mode impedance
             z0_mm[:,p:2*p] = 25 # common mode impedance
@@ -2741,7 +2741,7 @@ class Network(object):
         p : int, number of differential ports
         z0_mm: f x n x n matrix of single ended impedances, optional
             if input is None, assumes 50 Ohm reference impedance
-
+        
         .. warning::
             This is not fully tested, and should be considered as experimental
         '''
@@ -2755,35 +2755,35 @@ class Network(object):
         B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
         self.s = npy.linalg.solve(A, B)  # (35)
         self.z0 = z0_se
-
+        
     # generalized mixed mode supplement functions
     _T = npy.array([[1, 0 , -1, 0], [0, 0.5, 0, -0.5], [0.5, 0, 0.5, 0], [0, 1, 0, 1]])  # (5)
-
+    
     def _m(self, z0):
         scaling = npy.sqrt(z0.real) / (2 * npy.abs(z0))
         Z = npy.ones((z0.shape[0], 2, 2), dtype=npy.complex128)
         Z[:,0,1] = z0
         Z[:,1,1] = -z0
         return scaling[:,npy.newaxis,npy.newaxis] * Z
-
+    
     def _M(self, j, k, z0_se):  # (14)
         M = npy.zeros((self.f.shape[0],4,4), dtype=npy.complex128)
         M[:,:2,:2] = self._m(z0_se[:,j])
         M[:,2:,2:] = self._m(z0_se[:,k])
         return M
-
+    
     def _M_circle(self, l, p, z0_mm):  # (12)
         M = npy.zeros((self.f.shape[0],4,4), dtype=npy.complex128)
         M[:,:2,:2] = self._m(z0_mm[:,l])    # differential mode impedance of port pair
         M[:,2:,2:] = self._m(z0_mm[:,p+l])  # common mode impedance of port pair
         return M
-
+    
     def _X(self, j, k, l, p, z0_se, z0_mm):  # (15)
         return npy.einsum('...ij,...jk->...ik', self._M_circle(l, p, z0_mm).dot(self._T), npy.linalg.inv(self._M(j,k, z0_se)))  # matrix multiplication elementwise for each frequency
-
+    
     def _P(self, p):  # (27) (28)
         n = self.nports
-
+    
         Pda = npy.zeros((p,2*n), dtype=npy.bool)
         Pdb = npy.zeros((p,2*n), dtype=npy.bool)
         Pca = npy.zeros((p,2*n), dtype=npy.bool)
@@ -2799,24 +2799,24 @@ class Network(object):
                 Pa[l,4*p+2*(l+1)-1-1] = True
                 Pb[l,4*p+2*(l+1)-1] = True
         return npy.concatenate((Pda, Pca, Pa, Pdb, Pcb, Pb))
-
+    
     def _Q(self):  # (29) error corrected
         n = self.nports
-
+    
         Qa = npy.zeros((n,2*n), dtype=npy.bool)
         Qb = npy.zeros((n,2*n), dtype=npy.bool)
         for l in npy.arange(n):
             Qa[l,2*(l+1)-1-1] = True
             Qb[l,2*(l+1)-1] = True
         return npy.concatenate((Qa, Qb))
-
+    
     def _Xi(self, p, z0_se, z0_mm):  # (24)
         n = self.nports
         Xi = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * npy.eye(2*n, dtype=npy.complex128)
         for l in npy.arange(p):
             Xi[:,4*l:4*l+4,4*l:4*l+4] = self._X(l*2, l*2+1, l, p, z0_se, z0_mm)
         return Xi
-
+    
     def _Xi_tilde(self, p, z0_se, z0_mm):  # (31)
         n = self.nports
         P = npy.ones(self.f.shape[0])[:,npy.newaxis,npy.newaxis] * self._P(p)
@@ -3046,17 +3046,17 @@ def innerconnect(ntwkA, k, l, num=1):
     >>> ntwkC = rf.innerconnect(ntwkA, 0,1)
 
     '''
-
+    
     if (k+num-1> ntwkA.nports-1):
         raise IndexError('Port `k` out of range')
     if (l+num-1> ntwkA.nports-1):
         raise IndexError('Port `l` out of range')
-
-
+        
+        
     # create output Network, from copy of input
     ntwkC = ntwkA.copy()
 
-
+    
     if not (ntwkA.z0[:,k] == ntwkA.z0[:,l]).all():
         # connect a impedance mismatch, which will takes into account the
         # effect of differing port impedances
@@ -3110,19 +3110,19 @@ def cascade(ntwkA,ntwkB):
 def cascade_list(l):
     '''
     cascade a list of 2-port networks
-
+    
     all networks must have same frequency
-
+    
     Parameters
     --------------
     l : list-like
-        (ordered) list of networks
-
+        (ordered) list of networks 
+    
     Returns
     ----------
     out : 2-port Network
         the results of casacading all networks in the list `l`
-
+        
     '''
     return reduce(cascade, l)
 
@@ -3947,7 +3947,7 @@ def z2a(z):
     '''
     Converts impedance parameters to abcd  parameters [#]_ .
 
-
+   
     Parameters
     -----------
     z : :class:`numpy.ndarray` (shape fx2x2)
@@ -3995,12 +3995,12 @@ def s2a(s,z0):
     '''
     Converts scattering parameters to abcd  parameters [#]_ .
 
-
+   
     Parameters
     -----------
     s : :class:`numpy.ndarray` (shape fx2x2)
         impedance parameter matrix
-
+        
     z0: number or, :class:`numpy.ndarray` (shape fx2)
         port impedance
 
@@ -4010,7 +4010,7 @@ def s2a(s,z0):
         scattering transfer parameters (aka wave cascading matrix)
     '''
     return z2a(s2z(s,z0))
-
+    
 def y2s(y, z0=50):
     '''
     convert admittance parameters [#]_ to scattering parameters [#]_
@@ -4300,8 +4300,8 @@ def passivity(s):
     '''
     Passivity metric for a multi-port network.
 
-    A metric which is proportional to the amount of power lost in a
-    multiport network, depending on the excitation port. Specifically,
+    A metric which is proportional to the amount of power lost in a 
+    multiport network, depending on the excitation port. Specifically, 
     this returns a matrix who's diagonals are equal to the total
     power received at all ports, normalized to the power at a single
     excitement port.
@@ -4323,12 +4323,12 @@ def passivity(s):
 
     where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
     is dot product.
-
+    
     Notes
     ---------
-    The total amount of power disipated in a network depends on the
-    port matches. For example, given a matched attenuator, this metric
-    will yield the attenuation value. However, if the attenuator is
+    The total amount of power disipated in a network depends on the 
+    port matches. For example, given a matched attenuator, this metric 
+    will yield the attenuation value. However, if the attenuator is 
     cascaded with a mismatch, the power disipated will not be equivalent
     to the attenuator value, nor equal for each excitation port.
 
@@ -4749,7 +4749,7 @@ def two_port_reflect(ntwk1, ntwk2=None):
     ntwk1 : one-port Network object
             network seen from port 1
     ntwk2 : one-port Network object, or None
-            network seen from port 2. if None then will use ntwk1.
+            network seen from port 2. if None then will use ntwk1. 
 
     Returns
     -------
