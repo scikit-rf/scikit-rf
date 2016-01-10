@@ -53,10 +53,12 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     -----------
     smithR : number
             radius of smith chart
-    chart_type : ['z','y']
+    chart_type : ['z','y','zy', 'yz']
             Contour type. Possible values are
              * *'z'* : lines of constant impedance
              * *'y'* : lines of constant admittance
+             * *'zy'* : lines of constant impedance stronger than admittance
+             * *'yz'* : lines of constant admittance stronger than impedance
     draw_labels : Boolean
              annotate real and imaginary parts of impedance on the
              chart (only if smithR=1)
@@ -112,34 +114,50 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         rMax = (1.+smithR)/(1.-smithR)
         rLightList = plb.hstack([ plb.linspace(0,rMax,11)  , rLightList ])
 
-    if chart_type is 'y':
+    if chart_type.startswith('y'):
         y_flip_sign = -1
     else:
         y_flip_sign = 1
+
+    # draw impedance and
+    both_charts = chart_type in ('zy', 'yz')
+
+
     # loops through Verylight, Light and Heavy lists and draws circles using patches
     # for analysis of this see R.M. Weikles Microwave II notes (from uva)
 
+    superLightColor = dict(ec='whitesmoke', fc='none')
+    veryLightColor = dict(ec='lightgrey', fc='none')
+    lightColor = dict(ec='grey', fc='none')
+    heavyColor = dict(ec='black', fc='none')
+
+    # vswr circules verylight
     for vswr in vswrVeryLightList:
         radius = (vswr-1.0) / (vswr+1.0)
-        contour.append( Circle((0, 0), radius, ec='lightgrey',fc='none'))
+        contour.append( Circle((0, 0), radius, **veryLightColor))
 
+    # impedance/admittance circles
     for r in rLightList:
-        center = (r/(1.+r)*y_flip_sign,0 )
+        center = (r/(1.+r)*y_flip_sign, 0)
         radius = 1./(1+r)
-        contour.append( Circle( center, radius, ec='grey',fc = 'none'))
+        if both_charts:
+            contour.insert(0, Circle( (-center[0], center[1]), radius, **superLightColor))
+        contour.append( Circle( center, radius, **lightColor))
     for x in xLightList:
-        center = (1*y_flip_sign,1./x)
+        center = (1*y_flip_sign, 1./x)
         radius = 1./x
-        contour.append( Circle( center, radius, ec='grey',fc = 'none'))
+        if both_charts:
+            contour.insert(0, Circle( (-center[0], center[1]), radius, **superLightColor))
+        contour.append( Circle( center, radius, **lightColor))
 
     for r in rHeavyList:
-        center = (r/(1.+r)*y_flip_sign,0 )
+        center = (r/(1.+r)*y_flip_sign, 0)
         radius = 1./(1+r)
-        contour.append( Circle( center, radius, ec= 'black', fc = 'none'))
+        contour.append( Circle( center, radius, **heavyColor))
     for x in xHeavyList:
         center = (1*y_flip_sign,1./x)
         radius = 1./x
-        contour.append( Circle( center, radius, ec='black',fc = 'none'))
+        contour.append( Circle( center, radius, **heavyColor))
 
     # clipping circle
     clipc = Circle( [0,0], smithR, ec='k',fc='None',visible=True)
