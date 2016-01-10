@@ -44,6 +44,10 @@ import collections, pprint
 from subprocess import Popen,PIPE
 # globals
 
+try:
+    basestring
+except NameError:
+    basestring = (str, bytes)
 
 # other
 def now_string():
@@ -156,7 +160,7 @@ def get_fid(file, *args, **kwargs):
     file : str/unicode or file-object
         file to open
     \*args, \*\*kwargs : arguments and keyword arguments to `open()`
-        
+
     '''
     if isinstance(file, basestring):
         return open(file, *args, **kwargs)

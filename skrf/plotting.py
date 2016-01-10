@@ -19,15 +19,15 @@ Plots and Charts
     plot_smith
     plot_rectangular
     plot_polar
-    plot_complex_rectangular 
+    plot_complex_rectangular
     plot_complex_polar
-    
+
 Misc Functions
 -----------------
 
 .. autosummary::
     :toctree: generated/
-    
+
     save_all_figs
     add_markers_to_lines
     legend_off
@@ -44,8 +44,8 @@ from matplotlib import rcParams
 
 
 
-def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False, 
-    ax=None, ref_imm = 1.0):
+def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
+    ax=None, ref_imm = 1.0, draw_vswr=None):
     '''
     plots the smith chart of a given radius
 
@@ -58,19 +58,21 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
              * *'z'* : lines of constant impedance
              * *'y'* : lines of constant admittance
     draw_labels : Boolean
-             annotate real and imaginary parts of impedance on the 
+             annotate real and imaginary parts of impedance on the
              chart (only if smithR=1)
     border : Boolean
-        draw a rectangular border with axis ticks, around the perimeter 
+        draw a rectangular border with axis ticks, around the perimeter
         of the figure. Not used if draw_labels = True
-    
+
     ax : matplotlib.axes object
             existing axes to draw smith chart on
-    
+
     ref_imm : number
             Reference immittance for center of Smith chart. Only changes
             labels, if printed.
 
+    draw_vswr : list of numbers, Boolean or None
+        draw VSWR circles. If True, default values are used.
 
     '''
     ##TODO: fix this function so it doesnt suck
@@ -96,6 +98,15 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         rLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
         xLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
+    #
+    if isinstance(draw_vswr, (tuple,list)):
+        vswrVeryLightList = draw_vswr
+    elif draw_vswr is True:
+        # use the default I like
+        vswrVeryLightList = [1.5, 2.0, 3.0, 5.0]
+    else:
+        vswrVeryLightList = []
+
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
         rMax = (1.+smithR)/(1.-smithR)
@@ -105,8 +116,13 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         y_flip_sign = -1
     else:
         y_flip_sign = 1
-    # loops through Light and Heavy lists and draws circles using patches
+    # loops through Verylight, Light and Heavy lists and draws circles using patches
     # for analysis of this see R.M. Weikles Microwave II notes (from uva)
+
+    for vswr in vswrVeryLightList:
+        radius = (vswr-1.0) / (vswr+1.0)
+        contour.append( Circle((0, 0), radius, ec='lightgrey',fc='none'))
+
     for r in rLightList:
         center = (r/(1.+r)*y_flip_sign,0 )
         radius = 1./(1+r)
@@ -136,15 +152,15 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     # Set axis limits by plotting white points so zooming works properly
     ax1.plot(smithR*npy.array([-1.1, 1.1]), smithR*npy.array([-1.1, 1.1]), 'w.', markersize = 0)
     ax1.axis('image') # Combination of 'equal' and 'tight'
-    
-    
-    if not border: 
+
+
+    if not border:
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
         for loc, spine in ax1.spines.items():
             spine.set_color('none')
-        
-    
+
+
     if draw_labels:
         #Clear axis
         ax1.yaxis.set_ticks([])
@@ -181,7 +197,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                 S *= smithR * radialScaleFactor
                 rhox = S.real
                 rhoy = S.imag * y_flip_sign
-                
+
                 # Choose alignment anchor point based on label's value
                 if ((value == 1.0) or (value == -1.0)):
                     halignstyle = "center"
@@ -189,7 +205,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                     halignstyle = "right"
                 else:
                     halignstyle = "left"
-                
+
                 if (rhoy < 0):
                     valignstyle = "top"
                 else:
@@ -203,6 +219,15 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                          ha = "right", va = "center")
             ax1.annotate('$\infty$', xy=(radialScaleFactor, 0), xytext=(radialScaleFactor, 0),
                          ha = "left", va = "center")
+
+            # annotate vswr circles
+            for vswr in vswrVeryLightList:
+                rhoy = (vswr-1.0) / (vswr+1.0)
+
+                ax1.annotate(str(vswr), xy=(0, rhoy*smithR),
+                    xytext=(0, rhoy*smithR), ha = "center", va = "bottom",
+                    color='grey', size='smaller')
+
 
     # loop though contours and draw them on the given axes
     for currentContour in contour:
@@ -229,7 +254,7 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
     *args,**kwargs : passed to pylab.plot
-    
+
     '''
     if ax is None:
         ax = plb.gca()
@@ -253,10 +278,10 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     if axis is not None:
         ax.autoscale(True, 'x', True)
         ax.autoscale(True, 'y', False)
-        
+
     if plb.isinteractive():
         plb.draw()
-    
+
     return my_plot
 
 def plot_polar(theta, r, x_label=None, y_label=None, title=None,
@@ -269,7 +294,7 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     theta : array-like
         data to plot
     r : array-like
-        
+
     x_label : string
         x-axis label
     y_label : string
@@ -281,7 +306,7 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
     *args,**kwargs : passed to pylab.plot
-    
+
     See Also
     ----------
     plot_rectangular : plots rectangular data
@@ -312,7 +337,7 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
 
     if axis_equal:
         ax.axis('equal')
-        
+
     if plb.isinteractive():
         plb.draw()
 
@@ -345,7 +370,7 @@ def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
     plot_polar : plot polar data
     plot_complex_polar : plot complex data on polar plane
     plot_smith : plot complex data on smith chart
-    
+
     '''
     x = npy.real(z)
     y = npy.imag(z)
@@ -391,7 +416,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
 
 def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imaginary', title='Complex Plane', show_legend=True,
-    axis='equal', ax=None, force_chart = False, *args, **kwargs):
+    axis='equal', ax=None, force_chart = False, draw_vswr=None, *args, **kwargs):
     '''
     plot complex data on smith chart
 
@@ -416,7 +441,7 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     axis_equal: Boolean
         sets axis to be equal increments (calls axis('equal'))
     force_chart : Boolean
-        forces the re-drawing of smith chart 
+        forces the re-drawing of smith chart
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
     *args,**kwargs : passed to pylab.plot
@@ -429,14 +454,14 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     plot_complex_polar : plot complex data on polar plane
     plot_smith : plot complex data on smith chart
     '''
-    
+
     if ax is None:
         ax = plb.gca()
 
     # test if smith chart is already drawn
     if not force_chart:
         if len(ax.patches) == 0:
-            smith(ax=ax, smithR = smith_r, chart_type=chart_type)
+            smith(ax=ax, smithR = smith_r, chart_type=chart_type, draw_vswr=draw_vswr)
 
     plot_complex_rectangular(s, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,
@@ -447,15 +472,15 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
         plb.draw()
 
 
-def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,  
+def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,
                    add_titles=True, keep_it_tight=True,  subplot_kw={}, *args, **kw):
     '''
     Plot all networks parameters individually on subplots
-    
+
     Parameters
     --------------
-    
-    
+
+
     '''
     if newfig:
         f,axs= plb.subplots(ntwk.nports,ntwk.nports,
@@ -463,7 +488,7 @@ def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,
                                       size_per_port*ntwk.nports ),
                                       **subplot_kw)
     else:
-        f = plb.gcf() 
+        f = plb.gcf()
         axs = npy.array(f.get_axes())
 
     for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
@@ -478,23 +503,23 @@ def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,
 def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     '''
     Shades frequency bands.
-    
-    when plotting data over a set of frequency bands it is nice to 
+
+    when plotting data over a set of frequency bands it is nice to
     have each band visually separated from the other. The kwarg `alpha`
     is useful.
-    
-    Parameters 
+
+    Parameters
     --------------
     edges : array-like
         x-values separating regions of a given shade
-    y_range : tuple 
-        y-values to shade in 
+    y_range : tuple
+        y-values to shade in
     cmap : str
         see matplotlib.cm  or matplotlib.colormaps for acceptable values
     \*\* : key word arguments
         passed to `matplotlib.fill_between`
-        
-    Examples 
+
+    Examples
     -----------
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     '''
@@ -503,8 +528,8 @@ def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     axis = plb.axis()
     for k in range(len(edges)-1):
         plb.fill_between(
-            [edges[k],edges[k+1]], 
-            y_range[0], y_range[1], 
+            [edges[k],edges[k+1]],
+            y_range[0], y_range[1],
             color = cmap(1.0*k/len(edges)),
             **kwargs)
     plb.axis(axis)
@@ -545,13 +570,13 @@ saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
     '''
-    adds markers to existing lings on a plot 
-    
-    this is convinient if you have already have a plot made, but then 
-    need to add markers afterwards, so that it can be interpreted in 
-    black and white. The markevery argument makes the markers less 
-    frequent than the data, which is generally what you want. 
-    
+    adds markers to existing lings on a plot
+
+    this is convinient if you have already have a plot made, but then
+    need to add markers afterwards, so that it can be interpreted in
+    black and white. The markevery argument makes the markers less
+    frequent than the data, which is generally what you want.
+
     Parameters
     -----------
     ax : matplotlib.Axes
@@ -560,7 +585,7 @@ def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10
         see matplotlib.plot help for possible marker characters
     markevery : int
         markevery number of points with a marker.
-    
+
     '''
     if ax is None:
         ax=plb.gca()
@@ -572,14 +597,14 @@ def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10
 
 def legend_off(ax=None):
     '''
-    turn off the legend for a given axes. 
-    
+    turn off the legend for a given axes.
+
     if no axes is given then it will use current axes.
-    
+
     Parameters
     -----------
     ax : matplotlib.Axes object
-        axes to operate on 
+        axes to operate on
     '''
     if ax is None:
         plb.gca().legend_.set_visible(0)
@@ -589,41 +614,41 @@ def legend_off(ax=None):
 def scrape_legend(n=None, ax=None):
     '''
     scrapes a legend with redundant labels
-    
-    Given a legend of m entries of n groups, this will remove all but 
+
+    Given a legend of m entries of n groups, this will remove all but
     every m/nth entry. This is used when you plot many lines representing
     the same thing, and only want one label entry in the legend  for the
     whole ensemble of lines
-    
+
     '''
-    
+
     if ax is None:
         ax = plb.gca()
-    
+
     handles, labels = ax.get_legend_handles_labels()
-    
+
     if n is None:
         n =len ( set(labels))
-    
+
     if n>len(handles):
         raise ValueError('number of entries is too large')
-    
+
     k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
     ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
 
 def func_on_all_figs(func, *args, **kwargs):
     '''
-    runs a function after making all open figures current. 
-    
-    useful if you need to change the properties of many open figures 
-    at once, like turn off the grid. 
-    
+    runs a function after making all open figures current.
+
+    useful if you need to change the properties of many open figures
+    at once, like turn off the grid.
+
     Parameters
     ----------
     func : function
         function to call
     \*args, \*\*kwargs : pased to func
-    
+
     Examples
     ----------
     >>> rf.func_on_all_figs(grid,alpha=.3)
@@ -639,9 +664,9 @@ foaf = func_on_all_figs
 
 def plot_vector(a, off=0+0j, *args, **kwargs):
     '''
-    plot a 2d vector 
+    plot a 2d vector
     '''
-    return quiver(off.real,off.imag,a.real,a.imag,scale_units ='xy', 
+    return quiver(off.real,off.imag,a.real,a.imag,scale_units ='xy',
            angles='xy',scale=1, *args, **kwargs)
 
 
