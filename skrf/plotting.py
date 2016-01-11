@@ -44,8 +44,8 @@ from matplotlib import rcParams
 
 
 
-def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False, 
-    ax=None, ref_imm = 1.0):
+def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
+    ax=None, ref_imm = 1.0, draw_vswr=None):
     '''
     plots the smith chart of a given radius
 
@@ -53,10 +53,12 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     -----------
     smithR : number
             radius of smith chart
-    chart_type : ['z','y']
+    chart_type : ['z','y','zy', 'yz']
             Contour type. Possible values are
              * *'z'* : lines of constant impedance
              * *'y'* : lines of constant admittance
+             * *'zy'* : lines of constant impedance stronger than admittance
+             * *'yz'* : lines of constant admittance stronger than impedance
     draw_labels : Boolean
              annotate real and imaginary parts of impedance on the 
              chart (only if smithR=1)
@@ -71,6 +73,8 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
             Reference immittance for center of Smith chart. Only changes
             labels, if printed.
 
+    draw_vswr : list of numbers, Boolean or None
+        draw VSWR circles. If True, default values are used.
 
     '''
     ##TODO: fix this function so it doesnt suck
@@ -96,34 +100,64 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         rLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
         xLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
+    # vswr lines
+    if isinstance(draw_vswr, (tuple,list)):
+        vswrVeryLightList = draw_vswr
+    elif draw_vswr is True:
+        # use the default I like
+        vswrVeryLightList = [1.5, 2.0, 3.0, 5.0]
+    else:
+        vswrVeryLightList = []
+
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
         rMax = (1.+smithR)/(1.-smithR)
         rLightList = plb.hstack([ plb.linspace(0,rMax,11)  , rLightList ])
 
-    if chart_type is 'y':
+    if chart_type.startswith('y'):
         y_flip_sign = -1
     else:
         y_flip_sign = 1
-    # loops through Light and Heavy lists and draws circles using patches
+
+    # draw impedance and/or admittance
+    both_charts = chart_type in ('zy', 'yz')
+
+
+    # loops through Verylight, Light and Heavy lists and draws circles using patches
     # for analysis of this see R.M. Weikles Microwave II notes (from uva)
+
+    superLightColor = dict(ec='whitesmoke', fc='none')
+    veryLightColor = dict(ec='lightgrey', fc='none')
+    lightColor = dict(ec='grey', fc='none')
+    heavyColor = dict(ec='black', fc='none')
+
+    # vswr circules verylight
+    for vswr in vswrVeryLightList:
+        radius = (vswr-1.0) / (vswr+1.0)
+        contour.append( Circle((0, 0), radius, **veryLightColor))
+
+    # impedance/admittance circles
     for r in rLightList:
         center = (r/(1.+r)*y_flip_sign,0 )
         radius = 1./(1+r)
-        contour.append( Circle( center, radius, ec='grey',fc = 'none'))
+        if both_charts:
+            contour.insert(0, Circle((-center[0], center[1]), radius, **superLightColor))
+        contour.append(Circle(center, radius, **lightColor))
     for x in xLightList:
         center = (1*y_flip_sign,1./x)
         radius = 1./x
-        contour.append( Circle( center, radius, ec='grey',fc = 'none'))
+        if both_charts:
+            contour.insert(0, Circle( (-center[0], center[1]), radius, **superLightColor))
+        contour.append(Circle(center, radius, **lightColor))
 
     for r in rHeavyList:
         center = (r/(1.+r)*y_flip_sign,0 )
         radius = 1./(1+r)
-        contour.append( Circle( center, radius, ec= 'black', fc = 'none'))
+        contour.append(Circle(center, radius, **heavyColor))
     for x in xHeavyList:
         center = (1*y_flip_sign,1./x)
         radius = 1./x
-        contour.append( Circle( center, radius, ec='black',fc = 'none'))
+        contour.append(Circle(center, radius, **heavyColor))
 
     # clipping circle
     clipc = Circle( [0,0], smithR, ec='k',fc='None',visible=True)
@@ -203,6 +237,14 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                          ha = "right", va = "center")
             ax1.annotate('$\infty$', xy=(radialScaleFactor, 0), xytext=(radialScaleFactor, 0),
                          ha = "left", va = "center")
+
+            # annotate vswr circles
+            for vswr in vswrVeryLightList:
+                rhoy = (vswr-1.0) / (vswr+1.0)
+
+                ax1.annotate(str(vswr), xy=(0, rhoy*smithR),
+                    xytext=(0, rhoy*smithR), ha="center", va="bottom",
+                    color='grey', size='smaller')
 
     # loop though contours and draw them on the given axes
     for currentContour in contour:
@@ -391,7 +433,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
 
 def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imaginary', title='Complex Plane', show_legend=True,
-    axis='equal', ax=None, force_chart = False, *args, **kwargs):
+    axis='equal', ax=None, force_chart = False, draw_vswr=None, *args, **kwargs):
     '''
     plot complex data on smith chart
 
@@ -436,7 +478,7 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     # test if smith chart is already drawn
     if not force_chart:
         if len(ax.patches) == 0:
-            smith(ax=ax, smithR = smith_r, chart_type=chart_type)
+            smith(ax=ax, smithR = smith_r, chart_type=chart_type, draw_vswr=draw_vswr)
 
     plot_complex_rectangular(s, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis=axis,

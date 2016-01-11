@@ -44,6 +44,10 @@ import collections, pprint
 from subprocess import Popen,PIPE
 # globals
 
+try:
+    basestring
+except NameError:
+    basestring = (str, bytes)
 
 # other
 def now_string():
