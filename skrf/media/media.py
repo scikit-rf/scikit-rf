@@ -1135,13 +1135,13 @@ class Media(object):
         Determines physical distance from a transmission or reflection ntwk
         
         Given a matched transmission or reflection measurment the 
-        physical distance is estimated based on the phase of the ntwk
-        and propagation constant.
+        physical distance is estimated at each frequency point based on 
+        the scattering parameter phase of the ntwk and propagation constant.
 
         Notes
         -------
-        if the ntwk is a reflect measurement the returned distance will  be 
-        twice the physical distance will be 
+        If the ntwk is a reflect measurement, the returned distance will  
+        be twice the physical distance.
         
         Parameters
         -----------

@@ -45,6 +45,7 @@ from copy import deepcopy
 import warnings
 import numpy as npy
 import pylab as plb
+from util import now_string_2_dt
 # delayed imports due to circular dependencies
 # NetworkSet.from_dir : from io.general import read_all_networks
 
@@ -1045,14 +1046,29 @@ class NetworkSet(object):
         if label_axis:
             plb.ylabel('Standard Deviation(dB)')
 
-    def signature(self,m=0,n=0,from_mean=False, operation='__sub__',
-        component='s_mag',vmax = None,  *args, **kwargs):
+    def datetime_index(self):
         '''
-        visualization of relative changes in a NetworkSet.
+        Create a datetime index from networks names 
+        
+        this is just:
+        
+        [rf.now_string_2_dt(k.name ) for k in self]
+        
+        
+        '''
+        return [now_string_2_dt(k.name ) for k in self]
+            
 
-        Creates a colored image representing the devation of each
-        Network from the from mean Network of the NetworkSet, vs
-        frequency.
+    def signature(self,m=0,n=0, component='s_mag', 
+                  vmax = None, vs_time=False, cbar_label=None,
+                  *args, **kwargs):
+        '''
+        Visualization of a NetworkSet.
+
+        Creates a colored image representing the some component
+        of each Network in the  NetworkSet, vs frequency.
+        
+         
 
 
         Parameters
@@ -1061,40 +1077,73 @@ class NetworkSet(object):
             first s-parameters index
         n : int
             second s-parameter index
-        from_mean : Boolean
-            calculate distance from mean if True. or distance from
-            first network in networkset if False.
-        operation : ['__sub__', '__div__'], ..
-            operation to apply between each network and the reference
-            network, which is either the mean, or the initial ntwk.
         component : ['s_mag','s_db','s_deg' ..]
-            scalar component of Network to plot on the imshow. should
+            scalar component of Network to visualize. should
             be a property of the Network object.
-
         vmax : number
             sets upper limit of colorbar, if None, will be set to
             3*mean of the magnitude of the complex difference
-        \*args,\*\*kwargs : arguments, keyword arguments
+        vs_time: Boolean
+            if True, then we assume each Network.name was made with 
+            rf.now_string, and we make the y-axis a datetime axis
+        cbar_label: String
+            label for the colorbar 
+        
+        \*args,\*\*kw : arguments, keyword arguments
             passed to :func:`~pylab.imshow`
 
 
         '''
-        if from_mean:
-            diff_set = self.__getattribute__(operation)(self.mean_s)
-        else:
-            diff_set = self.__getattribute__(operation)(self.ntwk_set[0])
-
-        sig = npy.array([diff_set[k].__getattribute__(component)[:,m,n] \
+        
+            
+        mat = npy.array([self[k].__getattribute__(component)[:,m,n] \
             for k in range(len(self))])
+        
         if vmax is None:
-            vmax == 3*sig.mean()
-        plb.imshow(sig, vmax = vmax, *args, **kwargs)
-        plb.axis('tight')
-        plb.ylabel('Network \#')
-        c_bar = plb.colorbar()
-        c_bar.set_label('Distance From Mean')
+            vmax == 3*mat.mean()
+        
+        if vs_time:
+            # create a datetime index
+            dt_idx = [now_string_2_dt(k.name ) for k in self]
+            mpl_times = plb.date2num(dt_idx)
+            y_max = mpl_times[0]
+            y_min = mpl_times[-1]
+        
+        else:
+            y_min =  0
+            y_max =  len(self)
+            
+        # creates x and y scales
+        freq = self[0].frequency
+        extent = [freq.f_scaled[0], freq.f_scaled[-1], y_min ,y_max]
+        
+        # set default imshow kwargs
+        kw ={'extent':extent,'aspect':'auto', 'interpolation':'nearest' }
+        # update the users kwargs
+        kw.update(kwargs)
+        img = plb.imshow(mat, *args, **kw)
 
+        if vs_time:
+            ax =plb.gca()
+            ax.yaxis_date()
+            #date_format = plb.DateFormatter('%M:%S.%f')
+            #ax.yaxis.set_major_formatter(date_format)
+            #cbar.set_label('Magntidue (dB)')
+            plb.ylabel('Time')
+        else:
+            plb.ylabel('Network #')
+        
+        plb.grid(0)
+        freq.labelXAxis()
+        
+            
+        cbar = plb.colorbar()
+        if cbar_label is not None:
+            cbar.set_label(cbar_label)
 
+        return img
+        
+        
     # io
     def write(self, file=None,  *args, **kwargs):
         '''
