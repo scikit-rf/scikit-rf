@@ -1100,7 +1100,7 @@ class NetworkSet(object):
             for k in range(len(self))])
         
         if vmax is None:
-            vmax == 3*mat.mean()
+            vmax = 3*mat.mean()
         
         if vs_time:
             # create a datetime index
@@ -1118,7 +1118,8 @@ class NetworkSet(object):
         extent = [freq.f_scaled[0], freq.f_scaled[-1], y_min ,y_max]
         
         # set default imshow kwargs
-        kw ={'extent':extent,'aspect':'auto', 'interpolation':'nearest' }
+        kw ={'extent':extent,'aspect':'auto', 'interpolation':'nearest',
+            'vmax':vmax }
         # update the users kwargs
         kw.update(kwargs)
         img = plb.imshow(mat, *args, **kw)
