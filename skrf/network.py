@@ -2423,7 +2423,7 @@ class Network(object):
 
     # plotting
     def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
-            chart_type='z', draw_labels=False, label_axes=False, *args,**kwargs):
+            chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
         '''
         plots the scattering parameter on a smith chart
 
@@ -2450,6 +2450,8 @@ class Network(object):
             Label axis with titles `Real` and `Imaginary`
         border : Boolean
             draw rectangular border around image with ticks
+        draw_vswr : list of numbers, Boolean or None
+            draw VSWR circles. If True, default values are used.
 
         \*args : arguments, optional
                 passed to the matplotlib.plot command
@@ -2510,7 +2512,7 @@ class Network(object):
 
                 # plot the desired attribute vs frequency
                 if len (ax.patches) == 0:
-                    smith(ax=ax, smithR = r, chart_type=chart_type, draw_labels=draw_labels)
+                    smith(ax=ax, smithR = r, chart_type=chart_type, draw_labels=draw_labels, draw_vswr=draw_vswr)
                 ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, *args,**kwargs)
 
         #draw legend
