@@ -1099,8 +1099,8 @@ class NetworkSet(object):
         mat = npy.array([self[k].__getattribute__(component)[:,m,n] \
             for k in range(len(self))])
         
-        if vmax is None:
-            vmax = 3*mat.mean()
+        #if vmax is None:
+        #    vmax = 3*mat.mean()
         
         if vs_time:
             # create a datetime index

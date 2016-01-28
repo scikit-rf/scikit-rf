@@ -100,7 +100,7 @@ class Taper1D(object):
     
     @property
     def section_length(self):
-        return  self.length/self.n_sections
+        return  1.0*self.length/self.n_sections
     
     @property
     def value_vector(self):

@@ -40,6 +40,7 @@ from scipy.constants import  epsilon_0, mu_0
 from numpy import real, imag, cos
 from .distributedCircuit import DistributedCircuit
 from .media import Media
+from ..data import materials
 
 class Freespace(DistributedCircuit, Media):
     '''
@@ -68,13 +69,16 @@ class Freespace(DistributedCircuit, Media):
     
     '''
     def __init__(self, frequency=None, z0=None,  ep_r=1+0j, 
-                 mu_r=1+0j, mode_type='tem', angle=0, *args, **kwargs):
+                 mu_r=1+0j, rho=None, mode_type='tem', angle=0, 
+                 *args, **kwargs):
         
         Media.__init__(self, frequency=frequency,z0=z0)
         self.ep_r  = ep_r
         self.mu_r  = mu_r
         self.mode_type = mode_type.lower()
         self.angle = angle
+        self.rho=rho
+        
         
 
 
@@ -92,7 +96,12 @@ class Freespace(DistributedCircuit, Media):
     
     @property
     def G(self):
-        return self.frequency.w *imag(epsilon_0*self.ep_r)
+        if self.rho is not None:
+            conductivity=1./self.rho
+        else:
+            conductivity=0
+            
+        return conductivity+ self.frequency.w *imag(epsilon_0*self.ep_r)
         
     @property
     def Z0(self):
@@ -112,8 +121,36 @@ class Freespace(DistributedCircuit, Media):
                    'tm':Z0*cos(self.angle),
                    'tem':Z0}
         return Z0_dict[self.mode_type]
+    
+    @property
+    def rho(self):
+        '''
+        conductivty in ohm*m
+
+        Parameters
+        --------------
+        val : float, array-like or str
+            the conductivity in ohm*m. If array-like must be same length
+            as self.frequency. if str, it must be a key in
+            `skrf.data.materials`.
+
+        Examples
+        ---------
+        >>> wg.rho = 2.8e-8
+        >>> wg.rho = 2.8e-8 * ones(len(wg.frequency))
+        >>> wg.rho = 'al'
+        >>> wg.rho = 'aluminum'
+        '''
+        
+
+        return self._rho
             
-            
+    @rho.setter
+    def rho(self, val):
+        if isinstance(val, str):
+            self._rho = materials[val.lower()]['resistivity(ohm*m)']
+        else:
+            self._rho=val
 
     @property
     def gamma(self):
