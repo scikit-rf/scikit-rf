@@ -6,50 +6,7 @@
 distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 ============================================================
 
-:class:`DistributedCircuit` is `Media` object representing a 
-transmission line mode defined in terms of  distributed impedance
-and admittance values. 
 
-A Distributed Circuit may be defined in terms
-of the following attributes,
-
-================================  ================  ================
-Quantity                          Symbol            Property
-================================  ================  ================
-Distributed Capacitance           :math:`C^{'}`     :attr:`C`
-Distributed Inductance            :math:`L^{'}`     :attr:`L`
-Distributed Resistance            :math:`R^{'}`     :attr:`R`
-Distributed Conductance           :math:`G^{'}`     :attr:`G`
-================================  ================  ================
-
-
-The following quantities may be calculated, which are functions of 
-angular frequency (:math:`\omega`):
-
-===================================  ==================================================  ==============================
-Quantity                             Symbol                                              Property
-===================================  ==================================================  ==============================
-Distributed Impedance                :math:`Z^{'} = R^{'} + j \\omega L^{'}`              :attr:`Z`
-Distributed Admittance               :math:`Y^{'} = G^{'} + j \\omega C^{'}`              :attr:`Y`
-===================================  ==================================================  ==============================
-
-
-The properties which define their wave behavior:
-
-===================================  ============================================  ==============================
-Quantity                             Symbol                                        Method
-===================================  ============================================  ==============================
-Characteristic Impedance             :math:`Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}`     :func:`Z0`
-Propagation Constant                 :math:`\\gamma = \\sqrt{ Z^{'}  Y^{'}}`         :func:`gamma`
-===================================  ============================================  ==============================
-
-Given the following definitions, the components of propagation
-constant are interpreted as follows:
-
-.. math::
-    +\\Re e\\{\\gamma\\} = \\text{attenuation}
-
-    -\\Im m\\{\\gamma\\} = \\text{forward propagation}
 
 '''
 
@@ -91,6 +48,52 @@ class DistributedCircuit(Media):
     Notes
     ----------
     if C,I,R,G are vectors they should be the same length
+    
+        :class:`DistributedCircuit` is `Media` object representing a 
+    transmission line mode defined in terms of  distributed impedance
+    and admittance values. 
+
+    A Distributed Circuit may be defined in terms
+    of the following attributes,
+
+    ================================  ================  ================
+    Quantity                          Symbol            Property
+    ================================  ================  ================
+    Distributed Capacitance           :math:`C^{'}`     :attr:`C`
+    Distributed Inductance            :math:`L^{'}`     :attr:`L`
+    Distributed Resistance            :math:`R^{'}`     :attr:`R`
+    Distributed Conductance           :math:`G^{'}`     :attr:`G`
+    ================================  ================  ================
+
+
+    The following quantities may be calculated, which are functions of 
+    angular frequency (:math:`\omega`):
+
+    ===================================  ==================================================  ==============================
+    Quantity                             Symbol                                              Property
+    ===================================  ==================================================  ==============================
+    Distributed Impedance                :math:`Z^{'} = R^{'} + j \\omega L^{'}`              :attr:`Z`
+    Distributed Admittance               :math:`Y^{'} = G^{'} + j \\omega C^{'}`              :attr:`Y`
+    ===================================  ==================================================  ==============================
+
+
+    The properties which define their wave behavior:
+
+    ===================================  ============================================  ==============================
+    Quantity                             Symbol                                        Method
+    ===================================  ============================================  ==============================
+    Characteristic Impedance             :math:`Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}`     :func:`Z0`
+    Propagation Constant                 :math:`\\gamma = \\sqrt{ Z^{'}  Y^{'}}`         :func:`gamma`
+    ===================================  ============================================  ==============================
+
+    Given the following definitions, the components of propagation
+    constant are interpreted as follows:
+
+    .. math::
+        +\\Re e\\{\\gamma\\} = \\text{attenuation}
+
+        -\\Im m\\{\\gamma\\} = \\text{forward propagation}
+    
 
     See Also 
     --------
