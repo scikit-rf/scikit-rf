@@ -1196,9 +1196,10 @@ class Network(object):
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         '''
         return s2a(self.s, self.z0)
+
     @a.setter
     def a(self, value):
-        raise (NotImplementedError)
+        self._s = a2s(value, self.z0)
 
     @property
     def z0(self):
@@ -3942,6 +3943,70 @@ def z2t(z):
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     '''
     raise (NotImplementedError)
+
+def a2s(a, z0=50):
+    '''
+    convert abcd parameters to s parameters
+
+    Parameters
+    ------------
+    a : complex array-like
+        abcd parameters
+    z0 : complex array-like or number
+        port impedances
+
+    Returns
+    ---------
+    s : complex array-like
+        abcd parameters
+
+    '''
+
+    return z2s(a2z(a), z0)
+
+
+def a2z(a):
+    '''
+    Converts abcd parameters to z parameters [#]_ .
+
+
+    Parameters
+    -----------
+    a : :class:`numpy.ndarray` (shape fx2x2)
+        abcd parameter matrix
+
+    Returns
+    -------
+    z : numpy.ndarray
+        impedance parameters
+
+    See Also
+    ---------
+    inv : calculates inverse s-parameters
+
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
+    y2z
+    y2z
+    t2s
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+
+    References
+    -----------
+    .. [#] https://en.wikipedia.org/wiki/Two-port_network
+    '''
+
+    return z2a(a)
 
 def z2a(z):
     '''
