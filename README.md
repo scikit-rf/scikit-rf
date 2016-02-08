@@ -16,6 +16,5 @@ flexible and scalable.
 
 
 ## Join the **scikit-rf** team!
-Make three PR's and we'll mail you a sweet scikit-rf shirt! 
 
 ![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
