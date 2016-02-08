@@ -34,7 +34,7 @@ Functions
 from pylab import linspace, gca,plot, autoscale
 from numpy import pi
 import numpy as npy
-from numpy import fft, shape # used to center attribute `t` at 0
+from numpy import fft, shape, gradient# used to center attribute `t` at 0
 import re
 from .util import slice_domain,find_nearest_index
 #from .constants import ZERO
@@ -341,14 +341,20 @@ class Frequency(object):
     @property
     def step(self):
         '''
-        the inter-frequency step size
+        the inter-frequency step size (in hz) for evenly-spaced 
+        frequency sweeps
+        
+        see `df` for general case
         '''
         return self.span/(self.npoints-1.)
     
     @property
     def step_scaled(self):
         '''
-        the inter-frequency step size in
+        the inter-frequency step size (in self.unit) for evenly-spaced
+        frequency sweeps
+        
+        see `df` for general case
         '''
         return self.span_scaled/(self.npoints-1.)
     
@@ -391,7 +397,8 @@ class Frequency(object):
         '''
         self._f = npy.array(new_f)
 
-
+    
+    
     @property
     def f_scaled(self):
         '''
@@ -428,6 +435,25 @@ class Frequency(object):
         '''
         return 2*pi*self.f
 
+    @property 
+    def df(self):
+        '''
+        the gradient of the frequency vector (in hz)
+        '''
+        return gradient(self.f)
+    @property 
+    def df_scaled(self):
+        '''
+        the gradient of the frequency vector (in self.unit)
+        '''
+        return gradient(self.f_scaled)
+    @property 
+    def dw(self):
+        '''
+        the gradient of the frequency vector (in radians)
+        '''
+        return gradient(self.w)
+    
     @property
     def unit(self):
         '''

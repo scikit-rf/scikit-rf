@@ -49,7 +49,7 @@ class DistributedCircuit(Media):
     ----------
     if C,I,R,G are vectors they should be the same length
     
-        :class:`DistributedCircuit` is `Media` object representing a 
+    :class:`DistributedCircuit` is `Media` object representing a 
     transmission line mode defined in terms of  distributed impedance
     and admittance values. 
 

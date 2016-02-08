@@ -1497,21 +1497,23 @@ class Network(object):
         Defined as the derivative of the unwrapped s-parameter phase 
         (in rad) with respect to the frequency. 
         
-        -d(self.s_rad_unwrap)/d(self.frequency.f)
+        -d(self.s_rad_unwrap)/d(self.frequency.w)
         
         
         https://en.wikipedia.org/wiki/Group_delay_and_phase_delay
         '''
 
         phi = self.s_rad_unwrap
-        dw = gradient(self.frequency.w)
+        dphi = gradient(phi.squeeze())
+        dw = self.frequency.dw
         dw = dw.reshape([-1,1,1])*ones(shape(self.s)) # make shapes work
-        gd = gradient(phi.squeeze(),dw.squeeze()) # squeeze if dims are 1
+        gd = dphi.squeeze()/dw.squeeze() # squeeze if dims are 1
         
         if self.nports >1:
             gd = gd[0] # return gradient along frequency axis
         else:
             gd = gd.reshape(-1,1,1) # keep shape consistent with s,z,etc
+        
         return gd*-1.0
 
     ## NETWORK CLASIFIERs

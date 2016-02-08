@@ -551,7 +551,7 @@ class NetworkSet(object):
         return NetworkSet( [ntwk.inv for ntwk in self.ntwk_set])
 
     def animate(self, attr='s_deg',ylims=(-5,5),xlims = None, show=True,
-        savefigs =False, *args, **kwargs ):
+        savefigs =False, dir_='.',*args, **kwargs ):
         '''
         animate a property of the networkset
 
@@ -579,6 +579,14 @@ class NetworkSet(object):
         --------
         using `label=None` will speed up animation significantly,
         because it prevents the legend from drawing
+        
+        to create video paste this:
+        
+            !avconv -r 10 -i out_%5d.png  -vcodec huffyuv out.avi
+        
+        or (depending on your ffmpeg version) 
+            
+            !ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi
 
         Examples
         ------------
@@ -604,11 +612,12 @@ class NetworkSet(object):
             if show:
                 plb.show()
             if savefigs:
-                plb.savefig('out_%.5i'%idx+'.png')
-                print(('out_%.5i'%idx+'.png'))
+                fname = os.path.join(dir_, 'out_%.5i'%idx+'.png')
+                plb.savefig(fname)
+                
 
         if savefigs:
-            print('\nto create video paste this:\n\n!ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi\n')
+            print('\n\n')
         if was_interactive:
             plb.ion()
 
@@ -1110,8 +1119,8 @@ class NetworkSet(object):
             y_min = mpl_times[-1]
         
         else:
-            y_min =  0
-            y_max =  len(self)
+            y_min =  len(self)
+            y_max =  0
             
         # creates x and y scales
         freq = self[0].frequency
