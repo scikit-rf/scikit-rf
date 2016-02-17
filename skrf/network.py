@@ -2361,54 +2361,71 @@ class Network(object):
 
         return windowed
 
-    def time_gate(self, t_start, t_stop=None, window = ('kaiser',6)):
+    def time_gate(self, start=None, stop=None, center=None, span=None,
+                  window = ('kaiser',6)):
         '''
         Time-gate s-parameters
 
-        The gate can be defined with start/stop times, or by the gate 
-        width. If `t_stop` is None, the it will default to -`t_start`. 
-        In this case `t_start`== gate width/2
-        See Warning!
+        The gate can be defined with start/stop times, or by 
+        center/span. all times are in units of nanoseconds. common 
+        windows are:
+         * ('kaiser', 6)
+         * 'hamming'
+         * 'boxcar'  
 
         Parameters
         ------------
-        t_start : number
-            start of time gate, (s). Or, if t_stop==None, then it is 
-            1/2*gate width.
-        t_stop : number
-            stop of time gate (s), if None  will be -t_start.
-
+        start : number, or None
+            start of time gate, (ns). 
+        stop : number, or None
+            stop of time gate (ns). 
+        center : number, or None
+            center of time gate, (ns). 
+        span : number, or None
+            span of time gate, (ns). 
+        
+        window : string, float, or tuple 
+            passed to `window` arg of `scipy.signal.get_window`
+        
         Returns
         --------
         ntwk : Network
             copy of self with time-gated s-parameters
 
         .. warning::
-            This is not fully tested, and doesnt appear to be preserve power
-            correctly
+            Power is lost on the band edges due to properties of FFT. 
+            we do not re-normalize anything
 
 
         '''
-        if t_stop is None:
-            t_stop = -1*t_start
         
-        if t_start >t_stop:
-            t_start *=-1
-            t_stop *=-1
+        if start is not None and stop is not None:
+            start *=1e-9
+            stop *= 1e-9
+            
+        elif center is not None and span is not None:
+            center *=1e-9
+            span *= 1e-9
+            start = center -span/2.
+            stop = center +span/2.
+        
+        else:
+            raise ValueError('must provide either start/stop or center/span')
+        
         
         # find start/stop gate indecies
         t = self.frequency.t
-        t_start_idx = find_nearest_index(t,t_start)
-        t_stop_idx  = find_nearest_index(t,t_stop)
+        start_idx = find_nearest_index(t,start)
+        stop_idx  = find_nearest_index(t,stop)
 
         # create window
-        window_width = abs(t_stop_idx-t_start_idx)
+        window_width = abs(stop_idx-start_idx)
         window = signal.get_window(window, window_width)
         
         # create the gate by padding the window with zeros
-        padded_window = npy.r_[npy.zeros(t_start_idx),
+        padded_window = npy.r_[npy.zeros(start_idx),
                                window,
-                               npy.zeros(len(t)-t_stop_idx)]
+                               npy.zeros(len(t)-stop_idx)]
         
         # reshape the gate array so it operates on all s-parameters
         padded_window = padded_window.reshape(-1,1,1) *\

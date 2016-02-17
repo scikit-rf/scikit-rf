@@ -218,17 +218,26 @@ class Media(object):
         where:
         * :math:`\\omega` is angular frequency (rad/s),
         * :math:`\\gamma` is complex propagation constant (rad/m)
+    
+        Notes
+        -----
+        the `j` is used to make propgation real, this is needed  because 
+        skrf defined the gamma as \\gamma= \\alpha +j\\beta.
+        
+    
+        References 
+        -------------
+        https://en.wikipedia.org/wiki/Group_velocity
 
         See Also
         -----------
         propgation_constant
         v_p
         '''
+        dw = self.frequency.dw
+        dk = gradient(self.gamma)
 
-        dw = npy.diff(self.frequency.w)
-        dk = npy.diff(self.gamma)
-
-        return 1j*dw/dk
+        return dw/dk
 
 
     def get_array_of(self,x):
