@@ -4133,7 +4133,7 @@ def z2a(z):
         ]).transpose()
     return abcd
 
-def s2a(s,z0):
+def s2a(s,z0=50):
     '''
     Converts scattering parameters to abcd  parameters [#]_ .
 
