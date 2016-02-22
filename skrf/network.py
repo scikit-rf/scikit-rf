@@ -147,6 +147,7 @@ except ImportError:
     import pickle as pickle
     from pickle import UnpicklingError
 
+import warnings
 from copy import deepcopy as copy
 import re
 from numbers import Number
@@ -2009,12 +2010,18 @@ class Network(object):
         return network_2_dataframe(self, *args, **kwargs)
 
     # interpolation
-    def interpolate(self, new_frequency,**kwargs):
+    def interpolate(self, freq_or_n, basis='s',coords='cart', 
+                    f_kwargs={},**kwargs):
         '''
-        Return an interpolated network, from a new :class:'~skrf.frequency.Frequency'.
-
-        Interpolate the networks s-parameters linearly in real and
-        imaginary components. Other interpolation types can be used
+        Interpolate a Network allong frequency axis 
+        
+        The input 'freq_or_n` can be either a new
+        :class:`~skrf.frequency.Frequency` or an `int`, or a new 
+        frequency vector (in hz).
+        
+        This interpolates the real and imaginary components  in a given
+        `basis`, ie s,z,y,etc.Different interpolation types 
+        ('linear', 'quadratic') can be used
         by passing appropriate `\*\*kwargs`. This function `returns` an
         interpolated Network. Alternatively :func:`~Network.interpolate_self`
         will interpolate self.
@@ -2022,15 +2029,28 @@ class Network(object):
 
         Parameters
         -----------
-        new_frequency : :class:`~skrf.frequency.Frequency`
-            frequency information to interpolate
+        freq_or_n : :class:`~skrf.frequency.Frequency` or int or listlike
+            The new frequency over which to interpolate. this arg may be 
+            one of the following 
+              * a new `Frequency` object 
+              * if an  int, the current frequency span is resampled linearly.
+              * if a listlike, then create its used to create a new frequency 
+                object using `Frequency.from_f`
+        basis : ['s','z','y','a'],etc
+            The network parameter to interpolate      
+        coords : ['cart','polar']
+            coordinate system to use for interpolation. 
+             * 'cart' is cartesian is Re/Im
+             * 'polar' is unwrapped phase/mag
+            
         **kwargs : keyword arguments
-            passed to :func:`scipy.interpolate.interp1d` initializer.
+            passed to :func:`scipy.interpolate.interp1d` initializer. 
+            `kind` controls interpolation type
 
         Returns
         ----------
         result : :class:`Network`
-                an interpolated Network
+            an interpolated Network
 
         Notes
         --------
@@ -2064,23 +2084,49 @@ class Network(object):
             In [21]: n.interpolate(new_freq, kind = 'cubic')
 
         '''
-        # create interpolation objects
-        interpolation_s_re = \
-            interp1d(self.frequency.f,self.s_re,axis=0,**kwargs)
-        interpolation_s_im = \
-            interp1d(self.frequency.f,self.s_im,axis=0,**kwargs)
-        interpolation_z0_re = \
-            interp1d(self.frequency.f,self.z0.real,axis=0,**kwargs)
-        interpolation_z0_im = \
-            interp1d(self.frequency.f,self.z0.imag,axis=0,**kwargs)
-
-        # make new network and fill with interpolated s, and z0
+        # make new network and fill with interpolated values
         result = self.copy()
+        
+        # interpret input
+        dim =len(shape(freq_or_n))
+        if dim==0:
+            # input is a number
+            n = int(freq_or_n)
+            new_frequency = self.frequency.copy()
+            new_frequency.npoints = n
+        elif dim ==1:
+            # input is a array, or list 
+            new_frequency = Frequency.from_f(freq_or_n,**f_kwargs)
+        else:
+            # input is a frequency object
+            new_frequency = freq_or_n
+        
+        # set new frequency and pull some variables
         result.frequency = new_frequency
-        result.s = interpolation_s_re(new_frequency.f) +\
-            1j*interpolation_s_im(new_frequency.f)
-        result.z0 = interpolation_z0_re(new_frequency.f) +\
-            1j*interpolation_z0_im(new_frequency.f)
+        f = self.frequency.f
+        f_new = new_frequency.f
+        
+        # interpolate z0  ( this must happen first, because its needed
+        # to compute the basis tranform below (like y2s), if basis!='s')
+        interp_z0_re = interp1d(f, self.z0.real,axis=0,**kwargs)
+        interp_z0_im = interp1d(f, self.z0.imag,axis=0,**kwargs)
+        result.z0 = interp_z0_re(f_new) +1j*interp_z0_im(f_new)
+        
+        # interpolate  parameter for a given basis
+        x = self.__getattribute__(basis)
+        if coords =='cart':
+            interp_re = interp1d(f,x.real,axis=0,**kwargs)
+            interp_im = interp1d(f,x.imag,axis=0,**kwargs)
+            result.__setattr__(basis, interp_re(f_new) +1j*interp_im(f_new))
+        
+        elif coords == 'polar':
+            rad = npy.unwrap(npy.angle(x), axis=0)
+            mag = npy.abs(x)
+            interp_rad = interp1d(f,rad,axis=0,**kwargs)
+            interp_mag = interp1d(f,mag,axis=0,**kwargs)
+            x_new = interp_mag(f_new)*npy.exp(1j*interp_rad(f_new))
+            result.__setattr__(basis, x_new)
+
 
         return result
 
@@ -2126,14 +2172,12 @@ class Network(object):
             In [21]: n
 
         '''
+        warnings.warn('Use interpolate_self', DeprecationWarning)
         new_frequency = self.frequency.copy()
         new_frequency.npoints = npoints
         self.interpolate_self(new_frequency, **kwargs)
 
-    ##convenience
-    resample = interpolate_self_npoints
-
-    def interpolate_self(self, new_frequency, **kwargs):
+    def interpolate_self(self, freq_or_n, **kwargs):
         '''
         Interpolates s-parameters given a new
 
@@ -2154,8 +2198,10 @@ class Network(object):
         interpolate
         interpolate_from_f
         '''
-        ntwk = self.interpolate(new_frequency, **kwargs)
+        ntwk = self.interpolate(freq_or_n, **kwargs)
         self.frequency, self.s,self.z0 = ntwk.frequency, ntwk.s,ntwk.z0
+    ##convenience
+    resample = interpolate_self
 
     def interpolate_from_f(self, f, interp_kwargs={}, **kwargs):
         '''
@@ -2194,8 +2240,11 @@ class Network(object):
 
 
         '''
-        freq = Frequency.from_f(f,**kwargs)
-        self.interpolate_self(freq, **interp_kwargs)
+        warnings.warn('Use interpolate', DeprecationWarning)
+        return self.interpolate(freq_or_n = f,f_kwargs=kwargs, 
+                                **interp_kwargs) 
+        #freq = Frequency.from_f(f,**kwargs)
+        #self.interpolate_self(freq, **interp_kwargs)
 
     def crop(self, f_start, f_stop):
         '''
@@ -2362,7 +2411,7 @@ class Network(object):
         return windowed
 
     def time_gate(self, start=None, stop=None, center=None, span=None,
-                  window = ('kaiser',6)):
+                  mode='bandpass', window = ('kaiser',6)):
         '''
         Time-gate s-parameters
 
@@ -2370,8 +2419,9 @@ class Network(object):
         center/span. all times are in units of nanoseconds. common 
         windows are:
          * ('kaiser', 6)
+         * 6 # integers are interpreted as kaiser beta-values
          * 'hamming'
-         * 'boxcar'  
+         * 'boxcar'  # a staightup rect
 
         Parameters
         ------------
@@ -2383,9 +2433,14 @@ class Network(object):
             center of time gate, (ns). 
         span : number, or None
             span of time gate, (ns). 
-        
+        mode: ['bandpass','bandstop']
         window : string, float, or tuple 
             passed to `window` arg of `scipy.signal.get_window`
+        
+        Notes
+        ------
+        You cant gate things that are 'behind' strong reflections. This 
+        is due to the multiple reflections that occur. 
         
         Returns
         --------
@@ -2393,8 +2448,9 @@ class Network(object):
             copy of self with time-gated s-parameters
 
         .. warning::
-            Power is lost on the band edges due to properties of FFT. 
-            we do not re-normalize anything
+            Depending on sharpness of the gate, the  band edges may be 
+            inaccurate, due to properties of FFT. We do not re-normalize
+            anything.
 
 
         '''
@@ -2426,7 +2482,9 @@ class Network(object):
         padded_window = npy.r_[npy.zeros(start_idx),
                                window,
                                npy.zeros(len(t)-stop_idx)]
-        
+            
+        if mode == 'bandstop':
+            padded_window=1- padded_window 
         # reshape the gate array so it operates on all s-parameters
         padded_window = padded_window.reshape(-1,1,1) *\
                         npy.ones((len(self), self.nports, self.nports))
