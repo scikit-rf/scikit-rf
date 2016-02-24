@@ -56,7 +56,6 @@ Interpolation and Concatenation Along Frequency Axis
     Network.resample
     Network.interpolate
     Network.interpolate_self
-    Network.interpolate_from_f
 
 Combining Networks
 ===================================
@@ -2019,13 +2018,12 @@ class Network(object):
         :class:`~skrf.frequency.Frequency` or an `int`, or a new 
         frequency vector (in hz).
         
-        This interpolates the real and imaginary components  in a given
-        `basis`, ie s,z,y,etc.Different interpolation types 
-        ('linear', 'quadratic') can be used
+        This interpolates  a given `basis`, ie s, z, y, etc, in the 
+        coordinate system defined by `coord` like polar or cartesian. 
+         Different interpolation types ('linear', 'quadratic') can be used
         by passing appropriate `\*\*kwargs`. This function `returns` an
         interpolated Network. Alternatively :func:`~Network.interpolate_self`
-        will interpolate self.
-
+        will interpolate self. 
 
         Parameters
         -----------
@@ -2054,6 +2052,10 @@ class Network(object):
 
         Notes
         --------
+        The interpolation cordinate system (`coords`)  makes  a big 
+        difference for large ammounts of inerpolation. polar works well
+        for duts with slowly changing magnitude. try them all. 
+        
         See  :func:`scipy.interpolate.interpolate.interp1d` for useful
         kwargs. For example
             **kind** : str or int
@@ -2061,6 +2063,7 @@ class Network(object):
                 'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
                 as an integer specifying the order of the spline
                 interpolator to use.
+            
 
         See Also
         ----------
@@ -2088,18 +2091,22 @@ class Network(object):
         result = self.copy()
         
         # interpret input
-        dim =len(shape(freq_or_n))
-        if dim==0:
-            # input is a number
-            n = int(freq_or_n)
-            new_frequency = self.frequency.copy()
-            new_frequency.npoints = n
-        elif dim ==1:
-            # input is a array, or list 
-            new_frequency = Frequency.from_f(freq_or_n,**f_kwargs)
-        else:
+        if isinstance(freq_or_n,Frequency):
             # input is a frequency object
             new_frequency = freq_or_n
+        
+        else:
+            dim =len(shape(freq_or_n))
+            if dim==0:
+                # input is a number
+                n = int(freq_or_n)
+                new_frequency = self.frequency.copy()
+                new_frequency.npoints = n
+            elif dim ==1:
+                # input is a array, or list 
+                new_frequency = Frequency.from_f(freq_or_n,**f_kwargs)
+        
+            
         
         # set new frequency and pull some variables
         result.frequency = new_frequency
@@ -2494,6 +2501,7 @@ class Network(object):
         s_time = fft.ifftshift(fft.ifft(self.s, axis=0), axes=0)
         s_time_windowed = self.s_time*padded_window
         s_freq = fft.fft(fft.fftshift(s_time_windowed, axes=0), axis=0)
+                
         
         gated = self.copy()
         gated.s = s_freq

@@ -150,7 +150,7 @@ class Frequency(object):
 
         Parameters
         -----------
-        key : str, orslice
+        key : str, or slice
             if int; then it is interpreted as the index of the frequency
             if str, then should be like '50.1-75.5ghz', or just '50'.
             If the frequency unit is omited then self.frequency.unit is
@@ -165,7 +165,9 @@ class Frequency(object):
 
         output = self.copy()
 
+       
         if isinstance(key, str):
+           
             # they passed a string try and do some interpretation
             re_numbers = re.compile('.*\d')
             re_hyphen = re.compile('\s*-\s*')
@@ -198,7 +200,7 @@ class Frequency(object):
 
 
         output.f = npy.array(output.f[key]).reshape(-1)
-
+        
         return output
 
 
