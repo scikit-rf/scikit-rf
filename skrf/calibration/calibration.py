@@ -956,7 +956,7 @@ class Calibration(object):
         Calibration.residual_networks
         '''
 
-        NetworkSet(self.caled_ntwks).__getattribute__('plot_'+attr)(**kwargs)
+        NetworkSet(self.residual_ntwks).__getattribute__('plot_'+attr)(**kwargs)
 
     def write(self, file=None,  *args, **kwargs):
         '''
