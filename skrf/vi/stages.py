@@ -15,10 +15,11 @@ Stages  (:mod:`skrf.vi.stages`)
 '''
 from time import sleep
 import numpy as npy
-from visa import GpibInstrument
+
+from . ivihack import Driver
 
 
-class ESP300(GpibInstrument):
+class ESP300(Driver):
     '''
     Newport Universal Motion Controller/Driver Model ESP300
 
@@ -64,7 +65,12 @@ class ESP300(GpibInstrument):
             passed to GpibInstrument initializer
         '''
 
-        GpibInstrument.__init__(self,address,**kwargs)
+        if isinstance(address,int):
+            resource = 'GPIB::%i::INSTR'%address
+        else:
+            resource = address
+
+        Driver.__init__(self,resource = resource, **kwargs)
         self.current_axis = current_axis
         self.always_wait_for_stop = always_wait_for_stop
         self.delay=delay

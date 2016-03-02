@@ -62,10 +62,10 @@ Special Functions
 
 '''
 import numpy as npy
-from numpy import pi,angle,unwrap
+from numpy import pi,angle,unwrap, real, imag, array
 from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
-
+from scipy.interpolate import interp1d
 
 global LOG_OF_NEG
 LOG_OF_NEG = -100
@@ -416,6 +416,31 @@ def cross_ratio(a,b,c,d):
 
     '''
     return ((a-b)*(c-d))/((a-d)*(c-b))
+
+
+
+
+    
+
+def complexify(f, name=None):
+    '''
+    make  f(scalar)  into f(complex)
+    
+    if the real/imag arguments are not first, then you may specify the
+    name given to them as kwargs.
+    '''
+    
+        
+    def f_c(z, *args, **kw):
+        if name is not None:
+            kw_re= {name:real(z)}
+            kw_im= {name:imag(z)}
+            kw_re.update(kw)
+            kw_im.update(kw)
+            return f(*args, **kw_re)+ 1j*f(*args, **kw_im)
+        else:
+            return f(real(z), *args,**kw)+ 1j*f(imag(z), *args, **kw)
+    return f_c
 
 
 

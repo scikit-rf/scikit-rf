@@ -1,0 +1,60 @@
+package:
+    name: scikit-rf
+    version: {{ environ.get('GIT_DESCRIBE_TAG', '').replace('.dev', 'dev') }}
+
+build:
+    number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}
+
+source:
+    git_url: ../
+
+
+requirements:
+  build:
+    - python
+    - pandas
+    - setuptools
+    - ipython
+    - numpy
+    - scipy
+    - matplotlib
+    - mock
+    - nose
+
+  run:
+    - python
+    - ipython
+    - numpy
+    - scipy
+    - matplotlib
+    - pandas
+
+test:
+  # Python imports
+  imports:
+    - skrf
+    - skrf.calibration
+    - skrf.data
+    - skrf.io
+    - skrf.media
+
+  # commands:
+    # You can put test commands to be run here.  Use this to test that the
+    # entry points work.
+
+
+  # You can also put a file called run_test.py in the recipe that will be run
+  # at test time.
+
+  # requires:
+    # Put any additional test requirements here.  For example
+    # - nose
+
+about:
+  home: http://www.scikit-rf.org
+  license: new BSD
+  summary: 'Object Oriented Microwave Engineering'
+
+# See
+# http://docs.continuum.io/conda/build.html for
+# more information about meta.yaml

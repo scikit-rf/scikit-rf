@@ -20,6 +20,7 @@ from skrf.networkSet import NetworkSet
 global NPTS  
 NPTS = 1
 
+WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
 
 class CalibrationTest(object):
     '''
@@ -79,7 +80,7 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
     '''
     def setUp(self):
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg = self.wg
                 
         self.E = wg.random(n_ports =2, name = 'E')
@@ -125,7 +126,7 @@ class SDDLTest(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg = self.wg
         
         self.E = wg.random(n_ports =2, name = 'E')
@@ -188,7 +189,7 @@ class SDDLWeikle(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg = self.wg
         self.E = wg.random(n_ports =2, name = 'E')
         #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
@@ -228,7 +229,7 @@ class SDDMTest(OnePortTest):
     def setUp(self):
         
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg = self.wg
         
         self.E = wg.random(n_ports =2, name = 'E')
@@ -258,19 +259,22 @@ class SDDMTest(OnePortTest):
     
     def test_from_coefs_ntwks(self):
         raise SkipTest('not applicable ')
-    
+
+@SkipTest
 class PHNTest(OnePortTest):
     '''
     '''
     def setUp(self):
         
         self.n_ports = 1
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg = self.wg
         
         self.E = wg.random(n_ports =2, name = 'E')
-        known1 = wg.short()#wg.load(0)#wg.random()
-        known2 = wg.load(rand() + rand()*1j) #wg.random()
+        known1 = wg.random()
+        known2 = wg.random()
+        #known1 = wg.short()
+        #known2 = wg.load(rand() + rand()*1j) 
         
         ideals = [
                 wg.delay_short( 45.,'deg',name='ideal ew'),
@@ -279,7 +283,7 @@ class PHNTest(OnePortTest):
                 known2,
                 ]
         actuals = [
-                wg.delay_short( 20.,'deg',name='true ew'),
+                wg.delay_short( 33.,'deg',name='true ew'),
                 wg.delay_short( 110.,'deg',name='true qw'),
                 known1,
                 known2,
@@ -296,6 +300,7 @@ class PHNTest(OnePortTest):
         
     def test_determine_ideals(self):
         self.cal.run()
+        
         self.assertEqual(self.actuals[0], self.cal.ideals[0])
         self.assertEqual(self.actuals[1], self.cal.ideals[1])
             
@@ -307,7 +312,7 @@ class PHNTest(OnePortTest):
 class EightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg =WG
         wg= self.wg
         
         
@@ -398,7 +403,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
 class TRLTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg= self.wg
         
         
@@ -443,7 +448,7 @@ class TRLTest(EightTermTest):
 class TRLWithNoIdealsTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg= self.wg
         
         
@@ -485,7 +490,7 @@ class TRLWithNoIdealsTest(EightTermTest):
 class TRLMultiline(EightTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg= self.wg
         
         
@@ -533,7 +538,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         raise SkipTest()
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg= self.wg
         
         
@@ -608,7 +613,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
     '''
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg  = self.wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Xr = wg.random(n_ports =2, name = 'Xr')
@@ -733,7 +738,7 @@ class TwelveTermSloppyInitTest(TwelveTermTest):
     '''
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg  = self.wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Xr = wg.random(n_ports =2, name = 'Xr')
@@ -772,7 +777,7 @@ class TwelveTermSloppyInitTest(TwelveTermTest):
 class SOLTTest(TwelveTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg  = self.wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Xr = wg.random(n_ports =2, name = 'Xr')
@@ -804,7 +809,7 @@ class SOLTTest(TwelveTermTest):
 class TwoPortOnePathTest(TwelveTermTest):
     def setUp(self):
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg =WG
         wg  = self.wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Yf = wg.random(n_ports =2, name='Yf')
@@ -886,7 +891,7 @@ class UnknownThruTest(EightTermTest):
     def setUp(self):
         
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg= self.wg 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
@@ -921,7 +926,7 @@ class MRCTest(EightTermTest):
     def setUp(self):
         
         self.n_ports = 2
-        self.wg = rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+        self.wg = WG
         wg= self.wg 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')

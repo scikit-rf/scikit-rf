@@ -37,7 +37,7 @@ NetworkSet Class
 
 import os
 from . network import average as network_average
-from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT, Y_LABEL_DICT
 
 from . import mathFunctions as mf
 import zipfile
@@ -45,6 +45,7 @@ from copy import deepcopy
 import warnings
 import numpy as npy
 import pylab as plb
+from util import now_string_2_dt
 # delayed imports due to circular dependencies
 # NetworkSet.from_dir : from io.general import read_all_networks
 
@@ -550,7 +551,7 @@ class NetworkSet(object):
         return NetworkSet( [ntwk.inv for ntwk in self.ntwk_set])
 
     def animate(self, attr='s_deg',ylims=(-5,5),xlims = None, show=True,
-        savefigs =False, *args, **kwargs ):
+        savefigs =False, dir_='.',*args, **kwargs ):
         '''
         animate a property of the networkset
 
@@ -578,6 +579,14 @@ class NetworkSet(object):
         --------
         using `label=None` will speed up animation significantly,
         because it prevents the legend from drawing
+        
+        to create video paste this:
+        
+            !avconv -r 10 -i out_%5d.png  -vcodec huffyuv out.avi
+        
+        or (depending on your ffmpeg version) 
+            
+            !ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi
 
         Examples
         ------------
@@ -603,11 +612,12 @@ class NetworkSet(object):
             if show:
                 plb.show()
             if savefigs:
-                plb.savefig('out_%.5i'%idx+'.png')
-                print(('out_%.5i'%idx+'.png'))
+                fname = os.path.join(dir_, 'out_%.5i'%idx+'.png')
+                plb.savefig(fname)
+                
 
         if savefigs:
-            print('\nto create video paste this:\n\n!ffmpeg -r 10 -i out_%5d.png  -vcodec huffyuv out.avi\n')
+            print('\n\n')
         if was_interactive:
             plb.ion()
 
@@ -765,11 +775,6 @@ class NetworkSet(object):
         for m in M:
             for n in N:
 
-
-                ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
-                        's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                        's_db':'Magnitude (dB)'}
-
                 ax = plb.gca()
 
                 ntwk_mean = self.__getattribute__('mean_'+attribute)
@@ -787,6 +792,11 @@ class NetworkSet(object):
                     upper_bound = ppf(upper_bound)
                     lower_bound = ppf(lower_bound)
                     lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+                    if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                        if attribute is 's_mag':
+                            attribute = 's_db'
+                        elif attribute is 's_time_mag':
+                            attribute = 's_time_db'
 
                 if type == 'shade':
                     ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
@@ -808,7 +818,7 @@ class NetworkSet(object):
                 else:
                     raise(ValueError('incorrect plot type'))
 
-                ax.set_ylabel(ylabel_dict.get(attribute,''))
+                ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
                 ax.axis('tight')
 
 
@@ -853,9 +863,6 @@ class NetworkSet(object):
                 similar.  uncertainty for wrapped phase blows up at +-pi.
 
         '''
-        ylabel_dict = {'s_mag':'Magnitude','s_deg':'Phase (deg)',
-                's_deg_unwrap':'Phase (deg)','s_deg_unwrapped':'Phase (deg)',
-                's_db':'Magnitude (dB)'}
 
         ax = plb.gca()
 
@@ -874,6 +881,11 @@ class NetworkSet(object):
             upper_bound = ppf(upper_bound)
             lower_bound = ppf(lower_bound)
             lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+            if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                if attribute is 's_mag':
+                    attribute = 's_db'
+                elif attribute is 's_time_mag':
+                    attribute = 's_time_db'
 
         if type == 'shade':
             ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
@@ -896,7 +908,7 @@ class NetworkSet(object):
         else:
             raise(ValueError('incorrect plot type'))
 
-        ax.set_ylabel(ylabel_dict.get(attribute,''))
+        ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
         ax.axis('tight')
 
 
@@ -1043,14 +1055,29 @@ class NetworkSet(object):
         if label_axis:
             plb.ylabel('Standard Deviation(dB)')
 
-    def signature(self,m=0,n=0,from_mean=False, operation='__sub__',
-        component='s_mag',vmax = None,  *args, **kwargs):
+    def datetime_index(self):
         '''
-        visualization of relative changes in a NetworkSet.
+        Create a datetime index from networks names 
+        
+        this is just:
+        
+        [rf.now_string_2_dt(k.name ) for k in self]
+        
+        
+        '''
+        return [now_string_2_dt(k.name ) for k in self]
+            
 
-        Creates a colored image representing the devation of each
-        Network from the from mean Network of the NetworkSet, vs
-        frequency.
+    def signature(self,m=0,n=0, component='s_mag', 
+                  vmax = None, vs_time=False, cbar_label=None,
+                  *args, **kwargs):
+        '''
+        Visualization of a NetworkSet.
+
+        Creates a colored image representing the some component
+        of each Network in the  NetworkSet, vs frequency.
+        
+         
 
 
         Parameters
@@ -1059,40 +1086,74 @@ class NetworkSet(object):
             first s-parameters index
         n : int
             second s-parameter index
-        from_mean : Boolean
-            calculate distance from mean if True. or distance from
-            first network in networkset if False.
-        operation : ['__sub__', '__div__'], ..
-            operation to apply between each network and the reference
-            network, which is either the mean, or the initial ntwk.
         component : ['s_mag','s_db','s_deg' ..]
-            scalar component of Network to plot on the imshow. should
+            scalar component of Network to visualize. should
             be a property of the Network object.
-
         vmax : number
             sets upper limit of colorbar, if None, will be set to
             3*mean of the magnitude of the complex difference
-        \*args,\*\*kwargs : arguments, keyword arguments
+        vs_time: Boolean
+            if True, then we assume each Network.name was made with 
+            rf.now_string, and we make the y-axis a datetime axis
+        cbar_label: String
+            label for the colorbar 
+        
+        \*args,\*\*kw : arguments, keyword arguments
             passed to :func:`~pylab.imshow`
 
 
         '''
-        if from_mean:
-            diff_set = self.__getattribute__(operation)(self.mean_s)
-        else:
-            diff_set = self.__getattribute__(operation)(self.ntwk_set[0])
-
-        sig = npy.array([diff_set[k].__getattribute__(component)[:,m,n] \
+        
+            
+        mat = npy.array([self[k].__getattribute__(component)[:,m,n] \
             for k in range(len(self))])
-        if vmax is None:
-            vmax == 3*sig.mean()
-        plb.imshow(sig, vmax = vmax, *args, **kwargs)
-        plb.axis('tight')
-        plb.ylabel('Network \#')
-        c_bar = plb.colorbar()
-        c_bar.set_label('Distance From Mean')
+        
+        #if vmax is None:
+        #    vmax = 3*mat.mean()
+        
+        if vs_time:
+            # create a datetime index
+            dt_idx = [now_string_2_dt(k.name ) for k in self]
+            mpl_times = plb.date2num(dt_idx)
+            y_max = mpl_times[0]
+            y_min = mpl_times[-1]
+        
+        else:
+            y_min =  len(self)
+            y_max =  0
+            
+        # creates x and y scales
+        freq = self[0].frequency
+        extent = [freq.f_scaled[0], freq.f_scaled[-1], y_min ,y_max]
+        
+        # set default imshow kwargs
+        kw ={'extent':extent,'aspect':'auto', 'interpolation':'nearest',
+            'vmax':vmax }
+        # update the users kwargs
+        kw.update(kwargs)
+        img = plb.imshow(mat, *args, **kw)
 
+        if vs_time:
+            ax =plb.gca()
+            ax.yaxis_date()
+            #date_format = plb.DateFormatter('%M:%S.%f')
+            #ax.yaxis.set_major_formatter(date_format)
+            #cbar.set_label('Magntidue (dB)')
+            plb.ylabel('Time')
+        else:
+            plb.ylabel('Network #')
+        
+        plb.grid(0)
+        freq.labelXAxis()
+        
+            
+        cbar = plb.colorbar()
+        if cbar_label is not None:
+            cbar.set_label(cbar_label)
 
+        return img
+        
+        
     # io
     def write(self, file=None,  *args, **kwargs):
         '''

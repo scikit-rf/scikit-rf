@@ -86,8 +86,14 @@ class NetworkTestCase(unittest.TestCase):
         b.frequency=(1,)
         b.s = npy.arange(16).reshape(4,4)
         b.z0 = npy.arange(4)+10
+        
         c=rf.connect(a,2,b,0,2)
         self.assertTrue((c.z0==[0,1,12,13]).all())
+        
+        d=rf.connect(a,0,b,0,3)
+        self.assertTrue((d.z0==[3,13]).all())
+        
+    
 
     def test_connect_fast(self):
         raise SkipTest('not supporting this function currently ')
@@ -144,7 +150,17 @@ class NetworkTestCase(unittest.TestCase):
         y = short.y
         a = react.y
 
+    def test_conversions(self):
+        #Converting to other format and back to S-parameters should return the original network
+        tinyfloat = 1e-12
+        for test_z0 in (50, 10, 90+10j, 4-100j):
+            for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3):
+                ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
 
+                self.assertTrue((abs(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
+                self.assertTrue((abs(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
+                self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
+                self.assertTrue((abs(rf.t2s(rf.s2t(ntwk.s))-ntwk.s) < tinyfloat).all())
 
     def test_yz(self):
         tinyfloat = 1e-12

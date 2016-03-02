@@ -34,7 +34,7 @@ ytick.major.size : 0
 grid.color : white
 grid.linestyle : -    # solid line
 
-figure.figsize      : 6, 4
+figure.figsize      : 8, 4
 figure.facecolor : white
 figure.edgecolor : 0.50
 figure.dpi          : 120      

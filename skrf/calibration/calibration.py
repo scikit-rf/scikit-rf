@@ -357,6 +357,40 @@ class Calibration(object):
 
         return (self.ideals.pop(std),  self.measured.pop(std))
 
+    def remove_and_cal(self, std):
+        '''
+        Remove a cal standard and correct it, returning correct and ideal
+        
+        This requires requires overdetermination. Useful in 
+        troubleshooting a calibration in which one standard is junk, but 
+        you dont know which. 
+        
+        Parameters
+        -------------
+        std : int or str
+            the integer of calibration standard to remove, or the name
+            of the ideal or measured calibration standard to remove.
+
+        Returns
+        ---------
+        ideal,corrected : tuple of skrf.Networks
+            the ideal and corrected networks which were removed out of the
+            calibration
+            
+        '''
+        measured, ideals = copy(self.measured), copy(self.ideals)
+        i,m  = self.pop(std)
+        self.run()
+        c = self.apply_cal(m)
+        self.measured = measured
+        self.ideals = ideals
+        self.run()
+        return c,i
+        
+        
+        
+        
+    
     @classmethod
     def from_coefs_ntwks(cls, coefs_ntwks, **kwargs):
         '''
@@ -1343,18 +1377,29 @@ class PHN(OnePort):
         for k in range(npts):
             p =  poly1d([A[k],B[k],C[k]])
             b1[k],b2[k] = p.r
+        
+        a1 = -(f*b1 + g)/(z*b1 + e)
+        a2 = -(f*b2 + g)/(z*b2 + e)
 
         # temporarily translate into s-parameters so make the root-choice
         #  choosing a root in impedance doesnt generally work for typical
         # calibration standards
         b1_s = z2s(b1.reshape(-1,1,1),1)
         b2_s = z2s(b2.reshape(-1,1,1),1)
+        a1_s = z2s(a1.reshape(-1,1,1),1)
+        a2_s = z2s(a2.reshape(-1,1,1),1)
+        
         b_guess = z2s(b.reshape(-1,1,1),1)
-        b_found_s = find_closest(b1_s,b2_s,b_guess)
-
-        b_found = s2z(b_found_s.reshape(-1,1,1),1).flatten()
-        a_found = -(f*b_found + g)/(z*b_found + e)
-
+        a_guess = z2s(a.reshape(-1,1,1),1)
+        
+        distance1 = abs(a1_s - a_guess) + abs(b1_s - b_guess)
+        distance2 = abs(a2_s - a_guess) + abs(b2_s - b_guess)
+        
+        
+        b_found = npy.where(distance1<distance2, b1, b2)
+        a_found = npy.where(distance1<distance2, a1, a2)
+        
+        
         self.ideals[0].s = z2s(a_found.reshape(-1,1,1),1)
         self.ideals[1].s = z2s(b_found.reshape(-1,1,1),1)
 
@@ -2767,7 +2812,6 @@ def determine_line(thru_m, line_m, line_approx=None):
     '''
 
     npts = len(thru_m)
-    one = npy.ones(npts)
     zero = npy.zeros(npts)
 
     if line_approx is None:
@@ -2780,22 +2824,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     # the eigen values of the matrix C, are equal to s12,s12^-1)
     # we need to choose the correct one
     w,v = linalg.eig(C.t)
-
     s12_0, s12_1 = w[:,0], w[:,1]
-
-    s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
-    
-    
-    fm = [ -1* npy.trace(npy.dot(thru_m.t[f], npy.linalg.inv(line_m.t[f]))) \
-        for f in list(range(npts))]
-    one = npy.ones(npts)
-    zero = npy.zeros(npts)
-    
-    roots_v = npy.frompyfunc( lambda x,y,z:npy.roots([x,y,z]),3,1 )
-    s12 = roots_v(one, fm, one)
-    s12_0 = npy.array([k[0]  for k in s12])
-    s12_1 = npy.array([k[1]  for k in s12])
-    
     s12 = find_correct_sign(s12_0, s12_1, line_approx.s[:,1,0])
     found_line = line_m.copy()
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose().reshape(-1,2,2)
@@ -3060,10 +3089,10 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
             #TODO: make this better and maybe have phase continuity
             # functionality
             tracking  = coefs['reflection tracking']
-            s12 = npy.sqrt(tracking)
-            s21 = npy.sqrt(tracking)
-            #s12 =  sqrt_phase_unwrap(tracking)
-            #s21 =  sqrt_phase_unwrap(tracking)
+            #s12 = npy.sqrt(tracking)
+            #s21 = npy.sqrt(tracking)
+            s12 =  sqrt_phase_unwrap(tracking)
+            s21 =  sqrt_phase_unwrap(tracking)
 
         else:
             s21 = coefs['reflection tracking']
