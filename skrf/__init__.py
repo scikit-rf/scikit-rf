@@ -27,12 +27,6 @@ from . import io
 from . import instances
 
 
-try:
-    import data
-except:
-    print('warning: data module didn\'t load. dont worry about it.')
-    pass
-
 # Import contents into current namespace for ease of calling
 from .frequency import *
 from .network import *
