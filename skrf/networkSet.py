@@ -45,7 +45,7 @@ from copy import deepcopy
 import warnings
 import numpy as npy
 import pylab as plb
-from util import now_string_2_dt
+from . util import now_string_2_dt
 # delayed imports due to circular dependencies
 # NetworkSet.from_dir : from io.general import read_all_networks
 
