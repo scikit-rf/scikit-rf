@@ -1503,19 +1503,18 @@ class Network(object):
         
         https://en.wikipedia.org/wiki/Group_delay_and_phase_delay
         '''
-
+        gd = self.s*0 # quick way to make a new array of correct shape
+        
         phi = self.s_rad_unwrap
-        dphi = gradient(phi.squeeze())
         dw = self.frequency.dw
-        dw = dw.reshape([-1,1,1])*ones(shape(self.s)) # make shapes work
-        gd = dphi.squeeze()/dw.squeeze() # squeeze if dims are 1
         
-        if self.nports >1:
-            gd = gd[0] # return gradient along frequency axis
-        else:
-            gd = gd.reshape(-1,1,1) # keep shape consistent with s,z,etc
         
-        return gd*-1.0
+        for m,n in self.port_tuples:
+            dphi = gradient(phi[:,m,n])
+            gd[:,m,n] = -dphi/dw
+                
+                
+        return gd
 
     ## NETWORK CLASIFIERs
     def is_reciprocal(self):
@@ -2373,7 +2372,7 @@ class Network(object):
         self.s[:,:,to_ports] = self.s[:,:,from_ports]  # renumber columns
         self.z0[:,to_ports] = self.z0[:,from_ports]
 
-    def windowed(self, window=('kaiser',6),  normalize = True):
+    def windowed(self, window=('kaiser',6),  normalize=True):
         '''
         Return a windowed version of s-matrix. Used in time-domain analysis.
 
@@ -2492,6 +2491,7 @@ class Network(object):
             
         if mode == 'bandstop':
             padded_window=1- padded_window 
+        
         # reshape the gate array so it operates on all s-parameters
         padded_window = padded_window.reshape(-1,1,1) *\
                         npy.ones((len(self), self.nports, self.nports))
@@ -2501,10 +2501,15 @@ class Network(object):
         s_time = fft.ifftshift(fft.ifft(self.s, axis=0), axes=0)
         s_time_windowed = self.s_time*padded_window
         s_freq = fft.fft(fft.fftshift(s_time_windowed, axes=0), axis=0)
+        
+        
                 
         
         gated = self.copy()
         gated.s = s_freq
+        
+        
+        
         return gated
 
     # plotting

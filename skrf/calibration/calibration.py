@@ -730,8 +730,9 @@ class Calibration(object):
         standards and their corresponding  corrected measurements.
 
         '''
-        return [ideal - caled for (ideal, caled) in zip(self.ideals, self.caled_ntwks)]
-
+        return [caled - ideal for (ideal, caled) in zip(self.ideals, self.caled_ntwks)]
+    
+    
     @property
     def residual_ntwk_sets(self):
         '''
