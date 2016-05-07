@@ -446,6 +446,14 @@ def complexify(f, name=None):
 
 # old functions just for reference
 def complex2Scalar(input):
+    '''
+    Serializes a list/arary of complex numbers
+    
+    
+    produces the following output for input list `x`
+    
+    x[0].real, x[0].imag, x[1].real, x[1].imag, etc
+    '''
     input= npy.array(input)
     output = []
     for k in input:
@@ -454,6 +462,9 @@ def complex2Scalar(input):
     return npy.array(output).flatten()
 
 def scalar2Complex(input):
+    '''
+    inverse of `complex2Scalar`
+    '''
     input= npy.array(input)
     output = []
 
@@ -464,6 +475,25 @@ def scalar2Complex(input):
 def complex2dB(complx):
     dB = 20 * npy.log10(npy.abs( (npy.real(complx) + 1j*npy.imag(complx) )))
     return dB
+
+def flatten_c_mat(s, order ='F'):
+    '''
+    take a 2D (mxn) complex matrix and serialize and flatten it
+    
+    by default (using order='F') this generates the following 
+    from a  2x2 
+    
+    [s11,s12;s21,s22]->[s11re,s11im,s21re,s12im, ...]
+    
+    Parameters
+    ------------
+    s : ndarray
+        input 2D array 
+    order : ['F','C']
+        order of flattening
+    '''
+    return complex2Scalar(s.flatten(order='F'))
+
 
 def complex2ReIm(complx):
     return npy.real(complx), npy.imag(complx)

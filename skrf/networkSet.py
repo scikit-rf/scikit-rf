@@ -512,8 +512,36 @@ class NetworkSet(object):
             return out[0]
         else:
             return out
+    
+    
+    def scalar_mat(self, param='s',order='F'):
+        '''
+        scalar ndarray representing `param` data vs freq and element idx
         
+        output is a 3d array with axes  (freq, ns_index, port/ri)
         
+        freq is frequency 
+        ns_index is  index of this networkset
+        ports is a flattened re/im components of port index (len =2*nports**2)
+        '''
+        ntwk=self[0]
+        nfreq = len(ntwk)
+        # x will have the axes ( frequency,observations, ports)
+        x = npy.array([[mf.flatten_c_mat(k.__getattribute__(param)[f]) \
+            for k in self] for f in range(nfreq)])
+            
+        return x
+
+
+    def cov(self, **kw):
+        '''
+        covariance matrix 
+        
+        shape of output  will be  (nfreq, 2*nports**2, 2*nports**2)
+        '''
+        smat=self.scalar_mat(**kw)
+        return npy.array([npy.cov(k.T) for k in smat])
+
         
     
     @property
