@@ -22,12 +22,13 @@ Characteristic Impedance              :math:`z_0`    :attr:`Z0`
 
 '''
 from scipy.constants import  epsilon_0, mu_0,pi,c
-from numpy import sqrt, exp, sinc
+from numpy import sqrt, exp, sinc,where
 import numpy as npy
 from .media import Media
 from ..data import materials
 from ..tlineFunctions import skin_depth
 
+from .freespace import Freespace
 
 class RectangularWaveguide(Media):
     '''
@@ -249,7 +250,11 @@ class RectangularWaveguide(Media):
         v = 1/sqrt(self.ep*self.mu)
         if not ( self.m==1 and self.n==0):
             print('f_cutoff not verified as correct for this mode ')
-        return max(self.m*v/(2*self.a), self.n*v/(2*self.b))
+        
+        if self.m/self.a > self.n/self.b: 
+            return self.m*v/(2*self.a)
+        else: 
+            return self.n*v/(2*self.b)
 
     @property
     def f_norm(self):
@@ -336,6 +341,23 @@ class RectangularWaveguide(Media):
 
 
         '''
+        
+        '''
+        ## haringtons form
+        if self.m==1 and self.n==0:
+            fs = Freespace(frequency=self.frequency, 
+                           ep_r=self.ep_r, 
+                           mu_r=self.mu_r)
+                           
+            
+            return where(self.f_norm>1.,
+                     sqrt(1-self.f_norm**(-2))*fs.gamma, # cutton
+                     -1j*sqrt(1-self.f_norm**(2))*fs.gamma)# cutoff
+        '''
+            
+            
+            
+        
         k0,kc = self.k0, self.kc
         return  1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
                 sqrt(abs(kc**2- k0**2))*(k0<kc) + \

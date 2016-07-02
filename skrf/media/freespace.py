@@ -79,8 +79,22 @@ class Freespace(DistributedCircuit, Media):
         self.angle = angle
         self.rho=rho
         
+    @classmethod
+    def from_distributed_circuit(cls,dc, *args, **kwargs):
+        '''
+        initialize a freespace  from media.DistributedCirctuit
+        '''
+        w = dc.frequency.w
+        z= dc.Z/(w*mu_0)
+        y= dc.Y/(w*epsilon_0)
         
-
+        # this is a reflection in vector 1+1j
+        kw={}
+        kw['ep_r'] = y.imag +y.real*1j
+        kw['mu_r'] = z.imag +z.real*1j
+        
+        kwargs.update(kw)
+        return cls(frequency=dc.frequency, *args, **kwargs)
 
     @property
     def R(self):

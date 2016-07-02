@@ -692,8 +692,11 @@ class Media(object):
                 the length of transmissin line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
-        z0 : number, or array-like
-                the characteristic impedance of the line (if different from self.z0)
+        z0 : number, string, or array-like
+                the characteristic impedance of the line, if different 
+                from self.z0. To set z0 in terms of normalized impedance,
+                pass a string, like `z0='1+.2j'`
+                
         embed : bool
                 if `Z0` is given, should the line be embedded in z0
                 environment? or left in a `z` environment. if embedded,
@@ -709,7 +712,8 @@ class Media(object):
 
         Examples
         ----------
-        >>> my_media.line(90, 'deg', z0=100)
+        >>> my_media.line(1, 'mm', z0=100)
+        >>> my_media.line(90,'deg',z0='2') # set z0 as normalized impedance
 
         '''
         

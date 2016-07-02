@@ -513,6 +513,32 @@ class NetworkSet(object):
         else:
             return out
     
+    def filter(self,s):
+        '''
+        filter networkset based on a string in Network.name
+        
+        Notes
+        -----
+        This is just 
+        
+        `NetworkSet([k for k in self if s in k.name])`
+        
+        
+        Parameters 
+        -------------
+        s: str
+            string contained in network elements to be filtered
+        
+        Returns
+        --------
+        ns : NetworkSet
+            
+            
+        Examples
+        -----------
+        >>> ns.filter('monday')
+        '''
+        return NetworkSet([k for k in self if s in k.name])
     
     def scalar_mat(self, param='s',order='F'):
         '''
