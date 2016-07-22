@@ -7,7 +7,7 @@ network (:mod:`skrf.network`)
 
 Provides a n-port network class and associated functions.
 
-Most of the functionality in this module is provided as methods and
+Much of the functionality in this module is provided as methods and
 properties of the :class:`Network` Class.
 
 
@@ -43,6 +43,7 @@ Connecting Networks
     cascade_list
     de_embed
     flip
+    
 
 
 Interpolation and Concatenation Along Frequency Axis
@@ -67,6 +68,7 @@ Combining Networks
     four_oneports_2_twoport
     three_twoports_2_threeport
     n_twoports_2_nport
+    concat_ports
 
 
 
@@ -3316,6 +3318,98 @@ def overlap(ntwkA, ntwkB):
     new_freq = ntwkA.frequency.overlap(ntwkB.frequency)
     return ntwkA.interpolate(new_freq),ntwkB.interpolate(new_freq)
 
+def concat_ports(ntwk_list, port_order='first', *args,**kw ):
+    '''
+    Concatenate networks along the port axis
+    
+    
+    Notes
+    -------
+    The `port_order` ='first', means front-to-back, while 
+    `port_oder`='second' means left-to-right. So, for example, when 
+    concating two 2-networks, `A` and `B`, the ports are ordered as follows: 
+    
+    'first'  
+        a0 o---o a1  ->   0 o---o 1
+        b0 o---o b1  ->   2 o---o 3
+    
+    'second'  
+        a0 o---o a1  ->   0 o---o 2
+        b0 o---o b1  ->   1 o---o 3
+    
+
+    use `Network.renumber` to change port ordering. 
+    
+    Parameters 
+    -----------
+    ntwk_list  : list of skrf.Networks
+        ntwks to concatenate
+    port_order : ['first', 'second']
+        if `len(ntwk_list)>2` then you dont want to use `second`.
+        this function calls itself recursively so renumbering should
+        be done at the end. 
+    
+    Examples
+    -----------
+    
+    >>>concat([ntwkA,ntwkB])
+    >>>concat([ntwkA,ntwkB,ntwkC,ntwkD], port_order='second')
+    
+    To put for lines in parallel
+    >>> from skrf import air 
+    >>> l1 = air.line(100, z0=[0,1])
+    >>> l2 = air.line(300, z0=[2,3])
+    >>> l3 = air.line(400, z0=[4,5])
+    >>> l4 = air.line(400, z0=[6,7])
+    >>> concat_ports([l1,l2,l3,l4], port_order='second')
+    
+    See Also
+    --------
+    `stitch`:  concatinate two networks along the frequency axis
+    `Network.renumber` : renumber ports 
+    '''
+    # if ntwk list is longer than 2, recursivly call myself 
+    # untill we are done
+    if len(ntwk_list)>2:
+        f = lambda x,y: concat_ports([x,y], port_order='first')
+        out =  reduce(f,ntwk_list)
+        # if we want to renumber ports, we have to wait
+        # untill after the recursives calls
+        if port_order =='second':
+            N = out.nports
+            old_order = range(N)
+            new_order =range(0,N,2)+range(1,N,2)
+            out.renumber(new_order , old_order)
+        return out
+    
+    
+    ntwkA, ntwkB = ntwk_list
+    
+    
+    if ntwkA.frequency != ntwkB.frequency:
+        raise ValueError('ntwks dont have matching frequencies')
+    A = ntwkA.s
+    B = ntwkB.s
+    
+    nf = A.shape[0]     # num frequency points
+    nA = A.shape[1]     # num ports on A
+    nB = B.shape[1]     # num ports on B
+    nC = nA + nB        # num ports on C
+
+    #create composite matrix, appending each sub-matrix diagonally
+    C = npy.zeros((nf, nC, nC), dtype='complex')
+    C[:, :nA, :nA] = A.copy()
+    C[:, nA:, nA:] = B.copy()
+
+    
+    ntwkC = ntwkA.copy()
+    ntwkC.s = C
+    ntwkC.z0 = npy.hstack([ntwkA.z0, ntwkB.z0])
+    if port_order =='second':
+        old_order = range(nC)
+        new_order =range(0,nC,2)+range(1,nC,2)
+        ntwkC.renumber(old_order, new_order)
+    return ntwkC
 
 def average(list_of_networks, polar = False):
     '''
@@ -3465,6 +3559,11 @@ def n_twoports_2_nport(ntwk_list,nports, offby=1, **kwargs):
     '''
     Builds a N-port Network from list of two-ports
 
+    This  method was made to reconstruct a n-port network from 2-port 
+    subnetworks as measured by a 2-port VNA. So, for example, given a 
+    3-port DUT, you  might measure the set p12.s2p, p23.s2p, p13.s2p.
+    From these measurements, you can construct p.s3p.
+    
     By default all entries of result.s are filled with 0's, in case  you
     dont fully specify the entire s-matrix of the resultant ntwk.
 
@@ -3483,6 +3582,10 @@ def n_twoports_2_nport(ntwk_list,nports, offby=1, **kwargs):
     ----------
     nport : n-port :class:`Network`
         result
+    
+    See Also
+    --------
+    `concat_ports` : concatenate ntwks along their ports
     '''
 
     frequency = ntwk_list[0].frequency

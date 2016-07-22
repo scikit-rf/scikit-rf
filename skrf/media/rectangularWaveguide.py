@@ -328,7 +328,7 @@ class RectangularWaveguide(Media):
 
         .. math::
 
-                k_z = \\pm \\sqrt {k_0^2 - k_c^2}
+                k_z = j \\pm \\sqrt {k_0^2 - k_c^2}
 
         This is.
                 * IMAGINARY for propagating modes
@@ -341,10 +341,8 @@ class RectangularWaveguide(Media):
 
 
         '''
-        
-        '''
         ## haringtons form
-        if self.m==1 and self.n==0:
+        if True:#self.m==1 and self.n==0:
             fs = Freespace(frequency=self.frequency, 
                            ep_r=self.ep_r, 
                            mu_r=self.mu_r)
@@ -352,12 +350,10 @@ class RectangularWaveguide(Media):
             
             return where(self.f_norm>1.,
                      sqrt(1-self.f_norm**(-2))*fs.gamma, # cutton
-                     -1j*sqrt(1-self.f_norm**(2))*fs.gamma)# cutoff
-        '''
-            
-            
-            
+                 -1j*sqrt(1-self.f_norm**(2))*fs.gamma)# cutoff
         
+        
+        # TODO:  fix this for lossy ep/mu (remove abs?)
         k0,kc = self.k0, self.kc
         return  1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
                 sqrt(abs(kc**2- k0**2))*(k0<kc) + \
