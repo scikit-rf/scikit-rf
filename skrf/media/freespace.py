@@ -17,7 +17,7 @@ the space's relative permittivity and relative permeability.
 '''
 import warnings
 from scipy.constants import  epsilon_0, mu_0
-from numpy import real, imag, cos, sqrt,tan,array
+from numpy import real, imag, cos, sqrt,tan,array, ones
 from .distributedCircuit import DistributedCircuit
 from .media import Media
 from ..data import materials
@@ -220,7 +220,7 @@ class Freespace(Media):
                 Characteristic Impedance in units of ohms
         '''
         ep = self.ep_with_rho
-        return sqrt(self.mu/ep)    
+        return sqrt(self.mu/ep)*ones(len(self))  
     
     def plot_ep(self):
         self.plot(self.ep_r.real, label=r'ep_r real')

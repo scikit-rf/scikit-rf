@@ -348,17 +348,22 @@ class RectangularWaveguide(Media):
                            mu_r=self.mu_r)
                            
             
-            return where(self.f_norm>1.,
+            g= where(self.f_norm>1.,
                      sqrt(1-self.f_norm**(-2))*fs.gamma, # cutton
                  -1j*sqrt(1-self.f_norm**(2))*fs.gamma)# cutoff
         
-        
-        # TODO:  fix this for lossy ep/mu (remove abs?)
-        k0,kc = self.k0, self.kc
-        return  1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
-                sqrt(abs(kc**2- k0**2))*(k0<kc) + \
-                0*(kc==k0) + self.alpha_c *(self.rho!=None)
+        else:
+            # TODO:  fix this for lossy ep/mu (remove abs?)
+            k0,kc = self.k0, self.kc
+            g=  1j*sqrt(abs(k0**2 - kc**2)) * (k0>kc) +\
+                    sqrt(abs(kc**2- k0**2))*(k0<kc) + \
+                    0*(kc==k0) 
 
+        g = g+ self.alpha_c *(self.rho!=None)
+        
+        return g 
+        
+        
     @property
     def alpha_c(self):
         '''
