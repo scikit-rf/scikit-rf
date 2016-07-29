@@ -2616,7 +2616,251 @@ class MRC(UnknownThru):
 
         self.coefs = coefs
 
-class LMR16(Calibration):
+class SixteenTerm(Calibration):
+    '''
+    16-Term calibration that solves for leakage between the ports.
+
+    There are several different combinations of calibration standards that can
+    be used. At least five two port measurements are needed. Using through, open,
+    short, and load standards some combinations result in singular matrix.
+    See [1] for list of non-singular combinations.
+
+    Effect of the switch is assumed to be already removed as the switch correction
+    used for 8 Term calibration fails when crosstalk is significant. [2]
+
+    References
+    -----------
+    [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
+    [2] M. Schramm, M. Hrobak, J. Schür and L. P. Schmidt, "A new switch correction method for a single-receiver VNA," Microwave Conference (EuMC), 2013 European, Nuremberg, 2013, pp. 444-447.
+    '''
+
+    family = 'SixteenTerm'
+    def __init__(self, measured, ideals,
+                 *args, **kwargs):
+        Calibration.__init__(self,
+            measured = measured,
+            ideals = ideals,
+            *args, **kwargs)
+
+    def run(self):
+        numStds = self.nstandards
+        numCoefs = 15
+
+
+        mList = [k.s  for k in self.measured]
+        iList = [k.s for k in self.ideals]
+
+        fLength = len(mList[0])
+        #initialize outputs
+        error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
+        residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
+        Q = npy.zeros((numStds*4, 15),dtype=complex)
+        M = npy.zeros((numStds*4, 1),dtype=complex)
+        # loop through frequencies and form m, a vectors and
+        # the matrix M.
+        #i[j,k] = Actual S-parameters
+        #m[j,k] = Measured S-parameters
+        #t15 is normalized to one
+        for f in list(range(fLength)):
+            # loop through standards and fill matrix
+            for k in list(range(numStds)):
+                m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
+                Q[k*4:k*4+4,:] = npy.array([\
+                        [ i[0,0], i[1,0], 0     , 0     , 1, 0, 0, 0, -m[0,0]*i[0,0], -m[0,0]*i[1,0], -m[0,1]*i[0,0], -m[0,1]*i[1,0], -m[0,0] , 0       , -m[0,1] ],\
+                        [ i[0,1], i[1,1], 0     , 0     , 0, 1, 0, 0, -m[0,0]*i[0,1], -m[0,0]*i[1,1], -m[0,1]*i[0,1], -m[0,1]*i[1,1], 0       , -m[0,0] , 0       ],\
+                        [ 0     , 0     , i[0,0], i[1,0], 0, 0, 1, 0, -m[1,0]*i[0,0], -m[1,0]*i[1,0], -m[1,1]*i[0,0], -m[1,1]*i[1,0], -m[1,0] , 0       , -m[1,1] ],\
+                        [ 0     , 0     , i[0,1], i[1,1], 0 ,0 ,0, 1, -m[1,0]*i[0,1], -m[1,0]*i[1,1], -m[1,1]*i[0,1], -m[1,1]*i[1,1], 0       , -m[1,0] , 0       ],\
+                        ])
+                #pdb.set_trace()
+                M[k*4:k*4+4,:] = npy.array([\
+                        [    0    ],\
+                        [ m[0,1]  ],\
+                        [    0    ],\
+                        [ m[1,1]  ],\
+                        ])
+
+            ## calculate least squares
+            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
+            ##if len (residualsTmp )==0:
+            ##       raise ValueError( 'matrix has singular values, check standards')
+
+
+            error_vector[f,:] = error_vector_at_f.flatten()
+            residuals[f,:] = residuals_at_f
+
+        e = error_vector
+
+        T1 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+        T2 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+        T3 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+        T4 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+
+        T1[:,0,0] = e[:,0]
+        T1[:,0,1] = e[:,1]
+        T1[:,1,0] = e[:,2]
+        T1[:,1,1] = e[:,3]
+
+        T2[:,0,0] = e[:,4]
+        T2[:,0,1] = e[:,5]
+        T2[:,1,0] = e[:,6]
+        T2[:,1,1] = e[:,7]
+
+        T3[:,0,0] = e[:,8]
+        T3[:,0,1] = e[:,9]
+        T3[:,1,0] = e[:,10]
+        T3[:,1,1] = e[:,11]
+
+        T4[:,0,0] = e[:,12]
+        T4[:,0,1] = e[:,13]
+        T4[:,1,0] = e[:,14]
+        T4[:,1,1] = npy.ones(e[:,0].shape)
+
+        # put the error vector into human readable dictionary
+        e1, e2, e3, e4 = self.E_matrices(T1, T2, T3, T4)
+
+        #TODO: Standard names for 16-term errors?
+        #FIXME: Coefficients are linearly dependent
+        #One of them should be removed
+
+        self._coefs = {\
+                'forward directivity':e1[:,0,0],
+                'reverse directivity':e1[:,1,1],
+                'forward source match':e4[:,0,0],
+                'reverse source match':e4[:,1,1],
+                'forward transmission tracking':e3[:,0,0],
+                'reverse transmission tracking':e3[:,1,1],
+                'forward reflection tracking':e2[:,0,0]*e3[:,0,0],
+                'reverse reflection tracking':e2[:,1,1]*e3[:,1,1],
+                'forward isolation':e1[:,1,0],
+                'reverse isolation':e1[:,0,1],
+                'a3 a1 isolation':e3[:,0,1],
+                'a0 a3 isolation':e3[:,1,0],
+                'b2 b0 isolation':e2[:,0,1],
+                'b1 b3 isolation':e2[:,1,0],
+                'b2 a1 isolation':e4[:,0,1],
+                'b1 a2 isolation':e4[:,1,0],
+                }
+
+
+        # output is a dictionary of information
+        self._output_from_run = {
+                'error vector':e,
+                'residuals':residuals
+                }
+
+        return None
+
+    def apply_cal(self, ntwk):
+        caled = ntwk.copy()
+        inv = linalg.inv
+
+        T1,T2,T3,T4 = self.T_matrices
+
+        for f in list(range(len(ntwk.s))):
+            t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+                            T4[f,:,:],ntwk.s[f,:,:]
+            caled.s[f,:,:] = inv(-1*m.dot(t3)+t1).dot(m.dot(t4)-t2)
+        return caled
+
+    def embed(self, ntwk):
+        '''
+        '''
+        embedded = ntwk.copy()
+        inv = linalg.inv
+
+        T1,T2,T3,T4 = self.T_matrices
+
+        for f in list(range(len(ntwk.s))):
+            t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+                            T4[f,:,:],ntwk.s[f,:,:]
+            embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
+
+        return embedded
+
+    @property
+    def T_matrices(self):
+        '''
+        Intermediate matrices used for embedding and de-embedding.
+
+        Returns
+        --------
+        T1,T2,T3,T4 : numpy ndarray
+
+        '''
+        ec = self.coefs
+        npoints = len(ec['forward directivity'])
+        inv = linalg.inv
+
+        e100 = ec['forward directivity']
+        e111 = ec['reverse directivity']
+        e400 = ec['forward source match']
+        e411 = ec['reverse source match']
+        e300 = ec['forward transmission tracking']
+        e311 = ec['reverse transmission tracking']
+        e200 = ec['forward reflection tracking']/e300
+        e211 = ec['reverse reflection tracking']/e311
+        e110 = ec['forward isolation']
+        e101 = ec['reverse isolation']
+        e301 = ec['a3 a1 isolation']
+        e310 = ec['a0 a3 isolation']
+        e201 = ec['b2 b0 isolation']
+        e210 = ec['b1 b3 isolation']
+        e401 = ec['b2 a1 isolation']
+        e410 = ec['b1 a2 isolation']
+
+        E1 = npy.array([\
+                [ e100 , e110], \
+                [ e101 , e111]])\
+                .transpose().reshape(-1,2,2)
+        E2 = npy.array([\
+                [ e200 , e210], \
+                [ e201 , e211]])\
+                .transpose().reshape(-1,2,2)
+        E3 = npy.array([\
+                [ e300 , e310], \
+                [ e301 , e311]])\
+                .transpose().reshape(-1,2,2)
+        E4 = npy.array([\
+                [ e400 , e410], \
+                [ e401 , e411]])\
+                .transpose().reshape(-1,2,2)
+
+        T1 = npy.zeros(E1.shape, dtype=npy.complex)
+        T2 = T1.copy()
+        T3 = T1.copy()
+        T4 = T1.copy()
+
+        invE3 = inv(E3)
+        for i in range(npoints):
+            T1[i] = E2[i] - E1[i].dot(invE3[i]).dot(E4[i])
+            T2[i] = E1[i].dot(invE3[i])
+            T3[i] = -invE3[i].dot(E4[i])
+            T4[i] = invE3[i]
+
+        return T1, T2, T3, T4
+
+    def E_matrices(self, T1, T2, T3, T4):
+        '''
+        Convert solved calibration T matrices to S-parameters.
+        '''
+
+        inv = linalg.inv
+
+        E1 = npy.zeros(T1.shape, dtype=npy.complex)
+        E2 = npy.zeros(T2.shape, dtype=npy.complex)
+        E3 = npy.zeros(T3.shape, dtype=npy.complex)
+        E4 = npy.zeros(T4.shape, dtype=npy.complex)
+
+        invT4 = inv(npy.array(T4))
+        for i in range(len(T1)):
+            E1[i] = T2[i].dot(invT4[i])
+            E2[i] = T1[i] - T2[i].dot(invT4[i]).dot(T3[i])
+            E3[i] = invT4[i]
+            E4[i] = -invT4[i].dot(T3[i])
+        return E1, E2, E3, E4
+
+
+class LMR16(SixteenTerm):
     '''
         16-Term self calibration for leaky VNA. Implementation is based on [1].
 
@@ -2834,119 +3078,6 @@ class LMR16(Calibration):
                 }
 
         return None
-
-    def apply_cal(self, ntwk):
-        '''
-        Apply the calibration to a measuremnt
-        '''
-        caled = ntwk.copy()
-        inv = linalg.inv
-
-        T1,T2,T3,T4 = self.T_matrices
-
-        for f in list(range(len(ntwk.s))):
-            t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
-                            T4[f,:,:],ntwk.s[f,:,:]
-            caled.s[f,:,:] = inv(t1-m.dot(t3)).dot(m.dot(t4)-t2)
-        return caled
-
-    def embed(self, ntwk):
-        '''
-        Embed an ideal response in the estimated error network
-        '''
-        embedded = ntwk.copy()
-        inv = linalg.inv
-
-        T1,T2,T3,T4 = self.T_matrices
-
-        for f in list(range(len(ntwk.s))):
-            t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
-                            T4[f,:,:],ntwk.s[f,:,:]
-            embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
-
-        return embedded
-
-    @property
-    def T_matrices(self):
-        '''
-        Intermediate matrices used for embedding and de-embedding.
-
-        Returns
-        --------
-        T1,T2,T3,T4 : numpy ndarray
-
-        '''
-        ec = self.coefs
-        npoints = len(ec['forward directivity'])
-        inv = linalg.inv
-
-        e100 = ec['forward directivity']
-        e111 = ec['reverse directivity']
-        e400 = ec['forward source match']
-        e411 = ec['reverse source match']
-        e300 = ec['forward transmission tracking']
-        e311 = ec['reverse transmission tracking']
-        e200 = ec['forward reflection tracking']/e300
-        e211 = ec['reverse reflection tracking']/e311
-        e110 = ec['forward isolation']
-        e101 = ec['reverse isolation']
-        e301 = ec['a3 a1 isolation']
-        e310 = ec['a0 a3 isolation']
-        e201 = ec['b2 b0 isolation']
-        e210 = ec['b1 b3 isolation']
-        e401 = ec['b2 a1 isolation']
-        e410 = ec['b1 a2 isolation']
-
-        E1 = npy.array([\
-                [ e100 , e110], \
-                [ e101 , e111]])\
-                .transpose().reshape(-1,2,2)
-        E2 = npy.array([\
-                [ e200 , e210], \
-                [ e201 , e211]])\
-                .transpose().reshape(-1,2,2)
-        E3 = npy.array([\
-                [ e300 , e310], \
-                [ e301 , e311]])\
-                .transpose().reshape(-1,2,2)
-        E4 = npy.array([\
-                [ e400 , e410], \
-                [ e401 , e411]])\
-                .transpose().reshape(-1,2,2)
-
-        T1 = npy.zeros(E1.shape, dtype=npy.complex)
-        T2 = T1.copy()
-        T3 = T1.copy()
-        T4 = T1.copy()
-
-        invE3 = inv(E3)
-        for i in range(npoints):
-            T1[i] = E2[i] - E1[i].dot(invE3[i]).dot(E4[i])
-            T2[i] = E1[i].dot(invE3[i])
-            T3[i] = -invE3[i].dot(E4[i])
-            T4[i] = invE3[i]
-
-        return T1, T2, T3, T4
-
-    def E_matrices(self, T1, T2, T3, T4):
-        '''
-        Convert solved calibration T matrices to S-parameters.
-        '''
-
-        inv = linalg.inv
-
-        E1 = npy.zeros(T1.shape, dtype=npy.complex)
-        E2 = npy.zeros(T2.shape, dtype=npy.complex)
-        E3 = npy.zeros(T3.shape, dtype=npy.complex)
-        E4 = npy.zeros(T4.shape, dtype=npy.complex)
-
-        invT4 = inv(npy.array(T4))
-        for i in range(len(T1)):
-            E1[i] = T2[i].dot(invT4[i])
-            E2[i] = T1[i] - T2[i].dot(invT4[i]).dot(T3[i])
-            E3[i] = invT4[i]
-            E4[i] = -invT4[i].dot(T3[i])
-        return E1, E2, E3, E4
 
     @classmethod
     def from_coefs(cls, frequency, coefs, **kwargs):

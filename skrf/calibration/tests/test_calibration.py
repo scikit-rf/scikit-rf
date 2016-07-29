@@ -10,7 +10,7 @@ from numpy.random  import rand, uniform
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, LMR16, terminate
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate
 
 from skrf.networkSet import NetworkSet
 
@@ -1102,6 +1102,78 @@ class LMR16Test(unittest.TestCase, CalibrationTest):
         self.assertEqual(
             self.Z.s34 * self.Z.s43 ,
             self.cal.coefs_ntwks['reverse reflection tracking'])
+
+class SixteenTermTest(unittest.TestCase, CalibrationTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        #Port 0: VNA port 0
+        #Port 1: DUT port 0
+        #Port 2: DUT port 1
+        #Port 3: VNA port 1
+        self.Z = wg.random(n_ports = 4, name = 'Z')
+
+        o = wg.open(nports=1, name='open')
+        s = wg.short(nports=1, name='short')
+        m = wg.match(nports=1, name='load')
+        om = rf.two_port_reflect(o, m)
+        mo = rf.two_port_reflect(m, o)
+        oo = rf.two_port_reflect(o, o)
+        ss = rf.two_port_reflect(s, s)
+        thru = wg.thru(name='thru')
+
+        ideals = [
+            thru,
+            om,
+            mo,
+            oo,
+            ss
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal = rf.SixteenTerm(
+            measured = measured,
+            ideals = ideals,
+            )
+
+    def measure(self,ntwk):
+        out = rf.connect(self.Z, 1, ntwk, 0, num=2)
+        out.name = ntwk.name
+        return out
+
+    def test_forward_directivity_accuracy(self):
+        self.assertEqual(
+            self.Z.s11,
+            self.cal.coefs_ntwks['forward directivity'])
+
+    def test_forward_source_match_accuracy(self):
+        self.assertEqual(
+            self.Z.s22 ,
+            self.cal.coefs_ntwks['forward source match'] )
+
+    def test_forward_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.Z.s21 * self.Z.s12 ,
+            self.cal.coefs_ntwks['forward reflection tracking'])
+
+    def test_reverse_source_match_accuracy(self):
+        self.assertEqual(
+            self.Z.s33 ,
+            self.cal.coefs_ntwks['reverse source match']   )
+
+    def test_reverse_directivity_accuracy(self):
+        self.assertEqual(
+            self.Z.s44 ,
+            self.cal.coefs_ntwks['reverse directivity']  )
+
+    def test_reverse_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.Z.s34 * self.Z.s43 ,
+            self.cal.coefs_ntwks['reverse reflection tracking'])
+
 
 if __name__ == "__main__":
     unittest.main()
