@@ -2631,7 +2631,7 @@ class SixteenTerm(Calibration):
     References
     -----------
     [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
-    [2] M. Schramm, M. Hrobak, J. Schür and L. P. Schmidt, "A new switch correction method for a single-receiver VNA," Microwave Conference (EuMC), 2013 European, Nuremberg, 2013, pp. 444-447.
+    [2] M. Schramm, M. Hrobak, J. Schur and L. P. Schmidt, "A new switch correction method for a single-receiver VNA," Microwave Conference (EuMC), 2013 European, Nuremberg, 2013, pp. 444-447.
     '''
 
     family = 'SixteenTerm'
