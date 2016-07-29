@@ -6,11 +6,11 @@ except ImportError:
     import pickle as pickle
 import skrf as rf
 import numpy as npy
-from numpy.random  import rand
+from numpy.random  import rand, uniform
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, terminate
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, LMR16, terminate
 
 from skrf.networkSet import NetworkSet
 
@@ -1019,6 +1019,89 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
-        
+
+class LMR16Test(unittest.TestCase, CalibrationTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        #Port 0: VNA port 0
+        #Port 1: DUT port 0
+        #Port 2: DUT port 1
+        #Port 3: VNA port 1
+        self.Z = wg.random(n_ports = 4, name = 'Z')
+
+        r = wg.short(nports=1, name='short')
+        m = wg.match(nports=1, name='load')
+        mm = rf.two_port_reflect(m, m)
+        rm = rf.two_port_reflect(r, m)
+        mr = rf.two_port_reflect(m, r)
+        rr = rf.two_port_reflect(r, r)
+
+        thru_length = uniform(0,10)
+        thru = wg.line(thru_length,'deg',name='line')
+
+        self.thru = thru
+
+        ideals = [
+            thru,
+            mm,
+            rr,
+            rm,
+            mr
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal = rf.LMR16(
+            measured = measured,
+            ideals = [r],
+            ideal_is_reflect = True,
+             #Automatic sign detection doesn't work if the
+             #error terms aren't symmetric enough
+            sign = -1
+            )
+
+    def measure(self,ntwk):
+        out = rf.connect(self.Z, 1, ntwk, 0, num=2)
+        out.name = ntwk.name
+        return out
+
+    def test_solved_through(self):
+        self.assertEqual(
+            self.thru,
+            self.cal.solved_through)
+
+    def test_forward_directivity_accuracy(self):
+        self.assertEqual(
+            self.Z.s11,
+            self.cal.coefs_ntwks['forward directivity'])
+
+    def test_forward_source_match_accuracy(self):
+        self.assertEqual(
+            self.Z.s22 ,
+            self.cal.coefs_ntwks['forward source match'] )
+
+    def test_forward_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.Z.s21 * self.Z.s12 ,
+            self.cal.coefs_ntwks['forward reflection tracking'])
+
+    def test_reverse_source_match_accuracy(self):
+        self.assertEqual(
+            self.Z.s33 ,
+            self.cal.coefs_ntwks['reverse source match']   )
+
+    def test_reverse_directivity_accuracy(self):
+        self.assertEqual(
+            self.Z.s44 ,
+            self.cal.coefs_ntwks['reverse directivity']  )
+
+    def test_reverse_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.Z.s34 * self.Z.s43 ,
+            self.cal.coefs_ntwks['reverse reflection tracking'])
+
 if __name__ == "__main__":
     unittest.main()
