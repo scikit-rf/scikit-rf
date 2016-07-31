@@ -3365,8 +3365,8 @@ def concat_ports(ntwk_list, port_order='first', *args,**kw ):
     
     See Also
     --------
-    `stitch`:  concatinate two networks along the frequency axis
-    `Network.renumber` : renumber ports 
+    stitch :  concatinate two networks along the frequency axis
+    renumber : renumber ports 
     '''
     # if ntwk list is longer than 2, recursivly call myself 
     # untill we are done
@@ -3585,7 +3585,7 @@ def n_twoports_2_nport(ntwk_list,nports, offby=1, **kwargs):
     
     See Also
     --------
-    `concat_ports` : concatenate ntwks along their ports
+    concat_ports : concatenate ntwks along their ports
     '''
 
     frequency = ntwk_list[0].frequency

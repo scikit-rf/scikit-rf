@@ -38,6 +38,8 @@ Two-port
    UnknownThru
    TRL
    MultilineTRL
+   SixteenTerm
+   LMR16
 
 
 Three Reciever (1.5 port)
