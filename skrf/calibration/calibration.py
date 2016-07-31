@@ -161,7 +161,7 @@ class Calibration(object):
     '''
     family = ''
     def __init__(self, measured, ideals, sloppy_input=False,
-        is_reciprocal=True,name=None,*args, **kwargs):
+        is_reciprocal=True,name=None, self_calibration=False,*args, **kwargs):
         '''
         Calibration initializer.
 
@@ -203,6 +203,11 @@ class Calibration(object):
             the name of this calibration instance, like 'waveguide cal'
             this is just for convenience [None].
 
+        self_calibration: Boolean
+            True if there are less ideals than measurements.
+            Used in self-calibration such as LMR, LRRM, where some of the
+            standards can be unknown.
+
         \*args, \*\*kwargs : key-word arguments
             stored in self.kwargs, which may be used by sub-classes
             most likely in `run`.
@@ -233,7 +238,8 @@ class Calibration(object):
             self.measured, self.ideals = \
                 align_measured_ideals(self.measured, self.ideals)
 
-        if len(self.measured) != len(self.ideals):
+        self.self_calibration = self_calibration
+        if self_calibration == False and len(self.measured) != len(self.ideals):
             raise(IndexError('The length of measured and ideals lists are different. Number of ideals must equal the number of measured. If you are using `sloppy_input` ensure the names are uniquely alignable.'))
 
 
@@ -2609,6 +2615,536 @@ class MRC(UnknownThru):
         coefs.update({'k':k_})
 
         self.coefs = coefs
+
+class SixteenTerm(Calibration):
+    '''
+    16-Term calibration that solves for leakage between the ports.
+
+    There are several different combinations of calibration standards that can
+    be used. At least five two port measurements are needed. Using through, open,
+    short, and load standards some combinations result in singular matrix.
+    See [1] for list of non-singular combinations.
+
+    Effect of the switch is assumed to be already removed as the switch correction
+    used for 8 Term calibration fails when crosstalk is significant. [2]
+
+    References
+    -----------
+    [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
+    [2] M. Schramm, M. Hrobak, J. Schur and L. P. Schmidt, "A new switch correction method for a single-receiver VNA," Microwave Conference (EuMC), 2013 European, Nuremberg, 2013, pp. 444-447.
+    '''
+
+    family = 'SixteenTerm'
+    def __init__(self, measured, ideals,
+                 *args, **kwargs):
+        Calibration.__init__(self,
+            measured = measured,
+            ideals = ideals,
+            *args, **kwargs)
+
+    def run(self):
+        numStds = self.nstandards
+        numCoefs = 15
+
+
+        mList = [k.s  for k in self.measured]
+        iList = [k.s for k in self.ideals]
+
+        fLength = len(mList[0])
+        #initialize outputs
+        error_vector = npy.zeros(shape=(fLength,numCoefs),dtype=complex)
+        residuals = npy.zeros(shape=(fLength,4*numStds-numCoefs),dtype=complex)
+        Q = npy.zeros((numStds*4, 15),dtype=complex)
+        M = npy.zeros((numStds*4, 1),dtype=complex)
+        # loop through frequencies and form m, a vectors and
+        # the matrix M.
+        #i[j,k] = Actual S-parameters
+        #m[j,k] = Measured S-parameters
+        #t15 is normalized to one
+        for f in list(range(fLength)):
+            # loop through standards and fill matrix
+            for k in list(range(numStds)):
+                m,i  = mList[k][f,:,:],iList[k][f,:,:] # 2x2 s-matrices
+                Q[k*4:k*4+4,:] = npy.array([\
+                        [ i[0,0], i[1,0], 0     , 0     , 1, 0, 0, 0, -m[0,0]*i[0,0], -m[0,0]*i[1,0], -m[0,1]*i[0,0], -m[0,1]*i[1,0], -m[0,0] , 0       , -m[0,1] ],\
+                        [ i[0,1], i[1,1], 0     , 0     , 0, 1, 0, 0, -m[0,0]*i[0,1], -m[0,0]*i[1,1], -m[0,1]*i[0,1], -m[0,1]*i[1,1], 0       , -m[0,0] , 0       ],\
+                        [ 0     , 0     , i[0,0], i[1,0], 0, 0, 1, 0, -m[1,0]*i[0,0], -m[1,0]*i[1,0], -m[1,1]*i[0,0], -m[1,1]*i[1,0], -m[1,0] , 0       , -m[1,1] ],\
+                        [ 0     , 0     , i[0,1], i[1,1], 0 ,0 ,0, 1, -m[1,0]*i[0,1], -m[1,0]*i[1,1], -m[1,1]*i[0,1], -m[1,1]*i[1,1], 0       , -m[1,0] , 0       ],\
+                        ])
+                #pdb.set_trace()
+                M[k*4:k*4+4,:] = npy.array([\
+                        [    0    ],\
+                        [ m[0,1]  ],\
+                        [    0    ],\
+                        [ m[1,1]  ],\
+                        ])
+
+            ## calculate least squares
+            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
+            ##if len (residualsTmp )==0:
+            ##       raise ValueError( 'matrix has singular values, check standards')
+
+
+            error_vector[f,:] = error_vector_at_f.flatten()
+            residuals[f,:] = residuals_at_f
+
+        e = error_vector
+
+        T1 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+        T2 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+        T3 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+        T4 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+
+        T1[:,0,0] = e[:,0]
+        T1[:,0,1] = e[:,1]
+        T1[:,1,0] = e[:,2]
+        T1[:,1,1] = e[:,3]
+
+        T2[:,0,0] = e[:,4]
+        T2[:,0,1] = e[:,5]
+        T2[:,1,0] = e[:,6]
+        T2[:,1,1] = e[:,7]
+
+        T3[:,0,0] = e[:,8]
+        T3[:,0,1] = e[:,9]
+        T3[:,1,0] = e[:,10]
+        T3[:,1,1] = e[:,11]
+
+        T4[:,0,0] = e[:,12]
+        T4[:,0,1] = e[:,13]
+        T4[:,1,0] = e[:,14]
+        T4[:,1,1] = npy.ones(e[:,0].shape)
+
+        # put the error vector into human readable dictionary
+        e1, e2, e3, e4 = self.E_matrices(T1, T2, T3, T4)
+
+        #TODO: Standard names for 16-term errors?
+        #FIXME: Coefficients are linearly dependent
+        #One of them should be removed
+
+        self._coefs = {\
+                'forward directivity':e1[:,0,0],
+                'reverse directivity':e1[:,1,1],
+                'forward source match':e4[:,0,0],
+                'reverse source match':e4[:,1,1],
+                'forward transmission tracking':e3[:,0,0],
+                'reverse transmission tracking':e3[:,1,1],
+                'forward reflection tracking':e2[:,0,0]*e3[:,0,0],
+                'reverse reflection tracking':e2[:,1,1]*e3[:,1,1],
+                'forward isolation':e1[:,1,0],
+                'reverse isolation':e1[:,0,1],
+                'a3 a1 isolation':e3[:,0,1],
+                'a0 a3 isolation':e3[:,1,0],
+                'b2 b0 isolation':e2[:,0,1],
+                'b1 b3 isolation':e2[:,1,0],
+                'b2 a1 isolation':e4[:,0,1],
+                'b1 a2 isolation':e4[:,1,0],
+                }
+
+
+        # output is a dictionary of information
+        self._output_from_run = {
+                'error vector':e,
+                'residuals':residuals
+                }
+
+        return None
+
+    def apply_cal(self, ntwk):
+        caled = ntwk.copy()
+        inv = linalg.inv
+
+        T1,T2,T3,T4 = self.T_matrices
+
+        for f in list(range(len(ntwk.s))):
+            t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+                            T4[f,:,:],ntwk.s[f,:,:]
+            caled.s[f,:,:] = inv(-1*m.dot(t3)+t1).dot(m.dot(t4)-t2)
+        return caled
+
+    def embed(self, ntwk):
+        '''
+        '''
+        embedded = ntwk.copy()
+        inv = linalg.inv
+
+        T1,T2,T3,T4 = self.T_matrices
+
+        for f in list(range(len(ntwk.s))):
+            t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
+                            T4[f,:,:],ntwk.s[f,:,:]
+            embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
+
+        return embedded
+
+    @property
+    def T_matrices(self):
+        '''
+        Intermediate matrices used for embedding and de-embedding.
+
+        Returns
+        --------
+        T1,T2,T3,T4 : numpy ndarray
+
+        '''
+        ec = self.coefs
+        npoints = len(ec['forward directivity'])
+        inv = linalg.inv
+
+        e100 = ec['forward directivity']
+        e111 = ec['reverse directivity']
+        e400 = ec['forward source match']
+        e411 = ec['reverse source match']
+        e300 = ec['forward transmission tracking']
+        e311 = ec['reverse transmission tracking']
+        e200 = ec['forward reflection tracking']/e300
+        e211 = ec['reverse reflection tracking']/e311
+        e110 = ec['forward isolation']
+        e101 = ec['reverse isolation']
+        e301 = ec['a3 a1 isolation']
+        e310 = ec['a0 a3 isolation']
+        e201 = ec['b2 b0 isolation']
+        e210 = ec['b1 b3 isolation']
+        e401 = ec['b2 a1 isolation']
+        e410 = ec['b1 a2 isolation']
+
+        E1 = npy.array([\
+                [ e100 , e110], \
+                [ e101 , e111]])\
+                .transpose().reshape(-1,2,2)
+        E2 = npy.array([\
+                [ e200 , e210], \
+                [ e201 , e211]])\
+                .transpose().reshape(-1,2,2)
+        E3 = npy.array([\
+                [ e300 , e310], \
+                [ e301 , e311]])\
+                .transpose().reshape(-1,2,2)
+        E4 = npy.array([\
+                [ e400 , e410], \
+                [ e401 , e411]])\
+                .transpose().reshape(-1,2,2)
+
+        T1 = npy.zeros(E1.shape, dtype=npy.complex)
+        T2 = T1.copy()
+        T3 = T1.copy()
+        T4 = T1.copy()
+
+        invE3 = inv(E3)
+        for i in range(npoints):
+            T1[i] = E2[i] - E1[i].dot(invE3[i]).dot(E4[i])
+            T2[i] = E1[i].dot(invE3[i])
+            T3[i] = -invE3[i].dot(E4[i])
+            T4[i] = invE3[i]
+
+        return T1, T2, T3, T4
+
+    def E_matrices(self, T1, T2, T3, T4):
+        '''
+        Convert solved calibration T matrices to S-parameters.
+        '''
+
+        inv = linalg.inv
+
+        E1 = npy.zeros(T1.shape, dtype=npy.complex)
+        E2 = npy.zeros(T2.shape, dtype=npy.complex)
+        E3 = npy.zeros(T3.shape, dtype=npy.complex)
+        E4 = npy.zeros(T4.shape, dtype=npy.complex)
+
+        invT4 = inv(npy.array(T4))
+        for i in range(len(T1)):
+            E1[i] = T2[i].dot(invT4[i])
+            E2[i] = T1[i] - T2[i].dot(invT4[i]).dot(T3[i])
+            E3[i] = invT4[i]
+            E4[i] = -invT4[i].dot(T3[i])
+        return E1, E2, E3, E4
+
+
+class LMR16(SixteenTerm):
+    '''
+        16-Term self calibration for leaky VNA. Implementation is based on [1].
+
+        Needs five standards to be measured and given in this order:
+            Through
+            Match-match
+            Reflect-reflect
+            Reflect-match
+            Match-reflect
+
+        Reflect standard needs to be very reflective and same in all measurements.
+        Matching of through and match standards is assumed to be perfect.
+        Loss of the through is assumed to be zero, but its length can be non-zero.
+
+        Only reflect or through standard needs to be known and the other one will be
+        solved during the calibration. Solved S-parameters of the standards
+        can be accessed with LMR16.solved_through and LMR16.solved_reflect.
+
+        Due to needing to solve a second order equation during the calibration a
+        choice must be taken on the correct root. Sign argument, +1 or -1, can be
+        given to make the root choice.
+
+        If sign argument is not given it is tried to be solved automatically by
+        choosing the sign that makes k = t15/t12 closer to +1, which holds
+        if test fixture is symmetric.
+
+        Switch termination is already assumed to be done either by previous calibration or
+        using following equations during the measurements:
+
+            D = 1 - a3'/a0 a0'/a3'
+
+            S11 = 1/D ( b0/a0 - b0'/a3' a3/a0 )
+            S12 = 1/D ( b0'/a3' - b0/a0 a0'/a3' )
+            S21 = 1/D ( b3/a0 - b3'/a3' a3/a0 )
+            S22 = 1/D ( b3'/a3' - b3/a0 a0'/a3' )
+
+        , where primed measurements are with source on port 2 and unprimed with source
+        on port 1.
+        a0, and b0 are receivers on port 1
+        a3 and b3 are receivers on port 2
+
+
+        Parameters
+        --------------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards.
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the reflect or through calibration standard.
+
+        ideal_is_reflect : Boolean
+            True if given ideal is reflect and False if ideal is through
+
+        sign : +1,-1 or None
+            Sign to be used for the root choice.
+
+        References
+        ------------
+        [1] K. Silvonen, "LMR 16-a self-calibration procedure for a leaky network analyzer," in IEEE Transactions on Microwave Theory and Techniques, vol. 45, no. 7, pp. 1041-1049, Jul 1997
+        '''
+
+    family = 'SixteenTerm'
+    def __init__(self, measured, ideals, ideal_is_reflect=True, sign=None,
+                 *args, **kwargs):
+        if type(ideals) == Network:
+            ideals = [ideals]
+        if len(ideals) != 1:
+            raise ValueError("One ideal must be given: Through or reflect definition.")
+        if ideal_is_reflect == False:
+            self.through = ideals[0].copy()
+            self.reflect = None
+            self._solved_through = self.through
+            self._solved_reflect = Network(s=[0]*len(self.through.f), f=self.through.f, f_unit='Hz')
+        else:
+            self.through = None
+            self.reflect = ideals[0].copy()
+            self._solved_through = Network(s=[[[0,1],[1,0]]]*len(self.reflect.f), f=self.reflect.f, f_unit='Hz')
+            self._solved_reflect = self.reflect
+
+        if len(measured) != 5:
+            raise ValueError("5 Measurements are needed: T, M-M, R-R, R-M and M-R")
+
+        self.measured = measured
+        self.sign = sign
+
+        Calibration.__init__(self,
+            measured = measured,
+            ideals = ideals,
+            sloppy_input=False,
+            self_calibration=True,
+            *args, **kwargs)
+
+    def run(self):
+        mList = [k.s  for k in self.measured]
+
+        fLength = len(mList[0])
+
+        inv = linalg.inv
+
+        T1 = []
+        T2 = []
+        T3 = []
+        T4 = []
+
+        auto_sign = self.sign == None
+
+        for f in range(fLength):
+            ma = mList[0][f] #Through
+            mb = mList[1][f] #Match-match
+            mc = mList[2][f] #Reflect-reflect
+            md = mList[3][f] #Reflect-match
+            me = mList[4][f] #Match-reflect
+
+            nn = inv(me-ma).dot(mb-me)
+            mm = (ma-mc).dot(nn)
+            oo = mb-mc
+            rr = inv(md-ma).dot(mb-md)
+            pp = (ma-mc).dot(rr)
+
+            m = (pp[1,0] + oo[1,0])*mm[1,1] - (pp[1,1] + oo[1,1])*mm[1,0]
+            n = oo[1,0]*pp[0,1] - oo[1,1]*pp[0,0]
+            o = (mm[0,1]+ oo[0,1])*pp[0,0] - (mm[0,0] + oo[0,0])*pp[0,1]
+            p = oo[0,1]*mm[1,0] - oo[0,0]*mm[1,1]
+
+            #One of the coefficients is normalized to one
+            t12 = 1.0
+
+            auto_sign_abs = []
+            if auto_sign:
+                self.sign = 1
+
+            for sign_tries in [0,1,2]:
+                gt = self.sign*npy.sqrt(m*o/(n*p))
+                if self.through == None:
+                    g = self.reflect.s[f][0,0]
+                    t = g/gt
+                    self._solved_through.s[f] = npy.array([[0,t],[t,0]])
+                else:
+                    t = self.through.s[f][1,0]
+                    g = gt*t
+                    self._solved_reflect.s[f] = npy.array([g])
+                t15 = -(p/o)*(pp[0,0]/mm[1,1])*gt*t12
+                #If correct sign is not specified try to choose it based
+                #on the fact that with correct sign t15/t12 ~= +1
+                #Assuming that test fixtures are symmetric
+                if auto_sign:
+                    auto_sign_abs.append(npy.abs(1 - t15/t12))
+                    if sign_tries == 0:
+                        self.sign = -self.sign
+                    if sign_tries == 1:
+                        if auto_sign_abs[0] < auto_sign_abs[1]:
+                            self.sign = 1
+                        else:
+                            self.sign = -1
+                else:
+                    break
+
+            t13 = -pp[0,1]/pp[0,0]*t15
+            t14 = -mm[1,0]/mm[1,1]*t12
+            t8 =  (rr[0,0]*t12 + rr[0,1]*t14)*(1./g) - t13/t
+            t9 =  (nn[0,0]*t13 + nn[0,1]*t15)*(1./g) - t12/t
+            t10 = (rr[1,0]*t12 + rr[1,1]*t14)*(1./g) - t15/t
+            t11 = (nn[1,0]*t13 + nn[1,1]*t15)*(1./g) - t14/t
+            t0 = mc[0,0]*t8 + mc[0,1]*t10 - (1./g)*(oo[0,0]*t12+oo[0,1]*t14)
+            t1 = mc[0,0]*t9 + mc[0,1]*t11 - (1./g)*(oo[0,0]*t13+oo[0,1]*t15)
+            t2 = mc[1,0]*t8 + mc[1,1]*t10 - (1./g)*(oo[1,0]*t12+oo[1,1]*t14)
+            t3 = mc[1,0]*t9 + mc[1,1]*t11 - (1./g)*(oo[1,0]*t13+oo[1,1]*t15)
+            t4 = mb[0,0]*t12 + mb[0,1]*t14
+            t5 = mb[0,0]*t13 + mb[0,1]*t15
+            t6 = mb[1,0]*t12 + mb[1,1]*t14
+            t7 = mb[1,0]*t13 + mb[1,1]*t15
+
+            T1.append([[t0,t1],[t2,t3]])
+            T2.append([[t4,t5],[t6,t7]])
+            T3.append([[t8,t9],[t10,t11]])
+            T4.append([[t12,t13],[t14,t15]])
+
+        T1 = npy.array(T1)
+        T2 = npy.array(T2)
+        T3 = npy.array(T3)
+        T4 = npy.array(T4)
+
+        #Convert T-matrix to S-parameters
+        #and put error terms in human readable form
+        e1,e2,e3,e4 = self.E_matrices(T1, T2, T3, T4)
+
+        #Error network coefficients
+        #e1 = [[e00,e03],[e30,e33]]
+        #e2 = [[e01,e02],[e31,e32]]
+        #e3 = [[e10,e13],[e20,e23]]
+        #e4 = [[e11,e12],[e21,e22]]
+
+        #TODO: Standard names for 16-term errors?
+        #FIXME: Coefficients are linearly dependent
+        #One of them should be removed
+        #t12 = 1 = e23/(e23*e10-e13*e20)
+
+        self._coefs = {\
+                'forward directivity':e1[:,0,0],
+                'reverse directivity':e1[:,1,1],
+                'forward source match':e4[:,0,0],
+                'reverse source match':e4[:,1,1],
+                'forward transmission tracking':e3[:,0,0],
+                'reverse transmission tracking':e3[:,1,1],
+                'forward reflection tracking':e2[:,0,0]*e3[:,0,0],
+                'reverse reflection tracking':e2[:,1,1]*e3[:,1,1],
+                'forward isolation':e1[:,1,0],
+                'reverse isolation':e1[:,0,1],
+                'a3 a1 isolation':e3[:,0,1],
+                'a0 a3 isolation':e3[:,1,0],
+                'b2 b0 isolation':e2[:,0,1],
+                'b1 b3 isolation':e2[:,1,0],
+                'b2 a1 isolation':e4[:,0,1],
+                'b1 a2 isolation':e4[:,1,0],
+                }
+
+        return None
+
+    @classmethod
+    def from_coefs(cls, frequency, coefs, **kwargs):
+        '''
+        Creates a calibration from its error coefficients
+
+        Parameters
+        -------------
+        frequency : :class:`~skrf.frequency.Frequency`
+            frequency info, (duh)
+        coefs :  dict of numpy arrays
+            error coefficients for the calibration
+
+        See Also
+        ----------
+        Calibration.from_coefs_ntwks
+
+        '''
+        n = Network(frequency = frequency,
+                    s = rand_c(frequency.npoints,2,2))
+        measured = [n,n,n,n,n]
+
+        cal = cls(measured, measured[0], **kwargs)
+        cal.coefs = coefs
+        cal.family += '(fromCoefs)'
+        return  cal
+
+    @property
+    def residual_ntwks(self):
+        '''
+        Dictionary of residual Networks
+
+        These residuals are complex differences between the ideal
+        standards and their corresponding  corrected measurements.
+
+        '''
+        #Runs the calibration if needed
+        caled_ntwks = self.caled_ntwks
+
+        r = self.solved_reflect
+        m  = Network(s=[0]*len(self.solved_reflect.f), f=self.solved_reflect.f, f_unit='Hz')
+        mm = two_port_reflect(m, m)
+        mr = two_port_reflect(m, r)
+        rm = two_port_reflect(r, m)
+        rr = two_port_reflect(r, r)
+
+        ideals = [self.solved_through, mm, rr, rm, mr]
+
+        return [caled - ideal for (ideal, caled) in zip(ideals, caled_ntwks)]
+
+    @property
+    def solved_through(self):
+        '''
+        Return the solved through or the ideal through if reflect was solved
+        '''
+        if not hasattr(self, '_coefs'):
+            self.run()
+        return self._solved_through
+
+    @property
+    def solved_reflect(self):
+        '''
+        Return the solved reflect or the ideal reflect if through was solved
+        '''
+        if not hasattr(self, '_coefs'):
+            self.run()
+        return self._solved_reflect
 
 class Normalization(Calibration):
     '''
