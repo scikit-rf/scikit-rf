@@ -1152,7 +1152,7 @@ class OnePort(Calibration):
 
         s11 = self.coefs['directivity']
         s22 = self.coefs['source match']
-        er_ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
+        er_ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
         return er_ntwk.inv**ntwk
 
     def embed(self,ntwk):
@@ -3637,7 +3637,7 @@ def error_dict_2_network(coefs, frequency,  is_reciprocal=False, **kwargs):
 
         s11 = coefs['directivity']
         s22 = coefs['source match']
-        ntwk.s = npy.array([[s11, s12],[s21,s22]]).transpose().reshape(-1,2,2)
+        ntwk.s = npy.array([[s11, s21],[s12,s22]]).transpose().reshape(-1,2,2)
         ntwk.frequency = frequency
         return ntwk
 
