@@ -407,7 +407,16 @@ class Network(object):
         ##TODO: remove this as it takes up ~70% cpu time of this init
         self.__generate_plot_functions()
         
-
+    @classmethod
+    def from_z(cls,z,*args,**kw):
+        '''
+        '''
+        s = npy.zeros(shape=z.shape)
+        me = cls(s=s,*args,**kw)
+        me.z =z
+        return me
+   
+        
     ## OPERATORS
     def __pow__(self,other):
         '''
