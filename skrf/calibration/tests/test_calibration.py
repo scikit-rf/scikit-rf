@@ -420,7 +420,7 @@ class TRLTest(EightTermTest):
         
         actuals = [
             wg.thru( name='thru'),
-            wg.short(nports=2, name='short'),
+            rf.two_port_reflect(wg.load(-.9-.1j),wg.load(-.9-.1j)),
             wg.attenuator(-3,True, 45,'deg')
             #wg.line(45,'deg',name='line'),
             ]
@@ -443,6 +443,10 @@ class TRLTest(EightTermTest):
     def test_found_line(self):
         self.cal.run()
         self.assertTrue(self.cal.ideals[2]==self.actuals[2])
+        
+    def test_found_reflect(self):
+        self.cal.run()
+        self.assertTrue(self.cal.ideals[1]==self.actuals[1])
             
 
 class TRLWithNoIdealsTest(EightTermTest):

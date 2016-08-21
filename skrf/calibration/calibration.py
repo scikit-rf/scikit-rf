@@ -73,7 +73,7 @@ PNA interaction
 import numpy as npy
 from numpy import linalg
 from numpy.linalg import det
-from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d
+from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
 import pylab as plb
 import os
 from copy import deepcopy, copy
@@ -2336,6 +2336,9 @@ class TRL(EightTerm):
         warn('Value of Reflect is not solved for yet.')
 
         n_stds = len(measured)
+        
+        
+        ## generate ideals, given various inputs 
             
         if ideals is None:
             ideals = [None]*len(measured)
@@ -2378,6 +2381,8 @@ class TRL(EightTerm):
 
 
         m_ut = self.measured_unterminated
+        
+        ## Solve for the line[s]
         for k in range(n_reflects+1,n_stds):
             if estimate_line:
                 # setting line_approx  to None causes determine_line() to 
@@ -2387,6 +2392,13 @@ class TRL(EightTerm):
                 line_approx = ideals[k]
             
             self.ideals[k] = determine_line(m_ut[0], m_ut[k], line_approx) # find line
+
+        ## Solve for the reflect[s]
+        for k in range(1,n_reflects+1):
+            # solve for reflect using the last line if they pass >1
+            print 'sdf'
+            r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k])
+            self.ideals[k] = two_port_reflect(r,r)
 
 MultilineTRL = TRL
 
@@ -3369,6 +3381,74 @@ def determine_line(thru_m, line_m, line_approx=None):
     found_line.s = npy.array([[zero, s12],[s12,zero]]).transpose().reshape(-1,2,2)
     return found_line
 
+
+def determine_reflect(thru, reflect, line, reflect_approx =None):
+    '''
+    '''
+    inv = linalg.inv
+    l=1
+    rt = thru.t
+    rd = line.t
+    tt = einsum('ijk,ikl -> ijl', rd, inv(rt))
+
+    a = tt[:,1,0]
+    b = tt[:,1,1]-tt[:,0,0]
+    c = -tt[:,0,1]
+
+    #print a,b,c
+    sol1 = (-b-sqrt(b*b-4*a*c))/(2*a)
+    sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
+    a = None
+    b = None
+    c = None
+    
+    rootChoice = abs(sol1)>abs(sol2)
+    
+    out = []
+    for rooty in range(2):
+        rootChoice = invert(rootChoice) # stupid
+        y = sol1*invert(rootChoice) + sol2*rootChoice
+        x = sol1*rootChoice + sol2*invert(rootChoice)
+        b = y
+
+
+        #prop per 
+        g = 1/thru.s[:,1,0]
+        e = thru.s[:,0,0]
+        d = -det(thru.s)
+        f = -thru.s[:,1,1]
+
+        w = g*(1-e/x)/(1-b/x)
+        gam = (f-d/x)/(1-e/x)
+        b_A = (e-y)/(d-b*f)
+        aA = (d-b*f)/(1-e/x)
+
+        w1 = reflect.s[:,0,0]
+        w2 = reflect.s[:,1,1]
+
+        a = sqrt(((w1-y)*(1+w2*b_A)*(d-y*f))/\
+                ((w2+gam)*(1-w1/x)*(1-e/x)))
+        
+        for rootChoice2 in [1,-1] :
+            a= a*rootChoice2
+            unknownReflectS = (w1-y)/(a*(1-w1/x))
+            out.append(unknownReflectS)
+            
+    
+    
+    if reflect_approx is None:
+        reflect_approx = reflect.copy()
+        reflect_approx.s[:,0,0]=-1
+        
+        
+    close = find_closest(out[0], out[1], reflect_approx.s11.s)
+    closer = find_closest(out[2], out[3], reflect_approx.s11.s)
+    closest = find_closest(close, closer, reflect_approx.s11.s)
+    
+    reflect= reflect_approx.copy()
+    reflect.s[:,0,0]=closest
+    
+    return reflect#unknownReflect
 
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
     '''

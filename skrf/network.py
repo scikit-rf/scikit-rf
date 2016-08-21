@@ -362,6 +362,7 @@ class Network(object):
 
         See Also
         -----------
+        from_z : init from impedance values
         read : read a network from a file
         write : write a network to a file, using pickle
         write_touchstone : write a network to a touchstone file
