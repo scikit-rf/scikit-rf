@@ -2285,8 +2285,8 @@ class TRL(EightTerm):
 
         Note that the order of `measured` and `ideals` is strict.
         It must be [Thru, Reflect, Line]. A multiline algorithms is 
-        used if more than one line is passed. Multiple reflects can
-        also be used, see `n_reflects` argument.
+        used if more than one line is passed. A multi-reflect algorithm
+        is used if multiple reflects are passed, see `n_reflects` argument.
 
         All of the `ideals` can be indivdually set to None, or the entire
         list set to None (`ideals=None`). For each ideal set to None 
@@ -2301,10 +2301,6 @@ class TRL(EightTerm):
         from measurements . This is sensible
         if you have no idea what the line length is, but your **error 
         networks** are well macthed (E_ij >>E_ii).
-
-
-        .. warning::
-            This version of TRL does not solve for the Reflect standard yet
 
 
         Notes
@@ -2323,14 +2319,27 @@ class TRL(EightTerm):
             list may be None, or equivalently, the list may be None
 
         estimate_line : bool
-            Estimates the length of the line standard from raw measurements.
+            should we estimates the length of the line standard from 
+            raw measurements, if not we assume its about 90 deg.
             
         n_reflects :  1
             number of reflective standards 
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
-
+    
+        Examples
+        ---------
+        
+        >>>thru = rf.Network('thru.s2p')
+        >>>reflect = rf.Network('reflect.s2p')
+        >>>line = rf.Network('line.s2p')
+        >>>trl = TRL(measured=[thru,reflect,line], ideals=None)
+        
+        See Also
+        ----------
+        determine_line 
+        determine_reflect
 
         '''
         warn('Value of Reflect is not solved for yet.')
