@@ -10,8 +10,9 @@ from numpy.random  import rand, uniform
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect
 
+from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
 
 # number of frequency points to test calibration at 
@@ -22,6 +23,46 @@ NPTS = 1
 
 WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
 
+
+
+class DetermineTest(unittest.TestCase):
+    def setUp(self):
+        self.wg = WG
+        wg = self.wg
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name='Y')  
+        
+        
+        #thru
+        self.T = wg.thru()
+        self.T_m = self.embed(self.T)
+        
+        #line
+        self.L = wg.line(80,'deg')
+        self.L_approx = self.wg.line(90,'deg')
+        self.L_m = self.embed(self.L)
+        
+        # reflect
+        r = wg.load(-.8-.1j)
+        self.R = two_port_reflect(r,r)
+        self.R_approx = wg.short()
+        self.R_m = self.embed(self.R)
+        
+        
+    def embed(self,x):
+        return self.X**x**self.Y    
+        
+    def test_determine_line(self):
+        L_found = determine_line(self.T_m, self.L_m, 
+                                 line_approx=self.L_approx)
+        self.assertEqual(L_found,self.L)
+    
+    def test_determine_reflect(self):
+        R_found = determine_reflect(self.T_m, self.R_m, self.L_m, 
+                                 reflect_approx=self.R_approx)
+        
+        self.assertEqual(R_found,self.R.s11)
+    
 class CalibrationTest(object):
     '''
     This is the generic Calibration test case which all Calibration 

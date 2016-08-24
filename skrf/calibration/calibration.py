@@ -3391,13 +3391,37 @@ def determine_line(thru_m, line_m, line_approx=None):
     return found_line
 
 
-def determine_reflect(thru, reflect, line, reflect_approx =None):
+def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None, 
+                     return_all=False):
     '''
+    Determine reflect from a thru, reflect, line measurments
+    
+    This is used in the TRL algorithm, but is made modular for 
+    multi-line, multi-reflect options. 
+    
+    
+    Parameters
+    -----------
+    thru_m : :class:`~skrf.network.Network`
+        raw measurement of a thru
+    line_m : :class:`~skrf.network.Network`
+        raw measurement of a matched transmissive standard
+    reflect_approx : :class:`~skrf.network.Network`
+        approximate One-port network for the reflect.  if None, then
+        we assume its a flush short (gamma=-1)
+    return_all: bool
+        return all possible values fo relfect, one for each root-choice.
+        useful for troublshooting.
+        
+    Returns
+    -------
+    reflect : :class:`~skrf.network.Network`
+        a One-port network for the found reflect.
     '''
     inv = linalg.inv
     l=1
-    rt = thru.t
-    rd = line.t
+    rt = thru_m.t
+    rd = line_m.t
     tt = einsum('ijk,ikl -> ijl', rd, inv(rt))
 
     a = tt[:,1,0]
@@ -3422,18 +3446,18 @@ def determine_reflect(thru, reflect, line, reflect_approx =None):
 
 
         #prop per 
-        g = 1/thru.s[:,1,0]
-        e = thru.s[:,0,0]
-        d = -det(thru.s)
-        f = -thru.s[:,1,1]
+        g = 1/thru_m.s[:,1,0]
+        e = thru_m.s[:,0,0]
+        d = -det(thru_m.s)
+        f = -thru_m.s[:,1,1]
 
         w = g*(1-e/x)/(1-b/x)
         gam = (f-d/x)/(1-e/x)
         b_A = (e-y)/(d-b*f)
         aA = (d-b*f)/(1-e/x)
 
-        w1 = reflect.s[:,0,0]
-        w2 = reflect.s[:,1,1]
+        w1 = reflect_m.s[:,0,0]
+        w2 = reflect_m.s[:,1,1]
 
         a = sqrt(((w1-y)*(1+w2*b_A)*(d-y*f))/\
                 ((w2+gam)*(1-w1/x)*(1-e/x)))
@@ -3444,12 +3468,14 @@ def determine_reflect(thru, reflect, line, reflect_approx =None):
             out.append(unknownReflectS)
             
     
+    if return_all:
+        return [Network(frequency=thru_m.frequency, s = k) for k in out]
     
     if reflect_approx is None:
         reflect_approx = reflect.copy()
         reflect_approx.s[:,0,0]=-1
         
-        
+    
     close = find_closest(out[0], out[1], reflect_approx.s11.s)
     closer = find_closest(out[2], out[3], reflect_approx.s11.s)
     closest = find_closest(close, closer, reflect_approx.s11.s)
@@ -3457,7 +3483,12 @@ def determine_reflect(thru, reflect, line, reflect_approx =None):
     reflect= reflect_approx.copy()
     reflect.s[:,0,0]=closest
     
-    return reflect#unknownReflect
+    return reflect
+
+
+
+
+
 
 def convert_12term_2_8term(coefs_12term, redundant_k = False):
     '''
