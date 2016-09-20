@@ -2405,7 +2405,6 @@ class TRL(EightTerm):
         ## Solve for the reflect[s]
         for k in range(1,n_reflects+1):
             # solve for reflect using the last line if they pass >1
-            print 'sdf'
             r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k])
             self.ideals[k] = two_port_reflect(r,r)
 
