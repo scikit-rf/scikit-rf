@@ -88,6 +88,8 @@ class Touchstone():
 
         ## kind of s-parameter data (s1p, s2p, s3p, s4p)
         self.rank = None
+        ## Store port names in a list if they exist in the file
+        self.port_names = None
 
         self.load_file(fid)
 
@@ -116,10 +118,25 @@ class Touchstone():
 
             # store comments if they precede the option line
             line = line.split('!',1)
-            if len(line) == 2 and not self.parameter:
-                if self.comments == None:
-                    self.comments = ''
-                self.comments = self.comments + line[1]
+            if len(line) == 2:
+                if not self.parameter:
+                    if self.comments == None:
+                        self.comments = ''
+                    self.comments = self.comments + line[1]
+                elif line[1].startswith(' Port['):
+                    try:
+                        port_string, name = line[1].split('=', 1) #throws ValueError on unpack
+                        name = name.strip()
+                        garbage, index = port_string.strip().split('[', 1) #throws ValueError on unpack
+                        index = int(index.rstrip(']')) #throws ValueError on not int-able
+                        if index > self.rank or index <= 0:
+                            print("Port name {0} provided for port number {1} but that's out of range for a file with extension s{2}p".format(name, index, self.rank))
+                        else:
+                            if self.port_names is None: #Initialize the array at the last minute
+                                self.port_names = [''] * self.rank
+                            self.port_names[index - 1] = name
+                    except ValueError as e:
+                        print("Error extracting port names from line: {0}".format(line))
 
             # remove the comment (if any) so rest of line can be processed.
             # touchstone files are case-insensitive

@@ -374,6 +374,7 @@ class Network(object):
 
         self.name = name
         self.comments = comments
+        self.port_names = None
 
         if file is not None:
             # allows user to pass filename or file obj
@@ -595,15 +596,73 @@ class Network(object):
             the frequency.
             if str, then should be like '50.1-75.5ghz', or just '50'.
             If the frequency unit is omited then self.frequency.unit is
-            used.
+            used. This will also accept a 2 or 3 dimensional index of the
+            forms:
+                port1, port2
+                key, port1, port2
+            where port1 and port2 are allowed to be string port names if
+            the network has them defined (Network.port_names)
+            If port1 and port2 are integers, will return the single-port
+            network based on matrix notation (indices starts at 1 not 0)
+
+        Returns
+        -----------
+            skrf.Network :
+                interpolated in frequency if single dimension provided
+                OR
+                1-port network if multi-dimensional index provided
 
         Examples
         -----------
         >>> from skrf.data import ring_slot
         >>> a = ring_slot['80-90ghz']
         >>> a.plot_s_db()
+
+        Multidimensional indexing:
+        >>> import skrf as rf
+        >>> b = rf.Network("sometouchstonefile.s2p")
+        >>> c = b['80mhz', 'first_port_name', 'second_port_name']
+        >>> d = b['first_port_name', 'second_port_name']
+
+        Equivalently:
+        >>> d = b[1,2]
+
+        Equivalent to:
+        >>> d = b.s12
         '''
-        a = self.z0# HACK: to force getter for z0 to re-shape it
+
+        a = self.z0# HACK: to force getter for z0 to re-shape it (z0 getter has side effects...)
+        #If user passes a multidimensional index, try to return that 1 port subnetwork
+        if type(key) == tuple:
+            if len(key) == 3:
+                slice_like, p1_name, p2_name = key
+                return self[slice_like][p1_name,p2_name]
+            elif len(key) == 2:
+                p1_name, p2_name = key
+                if type(p1_name) == int and type(p2_name) == int: #allow integer indexing if desired
+                    if p1_name <= 0 or p2_name <= 0 or p1_name > self.nports or p2_name > self.nports:
+                        raise ValueError("Port index out of bounds")
+                    p1_index = p1_name - 1
+                    p2_index = p2_name - 1
+                else:
+                    if self.port_names is None:
+                        raise ValueError("Can't index without named ports")
+                    try:
+                        p1_index = self.port_names.index(p1_name)
+                    except ValueError as e:
+                        raise KeyError("Unknown port {0}".format(p1_name))
+                    try:
+                        p2_index = self.port_names.index(p2_name)
+                    except ValueError as e:
+                        raise KeyError("Unknown port {0}".format(p2_name))
+                ntwk = self.copy()
+                ntwk.s = self.s[:,p1_index,p2_index]
+                ntwk.z0 = self.z0[:,p1_index]
+                ntwk.name = "{0}({1}, {2})".format(self.name, p1_name, p2_name)
+                ntwk.port_names = None
+                return ntwk
+            else:
+                raise ValueError("Don't understand index: {0}".format(key))
         sliced_frequency = self.frequency[key]
         return self.interpolate(sliced_frequency)
 
@@ -1659,6 +1718,7 @@ class Network(object):
                        )
         
         ntwk.name = self.name
+        ntwk.port_names = copy(self.port_names)
         return ntwk
 
     def copy_from(self,other):
@@ -1711,6 +1771,7 @@ class Network(object):
             raise NotImplementedError('only s-parameters supported for now.')
 
         self.comments = touchstoneFile.get_comments()
+        self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
         self.z0 = complex(touchstoneFile.resistance)
