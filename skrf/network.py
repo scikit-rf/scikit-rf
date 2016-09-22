@@ -374,6 +374,7 @@ class Network(object):
 
         self.name = name
         self.comments = comments
+        self.port_names = None
 
         if file is not None:
             # allows user to pass filename or file obj
@@ -1711,6 +1712,7 @@ class Network(object):
             raise NotImplementedError('only s-parameters supported for now.')
 
         self.comments = touchstoneFile.get_comments()
+        self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
         self.z0 = complex(touchstoneFile.resistance)
