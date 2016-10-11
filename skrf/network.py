@@ -1717,7 +1717,10 @@ class Network(object):
                        )
         
         ntwk.name = self.name
-        ntwk.port_names = copy(self.port_names)
+        try:
+            ntwk.port_names = copy(self.port_names)
+        except(AttributeError):
+            ntwk.port_names =None
         return ntwk
 
     def copy_from(self,other):

@@ -2342,7 +2342,7 @@ class TRL(EightTerm):
         determine_reflect
 
         '''
-        warn('Value of Reflect is not solved for yet.')
+        #warn('Value of Reflect is not solved for yet.')
 
         n_stds = len(measured)
         
@@ -3475,10 +3475,11 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         reflect_approx.s[:,0,0]=-1
         
     
-    close = find_closest(out[0], out[1], reflect_approx.s11.s)
-    closer = find_closest(out[2], out[3], reflect_approx.s11.s)
-    closest = find_closest(close, closer, reflect_approx.s11.s)
+    close = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
+    closer = find_closest(out[2], out[3], reflect_approx.s11.s.flatten())
+    closest = find_closest(close, closer, reflect_approx.s11.s.flatten())
     
+    #import pdb;pdb.set_trace()
     reflect= reflect_approx.copy()
     reflect.s[:,0,0]=closest
     
