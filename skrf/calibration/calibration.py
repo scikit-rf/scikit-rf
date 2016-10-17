@@ -2279,7 +2279,7 @@ class TRL(EightTerm):
     '''
     family = 'TRL'
     def __init__(self, measured, ideals=None, estimate_line=False, 
-                n_reflects=1,*args,**kwargs):
+                n_reflects=1,solve_reflect = True, *args,**kwargs):
         '''
         Initialize a TRL calibration
 
@@ -2403,10 +2403,11 @@ class TRL(EightTerm):
             self.ideals[k] = determine_line(m_ut[0], m_ut[k], line_approx) # find line
 
         ## Solve for the reflect[s]
-        for k in range(1,n_reflects+1):
-            # solve for reflect using the last line if they pass >1
-            r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k])
-            self.ideals[k] = two_port_reflect(r,r)
+        if solve_reflect:
+            for k in range(1,n_reflects+1):
+                # solve for reflect using the last line if they pass >1
+                r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k])
+                self.ideals[k] = two_port_reflect(r,r)
 
 MultilineTRL = TRL
 
