@@ -40,7 +40,7 @@ from .util import slice_domain,find_nearest_index
 #from .constants import ZERO
 global ZER0
 ZERO=1e-4 # currently needed to allow frequency __eq__ method to work 
-# comparing 1e-4hz is very smalle for most applications
+# comparing 1e-4hz is very small for most applications
 class Frequency(object):
     '''
     A frequency band.
@@ -520,7 +520,7 @@ class Frequency(object):
 
     def round_to(self, val = 'hz'):
         '''
-        Round off frequency values to a specfied precision.
+        Round off frequency values to a specified precision.
 
         This is useful for dealing with finite precision limitations of
         VNA's and/or other software
@@ -579,7 +579,7 @@ class Frequency(object):
         '''
         Plot something vs this frequency
 
-        This plots whateve is given vs. `self.f_scaled` and then
+        This plots whatever is given vs. `self.f_scaled` and then
         calls `labelXAxis`.
 
         '''

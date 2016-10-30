@@ -9,7 +9,7 @@ This module provides functions related to transmission line theory.
 
 Impedance and Reflection Coefficient
 --------------------------------------
-These functions relate basic tranmission line quantities such as
+These functions relate basic transmission line quantities such as
 characteristic impedance, input impedance, reflection coefficient, etc.
 Each function has two names. One is a long-winded but readable name and
 the other is a short-hand variable-like names. Below is a table relating

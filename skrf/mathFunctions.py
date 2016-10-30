@@ -41,7 +41,7 @@ Unit Conversion
 
 Scalar-Complex Conversion
 ---------------------------------
-These conversions are useful for wrapping other functions that dont
+These conversions are useful for wrapping other functions that don't
 support complex numbers.
 
 .. autosummary::
@@ -235,12 +235,12 @@ def dbdeg_2_reim(db,deg):
 
 def db_2_np(x):
     '''
-    converts a value in nepers to dB
+    converts a value in Nepers to dB
     '''
     return (npy.log(10)/20) * x
 def np_2_db(x):
     '''
-    converts a value in dB to neper's
+    converts a value in dB to Nepers
     '''
     return 20/npy.log(10) * x
 
