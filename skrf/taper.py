@@ -88,7 +88,7 @@ class Taper1D(object):
         # the default behaviour should be to taper based on impedance. 
         # to do this we inspect the media class for a `from_z0` 
         # init method, and if it exists, we assign it to `med` attribute
-        # addmitantly having `med` be a class or a method is abuse,
+        # admittedly having `med` be a class or a method is abuse,
         # it makes for a intuitive operation
         if param =='z0':
             if hasattr(self.med, 'from_z0'):
@@ -162,7 +162,7 @@ class Exponential(Taper1D):
     where 
         f0: star param value
         f1: stop param value
-        x: independent variable (position allong taper)
+        x: independent variable (position along taper)
         x1: length of taper 
     
     '''

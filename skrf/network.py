@@ -367,7 +367,7 @@ class Network(object):
         write_touchstone : write a network to a touchstone file
         '''
 
-        # allow for old kwarg for backward compatability
+        # allow for old kwarg for backward compatibility
         if 'touchstone_filename' in kwargs:
             file = kwargs['touchstone_filename']
 
@@ -594,7 +594,7 @@ class Network(object):
             if slice; like [2-10] then it is interpreted as the index of
             the frequency.
             if str, then should be like '50.1-75.5ghz', or just '50'.
-            If the frequency unit is omited then self.frequency.unit is
+            If the frequency unit is omitted then self.frequency.unit is
             used. This will also accept a 2 or 3 dimensional index of the
             forms:
                 port1, port2
@@ -765,7 +765,7 @@ class Network(object):
                 for m in M:
                     for n in N:
                         # set the legend label for this trace to the networks
-                        # name if it exists, and they didnt pass a name key in
+                        # name if it exists, and they didn't pass a name key in
                         # the kwargs
                         if gen_label:
                             if self.name is None:
@@ -857,7 +857,7 @@ class Network(object):
                 for m in M:
                     for n in N:
                         # set the legend label for this trace to the networks
-                        # name if it exists, and they didnt pass a name key in
+                        # name if it exists, and they didn't pass a name key in
                         # the kwargs
                         if gen_label:
                             if self.name is None:
@@ -957,7 +957,7 @@ class Network(object):
                     for m in M:
                         for n in N:
                             # set the legend label for this trace to the networks
-                            # name if it exists, and they didnt pass a name key in
+                            # name if it exists, and they didn't pass a name key in
                             # the kwargs
                             if gen_label:
                                 if self.name is None:
@@ -1409,7 +1409,7 @@ class Network(object):
                 inv : function which implements the inverse s-matrix
         '''
         if self.number_of_ports <2:
-            raise(TypeError('One-Port Networks dont have inverses'))
+            raise(TypeError('One-Port Networks don\'t have inverses'))
         out = self.copy()
         out.s = inv(self.s)
         return out
@@ -1629,7 +1629,7 @@ class Network(object):
         -------
         This plot does not completely capture the passivity metric, which 
         is a test for `unitary-ness` of the s-matrix. However, it may
-        be  used to display a measure of power disapated in a network. 
+        be  used to display a measure of power dissipated in a network.
 
         See Also
         -----------
@@ -1791,7 +1791,7 @@ class Network(object):
                 try:
                     self.name = os.path.basename( os.path.splitext(touchstoneFile.filename)[0])
                 except():
-                    print('warning: couldnt inspect network name')
+                    print('warning: couldn\'t inspect network name')
                     self.name=''
                 pass
         #TODO: add Network property `comments` which is read from
@@ -2188,7 +2188,7 @@ class Network(object):
         f_new = new_frequency.f
         
         # interpolate z0  ( this must happen first, because its needed
-        # to compute the basis tranform below (like y2s), if basis!='s')
+        # to compute the basis transform below (like y2s), if basis!='s')
         interp_z0_re = interp1d(f, self.z0.real,axis=0,**kwargs)
         interp_z0_im = interp1d(f, self.z0.imag,axis=0,**kwargs)
         result.z0 = interp_z0_re(f_new) +1j*interp_z0_im(f_new)
@@ -2878,7 +2878,7 @@ class Network(object):
 
         p : int, number of differential ports
         z0_mm: f x n x n matrix of mixed mode impedances, optional
-            if input is None, 100 Ohms differentail and 25 Ohms common mode reference impedance
+            if input is None, 100 Ohms differential and 25 Ohms common mode reference impedance
         
         .. warning::
             This is not fully tested, and should be considered as experimental
@@ -3287,7 +3287,7 @@ def cascade_list(l):
     Returns
     ----------
     out : 2-port Network
-        the results of casacading all networks in the list `l`
+        the results of cascading all networks in the list `l`
         
     '''
     return reduce(cascade, l)
@@ -3297,7 +3297,7 @@ def de_embed(ntwkA,ntwkB):
     De-embed `ntwkA` from `ntwkB`.
 
     This calls `ntwkA.inv ** ntwkB`. The syntax of cascading an inverse
-    is more explicit, it is recomended that it be used instead of this
+    is more explicit, it is recommended that it be used instead of this
     function.
 
     Parameters
@@ -3310,7 +3310,7 @@ def de_embed(ntwkA,ntwkB):
     Returns
     --------
     C : Network
-            the resultant network of ntwkB de-embeded from ntwkA
+            the resultant network of ntwkB de-embedded from ntwkA
 
     See Also
     ---------
@@ -3362,7 +3362,7 @@ def overlap(ntwkA, ntwkB):
     '''
     Returns the overlapping parts of two Networks, interpolating if needed.
 
-    If frequency vectors for each ntwk dont perfectly overlap, then
+    If frequency vectors for each ntwk don't perfectly overlap, then
     ntwkB is interpolated so that the resultant networks have identical
     frequencies.
 
@@ -3438,16 +3438,16 @@ def concat_ports(ntwk_list, port_order='first', *args,**kw ):
     
     See Also
     --------
-    stitch :  concatinate two networks along the frequency axis
+    stitch :  concatenate two networks along the frequency axis
     renumber : renumber ports 
     '''
-    # if ntwk list is longer than 2, recursivly call myself 
-    # untill we are done
+    # if ntwk list is longer than 2, recursively call myself
+    # until we are done
     if len(ntwk_list)>2:
         f = lambda x,y: concat_ports([x,y], port_order='first')
         out =  reduce(f,ntwk_list)
         # if we want to renumber ports, we have to wait
-        # untill after the recursives calls
+        # until after the recursive calls
         if port_order =='second':
             N = out.nports
             old_order = range(N)
@@ -3460,7 +3460,7 @@ def concat_ports(ntwk_list, port_order='first', *args,**kw ):
     
     
     if ntwkA.frequency != ntwkB.frequency:
-        raise ValueError('ntwks dont have matching frequencies')
+        raise ValueError('ntwks don\'t have matching frequencies')
     A = ntwkA.s
     B = ntwkB.s
     
@@ -3549,7 +3549,7 @@ def one_port_2_two_port(ntwk):
 
 def chopinhalf(ntwk, *args, **kwargs):
         '''
-        Chops a sandwich of identical,recicprocal 2-ports in half.
+        Chops a sandwich of identical, reciprocal 2-ports in half.
 
         Given two identical, reciprocal 2-ports measured in series,
         this returns one.
@@ -3813,11 +3813,11 @@ def three_twoports_2_threeport(ntwk_triplet, auto_order = True,  *args,
 ## Functions operating on s-parameter matrices
 def connect_s(A,k,B,l):
     '''
-    connect two n-port networks' s-matricies together.
+    connect two n-port networks' s-matrices together.
 
     specifically, connect port `k` on network `A` to port `l` on network
     `B`. The resultant network has nports = (A.rank + B.rank-2). This
-    function operates on, and returns s-matricies. The function
+    function operates on, and returns s-matrices. The function
     :func:`connect` operates on :class:`Network` types.
 
     Parameters
@@ -4720,8 +4720,8 @@ def renormalize_s(s, z_old, z_new):
 
     Notes
     ------
-    This re-normalization assumes psuedo-wave formulation. The
-    function :func:`renormalize_s_pw` implementes the power-wave
+    This re-normalization assumes pseudo-wave formulation. The
+    function :func:`renormalize_s_pw` implements the power-wave
     formulation. However, the two implementation are only different
     for complex characteristic impedances.
     See the [1]_ and [2]_ for more details.
@@ -4859,7 +4859,7 @@ def fix_z0_shape( z0, nfreqs, nports):
     '''
     Make a port impedance of correct shape for a given network's matrix
 
-    This attempts to broadcast z0 to satisy
+    This attempts to broadcast z0 to satisfy
         npy.shape(z0) == (nfreqs,nports)
 
     Parameters
@@ -4873,7 +4873,7 @@ def fix_z0_shape( z0, nfreqs, nports):
 
     nfreqs : int
         number of frequency points
-    nportrs : int
+    nports : int
         number of ports
 
     Returns
@@ -5002,7 +5002,7 @@ def check_frequency_equal(ntwkA, ntwkB):
     checks if two Networks have same frequency
     '''
     if assert_frequency_equal(ntwkA,ntwkB) == False:
-        raise IndexError('Networks dont have matching frequency. See `Network.interpolate`')
+        raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 def check_z0_equal(ntwkA,ntwkB):
     '''
@@ -5010,14 +5010,14 @@ def check_z0_equal(ntwkA,ntwkB):
     '''
     #note you should check frequency equal before you call this
     if assert_z0_equal(ntwkA,ntwkB) == False:
-        raise ValueError('Networks dont have matching z0.')
+        raise ValueError('Networks don\'t have matching z0.')
 
 def check_nports_equal(ntwkA,ntwkB):
     '''
     checks if two Networks have same number of ports
     '''
     if assert_nports_equal(ntwkA,ntwkB) == False:
-        raise ValueError('Networks dont have matching number of ports.')
+        raise ValueError('Networks don\'t have matching number of ports.')
 
 ## TESTs (return [usually boolean] values)
 def assert_frequency_equal(ntwkA, ntwkB):
@@ -5044,7 +5044,7 @@ def assert_nports_equal(ntwkA,ntwkB):
 
 
 ## Other
-# dont belong here, but i needed them quickly
+# don't belong here, but i needed them quickly
 # this is needed for port impedance mismatches
 def impedance_mismatch(z1, z2):
     '''

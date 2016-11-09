@@ -93,7 +93,7 @@ class Parameter(object):
         for m in M:
             for n in N:
                 # set the legend label for this trace to the networks
-                # name if it exists, and they didnt pass a name key in
+                # name if it exists, and they didn't pass a name key in
                 # the kwargs
                 if gen_label:
                     if self._network.name is None:
@@ -448,7 +448,7 @@ class Network(object):
         key : str, or int
             if int; then it is interpreted as the index of the frequency
             if str, then should be like '50.1-75.5ghz', or just '50'.
-            If the frequency unit is omited then self.frequency.unit is
+            If the frequency unit is omitted then self.frequency.unit is
             used.
 
         Examples
@@ -602,7 +602,7 @@ class Network(object):
         Return a windowed version of s-matrix. Used in time-domain analysis.
 
         When using time domain through :attr:`s_time_db`,
-        or similar properies, the spectrum is ussually windowed,
+        or similar properties, the spectrum is ussually windowed,
         before the IFFT is taken. This is done to
         compensate for the band-pass nature of a spectrum [1]_ .
 
@@ -822,7 +822,7 @@ def s2t(s):
     '''
     Converts scattering parameters [#]_ to scattering transfer parameters [#]_ .
 
-    transfer parameters are also refered to as
+    transfer parameters are also referred to as
     'wave cascading matrix', this function only operates on 2-port
     networks.
 

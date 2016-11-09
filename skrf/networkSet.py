@@ -841,7 +841,7 @@ class NetworkSet(object):
 
                 if ppf is not None:
                     if type =='bar':
-                        warnings.warn('the \'ppf\' options doesnt work correctly with the bar-type error plots')
+                        warnings.warn('the \'ppf\' options don\'t work correctly with the bar-type error plots')
                     ntwk_mean.s = ppf(ntwk_mean.s)
                     upper_bound = ppf(upper_bound)
                     lower_bound = ppf(lower_bound)
