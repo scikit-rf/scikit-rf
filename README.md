@@ -1,3 +1,4 @@
+[![Anaconda-Server Badge](https://anaconda.org/scikit-rf/scikit-rf/badges/installer/conda.svg)](https://conda.anaconda.org/scikit-rf)
 
 [![Build Status](https://travis-ci.org/scikit-rf/scikit-rf.svg?branch=master)](https://travis-ci.org/scikit-rf/scikit-rf)
 [![Documentation Status](https://readthedocs.org/projects/scikit-rf/badge/?version=latest)](https://readthedocs.org/projects/scikit-rf/?badge=latest)
