@@ -11,3 +11,5 @@ doc/gh-pages
 build/
 scikit_rf.egg-info/
 dist/
+*.idea/
+*__pycache__/
