@@ -35,7 +35,8 @@ Misc Functions
     scrape_legend
 
 '''
-import pylab as plb
+
+import matplotlib.pyplot as plb
 import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
 from matplotlib.pyplot import quiver
@@ -94,11 +95,11 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     #TODO: fix this
     # these could be dynamically coded in the future, but work good'nuff for now
     if not draw_labels:
-        rLightList = plb.logspace(3,-5,9,base=.5)
-        xLightList = plb.hstack([plb.logspace(2,-5,8,base=.5), -1*plb.logspace(2,-5,8,base=.5)])
+        rLightList = npy.logspace(3,-5,9,base=.5)
+        xLightList = npy.hstack([npy.logspace(2,-5,8,base=.5), -1*npy.logspace(2,-5,8,base=.5)])
     else:
-        rLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
-        xLightList = plb.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
+        rLightList = npy.array( [ 0.2, 0.5, 1.0, 2.0, 5.0 ] )
+        xLightList = npy.array( [ 0.2, 0.5, 1.0, 2.0 , 5.0, -0.2, -0.5, -1.0, -2.0, -5.0 ] )
 
     # vswr lines
     if isinstance(draw_vswr, (tuple,list)):
@@ -112,7 +113,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     # cheap way to make a ok-looking smith chart at larger than 1 radii
     if smithR > 1:
         rMax = (1.+smithR)/(1.-smithR)
-        rLightList = plb.hstack([ plb.linspace(0,rMax,11)  , rLightList ])
+        rLightList = npy.hstack([ npy.linspace(0,rMax,11)  , rLightList ])
 
     if chart_type.startswith('y'):
         y_flip_sign = -1

@@ -157,7 +157,7 @@ import numpy as npy
 
 from numpy.linalg import inv as npy_inv
 
-import pylab as plb
+import matplotlib.pyplot as plb
 from scipy import stats,signal        # for Network.add_noise_*, and Network.windowed
 
 from scipy.interpolate import interp1d # for Network.interpolate()
