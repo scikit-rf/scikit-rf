@@ -2028,9 +2028,9 @@ class EightTerm(Calibration):
 
     '''
     family = 'EightTerm'
-    def __init__(self, measured, ideals, switch_terms=None,
-                 *args, **kwargs):
-        '''
+
+    def __init__(self, measured, ideals, switch_terms=None, *args, **kwargs):
+        """
         EightTerm Initializer
 
         Notes
@@ -2050,9 +2050,7 @@ class EightTerm(Calibration):
 
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
-
-
-        '''
+        """
 
         self.switch_terms = switch_terms
         if switch_terms is None:
@@ -2278,8 +2276,9 @@ class TRL(EightTerm):
 
     '''
     family = 'TRL'
-    def __init__(self, measured, ideals=None, estimate_line=False, 
-                n_reflects=1,solve_reflect = True, *args,**kwargs):
+
+    def __init__(self, measured, ideals=None, estimate_line=False,
+                 n_reflects=1, solve_reflect=True, *args, **kwargs):
         '''
         Initialize a TRL calibration
 

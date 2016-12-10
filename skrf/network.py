@@ -138,6 +138,7 @@ Misc Functions
 
 '''
 from six.moves import xrange
+import zipfile
 
 import os
 import warnings
@@ -157,7 +158,7 @@ import numpy as npy
 
 from numpy.linalg import inv as npy_inv
 
-import pylab as plb
+# import pylab as plb
 from scipy import stats,signal        # for Network.add_noise_*, and Network.windowed
 
 from scipy.interpolate import interp1d # for Network.interpolate()
@@ -375,7 +376,9 @@ class Network(object):
         self.comments = comments
         self.port_names = None
 
-        if file is not None:
+        if isinstance(file, zipfile.ZipExtFile):
+            self.read_touchstone(get_fid(file))
+        elif file is not None:
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and
             # unpickle it first
