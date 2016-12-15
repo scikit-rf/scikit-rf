@@ -2879,7 +2879,30 @@ class Network(object):
         p : int, number of differential ports
         z0_mm: f x n x n matrix of mixed mode impedances, optional
             if input is None, 100 Ohms differential and 25 Ohms common mode reference impedance
+
+        Odd Number of Ports
+        -------------------
         
+        In the case where there are an odd number of ports (such as a 3-port network
+        with ports 0, 1, and 2), se2gmm() assumes that the last port (port 2) remains
+        single-ended and ports 0 and 1 are converted to differntial mode and common
+        mode, respectively. For networks in which the port ordering is not suitable,
+        port renumbering can be used.
+        
+        For example, a 3-port single-ended network is converted to mixed-mode
+        parameters.
+        
+          | Port 0 (single-ended, 50 ohms) --> Port 0 (single-ended, 50 ohms)
+          | Port 1 (single-ended, 50 ohms) --> Port 1 (differential mode, 100 ohms)
+          | Port 2 (single-ended, 50 ohms) --> Port 2 (common mode, 25 ohms)
+                
+        >>> ntwk.renumber([0,1,2],[2,1,0])
+        >>> ntwk.se2gmm(p=1)
+        >>> ntwk.renumber([2,1,0],[0,1,2])
+
+        In the resulting network, port 0 is single-ended, port 1 is
+        differential mode, and port 2 is common mode.
+
         .. warning::
             This is not fully tested, and should be considered as experimental
         '''
