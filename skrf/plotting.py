@@ -40,6 +40,7 @@ import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
 from matplotlib.pyplot import quiver
 from matplotlib import rcParams
+from . import network
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
 
@@ -689,3 +690,562 @@ def plot_vector(a, off=0+0j, *args, **kwargs):
 
 def colors():
     return rcParams['axes.color_cycle']
+
+
+PRIMARY_PROPERTIES = network.PRIMARY_PROPERTIES
+COMPONENT_FUNC_DICT = network.COMPONENT_FUNC_DICT
+Y_LABEL_DICT = network.Y_LABEL_DICT
+
+# TODO: remove this as it takes up ~70% cpu time of this init
+def setup_matplotlib_plotting():
+    __generate_plot_functions(network.Network)
+    network.Network.plot = plot
+    network.Network.plot_passivity = plot_passivity
+    network.Network.plot_reciprocity = plot_reciprocity
+    network.Network.plot_reciprocity2 = plot_reciprocity2
+    network.Network.plot_s_db_time = plot_s_db_time
+    network.Network.plot_s_smith = plot_s_smith
+    network.Network.plot_it_all = plot_it_all
+
+
+def __generate_plot_functions(self):
+    '''
+    '''
+    for prop_name in PRIMARY_PROPERTIES:
+
+        def plot_prop_polar(self,
+            m=None, n=None, ax=None,
+            show_legend=True ,prop_name=prop_name,*args, **kwargs):
+
+            # create index lists, if not provided by user
+            if m is None:
+                M = range(self.number_of_ports)
+            else:
+                M = [m]
+            if n is None:
+                N = range(self.number_of_ports)
+            else:
+                N = [n]
+
+            if 'label'  not in kwargs.keys():
+                gen_label = True
+            else:
+                gen_label = False
+
+
+            was_interactive = plb.isinteractive
+            if was_interactive:
+                plb.interactive(False)
+
+            for m in M:
+                for n in N:
+                    # set the legend label for this trace to the networks
+                    # name if it exists, and they didn't pass a name key in
+                    # the kwargs
+                    if gen_label:
+                        if self.name is None:
+                            if plb.rcParams['text.usetex']:
+                                label_string = '$%s_{%i%i}$'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                            else:
+                                label_string = '%s%i%i'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                        else:
+                            if plb.rcParams['text.usetex']:
+                                label_string = self.name+', $%s_{%i%i}$'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                            else:
+                                label_string = self.name+', %s%i%i'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                        kwargs['label'] = label_string
+
+                    # plot the desired attribute vs frequency
+                    plot_complex_polar(
+                        z = getattr(self,prop_name)[:,m,n],
+                         show_legend = show_legend, ax = ax,
+                        *args, **kwargs)
+
+            if was_interactive:
+                plb.interactive(True)
+                plb.draw()
+                plb.show()
+
+        plot_prop_polar.__doc__ = '''
+plot the Network attribute :attr:`%s` vs frequency.
+
+Parameters
+-----------
+m : int, optional
+    first index of s-parameter matrix, if None will use all
+n : int, optional
+    secon index of the s-parameter matrix, if None will use all
+ax : :class:`matplotlib.Axes` object, optional
+    An existing Axes object to plot on
+show_legend : Boolean
+    draw legend or not
+attribute : string
+    Network attribute to plot
+y_label : string, optional
+    the y-axis label
+
+\*args,\\**kwargs : arguments, keyword arguments
+    passed to :func:`matplotlib.plot`
+
+Notes
+-------
+This function is dynamically generated upon Network
+initialization. This is accomplished by calling
+:func:`plot_vs_frequency_generic`
+
+Examples
+------------
+>>> myntwk.plot_%s(m=1,n=0,color='r')
+'''%(prop_name,prop_name)
+        # setattr(self.__class__,'plot_%s_polar'%(prop_name), \
+        setattr(self,'plot_%s_polar'%(prop_name), \
+            plot_prop_polar)
+
+        def plot_prop_rect(self,
+            m=None, n=None, ax=None,
+            show_legend=True,prop_name=prop_name,*args, **kwargs):
+
+            # create index lists, if not provided by user
+            if m is None:
+                M = range(self.number_of_ports)
+            else:
+                M = [m]
+            if n is None:
+                N = range(self.number_of_ports)
+            else:
+                N = [n]
+
+            if 'label'  not in kwargs.keys():
+                gen_label = True
+            else:
+                gen_label = False
+
+
+            #was_interactive = plb.isinteractive
+            #if was_interactive:
+            #    plb.interactive(False)
+
+            for m in M:
+                for n in N:
+                    # set the legend label for this trace to the networks
+                    # name if it exists, and they didn't pass a name key in
+                    # the kwargs
+                    if gen_label:
+                        if self.name is None:
+                            if plb.rcParams['text.usetex']:
+                                label_string = '$%s_{%i%i}$'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                            else:
+                                label_string = '%s%i%i'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                        else:
+                            if plb.rcParams['text.usetex']:
+                                label_string = self.name+', $%s_{%i%i}$'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                            else:
+                                label_string = self.name+', %s%i%i'%\
+                                (prop_name[0].upper(),m+1,n+1)
+                        kwargs['label'] = label_string
+
+                    # plot the desired attribute vs frequency
+                    plot_complex_rectangular(
+                        z = getattr(self,prop_name)[:,m,n],
+                         show_legend = show_legend, ax = ax,
+                        *args, **kwargs)
+
+            #if was_interactive:
+            #    plb.interactive(True)
+            #    plb.draw()
+            #    plb.show()
+
+        plot_prop_rect.__doc__ = '''
+plot the Network attribute :attr:`%s` vs frequency.
+
+Parameters
+-----------
+m : int, optional
+    first index of s-parameter matrix, if None will use all
+n : int, optional
+    secon index of the s-parameter matrix, if None will use all
+ax : :class:`matplotlib.Axes` object, optional
+    An existing Axes object to plot on
+show_legend : Boolean
+    draw legend or not
+attribute : string
+    Network attribute to plot
+y_label : string, optional
+    the y-axis label
+
+\*args,\\**kwargs : arguments, keyword arguments
+    passed to :func:`matplotlib.plot`
+
+Notes
+-------
+This function is dynamically generated upon Network
+initialization. This is accomplished by calling
+:func:`plot_vs_frequency_generic`
+
+Examples
+------------
+>>> myntwk.plot_%s(m=1,n=0,color='r')
+'''%(prop_name,prop_name)
+
+        # setattr(self.__class__,'plot_%s_complex'%(prop_name), \
+        setattr(self,'plot_%s_complex'%(prop_name), \
+            plot_prop_rect)
+
+
+        for func_name in COMPONENT_FUNC_DICT:
+            attribute = '%s_%s'%(prop_name, func_name)
+            y_label = Y_LABEL_DICT[func_name]
+
+            def plot_func(self,  m=None, n=None, ax=None,
+                show_legend=True,attribute=attribute,
+                y_label=y_label,*args, **kwargs):
+
+                # create index lists, if not provided by user
+                if m is None:
+                    M = range(self.number_of_ports)
+                else:
+                    M = [m]
+                if n is None:
+                    N = range(self.number_of_ports)
+                else:
+                    N = [n]
+
+                if 'label'  not in kwargs.keys():
+                    gen_label = True
+                else:
+                    gen_label = False
+
+                #TODO: turn off interactive plotting for performance
+                # this didnt work because it required a show()
+                # to be called, which in turn, disrupted testCases
+                #
+                #was_interactive = plb.isinteractive
+                #if was_interactive:
+                #    plb.interactive(False)
+
+                for m in M:
+                    for n in N:
+                        # set the legend label for this trace to the networks
+                        # name if it exists, and they didn't pass a name key in
+                        # the kwargs
+                        if gen_label:
+                            if self.name is None:
+                                if plb.rcParams['text.usetex']:
+                                    label_string = '$%s_{%i%i}$'%\
+                                    (attribute[0].upper(),m+1,n+1)
+                                else:
+                                    label_string = '%s%i%i'%\
+                                    (attribute[0].upper(),m+1,n+1)
+                            else:
+                                if plb.rcParams['text.usetex']:
+                                    label_string = self.name+', $%s_{%i%i}$'%\
+                                    (attribute[0].upper(),m+1,n+1)
+                                else:
+                                    label_string = self.name+', %s%i%i'%\
+                                    (attribute[0].upper(),m+1,n+1)
+                            kwargs['label'] = label_string
+
+                        # plot the desired attribute vs frequency
+                        if 'time' in attribute:
+                            xlabel = 'Time (ns)'
+                            x = self.frequency.t_ns
+
+                        else:
+                            xlabel = 'Frequency (%s)'%self.frequency.unit
+                            x = self.frequency.f_scaled
+
+                        plot_rectangular(
+                                x = x,
+                                y = getattr(self,attribute)[:,m,n],
+                                x_label = xlabel,
+                                y_label = y_label,
+                                show_legend = show_legend, ax = ax,
+                                *args, **kwargs)
+
+
+                #if was_interactive:
+                #    plb.interactive(True)
+                #    plb.draw()
+                #    #plb.show()
+
+            plot_func.__doc__ = '''
+    plot the Network attribute :attr:`%s` vs frequency.
+
+    Parameters
+    -----------
+    m : int, optional
+        first index of s-parameter matrix, if None will use all
+    n : int, optional
+        secon index of the s-parameter matrix, if None will use all
+    ax : :class:`matplotlib.Axes` object, optional
+        An existing Axes object to plot on
+    show_legend : Boolean
+        draw legend or not
+    attribute : string
+        Network attribute to plot
+    y_label : string, optional
+        the y-axis label
+
+    \*args,\\**kwargs : arguments, keyword arguments
+        passed to :func:`matplotlib.plot`
+
+    Notes
+    -------
+    This function is dynamically generated upon Network
+    initialization. This is accomplished by calling
+    :func:`plot_vs_frequency_generic`
+
+    Examples
+    ------------
+    >>> myntwk.plot_%s(m=1,n=0,color='r')
+    '''%(attribute,attribute)
+
+            # setattr(self.__class__,'plot_%s'%(attribute), \
+            setattr(self,'plot_%s'%(attribute), \
+                plot_func)
+
+
+## specific ploting functions
+def plot(self, *args, **kw):
+    '''
+    plot somthing vs frequency
+    '''
+    return self.frequency.plot(*args, **kw)
+
+
+def plot_passivity(self, port=None, label_prefix=None, *args, **kwargs):
+    '''
+    Plot dB(diag(passivity metric)) vs frequency
+
+    Notes
+    -------
+    This plot does not completely capture the passivity metric, which
+    is a test for `unitary-ness` of the s-matrix. However, it may
+    be  used to display a measure of power dissipated in a network.
+
+    See Also
+    -----------
+    passivity
+    '''
+    name = '' if self.name is None else self.name
+
+    if port is None:
+        ports = range(self.nports)
+    else:
+        ports = [port]
+    for k in ports:
+        if label_prefix == None:
+            label = name + ', port %i' % (k + 1)
+        else:
+            label = label_prefix + ', port %i' % (k + 1)
+        self.frequency.plot(mf.complex_2_db(self.passivity[:, k, k]),
+                            label=label,
+                            *args, **kwargs)
+
+    plb.legend()
+    plb.draw()
+
+
+def plot_reciprocity(self, db=False, *args, **kwargs):
+    '''
+    Plot reciprocity metric
+
+    See Also
+    -----------
+    reciprocity
+    '''
+    for m in range(self.nports):
+        for n in range(self.nports):
+            if m > n:
+                if 'label' not in kwargs.keys():
+                    kwargs['label'] = 'ports %i%i' % (m, n)
+                y = self.reciprocity[:, m, n].flatten()
+                if db:
+                    y = mf.complex_2_db(y)
+                self.frequency.plot(y, *args, **kwargs)
+
+    plb.legend()
+    plb.draw()
+
+
+def plot_reciprocity2(self, db=False, *args, **kwargs):
+    '''
+    Plot reciprocity metric #2
+
+    this is distance of the determinant of the wave-cascading matrix
+    from unity.
+
+    .. math::
+
+            abs(1 - S/S^T )
+
+
+
+    See Also
+    -----------
+    reciprocity
+    '''
+    for m in range(self.nports):
+        for n in range(self.nports):
+            if m > n:
+                if 'label' not in kwargs.keys():
+                    kwargs['label'] = 'ports %i%i' % (m, n)
+                y = self.reciprocity2[:, m, n].flatten()
+                if db:
+                    y = mf.complex_2_db(y)
+                self.frequency.plot(y, *args, **kwargs)
+
+    plb.legend()
+    plb.draw()
+
+
+def plot_s_db_time(self,*args,**kwargs):
+    return self.windowed().plot_s_time_db(*args,**kwargs)
+
+
+# plotting
+def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
+        chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
+    '''
+    plots the scattering parameter on a smith chart
+
+    plots indices `m`, `n`, where `m` and `n` can be integers or
+    lists of integers.
+
+
+    Parameters
+    -----------
+    m : int, optional
+            first index
+    n : int, optional
+            second index
+    ax : matplotlib.Axes object, optional
+            axes to plot on. in case you want to update an existing
+            plot.
+    show_legend : boolean, optional
+            to turn legend show legend of not, optional
+    chart_type : ['z','y']
+        draw impedance or addmitance contours
+    draw_labels : Boolean
+        annotate chart with impedance values
+    label_axes : Boolean
+        Label axis with titles `Real` and `Imaginary`
+    border : Boolean
+        draw rectangular border around image with ticks
+    draw_vswr : list of numbers, Boolean or None
+        draw VSWR circles. If True, default values are used.
+
+    \*args : arguments, optional
+            passed to the matplotlib.plot command
+    \*\*kwargs : keyword arguments, optional
+            passed to the matplotlib.plot command
+
+
+    See Also
+    --------
+    plot_vs_frequency_generic - generic plotting function
+    smith -  draws a smith chart
+
+    Examples
+    ---------
+    >>> myntwk.plot_s_smith()
+    >>> myntwk.plot_s_smith(m=0,n=1,color='b', marker='x')
+    '''
+    # TODO: prevent this from re-drawing smith chart if one alread
+    # exists on current set of axes
+
+    # get current axis if user doesnt supply and axis
+    if ax is None:
+        ax = plb.gca()
+
+
+    if m is None:
+        M = range(self.number_of_ports)
+    else:
+        M = [m]
+    if n is None:
+        N = range(self.number_of_ports)
+    else:
+        N = [n]
+
+    if 'label'  not in kwargs.keys():
+        generate_label=True
+    else:
+        generate_label=False
+
+    for m in M:
+        for n in N:
+            # set the legend label for this trace to the networks name if it
+            # exists, and they didnt pass a name key in the kwargs
+            if generate_label:
+                if self.name is None:
+                    if plb.rcParams['text.usetex']:
+                        label_string = '$S_{'+repr(m+1) + repr(n+1)+'}$'
+                    else:
+                        label_string = 'S'+repr(m+1) + repr(n+1)
+                else:
+                    if plb.rcParams['text.usetex']:
+                        label_string = self.name+', $S_{'+repr(m+1) + \
+                                repr(n+1)+'}$'
+                    else:
+                        label_string = self.name+', S'+repr(m+1) + repr(n+1)
+
+                kwargs['label'] = label_string
+
+            # plot the desired attribute vs frequency
+            if len (ax.patches) == 0:
+                smith(ax=ax, smithR = r, chart_type=chart_type, draw_labels=draw_labels, draw_vswr=draw_vswr)
+            ax.plot(self.s[:,m,n].real,  self.s[:,m,n].imag, *args,**kwargs)
+
+    #draw legend
+    if show_legend:
+        ax.legend()
+    ax.axis(npy.array([-1.1,1.1,-1.1,1.1])*r)
+
+    if label_axes:
+        ax.set_xlabel('Real')
+        ax.set_ylabel('Imaginary')
+
+
+def plot_it_all(self,*args, **kwargs):
+    '''
+    Plots dB, deg, smith, and complex in subplots
+
+    Plots the magnitude in dB in subplot 1, the phase in degrees in
+    subplot 2, a smith chart in subplot 3, and a complex plot in
+    subplot 4.
+
+    Parameters
+    -----------
+    \*args : arguments, optional
+            passed to the matplotlib.plot command
+    \*\*kwargs : keyword arguments, optional
+            passed to the matplotlib.plot command
+
+    See Also
+    --------
+    plot_s_db - plot magnitude (in dB) of s-parameters vs frequency
+    plot_s_deg - plot phase of s-parameters (in degrees) vs frequency
+    plot_s_smith - plot complex s-parameters on smith chart
+    plot_s_complex - plot complex s-parameters in the complex plane
+
+    Examples
+    ---------
+    >>> from skrf.data import ring_slot
+    >>> ring_slot.plot_it_all()
+    '''
+    plb.subplot(221)
+    getattr(self,'plot_s_db')(*args, **kwargs)
+    plb.subplot(222)
+    getattr(self,'plot_s_deg')(*args, **kwargs)
+    plb.subplot(223)
+    getattr(self,'plot_s_smith')(*args, **kwargs)
+    plb.subplot(224)
+    getattr(self,'plot_s_complex')(*args, **kwargs)

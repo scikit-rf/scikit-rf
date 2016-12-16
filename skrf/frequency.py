@@ -31,7 +31,7 @@ Functions
 
 '''
 
-from pylab import linspace, gca,plot, autoscale
+from pylab import linspace, gca, plot, autoscale
 from numpy import pi
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0

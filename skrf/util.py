@@ -41,7 +41,7 @@ import numpy as npy
 from scipy.constants import mil
 from datetime import datetime
 import collections, pprint
-from subprocess import Popen,PIPE
+from subprocess import Popen, PIPE
 import sys
 import zipfile
 import types
@@ -174,7 +174,7 @@ def get_fid(file, *args, **kwargs):
     file : str/unicode or file-object
         file to open
     \*args, \*\*kwargs : arguments and keyword arguments to `open()`
-        
+
     '''
     if isinstance(file, basestring):
         return open(file, *args, **kwargs)
