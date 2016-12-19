@@ -31,8 +31,8 @@ Functions
 
 '''
 
-from pylab import linspace, gca, plot, autoscale
-from numpy import pi
+
+from numpy import pi, linspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
 import re
@@ -41,6 +41,8 @@ from .util import slice_domain,find_nearest_index
 global ZER0
 ZERO=1e-4 # currently needed to allow frequency __eq__ method to work 
 # comparing 1e-4hz is very small for most applications
+
+
 class Frequency(object):
     '''
     A frequency band.
@@ -543,25 +545,6 @@ class Frequency(object):
 
         self.f = npy.round_(self.f/val)*val
 
-
-
-    def labelXAxis(self, ax=None):
-        '''
-        Label the x-axis of a plot.
-
-        Sets the labels of a plot using :func:`matplotlib.x_label` with
-        string containing the frequency unit.
-
-        Parameters
-        ---------------
-        ax : :class:`matplotlib.Axes`, optional
-                Axes on which to label the plot, defaults what is
-                returned by :func:`matplotlib.gca()`
-        '''
-        if ax is None:
-            ax = gca()
-        ax.set_xlabel('Frequency (%s)' % self.unit )
-
     def overlap(self,f2):
         '''
         Calculates overlapping frequency  between self and f2
@@ -574,38 +557,6 @@ class Frequency(object):
         '''
         return overlap_freq(self, f2)
 
-
-    def plot(self, y, *args, **kwargs):
-        '''
-        Plot something vs this frequency
-
-        This plots whatever is given vs. `self.f_scaled` and then
-        calls `labelXAxis`.
-
-        '''
-        
-        try:
-            if len(shape(y))>2:
-                # perhapsthe dimensions are empty, try to squeeze it down
-                y= y.squeeze()
-                if len(shape(y))>2:
-                    # the dimensions are full, so lets loop and plot each
-                    for m in range(shape(y)[1]):
-                        for n in range(shape(y)[2]):
-                            self.plot(y[:,m,n], *args, **kwargs)
-                    return
-            if len(y)==len(self):
-                pass
-            else:
-                
-                raise IndexError(['thing to plot doesn\'t have same'
-                                 ' number of points as f'])
-        except(TypeError):
-            y = y*npy.ones(len(self))
-
-        plot(self.f_scaled, y,*args, **kwargs)
-        autoscale(axis='x', tight=True)
-        self.labelXAxis()
 
 def overlap_freq(f1,f2):
     '''
