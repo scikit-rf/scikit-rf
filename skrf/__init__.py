@@ -17,7 +17,7 @@ from . import networkSet
 from . import media
 
 from . import calibration
-from . import plotting
+# from . import plotting
 from . import mathFunctions
 from . import tlineFunctions
 from . import taper
@@ -33,7 +33,7 @@ from .network import *
 from .networkSet import *
 from .calibration import *
 from .util import *
-from .plotting import  *
+# from .plotting import  *
 from .mathFunctions import *
 from .tlineFunctions import *
 from .io import * 
@@ -66,5 +66,15 @@ F = Frequency
 N = Network
 NS = NetworkSet
 lat = load_all_touchstones
-saf  = save_all_figs
+# saf  = save_all_figs
+saf = None
+stylely = None
 
+
+def setup_pylab():
+    from . import plotting
+    plotting.setup_matplotlib_plotting()
+
+    global saf, stylely
+    saf = plotting.save_all_figs
+    stylely = plotting.stylely
