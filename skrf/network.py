@@ -1559,6 +1559,24 @@ class Network(object):
         return abs(1-self.s/self.s.swapaxes(1,2))
 
     @property
+    def stability(self):
+        '''
+        Stability factor
+
+        .. math::
+                K = ( 1 - |S_{11}|^2 - |S_{22}|^2 + |D|^2 ) / (2 * |S_{12}| * |S_{21}|)
+                D = S_{11} S_{22} - S_{12} S_{21}
+        
+        Returns
+        ---------
+        '''
+        assert self.nports == 2, "Stability factor K is only defined for two ports"
+        
+        D = self.s[:,0,0] * self.s[:,1,1] - self.s[:,0,1] * self.s[:,1,0]
+        K = (1 - npy.abs(self.s[:,0,0])**2 - npy.abs(self.s[:,1,1])**2 + npy.abs(D)**2) / (2 * npy.abs(self.s[:,0,1]) * npy.abs(self.s[:,1,0]))
+        return K
+
+    @property
     def group_delay(self):
         '''
         The group delay
@@ -1703,6 +1721,23 @@ class Network(object):
 
         plb.legend()
         plb.draw()
+
+    def plot_stability(self, *args, **kwargs):
+        '''
+        Plot the stability factor K
+
+        '''
+        
+        y = self.stability
+
+        if 'label'  not in kwargs.keys():
+            kwargs['label'] = 'stability factor K'
+
+        self.frequency.plot(y, *args, **kwargs)
+
+        plb.legend()
+        plb.draw()
+
     ## CLASS METHODS
     def copy(self):
         '''
@@ -2938,7 +2973,7 @@ class Network(object):
         # XXX: assumes 'proper' order (differential ports, single ended ports)
         if z0_se is None:
             z0_se = self.z0.copy()
-            z0_se = 50
+            z0_se[:] = 50
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
