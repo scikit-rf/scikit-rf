@@ -1,12 +1,10 @@
-import copy
-
 import bokeh
 import bokeh.plotting as plotting
 import bokeh.models as models
 
-plotting.output_notebook()
-
 from .. import network
+
+plotting.output_notebook()
 
 
 lime_green = "#00FF00"
@@ -49,10 +47,6 @@ default_kwargs = {
 def plot_rectangular(ntwk, **kwargs):
     """
     :type ntwk: Network
-    :type primary_property: str
-    :type property_type: str
-    :type fig: bokeh.plotting.figure.Figure
-    :type show: bool
     :return: bokeh.plotting.figure.Figure
     """
 
