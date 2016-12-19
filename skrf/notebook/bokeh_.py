@@ -1,70 +1,42 @@
-import bokeh
-import bokeh.plotting as plotting
-import bokeh.models as models
+from bokeh import models, plotting
 
+from .utils import trace_color_cycle
 from .. import network
 
 plotting.output_notebook()
 
-
-lime_green = "#00FF00"
-green = "#00AA00"
-cyan = "#00FFFF"
-blue = "#0000FF"
-red = "#FF0000"
-magenta = "#FF00FF"
-yellow = "#FFFF00"
-purple = "#990099"
-orange = "#FFA500"
-
-YLABELS = network.Y_LABEL_DICT
-PRIMARY_PROPERTIES = network.PRIMARY_PROPERTIES
-COMPONENT_FUNC_DICT = network.COMPONENT_FUNC_DICT
-
-
-def trace_color_cycle(start = 0):
-    """
-    :start n: int
-    :return:
-    """
-    count = start
-    colors = [blue, red, purple, green]
-    num = len(colors)
-    while count < 1000:
-        yield colors[count % num]
-        count += 1
-
+Y_LABEL_DICT = network.Y_LABEL_DICT  # type: dict
+PRIMARY_PROPERTIES = network.PRIMARY_PROPERTIES  # type: dict
+COMPONENT_FUNC_DICT = network.COMPONENT_FUNC_DICT  # type: dict
 
 default_kwargs = {
     'primary_property': "s",
     'property_type': "db",
     'show': True,
-    'fig': None,
-    'subsets': {"s": {}, "y": {}, "a": {}, "z": {}}
+    'fig': None
 }
 
 
 def plot_rectangular(ntwk, **kwargs):
     """
     :type ntwk: Network
-    :return: bokeh.plotting.figure.Figure
+    :return: plotting.figure.Figure
     """
 
     fig = kwargs.get("fig", None)
-    show = kwargs.get("show", True)\
+    show = kwargs.get("show", True)
 
     primary_property = kwargs.get("primary_property", "s")
     property_type = kwargs.get("property_type", "db")
-    PROPERTY = primary_property + "_" + property_type
 
     colors = trace_color_cycle()
 
-    if type(fig) is not bokeh.plotting.Figure:
+    if type(fig) is not plotting.Figure:
         fig = plotting.figure(
             title=ntwk.name,
             height=350, width=800,
             x_axis_label="frequency ({:s})".format(ntwk.frequency.unit),
-            y_axis_label=YLABELS[property_type],
+            y_axis_label=Y_LABEL_DICT[property_type],
             tools="resize, pan, wheel_zoom, box_zoom, save, reset",
             toolbar_location="above",
             toolbar_sticky=True
@@ -75,9 +47,9 @@ def plot_rectangular(ntwk, **kwargs):
 
     for n in range(ntwk.nports):
         for m in range(ntwk.nports):
-            X = ntwk.frequency.f_scaled
-            Y = getattr(ntwk, PROPERTY)[:, m, n]
-            glpyhs.append(fig.line(X, Y, line_color=next(colors)))
+            x = ntwk.frequency.f_scaled
+            y = getattr(ntwk, primary_property + "_" + property_type)[:, m, n]
+            glpyhs.append(fig.line(x, y, line_color=next(colors)))
             labels.append("S{:d}{:d}".format(n + 1, m + 1))
 
     legend_items = []
@@ -88,7 +60,8 @@ def plot_rectangular(ntwk, **kwargs):
 
     fig.add_layout(legend, 'right')
 
-    if show: plotting.show(fig)
+    if show:
+        plotting.show(fig)
 
     return fig
 
@@ -97,11 +70,11 @@ for p in PRIMARY_PROPERTIES:
     for t in COMPONENT_FUNC_DICT.keys():
         attribute_name = "plot_{:s}_{:s}".format(p, t)
 
-        def plot_function(p, t):
-            def inner(ntwk, **kwargs):
+        def gen_plot_function(p, t):
+            def plot_function(ntwk, **kwargs):
                 kwargs["primary_property"] = p
                 kwargs["property_type"] = t
                 plot_rectangular(ntwk, **kwargs)
-            return inner
+            return plot_function
 
-        setattr(network.Network, attribute_name, plot_function(p, t))
+        setattr(network.Network, attribute_name, gen_plot_function(p, t))

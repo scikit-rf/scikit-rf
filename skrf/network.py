@@ -264,10 +264,9 @@ class Network(object):
     ------------
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     '''
-    
 
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = [ 's','z','y','a']
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
@@ -290,6 +289,7 @@ class Network(object):
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
         }
+
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
     Y_LABEL_DICT = {
