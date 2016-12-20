@@ -66,15 +66,22 @@ def plot_rectangular(ntwk, **kwargs):
     return fig
 
 
-for p in PRIMARY_PROPERTIES:
-    for t in COMPONENT_FUNC_DICT.keys():
-        attribute_name = "plot_{:s}_{:s}".format(p, t)
+def plot_polar():
+    pass  # not native to bokeh, but I have seen some hacks to do this.  Smith chart may be tricky
 
-        def gen_plot_function(p, t):
-            def plot_function(ntwk, **kwargs):
-                kwargs["primary_property"] = p
-                kwargs["property_type"] = t
-                plot_rectangular(ntwk, **kwargs)
-            return plot_function
 
-        setattr(network.Network, attribute_name, gen_plot_function(p, t))
+def use_bokeh():
+    for p in PRIMARY_PROPERTIES:
+        for t in COMPONENT_FUNC_DICT.keys():
+            attribute_name = "plot_{:s}_{:s}".format(p, t)
+
+            def gen_plot_function(p, t):
+                def plot_function(ntwk, **kwargs):
+                    kwargs["primary_property"] = p
+                    kwargs["property_type"] = t
+                    plot_rectangular(ntwk, **kwargs)
+                return plot_function
+
+            setattr(network.Network, attribute_name, gen_plot_function(p, t))
+
+use_bokeh()  # this function can be called again if we need to switch plotting engines for some reason
