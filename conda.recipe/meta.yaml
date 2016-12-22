@@ -1,6 +1,6 @@
 package:
     name: scikit-rf
-    version: {{ environ.get('GIT_DESCRIBE_TAG', '').replace('.dev', 'dev') }}
+    version: {{ environ.get('GIT_DESCRIBE_TAG', '').replace('.dev', 'dev').replace('v','') }}
 
 build:
     number: {{ environ.get('GIT_DESCRIBE_NUMBER', 0) }}

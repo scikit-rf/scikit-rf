@@ -9,7 +9,7 @@ from .util import get_fid, get_extn, find_nearest_index,slice_domain
 from scipy import  signal
 import numpy as npy
 from numpy import fft
-import pylab as plb
+import matplotlib.pyplot as plb
 
 from IPython.display import Image, SVG, Math
 from IPython.core.pylabtools import print_figure

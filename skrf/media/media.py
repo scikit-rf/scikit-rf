@@ -1198,9 +1198,8 @@ class Media(object):
         from_csv : class method to initialize Media object from a
             csv file written from this function
         '''
-        f = open(filename,'w')
+    
         header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
-        f.write(header)
 
         g,z,pz  = self.gamma, \
                 self.Z0, self.z0
@@ -1209,8 +1208,7 @@ class Media(object):
                 [self.frequency.f_scaled, z.real, z.imag, \
                 g.real, g.imag, pz.real, pz.imag]).T
 
-        npy.savetxt(f,data,delimiter=',')
-        f.close()
+        npy.savetxt(filename,data,delimiter=',',header=header)
 
 
 
