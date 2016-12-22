@@ -138,7 +138,6 @@ Misc Functions
 
 '''
 from six.moves import xrange
-import zipfile
 
 import os
 import warnings
@@ -158,7 +157,7 @@ import numpy as npy
 
 from numpy.linalg import inv as npy_inv
 
-# import pylab as plb
+# import matplotlib.pyplot as plb
 from scipy import stats,signal        # for Network.add_noise_*, and Network.windowed
 
 from scipy.interpolate import interp1d # for Network.interpolate()
@@ -265,8 +264,9 @@ class Network(object):
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     '''
 
+
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a']
+    PRIMARY_PROPERTIES = [ 's','z','y','a']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
@@ -289,7 +289,6 @@ class Network(object):
         'time_db' : lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
         'time_mag' : lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0),axes=0)),
         }
-
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
     Y_LABEL_DICT = {
@@ -376,9 +375,7 @@ class Network(object):
         self.comments = comments
         self.port_names = None
 
-        if isinstance(file, zipfile.ZipExtFile):
-            self.read_touchstone(get_fid(file))
-        elif file is not None:
+        if file is not None:
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and
             # unpickle it first
@@ -1255,6 +1252,24 @@ class Network(object):
 
         '''
         return abs(1-self.s/self.s.swapaxes(1,2))
+
+    @property
+    def stability(self):
+        '''
+        Stability factor
+
+        .. math::
+                K = ( 1 - |S_{11}|^2 - |S_{22}|^2 + |D|^2 ) / (2 * |S_{12}| * |S_{21}|)
+                D = S_{11} S_{22} - S_{12} S_{21}
+
+        Returns
+        ---------
+        '''
+        assert self.nports == 2, "Stability factor K is only defined for two ports"
+
+        D = self.s[:,0,0] * self.s[:,1,1] - self.s[:,0,1] * self.s[:,1,0]
+        K = (1 - npy.abs(self.s[:,0,0])**2 - npy.abs(self.s[:,1,1])**2 + npy.abs(D)**2) / (2 * npy.abs(self.s[:,0,1]) * npy.abs(self.s[:,1,0]))
+        return K
 
     @property
     def group_delay(self):
@@ -2349,7 +2364,30 @@ class Network(object):
         p : int, number of differential ports
         z0_mm: f x n x n matrix of mixed mode impedances, optional
             if input is None, 100 Ohms differential and 25 Ohms common mode reference impedance
-        
+
+        Odd Number of Ports
+        -------------------
+
+        In the case where there are an odd number of ports (such as a 3-port network
+        with ports 0, 1, and 2), se2gmm() assumes that the last port (port 2) remains
+        single-ended and ports 0 and 1 are converted to differntial mode and common
+        mode, respectively. For networks in which the port ordering is not suitable,
+        port renumbering can be used.
+
+        For example, a 3-port single-ended network is converted to mixed-mode
+        parameters.
+
+          | Port 0 (single-ended, 50 ohms) --> Port 0 (single-ended, 50 ohms)
+          | Port 1 (single-ended, 50 ohms) --> Port 1 (differential mode, 100 ohms)
+          | Port 2 (single-ended, 50 ohms) --> Port 2 (common mode, 25 ohms)
+
+        >>> ntwk.renumber([0,1,2],[2,1,0])
+        >>> ntwk.se2gmm(p=1)
+        >>> ntwk.renumber([2,1,0],[0,1,2])
+
+        In the resulting network, port 0 is single-ended, port 1 is
+        differential mode, and port 2 is common mode.
+
         .. warning::
             This is not fully tested, and should be considered as experimental
         '''
@@ -2385,7 +2423,7 @@ class Network(object):
         # XXX: assumes 'proper' order (differential ports, single ended ports)
         if z0_se is None:
             z0_se = self.z0.copy()
-            z0_se = 50
+            z0_se[:] = 50
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)

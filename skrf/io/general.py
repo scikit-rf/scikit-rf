@@ -375,7 +375,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
-            warnings.warn('couldnt write %s: %s'%(k,inst.strerror))
+            warnings.warn('couldnt write %s: %s'%(k,str(inst)))
 
             pass
 

@@ -36,10 +36,7 @@ except ImportError:
 import numpy as npy
 from datetime import datetime
 import collections, pprint
-from subprocess import Popen, PIPE
-import sys
-import zipfile
-import codecs
+from subprocess import Popen,PIPE
 # globals
 
 try:
@@ -144,18 +141,8 @@ def slice_domain(x,domain):
     stop = find_nearest_index(x, domain[1])
     return slice(start,stop+1)
 
-def prep_zipfile_fid(zfid):
-    """
-    :type zfid: zipfile.ZipExtFile
-    :return:
-    """
-    if sys.version_info > (3, 0):
-        if hasattr(zfid, "_readline"):
-            return
-        zfid._readline = zfid.readline
-        zfid.readline = lambda: codecs.decode(zfid._readline(), "ascii")
-
 # file IO
+
 def get_fid(file, *args, **kwargs):
     '''
     Returns a file object, given a filename or file object
@@ -173,8 +160,6 @@ def get_fid(file, *args, **kwargs):
     if isinstance(file, basestring):
         return open(file, *args, **kwargs)
     else:
-        if isinstance(file, zipfile.ZipExtFile):
-            prep_zipfile_fid(file)
         return file
 
 def get_extn(filename):

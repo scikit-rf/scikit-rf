@@ -1,3 +1,5 @@
+
+
 '''
 .. module:: skrf.io.touchstone
 ========================================
@@ -27,7 +29,7 @@ import numpy as npy
 from ..util import get_fid
 from ..network import Network
 from ..frequency import Frequency
-from ..media import Media, DefinedGammaZ0
+from ..media import  Media, DefinedGammaZ0
 from .. import mathFunctions as mf
 
 class Touchstone():
@@ -39,7 +41,7 @@ class Touchstone():
 
     .. [#] http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
     '''
-    def __init__(self, file):
+    def __init__(self,file):
         '''
         constructor
 
@@ -98,12 +100,12 @@ class Touchstone():
 
         filename=self.filename
 
-        extension = filename.split('.')[-1].lower()
+        extention = filename.split('.')[-1].lower()
         #self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
         try:
-            self.rank = int(extension[1:-1])
+            self.rank = int(extention[1:-1])
         except (ValueError):
-            raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extension)))
+            raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
 
 
         linenr = 0
@@ -250,8 +252,8 @@ class Touchstone():
         if format == 'orig':
             format = self.format
         ext1, ext2 = {'ri':('R','I'),'ma':('M','A'), 'db':('DB','A')}.get(format)
-        for r1 in range(self.rank):
-            for r2 in range(self.rank):
+        for r1 in xrange(self.rank):
+            for r2 in xrange(self.rank):
                 names.append("S%i%i%s"%(r1+1,r2+1,ext1))
                 names.append("S%i%i%s"%(r1+1,r2+1,ext2))
         return names

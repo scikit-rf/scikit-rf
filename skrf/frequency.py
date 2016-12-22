@@ -31,8 +31,8 @@ Functions
 
 '''
 
-
-from numpy import pi, linspace
+# from matplotlib.pyplot import gca,plot, autoscale
+from numpy import pi,linspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
 import re

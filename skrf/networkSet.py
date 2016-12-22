@@ -44,7 +44,7 @@ import zipfile
 from copy import deepcopy
 import warnings
 import numpy as npy
-# import pylab as plb
+# import matplotlib.pyplot as plb
 from . util import now_string_2_dt
 # delayed imports due to circular dependencies
 # NetworkSet.from_dir : from io.general import read_all_networks
@@ -758,6 +758,7 @@ class NetworkSet(object):
             file = self.name
 
         write(file,self, *args, **kwargs)
+
 
     def write_spreadsheet(self, *args, **kwargs):
         '''

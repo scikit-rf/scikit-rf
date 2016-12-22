@@ -74,7 +74,6 @@ import numpy as npy
 from numpy import linalg
 from numpy.linalg import det
 from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
-# import pylab as plb
 import os
 from copy import deepcopy, copy
 import itertools
@@ -1956,9 +1955,9 @@ class EightTerm(Calibration):
 
     '''
     family = 'EightTerm'
-
-    def __init__(self, measured, ideals, switch_terms=None, *args, **kwargs):
-        """
+    def __init__(self, measured, ideals, switch_terms=None,
+                 *args, **kwargs):
+        '''
         EightTerm Initializer
 
         Notes
@@ -1978,7 +1977,9 @@ class EightTerm(Calibration):
 
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
-        """
+
+
+        '''
 
         self.switch_terms = switch_terms
         if switch_terms is None:
@@ -2204,9 +2205,8 @@ class TRL(EightTerm):
 
     '''
     family = 'TRL'
-
     def __init__(self, measured, ideals=None, estimate_line=False,
-                 n_reflects=1, solve_reflect=True, *args, **kwargs):
+                n_reflects=1,solve_reflect = True, *args,**kwargs):
         '''
         Initialize a TRL calibration
 
