@@ -1198,9 +1198,9 @@ class Media(object):
         from_csv : class method to initialize Media object from a
             csv file written from this function
         '''
-    
-        header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
 
+        header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
+        
         g,z,pz  = self.gamma, \
                 self.Z0, self.z0
 

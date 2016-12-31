@@ -74,7 +74,6 @@ import numpy as npy
 from numpy import linalg
 from numpy.linalg import det
 from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
-import pylab as plb
 import os
 from copy import deepcopy, copy
 import itertools
@@ -876,25 +875,6 @@ class Calibration(object):
         out.name = 'Total Error'
         return out
 
-    def plot_errors(self, *args, **kwargs):
-        '''
-        Plots biased, unbiased and total error in dB scaled
-
-        See Also
-        ---------
-        biased_error
-        unbiased_error
-        total_error
-        '''
-        port_list = self.biased_error.port_tuples
-        for m,n in port_list:
-            plb.figure()
-            plb.title('S%i%i'%(m+1,n+1))
-            self.unbiased_error.plot_s_db(m,n,**kwargs)
-            self.biased_error.plot_s_db(m,n,**kwargs)
-            self.total_error.plot_s_db(m,n,**kwargs)
-            plb.ylim(-100,0)
-
     @property
     def error_ntwk(self):
         '''
@@ -913,59 +893,6 @@ class Calibration(object):
             self.coefs,
             frequency = self.frequency,
             is_reciprocal= self.is_reciprocal)
-
-
-    def plot_caled_ntwks(self, attr='s_smith', show_legend=False,**kwargs):
-        '''
-        Plots corrected calibration standards
-
-        Given that the calibration is overdetermined, this may be used
-        as a heuristic verification of calibration quality.
-
-        Parameters
-        ------------------
-        attr : str
-            Network property to plot, ie 's_db', 's_smith', etc
-        show_legend : bool
-            draw a legend or not
-        \\*\\*kwargs : kwargs
-            passed to the plot method of Network
-        '''
-        ns = NetworkSet(self.caled_ntwks)
-        kwargs.update({'show_legend':show_legend})
-
-        if ns[0].nports ==1:
-            ns.__getattribute__('plot_'+attr)(0,0, **kwargs)
-        elif ns[0].nports ==2:
-            plb.figure(figsize = (8,8))
-            for k,mn in enumerate([(0, 0), (1, 1), (0, 1), (1, 0)]):
-                plb.subplot(221+k)
-                plb.title('S%i%i'%(mn[0]+1,mn[1]+1))
-                ns.__getattribute__('plot_'+attr)(*mn, **kwargs)
-        else:
-            raise NotImplementedError
-        plb.tight_layout()
-
-    def plot_residuals(self, attr='s_db', **kwargs):
-        '''
-        Plot residual networks.
-
-        Given that the calibration is overdetermined, this may be used
-        as a metric of the calibration's *goodness of fit*
-
-        Parameters
-        ------------------
-        attr : str
-            Network property to plot, ie 's_db', 's_smith', etc
-        \\*\\*kwargs : kwargs
-            passed to the plot method of Network
-
-        See Also
-        --------
-        Calibration.residual_networks
-        '''
-
-        NetworkSet(self.residual_ntwks).__getattribute__('plot_'+attr)(**kwargs)
 
     def write(self, file=None,  *args, **kwargs):
         '''
@@ -2278,7 +2205,7 @@ class TRL(EightTerm):
 
     '''
     family = 'TRL'
-    def __init__(self, measured, ideals=None, estimate_line=False, 
+    def __init__(self, measured, ideals=None, estimate_line=False,
                 n_reflects=1,solve_reflect = True, *args,**kwargs):
         '''
         Initialize a TRL calibration

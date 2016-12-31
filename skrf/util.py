@@ -25,20 +25,15 @@ General
 
 '''
 
-from . import mathFunctions as mf
+import fnmatch
+import os
 
-
-import matplotlib as mpl
-import warnings
-import os, fnmatch
 try:
-	import cPickle as pickle
+    import cPickle as pickle
 except ImportError:
     import pickle as pickle
 
-import pylab as plb
 import numpy as npy
-from scipy.constants import mil
 from datetime import datetime
 import collections, pprint
 from subprocess import Popen,PIPE
@@ -160,7 +155,7 @@ def get_fid(file, *args, **kwargs):
     file : str/unicode or file-object
         file to open
     \*args, \*\*kwargs : arguments and keyword arguments to `open()`
-        
+
     '''
     if isinstance(file, basestring):
         return open(file, *args, **kwargs)
@@ -218,17 +213,6 @@ def git_version( modname):
     if out == '':
         return None
     return out
-
-
-def stylely(rc_dict={}, style_file = 'skrf.mplstyle'):
-    '''
-    loads the rc-params from the specified file (file must be located in skrf/data)
-    '''
-
-    from skrf.data import pwd # delayed to solve circular import
-    rc = mpl.rc_params_from_file(os.path.join(pwd, style_file))
-    mpl.rcParams.update(rc)
-    mpl.rcParams.update(rc_dict)
 
 
 def dict_2_recarray(d, delim, dtype):
