@@ -20,6 +20,7 @@ requirements:
     - matplotlib
     - mock
     - nose
+    - future
 
   run:
     - python

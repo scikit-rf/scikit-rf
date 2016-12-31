@@ -1200,8 +1200,7 @@ class Media(object):
         '''
 
         header = 'f[%s], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)\n'%self.frequency.unit
-        f.write(header)
-
+        
         g,z,pz  = self.gamma, \
                 self.Z0, self.z0
 
