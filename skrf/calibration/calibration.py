@@ -2338,8 +2338,573 @@ class TRL(EightTerm):
 
 MultilineTRL = TRL
 
-    
-    
+class NISTMultilineTRL(EightTerm):
+    '''
+    NIST Multiline TRL calibration.
+
+    Multiline TRL can use multiple lines to extend bandwidth and accuracy of the
+    calibration.
+
+    Algorithm is the one published in [0], but implementation is based on [1].
+
+    [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed," 60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
+
+    [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz" Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
+    '''
+    family = 'TRL'
+    def __init__(self, measured, Grefls, l,
+                n_reflects=1, er_est=1, refl_offset=None, p1_len_est=0, p2_len_est=0, ref_plane=0, gamma_root_choice='', *args,**kwargs):
+        '''
+        NIST Multiline TRL calibration
+
+        Note that the order of `measured` is strict.
+        It must be [Thru, Reflect, Line]. Multiple reflects can
+        also be used, see `n_reflects` argument.
+
+        Notes
+        -------
+        This implementation inherits from :class:`EightTerm`. Don't
+        forget to pass switch_terms.
+
+
+        Parameters
+        --------------
+        measured : list of :class:`~skrf.network.Network`
+             must be in order [Thru, Reflect, Line]
+
+        Grefls : list of complex
+            Reflection coefficient estimation of reflect standards.
+
+        l : list of float
+            Lengths of through and lines.
+
+        n_reflects :  int
+            number of reflective standards
+
+        er_est : complex
+            Estimated effective permittivity of the lines.
+            Imaginary part is the loss at 1 GHz.
+            Negative imaginary part indicates losses.
+
+        refl_offset : float
+            Estimated offset of the length measured from the center of the through.
+            Negative length is towards the VNA, Units are in meters.
+
+        p1_len_est : float
+            Estimated length of port 1.
+            Negative length is towards the VNA. Units are in meters.
+
+        p2_len_est : float
+            Estimated length of port 2.
+            Negative length is towards the VNA. Units are in meters.
+
+        ref_plane : float
+            Reference plane shift after the calibration.
+            Negative length is towards the VNA.
+
+        gamma_root_choice : string
+            Method to use for choosing the correct eigen value for propagation
+            constant.
+
+            '' : Use the default method.
+
+            'real' : Force the real part of the gamma to be positive corresponding
+            to a lossy line. Imaginary part can be negative.
+
+            'imag' : Force the imaginary part of the gamma to be positive,
+            corresponding to a positive length line. Real part can be positive.
+
+        \*args, \*\*kwargs :  passed to EightTerm.__init__
+            dont forget the `switch_terms` argument is important
+
+
+        '''
+        self.refl_offset = refl_offset
+        self.p1_len_est = p1_len_est
+        self.p2_len_est = p2_len_est
+        self.ref_plane = ref_plane
+        self.er_est = er_est
+        self.l = l
+        self.Grefls = Grefls
+        self.gamma_root_choice = gamma_root_choice
+
+        if self.refl_offset == None:
+            self.refl_offset = [0]*n_reflects
+
+        #Not used, but needed for Calibration class init
+        ideals = measured
+
+        #EightTerm applies the switch correction
+        EightTerm.__init__(self,
+            measured = measured,
+            ideals = ideals,
+            self_calibration=True,
+            *args, **kwargs)
+
+        m_sw = [k for k in self.measured_unterminated]
+
+        self.measured_reflects = m_sw[1:1+n_reflects]
+        self.measured_lines = [m_sw[0]]
+        self.measured_lines.extend(m_sw[1+n_reflects:])
+
+        if len(l) != len(self.measured_lines):
+            raise ValueError("Different amount of lines and line lengths found")
+
+    def run(self):
+        c = 299792458.0
+        pi = npy.pi
+
+        inv = linalg.inv
+        exp = npy.exp
+        log = npy.log
+        abs = npy.abs
+        det = linalg.det
+
+        measured_reflects = self.measured_reflects
+        measured_lines = self.measured_lines
+        l = self.l
+        er_est = self.er_est
+
+        freqs = measured_lines[0].f
+        fpoints = len(freqs)
+        lines = len(l)
+        gamma = npy.zeros(fpoints, dtype=npy.complex)
+
+        gamma_est = (1j*2*pi*freqs[0]/c)*npy.sqrt(er_est.real + 1j*er_est.imag/(freqs[0]*1e-9))
+
+        line_c = npy.zeros(fpoints, dtype=int)
+        er_eff = npy.zeros(fpoints, dtype=npy.complex)
+
+        Tmat1 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
+        Tmat2 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
+
+        Smat1 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
+        Smat2 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
+
+        e = npy.zeros(shape=(fpoints, 7), dtype=npy.complex)
+
+        def root_choice(Mij, dl, gamma_est):
+            e_val = linalg.eigvals(Mij)
+            Da = [0,0]
+            Db = [0,0]
+            ga = [0,0]
+            gb = [0,0]
+            for i in [0,1]:
+                if i == 0:
+                    eij1 = e_val[0]
+                    eij2 = e_val[1]
+                else:
+                    eij1 = e_val[1]
+                    eij2 = e_val[0]
+                ea = (eij1 + 1/eij2)/2
+                periods = npy.round(((gamma_est*dl).imag - (-log(ea)).imag)/(2*pi))
+                ga[i] = (-log(ea) + 1j*2*pi*periods)/dl
+                Da[i] = abs(ga[i]*dl - gamma_est*dl)/abs(gamma_est*dl)
+
+                eb = (eij2 + 1/eij1)/2
+                periods = npy.round(((gamma_est*dl).imag - (-log(eb)).imag)/(2*pi))
+                gb[i] = (-log(eb) + 1j*2*pi*periods)/dl
+                Da[i] = abs(gb[i]*dl + gamma_est*dl)/abs(-gamma_est*dl)
+            if Da[0] + Db[0] < 0.1*(Da[1] + Db[1]):
+                return e_val
+            if Da[1] + Db[1] < 0.1*(Da[0] + Db[0]):
+                return e_val[::-1]
+            if npy.sign((ga[0]).real) != npy.sign((gb[0]).real):
+                if Da[0] + Db[0] < Da[1] + Db[1]:
+                    return e_val
+                else:
+                    return e_val[::-1]
+            else:
+                if abs((ga[0]-gb[0]).real) < 0.1*abs((ga[1] + gb[1]).real) \
+                    and abs(ga[0].real/ga[0].imag) > 0.001 \
+                    and ga.real > 0:
+                        if Da[0] + Db[0] < 0.2:
+                            return e_val
+                        else:
+                            return e_val[::-1]
+                else:
+                    if Da[0] + Db[0] < Da[1] + Db[1]:
+                        return e_val
+                    else:
+                        return e_val[::-1]
+            #Unreachable
+            return e_val
+
+        for m in range(fpoints):
+            min_phi_eff = pi*npy.ones(lines)
+            #Find the best common line to use
+            for n in range(lines):
+                for k in range(n-1):
+                    dl = l[k] - l[n]
+                    pd = abs(exp(-gamma_est*dl) - exp(gamma_est*dl))/2
+                    if -1 <= pd <= 1:
+                        phi_eff = npy.arcsin( pd )
+                    else:
+                        phi_eff = 0
+                    min_phi_eff[n] = min(min_phi_eff[n], phi_eff)
+            #Common line is selected to be one with the largest phase difference
+            line_c[m] = npy.argmax(min_phi_eff)
+
+            #Propagation constant extraction
+            #Compute eigenvalues of each line pair
+
+            g_dl = npy.zeros(lines-1, dtype=npy.complex)
+            dl_vec = npy.zeros(lines-1, dtype=npy.complex)
+            k = 0
+
+            for n in range(lines):
+                #Skip the common line
+                if n == line_c[m]:
+                    continue
+                dl = l[n] - l[line_c[m]]
+                Mij = s2t(measured_lines[n].s[m]).dot(inv(s2t(measured_lines[line_c[m]].s[m])))
+                #Choose the correct root
+                e_val = root_choice(Mij, dl, gamma_est)
+
+                g_dl[k] = -log(0.5*(e_val[0] + 1.0/e_val[1]))
+
+                if 'real' in self.gamma_root_choice and (g_dl[k]/dl).real < 0:
+                    g_dl[k] = -g_dl[k]
+
+                if 'imag' in self.gamma_root_choice and (g_dl[k]/dl).imag < 0:
+                    g_dl[k] = -g_dl[k]
+
+                periods = npy.round(((gamma_est*dl).imag - (g_dl[k].imag))/(2*pi))
+                g_dl[k] += 1j*2*pi*periods
+                dl_vec[k] = dl
+                k = k + 1
+
+            V_inv = npy.eye(lines-1, dtype=npy.complex) \
+                    - (1.0/lines)*npy.ones(shape=(lines-1, lines-1), dtype=npy.complex)
+
+            gamma[m] = (dl_vec.conj().transpose().dot(V_inv).dot(g_dl))/(dl_vec.conj().transpose().dot(V_inv).dot(dl_vec))
+
+            if m != fpoints-1:
+                gamma_est = gamma[m].real + 1j*gamma[m].imag*freqs[m+1]/freqs[m]
+            er_eff[m] = -(gamma[m]/(2*pi*freqs[m]/c))**2
+
+            b1_vec = npy.zeros(lines-1, dtype=npy.complex)
+            b2_vec = npy.zeros(lines-1, dtype=npy.complex)
+            CoA1_vec = npy.zeros(lines-1, dtype=npy.complex)
+            CoA2_vec = npy.zeros(lines-1, dtype=npy.complex)
+
+            p = 0
+            for n in range(lines):
+                if n == line_c[m]:
+                    continue
+                #Port 1
+                T = s2t(measured_lines[n].s[m]).dot(inv(s2t(measured_lines[line_c[m]].s[m])))
+                T = measured_lines[n].s[m,1,0]*measured_lines[line_c[m]].s[m,0,1]*T
+                e_val = linalg.eigvals(T)
+
+                B1 = npy.array([\
+                    [T[0,1]/(e_val[0]-T[0,0]), T[0,1]/(e_val[1]-T[0,0])],
+                    [(e_val[0]-T[1,1])/T[1,0], (e_val[1]-T[1,1])/T[1,0]]])
+                CoA1 = npy.array([\
+                    [T[1,0]/(e_val[1]-T[1,1]), T[1,0]/(e_val[0]-T[1,1])],
+                    [(e_val[1]-T[0,0])/T[0,1], (e_val[0]-T[0,0])/T[0,1]]])
+                B_est1 = T[0,1]/(exp(gamma[m]*(l[n]-l[line_c[m]]) - T[0,0]))
+                CoA_est1 = T[1,0]/(exp(-gamma[m]*(l[n]-l[line_c[m]]) - T[1,1]))
+                dB1 = abs(B1 - B_est1)/abs(B_est1)
+                dCoA1 = abs(CoA1 - CoA_est1)/abs(CoA_est1)
+
+                if npy.sum(dB1[:,0]) + npy.sum(dCoA1[:,0]) < \
+                        npy.sum(dB1[:,1]) + npy.sum(dCoA1[:,1]):
+                    if abs(B1[0,0] - B_est1) <  abs(B1[1,0] - B_est1):
+                        b1_vec[p] = B1[0,0]
+                    else:
+                        b1_vec[p] = B1[1,0]
+
+                    if abs(CoA1[0,0] - CoA_est1) < \
+                            abs(CoA1[1,0] - CoA_est1):
+                        CoA1_vec[p] = CoA1[0,0]
+                    else:
+                        CoA1_vec[p] = CoA1[1,0]
+                else:
+                    if abs(B1[0,1] - B_est1) < abs(B1[1,1] - B_est1):
+                        b1_vec[p] = B1[0,1]
+                    else:
+                        b1_vec[p] = B1[1,1]
+
+                    if abs(CoA1[0,1] - CoA_est1) < abs(CoA1[1,1] - CoA_est1):
+                        CoA1_vec[p] = CoA1[0,1]
+                    else:
+                        CoA1_vec[p] = CoA1[1,1]
+
+                #Port 2
+                k = npy.array([[0,1],[1,0]], dtype=npy.complex)
+
+                T = s2t(k.dot(measured_lines[n].s[m]).dot(k)).dot(\
+                        inv(s2t(k.dot(measured_lines[line_c[m]].s[m]).dot(k))))
+                T = measured_lines[n].s[m][0,1]*measured_lines[line_c[m]].s[m][1,0]*T
+                e_val = linalg.eigvals(T)
+
+                B2 = npy.array([\
+                    [T[0,1]/(e_val[0]-T[0,0]), T[0,1]/(e_val[1]-T[0,0])],
+                    [(e_val[0]-T[1,1])/T[1,0], (e_val[1]-T[1,1])/T[1,0]]])
+                CoA2 = npy.array([\
+                    [T[1,0]/(e_val[1]-T[1,1]), T[1,0]/(e_val[0]-T[1,1])],
+                    [(e_val[1]-T[0,0])/T[0,1], (e_val[0]-T[0,0])/T[0,1]]])
+                B_est2 = T[0,1]/(exp(gamma[m]*(l[n]-l[line_c[m]]) - T[0,0]))
+                CoA_est2 = T[1,0]/(exp(-gamma[m]*(l[n]-l[line_c[m]]) - T[1,1]))
+                dB2 = abs(B2 - B_est2)/abs(B_est2)
+                dCoA2 = abs(CoA2 - CoA_est2)/abs(CoA_est2)
+
+                if npy.sum(dB2[:,0]) + npy.sum(dCoA2[:,0]) < \
+                        npy.sum(dB2[:,1]) + npy.sum(dCoA2[:,1]):
+                    if abs(B2[0,0] - B_est2) <  abs(B2[1,0] - B_est2):
+                        b2_vec[p] = B2[0,0]
+                    else:
+                        b2_vec[p] = B2[1,0]
+
+                    if abs(CoA2[0,0] - CoA_est2) < \
+                            abs(CoA2[1,0] - CoA_est2):
+                        CoA2_vec[p] = CoA2[0,0]
+                    else:
+                        CoA2_vec[p] = CoA2[1,0]
+                else:
+                    if abs(B2[0,1] - B_est2) < abs(B2[1,1] - B_est2):
+                        b2_vec[p] = B2[0,1]
+                    else:
+                        b2_vec[p] = B2[1,1]
+
+                    if abs(CoA2[0,1] - CoA_est2) < abs(CoA2[1,1] - CoA_est2):
+                        CoA2_vec[p] = CoA2[0,1]
+                    else:
+                        CoA2_vec[p] = CoA2[1,1]
+
+                p += 1
+
+            Vb = npy.zeros(shape=(lines-1,lines-1), dtype=npy.complex)
+            #Fill in upper triangular matrix
+            l_not_common = [i for i in l if i != l[line_c[m]]]
+            for b in range(len(l_not_common)):
+                for a in range(b+1):
+                    if a == b: #Diagonal
+                        len_l = l_not_common[a]
+                        exp_factor = exp(-gamma[m]*(len_l - l[line_c[m]]))
+                        Vb[a,b] = abs(exp_factor)**2 + 1/abs(exp_factor)**2 + \
+                                2*( abs(exp(-gamma[m]*len_l))*\
+                                abs(exp(-gamma[m]*l[line_c[m]])) )**2
+                        Vb[a,b] /= abs(exp_factor - 1/exp_factor)**2
+                    elif a < b:
+                        len_a = l_not_common[a]
+                        len_b = l_not_common[b]
+                        exp_factor = exp(-gamma[m]*(len_a -l[line_c[m]]))
+                        exp_factor2 = exp(-gamma[m]*(len_b -l[line_c[m]]))
+                        Vb[a,b] = exp_factor2*exp_factor.conjugate() + \
+                                (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
+                                exp(-gamma[m]*len_b)*(exp(-gamma[m]*len_a)).conjugate()
+                        Vb[a,b] = Vb[a,b]/(exp_factor - 1/exp_factor).conjugate()/ \
+                                (exp_factor2-1/exp_factor2)
+                        Vb[b,a] = Vb[a,b].conjugate()
+
+            Vc = npy.zeros(shape=(lines-1,lines-1), dtype=npy.complex)
+            #Fill in upper triangular matrix
+            for b in range(len(l_not_common)):
+                for a in range(b+1):
+                    if a == b:
+                        len_l = l_not_common[a]
+                        exp_factor = exp(-gamma[m]*(len_l - l[line_c[m]]))
+                        Vc[a,b] = abs(exp_factor)**2 + 1/(abs(exp_factor))**2 + \
+                                2/( abs(exp(-gamma[m]*l[line_c[m]]))*\
+                                abs(exp(-gamma[m]*len_l)) )**2
+                        Vc[a,b] /= abs(exp_factor - 1/exp_factor)**2
+                    elif a < b:
+                        len_a = l_not_common[a]
+                        len_b = l_not_common[b]
+                        exp_factor_a = exp(-gamma[m]*(len_a -l[line_c[m]]))
+                        exp_factor_b = exp(-gamma[m]*(len_b -l[line_c[m]]))
+                        Vc[a,b] = 1/(exp_factor_b*exp_factor_a.conjugate()) + \
+                                1/( (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
+                                exp(-gamma[m]*len_b)*(exp(-gamma[m]*len_a)).conjugate() )
+                        Vc[a,b] = Vc[a,b]/(exp_factor_a - 1/exp_factor_a).conjugate()/ \
+                                (exp_factor_b - 1/exp_factor_b)
+                        Vc[b,a] = Vc[a,b].conjugate()
+
+            h = npy.ones(lines-1)
+            B1 = h.conj().transpose().dot(inv(Vb)).dot(b1_vec)/ \
+                    (h.conj().transpose().dot(inv(Vb)).dot(h))
+            B2 = h.conj().transpose().dot(inv(Vb)).dot(b2_vec)/ \
+                    (h.conj().transpose().dot(inv(Vb)).dot(h))
+            CoA1 = h.conj().transpose().dot(inv(Vc)).dot(CoA1_vec)/ \
+                    (h.conj().transpose().dot(inv(Vc)).dot(h))
+            CoA2 = h.conj().transpose().dot(inv(Vc)).dot(CoA2_vec)/ \
+                    (h.conj().transpose().dot(inv(Vc)).dot(h))
+
+            #Determine A using unknown reflect
+            #Shortest line is assumed to be through line
+            thru_id = npy.argmin(l)
+            S_thru = measured_lines[thru_id].s[m]
+
+            Ap = -B1*B2 - B1*S_thru[1,1] + B2*S_thru[0,0] + linalg.det(S_thru)
+            Ap = -Ap/(1 - CoA1*S_thru[0,0] + CoA2*S_thru[1,1] - CoA1*CoA2*linalg.det(S_thru))
+
+            A1_vals = npy.zeros(len(self.Grefls), dtype=npy.complex)
+            A2_vals = npy.zeros(len(self.Grefls), dtype=npy.complex)
+
+            for n in range(len(measured_reflects)):
+                S_r = measured_reflects[n].s[m]
+
+                S_r11 = S_r[0,0]
+                S_r22 = S_r[1,1]
+
+                Arr = (S_r11 - B1)/(1 - S_r11*CoA1)* \
+                        (1 - S_r22*CoA2)/(S_r22 - B2)
+                Gr_est = self.Grefls[n]*exp(-2*gamma[m]*(self.refl_offset[n] - l[0]/2.))
+                G_trial = (S_r[0,0] - B1)/(npy.sqrt(Ap*Arr)*(1 - S_r[0,0]*CoA1))
+                if abs( Gr_est/abs(Gr_est) - G_trial/abs(G_trial) ) > npy.sqrt(2):
+                    A1_vals[n] = -npy.sqrt(Ap*Arr)
+                else:
+                    A1_vals[n] = npy.sqrt(Ap*Arr)
+                A2_vals[n] = A1_vals[n]/Arr
+
+            A1 = npy.mean(A1_vals)
+            A2 = npy.mean(A2_vals)
+
+            C1 = CoA1*A1
+            C2 = CoA2*A2
+
+            #Determine R
+
+            z0_phase = npy.angle( npy.sqrt(er_eff[m]) )
+            Qox = ( 1 - 1j*z0_phase)
+            Qoy = ( 1 - 1j*z0_phase)
+
+            R1R2 = (S_thru[1,0]*(1 - C1*C2))**-1
+            gam = A2 - B2*C2
+            de = (A1-B1*C1)*(R1R2*(A2-B2*C2))**2
+            beta_sqr = (abs(de)**2 + abs(gam)**2)/\
+                    (de.conjugate()*Qox + de.conjugate()*Qoy)
+            s21y = npy.sqrt( beta_sqr )
+            R2 = ((A2 -B2*C2)/s21y)**-1
+
+            R2_est = exp(gamma[m]*self.p2_len_est)
+            if abs( R2_est/abs(R2_est) -R2/abs(R2) ) > npy.sqrt(2):
+                R2 = -R2
+            R1 = R1R2/R2
+            R1_est = exp(gamma[m]*self.p1_len_est)
+
+            if abs( R1_est/abs(R1_est) - R1/abs(R1) ) > npy.sqrt(2):
+                warn('Inconsistencies detected')
+
+            #Error matrices
+            Tmat1[m,:,:] = R1*npy.array([[A1, B1],[C1, 1]])
+            Tmat2[m,:,:] = R2*npy.array([[A2, B2],[C2, 1]])
+
+            #Reference plane shift
+            Tstub = npy.array([[exp(-gamma[m]*self.ref_plane),0],\
+                    [0, exp(gamma[m]*self.ref_plane)]])
+
+            Tmat1[m,:,:] = Tmat1[m,:,:].dot(Tstub)
+            Tmat2[m,:,:] = Tmat2[m,:,:].dot(Tstub)
+
+            Smat1[m,:,:] = t2s(Tmat1[m,:,:])
+            Smat2[m,:,:] = t2s(Tmat2[m,:,:])
+
+            dx = linalg.det(Smat1[m,:,:])
+            dy = linalg.det(Smat2[m,:,:])
+            k = Smat1[m,1,0]/Smat2[m,0,1]
+
+            #Error coefficients
+            e[m] = [Smat1[m,0,0],
+                    Smat1[m,1,1],
+                    dx,
+                    k*Smat2[m,0,0],
+                    k*Smat2[m,1,1],
+                    k*dy,
+                    k]
+
+        self._gamma = gamma
+        self._er_eff = er_eff
+        self._coefs = {\
+                'forward directivity':e[:,0],
+                'forward source match':e[:,1],
+                'forward reflection tracking':(e[:,0]*e[:,1])-e[:,2],
+                'reverse directivity':e[:,3]/e[:,6],
+                'reverse source match':e[:,4]/e[:,6],
+                'reverse reflection tracking':(e[:,4]/e[:,6])*(e[:,3]/e[:,6])\
+                        - (e[:,5]/e[:,6]),
+                'k':e[:,6],
+                }
+
+
+        if self.switch_terms is not None:
+            self._coefs.update({
+                'forward switch term': self.switch_terms[0].s.flatten(),
+                'reverse switch term': self.switch_terms[1].s.flatten(),
+                })
+        else:
+            self._coefs.update({
+                'forward switch term': npy.zeros(fpoints, dtype=complex),
+                'reverse switch term': npy.zeros(fpoints, dtype=complex),
+                })
+        # output is a dictionary of information
+        self._output_from_run = {
+                'error vector':e
+                }
+
+    @classmethod
+    def from_coefs(cls, frequency, coefs, **kwargs):
+        '''
+        Creates a calibration from its error coefficients
+
+        Parameters
+        -------------
+        frequency : :class:`~skrf.frequency.Frequency`
+            frequency info, (duh)
+        coefs :  dict of numpy arrays
+            error coefficients for the calibration
+
+        See Also
+        ----------
+        Calibration.from_coefs_ntwks
+
+        '''
+        # assigning this measured network is a hack so that
+        # * `calibration.frequency` property evaluates correctly
+        # * __init__() will not throw an error
+        n = Network(frequency = frequency,
+                    s = rand_c(frequency.npoints,2,2))
+        measured = [n,n,n]
+
+        if 'forward switch term' in coefs:
+            switch_terms = (Network(frequency = frequency,
+                                    s=coefs['forward switch term']),
+                            Network(frequency = frequency,
+                                    s=coefs['reverse switch term']))
+            kwargs['switch_terms'] = switch_terms
+
+
+        #Fill the required __init__ fields with garbage
+        #and assign the coefficients manually
+        cal = cls(measured, [-1], [0,1], **kwargs)
+        cal.coefs = coefs
+        cal.family += '(fromCoefs)'
+        return  cal
+
+    @property
+    def gamma(self):
+        '''
+        Propagation constant of the solved line.
+        '''
+        try:
+            return self._gamma
+        except(AttributeError):
+            self.run()
+            return self._gamma
+
+    @property
+    def er_eff(self):
+        '''
+        Effective permittivity of the solved line.
+        '''
+        try:
+            return self._er_eff
+        except(AttributeError):
+            self.run()
+            return self._er_eff
+
 
 class UnknownThru(EightTerm):
     '''

@@ -10,7 +10,7 @@ from numpy.random  import rand, uniform
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect, NISTMultilineTRL
 
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
@@ -578,7 +578,52 @@ class TRLMultiline(EightTermTest):
         self.cal.run()
         for k in range(2,5):
             self.assertTrue(self.cal.ideals[k]==self.actuals[k])         
-        
+
+class NISTMultilineTRLTest(EightTermTest):
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg= self.wg
+
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name = 'Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+
+        # make error networks have s21,s12 >> s11,s22 so that TRL
+        # can guess at line length
+        self.X.s[:,0,0] *=1e-1
+        self.Y.s[:,0,0] *=1e-1
+        self.X.s[:,1,1] *=1e-1
+        self.Y.s[:,1,1] *=1e-1
+
+        actuals = [
+            wg.thru(),
+            rf.two_port_reflect(wg.load(-.9-.1j),wg.load(-.9-.1j)),
+            rf.two_port_reflect(wg.load(.92+0.05j),wg.load(.92+0.05j)),
+            wg.line(100,'um'),
+            wg.line(200,'um'),
+            wg.line(500,'um'),
+            ]
+
+        self.actuals=actuals
+
+        measured = [self.measure(k) for k in actuals]
+
+        self.cal = NISTMultilineTRL(
+            measured = measured,
+            Grefls = [-1, 1],
+            l = [0, 100e-6, 200e-6, 500e-6],
+            er_est = 1,
+            n_reflects = 2,
+            switch_terms = (self.gamma_f, self.gamma_r),
+            gamma_root_choice = 'imag' #Losslessness of the line causes problems
+                                       #without this option
+            )
+
+    def test_gamma(self):
+        self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
+
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         raise SkipTest()
