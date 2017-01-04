@@ -2484,6 +2484,12 @@ class NISTMultilineTRL(EightTerm):
 
         e = npy.zeros(shape=(fpoints, 7), dtype=npy.complex)
 
+        def t2s_single(t):
+            return t2s(t[npy.newaxis,:,:])[0]
+
+        def s2t_single(s):
+            return s2t(s[npy.newaxis,:,:])[0]
+
         def root_choice(Mij, dl, gamma_est):
             e_val = linalg.eigvals(Mij)
             Da = [0,0]
@@ -2558,7 +2564,7 @@ class NISTMultilineTRL(EightTerm):
                 if n == line_c[m]:
                     continue
                 dl = l[n] - l[line_c[m]]
-                Mij = s2t(measured_lines[n].s[m]).dot(inv(s2t(measured_lines[line_c[m]].s[m])))
+                Mij = s2t_single(measured_lines[n].s[m]).dot(inv(s2t_single(measured_lines[line_c[m]].s[m])))
                 #Choose the correct root
                 e_val = root_choice(Mij, dl, gamma_est)
 
@@ -2594,7 +2600,7 @@ class NISTMultilineTRL(EightTerm):
                 if n == line_c[m]:
                     continue
                 #Port 1
-                T = s2t(measured_lines[n].s[m]).dot(inv(s2t(measured_lines[line_c[m]].s[m])))
+                T = s2t_single(measured_lines[n].s[m]).dot(inv(s2t_single(measured_lines[line_c[m]].s[m])))
                 T = measured_lines[n].s[m,1,0]*measured_lines[line_c[m]].s[m,0,1]*T
                 e_val = linalg.eigvals(T)
 
@@ -2635,8 +2641,8 @@ class NISTMultilineTRL(EightTerm):
                 #Port 2
                 k = npy.array([[0,1],[1,0]], dtype=npy.complex)
 
-                T = s2t(k.dot(measured_lines[n].s[m]).dot(k)).dot(\
-                        inv(s2t(k.dot(measured_lines[line_c[m]].s[m]).dot(k))))
+                T = s2t_single(k.dot(measured_lines[n].s[m]).dot(k)).dot(\
+                        inv(s2t_single(k.dot(measured_lines[line_c[m]].s[m]).dot(k))))
                 T = measured_lines[n].s[m][0,1]*measured_lines[line_c[m]].s[m][1,0]*T
                 e_val = linalg.eigvals(T)
 
@@ -2800,8 +2806,8 @@ class NISTMultilineTRL(EightTerm):
             Tmat1[m,:,:] = Tmat1[m,:,:].dot(Tstub)
             Tmat2[m,:,:] = Tmat2[m,:,:].dot(Tstub)
 
-            Smat1[m,:,:] = t2s(Tmat1[m,:,:])
-            Smat2[m,:,:] = t2s(Tmat2[m,:,:])
+            Smat1[m,:,:] = t2s_single(Tmat1[m,:,:])
+            Smat2[m,:,:] = t2s_single(Tmat2[m,:,:])
 
             dx = linalg.det(Smat1[m,:,:])
             dy = linalg.det(Smat2[m,:,:])
