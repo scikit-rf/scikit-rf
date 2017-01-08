@@ -2483,6 +2483,7 @@ class NISTMultilineTRL(EightTerm):
         Smat2 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
 
         e = npy.zeros(shape=(fpoints, 7), dtype=npy.complex)
+        nstd = npy.zeros(shape=(fpoints), dtype=npy.float)
 
         def t2s_single(t):
             return t2s(t[npy.newaxis,:,:])[0]
@@ -2739,6 +2740,11 @@ class NISTMultilineTRL(EightTerm):
             CoA2 = h.conj().transpose().dot(inv(Vc)).dot(CoA2_vec)/ \
                     (h.conj().transpose().dot(inv(Vc)).dot(h))
 
+            sigmab = npy.sqrt(1/(h.conj().transpose().dot(inv(Vb)).dot(h)).real)
+            sigmac = npy.sqrt(1/(h.conj().transpose().dot(inv(Vc)).dot(h)).real)
+
+            nstd[m] = (sigmab + sigmac)/2
+
             #Determine A using unknown reflect
             #Shortest line is assumed to be through line
             thru_id = npy.argmin(l)
@@ -2824,6 +2830,7 @@ class NISTMultilineTRL(EightTerm):
 
         self._gamma = gamma
         self._er_eff = er_eff
+        self._nstd = nstd
         self._coefs = {\
                 'forward directivity':e[:,0],
                 'forward source match':e[:,1],
@@ -2911,6 +2918,20 @@ class NISTMultilineTRL(EightTerm):
         except(AttributeError):
             self.run()
             return self._er_eff
+
+    @property
+    def nstd(self):
+        '''
+        Normalized standard deviation of the calibration error.
+
+        Normalization is done such that 90 degree long single line gives
+        a standard deviation of 1.
+        '''
+        try:
+            return self._nstd
+        except(AttributeError):
+            self.run()
+            return self._nstd
 
 
 class UnknownThru(EightTerm):
