@@ -6,6 +6,7 @@ from collections import OrderedDict
 from math import sqrt
 
 import numpy as np
+import sip
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import skrf
@@ -1237,3 +1238,126 @@ class ReflectDialog(QtWidgets.QDialog):
                     self.label_port2.setText("port2 - measured")
                 else:
                     self.label_port2.setText("port2 - not measured")
+
+
+class MeasurementDialog(QtWidgets.QDialog):
+
+    measurements_available = QtCore.Signal(object)
+
+    def __init__(self, nwa, parent=None):
+        super(MeasurementDialog, self).__init__(parent)
+        self.setWindowTitle("MeasurementDialog")
+        self.horizontalLayout_main = QtWidgets.QHBoxLayout(self)
+
+        self.verticalLayout_left = QtWidgets.QVBoxLayout()
+
+        self.groupBox_options = QtWidgets.QGroupBox("Options", self)
+        self.checkBox_sweepNew = QtWidgets.QCheckBox("Sweep New", self.groupBox_options)
+        self.label_channel = QtWidgets.QLabel("Channel", self.groupBox_options)
+        self.spinBox_channel = QtWidgets.QSpinBox(self.groupBox_options)
+        self.horizontalLayout_channel = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_channel.addWidget(self.label_channel)
+        self.horizontalLayout_channel.addWidget(self.spinBox_channel)
+
+        self.verticalLayout_options = QtWidgets.QVBoxLayout(self.groupBox_options)
+        self.verticalLayout_options.addWidget(self.checkBox_sweepNew)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_channel)
+        self.verticalLayout_left.addWidget(self.groupBox_options)
+
+        self.groupBox_snp = QtWidgets.QGroupBox("Get N-Port Network", self)
+        self.verticalLayout_snp = QtWidgets.QVBoxLayout(self.groupBox_snp)
+        self.label_nports = QtWidgets.QLabel("NPorts", self.groupBox_snp)
+        self.comboBox_nports = QtWidgets.QComboBox(self.groupBox_snp)
+        self.comboBox_nports.addItems(("1", "2"))
+        self.btn_measureSnp = QtWidgets.QPushButton("Measure Network", self.groupBox_snp)
+        self.horizontalLayout_nports = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_nports.addWidget(self.label_nports)
+        self.horizontalLayout_nports.addWidget(self.comboBox_nports)
+        self.verticalLayout_snp.addWidget(self.btn_measureSnp)
+        self.verticalLayout_snp.addLayout(self.horizontalLayout_nports)
+
+        self.spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_snp.addItem(self.spacerItem)
+        self.verticalLayout_left.addWidget(self.groupBox_snp)
+
+        self.groupBox_traces = QtWidgets.QGroupBox("Available Traces", self)
+        self.listWidget_traces = QtWidgets.QListWidget(self.groupBox_traces)
+        self.listWidget_traces.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.btn_updateTraces = QtWidgets.QPushButton("Update", self.groupBox_traces)
+        self.btn_measureTraces = QtWidgets.QPushButton("Measure Traces", self.groupBox_traces)
+        self.horizontalLayout_tracesButtons = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_tracesButtons.addWidget(self.btn_updateTraces)
+        self.horizontalLayout_tracesButtons.addWidget(self.btn_measureTraces)
+
+        self.verticalLayout_traces = QtWidgets.QVBoxLayout(self.groupBox_traces)
+        self.verticalLayout_traces.addWidget(self.listWidget_traces)
+        self.verticalLayout_traces.addLayout(self.horizontalLayout_tracesButtons)
+
+        self.horizontalLayout_main.addLayout(self.verticalLayout_left)
+        self.horizontalLayout_main.addWidget(self.groupBox_traces)
+
+        self.snp_rows = list()
+        self.nwa = nwa
+
+        self.comboBox_nports.currentIndexChanged.connect(self.setup_nports)
+        self.comboBox_nports.setCurrentIndex(1)
+
+        self.btn_updateTraces.clicked.connect(self.update_traces)
+        self.btn_measureSnp.clicked.connect(self.measure_snp_network)
+
+        if self.nwa.NCHANNELS:
+            self.spinBox_channel.setValue(1)
+            self.spinBox_channel.setMinimum(1)
+            self.spinBox_channel.setMaximum(self.nwa.NCHANNELS)
+            self.spinBox_channel.valueChanged.connect(self.listWidget_traces.clear)
+        else:
+            self.spinBox_channel.setEnabled(False)
+
+    def measure_traces(self):
+        pass
+
+    def measure_snp_network(self):
+        pass
+
+    def setup_nports(self):
+        """
+        nport data can be grabbed from the analyzer.  First we must specify the number of ports, then we must
+        map the ports to the output measurement --> S11 = port1, S22 = port2... etc.
+        :type nports: int
+        :type mappable: boolean
+        :return:
+        """
+        nports = self.comboBox_nports.currentIndex() + 1
+
+        self.verticalLayout_snp.removeItem(self.spacerItem)
+        self.verticalLayout_snp.removeWidget(self.btn_measureSnp)
+        for row in self.snp_rows:
+            self.verticalLayout_snp.removeItem(row)
+            sip.delete(row.label)
+            sip.delete(row.spinBox)
+            sip.delete(row)
+
+        self.snp_rows = []
+
+        for port in range(1, nports + 1):
+            layout = QtWidgets.QHBoxLayout()
+            layout.label = QtWidgets.QLabel("Port{:d}".format(port))
+            layout.spinBox = QtWidgets.QSpinBox()
+            layout.spinBox.setValue(port)
+            layout.spinBox.setMinimum(1)
+            layout.spinBox.setMaximum(self.nwa.NPORTS)
+            layout.addWidget(layout.label)
+            layout.addWidget(layout.spinBox)
+            self.verticalLayout_snp.addLayout(layout)
+            self.snp_rows.append(layout)
+
+        self.verticalLayout_snp.addWidget(self.btn_measureSnp)
+        self.verticalLayout_snp.addItem(self.spacerItem)
+
+    def update_traces(self):
+        traces = self.nwa.get_list_of_traces()
+        self.listWidget_traces.clear()
+        for trace in traces:
+            item = QtWidgets.QListWidgetItem()
+            item.setText(trace["text"])
+            self.listWidget_traces.addItem(item)

@@ -19,6 +19,7 @@ class Analyzer(object):
     DEFAULT_VISA_ADDRESS = "GPIB0::16::INSTR"
     NAME = "Two Port Analyzer"
     NPORTS = 2
+    NCHANNELS = 256
 
     def __init__(self, visa_address):
         self.resource = None
