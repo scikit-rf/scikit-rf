@@ -8,8 +8,7 @@ import platform
 import ctypes
 
 import sip
-from . import cfg  # must import cfg before qtpy to parse qt-bindings
-os.environ['QT_API'] = 'pyqt5'  # force prefer pyqt5, let qtpy handle pyqt4 or pyside only
+from . import cfg  # must import cfg before qtpy to properly parse qt-bindings
 from qtpy import QtCore, QtWidgets, QtGui
 
 
@@ -58,8 +57,9 @@ def set_popup_exceptions():
     sys.excepthook = popup_excepthook
 
 
-# possibly necessary if the application needs matplotlib, as did previous versions of skrf
 def reconcile_with_matplotlib():
+    """this function makes sure that matplotlib is using the preferred version of Qt before we instantiate our
+    python qt-bindings libraries"""
     try:
         import matplotlib
         if os.environ['QT_API'] == 'pyqt5':
@@ -113,7 +113,6 @@ def warnMissingFeature():
     QtWidgets.QMessageBox.warning(None, "Feature Missing", msg, QtWidgets.QMessageBox.Ok)
 
 
-# TODO: make the following dialogs function the same for PySide, PyQt4, PyQt5, and Possibly PySide2
 def getOpenFileName_Global(caption, filter, start_path=None, **kwargs):
     if start_path is None:
         start_path = cfg.last_path
@@ -218,8 +217,3 @@ def set_process_id(appid=None):
     """
     if appid and type(appid) is str and platform.system() == "Windows":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
-
-
-if __name__ == "main":
-    # run some tests
-    pass

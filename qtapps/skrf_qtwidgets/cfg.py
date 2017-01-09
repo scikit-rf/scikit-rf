@@ -13,7 +13,7 @@ if not os.path.isdir(last_path):
 
 path_default = last_path
 
-# force qtbindings, mostly for debugging purposes
+os.environ['QT_API'] = 'pyqt5'  # force prefer pyqt5, let qtpy handle pyqt4 or pyside only
 if len(sys.argv) > 1:
     if sys.argv[1].lower() in ("pyqt4", "pyqt", "pyside", "pyqt5"):
         os.environ["QT_API"] = sys.argv[1].lower()
