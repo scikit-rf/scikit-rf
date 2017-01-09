@@ -2901,6 +2901,7 @@ class NISTMultilineTRL(EightTerm):
     def gamma(self):
         '''
         Propagation constant of the solved line.
+        
         '''
         try:
             return self._gamma
@@ -2912,6 +2913,11 @@ class NISTMultilineTRL(EightTerm):
     def er_eff(self):
         '''
         Effective permittivity of the solved line.
+        
+        
+        Currently, this only works for TEM media. If you are using 
+        non-TEM media (ie rectangular waveguide) then you need to compute
+        er yourself from gamma. 
         '''
         try:
             return self._er_eff
