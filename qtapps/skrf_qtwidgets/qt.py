@@ -5,9 +5,9 @@ import time
 import sys
 import traceback
 import platform
+import ctypes
 
 import sip
-
 from . import cfg  # must import cfg before qtpy to parse qt-bindings
 os.environ['QT_API'] = 'pyqt5'  # force prefer pyqt5, let qtpy handle pyqt4 or pyside only
 from qtpy import QtCore, QtWidgets, QtGui
@@ -186,7 +186,10 @@ def close_splash_screen(widget, splash, start_time):
     splash.finish(widget)
 
 
-def single_widget_application(widget_class, splash_screen=True):
+def single_widget_application(widget_class, splash_screen=True, appid=u"skrf.qtapp"):
+    if appid:
+        set_process_id(appid)
+
     app = QtWidgets.QApplication(sys.argv)
 
     setup_style()
@@ -204,6 +207,17 @@ def single_widget_application(widget_class, splash_screen=True):
 
     sip.setdestroyonexit(False)  # prevent a crash on exit
     sys.exit(app.exec_())
+
+
+def set_process_id(appid=None):
+    """
+    in windows, setting this parameter allows all instances to be grouped under the same taskbar icon, and allows
+    us to set an icon that is different from whatever the python executable is using.
+    :param appid: str, unicode
+    :return:
+    """
+    if appid and type(appid) is str and platform.system() == "Windows":
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 
 
 if __name__ == "main":
