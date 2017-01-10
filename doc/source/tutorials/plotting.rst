@@ -20,13 +20,14 @@ Introduction
 ---------------
 This tutorial describes **skrf's** plotting features. 
 
-If you would like to use skrf's plot styling, use stylely
+If you would like to use skrf's matplotlib interface with skrf styling, 
 
 
 .. ipython::
 	
+    In [138]: rf.setup_pylab()
+    
 	In [138]: rf.stylely()
-
   
   
 Plotting Methods

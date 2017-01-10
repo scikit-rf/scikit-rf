@@ -138,9 +138,12 @@ Amongst other things, the methods of the :class:`Network` class provide convenie
 * :func:`Network.plot_s_smith` : plot complex s-parameters on Smith Chart
 * ...
 
-To plot all four s-parameters of the `ring_slot` on the Smith Chart.
+To plot all four s-parameters of the `ring_slot` on the Smith Chart, using the matplotlib backend
 
 .. ipython::
+    
+    
+    In [138]: rf.setup_pylab() #setup matplotlib plotting
     
     In [151]: rf.stylely() # sets plot styleling  (optional)
     
