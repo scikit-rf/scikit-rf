@@ -1,3 +1,7 @@
+import visa
+rm = visa.ResourceManager()
+
+
 """
 This is a model module.  It will not function correctly to pull data.
 """
@@ -21,8 +25,9 @@ class Analyzer(object):
     NPORTS = 2
     NCHANNELS = 256
 
-    def __init__(self, visa_address):
-        self.resource = None
+    def __init__(self, visa_address=None):
+        print("wrong place")
+        pass
 
     def __enter__(self):
         """

@@ -1039,6 +1039,11 @@ class VnaController(QtWidgets.QWidget):
         self.hlay_row1.addWidget(self.label_visaString)
         self.hlay_row1.addWidget(self.lineEdit_visaString)
 
+        self.label_channel = QtWidgets.QLabel("Channel:")
+        self.spinBox_channel = QtWidgets.QSpinBox()
+        self.spinBox_channel.setMinimum(1)
+        self.spinBox_channel.setMaximum(256)
+
         self.label_startFreq = QtWidgets.QLabel("Start Freq:", self)
         self.lineEdit_startFrequency = QtWidgets.QLineEdit(self)
         self.lineEdit_startFrequency.setValidator(QtGui.QDoubleValidator())
@@ -1067,6 +1072,7 @@ class VnaController(QtWidgets.QWidget):
 
         self.layout_row2 = QtWidgets.QHBoxLayout()
         for label, widget in (
+                (self.label_channel, self.spinBox_channel),
                 (self.label_startFreq, self.lineEdit_startFrequency),
                 (self.label_stopFreq, self.lineEdit_stopFrequency),
                 (self.label_numberOfPoints, self.spinBox_numberOfPoints),
@@ -1092,6 +1098,18 @@ class VnaController(QtWidgets.QWidget):
         self.comboBox_funit.currentIndexChanged.connect(self.frequency_changed)
         self.lineEdit_startFrequency.textEdited.connect(self.set_start_freequency)
         self.lineEdit_stopFrequency.textEdited.connect(self.set_stop_freequency)
+
+        self.btn_setAnalyzerFreqSweep.clicked.connect(self.set_frequency_sweep)
+
+    def set_frequency_sweep(self):
+        channel = self.spinBox_channel.value()
+        f_unit = self.comboBox_funit.currentText()
+        f_start = self.start_frequency
+        f_stop = self.stop_frequency
+        f_npoints = self.spinBox_numberOfPoints.value()
+
+        with self.get_analyzer() as nwa:
+            nwa.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop, f_npoints=f_npoints)
 
     def set_start_freequency(self, value):
         self._start_frequency = float(value)
@@ -1275,13 +1293,12 @@ class MeasurementDialog(QtWidgets.QDialog):
 
         self.groupBox_snp = QtWidgets.QGroupBox("Get N-Port Network", self)
         self.verticalLayout_snp = QtWidgets.QVBoxLayout(self.groupBox_snp)
-        self.label_nports = QtWidgets.QLabel("NPorts", self.groupBox_snp)
-        self.comboBox_nports = QtWidgets.QComboBox(self.groupBox_snp)
-        self.comboBox_nports.addItems(("1", "2"))
+        self.label_ports = QtWidgets.QLabel("Ports:", self.groupBox_snp)
+        self.lineEdit_ports = QtWidgets.QLineEdit(self.groupBox_snp)
         self.btn_measureSnp = QtWidgets.QPushButton("Measure Network", self.groupBox_snp)
         self.horizontalLayout_nports = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_nports.addWidget(self.label_nports)
-        self.horizontalLayout_nports.addWidget(self.comboBox_nports)
+        self.horizontalLayout_nports.addWidget(self.label_ports)
+        self.horizontalLayout_nports.addWidget(self.lineEdit_ports)
         self.verticalLayout_snp.addWidget(self.btn_measureSnp)
         self.verticalLayout_snp.addLayout(self.horizontalLayout_nports)
 
@@ -1290,6 +1307,11 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.verticalLayout_left.addWidget(self.groupBox_snp)
 
         self.groupBox_traces = QtWidgets.QGroupBox("Available Traces", self)
+        self.lineEdit_namePrefix = QtWidgets.QLineEdit(self)
+        self.label_namePrefix = QtWidgets.QLabel("Name Prefix:")
+        self.horizontalLayout_namePrefix = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_namePrefix.addWidget(self.label_namePrefix)
+        self.horizontalLayout_namePrefix.addWidget(self.lineEdit_namePrefix)
         self.listWidget_traces = QtWidgets.QListWidget(self.groupBox_traces)
         self.listWidget_traces.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.btn_updateTraces = QtWidgets.QPushButton("Update", self.groupBox_traces)
@@ -1299,80 +1321,58 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.horizontalLayout_tracesButtons.addWidget(self.btn_measureTraces)
 
         self.verticalLayout_traces = QtWidgets.QVBoxLayout(self.groupBox_traces)
+        self.verticalLayout_traces.addLayout(self.horizontalLayout_namePrefix)
         self.verticalLayout_traces.addWidget(self.listWidget_traces)
         self.verticalLayout_traces.addLayout(self.horizontalLayout_tracesButtons)
 
         self.horizontalLayout_main.addLayout(self.verticalLayout_left)
         self.horizontalLayout_main.addWidget(self.groupBox_traces)
 
-        self.snp_rows = list()
         self.nwa = nwa
 
-        self.comboBox_nports.currentIndexChanged.connect(self.setup_nports)
-        self.comboBox_nports.setCurrentIndex(1)
-
         self.btn_updateTraces.clicked.connect(self.update_traces)
-        self.btn_measureSnp.clicked.connect(self.measure_snp_network)
+        self.btn_measureSnp.clicked.connect(self.measure_snp)
+        self.btn_measureTraces.clicked.connect(self.measure_traces)
 
         if self.nwa.NCHANNELS:
             self.spinBox_channel.setValue(1)
             self.spinBox_channel.setMinimum(1)
             self.spinBox_channel.setMaximum(self.nwa.NCHANNELS)
-            self.spinBox_channel.valueChanged.connect(self.listWidget_traces.clear)
         else:
             self.spinBox_channel.setEnabled(False)
 
     def measure_traces(self):
-        pass
+        items = self.listWidget_traces.selectedItems()
+        if len(items) < 1:
+            print("nothing to measure")
+            return
 
-    def measure_snp_network(self):
-        ports = list()
-        for row in self.snp_rows:
-            ports.append(row.spinBox.value())
-        from pprint import pprint
-        pprint(ports)
-        ntwk = self.nwa.measure_snp(ports)
+        traces = []
+        for item in items:
+            traces.append(item.trace)
+
+        ntwks = self.nwa.measure_traces(traces, name_prefix=self.lineEdit_namePrefix.text())
+        self.measurements_available.emit(ntwks)
+
+    def measure_snp(self):
+        ports = self.lineEdit_ports.text().replace(" ", "").split(",")
+        try:
+            ports = [int(port) for port in ports]
+        except Exception:
+            qt.error_popup("Ports must be a comma separated list of integers")
+            return
+
+        channel = self.spinBox_channel.value()
+        sweep = self.checkBox_sweepNew.isChecked()
+        name = self.lineEdit_namePrefix.text()
+        ntwk = self.nwa.measure_snp(ports=ports, channel=channel, sweep=sweep, name=name)
         self.measurements_available.emit(ntwk)
-
-    def setup_nports(self):
-        """
-        nport data can be grabbed from the analyzer.  First we must specify the number of ports, then we must
-        map the ports to the output measurement --> S11 = port1, S22 = port2... etc.
-        :type nports: int
-        :type mappable: boolean
-        :return:
-        """
-        nports = self.comboBox_nports.currentIndex() + 1
-
-        self.verticalLayout_snp.removeItem(self.spacerItem)
-        self.verticalLayout_snp.removeWidget(self.btn_measureSnp)
-        for row in self.snp_rows:
-            self.verticalLayout_snp.removeItem(row)
-            sip.delete(row.label)
-            sip.delete(row.spinBox)
-            sip.delete(row)
-
-        self.snp_rows = []
-
-        for port in range(1, nports + 1):
-            layout = QtWidgets.QHBoxLayout()
-            layout.label = QtWidgets.QLabel("Port{:d}".format(port))
-            layout.spinBox = QtWidgets.QSpinBox()
-            layout.spinBox.setValue(port)
-            layout.spinBox.setMinimum(1)
-            layout.spinBox.setMaximum(self.nwa.NPORTS)
-            layout.addWidget(layout.label)
-            layout.addWidget(layout.spinBox)
-            self.verticalLayout_snp.addLayout(layout)
-            self.snp_rows.append(layout)
-
-        self.verticalLayout_snp.addWidget(self.btn_measureSnp)
-        self.verticalLayout_snp.addItem(self.spacerItem)
 
     def update_traces(self):
         traces = self.nwa.get_list_of_traces()
         self.listWidget_traces.clear()
         for trace in traces:
             item = QtWidgets.QListWidgetItem()
-            item.setText(trace["text"])
+            item.setText(trace["label"])
+            item.trace = trace
             self.listWidget_traces.addItem(item)
