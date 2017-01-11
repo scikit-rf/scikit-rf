@@ -3,6 +3,7 @@ import sys
 
 this_dir = os.path.normpath(os.path.dirname(__file__))
 images_dir = os.path.join(this_dir, "images/")
+example_data_dir = os.path.join(this_dir, "example_data/")
 executable_dir = os.getcwd()
 user_dir = os.path.expanduser("~")
 

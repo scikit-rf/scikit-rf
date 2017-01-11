@@ -419,9 +419,12 @@ class NetworkListWidget(QtWidgets.QListWidget):
             return
         self.load_network(ntwk)
 
-    def load_from_files(self, caption="load touchstone file"):
-        ntwks = load_network_files(caption)  # type: skrf.Network
+    def load_networks(self, ntwks):
         if not ntwks:
+            return
+
+        if isinstance(ntwks, skrf.Network):
+            self.load_network(ntwks)
             return
 
         try:
@@ -433,6 +436,9 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
         item = self.item(self.count() - 1)
         self.set_active_network(item)
+
+    def load_from_files(self, caption="load touchstone file"):
+        self.load_networks(load_network_files(caption))
 
     def save_selected_items(self):
         items = self.selectedItems()
@@ -474,9 +480,12 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
     def measure_ntwk(self):
         with self.get_analyzer() as nwa:
-            meas = nwa.measure_twoport_ntwk()
-            meas.name = self.MEASUREMENT_PREFIX  # unique name processed in load_network
-        self.load_network(meas)
+            dialog = MeasurementDialog(nwa)
+            dialog.measurements_available.connect(self.load_networks)
+            dialog.exec_()
+        #     meas = nwa.measure_twoport_ntwk()
+        #     meas.name = self.MEASUREMENT_PREFIX  # unique name processed in load_network
+        # self.load_network(meas)
 
     def get_load_button(self, label="Load"):
         button = QtWidgets.QPushButton(label)
@@ -1317,7 +1326,13 @@ class MeasurementDialog(QtWidgets.QDialog):
         pass
 
     def measure_snp_network(self):
-        pass
+        ports = list()
+        for row in self.snp_rows:
+            ports.append(row.spinBox.value())
+        from pprint import pprint
+        pprint(ports)
+        ntwk = self.nwa.measure_snp(ports)
+        self.measurements_available.emit(ntwk)
 
     def setup_nports(self):
         """
