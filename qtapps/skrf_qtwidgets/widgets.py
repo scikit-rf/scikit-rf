@@ -1279,6 +1279,11 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.verticalLayout_left = QtWidgets.QVBoxLayout()
 
         self.groupBox_options = QtWidgets.QGroupBox("Options", self)
+        self.lineEdit_namePrefix = QtWidgets.QLineEdit(self)
+        self.label_namePrefix = QtWidgets.QLabel("Name Prefix:")
+        self.horizontalLayout_namePrefix = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_namePrefix.addWidget(self.label_namePrefix)
+        self.horizontalLayout_namePrefix.addWidget(self.lineEdit_namePrefix)
         self.checkBox_sweepNew = QtWidgets.QCheckBox("Sweep New", self.groupBox_options)
         self.label_channel = QtWidgets.QLabel("Channel", self.groupBox_options)
         self.spinBox_channel = QtWidgets.QSpinBox(self.groupBox_options)
@@ -1287,6 +1292,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.horizontalLayout_channel.addWidget(self.spinBox_channel)
 
         self.verticalLayout_options = QtWidgets.QVBoxLayout(self.groupBox_options)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_namePrefix)
         self.verticalLayout_options.addWidget(self.checkBox_sweepNew)
         self.verticalLayout_options.addLayout(self.horizontalLayout_channel)
         self.verticalLayout_left.addWidget(self.groupBox_options)
@@ -1307,11 +1313,6 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.verticalLayout_left.addWidget(self.groupBox_snp)
 
         self.groupBox_traces = QtWidgets.QGroupBox("Available Traces", self)
-        self.lineEdit_namePrefix = QtWidgets.QLineEdit(self)
-        self.label_namePrefix = QtWidgets.QLabel("Name Prefix:")
-        self.horizontalLayout_namePrefix = QtWidgets.QHBoxLayout()
-        self.horizontalLayout_namePrefix.addWidget(self.label_namePrefix)
-        self.horizontalLayout_namePrefix.addWidget(self.lineEdit_namePrefix)
         self.listWidget_traces = QtWidgets.QListWidget(self.groupBox_traces)
         self.listWidget_traces.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
         self.btn_updateTraces = QtWidgets.QPushButton("Update", self.groupBox_traces)
@@ -1321,7 +1322,6 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.horizontalLayout_tracesButtons.addWidget(self.btn_measureTraces)
 
         self.verticalLayout_traces = QtWidgets.QVBoxLayout(self.groupBox_traces)
-        self.verticalLayout_traces.addLayout(self.horizontalLayout_namePrefix)
         self.verticalLayout_traces.addWidget(self.listWidget_traces)
         self.verticalLayout_traces.addLayout(self.horizontalLayout_tracesButtons)
 
@@ -1340,6 +1340,8 @@ class MeasurementDialog(QtWidgets.QDialog):
             self.spinBox_channel.setMaximum(self.nwa.NCHANNELS)
         else:
             self.spinBox_channel.setEnabled(False)
+
+        self.lineEdit_ports.setText(",".join([str(port+1) for port in range(self.nwa.NPORTS)]))
 
     def measure_traces(self):
         items = self.listWidget_traces.selectedItems()
