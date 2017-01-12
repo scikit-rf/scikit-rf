@@ -30,10 +30,17 @@ class Analyzer(skrf.vi.vna_pyvisa.PNA, base_analyzer.Analyzer):
     def measure_switch_terms(self, ports=(1, 2), channel=None, sweep=False):
         return self.get_switch_terms(ports)
 
+    def sweep(self, mode=None):
+        """redundant, but here for clarity"""
+        super(Analyzer, self).sweep(mode)
+
     def measure_snp(self, ports=(1, 2), channel=None, sweep=True, name="", funit="GHz"):
         ports = [int(port) for port in ports] if type(ports) in (list, tuple) else int(ports)
         if not name:
             name = "{:d}Port Network".format(len(ports))
+
+        if sweep:
+            self.sweep()
 
         channel = str(channel) if channel else str(self.channel)
         self.activate_channel(channel)
@@ -62,7 +69,7 @@ class Analyzer(skrf.vi.vna_pyvisa.PNA, base_analyzer.Analyzer):
         """weird errors sometimes happen, so make sure a measurement is selected on the desired channel"""
         channel = str(channel)
         measurements = self.resource.query("SYSTem:MEASurement:CATalog? " + channel)[1:-1].split(",")
-        self.resource.write(":CALC{:s}:PAR:SEL {:s}".foramt(measurements[0]))
+        self.resource.write(":CALC{:s}:PAR:SEL {:s}".format(measurements[0]))
         return
 
     def get_list_of_traces(self):
@@ -115,4 +122,12 @@ class Analyzer(skrf.vi.vna_pyvisa.PNA, base_analyzer.Analyzer):
         pass
 
     def set_frequency_sweep(self, f_start, f_stop, f_npoints, f_unit='Hz', channel=None):
+        """
+        :param f_start: start frequency in units = f_unit
+        :param f_stop: start frequency in units = f_unit
+        :param f_npoints: number of points in the frequency sweep
+        :param f_unit: the frequnecy unit of the provided f_start and f_stop
+        :param channel: channel of the analyzer
+        :return:
+        """
         self.set_frequency()
