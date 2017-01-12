@@ -5,8 +5,6 @@ import os.path
 import traceback
 import sys
 
-from . import base_analyzer
-
 this_path = os.path.normpath(os.path.dirname(__file__))
 analyzer_modules = glob.glob(this_path + "/analyzer_*.py")
 analyzers = OrderedDict()
