@@ -6,7 +6,7 @@ calibration (:mod:`skrf.calibration.calibration`)
 
 
 This module  provides objects for VNA calibration. Specific algorithms
-inheret from the common base class  :class:`Calibration`.
+inherit from the common base class  :class:`Calibration`.
 
 Base Class
 --------------
@@ -43,7 +43,7 @@ Two-port
    LMR16
 
 
-Three Reciever (1.5 port)
+Three Receiver (1.5 port)
 ----------------------------------------------
 
 .. autosummary::
@@ -155,7 +155,7 @@ class Calibration(object):
         *  :func:`Calibration.embed` (optional)
 
 
-    The familiy of properties prefixed `coefs` and
+    The family of properties prefixed `coefs` and
     `coefs..ntwks`  returns error coefficients. If the property coefs
     is accessed and empty, then :func:`Calibration.run` is called.
 
@@ -795,8 +795,8 @@ class Calibration(object):
         Where:
 
         * r: complex residual errors
-        * mean_c: complex mean taken accross connection
-        * mean_s: complex mean taken accross standard
+        * mean_c: complex mean taken across connection
+        * mean_s: complex mean taken across standard
 
         See Also
         ---------
@@ -829,8 +829,8 @@ class Calibration(object):
 
         where:
         * r : complex residual errors
-        * std_c : standard deviation taken accross  connections
-        * mean_s : complex mean taken accross  standards
+        * std_c : standard deviation taken across  connections
+        * mean_s : complex mean taken across  standards
 
         See Also
         ---------
@@ -863,7 +863,7 @@ class Calibration(object):
 
         where:
         * r : complex residual errors
-        * std_cs : standard deviation taken accross connections
+        * std_cs : standard deviation taken across connections
                 and standards
 
         See Also
@@ -1373,7 +1373,7 @@ class TwelveTerm(Calibration):
         '''
         TwelveTerm initializer
 
-        Use the  `n_thrus` argument to explicity define the number of
+        Use the  `n_thrus` argument to explicitly define the number of
         transmissive standards. Otherwise, if `n_thrus=None`, then we
         will try and guess which are transmissive, by comparing the mean
         |s21| and |s12| responses (in dB) to `trans_thres`.
@@ -1742,8 +1742,8 @@ class TwoPortOnePath(TwelveTerm):
     '''
     Two Port One Path Calibration (aka poor man's TwelveTerm)
 
-    Provides full errror correction  on a switchless three reciever 
-    system, ie you can only measure the waves a1,b1,and b2. 
+    Provides full error correction  on a switchless three receiver 
+    system, i.e. you can only measure the waves a1,b1,and b2. 
     Given this architecture, the DUT must be flipped and measured 
     twice to be fully corrected.
 
@@ -1759,7 +1759,7 @@ class TwoPortOnePath(TwelveTerm):
         '''
         initializer
 
-        Use the  `n_thrus` argument to explicity define the number of
+        Use the  `n_thrus` argument to explicitly define the number of
         transmissive standards. Otherwise, if `n_thrus=None`, then we
         will try and guess which are transmissive, by comparing the mean
         |s21| and |s12| responses (in dB) to `trans_thres`.
@@ -1858,7 +1858,7 @@ class TwoPortOnePath(TwelveTerm):
 
     def apply_cal(self, ntwk_tuple):
         '''
-        apply the calibration to a measuremnt
+        apply the calibration to a measurement
 
         Notes
         -------
@@ -1920,7 +1920,7 @@ class EnhancedResponse(TwoPortOnePath):
 
     For code-structuring reasons, this is a dummy placeholder class.
     Its just TwoPortOnePath, which defaults to enhancedresponse correction
-    when you apply the calirbation to a single network, and not a tuple 
+    when you apply the calibration to a single network, and not a tuple 
     of networks.
     '''
     family = 'EnhancedResponse'
@@ -2185,11 +2185,6 @@ class TRL(EightTerm):
 
     A Similar self-calibration algorithm as developed by Engen and
     Hoer [1]_, more closely following into a more matrix form in [2]_.
-    
-    
-    .. warning::
-        This version of TRL does not solve for the Reflect standard yet
-
 
     See Also
     ------------
@@ -2344,19 +2339,26 @@ class NISTMultilineTRL(EightTerm):
     NIST Multiline TRL calibration.
 
     Multiline TRL can use multiple lines to extend bandwidth and accuracy of the
-    calibration.
+    calibration. Different line measurements are combined in a way that minimizes
+    the error in calibration.
 
-    Algorithm is the one published in [0], but implementation is based on [1].
+    At every frequency point there should be at least one line pair that has phase
+    difference that is not 0 degrees or a multiple of 180 degrees otherwise
+    calibration equations are singular and accuracy is very poor.
 
-    [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed," 60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
+    Algorithm is the one published in [0]_, but implementation is based on [1]_.
 
-    [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz" Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
+    References
+    ------------
+    .. [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed," 60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
+
+    .. [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz" Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
     '''
     family = 'TRL'
     def __init__(self, measured, Grefls, l,
                 n_reflects=1, er_est=1, refl_offset=None, p1_len_est=0, p2_len_est=0, ref_plane=0, gamma_root_choice='', *args,**kwargs):
         '''
-        NIST Multiline TRL calibration
+        NISTMultilineTRL initializer
 
         Note that the order of `measured` is strict.
         It must be [Thru, Reflect, Line]. Multiple reflects can
@@ -3057,7 +3059,7 @@ class MRC(UnknownThru):
     The self-calibration aspects of these two algorithms alleviate the
     need to know the phase of the delay shorts, as well as the exact
     response of the thru. Thus the calibration is resistant to
-    waveguide flangemisalignment.
+    waveguide flange misalignment.
 
 
     References
@@ -3167,25 +3169,48 @@ class MRC(UnknownThru):
 
 class SixteenTerm(Calibration):
     '''
-    16-Term calibration that solves for leakage between the ports.
+    General SixteenTerm (aka Error-box) Two-port calibration
+
+    16-term error model is a complete error model that can solve for leakages between
+    the different VNA receivers.
 
     There are several different combinations of calibration standards that can
     be used. At least five two port measurements are needed. Using through, open,
     short, and load standards some combinations result in singular matrix.
-    See [1] for list of non-singular combinations.
+    See [1]_ for list of non-singular combinations.
 
     Effect of the switch is assumed to be already removed as the switch correction
-    used for 8 Term calibration fails when crosstalk is significant. [2]
+    used for 8 Term calibration fails when crosstalk is significant. [2]_
 
     References
     -----------
-    [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
-    [2] M. Schramm, M. Hrobak, J. Schur and L. P. Schmidt, "A new switch correction method for a single-receiver VNA," Microwave Conference (EuMC), 2013 European, Nuremberg, 2013, pp. 444-447.
+    .. [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
+
+    .. [2] M. Schramm, M. Hrobak, J. Schur and L. P. Schmidt, "A new switch correction method for a single-receiver VNA," Microwave Conference (EuMC), 2013 European, Nuremberg, 2013, pp. 444-447.
     '''
 
     family = 'SixteenTerm'
     def __init__(self, measured, ideals,
                  *args, **kwargs):
+        '''
+        SixteenTerm Initializer
+
+        Notes
+        ------
+        Switch terms are already assumed to be corrected since the ordinary
+        correction equations are not valid if the crosstalk is significant.
+
+        Parameters
+        --------------
+        measured : list/dict  of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter
+
+        ideals : list/dict of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `ideals` list
+        '''
+
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
@@ -3411,46 +3436,47 @@ class SixteenTerm(Calibration):
 
 class LMR16(SixteenTerm):
     '''
-        16-Term self calibration for leaky VNA. Implementation is based on [1].
+    SixteenTerm Load-Match-Reflect self-calibration.
 
-        Needs five standards to be measured and given in this order:
-            Through
-            Match-match
-            Reflect-reflect
-            Reflect-match
-            Match-reflect
+    16-Term self calibration for leaky VNA. Implementation is based on [1]_.
 
-        Reflect standard needs to be very reflective and same in all measurements.
-        Matching of through and match standards is assumed to be perfect.
-        Loss of the through is assumed to be zero, but its length can be non-zero.
+    Needs five standards to be measured and given in this order:
+     *   Through
+     *   Match-match
+     *   Reflect-reflect
+     *   Reflect-match
+     *   Match-reflect
 
-        Only reflect or through standard needs to be known and the other one will be
-        solved during the calibration. Solved S-parameters of the standards
-        can be accessed with LMR16.solved_through and LMR16.solved_reflect.
+    Reflect standard needs to be very reflective and same in all measurements.
+    Matching of through and match standards is assumed to be perfect.
+    Loss of the through is assumed to be zero, but its length can be non-zero.
+
+    Only reflect or through standard needs to be known and the other one will be
+    solved during the calibration. Solved S-parameters of the standards
+    can be accessed with LMR16.solved_through and LMR16.solved_reflect.
+
+    Switch termination is already assumed to be done either by the previous calibration or
+    during the measurements. Regular switch correction equations used with
+    EightTerm calibration can't be used if leakage is significant.
+
+    References
+    ------------
+    .. [1] K. Silvonen, "LMR 16-a self-calibration procedure for a leaky network analyzer," in IEEE Transactions on Microwave Theory and Techniques, vol. 45, no. 7, pp. 1041-1049, Jul 1997
+        '''
+
+    family = 'SixteenTerm'
+    def __init__(self, measured, ideals, ideal_is_reflect=True, sign=None,
+                 *args, **kwargs):
+        """
+        LMR16 initializer
 
         Due to needing to solve a second order equation during the calibration a
         choice must be taken on the correct root. Sign argument, +1 or -1, can be
         given to make the root choice.
 
         If sign argument is not given it is tried to be solved automatically by
-        choosing the sign that makes k = t15/t12 closer to +1, which holds
+        choosing the sign that makes :math:`k = \\frac{t_{15}}{t_{12}}` closer to +1, which holds
         if test fixture is symmetric.
-
-        Switch termination is already assumed to be done either by previous calibration or
-        using following equations during the measurements:
-
-            D = 1 - a3'/a0 a0'/a3'
-
-            S11 = 1/D ( b0/a0 - b0'/a3' a3/a0 )
-            S12 = 1/D ( b0'/a3' - b0/a0 a0'/a3' )
-            S21 = 1/D ( b3/a0 - b3'/a3' a3/a0 )
-            S22 = 1/D ( b3'/a3' - b3/a0 a0'/a3' )
-
-        , where primed measurements are with source on port 2 and unprimed with source
-        on port 1.
-        a0, and b0 are receivers on port 1
-        a3 and b3 are receivers on port 2
-
 
         Parameters
         --------------
@@ -3458,22 +3484,14 @@ class LMR16(SixteenTerm):
             Raw measurements of the calibration standards.
 
         ideals : list/dict of :class:`~skrf.network.Network` objects
-            Predicted ideal response of the reflect or through calibration standard.
+            Estimated response of the reflect or through calibration standard.
 
         ideal_is_reflect : Boolean
             True if given ideal is reflect and False if ideal is through
 
         sign : +1,-1 or None
             Sign to be used for the root choice.
-
-        References
-        ------------
-        [1] K. Silvonen, "LMR 16-a self-calibration procedure for a leaky network analyzer," in IEEE Transactions on Microwave Theory and Techniques, vol. 45, no. 7, pp. 1041-1049, Jul 1997
-        '''
-
-    family = 'SixteenTerm'
-    def __init__(self, measured, ideals, ideal_is_reflect=True, sign=None,
-                 *args, **kwargs):
+        """
         if type(ideals) == Network:
             ideals = [ideals]
         if len(ideals) != 1:
