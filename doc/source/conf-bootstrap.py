@@ -23,7 +23,7 @@ import sphinx_bootstrap_theme
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-#needs_sphinx = '1.0'
+needs_sphinx = '1.3'
 
 #from subprocess import call
 #call(['make','notebooks'])
@@ -48,9 +48,10 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary',
     #'sphinx.ext.intersphinx',
+    'sphinx.ext.napoleon',
     'sphinx.ext.pngmath',
     'sphinx.ext.viewcode',
-    'numpydoc',
+    #'numpydoc',
     #'inheritance_diagram',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',

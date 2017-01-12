@@ -9,7 +9,7 @@ ipython `notebook <http://ipython.org/notebook.html>`_
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     
     tutorials/installation
     tutorials/introduction

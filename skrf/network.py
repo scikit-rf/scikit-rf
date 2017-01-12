@@ -1494,9 +1494,12 @@ class Network(object):
             # Add '!' Touchstone comment delimiters to the start of every line
             # in self.comments
             commented_header = ''
-            if self.comments:
-                for comment_line in self.comments.split('\n'):
-                    commented_header += '!{}\n'.format(comment_line)
+            try:
+                if self.comments:
+                    for comment_line in self.comments.split('\n'):
+                        commented_header += '!{}\n'.format(comment_line)
+            except(AttributeError):
+                pass
             if skrf_comment:
                 commented_header +='!Created with skrf (http://scikit-rf.org).\n'
 
