@@ -71,10 +71,13 @@ saf = None
 stylely = None
 
 
-def setup_pylab():
+def setup_pylab(use_skrf_style=False):
     from . import plotting
     plotting.setup_matplotlib_plotting()
 
     global saf, stylely
     saf = plotting.save_all_figs
     stylely = plotting.stylely
+
+    if use_skrf_style:
+        stylely()
