@@ -6,7 +6,6 @@ from collections import OrderedDict
 from math import sqrt
 
 import numpy as np
-import sip
 from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import skrf
@@ -966,7 +965,7 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.ok.setEnabled(False)
 
     def measure_switch(self):
-        self.forward, self.reverse = self.analyzer.measure_switch_terms()
+        self.forward, self.reverse = self.analyzer.get_switch_terms()
         self.evaluate()
 
     def load_forward_switch(self):
@@ -1207,15 +1206,15 @@ class ReflectDialog(QtWidgets.QDialog):
         self.btn_loadPort2.clicked.connect(self.load_s22)
 
     def measure_s11(self):
-        self.s11 = self.analyzer.get_oneport(port=1)
+        self.s11 = self.analyzer.get_oneport_ntwk(port=1)
         self.evaluate()
 
     def measure_s22(self):
-        self.s22 = self.analyzer.get_oneport(port=2)
+        self.s22 = self.analyzer.get_oneport_ntwk(port=2)
         self.evaluate()
 
     def measure_both(self):
-        self.reflect_2port = self.analyzer.get_twoport()
+        self.reflect_2port = self.analyzer.get_twoport_ntwk()
         self.evaluate()
 
     def load_s11(self):
@@ -1284,6 +1283,18 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.horizontalLayout_namePrefix = QtWidgets.QHBoxLayout()
         self.horizontalLayout_namePrefix.addWidget(self.label_namePrefix)
         self.horizontalLayout_namePrefix.addWidget(self.lineEdit_namePrefix)
+        self.label_timeout = QtWidgets.QLabel("Timeout (ms)", self)
+        self.spinBox_timeout = QtWidgets.QSpinBox(self)
+        self.spinBox_timeout.setMinimum(100)
+        self.spinBox_timeout.setMaximum(600000)
+        try:
+            self.spinBox_timeout.setValue(nwa.resource.timeout)
+        except:
+            self.spinBox_timeout.setValue(3000)
+        self.spinBox_timeout.setSingleStep(1000)
+        self.horizontalLayout_timeout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_timeout.addWidget(self.label_timeout)
+        self.horizontalLayout_timeout.addWidget(self.spinBox_timeout)
         self.checkBox_sweepNew = QtWidgets.QCheckBox("Sweep New", self.groupBox_options)
         self.label_channel = QtWidgets.QLabel("Channel", self.groupBox_options)
         self.spinBox_channel = QtWidgets.QSpinBox(self.groupBox_options)
@@ -1293,6 +1304,7 @@ class MeasurementDialog(QtWidgets.QDialog):
 
         self.verticalLayout_options = QtWidgets.QVBoxLayout(self.groupBox_options)
         self.verticalLayout_options.addLayout(self.horizontalLayout_namePrefix)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_timeout)
         self.verticalLayout_options.addWidget(self.checkBox_sweepNew)
         self.verticalLayout_options.addLayout(self.horizontalLayout_channel)
         self.verticalLayout_left.addWidget(self.groupBox_options)
@@ -1342,6 +1354,10 @@ class MeasurementDialog(QtWidgets.QDialog):
             self.spinBox_channel.setEnabled(False)
 
         self.lineEdit_ports.setText(",".join([str(port+1) for port in range(self.nwa.NPORTS)]))
+        self.spinBox_timeout.valueChanged.connect(self.set_timeout)
+
+    def set_timeout(self):
+        self.nwa.resource.timeout = self.spinBox_timeout.value()
 
     def measure_traces(self):
         items = self.listWidget_traces.selectedItems()
@@ -1353,7 +1369,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         for item in items:
             traces.append(item.trace)
 
-        ntwks = self.nwa.measure_traces(traces, name_prefix=self.lineEdit_namePrefix.text())
+        ntwks = self.nwa.get_traces(traces, name_prefix=self.lineEdit_namePrefix.text())
         self.measurements_available.emit(ntwks)
 
     def measure_snp(self):
@@ -1367,7 +1383,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         channel = self.spinBox_channel.value()
         sweep = self.checkBox_sweepNew.isChecked()
         name = self.lineEdit_namePrefix.text()
-        ntwk = self.nwa.measure_snp(ports=ports, channel=channel, sweep=sweep, name=name)
+        ntwk = self.nwa.get_snp_network(ports=ports, channel=channel, sweep=sweep, name=name)
         self.measurements_available.emit(ntwk)
 
     def update_traces(self):

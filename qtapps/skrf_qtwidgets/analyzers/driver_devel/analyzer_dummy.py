@@ -24,13 +24,13 @@ class Analyzer(base_analyzer.Analyzer):
 
     def measure_twoport_ntwk(self, ports=(1, 2), sweep=True, **kwargs):
         # return self.get_twoport(ports, sweep=sweep)
-        return self.measure_snp(ports)
+        return self.get_snp_network(ports)
 
     def measure_oneport_ntwk(self, port=1, sweep=True, **kwargs):
-        # return self.get_oneport(port, sweep=sweep)
-        return self.measure_snp(port)
+        # return self.get_oneport_ntwk(port, sweep=sweep)
+        return self.get_snp_network(port)
 
-    def measure_snp(self, ports, **kwargs):
+    def get_snp_network(self, ports, **kwargs):
         ntwk = skrf.Network(os.path.join(example_data_dir, 'ring slot array simulation.s2p'))
         if type(ports) == int:
             ports = [ports]
@@ -58,7 +58,7 @@ class Analyzer(base_analyzer.Analyzer):
         else:
             raise Exception("ports must be 1 or 2 or 1,2 or 2,1")
 
-    def measure_switch_terms(self, ports=(1, 2), sweep=True):
+    def get_switch_terms(self, ports=(1, 2), sweep=True):
         return self.get_switch_terms(ports)
 
     def get_list_of_traces(self, channel=None):
@@ -70,7 +70,7 @@ class Analyzer(base_analyzer.Analyzer):
         ]
         return traces
 
-    def measure_traces(self, traces=[], channel=None, sweep=False, **kwargs):
+    def get_traces(self, traces=[], channel=None, sweep=False, **kwargs):
         name_prefix = kwargs.get('name_prefix', "")
         if name_prefix:
             name_prefix += " - "

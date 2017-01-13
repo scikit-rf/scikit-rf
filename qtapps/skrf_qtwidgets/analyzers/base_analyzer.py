@@ -1,85 +1,172 @@
-import visa
-rm = visa.ResourceManager()
-
-
 """
 This is a model module.  It will not function correctly to pull data.
 """
+import visa
+
 
 class Analyzer(object):
     '''
-    class defining an analyzer for using with skrf_qtwidgets.  The base class needs only 6 methods:
+    class defining an analyzer for using with skrf_qtwidgets.
+
+    ***OPTIONAL METHODS TO IMPLEMENT FOR SKRF_QTWIDGETS***
     init - setup the instrument resource (i.e., pyvisa)
-    measure_twoport_ntwk
-    measure_oneport_ntwk
-    measure_switch_terms
     enter/exit - for using python's with statement
     >>> with Analyzer("GPIB0::16::ISNTR") as nwa:
     >>>     ntwk = nwa.measure_twoport_ntwk()
 
-    all 6 methods can easily be overwritten to match the idiosynchrasies of someone else's analyzer in lieu of a
-    master set of proper python drivers for these.
+    ***METHODS TO IMPLEMENT FOR SKRF_QTWIDGETS***
+    get_traces
+    get_list_of_traces
+    get_snp_network
+    get_twoport_ntwk
+    get_oneport_ntwk
+    get_switch_terms
+    set_frequency_sweep
+
+    ***OPTIONAL CLASS PROPERTIES TO OVERRIDE***
+    DEFAULT_VISA_ADDRESS
+    NAME
+    NPORTS
+    NCHANNELS
+
+    The init method of this base class is fairly generic and can be used with super, or overwritten completely.
+    The same is true for the enter/exit methods
+
+    The Required methods provide no functionality through this base class and are merely here for reference for those
+    wishing to develop drivers for their own instruments.  These are the methods required to operate with the
+    skrf_qtwidgets are provide a very basic VNA API in order to use the widgets.  Depending upon the application,
+    it may not be necessary to implement each of the above methods.  For example, get_switch_terms is only required
+    currently to use the multiline trl application, and even then, only if switch terms are required for the desired
+    calibration.
+
+    ***DRIVER TESTING***
+    Although this driver template is designed for use with the widgets, it can be used with any program desired.
+    An ipython notebook can be found in the driver_devel folder that provides a template for how to test the
+    functionality of the driver.
     '''
     DEFAULT_VISA_ADDRESS = "GPIB0::16::INSTR"
     NAME = "Two Port Analyzer"
     NPORTS = 2
-    NCHANNELS = 256
+    NCHANNELS = 32
 
-    def __init__(self, visa_address=None):
-        print("wrong place")
-        pass
+    FCONVERSION = {"hz": 1, "khz": 1000, "mhz": 1e6, "ghz": 1e9, "thz": 1e12, "phz": 1e15}
+
+    def __init__(self, address=DEFAULT_VISA_ADDRESS, **kwargs):
+        """
+        :param address: a visa resource string
+        :param kwargs: visa_library, timeout
+
+        general and recommended way of initializing the visa resource.
+
+        visa_library: pyvisa is a frontend that can use different visa_library backends, including the python-based
+        pyvisa-py backend which can handle SOCKET (though not GPIB) connections.  It should be possible to use this
+        library without NI-VISA libraries installed if the analyzer is so configured.
+        """
+
+        rm = visa.ResourceManager(visa_library=kwargs.get("visa_library", ""))
+        self.resource = rm.open_resource(address)
+
+        self.resource.timeout = kwargs.get("timeout", 3000)
+
+        if "socket" in address.lower():
+            self.resource.read_termination = "\n"
+            self.resource.write_termination = "\n"
+
+        if "instr" in address.lower():
+            self.resource.control_ren(2)
 
     def __enter__(self):
         """
-        set things up
-
         :return: the Analyzer Driver Object
         """
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """
-        tear things down
-
-        :param exc_type:
-        :param exc_val:
-        :param exc_tb:
-        :return: nothing
+        minimum action of closing the visa resource when we are done with it
         """
         self.resource.close()
 
-    def measure_twoport_ntwk(self, ports=(1, 2), channel=None, sweep=False):
+    def get_list_of_traces(self, **kwargs):
         """
-        :param ports: an interable of the ports to measure
-        :param sweep: whether or not to trigger a fresh measurement
-        :return: skrf.Network
+        :return: list
+         the purpose of this function is to query the analyzer for the available traces, and then
+         it then returns a list where each list-item represents one available trace.  How this is
+         achieved is completely up to the user with the only requirement that the items from this list
+         must be passed to the self.get_traces function, which will return one network item for each item
+         in the list that is passed.
+
+         Typically the user will get this list of all available traces, and then by some functionality
+         in the widgets (or whatever) will down-select the list and then return that down-selected list
+         to the get_traces function to retrieve the desired networks.
+
+         Each list item then must be a python object (str, list, dict, etc.) with all necessary information to
+         retrieve the trace as an skrf.Network object.  For example, each item could be a python dict with the
+         following keys:
+         * "name": the name of the measurement e.g. "CH1_S11_1"
+         * "channel": the channel number the measurement is on
+         * "measurement": the measurement number (MNUM in SCPI)
+         * "parameter": the parameter of the measurement, e.g. "S11", "S22" or "a1b1,2"
+         * "label": the text the item will use to identify itself to the user e.g "Measurement 1 on Channel 1"
         """
         pass
 
-    def measure_oneport_ntwk(self, port=1, channel=None, sweep=False):
+    def get_traces(self, traces, **kwargs):
+        """
+        :param traces: list of type that is exported by self.get_list_of_traces
+        :param kwargs:
+        :return: a list of 1-port networks representing the desired traces
+
+        *** I wish there was some way to distinquish between traces and 1-port networks,
+            but with the current structure of skrf, I don't know what that is
+        """
+
+    def get_snp_network(self, ports, **kwargs):
+        """
+        :param ports: list of ports
+        :return: an n-port skrf.Network object
+
+        general function to take in a list of ports and return the full snp network as an skrf.Network for those ports
+        """
+        raise AttributeError("get_snp_network not implemented")
+
+    def get_twoport_ntwk(self, ports=(1, 2), **kwargs):
+        """
+        :param ports: an interable of the ports to measure
+        :return: skrf.Network
+        """
+        if len(ports) != 2:
+            raise ValueError("Must provide a 2-length list of integers for the ports")
+        return self.get_snp_network(ports, **kwargs)
+
+    def get_oneport_ntwk(self, port, **kwargs):
         """
         :param ports: which port to measure
-        :param sweep: whether or not to trigger a fresh measurement
         :return: skrf.Network
         """
-        pass
+        if type(port) in (list, tuple):
+            if len(port) > 1:
+                raise ValueError("specify the port as an integer")
+        elif type(port) is not int:
+            raise ValueError("specify the port as an integer")
+        return self.get_snp_network(port, **kwargs)
 
-    def measure_switch_terms(self, ports=(1, 2), channel=None, sweep=False):
+    def get_switch_terms(self, ports=(1, 2), **kwargs):
         """
-        :param ports: an interable of the ports to measure
-        :param sweep: whether or not to trigger a fresh measurement
+        :param port: port to get S1P from
         :return: a lenth-2 iterable of 1-port networks
         """
-        pass
-
-    def measure_traces(self, traces=[], channel=None, sweep=False):
-        pass
-
-    def get_list_of_traces(self, channel=None):
-        pass
-
-    def get_frequency_sweep(self, channel=None):
-        pass
+        raise AttributeError("get_switch_terms not implemented")
 
     def set_frequency_sweep(self, start_freq, stop_freq, num_points, channel=None):
-        pass
+        raise AttributeError("set_frequency_sweep not implemented")
+
+    def to_hz(self, freq, f_unit):
+        """
+        :param freq: float
+        :param f_unit: str
+        :return:
+
+        A simple convenience function to create frequency in Hz if it is in a different unit
+        """
+        return freq * self.FCONVERSION[f_unit.lower()]
