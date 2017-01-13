@@ -104,12 +104,13 @@ class Analyzer(base_analyzer.Analyzer):
         """
         # assigning this way, activate the channel, see channel.setter for more information about weirdness
         # that can happen if we don't assign a measurement to be active
+        self.resource.clear()
         self.channel = channel = kwargs.get("channel", self.channel)
         sweep = kwargs.get("sweep", False)
         name = kwargs.get("name", "")
         f_unit = kwargs.get("f_unit", "GHz")
 
-        ports = [int(port) for port in ports] if type(ports) in (list, tuple) else int(ports)
+        ports = [int(port) for port in ports] if type(ports) in (list, tuple) else [int(ports)]
         if not name:
             name = "{:d}Port Network".format(len(ports))
 
@@ -150,6 +151,7 @@ class Analyzer(base_analyzer.Analyzer):
          * "parameter": the parameter of the measurement, e.g. "S11", "S22" or "a1b1,2"
          * "label": the text the item will use to identify itself to the user e.g "Measurement 1 on Channel 1"
         """
+        self.resource.clear()
         traces = []
         channels = self.resource.query("SYSTem:CHANnels:CATalog?")[1:-1].split(",")
         for channel in channels:
@@ -174,6 +176,7 @@ class Analyzer(base_analyzer.Analyzer):
         :param kwargs: sweep(bool), name_prefix(str)
         :return:
         """
+        self.resource.clear()
         sweep = kwargs.get("sweep", False)
         if sweep is True:
             self.sweep()
@@ -204,7 +207,9 @@ class Analyzer(base_analyzer.Analyzer):
                 traces.append(ntwk)
         return traces
 
-    def get_frequency(self, channel, **kwargs):
+    def get_frequency(self, **kwargs):
+        self.resource.clear()
+        channel = kwargs.get("channel", self.channel)
         use_log = "LOG" in self.resource.query("SENSe{:}:SWEep:TYPE?".format(channel)).upper()
         f_start = float(self.resource.query("SENSe:FREQuency:STARt?"))
         f_stop = float(self.resource.query("SENSe:FREQuency:STOP?"))
@@ -227,7 +232,7 @@ class Analyzer(base_analyzer.Analyzer):
         :param channel: channel of the analyzer
         :return:
         """
-        f_unit = kwargs.get("funit", "hz").lower()
+        f_unit = kwargs.get("f_unit", "hz")
         channel = kwargs.get("channel", 1)
         self.resource.write('SENS{:}:FREQ:STAR {:f}'.format(channel, self.to_hz(f_start, f_unit)))
         self.resource.write('SENS{:}:FREQ:STOP {:f}'.format(channel, self.to_hz(f_stop, f_unit)))
@@ -241,6 +246,10 @@ class Analyzer(base_analyzer.Analyzer):
         --------
         forward, reverse : oneport switch term Networks
         '''
+
+        # TODO: This tends to error if there are multiple channels operating
+
+        self.resource.clear()
         p1, p2 = ports
 
         channel = kwargs.get("channel", self.channel)
@@ -261,7 +270,7 @@ class Analyzer(base_analyzer.Analyzer):
         self.create_meas(forward_name, 'a{:}b{:},{:}'.format(p2, p2, p1))
         self.create_meas(reverse_name, 'a{:}b{:},{:}'.format(p1, p1, p2))
 
-        self.sweep()
+        self.sweep(**kwargs)
 
         forward = self.get_measurement(name=forward_name, sweep=False)  # type: skrf.Network
         forward.name = "forward switch terms"
@@ -289,13 +298,13 @@ class Analyzer(base_analyzer.Analyzer):
         """
         sweep = kwargs.get("sweep", False)
         if sweep:
-            self.sweep()
+            self.sweep(**kwargs)
 
         channel = self.channel
         ntwk = skrf.Network()
         sdata = self.resource.query_values(":CALC{:}:DATA? SDATA".format(channel))
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
-        ntwk.frequency = self.get_frequency(channel)
+        ntwk.frequency = self.get_frequency(channel=channel)
         return ntwk
 
     def create_meas(self, name, param, **kwargs):
@@ -362,7 +371,8 @@ class Analyzer(base_analyzer.Analyzer):
         but not be associated with a trace.
         '''
         channel = kwargs.get("channel", self.channel)
-        meas = self.get_meas_list(channel=channel)
+        # meas = self.get_meas_list()
+        meas = self.resource.query("SYSTem:MEASurement:CATalog?")[1:-1].split(",")
         return 0 if meas is None else len(meas)
 
     def select_meas_by_number(self, meas_number, **kwargs):

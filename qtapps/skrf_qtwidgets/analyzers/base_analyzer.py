@@ -8,18 +8,18 @@ class Analyzer(object):
     '''
     class defining an analyzer for using with skrf_qtwidgets.
 
-    ***OPTIONAL METHODS TO IMPLEMENT FOR SKRF_QTWIDGETS***
+    ***OPTIONAL METHODS TO OVERRIDE FOR SKRF_QTWIDGETS***
     init - setup the instrument resource (i.e., pyvisa)
+    get_twoport_ntwk  * must implement get_snp_network
+    get_oneport_ntwk  * must implement get_snp_network
     enter/exit - for using python's with statement
     >>> with Analyzer("GPIB0::16::ISNTR") as nwa:
     >>>     ntwk = nwa.measure_twoport_ntwk()
 
-    ***METHODS TO IMPLEMENT FOR SKRF_QTWIDGETS***
+    ***METHODS THAT MUST BE IMPLEMENTED FOR SKRF_QTWIDGETS***
     get_traces
     get_list_of_traces
     get_snp_network
-    get_twoport_ntwk
-    get_oneport_ntwk
     get_switch_terms
     set_frequency_sweep
 
@@ -41,7 +41,7 @@ class Analyzer(object):
 
     ***DRIVER TESTING***
     Although this driver template is designed for use with the widgets, it can be used with any program desired.
-    An ipython notebook can be found in the driver_devel folder that provides a template for how to test the
+    An ipython notebook can be found in the driver development folder that provides a template for how to test the
     functionality of the driver.
     '''
     DEFAULT_VISA_ADDRESS = "GPIB0::16::INSTR"
@@ -141,19 +141,23 @@ class Analyzer(object):
 
     def get_oneport_ntwk(self, port, **kwargs):
         """
-        :param ports: which port to measure
+        :param port: which port to measure
         :return: skrf.Network
         """
         if type(port) in (list, tuple):
             if len(port) > 1:
                 raise ValueError("specify the port as an integer")
-        elif type(port) is not int:
-            raise ValueError("specify the port as an integer")
+        else:
+            if type(port) is int:
+                port = (port)
+            else:
+                raise ValueError("specify the port as an integer")
+
         return self.get_snp_network(port, **kwargs)
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
         """
-        :param port: port to get S1P from
+        :param ports: port to get S1P from
         :return: a lenth-2 iterable of 1-port networks
         """
         raise AttributeError("get_switch_terms not implemented")

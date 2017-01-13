@@ -1,7 +1,13 @@
+"""
+A driver that would use the underlying methods of the skrf.vi.vna.PNA class
+This has not been tested at all, but is here in case someone wants to try
+"""
+
 import skrf.vi.vna
+from . import base_analyzer
 
 
-class Analyzer(skrf.vi.vna.PNA):
+class Analyzer(skrf.vi.vna.PNA, base_analyzer.Analyzer):
     '''
     class defining an analyzer for using with skrf_qtwidgets.  The base class needs only 6 methods:
     init - setup the instrument resource (i.e., pyvisa)
@@ -40,7 +46,7 @@ class Analyzer(skrf.vi.vna.PNA):
         """
         self.resource.close()
 
-    def measure_twoport_ntwk(self, ports=(1, 2), sweep=True):
+    def get_twoport_ntwk(self, ports=(1, 2), sweep=True):
         """
         :param ports: an interable of the ports to measure
         :param sweep: whether or not to trigger a fresh measurement
@@ -48,7 +54,7 @@ class Analyzer(skrf.vi.vna.PNA):
         """
         return self.get_twoport(ports, sweep=sweep)
 
-    def measure_oneport_ntwk(self, port=1, sweep=True):
+    def get_oneport_ntwk(self, port=1, sweep=True):
         """
         :param ports: which port to measure
         :param sweep: whether or not to trigger a fresh measurement
@@ -56,7 +62,7 @@ class Analyzer(skrf.vi.vna.PNA):
         """
         return self.get_oneport(port, sweep=sweep)
 
-    def measure_switch_terms(self, ports=(1, 2), sweep=True):
+    def get_switch_terms(self, ports=(1, 2), sweep=True):
         """
         :param ports: an interable of the ports to measure
         :param sweep: whether or not to trigger a fresh measurement
