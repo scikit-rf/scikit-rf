@@ -78,3 +78,16 @@ def setup_pylab():
     global saf, stylely
     saf = plotting.save_all_figs
     stylely = plotting.stylely
+
+def setup_plotting():
+    init_plotting = True
+    try:
+        if os.environ['SKRF_NO_PYLAB_INIT'] == '1':
+            init_plotting = False
+    except KeyError:
+        pass
+
+    if init_plotting:
+        setup_pylab()
+
+setup_plotting()
