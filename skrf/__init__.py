@@ -71,7 +71,7 @@ saf = None
 stylely = None
 
 
-def setup_pylab(use_skrf_style=False):
+def setup_pylab():
     from . import plotting
     plotting.setup_matplotlib_plotting()
 
@@ -79,5 +79,17 @@ def setup_pylab(use_skrf_style=False):
     saf = plotting.save_all_figs
     stylely = plotting.stylely
 
-    if use_skrf_style:
-        stylely()
+
+def setup_plotting():
+    init_plotting = True
+    try:
+        if os.environ['SKRF_NO_PYLAB_INIT'] == '1':
+            init_plotting = False
+    except KeyError:
+        pass
+
+    if init_plotting:
+        setup_pylab()
+
+setup_plotting()
+>>>>>>> b27575c2ed8555c20d338b7a09b8d494b9f8d3a3
