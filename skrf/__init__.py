@@ -81,7 +81,6 @@ def setup_pylab():
 
 
 def setup_plotting():
-    print(os.environ.get("SKRF_PLOT_ENV", "Plot environment not set"))
     plotting_environment = os.environ.get('SKRF_PLOT_ENV', "pylab").lower()
 
     if plotting_environment == "pylab":
