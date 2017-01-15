@@ -418,9 +418,12 @@ class NetworkListWidget(QtWidgets.QListWidget):
             return
         self.load_network(ntwk)
 
-    def load_from_files(self, caption="load touchstone file"):
-        ntwks = load_network_files(caption)  # type: skrf.Network
+    def load_networks(self, ntwks):
         if not ntwks:
+            return
+
+        if isinstance(ntwks, skrf.Network):
+            self.load_network(ntwks)
             return
 
         try:
@@ -432,6 +435,9 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
         item = self.item(self.count() - 1)
         self.set_active_network(item)
+
+    def load_from_files(self, caption="load touchstone file"):
+        self.load_networks(load_network_files(caption))
 
     def save_selected_items(self):
         items = self.selectedItems()
@@ -473,9 +479,12 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
     def measure_ntwk(self):
         with self.get_analyzer() as nwa:
-            meas = nwa.measure_twoport_ntwk()
-            meas.name = self.MEASUREMENT_PREFIX  # unique name processed in load_network
-        self.load_network(meas)
+            dialog = MeasurementDialog(nwa)
+            dialog.measurements_available.connect(self.load_networks)
+            dialog.exec_()
+        #     meas = nwa.measure_twoport_ntwk()
+        #     meas.name = self.MEASUREMENT_PREFIX  # unique name processed in load_network
+        # self.load_network(meas)
 
     def get_load_button(self, label="Load"):
         button = QtWidgets.QPushButton(label)
@@ -956,7 +965,7 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.ok.setEnabled(False)
 
     def measure_switch(self):
-        self.forward, self.reverse = self.analyzer.measure_switch_terms()
+        self.forward, self.reverse = self.analyzer.get_switch_terms()
         self.evaluate()
 
     def load_forward_switch(self):
@@ -1029,6 +1038,11 @@ class VnaController(QtWidgets.QWidget):
         self.hlay_row1.addWidget(self.label_visaString)
         self.hlay_row1.addWidget(self.lineEdit_visaString)
 
+        self.label_channel = QtWidgets.QLabel("Channel:")
+        self.spinBox_channel = QtWidgets.QSpinBox()
+        self.spinBox_channel.setMinimum(1)
+        self.spinBox_channel.setMaximum(256)
+
         self.label_startFreq = QtWidgets.QLabel("Start Freq:", self)
         self.lineEdit_startFrequency = QtWidgets.QLineEdit(self)
         self.lineEdit_startFrequency.setValidator(QtGui.QDoubleValidator())
@@ -1057,6 +1071,7 @@ class VnaController(QtWidgets.QWidget):
 
         self.layout_row2 = QtWidgets.QHBoxLayout()
         for label, widget in (
+                (self.label_channel, self.spinBox_channel),
                 (self.label_startFreq, self.lineEdit_startFrequency),
                 (self.label_stopFreq, self.lineEdit_stopFrequency),
                 (self.label_numberOfPoints, self.spinBox_numberOfPoints),
@@ -1082,6 +1097,18 @@ class VnaController(QtWidgets.QWidget):
         self.comboBox_funit.currentIndexChanged.connect(self.frequency_changed)
         self.lineEdit_startFrequency.textEdited.connect(self.set_start_freequency)
         self.lineEdit_stopFrequency.textEdited.connect(self.set_stop_freequency)
+
+        self.btn_setAnalyzerFreqSweep.clicked.connect(self.set_frequency_sweep)
+
+    def set_frequency_sweep(self):
+        channel = self.spinBox_channel.value()
+        f_unit = self.comboBox_funit.currentText()
+        f_start = self.start_frequency
+        f_stop = self.stop_frequency
+        f_npoints = self.spinBox_numberOfPoints.value()
+
+        with self.get_analyzer() as nwa:
+            nwa.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop, f_npoints=f_npoints)
 
     def set_start_freequency(self, value):
         self._start_frequency = float(value)
@@ -1179,15 +1206,15 @@ class ReflectDialog(QtWidgets.QDialog):
         self.btn_loadPort2.clicked.connect(self.load_s22)
 
     def measure_s11(self):
-        self.s11 = self.analyzer.get_oneport(port=1)
+        self.s11 = self.analyzer.get_oneport_ntwk(port=1)
         self.evaluate()
 
     def measure_s22(self):
-        self.s22 = self.analyzer.get_oneport(port=2)
+        self.s22 = self.analyzer.get_oneport_ntwk(port=2)
         self.evaluate()
 
     def measure_both(self):
-        self.reflect_2port = self.analyzer.get_twoport()
+        self.reflect_2port = self.analyzer.get_twoport_ntwk()
         self.evaluate()
 
     def load_s11(self):
@@ -1237,3 +1264,133 @@ class ReflectDialog(QtWidgets.QDialog):
                     self.label_port2.setText("port2 - measured")
                 else:
                     self.label_port2.setText("port2 - not measured")
+
+
+class MeasurementDialog(QtWidgets.QDialog):
+
+    measurements_available = QtCore.Signal(object)
+
+    def __init__(self, nwa, parent=None):
+        super(MeasurementDialog, self).__init__(parent)
+        self.setWindowTitle("MeasurementDialog")
+        self.horizontalLayout_main = QtWidgets.QHBoxLayout(self)
+
+        self.verticalLayout_left = QtWidgets.QVBoxLayout()
+
+        self.groupBox_options = QtWidgets.QGroupBox("Options", self)
+        self.lineEdit_namePrefix = QtWidgets.QLineEdit(self)
+        self.label_namePrefix = QtWidgets.QLabel("Name Prefix:")
+        self.horizontalLayout_namePrefix = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_namePrefix.addWidget(self.label_namePrefix)
+        self.horizontalLayout_namePrefix.addWidget(self.lineEdit_namePrefix)
+        self.label_timeout = QtWidgets.QLabel("Timeout (ms)", self)
+        self.spinBox_timeout = QtWidgets.QSpinBox(self)
+        self.spinBox_timeout.setMinimum(100)
+        self.spinBox_timeout.setMaximum(600000)
+        try:
+            self.spinBox_timeout.setValue(nwa.resource.timeout)
+        except:
+            self.spinBox_timeout.setValue(3000)
+        self.spinBox_timeout.setSingleStep(1000)
+        self.horizontalLayout_timeout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_timeout.addWidget(self.label_timeout)
+        self.horizontalLayout_timeout.addWidget(self.spinBox_timeout)
+        self.checkBox_sweepNew = QtWidgets.QCheckBox("Sweep New", self.groupBox_options)
+        self.label_channel = QtWidgets.QLabel("Channel", self.groupBox_options)
+        self.spinBox_channel = QtWidgets.QSpinBox(self.groupBox_options)
+        self.horizontalLayout_channel = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_channel.addWidget(self.label_channel)
+        self.horizontalLayout_channel.addWidget(self.spinBox_channel)
+
+        self.verticalLayout_options = QtWidgets.QVBoxLayout(self.groupBox_options)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_namePrefix)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_timeout)
+        self.verticalLayout_options.addWidget(self.checkBox_sweepNew)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_channel)
+        self.verticalLayout_left.addWidget(self.groupBox_options)
+
+        self.groupBox_snp = QtWidgets.QGroupBox("Get N-Port Network", self)
+        self.verticalLayout_snp = QtWidgets.QVBoxLayout(self.groupBox_snp)
+        self.label_ports = QtWidgets.QLabel("Ports:", self.groupBox_snp)
+        self.lineEdit_ports = QtWidgets.QLineEdit(self.groupBox_snp)
+        self.btn_measureSnp = QtWidgets.QPushButton("Measure Network", self.groupBox_snp)
+        self.horizontalLayout_nports = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_nports.addWidget(self.label_ports)
+        self.horizontalLayout_nports.addWidget(self.lineEdit_ports)
+        self.verticalLayout_snp.addWidget(self.btn_measureSnp)
+        self.verticalLayout_snp.addLayout(self.horizontalLayout_nports)
+
+        self.spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        self.verticalLayout_snp.addItem(self.spacerItem)
+        self.verticalLayout_left.addWidget(self.groupBox_snp)
+
+        self.groupBox_traces = QtWidgets.QGroupBox("Available Traces", self)
+        self.listWidget_traces = QtWidgets.QListWidget(self.groupBox_traces)
+        self.listWidget_traces.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
+        self.btn_updateTraces = QtWidgets.QPushButton("Update", self.groupBox_traces)
+        self.btn_measureTraces = QtWidgets.QPushButton("Measure Traces", self.groupBox_traces)
+        self.horizontalLayout_tracesButtons = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_tracesButtons.addWidget(self.btn_updateTraces)
+        self.horizontalLayout_tracesButtons.addWidget(self.btn_measureTraces)
+
+        self.verticalLayout_traces = QtWidgets.QVBoxLayout(self.groupBox_traces)
+        self.verticalLayout_traces.addWidget(self.listWidget_traces)
+        self.verticalLayout_traces.addLayout(self.horizontalLayout_tracesButtons)
+
+        self.horizontalLayout_main.addLayout(self.verticalLayout_left)
+        self.horizontalLayout_main.addWidget(self.groupBox_traces)
+
+        self.nwa = nwa
+
+        self.btn_updateTraces.clicked.connect(self.update_traces)
+        self.btn_measureSnp.clicked.connect(self.measure_snp)
+        self.btn_measureTraces.clicked.connect(self.measure_traces)
+
+        if self.nwa.NCHANNELS:
+            self.spinBox_channel.setValue(1)
+            self.spinBox_channel.setMinimum(1)
+            self.spinBox_channel.setMaximum(self.nwa.NCHANNELS)
+        else:
+            self.spinBox_channel.setEnabled(False)
+
+        self.lineEdit_ports.setText(",".join([str(port+1) for port in range(self.nwa.NPORTS)]))
+        self.spinBox_timeout.valueChanged.connect(self.set_timeout)
+
+    def set_timeout(self):
+        self.nwa.resource.timeout = self.spinBox_timeout.value()
+
+    def measure_traces(self):
+        items = self.listWidget_traces.selectedItems()
+        if len(items) < 1:
+            print("nothing to measure")
+            return
+
+        traces = []
+        for item in items:
+            traces.append(item.trace)
+
+        ntwks = self.nwa.get_traces(traces, name_prefix=self.lineEdit_namePrefix.text())
+        self.measurements_available.emit(ntwks)
+
+    def measure_snp(self):
+        ports = self.lineEdit_ports.text().replace(" ", "").split(",")
+        try:
+            ports = [int(port) for port in ports]
+        except Exception:
+            qt.error_popup("Ports must be a comma separated list of integers")
+            return
+
+        channel = self.spinBox_channel.value()
+        sweep = self.checkBox_sweepNew.isChecked()
+        name = self.lineEdit_namePrefix.text()
+        ntwk = self.nwa.get_snp_network(ports=ports, channel=channel, sweep=sweep, name=name)
+        self.measurements_available.emit(ntwk)
+
+    def update_traces(self):
+        traces = self.nwa.get_list_of_traces()
+        self.listWidget_traces.clear()
+        for trace in traces:
+            item = QtWidgets.QListWidgetItem()
+            item.setText(trace["label"])
+            item.trace = trace
+            self.listWidget_traces.addItem(item)

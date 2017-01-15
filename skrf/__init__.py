@@ -79,15 +79,16 @@ def setup_pylab():
     saf = plotting.save_all_figs
     stylely = plotting.stylely
 
-def setup_plotting():
-    init_plotting = True
-    try:
-        if os.environ['SKRF_NO_PYLAB_INIT'] == '1':
-            init_plotting = False
-    except KeyError:
-        pass
 
-    if init_plotting:
+def setup_plotting():
+    plotting_environment = os.environ.get('SKRF_PLOT_ENV', "pylab").lower()
+
+    if plotting_environment == "pylab":
         setup_pylab()
+    elif plotting_environment == "pylab-skrf-style":
+        setup_pylab()
+        stylely()
+    # elif some different plotting environment
+        # set that up
 
 setup_plotting()
