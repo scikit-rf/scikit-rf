@@ -12,9 +12,9 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     :maxdepth: 1
     
     tutorials/installation
-    tutorials/Introduction
-    
-tutorials/networks
+    tutorials/Introduction    
+    tutorials/Networks
+
 tutorials/plotting
 tutorials/networkset
 tutorials/virtualinstruments 
