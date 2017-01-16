@@ -4,18 +4,57 @@ import numpy as np
 import skrf
 from skrf_qtwidgets.analyzers import base_analyzer
 
+SCPI_COMMANDS = {
+    # "key": ["command", ("default_key": default_value) ...]
+    # defaults convention:
+    # if value is read/write, default scpi parameters will be null strings
+    "active_channel":       ["SYSTem:ACTive:CHANnel?", ()],
+    "measurement_list":     ["SYSTem:MEASurement:CATalog? {:}", ("channel", "")],
+    "select_meas_by_num":   [":CALC{:}:PAR:MNUM:SEL {:}", ("channel", ""), ("mnum", "")],
+    "trigger_source":       ["TRIGger:SEQuence:SOURce? {:}", ("source", "")],
+    "sweep_mode":           ["SENSe{:}:SWEep:MODE? {:}", ("channel", ""), ("mode", "")],
+    "averaging_state":      ["SENSe{:}:AVERage:STATe? {:}", ("channel", ""), ("onoff", "")],
+    "averaging_count":      ["SENSe{:}:AVERage:COUNt? {:}", ("channel", ""), ("count", "")],
+    "groups_count":         ["SENSe{:}:SWEep:GROups:COUNt? {:}", ("channel", ""), ("count", "")],
+    "sweep_time":           ["SENSe{:}:SWEep:TIME? {:}", ("channel", ""), ("seconds", "")],
+}
+
 
 class Analyzer(base_analyzer.Analyzer):
-    DEFAULT_VISA_ADDRESS = "TCPIP0::192.168.1.50::5025::SOCKET"
-    NAME = "Agilent E8363C"
+    DEFAULT_VISA_ADDRESS = "GPIB0::16::INSTR"
+    NAME = "Keysight PNA"
     NPORTS = 2
     NCHANNELS = 32
     SCPI_VERSION_TESTED = 'A.09.20.08'
 
     def __init__(self, address=DEFAULT_VISA_ADDRESS, **kwargs):
         super(Analyzer, self).__init__(address)
+        self.scpi = SCPI_COMMANDS
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.use_binary()
+
+    def process_scpi(self, command, **kwargs):
+        scpi_str = self.scpi[command][0]
+        defaults = self.scpi[command][1:]
+        args = []
+        for key, value in defaults:
+            args.append(kwargs.get(key, value))
+        return scpi_str.format(args)
+
+    def write(self, command, **kwargs):
+        scpi_str = self.process_scpi(command, **kwargs).replace('?', '').strip()
+        self.resource.write(scpi_str)
+
+    def read(self):
+        return self.resource.read().replace('"', '')
+
+    def query(self, command, **kwargs):
+        scpi_str = self.process_scpi(command, **kwargs).strip()
+        return self.resource.query(scpi_str).replace('"', '')
+
+    def query_values(self, command, **kwargs):
+        scpi_str = self.process_scpi(command, **kwargs)
+        return self.resource.query_values(scpi_str)
 
     def use_binary(self):
         """setup the analyzer to transfer in binary which is faster, especially for large datasets"""
@@ -29,7 +68,7 @@ class Analyzer(base_analyzer.Analyzer):
 
     @property
     def channel(self):
-        return int(self.resource.query("SYSTem:ACTive:CHANnel?"))
+        return int(self.query("active_channel"))
 
     @channel.setter
     def channel(self, channel):
@@ -45,8 +84,8 @@ class Analyzer(base_analyzer.Analyzer):
         this way we force this property to be set, even if it just resets itself to the same value, but then a trace
         will become active and our get_snp_network method will succeed.
         """
-        measurements = self.resource.query("SYSTem:MEASurement:CATalog? {:}".format(channel))[1:-1].split(",")
-        self.resource.write(":CALC{:}:PAR:MNUM:SEL {:}".format(channel, measurements[0]))
+        mnum = self.query("measurement_list", channel=channel).split(",")[0]
+        self.write("select_meas_by_num", channel=channel, mnum=mnum)
         return
 
     def sweep(self, **kwargs):
@@ -58,15 +97,17 @@ class Analyzer(base_analyzer.Analyzer):
         of continuous trigger or hold.
         """
         self.resource.clear()
-        self.resource.write("TRIGger:SEQuence:SOURce IMM")
         channel = kwargs.get("channel", self.channel)
-        sweep_mode = self.resource.query('SENSe{:}:SWEep:MODE?'.format(channel))
+
+        self.write("trigger_source", source="IMMediate")
+        sweep_mode = self.query("sweep_mode", channel=channel)
+
         was_continuous = "CONT" in sweep_mode.upper()
 
-        if bool(int(self.resource.query("SENSe{:}:AVERage:STATe?".format(channel)))):
+        if int(self.query("averaging_state", channel=channel)):
             sweep_mode = "GROUPS"
-            sweeps = int(self.resource.query("SENSe{:}:AVERage:COUNt?".format(channel)))
-            self.resource.write("SENSe{:}:SWEep:GROups:COUNt {:}".format(channel, sweeps))
+            sweeps = int(self.query("averaging_count"))
+            self.write("groups_count", channel=channel, count=sweeps)
             sweeps *= 2
         else:
             sweep_mode = "SINGLE"
@@ -78,18 +119,19 @@ class Analyzer(base_analyzer.Analyzer):
 
         # TODO: This works for 1 channel, but fails to account for the sweep time of many channels
         if not timeout:
-            sweep_time = float(self.resource.query("SENSe:SWEep:TIME?"))
+            sweep_time = float(self.query("sweep_time"))
             total_time = sweep_time * sweeps
             self.resource.timeout = total_time * 2000  # convert to milliseconds, and double for buffer
         else:
             self.resource.timeout = timeout
 
         try:
-            self.resource.query("SENS{:}:SWE:MODE {:s};*OPC?".format(channel, sweep_mode))
+            self.write("sweep_mode", channel=channel, mode=sweep_mode)
+            self.query("*OPC?")  # TODO: universal way to query if the instrument is ready, a method perhaps?
         finally:
             self.resource.clear()
             if was_continuous:
-                self.resource.write("SENS{:}:SWE:MODE CONT".format(channel))
+                self.write("sweep_mode", mode="continuous")
             self.resource.timeout = original_timeout
         return
 
