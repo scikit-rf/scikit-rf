@@ -5,18 +5,30 @@ import skrf
 from skrf_qtwidgets.analyzers import base_analyzer
 
 SCPI_COMMANDS = {
-    # "key": ["command", ("default_key": default_value) ...]
-    # defaults convention:
-    # if value is read/write, default scpi parameters will be null strings
-    "active_channel":       ["SYSTem:ACTive:CHANnel?", ()],
-    "measurement_list":     ["SYSTem:MEASurement:CATalog? {:}", ("channel", "")],
-    "select_meas_by_num":   [":CALC{:}:PAR:MNUM:SEL {:}", ("channel", ""), ("mnum", "")],
-    "trigger_source":       ["TRIGger:SEQuence:SOURce? {:}", ("source", "")],
-    "sweep_mode":           ["SENSe{:}:SWEep:MODE? {:}", ("channel", ""), ("mode", "")],
-    "averaging_state":      ["SENSe{:}:AVERage:STATe? {:}", ("channel", ""), ("onoff", "")],
-    "averaging_count":      ["SENSe{:}:AVERage:COUNt? {:}", ("channel", ""), ("count", "")],
-    "groups_count":         ["SENSe{:}:SWEep:GROups:COUNt? {:}", ("channel", ""), ("count", "")],
-    "sweep_time":           ["SENSe{:}:SWEep:TIME? {:}", ("channel", ""), ("seconds", "")],
+    # "key": ["command", ("kwarg", ...)]
+    "active_channel":       [":SYSTem:ACTive:CHANnel?", ()],
+    "active_data":          [":CALC{:}:DATA? {:s}", ("channel", "char")],
+    "available_channels":   [":SYSTem:CHANnels:CATalog?", ()],
+    "averaging_count":      [":SENSe{:}:AVERage:COUNt? {:}", ("channel", "count")],
+    "averaging_state":      [":SENSe{:}:AVERage:STATe? {:}", ("channel", "onoff")],
+    "display_trace":        ["DISPlay:WINDow{:}:TRACe{:}:FEED {:s}", ("window", "trace", "name")],
+    "create_measurement":   ['CALCulate{:}:PARameter:DEFine:EXTended "{:}", "{:}"', ("channel", "name", "param")],
+    "delete_measurement":   ["CALCulate{:}:PARameter:DELete {:}", ("channel", "name")],
+    "meas_format":          ["CALCulate{:}:FORMat {:}", ("channel", "fmt")],
+    "meas_name_list":       [":CALCulate{:}:PARameter:CAT:EXT?", ("channel")],
+    "meas_name_from_number": [":SYST:MEAS{:s}:NAME?", ("mnum")],
+    "meas_number_list":     [":SYSTem:MEASurement:CATalog? {:}", ("channel")],
+    "select_meas_by_num":   [":CALC{:}:PAR:MNUM:SEL {:}", ("channel", "mnum")],
+    "select_meas_by_name":  ['CALCulate{:}:PARameter:SELect "{:s}"', ("channel", "name")],
+    "sweep_mode":           [":SENSe{:}:SWEep:MODE? {:}", ("channel", "mode")],
+    "groups_count":         [":SENSe{:}:SWEep:GROups:COUNt? {:}", ("channel", "count")],
+    "sweep_time":           [":SENSe{:}:SWEep:TIME? {:}", ("channel", "seconds")],
+    "sweep_type":           ["SENSe{:}:SWEep:TYPE? {:}", ("channel", "sweep_type")],
+    "sweep_points":         [":SENSE{:}:SWEep:POINTS? {:}", ("channel", "sweep_points")],
+    "snp_data":             [':CALCulate{:}:DATA:SNP:PORTs? "{:}"', ("channel", "ports")],
+    "trigger_source":       [":TRIGger:SEQuence:SOURce? {:}", ("source")],
+    "start_frequency":      [":SENSe{:}:FREQuency:STARt? {:}", ("channel", "freq")],
+    "stop_frequency":       [":SENSe{:}:FREQuency:STOP? {:}", ("channel", "freq")]
 }
 
 
@@ -67,11 +79,11 @@ class Analyzer(base_analyzer.Analyzer):
         self.resource.values_format.use_ascii(converter='f', separator=',', container=np.array)
 
     @property
-    def channel(self):
+    def active_channel(self):
         return int(self.query("active_channel"))
 
-    @channel.setter
-    def channel(self, channel):
+    @active_channel.setter
+    def active_channel(self, channel):
         """
         :param channel: int
         :return:
@@ -80,11 +92,11 @@ class Analyzer(base_analyzer.Analyzer):
         trace on that channel.  We do this because if the analyzer gets into a state where it doesn't recognize
         any activated measurements, the get_snp_network method will fail, and possibly others as well.  That is why in
         some methods you will see the fillowing line:
-        >>> self.channel = channel = kwargs.get("channel", self.channel)
+        >>> self.active_channel = channel = kwargs.get("channel", self.active_channel)
         this way we force this property to be set, even if it just resets itself to the same value, but then a trace
         will become active and our get_snp_network method will succeed.
         """
-        mnum = self.query("measurement_list", channel=channel).split(",")[0]
+        mnum = self.query("meas_number_list", channel=channel).split(",")[0]
         self.write("select_meas_by_num", channel=channel, mnum=mnum)
         return
 
@@ -97,7 +109,7 @@ class Analyzer(base_analyzer.Analyzer):
         of continuous trigger or hold.
         """
         self.resource.clear()
-        channel = kwargs.get("channel", self.channel)
+        channel = kwargs.get("channel", self.active_channel)
 
         self.write("trigger_source", source="IMMediate")
         sweep_mode = self.query("sweep_mode", channel=channel)
@@ -146,24 +158,24 @@ class Analyzer(base_analyzer.Analyzer):
 
         general function to take in a list of ports and return the full snp network as an skrf.Network for those ports
         """
-        # assigning this way, activate the channel, see channel.setter for more information about weirdness
-        # that can happen if we don't assign a measurement to be active
         self.resource.clear()
-        self.channel = channel = kwargs.get("channel", self.channel)
+
+        # force activate channel to avoid possible errors:
+        self.active_channel = channel = kwargs.get("channel", self.active_channel)
+
         sweep = kwargs.get("sweep", False)
         name = kwargs.get("name", "")
         f_unit = kwargs.get("f_unit", "GHz")
 
         ports = [int(port) for port in ports] if type(ports) in (list, tuple) else [int(ports)]
         if not name:
-            name = "{:d}Port Network".format(len(ports))
+            name = "{:}Port Network".format(len(ports))
 
         if sweep:
             self.sweep()
 
-        npoints = int(self.resource.query(":SENSE{:}:SWEEP:POINTS?".format(channel)))
-        data = self.resource.query_values(
-            ':CALCulate{:}:DATA:SNP:PORTs? "{:s}"'.format(channel, ",".join(map(str, ports))))
+        npoints = int(self.query("sweep_points", channel=channel))
+        data = self.query_values("snp_data", channel=channel, ports=",".join(map(str, ports)))
         nrows = int(len(data) / npoints)
         nports = int(np.sqrt(nrows - 1))
         data = data.reshape([nrows, -1])
@@ -197,17 +209,16 @@ class Analyzer(base_analyzer.Analyzer):
         """
         self.resource.clear()
         traces = []
-        channels = self.resource.query("SYSTem:CHANnels:CATalog?")[1:-1].split(",")
+        channels = self.query("available_channels").split(",")
         for channel in channels:
-            meas_list = self.resource.query("CALC{:}:PAR:CAT:EXT?".format(channel))
-            meas = meas_list[1:-1].split(',')
-            if len(meas) == 1:
-                continue  # if there isnt a single comma, then there arent any measurments
-            parameters = dict([(meas[k], meas[k + 1]) for k in range(0, len(meas) - 1, 2)])
+            meas_list = self.query("meas_name_list", channel=channel).split(",")
+            if len(meas_list) == 1:
+                continue  # if there isnt a single comma, then there aren't any measurments
+            parameters = dict([(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)])
 
-            measurements = self.resource.query("SYSTem:MEASurement:CATalog? " + channel)[1:-1].split(",")
+            measurements = self.query("meas_number_list").split(",")
             for measurement in measurements:
-                name = self.resource.query("SYST:MEAS{:s}:NAME?".format(measurement))[1:-1]
+                name = self.query("meas_name_from_number", mnum=measurement)
                 item = {"name": name, "channel": channel, "measurement": measurement,
                         "parameter": parameters.get(name, name)}
                 item["label"] = "{:s} - Chan{:},Meas{:}".format(item["parameter"], item["channel"], item["measurement"])
@@ -241,8 +252,8 @@ class Analyzer(base_analyzer.Analyzer):
         for ch, ch_data in channels.items():
             frequency = ch_data["frequency"] = self.get_frequency()
             for trace in ch_data["traces"]:
-                self.resource.write("CALC{:s}:PAR:MNUM:SEL {:s}".format(trace["channel"], trace["measurement"]))
-                sdata = self.resource.query_values(":CALC{:s}:DATA? SDATA".format(trace["channel"]))
+                self.write("select_meas_by_number", channel=trace["channel"], mnum=trace["measurement"])
+                sdata = self.query_values("active_data", channel=trace["channel"], char="SDATA")
                 s = sdata[::2] + 1j * sdata[1::2]
                 ntwk = skrf.Network()
                 ntwk.s = s
@@ -253,11 +264,11 @@ class Analyzer(base_analyzer.Analyzer):
 
     def get_frequency(self, **kwargs):
         self.resource.clear()
-        channel = kwargs.get("channel", self.channel)
-        use_log = "LOG" in self.resource.query("SENSe{:}:SWEep:TYPE?".format(channel)).upper()
-        f_start = float(self.resource.query("SENSe:FREQuency:STARt?"))
-        f_stop = float(self.resource.query("SENSe:FREQuency:STOP?"))
-        f_npoints = int(self.resource.query("SENSe:SWEep:POINts?"))
+        channel = kwargs.get("channel", self.active_channel)
+        use_log = "LOG" in self.resource.query("sweep_type", channel=channel).upper()
+        f_start = float(self.query("start_frequency", channel=channel))
+        f_stop = float(self.query("stop_frequency", channel=channel))
+        f_npoints = int(self.query("sweep_points"))
         if use_log:
             freq = np.logspace(np.log10(f_start), np.log10(f_stop), f_npoints)
         else:
@@ -276,11 +287,14 @@ class Analyzer(base_analyzer.Analyzer):
         :param channel: channel of the analyzer
         :return:
         """
-        f_unit = kwargs.get("f_unit", "hz")
+        f_unit = kwargs.get("f_unit", "hz").lower()
+        if f_unit != "hz":
+            f_start = self.to_hz(f_start, f_unit)
+            f_stop = self.to_hz(f_stop, f_unit)
         channel = kwargs.get("channel", 1)
-        self.resource.write('SENS{:}:FREQ:STAR {:f}'.format(channel, self.to_hz(f_start, f_unit)))
-        self.resource.write('SENS{:}:FREQ:STOP {:f}'.format(channel, self.to_hz(f_stop, f_unit)))
-        self.resource.write('SENS{:}:SWE:POIN {:d}'.format(channel, f_npoints))
+        self.write('start_frequency', channel=channel, freq=f_start)
+        self.write('stop_frequency', channel=channel, freq=f_stop)
+        self.write('sweep_points', channel=channel, sweep_points=f_npoints)
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
         '''
@@ -291,12 +305,12 @@ class Analyzer(base_analyzer.Analyzer):
         forward, reverse : oneport switch term Networks
         '''
 
-        # TODO: This tends to error if there are multiple channels operating
+        # TODO: This tends to error if there are multiple channels operating, figure out how to fix
 
         self.resource.clear()
         p1, p2 = ports
 
-        channel = kwargs.get("channel", self.channel)
+        channel = kwargs.get("channel", self.active_channel)
 
         measurements = self.get_meas_list()
         max_trace = len(measurements)
@@ -321,18 +335,20 @@ class Analyzer(base_analyzer.Analyzer):
         reverse = self.get_measurement(name=reverse_name, sweep=False)  # type: skrf.Network
         reverse.name = "reverse switch terms"
 
-        self.delete_measurement(name=forward_name)
-        self.delete_measurement(name=reverse_name)
+        self.write("delete_measurement", channel=channel, name=forward_name)
+        self.write("delete_measurement", channel=channel, name=reverse_name)
         return forward, reverse
 
     def get_measurement(self, name=None, number=None, **kwargs):
         if name is None and number is None:
             raise ValueError("must provide either a measurement name or a number")
 
+        channel = kwargs.get("channel", self.active_channel)
+
         if type(name) is str:
-            self.select_meas_by_name(name, **kwargs)
+            self.write("select_meas_by_name", channel=channel, name=name)
         else:
-            self.select_meas_by_number(number, **kwargs)
+            self.write("select_meas_by_number", channel=channel, mnum=number)
         return self.get_active_trace_as_network(**kwargs)
 
     def get_active_trace_as_network(self, **kwargs):
@@ -344,9 +360,9 @@ class Analyzer(base_analyzer.Analyzer):
         if sweep:
             self.sweep(**kwargs)
 
-        channel = self.channel
+        channel = self.active_channel
         ntwk = skrf.Network()
-        sdata = self.resource.query_values(":CALC{:}:DATA? SDATA".format(channel))
+        sdata = self.query_values("active_data", channel="channel", char="SDATA")
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
         ntwk.frequency = self.get_frequency(channel=channel)
         return ntwk
@@ -358,18 +374,9 @@ class Analyzer(base_analyzer.Analyzer):
         :param kwargs: channel
         :return:
         '''
-        channel = kwargs.get("channel", self.channel)
-        self.resource.write('CALCulate{:}:PARameter:DEFine:EXTended "{:}", "{:}"'.format(channel, name, param))
+        channel = kwargs.get("channel", self.active_channel)
+        self.write("create_measurement", channel=channel, name=name, param=param)
         self.display_trace(name)
-
-    def delete_measurement(self, name, **kwargs):
-        '''
-        :param name: str, name of the measurement  **WARNING**, not all names behave well
-        :param kwargs: channel
-        :return:
-        '''
-        channel = kwargs.get("channel", self.channel)
-        self.resource.write('CALCulate{:}:PARameter:DELete {:s}'.format(channel, name))
 
     def display_trace(self, name, **kwargs):
         '''
@@ -382,13 +389,14 @@ class Analyzer(base_analyzer.Analyzer):
         display_format must be one of: MLINear, MLOGarithmic, PHASe, UPHase, IMAGinary, REAL, POLar, SMITh,
             SADMittance, SWR, GDELay, KELVin, FAHRenheit, CELSius
         '''
-        channel = kwargs.get('channel', self.channel)
+        channel = kwargs.get('channel', self.active_channel)
         window_n = kwargs.get("window_n", '')
         trace_n = kwargs.get("trace_n", self.ntraces + 1)
         display_format = kwargs.get('display_format', 'MLOG')
-        self.resource.write('DISPlay:WINDow{:}:TRACe{:}:FEED "{:s}"'.format(window_n, trace_n, name))
-        self.resource.write('CALCulate{:}:PARameter:SELect "{:}"'.format(channel, name))
-        self.resource.write('CALCulate{:}:FORMat {:}'.format(channel, display_format))
+
+        self.write('display_trace', window=window_n, trace=trace_n, name=name)
+        self.write("select_meas_by_name", channel=channel, name=name)
+        self.write("meas_format", channel=channel, fmt=display_format)
 
     def get_meas_list(self, **kwargs):
         '''
@@ -414,25 +422,7 @@ class Analyzer(base_analyzer.Analyzer):
         Note that this may not be the same as the number of traces displayed because a measurement may exist,
         but not be associated with a trace.
         '''
-        channel = kwargs.get("channel", self.channel)
+        channel = kwargs.get("channel", self.active_channel)
         # meas = self.get_meas_list()
         meas = self.resource.query("SYSTem:MEASurement:CATalog?")[1:-1].split(",")
         return 0 if meas is None else len(meas)
-
-    def select_meas_by_number(self, meas_number, **kwargs):
-        """
-        :param meas_number: int
-        :param kwargs: channel
-        :return:
-        """
-        channel = kwargs.get("channel", self.channel)
-        self.resource.write("CALC{:}:PAR:MNUM:SEL {:}".format(channel, meas_number))
-
-    def select_meas_by_name(self, name, **kwargs):
-        '''
-        :param name: str
-        :param kwargs: channel
-        :return:
-        '''
-        channel = kwargs.get("channel", self.channel)
-        self.resource.write('CALCulate{:}:PARameter:SELect "{:s}"'.format(channel, name))
