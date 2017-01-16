@@ -4,6 +4,7 @@ import numpy as np
 import skrf
 from skrf_qtwidgets.analyzers import base_analyzer
 
+# TODO: kwargs for scpi should be based on the docstrings for the commands
 SCPI_COMMANDS = {
     # "key": ["command", ("kwarg", ...)]
     "active_channel":       [":SYSTem:ACTive:CHANnel?", ()],
