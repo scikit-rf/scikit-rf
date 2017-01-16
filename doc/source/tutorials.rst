@@ -14,9 +14,10 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     tutorials/installation
     tutorials/Introduction    
     tutorials/Networks
-
+    tutorials/NetworkSet    
+    
 tutorials/plotting
-tutorials/networkset
+
 tutorials/virtualinstruments 
 tutorials/calibration
 tutorials/media       
