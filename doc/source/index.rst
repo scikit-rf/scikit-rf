@@ -7,18 +7,20 @@
     :height: 100
     :align: center
 |
-**scikit-rf** (aka `skrf`) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented in the Python programming language. It provides a modern, object-oriented library which is both flexible and scalable. The documentation below is broken up into three sections; tutorials, reference and examples.
+**scikit-rf** (aka `skrf`) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented in the Python programming language. It provides a modern, object-oriented library which is both flexible and scalable. The documentation below is broken up into three sections; narrative tutorials,  practical examples, and a reference API.
 
 
 Documentation
 ---------------
 |
+
+    
 .. toctree::
     :maxdepth: 2
     
-
     tutorials
-    
+    examples 
+    api
 
     
 * `Development <https://github.com/scikit-rf/scikit-rf/wiki/Development>`_

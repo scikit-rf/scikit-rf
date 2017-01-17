@@ -1,24 +1,24 @@
-.. _reference:
+.. _api:
 
 
-Reference
+API
 =========
 
 .. toctree::
     :maxdepth: 1
     
-    reference/frequency
-    reference/network
-    reference/networkSet
+    api/frequency
+    api/network
+    api/networkSet
     
-    reference/plotting
-    reference/mathFunctions
-    reference/tlineFunctions
-    reference/constants
-    reference/util
+    api/plotting
+    api/mathFunctions
+    api/tlineFunctions
+    api/constants
+    api/util
     
-    reference/io/index
-    reference/calibration/index
-    reference/media/index
-    reference/vi/index
+    api/io/index
+    api/calibration/index
+    api/media/index
+    api/vi/index
 

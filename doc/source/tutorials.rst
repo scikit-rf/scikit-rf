@@ -11,15 +11,13 @@ ipython `notebook <http://ipython.org/notebook.html>`_
 .. toctree::
     :maxdepth: 1
     
-    tutorials/installation
     tutorials/Introduction    
     tutorials/Networks
     tutorials/NetworkSet    
     tutorials/Plotting
-
-tutorials/virtualinstruments 
-tutorials/calibration
-tutorials/media       
+    tutorials/VirtualInstruments 
+    tutorials/Calibration
+    tutorials/Media       
 
 
 
