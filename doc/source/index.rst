@@ -19,7 +19,7 @@ Documentation
     :maxdepth: 2
     
     tutorials
-    examples 
+    examples/index.ipynb
     api
 
     

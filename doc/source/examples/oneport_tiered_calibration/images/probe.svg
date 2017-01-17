@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="600"
+   height="400"
+   id="svg5463"
+   version="1.1"
+   inkscape:version="0.48.3.1 r9886"
+   sodipodi:docname="probe.svg">
+  <defs
+     id="defs5465">
+    <marker
+       inkscape:stockid="Arrow2Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Lstart"
+       style="overflow:visible">
+      <path
+         id="path6404"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(1.1,0,0,1.1,1.1,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path6386"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lend"
+       style="overflow:visible">
+      <path
+         id="path6389"
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         inkscape:connector-curvature="0" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.7"
+     inkscape:cx="488.86485"
+     inkscape:cy="723.54197"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1920"
+     inkscape:window-height="1148"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata5468">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-652.36218)">
+    <g
+       id="g4408"
+       transform="translate(-56.568542,656.59915)">
+      <path
+         sodipodi:nodetypes="ccccccc"
+         inkscape:connector-curvature="0"
+         id="path5494"
+         d="m 269.28572,151.6479 0,151.42857 150,0 -4.6685,-17.42308 -57.62201,-99.80425 -53.27026,-34.13564 z"
+         style="fill:#cccccc;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path5496"
+         d="m 419.57215,303.41934 7.15156,4.12896"
+         style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <rect
+         y="308.34384"
+         x="396.4649"
+         height="23.233509"
+         width="158.56821"
+         id="rect5498"
+         style="fill:#000000;fill-opacity:0.125;fill-rule:nonzero;stroke:#000000;stroke-width:0.78153425;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:0.78153427, 0.78153427;stroke-dashoffset:0" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text6310"
+         y="224.50505"
+         x="300"
+         style="font-size:18px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:LMRoman12;-inkscape-font-specification:LMRoman12 Bold"
+         xml:space="preserve"><tspan
+           y="224.50505"
+           x="300"
+           id="tspan6312"
+           sodipodi:role="line">Probe</tspan></text>
+      <rect
+         y="143.79076"
+         x="220"
+         height="166.42857"
+         width="48.571423"
+         id="rect5490"
+         style="fill:#000000;fill-opacity:0.125;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 1;stroke-dashoffset:0" />
+      <rect
+         y="179.50504"
+         x="152.14287"
+         height="92.85714"
+         width="67.14286"
+         id="rect5502"
+         style="fill:#000000;fill-opacity:0.125;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-linecap:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:1, 1;stroke-dashoffset:0" />
+      <rect
+         y="207.36218"
+         x="158.57144"
+         height="22.142857"
+         width="103.57143"
+         id="rect7967"
+         style="fill:#e0e0e0;fill-opacity:1;stroke:none" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text6310-7"
+         y="222.8399"
+         x="153.56729"
+         style="font-size:18px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:LMRoman12;-inkscape-font-specification:LMRoman12 Bold"
+         xml:space="preserve"><tspan
+           y="222.8399"
+           x="153.56729"
+           id="tspan6312-7"
+           sodipodi:role="line">Waveguide</tspan></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text6310-6"
+         y="327.12561"
+         x="418.56729"
+         style="font-size:18px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:LMRoman12;-inkscape-font-specification:LMRoman12 Bold"
+         xml:space="preserve"><tspan
+           id="tspan6352"
+           y="327.12561"
+           x="418.56729"
+           sodipodi:role="line">Substrate</tspan></text>
+      <path
+         inkscape:connector-curvature="0"
+         id="path6371"
+         d="m 268.57143,147.36218 0,-69.999998"
+         style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:6, 6;stroke-dashoffset:0;marker-start:url(#Arrow2Lstart);marker-mid:none" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path6373"
+         d="m 452.14286,305.21932 0,-225.714281"
+         style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:6, 6;stroke-dashoffset:0;marker-start:url(#Arrow2Lstart)" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text6310-0"
+         y="76.411331"
+         x="238.56728"
+         style="font-size:18px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:LMRoman12;-inkscape-font-specification:LMRoman12 Bold"
+         xml:space="preserve"><tspan
+           y="76.411331"
+           x="238.56728"
+           id="tspan6312-0"
+           sodipodi:role="line">Tier 1</tspan></text>
+      <text
+         sodipodi:linespacing="125%"
+         id="text6310-61"
+         y="75.697037"
+         x="420.71014"
+         style="font-size:18px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:LMRoman12;-inkscape-font-specification:LMRoman12 Bold"
+         xml:space="preserve"><tspan
+           id="tspan7963"
+           y="75.697037"
+           x="420.71014"
+           sodipodi:role="line">Tier 2</tspan></text>
+    </g>
+  </g>
+</svg>
