@@ -1361,7 +1361,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         else:
             self.spinBox_channel.setEnabled(False)
 
-        self.lineEdit_ports.setText(",".join([str(port+1) for port in range(self.nwa.NPORTS)]))
+        self.lineEdit_ports.setText(",".join([str(port+1) for port in range(self.nwa.nports)]))
         self.spinBox_timeout.valueChanged.connect(self.set_timeout)
 
     def set_timeout(self):

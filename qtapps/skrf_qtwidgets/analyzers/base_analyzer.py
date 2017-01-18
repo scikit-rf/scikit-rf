@@ -83,6 +83,8 @@ class Analyzer(object):
         if "instr" in resource_string.lower():
             self.resource.control_ren(2)
 
+        self.nports = self.NPORTS  # store an instance variable in case it needs to be modified later
+
     def __enter__(self):
         """
         :return: the Analyzer Driver Object
