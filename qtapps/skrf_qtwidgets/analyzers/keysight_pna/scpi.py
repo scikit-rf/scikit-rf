@@ -58,18 +58,19 @@ def query(command, **kwargs):
     print(scpi_string)
 
 ***TEMPLATE STRING CONVENTION***
-Whenver possible I try to adhere to the Keysight documentation for what to name keyword arguments:
-It is important to check because the documentation can be a little inconsisten in places.  For example
-numeric arguments are usually referenced with <num> while measurement numbers are <n> rather than <num> or
+Whenver possible I try to adhere to the Keysight documentation for what to name keyword arguments.
+However, sometimes they are a little strange and inconsistent in their variable naming.  As such
+it is important to check because the documentation can be a little inconsisten in places.  For example
+numeric arguments are usually referenced with <num> while measurement numbers are <n> rather than <mnum> or
 
 <num> --> argument supplied as a number
 <cnum> --> channel number
 <tnum> --> trace number
 <wnum> --> window number
-<n> --> numeric argument, for example, measurement number
+<mnum> --> measurement number
 <onoff> --> "on" or "off" string for parameters that are set to on or off, e.g. averaging
 <char> --> argument supplied as a string (data formats for example, :FORM:DATA <char> where char="REAL, 64"
-<'Mname'> --> measurement name, usually in quotes
+<'mname'> --> measurement name, usually in quotes
 <'param'> --> parameter, usually in quotes, e.g. "S11"
 <'ports'> --> argument specifying a list of ports, usually in quotes.  the argument can be a list of ints, or a
               preformatted string, for example ports=(1,2) and ports="1,2" are both valid

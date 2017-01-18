@@ -6,7 +6,11 @@ from collections import OrderedDict
 from math import sqrt
 
 import numpy as np
-from qtpy import QtWidgets, QtCore, QtGui
+# from qtpy import QtWidgets, QtCore, QtGui
+from PyQt5 import QtWidgets, QtCore, QtGui
+QtCore.Slot = QtCore.pyqtSlot
+QtCore.Signal = QtCore.pyqtSignal
+
 import pyqtgraph as pg
 import skrf
 
@@ -1095,8 +1099,6 @@ class VnaController(QtWidgets.QWidget):
         self._stop_frequency = float(self.lineEdit_stopFrequency.text())
         self.funit = self.comboBox_funit.currentText()
         self.comboBox_funit.currentIndexChanged.connect(self.frequency_changed)
-        self.lineEdit_startFrequency.textEdited.connect(self.set_start_freequency)
-        self.lineEdit_stopFrequency.textEdited.connect(self.set_stop_freequency)
 
         self.btn_setAnalyzerFreqSweep.clicked.connect(self.set_frequency_sweep)
 
@@ -1115,6 +1117,7 @@ class VnaController(QtWidgets.QWidget):
         self.lineEdit_startFrequency.setText("{:g}".format(self._start_frequency))
     
     def get_start_frequency(self):
+        self._start_frequency = float(self.lineEdit_startFrequency.text())
         return self._start_frequency
     
     start_frequency = property(get_start_frequency, set_start_freequency)
@@ -1124,6 +1127,7 @@ class VnaController(QtWidgets.QWidget):
         self.lineEdit_stopFrequency.setText("{:g}".format(self._stop_frequency))
     
     def get_stop_frequency(self):
+        self._stop_frequency = float(self.lineEdit_stopFrequency.text())
         return self._stop_frequency
     
     stop_frequency = property(get_stop_frequency, set_stop_freequency)
@@ -1296,6 +1300,10 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.horizontalLayout_timeout.addWidget(self.label_timeout)
         self.horizontalLayout_timeout.addWidget(self.spinBox_timeout)
         self.checkBox_sweepNew = QtWidgets.QCheckBox("Sweep New", self.groupBox_options)
+        self.checkBox_autoTimeOut = QtWidgets.QCheckBox("Auto Timeout", self.groupBox_options)
+        self.horizonatlLayout_sweep = QtWidgets.QHBoxLayout()
+        self.horizonatlLayout_sweep.addWidget(self.checkBox_sweepNew)
+        self.horizonatlLayout_sweep.addWidget(self.checkBox_autoTimeOut)
         self.label_channel = QtWidgets.QLabel("Channel", self.groupBox_options)
         self.spinBox_channel = QtWidgets.QSpinBox(self.groupBox_options)
         self.horizontalLayout_channel = QtWidgets.QHBoxLayout()
@@ -1305,7 +1313,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.verticalLayout_options = QtWidgets.QVBoxLayout(self.groupBox_options)
         self.verticalLayout_options.addLayout(self.horizontalLayout_namePrefix)
         self.verticalLayout_options.addLayout(self.horizontalLayout_timeout)
-        self.verticalLayout_options.addWidget(self.checkBox_sweepNew)
+        self.verticalLayout_options.addLayout(self.horizonatlLayout_sweep)
         self.verticalLayout_options.addLayout(self.horizontalLayout_channel)
         self.verticalLayout_left.addWidget(self.groupBox_options)
 
@@ -1380,10 +1388,14 @@ class MeasurementDialog(QtWidgets.QDialog):
             qt.error_popup("Ports must be a comma separated list of integers")
             return
 
-        channel = self.spinBox_channel.value()
-        sweep = self.checkBox_sweepNew.isChecked()
-        name = self.lineEdit_namePrefix.text()
-        ntwk = self.nwa.get_snp_network(ports=ports, channel=channel, sweep=sweep, name=name)
+        kwargs = {"ports": ports,
+                  "channel": self.spinBox_channel.value(),
+                  "sweep": self.checkBox_sweepNew.isChecked(),
+                  "name": self.lineEdit_namePrefix.text()}
+        if self.checkBox_autoTimeOut.isChecked():
+            kwargs["timeout"] = self.spinBox_timeout.value()
+
+        ntwk = self.nwa.get_snp_network(**kwargs)
         self.measurements_available.emit(ntwk)
 
     def update_traces(self):

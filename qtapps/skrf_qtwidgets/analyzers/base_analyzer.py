@@ -78,9 +78,9 @@ class Analyzer(object):
         self.resource.timeout = kwargs.get("timeout", 3000)
 
         self.resource.read_termination = "\n"  # most queries are terminated with a newline
-        if "socket" in address.lower():
+        if "socket" in resource_string.lower():
             self.resource.write_termination = "\n"
-        if "instr" in address.lower():
+        if "instr" in resource_string.lower():
             self.resource.control_ren(2)
 
     def __enter__(self):

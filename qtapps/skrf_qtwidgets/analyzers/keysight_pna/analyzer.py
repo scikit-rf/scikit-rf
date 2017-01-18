@@ -3,21 +3,22 @@ from copy import deepcopy
 
 import numpy as np
 import skrf
-from skrf_qtwidgets.analyzers import base_analyzer
+from .. import base_analyzer
+# from skrf_qtwidgets.analyzers import base_analyzer
 
 from .import scpi
 
 scpi_commands = {
     # "key": "pre-SCPI command"
     "data":                 ":CALCulate<cnum>:DATA <char>,<data>",
-    "create_meas":          ":CALCulate<cnum>:PARameter:DEFine:EXTended <'Mname'>,<'param'>",
-    "delete_meas":          ":CALCulate<cnum>:PARameter:DELete <'Mname'>",
-    "select_meas_by_name":  ":CALCulate<cnum>:PARameter:SELect <'Mname'>",
+    "create_meas":          ":CALCulate<cnum>:PARameter:DEFine:EXTended <'mname'>,<'param'>",
+    "delete_meas":          ":CALCulate<cnum>:PARameter:DELete <'mname'>",
+    "select_meas_by_name":  ":CALCulate<cnum>:PARameter:SELect <'mname'>",
+    "select_meas_by_number": ":CALCulate<cnum>:PARameter:MNUM:SEL <mnum>",
     "meas_format":          ":CALCulate<cnum>:FORMat <char>",
     "meas_name_list":       ":CALCulate<cnum>:PARameter:CAT:EXT",
-    "select_meas_by_num":   ":CALCulate<cnum>:PARameter:MNUM:SEL <n>",
     "snp_data":             ":CALCulate<cnum>:DATA:SNP:PORTs <'ports'>",
-    "display_trace":        ":DISPlay:WINDow<wnum>:TRACe<tnum>:FEED <'name'>",
+    "display_trace":        ":DISPlay:WINDow<wnum>:TRACe<tnum>:FEED <'mname'>",
     "averaging_count":      ":SENSe<cnum>:AVERage:COUNt <num>",
     "averaging_state":      ":SENSe<cnum>:AVERage:STATe <onoff>",
     "start_frequency":      ":SENSe<cnum>:FREQuency:STARt <num>",
@@ -29,8 +30,8 @@ scpi_commands = {
     "sweep_points":         ":SENSE<cnum>:SWEep:POINts <num>",
     "available_channels":   ":SYSTem:CHANnels:CATalog",
     "active_channel":       ":SYSTem:ACTive:CHANnel",
-    "meas_name_from_number": ":SYSTem:MEASurement<n>:NAME",
-    "meas_number_list":     ":SYSTem:MEASurement:CATalog? <cnum>",
+    "meas_name_from_number": ":SYSTem:MEASurement<mnum>:NAME",
+    "meas_number_list":     ":SYSTem:MEASurement:CATalog <cnum>",
     "trigger_source":       ":TRIGger:SOURce <char>",
 }
 
@@ -82,6 +83,13 @@ class Analyzer(base_analyzer.Analyzer):
     def active_channel(self):
         return int(self.query("active_channel"))
 
+    @property
+    def idn(self):
+        return self.resource.query("*IDN?")
+
+    def wait_until_finished(self):
+        self.resource.query("*OPC?")
+
     @active_channel.setter
     def active_channel(self, channel):
         """
@@ -97,7 +105,7 @@ class Analyzer(base_analyzer.Analyzer):
         will become active and our get_snp_network method will succeed.
         """
         mnum = self.query("meas_number_list", cnum=channel).split(",")[0]
-        self.write("select_meas_by_num", cnum=channel, n=mnum)
+        self.write("select_meas_by_number", cnum=channel, mnum=mnum)
         return
 
     def sweep(self, **kwargs):
@@ -139,7 +147,7 @@ class Analyzer(base_analyzer.Analyzer):
 
         try:
             self.write("sweep_mode", cnum=channel, char=sweep_mode)
-            self.query("*OPC?")  # TODO: universal way to query if the instrument is ready, a method perhaps?
+            self.wait_until_finished()
         finally:
             self.resource.clear()
             if was_continuous:
@@ -170,12 +178,11 @@ class Analyzer(base_analyzer.Analyzer):
         ports = [int(port) for port in ports] if type(ports) in (list, tuple) else [int(ports)]
         if not name:
             name = "{:}Port Network".format(len(ports))
-
         if sweep:
             self.sweep()
 
         npoints = int(self.query("sweep_points", cnum=channel))
-        data = self.query_values("snp_data", cnum=channel, ports=(1, 2))
+        data = self.query_values("snp_data", cnum=channel, ports=ports)
         nrows = int(len(data) / npoints)
         nports = int(np.sqrt(nrows - 1))
         data = data.reshape([nrows, -1])
@@ -216,12 +223,13 @@ class Analyzer(base_analyzer.Analyzer):
                 continue  # if there isnt a single comma, then there aren't any measurments
             parameters = dict([(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)])
 
-            measurements = self.query("meas_number_list").split(",")
-            for measurement in measurements:
-                name = self.query("meas_name_from_number", n=measurement)
-                item = {"name": name, "channel": channel, "measurement": measurement,
+            meas_numbers = self.query("meas_number_list").split(",")
+            for mnum in meas_numbers:
+                name = self.query("meas_name_from_number", mnum=mnum)
+                item = {"name": name, "channel": channel, "measurement number": mnum,
                         "parameter": parameters.get(name, name)}
-                item["label"] = "{:s} - Chan{:},Meas{:}".format(item["parameter"], item["channel"], item["measurement"])
+                item["label"] = "{:s} - Chan{:},Meas{:}".format(
+                    item["parameter"], item["channel"], item["measurement number"])
                 traces.append(item)
         return traces
 
@@ -252,8 +260,8 @@ class Analyzer(base_analyzer.Analyzer):
         for ch, ch_data in channels.items():
             frequency = ch_data["frequency"] = self.get_frequency()
             for trace in ch_data["traces"]:
-                self.write("select_meas_by_number", cnum=trace["channel"], n=trace["measurement"])
-                sdata = self.query_values("selected_data", cnum=trace["channel"], char="SDATA")
+                self.write("select_meas_by_number", cnum=trace["channel"], mnum=trace["measurement number"])
+                sdata = self.query_values("data", cnum=trace["channel"], char="SDATA")
                 s = sdata[::2] + 1j * sdata[1::2]
                 ntwk = skrf.Network()
                 ntwk.s = s
@@ -330,25 +338,25 @@ class Analyzer(base_analyzer.Analyzer):
 
         self.sweep(**kwargs)
 
-        forward = self.get_measurement(name=forward_name, sweep=False)  # type: skrf.Network
+        forward = self.get_measurement(mname=forward_name, sweep=False)  # type: skrf.Network
         forward.name = "forward switch terms"
-        reverse = self.get_measurement(name=reverse_name, sweep=False)  # type: skrf.Network
+        reverse = self.get_measurement(mname=reverse_name, sweep=False)  # type: skrf.Network
         reverse.name = "reverse switch terms"
 
-        self.write("delete_meas", cnum=channel, name=forward_name)
-        self.write("delete_meas", cnum=channel, name=reverse_name)
+        self.write("delete_meas", cnum=channel, mname=forward_name)
+        self.write("delete_meas", cnum=channel, mname=reverse_name)
         return forward, reverse
 
-    def get_measurement(self, name=None, number=None, **kwargs):
-        if name is None and number is None:
-            raise ValueError("must provide either a measurement name or a number")
+    def get_measurement(self, mname=None, number=None, **kwargs):
+        if mname is None and number is None:
+            raise ValueError("must provide either a measurement mname or a number")
 
         channel = kwargs.get("channel", self.active_channel)
 
-        if type(name) is str:
-            self.write("select_meas_by_name", cnum=channel, Mname=name)
+        if type(mname) is str:
+            self.write("select_meas_by_name", cnum=channel, mname=mname)
         else:
-            self.write("select_meas_by_number", cnum=channel, n=number)
+            self.write("select_meas_by_number", cnum=channel, mnum=number)
         return self.get_active_trace_as_network(**kwargs)
 
     def get_active_trace_as_network(self, **kwargs):
@@ -362,7 +370,7 @@ class Analyzer(base_analyzer.Analyzer):
 
         channel = self.active_channel
         ntwk = skrf.Network()
-        sdata = self.query_values("selected_data", cnum="channel", char="SDATA")
+        sdata = self.query_values("data", cnum=channel, char="SDATA")
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
         ntwk.frequency = self.get_frequency(cnum=channel)
         return ntwk
@@ -375,7 +383,7 @@ class Analyzer(base_analyzer.Analyzer):
         :return:
         '''
         channel = kwargs.get("channel", self.active_channel)
-        self.write("create_meas", cnum=channel, Mname=name, param=param)
+        self.write("create_meas", cnum=channel, mname=name, param=param)
         self.display_trace(name)
 
     def display_trace(self, name, **kwargs):
@@ -394,8 +402,8 @@ class Analyzer(base_analyzer.Analyzer):
         trace_n = kwargs.get("trace_n", self.ntraces + 1)
         display_format = kwargs.get('display_format', 'MLOG')
 
-        self.write('display_trace', wnum=window_n, tnum=trace_n, name=name)
-        self.write("select_meas_by_name", cnum=channel, Mname=name)
+        self.write('display_trace', wnum=window_n, tnum=trace_n, mname=name)
+        self.write("select_meas_by_name", cnum=channel, mname=name)
         self.write("meas_format", cnum=channel, char=display_format)
 
     def get_meas_list(self, **kwargs):
