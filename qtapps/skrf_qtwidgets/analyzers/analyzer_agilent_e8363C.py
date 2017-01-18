@@ -58,12 +58,12 @@ class Analyzer(base_analyzer.Analyzer):
         of continuous trigger or hold.
         """
         self.resource.clear()
-        self.resource.write("TRIGger:SEQuence:SOURce IMM")
+        self.resource.write(":TRIGger:SEQuence:SOURce IMM")
         channel = kwargs.get("channel", self.channel)
-        sweep_mode = self.resource.query('SENSe{:}:SWEep:MODE?'.format(channel))
+        sweep_mode = self.resource.query(':SENSe{:}:SWEep:MODE?'.format(channel))
         was_continuous = "CONT" in sweep_mode.upper()
 
-        if bool(int(self.resource.query("SENSe{:}:AVERage:STATe?".format(channel)))):
+        if bool(int(self.resource.query(":SENSe{:}:AVERage:STATe?".format(channel)))):
             sweep_mode = "GROUPS"
             sweeps = int(self.resource.query("SENSe{:}:AVERage:COUNt?".format(channel)))
             self.resource.write("SENSe{:}:SWEep:GROups:COUNt {:}".format(channel, sweeps))
@@ -85,7 +85,7 @@ class Analyzer(base_analyzer.Analyzer):
             self.resource.timeout = timeout
 
         try:
-            self.resource.query("SENS{:}:SWE:MODE {:s};*OPC?".format(channel, sweep_mode))
+            self.resource.query(":SENS{:}:SWE:MODE {:s};*OPC?".format(channel, sweep_mode))
         finally:
             self.resource.clear()
             if was_continuous:
@@ -155,17 +155,18 @@ class Analyzer(base_analyzer.Analyzer):
         """
         self.resource.clear()
         traces = []
-        channels = self.resource.query("SYSTem:CHANnels:CATalog?")[1:-1].split(",")
+        channels = self.resource.query(":SYSTem:CHANnels:CATalog?")[1:-1].split(",")
         for channel in channels:
-            meas_list = self.resource.query("CALC{:}:PAR:CAT:EXT?".format(channel))
+            print(":CALC{:}:PAR:CAT:EXT?".format(channel))
+            meas_list = self.resource.query(":CALC{:}:PAR:CAT:EXT?".format(channel))
             meas = meas_list[1:-1].split(',')
             if len(meas) == 1:
                 continue  # if there isnt a single comma, then there arent any measurments
             parameters = dict([(meas[k], meas[k + 1]) for k in range(0, len(meas) - 1, 2)])
 
-            measurements = self.resource.query("SYSTem:MEASurement:CATalog? " + channel)[1:-1].split(",")
+            measurements = self.resource.query(":SYSTem:MEASurement:CATalog? " + channel)[1:-1].split(",")
             for measurement in measurements:
-                name = self.resource.query("SYST:MEAS{:s}:NAME?".format(measurement))[1:-1]
+                name = self.resource.query(":SYST:MEAS{:s}:NAME?".format(measurement))[1:-1]
                 item = {"name": name, "channel": channel, "measurement": measurement,
                         "parameter": parameters.get(name, name)}
                 item["label"] = "{:s} - Chan{:},Meas{:}".format(item["parameter"], item["channel"], item["measurement"])

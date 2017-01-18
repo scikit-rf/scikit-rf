@@ -13,7 +13,7 @@ class Analyzer(object):
     get_twoport_ntwk  * must implement get_snp_network
     get_oneport_ntwk  * must implement get_snp_network
     enter/exit - for using python's with statement
-    >>> with Analyzer("GPIB0::16::ISNTR") as nwa:
+    >>> with Analyzer("GPIB::16::ISNTR") as nwa:
     >>>     ntwk = nwa.measure_twoport_ntwk()
 
     ***METHODS THAT MUST BE IMPLEMENTED FOR SKRF_QTWIDGETS***
@@ -44,7 +44,7 @@ class Analyzer(object):
     An ipython notebook can be found in the driver development folder that provides a template for how to test the
     functionality of the driver.
     '''
-    DEFAULT_VISA_ADDRESS = "GPIB0::16::INSTR"
+    DEFAULT_VISA_ADDRESS = "GPIB::16::INSTR"
     NAME = "Two Port Analyzer"
     NPORTS = 2
     NCHANNELS = 32
@@ -64,14 +64,22 @@ class Analyzer(object):
         """
 
         rm = visa.ResourceManager(visa_library=kwargs.get("visa_library", ""))
-        self.resource = rm.open_resource(address)
 
+        interface = str(kwargs.get("interface", None)).upper()  # GPIB, SOCKET
+        if interface == "GPIB":
+            board = str(kwargs.get("card_number", "")).upper()
+            resource_string = "GPIB{:}::{:}::INSTR".format(board, address)
+        elif interface == "SOCKET":
+            port = str(kwargs.get("port", 5025))
+            resource_string = "TCPIP0::{:}::{:}::SOCKET".format(address, port)
+        else:
+            resource_string = address
+        self.resource = rm.open_resource(resource_string)
         self.resource.timeout = kwargs.get("timeout", 3000)
 
+        self.resource.read_termination = "\n"  # most queries are terminated with a newline
         if "socket" in address.lower():
-            self.resource.read_termination = "\n"
             self.resource.write_termination = "\n"
-
         if "instr" in address.lower():
             self.resource.control_ren(2)
 
