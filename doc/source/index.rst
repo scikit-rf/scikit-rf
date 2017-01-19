@@ -18,9 +18,9 @@ Documentation
 .. toctree::
     :maxdepth: 2
     
-    tutorials
-    examples/index.ipynb
-    api
+    tutorials/index.rst
+    examples/index.rst
+    api/index.rst
 
     
 * `Development <https://github.com/scikit-rf/scikit-rf/wiki/Development>`_

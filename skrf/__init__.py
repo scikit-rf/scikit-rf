@@ -78,3 +78,4 @@ def setup_pylab():
     global saf, stylely
     saf = plotting.save_all_figs
     stylely = plotting.stylely
+setup_pylab()

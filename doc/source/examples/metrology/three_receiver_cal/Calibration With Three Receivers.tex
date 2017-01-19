@@ -1,0 +1,567 @@
+
+% Default to the notebook output style
+
+    
+
+
+% Inherit from the specified cell style.
+
+
+
+
+    
+\documentclass{article}
+
+    
+    
+    \usepackage{graphicx} % Used to insert images
+    \usepackage{adjustbox} % Used to constrain images to a maximum size 
+    \usepackage{color} % Allow colors to be defined
+    \usepackage{enumerate} % Needed for markdown enumerations to work
+    \usepackage{geometry} % Used to adjust the document margins
+    \usepackage{amsmath} % Equations
+    \usepackage{amssymb} % Equations
+    \usepackage[mathletters]{ucs} % Extended unicode (utf-8) support
+    \usepackage[utf8x]{inputenc} % Allow utf-8 characters in the tex document
+    \usepackage{fancyvrb} % verbatim replacement that allows latex
+    \usepackage{grffile} % extends the file name processing of package graphics 
+                         % to support a larger range 
+    % The hyperref package gives us a pdf with properly built
+    % internal navigation ('pdf bookmarks' for the table of contents,
+    % internal cross-reference links, web links for URLs, etc.)
+    \usepackage{hyperref}
+    \usepackage{longtable} % longtable support required by pandoc >1.10
+    \usepackage{booktabs}  % table support for pandoc > 1.12.2
+    
+
+    
+    
+    \definecolor{orange}{cmyk}{0,0.4,0.8,0.2}
+    \definecolor{darkorange}{rgb}{.71,0.21,0.01}
+    \definecolor{darkgreen}{rgb}{.12,.54,.11}
+    \definecolor{myteal}{rgb}{.26, .44, .56}
+    \definecolor{gray}{gray}{0.45}
+    \definecolor{lightgray}{gray}{.95}
+    \definecolor{mediumgray}{gray}{.8}
+    \definecolor{inputbackground}{rgb}{.95, .95, .85}
+    \definecolor{outputbackground}{rgb}{.95, .95, .95}
+    \definecolor{traceback}{rgb}{1, .95, .95}
+    % ansi colors
+    \definecolor{red}{rgb}{.6,0,0}
+    \definecolor{green}{rgb}{0,.65,0}
+    \definecolor{brown}{rgb}{0.6,0.6,0}
+    \definecolor{blue}{rgb}{0,.145,.698}
+    \definecolor{purple}{rgb}{.698,.145,.698}
+    \definecolor{cyan}{rgb}{0,.698,.698}
+    \definecolor{lightgray}{gray}{0.5}
+    
+    % bright ansi colors
+    \definecolor{darkgray}{gray}{0.25}
+    \definecolor{lightred}{rgb}{1.0,0.39,0.28}
+    \definecolor{lightgreen}{rgb}{0.48,0.99,0.0}
+    \definecolor{lightblue}{rgb}{0.53,0.81,0.92}
+    \definecolor{lightpurple}{rgb}{0.87,0.63,0.87}
+    \definecolor{lightcyan}{rgb}{0.5,1.0,0.83}
+    
+    % commands and environments needed by pandoc snippets
+    % extracted from the output of `pandoc -s`
+    \DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+    % Add ',fontsize=\small' for more characters per line
+    \newenvironment{Shaded}{}{}
+    \newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{\textbf{{#1}}}}
+    \newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.56,0.13,0.00}{{#1}}}
+    \newcommand{\DecValTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\FloatTok}[1]{\textcolor[rgb]{0.25,0.63,0.44}{{#1}}}
+    \newcommand{\CharTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\StringTok}[1]{\textcolor[rgb]{0.25,0.44,0.63}{{#1}}}
+    \newcommand{\CommentTok}[1]{\textcolor[rgb]{0.38,0.63,0.69}{\textit{{#1}}}}
+    \newcommand{\OtherTok}[1]{\textcolor[rgb]{0.00,0.44,0.13}{{#1}}}
+    \newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.02,0.16,0.49}{{#1}}}
+    \newcommand{\RegionMarkerTok}[1]{{#1}}
+    \newcommand{\ErrorTok}[1]{\textcolor[rgb]{1.00,0.00,0.00}{\textbf{{#1}}}}
+    \newcommand{\NormalTok}[1]{{#1}}
+    
+    % Define a nice break command that doesn't care if a line doesn't already
+    % exist.
+    \def\br{\hspace*{\fill} \\* }
+    % Math Jax compatability definitions
+    \def\gt{>}
+    \def\lt{<}
+    % Document parameters
+    \title{Calibration With Three Receivers}
+    
+    
+    
+
+    % Pygments definitions
+    
+\makeatletter
+\def\PY@reset{\let\PY@it=\relax \let\PY@bf=\relax%
+    \let\PY@ul=\relax \let\PY@tc=\relax%
+    \let\PY@bc=\relax \let\PY@ff=\relax}
+\def\PY@tok#1{\csname PY@tok@#1\endcsname}
+\def\PY@toks#1+{\ifx\relax#1\empty\else%
+    \PY@tok{#1}\expandafter\PY@toks\fi}
+\def\PY@do#1{\PY@bc{\PY@tc{\PY@ul{%
+    \PY@it{\PY@bf{\PY@ff{#1}}}}}}}
+\def\PY#1#2{\PY@reset\PY@toks#1+\relax+\PY@do{#2}}
+
+\expandafter\def\csname PY@tok@gd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gu\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.50,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@gt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.27,0.87}{##1}}}
+\expandafter\def\csname PY@tok@gs\endcsname{\let\PY@bf=\textbf}
+\expandafter\def\csname PY@tok@gr\endcsname{\def\PY@tc##1{\textcolor[rgb]{1.00,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@cm\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@vg\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@m\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@mh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@go\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.53,0.53}{##1}}}
+\expandafter\def\csname PY@tok@ge\endcsname{\let\PY@it=\textit}
+\expandafter\def\csname PY@tok@vc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@il\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@cs\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@cp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.74,0.48,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@gh\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@ni\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.60,0.60,0.60}{##1}}}
+\expandafter\def\csname PY@tok@nl\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.63,0.63,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@no\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.53,0.00,0.00}{##1}}}
+\expandafter\def\csname PY@tok@na\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.49,0.56,0.16}{##1}}}
+\expandafter\def\csname PY@tok@nb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@nd\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@ne\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.82,0.25,0.23}{##1}}}
+\expandafter\def\csname PY@tok@nf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,1.00}{##1}}}
+\expandafter\def\csname PY@tok@si\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@s2\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@vi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@nt\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@nv\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@s1\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@kd\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@sh\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sc\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sx\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@bp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@c1\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@kc\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@c\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.25,0.50,0.50}{##1}}}
+\expandafter\def\csname PY@tok@mf\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@err\endcsname{\def\PY@bc##1{\setlength{\fboxsep}{0pt}\fcolorbox[rgb]{1.00,0.00,0.00}{1,1,1}{\strut ##1}}}
+\expandafter\def\csname PY@tok@mb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@ss\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.10,0.09,0.49}{##1}}}
+\expandafter\def\csname PY@tok@sr\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.53}{##1}}}
+\expandafter\def\csname PY@tok@mo\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@kn\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@mi\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@gp\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.00,0.50}{##1}}}
+\expandafter\def\csname PY@tok@o\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.40,0.40,0.40}{##1}}}
+\expandafter\def\csname PY@tok@kr\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@s\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@kp\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@w\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.73,0.73}{##1}}}
+\expandafter\def\csname PY@tok@kt\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.69,0.00,0.25}{##1}}}
+\expandafter\def\csname PY@tok@ow\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.67,0.13,1.00}{##1}}}
+\expandafter\def\csname PY@tok@sb\endcsname{\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+\expandafter\def\csname PY@tok@k\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.00,0.50,0.00}{##1}}}
+\expandafter\def\csname PY@tok@se\endcsname{\let\PY@bf=\textbf\def\PY@tc##1{\textcolor[rgb]{0.73,0.40,0.13}{##1}}}
+\expandafter\def\csname PY@tok@sd\endcsname{\let\PY@it=\textit\def\PY@tc##1{\textcolor[rgb]{0.73,0.13,0.13}{##1}}}
+
+\def\PYZbs{\char`\\}
+\def\PYZus{\char`\_}
+\def\PYZob{\char`\{}
+\def\PYZcb{\char`\}}
+\def\PYZca{\char`\^}
+\def\PYZam{\char`\&}
+\def\PYZlt{\char`\<}
+\def\PYZgt{\char`\>}
+\def\PYZsh{\char`\#}
+\def\PYZpc{\char`\%}
+\def\PYZdl{\char`\$}
+\def\PYZhy{\char`\-}
+\def\PYZsq{\char`\'}
+\def\PYZdq{\char`\"}
+\def\PYZti{\char`\~}
+% for compatibility with earlier versions
+\def\PYZat{@}
+\def\PYZlb{[}
+\def\PYZrb{]}
+\makeatother
+
+
+    % Exact colors from NB
+    \definecolor{incolor}{rgb}{0.0, 0.0, 0.5}
+    \definecolor{outcolor}{rgb}{0.545, 0.0, 0.0}
+
+
+
+    
+    % Prevent overflowing lines due to hard-to-break entities
+    \sloppy 
+    % Setup hyperref package
+    \hypersetup{
+      breaklinks=true,  % so long urls are correctly broken across lines
+      colorlinks=true,
+      urlcolor=blue,
+      linkcolor=darkorange,
+      citecolor=darkgreen,
+      }
+    % Slightly bigger margins than the latex defaults
+    
+    \geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+    
+    
+
+    \begin{document}
+    
+    
+    \maketitle
+    
+    
+
+    
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}30}]:} \PY{k+kn}{from} \PY{n+nn}{IPython.display} \PY{k+kn}{import} \PY{o}{*}
+         \PY{o}{\PYZpc{}}\PY{k}{nbtoc}
+\end{Verbatim}
+
+    
+    
+    
+    
+
+    \section{Intro}
+
+
+    It has long been known that full error correction is possible given a
+VNA with only three recievers and no internal coaxial switch. However,
+since no modern VNA employs such an architecture, the software required
+to make fully corrected measurements is not available on today's modern
+VNA's.
+
+Recently, the application of Frequency Extender units containing only
+three receivers has become more common. Thus, there is a need for full
+error correction capability on systems with three receivers and no
+internal coaxial switch. This document describes how to use
+\href{http://www.scikit-rf.org}{scikit-rf} to fully correct two-port
+measurements made on such a system.
+
+
+    \section{Theory}
+
+
+    A circuit model for a switch-less three receiver system is shown below.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}31}]:} \PY{n}{SVG}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{pics/vnaBlockDiagramForwardRotated.svg}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+\texttt{\color{outcolor}Out[{\color{outcolor}31}]:}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{Calibration With Three Receivers_files/Calibration With Three Receivers_5_0.pdf}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+
+    To fully correct an arbitrary two-port, the device must be measured in
+two orientations, call these forward and reverse. Because there is no
+switch present, this requires the operator to physically flip the
+device, and save the pair of measurements. In on-wafer scenarios, one
+could fabricate two identical devices, one in each orientation. In
+either case, a pair of measurements are required for each DUT before
+correction can occur.
+
+While in reality the device is being flipped, one can imaging that the
+device is static, and the entire VNA circuitry is flipped. This
+interpretation lends itself to implementation, as the existing 12-term
+correction can be re-used by simply copying the forward error
+coefficients into the corresponding reverse error coefficients. This is
+what \texttt{scikit-rf} does internally.
+
+
+    \section{Worked Example}
+
+
+    This example demonstrates how to create a
+\href{http://scikit-rf.readthedocs.org/en/latest/reference/calibration/generated/skrf.calibration.calibration.TwoPortOnePath.html\#skrf.calibration.calibration.TwoPortOnePath}{TwoPortOnePath}
+and
+\href{http://scikit-rf.readthedocs.org/en/latest/reference/calibration/generated/skrf.calibration.calibration.EnhancedResponse.html\#skrf.calibration.calibration.EnhancedResponse}{EnhancedResponse}
+calibration from measurements taken on a Agilent PNAX with a set of VDI
+WR-10 TXRX-RX Frequency Extender heads. Comparisons between the two
+algorithms are made by correcting an asymmetric DUT.
+
+
+    \subsection{Read in the Data}
+
+
+    The measurements of the calibration standards and DUT's were downloaded
+from the VNA by saving touchstone files of the raw s-parameter data to
+disk. This currently reside in the folder \texttt{./data/}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}32}]:} \PY{n}{ls} \PY{n}{data}\PY{o}{/}
+\end{Verbatim}
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+attenuator (forward).s2p      short.s2p
+attenuator (reverse).s2p      thru.s2p
+load.s2p                      wr15 shim and swg (forward).s2p
+quarter wave delay short.s2p  wr15 shim and swg (reverse).s2p
+    \end{Verbatim}
+
+    These files can be read by scikit-rf into \texttt{Network}s with the
+following.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}33}]:} \PY{k+kn}{import} \PY{n+nn}{skrf} \PY{k+kn}{as} \PY{n+nn}{rf} 
+         \PY{n}{raw} \PY{o}{=} \PY{n}{rf}\PY{o}{.}\PY{n}{read\PYZus{}all\PYZus{}networks}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{data/}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+         \PY{c}{\PYZsh{} list the raw measurments }
+         \PY{n}{raw}\PY{o}{.}\PY{n}{keys}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+            \begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}33}]:} ['load',
+          'attenuator (reverse)',
+          'short',
+          'attenuator (forward)',
+          'wr15 shim and swg (reverse)',
+          'wr15 shim and swg (forward)',
+          'thru',
+          'quarter wave delay short']
+\end{Verbatim}
+        
+    Each \texttt{Network} can be accessed through the dictionary
+\texttt{raw}.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}34}]:} \PY{n}{thru} \PY{o}{=} \PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{thru}\PY{l+s}{\PYZsq{}}\PY{p}{]}
+         \PY{n}{thru}
+\end{Verbatim}
+
+            \begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}34}]:} 2-Port Network: 'thru',  60-90 GHz, 721 pts, z0=[ 50.+0.j  50.+0.j]
+\end{Verbatim}
+        
+    If we look at the \emph{raw} measurement of the flush thru, it can be
+seen that only $S_{11}$ and $S_{21}$ contain meaningful data. The other
+s-parameters are noise.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}35}]:} \PY{n}{thru}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{Calibration With Three Receivers_files/Calibration With Three Receivers_17_0.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+
+    \subsection{Create Calibration}
+
+
+    In the code that follows a TwoPortOnePath calibration is created from
+corresponding measured and ideal responses of the calibration standards.
+The measured networks are read from disk, while their corresponding
+ideal responses are generated using scikit-rf. More information about
+using scikit-rf to do offline calibrations can be found
+\href{http://scikit-rf.readthedocs.org/en/latest/tutorials/calibration.html}{here}.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}36}]:} \PY{k+kn}{from} \PY{n+nn}{skrf.calibration} \PY{k+kn}{import} \PY{n}{TwoPortOnePath}
+         \PY{k+kn}{from} \PY{n+nn}{skrf.media} \PY{k+kn}{import} \PY{n}{RectangularWaveguide}
+         \PY{k+kn}{from} \PY{n+nn}{skrf} \PY{k+kn}{import} \PY{n}{two\PYZus{}port\PYZus{}reflect} \PY{k}{as} \PY{n}{tpr}
+         \PY{k+kn}{from} \PY{n+nn}{skrf} \PY{k+kn}{import}  \PY{n}{mil}
+         
+         \PY{c}{\PYZsh{} pull frequency information from measurements}
+         \PY{n}{frequency} \PY{o}{=} \PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{short}\PY{l+s}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{frequency}
+         
+         \PY{c}{\PYZsh{} the media object }
+         \PY{n}{wg} \PY{o}{=} \PY{n}{RectangularWaveguide}\PY{p}{(}\PY{n}{frequency}\PY{o}{=}\PY{n}{frequency}\PY{p}{,} \PY{n}{a}\PY{o}{=}\PY{l+m+mi}{120}\PY{o}{*}\PY{n}{mil}\PY{p}{,} \PY{n}{z0}\PY{o}{=}\PY{l+m+mi}{50}\PY{p}{)}
+         
+         \PY{c}{\PYZsh{} list of \PYZsq{}ideal\PYZsq{} responses of the calibration standards}
+         \PY{n}{ideals} \PY{o}{=} \PY{p}{[}\PY{n}{wg}\PY{o}{.}\PY{n}{short}\PY{p}{(}\PY{n}{nports}\PY{o}{=}\PY{l+m+mi}{2}\PY{p}{)}\PY{p}{,}
+                   \PY{n}{tpr}\PY{p}{(}\PY{n}{wg}\PY{o}{.}\PY{n}{delay\PYZus{}short}\PY{p}{(} \PY{l+m+mi}{90}\PY{p}{,}\PY{l+s}{\PYZsq{}}\PY{l+s}{deg}\PY{l+s}{\PYZsq{}}\PY{p}{)}\PY{p}{,} \PY{n}{wg}\PY{o}{.}\PY{n}{match}\PY{p}{(}\PY{p}{)}\PY{p}{)}\PY{p}{,}
+                   \PY{n}{wg}\PY{o}{.}\PY{n}{match}\PY{p}{(}\PY{n}{nports}\PY{o}{=}\PY{l+m+mi}{2}\PY{p}{)}\PY{p}{,}
+                   \PY{n}{wg}\PY{o}{.}\PY{n}{thru}\PY{p}{(}\PY{p}{)}\PY{p}{]}
+         
+         \PY{c}{\PYZsh{} corresponding measurments to the \PYZsq{}ideals\PYZsq{}}
+         \PY{n}{measured} \PY{o}{=} \PY{p}{[}\PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{short}\PY{l+s}{\PYZsq{}}\PY{p}{]}\PY{p}{,}
+                     \PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{quarter wave delay short}\PY{l+s}{\PYZsq{}}\PY{p}{]}\PY{p}{,}
+                     \PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{load}\PY{l+s}{\PYZsq{}}\PY{p}{]}\PY{p}{,}
+                     \PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{thru}\PY{l+s}{\PYZsq{}}\PY{p}{]}\PY{p}{]}
+         
+         \PY{c}{\PYZsh{} the Calibration object}
+         \PY{n}{cal} \PY{o}{=} \PY{n}{TwoPortOnePath}\PY{p}{(}\PY{n}{measured} \PY{o}{=} \PY{n}{measured}\PY{p}{,} \PY{n}{ideals} \PY{o}{=} \PY{n}{ideals} \PY{p}{)}
+\end{Verbatim}
+
+
+    \subsection{Apply Correction}
+
+
+    There are two types of correction possible with a 3-receiver system.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\itemsep1pt\parskip0pt\parsep0pt
+\item
+  Full (TwoPortOnePath)
+\item
+  Partial (EnhancedResponse)
+\end{enumerate}
+
+\texttt{scikit-rf} uses the same \texttt{Calibration} object for both,
+but employs different correction algorithms depending on the
+\texttt{type} of the DUT.
+
+The DUT this example is a WR-15 shim cascaded with a WR-12 1" straight
+waveguide, as shown in the picture below. Measurements of this DUT are
+corrected with both \emph{full} and \emph{partial} correction and the
+results are compared below.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}37}]:} \PY{n}{Image}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{pics/asymmetic DUT.jpg}\PY{l+s}{\PYZsq{}}\PY{p}{,} \PY{n}{width}\PY{o}{=}\PY{l+s}{\PYZsq{}}\PY{l+s}{75}\PY{l+s}{\PYZpc{}}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+\texttt{\color{outcolor}Out[{\color{outcolor}37}]:}
+    
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{Calibration With Three Receivers_files/Calibration With Three Receivers_23_0.jpeg}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+
+
+    \subsubsection{Full Correction ( TwoPortOnePath)}
+
+
+    Full correction is achieved by measuring each device in both
+orientations, \textbf{forward} and \textbf{reverse}. Meaning the DUT was
+physically removed, flipped, and re-inserted. The resulting pair of
+measurements are then passed to the \texttt{apply\_cal()} function as a
+tuple. This returns a single corrected response.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}38}]:} \PY{n}{dutf} \PY{o}{=} \PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{wr15 shim and swg (forward)}\PY{l+s}{\PYZsq{}}\PY{p}{]}
+         \PY{n}{dutr} \PY{o}{=} \PY{n}{raw}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{wr15 shim and swg (reverse)}\PY{l+s}{\PYZsq{}}\PY{p}{]}
+         
+         \PY{n}{corrected\PYZus{}full} \PY{o}{=} \PY{n}{cal}\PY{o}{.}\PY{n}{apply\PYZus{}cal}\PY{p}{(}\PY{p}{(}\PY{n}{dutf}\PY{p}{,} \PY{n}{dutr}\PY{p}{)}\PY{p}{)} \PY{c}{\PYZsh{} note argument is an ordered tuple }
+         
+         \PY{n}{corrected\PYZus{}full}\PY{o}{.}\PY{n}{name} \PY{o}{=} \PY{n+nb+bp}{None}
+         \PY{n}{corrected\PYZus{}full}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{p}{)}
+         \PY{n}{title}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{Full Correction}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+
+            \begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}38}]:} <matplotlib.text.Text at 0x7f81bde1ef90>
+\end{Verbatim}
+        
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{Calibration With Three Receivers_files/Calibration With Three Receivers_26_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+
+    \subsubsection{Partial Correction (Enhanced Response)}
+
+
+    If you pass a single measurement to the
+\texttt{TwoPortOnePath.apply\_cal()} function, then it will use partial
+correction. This correction is known as \texttt{EnhancedResponse}.
+Depending on the measurment application, this type of correction may be
+\emph{good enough}, and perhaps the only choice.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}39}]:} \PY{n}{corrected\PYZus{}partial} \PY{o}{=} \PY{n}{cal}\PY{o}{.}\PY{n}{apply\PYZus{}cal}\PY{p}{(}\PY{n}{dutf}\PY{p}{)} \PY{c}{\PYZsh{} note we pass a single network }
+         
+         \PY{n}{corrected\PYZus{}partial}\PY{o}{.}\PY{n}{name} \PY{o}{=} \PY{n+nb+bp}{None}
+         \PY{n}{corrected\PYZus{}partial}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}
+         \PY{n}{corrected\PYZus{}partial}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{)}
+         \PY{n}{title}\PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{Partial Correction}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+\end{Verbatim}
+
+            \begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}39}]:} <matplotlib.text.Text at 0x7f81c46bb810>
+\end{Verbatim}
+        
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{Calibration With Three Receivers_files/Calibration With Three Receivers_29_1.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+    Note the \emph{partially} corrected measurement only has a partially
+filled s-matrix, while the fully correct measurement has a full s-matrix
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}40}]:} \PY{n}{corrected\PYZus{}partial}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{75ghz}\PY{l+s}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{s}
+\end{Verbatim}
+
+            \begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}40}]:} array([[[ 0.01398785+0.00470094j,  0.00000000+0.j        ],
+                 [ 0.22933932-0.96883735j,  0.00000000+0.j        ]]])
+\end{Verbatim}
+        
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}41}]:} \PY{n}{corrected\PYZus{}full}\PY{p}{[}\PY{l+s}{\PYZsq{}}\PY{l+s}{75ghz}\PY{l+s}{\PYZsq{}}\PY{p}{]}\PY{o}{.}\PY{n}{s}
+\end{Verbatim}
+
+            \begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}41}]:} array([[[ 0.09106062-0.05667315j,  0.21885438-0.96923775j],
+                 [ 0.22778341-0.95953481j,  0.05839562+0.08057083j]]])
+\end{Verbatim}
+        
+
+    \subsection{Direct Comparison}
+
+
+    Below are direct comparisons of the DUT shown above corrected with
+\emph{full} and \emph{partial} algorithms. It shows that the partial
+calibration produces a large ripple on the reflect measurements, and
+slightly larger ripple on the transmissive measurments.
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}42}]:} \PY{n}{f}\PY{p}{,} \PY{n}{ax} \PY{o}{=} \PY{n}{subplots}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,}\PY{l+m+mi}{2}\PY{p}{,} \PY{n}{figsize}\PY{o}{=}\PY{p}{(}\PY{l+m+mi}{8}\PY{p}{,}\PY{l+m+mi}{4}\PY{p}{)}\PY{p}{)}
+         
+         \PY{n}{ax}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}title} \PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{\PYZdl{}S\PYZus{}\PYZob{}11\PYZcb{}\PYZdl{}}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+         \PY{n}{ax}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{]}\PY{o}{.}\PY{n}{set\PYZus{}title} \PY{p}{(}\PY{l+s}{\PYZsq{}}\PY{l+s}{\PYZdl{}S\PYZus{}\PYZob{}21\PYZcb{}\PYZdl{}}\PY{l+s}{\PYZsq{}}\PY{p}{)}
+         
+         \PY{n}{corrected\PYZus{}full}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{,} \PY{n}{label}\PY{o}{=}\PY{l+s}{\PYZsq{}}\PY{l+s}{Full Correction}\PY{l+s}{\PYZsq{}}\PY{p}{,} \PY{n}{ax} \PY{o}{=} \PY{n}{ax}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}
+         \PY{n}{corrected\PYZus{}full}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{,} \PY{n}{label}\PY{o}{=}\PY{l+s}{\PYZsq{}}\PY{l+s}{Full Correction}\PY{l+s}{\PYZsq{}}\PY{p}{,} \PY{n}{ax} \PY{o}{=} \PY{n}{ax}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{]}\PY{p}{)}
+         
+         \PY{n}{corrected\PYZus{}partial}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{l+m+mi}{0}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{,} \PY{n}{label}\PY{o}{=}\PY{l+s}{\PYZsq{}}\PY{l+s}{Partial Correction}\PY{l+s}{\PYZsq{}}\PY{p}{,}\PY{n}{ax}\PY{o}{=}\PY{n}{ax}\PY{p}{[}\PY{l+m+mi}{0}\PY{p}{]}\PY{p}{)}
+         \PY{n}{corrected\PYZus{}partial}\PY{o}{.}\PY{n}{plot\PYZus{}s\PYZus{}db}\PY{p}{(}\PY{l+m+mi}{1}\PY{p}{,}\PY{l+m+mi}{0}\PY{p}{,} \PY{n}{label}\PY{o}{=}\PY{l+s}{\PYZsq{}}\PY{l+s}{Partial Correction}\PY{l+s}{\PYZsq{}}\PY{p}{,}\PY{n}{ax}\PY{o}{=}\PY{n}{ax}\PY{p}{[}\PY{l+m+mi}{1}\PY{p}{]}\PY{p}{)}
+         
+         
+         \PY{n}{tight\PYZus{}layout}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+    \begin{center}
+    \adjustimage{max size={0.9\linewidth}{0.9\paperheight}}{Calibration With Three Receivers_files/Calibration With Three Receivers_35_0.png}
+    \end{center}
+    { \hspace*{\fill} \\}
+    
+
+    \subsection{Formating}
+
+
+    \begin{Verbatim}[commandchars=\\\{\}]
+{\color{incolor}In [{\color{incolor}43}]:} \PY{k+kn}{from} \PY{n+nn}{IPython.core.display} \PY{k+kn}{import} \PY{n}{HTML}
+         
+         
+         \PY{k}{def} \PY{n+nf}{css\PYZus{}styling}\PY{p}{(}\PY{p}{)}\PY{p}{:}
+             \PY{n}{styles} \PY{o}{=} \PY{n+nb}{open}\PY{p}{(}\PY{l+s}{\PYZdq{}}\PY{l+s}{../styles/plotly.css}\PY{l+s}{\PYZdq{}}\PY{p}{,} \PY{l+s}{\PYZdq{}}\PY{l+s}{r}\PY{l+s}{\PYZdq{}}\PY{p}{)}\PY{o}{.}\PY{n}{read}\PY{p}{(}\PY{p}{)}
+             \PY{k}{return} \PY{n}{HTML}\PY{p}{(}\PY{n}{styles}\PY{p}{)}
+         \PY{n}{css\PYZus{}styling}\PY{p}{(}\PY{p}{)}
+\end{Verbatim}
+
+            \begin{Verbatim}[commandchars=\\\{\}]
+{\color{outcolor}Out[{\color{outcolor}43}]:} <IPython.core.display.HTML at 0x7f81c4d4d990>
+\end{Verbatim}
+        
+
+    % Add a bibliography block to the postdoc
+    
+    
+    
+    \end{document}
