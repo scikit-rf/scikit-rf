@@ -4,35 +4,35 @@ from copy import deepcopy
 import numpy as np
 import skrf
 from .. import base_analyzer
-# from skrf_qtwidgets.analyzers import base_analyzer
 
 from .import scpi
 
 scpi_commands = {
-    # "key": "pre-SCPI command"
-    "data":                 ":CALCulate<cnum>:DATA <char>,<data>",
-    "create_meas":          ":CALCulate<cnum>:PARameter:DEFine:EXTended <'mname'>,<'param'>",
-    "delete_meas":          ":CALCulate<cnum>:PARameter:DELete <'mname'>",
-    "select_meas_by_name":  ":CALCulate<cnum>:PARameter:SELect <'mname'>",
-    "select_meas_by_number": ":CALCulate<cnum>:PARameter:MNUM:SEL <mnum>",
-    "meas_format":          ":CALCulate<cnum>:FORMat <char>",
-    "meas_name_list":       ":CALCulate<cnum>:PARameter:CAT:EXT",
-    "snp_data":             ":CALCulate<cnum>:DATA:SNP:PORTs <'ports'>",
-    "display_trace":        ":DISPlay:WINDow<wnum>:TRACe<tnum>:FEED <'mname'>",
-    "averaging_count":      ":SENSe<cnum>:AVERage:COUNt <num>",
-    "averaging_state":      ":SENSe<cnum>:AVERage:STATe <onoff>",
-    "start_frequency":      ":SENSe<cnum>:FREQuency:STARt <num>",
-    "stop_frequency":       ":SENSe<cnum>:FREQuency:STOP <num>",
-    "groups_count":         ":SENSe<cnum>:SWEep:GROups:COUNt <num>",
-    "sweep_mode":           ":SENSe<cnum>:SWEep:MODE <char>",
-    "sweep_time":           ":SENSe<cnum>:SWEep:TIME <num>",
-    "sweep_type":           ":SENSe<cnum>:SWEep:TYPE <char>",
-    "sweep_points":         ":SENSE<cnum>:SWEep:POINts <num>",
-    "available_channels":   ":SYSTem:CHANnels:CATalog",
-    "active_channel":       ":SYSTem:ACTive:CHANnel",
-    "meas_name_from_number": ":SYSTem:MEASurement<mnum>:NAME",
-    "meas_number_list":     ":SYSTem:MEASurement:CATalog <cnum>",
-    "trigger_source":       ":TRIGger:SOURce <char>",
+    # "key": "SCPI command template"
+    "data":                 ":CALC<cnum>:DATA <char>,<data>",
+    "create_meas":          ":CALC<cnum>:PAR:DEF:EXT <'mname'>,<'param'>",
+    "delete_meas":          ":CALC<cnum>:PAR:DEL <'mname'>",
+    "select_meas_by_name":  ":CALC<cnum>:PAR:SEL <'mname'>",
+    "select_meas_by_number": ":CALC<cnum>:PAR:MNUM:SEL <mnum>",
+    "meas_format":          ":CALC<cnum>:FORM <char>",
+    "meas_name_list":       ":CALC<cnum>:PAR:CAT:EXT",
+    "snp_data":             ":CALC<cnum>:DATA:SNP:PORT <'ports'>",
+    "display_trace":        ":DISP:WIND<wnum>:TRAC<tnum>:FEED <'mname'>",
+    "averaging_count":      ":SENS<cnum>:AVER:COUN <num>",
+    "averaging_state":      ":SENS<cnum>:AVER:STAT <onoff>",
+    "averaging_mode":       ":SENS<cnum>:AVER:MODE <char>",
+    "start_frequency":      ":SENS<cnum>:FREQ:STAR <num>",
+    "stop_frequency":       ":SENS<cnum>:FREQ:STOP <num>",
+    "groups_count":         ":SENS<cnum>:SWE:GRO:COUNt <num>",
+    "sweep_mode":           ":SENS<cnum>:SWE:MODE <char>",
+    "sweep_time":           ":SENS<cnum>:SWE:TIME <num>",
+    "sweep_type":           ":SENS<cnum>:SWE:TYPE <char>",
+    "sweep_points":         ":SENSE<cnum>:SWE:POIN <num>",
+    "available_channels":   ":SYST:CHAN:CAT",
+    "active_channel":       ":SYST:ACT:CHAN",
+    "meas_name_from_number": ":SYST:MEAS<mnum>:NAME",
+    "meas_number_list":     ":SYST:MEAS:CAT <cnum>",
+    "trigger_source":       ":TRIG:SOUR <char>",
 }
 
 
@@ -113,53 +113,71 @@ class Analyzer(base_analyzer.Analyzer):
 
     def sweep(self, **kwargs):
         """
-        :param kwargs: channel(int), timeout(milliseconds)
+        :param kwargs: channel("all", int or list of channels), timeout(milliseconds)
         :return:
 
-        trigger a fresh sweep, based upon the analyzers current averaging setting, and then return to the prior state
-        of continuous trigger or hold.
+        trigger a fresh sweep on the specified channels ("all" if no channel specified)
+        Autoset timeout and sweep mode based upon the analyzers current averaging setting,
+        and then return to the prior state of continuous trigger or hold.
         """
         self.resource.clear()
-        channel = kwargs.get("channel", self.active_channel)
-
         self.write("trigger_source", char="IMMediate")
-        sweep_mode = self.query("sweep_mode", cnum=channel)
-
-        was_continuous = "CONT" in sweep_mode.upper()
-
-        if int(self.query("averaging_state", cnum=channel)):
-            sweep_mode = "GROUPS"
-            sweeps = int(self.query("averaging_count"))
-            self.write("groups_count", cnum=channel, num=sweeps)
-            sweeps *= 2
-        else:
-            sweep_mode = "SINGLE"
-            sweeps = 2  # 2 sweeps for each port
-
         original_timeout = self.resource.timeout
-        timeout = kwargs.get("timeout", None)
-        # if no timeout is specified attempt to autoset the sweep time to avoid unintentional timeouts
 
-        # TODO: This works for 1 channel, but fails to account for the sweep time of many channels
-        if not timeout:
-            sweep_time = float(self.query("sweep_time"))
-            total_time = sweep_time * sweeps
-            self.resource.timeout = total_time * 2000  # convert to milliseconds, and double for buffer
-        else:
-            self.resource.timeout = timeout
+        channels_to_sweep = kwargs.get("channels", None)
+        if not channels_to_sweep:
+            channels_to_sweep = kwargs.get("channel", "all")
+        if not type(channels_to_sweep) in (list, tuple):
+            channels_to_sweep = [channels_to_sweep]
+        channels_to_sweep = list(map(str, channels_to_sweep))
+
+        channels = self.query("available_channels").split(",")
+        for i, channel in enumerate(channels):
+            sweep_mode = self.query("sweep_mode", cnum=channel)
+            was_continuous = "CONT" in sweep_mode.upper()
+            sweep_time = float(self.query("sweep_time", cnum=channel))
+            averaging_on = int(self.query("averaging_state", cnum=channel))
+            averaging_type = self.query("averaging_mode", cnum=channel)
+
+            if averaging_on and "SWE" in averaging_type.upper():
+                sweep_mode = "GROUPS"
+                sweeps = int(self.query("averaging_count"))
+                self.write("groups_count", cnum=channel, num=sweeps)
+                sweeps *= self.nports  # TODO: this is right for 2-port, confirm also for 4-port
+            else:
+                sweep_mode = "SINGLE"
+                sweeps = self.nports
+            channels[i] = {
+                "cnum": channel,
+                "sweep_time": sweep_time,
+                "sweeps": sweeps,
+                "sweep_mode": sweep_mode,
+                "was_continuous": was_continuous
+            }
+            self.write("sweep_mode", cnum=channel, char="HOLD")
+
+        timeout = kwargs.get("timeout", None)  # recommend not setting this variable, as autosetting is preferred
 
         try:
-            self.write("sweep_mode", cnum=channel, char=sweep_mode)
-            self.wait_until_finished()
+            for channel in channels:
+                import time
+                if "all" not in channels_to_sweep and channel["cnum"] not in channels_to_sweep:
+                    continue  # default for sweep is all, else if we specify, then sweep
+                if not timeout:  # autoset timeout based on sweep time
+                    sweep_time = channel["sweep_time"] * channel[
+                        "sweeps"] * 1000  # convert to milliseconds, and double for buffer
+                    self.resource.timeout = max(sweep_time * 2, 5000)  # give ourselves a minimum 5 seconds for a sweep
+                else:
+                    self.resource.timeout = timeout
+                self.write("sweep_mode", cnum=channel["cnum"], char=channel["sweep_mode"])
+                self.wait_until_finished()
         finally:
             self.resource.clear()
-            if was_continuous:
-                self.write("sweep_mode", char="continuous")
+            for channel in channels:
+                if channel["was_continuous"]:
+                    self.write("sweep_mode", cnum=channel["cnum"], char="continuous")
             self.resource.timeout = original_timeout
         return
-
-    def sweep_all_channels(self, **kwargs):
-        pass
 
     def get_snp_network(self, ports, **kwargs):
         """
@@ -182,7 +200,7 @@ class Analyzer(base_analyzer.Analyzer):
         if not name:
             name = "{:}Port Network".format(len(ports))
         if sweep:
-            self.sweep()
+            self.sweep(channel=channel)
 
         npoints = int(self.query("sweep_points", cnum=channel))
         data = self.query_values("snp_data", cnum=channel, ports=ports)
@@ -244,8 +262,6 @@ class Analyzer(base_analyzer.Analyzer):
         """
         self.resource.clear()
         sweep = kwargs.get("sweep", False)
-        if sweep is True:
-            self.sweep()
 
         name_prefix = kwargs.get("name_prefix", "")
         if name_prefix:
@@ -259,6 +275,10 @@ class Analyzer(base_analyzer.Analyzer):
                     "frequency": None,
                     "traces": list()}
             channels[ch]["traces"].append(trace)
+
+        if sweep is True:
+            self.sweep(channels=list(channels.keys()))
+
         traces = []
         for ch, ch_data in channels.items():
             frequency = ch_data["frequency"] = self.get_frequency()
@@ -338,7 +358,7 @@ class Analyzer(base_analyzer.Analyzer):
         self.create_meas(forward_name, 'a{:}b{:},{:}'.format(p2, p2, p1))
         self.create_meas(reverse_name, 'a{:}b{:},{:}'.format(p1, p1, p2))
 
-        self.sweep(**kwargs)
+        self.sweep(channel=channel)
 
         forward = self.get_measurement(mname=forward_name, sweep=False)  # type: skrf.Network
         forward.name = "forward switch terms"
@@ -366,11 +386,11 @@ class Analyzer(base_analyzer.Analyzer):
         :param kwargs:
         :return:
         """
+        channel = self.active_channel
         sweep = kwargs.get("sweep", False)
         if sweep:
-            self.sweep(**kwargs)
+            self.sweep(channel=channel)
 
-        channel = self.active_channel
         ntwk = skrf.Network()
         sdata = self.query_values("data", cnum=channel, char="SDATA")
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
