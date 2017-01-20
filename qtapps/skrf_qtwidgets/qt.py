@@ -159,8 +159,7 @@ def center_widget(widget):
 
 
 def get_skrf_icon():
-    icon_image = os.path.join(cfg.images_dir, "scikit-rf-logo.png")
-    return QtGui.QIcon(icon_image)
+    return QtGui.QIcon(cfg.skrf_icon)
 
 
 def get_splash_screen():
@@ -185,7 +184,7 @@ def close_splash_screen(widget, splash, start_time):
     splash.finish(widget)
 
 
-def single_widget_application(widget_class, splash_screen=True, appid=u"skrf.qtapp"):
+def single_widget_application(widget_class, splash_screen=True, appid=u"skrf.qtapp", icon=cfg.skrf_icon):
     if appid:
         set_process_id(appid)
 
@@ -198,7 +197,16 @@ def single_widget_application(widget_class, splash_screen=True, appid=u"skrf.qta
         splash, start_time = get_splash_screen()
 
     form = widget_class()
-    form.setWindowIcon(get_skrf_icon())
+    try:
+        if type(icon) is str:
+            icon = QtGui.QIcon(icon)
+        elif not isinstance(icon, QtGui.QIcon):
+            icon = False
+        if icon:
+            form.setWindowIcon(icon)
+    except Exception as e:
+        error_popup(e)
+
     form.show()
 
     if splash_screen:

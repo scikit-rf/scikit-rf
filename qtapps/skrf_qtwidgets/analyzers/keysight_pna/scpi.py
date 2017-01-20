@@ -6,7 +6,7 @@ slightly different from model to model.
 TODO:
 - Consider whether the pre-processor should be in the main analyzers folder rather than the keysight folder.
     ** I am wholly unfamiliar with other analyzer syntax, and don't know if they follow the same patterns, nor am
-    ** I familiar with the SCPI standard enough to know if
+    ** I familiar with the SCPI standard enough to know if this makes sense
 
 *** USAGE ***:
 SCPI commands have a command tree and an argument set separated by a space:
@@ -16,7 +16,7 @@ This structure is the same for query and write, though queries have a '?' attach
 Some commands are read-only, some are write-only and some are read-write.  Not all accept arguments, but the call
 structure is always the same.
 
-preprocess_scpi(command, kwargs**):
+preprocess_scpi(command_set, command, kwargs**):
     ...
     return scpi_command, scpi_args
 
@@ -25,24 +25,25 @@ e.g. "create_meas": ":CALCulate<cnum>:PARameter:DEFine:EXTended <'mname'>,<'para
 
 the arguments in angle brackets -- <kwarg>, or <'quoted_kwarg'> --represent the arguments needed to complete the SCPI
 command but unknown until usage.  The arguments are supplied as keyword arguments to a function
-and the preprocessor strips out the tags and replaces them with.  Some arguments are supplied in SCPI surrounded
-by quotes.  In this case the quotes (either ', or ") are supplied in the template string and the preprocessor
+and the preprocessor strips out the tags and replaces them with kwarg values.
+Some arguments are supplied in SCPI surrounded by quotes.  In this case the quotes
+(either ', or ") are supplied in the template string and the preprocessor
 will strip out the brackets and the kwarg name, and leave the quotes in place.
 
 the template string provides everything the user needs to know about structuring the code
 For example to query the instrument about the start frequency, you need a scpi command which is obtained
 with:
->>>preprocess("start_frequency", cnum=1, num=1e7)
+>>>preprocess(command_set, "start_frequency", cnum=1, num=1e7)
 returns:
     [":SENSe1:FREQuency:STARt", "10000000.0"]
 
 if no keyword argument is supplied in the command tree the variable simply is an empty string.  In the arguments
 if no keyword argument is supplied, then the argument is simply omitted.  Currently there is no specification if a
 variable is required or not.  It is up to the user to know whether or not the arguments are necessary.
->>>preprocess("start_frequency")
+>>>preprocess(command_set, "start_frequency")
 returns:
     [":SENSe:FREQuency:STARt" ""]
-which can easily be converted into the valid query string: ":SENSe:FREQuency:STARt?" by simply adding a questionmark
+which can easily be converted into the valid query string: ":SENSe:FREQuency:STARt?" by simply adding a question mark
 
 usually this would be used with a helper function, e.g. write/query, that would convert this list into a proper
 query command and then return the result:
@@ -78,7 +79,7 @@ numeric arguments are usually referenced with <num> while measurement numbers ar
 below are some examples:
 
 create a new S11 measurement
->>>write("create_meas", cnum=1, Mname="CH1_S11_1", param="S11")
+>>>write("create_meas", cnum=1, mname="CH1_S11_1", param="S11")
 
 what is the active channel:
 >>>query("active_channel")

@@ -13,8 +13,9 @@ if not os.path.isdir(last_path):
     last_path = user_dir
 
 path_default = last_path
+skrf_icon = os.path.join(images_dir, "scikit-rf-logo.png")
 
-os.environ['SKRF_PLOT_ENV'] = "none"
+os.environ['SKRF_PLOT_ENV'] = "none"  # disable automatic loading of pylab
 
 os.environ['QT_API'] = 'pyqt5'  # force prefer pyqt5, let qtpy handle pyqt4 or pyside only
 if len(sys.argv) > 1:

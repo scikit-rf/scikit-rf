@@ -54,7 +54,7 @@ class Analyzer(base_analyzer.Analyzer):
         self.resource.write(scpi_str)
 
     def read(self):
-        return self.resource.read().replace('"', '')
+        return self.resource.read().replace('"', '')  # string returns often have extraneous double quotes
 
     def query(self, command, **kwargs):
         scpi_str = "? ".join(scpi.preprocess(self.scpi_commands, command, **kwargs)).strip()
@@ -65,6 +65,7 @@ class Analyzer(base_analyzer.Analyzer):
         return self.resource.query_values(scpi_str)
 
     def scpi_string(self, command, query=True, **kwargs):
+        """for debugging purposes, to see what SCPI string we are actually making"""
         cmd, arg = scpi.preprocess(self.scpi_commands, command, **kwargs)
         joiner = "? " if query is True else " "
         return joiner.join((cmd, arg)).strip()
@@ -80,15 +81,15 @@ class Analyzer(base_analyzer.Analyzer):
         self.resource.values_format.use_ascii(converter='f', separator=',', container=np.array)
 
     @property
-    def active_channel(self):
-        return int(self.query("active_channel"))
-
-    @property
     def idn(self):
         return self.resource.query("*IDN?")
 
     def wait_until_finished(self):
         self.resource.query("*OPC?")
+
+    @property
+    def active_channel(self):
+        return int(self.query("active_channel"))
 
     @active_channel.setter
     def active_channel(self, channel):
@@ -104,6 +105,8 @@ class Analyzer(base_analyzer.Analyzer):
         this way we force this property to be set, even if it just resets itself to the same value, but then a trace
         will become active and our get_snp_network method will succeed.
         """
+        # TODO: Good chance this will fail if no measurement is on the set channel, need to think about that...
+
         mnum = self.query("meas_number_list", cnum=channel).split(",")[0]
         self.write("select_meas_by_number", cnum=channel, mnum=mnum)
         return
@@ -204,13 +207,13 @@ class Analyzer(base_analyzer.Analyzer):
         """
         :return: list
          the purpose of this function is to query the analyzer for all available traces on all channels
-         it then returns a list where each list-item represents one available trace through.
+         it then returns a list where each list-item represents one available trace.
 
          Each list item is a python dict with all necessary information to retrieve the trace as an skrf.Network object:
          list-item keys are:
          * "name": the name of the measurement e.g. "CH1_S11_1"
          * "channel": the channel number the measurement is on
-         * "measurement": the measurement number (MNUM in SCPI)
+         * "measurement number": the measurement number (MNUM in SCPI)
          * "parameter": the parameter of the measurement, e.g. "S11", "S22" or "a1b1,2"
          * "label": the text the item will use to identify itself to the user e.g "Measurement 1 on Channel 1"
         """
@@ -291,7 +294,7 @@ class Analyzer(base_analyzer.Analyzer):
         :param f_start: start frequency in units = f_unit
         :param f_stop: start frequency in units = f_unit
         :param f_npoints: number of points in the frequency sweep
-        :param f_unit: the frequnecy unit of the provided f_start and f_stop
+        :param f_unit: the frequnecy unit of the provided f_start and f_stop, default is Hz
         :param channel: channel of the analyzer
         :return:
         """
@@ -299,7 +302,7 @@ class Analyzer(base_analyzer.Analyzer):
         if f_unit != "hz":
             f_start = self.to_hz(f_start, f_unit)
             f_stop = self.to_hz(f_stop, f_unit)
-        channel = kwargs.get("channel", 1)
+        channel = kwargs.get("channel", self.active_channel)
         self.write('start_frequency', cnum=channel, num=f_start)
         self.write('stop_frequency', cnum=channel, num=f_stop)
         self.write('sweep_points', cnum=channel, num=f_npoints)
@@ -314,11 +317,10 @@ class Analyzer(base_analyzer.Analyzer):
         '''
 
         # TODO: This tends to error if there are multiple channels operating, figure out how to fix
-
         self.resource.clear()
         p1, p2 = ports
 
-        channel = kwargs.get("channel", self.active_channel)
+        self.active_channel = channel = kwargs.get("channel", self.active_channel)
 
         measurements = self.get_meas_list()
         max_trace = len(measurements)
