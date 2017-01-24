@@ -15,6 +15,11 @@ def to_string(value):
         return str(value)
 
 
+def indent(text, levels, pad="    "):
+    padding = "".join([pad] * levels)
+    return padding + text.replace("\n", "\n" + padding)
+
+
 def generate_set_string(command, command_root):
     command_string = " ".join((command_root, to_string(command["set"]))).strip()
 
@@ -29,17 +34,12 @@ def generate_set_string(command, command_root):
         scpi_command = '"{:}"'.format(command_string)
 
     function_string = \
-        """def set_{:s}(self{:}):
-            scpi_command = {:}
-            self.resource.write('{:}'.format(scpi_command))""".format(
+"""def set_{:s}(self{:}):
+    scpi_command = {:}
+    self.resource.write('{:}'.format(scpi_command))""".format(
             command['name'], kwargs_string, scpi_command, '{:}')
 
     return function_string
-
-
-def indent(text, levels, pad="    "):
-    padding = "".join([pad] * levels)
-    return padding + text.replace("\n", "\n" + padding)
 
 
 def generate_query_string(command, command_root):
@@ -76,10 +76,10 @@ def generate_query_string(command, command_root):
             return_line = "return value"
 
     function_string = \
-        """def query_{:s}(self{:}):
-            scpi_command = {:}
-            value = self.resource.query(scpi_command)
-            {:}""".format(command['name'], kwargs_string, scpi_command, return_line)
+"""def query_{:s}(self{:}):
+    scpi_command = {:}
+    value = self.resource.query(scpi_command)
+    {:}""".format(command['name'], kwargs_string, scpi_command, return_line)
 
     return function_string
 
@@ -98,9 +98,9 @@ def generate_query_values_string(command, command_root):
         scpi_command = '"{:}"'.format(command_string)
 
     function_string = \
-        """def query_{:s}(self{:}):
-            scpi_command = {:}
-            return self.resource.query_values(scpi_command)""".format(
+"""def query_{:s}(self{:}):
+    scpi_command = {:}
+    return self.resource.query_values(scpi_command)""".format(
             command['name'], kwargs_string, scpi_command)
 
     return function_string
