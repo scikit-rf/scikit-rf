@@ -1,0 +1,45 @@
+CALC<cnum>:
+  DATA:
+    command: {name: data, set: <fmt>,<data>, query_values: <fmt>}
+    branch:
+      SNP:
+        PORT: {name: snp_data, query_values: "'<ports>'"}
+  PAR:
+    CAT:
+      EXT: {name: meas_name_list, query: null, csv: True, strip_outer_quotes: True}
+    DEF:
+      EXT: {name: create_meas, set: "'<mname>','<param>'"}
+    DEL: {name: delete_meas, set: "'<mmame>'"}
+    SEL: {name: selected_meas, set: "'<mname>'", query: null}
+    MNUM: {name: selected_meas_by_number, set: <mnum>, query: null}
+  FORM: {name: disp_format, set: <fmt>, query: null}
+DISP:
+  WIND<wnum>:
+    TRAC<tnum>:
+      FEED: {name: display_trace, set: "'<mname>'"}
+SENS<cnum>:
+  AVER:
+    COUN: {name: averaging_count, set: <num>, query: null, returns: int}
+    STAT: {name: averaging_state, set: <onoff>, query: null, returns: bool}
+    MODE: {name: averaging_mode, set: <mode>, query: null}
+  FREQ:
+    START: {name: f_start, set: <num>, query: null, returns: float}
+    STOP: {name: f_stop, set: <num>, query: null, returns: float}
+  SWE:
+    GRO:
+      COUN: {name: groups_count, set: <num>, query: null, returns: int}
+    MODE: {name: sweep_mode, set: <mode>, query: null}
+    TIME: {name: sweep_time, query: null, returns: float}
+    TYPE: {name: sweep_type, set: <sweep_type>, query: null}
+    POIN: {name: sweep_n_points, set: <num>, query: null, returns: int}
+SYST:
+  CHAN:
+    CAT: {name: available_channels, query: <cnum>, csv: True, returns: int}
+  ACT:
+    CHAN: {name: active_channel, query: null, returns: int}
+  MEAS<mnum>:
+    NAME: {name: meas_name_from_number, query: null}
+  MEAS:
+    CAT: {name: meas_number_list, query: <cnum>, csv: True, returns: int}
+TRIG:
+  SOUR: {name: trigger_source, set: <trigger_source>, query: null}
