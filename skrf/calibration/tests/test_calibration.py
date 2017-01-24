@@ -615,7 +615,6 @@ class NISTMultilineTRLTest(EightTermTest):
             Grefls = [-1, 1],
             l = [0, 100e-6, 200e-6, 500e-6],
             er_est = 1,
-            n_reflects = 2,
             switch_terms = (self.gamma_f, self.gamma_r),
             gamma_root_choice = 'imag' #Losslessness of the line causes problems
                                        #without this option
