@@ -5,7 +5,7 @@ import numpy as np
 import skrf
 from .. import base_analyzer
 
-from .import scpi
+from .import scpi_preprocessor
 
 scpi_commands = {
     # "key": "SCPI command template"
@@ -50,23 +50,23 @@ class Analyzer(base_analyzer.Analyzer):
         self.use_binary()
 
     def write(self, command, **kwargs):
-        scpi_str = " ".join(scpi.preprocess(self.scpi_commands, command, **kwargs)).strip()
+        scpi_str = " ".join(scpi_preprocessor.preprocess(self.scpi_commands, command, **kwargs)).strip()
         self.resource.write(scpi_str)
 
     def read(self):
         return self.resource.read().replace('"', '')  # string returns often have extraneous double quotes
 
     def query(self, command, **kwargs):
-        scpi_str = "? ".join(scpi.preprocess(self.scpi_commands, command, **kwargs)).strip()
+        scpi_str = "? ".join(scpi_preprocessor.preprocess(self.scpi_commands, command, **kwargs)).strip()
         return self.resource.query(scpi_str).replace('"', '')
 
     def query_values(self, command, **kwargs):
-        scpi_str = "? ".join(scpi.preprocess(self.scpi_commands, command, **kwargs)).strip()
+        scpi_str = "? ".join(scpi_preprocessor.preprocess(self.scpi_commands, command, **kwargs)).strip()
         return self.resource.query_values(scpi_str)
 
     def scpi_string(self, command, query=True, **kwargs):
         """for debugging purposes, to see what SCPI string we are actually making"""
-        cmd, arg = scpi.preprocess(self.scpi_commands, command, **kwargs)
+        cmd, arg = scpi_preprocessor.preprocess(self.scpi_commands, command, **kwargs)
         joiner = "? " if query is True else " "
         return joiner.join((cmd, arg)).strip()
 

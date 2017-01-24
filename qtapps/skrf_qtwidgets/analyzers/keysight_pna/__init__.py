@@ -3,4 +3,4 @@
 """
 
 from .analyzer import Analyzer, scpi_commands
-from . import scpi
+from . import scpi_preprocessor
