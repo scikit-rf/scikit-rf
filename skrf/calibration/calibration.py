@@ -643,8 +643,8 @@ class Calibration(object):
         d = self.coefs
 
         for k in coefs_list_8term:
-            if k not in d:
-                d = convert_12term_2_8term(d)
+            if k not in d and k in coefs_list_12term:
+                return convert_12term_2_8term(d)
 
         return d
 
@@ -691,8 +691,8 @@ class Calibration(object):
         d = self.coefs
 
         for k in coefs_list_12term:
-            if k not in d:
-                d = convert_8term_2_12term(d)
+            if k not in d and k in coefs_list_8term:
+                return convert_8term_2_12term(d)
 
         return d
 
