@@ -1086,28 +1086,64 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
             ideals = ideals,
             measured = measured,
             )
-        
+
         coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs, redundant_k=1)
         coefs = NetworkSet.from_s_dict(coefs,
                                     frequency=self.cal.frequency).to_dict()
         self.coefs= coefs
-        
+
+    def terminate(self, ntwk):
+        '''
+        terminate a measured network with the switch terms
+        '''
+        return terminate(ntwk,self.gamma_f, self.gamma_r)
+
     def measure(self,ntwk):
-        m = ntwk.copy()
-        return terminate(m, self.gamma_f, self.gamma_r) 
-    
-    
+        out =  self.terminate(self.X**ntwk**self.Y)
+        out.name = ntwk.name
+        return out
+
     def test_forward_switch_term(self):
         self.assertEqual(self.coefs['forward switch term'], self.gamma_f)
-    
+
     def test_reverse_switch_term(self):
         self.assertEqual(self.coefs['reverse switch term'], self.gamma_r)
 
-    @nottest
-    def test_k(self):
-        self.assertEqual(self.coefs['k'], self.X.s21/self.Y.s12 )
-    
-    
+    def test_forward_directivity_accuracy(self):
+        self.assertEqual(
+            self.X.s11,
+            self.coefs['forward directivity'])
+
+    def test_forward_source_match_accuracy(self):
+        self.assertEqual(
+            self.X.s22 ,
+            self.coefs['forward source match'] )
+
+    def test_forward_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.X.s21 * self.X.s12 ,
+            self.coefs['forward reflection tracking'])
+
+    def test_reverse_source_match_accuracy(self):
+        self.assertEqual(
+            self.Y.s11 ,
+            self.coefs['reverse source match']   )
+
+    def test_reverse_directivity_accuracy(self):
+        self.assertEqual(
+            self.Y.s22 ,
+            self.coefs['reverse directivity']  )
+
+    def test_reverse_reflection_tracking_accuracy(self):
+        self.assertEqual(
+            self.Y.s21 * self.Y.s12 ,
+            self.coefs['reverse reflection tracking'])
+
+    def test_k_accuracy(self):
+        self.assertEqual(
+            self.X.s21/self.Y.s12 ,
+            self.coefs['k']  )
+
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
