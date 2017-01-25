@@ -437,7 +437,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.assertEqual(
             self.X.s21/self.Y.s12 , 
             self.cal.coefs_ntwks['k']  )   
-    @nottest
+
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
             
