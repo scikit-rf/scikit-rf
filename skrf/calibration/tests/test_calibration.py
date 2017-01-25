@@ -1100,8 +1100,9 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     def test_forward_switch_term(self):
         self.assertEqual(self.coefs['forward switch term'], self.gamma_f)
     
-    def test_forward_switch_term(self):
+    def test_reverse_switch_term(self):
         self.assertEqual(self.coefs['reverse switch term'], self.gamma_r)
+
     @nottest
     def test_k(self):
         self.assertEqual(self.coefs['k'], self.X.s21/self.Y.s12 )
