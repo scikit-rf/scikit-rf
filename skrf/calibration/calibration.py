@@ -3264,6 +3264,11 @@ class SixteenTerm(Calibration):
 
         e = error_vector
 
+        #Normalize e23 = 1
+        c = e[:,12]/(e[:,12]-e[:,13]*e[:,14])
+        for i in range(len(e[0])):
+            e[:,i] *= c
+
         T1 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
         T2 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
         T3 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
@@ -3287,34 +3292,29 @@ class SixteenTerm(Calibration):
         T4[:,0,0] = e[:,12]
         T4[:,0,1] = e[:,13]
         T4[:,1,0] = e[:,14]
-        T4[:,1,1] = npy.ones(e[:,0].shape)
+        T4[:,1,1] = c
 
         # put the error vector into human readable dictionary
         e1, e2, e3, e4 = self.E_matrices(T1, T2, T3, T4)
 
-        #TODO: Standard names for 16-term errors?
-        #FIXME: Coefficients are linearly dependent
-        #One of them should be removed
 
         self._coefs = {\
                 'forward directivity':e1[:,0,0],
                 'reverse directivity':e1[:,1,1],
                 'forward source match':e4[:,0,0],
                 'reverse source match':e4[:,1,1],
-                'forward transmission tracking':e3[:,0,0],
-                'reverse transmission tracking':e3[:,1,1],
                 'forward reflection tracking':e2[:,0,0]*e3[:,0,0],
-                'reverse reflection tracking':e2[:,1,1]*e3[:,1,1],
+                'reverse reflection tracking':e2[:,1,1],
+                'k':e3[:,0,0],
                 'forward isolation':e1[:,1,0],
                 'reverse isolation':e1[:,0,1],
-                'a3 a1 isolation':e3[:,0,1],
-                'a0 a3 isolation':e3[:,1,0],
-                'b2 b0 isolation':e2[:,0,1],
-                'b1 b3 isolation':e2[:,1,0],
-                'b2 a1 isolation':e4[:,0,1],
-                'b1 a2 isolation':e4[:,1,0],
+                'forward port 1 isolation':e3[:,1,0],
+                'reverse port 1 isolation':e2[:,0,1],
+                'forward port 2 isolation':e2[:,1,0],
+                'reverse port 2 isolation':e3[:,0,1],
+                'forward port isolation':e4[:,1,0],
+                'reverse port isolation':e4[:,0,1],
                 }
-
 
         # output is a dictionary of information
         self._output_from_run = {
@@ -3369,18 +3369,18 @@ class SixteenTerm(Calibration):
         e111 = ec['reverse directivity']
         e400 = ec['forward source match']
         e411 = ec['reverse source match']
-        e300 = ec['forward transmission tracking']
-        e311 = ec['reverse transmission tracking']
+        e300 = ec['k']
+        e311 = npy.ones(npoints)
         e200 = ec['forward reflection tracking']/e300
-        e211 = ec['reverse reflection tracking']/e311
+        e211 = ec['reverse reflection tracking']
         e110 = ec['forward isolation']
         e101 = ec['reverse isolation']
-        e301 = ec['a3 a1 isolation']
-        e310 = ec['a0 a3 isolation']
-        e201 = ec['b2 b0 isolation']
-        e210 = ec['b1 b3 isolation']
-        e401 = ec['b2 a1 isolation']
-        e410 = ec['b1 a2 isolation']
+        e301 = ec['reverse port 2 isolation']
+        e310 = ec['forward port 1 isolation']
+        e201 = ec['reverse port 1 isolation']
+        e210 = ec['forward port 2 isolation']
+        e401 = ec['reverse port isolation']
+        e410 = ec['forward port isolation']
 
         E1 = npy.array([\
                 [ e100 , e110], \
@@ -3585,8 +3585,13 @@ class LMR16(SixteenTerm):
                 else:
                     break
 
+
             t13 = -pp[0,1]/pp[0,0]*t15
             t14 = -mm[1,0]/mm[1,1]*t12
+
+            #Normalize e23 = 1
+            c = 1/(t15 - t13*t14)
+
             t8 =  (rr[0,0]*t12 + rr[0,1]*t14)*(1./g) - t13/t
             t9 =  (nn[0,0]*t13 + nn[0,1]*t15)*(1./g) - t12/t
             t10 = (rr[1,0]*t12 + rr[1,1]*t14)*(1./g) - t15/t
@@ -3600,10 +3605,10 @@ class LMR16(SixteenTerm):
             t6 = mb[1,0]*t12 + mb[1,1]*t14
             t7 = mb[1,0]*t13 + mb[1,1]*t15
 
-            T1.append([[t0,t1],[t2,t3]])
-            T2.append([[t4,t5],[t6,t7]])
-            T3.append([[t8,t9],[t10,t11]])
-            T4.append([[t12,t13],[t14,t15]])
+            T1.append( c*npy.array([[t0,t1],[t2,t3]]) )
+            T2.append( c*npy.array([[t4,t5],[t6,t7]]) )
+            T3.append( c*npy.array([[t8,t9],[t10,t11]]) )
+            T4.append( c*npy.array([[t12,t13],[t14,t15]]) )
 
         T1 = npy.array(T1)
         T2 = npy.array(T2)
@@ -3614,35 +3619,23 @@ class LMR16(SixteenTerm):
         #and put error terms in human readable form
         e1,e2,e3,e4 = self.E_matrices(T1, T2, T3, T4)
 
-        #Error network coefficients
-        #e1 = [[e00,e03],[e30,e33]]
-        #e2 = [[e01,e02],[e31,e32]]
-        #e3 = [[e10,e13],[e20,e23]]
-        #e4 = [[e11,e12],[e21,e22]]
-
-        #TODO: Standard names for 16-term errors?
-        #FIXME: Coefficients are linearly dependent
-        #One of them should be removed
-        #t12 = 1 = e23/(e23*e10-e13*e20)
-
         self._coefs = {\
-                'forward directivity':e1[:,0,0],
-                'reverse directivity':e1[:,1,1],
-                'forward source match':e4[:,0,0],
-                'reverse source match':e4[:,1,1],
-                'forward transmission tracking':e3[:,0,0],
-                'reverse transmission tracking':e3[:,1,1],
-                'forward reflection tracking':e2[:,0,0]*e3[:,0,0],
-                'reverse reflection tracking':e2[:,1,1]*e3[:,1,1],
-                'forward isolation':e1[:,1,0],
-                'reverse isolation':e1[:,0,1],
-                'a3 a1 isolation':e3[:,0,1],
-                'a0 a3 isolation':e3[:,1,0],
-                'b2 b0 isolation':e2[:,0,1],
-                'b1 b3 isolation':e2[:,1,0],
-                'b2 a1 isolation':e4[:,0,1],
-                'b1 a2 isolation':e4[:,1,0],
-                }
+            'forward directivity':e1[:,0,0],
+            'reverse directivity':e1[:,1,1],
+            'forward source match':e4[:,0,0],
+            'reverse source match':e4[:,1,1],
+            'forward reflection tracking':e2[:,0,0]*e3[:,0,0],
+            'reverse reflection tracking':e2[:,1,1],
+            'k':e3[:,0,0],
+            'forward isolation':e1[:,1,0],
+            'reverse isolation':e1[:,0,1],
+            'forward port 1 isolation':e3[:,1,0],
+            'reverse port 1 isolation':e2[:,0,1],
+            'forward port 2 isolation':e2[:,1,0],
+            'reverse port 2 isolation':e3[:,0,1],
+            'forward port isolation':e4[:,1,0],
+            'reverse port isolation':e4[:,0,1],
+            }
 
         return None
 

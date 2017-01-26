@@ -1228,15 +1228,136 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
             self.Z.s14 ,
             self.cal.coefs_ntwks['reverse isolation'])
 
-    def test_b2_a1_isolation(self):
+    def test_reverse_port_isolation(self):
         self.assertEqual(
             self.Z.s23 ,
-            self.cal.coefs_ntwks['b2 a1 isolation'])
+            self.cal.coefs_ntwks['reverse port isolation'])
 
-    def test_b1_a2_isolation(self):
+    def test_forward_port_isolation(self):
         self.assertEqual(
             self.Z.s32 ,
-            self.cal.coefs_ntwks['b1 a2 isolation'])
+            self.cal.coefs_ntwks['forward port isolation'])
+
+    def test_k(self):
+        self.assertEqual(
+            self.Z.s21/self.Z.s34 ,
+            self.cal.coefs_ntwks['k'])
+
+    def test_forward_port1_isolation(self):
+        self.assertEqual(
+            self.Z.s31/self.Z.s34 ,
+            self.cal.coefs_ntwks['forward port 1 isolation'])
+
+    def test_reverse_port1_isolation(self):
+        self.assertEqual(
+            self.Z.s13*self.Z.s34 ,
+            self.cal.coefs_ntwks['reverse port 1 isolation'])
+
+    def test_forward_port2_isolation(self):
+        self.assertEqual(
+            self.Z.s42*self.Z.s34 ,
+            self.cal.coefs_ntwks['forward port 2 isolation'])
+
+    def test_reverse_port2_isolation(self):
+        self.assertEqual(
+            self.Z.s24/self.Z.s34 ,
+            self.cal.coefs_ntwks['reverse port 2 isolation'])
+
+class SixteenTermCoefficientsTest(unittest.TestCase):
+    """Test that 16-term non-isolation coefficients are defined the same way as
+    8-term coefficients."""
+    def setUp(self):
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        #Port 0: VNA port 0
+        #Port 1: DUT port 0
+        #Port 2: DUT port 1
+        #Port 3: VNA port 1
+        self.Z = wg.random(n_ports = 4, name = 'Z')
+
+        o = wg.open(nports=1, name='open')
+        s = wg.short(nports=1, name='short')
+        m = wg.match(nports=1, name='load')
+        om = rf.two_port_reflect(o, m)
+        mo = rf.two_port_reflect(m, o)
+        oo = rf.two_port_reflect(o, o)
+        ss = rf.two_port_reflect(s, s)
+        thru = wg.thru(name='thru')
+
+        ideals = [
+            thru,
+            om,
+            mo,
+            oo,
+            ss
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal16 = rf.SixteenTerm(
+            measured = measured,
+            ideals = ideals,
+            )
+
+        r = wg.load(.95+.1j,nports=1)
+        m = wg.match(nports=1)
+        mm = rf.two_port_reflect(m, m)
+        rm = rf.two_port_reflect(r, m)
+        mr = rf.two_port_reflect(m, r)
+        rr = rf.two_port_reflect(r, r)
+
+        ideals = [
+            thru,
+            mm,
+            rr,
+            rm,
+            mr
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal_lmr16 = rf.LMR16(
+            measured = measured,
+            ideals = [thru],
+            ideal_is_reflect = False,
+             #Automatic sign detection doesn't work if the
+             #error terms aren't symmetric enough
+            sign = 1
+            )
+
+        #Same error network, but without leakage for EightTerm
+
+        #Primary leakage
+        self.Z.s[:,2,1] = 0 # forward port isolation
+        self.Z.s[:,1,2] = 0 # reverse port isolation
+        self.Z.s[:,3,0] = 0 # forward (switch) isolation
+        self.Z.s[:,0,3] = 0 # reverse (switch) isolaion
+
+        #Cross leakage        
+        self.Z.s[:,3,1] = 0 # forward port 2 isolation
+        self.Z.s[:,1,3] = 0 # reverse port 2 isolation
+        self.Z.s[:,2,0] = 0 # forward port 1 isolation
+        self.Z.s[:,0,2] = 0 # reverse port 1 isolation
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal8 = rf.EightTerm(
+            measured = measured,
+            ideals = ideals,
+            )
+
+    def measure(self,ntwk):
+        out = rf.connect(self.Z, 1, ntwk, 0, num=2)
+        out.name = ntwk.name
+        return out
+
+    def test_coefficients(self):
+        for k in self.cal8.coefs.keys():
+            if k in self.cal16.coefs.keys():
+                self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal16.coefs[k]) < 1e-10)
+                self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal_lmr16.coefs[k]) < 1e-10)
 
 
 class LMR16Test(SixteenTermTest):
