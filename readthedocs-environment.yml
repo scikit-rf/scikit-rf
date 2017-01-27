@@ -1,9 +1,19 @@
 channels:
-  - conda-forge
+    - conda-forge
 dependencies:
-  - pandoc
-  - nbconvert
-  - ipykernel
-  - pip:
-    - nbsphinx
-    - git+https://github.com/arsenovic/nbsphinx.git@master
+    - python
+    - pandas
+    - setuptools
+    - ipython
+    - numpy
+    - scipy
+    - matplotlib
+    - mock
+    - nose
+    - future
+    - pandoc
+    - nbconvert
+    - ipykernel
+    - pip:
+        - nbsphinx
+        - git+https://github.com/arsenovic/nbsphinx.git@master
