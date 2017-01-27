@@ -247,7 +247,7 @@ class NetworkSet(object):
 
         >>> my_set = rf.NetworkSet.from_dir('./data/')
         '''
-        from io.general import read_all_networks
+        from . io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
         
         
@@ -750,7 +750,7 @@ class NetworkSet(object):
 
         '''
         # this import is delayed until here because of a circular dependency
-        from io.general import write
+        from . io.general import write
 
         if file is None:
             if self.name is None:
@@ -768,7 +768,7 @@ class NetworkSet(object):
         ---------
         skrf.io.general.network_2_spreadsheet
         '''
-        from io.general import networkset_2_spreadsheet
+        from . io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
 
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
