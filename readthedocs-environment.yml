@@ -15,5 +15,4 @@ dependencies:
     - nbconvert
     - ipykernel
     - pip:
-        - nbsphinx
         - git+https://github.com/arsenovic/nbsphinx.git@master
