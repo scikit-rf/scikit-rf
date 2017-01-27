@@ -64,7 +64,7 @@ extensions = [
 import nbsphinx
 nbsphinx_execute = 'always'
 nbsphinx_allow_errors=True
-nbsphinx_kernel_name='python3'
+nbsphinx_kernel_name='python'
 numpydoc_show_class_members = False
 
 # Add any paths that contain templates here, relative to this directory.
@@ -81,7 +81,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'scikit-rf'
-copyright = u'2016, scikit-rf development team'
+copyright = u'2017, scikit-rf development team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
