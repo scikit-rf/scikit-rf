@@ -63,3 +63,12 @@ Internals
     :glob:
     
     internals/*
+    
+Interactive
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+    
+    interactive/*
