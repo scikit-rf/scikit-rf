@@ -14,5 +14,7 @@ dependencies:
     - pandoc
     - nbconvert=4.2
     - ipykernel
+    - xlwt
+    - xlrd
     - pip:
         - git+https://github.com/arsenovic/nbsphinx.git@master
