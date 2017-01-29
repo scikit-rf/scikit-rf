@@ -14,8 +14,8 @@
 import sys, os
 import sphinx_rtd_theme
 
-import skrf as rf 
-rf.setup_pylab()
+#import skrf as rf 
+#rf.setup_pylab()
 
 import warnings
 warnings.filterwarnings('ignore')
@@ -36,9 +36,9 @@ needs_sphinx = '1.3'
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 #sys.path.insert(0, os.path.abspath('../../build/lib.linux-x86_64-2.7/'))
 
-import matplotlib
+#import matplotlib#
 # Force matplotlib to not use any Xwindows backend.
-matplotlib.use('Agg')
+#matplotlib.use('Agg')
 
 import skrf as rf 
 rf.setup_pylab()
