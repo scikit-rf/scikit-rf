@@ -2356,7 +2356,7 @@ class NISTMultilineTRL(EightTerm):
     '''
     family = 'TRL'
     def __init__(self, measured, Grefls, l,
-                n_reflects=1, er_est=1, refl_offset=None, p1_len_est=0, p2_len_est=0, ref_plane=0, gamma_root_choice='', *args,**kwargs):
+                 er_est=1, refl_offset=None, p1_len_est=0, p2_len_est=0, ref_plane=0, gamma_root_choice='real', *args,**kwargs):
         '''
         NISTMultilineTRL initializer
 
@@ -2376,13 +2376,11 @@ class NISTMultilineTRL(EightTerm):
              must be in order [Thru, Reflect, Line]
 
         Grefls : list of complex
-            Reflection coefficient estimation of reflect standards.
+            Estimated reflection coefficients of reflect standards.
+            Usually -1 for short or +1 for open.
 
         l : list of float
             Lengths of through and lines.
-
-        n_reflects :  int
-            number of reflective standards
 
         er_est : complex
             Estimated effective permittivity of the lines.
@@ -2406,16 +2404,19 @@ class NISTMultilineTRL(EightTerm):
             Negative length is towards the VNA.
 
         gamma_root_choice : string
-            Method to use for choosing the correct eigen value for propagation
+            Method to use for choosing the correct eigenvalue for propagation
             constant.
-
-            '' : Use the default method.
 
             'real' : Force the real part of the gamma to be positive corresponding
             to a lossy line. Imaginary part can be negative.
+            This is the suggested method when lines have moderate loss and the
+            measurement noise is low. This is the default method.
+
+            'none' : Use heurestics to choose the eigenvalue.
 
             'imag' : Force the imaginary part of the gamma to be positive,
             corresponding to a positive length line. Real part can be positive.
+            May choose incorrectly when the line is long due to phase wrapping.
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
@@ -2432,7 +2433,10 @@ class NISTMultilineTRL(EightTerm):
         self.gamma_root_choice = gamma_root_choice
 
         if self.refl_offset == None:
-            self.refl_offset = [0]*n_reflects
+            self.refl_offset = [0]*len(Grefls)
+
+        if len(measured) != len(Grefls) + len(l):
+            raise ValueError("Amount of measurements doesn't match amount of line lengths and reflection coefficients")
 
         #Not used, but needed for Calibration class init
         ideals = measured
@@ -2445,6 +2449,8 @@ class NISTMultilineTRL(EightTerm):
             *args, **kwargs)
 
         m_sw = [k for k in self.measured_unterminated]
+
+        n_reflects = len(Grefls)
 
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
@@ -2755,8 +2761,8 @@ class NISTMultilineTRL(EightTerm):
             Ap = -B1*B2 - B1*S_thru[1,1] + B2*S_thru[0,0] + linalg.det(S_thru)
             Ap = -Ap/(1 - CoA1*S_thru[0,0] + CoA2*S_thru[1,1] - CoA1*CoA2*linalg.det(S_thru))
 
-            A1_vals = npy.zeros(len(self.Grefls), dtype=npy.complex)
-            A2_vals = npy.zeros(len(self.Grefls), dtype=npy.complex)
+            A1_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
+            A2_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
 
             for n in range(len(measured_reflects)):
                 S_r = measured_reflects[n].s[m]
