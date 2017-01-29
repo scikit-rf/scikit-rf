@@ -10,3 +10,12 @@ sphinx-bootstrap-theme>=0.3.0
 
 ipython==1.1.0
 
+
+
+# nbstripout
+# xlwt
+# xlrd
+# ipywidgets
+# python-ivi
+# pyvisa
+# plotly

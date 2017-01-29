@@ -43,9 +43,11 @@ import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
 from matplotlib.pyplot import quiver
 from matplotlib import rcParams
+from matplotlib.dates import date2num
 
 from . import network, frequency, calibration, networkSet
 from . import mathFunctions as mf
+from . util import now_string_2_dt
 
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
@@ -1859,7 +1861,7 @@ def signature(self, m=0, n=0, component='s_mag',
     if vs_time:
         # create a datetime index
         dt_idx = [now_string_2_dt(k.name) for k in self]
-        mpl_times = plb.date2num(dt_idx)
+        mpl_times = date2num(dt_idx)
         y_max = mpl_times[0]
         y_min = mpl_times[-1]
 
