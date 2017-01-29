@@ -18,4 +18,5 @@ dependencies:
     - xlwt
     - xlrd
     - pip:
+        - python-ivi
         - git+https://github.com/arsenovic/nbsphinx.git@master

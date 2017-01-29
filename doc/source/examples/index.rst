@@ -45,14 +45,6 @@ Plotting
     plotting/*
     
 
-Instrument Control
-------------------
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-    
-    instrumentcontrol/*
     
 
 Internals
