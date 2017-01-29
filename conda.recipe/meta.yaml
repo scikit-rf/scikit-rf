@@ -21,6 +21,8 @@ requirements:
     - mock
     - nose
     - future
+    - xlwt
+    - xlrd
 
   run:
     - python

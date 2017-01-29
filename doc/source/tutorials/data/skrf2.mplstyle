@@ -1,0 +1,61 @@
+# style for skrf (www.scikit-rf.org) ( based off ggplot.mplstyle)
+patch.linewidth : 0.5
+patch.facecolor : 348ABD  # blue
+patch.edgecolor : EEEEEE
+patch.antialiased : True
+
+text.usetex         : False 
+#font.family         : 'serif'
+font.size           : 10
+#font.serif          : New Century Schoolbook, Century Schoolbook L, Utopia, ITC Bookman, Bookman, Nimbus Roman No9 L, Times New Roman, Times, Palatino, Charter, ser
+
+axes.facecolor : white #E5E5E5
+axes.edgecolor : black
+axes.linewidth : 1
+axes.grid : True
+axes.titlesize : 13
+axes.labelsize : 11
+axes.labelcolor : black #555555
+axes.axisbelow : True     
+axes.color_cycle : 348ABD, b74331,8EBA42, FBC15E, 988ED5,  FFB5B8, 777777
+
+xtick.color : black #555555
+xtick.direction : in #out
+xtick.labelsize     :9
+xtick.major.size : 5 
+xtick.minor.size : 3
+xtick.minor.width : 1
+xtick.minor.pad : 4
+
+ytick.color : black #555555
+ytick.direction : in #out
+ytick.labelsize     : 9 
+ytick.major.size : 5 
+
+grid.color : E5E5E5 #gray
+grid.linestyle : --    # solid line
+
+figure.figsize      : 6, 4
+figure.facecolor : white
+figure.edgecolor : 0.50
+figure.dpi          : 120      
+figure.subplot.left	    : 0.12 
+figure.subplot.right	: 0.9    
+figure.subplot.bottom	: 0.12
+figure.subplot.top      : 0.9  
+
+
+lines.linewidth     : 1     
+lines.markersize    : 3        
+
+legend.fontsize     : 7
+legend.loc			: best
+legend.frameon : True
+
+legend.fancybox : True
+
+path.simplify       : True  
+
+savefig.dpi         : 120
+
+interactive :True

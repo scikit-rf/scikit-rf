@@ -1494,9 +1494,12 @@ class Network(object):
             # Add '!' Touchstone comment delimiters to the start of every line
             # in self.comments
             commented_header = ''
-            if self.comments:
-                for comment_line in self.comments.split('\n'):
-                    commented_header += '!{}\n'.format(comment_line)
+            try:
+                if self.comments:
+                    for comment_line in self.comments.split('\n'):
+                        commented_header += '!{}\n'.format(comment_line)
+            except(AttributeError):
+                pass
             if skrf_comment:
                 commented_header +='!Created with skrf (http://scikit-rf.org).\n'
 
@@ -1645,7 +1648,7 @@ class Network(object):
         skrf.io.general.read : read any skrf object
         '''
         # this import is delayed until here because of a circular depency
-        from io.general import write
+        from . io.general import write
 
         if file is None:
             if self.name is None:
@@ -1692,7 +1695,7 @@ class Network(object):
         ---------
         skrf.io.general.network_2_spreadsheet
         '''
-        from .io.general import network_2_spreadsheet
+        from . io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
     def to_dataframe(self, *args, **kwargs):
@@ -1703,7 +1706,7 @@ class Network(object):
         ---------
         skrf.io.general.network_2_dataframe
         '''
-        from .io.general import network_2_dataframe
+        from . io.general import network_2_dataframe
         return network_2_dataframe(self, *args, **kwargs)
 
     # interpolation

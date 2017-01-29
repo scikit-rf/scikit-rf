@@ -28,6 +28,13 @@ line = Network(os.path.join(pwd, 'line.s2p'))
 ring_slot = Network(os.path.join(pwd, 'ring slot.s2p'))
 tee = Network(os.path.join(pwd, 'tee.s3p'))
 ring_slot_meas = Network(os.path.join(pwd, 'ring slot measured.s1p'))
+wr2p2_line = Network(os.path.join(pwd, 'wr2p2,line.s2p'))
+wr2p2_line1 = Network(os.path.join(pwd, 'wr2p2,line1.s2p'))
+wr2p2_delayshort = Network(os.path.join(pwd, 'wr2p2,delayshort.s1p'))
+wr2p2_short = Network(os.path.join(pwd, 'wr2p2,short.s1p'))
+wr1p5_line = Network(os.path.join(pwd, 'wr1p5,line.s2p'))
+wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.s1p'))
+
 '''
 The following networks have been saved using Python2 Pickler. 
 Numpy arrays pickled in Python2 can't be reopenned using Python3, 
@@ -35,13 +42,6 @@ as a consequence (?) of the utf8 support in Python3.
 So the following lines shall only work with Python2.  
 '''
 if six.PY2:
-    wr2p2_line = Network(os.path.join(pwd, 'wr2p2,line.ntwk'))
-    wr2p2_line1 = Network(os.path.join(pwd, 'wr2p2,line1.ntwk'))
-    wr2p2_delayshort = Network(os.path.join(pwd, 'wr2p2,delayshort.ntwk'))
-    wr2p2_short = Network(os.path.join(pwd, 'wr2p2,short.ntwk'))
-    wr1p5_line = Network(os.path.join(pwd, 'wr1p5,line.ntwk'))
-    wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.ntwk'))
-    
     one_port_cal = read(os.path.join(pwd, 'one_port.cal'))
 
 mpl_rc_fname = os.path.join(pwd, 'skrf.mplstyle')
