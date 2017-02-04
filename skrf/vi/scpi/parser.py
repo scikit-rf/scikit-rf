@@ -3,7 +3,7 @@ import os.path
 import re
 import sys
 
-kwarg_pattern = re.compile('<(\w+)>', re.ASCII)
+kwarg_pattern = re.compile('<(\w+=?[\w,\(\)\'\"]*)>', re.ASCII)
 
 
 def to_string(value):
@@ -20,40 +20,63 @@ def indent(text, levels, pad="    "):
     return padding + text.replace("\n", "\n" + padding)
 
 
-def generate_set_string(command, command_root):
-    command_string = " ".join((command_root, to_string(command["set"]))).strip()
+def isnumeric(value):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
 
+
+def process_kwarg_default(value):
+    if value[0] + value[-1] in ("()", "[]"):
+        return value  # default is a list or tuple, assume values were entered correctly
+    elif value[0] + value[-1] in ('""', "''"):
+        return value  # value is an explicit string, return as is
+    elif isnumeric(value):
+        return str(value)
+    else:
+        return '"{:}"'.format(value)  # treat as string, must have quotes to use as a kwarg default value
+
+
+def parse_command_string(command_string):
     args = kwarg_pattern.findall(command_string)
-    args_string = ", ".join(args)
-    kwargs_string = "".join([', ' + kwarg + '=""' for kwarg in args])
+    kwargs = list()
+    for arg in args:
+        if "=" in arg:
+            kwarg, val = arg.split("=")
+            val = process_kwarg_default(val)
+        else:
+            kwarg = arg
+            val = '""'
+        kwargs.append((kwarg, val))
+    kwargs_string = "".join([', ' + kwarg + "=" + val for kwarg, val in kwargs])
 
     if len(args) > 0:
         command_base = kwarg_pattern.sub("{:}", command_string)
+        args_string = ", ".join(kwarg for kwarg, val in kwargs)
         scpi_command = "scpi_preprocess(\"{:}\", {:})".format(command_base, args_string)
     else:
         scpi_command = '"{:}"'.format(command_string)
 
+    return kwargs_string, scpi_command
+
+
+def generate_set_string(command, command_root):
+    command_string = " ".join((command_root, to_string(command["set"]))).strip()
+    kwargs_string, scpi_command = parse_command_string(command_string)
+
     function_string = \
 """def set_{:s}(self{:}):
     scpi_command = {:}
-    self.resource.write('{:}'.format(scpi_command))""".format(
-            command['name'], kwargs_string, scpi_command, '{:}')
+    self.resource.write(scpi_command)""".format(command['name'], kwargs_string, scpi_command)
 
     return function_string
 
 
 def generate_query_string(command, command_root):
     command_string = "? ".join((command_root, to_string(command["query"]))).strip()
-
-    args = kwarg_pattern.findall(command_string)
-    args_string = ", ".join(args)
-    kwargs_string = "".join([', ' + kwarg + '=""' for kwarg in args])
-
-    if len(args) > 0:
-        command_base = kwarg_pattern.sub("{:}", command_string)
-        scpi_command = "scpi_preprocess(\"{:}\", {:})".format(command_base, args_string)
-    else:
-        scpi_command = '"{:}"'.format(command_string)
+    kwargs_string, scpi_command = parse_command_string(command_string)
 
     converter = command.get('returns', "str")
     valid_converters = ("int", "str", "float", "bool")
@@ -86,16 +109,7 @@ def generate_query_string(command, command_root):
 
 def generate_query_values_string(command, command_root):
     command_string = "? ".join((command_root, to_string(command["query_values"]))).strip()
-
-    args = kwarg_pattern.findall(command_string)
-    args_string = ", ".join(args)
-    kwargs_string = "".join([', ' + kwarg + '=""' for kwarg in args])
-
-    if len(args) > 0:
-        command_base = kwarg_pattern.sub("{:}", command_string)
-        scpi_command = "scpi_preprocess(\"{:}\", {:})".format(command_base, args_string)
-    else:
-        scpi_command = '"{:}"'.format(command_string)
+    kwargs_string, scpi_command = parse_command_string(command_string)
 
     function_string = \
 """def query_{:s}(self{:}):
@@ -142,10 +156,9 @@ string_converter = """def to_string(value):
         return str(value)"""
 
 scpi_preprocessor = """def scpi_preprocess(command_string, *args):
-    args_list = list(args)
-    for i, arg in enumerate(args_list):
-        args_list[i] = to_string(arg)
-    return command_string.format(*args_list)"""
+    for i, arg in enumerate(args):
+        args[i] = to_string(arg)
+    return command_string.format(*args)"""
 
 class_header = """class SCPI(object):
     def __init__(self, resource):
