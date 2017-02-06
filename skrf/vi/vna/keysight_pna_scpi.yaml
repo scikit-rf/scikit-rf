@@ -16,8 +16,8 @@ COMMAND_TREE:
       DEF:
         EXT: {name: create_meas, set: "'<mname>','<param>'"}
       DEL: {name: delete_meas, set: "'<mname>'"}
-      SEL: {name: selected_meas, set: "'<mname>'", query: ""}
-      MNUM: {name: selected_meas_by_number, set: <mnum>, query: ""}
+      SEL: {name: selected_meas, set: "'<mname>'", query: "", strip_outer_quotes: True}
+      MNUM: {name: selected_meas_by_number, set: <mnum>, query: "", returns: int}
     FORM: {name: display_format, set: <fmt=MLOG>, query: ""}
   DISP:
     WIND<wnum>:
@@ -40,12 +40,12 @@ COMMAND_TREE:
       POIN: {name: sweep_n_points, set: <n_points=401>, query: "", returns: int}
   SYST:
     CHAN:
-      CAT: {name: available_channels, query: "", csv: True, returns: int}
+      CAT: {name: available_channels, query: "", csv: True, returns: int, strip_outer_quotes: True}
     ACT:
       CHAN: {name: active_channel, query: "", returns: int}
     MEAS<mnum>:
-      NAME: {name: meas_name_from_number, query: ""}
+      NAME: {name: meas_name_from_number, query: "", strip_outer_quotes: True}
     MEAS:
-      CAT: {name: meas_number_list, query: <cnum>, csv: True, returns: int}
+      CAT: {name: meas_number_list, query: <cnum>, csv: True, returns: int, strip_outer_quotes: True}
   TRIG:
     SOUR: {name: trigger_source, set: <trigger_source=IMM>, query: ""}

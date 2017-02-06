@@ -7,6 +7,7 @@ from . import keysight_pna_scpi
 
 
 class PNA(vna.VNA):
+    DEFAULT_VISA_ADDRESS = "GPIB::16::INSTR"
     NAME = "Keysight PNA"
     NPORTS = 2
     NCHANNELS = 32
@@ -60,7 +61,7 @@ class PNA(vna.VNA):
         will become active and our get_snp_network method will succeed.
         """
         # TODO: Good chance this will fail if no measurement is on the set channel, need to think about that...
-        mnum = self.scpi.query_meas_number_list(channel)
+        mnum = self.scpi.query_meas_number_list(channel)[0]
         self.scpi.set_selected_meas_by_number(channel, mnum)
         return
 
@@ -77,15 +78,14 @@ class PNA(vna.VNA):
         self.scpi.set_trigger_source("IMM")
         original_timeout = self.resource.timeout
 
+        # expecting either an int or a list of ints for the channel(s)
         channels_to_sweep = kwargs.get("channels", None)
         if not channels_to_sweep:
             channels_to_sweep = kwargs.get("channel", "all")
         if not type(channels_to_sweep) in (list, tuple):
             channels_to_sweep = [channels_to_sweep]
-        channels_to_sweep = list(map(str, channels_to_sweep))
-
-        # channels = self.query("available_channels").split(",")
         channels = self.scpi.query_available_channels()
+
         for i, channel in enumerate(channels):
             sweep_mode = self.scpi.query_sweep_mode(channel)
             was_continuous = "CONT" in sweep_mode.upper()
@@ -128,7 +128,7 @@ class PNA(vna.VNA):
             self.resource.clear()
             for channel in channels:
                 if channel["was_continuous"]:
-                    self.scpi.set_sweep_mode(channel, "CONT")
+                    self.scpi.set_sweep_mode(channel["cnum"], "CONT")
             self.resource.timeout = original_timeout
         return
 

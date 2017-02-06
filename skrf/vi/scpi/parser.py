@@ -3,7 +3,7 @@ import os.path
 import re
 import sys
 
-kwarg_pattern = re.compile('<(\w+=?[\w,\(\)\'\"]*)>', re.ASCII)
+kwarg_pattern = re.compile('<(\w+=?[\w, \(\)\'\"]*)>', re.ASCII)
 
 
 def to_string(value):
@@ -86,14 +86,22 @@ def generate_query_string(command, command_root):
         must be one of {:}
         """.format(command_string, converter, ", ".join(valid_converters)))
 
-    is_csv = command.get('csv', False)
-    if is_csv is True:
-        if converter != "str":
-            return_line = "return list(map({:}, value))".format(converter)
+    pre_line = ""
+    if command.get("strip_outer_quotes", False) is True:
+        pre_line += "\n    value = value[1:-1]"
+
+    if command.get('csv', False) is True:
+        pre_line += '\n    value = value.split(",")'
+        if converter == "bool":
+            return_line = """return list(map(bool, map(int, value)))"""
+        elif converter != "str":
+            return_line = """return list(map({:}, value))""".format(converter)
         else:
-            return_line = "return value.split(',')"
+            return_line = "return value"
     else:
-        if converter != "str":
+        if converter == "bool":
+            return_line = "return bool(int(value))"
+        elif converter != "str":
             return_line = "return {:}(value)".format(converter)
         else:
             return_line = "return value"
@@ -101,8 +109,8 @@ def generate_query_string(command, command_root):
     function_string = \
 """def query_{:s}(self{:}):
     scpi_command = {:}
-    value = self.resource.query(scpi_command)
-    {:}""".format(command['name'], kwargs_string, scpi_command, return_line)
+    value = self.resource.query(scpi_command){:}
+    {:}""".format(command['name'], kwargs_string, scpi_command, pre_line, return_line)
 
     return function_string
 
@@ -157,6 +165,7 @@ string_converter = """def to_string(value):
 
 scpi_preprocessor = """def scpi_preprocess(command_string, *args):
     for i, arg in enumerate(args):
+        args = list(args)
         args[i] = to_string(arg)
     return command_string.format(*args)"""
 
