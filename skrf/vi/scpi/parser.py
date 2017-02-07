@@ -91,7 +91,7 @@ def generate_query_string(command, command_root):
     csv = bool(command.get('csv', False))
     if csv or strip_outer_quotes or converter != "str":
         pre_line = \
-            "\n    value = process_query(value, csv={:}, strip_outer_quotes={:}, converter='{:}')".format(
+            "\n    value = process_query(value, csv={:}, strip_outer_quotes={:}, returns='{:}')".format(
                 csv, strip_outer_quotes, converter
             )
 
@@ -165,14 +165,14 @@ scpi_preprocessor = """def scpi_preprocess(command_string, *args):
         args[i] = to_string(arg)
     return command_string.format(*args)"""
 
-query_processor = """def process_query(query, csv=False, strip_outer_quotes=True, converter="str"):
+query_processor = """def process_query(query, csv=False, strip_outer_quotes=True, returns="str"):
     if strip_outer_quotes is True:
         if query[0] + query[-1] in ('""', "''"):
             query = query[1:-1]
     if csv is True:
         query = query.split(",")
 
-    converter = None if converter == "str" else converters.get(converter, None)
+    converter = None if returns == "str" else converters.get(returns, None)
     if converter:
         if csv is True:
             query = list(map(converter, query))
