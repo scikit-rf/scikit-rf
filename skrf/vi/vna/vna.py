@@ -1,5 +1,5 @@
 """
-This is a model module.  It will not function correctly to pull data.
+This is a model module.  It will not function correctly to pull data, but needs other modules to subclass it.
 """
 import pyvisa
 
@@ -10,8 +10,8 @@ class VNA(object):
 
     ***OPTIONAL METHODS***
     init - setup the instrument resource (i.e., pyvisa)
-    get_twoport_ntwk  * must implement get_snp_network
-    get_oneport_ntwk  * must implement get_snp_network
+    get_twoport  * must implement get_snp_network
+    get_oneport  * must implement get_snp_network
     enter/exit - for using python's with statement
     >>> with Analyzer("GPIB::16::ISNTR") as nwa:
     >>>     ntwk = nwa.measure_twoport_ntwk()
@@ -49,6 +49,8 @@ class VNA(object):
         visa_library: pyvisa is a frontend that can use different visa_library backends, including the python-based
         pyvisa-py backend which can handle SOCKET (though not GPIB) connections.  It should be possible to use this
         library without NI-VISA libraries installed if the analyzer is so configured.
+
+        FRONT-PANEL LOCKOUT: currently lockout is disabled.  Something to look at for the future
         """
 
         rm = pyvisa.ResourceManager(visa_library=kwargs.get("visa_library", ""))
@@ -127,7 +129,7 @@ class VNA(object):
         """
         raise AttributeError("get_snp_network not implemented")
 
-    def get_twoport_ntwk(self, ports=(1, 2), **kwargs):
+    def get_twoport(self, ports=(1, 2), **kwargs):
         """
         :param ports: an interable of the ports to measure
         :return: skrf.Network
@@ -136,7 +138,7 @@ class VNA(object):
             raise ValueError("Must provide a 2-length list of integers for the ports")
         return self.get_snp_network(ports, **kwargs)
 
-    def get_oneport_ntwk(self, port, **kwargs):
+    def get_oneport(self, port=1, **kwargs):
         """
         :param port: which port to measure
         :return: skrf.Network
