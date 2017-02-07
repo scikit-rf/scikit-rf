@@ -32,8 +32,6 @@ def parse_number_with_units(number_string):
     return value, units
 
 
-
-
 def excepthook_(type, value, tback):
     """overrides the default exception hook so that errors will print the error to the command line
     rather than just exiting with code 1 and no other explanation"""
