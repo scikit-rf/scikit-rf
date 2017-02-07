@@ -87,30 +87,19 @@ def generate_query_string(command, command_root):
         """.format(command_string, converter, ", ".join(valid_converters)))
 
     pre_line = ""
-    if command.get("strip_outer_quotes", False) is True:
-        pre_line += "\n    value = value[1:-1]"
-
-    if command.get('csv', False) is True:
-        pre_line += '\n    value = value.split(",")'
-        if converter == "bool":
-            return_line = """return list(map(bool, map(int, value)))"""
-        elif converter != "str":
-            return_line = """return list(map({:}, value))""".format(converter)
-        else:
-            return_line = "return value"
-    else:
-        if converter == "bool":
-            return_line = "return bool(int(value))"
-        elif converter != "str":
-            return_line = "return {:}(value)".format(converter)
-        else:
-            return_line = "return value"
+    strip_outer_quotes = bool(command.get("strip_outer_quotes", True))
+    csv = bool(command.get('csv', False))
+    if csv or strip_outer_quotes or converter != "str":
+        pre_line = \
+            "\n    value = process_query(value, csv={:}, strip_outer_quotes={:}, converter='{:}')".format(
+                csv, strip_outer_quotes, converter
+            )
 
     function_string = \
 """def query_{:s}(self{:}):
     scpi_command = {:}
     value = self.resource.query(scpi_command){:}
-    {:}""".format(command['name'], kwargs_string, scpi_command, pre_line, return_line)
+    return value""".format(command['name'], kwargs_string, scpi_command, pre_line)
 
     return function_string
 
@@ -155,6 +144,13 @@ def parse_branch(branch, set_strings=[], query_strings=[], query_value_strings=[
 
     return set_strings, query_strings, query_value_strings
 
+header_string = """converters = {
+    "str": str,
+    "int": int,
+    "float": float,
+    "bool": lambda x: bool(int(x)),
+}"""
+
 string_converter = """def to_string(value):
     if type(value) in (list, tuple):
         return ",".join(map(str, value))
@@ -169,6 +165,22 @@ scpi_preprocessor = """def scpi_preprocess(command_string, *args):
         args[i] = to_string(arg)
     return command_string.format(*args)"""
 
+query_processor = """def process_query(query, csv=False, strip_outer_quotes=True, converter="str"):
+    if strip_outer_quotes is True:
+        if query[0] + query[-1] in ('""', "''"):
+            query = query[1:-1]
+    if csv is True:
+        query = query.split(",")
+
+    converter = None if converter == "str" else converters.get(converter, None)
+    if converter:
+        if csv is True:
+            query = list(map(converter, query))
+        else:
+            query = converter(query)
+
+    return query"""
+
 class_header = """class SCPI(object):
     def __init__(self, resource):
         self.resource = resource
@@ -182,7 +194,7 @@ with open(driver_yaml_file, 'r') as yaml_file:
     driver_template = yaml.load(yaml_file)
 sets, querys, arrays = parse_branch(driver_template["COMMAND_TREE"])
 
-driver_str = string_converter + "\n\n\n" + scpi_preprocessor + "\n\n\n"
+driver_str = "\n\n\n".join((header_string, string_converter, scpi_preprocessor, query_processor)) + "\n\n\n"
 driver_str += class_header
 
 for s in sets:
