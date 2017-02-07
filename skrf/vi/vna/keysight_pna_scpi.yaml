@@ -12,15 +12,16 @@ COMMAND_TREE:
           PORT: {name: snp_data, query_values: "'<ports=(1, 2)>'"}
     PAR:
       CAT:
-        EXT: {name: meas_name_list, query: "", csv: True, strip_outer_quotes: True}
+        EXT: {name: meas_name_list, query: "", csv: True}
       DEF:
         EXT: {name: create_meas, set: "'<mname>','<param>'"}
       DEL: {name: delete_meas, set: "'<mname>'"}
-      SEL: {name: selected_meas, set: "'<mname>'", query: "", strip_outer_quotes: True}
+      SEL: {name: selected_meas, set: "'<mname>'", query: ""}
       MNUM: {name: selected_meas_by_number, set: <mnum>, query: "", returns: int}
     FORM: {name: display_format, set: <fmt=MLOG>, query: ""}
   DISP:
     WIND<wnum>:
+      CAT: {name: window_trace_numbers, query: "", csv: True, returns: int}
       TRAC<tnum>:
         FEED: {name: display_trace, set: "'<mname>'"}
   SENS<cnum=1>:
@@ -40,12 +41,12 @@ COMMAND_TREE:
       POIN: {name: sweep_n_points, set: <n_points=401>, query: "", returns: int}
   SYST:
     CHAN:
-      CAT: {name: available_channels, query: "", csv: True, returns: int, strip_outer_quotes: True}
+      CAT: {name: available_channels, query: "", csv: True, returns: int}
     ACT:
       CHAN: {name: active_channel, query: "", returns: int}
     MEAS<mnum>:
-      NAME: {name: meas_name_from_number, query: "", strip_outer_quotes: True}
+      NAME: {name: meas_name_from_number, query: ""}
     MEAS:
-      CAT: {name: meas_number_list, query: <cnum>, csv: True, returns: int, strip_outer_quotes: True}
+      CAT: {name: meas_number_list, query: <cnum>, csv: True, returns: int}
   TRIG:
     SOUR: {name: trigger_source, set: <trigger_source=IMM>, query: ""}

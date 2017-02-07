@@ -2,6 +2,8 @@ from collections import OrderedDict
 
 import numpy as np
 import skrf
+import pyvisa
+
 from . import vna
 from . import keysight_pna_scpi
 
@@ -44,7 +46,16 @@ class PNA(vna.VNA):
 
     @property
     def active_channel(self):
-        return self.scpi.query_active_channel()
+        old_timeout = self.resource.timeout
+        self.resource.timeout = 500
+        try:
+            channel = self.scpi.query_active_channel()
+        except pyvisa.VisaIOError:
+            print("No channel active, using 1")
+            channel = 1
+        finally:
+            self.resource.timeout = old_timeout
+        return channel
 
     @active_channel.setter
     def active_channel(self, channel):
@@ -122,7 +133,7 @@ class PNA(vna.VNA):
                     self.resource.timeout = max(sweep_time * 2, 5000)  # give ourselves a minimum 5 seconds for a sweep
                 else:
                     self.resource.timeout = timeout
-                self.write("sweep_mode", cnum=channel["cnum"], char=channel["sweep_mode"])
+                self.scpi.set_sweep_mode(channel["cnum"], channel["sweep_mode"])
                 self.wait_until_finished()
         finally:
             self.resource.clear()
@@ -316,8 +327,6 @@ class PNA(vna.VNA):
         reverse = self.get_measurement(mname=reverse_name, sweep=False)  # type: skrf.Network
         reverse.name = "reverse switch terms"
 
-        self.write("delete_meas", cnum=channel, mname=forward_name)
-        self.write("delete_meas", cnum=channel, mname=reverse_name)
         self.scpi.set_delete_meas(channel, forward_name)
         self.scpi.set_delete_meas(channel, reverse_name)
         return forward, reverse
@@ -374,10 +383,12 @@ class PNA(vna.VNA):
         """
         channel = kwargs.get('channel', self.active_channel)
         window_n = kwargs.get("window_n", '')
-        trace_n = kwargs.get("trace_n", self.ntraces + 1)
+        trace_n = kwargs.get("trace_n",
+                             max(self.scpi.query_window_trace_numbers(window_n)) + 1)
         display_format = kwargs.get('display_format', 'MLOG')
 
         self.scpi.set_display_trace(window_n, trace_n, mname)
+
         self.scpi.set_selected_meas(channel, mname)
         self.scpi.set_display_format(channel, display_format)
 
