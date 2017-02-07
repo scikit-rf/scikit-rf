@@ -6,11 +6,7 @@ from collections import OrderedDict
 from math import sqrt
 
 import numpy as np
-# from qtpy import QtWidgets, QtCore, QtGui
-from PyQt5 import QtWidgets, QtCore, QtGui
-QtCore.Slot = QtCore.pyqtSlot
-QtCore.Signal = QtCore.pyqtSignal
-
+from qtpy import QtWidgets, QtCore, QtGui
 import pyqtgraph as pg
 import skrf
 
@@ -1210,15 +1206,15 @@ class ReflectDialog(QtWidgets.QDialog):
         self.btn_loadPort2.clicked.connect(self.load_s22)
 
     def measure_s11(self):
-        self.s11 = self.analyzer.get_oneport_ntwk(port=1)
+        self.s11 = self.analyzer.get_oneport(port=1)
         self.evaluate()
 
     def measure_s22(self):
-        self.s22 = self.analyzer.get_oneport_ntwk(port=2)
+        self.s22 = self.analyzer.get_oneport(port=2)
         self.evaluate()
 
     def measure_both(self):
-        self.reflect_2port = self.analyzer.get_twoport_ntwk()
+        self.reflect_2port = self.analyzer.get_twoport()
         self.evaluate()
 
     def load_s11(self):
