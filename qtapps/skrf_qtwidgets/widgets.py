@@ -225,8 +225,6 @@ class NetworkListItem(QtWidgets.QListWidgetItem):
 
 
 class NetworkListWidget(QtWidgets.QListWidget):
-    MEASUREMENT_PREFIX = "meas"
-
     item_removed = QtCore.Signal()
     item_updated = QtCore.Signal(object)
     save_single_requested = QtCore.Signal(object, str)
@@ -241,6 +239,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
         self.save_single_requested.connect(save_NetworkListItem)
         self.itemDelegate().commitData.connect(self.item_text_updated)
         self.itemSelectionChanged.connect(self.set_active_networks)
+        self.itemClicked.connect(self.set_active_networks)
         self.item_updated.connect(self.set_active_network)
 
         self._ntwk_plot = None
@@ -371,11 +370,13 @@ class NetworkListWidget(QtWidgets.QListWidget):
         :type item: NetworkListItem
         :return:
         """
+        self.blockSignals(True)
         if item is None:
             return
 
         if self.ntwk_plot:
             self.ntwk_plot.set_networks(item.ntwk, item.ntwk_corrected)
+        self.blockSignals(False)
 
     def load_named_ntwk(self, ntwk, name, activate=True):
         item = self.get_named_item(name)
@@ -483,7 +484,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
             dialog.measurements_available.connect(self.load_networks)
             dialog.exec_()
         #     meas = nwa.measure_twoport_ntwk()
-        #     meas.name = self.MEASUREMENT_PREFIX  # unique name processed in load_network
+        #     meas.name = self.name_prefix  # unique name processed in load_network
         # self.load_network(meas)
 
     def get_load_button(self, label="Load"):
@@ -757,6 +758,8 @@ class NetworkPlotWidget(QtWidgets.QWidget):
             self.last_plot = "rectangular"
 
     def plot_ntwk(self):
+        import time
+        print("plotting", time.time())
         if self.use_corrected and self.ntwk_corrected is not None:
             ntwk = self.ntwk_corrected
         else:

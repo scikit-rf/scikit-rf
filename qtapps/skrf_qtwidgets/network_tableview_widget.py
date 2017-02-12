@@ -162,15 +162,16 @@ class NetworkTableModel(QtCore.QAbstractTableModel):
     def flags(self, index):
         return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
 
-one_port = skrf.Network(r"C:\Coding\Python\scikit-rf\qtapps\skrf_qtwidgets\example_data\horn antenna.s1p")
-two_port = skrf.Network(r"C:\Coding\Python\scikit-rf\qtapps\skrf_qtwidgets\example_data\ring slot array simulation.s2p")
+if __name__ == "__main__":
+    one_port = skrf.Network(r"C:\Coding\Python\scikit-rf\qtapps\skrf_qtwidgets\example_data\horn antenna.s1p")
+    two_port = skrf.Network(r"C:\Coding\Python\scikit-rf\qtapps\skrf_qtwidgets\example_data\ring slot array simulation.s2p")
 
-table_header = ['Network', 'Length (m)']
-networks = [
-    ThruItem(one_port, 0.0),
-    ThruItem(two_port, 0.0),
-]
-app = QtWidgets.QApplication([])
-win = MyWindow(networks, table_header)
-win.show()
-app.exec_()
+    table_header = ['Network', 'Length (m)']
+    networks = [
+        ThruItem(one_port, 0.0),
+        ThruItem(two_port, 0.0),
+    ]
+    app = QtWidgets.QApplication([])
+    win = MyWindow(networks, table_header)
+    win.show()
+    app.exec_()
