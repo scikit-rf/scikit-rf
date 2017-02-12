@@ -1,14 +1,18 @@
-from collections import OrderedDict
+from collections import OrderedDict, Iterable
 
 import numpy as np
 import skrf
 import pyvisa
 
-from . import vna
+from . import abcvna
 from . import keysight_pna_scpi
 
 
-class PNA(vna.VNA):
+class PNA(abcvna.VNA):
+    """
+    Class for modern Keysight/Agilent Peformance Network Analyzers
+    """
+
     DEFAULT_VISA_ADDRESS = "GPIB::16::INSTR"
     NAME = "Keysight PNA"
     NPORTS = 2
@@ -16,16 +20,22 @@ class PNA(vna.VNA):
     SCPI_VERSION_TESTED = 'A.09.20.08'
 
     def __init__(self, address=DEFAULT_VISA_ADDRESS, **kwargs):
+        """
+        initialization of PNA Class
+
+        Parameters
+        ----------
+        address : str
+            visa resource string (full string or ip address)
+        kwargs : dict
+            interface (str), port (int), timeout (int),
+        :param address:
+        :param kwargs:
+        """
         super(PNA, self).__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = keysight_pna_scpi.SCPI(self.resource)
         self.use_binary()
-
-        # convenience functions
-        self.write = self.resource.write
-        self.read = self.resource.read
-        self.query = self.resource.query
-        self.query_values = self.resource.query_values
 
     def use_binary(self):
         """setup the analyzer to transfer in binary which is faster, especially for large datasets"""
@@ -36,13 +46,6 @@ class PNA(vna.VNA):
     def use_ascii(self):
         self.resource.write(':FORM:DATA ASCII')
         self.resource.values_format.use_ascii(converter='f', separator=',', container=np.array)
-
-    @property
-    def idn(self):
-        return self.resource.query("*IDN?")
-
-    def wait_until_finished(self):
-        self.resource.query("*OPC?")
 
     @property
     def active_channel(self):
@@ -60,9 +63,14 @@ class PNA(vna.VNA):
     @active_channel.setter
     def active_channel(self, channel):
         """
-        :param channel: int
-        :return:
+        Set the active channel on the analyzer
 
+        Parameters
+        ----------
+        channel : int
+
+        Notes
+        -----
         There is no specific command to activate a channel, so we ask which channel we want and then activate the first
         trace on that channel.  We do this because if the analyzer gets into a state where it doesn't recognize
         any activated measurements, the get_snp_network method will fail, and possibly others as well.  That is why in
@@ -78,10 +86,14 @@ class PNA(vna.VNA):
 
     def sweep(self, **kwargs):
         """
-        :param kwargs: channel("all", int or list of channels), timeout(milliseconds)
-        :return:
+        Initialize a fresh sweep of data on the specified channels
 
-        trigger a fresh sweep on the specified channels ("all" if no channel specified)
+        Parameters
+        ----------
+        kwargs : dict
+            channel ("all", int or list of channels), timeout (milliseconds)
+
+        trigger a fresh sweep on the specified channels (default is "all" if no channel specified)
         Autoset timeout and sweep mode based upon the analyzers current averaging setting,
         and then return to the prior state of continuous trigger or hold.
         """
@@ -145,11 +157,20 @@ class PNA(vna.VNA):
 
     def get_snp_network(self, ports, **kwargs):
         """
-        :param ports: list of ports
-        :param kwargs: channel(int), sweep(bool), name(str), f_unit(str)
-        :return: an n-port skrf.Network object
+        return n-port network as an Network object
 
-        general function to take in a list of ports and return the full snp network as an skrf.Network for those ports
+        Parameters
+        ----------
+        ports : Iterable
+            a iterable of integers designating the ports to query
+        kwargs : dict
+            channel(int), sweep(bool), name(str), f_unit(str)
+
+        Returns
+        -------
+        Network
+
+        general function to take in a list of ports and return the full snp network as a Network object
         """
         self.resource.clear()
 
@@ -186,19 +207,6 @@ class PNA(vna.VNA):
         return ntwk
 
     def get_list_of_traces(self, **kwargs):
-        """
-        :return: list
-         the purpose of this function is to query the analyzer for all available traces on all channels
-         it then returns a list where each list-item represents one available trace.
-
-         Each list item is a python dict with all necessary information to retrieve the trace as an skrf.Network object:
-         list-item keys are:
-         * "name": the name of the measurement e.g. "CH1_S11_1"
-         * "channel": the channel number the measurement is on
-         * "measurement number": the measurement number (MNUM in SCPI)
-         * "parameter": the parameter of the measurement, e.g. "S11", "S22" or "a1b1,2"
-         * "label": the text the item will use to identify itself to the user e.g "Measurement 1 on Channel 1"
-        """
         self.resource.clear()
         traces = []
         channels = self.query("available_channels").split(",")
@@ -220,9 +228,23 @@ class PNA(vna.VNA):
 
     def get_traces(self, traces, **kwargs):
         """
-        :param traces: list of type that is exported by self.get_list_of_traces
-        :param kwargs: sweep(bool), name_prefix(str)
-        :return:
+        retrieve traces as 1-port networks from a list returned by get_list_of_traces
+
+        Parameters
+        ----------
+        traces : list
+            list of type that is exported by self.get_list_of_traces
+        kwargs : dict
+            sweep (bool), name_prefix (str)
+
+        Returns
+        -------
+        list
+            a list of 1-port networks representing the desired traces
+
+        Notes
+        -----
+        There is no current way to distinguish between traces and 1-port networks within skrf
         """
         self.resource.clear()
         sweep = kwargs.get("sweep", False)
@@ -258,6 +280,18 @@ class PNA(vna.VNA):
         return traces
 
     def get_frequency(self, **kwargs):
+        """
+        get an skrf.Frequency object for the current channel
+
+        Parameters
+        ----------
+        kwargs : dict
+            channel (int), f_unit (str)
+
+        Returns
+        -------
+        skrf.Frequency
+        """
         self.resource.clear()
         channel = kwargs.get("channel", self.active_channel)
         use_log = "LOG" in self.scpi.query_sweep_type(channel).upper()
@@ -274,12 +308,6 @@ class PNA(vna.VNA):
         return frequency
 
     def set_frequency_sweep(self, f_start, f_stop, f_npoints, **kwargs):
-        """
-        :param f_start: start frequency in units = f_unit
-        :param f_stop: start frequency in units = f_unit
-        :param f_npoints: number of points in the frequency sweep
-        :return:
-        """
         f_unit = kwargs.get("f_unit", "hz").lower()
         if f_unit != "hz":
             f_start = self.to_hz(f_start, f_unit)
@@ -290,14 +318,6 @@ class PNA(vna.VNA):
         self.scpi.set_sweep_n_points(f_npoints)
 
     def get_switch_terms(self, ports=(1, 2), **kwargs):
-        """
-        Get switch terms and return them as a tuple of Network objects.
-
-        Returns
-        --------
-        forward, reverse : oneport switch term Networks
-        """
-
         self.resource.clear()
         p1, p2 = ports
 
@@ -332,6 +352,22 @@ class PNA(vna.VNA):
         return forward, reverse
 
     def get_measurement(self, mname=None, mnum=None, **kwargs):
+        """
+        get a measurement trace from the analyzer, specified by either name or number
+
+        Parameters
+        ----------
+        mname : str
+            the name of the measurement, e.g. 'CH1_S11_1'
+        mnum : int
+            the number of number of the measurement
+        kwargs : dict
+            channel (int), sweep (bool)
+
+        Returns
+        -------
+        skrf.Network
+        """
         if mname is None and mnum is None:
             raise ValueError("must provide either a measurement mname or a mnum")
 
@@ -345,8 +381,16 @@ class PNA(vna.VNA):
 
     def get_active_trace_as_network(self, **kwargs):
         """
-        :param kwargs:
-        :return:
+        get the active trace as a network object
+
+        Parameters
+        ----------
+        kwargs : dict
+            channel (int), sweep (bool)
+
+        Returns
+        -------
+        skrf.Network
         """
         channel = self.active_channel
         sweep = kwargs.get("sweep", False)
@@ -356,15 +400,21 @@ class PNA(vna.VNA):
         ntwk = skrf.Network()
         sdata = self.scpi.query_data(channel, "SDATA")
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
-        ntwk.frequency = self.get_frequency(cnum=channel)
+        ntwk.frequency = self.get_frequency(channel=channel)
         return ntwk
 
     def create_meas(self, mname, param, **kwargs):
         """
-        :param mname: str, name of the measurement  **WARNING**, not all names behave well
-        :param param: str, analyzer parameter, e.g.: S11 ; a1/b1,1 ; A/R1,1
-        :param kwargs: channel
-        :return:
+        Create a new measurement trace on the analyzer
+
+        Parameters
+        ----------
+        mname: str
+            name of the measurement  **WARNING**, not all names behave well
+        param: str
+            analyzer parameter, e.g.: S11 ; a1/b1,1 ; A/R1,1
+        kwargs : dict
+            channel(int)
         """
         channel = kwargs.get("channel", self.active_channel)
         self.scpi.set_create_meas(channel, mname, param)
@@ -372,14 +422,19 @@ class PNA(vna.VNA):
 
     def display_trace(self, mname, **kwargs):
         """
-        :param mname: str
-        :param kwargs: channel(int), window_n(int), trace_n(int), display_format(str)
-        :return:
+        Display measurement name on the analyzer display window
 
-        Display a given measurement on specified trace number.
+        Parameters:
+        mname : str
+            the name of the measurement, e.g. 'CH1_S11_1'
+        kwargs : dict
+            channel(int), window_n(int), trace_n(int), display_format(str)
 
-        display_format must be one of: MLINear, MLOGarithmic, PHASe, UPHase, IMAGinary, REAL, POLar, SMITh,
-            SADMittance, SWR, GDELay, KELVin, FAHRenheit, CELSius
+        Keyword Arguments
+        ----------------
+        display_format : str
+            must be one of: MLINear, MLOGarithmic, PHASe, UPHase, IMAGinary, REAL, POLar, SMITh,
+                            SADMittance, SWR, GDELay, KELVin, FAHRenheit, CELSius
         """
         channel = kwargs.get('channel', self.active_channel)
         window_n = kwargs.get("window_n", '')
@@ -394,13 +449,20 @@ class PNA(vna.VNA):
 
     def get_meas_list(self, **kwargs):
         """
-        :param kwargs: channel
-        :type kwargs: dict
-        :return: list of tuples of the form, (name, measurement)
-        :rtype: list
+        Convenience function to return a nicely arranged list of the measurement, parameter catalogue
 
-        Return a list of measurement names on all channels.  If channel is provided to kwargs, then only measurements
-        for that channel are queried
+        Parameters
+        ----------
+        kwargs : dict
+            channel : int
+
+        Returns
+        -------
+        list
+            list of tuples of the form: (name, measurement)
+
+        Return a list of measurement names on all channels.
+        If channel is provided to kwargs, then only measurements for that channel are queried
         """
         channel = kwargs.get("channel", self.active_channel)
         meas_list = self.scpi.query_meas_name_list(channel)
@@ -409,16 +471,21 @@ class PNA(vna.VNA):
         return [(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)]
 
     @property
-    def ntraces(self, **kwargs):
+    def ntraces(self):
         """
-        :param kwargs: channel
-        :return: The number of measurement traces that exist on the current channel
+        Get the number of traces on the active channel
 
+        Returns
+        -------
+        int
+            The number of measurement traces that exist on the current channel
+
+        Notes
+        -----
         Note that this may not be the same as the number of traces displayed because a measurement may exist,
         but not be associated with a trace.
         """
-        channel = kwargs.get("channel", self.active_channel)
-        meas_list = self.scpi.query_meas_number_list(channel)
+        meas_list = self.scpi.query_meas_number_list(self.active_channel)
         return 0 if meas_list is None else len(meas_list)
 
 

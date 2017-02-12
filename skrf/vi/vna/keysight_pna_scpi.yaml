@@ -1,8 +1,8 @@
 DEFAULTS:
   csv: False
   returns: str
-  strip_outer_quotes: False
-  arg_val: ""
+  strip_outer_quotes: True
+  kwarg_value: ""
 COMMAND_TREE:
   CALC<cnum=1>:
     DATA:

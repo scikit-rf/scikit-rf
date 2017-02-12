@@ -59,7 +59,7 @@ class VNA(object):
         address : str
             a visa resource string, or an ip address
         kwargs : dict
-            visa_library (str), timemout in milliseconds (int)
+            visa_library (str), timemout in milliseconds (int), card_number (int), interface (str)
 
         Notes
         -----
@@ -75,6 +75,10 @@ class VNA(object):
             to use this library without NI-VISA libraries installed if the analyzer is so configured.
         timeout : int
             milliseconds
+        interface : str
+            one of "SOCKET", "GPIB"
+        card_number : int
+            for GPIB, default is usually 0
         """
 
         rm = pyvisa.ResourceManager(visa_library=kwargs.get("visa_library", ""))
@@ -98,6 +102,12 @@ class VNA(object):
 
         self.nports = self.NPORTS  # store an instance variable in case it needs to be modified later
 
+        # convenience functions
+        self.write = self.resource.write
+        self.read = self.resource.read
+        self.query = self.resource.query
+        self.query_values = self.resource.query_values
+
     def __enter__(self):
         """
         context manager entry point
@@ -120,6 +130,13 @@ class VNA(object):
         exc_tb : traceback
         """
         self.resource.close()
+
+    @property
+    def idn(self):
+        return self.resource.query("*IDN?")
+
+    def wait_until_finished(self):
+        self.resource.query("*OPC?")
 
     def get_list_of_traces(self, **kwargs):
         """
