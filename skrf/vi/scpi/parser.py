@@ -160,8 +160,8 @@ string_converter = """def to_string(value):
         return str(value)"""
 
 scpi_preprocessor = """def scpi_preprocess(command_string, *args):
+    args = list(args)
     for i, arg in enumerate(args):
-        args = list(args)
         args[i] = to_string(arg)
     return command_string.format(*args)"""
 
@@ -186,23 +186,29 @@ class_header = """class SCPI(object):
         self.resource = resource
 """
 
-driver_yaml_file = os.path.abspath(sys.argv[1])
-driver_dir = os.path.dirname(driver_yaml_file)
-driver = os.path.splitext(driver_yaml_file)[0] + ".py"
 
-with open(driver_yaml_file, 'r') as yaml_file:
-    driver_template = yaml.load(yaml_file)
-sets, querys, arrays = parse_branch(driver_template["COMMAND_TREE"])
+def parse_yaml_file(driver_yaml_file):
+    driver_dir = os.path.dirname(driver_yaml_file)
+    driver = os.path.splitext(driver_yaml_file)[0] + ".py"
 
-driver_str = "\n\n\n".join((header_string, string_converter, scpi_preprocessor, query_processor)) + "\n\n\n"
-driver_str += class_header
+    with open(driver_yaml_file, 'r') as yaml_file:
+        driver_template = yaml.load(yaml_file)
+    sets, querys, arrays = parse_branch(driver_template["COMMAND_TREE"])
 
-for s in sets:
-    driver_str += "\n" + indent(s, 1) + "\n"
-for q in querys:
-    driver_str += "\n" + indent(q, 1) + "\n"
-for a in arrays:
-    driver_str += "\n" + indent(a, 1) + "\n"
+    driver_str = "\n\n\n".join((header_string, string_converter, scpi_preprocessor, query_processor)) + "\n\n\n"
+    driver_str += class_header
 
-with open(driver, 'w') as scpi_driver:
-    scpi_driver.write(driver_str)
+    for s in sets:
+        driver_str += "\n" + indent(s, 1) + "\n"
+    for q in querys:
+        driver_str += "\n" + indent(q, 1) + "\n"
+    for a in arrays:
+        driver_str += "\n" + indent(a, 1) + "\n"
+
+    with open(driver, 'w') as scpi_driver:
+        scpi_driver.write(driver_str)
+
+
+if __name__ == "__main__":
+    driver_yaml_file = os.path.abspath(sys.argv[1])
+    parse_yaml_file(driver_yaml_file)

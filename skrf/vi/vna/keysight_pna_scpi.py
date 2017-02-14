@@ -16,8 +16,8 @@ def to_string(value):
 
 
 def scpi_preprocess(command_string, *args):
+    args = list(args)
     for i, arg in enumerate(args):
-        args = list(args)
         args[i] = to_string(arg)
     return command_string.format(*args)
 
@@ -43,28 +43,8 @@ class SCPI(object):
     def __init__(self, resource):
         self.resource = resource
 
-    def set_display_format(self, cnum=1, fmt="MLOG"):
-        scpi_command = scpi_preprocess(":CALC{:}:FORM {:}", cnum, fmt)
-        self.resource.write(scpi_command)
-
-    def set_create_meas(self, cnum=1, mname="", param=""):
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:DEF:EXT '{:}','{:}'", cnum, mname, param)
-        self.resource.write(scpi_command)
-
-    def set_selected_meas(self, cnum=1, mname=""):
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:SEL '{:}'", cnum, mname)
-        self.resource.write(scpi_command)
-
-    def set_delete_meas(self, cnum=1, mname=""):
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:DEL '{:}'", cnum, mname)
-        self.resource.write(scpi_command)
-
-    def set_selected_meas_by_number(self, cnum=1, mnum=""):
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:MNUM {:}", cnum, mnum)
-        self.resource.write(scpi_command)
-
-    def set_data(self, cnum=1, fmt="SDATA", data="None"):
-        scpi_command = scpi_preprocess(":CALC{:}:DATA {:},{:}", cnum, fmt, data)
+    def set_display_trace(self, wnum="", tnum="", mname=""):
+        scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:FEED '{:}'", wnum, tnum, mname)
         self.resource.write(scpi_command)
 
     def set_groups_count(self, cnum=1, groups_count=1):
@@ -103,48 +83,44 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":SENS{:}:FREQ:STOP {:}", cnum, freq)
         self.resource.write(scpi_command)
 
+    def set_display_format(self, cnum=1, fmt="MLOG"):
+        scpi_command = scpi_preprocess(":CALC{:}:FORM {:}", cnum, fmt)
+        self.resource.write(scpi_command)
+
+    def set_data(self, cnum=1, fmt="SDATA", data="None"):
+        scpi_command = scpi_preprocess(":CALC{:}:DATA {:},{:}", cnum, fmt, data)
+        self.resource.write(scpi_command)
+
+    def set_create_meas(self, cnum=1, mname="", param=""):
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:DEF:EXT '{:}','{:}'", cnum, mname, param)
+        self.resource.write(scpi_command)
+
+    def set_selected_meas(self, cnum=1, mname=""):
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:SEL '{:}'", cnum, mname)
+        self.resource.write(scpi_command)
+
+    def set_delete_meas(self, cnum=1, mname=""):
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:DEL '{:}'", cnum, mname)
+        self.resource.write(scpi_command)
+
+    def set_selected_meas_by_number(self, cnum=1, mnum=""):
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:MNUM {:}", cnum, mnum)
+        self.resource.write(scpi_command)
+
     def set_trigger_source(self, trigger_source="IMM"):
         scpi_command = scpi_preprocess(":TRIG:SOUR {:}", trigger_source)
         self.resource.write(scpi_command)
 
-    def set_display_trace(self, wnum="", tnum="", mname=""):
-        scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:FEED '{:}'", wnum, tnum, mname)
-        self.resource.write(scpi_command)
-
-    def query_display_format(self, cnum=1):
-        scpi_command = scpi_preprocess(":CALC{:}:FORM?", cnum)
+    def query_window_trace_numbers(self, wnum=""):
+        scpi_command = scpi_preprocess(":DISP:WIND{:}:CAT?", wnum)
         value = self.resource.query(scpi_command)
-        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
-        return value
-
-    def query_meas_name_list(self, cnum=1):
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:CAT:EXT?", cnum)
-        value = self.resource.query(scpi_command)
-        value = process_query(value, csv=True, strip_outer_quotes=True, returns='str')
-        return value
-
-    def query_selected_meas(self, cnum=1):
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:SEL?", cnum)
-        value = self.resource.query(scpi_command)
-        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
-        return value
-
-    def query_selected_meas_by_number(self, cnum=1):
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:MNUM?", cnum)
-        value = self.resource.query(scpi_command)
-        value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
+        value = process_query(value, csv=True, strip_outer_quotes=True, returns='int')
         return value
 
     def query_groups_count(self, cnum=1):
         scpi_command = scpi_preprocess(":SENS{:}:SWE:GRO:COUN?", cnum)
         value = self.resource.query(scpi_command)
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
-        return value
-
-    def query_sweep_time(self, cnum=1):
-        scpi_command = scpi_preprocess(":SENS{:}:SWE:TIME?", cnum)
-        value = self.resource.query(scpi_command)
-        value = process_query(value, csv=False, strip_outer_quotes=True, returns='float')
         return value
 
     def query_sweep_type(self, cnum=1):
@@ -163,6 +139,12 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":SENS{:}:SWE:MODE?", cnum)
         value = self.resource.query(scpi_command)
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
+        return value
+
+    def query_sweep_time(self, cnum=1):
+        scpi_command = scpi_preprocess(":SENS{:}:SWE:TIME?", cnum)
+        value = self.resource.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='float')
         return value
 
     def query_averaging_count(self, cnum=1):
@@ -195,6 +177,36 @@ class SCPI(object):
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='float')
         return value
 
+    def query_display_format(self, cnum=1):
+        scpi_command = scpi_preprocess(":CALC{:}:FORM?", cnum)
+        value = self.resource.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
+        return value
+
+    def query_selected_meas(self, cnum=1):
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:SEL?", cnum)
+        value = self.resource.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
+        return value
+
+    def query_meas_name_list(self, cnum=1):
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:CAT:EXT?", cnum)
+        value = self.resource.query(scpi_command)
+        value = process_query(value, csv=True, strip_outer_quotes=True, returns='str')
+        return value
+
+    def query_selected_meas_by_number(self, cnum=1):
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:MNUM?", cnum)
+        value = self.resource.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
+        return value
+
+    def query_available_channels(self):
+        scpi_command = ":SYST:CHAN:CAT?"
+        value = self.resource.query(scpi_command)
+        value = process_query(value, csv=True, strip_outer_quotes=True, returns='int')
+        return value
+
     def query_meas_name_from_number(self, mnum=""):
         scpi_command = scpi_preprocess(":SYST:MEAS{:}:NAME?", mnum)
         value = self.resource.query(scpi_command)
@@ -213,22 +225,10 @@ class SCPI(object):
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
         return value
 
-    def query_available_channels(self):
-        scpi_command = ":SYST:CHAN:CAT?"
-        value = self.resource.query(scpi_command)
-        value = process_query(value, csv=True, strip_outer_quotes=True, returns='int')
-        return value
-
     def query_trigger_source(self):
         scpi_command = ":TRIG:SOUR?"
         value = self.resource.query(scpi_command)
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
-        return value
-
-    def query_window_trace_numbers(self, wnum=""):
-        scpi_command = scpi_preprocess(":DISP:WIND{:}:CAT?", wnum)
-        value = self.resource.query(scpi_command)
-        value = process_query(value, csv=True, strip_outer_quotes=True, returns='int')
         return value
 
     def query_data(self, cnum=1, fmt="SDATA"):
