@@ -3,7 +3,7 @@ import skrf
 
 from . import qt
 from . import widgets
-from . import network_tableview_widget
+from . import numeric_inputs
 
 
 class CalibratedMeasurementsWidget(QtWidgets.QWidget):
@@ -234,10 +234,6 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         return skrf.calibration.TRL(measured, n_reflects=len(reflects), switch_terms=switch_terms)
 
 
-class LineList(widgets.NetworkListWidget):
-    pass
-
-
 class NISTTRLStandardsWidget(QtWidgets.QWidget):
     THRU_ID = "thru"
     SWITCH_TERMS_ID_FORWARD = "forward switch terms"
@@ -248,6 +244,46 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
         self.verticalLayout_main.setContentsMargins(6, 6, 6, 6)
+
+        self.lineEdit_epsEstimate = numeric_inputs.DoubleLineEdit(1.0)
+        self.comboBox_rootChoice = QtWidgets.QComboBox()
+        self.comboBox_rootChoice.addItems(("real", "imag", "auto"))
+        self.lineEdit_port1Distance = numeric_inputs.InputWithUnits("mm", 0)
+        self.lineEdit_port2Distance = numeric_inputs.InputWithUnits("mm", 0)
+        self.lineEdit_thruLength = numeric_inputs.InputWithUnits("mm", 0)
+        self.lineEdit_referencePlane = numeric_inputs.InputWithUnits("mm", 0)
+
+        self.label_epsEstimate = QtWidgets.QLabel("eps est.")
+        self.label_rootChoice = QtWidgets.QLabel("root choice")
+        self.label_port1Distance = QtWidgets.QLabel("port1 dist (mm)")
+        self.label_port2Distance = QtWidgets.QLabel("port2 dist (mm)")
+        self.label_thruLength = QtWidgets.QLabel("thru length (mm)")
+        self.label_referencePlane = QtWidgets.QLabel("ref plane (mm)")
+        self.verticalLayout_parametersCol1 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_parametersCol1.addWidget(self.label_epsEstimate)
+        self.verticalLayout_parametersCol1.addWidget(self.label_port1Distance)
+        self.verticalLayout_parametersCol1.addWidget(self.label_thruLength)
+        self.verticalLayout_parametersCol2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_parametersCol2.addWidget(self.lineEdit_epsEstimate)
+        self.verticalLayout_parametersCol2.addWidget(self.lineEdit_port1Distance)
+        self.verticalLayout_parametersCol2.addWidget(self.lineEdit_thruLength)
+        self.verticalLayout_parametersCol3 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_parametersCol3.addWidget(self.label_rootChoice)
+        self.verticalLayout_parametersCol3.addWidget(self.label_port2Distance)
+        self.verticalLayout_parametersCol3.addWidget(self.label_referencePlane)
+        self.verticalLayout_parametersCol4 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_parametersCol4.addWidget(self.comboBox_rootChoice)
+        self.verticalLayout_parametersCol4.addWidget(self.lineEdit_port2Distance    )
+        self.verticalLayout_parametersCol4.addWidget(self.lineEdit_referencePlane)
+        self.horizontalLayout_parameters = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol1)
+        self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol2)
+        self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol3)
+        self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol4)
+        self.verticalLayout_main.addLayout(self.horizontalLayout_parameters)
+
+        self.hline = widgets.qt.QHLine()
+        self.verticalLayout_main.addWidget(self.hline)
 
         self.label_thru = QtWidgets.QLabel("Thru")
         self.btn_measureThru = QtWidgets.QPushButton("Measure")
@@ -279,10 +315,17 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.horizontalLayout_reflect.addWidget(self.btn_loadReflect)
         self.verticalLayout_main.addLayout(self.horizontalLayout_reflect)
 
-        self.listWidget_reflect = widgets.NetworkListWidget(self)
+        refl_parameters = [
+            {"name": "refl_type", "type": "str", "default": "short", "combo_list": ["short", "open"]},
+            {"name": "offset", "type": "float", "default": 0.0, "units": "mm"}
+        ]
+        self.listWidget_reflect = widgets.ParameterizedNetworkListWidget(self, refl_parameters)
+        self.listWidget_reflect.label_parameters = ["refl_type", "offset"]
         self.verticalLayout_main.addWidget(self.listWidget_reflect)
 
-        self.listWidget_line = widgets.NetworkListWidget(self)
+        line_parameters = [{"name": "length", "type": "float", "default": 1.0, "units": "mm"}]
+        self.listWidget_line = widgets.ParameterizedNetworkListWidget(self, line_parameters)
+        self.listWidget_line.label_parameters = ["length"]
         self.listWidget_line.name_prefix = "line"
         self.label_line = QtWidgets.QLabel("Line")
         self.btn_measureLine = self.listWidget_line.get_measure_button()
@@ -394,4 +437,33 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
             qt.error_popup("\n\n".join(error_messages))
             return
 
-        return skrf.calibration.TRL(measured, n_reflects=len(reflects), switch_terms=switch_terms)
+        refl_types = self.listWidget_reflect.get_parameter_from_all("refl_type")
+        Grefls = [-1 if rtype == "short" else 1 for rtype in refl_types]
+        offsets = self.listWidget_reflect.get_parameter_from_all("offset")
+        refl_offset = [roff / 1000 for roff in offsets]  # convert mm to m
+
+        line_lengths = self.listWidget_line.get_parameter_from_all("length")
+        l = [length / 1000 for length in line_lengths]  # convert mm to m
+        l.insert(0, self.lineEdit_thruLength.get_value("m"))
+
+        er_est = self.lineEdit_epsEstimate.get_value()
+        p1_len_est = self.lineEdit_port1Distance.get_value("m")
+        p2_len_est = self.lineEdit_port2Distance.get_value("m")
+        ref_plane = self.lineEdit_referencePlane.get_value("m")
+        gamma_root_choice = self.comboBox_rootChoice.currentText()
+
+        print(Grefls)
+        print(refl_offset)
+        print(l)
+        print(er_est)
+        print(p1_len_est, p2_len_est)
+        print(ref_plane)
+        print(gamma_root_choice)
+
+        cal = skrf.calibration.NISTMultilineTRL(
+            measured, Grefls, l,
+            er_est=er_est, refl_offset=refl_offset, p1_len_est=p1_len_est, p2_len_est=p2_len_est,
+            ref_plane=ref_plane, gamma_root_choice=gamma_root_choice, switch_terms=switch_terms
+        )
+
+        return cal

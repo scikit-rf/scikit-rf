@@ -1,16 +1,14 @@
-"""NOT WORKING YET!"""
-
 from skrf_qtwidgets import qt, widgets, calibration_widgets
 from qtpy import QtWidgets, QtCore
 
 
-class TRLWidget(QtWidgets.QWidget):
+class NISTTRLWidget(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        super(TRLWidget, self).__init__(parent)
+        super(NISTTRLWidget, self).__init__(parent)
 
         # --- Setup UI --- #
-        self.resize(825, 575)
-        self.setWindowTitle("Multiline TRL Calibration")
+        self.resize(950, 575)
+        self.setWindowTitle("NIST Multiline TRL Calibration")
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
 
         self.vna_controller = widgets.VnaController()
@@ -39,4 +37,4 @@ class TRLWidget(QtWidgets.QWidget):
         self.tab_measurements.connect_plot(self.ntwk_plot)
         self.tab_measurements.get_calibration = self.tab_calStandards.get_calibration
 
-app = qt.single_widget_application(TRLWidget, False)
+app = qt.single_widget_application(TRLWidget, splash_screen=False)
