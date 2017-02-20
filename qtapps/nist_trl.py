@@ -37,4 +37,4 @@ class NISTTRLWidget(QtWidgets.QWidget):
         self.tab_measurements.connect_plot(self.ntwk_plot)
         self.tab_measurements.get_calibration = self.tab_calStandards.get_calibration
 
-app = qt.single_widget_application(TRLWidget, splash_screen=False)
+app = qt.single_widget_application(NISTTRLWidget, splash_screen=False)
