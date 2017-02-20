@@ -279,7 +279,7 @@ class Media(object):
 
         gamma = self.gamma
         if bc:
-                return 1.0*theta/npy.imag(gamma[gamma.size/2])
+                return 1.0*theta/npy.imag(gamma[int(gamma.size/2)])
         else:
                 return 1.0*theta/npy.imag(gamma)
 
