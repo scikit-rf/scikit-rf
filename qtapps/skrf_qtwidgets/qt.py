@@ -12,6 +12,20 @@ from . import cfg  # must import cfg before qtpy to properly parse qt-bindings
 from qtpy import QtCore, QtWidgets, QtGui
 
 
+class QHLine(QtWidgets.QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QtWidgets.QFrame.HLine)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)
+
+
+class QVLine(QtWidgets.QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QtWidgets.QFrame.VLine)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)
+
+
 def setup_style(style=cfg.preferred_style):
     available_styles = QtWidgets.QStyleFactory.keys()
     if style:

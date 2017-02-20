@@ -1,19 +1,16 @@
-import sys
 import os
-import traceback
 import re
+import sys
+import traceback
 from collections import OrderedDict
 from math import sqrt
 
 import numpy as np
-# from qtpy import QtWidgets, QtCore, QtGui
-from PyQt5 import QtWidgets, QtCore, QtGui
-QtCore.Slot = QtCore.pyqtSlot
-QtCore.Signal = QtCore.pyqtSignal
-
 import pyqtgraph as pg
-import skrf
+from qtpy import QtWidgets, QtCore, QtGui
 
+import skrf
+from . import numeric_inputs
 from . import qt
 from . import smith_chart
 from .analyzers import analyzers
@@ -220,22 +217,24 @@ class NetworkListItem(QtWidgets.QListWidgetItem):
         super(NetworkListItem, self).__init__(parent)
         self.ntwk = None
         self.ntwk_corrected = None
+        self.parameters = {}
 
-    def update_ntwk_names(self):
+    def update_ntwk_names(self, name):
         if isinstance(self.ntwk, skrf.Network):
-            self.ntwk.name = self.text()
+            self.ntwk.name = name
         if isinstance(self.ntwk_corrected, skrf.Network):
-            self.ntwk_corrected.name = self.text() + "-cal"
+            self.ntwk_corrected.name = name + "-cal"
+
+    def set_text(self):
+        self.setText(self.ntwk.name)
 
 
 class NetworkListWidget(QtWidgets.QListWidget):
-    MEASUREMENT_PREFIX = "meas"
-
     item_removed = QtCore.Signal()
     item_updated = QtCore.Signal(object)
     save_single_requested = QtCore.Signal(object, str)
 
-    def __init__(self, ntwk_plot=None, name_prefix='meas', parent=None):
+    def __init__(self, name_prefix='meas', parent=None):
         super(NetworkListWidget, self).__init__(parent)
         self.name_prefix = name_prefix
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -245,6 +244,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
         self.save_single_requested.connect(save_NetworkListItem)
         self.itemDelegate().commitData.connect(self.item_text_updated)
         self.itemSelectionChanged.connect(self.set_active_networks)
+        self.itemClicked.connect(self.set_active_networks)
         self.item_updated.connect(self.set_active_network)
 
         self._ntwk_plot = None
@@ -275,7 +275,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
                 continue
 
             item = self.item(i)
-            names.append(item.text())
+            names.append(item.ntwk.name)
 
         if name in names:
             if re.match("_\d\d", name[-3:]):
@@ -293,8 +293,8 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
     def item_text_updated(self, emit=True):
         item = self.currentItem()  # type: NetworkListItem
-        item.setText(self.get_unique_name(item.text(), self.row(item)))
-        item.update_ntwk_names()
+        item.setText(self.get_unique_name(item.ntwk.name, self.row(item)))
+        item.update_ntwk_names(item.text())
         if emit:
             self.item_updated.emit(item)
 
@@ -375,11 +375,13 @@ class NetworkListWidget(QtWidgets.QListWidget):
         :type item: NetworkListItem
         :return:
         """
+        self.blockSignals(True)
         if item is None:
             return
 
         if self.ntwk_plot:
             self.ntwk_plot.set_networks(item.ntwk, item.ntwk_corrected)
+        self.blockSignals(False)
 
     def load_named_ntwk(self, ntwk, name, activate=True):
         item = self.get_named_item(name)
@@ -390,20 +392,29 @@ class NetworkListWidget(QtWidgets.QListWidget):
         item.setFlags(item.flags() | QtCore.Qt.NoItemFlags)
         item.setText(name)
         item.ntwk = ntwk
+        item.update_ntwk_names(name)
+
         self.clearSelection()
         self.setCurrentItem(item)
         if activate is True:
             self.set_active_network(item)
 
+    def get_list_of_names(self):
+        names = list()
+        for i in range(self.count()):
+            item = self.item(i)
+            names.append(item.ntwk.name)
+        return names
+
     def get_named_item(self, name):
-        items = self.findItems(name, QtCore.Qt.MatchExactly)
-        if len(items) > 1:
-            raise Exception("multiple items matched name: {:s}".format(name))
-        elif len(items) == 0:
-            item = None
-        else:
-            item = items[0]
-        return item
+        named_item = None
+        print(name)
+        for i in range(self.count()):
+            item = self.item(i)
+            print(item.ntwk.name)
+            if item.ntwk.name == name:
+                named_item = item
+        return named_item
 
     def load_network(self, ntwk, activate=True):
         item = NetworkListItem()
@@ -487,7 +498,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
             dialog.measurements_available.connect(self.load_networks)
             dialog.exec_()
         #     meas = nwa.measure_twoport_ntwk()
-        #     meas.name = self.MEASUREMENT_PREFIX  # unique name processed in load_network
+        #     meas.name = self.name_prefix  # unique name processed in load_network
         # self.load_network(meas)
 
     def get_load_button(self, label="Load"):
@@ -529,6 +540,186 @@ class NetworkListWidget(QtWidgets.QListWidget):
         horizontal_layout.addWidget(save_selected_button)
         horizontal_layout.addWidget(save_all_button)
         return widget
+
+
+class ParameterizedNetworkListWidget(NetworkListWidget):
+    def __init__(self, name_prefix=None, item_parameters=(), parent=None):
+        """
+        initialize a parameterized version of the NetworkListWidget
+
+        Parameters
+        ----------
+        name_prefix : str
+            typically "meas", but some text that will be the default name of new measurements
+        item_parameters : Iterable
+            a list of dictionaries that contain the attributes each item will ahve
+        parent : QtWidgets.QWidget
+            the parent widget of the NetworkListWidget
+        """
+        super(ParameterizedNetworkListWidget, self).__init__(name_prefix, parent)
+        self._item_parameters = OrderedDict()
+        self.itemDoubleClicked.connect(self.edit_item)
+        self._label_parameters = list()
+        for param in item_parameters:
+            self.add_item_parameter(param)
+
+    @property
+    def label_parameters(self):
+        return self._label_parameters
+
+    @label_parameters.setter
+    def label_parameters(self, parameters):
+        if type(parameters) is str:
+            if parameters in self.item_parameters.keys():
+                self._label_parameters = [parameters]
+            else:
+                print("invalid parameter")
+                return
+        elif type(parameters) not in (list, tuple):
+            Warning("must provide a list of strings that identify parameters to include in the label")
+            return
+
+        label_parameters = list()
+
+        for param_name in parameters:
+            if type(param_name) is not str:
+                print("must provide strings only")
+            elif param_name in self.item_parameters.keys() and param_name not in self._label_parameters:
+                label_parameters.append(param_name)
+
+        if not label_parameters:
+            Warning("no valid parameters provided")
+        else:
+            self._label_parameters = label_parameters
+
+    def set_item_text(self, item):
+        name = item.ntwk.name
+        for param in self.label_parameters:
+            name += " - {:}".format(item.parameters[param])
+            units = self.item_parameters[param]["units"]
+            if units:
+                name += " {:}".format(units)
+        item.setText(name)
+
+    def load_network(self, ntwk, activate=True):
+        item = NetworkListItem()
+        item.setFlags(item.flags() | QtCore.Qt.NoItemFlags)
+        item.ntwk = ntwk
+        for name, param in self.item_parameters.items():
+            item.parameters[name] = param["default"]
+        self.addItem(item)
+        self.clearSelection()
+        self.setCurrentItem(item)
+        self.item_text_updated(emit=activate)
+        self.set_item_text(item)
+        return item
+
+    def edit_item(self, item):
+        """
+        pop up a dialog to edit the name and network parameters
+
+        Parameters
+        ----------
+        item : NetworkListItem
+        """
+        dialog = QtWidgets.QDialog(None)
+        vlay = QtWidgets.QVBoxLayout(dialog)
+        form = QtWidgets.QFormLayout(None)
+        vlay.addLayout(form)
+
+        inputs = dict()
+
+        input = QtWidgets.QLineEdit()
+        input.setText(item.ntwk.name)
+        form.addRow("name", input)
+        inputs["name"] = input
+
+        for name, param in self.item_parameters.items():
+            value = item.parameters[name]
+            if param["combo_list"]:
+                input = QtWidgets.QComboBox()
+                input.addItems(param["combo_list"])
+                input.setCurrentIndex(input.findText(value))
+                row_name = name
+            elif param["units"] and param["type"] in ("int", "float"):
+                input = numeric_inputs.InputWithUnits(param["units"])
+                input.setText(str(value))
+                row_name = "{:} ({:})".format(name, param["units"])
+            else:
+                input = QtWidgets.QLineEdit()
+                input.setText(str(value))
+                row_name = name
+
+            inputs[name] = input
+            form.addRow(row_name, input)
+
+        ok = QtWidgets.QPushButton("Ok")
+        ok.setAutoDefault(False)
+        cancel = QtWidgets.QPushButton("Cancel")
+        cancel.setAutoDefault(False)
+        hlay = QtWidgets.QHBoxLayout()
+        hlay.addWidget(ok)
+        hlay.addWidget(cancel)
+        vlay.addLayout(hlay)
+        ok.clicked.connect(dialog.accept)
+        cancel.clicked.connect(dialog.reject)
+
+        accepted = dialog.exec_()
+        if accepted:
+            for name, input in inputs.items():
+                if isinstance(input, numeric_inputs.NumericLineEdit):
+                    value = input.get_value()
+                elif isinstance(input, QtWidgets.QLineEdit):
+                    value = input.text()
+                elif isinstance(input, QtWidgets.QComboBox):
+                    value = input.currentText()
+                elif isinstance(input, QtWidgets.QDoubleSpinBox) or isinstance(input, QtWidgets.QSpinBox):
+                    value = input.value()
+                else:
+                    raise TypeError("Unsupported Widget {:}".format(input))
+                item.parameters[name] = value
+
+            index = self.indexFromItem(item).row()
+            name = self.get_unique_name(inputs["name"].text(), index)
+            item.update_ntwk_names(name)
+            self.set_item_text(item)
+
+    @property
+    def item_parameters(self):
+        return self._item_parameters
+
+    def add_item_parameter(self, attribute):
+        name = attribute["name"]
+        attr_type = attribute["type"]
+        default = attribute["default"]
+        units = attribute.get("units", None)
+        combo_list = attribute.get("combo_list", None)
+
+        self._item_parameters[name] = {
+            "type": attr_type,
+            "default": default,
+            "units": units,
+            "combo_list": combo_list
+        }
+
+    def get_parameter_from_all(self, parameter):
+        """
+        retrieve the value of a parameter from the all of the items, and return as a list
+
+        Parameters
+        ----------
+        parameter : str
+            the dict key of the parameter of interest
+
+        Returns
+        -------
+        list
+        """
+        values = list()
+        for i in range(self.count()):
+            item = self.item(i)
+            values.append(item.parameters[parameter])
+        return values
 
 
 class NetworkPlotWidget(QtWidgets.QWidget):
@@ -761,6 +952,8 @@ class NetworkPlotWidget(QtWidgets.QWidget):
             self.last_plot = "rectangular"
 
     def plot_ntwk(self):
+        import time
+        print("plotting", time.time())
         if self.use_corrected and self.ntwk_corrected is not None:
             ntwk = self.ntwk_corrected
         else:
@@ -1210,15 +1403,15 @@ class ReflectDialog(QtWidgets.QDialog):
         self.btn_loadPort2.clicked.connect(self.load_s22)
 
     def measure_s11(self):
-        self.s11 = self.analyzer.get_oneport_ntwk(port=1)
+        self.s11 = self.analyzer.get_oneport(port=1)
         self.evaluate()
 
     def measure_s22(self):
-        self.s22 = self.analyzer.get_oneport_ntwk(port=2)
+        self.s22 = self.analyzer.get_oneport(port=2)
         self.evaluate()
 
     def measure_both(self):
-        self.reflect_2port = self.analyzer.get_twoport_ntwk()
+        self.reflect_2port = self.analyzer.get_twoport()
         self.evaluate()
 
     def load_s11(self):

@@ -10,7 +10,7 @@ class Analyzer(object):
 
     ***OPTIONAL METHODS TO OVERRIDE FOR SKRF_QTWIDGETS***
     init - setup the instrument resource (i.e., pyvisa)
-    get_twoport_ntwk  * must implement get_snp_network
+    get_twoport  * must implement get_snp_network
     get_oneport_ntwk  * must implement get_snp_network
     enter/exit - for using python's with statement
     >>> with Analyzer("GPIB::16::ISNTR") as nwa:
