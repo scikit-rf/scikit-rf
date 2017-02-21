@@ -165,7 +165,9 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_thru.load_named_ntwk(ntwk, self.THRU_ID)
 
     def load_thru(self):
-        self.listWidget_thru.load_named_ntwk(widgets.load_network_file(), self.THRU_ID)
+        thru = widgets.load_network_file()
+        if isinstance(thru, skrf.Network):
+            self.listWidget_thru.load_named_ntwk(thru, self.THRU_ID)
 
     def measure_reflect(self):
         with self.vna_controller.get_analyzer() as nwa:
@@ -248,42 +250,34 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.lineEdit_epsEstimate = numeric_inputs.DoubleLineEdit(1.0)
         self.comboBox_rootChoice = QtWidgets.QComboBox()
         self.comboBox_rootChoice.addItems(("real", "imag", "auto"))
-        self.lineEdit_port1Distance = numeric_inputs.InputWithUnits("mm", 0)
-        self.lineEdit_port2Distance = numeric_inputs.InputWithUnits("mm", 0)
         self.lineEdit_thruLength = numeric_inputs.InputWithUnits("mm", 0)
         self.lineEdit_referencePlane = numeric_inputs.InputWithUnits("mm", 0)
 
         self.label_epsEstimate = QtWidgets.QLabel("eps est.")
         self.label_rootChoice = QtWidgets.QLabel("root choice")
-        self.label_port1Distance = QtWidgets.QLabel("port1 dist (mm)")
-        self.label_port2Distance = QtWidgets.QLabel("port2 dist (mm)")
         self.label_thruLength = QtWidgets.QLabel("thru length (mm)")
-        self.label_referencePlane = QtWidgets.QLabel("ref plane (mm)")
-        self.verticalLayout_parametersCol1 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_parametersCol1.addWidget(self.label_epsEstimate)
-        self.verticalLayout_parametersCol1.addWidget(self.label_port1Distance)
-        self.verticalLayout_parametersCol1.addWidget(self.label_thruLength)
-        self.verticalLayout_parametersCol2 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_parametersCol2.addWidget(self.lineEdit_epsEstimate)
-        self.verticalLayout_parametersCol2.addWidget(self.lineEdit_port1Distance)
-        self.verticalLayout_parametersCol2.addWidget(self.lineEdit_thruLength)
-        self.verticalLayout_parametersCol3 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_parametersCol3.addWidget(self.label_rootChoice)
-        self.verticalLayout_parametersCol3.addWidget(self.label_port2Distance)
-        self.verticalLayout_parametersCol3.addWidget(self.label_referencePlane)
-        self.verticalLayout_parametersCol4 = QtWidgets.QVBoxLayout()
-        self.verticalLayout_parametersCol4.addWidget(self.comboBox_rootChoice)
-        self.verticalLayout_parametersCol4.addWidget(self.lineEdit_port2Distance    )
-        self.verticalLayout_parametersCol4.addWidget(self.lineEdit_referencePlane)
-        self.horizontalLayout_parameters = QtWidgets.QHBoxLayout()
+        self.label_referencePlane = QtWidgets.QLabel("ref plane shift (mm)")
+        self.groupBox_calOptions = QtWidgets.QGroupBox("Calibration Options")
+        col1 = self.verticalLayout_parametersCol1 = QtWidgets.QVBoxLayout()
+        col2 = self.verticalLayout_parametersCol2 = QtWidgets.QVBoxLayout()
+        col3 = self.verticalLayout_parametersCol3 = QtWidgets.QVBoxLayout()
+        col4 = self.verticalLayout_parametersCol4 = QtWidgets.QVBoxLayout()
+
+        col1.addWidget(self.label_thruLength)
+        col2.addWidget(self.lineEdit_thruLength)
+        col1.addWidget(self.label_referencePlane)
+        col2.addWidget(self.lineEdit_referencePlane)
+        col3.addWidget(self.label_epsEstimate)
+        col4.addWidget(self.lineEdit_epsEstimate)
+        col3.addWidget(self.label_rootChoice)
+        col4.addWidget(self.comboBox_rootChoice)
+
+        self.horizontalLayout_parameters = QtWidgets.QHBoxLayout(self.groupBox_calOptions)
         self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol1)
         self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol2)
         self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol3)
         self.horizontalLayout_parameters.addLayout(self.verticalLayout_parametersCol4)
-        self.verticalLayout_main.addLayout(self.horizontalLayout_parameters)
-
-        self.hline = widgets.qt.QHLine()
-        self.verticalLayout_main.addWidget(self.hline)
+        self.verticalLayout_main.addWidget(self.groupBox_calOptions)
 
         self.label_thru = QtWidgets.QLabel("Thru")
         self.btn_measureThru = QtWidgets.QPushButton("Measure")
@@ -306,10 +300,18 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_thru = widgets.NetworkListWidget(self)
         self.verticalLayout_main.addWidget(self.listWidget_thru)
 
-        self.label_reflect = QtWidgets.QLabel("Reflect", self)
+        self.reflect_help = widgets.qt.HelpIndicator(title="Reflect Standards Help", help_text="""<h2>Reflect Standards</h2>
+            <p>You can have any number of reflect standards. &nbsp;The number of standards is not entered,
+            but rather is determined from the number that you load or measure</p>
+            <h3>Parameters</h3>
+            <p>Reflect standards can have 2 parameters:
+            <ul><li>offset: specified in mm</li><li>type: open/short.</li></ul>
+            You can edit these parameters by double clicking on the items in the list.</p>""")
+        self.label_reflect = QtWidgets.QLabel("Reflect Standards", self)
         self.btn_measureReflect = QtWidgets.QPushButton("Measure", self)
         self.btn_loadReflect = QtWidgets.QPushButton("Load", self)
         self.horizontalLayout_reflect = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_reflect.addWidget(self.reflect_help)
         self.horizontalLayout_reflect.addWidget(self.label_reflect)
         self.horizontalLayout_reflect.addWidget(self.btn_measureReflect)
         self.horizontalLayout_reflect.addWidget(self.btn_loadReflect)
@@ -323,14 +325,21 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_reflect.label_parameters = ["refl_type", "offset"]
         self.verticalLayout_main.addWidget(self.listWidget_reflect)
 
+        self.line_help = widgets.qt.HelpIndicator(title="Line Standards Help", help_text="""<h2>Line Standards</h2>
+<p>You can have any number of line standards. &nbsp;The number of line standards is not entered, but instead is determined from the lines loaded or measured.</p>
+<p>The accuracy of the calibration will in large part depend on having line standards that are not close to an integer multiple of 180 degrees out of phase from the calibration planes</p>
+<h3>Parameters</h3>
+<p>Lines have a length in mm. &nbsp;This can be edited by double clicking the items in the list below.</p>""")
+
         line_parameters = [{"name": "length", "type": "float", "default": 1.0, "units": "mm"}]
         self.listWidget_line = widgets.ParameterizedNetworkListWidget(self, line_parameters)
         self.listWidget_line.label_parameters = ["length"]
         self.listWidget_line.name_prefix = "line"
-        self.label_line = QtWidgets.QLabel("Line")
+        self.label_line = QtWidgets.QLabel("Line Standards")
         self.btn_measureLine = self.listWidget_line.get_measure_button()
         self.btn_loadLine = self.listWidget_line.get_load_button()
         self.horizontalLayout_line = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_line.addWidget(self.line_help)
         self.horizontalLayout_line.addWidget(self.label_line)
         self.horizontalLayout_line.addWidget(self.btn_measureLine)
         self.horizontalLayout_line.addWidget(self.btn_loadLine)
@@ -371,7 +380,9 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_thru.load_named_ntwk(ntwk, self.THRU_ID)
 
     def load_thru(self):
-        self.listWidget_thru.load_named_ntwk(widgets.load_network_file(), self.THRU_ID)
+        thru = widgets.load_network_file()
+        if isinstance(thru, skrf.Network):
+            self.listWidget_thru.load_named_ntwk(thru, self.THRU_ID)
 
     def measure_reflect(self):
         with self.vna_controller.get_analyzer() as nwa:
@@ -447,22 +458,14 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         l.insert(0, self.lineEdit_thruLength.get_value("m"))
 
         er_est = self.lineEdit_epsEstimate.get_value()
-        p1_len_est = self.lineEdit_port1Distance.get_value("m")
-        p2_len_est = self.lineEdit_port2Distance.get_value("m")
+        # p1_len_est = self.lineEdit_port1Distance.get_value("m")
+        # p2_len_est = self.lineEdit_port2Distance.get_value("m")
         ref_plane = self.lineEdit_referencePlane.get_value("m")
         gamma_root_choice = self.comboBox_rootChoice.currentText()
 
-        print(Grefls)
-        print(refl_offset)
-        print(l)
-        print(er_est)
-        print(p1_len_est, p2_len_est)
-        print(ref_plane)
-        print(gamma_root_choice)
-
         cal = skrf.calibration.NISTMultilineTRL(
             measured, Grefls, l,
-            er_est=er_est, refl_offset=refl_offset, p1_len_est=p1_len_est, p2_len_est=p2_len_est,
+            er_est=er_est, refl_offset=refl_offset, # p1_len_est=p1_len_est, p2_len_est=p2_len_est,
             ref_plane=ref_plane, gamma_root_choice=gamma_root_choice, switch_terms=switch_terms
         )
 

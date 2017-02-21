@@ -3,7 +3,7 @@ import os.path
 import re
 import sys
 
-kwarg_pattern = re.compile('<(\w+)>', re.ASCII)
+kwarg_pattern = re.compile('<([a-zA-Z0-9_]+)>')
 
 
 def to_string(value):

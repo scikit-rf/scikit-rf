@@ -93,9 +93,9 @@ set the start frequency to 1 GHz
 
 import re
 
-cmd_pattern = re.compile('<(\w+)>', re.ASCII)
-arg_pattern = re.compile('<([\'"]?\w+[\'"]?)>', re.ASCII)
-kwarg_pattern = re.compile('[\'"]?(\w+)[\'"]?', re.ASCII)
+cmd_pattern = re.compile('<([a-zA-Z0-9_]+)>')
+arg_pattern = re.compile('<([\'"]?[a-zA-Z0-9_]+[\'"]?)>')
+kwarg_pattern = re.compile('[\'"]?([a-zA-Z0-9_]+)[\'"]?')
 
 
 def preprocess(command_set, command, **kwargs):

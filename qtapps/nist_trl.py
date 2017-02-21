@@ -14,6 +14,7 @@ class NISTTRLWidget(QtWidgets.QWidget):
         self.vna_controller = widgets.VnaController()
         self.vna_controller.verticalLayout.setContentsMargins(3, 3, 3, 3)
         self.verticalLayout_main.addWidget(self.vna_controller)
+        self.verticalLayout_main.addWidget(widgets.qt.QHLine())
 
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal, self)
         size_policy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Preferred)

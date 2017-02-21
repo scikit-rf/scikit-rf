@@ -622,51 +622,11 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
         ----------
         item : NetworkListItem
         """
-        dialog = QtWidgets.QDialog(None)
-        vlay = QtWidgets.QVBoxLayout(dialog)
-        form = QtWidgets.QFormLayout(None)
-        vlay.addLayout(form)
-
-        inputs = dict()
-
-        input = QtWidgets.QLineEdit()
-        input.setText(item.ntwk.name)
-        form.addRow("name", input)
-        inputs["name"] = input
-
-        for name, param in self.item_parameters.items():
-            value = item.parameters[name]
-            if param["combo_list"]:
-                input = QtWidgets.QComboBox()
-                input.addItems(param["combo_list"])
-                input.setCurrentIndex(input.findText(value))
-                row_name = name
-            elif param["units"] and param["type"] in ("int", "float"):
-                input = numeric_inputs.InputWithUnits(param["units"])
-                input.setText(str(value))
-                row_name = "{:} ({:})".format(name, param["units"])
-            else:
-                input = QtWidgets.QLineEdit()
-                input.setText(str(value))
-                row_name = name
-
-            inputs[name] = input
-            form.addRow(row_name, input)
-
-        ok = QtWidgets.QPushButton("Ok")
-        ok.setAutoDefault(False)
-        cancel = QtWidgets.QPushButton("Cancel")
-        cancel.setAutoDefault(False)
-        hlay = QtWidgets.QHBoxLayout()
-        hlay.addWidget(ok)
-        hlay.addWidget(cancel)
-        vlay.addLayout(hlay)
-        ok.clicked.connect(dialog.accept)
-        cancel.clicked.connect(dialog.reject)
+        dialog = NetworkParameterEditor(item, self.item_parameters)
 
         accepted = dialog.exec_()
         if accepted:
-            for name, input in inputs.items():
+            for name, input in dialog.inputs.items():
                 if isinstance(input, numeric_inputs.NumericLineEdit):
                     value = input.get_value()
                 elif isinstance(input, QtWidgets.QLineEdit):
@@ -680,7 +640,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
                 item.parameters[name] = value
 
             index = self.indexFromItem(item).row()
-            name = self.get_unique_name(inputs["name"].text(), index)
+            name = self.get_unique_name(dialog.inputs["name"].text(), index)
             item.update_ntwk_names(name)
             self.set_item_text(item)
 
@@ -720,6 +680,59 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
             item = self.item(i)
             values.append(item.parameters[parameter])
         return values
+
+
+class NetworkParameterEditor(QtWidgets.QDialog):
+    def __init__(self, item, item_parameters, window_title="Edit Parameters", parent=None):
+        super(NetworkParameterEditor, self).__init__(parent)
+        self.setWindowTitle(window_title)
+        vlay = QtWidgets.QVBoxLayout(self)
+        form = QtWidgets.QFormLayout(None)
+        vlay.addLayout(form)
+
+        self.inputs = dict()
+
+        input = QtWidgets.QLineEdit()
+        input.setText(item.ntwk.name)
+        form.addRow("name", input)
+        self.inputs["name"] = input
+
+        for name, param in item_parameters.items():
+            value = item.parameters[name]
+            if param["combo_list"]:
+                input = QtWidgets.QComboBox()
+                input.addItems(param["combo_list"])
+                input.setCurrentIndex(input.findText(value))
+                row_name = name
+            elif param["units"] and param["type"] in ("int", "float"):
+                input = numeric_inputs.InputWithUnits(param["units"])
+                input.setText(str(value))
+                row_name = "{:} ({:})".format(name, param["units"])
+            else:
+                input = QtWidgets.QLineEdit()
+                input.setText(str(value))
+                row_name = name
+
+            self.inputs[name] = input
+            form.addRow(row_name, input)
+
+        ok = QtWidgets.QPushButton("Ok")
+        ok.setAutoDefault(False)
+        cancel = QtWidgets.QPushButton("Cancel")
+        cancel.setAutoDefault(False)
+        hlay = QtWidgets.QHBoxLayout()
+        hlay.addWidget(ok)
+        hlay.addWidget(cancel)
+        vlay.addLayout(hlay)
+        ok.clicked.connect(self.accept)
+        cancel.clicked.connect(self.reject)
+
+    def showEvent(self, event):
+        self.resize(self.width() * 1.25, self.height())
+        qr = self.frameGeometry()
+        cp = QtWidgets.QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
 
 class NetworkPlotWidget(QtWidgets.QWidget):

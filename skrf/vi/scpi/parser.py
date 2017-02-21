@@ -3,7 +3,7 @@ import os.path
 import re
 import sys
 
-kwarg_pattern = re.compile('<(\w+=?[\w, \(\)\'\"]*)>', re.ASCII)
+kwarg_pattern = re.compile('<([a-zA-Z0-9_]+=?[a-zA-Z0-9_, \(\)\'\"]*)>')
 
 
 def to_string(value):
@@ -198,11 +198,11 @@ def parse_yaml_file(driver_yaml_file):
     driver_str = "\n\n\n".join((header_string, string_converter, scpi_preprocessor, query_processor)) + "\n\n\n"
     driver_str += class_header
 
-    for s in sets:
+    for s in sorted(sets, key=str.lower):
         driver_str += "\n" + indent(s, 1) + "\n"
-    for q in querys:
+    for q in sorted(querys, key=str.lower):
         driver_str += "\n" + indent(q, 1) + "\n"
-    for a in arrays:
+    for a in sorted(arrays, key=str.lower):
         driver_str += "\n" + indent(a, 1) + "\n"
 
     with open(driver, 'w') as scpi_driver:
