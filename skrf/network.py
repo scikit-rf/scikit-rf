@@ -148,7 +148,6 @@ except ImportError:
     import pickle as pickle
     from pickle import UnpicklingError
 
-import warnings
 from copy import deepcopy as copy
 import re
 from numbers import Number
