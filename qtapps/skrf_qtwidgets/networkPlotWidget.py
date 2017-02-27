@@ -9,7 +9,6 @@ import skrf
 from . import smith_chart, util
 
 
-# TODO: when plotting a list of networks, only uncorrected data will show
 class NetworkPlotWidget(QtWidgets.QWidget):
     S_VALS = OrderedDict((
         ("decibels", "db"),
