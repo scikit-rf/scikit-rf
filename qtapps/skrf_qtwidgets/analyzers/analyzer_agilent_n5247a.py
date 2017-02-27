@@ -1,7 +1,7 @@
-from skrf_qtwidgets.analyzers import keysight_pna
+from skrf.vi.vna import keysight_pna
 
 
-class Analyzer(keysight_pna.Analyzer):
+class Analyzer(keysight_pna.PNAX):
     DEFAULT_VISA_ADDRESS = "GPIB::16::INSTR"
     NAME = "Agilent N5247A"
     NPORTS = 4
