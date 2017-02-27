@@ -8,8 +8,6 @@ from qtpy import QtWidgets
 import skrf
 from . import smith_chart, util
 
-counter = util.debug_counter()
-
 
 # TODO: when plotting a list of networks, only uncorrected data will show
 class NetworkPlotWidget(QtWidgets.QWidget):
@@ -242,7 +240,6 @@ class NetworkPlotWidget(QtWidgets.QWidget):
             self.last_plot = "rectangular"
 
     def plot_ntwk(self):
-        print("plotting:", next(counter), "corr type:", type(self.ntwk_corrected))
         if self.use_corrected and self.ntwk_corrected is not None:
             ntwk = self.ntwk_corrected
         else:
