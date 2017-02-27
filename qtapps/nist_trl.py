@@ -1,3 +1,4 @@
+import skrf_qtwidgets.networkPlotWidget
 from skrf_qtwidgets import qt, widgets, calibration_widgets
 from qtpy import QtWidgets, QtCore
 
@@ -27,7 +28,7 @@ class NISTTRLWidget(QtWidgets.QWidget):
         self.tabWidget.addTab(self.tab_calStandards, "Cal Standards")
         self.tabWidget.addTab(self.tab_measurements, "Measurements")
 
-        self.ntwk_plot = widgets.NetworkPlotWidget(self.splitter)
+        self.ntwk_plot = skrf_qtwidgets.networkPlotWidget.NetworkPlotWidget(self.splitter)
 
         self.verticalLayout_main.addWidget(self.splitter)
         self.splitter.setStretchFactor(1, 100)
@@ -38,4 +39,14 @@ class NISTTRLWidget(QtWidgets.QWidget):
         self.tab_measurements.connect_plot(self.ntwk_plot)
         self.tab_measurements.get_calibration = self.tab_calStandards.get_calibration
 
-app = qt.single_widget_application(NISTTRLWidget, splash_screen=False)
+    def closeEvent(self, event):
+        quit_msg = "Are you sure you want to exit the program?"
+        reply = QtWidgets.QMessageBox.question(
+            self, 'Message', quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+
+        if reply == QtWidgets.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+
+app = qt.single_widget_application(NISTTRLWidget, splash_screen=True)

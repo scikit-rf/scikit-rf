@@ -27,7 +27,7 @@ class Analyzer(base_analyzer.Analyzer):
         return self.get_snp_network(ports)
 
     def measure_oneport_ntwk(self, port=1, sweep=True, **kwargs):
-        # return self.get_oneport_ntwk(port, sweep=sweep)
+        # return self.get_oneport(port, sweep=sweep)
         return self.get_snp_network(port)
 
     def get_snp_network(self, ports, **kwargs):

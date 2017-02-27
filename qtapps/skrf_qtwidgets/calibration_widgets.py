@@ -1,9 +1,7 @@
 from qtpy import QtWidgets, QtCore
 import skrf
 
-from . import qt
-from . import widgets
-from . import numeric_inputs
+from . import qt, networkListWidget, numeric_inputs, widgets
 
 
 class CalibratedMeasurementsWidget(QtWidgets.QWidget):
@@ -13,7 +11,7 @@ class CalibratedMeasurementsWidget(QtWidgets.QWidget):
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
         self.verticalLayout_main.setContentsMargins(6, 6, 6, 6)
 
-        self.listWidget_measurements = widgets.NetworkListWidget(self)
+        self.listWidget_measurements = networkListWidget.NetworkListWidget(self)
         self.btn_measureMeasurement = self.listWidget_measurements.get_measure_button()
         self.btn_loadMeasurement = self.listWidget_measurements.get_load_button()
         self.btn_calibrate = QtWidgets.QPushButton("Calibrate")
@@ -69,7 +67,7 @@ class CalibratedMeasurementsWidget(QtWidgets.QWidget):
     def calibrate_measurements(self):
         calibration = self.get_calibration()
         for i in range(self.listWidget_measurements.count()):
-            item = self.listWidget_measurements.item(i)  # type: widgets.NetworkListItem
+            item = self.listWidget_measurements.item(i)  # type: networkListWidget.NetworkListItem
             item.ntwk_corrected = calibration.apply_cal(item.ntwk)
             item.ntwk_corrected.name = item.ntwk.name + "-cal"
         self.listWidget_measurements.set_active_networks()
@@ -104,7 +102,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         self.horizontalLayout_switchTerms.addWidget(self.btn_loadSwitchTerms)
         self.verticalLayout_main.addLayout(self.horizontalLayout_switchTerms)
 
-        self.listWidget_thru = widgets.NetworkListWidget(self)
+        self.listWidget_thru = networkListWidget.NetworkListWidget(self)
         self.verticalLayout_main.addWidget(self.listWidget_thru)
 
         self.label_reflect = QtWidgets.QLabel("Reflect", self)
@@ -116,10 +114,10 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         self.horizontalLayout_reflect.addWidget(self.btn_loadReflect)
         self.verticalLayout_main.addLayout(self.horizontalLayout_reflect)
 
-        self.listWidget_reflect = widgets.NetworkListWidget(self)
+        self.listWidget_reflect = networkListWidget.NetworkListWidget(self)
         self.verticalLayout_main.addWidget(self.listWidget_reflect)
 
-        self.listWidget_line = widgets.NetworkListWidget(self)
+        self.listWidget_line = networkListWidget.NetworkListWidget(self)
         self.listWidget_line.name_prefix = "line"
         self.label_line = QtWidgets.QLabel("Line")
         self.btn_measureLine = self.listWidget_line.get_measure_button()
@@ -297,7 +295,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.horizontalLayout_switchTerms.addWidget(self.btn_loadSwitchTerms)
         self.verticalLayout_main.addLayout(self.horizontalLayout_switchTerms)
 
-        self.listWidget_thru = widgets.NetworkListWidget(self)
+        self.listWidget_thru = networkListWidget.NetworkListWidget(self)
         self.verticalLayout_main.addWidget(self.listWidget_thru)
 
         self.reflect_help = widgets.qt.HelpIndicator(title="Reflect Standards Help", help_text="""<h2>Reflect Standards</h2>
@@ -321,7 +319,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
             {"name": "refl_type", "type": "str", "default": "short", "combo_list": ["short", "open"]},
             {"name": "offset", "type": "float", "default": 0.0, "units": "mm"}
         ]
-        self.listWidget_reflect = widgets.ParameterizedNetworkListWidget(self, refl_parameters)
+        self.listWidget_reflect = networkListWidget.ParameterizedNetworkListWidget(self, refl_parameters)
         self.listWidget_reflect.label_parameters = ["refl_type", "offset"]
         self.verticalLayout_main.addWidget(self.listWidget_reflect)
 
@@ -332,7 +330,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 <p>Lines have a length in mm. &nbsp;This can be edited by double clicking the items in the list below.</p>""")
 
         line_parameters = [{"name": "length", "type": "float", "default": 1.0, "units": "mm"}]
-        self.listWidget_line = widgets.ParameterizedNetworkListWidget(self, line_parameters)
+        self.listWidget_line = networkListWidget.ParameterizedNetworkListWidget(self, line_parameters)
         self.listWidget_line.label_parameters = ["length"]
         self.listWidget_line.name_prefix = "line"
         self.label_line = QtWidgets.QLabel("Line Standards")

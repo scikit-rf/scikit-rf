@@ -1,3 +1,5 @@
+import skrf_qtwidgets.networkListWidget
+import skrf_qtwidgets.networkPlotWidget
 from skrf_qtwidgets import qt, widgets
 from qtpy import QtWidgets, QtCore
 
@@ -23,7 +25,7 @@ class DataGrabber(QtWidgets.QWidget):
         self.measurements_widget_layout = QtWidgets.QVBoxLayout(self.measurements_widget)
         self.measurements_widget_layout.setContentsMargins(0, 0, 0, 0)
 
-        self.listWidget_measurements = widgets.NetworkListWidget(self.measurements_widget)
+        self.listWidget_measurements = skrf_qtwidgets.networkListWidget.NetworkListWidget(self.measurements_widget)
         self.measurement_buttons = self.listWidget_measurements.get_input_buttons()
         self.measurements_widget_layout.addWidget(self.measurement_buttons)
         self.measurements_widget_layout.addWidget(self.listWidget_measurements)
@@ -31,7 +33,7 @@ class DataGrabber(QtWidgets.QWidget):
         self.save_buttons = self.listWidget_measurements.get_save_buttons()
         self.measurements_widget_layout.addWidget(self.save_buttons)
 
-        self.ntwk_plot = widgets.NetworkPlotWidget(self.splitter)
+        self.ntwk_plot = skrf_qtwidgets.networkPlotWidget.NetworkPlotWidget(self.splitter)
         self.ntwk_plot.corrected_data_enabled = False
 
         self.verticalLayout_main.addWidget(self.splitter)
