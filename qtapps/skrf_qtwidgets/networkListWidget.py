@@ -1,7 +1,6 @@
 import os
 import re
 from collections import OrderedDict
-from functools import partial
 
 from qtpy import QtWidgets, QtCore
 
@@ -28,7 +27,6 @@ class NetworkListItem(QtWidgets.QListWidgetItem):
         self.setText(self.ntwk.name)
 
 
-# TODO: implement proper event handling for updating plat a.la. StackOverflow Question
 class NetworkListWidget(QtWidgets.QListWidget):
     item_removed = QtCore.Signal()
     item_updated = QtCore.Signal(object)
