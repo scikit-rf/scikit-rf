@@ -1403,6 +1403,11 @@ class TwelveTerm(Calibration):
             Compared to the measured s21,s12  meaned over frequency
             Only use if n_thrus=None.
 
+        isolation : :class:`~skrf.network.Network` object
+            Measurement with loads on both ports. Used for determining the
+            isolation error terms. If no measurement is given isolation is
+            assumed to be zero.
+
         See Also
         -----------
         Calibration.__init__
@@ -1467,9 +1472,8 @@ class TwelveTerm(Calibration):
         p2_coefs = dict(port2_cal.coefs)
 
         if self.kwargs.get('isolation',None) is not None:
-            raise NotImplementedError()
-            p1_coefs['isolation'] = isolation.s21.s.flatten()
-            p2_coefs['isolation'] = isolation.s12.s.flatten()
+            p1_coefs['isolation'] = self.kwargs['isolation'].s21.s.flatten()
+            p2_coefs['isolation'] = self.kwargs['isolation'].s12.s.flatten()
         else:
             p1_coefs['isolation'] = npy.zeros(len(self.frequency), dtype=complex)
             p2_coefs['isolation'] = npy.zeros(len(self.frequency), dtype=complex)
@@ -1486,7 +1490,7 @@ class TwelveTerm(Calibration):
             g = lm1[-1].s
             d = p1_coefs['source match'].reshape(-1,1,1)
             e,f,b,h = thru_i.s11.s, thru_i.s22.s,thru_i.s21.s,thru_i.s12.s
-            m = thru.s21.s
+            m = thru.s21.s - p1_coefs['isolation'].reshape(-1,1,1)
 
             ac = m*1./b * (1 - (d*e + f*g + b*g*h*d) + (d*e*f*g) )
             tt1.append(ac[:])
@@ -1497,7 +1501,7 @@ class TwelveTerm(Calibration):
             d = p2_coefs['source match'].reshape(-1,1,1)
 
             e,f,b,h = thru_i.s11.s, thru_i.s22.s,thru_i.s21.s,thru_i.s12.s
-            m = thru.s21.s
+            m = thru.s21.s - p2_coefs['isolation'].reshape(-1,1,1)
 
             ac = m*1./b * (1 - (d*e+f*g+b*g*h*d) + d*e*f*g)
             tt2.append(ac[:])
@@ -1665,6 +1669,12 @@ class SOLT(TwelveTerm):
         n_thrus : int
             number of thru measurments
 
+        isolation : :class:`~skrf.network.Network` object
+            Measurement with loads on both ports. Used for determining the
+            isolation error terms. If no measurement is given isolation is
+            assumed to be zero.
+
+
         See Also
         ------------
         TwelveTerm.__init__
@@ -1712,9 +1722,8 @@ class SOLT(TwelveTerm):
         p2_coefs = port2_cal.coefs
 
         if self.kwargs.get('isolation',None) is not None:
-            raise NotImplementedError()
-            p1_coefs['isolation'] = isolation.s21.s.flatten()
-            p2_coefs['isolation'] = isolation.s12.s.flatten()
+            p1_coefs['isolation'] = self.kwargs['isolation'].s21.s.flatten()
+            p2_coefs['isolation'] = self.kwargs['isolation'].s12.s.flatten()
         else:
             p1_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
             p2_coefs['isolation'] = npy.zeros(len(thru), dtype=complex)
