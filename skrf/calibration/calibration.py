@@ -2365,7 +2365,8 @@ class NISTMultilineTRL(EightTerm):
     '''
     family = 'TRL'
     def __init__(self, measured, Grefls, l,
-                 er_est=1, refl_offset=None, p1_len_est=0, p2_len_est=0, ref_plane=0, gamma_root_choice='real', *args,**kwargs):
+                 er_est=1, refl_offset=None, ref_plane=0,
+                 gamma_root_choice='real', k_method='multical', *args,**kwargs):
         '''
         NISTMultilineTRL initializer
 
@@ -2400,14 +2401,6 @@ class NISTMultilineTRL(EightTerm):
             Estimated offset of the length measured from the center of the through.
             Negative length is towards the VNA, Units are in meters.
 
-        p1_len_est : float
-            Estimated length of port 1.
-            Negative length is towards the VNA. Units are in meters.
-
-        p2_len_est : float
-            Estimated length of port 2.
-            Negative length is towards the VNA. Units are in meters.
-
         ref_plane : float
             Reference plane shift after the calibration.
             Negative length is towards the VNA.
@@ -2421,11 +2414,16 @@ class NISTMultilineTRL(EightTerm):
             This is the suggested method when lines have moderate loss and the
             measurement noise is low. This is the default method.
 
-            'none' : Use heurestics to choose the eigenvalue.
+            'auto' : Use heurestics to choose the eigenvalue.
 
             'imag' : Force the imaginary part of the gamma to be positive,
             corresponding to a positive length line. Real part can be positive.
             May choose incorrectly when the line is long due to phase wrapping.
+
+        k_method : string
+            Method to use for determining the 'k' error coefficient.
+            Currently valid choices are 'marks' or 'multical'.
+            The default method is 'multical'.
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
@@ -2433,13 +2431,12 @@ class NISTMultilineTRL(EightTerm):
 
         '''
         self.refl_offset = refl_offset
-        self.p1_len_est = p1_len_est
-        self.p2_len_est = p2_len_est
         self.ref_plane = ref_plane
         self.er_est = er_est
         self.l = l
         self.Grefls = Grefls
         self.gamma_root_choice = gamma_root_choice
+        self.k_method = k_method
 
         if self.refl_offset == None:
             self.refl_offset = [0]*len(Grefls)
@@ -2767,8 +2764,8 @@ class NISTMultilineTRL(EightTerm):
             thru_id = npy.argmin(l)
             S_thru = measured_lines[thru_id].s[m]
 
-            Ap = -B1*B2 - B1*S_thru[1,1] + B2*S_thru[0,0] + linalg.det(S_thru)
-            Ap = -Ap/(1 - CoA1*S_thru[0,0] + CoA2*S_thru[1,1] - CoA1*CoA2*linalg.det(S_thru))
+            Ap = B1*B2 - B1*S_thru[1,1] - B2*S_thru[0,0] + linalg.det(S_thru)
+            Ap = -Ap/(1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*linalg.det(S_thru))
 
             A1_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
             A2_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
@@ -2795,28 +2792,39 @@ class NISTMultilineTRL(EightTerm):
             C1 = CoA1*A1
             C2 = CoA2*A2
 
-            #Determine R
+            #Determine R1, R2
 
-            z0_phase = npy.angle( npy.sqrt(er_eff[m]) )
-            Qox = ( 1 - 1j*z0_phase)
-            Qoy = ( 1 - 1j*z0_phase)
+            if self.k_method == 'marks':
+                p1_len_est = self.kwargs.get('p1_len_est', 0)
+                p2_len_est = self.kwargs.get('p2_len_est', 0)
 
-            R1R2 = (S_thru[1,0]*(1 - C1*C2))**-1
-            gam = A2 - B2*C2
-            de = (A1-B1*C1)*(R1R2*(A2-B2*C2))**2
-            beta_sqr = (abs(de)**2 + abs(gam)**2)/\
-                    (de.conjugate()*Qox + de.conjugate()*Qoy)
-            s21y = npy.sqrt( beta_sqr )
-            R2 = ((A2 -B2*C2)/s21y)**-1
+                z0_phase = npy.angle( npy.sqrt(er_eff[m]) )
+                Qox = ( 1 - 1j*z0_phase)
+                Qoy = ( 1 - 1j*z0_phase)
 
-            R2_est = exp(gamma[m]*self.p2_len_est)
-            if abs( R2_est/abs(R2_est) -R2/abs(R2) ) > npy.sqrt(2):
-                R2 = -R2
-            R1 = R1R2/R2
-            R1_est = exp(gamma[m]*self.p1_len_est)
+                R1R2 = (S_thru[1,0]*(1 - C1*C2))**-1
+                gam = A2 - B2*C2
+                de = (A1-B1*C1)*(R1R2*(A2-B2*C2))**2
+                beta_sqr = (abs(de)**2 + abs(gam)**2)/\
+                        (de.conjugate()*Qox + de.conjugate()*Qoy)
+                s21y = npy.sqrt( beta_sqr )
+                R2 = ((A2 -B2*C2)/s21y)**-1
 
-            if abs( R1_est/abs(R1_est) - R1/abs(R1) ) > npy.sqrt(2):
-                warn('Inconsistencies detected')
+                R2_est = exp(gamma[m]*p2_len_est)
+                if abs( R2_est/abs(R2_est) -R2/abs(R2) ) > npy.sqrt(2):
+                    R2 = -R2
+                R1 = R1R2/R2
+                R1_est = exp(gamma[m]*p1_len_est)
+
+                if abs( R1_est/abs(R1_est) - R1/abs(R1) ) > npy.sqrt(2):
+                    warn('Inconsistencies detected')
+            elif self.k_method == 'multical':
+                denom = 1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*\
+                (S_thru[0,0]*S_thru[1,1] - S_thru[0,1]*S_thru[1,0])
+                R1 = S_thru[0,1]/denom
+                R2 = S_thru[1,0]/denom
+            else:
+                raise ValueError('Unknown k_method: {}'.format(self.k_method))
 
             #Error matrices
             Tmat1[m,:,:] = R1*npy.array([[A1, B1],[C1, 1]])
@@ -2834,15 +2842,19 @@ class NISTMultilineTRL(EightTerm):
 
             dx = linalg.det(Smat1[m,:,:])
             dy = linalg.det(Smat2[m,:,:])
-            k = Smat1[m,1,0]/Smat2[m,0,1]
+
+            if self.k_method == 'marks':
+                k = Smat1[m,1,0]/Smat2[m,0,1]
+            else:
+                k = R2*dx*dy*Smat1[m,1,0]/Smat2[m,0,1]
 
             #Error coefficients
             e[m] = [Smat1[m,0,0],
                     Smat1[m,1,1],
                     dx,
-                    k*Smat2[m,0,0],
-                    k*Smat2[m,1,1],
-                    k*dy,
+                    Smat2[m,0,0],
+                    Smat2[m,1,1],
+                    dy,
                     k]
 
         self._gamma = gamma
@@ -2851,11 +2863,10 @@ class NISTMultilineTRL(EightTerm):
         self._coefs = {\
                 'forward directivity':e[:,0],
                 'forward source match':e[:,1],
-                'forward reflection tracking':(e[:,0]*e[:,1])-e[:,2],
-                'reverse directivity':e[:,3]/e[:,6],
-                'reverse source match':e[:,4]/e[:,6],
-                'reverse reflection tracking':(e[:,4]/e[:,6])*(e[:,3]/e[:,6])\
-                        - (e[:,5]/e[:,6]),
+                'forward reflection tracking':e[:,0]*e[:,1]-e[:,2],
+                'reverse directivity':e[:,3],
+                'reverse source match':e[:,4],
+                'reverse reflection tracking':e[:,4]*e[:,3]- e[:,5],
                 'k':e[:,6],
                 }
 
