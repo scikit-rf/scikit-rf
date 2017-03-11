@@ -708,6 +708,8 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         self.Xr = wg.random(n_ports =2, name = 'Xr')
         self.Yf = wg.random(n_ports =2, name='Yf')
         self.Yr = wg.random(n_ports =2, name='Yr')
+        self.If = wg.random(n_ports =1, name='If')
+        self.Ir = wg.random(n_ports =1, name='Ir')
        
         ideals = [
             wg.short(nports=2, name='short'),
@@ -723,7 +725,8 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         self.cal = rf.TwelveTerm(
             ideals = ideals,
             measured = measured,
-            n_thrus=2, 
+            n_thrus=2,
+            isolation=measured[2]
             )
     
     def measure(self,ntwk):
@@ -734,6 +737,10 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         m.s[:,0,0] = mf.s[:,0,0]
         m.s[:,0,1] = mr.s[:,0,1]
         m.s[:,1,1] = mr.s[:,1,1]
+
+        #Leakage
+        m.s[:,1,0] += self.If.s[:,0,0]
+        m.s[:,0,1] += self.Ir.s[:,0,0]
         return m
         
     def test_forward_directivity_accuracy(self):
@@ -786,6 +793,15 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
             self.Yr.s12*self.Xr.s12 , 
             self.cal.coefs_ntwks['reverse transmission tracking'])
             
+    def test_forward_isolation_accuracy(self):
+        self.assertEqual(
+            self.If.s11,
+            self.cal.coefs_ntwks['forward isolation'])
+
+    def test_reverse_isolation_accuracy(self):
+        self.assertEqual(
+            self.Ir.s11,
+            self.cal.coefs_ntwks['reverse isolation'])
     
     @nottest
     def test_convert_12term_2_8term(self):
@@ -833,6 +849,10 @@ class TwelveTermSloppyInitTest(TwelveTermTest):
         self.Xr = wg.random(n_ports =2, name = 'Xr')
         self.Yf = wg.random(n_ports =2, name='Yf')
         self.Yr = wg.random(n_ports =2, name='Yr')
+        #No leakage as it can interfere with thru detection, which is done
+        #based on S21 and S12
+        self.If = wg.match(n_ports =1, name='If')
+        self.Ir = wg.match(n_ports =1, name='Ir')
        
         ideals = [
             wg.short(nports=2, name='short'),
@@ -872,7 +892,9 @@ class SOLTTest(TwelveTermTest):
         self.Xr = wg.random(n_ports =2, name = 'Xr')
         self.Yf = wg.random(n_ports =2, name='Yf')
         self.Yr = wg.random(n_ports =2, name='Yr')
-       
+        self.If = wg.random(n_ports =1, name='If')
+        self.Ir = wg.random(n_ports =1, name='Ir')
+
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
@@ -892,6 +914,7 @@ class SOLTTest(TwelveTermTest):
             ideals = ideals,
             measured = measured,
             n_thrus=1,
+            isolation=measured[2]
             )
         
 
@@ -902,6 +925,10 @@ class TwoPortOnePathTest(TwelveTermTest):
         wg  = self.wg
         self.Xf = wg.random(n_ports =2, name = 'Xf')
         self.Yf = wg.random(n_ports =2, name='Yf')
+
+        #No leakage
+        self.If = wg.match(n_ports =1, name='If')
+        self.Ir = wg.match(n_ports =1, name='Ir')
         
         
         ideals = [
