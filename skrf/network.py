@@ -148,7 +148,6 @@ except ImportError:
     import pickle as pickle
     from pickle import UnpicklingError
 
-import warnings
 from copy import deepcopy as copy
 import re
 from numbers import Number
@@ -386,9 +385,9 @@ class Network(object):
             except(UnpicklingError):
                 # if unpickling doesn't work then, close fid, reopen in
                 # non-binary mode and try to read it as touchstone
+                filename=fid.name
                 fid.close()
-                fid = get_fid(file)
-                self.read_touchstone(fid)
+                self.read_touchstone(filename)
 
             if name is None and isinstance(file,str):
                 name = os.path.splitext(os.path.basename(file))[0]
