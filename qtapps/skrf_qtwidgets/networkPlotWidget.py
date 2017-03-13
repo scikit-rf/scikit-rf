@@ -270,11 +270,10 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         s = getattr(ntwk, attr)
         for n in range(ntwk.s.shape[2]):
             for m in range(ntwk.s.shape[1]):
-                c = next(colors)
-
                 if trace > 0:
                     if not n == n_ or not m == m_:
                         continue
+                c = next(colors)
                 label = "S{:d}{:d}".format(m + 1, n + 1)
 
                 if "db" in attr:
@@ -318,12 +317,10 @@ class NetworkPlotWidget(QtWidgets.QWidget):
             s = getattr(ntwk, attr)
             for n in range(ntwk.s.shape[2]):
                 for m in range(ntwk.s.shape[1]):
-                    c = next(colors)
-
                     if trace > 0:
                         if not n == n_ or not m == m_:
                             continue
-
+                    c = next(colors)
                     label = ntwk.name
                     if ntwk.s.shape[1] > 1:
                         label += " - S{:d}{:d}".format(m + 1, n + 1)
@@ -364,12 +361,10 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         for n in range(ntwk.s.shape[2]):
             for m in range(ntwk.s.shape[1]):
-                c = next(colors)
-
                 if trace > 0:
                     if not n == n_ or not m == m_:
                         continue
-
+                c = next(colors)
                 label = "S{:d}{:d}".format(m + 1, n + 1)
 
                 s = ntwk.s[:, m, n]
@@ -398,12 +393,10 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         for ntwk in ntwk_list:
             for n in range(ntwk.s.shape[2]):
                 for m in range(ntwk.s.shape[1]):
-                    c = next(colors)
-
                     if trace > 0:
                         if not n == n_ or not m == m_:
                             continue
-
+                    c = next(colors)
                     label = ntwk.name
                     if ntwk.s.shape[1] > 1:
                         label += " - S{:d}{:d}".format(m + 1, n + 1)

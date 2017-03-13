@@ -1412,7 +1412,7 @@ class PNA(Driver):
         ---------
         >>> p = PNA()
         >>> my_cal =  p.get_calbration()
-        >>> p.set_calibration(my_cal, ports = (1,2)
+        >>> p.set_calibration(my_cal, ports = (1,2))
 
         See Also
         --------

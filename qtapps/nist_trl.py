@@ -12,9 +12,9 @@ class NISTTRLWidget(QtWidgets.QWidget):
         self.setWindowTitle("NIST Multiline TRL Calibration")
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
 
-        self.vna_controller = widgets.VnaController()
-        self.vna_controller.verticalLayout.setContentsMargins(3, 3, 3, 3)
-        self.verticalLayout_main.addWidget(self.vna_controller)
+        self.vna_selector = widgets.VnaSelector()
+        self.vna_selector.verticalLayout.setContentsMargins(3, 3, 3, 3)
+        self.verticalLayout_main.addWidget(self.vna_selector)
         self.verticalLayout_main.addWidget(widgets.qt.QHLine())
 
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal, self)
@@ -36,8 +36,24 @@ class NISTTRLWidget(QtWidgets.QWidget):
 
         # necessary rigging of widgets
         self.tab_calStandards.connect_plot(self.ntwk_plot)
+        self.tab_calStandards.get_analyzer = self.vna_selector.get_analyzer
         self.tab_measurements.connect_plot(self.ntwk_plot)
         self.tab_measurements.get_calibration = self.tab_calStandards.get_calibration
+        self.tab_measurements.get_analyzer = self.vna_selector.get_analyzer
+        self.vna_selector.enableStateToggled.connect(self.process_vna_available)
+        self.tab_calStandards.calibration_updated.connect(self.tab_measurements.set_calibration)
+
+        self.process_vna_available(self.vna_selector.isEnabled())
+
+    def process_vna_available(self, available):
+        """
+        Parameters
+        ----------
+        available : bool
+            set the widgets based on whether or not analyzers are available for measuring / setting properties
+        """
+        self.tab_calStandards.process_vna_available(available)
+        self.tab_measurements.btn_measureMeasurement.setEnabled(available)
 
     def closeEvent(self, event):
         quit_msg = "Are you sure you want to exit the program?"
@@ -49,4 +65,5 @@ class NISTTRLWidget(QtWidgets.QWidget):
         else:
             event.ignore()
 
-app = qt.single_widget_application(NISTTRLWidget, splash_screen=True)
+if __name__ == "__main__":
+    app = qt.single_widget_application(NISTTRLWidget, splash_screen=True)

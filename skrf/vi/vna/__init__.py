@@ -36,4 +36,5 @@ Available VNAs
     HP8720
 '''
 
+from .abcvna import VNA
 from .keysight_pna import PNA, PNAX

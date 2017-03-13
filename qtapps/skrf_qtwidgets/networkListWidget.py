@@ -288,6 +288,22 @@ class NetworkListWidget(QtWidgets.QListWidget):
             names.append(item.ntwk.name)
         return names
 
+    def correction(self, ntwk):
+        """
+        method to for applying a correction to a network.  This method must be overridden to be functional
+
+        Parameters
+        ----------
+        ntwk : skrf.Network
+            the raw uncorrected network object
+
+        Returns
+        -------
+        skrf.Network
+            the corrected network object
+        """
+        return None
+
     def get_named_item(self, name):
         named_item = None
         for i in range(self.count()):
@@ -301,6 +317,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
         item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
         item.setText(self.get_unique_name(ntwk.name))
         item.ntwk = ntwk
+        item.ntwk_corrected = self.correction(ntwk)
         self.addItem(item)
         self.clearSelection()
         self.setCurrentItem(item)

@@ -290,3 +290,17 @@ class HelpIndicator(QtWidgets.QPushButton):
         vlay.addWidget(textEdit)
         dialog.exec_()
 
+
+class RunFunctionDialog(QtWidgets.QDialog):
+    def __init__(self, function, title="Wait", text=None, parent=None):
+        super(RunFunctionDialog, self).__init__(parent)
+        self.function = function
+        self.layout = QtWidgets.QVBoxLayout(self)
+        if text is None:
+            text = "Running Function, will close automatically"
+        self.text = QtWidgets.QTextBrowser()
+        self.text.setText(text)
+        self.layout.addWidget(self.text)
+
+    def showEvent(self, QShowEvent):
+        self.function()

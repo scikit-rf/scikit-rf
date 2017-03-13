@@ -13,7 +13,7 @@ class DataGrabber(QtWidgets.QWidget):
         self.setWindowTitle("Scikit-RF Data Grabber")
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
 
-        self.vna_controller = widgets.VnaController()
+        self.vna_controller = widgets.VnaSelector()
         self.verticalLayout_main.addWidget(self.vna_controller)
 
         self.splitter = QtWidgets.QSplitter(QtCore.Qt.Horizontal, self)

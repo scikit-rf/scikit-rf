@@ -209,14 +209,14 @@ class PNA(abcvna.VNA):
     def get_list_of_traces(self, **kwargs):
         self.resource.clear()
         traces = []
-        channels = self.query("available_channels").split(",")
+        channels = self.scpi.query_available_channels()
         for channel in channels:
             meas_list = self.scpi.query_meas_name_list(channel)
             if len(meas_list) == 1:
                 continue  # if there isnt a single comma, then there aren't any measurments
             parameters = dict([(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)])
 
-            meas_numbers = self.query("meas_number_list").split(",")
+            meas_numbers = self.scpi.query_meas_number_list()
             for mnum in meas_numbers:
                 name = self.scpi.query_meas_name_from_number(mnum)
                 item = {"name": name, "channel": channel, "measurement number": mnum,

@@ -49,17 +49,47 @@ def parse_command_string(command_string):
         else:
             kwarg = arg
             val = '""'
-        kwargs.append((kwarg, val))
+        kwargs.append([kwarg, val])
     kwargs_string = "".join([', ' + kwarg + "=" + val for kwarg, val in kwargs])
 
     if len(args) > 0:
         command_base = kwarg_pattern.sub("{:}", command_string)
         args_string = ", ".join(kwarg for kwarg, val in kwargs)
-        scpi_command = "scpi_preprocess(\"{:}\", {:})".format(command_base, args_string)
+        scpi_command = 'scpi_preprocess("{:}", {:})'.format(command_base, args_string)
     else:
         scpi_command = '"{:}"'.format(command_string)
 
     return kwargs_string, scpi_command
+
+
+def parse_write_values_string(command_string):
+    """
+    parse the command string for the write_values scpi command which is a little different than the others
+
+    Parameters
+    ----------
+    command_string : str
+        the input string that will be parsed for keyword arguments
+    """
+    args = kwarg_pattern.findall(command_string)
+    kwargs = list()
+    for arg in args:
+        if "=" in arg:
+            kwarg, val = arg.split("=")
+            val = process_kwarg_default(val)
+        else:
+            kwarg = arg
+            val = '""'
+        kwargs.append([kwarg, val])
+    kwargs[-1][1] = "None"  # data_values will be set to None as default
+    kwargs_string = "".join([', ' + kwarg + "=" + val for kwarg, val in kwargs])
+
+    command_string = command_string.replace("<{:}>".format(args[-1]), "")
+    command_base = kwarg_pattern.sub("{:}", command_string)
+    args_string = ", ".join(kwarg for kwarg, val in kwargs[:-1])  # last arg is the data we pass in
+    scpi_command = 'scpi_preprocess("{:}", {:})'.format(command_base, args_string)
+
+    return kwargs_string, scpi_command, kwargs[-1][0]
 
 
 def generate_set_string(command, command_root):
@@ -70,6 +100,19 @@ def generate_set_string(command, command_root):
 """def set_{:s}(self{:}):
     scpi_command = {:}
     self.resource.write(scpi_command)""".format(command['name'], kwargs_string, scpi_command)
+
+    return function_string
+
+
+def generate_set_values_string(command, command_root):
+    command_string = " ".join((command_root, to_string(command["set_values"]))).strip()
+    kwargs_string, scpi_command, data_variable = parse_write_values_string(command_string)
+
+    function_string = \
+"""def set_{:s}(self{:}):
+    scpi_command = {:}
+    self.resource.write_values(scpi_command, {:})""".format(
+            command['name'], kwargs_string, scpi_command, data_variable)
 
     return function_string
 
@@ -134,15 +177,17 @@ def parse_branch(branch, set_strings=[], query_strings=[], query_value_strings=[
         if command:
             if "set" in command.keys():
                 set_strings.append(generate_set_string(command, command_root))
+            if "set_values" in command.keys():
+                set_strings.append(generate_set_values_string(command, command_root))
             if "query" in command.keys():
                 query_strings.append(generate_query_string(command, command_root))
             if "query_values" in command.keys():
-                query_value_strings.append(generate_query_values_string(command, command_root))
+                query_strings.append(generate_query_values_string(command, command_root))
 
         if branch:
             parse_branch(branch, set_strings, query_strings, query_value_strings, command_root)
 
-    return set_strings, query_strings, query_value_strings
+    return set_strings, query_strings
 
 header_string = """converters = {
     "str": str,
@@ -188,22 +233,19 @@ class_header = """class SCPI(object):
 
 
 def parse_yaml_file(driver_yaml_file):
-    driver_dir = os.path.dirname(driver_yaml_file)
     driver = os.path.splitext(driver_yaml_file)[0] + ".py"
 
     with open(driver_yaml_file, 'r') as yaml_file:
         driver_template = yaml.load(yaml_file)
-    sets, querys, arrays = parse_branch(driver_template["COMMAND_TREE"])
+    sets, queries = parse_branch(driver_template["COMMAND_TREE"])
 
     driver_str = "\n\n\n".join((header_string, string_converter, scpi_preprocessor, query_processor)) + "\n\n\n"
     driver_str += class_header
 
     for s in sorted(sets, key=str.lower):
         driver_str += "\n" + indent(s, 1) + "\n"
-    for q in sorted(querys, key=str.lower):
+    for q in sorted(queries, key=str.lower):
         driver_str += "\n" + indent(q, 1) + "\n"
-    for a in sorted(arrays, key=str.lower):
-        driver_str += "\n" + indent(a, 1) + "\n"
 
     with open(driver, 'w') as scpi_driver:
         scpi_driver.write(driver_str)
