@@ -488,6 +488,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.lineEdit_epsEstimate.value_changed.connect(self.calibration_parameters_changed)
         self.lineEdit_referencePlane.value_changed.connect(self.calibration_parameters_changed)
         self.lineEdit_thruLength.value_changed.connect(self.calibration_parameters_changed)
+        self.comboBox_rootChoice.currentIndexChanged.connect(self.calibration_parameters_changed)
         self.listWidget_reflect.state_changed.connect(self.calibration_parameters_changed)
         self.listWidget_line.state_changed.connect(self.calibration_parameters_changed)
         self.listWidget_thru.state_changed.connect(self.calibration_parameters_changed)
