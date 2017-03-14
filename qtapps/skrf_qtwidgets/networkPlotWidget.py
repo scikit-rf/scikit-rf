@@ -232,6 +232,12 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                     frequency, curve.ntwk.frequency.unit, S11.real, S11.imag, Z.real, Z.imag))
 
     def update_plot(self):
+        if self.corrected_data_enabled:
+            if self.ntwk_corrected:
+                self.checkBox_useCorrected.setEnabled(True)
+            else:
+                self.checkBox_useCorrected.setEnabled(False)
+
         if "smith" in self.comboBox_primarySelector.currentText().lower():
             self.plot_smith()
         else:
