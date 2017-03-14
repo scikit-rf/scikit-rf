@@ -484,6 +484,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.calibration_current = False
 
         self.btn_viewCalibration.setEnabled(False)
+        self.btn_saveCalibration.setEnabled(False)
 
         self.lineEdit_epsEstimate.value_changed.connect(self.calibration_parameters_changed)
         self.lineEdit_referencePlane.value_changed.connect(self.calibration_parameters_changed)
@@ -797,9 +798,11 @@ This will save the measurements and parameters as currently entered.  Do you sti
             er_est=er_est, refl_offset=refl_offset, # p1_len_est=p1_len_est, p2_len_est=p2_len_est,
             ref_plane=ref_plane, gamma_root_choice=gamma_root_choice, switch_terms=switch_terms
         )
+        cal.run()
 
         self.calibration = cal
         self.calibration_current = True
+
         self.btn_runCalibration.setEnabled(False)
         self.btn_saveCalibration.setEnabled(True)
         self.btn_viewCalibration.setEnabled(True)
