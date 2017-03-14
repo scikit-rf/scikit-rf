@@ -6,7 +6,7 @@ DEFAULTS:
 COMMAND_TREE:
   CALC<cnum=1>:
     DATA:
-      command: {name: data, set: "<fmt=SDATA>,<data=None>", query_values: <fmt=SDATA>}
+      command: {name: data, set_values: "<fmt=SDATA>,<data>", query_values: <fmt=SDATA>}
       branch:
         SNP:
           PORT: {name: snp_data, query_values: "'<ports=(1, 2)>'"}
@@ -29,6 +29,11 @@ COMMAND_TREE:
       COUN: {name: averaging_count, set: <avg_count>, query: "", returns: int}
       STAT: {name: averaging_state, set: <onoff=ON>, query: "", returns: bool}
       MODE: {name: averaging_mode, set: <avg_mode=SWEEP>, query: ""}
+    CORR:
+      CSET:
+        CRE: {name: create_calset, set: <calset_name>}
+        NAME: {name: calset_name, set: <calset_name>, query: ""}
+        DATA: {name: calset_data, set_values: "<eterm>,<portA=1>,<portB=2>,<eterm_data>", query_values: "<eterm>,<portA=1>,<portB=2>"}
     FREQ:
       START: {name: f_start, set: <freq>, query: "", returns: float}
       STOP: {name: f_stop, set: <freq>, query: "", returns: float}

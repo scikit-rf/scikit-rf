@@ -2,6 +2,8 @@ import re
 
 from qtpy import QtWidgets, QtCore, QtGui
 
+from . import util
+
 available_units = {
     "frequency": {
         "base": "Hz",
@@ -46,6 +48,14 @@ class NumericLineEdit(QtWidgets.QLineEdit):
 
     def get_value(self):
         return float(self.text())
+
+    def set_value(self, value):
+        if type(value) in (float, int):
+            self.setText("{:0.6g}".format(value))
+        elif util.is_numeric(value):
+            self.setText(str(value))
+        else:
+            raise TypeError("must provide a number or a numeric string")
 
 
 class DoubleLineEdit(NumericLineEdit):
@@ -96,11 +106,17 @@ class InputWithUnits(NumericLineEdit):
 
     def get_value(self, units=None):
         value = float(self.text())
-
         if type(units) is str:
             if units in self.conversions.keys():
-                value *= self.conversions[self.units] / self.conversions[units]
+                value *= self.conversions[units] / self.conversions[self.units]
             else:
                 raise ValueError("Invalid units {:} provided to get_value".format(units))
-
         return value
+
+    def set_units(self, units):
+        if units not in self.conversions.keys():
+            raise KeyError("invalid units {}".format(units))
+
+        value = float(self.text()) / self.conversions[self.units] * self.conversions[units]
+        self.units = units
+        self.setText("{:0.6g}".format(value))

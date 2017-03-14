@@ -158,9 +158,9 @@ class NetworkParameterEditor(QtWidgets.QDialog):
             form.addRow(row_name, input)
 
         ok = QtWidgets.QPushButton("Ok")
-        ok.setAutoDefault(False)
+        # ok.setAutoDefault(False)
         cancel = QtWidgets.QPushButton("Cancel")
-        cancel.setAutoDefault(False)
+        # cancel.setAutoDefault(False)
         hlay = QtWidgets.QHBoxLayout()
         hlay.addWidget(ok)
         hlay.addWidget(cancel)
@@ -269,18 +269,139 @@ class SwitchTermsDialog(QtWidgets.QDialog):
             self.ready = True
 
 
+class VnaControllerDialog(QtWidgets.QDialog):
+    """
+    a convenience Dialog class that contains a VnaController Widget
+    """
+    def __init__(self, vna, parent=None):
+        super(VnaControllerDialog, self).__init__(parent)
+        self.controller = VnaController(vna, self)
+        self.close = QtWidgets.QPushButton("Close")
+        self.close.clicked.connect(self.close)
+
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.addWidget(self.controller)
+        self.layout.addWidget(self.close)
+
+
 class VnaController(QtWidgets.QWidget):
+    """
+    control the parameters of the VNA, start with simple things like the frequency settings
+    """
     FUNITS = ["Hz", "kHz", "MHz", "GHz", "THz", "PHz"]
     FCONVERSIONS = {"Hz": 1., "kHz": 1e-3, "MHz": 1e-6, "GHz": 1e-9, "THz": 1e-12, "PHz": 1e-15}
 
-    def __init__(self, parent=None):
+    def __init__(self, vna, parent=None):
+
+        """
+        set the instrument state for the given vna
+
+        Parameters
+        ----------
+        vna : skrf.vi.vna.VNA
+            skrf vna virtual instrument driver object
+        parent: QtWidgets.QWidget
+            parent widget
+        """
         super(VnaController, self).__init__(parent)
+
+        self.vna = vna
+
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+
+        # --- Frequency Controls --- #
+        default_funit = "GHz"
+        self.label_startFreq = QtWidgets.QLabel("Frequency:")
+        self.lineEdit_startFrequency = numeric_inputs.InputWithUnits(default_funit, 0.01)
+        self.lineEdit_startFrequency.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.label_stopFreq = QtWidgets.QLabel("to:")
+        self.lineEdit_stopFrequency = numeric_inputs.InputWithUnits(default_funit, 40)
+        self.lineEdit_stopFrequency.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.comboBox_funit = QtWidgets.QComboBox()
+        self.comboBox_funit.addItems(self.FUNITS)
+        self.comboBox_funit.setCurrentIndex(self.comboBox_funit.findText(default_funit))
+        self.label_numberOfPoints = QtWidgets.QLabel("Num Points:")
+        self.spinBox_numberOfPoints = QtWidgets.QSpinBox()
+        self.spinBox_numberOfPoints.setMinimum(1)
+        self.spinBox_numberOfPoints.setMaximum(100000)
+        self.spinBox_numberOfPoints.setSingleStep(100)
+        self.spinBox_numberOfPoints.setValue(401)
+        self.checkBox_logf = QtWidgets.QCheckBox("Log")
+        self.checkBox_logf.setChecked(False)
+        self.btn_setAnalyzerFreqSweep = QtWidgets.QPushButton("Set Freq. Sweep")
+
+        # --- adding Frequency Controls --- #
+        self.layout_row2.addWidget(self.label_startFreq)
+        self.layout_row2.addWidget(self.lineEdit_startFrequency)
+        self.layout_row2.addWidget(self.label_stopFreq)
+        self.layout_row2.addWidget(self.lineEdit_stopFrequency)
+        self.layout_row2.addWidget(self.comboBox_funit)
+        self.layout_row2.addWidget(qt.QVLine())
+        self.layout_row2.addWidget(self.label_numberOfPoints)
+        self.layout_row2.addWidget(self.spinBox_numberOfPoints)
+        self.layout_row2.addWidget(self.checkBox_logf)
+        self.layout_row2.addWidget(self.btn_setAnalyzerFreqSweep)
+
+        self._start_frequency = float(self.lineEdit_startFrequency.text())
+        self._stop_frequency = float(self.lineEdit_stopFrequency.text())
+        self.funit = self.comboBox_funit.currentText()
+        self.comboBox_funit.currentIndexChanged.connect(self.frequency_changed)
+        self.btn_setAnalyzerFreqSweep.clicked.connect(self.set_frequency_sweep)
+
+    def set_frequency_sweep(self):
+        channel = self.spinBox_channel.value()
+        f_unit = self.comboBox_funit.currentText()
+        f_start = self.start_frequency
+        f_stop = self.stop_frequency
+        f_npoints = self.spinBox_numberOfPoints.value()
+        self.vna.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop, f_npoints=f_npoints)
+
+    def set_start_freequency(self, value):
+        self._start_frequency = float(value)
+        self.lineEdit_startFrequency.setText("{:g}".format(self._start_frequency))
+
+    def get_start_frequency(self):
+        self._start_frequency = float(self.lineEdit_startFrequency.text())
+        return self._start_frequency
+
+    start_frequency = property(get_start_frequency, set_start_freequency)
+
+    def set_stop_freequency(self, value):
+        self._stop_frequency = float(value)
+        self.lineEdit_stopFrequency.setText("{:g}".format(self._stop_frequency))
+
+    def get_stop_frequency(self):
+        self._stop_frequency = float(self.lineEdit_stopFrequency.text())
+        return self._stop_frequency
+
+    stop_frequency = property(get_stop_frequency, set_stop_freequency)
+
+    def frequency_changed(self):
+        self.funit = self.comboBox_funit.currentText()
+        self.lineEdit_startFrequency.set_units(self.funit)
+        self.lineEdit_stopFrequency.set_units(self.funit)
+
+
+class VnaSelector(QtWidgets.QWidget):
+    enableStateToggled = QtCore.Signal(bool)
+
+    def __init__(self, parent=None):
+        super(VnaSelector, self).__init__(parent)
 
         # --- Setup UI Elements --- #
         self.verticalLayout = QtWidgets.QVBoxLayout(self)  # primary widget layout
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)  # normally this will be embedded in another application
 
         self.checkBox_TriggerNew = QtWidgets.QCheckBox("Trigger New", self)
+        self.checkBox_TriggerNew.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.label_ports = QtWidgets.QLabel("ports 1,2:")
+        self.spinBox_port1 = QtWidgets.QSpinBox(self)
+        self.spinBox_port2 = QtWidgets.QSpinBox(self)
+        for port in (self.spinBox_port1, self.spinBox_port2):
+            port.setMinimum(1)
+            port.setMaximum(4)
+        self.spinBox_port1.setValue(1)
+        self.spinBox_port2.setValue(2)
 
         self.label_analyzerList = QtWidgets.QLabel("Select Analyzer", self)
         self.comboBox_analyzer = QtWidgets.QComboBox(self)
@@ -291,113 +412,55 @@ class VnaController(QtWidgets.QWidget):
         self.label_visaString = QtWidgets.QLabel("Visa String", self)
         self.lineEdit_visaString = QtWidgets.QLineEdit(self)
 
-        self.hlay_row1 = QtWidgets.QHBoxLayout()
-        self.hlay_row1.addWidget(self.checkBox_TriggerNew)
-        self.hlay_row1.addLayout(self.hlay_analyzerList)
-        self.hlay_row1.addWidget(self.label_visaString)
-        self.hlay_row1.addWidget(self.lineEdit_visaString)
+        self.row1 = QtWidgets.QHBoxLayout()
+        self.row1.addLayout(self.hlay_analyzerList)
+        self.row1.addWidget(self.label_visaString)
+        self.row1.addWidget(self.lineEdit_visaString)
+        self.row1.insertStretch(-1)
 
         self.label_channel = QtWidgets.QLabel("Channel:")
         self.spinBox_channel = QtWidgets.QSpinBox()
         self.spinBox_channel.setMinimum(1)
         self.spinBox_channel.setMaximum(256)
 
-        self.label_startFreq = QtWidgets.QLabel("Start Freq:", self)
-        self.lineEdit_startFrequency = QtWidgets.QLineEdit(self)
-        self.lineEdit_startFrequency.setValidator(QtGui.QDoubleValidator())
-        self.lineEdit_startFrequency.setText("{:g}".format(0.01))
-        self.lineEdit_startFrequency.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.btn_controlVna = QtWidgets.QPushButton("Set VNA State")
 
-        self.label_stopFreq = QtWidgets.QLabel("Stop Freq:", self)
-        self.lineEdit_stopFrequency = QtWidgets.QLineEdit(self)
-        self.lineEdit_stopFrequency.setValidator(QtGui.QDoubleValidator())
-        self.lineEdit_stopFrequency.setText("{:g}".format(40.0))
-        self.lineEdit_stopFrequency.setSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
+        self.row2 = QtWidgets.QHBoxLayout()
+        self.row2.addWidget(self.label_channel)
+        self.row2.addWidget(self.spinBox_channel)
+        self.row2.addWidget(qt.QVLine())
+        self.row2.addWidget(self.checkBox_TriggerNew)
+        self.row2.addWidget(qt.QVLine())
+        self.row2.addWidget(self.label_ports)
+        self.row2.addWidget(self.spinBox_port1)
+        self.row2.addWidget(self.spinBox_port2)
+        self.row2.addWidget(qt.QVLine())
+        self.row2.addWidget(self.btn_controlVna)
+        self.row2.insertStretch(-1)
 
-        self.label_numberOfPoints = QtWidgets.QLabel("Num Points:", self)
-        self.spinBox_numberOfPoints = QtWidgets.QSpinBox(self)
-        self.spinBox_numberOfPoints.setMinimum(1)
-        self.spinBox_numberOfPoints.setMaximum(100000)
-        self.spinBox_numberOfPoints.setSingleStep(100)
-        self.spinBox_numberOfPoints.setValue(401)
-
-        self.label_funit = QtWidgets.QLabel("Units:", self)
-        self.comboBox_funit = QtWidgets.QComboBox(self)
-        self.comboBox_funit.addItems(self.FUNITS)
-        self.comboBox_funit.setCurrentIndex(self.comboBox_funit.findText("GHz"))
-
-        self.btn_setAnalyzerFreqSweep = QtWidgets.QPushButton("Set Freq. Sweep", self)
-
-        self.layout_row2 = QtWidgets.QHBoxLayout()
-        for label, widget in (
-                (self.label_channel, self.spinBox_channel),
-                (self.label_startFreq, self.lineEdit_startFrequency),
-                (self.label_stopFreq, self.lineEdit_stopFrequency),
-                (self.label_numberOfPoints, self.spinBox_numberOfPoints),
-                (self.label_funit, self.comboBox_funit)
-        ):
-            label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignCenter)
-            self.layout_row2.addWidget(label)
-            self.layout_row2.addWidget(widget)
-        self.layout_row2.addWidget(self.btn_setAnalyzerFreqSweep)
-        self.layout_row2.insertStretch(-1)
-
-        self.verticalLayout.addLayout(self.hlay_row1)
-        self.verticalLayout.addLayout(self.layout_row2)
+        self.verticalLayout.addLayout(self.row1)
+        self.verticalLayout.addLayout(self.row2)
 
         self.comboBox_analyzer.currentIndexChanged.connect(self.set_analyzer_default_address)
         for key, val in analyzers.items():
             self.comboBox_analyzer.addItem(key)
         # --- End Setup UI Elements --- #
 
-        self._start_frequency = float(self.lineEdit_startFrequency.text())
-        self._stop_frequency = float(self.lineEdit_stopFrequency.text())
-        self.funit = self.comboBox_funit.currentText()
-        self.comboBox_funit.currentIndexChanged.connect(self.frequency_changed)
+        self.btn_controlVna.clicked.connect(self.control_vna)
 
-        self.btn_setAnalyzerFreqSweep.clicked.connect(self.set_frequency_sweep)
-
-    def set_frequency_sweep(self):
-        channel = self.spinBox_channel.value()
-        f_unit = self.comboBox_funit.currentText()
-        f_start = self.start_frequency
-        f_stop = self.stop_frequency
-        f_npoints = self.spinBox_numberOfPoints.value()
-
-        with self.get_analyzer() as nwa:
-            nwa.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop, f_npoints=f_npoints)
-
-    def set_start_freequency(self, value):
-        self._start_frequency = float(value)
-        self.lineEdit_startFrequency.setText("{:g}".format(self._start_frequency))
-    
-    def get_start_frequency(self):
-        self._start_frequency = float(self.lineEdit_startFrequency.text())
-        return self._start_frequency
-    
-    start_frequency = property(get_start_frequency, set_start_freequency)
-
-    def set_stop_freequency(self, value):
-        self._stop_frequency = float(value)
-        self.lineEdit_stopFrequency.setText("{:g}".format(self._stop_frequency))
-    
-    def get_stop_frequency(self):
-        self._stop_frequency = float(self.lineEdit_stopFrequency.text())
-        return self._stop_frequency
-    
-    stop_frequency = property(get_stop_frequency, set_stop_freequency)
-
-    def frequency_changed(self):
-        conversion = self.FCONVERSIONS[self.comboBox_funit.currentText()] / self.FCONVERSIONS[self.funit]
-        self.funit = self.comboBox_funit.currentText()
-        self.start_frequency *= conversion
-        self.stop_frequency *= conversion
+    def setEnabled(self, enabled):
+        super(VnaSelector, self).setEnabled(enabled)
+        self.enableStateToggled.emit(enabled)
 
     def set_analyzer_default_address(self):
         self.lineEdit_visaString.setText(analyzers[self.comboBox_analyzer.currentText()].DEFAULT_VISA_ADDRESS)
 
     def get_analyzer(self):
         return analyzers[self.comboBox_analyzer.currentText()](self.lineEdit_visaString.text())
+
+    def control_vna(self):
+        with self.get_analyzer() as vna:
+            VnaControllerDialog(vna).exec_()
 
 
 class ReflectDialog(QtWidgets.QDialog):

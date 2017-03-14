@@ -55,13 +55,25 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":SENS{:}:AVER:STAT {:}", cnum, onoff)
         self.resource.write(scpi_command)
 
+    def set_calset_data(self, cnum=1, eterm="", portA=1, portB=2, eterm_data=None):
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:DATA {:},{:},{:},", cnum, eterm, portA, portB)
+        self.resource.write_values(scpi_command, eterm_data)
+
+    def set_calset_name(self, cnum=1, calset_name=""):
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:NAME {:}", cnum, calset_name)
+        self.resource.write(scpi_command)
+
+    def set_create_calset(self, cnum=1, calset_name=""):
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:CRE {:}", cnum, calset_name)
+        self.resource.write(scpi_command)
+
     def set_create_meas(self, cnum=1, mname="", param=""):
         scpi_command = scpi_preprocess(":CALC{:}:PAR:DEF:EXT '{:}','{:}'", cnum, mname, param)
         self.resource.write(scpi_command)
 
-    def set_data(self, cnum=1, fmt="SDATA", data="None"):
-        scpi_command = scpi_preprocess(":CALC{:}:DATA {:},{:}", cnum, fmt, data)
-        self.resource.write(scpi_command)
+    def set_data(self, cnum=1, fmt="SDATA", data=None):
+        scpi_command = scpi_preprocess(":CALC{:}:DATA {:},", cnum, fmt)
+        self.resource.write_values(scpi_command, data)
 
     def set_delete_meas(self, cnum=1, mname=""):
         scpi_command = scpi_preprocess(":CALC{:}:PAR:DEL '{:}'", cnum, mname)
@@ -141,6 +153,20 @@ class SCPI(object):
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='bool')
         return value
 
+    def query_calset_data(self, cnum=1, eterm="", portA=1, portB=2):
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:DATA? {:},{:},{:}", cnum, eterm, portA, portB)
+        return self.resource.query_values(scpi_command)
+
+    def query_calset_name(self, cnum=1):
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:NAME?", cnum)
+        value = self.resource.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
+        return value
+
+    def query_data(self, cnum=1, fmt="SDATA"):
+        scpi_command = scpi_preprocess(":CALC{:}:DATA? {:}", cnum, fmt)
+        return self.resource.query_values(scpi_command)
+
     def query_display_format(self, cnum=1):
         scpi_command = scpi_preprocess(":CALC{:}:FORM?", cnum)
         value = self.resource.query(scpi_command)
@@ -195,6 +221,10 @@ class SCPI(object):
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
         return value
 
+    def query_snp_data(self, cnum=1, ports=(1, 2)):
+        scpi_command = scpi_preprocess(":CALC{:}:DATA:SNP:PORT? '{:}'", cnum, ports)
+        return self.resource.query_values(scpi_command)
+
     def query_sweep_mode(self, cnum=1):
         scpi_command = scpi_preprocess(":SENS{:}:SWE:MODE?", cnum)
         value = self.resource.query(scpi_command)
@@ -230,11 +260,3 @@ class SCPI(object):
         value = self.resource.query(scpi_command)
         value = process_query(value, csv=True, strip_outer_quotes=True, returns='int')
         return value
-
-    def query_data(self, cnum=1, fmt="SDATA"):
-        scpi_command = scpi_preprocess(":CALC{:}:DATA? {:}", cnum, fmt)
-        return self.resource.query_values(scpi_command)
-
-    def query_snp_data(self, cnum=1, ports=(1, 2)):
-        scpi_command = scpi_preprocess(":CALC{:}:DATA:SNP:PORT? '{:}'", cnum, ports)
-        return self.resource.query_values(scpi_command)

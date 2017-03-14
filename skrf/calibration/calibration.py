@@ -3969,6 +3969,8 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         raw measurement of a thru
     line_m : :class:`~skrf.network.Network`
         raw measurement of a matched transmissive standard
+    reflect_m: :class:`~skrf.network.Network`
+        raw measurement of a reflect standard
     reflect_approx : :class:`~skrf.network.Network`
         approximate One-port network for the reflect.  if None, then
         we assume its a flush short (gamma=-1)
@@ -4035,7 +4037,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         return [Network(frequency=thru_m.frequency, s = k) for k in out]
     
     if reflect_approx is None:
-        reflect_approx = reflect.copy()
+        reflect_approx = reflect_m.copy()
         reflect_approx.s[:,0,0]=-1
         
     
@@ -4044,7 +4046,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     closest = find_closest(close, closer, reflect_approx.s11.s.flatten())
     
     #import pdb;pdb.set_trace()
-    reflect= reflect_approx.copy()
+    reflect = reflect_approx.copy()
     reflect.s[:,0,0]=closest
     
     return reflect

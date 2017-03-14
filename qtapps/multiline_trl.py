@@ -12,7 +12,7 @@ class TRLWidget(QtWidgets.QWidget):
         self.setWindowTitle("Multiline TRL Calibration")
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
 
-        self.vna_controller = widgets.VnaController()
+        self.vna_controller = widgets.VnaSelector()
         self.vna_controller.verticalLayout.setContentsMargins(3, 3, 3, 3)
         self.verticalLayout_main.addWidget(self.vna_controller)
 
