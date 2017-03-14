@@ -33,6 +33,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
     save_single_requested = QtCore.Signal(object, str)
     selection_changed = QtCore.Signal(object)
     same_item_clicked = QtCore.Signal(object)
+    state_changed = QtCore.Signal()
 
     def __init__(self, name_prefix='meas', parent=None):
         super(NetworkListWidget, self).__init__(parent)
@@ -44,6 +45,8 @@ class NetworkListWidget(QtWidgets.QListWidget):
         self.save_single_requested.connect(self.save_NetworkListItem)
         self.itemDelegate().commitData.connect(self.item_text_updated)
         self.item_updated.connect(self.set_active_network)
+        self.item_updated.connect(self.state_changed.emit)
+        self.item_removed.connect(self.state_changed.emit)
 
         self._ntwk_plot = None
         self.named_items = {}
@@ -315,9 +318,11 @@ class NetworkListWidget(QtWidgets.QListWidget):
     def load_network(self, ntwk, activate=True):
         item = NetworkListItem()
         item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-        item.setText(self.get_unique_name(ntwk.name))
+        name = self.get_unique_name(ntwk.name)
         item.ntwk = ntwk
         item.ntwk_corrected = self.correction(ntwk)
+        item.update_ntwk_names(name)
+        item.set_text()
         self.addItem(item)
         self.clearSelection()
         self.setCurrentItem(item)
@@ -530,9 +535,14 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
         """
         dialog = widgets.NetworkParameterEditor(item, self.item_parameters)
 
+        state_changed = False
+
         accepted = dialog.exec_()
         if accepted:
             for name, input in dialog.inputs.items():
+                if name == "name":
+                    continue
+
                 if isinstance(input, numeric_inputs.NumericLineEdit):
                     value = input.get_value()
                 elif isinstance(input, QtWidgets.QLineEdit):
@@ -543,12 +553,19 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
                     value = input.value()
                 else:
                     raise TypeError("Unsupported Widget {:}".format(input))
-                item.parameters[name] = value
+                if item.parameters[name] != value:
+                    item.parameters[name] = value
+                    state_changed = True
 
             index = self.indexFromItem(item).row()
             name = self.get_unique_name(dialog.inputs["name"].text(), index)
-            item.update_ntwk_names(name)
+            if item.ntwk.name != name:
+                item.update_ntwk_names(name)
+                state_changed = True
             self.set_item_text(item)
+
+            if state_changed:
+                self.state_changed.emit()
 
     @property
     def item_parameters(self):
