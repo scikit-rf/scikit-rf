@@ -40,8 +40,17 @@ def parse_number_with_units(number_string):
 
 
 class NumericLineEdit(QtWidgets.QLineEdit):
+    value_changed = QtCore.Signal()
+
     def __init__(self, parent=None):
         super(NumericLineEdit, self).__init__(parent)
+        self.current_value = self.text()
+        self.editingFinished.connect(self.check_state)
+
+    def check_state(self):
+        if not self.current_value == self.text():
+            self.current_value = self.text()
+            self.value_changed.emit()
 
     def sizeHint(self):
         return QtCore.QSize(60, 22)
@@ -51,11 +60,14 @@ class NumericLineEdit(QtWidgets.QLineEdit):
 
     def set_value(self, value):
         if type(value) in (float, int):
-            self.setText("{:0.6g}".format(value))
+            str_val = "{:0.6g}".format(value)
         elif util.is_numeric(value):
-            self.setText(str(value))
+            str_val = str(value)
         else:
             raise TypeError("must provide a number or a numeric string")
+
+        self.setText(str_val)
+        self.check_state()
 
 
 class DoubleLineEdit(NumericLineEdit):
@@ -76,6 +88,7 @@ class InputWithUnits(NumericLineEdit):
             the unit of measure, e.g. "Hz", "mm", "in", "mil"
         """
         super(InputWithUnits, self).__init__(parent)
+        self.editingFinished.disconnect(self.check_state)
         if value is not None:
             try:
                 value = float(value)
@@ -91,7 +104,6 @@ class InputWithUnits(NumericLineEdit):
                 self.base_unit = self.conversions["base"]
         if not self.conversions:
             raise ValueError("unit not recognized")
-
         self.editingFinished.connect(self.number_entered)
 
     def number_entered(self):
@@ -103,6 +115,7 @@ class InputWithUnits(NumericLineEdit):
             self.setText("{:0.6g}".format(value))
         else:
             self.setText("invalid unit")
+        self.check_state()
 
     def get_value(self, units=None):
         value = float(self.text())
@@ -120,3 +133,4 @@ class InputWithUnits(NumericLineEdit):
         value = float(self.text()) / self.conversions[self.units] * self.conversions[units]
         self.units = units
         self.setText("{:0.6g}".format(value))
+        self.check_state()

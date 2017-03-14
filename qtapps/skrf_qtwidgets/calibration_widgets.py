@@ -310,15 +310,16 @@ class NISTCalViewer(QtWidgets.QDialog):
         """
         super(NISTCalViewer, self).__init__(parent)
         self.setWindowTitle("Inspect Cal")
-
-        fHz = cal.frequency.f
-        c = 299792458
-
         self.layout = QtWidgets.QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.graphicsLayout = pg.GraphicsLayoutWidget()
 
+        fHz = cal.frequency.f
+        c = 299792458
         eps_eff = (cal.gamma * c / (1j * 2 * np.pi * fHz)) ** 2  # assuming non-magnetic TEM propagation
+        Eratio_1cm = np.exp(-cal.gamma * 0.1)
+        dbcm = 20 * np.log10(np.abs(Eratio_1cm))
+
         self.eps_plot = self.graphicsLayout.addPlot()  # type: pg.PlotItem
         self.eps_plot.setLabel("left", "effective permittivity")
         self.eps_plot.setLabel("bottom", "frequency", units="Hz")
@@ -327,8 +328,6 @@ class NISTCalViewer(QtWidgets.QDialog):
         self.eps_plot.plot(fHz, eps_eff.real, pen=pg.mkPen("c"), name="real")
         self.eps_plot.plot(fHz, -eps_eff.imag, pen=pg.mkPen("y"), name="imag")
 
-        Eratio_1cm = np.exp(-cal.gamma * 0.1)
-        dbcm = 20 * np.log10(np.abs(Eratio_1cm))
         self.y_plot = self.graphicsLayout.addPlot()  # type: pg.PlotItem
         self.y_plot.setLabel("left", "line loss", units="dB/cm")
         self.y_plot.setLabel("bottom", "frequency", units="Hz")
@@ -336,7 +335,6 @@ class NISTCalViewer(QtWidgets.QDialog):
         self.y_plot.plot(fHz, dbcm)
 
         self.layout.addWidget(self.graphicsLayout)
-
         self.resize(900, 400)
 
 
@@ -483,11 +481,26 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.btn_uploadCalibration.clicked.connect(self.upload_calibration)
         self._get_analyzer = None
         self._calibration = None
+        self.calibration_current = False
 
         self.btn_viewCalibration.setEnabled(False)
 
+        self.lineEdit_epsEstimate.value_changed.connect(self.calibration_parameters_changed)
+        self.lineEdit_referencePlane.value_changed.connect(self.calibration_parameters_changed)
+        self.lineEdit_thruLength.value_changed.connect(self.calibration_parameters_changed)
+        self.listWidget_reflect.state_changed.connect(self.calibration_parameters_changed)
+        self.listWidget_line.state_changed.connect(self.calibration_parameters_changed)
+        self.listWidget_thru.state_changed.connect(self.calibration_parameters_changed)
+
+    def calibration_parameters_changed(self):
+        self.calibration_current = False
+        self.btn_runCalibration.setEnabled(True)
+        if self.calibration is not None:
+            self.btn_runCalibration.setText("Re-Run Cal")
+            self.btn_viewCalibration.setText("View Cal (Old)")
+
     def view_calibration(self):
-        dialog = NISTCalViewer(self.get_calibration())
+        dialog = NISTCalViewer(self.calibration)
         dialog.exec_()
 
     def upload_calibration(self):
@@ -533,6 +546,14 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 
     def save_calibration(self):
         """save an mTRL as a json + .s2p files in a zip archive"""
+        if not self.calibration_current:
+            msg = """Calibration parameters have changed and cal has not been re-run.
+This will save the measurements and parameters as currently entered.  Do you still want to save"""
+            reply = QtWidgets.QMessageBox.question(
+                self, 'Cal Parameters Changed', msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+            if reply == QtWidgets.QMessageBox.No:
+                return
+
         thru = self.listWidget_thru.get_named_item(self.THRU_ID).ntwk
         fswitch = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_FORWARD).ntwk
         rswitch = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_REVERSE).ntwk
@@ -708,6 +729,14 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
     def get_calibration(self):
         return self._calibration
 
+    def set_calibration(self, cal):
+        if not isinstance(cal, skrf.calibration.NISTMultilineTRL):
+            raise TypeError("Must provide a NISTMultilineTRL Calibration object")
+        else:
+            self._calibration = cal
+
+    calibration = property(get_calibration, set_calibration)
+
     def run_calibration_popup(self):
         dialog = qt.RunFunctionDialog(self.run_calibration, "Running Calibration",
                                       "Running NIST Multiline Cal\nthis window will close when finished")
@@ -768,6 +797,10 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
             ref_plane=ref_plane, gamma_root_choice=gamma_root_choice, switch_terms=switch_terms
         )
 
-        self._calibration = cal
+        self.calibration = cal
+        self.calibration_current = True
+        self.btn_runCalibration.setEnabled(False)
+        self.btn_saveCalibration.setEnabled(True)
         self.btn_viewCalibration.setEnabled(True)
+        self.btn_viewCalibration.setText("View Cal")
         self.calibration_updated.emit(cal)
