@@ -318,9 +318,11 @@ class NetworkListWidget(QtWidgets.QListWidget):
     def load_network(self, ntwk, activate=True):
         item = NetworkListItem()
         item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
-        item.setText(self.get_unique_name(ntwk.name))
+        name = self.get_unique_name(ntwk.name)
         item.ntwk = ntwk
         item.ntwk_corrected = self.correction(ntwk)
+        item.update_ntwk_names(name)
+        item.set_text()
         self.addItem(item)
         self.clearSelection()
         self.setCurrentItem(item)
