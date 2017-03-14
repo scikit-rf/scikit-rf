@@ -3,7 +3,9 @@ import json
 import zipfile
 
 from qtpy import QtWidgets, QtCore
+import pyqtgraph as pg
 import skrf
+import numpy as np
 
 from . import qt, networkListWidget, numeric_inputs, widgets, util
 
@@ -296,6 +298,48 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         return skrf.calibration.TRL(measured, n_reflects=len(reflects), switch_terms=switch_terms)
 
 
+class NISTCalViewer(QtWidgets.QDialog):
+    def __init__(self, cal, parent=None):
+        """
+        a simple viewer to check the quality of the calibration
+
+        Parameters
+        ----------
+        cal : skrf.calibration.NISTMultilineTRL
+            the calibration object
+        """
+        super(NISTCalViewer, self).__init__(parent)
+        self.setWindowTitle("Inspect Cal")
+
+        fHz = cal.frequency.f
+        c = 299792458
+
+        self.layout = QtWidgets.QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.graphicsLayout = pg.GraphicsLayoutWidget()
+
+        eps_eff = (cal.gamma * c / (1j * 2 * np.pi * fHz)) ** 2  # assuming non-magnetic TEM propagation
+        self.eps_plot = self.graphicsLayout.addPlot()  # type: pg.PlotItem
+        self.eps_plot.setLabel("left", "effective permittivity")
+        self.eps_plot.setLabel("bottom", "frequency", units="Hz")
+        self.eps_plot.addLegend()
+        self.eps_plot.showGrid(True, True)
+        self.eps_plot.plot(fHz, eps_eff.real, pen=pg.mkPen("c"), name="real")
+        self.eps_plot.plot(fHz, -eps_eff.imag, pen=pg.mkPen("y"), name="imag")
+
+        Eratio_1cm = np.exp(-cal.gamma * 0.1)
+        dbcm = 20 * np.log10(np.abs(Eratio_1cm))
+        self.y_plot = self.graphicsLayout.addPlot()  # type: pg.PlotItem
+        self.y_plot.setLabel("left", "line loss", units="dB/cm")
+        self.y_plot.setLabel("bottom", "frequency", units="Hz")
+        self.y_plot.showGrid(True, True)
+        self.y_plot.plot(fHz, dbcm)
+
+        self.layout.addWidget(self.graphicsLayout)
+
+        self.resize(900, 400)
+
+
 class NISTTRLStandardsWidget(QtWidgets.QWidget):
     THRU_ID = "thru"
     SWITCH_TERMS_ID_FORWARD = "forward switch terms"
@@ -443,7 +487,8 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.btn_viewCalibration.setEnabled(False)
 
     def view_calibration(self):
-        qt.warnMissingFeature()
+        dialog = NISTCalViewer(self.get_calibration())
+        dialog.exec_()
 
     def upload_calibration(self):
         qt.warnMissingFeature()
@@ -619,7 +664,6 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.lineEdit_thruLength.set_value(standards["thru"]["length"] * 1000)
         self.lineEdit_referencePlane.set_value(params["parameters"]["reference plane shift"] * 1000)
         self.comboBox_rootChoice.setCurrentIndex(self.comboBox_rootChoice.findText(params["parameters"]["root choice"]))
-
 
     def measure_thru(self):
         with self.get_analyzer() as nwa:
