@@ -1,5 +1,4 @@
-
-'''
+"""
 
 .. currentmodule:: skrf.util
 ========================================
@@ -7,7 +6,6 @@ util (:mod:`skrf.util`)
 ========================================
 
 Holds utility functions that are general conveniences.
-
 
 
 General
@@ -21,12 +19,12 @@ General
    get_fid
    get_extn
 
-
-
-'''
+"""
 
 import fnmatch
 import os
+import json
+import zipfile
 
 try:
     import cPickle as pickle
@@ -35,8 +33,10 @@ except ImportError:
 
 import numpy as npy
 from datetime import datetime
-import collections, pprint
-from subprocess import Popen,PIPE
+import collections
+import pprint
+import re
+from subprocess import Popen, PIPE
 # globals
 
 try:
@@ -44,7 +44,7 @@ try:
 except NameError:
     basestring = (str, bytes)
 
-# other
+
 def now_string():
     '''
     returns a unique sortable string, representing the current time
@@ -60,6 +60,7 @@ def now_string():
     '''
     return datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
 
+
 def now_string_2_dt(s):
     '''
     Converts the output of  :func:`now_string` to a datetime object.
@@ -71,7 +72,8 @@ def now_string_2_dt(s):
     '''
     return datetime(*[int(k) for k in s.split('.')])
 
-def find_nearest(array,value):
+
+def find_nearest(array, value):
     '''
     find nearest value in array.
 
@@ -93,7 +95,8 @@ def find_nearest(array,value):
     idx=(npy.abs(array-value)).argmin()
     return array[idx]
 
-def find_nearest_index(array,value):
+
+def find_nearest_index(array, value):
     '''
     find nearest value in array.
 
@@ -116,7 +119,8 @@ def find_nearest_index(array,value):
     '''
     return (npy.abs(array-value)).argmin()
 
-def slice_domain(x,domain):
+
+def slice_domain(x, domain):
     '''
     Returns a slice object closest to the `domain` of `x`
 
@@ -143,6 +147,7 @@ def slice_domain(x,domain):
 
 # file IO
 
+
 def get_fid(file, *args, **kwargs):
     '''
     Returns a file object, given a filename or file object
@@ -161,6 +166,7 @@ def get_fid(file, *args, **kwargs):
         return open(file, *args, **kwargs)
     else:
         return file
+
 
 def get_extn(filename):
     '''
@@ -187,6 +193,7 @@ def get_extn(filename):
         return None
     else:
         return ext[1:]
+
 
 def basename_noext(filename):
     '''
@@ -252,7 +259,6 @@ def dict_2_recarray(d, delim, dtype):
     split_keys = [tuple(k.split(delim)+[d[k]]) for k in d.keys()]
     x = npy.array(split_keys, dtype=dtype+[('values',object)])
     return x
-
 
 
 def findReplace(directory, find, replace, filePattern):
@@ -374,6 +380,7 @@ class HomoList(collections.Sequence):
 
     def __repr__(self):
         return pprint.pformat(self.store)
+
 
 class HomoDict(collections.MutableMapping):
     '''
@@ -508,3 +515,112 @@ class HomoDict(collections.MutableMapping):
             else:
                 a = a[a.__getattr__(k) == kwargs[k]]
         return a
+
+
+def has_duplicate_value(value, values, index):
+    """
+    convenience function to check if there is another value of the current index in the list
+
+    Parameters
+    ----------
+    value :
+        any value in a list
+    values : Iterable
+        the iterable containing the values
+    index : int
+        the index of the current item we are checking for
+
+    Returns
+    -------
+    bool,int
+        returns None if no duplicate found, or the index of the first found duplicate
+    """
+
+    for i, val in enumerate(values):
+        if i == index:
+            continue
+        if value == val:
+            return i
+    return False
+
+
+def unique_name(name, names, exclude=-1):
+    """
+    pass in a name and a list of names, and increment with _## as necessary to ensure a unique name
+
+    Parameters
+    ----------
+    name : str
+        the chosen name, to be modified if necessary
+    names : list
+        list of names (str)
+    exclude : int
+        the index of an item to be excluded from the search
+    """
+    if not has_duplicate_value(name, names, exclude):
+        return name
+    else:
+        if re.match("_\d\d", name[-3:]):
+            name_base = name[:-3]
+            suffix = int(name[-2:])
+        else:
+            name_base = name
+            suffix = 1
+
+        for num in range(suffix, 100, 1):
+            name = "{:s}_{:02d}".format(name_base, num)
+            if has_duplicate_value(name, names, exclude) is False:
+                break
+    return name
+
+
+def snp_string(ntwk, comments=None):
+    """
+    get the RI .snp touchstone file string, which we will use for saving with zip files
+    *** ONLY SUPPORTS 1 and 2-port networks
+
+    Parameters
+    ----------
+    ntwk : skrf.Network
+        a one or two-port Network
+    comments : str, list
+        any comments to append to the top of the file
+
+    Returns
+    -------
+    str
+    """
+    if type(comments) == str:
+        lines = comments.splitlines()
+    elif type(comments) == list:
+        lines = comments
+    elif type(comments) == tuple:
+        lines = list(comments)
+    elif comments:
+        raise TypeError("Must provide either a string, or a list of strings")
+    else:
+        lines = None
+
+    if lines:
+        for i, line in enumerate(lines):
+            if not line.startswith("!"):
+                lines[i] = "! " + line
+        s2p_comments = "\n".join(lines) + "\n"
+    else:
+        s2p_comments = ""
+
+    if ntwk.nports == 1:
+        S11 = ntwk.s[:, 0, 0]
+        rows = npy.vstack((ntwk.f, S11.real, S11.imag)).T.tolist()
+    elif ntwk.nports == 2:
+        S11 = ntwk.s[:, 0, 0]
+        S21 = ntwk.s[:, 1, 0]
+        S12 = ntwk.s[:, 0, 1]
+        S22 = ntwk.s[:, 1, 1]
+        rows = npy.vstack(
+            (ntwk.f, S11.real, S11.imag, S21.real, S21.imag, S12.real, S12.imag, S22.real, S22.imag)).T.tolist()
+    else:
+        raise ValueError("Network must be a two-port network")
+
+    return s2p_comments + "# Hz S RI R 50\n" + \
+           "\n".join(" ".join("{:0.12g}".format(val) for val in row) for row in rows)

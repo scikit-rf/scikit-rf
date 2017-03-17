@@ -76,6 +76,11 @@ from numpy import linalg
 from numpy.linalg import det
 from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
 import os
+import pprint
+import io
+from collections import OrderedDict
+import json
+import zipfile
 from copy import deepcopy, copy
 import itertools
 from warnings import warn
@@ -90,6 +95,8 @@ from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
 from ..networkSet import NetworkSet
+from .. import util
+from ..io.touchstone import read_zipped_touchstones
 
 
 ## later imports. delayed to solve circular dependencies
@@ -896,7 +903,7 @@ class Calibration(object):
             is_reciprocal= self.is_reciprocal)
 
     def write(self, file=None,  *args, **kwargs):
-        '''
+        """
         Write the Calibration to disk using :func:`~skrf.io.general.write`
 
 
@@ -924,9 +931,8 @@ class Calibration(object):
         ---------
         skrf.io.general.write
         skrf.io.general.read
-
-        '''
-        # this import is delayed untill here because of a circular depency
+        """
+        # this import is delayed until here because of a circular dependency
         from ..io.general import write
 
         if file is None:
@@ -1346,7 +1352,7 @@ class PHN(OnePort):
 ## Two Ports
 
 class TwelveTerm(Calibration):
-    '''
+    """
     12-term, full two-port calibration.
 
     `TwelveTerm` is the traditional, fully determined, two-port calibration
@@ -1366,7 +1372,7 @@ class TwelveTerm(Calibration):
     .. [1] "Calibration Process of Automatic Network Analyzer Systems"  by Stig Rehnmark
 
 
-    '''
+    """
     family = 'TwelveTerm'
     def __init__(self, measured, ideals, n_thrus=None, trans_thres=-40,
                  *args, **kwargs):
@@ -1935,7 +1941,7 @@ class EnhancedResponse(TwoPortOnePath):
     family = 'EnhancedResponse'
 
 class EightTerm(Calibration):
-    '''
+    """
     General EightTerm (aka Error-box) Two-port calibration
 
     This is basically an extension of the one-port algorithm to two-port
@@ -1962,8 +1968,7 @@ class EightTerm(Calibration):
     .. [2] Rytting, D. (1996) Network Analyzer Error Models and Calibration Methods. RF 8: Microwave Measurements for Wireless Applications (ARFTG/NIST Short Course Notes)
 
 
-
-    '''
+    """
     family = 'EightTerm'
     def __init__(self, measured, ideals, switch_terms=None,
                  *args, **kwargs):
@@ -2343,8 +2348,9 @@ class TRL(EightTerm):
 
 MultilineTRL = TRL
 
+
 class NISTMultilineTRL(EightTerm):
-    '''
+    """
     NIST Multiline TRL calibration.
 
     Multiline TRL can use multiple lines to extend bandwidth and accuracy of the
@@ -2362,12 +2368,13 @@ class NISTMultilineTRL(EightTerm):
     .. [0] D. C. DeGroot, J. A. Jargon and R. B. Marks, "Multiline TRL revealed," 60th ARFTG Conference Digest, Fall 2002., Washington, DC, USA, 2002, pp. 131-155.
 
     .. [1] K. Yau "On the metrology of nanoscale Silicon transistors above 100 GHz" Ph.D. dissertation, Dept. Elec. Eng. and Comp. Eng., University of Toronto, Toronto, Canada, 2011.
-    '''
+    """
     family = 'TRL'
+
     def __init__(self, measured, Grefls, l,
                  er_est=1, refl_offset=None, ref_plane=0,
-                 gamma_root_choice='real', k_method='multical', *args,**kwargs):
-        '''
+                 gamma_root_choice='real', k_method='multical', *args, **kwargs):
+        """
         NISTMultilineTRL initializer
 
         Note that the order of `measured` is strict.
@@ -2429,7 +2436,7 @@ class NISTMultilineTRL(EightTerm):
             dont forget the `switch_terms` argument is important
 
 
-        '''
+        """
         self.refl_offset = refl_offset
         self.ref_plane = ref_plane
         self.er_est = er_est
@@ -2438,16 +2445,16 @@ class NISTMultilineTRL(EightTerm):
         self.gamma_root_choice = gamma_root_choice
         self.k_method = k_method
 
-        if self.refl_offset == None:
+        if self.refl_offset is None:
             self.refl_offset = [0]*len(Grefls)
 
         if len(measured) != len(Grefls) + len(l):
             raise ValueError("Amount of measurements doesn't match amount of line lengths and reflection coefficients")
 
-        #Not used, but needed for Calibration class init
+        # Not used, but needed for Calibration class init
         ideals = measured
 
-        #EightTerm applies the switch correction
+        # EightTerm applies the switch correction
         EightTerm.__init__(self,
             measured = measured,
             ideals = ideals,
@@ -2888,7 +2895,7 @@ class NISTMultilineTRL(EightTerm):
 
     @classmethod
     def from_coefs(cls, frequency, coefs, **kwargs):
-        '''
+        """
         Creates a calibration from its error coefficients
 
         Parameters
@@ -2902,7 +2909,7 @@ class NISTMultilineTRL(EightTerm):
         ----------
         Calibration.from_coefs_ntwks
 
-        '''
+        """
         # assigning this measured network is a hack so that
         # * `calibration.frequency` property evaluates correctly
         # * __init__() will not throw an error
@@ -2967,6 +2974,124 @@ class NISTMultilineTRL(EightTerm):
             self.run()
             return self._nstd
 
+    def save_calibration(self, filename):
+        """
+        save calibration as an archive containing the standards, parameters and calibration results
+
+        Parameters
+        ----------
+        filename : str
+            the path of the zip archive to save
+
+        """
+        parameters = OrderedDict()
+        parameters["file type"] = "skrf calibration"
+        parameters["calibration class"] = self.__class__.__name__
+
+        standards = parameters["standards"] = OrderedDict()
+
+        n_reflects = len(self.measured_reflects)
+        n_lines = len(self.measured_lines) - 1
+        thru = self.measured[0]
+        reflects = self.measured[1:n_reflects+1]
+        lines = self.measured[1+n_reflects:]
+        switch_terms = self.switch_terms
+
+        ntwk_names = [thru.name]
+        ntwk_names.extend(reflect.name for reflect in reflects)
+        ntwk_names.extend(line.name for line in lines)
+        if switch_terms:
+            fswitch, rswitch = switch_terms
+            ntwk_names.extend((fswitch.name, rswitch.name))
+
+        for i, name in enumerate(ntwk_names):
+            ntwk_names[i] = util.unique_name(name, ntwk_names, i)
+
+        standards["thru"] = ntwk_names[0]
+
+        standards["reflects"] = list()
+        r_start = 1
+        for rname in ntwk_names[r_start:r_start + n_reflects]:
+            standards["reflects"].append(rname)
+
+        standards["lines"] = list()
+        l_start = r_start + n_reflects
+        for lname in ntwk_names[l_start:l_start + n_lines]:
+            standards["lines"].append(lname)
+
+        if switch_terms:
+            standards["switch terms"] = {
+                "forward": ntwk_names[-2],
+                "reverse": ntwk_names[-1]
+            }
+            parameters["measured"] = ntwk_names[:-2]
+        else:
+            standards["switch terms"] = None
+            parameters["measured"] = ntwk_names[:]
+
+        parameters["kwargs"] = {
+            "Grefls": self.Grefls,
+            "l": self.l,
+            "er_est": self.er_est,
+            "refl_offset": self.refl_offset,
+            "ref_plane": self.ref_plane,
+            "gamma_root_choice": self.gamma_root_choice,
+            "k_method": self.k_method
+        }
+
+        with zipfile.ZipFile(filename, 'w', compression=zipfile.ZIP_STORED) as archive:
+            archive.writestr("parameters.json", json.dumps(parameters, indent=2))
+
+            thru_str = util.snp_string(thru, comments="Thru Standard")
+            archive.writestr("standards/" + ntwk_names[0] + ".s2p", thru_str)
+
+            if switch_terms:
+                fswitch_str = util.snp_string(fswitch, comments="Forward Switch Terms")
+                rswitch_str = util.snp_string(rswitch, comments="Reverse Switch Terms")
+                archive.writestr("standards/" + ntwk_names[-2] + ".s1p", fswitch_str)
+                archive.writestr("standards/" + ntwk_names[-1] + ".s1p", rswitch_str)
+
+            for i, name in enumerate(ntwk_names[r_start:r_start + n_reflects]):
+                reflect_str = util.snp_string(
+                    reflects[i], comments=["offset={}".format(self.refl_offset[i]), "Grefl={}".format(self.Grefls[i])])
+                archive.writestr("standards/" + name + ".s2p", reflect_str)
+            for i, name in enumerate(ntwk_names[l_start:l_start + n_lines]):
+                line_str = util.snp_string(lines[i], comments="length={}".format(self.l[i + 1]))
+                archive.writestr("standards/" + name + ".s2p", line_str)
+
+            with io.BytesIO() as coefficients:
+                npy.savez(coefficients, **self.coefs)
+                archive.writestr("cal_coefficients.npz", coefficients.getvalue())
+
+            with io.BytesIO() as gamma:
+                npy.savetxt(gamma, self.gamma)
+                archive.writestr("gamma.dat", gamma.getvalue())
+
+            with io.BytesIO() as freq:
+                npy.savetxt(freq, self.frequency.f)
+                archive.writestr("frequency.dat", freq.getvalue())
+
+    @classmethod
+    def load_calibration_archive(cls, filename):
+        with zipfile.ZipFile(filename) as archive:
+            parameters = json.loads(archive.open("parameters.json").read().decode("ascii"))
+            ntwks = read_zipped_touchstones(archive)
+
+        measured = list()
+        for name in parameters["measured"]:
+            measured.append(ntwks[name])
+
+        if parameters["standards"]["switch terms"] is None:
+            switch_terms = None
+        else:
+            switch_terms = [
+                ntwks[parameters["standards"]["switch terms"]["forward"]],
+                ntwks[parameters["standards"]["switch terms"]["reverse"]]
+            ]
+
+        kwargs = parameters["kwargs"]
+
+        return cls(measured, switch_terms=switch_terms, **kwargs)
 
 class UnknownThru(EightTerm):
     '''
