@@ -3039,7 +3039,7 @@ class NISTMultilineTRL(EightTerm):
             "k_method": self.k_method
         }
 
-        with zipfile.ZipFile(filename, 'w', compression=zipfile.ZIP_STORED) as archive:
+        with zipfile.ZipFile(filename, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
             archive.writestr("parameters.json", json.dumps(parameters, indent=2))
 
             thru_str = util.snp_string(thru, comments="Thru Standard")
