@@ -1485,12 +1485,12 @@ class Network(object):
 
         def get_buffer():
             if return_string is True:
-                buffer = io.StringIO()
+                buf = io.StringIO()
             else:
-                buffer = open(filename, "w")
-            return buffer
+                buf = open(filename, "w")
+            return buf
 
-        with get_buffer() as buffer:
+        with get_buffer() as output:
             # Add '!' Touchstone comment delimiters to the start of every line
             # in self.comments
             commented_header = ''
@@ -1503,28 +1503,28 @@ class Network(object):
             if skrf_comment:
                 commented_header +='!Created with skrf (http://scikit-rf.org).\n'
 
-            buffer.write(commented_header)
+            output.write(commented_header)
 
             # write header file.
             # the '#'  line is NOT a comment it is essential and it must be
             # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-            buffer.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0,0]))))
+            output.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0,0]))))
 
             if self.number_of_ports == 1 :
                 # write comment line for users (optional)
-                buffer.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
+                output.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    buffer.write(str(self.frequency.f_scaled[f])+' '\
+                    output.write(str(self.frequency.f_scaled[f])+' '\
                         + str(funcA(self.s[f,0,0])) + ' '\
                         + str(funcB(self.s[f,0,0])) +'\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        buffer.write('! Port Impedance ')
+                        output.write('! Port Impedance ')
                         for n in range(self.number_of_ports):
-                            buffer.write('%.14f %.14f '%(self.z0[f,n].real, self.z0[f,n].imag))
-                        buffer.write('\n')
+                            output.write('%.14f %.14f '%(self.z0[f,n].real, self.z0[f,n].imag))
+                        output.write('\n')
 
             elif self.number_of_ports == 2 :
                 # 2-port is a special case with
@@ -1532,10 +1532,10 @@ class Network(object):
                 # - S21,S12 in reverse order: legacy ?
 
                 # write comment line for users (optional)
-                buffer.write('!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 {labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n'.format(**formatDic))
+                output.write('!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 {labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    buffer.write(str(self.frequency.f_scaled[f])+' '\
+                    output.write(str(self.frequency.f_scaled[f])+' '\
                         + str(funcA(self.s[f,0,0])) + ' '\
                         + str(funcB(self.s[f,0,0])) + ' '\
                         + str(funcA(self.s[f,1,0])) + ' '\
@@ -1546,35 +1546,35 @@ class Network(object):
                         + str(funcB(self.s[f,1,1])) +'\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        buffer.write('! Port Impedance' )
+                        output.write('! Port Impedance' )
                         for n in range(2):
-                            buffer.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
-                        buffer.write('\n')
+                            output.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                        output.write('\n')
 
             elif self.number_of_ports == 3 :
                 # 3-port is written over 3 lines / matrix order
 
                 # write comment line for users (optional)
-                buffer.write ('!freq')
+                output.write ('!freq')
                 for m in range(1,4):
                     for n in range(1,4):
-                        buffer.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
-                    buffer.write('\n!')
-                buffer.write('\n')
+                        output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
+                    output.write('\n!')
+                output.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    buffer.write(str(self.frequency.f_scaled[f]))
+                    output.write(str(self.frequency.f_scaled[f]))
                     for m in range(3):
                         for n in range(3):
-                            buffer.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
+                            output.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
                              + str(funcB(self.s[f,m,n])))
-                        buffer.write('\n')
+                        output.write('\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        buffer.write('! Port Impedance' )
+                        output.write('! Port Impedance' )
                         for n in range(3):
-                            buffer.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
-                        buffer.write('\n')
+                            output.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                        output.write('\n')
 
             elif self.number_of_ports >= 4 :
                 # general n-port
@@ -1585,34 +1585,34 @@ class Network(object):
                 #   -> allows to parse without knowledge of number of ports
 
                 # write comment line for users (optional)
-                buffer.write ('!freq')
+                output.write ('!freq')
                 for m in range(1,1+self.number_of_ports):
                     for n in range(1,1+self.number_of_ports):
                         if (n > 0 and (n%4) == 0 ) :
-                            buffer.write('\n!')
-                            buffer.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
-                    buffer.write('\n!')
-                buffer.write('\n')
+                            output.write('\n!')
+                            output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
+                    output.write('\n!')
+                output.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    buffer.write(str(self.frequency.f_scaled[f]))
+                    output.write(str(self.frequency.f_scaled[f]))
                     for m in range(self.number_of_ports):
                         for n in range(self.number_of_ports):
                             if (n > 0 and (n%4) == 0 ) :
-                                buffer.write('\n')
-                            buffer.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
+                                output.write('\n')
+                            output.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
                              + str(funcB(self.s[f,m,n])))
-                        buffer.write('\n')
+                        output.write('\n')
 
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        buffer.write('! Port Impedance' )
+                        output.write('! Port Impedance' )
                         for n in range(self.number_of_ports):
-                            buffer.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
-                        buffer.write('\n')
+                            output.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                        output.write('\n')
 
             if return_string is True:
-                return buffer.getvalue()
+                return output.getvalue()
 
     def write(self, file=None, *args, **kwargs):
         """
