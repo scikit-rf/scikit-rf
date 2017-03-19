@@ -1,4 +1,4 @@
-'''
+"""
 .. module:: skrf.network
 ========================================
 network (:mod:`skrf.network`)
@@ -43,7 +43,7 @@ Connecting Networks
     cascade_list
     de_embed
     flip
-    
+
 
 
 Interpolation and Concatenation Along Frequency Axis
@@ -134,10 +134,10 @@ Misc Functions
     Network.nudge
     Network.renormalize
 
+"""
 
-
-'''
 from six.moves import xrange
+from functools import reduce
 
 import os
 import warnings
@@ -148,32 +148,27 @@ except ImportError:
     import pickle as pickle
     from pickle import UnpicklingError
 
-from copy import deepcopy as copy
+import io
 import re
+from copy import deepcopy as copy
 from numbers import Number
 from itertools import product
+
 import numpy as npy
-
 from numpy.linalg import inv as npy_inv
-
-# import matplotlib.pyplot as plb
-from scipy import stats,signal        # for Network.add_noise_*, and Network.windowed
-
-from scipy.interpolate import interp1d # for Network.interpolate()
-from numpy import fft, gradient, reshape, shape,ones
-import unittest # fotr unitest.skip
+from numpy import fft, gradient, reshape, shape, ones
+from scipy import stats, signal        # for Network.add_noise_*, and Network.windowed
+from scipy.interpolate import interp1d  # for Network.interpolate()
+import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
-    
 from . frequency import Frequency
-
-# from . plotting import *#smith, plot_rectangular, plot_smith, plot_complex_polar
 from . tlineFunctions import zl_2_Gamma0
-from . util import get_fid, get_extn, find_nearest_index,slice_domain
-## later imports. delayed to solve circular dependencies
-#from io.general import read, write
-#from io import touchstone
-#from io.general import network_2_spreadsheet
+from . util import get_fid, get_extn, find_nearest_index, slice_domain
+# later imports. delayed to solve circular dependencies
+# from io.general import read, write
+# from io import touchstone
+# from io.general import network_2_spreadsheet
 
 from .constants import ZERO
 
@@ -1420,12 +1415,11 @@ class Network(object):
         #TODO: add Network property `comments` which is read from
         # touchstone file.
 
-    def write_touchstone(self, filename=None, dir = None,
-                         write_z0=False,skrf_comment=True,
+    def write_touchstone(self, filename=None, dir=None,
+                         write_z0=False, skrf_comment=True, return_string=False,
                          form='ri'):
-        '''
+        """
         Write a contents of the :class:`Network` to a touchstone file.
-
 
         Parameters
         ----------
@@ -1439,6 +1433,8 @@ class Network(object):
             like Ansoft HFSS does
         skrf_comment : bool, optional
             write `created by skrf` comment
+        return_string : bool, optional
+            return the file_string rather than write to a file
         form : 'db','ma','ri'
             format to write data,
             * db = db, deg
@@ -1454,8 +1450,7 @@ class Network(object):
         The functionality of this function should take place in the
         :class:`~skrf.touchstone.touchstone` class.
 
-
-        '''
+        """
         # according to Touchstone 2.0 spec
         # [no tab, max. 4 coeffs per line, etc.]
 
@@ -1465,31 +1460,37 @@ class Network(object):
             else:
                 raise ValueError('No filename given. Network must have a name, or you must provide a filename')
 
-
         if get_extn(filename) is None:
             filename = filename +'.s%ip'%self.number_of_ports
 
         if dir is not None:
-            filename =  os.path.join(dir, filename)
+            filename=os.path.join(dir, filename)
 
-        # set internal varialbes according to form
+        # set internal variables according to form
         form = form.upper()
         if form == "RI":
-            formatDic = {"labelA":"Re", "labelB":"Im"}
+            formatDic = {"labelA": "Re", "labelB": "Im"}
             funcA = npy.real
             funcB = npy.imag
         elif form == "DB":
-            formatDic = {"labelA":"dB", "labelB":"ang"}
+            formatDic = {"labelA": "dB", "labelB": "ang"}
             funcA = mf.complex_2_db
             funcB = mf.complex_2_degree
         elif form == "MA":
-            formatDic = {"labelA":"mag", "labelB":"ang"}
+            formatDic = {"labelA": "mag", "labelB": "ang"}
             funcA = mf.complex_2_magnitude
             funcB = mf.complex_2_degree
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
-        with open(filename,"w") as outputFile:
+        def get_buffer():
+            if return_string is True:
+                buffer = io.StringIO()
+            else:
+                buffer = open(filename, "w")
+            return buffer
+
+        with get_buffer() as buffer:
             # Add '!' Touchstone comment delimiters to the start of every line
             # in self.comments
             commented_header = ''
@@ -1502,28 +1503,28 @@ class Network(object):
             if skrf_comment:
                 commented_header +='!Created with skrf (http://scikit-rf.org).\n'
 
-            outputFile.write(commented_header)
+            buffer.write(commented_header)
 
             # write header file.
             # the '#'  line is NOT a comment it is essential and it must be
             # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
-            outputFile.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0,0]))))
+            buffer.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0,0]))))
 
             if self.number_of_ports == 1 :
                 # write comment line for users (optional)
-                outputFile.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
+                buffer.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    outputFile.write(str(self.frequency.f_scaled[f])+' '\
+                    buffer.write(str(self.frequency.f_scaled[f])+' '\
                         + str(funcA(self.s[f,0,0])) + ' '\
                         + str(funcB(self.s[f,0,0])) +'\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        outputFile.write('! Port Impedance ' )
+                        buffer.write('! Port Impedance ')
                         for n in range(self.number_of_ports):
-                            outputFile.write('%.14f %.14f '%(self.z0[f,n].real, self.z0[f,n].imag))
-                        outputFile.write('\n')
+                            buffer.write('%.14f %.14f '%(self.z0[f,n].real, self.z0[f,n].imag))
+                        buffer.write('\n')
 
             elif self.number_of_ports == 2 :
                 # 2-port is a special case with
@@ -1531,10 +1532,10 @@ class Network(object):
                 # - S21,S12 in reverse order: legacy ?
 
                 # write comment line for users (optional)
-                outputFile.write('!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 {labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n'.format(**formatDic))
+                buffer.write('!freq {labelA}S11 {labelB}S11 {labelA}S21 {labelB}S21 {labelA}S12 {labelB}S12 {labelA}S22 {labelB}S22\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    outputFile.write(str(self.frequency.f_scaled[f])+' '\
+                    buffer.write(str(self.frequency.f_scaled[f])+' '\
                         + str(funcA(self.s[f,0,0])) + ' '\
                         + str(funcB(self.s[f,0,0])) + ' '\
                         + str(funcA(self.s[f,1,0])) + ' '\
@@ -1545,35 +1546,35 @@ class Network(object):
                         + str(funcB(self.s[f,1,1])) +'\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        outputFile.write('! Port Impedance' )
+                        buffer.write('! Port Impedance' )
                         for n in range(2):
-                            outputFile.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
-                        outputFile.write('\n')
+                            buffer.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                        buffer.write('\n')
 
             elif self.number_of_ports == 3 :
                 # 3-port is written over 3 lines / matrix order
 
                 # write comment line for users (optional)
-                outputFile.write ('!freq')
+                buffer.write ('!freq')
                 for m in range(1,4):
                     for n in range(1,4):
-                        outputFile.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
-                    outputFile.write('\n!')
-                outputFile.write('\n')
+                        buffer.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
+                    buffer.write('\n!')
+                buffer.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    outputFile.write(str(self.frequency.f_scaled[f]))
+                    buffer.write(str(self.frequency.f_scaled[f]))
                     for m in range(3):
                         for n in range(3):
-                            outputFile.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
+                            buffer.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
                              + str(funcB(self.s[f,m,n])))
-                        outputFile.write('\n')
+                        buffer.write('\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        outputFile.write('! Port Impedance' )
+                        buffer.write('! Port Impedance' )
                         for n in range(3):
-                            outputFile.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
-                        outputFile.write('\n')
+                            buffer.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                        buffer.write('\n')
 
             elif self.number_of_ports >= 4 :
                 # general n-port
@@ -1584,35 +1585,37 @@ class Network(object):
                 #   -> allows to parse without knowledge of number of ports
 
                 # write comment line for users (optional)
-                outputFile.write ('!freq')
+                buffer.write ('!freq')
                 for m in range(1,1+self.number_of_ports):
                     for n in range(1,1+self.number_of_ports):
                         if (n > 0 and (n%4) == 0 ) :
-                            outputFile.write('\n!')
-                            outputFile.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
-                    outputFile.write('\n!')
-                outputFile.write('\n')
+                            buffer.write('\n!')
+                            buffer.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
+                    buffer.write('\n!')
+                buffer.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    outputFile.write(str(self.frequency.f_scaled[f]))
+                    buffer.write(str(self.frequency.f_scaled[f]))
                     for m in range(self.number_of_ports):
                         for n in range(self.number_of_ports):
                             if (n > 0 and (n%4) == 0 ) :
-                                outputFile.write('\n')
-                            outputFile.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
+                                buffer.write('\n')
+                            buffer.write( ' ' + str(funcA(self.s[f,m,n])) + ' '\
                              + str(funcB(self.s[f,m,n])))
-                        outputFile.write('\n')
+                        buffer.write('\n')
 
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
-                        outputFile.write('! Port Impedance' )
+                        buffer.write('! Port Impedance' )
                         for n in range(self.number_of_ports):
-                            outputFile.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
-                        outputFile.write('\n')
+                            buffer.write(' %.14f %.14f'%(self.z0[f,n].real, self.z0[f,n].imag))
+                        buffer.write('\n')
 
+            if return_string is True:
+                return buffer.getvalue()
 
     def write(self, file=None, *args, **kwargs):
-        '''
+        """
         Write the Network to disk using the :mod:`pickle` module.
 
         The resultant file can be read either by using the Networks
@@ -1645,7 +1648,7 @@ class Network(object):
         ---------
         skrf.io.general.write : write any skrf object
         skrf.io.general.read : read any skrf object
-        '''
+        """
         # this import is delayed until here because of a circular depency
         from . io.general import write
 
@@ -1657,7 +1660,7 @@ class Network(object):
         write(file,self,*args, **kwargs)
 
     def read(self, *args, **kwargs):
-        '''
+        """
         Read a Network from a 'ntwk' file
 
         A ntwk file is written with :func:`write`. It is just a pickled
@@ -1682,7 +1685,7 @@ class Network(object):
         write
         skrf.io.general.write
         skrf.io.general.read
-        '''
+        """
         from .io.general import read
         self.copy_from(read(*args, **kwargs))
 
@@ -1698,51 +1701,51 @@ class Network(object):
         network_2_spreadsheet(self, *args, **kwargs)
 
     def to_dataframe(self, *args, **kwargs):
-        '''
+        """
         Convert attributes of a Network to a pandas DataFrame
 
         See Also
         ---------
         skrf.io.general.network_2_dataframe
-        '''
+        """
         from . io.general import network_2_dataframe
         return network_2_dataframe(self, *args, **kwargs)
 
     # interpolation
     def interpolate(self, freq_or_n, basis='s',coords='cart', 
                     f_kwargs={},**kwargs):
-        '''
-        Interpolate a Network allong frequency axis 
-        
+        """
+        Interpolate a Network allong frequency axis
+
         The input 'freq_or_n` can be either a new
-        :class:`~skrf.frequency.Frequency` or an `int`, or a new 
+        :class:`~skrf.frequency.Frequency` or an `int`, or a new
         frequency vector (in hz).
-        
-        This interpolates  a given `basis`, ie s, z, y, etc, in the 
-        coordinate system defined by `coord` like polar or cartesian. 
+
+        This interpolates  a given `basis`, ie s, z, y, etc, in the
+        coordinate system defined by `coord` like polar or cartesian.
          Different interpolation types ('linear', 'quadratic') can be used
         by passing appropriate `\*\*kwargs`. This function `returns` an
         interpolated Network. Alternatively :func:`~Network.interpolate_self`
-        will interpolate self. 
+        will interpolate self.
 
         Parameters
         -----------
         freq_or_n : :class:`~skrf.frequency.Frequency` or int or listlike
-            The new frequency over which to interpolate. this arg may be 
-            one of the following 
-              * a new `Frequency` object 
+            The new frequency over which to interpolate. this arg may be
+            one of the following
+              * a new `Frequency` object
               * if an  int, the current frequency span is resampled linearly.
-              * if a listlike, then create its used to create a new frequency 
+              * if a listlike, then create its used to create a new frequency
                 object using `Frequency.from_f`
         basis : ['s','z','y','a'],etc
-            The network parameter to interpolate      
+            The network parameter to interpolate
         coords : ['cart','polar']
-            coordinate system to use for interpolation. 
+            coordinate system to use for interpolation.
              * 'cart' is cartesian is Re/Im
              * 'polar' is unwrapped phase/mag
-            
+
         **kwargs : keyword arguments
-            passed to :func:`scipy.interpolate.interp1d` initializer. 
+            passed to :func:`scipy.interpolate.interp1d` initializer.
             `kind` controls interpolation type
 
         Returns
@@ -1752,10 +1755,10 @@ class Network(object):
 
         Notes
         --------
-        The interpolation cordinate system (`coords`)  makes  a big 
+        The interpolation cordinate system (`coords`)  makes  a big
         difference for large ammounts of inerpolation. polar works well
-        for duts with slowly changing magnitude. try them all. 
-        
+        for duts with slowly changing magnitude. try them all.
+
         See  :func:`scipy.interpolate.interpolate.interp1d` for useful
         kwargs. For example
             **kind** : str or int
@@ -1763,7 +1766,7 @@ class Network(object):
                 'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
                 as an integer specifying the order of the spline
                 interpolator to use.
-            
+
 
         See Also
         ----------
@@ -1786,7 +1789,7 @@ class Network(object):
 
             In [21]: n.interpolate(new_freq, kind = 'cubic')
 
-        '''
+        """
         # make new network and fill with interpolated values
         result = self.copy()
         
@@ -2602,8 +2605,9 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
     return ntwkC
 
+
 def connect_fast(ntwkA, k, ntwkB, l):
-    '''
+    """
     Connect two n-port networks together (using C-implementation)
 
     Specifically, connect ports `k` on `ntwkA` to ports
@@ -2648,9 +2652,9 @@ def connect_fast(ntwkA, k, ntwkB, l):
     >>> ntwkB = rf.Network('ntwkB.s2p')
     >>> ntwkC = rf.connect(ntwkA, 1, ntwkB,0)
 
-    '''
+    """
     num = 1
-    from src import connect_s_fast
+    from .src import connect_s_fast
 
     # some checking
     check_frequency_equal(ntwkA,ntwkB)
@@ -2784,22 +2788,22 @@ def cascade(ntwkA,ntwkB):
     return connect(ntwkA,1, ntwkB,0)
 
 def cascade_list(l):
-    '''
+    """
     cascade a list of 2-port networks
-    
+
     all networks must have same frequency
-    
+
     Parameters
     --------------
     l : list-like
-        (ordered) list of networks 
-    
+        (ordered) list of networks
+
     Returns
     ----------
     out : 2-port Network
         the results of cascading all networks in the list `l`
-        
-    '''
+
+    """
     return reduce(cascade, l)
 
 def de_embed(ntwkA,ntwkB):
@@ -3485,8 +3489,9 @@ def s2z(s,z0=50):
         z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
     return z
 
+
 def s2y(s,z0=50):
-    '''
+    """
     convert scattering parameters [#]_ to admittance parameters [#]_
 
 
@@ -3528,7 +3533,7 @@ def s2y(s,z0=50):
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
-    '''
+    """
 
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -3542,8 +3547,9 @@ def s2y(s,z0=50):
         y[fidx] = sqrty0*(I-s[fidx])*(I+s[fidx])**-1*sqrty0
     return y
 
+
 def s2t(s):
-    '''
+    """
     Converts scattering parameters [#]_ to scattering transfer parameters [#]_ .
 
     transfer parameters are also refered to as
@@ -3585,8 +3591,8 @@ def s2t(s):
     -----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
-    '''
-    #TODO: check rank(s) ==2
+    """
+    # TODO: check rank(s) ==2
 
     t = npy.array([
         [-1*(s[:,0,0]*s[:,1,1]- s[:,1,0]*s[:,0,1])/s[:,1,0],
@@ -3598,7 +3604,7 @@ def s2t(s):
 
 
 def z2s(z, z0=50):
-    '''
+    """
     convert impedance parameters [1]_ to scattering parameters [2]_
 
     .. math::
@@ -3622,7 +3628,7 @@ def z2s(z, z0=50):
     ----------
     .. [1] http://en.wikipedia.org/wiki/impedance_parameters
     .. [2] http://en.wikipedia.org/wiki/S-parameters
-    '''
+    """
     nfreqs, nports, nports = z.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
     s = npy.zeros(z.shape, dtype='complex')
