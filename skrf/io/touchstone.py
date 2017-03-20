@@ -32,17 +32,18 @@ from ..frequency import Frequency
 from ..media import Media, DefinedGammaZ0
 from .. import mathFunctions as mf
 
-class Touchstone():
-    '''
+
+class Touchstone:
+    """
     class to read touchstone s-parameter files
 
     The reference for writing this class is the draft of the
     Touchstone(R) File Format Specification Rev 2.0 [#]_
 
     .. [#] http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
-    '''
-    def __init__(self,file):
-        '''
+    """
+    def __init__(self, file):
+        """
         constructor
 
         Parameters
@@ -60,7 +61,7 @@ class Touchstone():
 
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
-        '''
+        """
         fid = get_fid(file)
         filename = fid.name
         ## file name of the touchstone data file

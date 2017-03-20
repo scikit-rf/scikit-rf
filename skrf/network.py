@@ -149,7 +149,7 @@ except ImportError:
     import pickle as pickle
     from pickle import UnpicklingError
 
-import io
+import sys
 import re
 import zipfile
 from copy import deepcopy as copy
@@ -168,9 +168,9 @@ from .frequency import Frequency
 from .tlineFunctions import zl_2_Gamma0
 from .util import get_fid, get_extn, find_nearest_index, slice_domain
 # later imports. delayed to solve circular dependencies
-# from io.general import read, write
-# from io import touchstone
-# from io.general import network_2_spreadsheet
+# from .io.general import read, write
+# from .io import touchstone
+# from .io.general import network_2_spreadsheet
 
 from .constants import ZERO
 
@@ -1470,7 +1470,8 @@ class Network(object):
 
         def get_buffer():
             if return_string is True or type(to_archive) is zipfile.ZipFile:
-                buf = io.StringIO()
+                from .io.general import StringBuffer  # avoid circular import
+                buf = StringBuffer()
             else:
                 buf = open(filename, "w")
             return buf
