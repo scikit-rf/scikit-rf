@@ -3003,7 +3003,8 @@ class NISTMultilineTRL(EightTerm):
             parameters = json.loads(archive.open("parameters.json").read().decode("ascii"))
             measured_dict = read_zipped_touchstones(archive, "measured")
             switch_terms_dict = read_zipped_touchstones(archive, "switch terms")
-            # coefs_dict = read_zipped_touchstones(archive, "coefs")  # not used currently
+            coefs_dict = read_zipped_touchstones(archive, "coefs")  # not used currently
+            gamma_ntwk = Network.zipped_touchstone("gamma.s1p", archive)
 
         measured = list()
         for name in parameters["measured"]:
@@ -3019,7 +3020,11 @@ class NISTMultilineTRL(EightTerm):
 
         kwargs = parameters["kwargs"]
 
-        return cls(measured, switch_terms=switch_terms, **kwargs)
+        cal = cls(measured, switch_terms=switch_terms, **kwargs)
+        cal.coefs = NetworkSet(coefs_dict).to_s_dict()
+        cal._gamma = gamma_ntwk.s.flatten()
+
+        return cal
 
 
 class UnknownThru(EightTerm):

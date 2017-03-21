@@ -418,16 +418,16 @@ class NetworkSet(object):
                 network_property_name,plot_func)
 
     def to_dict(self):
-        '''
+        """
         Returns a dictionary representation of the NetworkSet
 
         The returned dictionary has the Network names for keys, and the
         Networks as values.
-        '''
+        """
         return dict([(k.name, k) for k in self.ntwk_set])
 
     def to_s_dict(ns, *args, **kwargs):
-        '''
+        """
         Converts a NetworkSet to a dictionary of s-parameters
 
         The resultant  keys of the dictionary are the names of the Networks
@@ -452,7 +452,7 @@ class NetworkSet(object):
         See Also
         --------
         NetworkSet.from_s_dict
-        '''
+        """
         d = ns.to_dict()
         for k in d:
             d[k] = d[k].s

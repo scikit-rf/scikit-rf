@@ -1397,6 +1397,24 @@ class Network(object):
                 # TODO: add Network property `comments` which is read from
                 # touchstone file.
 
+    @classmethod
+    def zipped_touchstone(cls, filename, archive):
+        """
+        read a Network from a touchstone file in a ziparchive
+
+        Parameters
+        ----------
+        filename : str
+            the full path filename of the touchstone file
+        archive : zipfile.ZipFile
+            the opened zip archive
+
+        """
+        with archive.open(filename) as touchstone_file:
+            ntwk = cls()
+            ntwk.read_touchstone(touchstone_file)
+        return ntwk
+
     def write_touchstone(self, filename=None, dir=None,
                          write_z0=False, skrf_comment=True,
                          return_string=False, to_archive=None,
