@@ -14,3 +14,4 @@ scikit_rf.egg-info/
 dist/
 *.idea/
 *__pycache__/
+qtapps/sandbox*

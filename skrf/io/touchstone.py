@@ -113,6 +113,8 @@ class Touchstone():
         while (1):
             linenr +=1
             line = fid.readline()
+            if not type(line) == str:
+                line = line.decode("ascii")  # for python3 zipfile compatibility
             if not line:
                 break
 

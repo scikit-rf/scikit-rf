@@ -43,11 +43,17 @@ class NetworkTestCase(unittest.TestCase):
             rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
 
 
+    def test_constructor_from_fid_touchstone(self):
+        filename= os.path.join(self.test_dir, 'ntwk1.s2p')
+        with open(filename,'rb') as fid:
+            rf.Network(fid)
+    
     def test_open_saved_touchstone(self):
         self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
         ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
+    
 
     def test_pickling(self):
         if six.PY2:

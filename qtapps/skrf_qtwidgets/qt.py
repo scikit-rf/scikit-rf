@@ -12,6 +12,20 @@ from . import cfg  # must import cfg before qtpy to properly parse qt-bindings
 from qtpy import QtCore, QtWidgets, QtGui
 
 
+class QHLine(QtWidgets.QFrame):
+    def __init__(self):
+        super(QHLine, self).__init__()
+        self.setFrameShape(QtWidgets.QFrame.HLine)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)
+
+
+class QVLine(QtWidgets.QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QtWidgets.QFrame.VLine)
+        self.setFrameShadow(QtWidgets.QFrame.Sunken)
+
+
 def setup_style(style=cfg.preferred_style):
     available_styles = QtWidgets.QStyleFactory.keys()
     if style:
@@ -225,3 +239,68 @@ def set_process_id(appid=None):
     """
     if appid and type(appid) is str and platform.system() == "Windows":
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
+
+
+class HTMLDisplay(QtWidgets.QTextEdit):
+    def __init__(self, parent=None):
+        super(HTMLDisplay, self).__init__(parent)
+        self.defaultSize = super(HTMLDisplay, self).sizeHint()
+        self.h = self.defaultSize.height() * 2
+        self.w = self.defaultSize.width() * 2
+
+    def sizeHint(self):
+        size = QtCore.QSize()
+        size.setHeight(self.h)
+        size.setWidth(self.w)
+        return size
+
+
+class HelpIndicator(QtWidgets.QPushButton):
+    def __init__(self, title="help text", help_text=None, parent=None):
+        super(HelpIndicator, self).__init__(parent)
+        self.defaultSize = super(HelpIndicator, self).sizeHint()
+        self.title = title
+        self.h = self.defaultSize.height()
+        self.w = self.h
+        self.setFixedWidth(self.w)
+        self.setText("?")
+        if help_text and type(help_text) is str:
+            self.help_text = help_text
+        else:
+            self.help_text = None
+        self.clicked.connect(self.popup)
+
+    def sizeHint(self):
+        size = QtCore.QSize()
+        size.setHeight(self.h)
+        size.setWidth(self.w)
+        return size
+
+    def popup(self):
+        dialog = QtWidgets.QDialog()
+        dialog.setWindowTitle(self.title)
+        vlay = QtWidgets.QVBoxLayout(dialog)
+        vlay.setContentsMargins(2, 2, 2, 2)
+        textEdit = HTMLDisplay()
+        qsize = textEdit.sizeHint()  # type: QtCore.QSize
+        qsize.setWidth(qsize.width() * 2)
+        qsize.setHeight(qsize.height() * 2)
+        textEdit.setReadOnly(True)
+        textEdit.setHtml(self.help_text)
+        vlay.addWidget(textEdit)
+        dialog.exec_()
+
+
+class RunFunctionDialog(QtWidgets.QDialog):
+    def __init__(self, function, title="Wait", text=None, parent=None):
+        super(RunFunctionDialog, self).__init__(parent)
+        self.function = function
+        self.layout = QtWidgets.QVBoxLayout(self)
+        if text is None:
+            text = "Running Function, will close automatically"
+        self.text = QtWidgets.QTextBrowser()
+        self.text.setText(text)
+        self.layout.addWidget(self.text)
+
+    def showEvent(self, QShowEvent):
+        self.function()
