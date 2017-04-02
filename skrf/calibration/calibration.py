@@ -2188,6 +2188,56 @@ class EightTerm(Calibration):
 
         return T1,T2,T3,T4
 
+
+    def renormalize(self, z0_old, z0_new, powerwave=False):
+        """Renormalizes the calibration error boxes to a new reference impedance.
+
+        Useful for example after doing a TRL calibration with non-50 ohm
+        transmission lines. After the TRL calibration reference impedance is the
+        line characteristic impedance.  If the transmission line characteristic
+        impedance is known this function can be used to renormalize the
+        reference impedance to 50 ohms or any other impedance.
+        """
+        ec = self.coefs
+        npoints = len(ec['k'])
+        one = npy.ones(npoints,dtype=complex)
+
+        Edf = self.coefs['forward directivity']
+        Esf = self.coefs['forward source match']
+        Erf = self.coefs['forward reflection tracking']
+        Edr = self.coefs['reverse directivity']
+        Esr = self.coefs['reverse source match']
+        Err = self.coefs['reverse reflection tracking']
+        k = self.coefs['k']
+
+        S1 = npy.array([\
+                [ Edf,  k ],\
+                [ Erf/k,     Esf ]])\
+                .transpose().reshape(-1,2,2)
+
+        S2 = npy.array([\
+                [ Edr,  Err ],\
+                [ one,     Esr ]])\
+                .transpose().reshape(-1,2,2)
+
+        if powerwave:
+            S1 = renormalize_pw(S1, [z0_new, z0_old], z0_new)
+            S2 = renormalize_pw(S2, [z0_new, z0_old], z0_new)
+        else:
+            S1 = renormalize_s(S1, [z0_new, z0_old], z0_new)
+            S2 = renormalize_s(S2, [z0_new, z0_old], z0_new)
+
+        self.coefs['forward directivity'] = S1[:,0,0]
+        self.coefs['forward source match'] = S1[:,1,1]
+        self.coefs['forward reflection tracking'] = S1[:,0,1]*S1[:,1,0]
+        self.coefs['reverse directivity'] = S2[:,0,0]
+        self.coefs['reverse source match'] = S2[:,1,1]
+        self.coefs['reverse reflection tracking'] = S2[:,1,0]*S2[:,0,1]
+        self.coefs['k'] = S1[:,1,0]/S2[:,0,1]
+
+        return None
+
+
 class TRL(EightTerm):
     '''
     Thru Reflect Line
