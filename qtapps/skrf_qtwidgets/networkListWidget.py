@@ -38,6 +38,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
     def __init__(self, name_prefix='meas', parent=None):
         super(NetworkListWidget, self).__init__(parent)
         self.name_prefix = name_prefix
+        print("prefix", self.name_prefix)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
@@ -357,6 +358,9 @@ class NetworkListWidget(QtWidgets.QListWidget):
     def load_from_files(self, caption="load touchstone file"):
         self.load_networks(widgets.load_network_files(caption))
 
+    def load_from_files_twoport(self, caption="load touchstone files"):
+        self.load_networks(widgets.load_network_files(caption, filter="touchstone file (*.s2p)"))
+
     def save_selected_items(self):
         items = self.selectedItems()
         if len(items) == 1:
@@ -400,18 +404,33 @@ class NetworkListWidget(QtWidgets.QListWidget):
             dialog = widgets.MeasurementDialog(nwa)
             dialog.measurements_available.connect(self.load_networks)
             dialog.exec_()
-        #     meas = nwa.measure_twoport_ntwk()
-        #     meas.name = self.name_prefix  # unique name processed in load_network
-        # self.load_network(meas)
+
+    def measure_twoport(self, **kwargs):
+        with self.get_analyzer() as nwa:
+            params = nwa.defaults_twoport.copy()
+            params.update(kwargs)  # override any of the defaults with arguments passed in here
+            meas = nwa.get_twoport(**params)
+            meas.name = self.name_prefix  # unique name processed in load_network
+        self.load_network(meas)
 
     def get_load_button(self, label="Load"):
         button = QtWidgets.QPushButton(label)
         button.released.connect(self.load_from_files)
         return button
 
+    def get_load_button_twoport(self, label="Load"):
+        button = QtWidgets.QPushButton(label)
+        button.released.connect(self.load_from_files_twoport)
+        return button
+
     def get_measure_button(self, label="Measure"):
         button = QtWidgets.QPushButton(label)
         button.released.connect(self.measure_ntwk)
+        return button
+
+    def get_measure_button_twoport(self, label="Measure"):
+        button = QtWidgets.QPushButton(label)
+        button.released.connect(self.measure_twoport)
         return button
 
     def get_save_selected_button(self, label="Save Selected"):
@@ -424,12 +443,18 @@ class NetworkListWidget(QtWidgets.QListWidget):
         button.clicked.connect(self.save_all_measurements)
         return button
 
-    def get_input_buttons(self, labels=("Load", "Measure")):
+    def get_input_buttons(self, labels=("Load", "Measure"), button_types="general"):
         widget = QtWidgets.QWidget()
         horizontal_layout = QtWidgets.QHBoxLayout(widget)
         horizontal_layout.setContentsMargins(0, 2, 0, 2)
-        load_button = self.get_load_button(labels[0])
-        measurement_button = self.get_measure_button(labels[1])
+        if button_types == "twoport":
+            load_button = self.get_load_button_twoport(labels[0])
+            measurement_button = self.get_measure_button_twoport(labels[1])
+        elif button_types == "general":
+            load_button = self.get_load_button(labels[0])
+            measurement_button = self.get_measure_button(labels[1])
+        else:
+            raise TypeError("unrecognized request type for input buttons")
         horizontal_layout.addWidget(load_button)
         horizontal_layout.addWidget(measurement_button)
         return widget
@@ -446,7 +471,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
 
 class ParameterizedNetworkListWidget(NetworkListWidget):
-    def __init__(self, name_prefix=None, item_parameters=(), parent=None):
+    def __init__(self, name_prefix="meas", item_parameters=(), parent=None):
         """
         initialize a parameterized version of the NetworkListWidget
 

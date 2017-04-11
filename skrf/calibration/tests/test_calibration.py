@@ -623,6 +623,89 @@ class NISTMultilineTRLTest(EightTermTest):
     def test_gamma(self):
         self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
 
+class NISTMultilineTRLTest2(unittest.TestCase):
+    """ Test characteristic impdeance change and reference plane shift.
+    Due to the transformations solved error boxes are not equal to the initial
+    error boxes so CalibrationTestCase can't be used."""
+    def setUp(self):
+        global NPTS
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+
+        r = npy.random.uniform(10,100,NPTS)
+        l = 1e-9*npy.random.uniform(100,200,NPTS)
+        g = npy.zeros(NPTS)
+        c = 1e-12*npy.random.uniform(100,200,NPTS)
+
+        rlgc = rf.media.DistributedCircuit(frequency=wg.frequency, z0=None, R=r, L=l, G=g, C=c)
+        self.rlgc = rlgc
+
+        self.X = wg.random(n_ports =2, name = 'X')
+        self.Y = wg.random(n_ports =2, name = 'Y')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
+
+        # make error networks have s21,s12 >> s11,s22 so that TRL
+        # can guess at line length
+        self.X.s[:,0,0] *=1e-1
+        self.Y.s[:,0,0] *=1e-1
+        self.X.s[:,1,1] *=1e-1
+        self.Y.s[:,1,1] *=1e-1
+
+        actuals = [
+            rlgc.thru(),
+            rlgc.short(nports=2),
+            rlgc.line(10,'um'),
+            rlgc.line(100,'um'),
+            rlgc.line(500,'um'),
+            ]
+
+        self.actuals=actuals
+
+        measured = [self.measure(k) for k in actuals]
+
+        self.measured = measured
+
+        self.cal = NISTMultilineTRL(
+            measured = measured,
+            Grefls = [-1],
+            l = [0, 10e-6, 100e-6, 500e-6],
+            switch_terms = (self.gamma_f, self.gamma_r),
+            ref_plane=50e-6,
+            c0=c,
+            z0_ref=50,
+            gamma_root_choice = 'real'
+            )
+
+    def terminate(self, ntwk):
+        '''
+        terminate a measured network with the switch terms
+        '''
+        return terminate(ntwk,self.gamma_f, self.gamma_r)
+
+    def measure(self,ntwk):
+        out =  self.terminate(self.X**ntwk**self.Y)
+        out.name = ntwk.name
+        return out
+
+    def test_gamma(self):
+        self.assertTrue(max(npy.abs(self.rlgc.gamma-self.cal.gamma)) < 1e-3)
+
+    def test_z0(self):
+        self.assertTrue(max(npy.abs(self.rlgc.z0-self.cal.z0)) < 1e-3)
+
+    def test_shift(self):
+        self.assertTrue(self.cal.apply_cal(self.measured[3]) == self.wg.thru())
+
+    def test_shift2(self):
+        feed = self.rlgc.line(50,'um')
+        dut = self.wg.random(n_ports=2)
+        #Thrus convert the port impedances to 50 ohm
+        dut_feed = self.wg.thru()**feed**dut**feed**self.wg.thru()
+        dut_meas = self.measure(dut_feed)
+        self.assertTrue(self.cal.apply_cal(dut_meas) == dut)
+
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
         raise SkipTest()

@@ -224,7 +224,7 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.ok.setEnabled(False)
 
     def measure_switch(self):
-        self.forward, self.reverse = self.analyzer.get_switch_terms()
+        self.forward, self.reverse = self.analyzer.get_switch_terms(**self.analyzer.defaults_twoport)
         self.evaluate()
 
     def load_forward_switch(self):
@@ -392,8 +392,8 @@ class VnaSelector(QtWidgets.QWidget):
         self.verticalLayout = QtWidgets.QVBoxLayout(self)  # primary widget layout
         self.verticalLayout.setContentsMargins(0, 0, 0, 0)  # normally this will be embedded in another application
 
-        self.checkBox_TriggerNew = QtWidgets.QCheckBox("Trigger New", self)
-        self.checkBox_TriggerNew.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.checkBox_SweepNew = QtWidgets.QCheckBox("Sweep New", self)
+        self.checkBox_SweepNew.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.label_ports = QtWidgets.QLabel("ports 1,2:")
         self.spinBox_port1 = QtWidgets.QSpinBox(self)
         self.spinBox_port2 = QtWidgets.QSpinBox(self)
@@ -429,7 +429,7 @@ class VnaSelector(QtWidgets.QWidget):
         self.row2.addWidget(self.label_channel)
         self.row2.addWidget(self.spinBox_channel)
         self.row2.addWidget(qt.QVLine())
-        self.row2.addWidget(self.checkBox_TriggerNew)
+        self.row2.addWidget(self.checkBox_SweepNew)
         self.row2.addWidget(qt.QVLine())
         self.row2.addWidget(self.label_ports)
         self.row2.addWidget(self.spinBox_port1)
@@ -441,30 +441,69 @@ class VnaSelector(QtWidgets.QWidget):
         self.verticalLayout.addLayout(self.row1)
         self.verticalLayout.addLayout(self.row2)
 
-        self.comboBox_analyzer.currentIndexChanged.connect(self.set_analyzer_default_address)
+        self.comboBox_analyzer.currentIndexChanged.connect(self.update_selected_analyzer)
         for key, val in analyzers.items():
             self.comboBox_analyzer.addItem(key)
         # --- End Setup UI Elements --- #
 
         self.btn_controlVna.clicked.connect(self.control_vna)
+        self.btn_controlVna.setEnabled(False)
 
     def setEnabled(self, enabled):
         super(VnaSelector, self).setEnabled(enabled)
         self.enableStateToggled.emit(enabled)
 
-    def set_analyzer_default_address(self):
-        self.lineEdit_visaString.setText(analyzers[self.comboBox_analyzer.currentText()].DEFAULT_VISA_ADDRESS)
+    def update_selected_analyzer(self):
+        cls = analyzers[self.comboBox_analyzer.currentText()]
+        self.lineEdit_visaString.setText(cls.DEFAULT_VISA_ADDRESS)
+        self.spinBox_port2.setMaximum(cls.NPORTS)
+        self.spinBox_channel.setMaximum(cls.NCHANNELS)
 
     def get_analyzer(self):
-        return analyzers[self.comboBox_analyzer.currentText()](self.lineEdit_visaString.text())
+        nwa = analyzers[self.comboBox_analyzer.currentText()](self.lineEdit_visaString.text())
+        nwa.set_defaults(port1=self.port1, port2=self.port2, sweep=self.sweep_new, channel=self.channel)
+        return nwa
+
+    @property
+    def port1(self):
+        return self.spinBox_port1.value()
+
+    @port1.setter
+    def port1(self, val):
+        self.spinBox_port1.setValue(val)
+
+    @property
+    def port2(self):
+        return self.spinBox_port2.value()
+
+    @port2.setter
+    def port2(self, val):
+        self.spinBox_port2.setValue(val)
+
+    @property
+    def sweep_new(self):
+        return self.checkBox_SweepNew.isChecked()
+
+    @sweep_new.setter
+    def sweep_new(self, val):
+        self.checkBox_SweepNew.setChecked(val)
+
+    @property
+    def channel(self):
+        return self.spinBox_channel.value()
+
+    @channel.setter
+    def channel(self, val):
+        self.spinBox_channel.setValue(val)
 
     def control_vna(self):
+        qt.warnMissingFeature()
         with self.get_analyzer() as vna:
             VnaControllerDialog(vna).exec_()
 
 
 class ReflectDialog(QtWidgets.QDialog):
-    def __init__(self, analyzer=None, parent=None):
+    def __init__(self, analyzer=None, parent=None, **kwargs):
         super(ReflectDialog, self).__init__(parent)
 
         self.setWindowTitle("Measure Reflect Standards")
@@ -528,15 +567,15 @@ class ReflectDialog(QtWidgets.QDialog):
         self.btn_loadPort2.clicked.connect(self.load_s22)
 
     def measure_s11(self):
-        self.s11 = self.analyzer.get_oneport(port=1)
+        self.s11 = self.analyzer.get_oneport(port=self.port1)
         self.evaluate()
 
     def measure_s22(self):
-        self.s22 = self.analyzer.get_oneport(port=2)
+        self.s22 = self.analyzer.get_oneport(port=self.port2)
         self.evaluate()
 
     def measure_both(self):
-        self.reflect_2port = self.analyzer.get_twoport()
+        self.reflect_2port = self.analyzer.get_twoport(**self.analyzer.defaults_twoport)
         self.evaluate()
 
     def load_s11(self):

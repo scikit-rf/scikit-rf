@@ -1385,7 +1385,7 @@ class Network(object):
             try:
                 self.name = os.path.basename(os.path.splitext(filename)[0])
                 # this may not work if filename is a file object
-            except(AttributeError):
+            except(AttributeError, TypeError):
                 # in case they pass a file-object instead of file name,
                 # get the name from the touchstone file
                 try:

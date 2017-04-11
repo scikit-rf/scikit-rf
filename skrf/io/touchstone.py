@@ -492,8 +492,7 @@ def read_zipped_touchstones(ziparchive, dir=""):
     dict
     """
     networks = dict()
-    fnames = [f.filename for f in ziparchive.filelist]
-    for fname in fnames:  # type: str
+    for fname in ziparchive.namelist():  # type: str
         directory, filename = os.path.split(fname)
         if dir == directory and fname[-4:].lower() in (".s1p", ".s2p", ".s3p", ".s4p"):
             network = Network.zipped_touchstone(fname, ziparchive)

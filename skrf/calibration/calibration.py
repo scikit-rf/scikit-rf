@@ -2168,12 +2168,65 @@ class EightTerm(Calibration):
         return T1, T2, T3, T4
 
 
+    def renormalize(self, z0_old, z0_new, powerwave=False):
+        """Renormalizes the calibration error boxes to a new reference impedance.
+
+        Useful for example after doing a TRL calibration with non-50 ohm
+        transmission lines. After the TRL calibration reference impedance is the
+        line characteristic impedance.  If the transmission line characteristic
+        impedance is known this function can be used to renormalize the
+        reference impedance to 50 ohms or any other impedance.
+        """
+        ec = self.coefs
+        npoints = len(ec['k'])
+        one = npy.ones(npoints,dtype=complex)
+
+        Edf = self.coefs['forward directivity']
+        Esf = self.coefs['forward source match']
+        Erf = self.coefs['forward reflection tracking']
+        Edr = self.coefs['reverse directivity']
+        Esr = self.coefs['reverse source match']
+        Err = self.coefs['reverse reflection tracking']
+        k = self.coefs['k']
+
+        S1 = npy.array([\
+                [ Edf,  k ],\
+                [ Erf/k,     Esf ]])\
+                .transpose().reshape(-1,2,2)
+
+        S2 = npy.array([\
+                [ Edr,  Err ],\
+                [ one,     Esr ]])\
+                .transpose().reshape(-1,2,2)
+
+        if powerwave:
+            S1 = renormalize_pw(S1, [z0_new, z0_old], z0_new)
+            S2 = renormalize_pw(S2, [z0_new, z0_old], z0_new)
+        else:
+            S1 = renormalize_s(S1, [z0_new, z0_old], z0_new)
+            S2 = renormalize_s(S2, [z0_new, z0_old], z0_new)
+
+        self.coefs['forward directivity'] = S1[:,0,0]
+        self.coefs['forward source match'] = S1[:,1,1]
+        self.coefs['forward reflection tracking'] = S1[:,0,1]*S1[:,1,0]
+        self.coefs['reverse directivity'] = S2[:,0,0]
+        self.coefs['reverse source match'] = S2[:,1,1]
+        self.coefs['reverse reflection tracking'] = S2[:,1,0]*S2[:,0,1]
+        self.coefs['k'] = S1[:,1,0]/S2[:,0,1]
+
+        return None
+
+
 class TRL(EightTerm):
     '''
     Thru Reflect Line
 
     A Similar self-calibration algorithm as developed by Engen and
     Hoer [1]_, more closely following into a more matrix form in [2]_.
+
+    Reference impedance of the calibration is characteristic impedance of the
+    transmission lines. If the characteristic impedance is known, reference
+    impedance can be renormalized using `EightTerm.renormalize` function.
 
     See Also
     ------------
@@ -2334,6 +2387,13 @@ class NISTMultilineTRL(EightTerm):
     difference that is not 0 degrees or a multiple of 180 degrees otherwise
     calibration equations are singular and accuracy is very poor.
 
+    By default the reference impedance of the calibration is the characteristic
+    impedance of the transmission lines. If the characteristic impedance is
+    known reference impedance can be renormalized by giving `z0_ref` and
+    `z0_line`.  Alternatively if capacitance/length of the transmission line is
+    given with `c0` argument, characteristic impedance can be solved assuming
+    that conductance/length is zero.
+
     Algorithm is the one published in [0]_, but implementation is based on [1]_.
 
     References
@@ -2346,8 +2406,9 @@ class NISTMultilineTRL(EightTerm):
 
     def __init__(self, measured, Grefls, l,
                  er_est=1, refl_offset=None, ref_plane=0,
-                 gamma_root_choice='real', k_method='multical', *args, **kwargs):
-        """
+                 gamma_root_choice='real', k_method='multical', c0=None,
+                 z0_ref=None, z0_line=None, *args, **kwargs):
+        '''
         NISTMultilineTRL initializer
 
         Note that the order of `measured` is strict.
@@ -2394,7 +2455,7 @@ class NISTMultilineTRL(EightTerm):
             This is the suggested method when lines have moderate loss and the
             measurement noise is low. This is the default method.
 
-            'auto' : Use heurestics to choose the eigenvalue.
+            'auto' : Use heuristics to choose the eigenvalue.
 
             'imag' : Force the imaginary part of the gamma to be positive,
             corresponding to a positive length line. Real part can be positive.
@@ -2404,6 +2465,37 @@ class NISTMultilineTRL(EightTerm):
             Method to use for determining the 'k' error coefficient.
             Currently valid choices are 'marks' or 'multical'.
             The default method is 'multical'.
+
+        c0 : None, float or list of float
+            Capacitance/length of the transmission line in units F/m used for
+            reference impedance renormalization.
+
+            Characteristic impedance of the transmission lines can be determined
+            from the solved propagation constant if capacitance per length is known.
+            After the characteristic impedance is solved reference impedance of
+            the calibration is changed to `z0_ref`.
+            Solved characteristic impedance can be accessed with `cal.z0`.
+
+            Assumes TEM mode and conductance/length to be zero.
+
+            If `c0` == `z0_line` == None, the characteristic impedance is not renormalized.
+            In this case reference impedance of the calibration is characteristic
+            impedance of the transmission lines.
+
+        z0_ref : None or complex
+            New reference impedance for the characteristic impedance renormalizarion.
+
+            No effect if `c0` == None and `z0_line` == None.
+
+            If `z0_ref` == None, no renormalization is done.
+
+        z0_line : None, complex or list of complex
+            Characteristic impedance of the transmission lines. Used for reference
+            impedance renormalization.
+
+            If `z0` == `z0_line` == None, the characteristic impedance is not renormalized.
+            In this case reference impedance of the calibration is characteristic
+            impedance of the transmission lines.
 
         \*args, \*\*kwargs :  passed to EightTerm.__init__
             dont forget the `switch_terms` argument is important
@@ -2417,6 +2509,9 @@ class NISTMultilineTRL(EightTerm):
         self.Grefls = Grefls
         self.gamma_root_choice = gamma_root_choice
         self.k_method = k_method
+        self.z0_ref = z0_ref
+        self.c0 = c0
+        self.z0_line = z0_line
 
         if self.refl_offset is None:
             self.refl_offset = [0] * len(Grefls)
@@ -2464,6 +2559,7 @@ class NISTMultilineTRL(EightTerm):
         fpoints = len(freqs)
         lines = len(l)
         gamma = npy.zeros(fpoints, dtype=npy.complex)
+        z0 = npy.zeros(fpoints, dtype=npy.complex)
 
         gamma_est = (1j * 2 * pi * freqs[0] / c) * npy.sqrt(er_est.real + 1j * er_est.imag / (freqs[0] * 1e-9))
 
@@ -2808,27 +2904,60 @@ class NISTMultilineTRL(EightTerm):
             else:
                 raise ValueError('Unknown k_method: {}'.format(self.k_method))
 
-            # Error matrices
-            Tmat1[m, :, :] = R1 * npy.array([[A1, B1], [C1, 1]])
-            Tmat2[m, :, :] = R2 * npy.array([[A2, B2], [C2, 1]])
+            #Reference plane shift
+            if self.ref_plane != 0:
+                try:
+                    shift1 = exp(-2*gamma[m]*self.ref_plane[0])
+                    shift2 = exp(-2*gamma[m]*self.ref_plane[1])
+                except TypeError:
+                    shift1 = exp(-2*gamma[m]*self.ref_plane)
+                    shift2 = exp(-2*gamma[m]*self.ref_plane)
+                A1 *= shift1
+                A2 *= shift2
+                C1 *= shift1
+                C2 *= shift2
+                R1 *= shift1
+                R2 *= shift2
 
-            # Reference plane shift
-            Tstub = npy.array([[exp(-gamma[m] * self.ref_plane), 0], \
-                               [0, exp(gamma[m] * self.ref_plane)]])
+            if self.c0 is not None:
+                #Estimate the line characteristic impedance
+                #using known capacitance/length
+                if self.z0_line is not None:
+                    raise ValueError('Only one of c0 or z0_line can be given.')
+                try:
+                    c0m = self.c0[m]
+                except TypeError:
+                    c0m = c0
+                z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*c0m)
+            else:
+                #Set the known line characteristic impedance
+                if self.z0_line is not None:
+                    try:
+                        z0[m] = self.z0_line[m]
+                    except TypeError:
+                        z0[m] = self.z0_line
+                else:
+                    try:
+                        z0[m] = self.z0_ref[m]
+                    except TypeError:
+                        z0[m] = self.z0_ref
 
-            Tmat1[m, :, :] = Tmat1[m, :, :].dot(Tstub)
-            Tmat2[m, :, :] = Tmat2[m, :, :].dot(Tstub)
+            #Error matrices
+            Tmat1[m,:,:] = R1*npy.array([[A1, B1],[C1, 1]])
+            Tmat2[m,:,:] = R2*npy.array([[A2, B2],[C2, 1]])
 
-            Smat1[m, :, :] = t2s_single(Tmat1[m, :, :])
-            Smat2[m, :, :] = t2s_single(Tmat2[m, :, :])
+            Smat1[m,:,:] = t2s_single(Tmat1[m,:,:])
+            Smat2[m,:,:] = t2s_single(Tmat2[m,:,:])
 
-            dx = linalg.det(Smat1[m, :, :])
-            dy = linalg.det(Smat2[m, :, :])
+            #Convert the error coefficients to 
+            #definitions used by the EightTerm class.
+            dx = linalg.det(Smat1[m,:,:])
+            dy = linalg.det(Smat2[m,:,:])
 
             if self.k_method == 'marks':
                 k = Smat1[m, 1, 0] / Smat2[m, 0, 1]
             else:
-                k = R2 * dx * dy * Smat1[m, 1, 0] / Smat2[m, 0, 1]
+                k = dx*dy*Smat1[m,1,0]/(Smat2[m,0,1]*Smat2[m,1,0])
 
             # Error coefficients
             e[m] = [Smat1[m, 0, 0],
@@ -2839,6 +2968,7 @@ class NISTMultilineTRL(EightTerm):
                     dy,
                     k]
 
+        self._z0 = z0
         self._gamma = gamma
         self._er_eff = er_eff
         self._nstd = nstd
@@ -2866,6 +2996,13 @@ class NISTMultilineTRL(EightTerm):
         self._output_from_run = {
             'error vector': e
         }
+
+        #Reference impedance renormalization
+        if self.z0_ref is not None and npy.any(z0 != self.z0_ref):
+            powerwave = self.kwargs.get('powerwave', False)
+            if npy.shape(self.z0_ref) != (fpoints,):
+                z0_ref = self.z0_ref*npy.ones(fpoints, dtype=npy.complex)
+            self.renormalize(z0, z0_ref, powerwave=powerwave)
 
     @classmethod
     def from_coefs(cls, frequency, coefs, **kwargs):
@@ -2932,6 +3069,21 @@ class NISTMultilineTRL(EightTerm):
         except(AttributeError):
             self.run()
             return self._er_eff
+
+    @property
+    def z0(self):
+        '''
+        Solved characteristic impedance of the transmission lines.
+
+        This is only solved if C0 parameter (Capacitance/length in units F/m) is given.
+
+        Solved Z0 assumes that conductance/length is zero and line supports TEM mode.
+        '''
+        try:
+            return self._z0
+        except(AttributeError):
+            self.run()
+            return self._z0
 
     @property
     def nstd(self):

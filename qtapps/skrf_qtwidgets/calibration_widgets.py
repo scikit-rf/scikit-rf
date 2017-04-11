@@ -17,9 +17,9 @@ class CalibratedMeasurementsWidget(QtWidgets.QWidget):
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
         self.verticalLayout_main.setContentsMargins(6, 6, 6, 6)
 
-        self.listWidget_measurements = networkListWidget.NetworkListWidget(self)
-        self.btn_measureMeasurement = self.listWidget_measurements.get_measure_button()
-        self.btn_loadMeasurement = self.listWidget_measurements.get_load_button()
+        self.listWidget_measurements = networkListWidget.NetworkListWidget()
+        self.btn_measureMeasurement = self.listWidget_measurements.get_measure_button_twoport()
+        self.btn_loadMeasurement = self.listWidget_measurements.get_load_button_twoport()
         self.horizontalLayout_measurementButtons = QtWidgets.QHBoxLayout()
         self.horizontalLayout_measurementButtons.addWidget(self.btn_loadMeasurement)
         self.horizontalLayout_measurementButtons.addWidget(self.btn_measureMeasurement)
@@ -162,7 +162,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_line = networkListWidget.NetworkListWidget(self)
         self.listWidget_line.name_prefix = "line"
         self.label_line = QtWidgets.QLabel("Line")
-        self.btn_measureLine = self.listWidget_line.get_measure_button()
+        self.btn_measureLine = self.listWidget_line.get_measure_button_twoport()
         self.btn_loadLine = self.listWidget_line.get_load_button()
         self.horizontalLayout_line = QtWidgets.QHBoxLayout()
         self.horizontalLayout_line.addWidget(self.label_line)
@@ -401,7 +401,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.horizontalLayout_switchTerms.addWidget(self.btn_loadSwitchTerms)
         self.verticalLayout_main.addLayout(self.horizontalLayout_switchTerms)
 
-        self.listWidget_thru = networkListWidget.NetworkListWidget(self)
+        self.listWidget_thru = networkListWidget.NetworkListWidget()
         self.verticalLayout_main.addWidget(self.listWidget_thru)
 
         self.reflect_help = widgets.qt.HelpIndicator(title="Reflect Standards Help", help_text="""<h2>Reflect Standards</h2>
@@ -425,7 +425,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
             {"name": "refl_type", "type": "str", "default": "short", "combo_list": ["short", "open"]},
             {"name": "offset", "type": "float", "default": 0.0, "units": "mm"}
         ]
-        self.listWidget_reflect = networkListWidget.ParameterizedNetworkListWidget(self, refl_parameters)
+        self.listWidget_reflect = networkListWidget.ParameterizedNetworkListWidget(item_parameters=refl_parameters)
         self.listWidget_reflect.label_parameters = ["refl_type", "offset"]
         self.verticalLayout_main.addWidget(self.listWidget_reflect)
 
@@ -436,12 +436,12 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 <p>Lines have a length in mm. &nbsp;This can be edited by double clicking the items in the list below.</p>""")
 
         line_parameters = [{"name": "length", "type": "float", "default": 1.0, "units": "mm"}]
-        self.listWidget_line = networkListWidget.ParameterizedNetworkListWidget(self, line_parameters)
+        self.listWidget_line = networkListWidget.ParameterizedNetworkListWidget(item_parameters=line_parameters)
         self.listWidget_line.label_parameters = ["length"]
         self.listWidget_line.name_prefix = "line"
         self.label_line = QtWidgets.QLabel("Line Standards")
-        self.btn_measureLine = self.listWidget_line.get_measure_button()
-        self.btn_loadLine = self.listWidget_line.get_load_button()
+        self.btn_measureLine = self.listWidget_line.get_measure_button_twoport()
+        self.btn_loadLine = self.listWidget_line.get_load_button_twoport()
         self.horizontalLayout_line = QtWidgets.QHBoxLayout()
         self.horizontalLayout_line.addWidget(self.line_help)
         self.horizontalLayout_line.addWidget(self.label_line)
@@ -468,9 +468,9 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         # --- END UI SETUP --- #
 
         self.btn_loadThru.clicked.connect(self.load_thru)
-        self.btn_loadReflect.clicked.connect(self.load_reflect)
+        self.btn_loadReflect.released.connect(self.load_reflect)
         self.btn_loadSwitchTerms.clicked.connect(self.load_switch_terms)
-        self.btn_measureThru.clicked.connect(self.measure_thru)
+        self.btn_measureThru.released.connect(self.measure_thru)
         self.btn_measureReflect.clicked.connect(self.measure_reflect)
         self.btn_measureSwitchTerms.clicked.connect(self.measure_switch_terms)
         self.btn_saveCalibration.clicked.connect(self.save_calibration)
@@ -575,15 +575,14 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 
         n_reflects = len(cal.Grefls)
         reflects = cal.measured[1:n_reflects+1]
-        refl_types = ["short" if rt == "-1" else "open" for rt in cal.Grefls]
-        refl_offset = [roff * 1000 for roff in cal.refl_offset]
+        refl_types = ["short" if rt == -1 else "open" for rt in cal.Grefls]
+        refl_offsets = [roff * 1000 for roff in cal.refl_offset]
         self.listWidget_reflect.clear()
-        for reflect, offset, rtype in zip(reflects, refl_offset, refl_types):
+        for reflect, offset, rtype in zip(reflects, refl_offsets, refl_types):
             self.listWidget_reflect.load_network(reflect, False, parameters={"refl_type": rtype, "offset": offset})
 
         lines = cal.measured[1+n_reflects:]
         line_lengths = [l * 1000 for l in cal.l[1:]]
-        n_lines = len(lines)
         self.listWidget_line.clear()
         for line, length in zip(lines, line_lengths):
             self.listWidget_line.load_network(line, False, parameters={"length": length})
@@ -595,7 +594,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 
     def measure_thru(self):
         with self.get_analyzer() as nwa:
-            ntwk = nwa.get_twoport()
+            ntwk = nwa.get_twoport(**nwa.defaults_twoport)
         self.listWidget_thru.load_named_ntwk(ntwk, self.THRU_ID)
 
     def load_thru(self):
@@ -613,7 +612,6 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
             accepted = dialog.exec_()
             if accepted:
                 if not dialog.reflect_2port.name:
-                    # dialog.reflect_2port.name = self.listWidget_reflect.get_unique_name("reflect")
                     dialog.reflect_2port.name = "reflect"  # unique name will be assigned in load_network
                 self.listWidget_reflect.load_network(dialog.reflect_2port)
         finally:
