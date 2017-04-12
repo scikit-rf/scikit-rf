@@ -99,7 +99,7 @@ def generate_set_string(command, command_root):
     function_string = \
 """def set_{:s}(self{:}):
     scpi_command = {:}
-    self.resource.write(scpi_command)""".format(command['name'], kwargs_string, scpi_command)
+    self.write(scpi_command)""".format(command['name'], kwargs_string, scpi_command)
 
     return function_string
 
@@ -111,7 +111,7 @@ def generate_set_values_string(command, command_root):
     function_string = \
 """def set_{:s}(self{:}):
     scpi_command = {:}
-    self.resource.write_values(scpi_command, {:})""".format(
+    self.write_values(scpi_command, {:})""".format(
             command['name'], kwargs_string, scpi_command, data_variable)
 
     return function_string
@@ -141,7 +141,7 @@ def generate_query_string(command, command_root):
     function_string = \
 """def query_{:s}(self{:}):
     scpi_command = {:}
-    value = self.resource.query(scpi_command){:}
+    value = self.query(scpi_command){:}
     return value""".format(command['name'], kwargs_string, scpi_command, pre_line)
 
     return function_string
@@ -154,7 +154,7 @@ def generate_query_values_string(command, command_root):
     function_string = \
 """def query_{:s}(self{:}):
     scpi_command = {:}
-    return self.resource.query_values(scpi_command)""".format(
+    return self.query_values(scpi_command)""".format(
             command['name'], kwargs_string, scpi_command)
 
     return function_string
@@ -189,7 +189,10 @@ def parse_branch(branch, set_strings=[], query_strings=[], query_value_strings=[
 
     return set_strings, query_strings
 
-header_string = """converters = {
+header_string = """import re
+
+null_parameter = re.compile(",{2,}")  # detect optional null parameter as two consecutive commas, and remove
+converters = {
     "str": str,
     "int": int,
     "float": float,
@@ -208,7 +211,8 @@ scpi_preprocessor = """def scpi_preprocess(command_string, *args):
     args = list(args)
     for i, arg in enumerate(args):
         args[i] = to_string(arg)
-    return command_string.format(*args)"""
+    cmd = command_string.format(*args)
+    return null_parameter.sub(",", cmd)"""
 
 query_processor = """def process_query(query, csv=False, strip_outer_quotes=True, returns="str"):
     if strip_outer_quotes is True:
@@ -229,6 +233,27 @@ query_processor = """def process_query(query, csv=False, strip_outer_quotes=True
 class_header = """class SCPI(object):
     def __init__(self, resource):
         self.resource = resource
+        self.echo = False  # print scpi command string to scpi out
+    
+    def write(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        self.resource.write(scpi, *args, **kwargs)
+    
+    def query(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query(scpi, *args, **kwargs)
+    
+    def write_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        self.resource.write_values(scpi, *args, **kwargs)
+    
+    def query_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_values(scpi, *args, **kwargs)
 """
 
 
