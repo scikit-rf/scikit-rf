@@ -75,6 +75,8 @@ import numpy as npy
 from numpy import linalg
 from numpy.linalg import det
 from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
+import json
+from collections import OrderedDict
 import os
 from copy import deepcopy, copy
 import itertools
@@ -90,6 +92,9 @@ from ..frequency import *
 from ..network import *
 from ..networkSet import func_on_networks as fon
 from ..networkSet import NetworkSet
+from .. import util
+from ..io.touchstone import read_zipped_touchstones
+from .. import __version__ as skrf__version__
 
 
 ## later imports. delayed to solve circular dependencies
@@ -394,11 +399,11 @@ class Calibration(object):
         self.ideals = ideals
         self.run()
         return c,i
-        
-        
-        
-        
-    
+
+
+
+
+
     @classmethod
     def from_coefs_ntwks(cls, coefs_ntwks, **kwargs):
         '''
@@ -739,8 +744,8 @@ class Calibration(object):
 
         '''
         return [caled - ideal for (ideal, caled) in zip(self.ideals, self.caled_ntwks)]
-    
-    
+
+
     @property
     def residual_ntwk_sets(self):
         '''
@@ -1314,7 +1319,7 @@ class PHN(OnePort):
         for k in range(npts):
             p =  poly1d([A[k],B[k],C[k]])
             b1[k],b2[k] = p.r
-        
+
         a1 = -(f*b1 + g)/(z*b1 + e)
         a2 = -(f*b2 + g)/(z*b2 + e)
 
@@ -1325,18 +1330,18 @@ class PHN(OnePort):
         b2_s = z2s(b2.reshape(-1,1,1),1)
         a1_s = z2s(a1.reshape(-1,1,1),1)
         a2_s = z2s(a2.reshape(-1,1,1),1)
-        
+
         b_guess = z2s(b.reshape(-1,1,1),1)
         a_guess = z2s(a.reshape(-1,1,1),1)
-        
+
         distance1 = abs(a1_s - a_guess) + abs(b1_s - b_guess)
         distance2 = abs(a2_s - a_guess) + abs(b2_s - b_guess)
-        
-        
+
+
         b_found = npy.where(distance1<distance2, b1, b2)
         a_found = npy.where(distance1<distance2, a1, a2)
-        
-        
+
+
         self.ideals[0].s = z2s(a_found.reshape(-1,1,1),1)
         self.ideals[1].s = z2s(b_found.reshape(-1,1,1),1)
 
@@ -2221,8 +2226,8 @@ class EightTerm(Calibration):
                 .transpose().reshape(-1,2,2)
 
         if powerwave:
-            S1 = renormalize_pw(S1, [z0_new, z0_old], z0_new)
-            S2 = renormalize_pw(S2, [z0_new, z0_old], z0_new)
+            S1 = renormalize_s_pw(S1, [z0_new, z0_old], z0_new)
+            S2 = renormalize_s_pw(S2, [z0_new, z0_old], z0_new)
         else:
             S1 = renormalize_s(S1, [z0_new, z0_old], z0_new)
             S2 = renormalize_s(S2, [z0_new, z0_old], z0_new)
@@ -2331,13 +2336,13 @@ class TRL(EightTerm):
         #warn('Value of Reflect is not solved for yet.')
 
         n_stds = len(measured)
-        
-        
-        ## generate ideals, given various inputs 
-            
+
+
+        ## generate ideals, given various inputs
+
         if ideals is None:
             ideals = [None]*len(measured)
-            
+
         if ideals[0] is None:
             # lets make an ideal flush thru for them
             ideal_thru = measured[0].copy()
@@ -2346,7 +2351,7 @@ class TRL(EightTerm):
             ideal_thru.s[:,1,0] = 1
             ideal_thru.s[:,0,1] = 1
             ideals[0] = ideal_thru
-        
+
         for k in range(1,n_reflects+1):
             if ideals[k] is None:
                 # assume they are using flushshorts
@@ -2356,7 +2361,7 @@ class TRL(EightTerm):
                 ideal_reflect.s[:,1,0] = 0
                 ideal_reflect.s[:,0,1] = 0
                 ideals[k] = ideal_reflect
-        
+
         for k in range(n_reflects+1,n_stds):
             if ideals[k] is None:
                 # lets make an 90deg line for them
@@ -2376,16 +2381,16 @@ class TRL(EightTerm):
 
 
         m_ut = self.measured_unterminated
-        
+
         ## Solve for the line[s]
         for k in range(n_reflects+1,n_stds):
             if estimate_line:
-                # setting line_approx  to None causes determine_line() to 
+                # setting line_approx  to None causes determine_line() to
                 # estimate the line length from raw measurements
                 line_approx = None
             else:
                 line_approx = ideals[k]
-            
+
             self.ideals[k] = determine_line(m_ut[0], m_ut[k], line_approx) # find line
 
         ## Solve for the reflect[s]
@@ -2946,7 +2951,7 @@ class NISTMultilineTRL(EightTerm):
                 try:
                     c0m = self.c0[m]
                 except TypeError:
-                    c0m = c0
+                    c0m = self.c0
                 z0[m] = gamma[m]/(1j*2*npy.pi*freqs[m]*c0m)
             else:
                 #Set the known line characteristic impedance
@@ -2968,7 +2973,7 @@ class NISTMultilineTRL(EightTerm):
             Smat1[m,:,:] = t2s_single(Tmat1[m,:,:])
             Smat2[m,:,:] = t2s_single(Tmat2[m,:,:])
 
-            #Convert the error coefficients to 
+            #Convert the error coefficients to
             #definitions used by the EightTerm class.
             dx = linalg.det(Smat1[m,:,:])
             dy = linalg.det(Smat2[m,:,:])
@@ -3119,6 +3124,85 @@ class NISTMultilineTRL(EightTerm):
         except(AttributeError):
             self.run()
             return self._nstd
+
+    def save_calibration(self, filename):
+        """
+        save calibration as an archive containing the standards, parameters and calibration results
+
+        Parameters
+        ----------
+        filename : str
+            the path of the zip archive to save
+
+        """
+        parameters = OrderedDict()
+        parameters["file type"] = "skrf calibration"
+        parameters["calibration class"] = self.__class__.__name__
+        parameters["skrf version"] = skrf__version__
+
+        parameters["measured"] = ntwk_names = [ntwk.name for ntwk in self.measured]
+        for i, name in enumerate(ntwk_names):
+            ntwk_names[i] = util.unique_name(name, ntwk_names, i)
+        parameters["ideals"] = None
+
+        if self.switch_terms:
+            fswitch, rswitch = self.switch_terms  # type: Network
+            fswitch.name = "forward switch terms"
+            rswitch.name = "reverse switch terms"
+            parameters["switch terms"] = fswitch.name, rswitch.name
+        else:
+            parameters["switch terms"] = None
+
+        parameters["kwargs"] = {
+            "Grefls": self.Grefls,
+            "l": self.l,
+            "er_est": self.er_est,
+            "refl_offset": self.refl_offset,
+            "ref_plane": self.ref_plane,
+            "gamma_root_choice": self.gamma_root_choice,
+            "k_method": self.k_method
+        }
+
+        with zipfile.ZipFile(filename, 'w', compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("parameters.json", json.dumps(parameters, indent=2))
+            if self.switch_terms:
+                fswitch.write_touchstone(dir="switch terms", to_archive=archive)
+                rswitch.write_touchstone(dir="switch terms", to_archive=archive)
+            for i, ntwk in enumerate(self.measured):  # type: int, Network
+                ntwk.write_touchstone(ntwk_names[i] + ".s2p", dir="measured", to_archive=archive)
+            for key, ntwk in self.coefs_ntwks.items():
+                ntwk.write_touchstone(dir="coefs", to_archive=archive)
+            gamma_ntwk = Network(f=self.measured[0].f, s=self.gamma, z0=50., comments="propagation constant")
+            gamma_ntwk.write_touchstone("gamma.s1p", to_archive=archive)
+
+    @classmethod
+    def load_calibration_archive(cls, filename):
+        with zipfile.ZipFile(filename) as archive:
+            parameters = json.loads(archive.open("parameters.json").read().decode("ascii"))
+            measured_dict = read_zipped_touchstones(archive, "measured")
+            switch_terms_dict = read_zipped_touchstones(archive, "switch terms")
+            coefs_dict = read_zipped_touchstones(archive, "coefs")  # not used currently
+            gamma_ntwk = Network.zipped_touchstone("gamma.s1p", archive)
+
+        measured = list()
+        for name in parameters["measured"]:
+            measured.append(measured_dict[name])
+
+        if parameters["switch terms"] is None:
+            switch_terms = None
+        else:
+            switch_terms = [
+                switch_terms_dict[parameters["switch terms"][0]],
+                switch_terms_dict[parameters["switch terms"][1]]
+            ]
+
+        kwargs = parameters["kwargs"]
+
+        cal = cls(measured, switch_terms=switch_terms, **kwargs)
+        cal.coefs = NetworkSet(coefs_dict).to_s_dict()
+        cal._gamma = gamma_ntwk.s.flatten()
+
+        return cal
 
 
 class UnknownThru(EightTerm):
@@ -3899,7 +3983,7 @@ class Normalization(Calibration):
 
 
 
-    
+
 
 
 
@@ -4107,7 +4191,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     return found_line
 
 
-def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None, 
+def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
                      return_all=False):
     '''
     Determine reflect from a thru, reflect, line measurments
@@ -4152,9 +4236,9 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     a = None
     b = None
     c = None
-    
+
     rootChoice = abs(sol1)>abs(sol2)
-    
+
     out = []
     for rooty in range(2):
         rootChoice = invert(rootChoice) # stupid
@@ -4163,7 +4247,7 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         b = y
 
 
-        #prop per 
+        #prop per
         g = 1/thru_m.s[:,1,0]
         e = thru_m.s[:,0,0]
         d = -det(thru_m.s)
@@ -4179,29 +4263,29 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
 
         a = sqrt(((w1-y)*(1+w2*b_A)*(d-y*f))/\
                 ((w2+gam)*(1-w1/x)*(1-e/x)))
-        
+
         for rootChoice2 in [1,-1] :
             a= a*rootChoice2
             unknownReflectS = (w1-y)/(a*(1-w1/x))
             out.append(unknownReflectS)
-            
-    
+
+
     if return_all:
         return [Network(frequency=thru_m.frequency, s = k) for k in out]
-    
+
     if reflect_approx is None:
         reflect_approx = reflect_m.copy()
         reflect_approx.s[:,0,0]=-1
-        
-    
+
+
     close = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
     closer = find_closest(out[2], out[3], reflect_approx.s11.s.flatten())
     closest = find_closest(close, closer, reflect_approx.s11.s.flatten())
-    
+
     #import pdb;pdb.set_trace()
     reflect = reflect_approx.copy()
     reflect.s[:,0,0]=closest
-    
+
     return reflect
 
 

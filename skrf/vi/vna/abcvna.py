@@ -1,6 +1,7 @@
 """
 This is a model module.  It will not function correctly to pull data, but needs other modules to subclass it.
 """
+import copy
 from typing import Iterable
 
 import numpy as np
@@ -107,6 +108,32 @@ class VNA(object):
         self.read = self.resource.read
         self.query = self.resource.query
         self.query_values = self.resource.query_values
+
+        # set the default values that will be used for measurements
+        self._defaults = {"port1": 1, "port2": 2, "channel": 1, "sweep": False}
+
+    @property
+    def defaults(self):
+        """
+        provide the dict of values that will be the defaults for grabbing data from the instrument
+
+        relevant values are port1, port2, channel and sweep
+        """
+        return self._defaults
+
+    @property
+    def defaults_twoport(self):
+        defaults = copy.copy(self.defaults)
+        defaults["ports"] = (defaults["port1"], defaults["port2"])
+        return defaults
+
+    def set_defaults(self, **kwargs):
+        valid_keys = self._defaults.keys()
+        for key, value in kwargs.items():
+            if key in valid_keys:
+                self._defaults[key] = value
+            else:
+                Warning("default parameter {} not recognized and not set".format(key))
 
     def __enter__(self):
         """

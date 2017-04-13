@@ -43,4 +43,4 @@ class DataGrabber(QtWidgets.QWidget):
         self.listWidget_measurements.ntwk_plot = self.ntwk_plot
         self.listWidget_measurements.get_analyzer = self.vna_controller.get_analyzer
 
-app = qt.single_widget_application(DataGrabber)
+app = qt.single_widget_application(DataGrabber, appid="DataGrabber")
