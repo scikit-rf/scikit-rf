@@ -224,7 +224,7 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.ok.setEnabled(False)
 
     def measure_switch(self):
-        self.forward, self.reverse = self.analyzer.get_switch_terms(**self.analyzer.defaults_twoport)
+        self.forward, self.reverse = self.analyzer.get_switch_terms(**self.analyzer.params_twoport)
         self.evaluate()
 
     def load_forward_switch(self):
@@ -461,7 +461,7 @@ class VnaSelector(QtWidgets.QWidget):
 
     def get_analyzer(self):
         nwa = analyzers[self.comboBox_analyzer.currentText()](self.lineEdit_visaString.text())
-        nwa.set_defaults(port1=self.port1, port2=self.port2, sweep=self.sweep_new, channel=self.channel)
+        nwa.set_measurement_parameters(port1=self.port1, port2=self.port2, sweep=self.sweep_new, channel=self.channel)
         return nwa
 
     @property
@@ -575,7 +575,7 @@ class ReflectDialog(QtWidgets.QDialog):
         self.evaluate()
 
     def measure_both(self):
-        self.reflect_2port = self.analyzer.get_twoport(**self.analyzer.defaults_twoport)
+        self.reflect_2port = self.analyzer.get_twoport(**self.analyzer.params_twoport)
         self.evaluate()
 
     def load_s11(self):

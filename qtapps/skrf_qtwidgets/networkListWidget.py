@@ -407,8 +407,8 @@ class NetworkListWidget(QtWidgets.QListWidget):
 
     def measure_twoport(self, **kwargs):
         with self.get_analyzer() as nwa:
-            params = nwa.defaults_twoport.copy()
-            params.update(kwargs)  # override any of the defaults with arguments passed in here
+            params = nwa.params_twoport.copy()
+            params.update(kwargs)  # override any of the measurement_parameters with arguments passed in here
             meas = nwa.get_twoport(**params)
             meas.name = self.name_prefix  # unique name processed in load_network
         self.load_network(meas)

@@ -1,7 +1,3 @@
-from collections import OrderedDict
-import json
-import zipfile
-
 from qtpy import QtWidgets, QtCore
 import pyqtgraph as pg
 import skrf
@@ -485,6 +481,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 
         self.btn_viewCalibration.setEnabled(False)
         self.btn_saveCalibration.setEnabled(False)
+        self.btn_uploadCalibration.setEnabled(False)
 
         self.lineEdit_epsEstimate.value_changed.connect(self.calibration_parameters_changed)
         self.lineEdit_referencePlane.value_changed.connect(self.calibration_parameters_changed)
@@ -498,15 +495,22 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.calibration_current = False
         self.btn_runCalibration.setEnabled(True)
         if self.calibration is not None:
+            self.btn_uploadCalibration.setEnabled(True)
             self.btn_runCalibration.setText("Re-Run Cal")
             self.btn_viewCalibration.setText("View Cal (Old)")
+        else:
+            self.btn_viewCalibration.setEnabled(False)
+            self.btn_saveCalibration.setEnabled(False)
+            self.btn_uploadCalibration.setEnabled(False)
 
     def view_calibration(self):
         dialog = NISTCalViewer(self.calibration)
         dialog.exec_()
 
     def upload_calibration(self):
-        qt.warnMissingFeature()
+        with self.get_analyzer() as vna:
+            vna.upload_twoport_calibration(self.calibration)
+        # qt.warnMissingFeature()
 
     @property
     def get_analyzer(self):
@@ -594,7 +598,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 
     def measure_thru(self):
         with self.get_analyzer() as nwa:
-            ntwk = nwa.get_twoport(**nwa.defaults_twoport)
+            ntwk = nwa.get_twoport(**nwa.params_twoport)
         self.listWidget_thru.load_named_ntwk(ntwk, self.THRU_ID)
 
     def load_thru(self):
