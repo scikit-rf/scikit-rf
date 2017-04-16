@@ -1410,9 +1410,13 @@ class TwelveTerm(Calibration):
             Only use if n_thrus=None.
 
         isolation : :class:`~skrf.network.Network` object
-            Measurement with loads on both ports. Used for determining the
-            isolation error terms. If no measurement is given isolation is
-            assumed to be zero.
+            Measurement with loads on both ports with a perfect isolation
+            between the ports. Used for determining the isolation error terms.
+            If no measurement is given leakage is assumed to be zero.
+
+            Loads don't need to be same as the one used as a match standard or
+            even have similar reflection coefficients. Reflects can be also used,
+            but accuracy might not be as good.
 
         See Also
         -----------
@@ -1995,9 +1999,13 @@ class EightTerm(Calibration):
             the pair of switch terms in the order (forward, reverse)
 
         isolation : :class:`~skrf.network.Network` object
-            Measurement with loads on both ports. Used for determining the
-            isolation error terms. If no measurement is given isolation is
-            assumed to be zero.
+            Measurement with loads on both ports with a perfect isolation
+            between the ports. Used for determining the isolation error terms.
+            If no measurement is given leakage is assumed to be zero.
+
+            Loads don't need to be same as the one used as a match standard or
+            even have similar reflection coefficients. Reflects can be also used,
+            but accuracy might not be as good.
 
         '''
 
