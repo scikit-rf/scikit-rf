@@ -1,6 +1,4 @@
-
-
-'''
+"""
 .. module:: skrf.io.touchstone
 ========================================
 touchstone (:mod:`skrf.io.touchstone`)
@@ -22,27 +20,30 @@ Functions related to reading/writing touchstones.
     hfss_touchstone_2_gamma_z0
     hfss_touchstone_2_media
     hfss_touchstone_2_network
-'''
+"""
 
+import os
+import zipfile
 import numpy
 import numpy as npy
 from ..util import get_fid
 from ..network import Network
 from ..frequency import Frequency
-from ..media import  Media, DefinedGammaZ0
+from ..media import Media, DefinedGammaZ0
 from .. import mathFunctions as mf
 
-class Touchstone():
-    '''
+
+class Touchstone:
+    """
     class to read touchstone s-parameter files
 
     The reference for writing this class is the draft of the
     Touchstone(R) File Format Specification Rev 2.0 [#]_
 
     .. [#] http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
-    '''
-    def __init__(self,file):
-        '''
+    """
+    def __init__(self, file):
+        """
         constructor
 
         Parameters
@@ -60,7 +61,7 @@ class Touchstone():
 
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
-        '''
+        """
         fid = get_fid(file)
         filename = fid.name
         ## file name of the touchstone data file
@@ -398,6 +399,7 @@ def hfss_touchstone_2_gamma_z0(filename):
 
     return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
 
+
 def hfss_touchstone_2_media(filename, f_unit='ghz'):
     '''
     Creates a :class:`~skrf.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments
@@ -443,6 +445,7 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
 
     return media_list
 
+
 def hfss_touchstone_2_network(filename, f_unit='ghz'):
     '''
     Creates a :class:`~skrf.Network` object from a a HFSS-style touchstone file
@@ -471,3 +474,27 @@ def hfss_touchstone_2_network(filename, f_unit='ghz'):
     f,gamm,z0 = hfss_touchstone_2_gamma_z0(filename=filename)
     my_network.z0 = z0
     return(my_network)
+
+
+def read_zipped_touchstones(ziparchive, dir=""):
+    """
+    similar to skrf.io.read_all_networks, which works for directories but only for touchstones in ziparchives
+
+    Parameters
+    ----------
+    ziparchive : zipfile.ZipFile
+        an zip archive file, containing touchstone files and open for reading
+    dir : str
+        the directory of the ziparchive to read networks from, default is "" which reads only the root directory
+
+    Returns
+    -------
+    dict
+    """
+    networks = dict()
+    for fname in ziparchive.namelist():  # type: str
+        directory, filename = os.path.split(fname)
+        if dir == directory and fname[-4:].lower() in (".s1p", ".s2p", ".s3p", ".s4p"):
+            network = Network.zipped_touchstone(fname, ziparchive)
+            networks[network.name] = network
+    return networks

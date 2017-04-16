@@ -17,9 +17,9 @@ class CalibratedMeasurementsWidget(QtWidgets.QWidget):
         self.verticalLayout_main = QtWidgets.QVBoxLayout(self)
         self.verticalLayout_main.setContentsMargins(6, 6, 6, 6)
 
-        self.listWidget_measurements = networkListWidget.NetworkListWidget(self)
-        self.btn_measureMeasurement = self.listWidget_measurements.get_measure_button()
-        self.btn_loadMeasurement = self.listWidget_measurements.get_load_button()
+        self.listWidget_measurements = networkListWidget.NetworkListWidget()
+        self.btn_measureMeasurement = self.listWidget_measurements.get_measure_button_twoport()
+        self.btn_loadMeasurement = self.listWidget_measurements.get_load_button_twoport()
         self.horizontalLayout_measurementButtons = QtWidgets.QHBoxLayout()
         self.horizontalLayout_measurementButtons.addWidget(self.btn_loadMeasurement)
         self.horizontalLayout_measurementButtons.addWidget(self.btn_measureMeasurement)
@@ -162,7 +162,7 @@ class TRLStandardsWidget(QtWidgets.QWidget):
         self.listWidget_line = networkListWidget.NetworkListWidget(self)
         self.listWidget_line.name_prefix = "line"
         self.label_line = QtWidgets.QLabel("Line")
-        self.btn_measureLine = self.listWidget_line.get_measure_button()
+        self.btn_measureLine = self.listWidget_line.get_measure_button_twoport()
         self.btn_loadLine = self.listWidget_line.get_load_button()
         self.horizontalLayout_line = QtWidgets.QHBoxLayout()
         self.horizontalLayout_line.addWidget(self.label_line)
@@ -401,7 +401,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.horizontalLayout_switchTerms.addWidget(self.btn_loadSwitchTerms)
         self.verticalLayout_main.addLayout(self.horizontalLayout_switchTerms)
 
-        self.listWidget_thru = networkListWidget.NetworkListWidget(self)
+        self.listWidget_thru = networkListWidget.NetworkListWidget()
         self.verticalLayout_main.addWidget(self.listWidget_thru)
 
         self.reflect_help = widgets.qt.HelpIndicator(title="Reflect Standards Help", help_text="""<h2>Reflect Standards</h2>
@@ -425,7 +425,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
             {"name": "refl_type", "type": "str", "default": "short", "combo_list": ["short", "open"]},
             {"name": "offset", "type": "float", "default": 0.0, "units": "mm"}
         ]
-        self.listWidget_reflect = networkListWidget.ParameterizedNetworkListWidget(self, refl_parameters)
+        self.listWidget_reflect = networkListWidget.ParameterizedNetworkListWidget(item_parameters=refl_parameters)
         self.listWidget_reflect.label_parameters = ["refl_type", "offset"]
         self.verticalLayout_main.addWidget(self.listWidget_reflect)
 
@@ -436,12 +436,12 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 <p>Lines have a length in mm. &nbsp;This can be edited by double clicking the items in the list below.</p>""")
 
         line_parameters = [{"name": "length", "type": "float", "default": 1.0, "units": "mm"}]
-        self.listWidget_line = networkListWidget.ParameterizedNetworkListWidget(self, line_parameters)
+        self.listWidget_line = networkListWidget.ParameterizedNetworkListWidget(item_parameters=line_parameters)
         self.listWidget_line.label_parameters = ["length"]
         self.listWidget_line.name_prefix = "line"
         self.label_line = QtWidgets.QLabel("Line Standards")
-        self.btn_measureLine = self.listWidget_line.get_measure_button()
-        self.btn_loadLine = self.listWidget_line.get_load_button()
+        self.btn_measureLine = self.listWidget_line.get_measure_button_twoport()
+        self.btn_loadLine = self.listWidget_line.get_load_button_twoport()
         self.horizontalLayout_line = QtWidgets.QHBoxLayout()
         self.horizontalLayout_line.addWidget(self.line_help)
         self.horizontalLayout_line.addWidget(self.label_line)
@@ -468,9 +468,9 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         # --- END UI SETUP --- #
 
         self.btn_loadThru.clicked.connect(self.load_thru)
-        self.btn_loadReflect.clicked.connect(self.load_reflect)
+        self.btn_loadReflect.released.connect(self.load_reflect)
         self.btn_loadSwitchTerms.clicked.connect(self.load_switch_terms)
-        self.btn_measureThru.clicked.connect(self.measure_thru)
+        self.btn_measureThru.released.connect(self.measure_thru)
         self.btn_measureReflect.clicked.connect(self.measure_reflect)
         self.btn_measureSwitchTerms.clicked.connect(self.measure_switch_terms)
         self.btn_saveCalibration.clicked.connect(self.save_calibration)
@@ -549,148 +549,52 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
     def save_calibration(self):
         """save an mTRL as a json + .s2p files in a zip archive"""
         if not self.calibration_current:
-            msg = """Calibration parameters have changed and cal has not been re-run.
-This will save the measurements and parameters as currently entered.  Do you still want to save"""
+            msg = "Calibration parameters have changed and cal has not been re-run. " \
+                  "This will save the previously run calibration.  Do you still want to save"
             reply = QtWidgets.QMessageBox.question(
                 self, 'Cal Parameters Changed', msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
             if reply == QtWidgets.QMessageBox.No:
                 return
 
-        thru = self.listWidget_thru.get_named_item(self.THRU_ID).ntwk
-        fswitch = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_FORWARD).ntwk
-        rswitch = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_REVERSE).ntwk
-        reflects = self.listWidget_reflect.get_all_networks()
-        reflect_offsets = self.listWidget_reflect.get_parameter_from_all("offset")
-        reflect_types = self.listWidget_reflect.get_parameter_from_all("refl_type")
-        lines = self.listWidget_line.get_all_networks()
-        line_lengths = self.listWidget_line.get_parameter_from_all("length")
-
-        switch_terms = True if isinstance(fswitch, skrf.Network) and isinstance(fswitch, skrf.Network) else False
-
-        # --- make sure we have no naming conflicts --- #
-        ntwk_names = [thru.name]
-        if not switch_terms:
-            ntwk_names.extend(("", ""))
-        else:
-            ntwk_names.extend((fswitch.name, rswitch.name))
-
-        ntwk_names.extend(reflect.name for reflect in reflects)
-        ntwk_names.extend(line.name for line in lines)
-
-        n_reflects = len(reflects)
-        n_lines = len(lines)
-
-        rx = 3  # starting index of the reflects
-        lx = rx + n_reflects  # starting index of the lines
-
-        for i, name in enumerate(ntwk_names[rx:]):
-            ntwk_names[rx+i] = util.unique_name(name, ntwk_names, exclude=rx+i)
-        # --- done with naming conflicts --- #
-
-        cal_parameters = OrderedDict()
-        cal_standards = OrderedDict()
-        cal_standards["thru"] = {"name": ntwk_names[0], "length": self.lineEdit_thruLength.get_value(units="m")}
-        if switch_terms:
-            cal_standards["forward switch terms"] = {"name": ntwk_names[1]}
-            cal_standards["reverse switch terms"] = {"name": ntwk_names[2]}
-        else:
-            cal_standards["forward switch terms"] = None
-            cal_standards["reverse switch terms"] = None
-
-        cal_standards["reflects"] = [None] * n_reflects
-        for i, name in enumerate(ntwk_names[rx:rx+n_reflects]):
-            cal_standards["reflects"][i] = {
-                "name": name,
-                "refl_type": reflect_types[i],
-                "offset": reflect_offsets[i] / 1000
-            }
-
-        cal_standards["lines"] = [None] * n_lines
-        for i, name in enumerate(ntwk_names[lx:]):
-            cal_standards["lines"][i] = {
-                "name": name,
-                "length": line_lengths[i] / 1000
-            }
-
-        cal_parameters["parameters"] = {
-            "reference plane shift": self.lineEdit_referencePlane.get_value(units="m"),
-            "eps estimate": self.lineEdit_epsEstimate.get_value(),
-            "root choice": self.comboBox_rootChoice.currentText(),
-            "port1 length estimate": 0,
-            "port2 length estimate": 0
-        }
-        cal_parameters["standards"] = cal_standards
-        l = [cal_standards["thru"]["length"]]
-        l.extend(l / 1000 for l in line_lengths)
-        cal_parameters["skrf kwargs"] = {
-            "Grefls": [-1 if rtype == "short" else 1 for rtype in reflect_types],
-            "l": l,
-            "er_est": cal_parameters["parameters"]["eps estimate"],
-            "refl_offset": [r / 1000 for r in reflect_offsets],
-            "p1_len_est": 0, "p2_len_est": 0,
-            "ref_plane": cal_parameters["parameters"]["reference plane shift"],
-            "gamma_root_choice": cal_parameters["parameters"]["root choice"]
-        }
-
         cal_file = qt.getSaveFileName_Global("save calibration file", "skrf cal (*.zip)")
-        if not cal_file:
-            return
-
-        with zipfile.ZipFile(cal_file, 'w', zipfile.ZIP_DEFLATED) as archive:
-            archive.writestr("parameters.json", json.dumps(cal_parameters, indent=2))
-            thru_str = util.snp_string(thru, comments="Thru Standard")
-            fswitch_str = util.snp_string(fswitch, comments="Forward Switch Terms")
-            rswitch_str = util.snp_string(rswitch, comments="Reverse Switch Terms")
-            archive.writestr(ntwk_names[0] + ".s2p", thru_str)
-            archive.writestr(ntwk_names[1] + ".s1p", fswitch_str)
-            archive.writestr(ntwk_names[2] + ".s1p", rswitch_str)
-            for i, name in enumerate(ntwk_names[rx:rx+n_reflects]):
-                reflect_str = util.snp_string(
-                    reflects[i], comments=["offset={} mm".format(reflect_offsets[i]), "type={}".format(reflect_types)])
-                archive.writestr(name + ".s2p", reflect_str)
-            for i, name in enumerate(ntwk_names[lx:]):
-                line_str = util.snp_string(lines[i], comments="length={} mm".format(line_lengths[i]))
-                archive.writestr(name + ".s2p", line_str)
+        if cal_file:
+           self.calibration.save_calibration(cal_file)
 
     def load_calibration(self):
         cal_file = qt.getOpenFileName_Global("Open mTRL calibration File", "zip (*.zip)")
         if not cal_file:
             return
 
-        with zipfile.ZipFile(cal_file) as archive:
-            params = json.loads(archive.open('parameters.json').read().decode("ascii"))
-            networks = util.read_zipped_touchstones(archive)
+        cal = skrf.NISTMultilineTRL.load_calibration_archive(cal_file)
+        self.calibration = cal
 
-        standards = params["standards"]
-        thru = networks[standards["thru"]["name"]]
-        fswitch = networks[standards["forward switch terms"]["name"]]
-        rswitch = networks[standards["reverse switch terms"]["name"]]
+        self.listWidget_thru.load_named_ntwk(cal.measured[0], self.THRU_ID)
+        if cal.switch_terms:
+            self.listWidget_thru.load_named_ntwk(cal.switch_terms[0], self.SWITCH_TERMS_ID_FORWARD)
+            self.listWidget_thru.load_named_ntwk(cal.switch_terms[1], self.SWITCH_TERMS_ID_REVERSE)
 
-        self.listWidget_thru.load_named_ntwk(thru, thru.name)
-        self.listWidget_thru.load_named_ntwk(fswitch, fswitch.name)
-        self.listWidget_thru.load_named_ntwk(rswitch, rswitch.name)
-
+        n_reflects = len(cal.Grefls)
+        reflects = cal.measured[1:n_reflects+1]
+        refl_types = ["short" if rt == -1 else "open" for rt in cal.Grefls]
+        refl_offsets = [roff * 1000 for roff in cal.refl_offset]
         self.listWidget_reflect.clear()
-        for reflect in standards["reflects"]:
-            ntwk = networks[reflect["name"]]
-            offset = reflect["offset"] * 1000
-            rtype = reflect["refl_type"]
-            self.listWidget_reflect.load_network(ntwk, False, parameters={"refl_type": rtype, "offset": offset})
+        for reflect, offset, rtype in zip(reflects, refl_offsets, refl_types):
+            self.listWidget_reflect.load_network(reflect, False, parameters={"refl_type": rtype, "offset": offset})
 
+        lines = cal.measured[1+n_reflects:]
+        line_lengths = [l * 1000 for l in cal.l[1:]]
         self.listWidget_line.clear()
-        for line in standards["lines"]:
-            ntwk = networks[line["name"]]
-            length = line["length"] * 1000
-            self.listWidget_line.load_network(ntwk, False, parameters={"length": length})
+        for line, length in zip(lines, line_lengths):
+            self.listWidget_line.load_network(line, False, parameters={"length": length})
 
-        self.lineEdit_epsEstimate.set_value(params["parameters"]["eps estimate"])
-        self.lineEdit_thruLength.set_value(standards["thru"]["length"] * 1000)
-        self.lineEdit_referencePlane.set_value(params["parameters"]["reference plane shift"] * 1000)
-        self.comboBox_rootChoice.setCurrentIndex(self.comboBox_rootChoice.findText(params["parameters"]["root choice"]))
+        self.lineEdit_epsEstimate.set_value(cal.er_est)
+        self.lineEdit_thruLength.set_value(cal.l[0] * 1000)
+        self.lineEdit_referencePlane.set_value(cal.ref_plane * 1000)
+        self.comboBox_rootChoice.setCurrentIndex(self.comboBox_rootChoice.findText(cal.gamma_root_choice))
 
     def measure_thru(self):
         with self.get_analyzer() as nwa:
-            ntwk = nwa.get_twoport()
+            ntwk = nwa.get_twoport(**nwa.defaults_twoport)
         self.listWidget_thru.load_named_ntwk(ntwk, self.THRU_ID)
 
     def load_thru(self):
@@ -708,7 +612,6 @@ This will save the measurements and parameters as currently entered.  Do you sti
             accepted = dialog.exec_()
             if accepted:
                 if not dialog.reflect_2port.name:
-                    # dialog.reflect_2port.name = self.listWidget_reflect.get_unique_name("reflect")
                     dialog.reflect_2port.name = "reflect"  # unique name will be assigned in load_network
                 self.listWidget_reflect.load_network(dialog.reflect_2port)
         finally:
@@ -736,6 +639,12 @@ This will save the measurements and parameters as currently entered.  Do you sti
             raise TypeError("Must provide a NISTMultilineTRL Calibration object")
         else:
             self._calibration = cal
+            self.calibration_current = True
+            self.btn_runCalibration.setEnabled(False)
+            self.btn_saveCalibration.setEnabled(True)
+            self.btn_viewCalibration.setEnabled(True)
+            self.btn_viewCalibration.setText("View Cal")
+            self.calibration_updated.emit(cal)
 
     calibration = property(get_calibration, set_calibration)
 
@@ -801,10 +710,3 @@ This will save the measurements and parameters as currently entered.  Do you sti
         cal.run()
 
         self.calibration = cal
-        self.calibration_current = True
-
-        self.btn_runCalibration.setEnabled(False)
-        self.btn_saveCalibration.setEnabled(True)
-        self.btn_viewCalibration.setEnabled(True)
-        self.btn_viewCalibration.setText("View Cal")
-        self.calibration_updated.emit(cal)

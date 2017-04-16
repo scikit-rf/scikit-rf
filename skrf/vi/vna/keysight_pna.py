@@ -155,6 +155,70 @@ class PNA(abcvna.VNA):
             self.resource.timeout = original_timeout
         return
 
+    def upload_twoport_calibration(self, cal, port1=1, port2=2, **kwargs):
+        """
+        upload a calibration to the vna, and set correction on all measurements
+
+        calset_mapping = {
+            # forward = (1, 1), reverse = (2, 2)
+            "directivity": "EDIR",
+            "source match": "ESRM",
+            "reflection tracking": "ERFT",
+            
+            # forward = (2, 1), reverse = (1, 2)
+            "load match": "ELDM",
+            "transmission tracking": "ETRT"},
+            "cross talk": "EXTLK"},
+        }
+        
+        Parameters
+        ----------
+        cal : skrf.Calibration
+        port1: int
+        port2: int
+        
+        """
+
+        npoints = self.scpi.query_sweep_n_points()
+        zero = None
+
+        self.active_channel = channel = kwargs.get("channel", self.active_channel)
+
+        calname = kwargs.get("calname", "skrf_12term_cal")
+        calibrations = self.scpi.query_calset_catalog(cnum=channel, form="NAME")
+        if calname in calibrations:
+            self.scpi.set_delete_calset(cnum=channel, calset_name=calname)
+        self.scpi.set_create_calset(cnum=channel, calset_name=calname)
+
+        cfs = dict()
+        for coef, data in cal.coefs_12term.items():
+            cfs[coef] = skrf.mf.complex2Scalar(data)
+
+        self.scpi.set_calset_data(cnum=channel, eterm="EDIR", portA=port1, portB=port1, eterm_data=cfs["forward directivity"])
+        self.scpi.set_calset_data(cnum=channel, eterm="EDIR", portA=port2, portB=port2, eterm_data=cfs["reverse directivity"])
+        self.scpi.set_calset_data(cnum=channel, eterm="ESRM", portA=port1, portB=port1, eterm_data=cfs["forward source match"])
+        self.scpi.set_calset_data(cnum=channel, eterm="ESRM", portA=port2, portB=port2, eterm_data=cfs["reverse source match"])
+        self.scpi.set_calset_data(cnum=channel, eterm="ERFT", portA=port1, portB=port1, eterm_data=cfs["forward reflection tracking"])
+        self.scpi.set_calset_data(cnum=channel, eterm="ERFT", portA=port2, portB=port2, eterm_data=cfs["reverse reflection tracking"])
+
+        self.scpi.set_calset_data(cnum=channel, eterm="ELDM", portA=port2, portB=port1, eterm_data=cfs["forward load match"])
+        self.scpi.set_calset_data(cnum=channel, eterm="ELDM", portA=port1, portB=port2, eterm_data=cfs["reverse load match"])
+        self.scpi.set_calset_data(cnum=channel, eterm="ETRT", portA=port2, portB=port1, eterm_data=cfs["forward transmission tracking"])
+        self.scpi.set_calset_data(cnum=channel, eterm="ETRT", portA=port1, portB=port2, eterm_data=cfs["reverse transmission tracking"])
+
+        if "forward crosstalk" not in cfs.keys():
+            if zero is None:
+                zero = np.zeros(shape=(npoints * 2,), dtype=float)
+            self.scpi.set_calset_data(cnum=channel, eterm="EXTLK", portA=port2, portB=port1, eterm_data=zero)
+        if "reverse crosstalk" not in cfs.keys():
+            if zero is None:
+                zero = np.zeros(shape=(npoints * 2,), dtype=float)
+            self.scpi.set_calset_data(cnum=channel, eterm="EXTLK", portA=port1, portB=port2, eterm_data=zero)
+
+        for mnum in self.scpi.query_meas_number_list(cnum=channel):
+            self.scpi.set_selected_meas_by_number(cnum=channel, mnum=mnum)
+            self.scpi.set_meas_correction_state(cnum=channel, onoff="ON")
+
     def get_snp_network(self, ports, **kwargs):
         """
         return n-port network as an Network object

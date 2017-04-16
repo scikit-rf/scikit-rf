@@ -28,6 +28,7 @@ Writing output to spreadsheet
 
 
 '''
+import sys
 try:
     import cPickle as pickle
     from cPickle import UnpicklingError
@@ -735,4 +736,16 @@ def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
 
 
+# Provide a StringBuffer that let's me work with Python2 strings and Python3 unicode strings without thinking
+if sys.version_info < (3, 0):
+    import StringIO
 
+    class StringBuffer(StringIO.StringIO):
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            self.close()
+else:
+    import io
+    StringBuffer = io.StringIO

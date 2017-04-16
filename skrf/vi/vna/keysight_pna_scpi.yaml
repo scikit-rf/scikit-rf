@@ -5,6 +5,8 @@ DEFAULTS:
   kwarg_value: ""
 COMMAND_TREE:
   CALC<cnum=1>:
+    CORR:
+      STAT: {name: meas_correction_state, set: <onoff=ON>, query: ""}
     DATA:
       command: {name: data, set_values: "<fmt=SDATA>,<data>", query_values: <fmt=SDATA>}
       branch:
@@ -31,12 +33,21 @@ COMMAND_TREE:
       MODE: {name: averaging_mode, set: <avg_mode=SWEEP>, query: ""}
     CORR:
       CSET:
-        CRE: {name: create_calset, set: <calset_name>}
-        NAME: {name: calset_name, set: <calset_name>, query: ""}
-        DATA: {name: calset_data, set_values: "<eterm>,<portA=1>,<portB=2>,<eterm_data>", query_values: "<eterm>,<portA=1>,<portB=2>"}
+        ACT: {name: active_calset, set: "'<calset_name>',<onoff=1>", query: <form=NAME>}
+        CAT: {name: calset_catalog, query: <form=NAME>}
+        CRE: {name: create_calset, set: "'<calset_name>'"}
+        DEL: {name: delete_calset, set: "'<calset_name>'"}
+        DESC: {name: calset_description, set: "'<description>'", query: ""}
+        ETER:
+          command: {name: calset_eterm, set_values: "'<eterm>',<eterm_data>", query_values: "'<eterm>'"}  # not working currently, don't know why
+          branch:
+            CAT: {name: calset_eterm_catalog, query: ""}  # this should be csv, but the return string is ambiguous and has commas that are not separating
+        NAME: {name: calset_name, set: "'<calset_name>'", query: ""}
+        DATA: {name: calset_data, set_values: "<eterm>,<portA=1>,<portB=2>,<param>,<eterm_data>", query_values: "<eterm>,<portA=1>,<portB=2>"}
     FREQ:
       START: {name: f_start, set: <freq>, query: "", returns: float}
       STOP: {name: f_stop, set: <freq>, query: "", returns: float}
+    STAT: {name: channel_correction_state, set: "<onoff=ON>", query: ""}
     SWE:
       GRO:
         COUN: {name: groups_count, set: <groups_count=1>, query: "", returns: int}
