@@ -444,7 +444,6 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             self.cal.coefs_ntwks['k']  )   
 
     def test_forward_isolation_accuracy(self):
-        print self.cal.coefs
         self.assertEqual(
             self.If.s11 , 
             self.cal.coefs_ntwks['forward isolation']  )      
