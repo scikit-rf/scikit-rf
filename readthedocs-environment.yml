@@ -18,6 +18,6 @@ dependencies:
     - xlwt
     - xlrd
     - pip:
-        - python-ivi
-	- PyVisa
-        - git+https://github.com/arsenovic/nbsphinx.git@master
+    - python-ivi
+    - PyVisa
+    - git+https://github.com/arsenovic/nbsphinx.git@master
