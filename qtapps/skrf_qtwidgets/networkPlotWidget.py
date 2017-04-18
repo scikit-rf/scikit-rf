@@ -27,6 +27,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         self.checkBox_useCorrected = QtWidgets.QCheckBox()
         self.checkBox_useCorrected.setText("Plot Corrected")
+        self.checkBox_useCorrected.setEnabled(False)
 
         self.comboBox_primarySelector = QtWidgets.QComboBox(self)
         self.comboBox_primarySelector.addItems(("S", "Z", "Y", "A", "Smith Chart"))
