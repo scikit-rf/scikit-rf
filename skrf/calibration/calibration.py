@@ -2018,11 +2018,9 @@ class EightTerm(Calibration):
             self.isolation.s[:,:,:] = 0
         else:
             self.isolation = isolation.copy()
-
-            measured = [m.copy() for m in measured]
-            for i in range(len(measured)):
-                measured[i].s[:,1,0] -= self.isolation.s[:,1,0]
-                measured[i].s[:,0,1] -= self.isolation.s[:,0,1]
+            #Zero port matching so that networks can be simply subtracted
+            self.isolation.s[:,0,0] = 0
+            self.isolation.s[:,1,1] = 0
 
         Calibration.__init__(self,
             measured = measured,
@@ -2059,10 +2057,13 @@ class EightTerm(Calibration):
         else:
             return ntwk
 
+    @property
+    def measured_unisolated(self):
+        return [k-self.isolation for k in self.measured]
 
     @property
     def measured_unterminated(self):
-        return [self.unterminate(k) for k in self.measured]
+        return [self.unterminate(k) for k in self.measured_unisolated]
 
     def run(self):
         numStds = self.nstandards
