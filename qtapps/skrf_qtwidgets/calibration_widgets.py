@@ -478,6 +478,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self._get_analyzer = None
         self._calibration = None
         self.calibration_current = False
+        self.vna_available = False
 
         self.btn_viewCalibration.setEnabled(False)
         self.btn_saveCalibration.setEnabled(False)
@@ -495,7 +496,8 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         self.calibration_current = False
         self.btn_runCalibration.setEnabled(True)
         if self.calibration is not None:
-            self.btn_uploadCalibration.setEnabled(True)
+            if self.vna_available:
+                self.btn_uploadCalibration.setEnabled(True)
             self.btn_runCalibration.setText("Re-Run Cal")
             self.btn_viewCalibration.setText("View Cal (Old)")
         else:
@@ -539,11 +541,11 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         ----------
         available : bool
         """
+        self.vna_available = available
         self.btn_measureLine.setEnabled(available)
         self.btn_measureSwitchTerms.setEnabled(available)
         self.btn_measureReflect.setEnabled(available)
         self.btn_measureThru.setEnabled(available)
-        self.btn_uploadCalibration.setEnabled(available)
 
     def connect_plot(self, ntwk_plot):
         self.listWidget_thru.ntwk_plot = ntwk_plot

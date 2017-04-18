@@ -38,7 +38,6 @@ class NetworkListWidget(QtWidgets.QListWidget):
     def __init__(self, name_prefix='meas', parent=None):
         super(NetworkListWidget, self).__init__(parent)
         self.name_prefix = name_prefix
-        print("prefix", self.name_prefix)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
@@ -80,9 +79,15 @@ class NetworkListWidget(QtWidgets.QListWidget):
     @staticmethod
     def save_NetworkListItem(ntwk_list_item, save_which):
         """
-        :type ntwk_list_item: NetworkListItem
-        :type save_which: str
-        :return:
+        Save a single network list item as a touchstone file
+        
+        Parameters
+        ----------
+        ntwk_list_item : NetworkListItem
+            the QListWidgetItem referencing the N
+        save_which : str
+            specify to save the raw, corrected or both
+        
         """
 
         if save_which.lower() not in ("raw", "cal", "both"):
@@ -406,6 +411,7 @@ class NetworkListWidget(QtWidgets.QListWidget):
             dialog.exec_()
 
     def measure_twoport(self, **kwargs):
+        # TODO: get rid of this structure with measurement parameters
         with self.get_analyzer() as nwa:
             params = nwa.params_twoport.copy()
             params.update(kwargs)  # override any of the measurement_parameters with arguments passed in here
