@@ -631,6 +631,8 @@ class Calibration(object):
             * forward switch term
             * reverse switch term
             * k
+            * forward isolation
+            * reverse isolation
 
         Notes
         --------
@@ -4422,8 +4424,6 @@ def convert_8term_2_12term(coefs_8term):
     coefs_12term['reverse load match'] = Elr
     coefs_12term['forward transmission tracking'] =  Etf
     coefs_12term['reverse transmission tracking'] =  Etr
-    coefs_12term['forward isolation'] = coefs_8term.get("forward isolation", npy.zeros_like(Elf))
-    coefs_12term['reverse isolation'] = coefs_8term.get("reverse isolation", npy.zeros_like(Elf))
     return coefs_12term
 
 
