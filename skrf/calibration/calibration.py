@@ -138,7 +138,9 @@ coefs_list_8term = [
     'reverse reflection tracking',
     'forward switch term',
     'reverse switch term',
-    'k'
+    'k',
+    'forward isolation',
+    'reverse isolation'
     ]
 global coefs_list_3term
 coefs_list_3term = [
@@ -726,7 +728,6 @@ class Calibration(object):
         Err = self.coefs_12term['reverse reflection tracking']
         Etr = self.coefs_12term['reverse transmission tracking']
         Esr = self.coefs_12term['reverse source match']
-
 
         return Etf*Etr - (Err + Edr*(Elf - Esr))*(Erf  + Edf *(Elr - Esf))
 
@@ -1409,9 +1410,13 @@ class TwelveTerm(Calibration):
             Only use if n_thrus=None.
 
         isolation : :class:`~skrf.network.Network` object
-            Measurement with loads on both ports. Used for determining the
-            isolation error terms. If no measurement is given isolation is
-            assumed to be zero.
+            Measurement with loads on both ports with a perfect isolation
+            between the ports. Used for determining the isolation error terms.
+            If no measurement is given leakage is assumed to be zero.
+
+            Loads don't need to be same as the one used as a match standard or
+            even have similar reflection coefficients. Reflects can be also used,
+            but accuracy might not be as good.
 
         See Also
         -----------
@@ -1971,7 +1976,7 @@ class EightTerm(Calibration):
     '''
     family = 'EightTerm'
     def __init__(self, measured, ideals, switch_terms=None,
-                 *args, **kwargs):
+                isolation=None, *args, **kwargs):
         '''
         EightTerm Initializer
 
@@ -1993,12 +1998,30 @@ class EightTerm(Calibration):
         switch_terms : tuple of :class:`~skrf.network.Network` objects
             the pair of switch terms in the order (forward, reverse)
 
+        isolation : :class:`~skrf.network.Network` object
+            Measurement with loads on both ports with a perfect isolation
+            between the ports. Used for determining the isolation error terms.
+            If no measurement is given leakage is assumed to be zero.
+
+            Loads don't need to be same as the one used as a match standard or
+            even have similar reflection coefficients. Reflects can be also used,
+            but accuracy might not be as good.
 
         '''
 
         self.switch_terms = switch_terms
         if switch_terms is None:
             warn('No switch terms provided')
+
+        if isolation is None:
+            self.isolation = measured[0].copy()
+            self.isolation.s[:,:,:] = 0
+        else:
+            self.isolation = isolation.copy()
+            #Zero port matching so that networks can be simply subtracted
+            self.isolation.s[:,0,0] = 0
+            self.isolation.s[:,1,1] = 0
+
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
@@ -2034,10 +2057,13 @@ class EightTerm(Calibration):
         else:
             return ntwk
 
+    @property
+    def measured_unisolated(self):
+        return [k-self.isolation for k in self.measured]
 
     @property
     def measured_unterminated(self):
-        return [self.unterminate(k) for k in self.measured]
+        return [self.unterminate(k) for k in self.measured_unisolated]
 
     def run(self):
         numStds = self.nstandards
@@ -2096,6 +2122,8 @@ class EightTerm(Calibration):
                 'k':e[:,6],
                 }
 
+        self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
+        self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
         if self.switch_terms is not None:
             self._coefs.update({
@@ -2121,6 +2149,9 @@ class EightTerm(Calibration):
 
         T1,T2,T3,T4 = self.T_matrices
 
+        ntwk.s[:,1,0] -= self.coefs['forward isolation']
+        ntwk.s[:,0,1] -= self.coefs['reverse isolation']
+
         ntwk = self.unterminate(ntwk)
 
         for f in list(range(len(ntwk.s))):
@@ -2143,6 +2174,9 @@ class EightTerm(Calibration):
             embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
 
         embedded = self.terminate(embedded)
+
+        embedded.s[:,1,0] += self.coefs['forward isolation']
+        embedded.s[:,0,1] += self.coefs['reverse isolation']
 
         return embedded
 
@@ -3006,6 +3040,8 @@ class NISTMultilineTRL(EightTerm):
                 'k':e[:,6],
                 }
 
+        self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
+        self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
         if self.switch_terms is not None:
             self._coefs.update({
@@ -3294,6 +3330,9 @@ class UnknownThru(EightTerm):
         # create single dictionary for all error terms
         coefs = {}
 
+        coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
+        coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
+
         coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
         coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
 
@@ -3413,6 +3452,9 @@ class MRC(UnknownThru):
 
         coefs.update(dict([('forward %s'%k, p1_coefs[k]) for k in p1_coefs]))
         coefs.update(dict([('reverse %s'%k, p2_coefs[k]) for k in p2_coefs]))
+
+        coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
+        coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
 
         if self.switch_terms is not None:
             coefs.update({
@@ -4334,7 +4376,8 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
     coefs_8term = {}
     for l in ['forward directivity','forward source match',
         'forward reflection tracking','reverse directivity',
-        'reverse reflection tracking','reverse source match']:
+        'reverse reflection tracking','reverse source match',
+        'forward isolation', 'reverse isolation']:
         coefs_8term[l] = coefs_12term[l].copy()
 
     coefs_8term['forward switch term'] = gamma_f
@@ -4356,7 +4399,6 @@ def convert_8term_2_12term(coefs_8term):
     Esr = coefs_8term['reverse source match']
     Err = coefs_8term['reverse reflection tracking']
 
-
     gamma_f = coefs_8term['forward switch term']
     gamma_r = coefs_8term['reverse switch term']
     k = coefs_8term['k']
@@ -4371,7 +4413,8 @@ def convert_8term_2_12term(coefs_8term):
     coefs_12term = {}
     for l in ['forward directivity','forward source match',
         'forward reflection tracking','reverse directivity',
-        'reverse reflection tracking','reverse source match']:
+        'reverse reflection tracking','reverse source match',
+        'forward isolation', 'reverse isolation']:
         coefs_12term[l] = coefs_8term[l].copy()
 
     coefs_12term['forward load match'] = Elf
