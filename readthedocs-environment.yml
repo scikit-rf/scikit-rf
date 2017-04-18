@@ -19,5 +19,5 @@ dependencies:
     - xlrd
     - pip:
         - python-ivi
-	- PyVisa
+        - PyVisa
         - git+https://github.com/arsenovic/nbsphinx.git@master

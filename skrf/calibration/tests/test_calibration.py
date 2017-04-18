@@ -101,16 +101,12 @@ class CalibrationTest(object):
     def test_from_coefs(self):
         cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
         ntwk = self.wg.random(n_ports=self.n_ports)
-        if cal_from_coefs.apply_cal(self.cal.embed(ntwk))!= ntwk:
-            raise ValueError
         self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
         
     def test_from_coefs_ntwks(self):
         cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
         
         ntwk = self.wg.random(n_ports=self.n_ports)
-        if cal_from_coefs.apply_cal(self.cal.embed(ntwk))!= ntwk:
-            raise ValueError
         self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
         
 class OnePortTest(unittest.TestCase, CalibrationTest):
@@ -359,6 +355,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
+        #Isolation terms
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         
@@ -375,6 +374,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.cal = rf.EightTerm(
             ideals = ideals,
             measured = measured,
+            isolation = measured[2],
             switch_terms = (self.gamma_f, self.gamma_r)
             )
         
@@ -388,6 +388,8 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     def measure(self,ntwk):
         out =  self.terminate(self.X**ntwk**self.Y)
         out.name = ntwk.name
+        out.s[:,1,0] += self.If.s[:,0,0]
+        out.s[:,0,1] += self.Ir.s[:,0,0]
         return out
     
     
@@ -400,6 +402,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         ut =  self.X**a**self.Y
         #terminated measurement
         m = self.measure(a)
+        #Remove leakage
+        m.s[:,1,0] -= self.If.s[:,0,0]
+        m.s[:,0,1] -= self.Ir.s[:,0,0]
         self.assertEqual(self.cal.unterminate(m), ut)
         
        
@@ -438,6 +443,16 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             self.X.s21/self.Y.s12 , 
             self.cal.coefs_ntwks['k']  )   
 
+    def test_forward_isolation_accuracy(self):
+        self.assertEqual(
+            self.If.s11 , 
+            self.cal.coefs_ntwks['forward isolation']  )      
+
+    def test_reverse_isolation_accuracy(self):
+        self.assertEqual(
+            self.Ir.s11 , 
+            self.cal.coefs_ntwks['reverse isolation']  )      
+
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
             
@@ -450,6 +465,8 @@ class TRLTest(EightTermTest):
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         # make error networks have s21,s12 >> s11,s22 so that TRL
@@ -477,6 +494,7 @@ class TRLTest(EightTermTest):
         self.cal = rf.TRL(
             ideals = ideals,
             measured = measured,
+            isolation = measured[1],
             switch_terms = (self.gamma_f, self.gamma_r)
             )
 
@@ -499,6 +517,8 @@ class TRLWithNoIdealsTest(EightTermTest):
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         # make error networks have s21,s12 >> s11,s22 so that TRL
@@ -524,6 +544,7 @@ class TRLWithNoIdealsTest(EightTermTest):
         self.cal = rf.TRL(
             ideals = ideals,
             measured = measured,
+            isolation = measured[1],
             switch_terms = (self.gamma_f, self.gamma_r)
             )
     
@@ -541,6 +562,8 @@ class TRLMultiline(EightTermTest):
         
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         # make error networks have s21,s12 >> s11,s22 so that TRL
@@ -569,6 +592,7 @@ class TRLMultiline(EightTermTest):
         self.cal = rf.TRL(
             ideals = ideals,
             measured = measured,
+            isolation = measured[1],
             switch_terms = (self.gamma_f, self.gamma_r),
             n_reflects=2,
             )
@@ -587,6 +611,9 @@ class NISTMultilineTRLTest(EightTermTest):
 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name = 'Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
@@ -612,6 +639,7 @@ class NISTMultilineTRLTest(EightTermTest):
 
         self.cal = NISTMultilineTRL(
             measured = measured,
+            isolation = measured[1],
             Grefls = [-1, 1],
             l = [0, 100e-6, 200e-6, 500e-6],
             er_est = 1,
@@ -1094,6 +1122,9 @@ class UnknownThruTest(EightTermTest):
         wg= self.wg 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
+        #No leakage
+        self.If = wg.match(n_ports=1, name='If')
+        self.Ir = wg.match(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         
@@ -1129,6 +1160,9 @@ class MRCTest(EightTermTest):
         wg= self.wg 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
+        #No leakage
+        self.If = wg.match(n_ports=1, name='If')
+        self.Ir = wg.match(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         
@@ -1179,8 +1213,10 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
         self.Y = wg.random(n_ports =2, name='Y')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
-        
-        
+        #Isolation terms
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
@@ -1194,6 +1230,7 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
         self.cal = rf.TwelveTerm(
             ideals = ideals,
             measured = measured,
+            isolation=measured[2]
             )
 
         coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs, redundant_k=1)
@@ -1210,7 +1247,15 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     def measure(self,ntwk):
         out =  self.terminate(self.X**ntwk**self.Y)
         out.name = ntwk.name
+        out.s[:,1,0] += self.If.s[:,0,0]
+        out.s[:,0,1] += self.Ir.s[:,0,0]
         return out
+
+    def test_forward_isolation(self):
+        self.assertEqual(self.coefs['forward isolation'], self.If.s11)
+
+    def test_reverse_isolation(self):
+        self.assertEqual(self.coefs['reverse isolation'], self.Ir.s11)
 
     def test_forward_switch_term(self):
         self.assertEqual(self.coefs['forward switch term'], self.gamma_f)
@@ -1436,13 +1481,12 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
             sign = 1
             )
 
-        #Same error network, but without leakage for EightTerm
+        #Same error network, but without additional leakages for EightTerm
+        #Switch leakage is still included as EightTerm can solve it
 
         #Primary leakage
         self.Z.s[:,2,1] = 0 # forward port isolation
         self.Z.s[:,1,2] = 0 # reverse port isolation
-        self.Z.s[:,3,0] = 0 # forward (switch) isolation
-        self.Z.s[:,0,3] = 0 # reverse (switch) isolaion
 
         #Cross leakage        
         self.Z.s[:,3,1] = 0 # forward port 2 isolation
@@ -1455,6 +1499,7 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
         self.cal8 = rf.EightTerm(
             measured = measured,
             ideals = ideals,
+            isolation = measured[1]
             )
 
     def measure(self,ntwk):
