@@ -3487,18 +3487,13 @@ class SixteenTerm(Calibration):
     short, and load standards some combinations result in singular matrix.
     See [1]_ for list of non-singular combinations.
 
-    Effect of the switch is assumed to be already removed as the switch correction
-    used for 8 Term calibration fails when crosstalk is significant. [2]_
-
     References
     -----------
     .. [1] K. J. Silvonen, "Calibration of 16-term error model (microwave measurement)," in Electronics Letters, vol. 29, no. 17, pp. 1544-1545, 19 Aug. 1993.
-
-    .. [2] M. Schramm, M. Hrobak, J. Schur and L. P. Schmidt, "A new switch correction method for a single-receiver VNA," Microwave Conference (EuMC), 2013 European, Nuremberg, 2013, pp. 444-447.
     '''
 
     family = 'SixteenTerm'
-    def __init__(self, measured, ideals,
+    def __init__(self, measured, ideals, switch_terms=None,
                  *args, **kwargs):
         '''
         SixteenTerm Initializer
@@ -3517,19 +3512,59 @@ class SixteenTerm(Calibration):
         ideals : list/dict of :class:`~skrf.network.Network` objects
             Predicted ideal response of the calibration standards.
             The order must align with `ideals` list
+
+        switch_terms : tuple of :class:`~skrf.network.Network` objects
+            the pair of switch terms in the order (forward, reverse)
         '''
+
+        self.switch_terms = switch_terms
+        if switch_terms is None:
+            warn('No switch terms provided')
 
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
             *args, **kwargs)
 
+    def unterminate(self,ntwk):
+        '''
+        Unterminates switch terms from a raw measurement.
+
+        See Also
+        ---------
+        calibration.unterminate
+        '''
+        if self.switch_terms is not None:
+            gamma_f, gamma_r = self.switch_terms
+            return unterminate(ntwk, gamma_f, gamma_r)
+
+        else:
+            return ntwk
+
+    def terminate(self, ntwk):
+        '''
+        Terminate a  network with  switch terms
+
+        See Also
+        --------
+        calibration.terminate
+        '''
+        if self.switch_terms is not None:
+            gamma_f, gamma_r = self.switch_terms
+            return terminate(ntwk, gamma_f, gamma_r)
+        else:
+            return ntwk
+
+
+    @property
+    def measured_unterminated(self):
+        return [self.unterminate(k) for k in self.measured]
+
     def run(self):
         numStds = self.nstandards
         numCoefs = 15
 
-
-        mList = [k.s  for k in self.measured]
+        mList = [k.s  for k in self.measured_unterminated]
         iList = [k.s for k in self.ideals]
 
         fLength = len(mList[0])
@@ -3624,6 +3659,17 @@ class SixteenTerm(Calibration):
                 'reverse port isolation':e4[:,0,1],
                 }
 
+        if self.switch_terms is not None:
+            self._coefs.update({
+                'forward switch term': self.switch_terms[0].s.flatten(),
+                'reverse switch term': self.switch_terms[1].s.flatten(),
+                })
+        else:
+            self._coefs.update({
+                'forward switch term': npy.zeros(fLength, dtype=complex),
+                'reverse switch term': npy.zeros(fLength, dtype=complex),
+                })
+
         # output is a dictionary of information
         self._output_from_run = {
                 'error vector':e,
@@ -3637,6 +3683,8 @@ class SixteenTerm(Calibration):
         inv = linalg.inv
 
         T1,T2,T3,T4 = self.T_matrices
+
+        ntwk = self.unterminate(ntwk)
 
         for f in list(range(len(ntwk.s))):
             t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
@@ -3656,6 +3704,8 @@ class SixteenTerm(Calibration):
             t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
             embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
+
+        embedded = self.terminate(embedded)
 
         return embedded
 
@@ -3774,7 +3824,7 @@ class LMR16(SixteenTerm):
 
     family = 'SixteenTerm'
     def __init__(self, measured, ideals, ideal_is_reflect=True, sign=None,
-                 *args, **kwargs):
+                 switch_terms=None, *args, **kwargs):
         """
         LMR16 initializer
 
@@ -3800,6 +3850,11 @@ class LMR16(SixteenTerm):
         sign : +1,-1 or None
             Sign to be used for the root choice.
         """
+
+        self.switch_terms = switch_terms
+        if switch_terms is None:
+            warn('No switch terms provided')
+
         if type(ideals) == Network:
             ideals = [ideals]
         if len(ideals) != 1:
@@ -3829,7 +3884,7 @@ class LMR16(SixteenTerm):
             *args, **kwargs)
 
     def run(self):
-        mList = [k.s  for k in self.measured]
+        mList = [k.s  for k in self.measured_unterminated]
 
         fLength = len(mList[0])
 
@@ -3945,6 +4000,18 @@ class LMR16(SixteenTerm):
             'reverse port isolation':e4[:,0,1],
             }
 
+        if self.switch_terms is not None:
+            self._coefs.update({
+                'forward switch term': self.switch_terms[0].s.flatten(),
+                'reverse switch term': self.switch_terms[1].s.flatten(),
+                })
+        else:
+            self._coefs.update({
+                'forward switch term': npy.zeros(fLength, dtype=complex),
+                'reverse switch term': npy.zeros(fLength, dtype=complex),
+                })
+
+
         return None
 
     @classmethod
@@ -3967,6 +4034,13 @@ class LMR16(SixteenTerm):
         n = Network(frequency = frequency,
                     s = rand_c(frequency.npoints,2,2))
         measured = [n,n,n,n,n]
+
+        if 'forward switch term' in coefs:
+            switch_terms = (Network(frequency = frequency,
+                                    s=coefs['forward switch term']),
+                            Network(frequency = frequency,
+                                    s=coefs['reverse switch term']))
+            kwargs['switch_terms'] = switch_terms
 
         cal = cls(measured, measured[0], **kwargs)
         cal.coefs = coefs
