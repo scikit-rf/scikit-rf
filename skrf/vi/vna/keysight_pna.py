@@ -134,7 +134,7 @@ class PNA(abcvna.VNA):
                 sweep_mode = "GROUPS"
                 number_of_sweeps = self.scpi.query_averaging_count(channel)
                 self.scpi.set_groups_count(channel, number_of_sweeps)
-                number_of_sweeps *= self.nports  # TODO: this is right for 2-port, confirm also for 4-port
+                number_of_sweeps *= self.nports
             else:
                 sweep_mode = "SINGLE"
                 number_of_sweeps = self.nports
@@ -172,6 +172,12 @@ class PNA(abcvna.VNA):
     def upload_twoport_calibration(self, cal, port1=1, port2=2, **kwargs):
         """
         upload a calibration to the vna, and set correction on all measurements
+        
+        Parameters
+        ----------
+        cal : skrf.Calibration
+        port1: int
+        port2: int
 
         calibration error terms reference
             # forward = (1, 1), reverse = (2, 2)
@@ -183,12 +189,6 @@ class PNA(abcvna.VNA):
             "load match": "ELDM",
             "transmission tracking": "ETRT"
             "isolation": "EXTLK"
-        
-        Parameters
-        ----------
-        cal : skrf.Calibration
-        port1: int
-        port2: int
         
         """
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
@@ -239,6 +239,7 @@ class PNA(abcvna.VNA):
         sweep = kwargs.get("sweep", False)
         name = kwargs.get("name", "")
         f_unit = kwargs.get("f_unit", "GHz")
+        raw_data = kwargs.get("raw_data", False)
 
         ports = [int(port) for port in ports] if type(ports) in (list, tuple) else [int(ports)]
         if not name:
@@ -247,8 +248,17 @@ class PNA(abcvna.VNA):
             self.sweep(channel=channel)
 
         npoints = self.scpi.query_sweep_n_points(channel)
-        # TODO: figure out how to grab raw data when specified by the user
-        data = self.scpi.query_snp_data(channel, ports)
+
+        if raw_data is True:
+            if self.scpi.query_channel_correction_state(channel):
+                self.scpi.set_channel_correction_state(channel, False)
+                data = self.scpi.query_snp_data(channel, ports)
+                self.scpi.set_channel_correction_state(channel, True)
+            else:
+                data = self.scpi.query_snp_data(channel, ports)
+        else:
+            data = self.scpi.query_snp_data(channel, ports)
+
         nrows = int(len(data) / npoints)
         nports = int(np.sqrt(nrows - 1))
         data = data.reshape([nrows, -1])
@@ -383,7 +393,6 @@ class PNA(abcvna.VNA):
 
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
 
-        # TODO: this is not a reliable way to determine the maximum trace number
         measurements = self.get_meas_list()
         max_trace = len(measurements)
         for meas in measurements:  # type: str
@@ -458,9 +467,7 @@ class PNA(abcvna.VNA):
             self.sweep(channel=channel)
 
         ntwk = skrf.Network()
-        # TODO: handle corrected data more rigorously, and test RDATA on analyzer
-        fmt = "RDATA" if kwargs.get("corrected") is False else "SDATA"
-        sdata = self.scpi.query_data(channel, fmt)
+        sdata = self.scpi.query_data(channel)
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
         ntwk.frequency = self.get_frequency(channel=channel)
         return ntwk

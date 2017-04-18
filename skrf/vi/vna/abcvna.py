@@ -52,7 +52,7 @@ class VNA(object):
     NCHANNELS = 32
     MEASUREMENT_PARAMETERS = {
         "port1": 1, "port2": 2, "ports": (1, 2),
-        "corrected": True, "sweep": False,
+        "raw_data": True, "sweep": False,
     }
 
     def __init__(self, address=DEFAULT_VISA_ADDRESS, **kwargs):

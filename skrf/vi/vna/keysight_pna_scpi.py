@@ -10,8 +10,13 @@ converters = {
 
 
 def to_string(value):
-    if type(value) in (list, tuple):
-        return ",".join(map(str, value))
+    tval = type(value)
+    if tval is str:
+        return value
+    elif tval is bool:
+        return str(int(value))
+    elif tval in (list, tuple):
+        return ",".join(map(to_string, value))
     elif value is None:
         return ""
     else:
@@ -101,7 +106,7 @@ class SCPI(object):
         self.write(scpi_command)
 
     def set_channel_correction_state(self, cnum=1, onoff="ON"):
-        scpi_command = scpi_preprocess(":SENS{:}:STAT {:}", cnum, onoff)
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:STAT {:}", cnum, onoff)
         self.write(scpi_command)
 
     def set_create_calset(self, cnum=1, calset_name=""):
@@ -126,6 +131,10 @@ class SCPI(object):
 
     def set_display_format(self, cnum=1, fmt="MLOG"):
         scpi_command = scpi_preprocess(":CALC{:}:FORM {:}", cnum, fmt)
+        self.write(scpi_command)
+
+    def set_display_onoff(self, onoff="ON"):
+        scpi_command = scpi_preprocess(":DISP:ENAB {:}", onoff)
         self.write(scpi_command)
 
     def set_display_trace(self, wnum="", tnum="", mname=""):
@@ -241,9 +250,9 @@ class SCPI(object):
         return value
 
     def query_channel_correction_state(self, cnum=1):
-        scpi_command = scpi_preprocess(":SENS{:}:STAT?", cnum)
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:STAT?", cnum)
         value = self.query(scpi_command)
-        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='bool')
         return value
 
     def query_data(self, cnum=1, fmt="SDATA"):
@@ -254,6 +263,12 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":CALC{:}:FORM?", cnum)
         value = self.query(scpi_command)
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
+        return value
+
+    def query_display_onoff(self):
+        scpi_command = ":DISP:ENAB?"
+        value = self.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='bool')
         return value
 
     def query_f_start(self, cnum=1):
