@@ -1,3 +1,4 @@
+import warnings
 from collections import OrderedDict, Iterable
 
 import numpy as np
@@ -46,6 +47,19 @@ class PNA(abcvna.VNA):
     def use_ascii(self):
         self.resource.write(':FORM:DATA ASCII')
         self.resource.values_format.use_ascii(converter='f', separator=',', container=np.array)
+
+    @property
+    def echo(self):
+        return self.scpi.echo
+
+    @echo.setter
+    def echo(self, onoff):
+        if onoff in (1, True):
+            self.scpi.echo = True
+        elif onoff in (0, False):
+            self.scpi.echo = False
+        else:
+            raise warnings.warn("echo must be a boolean")
 
     @property
     def active_channel(self):
@@ -120,7 +134,7 @@ class PNA(abcvna.VNA):
                 sweep_mode = "GROUPS"
                 number_of_sweeps = self.scpi.query_averaging_count(channel)
                 self.scpi.set_groups_count(channel, number_of_sweeps)
-                number_of_sweeps *= self.nports  # TODO: this is right for 2-port, confirm also for 4-port
+                number_of_sweeps *= self.nports
             else:
                 sweep_mode = "SINGLE"
                 number_of_sweeps = self.nports
@@ -158,8 +172,14 @@ class PNA(abcvna.VNA):
     def upload_twoport_calibration(self, cal, port1=1, port2=2, **kwargs):
         """
         upload a calibration to the vna, and set correction on all measurements
+        
+        Parameters
+        ----------
+        cal : skrf.Calibration
+        port1: int
+        port2: int
 
-        calset_mapping = {
+        calibration error terms reference
             # forward = (1, 1), reverse = (2, 2)
             "directivity": "EDIR",
             "source match": "ESRM",
@@ -167,21 +187,10 @@ class PNA(abcvna.VNA):
             
             # forward = (2, 1), reverse = (1, 2)
             "load match": "ELDM",
-            "transmission tracking": "ETRT"},
-            "cross talk": "EXTLK"},
-        }
-        
-        Parameters
-        ----------
-        cal : skrf.Calibration
-        port1: int
-        port2: int
+            "transmission tracking": "ETRT"
+            "isolation": "EXTLK"
         
         """
-
-        npoints = self.scpi.query_sweep_n_points()
-        zero = None
-
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
 
         calname = kwargs.get("calname", "skrf_12term_cal")
@@ -194,26 +203,12 @@ class PNA(abcvna.VNA):
         for coef, data in cal.coefs_12term.items():
             cfs[coef] = skrf.mf.complex2Scalar(data)
 
-        self.scpi.set_calset_data(cnum=channel, eterm="EDIR", portA=port1, portB=port1, eterm_data=cfs["forward directivity"])
-        self.scpi.set_calset_data(cnum=channel, eterm="EDIR", portA=port2, portB=port2, eterm_data=cfs["reverse directivity"])
-        self.scpi.set_calset_data(cnum=channel, eterm="ESRM", portA=port1, portB=port1, eterm_data=cfs["forward source match"])
-        self.scpi.set_calset_data(cnum=channel, eterm="ESRM", portA=port2, portB=port2, eterm_data=cfs["reverse source match"])
-        self.scpi.set_calset_data(cnum=channel, eterm="ERFT", portA=port1, portB=port1, eterm_data=cfs["forward reflection tracking"])
-        self.scpi.set_calset_data(cnum=channel, eterm="ERFT", portA=port2, portB=port2, eterm_data=cfs["reverse reflection tracking"])
-
-        self.scpi.set_calset_data(cnum=channel, eterm="ELDM", portA=port2, portB=port1, eterm_data=cfs["forward load match"])
-        self.scpi.set_calset_data(cnum=channel, eterm="ELDM", portA=port1, portB=port2, eterm_data=cfs["reverse load match"])
-        self.scpi.set_calset_data(cnum=channel, eterm="ETRT", portA=port2, portB=port1, eterm_data=cfs["forward transmission tracking"])
-        self.scpi.set_calset_data(cnum=channel, eterm="ETRT", portA=port1, portB=port2, eterm_data=cfs["reverse transmission tracking"])
-
-        if "forward crosstalk" not in cfs.keys():
-            if zero is None:
-                zero = np.zeros(shape=(npoints * 2,), dtype=float)
-            self.scpi.set_calset_data(cnum=channel, eterm="EXTLK", portA=port2, portB=port1, eterm_data=zero)
-        if "reverse crosstalk" not in cfs.keys():
-            if zero is None:
-                zero = np.zeros(shape=(npoints * 2,), dtype=float)
-            self.scpi.set_calset_data(cnum=channel, eterm="EXTLK", portA=port1, portB=port2, eterm_data=zero)
+        for eterm, coef in zip(("EDIR", "ESRM", "ERFT"), ("directivity", "source match", "reflection tracking")):
+            self.scpi.set_calset_data(channel, eterm, port1, port1, eterm_data=cfs["forward " + coef])
+            self.scpi.set_calset_data(channel, eterm, port2, port2, eterm_data=cfs["reverse " + coef])
+        for eterm, coef in zip(("ELDM", "ETRT", "EXTLK"), ("load match", "transmission tracking", "isolation")):
+            self.scpi.set_calset_data(channel, eterm, port2, port1, eterm_data=cfs["forward " + coef])
+            self.scpi.set_calset_data(channel, eterm, port1, port2, eterm_data=cfs["reverse " + coef])
 
         for mnum in self.scpi.query_meas_number_list(cnum=channel):
             self.scpi.set_selected_meas_by_number(cnum=channel, mnum=mnum)
@@ -228,7 +223,7 @@ class PNA(abcvna.VNA):
         ports : Iterable
             a iterable of integers designating the ports to query
         kwargs : dict
-            channel(int), sweep(bool), name(str), f_unit(str)
+            channel(int), sweep(bool), name(str), f_unit(str), corrected(bool)
 
         Returns
         -------
@@ -244,6 +239,7 @@ class PNA(abcvna.VNA):
         sweep = kwargs.get("sweep", False)
         name = kwargs.get("name", "")
         f_unit = kwargs.get("f_unit", "GHz")
+        raw_data = kwargs.get("raw_data", False)
 
         ports = [int(port) for port in ports] if type(ports) in (list, tuple) else [int(ports)]
         if not name:
@@ -252,7 +248,17 @@ class PNA(abcvna.VNA):
             self.sweep(channel=channel)
 
         npoints = self.scpi.query_sweep_n_points(channel)
-        data = self.scpi.query_snp_data(channel, ports)
+
+        if raw_data is True:
+            if self.scpi.query_channel_correction_state(channel):
+                self.scpi.set_channel_correction_state(channel, False)
+                data = self.scpi.query_snp_data(channel, ports)
+                self.scpi.set_channel_correction_state(channel, True)
+            else:
+                data = self.scpi.query_snp_data(channel, ports)
+        else:
+            data = self.scpi.query_snp_data(channel, ports)
+
         nrows = int(len(data) / npoints)
         nports = int(np.sqrt(nrows - 1))
         data = data.reshape([nrows, -1])
@@ -387,7 +393,6 @@ class PNA(abcvna.VNA):
 
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
 
-        # TODO: this is not a reliable way to determine the maximum trace number
         measurements = self.get_meas_list()
         max_trace = len(measurements)
         for meas in measurements:  # type: str
@@ -462,7 +467,7 @@ class PNA(abcvna.VNA):
             self.sweep(channel=channel)
 
         ntwk = skrf.Network()
-        sdata = self.scpi.query_data(channel, "SDATA")
+        sdata = self.scpi.query_data(channel)
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
         ntwk.frequency = self.get_frequency(channel=channel)
         return ntwk

@@ -1,7 +1,8 @@
 """
-This is a model module.  It will not function correctly to pull data, but needs other modules to subclass it.
+This is a model module.  It will not function correctly to pull data, but needs to be subclassed.
 """
 import copy
+import warnings
 from typing import Iterable
 
 import numpy as np
@@ -12,8 +13,7 @@ from ...frequency import Frequency
 
 
 class VNA(object):
-    '''
-
+    """
     class defining a base analyzer for using with scikit-rf
 
     This class defines the base functionality expected for all Network Analyzers.  To keep this manageable,
@@ -45,11 +45,15 @@ class VNA(object):
     get_snp_network
     get_switch_terms
     set_frequency_sweep
-    '''
+    """
     DEFAULT_VISA_ADDRESS = "GPIB::16::INSTR"
     NAME = "Two Port Analyzer"
     NPORTS = 2
     NCHANNELS = 32
+    MEASUREMENT_PARAMETERS = {
+        "port1": 1, "port2": 2, "ports": (1, 2),
+        "raw_data": True, "sweep": False,
+    }
 
     def __init__(self, address=DEFAULT_VISA_ADDRESS, **kwargs):
         """
@@ -101,39 +105,55 @@ class VNA(object):
         if "instr" in resource_string.lower():
             self.resource.control_ren(2)
 
-        self.nports = self.NPORTS  # store an instance variable in case it needs to be modified later
-
-        # convenience functions
+        # convenience pyvisa functions
         self.write = self.resource.write
         self.read = self.resource.read
         self.query = self.resource.query
         self.query_values = self.resource.query_values
 
         # set the default values that will be used for measurements
-        self._defaults = {"port1": 1, "port2": 2, "channel": 1, "sweep": False}
+        self._measurement_parameters = self.MEASUREMENT_PARAMETERS.copy()
 
     @property
-    def defaults(self):
-        """
-        provide the dict of values that will be the defaults for grabbing data from the instrument
-
-        relevant values are port1, port2, channel and sweep
-        """
-        return self._defaults
+    def nports(self):
+        return self.NPORTS
 
     @property
-    def defaults_twoport(self):
-        defaults = copy.copy(self.defaults)
-        defaults["ports"] = (defaults["port1"], defaults["port2"])
-        return defaults
+    def measurement_parameters(self):
+        """
+        provide the dict of values that will be the measurement_parameters for grabbing data from the instrument
+        
+        the primary purpose of this is to provide a mechanism to attach desired parameters onto a vna object which
+        may be transient from a "generator" to a "receiver" where a generator would be some object like a Gui Widget 
+        through which the end user sets desired vna parameters and the receiver is something that is calling the
+        measurement routines, but doesn't have direct access to the generator.
 
-    def set_defaults(self, **kwargs):
-        valid_keys = self._defaults.keys()
+        relevant dict keys
+        ------------------
+        port1, port2 : int
+            specify the 1st and second ports
+        ports : tuple of ints
+            specify which set of ports to grab data from
+        corrected : bool
+            whether to retrieve corrected data or not
+        sweep : bool
+            whether to initiate a fresh sweep or not
+        """
+        return self._measurement_parameters
+
+    @property
+    def params_twoport(self):
+        params = copy.copy(self.measurement_parameters)
+        params["ports"] = (params["port1"], params["port2"])
+        return params
+
+    def set_measurement_parameters(self, **kwargs):
+        valid_keys = self._measurement_parameters.keys()
         for key, value in kwargs.items():
             if key in valid_keys:
-                self._defaults[key] = value
+                self._measurement_parameters[key] = value
             else:
-                Warning("default parameter {} not recognized and not set".format(key))
+                warnings.warn("default parameter {} not recognized and not set".format(key))
 
     def __enter__(self):
         """
@@ -201,7 +221,7 @@ class VNA(object):
         * "parameter": the parameter of the measurement, e.g. "S11", "S22" or "a1b1,2"
         * "label": the text the item will use to identify itself to the user e.g "Measurement 1 on Channel 1"
         """
-        raise AttributeError("method not implemented")
+        raise NotImplementedError("must implement with subclass")
 
     def get_traces(self, traces, **kwargs):
         """
@@ -223,7 +243,7 @@ class VNA(object):
         -----
         There is no current way to distinguish between traces and 1-port networks within skrf
         """
-        raise AttributeError("method not implemented")
+        raise NotImplementedError("must implement with subclass")
 
     def get_snp_network(self, ports, **kwargs):
         """
@@ -242,7 +262,7 @@ class VNA(object):
 
         general function to take in a list of ports and return the full snp network as a Network object
         """
-        raise AttributeError("get_snp_network not implemented")
+        raise NotImplementedError("must implement with subclass")
 
     def get_twoport(self, ports=(1, 2), **kwargs):
         """
@@ -306,7 +326,7 @@ class VNA(object):
         list
             a 2-length list of 1-port networks [forward_switch_terms, reverse_switch_terms]
         """
-        raise AttributeError("get_switch_terms not implemented")
+        raise NotImplementedError("must implement with subclass")
 
     def set_frequency_sweep(self, start_freq, stop_freq, num_points, **kwargs):
         """
@@ -323,7 +343,7 @@ class VNA(object):
         kwargs : dict
             channel (int), f_units (str), sweep_type (str -> lin, log), other optional parameters
         """
-        raise AttributeError("set_frequency_sweep not implemented")
+        raise NotImplementedError("must implement with subclass")
 
     @staticmethod
     def to_hz(freq, f_unit):

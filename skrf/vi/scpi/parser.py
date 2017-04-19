@@ -200,8 +200,13 @@ converters = {
 }"""
 
 string_converter = """def to_string(value):
-    if type(value) in (list, tuple):
-        return ",".join(map(str, value))
+    tval = type(value)
+    if tval is str:
+        return value
+    elif tval is bool:
+        return str(int(value))
+    elif tval in (list, tuple):
+        return ",".join(map(to_string, value))
     elif value is None:
         return ""
     else:

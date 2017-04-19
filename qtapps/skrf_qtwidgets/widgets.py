@@ -224,7 +224,7 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.ok.setEnabled(False)
 
     def measure_switch(self):
-        self.forward, self.reverse = self.analyzer.get_switch_terms(**self.analyzer.defaults_twoport)
+        self.forward, self.reverse = self.analyzer.get_switch_terms(**self.analyzer.params_twoport)
         self.evaluate()
 
     def load_forward_switch(self):
@@ -394,12 +394,14 @@ class VnaSelector(QtWidgets.QWidget):
 
         self.checkBox_SweepNew = QtWidgets.QCheckBox("Sweep New", self)
         self.checkBox_SweepNew.setLayoutDirection(QtCore.Qt.RightToLeft)
+        self.checkBox_RawData = QtWidgets.QCheckBox("Raw Data", self)
+        self.checkBox_RawData.setLayoutDirection(QtCore.Qt.RightToLeft)
         self.label_ports = QtWidgets.QLabel("ports 1,2:")
         self.spinBox_port1 = QtWidgets.QSpinBox(self)
         self.spinBox_port2 = QtWidgets.QSpinBox(self)
         for port in (self.spinBox_port1, self.spinBox_port2):
             port.setMinimum(1)
-            port.setMaximum(4)
+            port.setMaximum(2)
         self.spinBox_port1.setValue(1)
         self.spinBox_port2.setValue(2)
 
@@ -431,6 +433,8 @@ class VnaSelector(QtWidgets.QWidget):
         self.row2.addWidget(qt.QVLine())
         self.row2.addWidget(self.checkBox_SweepNew)
         self.row2.addWidget(qt.QVLine())
+        self.row2.addWidget(self.checkBox_RawData)
+        self.row2.addWidget(qt.QVLine())
         self.row2.addWidget(self.label_ports)
         self.row2.addWidget(self.spinBox_port1)
         self.row2.addWidget(self.spinBox_port2)
@@ -461,7 +465,9 @@ class VnaSelector(QtWidgets.QWidget):
 
     def get_analyzer(self):
         nwa = analyzers[self.comboBox_analyzer.currentText()](self.lineEdit_visaString.text())
-        nwa.set_defaults(port1=self.port1, port2=self.port2, sweep=self.sweep_new, channel=self.channel)
+        nwa.set_measurement_parameters(
+            port1=self.port1, port2=self.port2, sweep=self.sweep_new,
+            channel=self.channel, raw_data=self.raw_data)
         return nwa
 
     @property
@@ -489,6 +495,14 @@ class VnaSelector(QtWidgets.QWidget):
         self.checkBox_SweepNew.setChecked(val)
 
     @property
+    def raw_data(self):
+        return self.checkBox_RawData.isChecked()
+
+    @raw_data.setter
+    def raw_data(self, val):
+        self.checkBox_RawData.setChecked(val)
+
+    @property
     def channel(self):
         return self.spinBox_channel.value()
 
@@ -498,8 +512,8 @@ class VnaSelector(QtWidgets.QWidget):
 
     def control_vna(self):
         qt.warnMissingFeature()
-        with self.get_analyzer() as vna:
-            VnaControllerDialog(vna).exec_()
+        # with self.get_analyzer() as vna:
+        #     VnaControllerDialog(vna).exec_()
 
 
 class ReflectDialog(QtWidgets.QDialog):
@@ -575,7 +589,7 @@ class ReflectDialog(QtWidgets.QDialog):
         self.evaluate()
 
     def measure_both(self):
-        self.reflect_2port = self.analyzer.get_twoport(**self.analyzer.defaults_twoport)
+        self.reflect_2port = self.analyzer.get_twoport(**self.analyzer.params_twoport)
         self.evaluate()
 
     def load_s11(self):

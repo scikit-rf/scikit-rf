@@ -166,7 +166,6 @@ class Calibration(object):
     `coefs..ntwks`  returns error coefficients. If the property coefs
     is accessed and empty, then :func:`Calibration.run` is called.
 
-
     '''
     family = ''
     def __init__(self, measured, ideals, sloppy_input=False,
@@ -632,6 +631,8 @@ class Calibration(object):
             * forward switch term
             * reverse switch term
             * k
+            * forward isolation
+            * reverse isolation
 
         Notes
         --------
@@ -675,11 +676,13 @@ class Calibration(object):
             * forward reflection tracking
             * forward transmission tracking
             * forward load match
+            * forward isolation
             * reverse directivity
             * reverse load match
             * reverse reflection tracking
             * reverse transmission tracking
             * reverse source match
+            * reverse isolation
 
         Notes
         --------
@@ -4422,6 +4425,7 @@ def convert_8term_2_12term(coefs_8term):
     coefs_12term['forward transmission tracking'] =  Etf
     coefs_12term['reverse transmission tracking'] =  Etr
     return coefs_12term
+
 
 def convert_pnacoefs_2_skrf(coefs):
     '''
