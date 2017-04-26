@@ -1312,6 +1312,8 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
         #Port 2: DUT port 1
         #Port 3: VNA port 1
         self.Z = wg.random(n_ports = 4, name = 'Z')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
         o = wg.open(nports=1, name='open')
         s = wg.short(nports=1, name='short')
@@ -1335,10 +1337,17 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
         self.cal = rf.SixteenTerm(
             measured = measured,
             ideals = ideals,
+            switch_terms=(self.gamma_f, self.gamma_r)
             )
 
+    def terminate(self, ntwk):
+        '''
+        terminate a measured network with the switch terms
+        '''
+        return terminate(ntwk,self.gamma_f, self.gamma_r)
+
     def measure(self,ntwk):
-        out = rf.connect(self.Z, 1, ntwk, 0, num=2)
+        out = self.terminate(rf.connect(self.Z, 1, ntwk, 0, num=2))
         out.name = ntwk.name
         return out
 
@@ -1430,6 +1439,8 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
         #Port 2: DUT port 1
         #Port 3: VNA port 1
         self.Z = wg.random(n_ports = 4, name = 'Z')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
         o = wg.open(nports=1, name='open')
         s = wg.short(nports=1, name='short')
@@ -1453,6 +1464,7 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
         self.cal16 = rf.SixteenTerm(
             measured = measured,
             ideals = ideals,
+            switch_terms=(self.gamma_f, self.gamma_r)
             )
 
         r = wg.load(.95+.1j,nports=1)
@@ -1478,13 +1490,15 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
             ideal_is_reflect = False,
              #Automatic sign detection doesn't work if the
              #error terms aren't symmetric enough
-            sign = 1
+            sign = 1,
+            switch_terms=(self.gamma_f, self.gamma_r)
             )
 
-        #Same error network, but without additional leakages for EightTerm
-        #Switch leakage is still included as EightTerm can solve it
+        #Same error network, but without leakage terms
 
         #Primary leakage
+        self.Z.s[:,3,0] = 0 # forward isolation
+        self.Z.s[:,0,3] = 0 # reverse isolation
         self.Z.s[:,2,1] = 0 # forward port isolation
         self.Z.s[:,1,2] = 0 # reverse port isolation
 
@@ -1499,17 +1513,25 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
         self.cal8 = rf.EightTerm(
             measured = measured,
             ideals = ideals,
-            isolation = measured[1]
+            switch_terms=(self.gamma_f, self.gamma_r),
             )
 
+    def terminate(self, ntwk):
+        '''
+        terminate a measured network with the switch terms
+        '''
+        return terminate(ntwk,self.gamma_f, self.gamma_r)
+
     def measure(self,ntwk):
-        out = rf.connect(self.Z, 1, ntwk, 0, num=2)
+        out = self.terminate(rf.connect(self.Z, 1, ntwk, 0, num=2))
         out.name = ntwk.name
         return out
 
     def test_coefficients(self):
         for k in self.cal8.coefs.keys():
             if k in self.cal16.coefs.keys():
+                if 'isolation' in k:
+                    continue
                 self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal16.coefs[k]) < 1e-10)
                 self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal_lmr16.coefs[k]) < 1e-10)
 
@@ -1525,6 +1547,8 @@ class LMR16Test(SixteenTermTest):
         #Port 2: DUT port 1
         #Port 3: VNA port 1
         self.Z = wg.random(n_ports = 4, name = 'Z')
+        self.gamma_f = wg.random(n_ports =1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
         r = wg.short(nports=1, name='short')
         m = wg.match(nports=1, name='load')
@@ -1554,13 +1578,9 @@ class LMR16Test(SixteenTermTest):
             ideal_is_reflect = True,
              #Automatic sign detection doesn't work if the
              #error terms aren't symmetric enough
-            sign = -1
+            sign = -1,
+            switch_terms=(self.gamma_f, self.gamma_r)
             )
-
-    def measure(self,ntwk):
-        out = rf.connect(self.Z, 1, ntwk, 0, num=2)
-        out.name = ntwk.name
-        return out
 
     def test_solved_through(self):
         self.assertEqual(
