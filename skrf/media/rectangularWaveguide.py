@@ -342,7 +342,7 @@ class RectangularWaveguide(Media):
 
         '''
         ## haringtons form
-        if True:#self.m==1 and self.n==0:
+        if False:#self.m==1 and self.n==0:
             fs = Freespace(frequency=self.frequency, 
                            ep_r=self.ep_r, 
                            mu_r=self.mu_r)
@@ -421,8 +421,8 @@ class RectangularWaveguide(Media):
         The characteristic impedance
         '''
         omega = self.frequency.w
-        impedance_dict = {'te':   omega*self.mu/(-1*self.gamma),
-                          'tm':   -1*self.gamma/(omega*self.ep),\
+        impedance_dict = {'te':   1j*omega*self.mu/(self.gamma),
+                          'tm':   -1j*self.gamma/(omega*self.ep),\
                          }
 
         return impedance_dict[self.mode_type]
