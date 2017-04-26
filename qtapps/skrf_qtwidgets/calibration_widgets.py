@@ -500,10 +500,6 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
                 self.btn_uploadCalibration.setEnabled(True)
             self.btn_runCalibration.setText("Re-Run Cal")
             self.btn_viewCalibration.setText("View Cal (Old)")
-        else:
-            self.btn_viewCalibration.setEnabled(False)
-            self.btn_saveCalibration.setEnabled(False)
-            self.btn_uploadCalibration.setEnabled(False)
 
     def view_calibration(self):
         dialog = NISTCalViewer(self.calibration)
@@ -511,8 +507,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
 
     def upload_calibration(self):
         with self.get_analyzer() as vna:
-            vna.upload_twoport_calibration(self.calibration)
-        # qt.warnMissingFeature()
+            vna.upload_twoport_calibration(self.calibration, "skrf_NIST_mTRL")
 
     @property
     def get_analyzer(self):
@@ -649,6 +644,7 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
             self.btn_runCalibration.setEnabled(False)
             self.btn_saveCalibration.setEnabled(True)
             self.btn_viewCalibration.setEnabled(True)
+            self.btn_runCalibration.setEnabled(True)
             self.btn_viewCalibration.setText("View Cal")
             self.calibration_updated.emit(cal)
 

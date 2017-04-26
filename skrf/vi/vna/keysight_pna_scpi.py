@@ -157,6 +157,10 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":CALC{:}:CORR:STAT {:}", cnum, onoff)
         self.write(scpi_command)
 
+    def set_save_calset(self, cnum=1, user='01'):
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:SAVE {:}", cnum, user)
+        self.write(scpi_command)
+
     def set_selected_meas(self, cnum=1, mname=""):
         scpi_command = scpi_preprocess(":CALC{:}:PAR:SEL '{:}'", cnum, mname)
         self.write(scpi_command)
@@ -311,6 +315,12 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":SYST:MEAS:CAT? {:}", cnum)
         value = self.query(scpi_command)
         value = process_query(value, csv=True, strip_outer_quotes=True, returns='int')
+        return value
+
+    def query_save_calset(self, cnum=1):
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:SAVE?", cnum)
+        value = self.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
         return value
 
     def query_selected_meas(self, cnum=1):
