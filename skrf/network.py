@@ -280,9 +280,9 @@ class Network(object):
                                  npy.abs(x),
         # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': lambda x: fft.ifftshift(fft.ifft(x, axis=0), axes=0),
-        'time_db': lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0), axes=0)),
-        'time_mag': lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0), axes=0)),
+        'time': lambda x: fft.fftshift(fft.ifft(x, axis=0), axes=0),
+        'time_db': lambda x: mf.complex_2_db(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
+        'time_mag': lambda x: mf.complex_2_magnitude(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
     }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -2204,9 +2204,9 @@ class Network(object):
         padded_window = padded_window.reshape(-1, 1, 1) * \
                         npy.ones((len(self), self.nports, self.nports))
 
-        s_time = fft.ifftshift(fft.ifft(self.s, axis=0), axes=0)
+        # s_time = fft.ifftshift(fft.ifft(self.s, axis=0), axes=0)  # calculation is not used, using self.s_time
         s_time_windowed = self.s_time * padded_window
-        s_freq = fft.fft(fft.fftshift(s_time_windowed, axes=0), axis=0)
+        s_freq = fft.fft(fft.ifftshift(s_time_windowed, axes=0), axis=0)
 
         gated = self.copy()
         gated.s = s_freq
