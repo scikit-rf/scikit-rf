@@ -281,9 +281,9 @@ class Network(object):
                                  npy.abs(x),
         # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': lambda x: fft.ifftshift(fft.ifft(x, axis=0), axes=0),
-        'time_db': lambda x: mf.complex_2_db(fft.ifftshift(fft.ifft(x, axis=0), axes=0)),
-        'time_mag': lambda x: mf.complex_2_magnitude(fft.ifftshift(fft.ifft(x, axis=0), axes=0)),
+        'time': lambda x: fft.fftshift(fft.ifft(x, axis=0), axes=0),
+        'time_db': lambda x: mf.complex_2_db(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
+        'time_mag': lambda x: mf.complex_2_magnitude(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
     }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -2202,11 +2202,11 @@ class Network(object):
         if mode == 'bandstop':
             gate = 1 - gate
 
-       
         #IFFT the gate, so we have it's frequency response, aka kernel
         kernel=fft.fftshift(fft.ifft(fft.fftshift(gate, axes=0), axis=0))
         kernel =abs(kernel).flatten() # take mag and flatten
         kernel=kernel/sum(kernel) # normalize kernel
+
 
 
         out = self.copy()
