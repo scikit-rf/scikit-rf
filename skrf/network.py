@@ -161,6 +161,7 @@ from numpy.linalg import inv as npy_inv
 from numpy import fft, gradient, reshape, shape, ones
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
+from scipy.ndimage.filters import convolve1d
 import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
@@ -2114,6 +2115,7 @@ class Network(object):
 
         '''
         window = signal.get_window(window, len(self))
+        
         window = window.reshape(-1, 1, 1) * npy.ones((len(self),
                                                       self.nports,
                                                       self.nports))
@@ -2193,25 +2195,29 @@ class Network(object):
         window = signal.get_window(window, window_width)
 
         # create the gate by padding the window with zeros
-        padded_window = npy.r_[npy.zeros(start_idx),
+        gate = npy.r_[npy.zeros(start_idx),
                                window,
                                npy.zeros(len(t) - stop_idx)]
 
         if mode == 'bandstop':
-            padded_window = 1 - padded_window
+            gate = 1 - gate
 
-            # reshape the gate array so it operates on all s-parameters
-        padded_window = padded_window.reshape(-1, 1, 1) * \
-                        npy.ones((len(self), self.nports, self.nports))
+        #IFFT the gate, so we have it's frequency response, aka kernel
+        kernel=fft.fftshift(fft.ifft(fft.fftshift(gate, axes=0), axis=0))
+        kernel =abs(kernel).flatten() # take mag and flatten
+        kernel=kernel/sum(kernel) # normalize kernel
 
-        # s_time = fft.ifftshift(fft.ifft(self.s, axis=0), axes=0)  # calculation is not used, using self.s_time
-        s_time_windowed = self.s_time * padded_window
-        s_freq = fft.fft(fft.ifftshift(s_time_windowed, axes=0), axis=0)
 
-        gated = self.copy()
-        gated.s = s_freq
 
-        return gated
+        out = self.copy()
+        # waste of code to handle convolve1d suck
+        for m,n in self.port_tuples:
+            re = self.s_re[:,m,n]
+            im = self.s_im[:,m,n]
+            s = convolve1d(re,kernel, mode='reflect')+\
+             1j*convolve1d(im,kernel, mode='reflect')
+            out.s[:,m,n]=s
+        return out
 
     # noise
     def add_noise_polar(self, mag_dev, phase_dev, **kwargs):
