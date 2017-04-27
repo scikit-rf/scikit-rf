@@ -172,6 +172,7 @@ from .util import get_fid, get_extn, find_nearest_index, slice_domain
 # from .io.general import read, write
 # from .io import touchstone
 # from .io.general import network_2_spreadsheet
+# from media import Freespace
 
 from .constants import ZERO
 
@@ -2082,6 +2083,47 @@ class Network(object):
         self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
 
+
+    def rotate(self, theta, unit='deg'):
+        '''
+        Rotate S-parameters
+        '''
+        if unit == 'deg':
+            theta = mf.degree_2_radian(theta )
+        
+        self.s = self.s*exp(-1j*theta)
+        
+    def delay(self, d, unit='deg', port=0, media=None,**kw):
+        '''
+        Add phase delay to a given port.
+        
+        This will cascade a matched line of length `d/2` from a given `media`
+        in front of `port`. If `media==None`, then freespace is used. 
+        
+        Parameters
+        ----------
+        d : number
+                the length of transmissin line (see unit argument)
+        unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
+                the units of d.  See :func:`Media.to_meters`, for details
+        port : int
+            port to add delay to.
+        media: skrf.media.Media 
+            media object to use for generating delay. If None, this will
+            default to freespace. 
+        '''
+        if d ==0:
+            return self
+        d=d/2.
+        if self.nports >2: 
+            raise NotImplementedError('only implemented for 1 and 2 ports')
+        if media is None:
+            from .media import Freespace
+            media = Freespace(frequency=self.frequency,z0=self.z0[:,port])
+        
+        l =media.line(d=d, unit=unit,**kw)
+        return l**self
+
     def windowed(self, window=('kaiser', 6), normalize=True):
         '''
         Return a windowed version of s-matrix. Used in time-domain analysis.
@@ -2128,7 +2170,8 @@ class Network(object):
         return windowed
 
     def time_gate(self, start=None, stop=None, center=None, span=None,
-                  mode='bandpass', window=('kaiser', 6),return_all=False):
+                  mode='bandpass', window=('kaiser', 6),media=None, 
+                  return_all=False):
         '''
         Time-gate s-parameters
 
@@ -2159,6 +2202,12 @@ class Network(object):
         You cant gate things that are 'behind' strong reflections. This 
         is due to the multiple reflections that occur. 
         
+        If `center!=0`, then the ntwk's time response is shifted 
+        to t=0, gated, then shifted back to where it was. This is 
+        done in frequency domain usin `self.delay()`. If the media being
+        gated is dispersive (ie waveguide), then the gate `span` will be 
+        span at t=0, which is different
+        
         Returns
         --------
         ntwk : Network
@@ -2175,6 +2224,8 @@ class Network(object):
         if start is not None and stop is not None:
             start *= 1e-9
             stop *= 1e-9
+            span = abs(stop-start)
+            center = (stop-start)/2.
 
         elif center is not None and span is not None:
             center *= 1e-9
@@ -2210,18 +2261,32 @@ class Network(object):
 
 
         out = self.copy()
-        # waste of code to handle convolve1d suck
+        
+        
+        # do the convolutino for each port
         for m,n in self.port_tuples:
-            re = self.s_re[:,m,n]
-            im = self.s_im[:,m,n]
+            # conditionally delay ntwk, to center at t=0, this is 
+            # equivalent to gating at center. 
+            if center!=0:
+                out = out.delay(-center*1e9, 'ns',port=m,media=media)
+            
+            # waste of code to handle convolve1d suck
+            re = out.s_re[:,m,n]
+            im = out.s_im[:,m,n]
             s = convolve1d(re,kernel, mode='reflect')+\
              1j*convolve1d(im,kernel, mode='reflect')
-            out.s[:,m,n]=s
-        
+            out.s[:,m,n] = s
+            # conditionally  un-delay ntwk
+            if center!=0:
+                out = out.delay(center*1e9, 'ns',port=m,media=media)
         if return_all:
+            # compute the gate ntwk and add delay
+            gate_ntwk = out.s11.copy()
+            gate_ntwk.s = kernel
+            gate_ntwk= gate_ntwk.delay(center*1e9, 'ns', media=media)
+            
             return {'gated_ntwk':out,
-                    'gate':gate,
-                    'kernel':kernel}
+                    'gate_ntwk':gate_ntwk}
         else:
             return out
 

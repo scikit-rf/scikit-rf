@@ -34,7 +34,7 @@ distance_dict = {'m':1.,
                  'ps':1e-12*c,
                  }
 
-def to_meters( d, unit='m'):
+def to_meters( d, unit='m',v_g=c):
     '''
     Translate various  units of distance into meters
 
@@ -47,10 +47,24 @@ def to_meters( d, unit='m'):
     unit : str
         the unit to that x is in:
         ['m','cm','um','in','mil','s','us','ns','ps']
+    v_g : 
 
     '''
+    
+    distance_dict = {'m':1.,
+                 'cm':1e-2,
+                 'mm':1e-3,
+                 'um':1e-6,
+                 'in':inch,
+                 'mil': mil,
+                 's':v_g,
+                 'us':1e-6*v_g,
+                 'ns':1e-9*v_g,
+                 'ps':1e-12*v_g,
+                 }
+                 
+                 
     unit = unit.lower()
-    global distance_dict
     try:
         return distance_dict[unit]*d
     except(KeyError):

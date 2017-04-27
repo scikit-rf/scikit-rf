@@ -630,7 +630,8 @@ class Media(object):
         Translate various  units of distance into meters
 
         This is a method of media to allow for electrical lengths as
-        inputs
+        inputs.  For dispersive media, mean group velocity is used to 
+        translate time-based units to distance.
 
         Parameters
         ------------
@@ -654,7 +655,10 @@ class Media(object):
         if unit in d_dict: 
             return d_dict[unit]
         else:
-            return to_meters(d=d,unit=unit)
+            # mean group velocity is used to translate time-based
+            # units to distance
+            v_g = -self.v_g.imag.mean()
+            return to_meters(d=d,unit=unit, v_g=v_g)
 
     def thru(self, **kwargs):
         '''
