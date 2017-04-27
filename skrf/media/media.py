@@ -657,7 +657,13 @@ class Media(object):
         else:
             # mean group velocity is used to translate time-based
             # units to distance
-            v_g = -self.v_g.imag.mean()
+            if 's' in unit:
+                # they are specifiying  a time unit so calculate
+                # the group velocity. (note this fails for media of 
+                # too little points, as it uses gradient)
+                v_g = -self.v_g.imag.mean()
+            else:
+                v_g=c
             return to_meters(d=d,unit=unit, v_g=v_g)
 
     def thru(self, **kwargs):
