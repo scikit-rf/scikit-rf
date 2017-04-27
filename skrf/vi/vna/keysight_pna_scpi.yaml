@@ -37,6 +37,7 @@ COMMAND_TREE:
         ACT: {name: active_calset, set: "'<calset_name>',<onoff=1>", query: <form=NAME>}
         CAT: {name: calset_catalog, query: <form=NAME>}
         CRE: {name: create_calset, set: "'<calset_name>'"}
+        DATA: {name: calset_data, set_values: "<eterm>,<portA=1>,<portB=2>,<param>,<eterm_data>", query_values: "<eterm>,<portA=1>,<portB=2>"}
         DEL: {name: delete_calset, set: "'<calset_name>'"}
         DESC: {name: calset_description, set: "'<description>'", query: ""}
         ETER:
@@ -44,7 +45,7 @@ COMMAND_TREE:
           branch:
             CAT: {name: calset_eterm_catalog, query: ""}  # this should be csv, but the return string is ambiguous and has commas that are not separating
         NAME: {name: calset_name, set: "'<calset_name>'", query: ""}
-        DATA: {name: calset_data, set_values: "<eterm>,<portA=1>,<portB=2>,<param>,<eterm_data>", query_values: "<eterm>,<portA=1>,<portB=2>"}
+        SAVE: {name: save_calset, set: "<user='01'>", query: ""}
       STAT: {name: channel_correction_state, set: "<onoff=ON>", query: "", returns: bool}
     FREQ:
       START: {name: f_start, set: <freq>, query: "", returns: float}

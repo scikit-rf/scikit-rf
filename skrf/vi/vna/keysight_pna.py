@@ -210,9 +210,7 @@ class PNA(abcvna.VNA):
             self.scpi.set_calset_data(channel, eterm, port2, port1, eterm_data=cfs["forward " + coef])
             self.scpi.set_calset_data(channel, eterm, port1, port2, eterm_data=cfs["reverse " + coef])
 
-        for mnum in self.scpi.query_meas_number_list(cnum=channel):
-            self.scpi.set_selected_meas_by_number(cnum=channel, mnum=mnum)
-            self.scpi.set_meas_correction_state(cnum=channel, onoff="ON")
+        self.scpi.set_active_calset(1, calname, True)
 
     def get_snp_network(self, ports, **kwargs):
         """
