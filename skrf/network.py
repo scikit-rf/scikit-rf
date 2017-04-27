@@ -2128,7 +2128,7 @@ class Network(object):
         return windowed
 
     def time_gate(self, start=None, stop=None, center=None, span=None,
-                  mode='bandpass', window=('kaiser', 6)):
+                  mode='bandpass', window=('kaiser', 6),return_all=False):
         '''
         Time-gate s-parameters
 
@@ -2217,7 +2217,13 @@ class Network(object):
             s = convolve1d(re,kernel, mode='reflect')+\
              1j*convolve1d(im,kernel, mode='reflect')
             out.s[:,m,n]=s
-        return out
+        
+        if return_all:
+            return {'gated_ntwk':out,
+                    'gate':gate,
+                    'kernel':kernel}
+        else:
+            return out
 
     # noise
     def add_noise_polar(self, mag_dev, phase_dev, **kwargs):
