@@ -2091,7 +2091,7 @@ class Network(object):
         if unit == 'deg':
             theta = mf.degree_2_radian(theta )
         
-        self.s = self.s*exp(-1j*theta)
+        self.s = self.s * npy.exp(-1j*theta)
         
     def delay(self, d, unit='deg', port=0, media=None,**kw):
         '''
@@ -2247,46 +2247,45 @@ class Network(object):
 
         # create the gate by padding the window with zeros
         gate = npy.r_[npy.zeros(start_idx),
-                               window,
-                               npy.zeros(len(t) - stop_idx)]
+                      window,
+                      npy.zeros(len(t) - stop_idx)]
 
         if mode == 'bandstop':
             gate = 1 - gate
 
-        #IFFT the gate, so we have it's frequency response, aka kernel
-        kernel=fft.fftshift(fft.ifft(fft.fftshift(gate, axes=0), axis=0))
-        kernel =abs(kernel).flatten() # take mag and flatten
-        kernel=kernel/sum(kernel) # normalize kernel
-
-
+        # IFFT the gate, so we have it's frequency response, aka kernel
+        kernel = fft.fftshift(fft.ifft(fft.ifftshift(gate, axes=0), axis=0))
+        kernel = abs(kernel).flatten()  # take mag and flatten
+        kernel = kernel/sum(kernel)  # normalize kernel
 
         out = self.copy()
-        
-        
-        # do the convolutino for each port
-        for m,n in self.port_tuples:
+
+        # do the convolution for each port
+        for m, n in self.port_tuples:
             # conditionally delay ntwk, to center at t=0, this is 
             # equivalent to gating at center. 
-            if center!=0:
-                out = out.delay(-center*1e9, 'ns',port=m,media=media)
+            if center != 0:
+                out = out.delay(-center*1e9, 'ns', port=m, media=media)
             
             # waste of code to handle convolve1d suck
-            re = out.s_re[:,m,n]
-            im = out.s_im[:,m,n]
-            s = convolve1d(re,kernel, mode='reflect')+\
-             1j*convolve1d(im,kernel, mode='reflect')
-            out.s[:,m,n] = s
-            # conditionally  un-delay ntwk
-            if center!=0:
-                out = out.delay(center*1e9, 'ns',port=m,media=media)
+            re = out.s_re[:, m, n]
+            im = out.s_im[:, m, n]
+            s = convolve1d(re, kernel, mode='reflect') + \
+                1j * convolve1d(im, kernel, mode='reflect')
+            out.s[:, m, n] = s
+
+            # conditionally un-delay ntwk
+            if center != 0:
+                out = out.delay(center*1e9, 'ns', port=m, media=media)
+
         if return_all:
             # compute the gate ntwk and add delay
             gate_ntwk = out.s11.copy()
             gate_ntwk.s = kernel
-            gate_ntwk= gate_ntwk.delay(center*1e9, 'ns', media=media)
+            gate_ntwk = gate_ntwk.delay(center*1e9, 'ns', media=media)
             
-            return {'gated_ntwk':out,
-                    'gate_ntwk':gate_ntwk}
+            return {'gated_ntwk': out,
+                    'gate_ntwk': gate_ntwk}
         else:
             return out
 
