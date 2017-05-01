@@ -2262,12 +2262,17 @@ class EightTerm(Calibration):
                 [ one,     Esr ]])\
                 .transpose().reshape(-1,2,2)
 
+        #Port impedances before renormalization.
+        #Only the DUT side (port 2) is renormalized.
+        #VNA side (port 1) stays unchanged.
+        z = npy.array([z0_new, z0_old]).transpose()
+
         if powerwave:
-            S1 = renormalize_s_pw(S1, [z0_new, z0_old], z0_new)
-            S2 = renormalize_s_pw(S2, [z0_new, z0_old], z0_new)
+            S1 = renormalize_s_pw(S1, z, z0_new)
+            S2 = renormalize_s_pw(S2, z, z0_new)
         else:
-            S1 = renormalize_s(S1, [z0_new, z0_old], z0_new)
-            S2 = renormalize_s(S2, [z0_new, z0_old], z0_new)
+            S1 = renormalize_s(S1, z, z0_new)
+            S2 = renormalize_s(S2, z, z0_new)
 
         self.coefs['forward directivity'] = S1[:,0,0]
         self.coefs['forward source match'] = S1[:,1,1]
@@ -2470,7 +2475,7 @@ class NISTMultilineTRL(EightTerm):
     def __init__(self, measured, Grefls, l,
                  er_est=1, refl_offset=None, ref_plane=0,
                  gamma_root_choice='real', k_method='multical', c0=None,
-                 z0_ref=None, z0_line=None, *args, **kwargs):
+                 z0_ref=50, z0_line=None, *args, **kwargs):
         '''
         NISTMultilineTRL initializer
 
