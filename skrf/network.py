@@ -2098,7 +2098,7 @@ class Network(object):
         if unit == 'deg':
             theta = mf.degree_2_radian(theta )
         
-        self.s = self.s*exp(-1j*theta)
+        self.s = self.s * npy.exp(-1j*theta)
         
     def delay(self, d, unit='deg', port=0, media=None,**kw):
         '''
@@ -2183,6 +2183,7 @@ class Network(object):
         see `skrf.time_domain.time_gate`
         '''
         return time_gate(self, *args, **kw)
+
 
     # noise
     def add_noise_polar(self, mag_dev, phase_dev, **kwargs):
