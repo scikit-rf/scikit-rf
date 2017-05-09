@@ -12,6 +12,7 @@ API
     networkSet
     
     plotting
+    time
     mathFunctions
     tlineFunctions
     constants
