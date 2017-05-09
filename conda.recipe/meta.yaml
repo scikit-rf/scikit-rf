@@ -23,6 +23,7 @@ requirements:
     - future
     - xlwt
     - xlrd
+    - peakutils
 
   run:
     - python

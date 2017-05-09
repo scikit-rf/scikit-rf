@@ -168,6 +168,7 @@ from . import mathFunctions as mf
 from .frequency import Frequency
 from .tlineFunctions import zl_2_Gamma0
 from .util import get_fid, get_extn, find_nearest_index, slice_domain
+from .time import time_gate
 # later imports. delayed to solve circular dependencies
 # from .io.general import read, write
 # from .io import touchstone
@@ -1722,7 +1723,7 @@ class Network(object):
 
     # interpolation
     def interpolate(self, freq_or_n, basis='s', coords='cart',
-                    f_kwargs={}, **kwargs):
+                    f_kwargs={}, return_array=False, **kwargs):
         """
         Interpolate a Network allong frequency axis
 
@@ -1752,7 +1753,9 @@ class Network(object):
             coordinate system to use for interpolation.
              * 'cart' is cartesian is Re/Im
              * 'polar' is unwrapped phase/mag
-
+        return_array: bool
+            return the interpolated array instead of re-asigning it to 
+            a given attribute
         **kwargs : keyword arguments
             passed to :func:`scipy.interpolate.interp1d` initializer.
             `kind` controls interpolation type
@@ -1760,7 +1763,7 @@ class Network(object):
         Returns
         ----------
         result : :class:`Network`
-            an interpolated Network
+            an interpolated Network, or array
 
         Notes
         --------
@@ -1834,7 +1837,8 @@ class Network(object):
         if coords == 'cart':
             interp_re = interp1d(f, x.real, axis=0, **kwargs)
             interp_im = interp1d(f, x.imag, axis=0, **kwargs)
-            result.__setattr__(basis, interp_re(f_new) + 1j * interp_im(f_new))
+            x_new =  interp_re(f_new) + 1j * interp_im(f_new)
+
 
         elif coords == 'polar':
             rad = npy.unwrap(npy.angle(x), axis=0)
@@ -1842,8 +1846,11 @@ class Network(object):
             interp_rad = interp1d(f, rad, axis=0, **kwargs)
             interp_mag = interp1d(f, mag, axis=0, **kwargs)
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
+            
+        if return_array:
+            return x_new
+        else:
             result.__setattr__(basis, x_new)
-
         return result
 
     def interpolate_self_npoints(self, npoints, **kwargs):
@@ -2169,126 +2176,13 @@ class Network(object):
 
         return windowed
 
-    def time_gate(self, start=None, stop=None, center=None, span=None,
-                  mode='bandpass', window=('kaiser', 6),media=None, 
-                  return_all=False):
+    def time_gate(self, *args, **kw):
         '''
-        Time-gate s-parameters
-
-        The gate can be defined with start/stop times, or by 
-        center/span. all times are in units of nanoseconds. common 
-        windows are:
-         * ('kaiser', 6)
-         * 6 # integers are interpreted as kaiser beta-values
-         * 'hamming'
-         * 'boxcar'  # a staightup rect
-
-        Parameters
-        ------------
-        start : number, or None
-            start of time gate, (ns). 
-        stop : number, or None
-            stop of time gate (ns). 
-        center : number, or None
-            center of time gate, (ns). 
-        span : number, or None
-            span of time gate, (ns). 
-        mode: ['bandpass','bandstop']
-        window : string, float, or tuple 
-            passed to `window` arg of `scipy.signal.get_window`
+        time gate this ntwk
         
-        Notes
-        ------
-        You cant gate things that are 'behind' strong reflections. This 
-        is due to the multiple reflections that occur. 
-        
-        If `center!=0`, then the ntwk's time response is shifted 
-        to t=0, gated, then shifted back to where it was. This is 
-        done in frequency domain usin `self.delay()`. If the media being
-        gated is dispersive (ie waveguide), then the gate `span` will be 
-        span at t=0, which is different
-        
-        Returns
-        --------
-        ntwk : Network
-            copy of self with time-gated s-parameters
-
-        .. warning::
-            Depending on sharpness of the gate, the  band edges may be 
-            inaccurate, due to properties of FFT. We do not re-normalize
-            anything.
-
-
+        see `skrf.time_domain.time_gate`
         '''
-
-        if start is not None and stop is not None:
-            start *= 1e-9
-            stop *= 1e-9
-            span = abs(stop-start)
-            center = (stop-start)/2.
-
-        elif center is not None and span is not None:
-            center *= 1e-9
-            span *= 1e-9
-            start = center - span / 2.
-            stop = center + span / 2.
-
-        else:
-            raise ValueError('must provide either start/stop or center/span')
-
-        # find start/stop gate indecies
-        t = self.frequency.t
-        start_idx = find_nearest_index(t, start)
-        stop_idx = find_nearest_index(t, stop)
-
-        # create window
-        window_width = abs(stop_idx - start_idx)
-        window = signal.get_window(window, window_width)
-
-        # create the gate by padding the window with zeros
-        gate = npy.r_[npy.zeros(start_idx),
-                               window,
-                               npy.zeros(len(t) - stop_idx)]
-
-        if mode == 'bandstop':
-            gate = 1 - gate
-
-        #IFFT the gate, so we have it's frequency response, aka kernel
-        kernel=fft.fftshift(fft.ifft(fft.fftshift(gate, axes=0), axis=0))
-        kernel =abs(kernel).flatten() # take mag and flatten
-        kernel=kernel/sum(kernel) # normalize kernel
-
-
-
-        out = self.copy()
-        
-        
-        # do the convolutino for each port
-        for m,n in self.port_tuples:
-            # conditionally delay ntwk, to center at t=0, this is 
-            # equivalent to gating at center. 
-            if center!=0:
-                out = out.delay(-center*1e9, 'ns',port=m,media=media)
-            
-            # waste of code to handle convolve1d suck
-            re = out.s_re[:,m,n]
-            im = out.s_im[:,m,n]
-            s = convolve1d(re,kernel, mode='reflect')+\
-             1j*convolve1d(im,kernel, mode='reflect')
-            out.s[:,m,n] = s
-            # conditionally  un-delay ntwk
-            if center!=0:
-                out = out.delay(center*1e9, 'ns',port=m,media=media)
-        if return_all:
-            # compute the gate ntwk and add delay
-            gate_ntwk = out.s11.copy()
-            gate_ntwk.s = kernel
-            gate_ntwk= gate_ntwk.delay(center*1e9, 'ns', media=media)
-            
-            return {'gated_ntwk':out,
-                    'gate_ntwk':gate_ntwk}
-        else:
-            return out
+        return time_gate(self, *args, **kw)
 
     # noise
     def add_noise_polar(self, mag_dev, phase_dev, **kwargs):
