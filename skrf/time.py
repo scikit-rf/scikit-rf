@@ -87,7 +87,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
         distance to the second tallest peak
     mode: ['bandpass','bandstop']
         mode of gate 
-    boundary:  {‘reflect’, ‘constant’, ‘nearest’, ‘mirror’, ‘wrap’},
+    boundary:  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'},
         passed to `scipy.ndimage.filters.convolve1d`
     window : string, float, or tuple 
         passed to `window` arg of `scipy.signal.get_window`
