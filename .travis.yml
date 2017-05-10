@@ -29,6 +29,7 @@ script:
 after_success:
 - coveralls
 deploy:
+  provider: pypi
   user: arsenovic
   password:
     secure: CXC4a1iOePqzjr9+i0dfvAAMATIZvDd1xAagx3phwyh9iCrJva2hPNlZ0bRVhrmf0j8aBx1OzhiYrLN/mG+el5UROuQZXdovogr/TfyDgDxshLf5YAIUukubSJoiesAKtkgLYvp4xnUsbgqS1ONyHim3PBpfVF5v32jGUoMbSJU=
