@@ -13,17 +13,14 @@ requirements:
   build:
     - python
     - pandas
-    - setuptools
+    #- setuptools
     - ipython
     - numpy
     - scipy
     - matplotlib
-    - mock
-    - nose
-    - future
-    - xlwt
-    - xlrd
-    - peakutils
+    #- mock
+    #- nose
+    #- future
 
   run:
     - python
@@ -32,6 +29,8 @@ requirements:
     - scipy
     - matplotlib
     - pandas
+    - xlwt
+    - xlrd
 
 test:
   # Python imports
