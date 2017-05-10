@@ -12,15 +12,14 @@ source:
 requirements:
   build:
     - python
+    - setuptools
     - pandas
-    #- setuptools
     - ipython
     - numpy
     - scipy
-    - matplotlib
-    #- mock
-    #- nose
-    #- future
+    - matplotlib    
+    - six
+    - future
 
   run:
     - python

@@ -20,5 +20,4 @@ dependencies:
     - pip:
         - python-ivi
         - PyVisa
-        - peakutils
         - git+https://github.com/arsenovic/nbsphinx.git@master
