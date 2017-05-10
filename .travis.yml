@@ -1,46 +1,36 @@
 language: python
 python:
-  - 2.7
-  - 3.5
-  - 3.6
+- 2.7
+- 3.5
+- 3.6
 before_install:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  # Install conda
-  - sudo apt-get update 
-  # Install miniconda
-  # -----------------
-  - if [[ "$TRAVIS_PYTHON_VERSION" == 2* ]]; then
-      wget http://repo.continuum.io/miniconda/Miniconda-3.7.0-Linux-x86_64.sh -O miniconda.sh;
-    else
-      wget http://repo.continuum.io/miniconda/Miniconda3-3.7.0-Linux-x86_64.sh -O miniconda.sh;
-    fi
-    
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-   
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update conda
-  
-
-install: 
-
-
-  - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
-  - source activate test-environment
-
-  - conda install numpy matplotlib scipy pandas nose pip ipython=5.1
-  - pip install -r tools/travis-requirements.txt
-  - python setup.py install
-# command to run tests
-script: 
-  - python --version
-  - python -c "import numpy; print('numpy %s' % numpy.__version__)"
-  - python -c "import scipy; print('scipy %s' % scipy.__version__)"
-  - python -c "import skrf; print('skrf %s' % skrf.__version__)"
-  # move somewhere so that nosetests skrf tests the module, not the dir
-  #- cd tools/
-  - nosetests skrf -c nose.cfg
-
+- export DISPLAY=:99.0
+- sh -e /etc/init.d/xvfb start
+- sudo apt-get update
+- if [[ "$TRAVIS_PYTHON_VERSION" == 2* ]]; then wget http://repo.continuum.io/miniconda/Miniconda-3.7.0-Linux-x86_64.sh
+  -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.7.0-Linux-x86_64.sh
+  -O miniconda.sh; fi
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- conda config --set always_yes yes --set changeps1 no
+- conda update conda
+install:
+- conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
+- source activate test-environment
+- conda install numpy matplotlib scipy pandas nose pip ipython=5.1
+- pip install -r tools/travis-requirements.txt
+- python setup.py install
+script:
+- python --version
+- python -c "import numpy; print('numpy %s' % numpy.__version__)"
+- python -c "import scipy; print('scipy %s' % scipy.__version__)"
+- python -c "import skrf; print('skrf %s' % skrf.__version__)"
+- nosetests skrf -c nose.cfg
 after_success:
-  - coveralls
+- coveralls
+deploy:
+  user: arsenovic
+  password:
+    secure: CXC4a1iOePqzjr9+i0dfvAAMATIZvDd1xAagx3phwyh9iCrJva2hPNlZ0bRVhrmf0j8aBx1OzhiYrLN/mG+el5UROuQZXdovogr/TfyDgDxshLf5YAIUukubSJoiesAKtkgLYvp4xnUsbgqS1ONyHim3PBpfVF5v32jGUoMbSJU=
+  on:
+    tags: true
