@@ -1,6 +1,8 @@
-# 0) install conda-build-all and login to anaconda
+# prep) install conda-build-all, anaconda and login to anaconda
   conda install conda-build-all anaconda
   anaconda login
+
+# 0) change version in skrf/__init__.py
 
 # 1) tag a relase and push tags
   git tag -a -f v0.14.4 -m "Release with python 3.6 support"
