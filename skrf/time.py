@@ -7,7 +7,7 @@ time (:mod:`skrf.time`)
 time domain functions 
 
 Methods
-===============
+------------
 
 .. autosummary::
     :toctree: generated/
@@ -15,6 +15,18 @@ Methods
     time_gate
     detect_span 
     find_n_peaks
+    indexes
+    
+asdfasdf
+
+.. autosummary::
+    :toctree: generated/
+
+    time_gate
+    detect_span 
+    find_n_peaks
+    indexes
+    
 """
 
 from .util import  find_nearest_index
