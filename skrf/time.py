@@ -137,12 +137,12 @@ def find_n_peaks(x,n, thres=.9, **kw):
     
     for dummy  in range(10):
         
-        indexes = indexes(x, **kw)
-        if len(indexes) < n:
+        idx = indexes(x, **kw)
+        if len(idx) < n:
             thres*=.5
             
         else:
-            peak_vals = sorted(x[indexes], reverse=True)[:n]
+            peak_vals = sorted(x[idx], reverse=True)[:n]
             peak_idxs =[x.tolist().index(k) for k in peak_vals]
 
             return peak_idxs
