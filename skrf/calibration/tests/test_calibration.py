@@ -621,13 +621,6 @@ class NISTMultilineTRLTest(EightTermTest):
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
-        # make error networks have s21,s12 >> s11,s22 so that TRL
-        # can guess at line length
-        self.X.s[:,0,0] *=1e-1
-        self.Y.s[:,0,0] *=1e-1
-        self.X.s[:,1,1] *=1e-1
-        self.Y.s[:,1,1] *=1e-1
-
         actuals = [
             wg.thru(),
             rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
@@ -676,13 +669,6 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         self.Y = wg.random(n_ports =2, name = 'Y')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
-
-        # make error networks have s21,s12 >> s11,s22 so that TRL
-        # can guess at line length
-        self.X.s[:,0,0] *=1e-1
-        self.Y.s[:,0,0] *=1e-1
-        self.X.s[:,1,1] *=1e-1
-        self.Y.s[:,1,1] *=1e-1
 
         actuals = [
             rlgc.thru(),

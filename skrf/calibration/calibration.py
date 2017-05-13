@@ -2754,6 +2754,19 @@ class NISTMultilineTRL(EightTerm):
             CoA1_vec = npy.zeros(lines-1, dtype=npy.complex)
             CoA2_vec = npy.zeros(lines-1, dtype=npy.complex)
 
+            b1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+            b2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+            CoA1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+            CoA2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+
+            root1 = []
+            root2 = []
+
+            d1 = [0,0]
+            d2 = [0,0]
+
+            S_thru = measured_lines[0].s[m]
+
             p = 0
             for n in range(lines):
                 if n == line_c[m]:
@@ -2774,28 +2787,24 @@ class NISTMultilineTRL(EightTerm):
                 dB1 = abs(B1 - B_est1)/abs(B_est1)
                 dCoA1 = abs(CoA1 - CoA_est1)/abs(CoA_est1)
 
-                if npy.sum(dB1[:,0]) + npy.sum(dCoA1[:,0]) < \
-                        npy.sum(dB1[:,1]) + npy.sum(dCoA1[:,1]):
-                    if abs(B1[0,0] - B_est1) <  abs(B1[1,0] - B_est1):
-                        b1_vec[p] = B1[0,0]
-                    else:
-                        b1_vec[p] = B1[1,0]
-
-                    if abs(CoA1[0,0] - CoA_est1) < \
-                            abs(CoA1[1,0] - CoA_est1):
-                        CoA1_vec[p] = CoA1[0,0]
-                    else:
-                        CoA1_vec[p] = CoA1[1,0]
+                if abs(B1[0,1] - B_est1) < abs(B1[1,1] - B_est1):
+                    b1_vec[p] = B1[0,1]
+                    b1_vec2[p] = B1[0,0]
+                    root1.append([0,1])
                 else:
-                    if abs(B1[0,1] - B_est1) < abs(B1[1,1] - B_est1):
-                        b1_vec[p] = B1[0,1]
-                    else:
-                        b1_vec[p] = B1[1,1]
+                    b1_vec[p] = B1[1,1]
+                    b1_vec2[p] = B1[1,0]
+                    root1.append([1,1])
 
-                    if abs(CoA1[0,1] - CoA_est1) < abs(CoA1[1,1] - CoA_est1):
-                        CoA1_vec[p] = CoA1[0,1]
-                    else:
-                        CoA1_vec[p] = CoA1[1,1]
+                if abs(CoA1[0,1] - CoA_est1) < abs(CoA1[1,1] - CoA_est1):
+                    CoA1_vec[p] = CoA1[0,1]
+                    CoA1_vec2[p] = CoA1[0,0]
+                else:
+                    CoA1_vec[p] = CoA1[1,1]
+                    CoA1_vec2[p] = CoA1[1,0]
+
+                d1[0] += npy.sum(dB1[:,root1[-1][1]]) + npy.sum(dCoA1[:,root1[-1][1]])
+                d1[1] += npy.sum(dB1[:,int(not root1[-1][1])]) + npy.sum(dCoA1[:,int(not root1[-1][1])])
 
                 #Port 2
                 k = npy.array([[0,1],[1,0]], dtype=npy.complex)
@@ -2816,28 +2825,24 @@ class NISTMultilineTRL(EightTerm):
                 dB2 = abs(B2 - B_est2)/abs(B_est2)
                 dCoA2 = abs(CoA2 - CoA_est2)/abs(CoA_est2)
 
-                if npy.sum(dB2[:,0]) + npy.sum(dCoA2[:,0]) < \
-                        npy.sum(dB2[:,1]) + npy.sum(dCoA2[:,1]):
-                    if abs(B2[0,0] - B_est2) <  abs(B2[1,0] - B_est2):
-                        b2_vec[p] = B2[0,0]
-                    else:
-                        b2_vec[p] = B2[1,0]
-
-                    if abs(CoA2[0,0] - CoA_est2) < \
-                            abs(CoA2[1,0] - CoA_est2):
-                        CoA2_vec[p] = CoA2[0,0]
-                    else:
-                        CoA2_vec[p] = CoA2[1,0]
+                if abs(B2[0,1] - B_est2) < abs(B2[1,1] - B_est2):
+                    b2_vec[p] = B2[0,1]
+                    b2_vec2[p] = B2[0,0]
+                    root2.append([0,1])
                 else:
-                    if abs(B2[0,1] - B_est2) < abs(B2[1,1] - B_est2):
-                        b2_vec[p] = B2[0,1]
-                    else:
-                        b2_vec[p] = B2[1,1]
+                    b2_vec[p] = B2[1,1]
+                    b2_vec2[p] = B2[1,0]
+                    root2.append([1,1])
 
-                    if abs(CoA2[0,1] - CoA_est2) < abs(CoA2[1,1] - CoA_est2):
-                        CoA2_vec[p] = CoA2[0,1]
-                    else:
-                        CoA2_vec[p] = CoA2[1,1]
+                if abs(CoA2[0,1] - CoA_est2) < abs(CoA2[1,1] - CoA_est2):
+                    CoA2_vec[p] = CoA2[0,1]
+                    CoA2_vec2[p] = CoA2[0,0]
+                else:
+                    CoA2_vec[p] = CoA2[1,1]
+                    CoA2_vec2[p] = CoA2[1,0]
+
+                d2[0] += npy.sum(dB2[:,root2[-1][1]]) + npy.sum(dCoA2[:,root2[-1][1]])
+                d2[1] += npy.sum(dB2[:,int(not root2[-1][1])]) + npy.sum(dCoA2[:,int(not root2[-1][1])])
 
                 p += 1
 
@@ -2888,56 +2893,111 @@ class NISTMultilineTRL(EightTerm):
                                 (exp_factor_b - 1/exp_factor_b)
                         Vc[b,a] = Vc[a,b].conjugate()
 
+            def solve_A(B1, B2, CoA1, CoA2):
+                #Determine A using unknown reflect
+                Ap = B1*B2 - B1*S_thru[1,1] - B2*S_thru[0,0] + linalg.det(S_thru)
+                Ap = -Ap/(1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*linalg.det(S_thru))
+
+                A1_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
+                A2_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
+
+                for n in range(len(measured_reflects)):
+                    S_r = measured_reflects[n].s[m]
+
+                    S_r11 = S_r[0,0]
+                    S_r22 = S_r[1,1]
+
+                    Arr = (S_r11 - B1)/(1 - S_r11*CoA1)* \
+                            (1 - S_r22*CoA2)/(S_r22 - B2)
+                    Gr_est = self.Grefls[n]*exp(-2*gamma[m]*(self.refl_offset[n] - l[0]/2.))
+                    G_trial = (S_r[0,0] - B1)/(npy.sqrt(Ap*Arr)*(1 - S_r[0,0]*CoA1))
+                    if abs( Gr_est/abs(Gr_est) - G_trial/abs(G_trial) ) > npy.sqrt(2):
+                        A1_vals[n] = -npy.sqrt(Ap*Arr)
+                    else:
+                        A1_vals[n] = npy.sqrt(Ap*Arr)
+                    A2_vals[n] = A1_vals[n]/Arr
+
+                A1 = npy.mean(A1_vals)
+                A2 = npy.mean(A2_vals)
+                return A1, A2
+
             h = npy.ones(lines-1)
-            B1 = h.conj().transpose().dot(inv(Vb)).dot(b1_vec)/ \
-                    (h.conj().transpose().dot(inv(Vb)).dot(h))
-            B2 = h.conj().transpose().dot(inv(Vb)).dot(b2_vec)/ \
-                    (h.conj().transpose().dot(inv(Vb)).dot(h))
-            CoA1 = h.conj().transpose().dot(inv(Vc)).dot(CoA1_vec)/ \
-                    (h.conj().transpose().dot(inv(Vc)).dot(h))
-            CoA2 = h.conj().transpose().dot(inv(Vc)).dot(CoA2_vec)/ \
-                    (h.conj().transpose().dot(inv(Vc)).dot(h))
+
+            values = []
+            #List possible root choices for B and CoA
+            for i in [(0,0), (0,1), (1,0), (1,1)]:
+                if i[0] == 0:
+                    b1 = b1_vec
+                    coa1 = CoA1_vec
+                else:
+                    b1 = b1_vec2
+                    coa1 = CoA1_vec2
+
+                if i[1] == 0:
+                    b2 = b2_vec
+                    coa2 = CoA2_vec
+                else:
+                    b2 = b2_vec2
+                    coa2 = CoA2_vec2
+
+                B1 = h.conj().transpose().dot(inv(Vb)).dot(b1)/ \
+                        (h.conj().transpose().dot(inv(Vb)).dot(h))
+                B2 = h.conj().transpose().dot(inv(Vb)).dot(b2)/ \
+                        (h.conj().transpose().dot(inv(Vb)).dot(h))
+                CoA1 = h.conj().transpose().dot(inv(Vc)).dot(coa1)/ \
+                        (h.conj().transpose().dot(inv(Vc)).dot(h))
+                CoA2 = h.conj().transpose().dot(inv(Vc)).dot(coa2)/ \
+                        (h.conj().transpose().dot(inv(Vc)).dot(h))
+
+                denom = 1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*\
+                (S_thru[0,0]*S_thru[1,1] - S_thru[0,1]*S_thru[1,0])
+
+                values.append( (abs(denom), B1, B2, CoA1, CoA2) )
+
+            if abs(values[0][0]) > 1e-9 and d1[1]/d1[0] > 10 and d2[1]/d2[0] > 10:
+                #Estimate seems to be correct
+                B1, B2, CoA1, CoA2 = values[0][1:]
+                A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+            else:
+                #Estimation is incorrect or the accuracy is bad
+                #Choose the root that minimizes error to measurements
+                best_error = None
+                best_values = []
+                for v in values:
+                    if abs(v[0]) < 1e-9:
+                        continue
+                    B1, B2, CoA1, CoA2 = v[1:]
+                    A1, A2 = solve_A(B1, B2, CoA1, CoA2)
+                    C1 = CoA1*A1
+                    C2 = CoA2*A2
+                    R = S_thru[0,1]*(1 - C1*C2)/(A1 - B1*C1)
+
+                    T1 = R*npy.array([[A1, B1],[C1, 1]])
+                    g = npy.array([[0,1],[1,0]])
+                    T2 = npy.array([[A2, B2],[C2, 1]])
+
+                    error = 0
+                    for n in range(lines):
+                        meas = measured_lines[n].s[m]
+                        ideal = npy.array([[exp(-gamma[m]*l[n]), 0],[0,exp(gamma[m]*l[n])]])
+                        embedded = t2s_single(T1.dot(ideal).dot(g.dot(inv(T2).dot(g))))
+
+                        error += abs(npy.sum(embedded - meas))
+                    if best_error == None or error < best_error:
+                        best_error = error
+                        best_values = v
+                B1, B2, CoA1, CoA2 = best_values[1:]
+                A1, A2 = solve_A(B1, B2, CoA1, CoA2)
 
             sigmab = npy.sqrt(1/(h.conj().transpose().dot(inv(Vb)).dot(h)).real)
             sigmac = npy.sqrt(1/(h.conj().transpose().dot(inv(Vc)).dot(h)).real)
 
             nstd[m] = (sigmab + sigmac)/2
 
-            #Determine A using unknown reflect
-            #Shortest line is assumed to be through line
-            thru_id = npy.argmin(l)
-            S_thru = measured_lines[thru_id].s[m]
-
-            Ap = B1*B2 - B1*S_thru[1,1] - B2*S_thru[0,0] + linalg.det(S_thru)
-            Ap = -Ap/(1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*linalg.det(S_thru))
-
-            A1_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
-            A2_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
-
-            for n in range(len(measured_reflects)):
-                S_r = measured_reflects[n].s[m]
-
-                S_r11 = S_r[0,0]
-                S_r22 = S_r[1,1]
-
-                Arr = (S_r11 - B1)/(1 - S_r11*CoA1)* \
-                        (1 - S_r22*CoA2)/(S_r22 - B2)
-                Gr_est = self.Grefls[n]*exp(-2*gamma[m]*(self.refl_offset[n] - l[0]/2.))
-                G_trial = (S_r[0,0] - B1)/(npy.sqrt(Ap*Arr)*(1 - S_r[0,0]*CoA1))
-                if abs( Gr_est/abs(Gr_est) - G_trial/abs(G_trial) ) > npy.sqrt(2):
-                    A1_vals[n] = -npy.sqrt(Ap*Arr)
-                else:
-                    A1_vals[n] = npy.sqrt(Ap*Arr)
-                A2_vals[n] = A1_vals[n]/Arr
-
-            A1 = npy.mean(A1_vals)
-            A2 = npy.mean(A2_vals)
-
             C1 = CoA1*A1
             C2 = CoA2*A2
 
             #Determine R1, R2
-
             if self.k_method == 'marks':
                 p1_len_est = self.kwargs.get('p1_len_est', 0)
                 p2_len_est = self.kwargs.get('p2_len_est', 0)
