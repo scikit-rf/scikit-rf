@@ -270,9 +270,6 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
                            window,
                            npy.zeros(len(t) - stop_idx)]
 
-    if mode == 'bandstop':
-        gate = 1 - gate
-
     #IFFT the gate, so we have it's frequency response, aka kernel
     kernel=fft.fftshift(fft.ifft(fft.fftshift(gate, axes=0), axis=0))
     kernel =abs(kernel).flatten() # take mag and flatten
@@ -281,7 +278,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
     out = ntwk.copy()
     
     # conditionally delay ntwk, to center at t=0, this is 
-    # equivalent to gating at center. 
+    # equivalent to gating at center.  (this is probably very inefficient)
     if center!=0:
         out = out.delay(-center*1e9, 'ns',port=0,media=media)
     
@@ -295,6 +292,13 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
     if center!=0:
         out = out.delay(center*1e9, 'ns',port=0,media=media)
 
+    if mode == 'bandstop':
+        out = ntwk-out
+    elif mode=='bandpass':
+        pass
+    else:
+        raise ValueError('mode should be \'bandpass\' or \'bandstop\'')
+
     if return_all:
         # compute the gate ntwk and add delay
         gate_ntwk = out.s11.copy()
@@ -302,7 +306,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
         gate_ntwk= gate_ntwk.delay(center*1e9, 'ns', media=media)
         
         return {'gated_ntwk':out,
-                'gate_ntwk':gate_ntwk}
+                'gate':gate_ntwk}
     else:
         return out
     
