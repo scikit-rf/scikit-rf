@@ -7,7 +7,7 @@ time (:mod:`skrf.time`)
 time domain functions 
 
 Methods
-===============
+------------
 
 .. autosummary::
     :toctree: generated/
@@ -15,15 +15,132 @@ Methods
     time_gate
     detect_span 
     find_n_peaks
+    indexes
+    
+asdfasdf
+
+.. autosummary::
+    :toctree: generated/
+
+    time_gate
+    detect_span 
+    find_n_peaks
+    indexes
+    
 """
 
 from .util import  find_nearest_index
 
-import peakutils
+
 from scipy.ndimage.filters import convolve1d
 from scipy import  signal
 import numpy as npy
+import numpy as np # so i dont have to change indexes (from peakutils)
 from numpy import fft
+
+def indexes(y, thres=0.3, min_dist=1):
+    """Peak detection routine.
+
+    Finds the numeric index of the peaks in *y* by taking its first order difference. By using
+    *thres* and *min_dist* parameters, it is possible to reduce the number of
+    detected peaks. *y* must be signed.
+
+    Parameters
+    ----------
+    y : ndarray (signed)
+        1D amplitude data to search for peaks.
+    thres : float between [0., 1.]
+        Normalized threshold. Only the peaks with amplitude higher than the
+        threshold will be detected.
+    min_dist : int
+        Minimum distance between each detected peak. The peak with the highest
+        amplitude is preferred to satisfy this constraint.
+
+    Returns
+    -------
+    ndarray
+        Array containing the numeric indexes of the peaks that were detected
+    
+    Notes
+    --------
+    This function was taken from peakutils-1.1.0 
+    http://pythonhosted.org/PeakUtils/index.html
+    
+    """
+    #This function  was taken from peakutils, and is covered 
+    # by the MIT license, inlcuded below: 
+    
+    #The MIT License (MIT)
+
+    #Copyright (c) 2014 Lucas Hermann Negri
+
+    #Permission is hereby granted, free of charge, to any person obtaining a copy
+    #of this software and associated documentation files (the "Software"), to deal
+    #in the Software without restriction, including without limitation the rights
+    #to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    #copies of the Software, and to permit persons to whom the Software is
+    #furnished to do so, subject to the following conditions:
+
+    #The above copyright notice and this permission notice shall be included in
+    #all copies or substantial portions of the Software.
+
+    #THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    #IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    #FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    #AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    #LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    #THE SOFTWARE.
+    
+    if isinstance(y, np.ndarray) and np.issubdtype(y.dtype, np.unsignedinteger):
+        raise ValueError("y must be signed")
+
+    thres = thres * (np.max(y) - np.min(y)) + np.min(y)
+    min_dist = int(min_dist)
+
+    # compute first order difference
+    dy = np.diff(y)
+
+    # propagate left and right values successively to fill all plateau pixels (0-value)
+    zeros,=np.where(dy == 0)
+    
+    # check if the singal is totally flat
+    if len(zeros) == len(y) - 1:
+        return np.array([])
+    
+    while len(zeros):
+        # add pixels 2 by 2 to propagate left and right value onto the zero-value pixel
+        zerosr = np.hstack([dy[1:], 0.])
+        zerosl = np.hstack([0., dy[:-1]])
+
+        # replace 0 with right value if non zero
+        dy[zeros]=zerosr[zeros]
+        zeros,=np.where(dy == 0)
+
+        # replace 0 with left value if non zero
+        dy[zeros]=zerosl[zeros]
+        zeros,=np.where(dy == 0)
+
+    # find the peaks by using the first order difference
+    peaks = np.where((np.hstack([dy, 0.]) < 0.)
+                     & (np.hstack([0., dy]) > 0.)
+                     & (y > thres))[0]
+
+    # handle multiple peaks, respecting the minimum distance
+    if peaks.size > 1 and min_dist > 1:
+        highest = peaks[np.argsort(y[peaks])][::-1]
+        rem = np.ones(y.size, dtype=bool)
+        rem[peaks] = False
+
+        for peak in highest:
+            if not rem[peak]:
+                sl = slice(max(0, peak - min_dist), peak + min_dist + 1)
+                rem[sl] = True
+                rem[peak] = False
+
+        peaks = np.arange(y.size)[~rem]
+
+    return peaks
 
 def find_n_peaks(x,n, thres=.9, **kw):
     '''
@@ -32,17 +149,16 @@ def find_n_peaks(x,n, thres=.9, **kw):
     
     for dummy  in range(10):
         
-        indexes = peakutils.indexes(x, **kw)
-        if len(indexes) < n:
+        idx = indexes(x, **kw)
+        if len(idx) < n:
             thres*=.5
             
         else:
-            peak_vals = sorted(x[indexes], reverse=True)[:n]
+            peak_vals = sorted(x[idx], reverse=True)[:n]
             peak_idxs =[x.tolist().index(k) for k in peak_vals]
 
             return peak_idxs
     raise ValueError('Couldnt find %i peaks'%n)
-    
     
 def detect_span(ntwk):
     '''
@@ -54,8 +170,6 @@ def detect_span(ntwk):
     span = abs(ntwk.frequency.t_ns[p1]-ntwk.frequency.t_ns[p2])
     return span 
     
-
-
 def time_gate(ntwk, start=None, stop=None, center=None, span=None,
               mode='bandpass', window=('kaiser', 6),media=None, 
               boundary='reflect',return_all=False):
@@ -156,9 +270,6 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
                            window,
                            npy.zeros(len(t) - stop_idx)]
 
-    if mode == 'bandstop':
-        gate = 1 - gate
-
     #IFFT the gate, so we have it's frequency response, aka kernel
     kernel=fft.fftshift(fft.ifft(fft.fftshift(gate, axes=0), axis=0))
     kernel =abs(kernel).flatten() # take mag and flatten
@@ -167,7 +278,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
     out = ntwk.copy()
     
     # conditionally delay ntwk, to center at t=0, this is 
-    # equivalent to gating at center. 
+    # equivalent to gating at center.  (this is probably very inefficient)
     if center!=0:
         out = out.delay(-center*1e9, 'ns',port=0,media=media)
     
@@ -181,6 +292,13 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
     if center!=0:
         out = out.delay(center*1e9, 'ns',port=0,media=media)
 
+    if mode == 'bandstop':
+        out = ntwk-out
+    elif mode=='bandpass':
+        pass
+    else:
+        raise ValueError('mode should be \'bandpass\' or \'bandstop\'')
+
     if return_all:
         # compute the gate ntwk and add delay
         gate_ntwk = out.s11.copy()
@@ -188,7 +306,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
         gate_ntwk= gate_ntwk.delay(center*1e9, 'ns', media=media)
         
         return {'gated_ntwk':out,
-                'gate_ntwk':gate_ntwk}
+                'gate':gate_ntwk}
     else:
         return out
     

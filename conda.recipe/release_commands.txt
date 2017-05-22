@@ -1,0 +1,21 @@
+# prep) install conda-build-all, anaconda and login to anaconda
+  conda install conda-build-all anaconda
+  anaconda login
+
+# 0) change version in skrf/__init__.py
+
+# 1) tag a relase and push tags
+  git tag -a -f v0.14.4 -m "Release with python 3.6 support"
+  git push --tags
+
+# if build works, travis will then push a release to pypi.  
+
+# 2) next, modify meta.yaml to reflect the pypi package and hash
+#  (from pypi), and build all conda packages for all python versions
+  conda-build-all path//to/scikit-rf/conda.recipe/ --matrix-condition "python >=2.7.*"
+
+# 3) convert all python versions to all platforms 
+  find /home/alex/anaconda3/conda-bld/linux-64/ -name '*py*.bz2' -exec conda convert -p all {} \;
+ 
+# 4) upload all pacakges to your channel
+  find . -name '*.bz2' -exec anaconda upload --user scikit-rf  {} \;

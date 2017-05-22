@@ -21,7 +21,8 @@ from skrf.networkSet import NetworkSet
 global NPTS  
 NPTS = 1
 
-WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil,z0=50)
+WG_lossless =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, z0=50)
+WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, z0=50, rho='gold')
 
 
 
@@ -163,7 +164,8 @@ class SDDLTest(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
-        self.wg = WG
+        #Exact only with a lossless waveguide
+        self.wg = WG_lossless
         wg = self.wg
         
         self.E = wg.random(n_ports =2, name = 'E')
@@ -226,7 +228,8 @@ class SDDLWeikle(OnePortTest):
     def setUp(self):
         #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
-        self.wg = WG
+        #Exact only with a lossless waveguide
+        self.wg = WG_lossless
         wg = self.wg
         self.E = wg.random(n_ports =2, name = 'E')
         #self.E.s[0,:,:] = npy.array([[.1j,1],[1j,1j+2]])
@@ -266,7 +269,8 @@ class SDDMTest(OnePortTest):
     def setUp(self):
         
         self.n_ports = 1
-        self.wg = WG
+        #Exact only with a lossless waveguide
+        self.wg = WG_lossless
         wg = self.wg
         
         self.E = wg.random(n_ports =2, name = 'E')
@@ -617,20 +621,13 @@ class NISTMultilineTRLTest(EightTermTest):
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
-        # make error networks have s21,s12 >> s11,s22 so that TRL
-        # can guess at line length
-        self.X.s[:,0,0] *=1e-1
-        self.Y.s[:,0,0] *=1e-1
-        self.X.s[:,1,1] *=1e-1
-        self.Y.s[:,1,1] *=1e-1
-
         actuals = [
             wg.thru(),
-            rf.two_port_reflect(wg.load(-.9-.1j),wg.load(-.9-.1j)),
-            rf.two_port_reflect(wg.load(.92+0.05j),wg.load(.92+0.05j)),
+            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),
+            rf.two_port_reflect(wg.load(.99+0.05j),wg.load(.99+0.05j)),
             wg.line(100,'um'),
             wg.line(200,'um'),
-            wg.line(500,'um'),
+            wg.line(900,'um'),
             ]
 
         self.actuals=actuals
@@ -641,18 +638,17 @@ class NISTMultilineTRLTest(EightTermTest):
             measured = measured,
             isolation = measured[1],
             Grefls = [-1, 1],
-            l = [0, 100e-6, 200e-6, 500e-6],
+            l = [0, 100e-6, 200e-6, 900e-6],
             er_est = 1,
             switch_terms = (self.gamma_f, self.gamma_r),
-            gamma_root_choice = 'imag' #Losslessness of the line causes problems
-                                       #without this option
+            gamma_root_choice = 'real'
             )
 
     def test_gamma(self):
         self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
 
 class NISTMultilineTRLTest2(unittest.TestCase):
-    """ Test characteristic impdeance change and reference plane shift.
+    """ Test characteristic impedance change and reference plane shift.
     Due to the transformations solved error boxes are not equal to the initial
     error boxes so CalibrationTestCase can't be used."""
     def setUp(self):
@@ -673,13 +669,6 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         self.Y = wg.random(n_ports =2, name = 'Y')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
-
-        # make error networks have s21,s12 >> s11,s22 so that TRL
-        # can guess at line length
-        self.X.s[:,0,0] *=1e-1
-        self.Y.s[:,0,0] *=1e-1
-        self.X.s[:,1,1] *=1e-1
-        self.Y.s[:,1,1] *=1e-1
 
         actuals = [
             rlgc.thru(),
@@ -1156,7 +1145,8 @@ class MRCTest(EightTermTest):
     def setUp(self):
         
         self.n_ports = 2
-        self.wg = WG
+        #Exact only with a lossless waveguide
+        self.wg = WG_lossless
         wg= self.wg 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')

@@ -3034,6 +3034,8 @@ def one_port_2_two_port(ntwk):
                         npy.exp(1j * (
                         npy.angle(s11) + npy.pi / 2. * (npy.angle(s11) < 0) - npy.pi / 2 * (npy.angle(s11) > 0)))
     result.s[:, 1, 0] = result.s[:, 0, 1]
+    
+    result.z0 = npy.hstack([ntwk.z0,ntwk.z0])
     return result
 
 
