@@ -1541,6 +1541,8 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
     for m in M:
         for n in N:
 
+            plot_attribute = attribute
+
             ax = plb.gca()
 
             ntwk_mean = self.__getattribute__('mean_'+attribute)
@@ -1553,16 +1555,16 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
 
             if ppf is not None:
                 if type =='bar':
-                    warnings.warn('the \'ppf\' options don\'t work correctly with the bar-type error plots')
+                    raise NotImplementedError('the \'ppf\' options don\'t work correctly with the bar-type error plots')
                 ntwk_mean.s = ppf(ntwk_mean.s)
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
                 lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
                 if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute is 's_mag':
-                        attribute = 's_db'
+                        plot_attribute = 's_db'
                     elif attribute is 's_time_mag':
-                        attribute = 's_time_db'
+                        plot_attribute = 's_time_db'
 
             if type == 'shade':
                 ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
@@ -1584,7 +1586,7 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
             else:
                 raise(ValueError('incorrect plot type'))
 
-            ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
+            ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:],''))  # use only the function of the attribute
             ax.axis('tight')
 
 def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
@@ -1641,7 +1643,7 @@ def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
 
     if ppf is not None:
         if type =='bar':
-            warnings.warn('the \'ppf\' options don\'t work correctly with the bar-type error plots')
+            raise NotImplementedError('the \'ppf\' options don\'t work correctly with the bar-type error plots')
         ntwk_mean.s = ppf(ntwk_mean.s)
         upper_bound = ppf(upper_bound)
         lower_bound = ppf(lower_bound)
