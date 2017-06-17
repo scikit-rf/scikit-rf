@@ -1979,7 +1979,7 @@ class EightTerm(Calibration):
     '''
     family = 'EightTerm'
     def __init__(self, measured, ideals, switch_terms=None,
-                isolation=None, *args, **kwargs):
+                isolation=None, ut_hook=None,*args, **kwargs):
         '''
         EightTerm Initializer
 
@@ -2024,7 +2024,9 @@ class EightTerm(Calibration):
             #Zero port matching so that networks can be simply subtracted
             self.isolation.s[:,0,0] = 0
             self.isolation.s[:,1,1] = 0
-
+        
+        self.ut_hook=ut_hook
+        
         Calibration.__init__(self,
             measured = measured,
             ideals = ideals,
@@ -2039,12 +2041,17 @@ class EightTerm(Calibration):
         ---------
         calibration.unterminate
         '''
+        if self.ut_hook is not None:
+            return self.ut_hook(self,ntwk)
+        
         if self.switch_terms is not None:
             gamma_f, gamma_r = self.switch_terms
             return unterminate(ntwk, gamma_f, gamma_r)
 
         else:
             return ntwk
+        
+        
 
     def terminate(self, ntwk):
         '''
@@ -2156,7 +2163,7 @@ class EightTerm(Calibration):
         ntwk.s[:,0,1] -= self.coefs['reverse isolation']
 
         ntwk = self.unterminate(ntwk)
-
+        
         for f in list(range(len(ntwk.s))):
             t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
                             T4[f,:,:],ntwk.s[f,:,:]
