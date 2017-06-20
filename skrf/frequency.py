@@ -240,6 +240,8 @@ class Frequency(object):
         # had to do this out of practicality
         if len(self.f) != len(other.f):
             return False
+        elif len(self.f) == len(other.f) == 0:
+            return True
         else:
             return (max(abs(self.f-other.f)) < ZERO)
 
