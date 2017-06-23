@@ -577,6 +577,7 @@ def unique_name(name, names, exclude=-1):
 
 def smooth(x, window_len=11, window='flat'):
     """smooth the data using a window with requested size.
+    based on the function from the scipy cookbook
     http://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
 
     This method is based on the convolution of a scaled window with the signal.
@@ -617,11 +618,10 @@ def smooth(x, window_len=11, window='flat'):
     if window_len < 3:
         return x
 
-    if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError("Window is one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
 
     s = npy.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
-    # print(len(s))
     if window == 'flat':  # moving average
         w = npy.ones(window_len, 'd')
     else:
@@ -631,6 +631,10 @@ def smooth(x, window_len=11, window='flat'):
 
 
 class ProgressBar:
+    """
+    a progress bar based off of the notebook/ipython progress bar from PyMC.  Useful when waiting for long operations
+    such as taking a large number of VNA measurements that may take a few minutes
+    """
     def __init__(self, iterations, label="iterations"):
         self.iterations = iterations
         self.label = label
