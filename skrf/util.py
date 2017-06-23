@@ -20,7 +20,7 @@ General
    get_extn
 
 """
-
+from __future__ import print_function
 import fnmatch
 import os
 import json
@@ -37,6 +37,7 @@ import collections
 import pprint
 import re
 from subprocess import Popen, PIPE
+import sys
 # globals
 
 try:
@@ -572,3 +573,94 @@ def unique_name(name, names, exclude=-1):
             if has_duplicate_value(name, names, exclude) is False:
                 break
     return name
+
+
+def smooth(x, window_len=11, window='flat'):
+    """smooth the data using a window with requested size.
+    based on the function from the scipy cookbook
+    http://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
+
+    This method is based on the convolution of a scaled window with the signal.
+    The signal is prepared by introducing reflected copies of the signal 
+    (with the window size) in both ends so that transient parts are minimized
+    in the begining and end part of the output signal.
+
+    input:
+        x: the input signal 
+        window_len: the dimension of the smoothing window; should be an odd integer
+        window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
+            flat window will produce a moving average smoothing.
+
+    output:
+        the smoothed signal
+
+    example:
+
+    t=linspace(-2,2,0.1)
+    x=sin(t)+randn(len(t))*0.1
+    y=smooth(x)
+
+    see also: 
+
+    npy.hanning, npy.hamming, npy.bartlett, npy.blackman, npy.convolve
+    scipy.signal.lfilter
+
+    TODO: the window parameter could be the window itself if an array instead of a string
+    NOTE: length(output) != length(input), to correct this: return y[(window_len/2-1):-(window_len/2)] instead of just y.
+    """
+
+    if x.ndim != 1:
+        raise ValueError("smooth only accepts 1 dimension arrays.")
+
+    if x.size < window_len:
+        raise ValueError("Input vector needs to be bigger than window size.")
+
+    if window_len < 3:
+        return x
+
+    if window not in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
+        raise ValueError("Window is one of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
+
+    s = npy.r_[x[window_len - 1:0:-1], x, x[-2:-window_len - 1:-1]]
+    if window == 'flat':  # moving average
+        w = npy.ones(window_len, 'd')
+    else:
+        w = eval('npy.' + window + '(window_len)')
+    y = npy.convolve(w / w.sum(), s, mode='same')
+    return y[window_len-1:-(window_len-1)]
+
+
+class ProgressBar:
+    """
+    a progress bar based off of the notebook/ipython progress bar from PyMC.  Useful when waiting for long operations
+    such as taking a large number of VNA measurements that may take a few minutes
+    """
+    def __init__(self, iterations, label="iterations"):
+        self.iterations = iterations
+        self.label = label
+        self.prog_bar = '[]'
+        self.fill_char = '*'
+        self.width = 50
+        self.__update_amount(0)
+
+    def animate(self, iteration):
+        print('\r', self, end='')
+        sys.stdout.flush()
+        self.update_iteration(iteration + 1)
+
+    def update_iteration(self, elapsed_iter):
+        self.__update_amount((elapsed_iter / float(self.iterations)) * 100.0)
+        self.prog_bar += '  %d of %s %s complete' % (elapsed_iter, self.iterations, self.label)
+
+    def __update_amount(self, new_amount):
+        percent_done = int(round((new_amount / 100.0) * 100.0))
+        all_full = self.width - 2
+        num_hashes = int(round((percent_done / 100.0) * all_full))
+        self.prog_bar = '[' + self.fill_char * num_hashes + ' ' * (all_full - num_hashes) + ']'
+        pct_place = (len(self.prog_bar) // 2) - len(str(percent_done))
+        pct_string = '%d%%' % percent_done
+        self.prog_bar = self.prog_bar[0:pct_place] + \
+            (pct_string + self.prog_bar[pct_place + len(pct_string):])
+
+    def __str__(self):
+        return str(self.prog_bar)
