@@ -303,7 +303,7 @@ class RectangularWaveguide(Media):
 
         the distance in which the phase of the field increases by 2 pi
         '''
-        return 2*pi/self.propagation_constant.imag
+        return 2*pi/self.beta
 
     @property
     def lambda_cutoff(self):
@@ -404,7 +404,7 @@ class RectangularWaveguide(Media):
         http://eceweb1.rutgers.edu/~orfanidi/ewa/
         '''
 
-        if self.rho==None:
+        if self.rho is None:
             return 0
 
         a,b,w,ep,rho,f_n = self.a, self.b, self.frequency.w, self.ep, \
