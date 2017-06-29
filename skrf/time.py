@@ -17,15 +17,7 @@ Methods
     find_n_peaks
     indexes
     
-asdfasdf
 
-.. autosummary::
-    :toctree: generated/
-
-    time_gate
-    detect_span 
-    find_n_peaks
-    indexes
     
 """
 
