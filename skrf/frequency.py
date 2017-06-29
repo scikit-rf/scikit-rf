@@ -39,7 +39,7 @@ import re
 from .util import slice_domain,find_nearest_index
 #from .constants import ZERO
 global ZER0
-ZERO=1e-4 # currently needed to allow frequency __eq__ method to work 
+ZERO=1e-4 # currently needed to allow frequency __eq__ method to work
 # comparing 1e-4hz is very small for most applications
 
 
@@ -76,7 +76,7 @@ class Frequency(object):
             'ghz':1e9,\
             'thz':1e12\
             }
-    
+
 
     def __init__(self,start=0, stop=0, npoints=0, unit='ghz', sweep_type='lin'):
         '''
@@ -167,9 +167,9 @@ class Frequency(object):
 
         output = self.copy()
 
-       
+
         if isinstance(key, str):
-           
+
             # they passed a string try and do some interpretation
             re_numbers = re.compile('.*\d')
             re_hyphen = re.compile('\s*-\s*')
@@ -201,8 +201,11 @@ class Frequency(object):
                 raise IndexError('slicing frequency is incorrect')
 
 
-        output.f = npy.array(output.f[key]).reshape(-1)
-        
+        if output.f.shape[0] > 0:
+            output.f = npy.array(output.f[key]).reshape(-1)
+        else:
+            output.f = npy.empty(shape=(0))
+
         return output
 
 
@@ -240,6 +243,8 @@ class Frequency(object):
         # had to do this out of practicality
         if len(self.f) != len(other.f):
             return False
+        elif len(self.f) == len(other.f) == 0:
+            return True
         else:
             return (max(abs(self.f-other.f)) < ZERO)
 
@@ -274,20 +279,20 @@ class Frequency(object):
         '''
         return self.f[0]
 
-    @property 
+    @property
     def start_scaled(self):
         '''
         starting frequency in :attr:`unit`'s
         '''
         return self.f_scaled[0]
-    @property 
+    @property
     def stop_scaled(self):
         '''
         stop frequency in :attr:`unit`'s
         '''
         return self.f_scaled[-1]
-    
-        
+
+
     @property
     def stop(self):
         '''
@@ -301,7 +306,7 @@ class Frequency(object):
         number of points in the frequency
         '''
         return len(self.f)
-    
+
     @npoints.setter
     def npoints(self, n):
         '''
@@ -309,8 +314,8 @@ class Frequency(object):
         '''
         self.f = linspace(self.start, self.stop, n)
 
-    
-    
+
+
     @property
     def center(self):
         '''
@@ -322,14 +327,14 @@ class Frequency(object):
                 the exact center frequency in units of hz
         '''
         return self.start + (self.stop-self.start)/2.
-    
+
     @property
     def center_idx(self):
         '''
         closes idx of :attr:`f` to the center frequency
         '''
         return int(self.npoints)/2
-        
+
     @property
     def center_scaled(self):
         '''
@@ -345,30 +350,30 @@ class Frequency(object):
     @property
     def step(self):
         '''
-        the inter-frequency step size (in hz) for evenly-spaced 
+        the inter-frequency step size (in hz) for evenly-spaced
         frequency sweeps
-        
+
         see `df` for general case
         '''
         return self.span/(self.npoints-1.)
-    
+
     @property
     def step_scaled(self):
         '''
         the inter-frequency step size (in self.unit) for evenly-spaced
         frequency sweeps
-        
+
         see `df` for general case
         '''
         return self.span_scaled/(self.npoints-1.)
-    
+
     @property
     def span(self):
         '''
         the frequency span
         '''
         return abs(self.stop-self.start)
-    
+
     @property
     def span_scaled(self):
         '''
@@ -401,8 +406,8 @@ class Frequency(object):
         '''
         self._f = npy.array(new_f)
 
-    
-    
+
+
     @property
     def f_scaled(self):
         '''
@@ -439,25 +444,25 @@ class Frequency(object):
         '''
         return 2*pi*self.f
 
-    @property 
+    @property
     def df(self):
         '''
         the gradient of the frequency vector (in hz)
         '''
         return gradient(self.f)
-    @property 
+    @property
     def df_scaled(self):
         '''
         the gradient of the frequency vector (in self.unit)
         '''
         return gradient(self.f_scaled)
-    @property 
+    @property
     def dw(self):
         '''
         the gradient of the frequency vector (in radians)
         '''
         return gradient(self.w)
-    
+
     @property
     def unit(self):
         '''
@@ -564,9 +569,9 @@ def overlap_freq(f1,f2):
 
     Or, put more accurately, this returns a Frequency that is the part
     of f1 that is overlapped by f2. The resultant start frequency is
-    the smallest f1.f that is greater than f2.f.start, and the stop 
+    the smallest f1.f that is greater than f2.f.start, and the stop
     frequency is the largest f1.f that is smaller than f2.f.stop.
-    
+
     This way the new frequency overlays onto f1.
 
 

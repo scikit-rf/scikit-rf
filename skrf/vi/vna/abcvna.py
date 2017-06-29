@@ -86,7 +86,9 @@ class VNA(object):
             for GPIB, default is usually 0
         """
 
-        rm = pyvisa.ResourceManager(visa_library=kwargs.get("visa_library", ""))
+        rm = kwargs.get("resource_manager", None)
+        if not rm:
+            rm = pyvisa.ResourceManager(visa_library=kwargs.get("visa_library", ""))
 
         interface = str(kwargs.get("interface", None)).upper()  # GPIB, SOCKET
         if interface == "GPIB":

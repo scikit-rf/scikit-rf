@@ -160,19 +160,30 @@ def generate_query_values_string(command, command_root):
     return function_string
 
 
-def parse_branch(branch, set_strings=[], query_strings=[], query_value_strings=[], root=""):
+def parse_branch(branch, set_strings=None, query_strings=None, query_value_strings=None, root=""):
+    if set_strings is None:
+        set_strings = list()
+    if query_strings is None:
+        query_strings = list()
+    if query_value_strings is None:
+        query_value_strings = list()
+
     for key, value in branch.items():
         command_root = root + ":" + key
         command = None
         branch = None
 
-        if "name" in value.keys():
-            command = value
-        elif "command" in value.keys():
-            command = value["command"]
-            branch = value["branch"]
-        else:
-            branch = value
+        try:
+            if "name" in value.keys():
+                command = value
+            elif "command" in value.keys():
+                command = value["command"]
+                branch = value["branch"]
+            else:
+                branch = value
+        except Exception as e:
+            print(key, value)
+            raise Exception(e)
 
         if command:
             if "set" in command.keys():
@@ -265,6 +276,7 @@ class_header = """class SCPI(object):
 def parse_yaml_file(driver_yaml_file):
     driver = os.path.splitext(driver_yaml_file)[0] + ".py"
 
+    driver_template = None
     with open(driver_yaml_file, 'r') as yaml_file:
         driver_template = yaml.load(yaml_file)
     sets, queries = parse_branch(driver_template["COMMAND_TREE"])

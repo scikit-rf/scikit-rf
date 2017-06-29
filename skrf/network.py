@@ -664,7 +664,7 @@ class Network(object):
         else:
             name = self.name
 
-        if len(npy.shape(self.z0)) == 0:
+        if len(npy.shape(self.z0)) == 0 or npy.shape(self.z0)[0] == 0:
             z0 = str(self.z0)
         else:
             z0 = str(self.z0[0, :])
