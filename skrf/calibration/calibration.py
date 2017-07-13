@@ -2690,7 +2690,7 @@ class NISTMultilineTRL(EightTerm):
             else:
                 if abs((ga[0]-gb[0]).real) < 0.1*abs((ga[1] + gb[1]).real) \
                     and abs(ga[0].real/ga[0].imag) > 0.001 \
-                    and ga.real > 0:
+                    and ga[0].real > 0:
                         if Da[0] + Db[0] < 0.2:
                             return e_val
                         else:
