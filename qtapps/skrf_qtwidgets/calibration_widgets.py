@@ -664,8 +664,14 @@ class NISTTRLStandardsWidget(QtWidgets.QWidget):
         error_messages = []
 
         thru = self.listWidget_thru.get_named_item(self.THRU_ID).ntwk
-        forward_switch_terms = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_FORWARD).ntwk
-        reverse_switch_terms = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_REVERSE).ntwk
+
+        try:
+            forward_switch_terms = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_FORWARD).ntwk
+            reverse_switch_terms = self.listWidget_thru.get_named_item(self.SWITCH_TERMS_ID_REVERSE).ntwk
+        except Exception as e:
+            forward_switch_terms = None
+            reverse_switch_terms = None
+
         if isinstance(forward_switch_terms, skrf.Network) and isinstance(reverse_switch_terms, skrf.Network):
             switch_terms = (forward_switch_terms, reverse_switch_terms)
         else:
