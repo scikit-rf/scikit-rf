@@ -4,11 +4,15 @@ DEFAULTS:
   strip_outer_quotes: True
   kwarg_value: ""
 COMMAND_TREE:
+  BWID: {name: if_bandwidth, set: <bandwidth=1000>, query: "", returns: int}
   CALC:
+    DATA:
+      SDAT: {name: current_trace_data, query_values: ""}
+    PAR:
+      COUN: {name: trace_count, set: <num=4>, query: "", returns: int}
     PAR<trace=1>:
-      COUN: {name: trace_count, query: "", returns: int}
       DEF: {name: trace_measurement, set: "<meas='S11'>", query: ""}
-      SEL: {name: current_trace, set: "", query: "", returns: int}
+      SEL: {name: current_trace, set: ""}
     FORM: {name: display_format, set: <fmt=MLOG>, query: ""}
   DISP:
     WIND:
