@@ -390,9 +390,9 @@ def hfss_touchstone_2_gamma_z0(filename):
 
         for line in f:
             if '! Gamma' in line:
-                gamma.append(line2ComplexVector(line))
+                gamma.append(line2ComplexVector(line.replace('! Gamma', '')))
             if '! Port Impedance' in line:
-                z0.append(line2ComplexVector(line))
+                z0.append(line2ComplexVector(line.replace('! Port Impedance', '')))
 
     if len(z0) == 0:
         raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
