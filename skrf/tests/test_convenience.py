@@ -32,4 +32,24 @@ class ConvenienceTestCase(unittest.TestCase):
         med_p1,med_p2 = rf.hfss_touchstone_2_media(self.hfss_twoport_file)
         med_p1.line(1)
         med_p2.line(1)
+        
+    def test_hfss_touchstone_renormalization(self):
+        '''
+        Scattering matrices are given for a given impedance z0, 
+        which is usually assumed to be 50 Ohm, unless otherwise stated.
+        
+        Touchstone files are not necessarly indicating such impedances, 
+        especially if they vary with frequency.
+        
+        HFSS Touchstone file format supports port informations (as an option) for gamma and z0
+        When HFSS file are read with hfss_touchstone_2_network(),
+        the port informations are taken into account, while this is not the case with Network()
+        since the latter function should work with any Touchstone files, not especially HFSS's.
+        '''
+        # Comparing the S-params of the same device expressed with same z0 
+        nw_50 = rf.hfss_touchstone_2_network(os.path.join(self.test_dir, 'hfss_threeport_DB_50Ohm.s3p'))
+        nw = rf.hfss_touchstone_2_network(os.path.join(self.test_dir, 'hfss_threeport_DB.s3p'))
+        nw.renormalize(z_new=50)       
+        self.assertTrue(npy.all(npy.abs(nw.s - nw_50.s) < 1e-6))
+        
 

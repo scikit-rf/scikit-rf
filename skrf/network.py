@@ -2043,8 +2043,8 @@ class Network(object):
         powerwave : bool
             if true this calls :func:`renormalize_s_pw`, which assumes
             a powerwave formulation. Otherwise it calls
-            :func:`renormalize_s` which implements the default psuedowave
-            formuation. If z_new or self.z0 is complex, then these
+            :func:`renormalize_s` which implements the default pseudowave
+            formulation. If z_new or self.z0 is complex, then these
             produce different results.
 
         See Also
