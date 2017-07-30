@@ -3528,12 +3528,13 @@ def s2t(s):
     Converts scattering parameters [#]_ to scattering transfer parameters [#]_ .
 
     transfer parameters are also refered to as
-    'wave cascading matrix', this function only operates on 2-port
-    networks.
+    'wave cascading matrix', this function only operates on 2N-ports
+    networks with same number of input and output ports, also known as
+    'balanced networks'.
 
     Parameters
     -----------
-    s : :class:`numpy.ndarray` (shape fx2x2)
+    s : :class:`numpy.ndarray` (shape fx2nx2n)
         scattering parameter matrix
 
     Returns
@@ -3566,15 +3567,28 @@ def s2t(s):
     -----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+    .. [#] Janusz A. Dobrowolski, "Scattering Parameter in RF and Microwave Circuit Analysis and Design",
+           Artech House, 2016, pp. 65-68
     """
-    # TODO: check rank(s) ==2
-
-    t = npy.array([
-        [-1 * (s[:, 0, 0] * s[:, 1, 1] - s[:, 1, 0] * s[:, 0, 1]) / s[:, 1, 0],
-         -s[:, 1, 1] / s[:, 1, 0]],
-        [s[:, 0, 0] / s[:, 1, 0],
-         1. / s[:, 1, 0]]
-    ]).transpose()
+    z, y, x = s.shape
+    # test here for even number of ports.
+    # s-parameter networks are square matrix, so x and y are equal.
+    if(x % 2 != 0):
+        raise IndexError('Network don\'t have an even number of ports')     
+    t = npy.zeros((z, y, x), dtype=complex)
+    yh = int(y/2)
+    xh = int(x/2)
+    # S_II,I^-1
+    sinv = npy.linalg.inv(s[:, yh:y, 0:xh])
+    # np.linalg.inv test for singularity (matrix not invertible)
+    # T_I,I = S_I,II - S_I,I * S_II,I^-1 * S_II,II
+    t[:, 0:yh, 0:xh] = s[:, 0:yh, xh:x]-s[:, 0:yh, 0:xh]*sinv*s[:, yh:y, xh:x]
+    # T_I,II = S_I,I * S_II,I^-1
+    t[:, 0:yh, xh:x] = s[:, 0:yh, 0:xh]*sinv
+    # T_II,I = -S_II,I^-1 * S_II,II
+    t[:, yh:y, 0:xh] = -sinv*s[:, yh:y, xh:x]
+    # T_II,II = S_II,I^-1
+    t[:, yh:y, xh:x] = sinv
     return t
 
 
@@ -3989,13 +4003,13 @@ def t2s(t):
     converts scattering transfer parameters [#]_ to scattering parameters [#]_
 
     transfer parameters are also referred to as
-    'wave cascading matrix', this function only operates on 2-port
-    networks. this function only operates on 2-port scattering
-    parameters.
+    'wave cascading matrix', this function only operates on 2N-ports
+    networks with same number of input and output ports, also known as
+    'balanced networks'.
 
     Parameters
     -----------
-    t : :class:`numpy.ndarray` (shape fx2x2)
+    t : :class:`numpy.ndarray` (shape fx2nx2n)
             scattering transfer parameters
 
     Returns
@@ -4027,15 +4041,28 @@ def t2s(t):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     .. [#] http://en.wikipedia.org/wiki/S-parameters
+    .. [#] Janusz A. Dobrowolski, "Scattering Parameter in RF and Microwave Circuit Analysis and Design",
+           Artech House, 2016, pp. 65-68
     '''
-    # TODO: check rank(s) ==2
-
-    s = npy.array([
-        [t[:, 0, 1] / t[:, 1, 1],
-         1 / t[:, 1, 1]],
-        [(t[:, 0, 0] * t[:, 1, 1] - t[:, 1, 0] * t[:, 0, 1]) / t[:, 1, 1],
-         -1 * t[:, 1, 0] / t[:, 1, 1]]
-    ]).transpose()
+    z, y, x = t.shape
+    # test here for even number of ports.
+    # t-parameter networks are square matrix, so x and y are equal.
+    if(x % 2 != 0):
+        raise IndexError('Network don\'t have an even number of ports')
+    s = npy.zeros((z, y, x), dtype=complex)
+    yh = int(y/2)
+    xh = int(x/2)
+    # T_II,II^-1
+    tinv = npy.linalg.inv(t[:, yh:y, xh:x])
+    # np.linalg.inv test for singularity (matrix not invertible)
+    # S_I,I = T_I,II * T_II,II^-1
+    s[:, 0:yh, 0:xh] = t[:, 0:yh, xh:x]*tinv
+    # S_I,II = T_I,I - T_I,I,II * T_II,II^-1 * T_II,I
+    s[:, 0:yh, xh:x] = t[:, 0:yh, 0:xh]-t[:, 0:yh, xh:x]*tinv*t[:, yh:y, 0:xh]
+    # S_II,I = T_II,II^-1
+    s[:, yh:y, 0:xh] = tinv
+    # S_II,II = -T_II,II^-1 * T_II,I
+    s[:, yh:y, xh:x] = -tinv*t[:, yh:y, 0:xh]
     return s
 
 
@@ -4440,7 +4467,7 @@ def inv(s):
 
     Parameters
     -----------
-    s : :class:`numpy.ndarray` (shape fx2x2)
+    s : :class:`numpy.ndarray` (shape fx2nx2n)
             scattering parameter matrix.
 
     Returns
