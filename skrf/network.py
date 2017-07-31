@@ -415,16 +415,31 @@ class Network(object):
         """
         cascade this network with another network
 
-        port 1 of this network is connected to port 0 or the other
-        network
+        If networks are both of 2N ports, it is assumed they are balanced
+        and we connect ports N->2N-1 on self with 0-N on other. 
         """
         # if they pass a number then use power operator
         if isinstance(other, Number):
             out = self.copy()
             out.s = out.s ** other
             return out
-        # else connect the two
-        return connect(self, 1, other, 0)
+        
+        if self.nports<2:
+            raise ValueError('nports must be >1')
+            
+        
+        N = int(self.nports/2 )
+        if other.nports == 1:
+            # we are terminating a N-port with a 1-port. 
+            # which port on self to use is ambiguous. choose N
+            return connect(self, N, other, 0)
+        
+        elif self.nports %2 == 0 and self.nports == other.nports:
+            # we have 2N port balanced networks
+            return connect(self, N, other, 0, num=N)
+        
+        else:
+            raise ValueError('I dont know what to do, check port shapes of Networks')
 
     def __floordiv__(self, other):
         """
@@ -4483,12 +4498,14 @@ def inv(s):
 
     '''
     # this idea is from lihan
-    i = s2t(s)
-    for f in range(len(i)):
-        i[f, :, :] = npy.linalg.inv(i[f, :, :])  # could also be written as
-        #   npy.mat(i[f,:,:])**-1  -- Trey
-    i = t2s(i)
-    return i
+    t = s2t(s)
+    tinv = npy.linalg.inv(t)
+    sinv = t2s(tinv)
+    #for f in range(len(i)):
+    #    i[f, :, :] = npy.linalg.inv(i[f, :, :])  # could also be written as
+    #    #   npy.mat(i[f,:,:])**-1  -- Trey
+    
+    return sinv
 
 
 def flip(a):
@@ -4509,8 +4526,9 @@ def flip(a):
 
     Note
     -----
-                    only works for 2-ports at the moment
+        See renumber    
     '''
+    ## TODO: implement me with  renumber!
     c = a.copy()
 
     if len(a.shape) > 2:
