@@ -415,8 +415,7 @@ class Network(object):
         """
         cascade this network with another network
 
-        If networks are both of 2N ports, it is assumed they are balanced
-        and we connect ports N->2N-1 on self with 0-N on other. 
+        See `cascade`
         """
         # if they pass a number then use power operator
         if isinstance(other, Number):
@@ -424,23 +423,9 @@ class Network(object):
             out.s = out.s ** other
             return out
         
-        if self.nports<2:
-            raise ValueError('nports must be >1')
-            
-        
-        N = int(self.nports/2 )
-        if other.nports == 1:
-            # we are terminating a N-port with a 1-port. 
-            # which port on self to use is ambiguous. choose N
-            return connect(self, N, other, 0)
-        
-        elif self.nports %2 == 0 and self.nports == other.nports:
-            # we have 2N port balanced networks
-            return connect(self, N, other, 0, num=N)
-        
         else:
-            raise ValueError('I dont know what to do, check port shapes of Networks')
-
+            return cascade(self, other)
+            
     def __floordiv__(self, other):
         """
         de-embeding another network[s], from this network
@@ -2749,11 +2734,24 @@ def innerconnect(ntwkA, k, l, num=1):
 
 def cascade(ntwkA, ntwkB):
     '''
-    Cascade two 2-port Networks together
+    Cascade two 2, 2N-ports  Networks together
 
-    Connects port 1 of `ntwkA` to port 0 of `ntwkB`. This calls
-    `connect(ntwkA,1, ntwkB,0)`, which is a more general function.
-
+    Connects ports N through 2N-1  on `ntwkA` to ports 0 through N of 
+    `ntwkB`. This calls `connect()`, which is a more general function.
+    Use `Network.renumber` to change port order if needed. 
+    
+    Notes
+    ------
+    
+        A                B          
+     +---------+   +---------+   
+    -|0      N |---|0      N |-  
+    -|1     N+1|---|1     N+1|-   
+    ...       ... ...       ... 
+    -|N-2  2N-2|---|N-2  2N-2|- 
+    -|N-1  2N-1|---|N-1  2N-1|-  
+     +---------+   +---------+  
+     
     Parameters
     -----------
     ntwkA : :class:`Network`
@@ -2769,8 +2767,26 @@ def cascade(ntwkA, ntwkB):
     See Also
     ---------
     connect : connects two Networks together at arbitrary ports.
+    Network.renumber : changes the port order of a network
     '''
-    return connect(ntwkA, 1, ntwkB, 0)
+    
+    if ntwkA.nports<2:
+            raise ValueError('nports must be >1')
+        
+    
+    N = int(ntwkA.nports/2 )
+    if ntwkB.nports == 1:
+        # we are terminating a N-port with a 1-port. 
+        # which port on self to use is ambiguous. choose N
+        return connect(ntwkA, N, ntwkB, 0)
+    
+    elif ntwkA.nports %2 == 0 and ntwkA.nports == ntwkB.nports:
+        # we have 2N port balanced networks
+        return connect(ntwkA, N, ntwkB, 0, num=N)
+    
+    else:
+        raise ValueError('I dont know what to do, check port shapes of Networks')
+    
 
 
 def cascade_list(l):
