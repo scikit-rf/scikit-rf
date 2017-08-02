@@ -39,7 +39,7 @@ class FieldFox(abcvna.VNA):
         self.use_ascii()
 
     def use_binary(self):
-        raise Exception("binary working correctly")
+        raise Exception("binary not working correctly")
         """setup the analyzer to transfer in binary which is faster, especially for large datasets"""
         self.resource.write(':FORM:BORD SWAP')
         self.resource.write(':FORM:DATA REAL,64')
@@ -81,62 +81,19 @@ class FieldFox(abcvna.VNA):
         and then return to the prior state of continuous trigger or hold.
         """
         self.resource.clear()
-        self.scpi.set_trigger_source("IMM")
         original_timeout = self.resource.timeout
+        self.resource.timeout = kwargs.get("timeout", 15000)  # allow at least 10 seconds for every averaging sweep
 
-        # expecting either an int or a list of ints for the channel(s)
-        channels_to_sweep = kwargs.get("channels", None)
-        if not channels_to_sweep:
-            channels_to_sweep = kwargs.get("channel", "all")
-        if not type(channels_to_sweep) in (list, tuple):
-            channels_to_sweep = [channels_to_sweep]
-        channels = self.scpi.query_available_channels()
-
-        for i, channel in enumerate(channels):
-            sweep_mode = self.scpi.query_sweep_mode(channel)
-            was_continuous = "CONT" in sweep_mode.upper()
-            sweep_time = self.scpi.query_sweep_time(channel)
-            averaging_on = self.scpi.query_averaging_state(channel)
-            averaging_mode = self.scpi.query_averaging_mode(channel)
-
-            if averaging_on and "SWE" in averaging_mode.upper():
-                sweep_mode = "GROUPS"
-                number_of_sweeps = self.scpi.query_averaging_count(channel)
-                self.scpi.set_groups_count(channel, number_of_sweeps)
-                number_of_sweeps *= self.nports
-            else:
-                sweep_mode = "SINGLE"
-                number_of_sweeps = self.nports
-            channels[i] = {
-                "cnum": channel,
-                "sweep_time": sweep_time,
-                "number_of_sweeps": number_of_sweeps,
-                "sweep_mode": sweep_mode,
-                "was_continuous": was_continuous
-            }
-            self.scpi.set_sweep_mode(channel, "HOLD")
-        timeout = kwargs.get("timeout", None)  # recommend not setting this variable, as autosetting is preferred
+        was_continuous = self.scpi.query_continuous_sweep()
+        self.scpi.set_continuous_sweep(False)
+        self.scpi.set_clear_averaging()
 
         try:
-            for channel in channels:
-                import time
-                if "all" not in channels_to_sweep and channel["cnum"] not in channels_to_sweep:
-                    continue  # default for sweep is all, else if we specify, then sweep
-                if not timeout:  # autoset timeout based on sweep time
-                    sweep_time = channel["sweep_time"] * channel[
-                        "number_of_sweeps"] * 1000  # convert to milliseconds, and double for buffer
-                    self.resource.timeout = max(sweep_time * 2, 5000)  # give ourselves a minimum 5 seconds for a sweep
-                else:
-                    self.resource.timeout = timeout
-                self.scpi.set_sweep_mode(channel["cnum"], channel["sweep_mode"])
-                self.wait_until_finished()
+            for i in range(self.scpi.query_averaging_count()):
+                self.scpi.query(":INIT;*OPC?")
         finally:
-            self.resource.clear()
-            for channel in channels:
-                if channel["was_continuous"]:
-                    self.scpi.set_sweep_mode(channel["cnum"], "CONT")
             self.resource.timeout = original_timeout
-        return
+            self.scpi.set_continuous_sweep(was_continuous)
 
     def upload_twoport_calibration(self, cal, port1=1, port2=2, **kwargs):
         """
@@ -296,15 +253,10 @@ class FieldFox(abcvna.VNA):
         skrf.Frequency
         """
         self.resource.clear()
-        channel = kwargs.get("channel", self.active_channel)
-        use_log = "LOG" in self.scpi.query_sweep_type(channel).upper()
-        f_start = self.scpi.query_f_start(channel)
-        f_stop = self.scpi.query_f_stop(channel)
-        f_npoints = self.scpi.query_sweep_n_points(channel)
-        if use_log:
-            freq = np.logspace(np.log10(f_start), np.log10(f_stop), f_npoints)
-        else:
-            freq = np.linspace(f_start, f_stop, f_npoints)
+        f_start = self.scpi.query_f_start()
+        f_stop = self.scpi.query_f_stop()
+        f_npoints = self.scpi.query_sweep_n_points()
+        freq = np.linspace(f_start, f_stop, f_npoints)
 
         frequency = skrf.Frequency.from_f(freq, unit="Hz")
         frequency.unit = kwargs.get("f_unit", "Hz")
@@ -321,71 +273,110 @@ class FieldFox(abcvna.VNA):
 
     def get_twoport(self, ports=(1, 2), **kwargs):
         if not self.scpi.query_trace_display_config() == "D12_34":
-            raise Exception("display does not show all for SParameters")
+            self.initiate_twoport()
 
-    def get_switch_terms(self, **kwargs):
-        # TODO: implement switch terms
-        pass
+        port1, port2 = ports
+
+        ntwk = skrf.Network()
+        ntwk.frequency = self.get_frequency(f_unit="GHz")
+        npoints = len(ntwk.f)
+        ntwk.s = np.empty(shape=(npoints, 2, 2), dtype=complex)
+
+        if kwargs.get("sweep", False) is True:
+            self.sweep()
+
+        sdata = []
+        for i in range(1,5):
+            self.scpi.set_current_trace(i)
+            sdata.append(self.scpi.query_current_trace_data())
+
+        ntwk.s[:, 0, 0] = sdata[0][::2] + 1j * sdata[0][1::2]
+        ntwk.s[:, 1, 0] = sdata[1][::2] + 1j * sdata[1][1::2]
+        ntwk.s[:, 0, 1] = sdata[2][::2] + 1j * sdata[2][1::2]
+        ntwk.s[:, 1, 1] = sdata[3][::2] + 1j * sdata[3][1::2]
+
+        ntwk.z0 = kwargs.get("z0", 50.)
+
+        if port1 == 1 and port2 == 2:
+            return ntwk
+        elif port1 == 2 and port2 ==1:
+            ntwk.flip()
+            return ntwk
+        else:
+            raise Exception("ports must be a 2-length tuple with either 1, 2 or 2, 1")
+
+    def get_forward_switch_terms(self, **kwargs):
+        print("make sure source port is set to port2 manually")
 
         self.resource.clear()
-        p1, p2 = 1, 2
+        trace_config = self.scpi.query_trace_display_config()
+        trace_measurements = []
+        for i in range(self.scpi.query_trace_count()):
+            trace_measurements.append(self.scpi.query_trace_measurement(i + 1))
+        self.scpi.set_trace_count(2)
+        self.scpi.set_trace_measurement(1, "R1")
+        self.scpi.set_trace_measurement(2, "A")
 
-        self.active_channel = channel = kwargs.get("channel", self.active_channel)
+        self.sweep(**kwargs)
 
-        measurements = self.get_meas_list()
-        max_trace = len(measurements)
-        for meas in measurements:  # type: str
-            try:
-                trace_num = int(meas[0][-2:].replace("_", ""))
-                if trace_num > max_trace:
-                    max_trace = trace_num
-            except ValueError:
-                pass
+        self.scpi.set_current_trace(1)
+        R1 = self.get_active_trace_as_network()
+        self.scpi.set_current_trace(2)
+        A = self.get_active_trace_as_network()
 
-        forward_name = "CH{:}_FS_P{:d}_{:d}".format(channel, p1, max_trace + 1)
-        reverse_name = "CH{:}_RS_P{:d}_{:d}".format(channel, p2, max_trace + 2)
+        self.scpi.set_trace_display_config(trace_config)
+        for i in range(len(trace_measurements)):
+            self.scpi.set_trace_measurement(i + 1, trace_measurements[i])
 
-        self.create_meas(forward_name, 'a{:}b{:},{:}'.format(p2, p2, p1))
-        self.create_meas(reverse_name, 'a{:}b{:},{:}'.format(p1, p1, p2))
+        return R1 / A
 
-        self.sweep(channel=channel)
+    def get_reverse_switch_terms(self, **kwargs):
+        print("make sure source port is set to port1 manually")
 
-        forward = self.get_measurement(mname=forward_name, sweep=False)  # type: skrf.Network
-        forward.name = "forward switch terms"
-        reverse = self.get_measurement(mname=reverse_name, sweep=False)  # type: skrf.Network
-        reverse.name = "reverse switch terms"
+        self.resource.clear()
+        trace_config = self.scpi.query_trace_display_config()
+        trace_measurements = []
+        for i in range(self.scpi.query_trace_count()):
+            trace_measurements.append(self.scpi.query_trace_measurement(i + 1))
+        self.scpi.set_trace_count(2)
+        self.scpi.set_trace_measurement(1, "R2")
+        self.scpi.set_trace_measurement(2, "B")
 
-        self.scpi.set_delete_meas(channel, forward_name)
-        self.scpi.set_delete_meas(channel, reverse_name)
-        return forward, reverse
+        self.sweep(**kwargs)
 
-    def get_measurement(self, mname=None, mnum=None, **kwargs):
-        """
-        get a measurement trace from the analyzer, specified by either name or number
+        self.scpi.set_current_trace(1)
+        R2 = self.get_active_trace_as_network()
+        self.scpi.set_current_trace(2)
+        B = self.get_active_trace_as_network()
 
-        Parameters
-        ----------
-        mname : str
-            the name of the measurement, e.g. 'CH1_S11_1'
-        mnum : int
-            the number of number of the measurement
-        kwargs : dict
-            channel (int), sweep (bool)
+        self.scpi.set_trace_display_config(trace_config)
+        for i in range(len(trace_measurements)):
+            self.scpi.set_trace_measurement(i + 1, trace_measurements[i])
 
-        Returns
-        -------
-        skrf.Network
-        """
-        if mname is None and mnum is None:
-            raise ValueError("must provide either a measurement mname or a mnum")
+        return R2 / B
 
-        channel = kwargs.get("channel", self.active_channel)
+    def display_switch_terms(self):
+        self.scpi.set_trace_count(4)
+        self.scpi.set_trace_measurement(1, "R1")
+        self.scpi.set_trace_measurement(2, "R2")
+        self.scpi.set_trace_measurement(3, "A")
+        self.scpi.set_trace_measurement(4, "B")
 
-        if type(mname) is str:
-            self.scpi.set_selected_meas(channel, mname)
-        else:
-            self.scpi.set_selected_meas_by_number(channel, mnum)
-        return self.get_active_trace_as_network(**kwargs)
+    def set_scale_all(self, bottom, top):
+        for i in range(1, self.scpi.query_trace_count() + 1):
+            self.write("DISP:WIND:TRAC{:d}:Y:TOP {:}".format(i, top))
+            self.write("DISP:WIND:TRAC{:d}:Y:BOTT {:}".format(i, bottom))
+
+    def get_switch_terms(self, **kwargs):
+        msg = """the Field Fox VNA does not allow the automatic setting of source ports and so one cannot automatically
+        measure the switch terms.  Instead, select Measure->More->Advanced to set the Source Port to port2, then use
+        FieldFox.get_forward_switch_terms method to collect the forward switch terms.  Then change the source port to
+        to port1, then use FieldFox.get_reverse_switch_terms to collect the reverse switch terms"""
+        raise Exception(msg)
+
+    def get_trace(self, tnum):
+        self.scpi.set_current_trace(tnum)
+        return self.get_active_trace_as_network()
 
     def get_active_trace_as_network(self, **kwargs):
         """
@@ -400,13 +391,12 @@ class FieldFox(abcvna.VNA):
         -------
         skrf.Network
         """
-        channel = self.active_channel
         sweep = kwargs.get("sweep", False)
         if sweep:
-            self.sweep(channel=channel)
+            self.sweep()
 
         ntwk = skrf.Network()
-        sdata = self.scpi.query_data(channel)
+        sdata = self.scpi.query_current_trace_data()
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
-        ntwk.frequency = self.get_frequency(channel=channel)
+        ntwk.frequency = self.get_frequency()
         return ntwk

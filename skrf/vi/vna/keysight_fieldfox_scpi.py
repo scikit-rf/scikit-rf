@@ -105,6 +105,10 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":FREQ:STOP {:}", freq)
         self.write(scpi_command)
 
+    def set_if_bandwidth(self, bandwidth=1000):
+        scpi_command = scpi_preprocess(":BWID {:}", bandwidth)
+        self.write(scpi_command)
+
     def set_instrument(self, instr="NA"):
         scpi_command = scpi_preprocess(":INST '{:}'", instr)
         self.write(scpi_command)
@@ -119,6 +123,10 @@ class SCPI(object):
 
     def set_trace_autoscale(self, tnum=1):
         scpi_command = scpi_preprocess(":DISP:WIND:TRAC{:}:Y:AUTO", tnum)
+        self.write(scpi_command)
+
+    def set_trace_count(self, num=4):
+        scpi_command = scpi_preprocess(":CALC:PAR:COUN {:}", num)
         self.write(scpi_command)
 
     def set_trace_display_config(self, config="D12_34"):
@@ -147,11 +155,9 @@ class SCPI(object):
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='bool')
         return value
 
-    def query_current_trace(self, trace=1):
-        scpi_command = scpi_preprocess(":CALC:PAR{:}:SEL?", trace)
-        value = self.query(scpi_command)
-        value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
-        return value
+    def query_current_trace_data(self):
+        scpi_command = ":CALC:DATA:SDAT?"
+        return self.query_values(scpi_command)
 
     def query_display_format(self):
         scpi_command = ":CALC:FORM?"
@@ -169,6 +175,12 @@ class SCPI(object):
         scpi_command = ":FREQ:STOP?"
         value = self.query(scpi_command)
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='float')
+        return value
+
+    def query_if_bandwidth(self):
+        scpi_command = ":BWID?"
+        value = self.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
         return value
 
     def query_instrument(self):
@@ -189,8 +201,8 @@ class SCPI(object):
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='float')
         return value
 
-    def query_trace_count(self, trace=1):
-        scpi_command = scpi_preprocess(":CALC:PAR{:}:COUN?", trace)
+    def query_trace_count(self):
+        scpi_command = ":CALC:PAR:COUN?"
         value = self.query(scpi_command)
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
         return value
