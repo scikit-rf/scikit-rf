@@ -15,7 +15,22 @@ class NetworkTestCase(unittest.TestCase):
     Network class operation test case.
     The following is true, as tested by lihan in ADS,
         test3 == test1 ** test2
-
+        
+    To test for 2N-port deembeding Meas, F and DUT are created such as:
+    ::
+        Meas == F ** DUT
+            Meas              F            DUT
+         +---------+     +---------+   +---------+
+        -|0       4|-   -|0       4|---|0       4|-
+        -|1       5|- = -|1       5|---|1       5|-
+        -|2       6|-   -|2       6|---|2       6|-
+        -|3       7|-   -|3       7|---|3       7|-
+         +---------+     +---------+   +---------+
+    
+    Note:
+    -----
+    due to the complexity of inv computations, there will be an unavoidable
+    precision loss. thus F.inv ** Meas will show a small difference with DUT.       
     '''
     def setUp(self):
         '''
@@ -27,6 +42,20 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
+        self.freq = rf.Frequency(75,110,101,'ghz')
+        self.cpw =  rf.media.CPW(self.freq, w=10e-6, s=5e-6, ep_r=10.6)
+        l1 = self.cpw.line(0.2,  'm', z0=50)
+        l2 = self.cpw.line(0.07, 'm', z0=50)
+        l3 = self.cpw.line(0.27, 'm', z0=50)
+        self.F = rf.concat_ports([l1, l1, l1, l1])
+        self.F.renumber([0,1,2,3,4,5,6,7],
+                        [0,4,1,5,2,6,3,7])
+        self.DUT = rf.concat_ports([l2, l2, l2, l2])
+        self.DUT.renumber([0,1,2,3,4,5,6,7],
+                          [0,4,1,5,2,6,3,7])
+        self.Meas = rf.concat_ports([l3, l3, l3, l3])
+        self.Meas.renumber([0,1,2,3,4,5,6,7],
+                           [0,4,1,5,2,6,3,7])
         
 
     def test_constructor_empty(self):
@@ -74,6 +103,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
+        self.assertEqual(self.F ** self.DUT, self.Meas)
 
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
@@ -133,6 +163,7 @@ class NetworkTestCase(unittest.TestCase):
     def test_de_embed_by_inv(self):
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)
+        self.assertEqual(self.F.inv ** self.Meas, self.DUT)
 
     def test_plot_one_port_db(self):
         self.ntwk1.plot_s_db(0,0)
@@ -171,6 +202,8 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((abs(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.t2s(rf.s2t(ntwk.s))-ntwk.s) < tinyfloat).all())
+        self.assertTrue((abs(rf.t2s(rf.s2t(self.F.s))-self.F.s) < tinyfloat).all())
+       
 
     def test_yz(self):
         tinyfloat = 1e-12
