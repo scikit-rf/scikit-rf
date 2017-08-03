@@ -38,3 +38,4 @@ Available VNAs
 
 from .abcvna import VNA
 from .keysight_pna import PNA, PNAX
+from .keysight_fieldfox import FieldFox

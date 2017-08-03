@@ -36,7 +36,8 @@ class PNA(abcvna.VNA):
         super(PNA, self).__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = keysight_pna_scpi.SCPI(self.resource)
-        self.use_binary()
+        # self.use_binary()
+        self.use_ascii()
 
     def use_binary(self):
         """setup the analyzer to transfer in binary which is faster, especially for large datasets"""
