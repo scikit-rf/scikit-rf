@@ -16,7 +16,7 @@ Network Theory
     
     networktheory/*
 
-Metrology
+Metrology/Calibration
 ------------------
 
 .. toctree::

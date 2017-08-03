@@ -536,7 +536,7 @@ class TRLWithNoIdealsTest(EightTermTest):
         
         actuals = [
             wg.thru( name='thru'),
-            wg.short(nports=2, name='short'),
+            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),\
             wg.attenuator(-3,True, 45,'deg')
             ]
         self.actuals=actuals

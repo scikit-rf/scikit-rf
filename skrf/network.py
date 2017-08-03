@@ -2791,7 +2791,7 @@ def cascade(ntwkA, ntwkB):
 
 def cascade_list(l):
     """
-    cascade a list of 2-port networks
+    cascade a list of 2N-port networks
 
     all networks must have same frequency
 
