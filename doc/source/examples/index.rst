@@ -16,8 +16,8 @@ Network Theory
     
     networktheory/*
 
-Metrology/Calibration
-----------------------
+Metrology and Calibration
+--------------------------
 
 .. toctree::
     :maxdepth: 1
