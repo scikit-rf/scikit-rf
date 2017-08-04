@@ -348,8 +348,55 @@ class Touchstone:
         noise_source_reflection = noise_values[:,2]
         noise_source_phase = noise_values[:,3]
         noise_normalized_resistance = noise_values[:,4]
-
-
+        
+    def is_from_hfss(self):
+        '''
+        Check if the Touchstone file has been produced by HFSS
+        
+        Returns
+        ------------
+        status : boolean
+            True if the Touchstone file has been produced by HFSS
+            False otherwise
+        '''    
+        status = False
+        if 'Exported from HFSS' in self.comments:
+            status = True
+        return status      
+    
+    def get_gamma_z0(self):
+        '''
+        Extracts Z0 and Gamma comments from touchstone file (is provided)
+        
+        Returns
+        --------
+        gamma : complex numpy.ndarray
+            complex  propagation constant
+        z0 : numpy.ndarray
+            complex port impedance    
+        '''
+        def line2ComplexVector(s):
+            return mf.scalar2Complex(npy.array([k for k in s.strip().split(' ')
+                                                if k != ''][self.rank*-2:],
+                                                dtype='float'))
+    
+        with open(self.filename) as f:
+            gamma, z0 = [],[]
+    
+            for line in f:
+                if '! Gamma' in line:
+                    gamma.append(line2ComplexVector(line.replace('! Gamma', '')))
+                if '! Port Impedance' in line:
+                    z0.append(line2ComplexVector(line.replace('! Port Impedance', '')))
+    
+            # If the file does not contain valid port impedance comments, set to default one
+            if len(z0) == 0:
+                z0 = self.resistance
+                #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
+                
+            
+        return npy.array(gamma), npy.array(z0)
+    
 def hfss_touchstone_2_gamma_z0(filename):
     '''
     Extracts Z0 and Gamma comments from touchstone file
@@ -376,28 +423,9 @@ def hfss_touchstone_2_gamma_z0(filename):
     ----------
     >>> f,gamm,z0 = rf.hfss_touchstone_2_gamma_z0('line.s2p')
     '''
-    #TODO: make this work for different HFSS versions. and arbitrary
-    # number of ports
     ntwk = Network(filename)
 
-    def line2ComplexVector(s):
-        return mf.scalar2Complex(npy.array([k for k in s.strip().split(' ')
-                                            if k != ''][ntwk.nports*-2:],
-                                            dtype='float'))
-
-    with open(filename) as f:
-        gamma, z0 = [],[]
-
-        for line in f:
-            if '! Gamma' in line:
-                gamma.append(line2ComplexVector(line.replace('! Gamma', '')))
-            if '! Port Impedance' in line:
-                z0.append(line2ComplexVector(line.replace('! Port Impedance', '')))
-
-    if len(z0) == 0:
-        raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
-
-    return ntwk.frequency.f, npy.array(gamma), npy.array(z0)
+    return ntwk.frequency.f, ntwk.gamma, ntwk.z0
 
 
 def hfss_touchstone_2_media(filename, f_unit='ghz'):
@@ -471,8 +499,6 @@ def hfss_touchstone_2_network(filename, f_unit='ghz'):
     hfss_touchstone_2_gamma_z0 : returns gamma, and z0
     '''
     my_network = Network(file=filename, f_unit=f_unit)
-    f,gamm,z0 = hfss_touchstone_2_gamma_z0(filename=filename)
-    my_network.z0 = z0
     return(my_network)
 
 
