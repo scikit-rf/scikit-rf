@@ -37,6 +37,12 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_constructor_from_touchstone(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
+        
+    def test_constructor_from_hfss_touchstone(self):
+        # HFSS can provide the port characteric impedances in its generated touchstone file.
+        # Check if reading a HFSS touchstone file with non-50Ohm impedances
+        ntwk_hfss = rf.Network(os.path.join(self.test_dir, 'hfss_threeport_DB.s3p'))
+        self.assertFalse(npy.isclose(ntwk_hfss.z0[0,0], 50))
 
     def test_constructor_from_pickle(self):
         if six.PY2:
