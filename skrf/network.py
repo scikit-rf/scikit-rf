@@ -2745,7 +2745,7 @@ def cascade(ntwkA, ntwkB):
     
     Notes
     ------
-    ::
+    connection diagram::
             A                B          
          +---------+   +---------+   
         -|0      N |---|0      N |-  
@@ -2754,7 +2754,7 @@ def cascade(ntwkA, ntwkB):
         -|N-2  2N-2|---|N-2  2N-2|- 
         -|N-1  2N-1|---|N-1  2N-1|-  
          +---------+   +---------+  
-     
+        
     Parameters
     -----------
     ntwkA : :class:`Network`
