@@ -81,11 +81,15 @@ class ConvenienceTestCase(unittest.TestCase):
         Try reading an Agilent touchstone 4-ports measurement file		
         '''		
         filename = 'Agilent_E5071B.s4p'		
-        self.ntwk = rf.Network(os.path.join(self.test_dir, filename))		
-		          
+        ntwk = rf.Network(os.path.join(self.test_dir, filename))				          
         # Check if port characteric impedance is correctly parsed        
-        self.assertTrue(npy.isclose(npy.unique(self.ntwk.z0), 75))      
-          
+        self.assertTrue(npy.isclose(npy.unique(ntwk.z0), 75)) 
+        
+        self.assertTrue(npy.allclose(ntwk.s_db[0][1], # check s2n_mag
+                                    [-5.252684e+001, -2.278388e-001, -4.435702e+001, -8.235984e+001]))
+        self.assertTrue(npy.allclose(ntwk.s_deg[0][1], # check s2n_deg
+                                    [-1.350884e+002, 8.767636e+001,	-1.585657e+002,	7.708928e+001]))
+        
     def test_RS_touchstone_4ports(self):		
         '''		
         Try reading an R&S touchstone 4-ports measurement file		
@@ -95,6 +99,11 @@ class ConvenienceTestCase(unittest.TestCase):
         # Check if port characteric impedance is correctly parsed		
         self.assertTrue(npy.isclose(npy.unique(ntwk.z0), 50))		
         # For this specific file, the port#1 min return loss is @55.5MHz		
-        self.assertTrue(ntwk.frequency.f[npy.argmin(ntwk.s11.s_mag)], 55.5e6)         
+        self.assertTrue(ntwk.frequency.f[npy.argmin(ntwk.s11.s_mag)], 55.5e6)
+
+        self.assertTrue(npy.allclose(ntwk.s_re[0][2], # check s3n_re
+                                    [-9.748145748042028E-6, 5.737806652221101E-6, -7.283138400961303E-1,  -7.202238521877286E-6]))
+        self.assertTrue(npy.allclose(ntwk.s_im[0][2], # check s3n_im
+                                    [4.457944078457155E-6, 5.341399484369366E-6, -4.531402467395991E-1, 5.667857998796495E-7]))                 
         
         
