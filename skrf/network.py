@@ -1379,11 +1379,14 @@ class Network(object):
         self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
-        self.z0 = complex(touchstoneFile.resistance)
+        if touchstoneFile.is_from_hfss():
+            self.gamma, self.z0 = touchstoneFile.get_gamma_z0()
+        else:
+            self.z0 = complex(touchstoneFile.resistance)
         f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
-
+            
         if self.name is None:
             try:
                 self.name = os.path.basename(os.path.splitext(filename)[0])
