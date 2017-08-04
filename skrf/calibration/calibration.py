@@ -71,11 +71,13 @@ PNA interaction
    convert_pnacoefs_2_skrf
 
 '''
+
 import numpy as npy
 from numpy import linalg
 from numpy.linalg import det
 from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
 import json
+from numbers import Number
 from collections import OrderedDict
 import os
 from copy import deepcopy, copy
@@ -2319,7 +2321,7 @@ class TRL(EightTerm):
     '''
     family = 'TRL'
     def __init__(self, measured, ideals=None, estimate_line=False,
-                n_reflects=1,solve_reflect = True, *args,**kwargs):
+                n_reflects=1,solve_reflect=True, *args,**kwargs):
         '''
         Initialize a TRL calibration
 
@@ -2335,6 +2337,8 @@ class TRL(EightTerm):
         * thru : flush thru 
         * reflect : flush shorts 
         * line : and approximaitly  90deg  matched line (can be lossy)
+        
+        The reflect ideals can also be given as a +-1. 
         
         Note you can also use the `estimate_line` option  to 
         automatically  estimate the initial guess for the line length 
@@ -2352,16 +2356,21 @@ class TRL(EightTerm):
         Parameters
         --------------
         measured : list of :class:`~skrf.network.Network`
-             must be in order [Thru, Reflect, Line]
+            must be in order [Thru, Reflect[s], Line[s]]. if the number
+            of reflects is >1 then use `n_reflects` argument. 
 
-        ideals : list of :class:`~skrf.network.Network`, None
+        ideals : list of :class:`~skrf.network.Network`, [+1,-1] , None
             must be in order [Thru, Reflect, Line]. Each element in the 
-            list may be None, or equivalently, the list may be None
+            list may be None, or equivalently, the list may be None. 
+            Also the reflects can be simply given as  +1 or -1. 
 
         estimate_line : bool
             should we estimates the length of the line standard from 
             raw measurements, if not we assume its about 90 deg.
-            
+        
+        solve_reflect : bool
+            Solve for the reflect or not. 
+        
         n_reflects :  1
             number of reflective standards 
 
@@ -2374,7 +2383,15 @@ class TRL(EightTerm):
         >>>thru = rf.Network('thru.s2p')
         >>>reflect = rf.Network('reflect.s2p')
         >>>line = rf.Network('line.s2p')
+        
+        # ideals is None, so we assume it's close to a flush short
         >>>trl = TRL(measured=[thru,reflect,line], ideals=None)
+        
+        # reflect is given as close to a flush short
+        >>>trl = TRL(measured=[thru,reflect,line], ideals=[None,-1,None])
+        
+        # reflect is given as close to a flush open
+        >>>trl = TRL(measured=[thru,reflect,line], ideals=[None,+1,None])
         
         See Also
         ----------
@@ -2403,13 +2420,17 @@ class TRL(EightTerm):
 
         for k in range(1,n_reflects+1):
             if ideals[k] is None:
-                # assume they are using flushshorts
+                # default  assume they are using flushshorts
+                ideals[k] =-1
+                
+            if isinstance(ideals[k], Number):
                 ideal_reflect = measured[k].copy()
-                ideal_reflect.s[:,0,0] = -1
-                ideal_reflect.s[:,1,1] = -1
+                ideal_reflect.s[:,0,0] = ideals[k]
+                ideal_reflect.s[:,1,1] = ideals[k]
                 ideal_reflect.s[:,1,0] = 0
                 ideal_reflect.s[:,0,1] = 0
                 ideals[k] = ideal_reflect
+                
 
         for k in range(n_reflects+1,n_stds):
             if ideals[k] is None:
@@ -4468,16 +4489,20 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         reflect_approx = reflect_m.copy()
         reflect_approx.s[:,0,0]=-1
 
-
+   
     close = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
     closer = find_closest(out[2], out[3], reflect_approx.s11.s.flatten())
     closest = find_closest(close, closer, reflect_approx.s11.s.flatten())
 
     #import pdb;pdb.set_trace()
     reflect = reflect_approx.copy()
-    reflect.s[:,0,0]=closest
+    # ALEX CHANGED THIS WITHOUT JUSTIFICATION, because it gave correct
+    # results. if this change is `correct` then we need to change 
+    # the rooty in range loop
+    reflect.s[:,0,0]=closer
 
-    return reflect
+    return reflect.s11
+    
 
 
 

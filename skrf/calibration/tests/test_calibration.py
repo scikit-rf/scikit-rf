@@ -15,7 +15,7 @@ from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTe
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
 
-# number of frequency points to test calibration at 
+# number of frequency points to test calibration at .
 # i choose 1 for speed, but given that many tests employ *random* 
 # networks values >100 are better for  initialy verification
 global NPTS  
@@ -44,10 +44,17 @@ class DetermineTest(unittest.TestCase):
         self.L_m = self.embed(self.L)
         
         # reflect
-        r = wg.load(-.8-.1j)
-        self.R = two_port_reflect(r,r)
-        self.R_approx = wg.short()
-        self.R_m = self.embed(self.R)
+        self.r = [ wg.delay_load(p,k,'deg') \
+                    for k in [-10,10,88,92] \
+                    for p in [-.9,-1]]
+        
+        
+        self.R = [rf.two_port_reflect(k,k) for k in self.r]
+        
+        short= wg.short()
+        open = wg.open()
+        self.r_estimate = [short, short,short, short, open ,open, open ,open]
+        self.R_m = [self.embed(k) for k in self.R]
         
         
     def embed(self,x):
@@ -59,10 +66,10 @@ class DetermineTest(unittest.TestCase):
         self.assertEqual(L_found,self.L)
     
     def test_determine_reflect(self):
-        R_found = determine_reflect(self.T_m, self.R_m, self.L_m, 
-                                 reflect_approx=self.R_approx)
-        
-        self.assertEqual(R_found,self.R.s11)
+        r_found = [determine_reflect(self.T_m,k,self.L_m, l) \
+                   for k,l in zip(self.R_m, self.r_estimate)]
+
+        [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
     
 class CalibrationTest(object):
     '''
@@ -475,10 +482,10 @@ class TRLTest(EightTermTest):
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         # make error networks have s21,s12 >> s11,s22 so that TRL
         # can guess at line length
-        #self.X.s[:,0,0] *=1e-1
-        #self.Y.s[:,0,0] *=1e-1
-        #self.X.s[:,1,1] *=1e-1 
-        #self.Y.s[:,1,1] *=1e-1 
+        self.X.s[:,0,0] *=1e-1
+        self.Y.s[:,0,0] *=1e-1
+        self.X.s[:,1,1] *=1e-1 
+        self.Y.s[:,1,1] *=1e-1 
         
         actuals = [
             wg.thru( name='thru'),
@@ -511,7 +518,6 @@ class TRLTest(EightTermTest):
         self.cal.run()
         self.assertTrue(self.cal.ideals[1]==self.actuals[1])
             
-
 class TRLWithNoIdealsTest(EightTermTest):
     def setUp(self):
         self.n_ports = 2
@@ -527,26 +533,25 @@ class TRLWithNoIdealsTest(EightTermTest):
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
         # make error networks have s21,s12 >> s11,s22 so that TRL
         # can guess at line length
-        #self.X.s[:,0,0] *=1e-1
-        #self.Y.s[:,0,0] *=1e-1
-        #self.X.s[:,1,1] *=1e-1 
-        #self.Y.s[:,1,1] *=1e-1 
+        self.X.s[:,0,0] *=1e-1
+        self.Y.s[:,0,0] *=1e-1
+        self.X.s[:,1,1] *=1e-1 
+        self.Y.s[:,1,1] *=1e-1 
         
         ideals =  None
         
-        actuals = [
-            wg.thru( name='thru'),
-            rf.two_port_reflect(wg.load(-.98-.1j),wg.load(-.98-.1j)),\
-            wg.attenuator(-3,True, 45,'deg')
-            ]
-        self.actuals=actuals
+        r = wg.delay_short(20,'deg')
+
+            
+        self.actuals=[wg.thru( name='thru'),
+                      rf.two_port_reflect(r,r),\
+                      wg.attenuator(-3,True, 45,'deg')]
+
         
-        
-        
-        measured = [self.measure(k) for k in actuals]
+        measured = [self.measure(k) for k in self.actuals]
         
         self.cal = rf.TRL(
-            ideals = ideals,
+            ideals = None,
             measured = measured,
             isolation = measured[1],
             switch_terms = (self.gamma_f, self.gamma_r)
@@ -556,6 +561,10 @@ class TRLWithNoIdealsTest(EightTermTest):
     def test_found_line(self):
         self.cal.run()
         self.assertTrue(self.cal.ideals[2]==self.actuals[2])
+        
+    def test_found_reflect(self):
+        self.cal.run()
+        self.assertTrue(self.cal.ideals[1]==self.actuals[1])
         
 class TRLMultiline(EightTermTest):
     def setUp(self):
@@ -582,7 +591,7 @@ class TRLMultiline(EightTermTest):
         actuals = [
             wg.thru( name='thru'),
             wg.short(nports=2, name='short'),
-            wg.short(nports=2, name='open'),
+            wg.open(nports=2, name='open'),
             wg.attenuator(-3,True, 45,'deg'),
             wg.attenuator(-6,True, 90,'deg'),
             wg.attenuator(-8,True, 145,'deg'),
@@ -594,7 +603,7 @@ class TRLMultiline(EightTermTest):
         measured = [self.measure(k) for k in actuals]
         
         self.cal = rf.TRL(
-            ideals = ideals,
+            ideals = [None, -1,1,None,None,None],
             measured = measured,
             isolation = measured[1],
             switch_terms = (self.gamma_f, self.gamma_r),
@@ -782,8 +791,6 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
         m.s[:,0,1] = mr.s[:,1,0]
         return m
         
-
-        
 class TwelveTermTest(unittest.TestCase, CalibrationTest):
     '''
     This test verifys the accuracy of the SOLT calibration. Generating 
@@ -931,7 +938,6 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
-
 class TwelveTermSloppyInitTest(TwelveTermTest):
     '''
     Test the TwelveTerm.__init__'s ability to 
@@ -982,7 +988,6 @@ class TwelveTermSloppyInitTest(TwelveTermTest):
         m.s[:,1,1] = mr.s[:,1,1]
         return m    
     
-
 class SOLTTest(TwelveTermTest):
     def setUp(self):
         self.n_ports = 2
@@ -1016,7 +1021,6 @@ class SOLTTest(TwelveTermTest):
             n_thrus=1,
             isolation=measured[2]
             )
-        
 
 class TwoPortOnePathTest(TwelveTermTest):
     def setUp(self):
@@ -1099,10 +1103,6 @@ class TwoPortOnePathTest(TwelveTermTest):
     def test_reverse_transmission_tracking_accuracy(self):
         raise SkipTest()  
     
-    
-    
-    
-
 class UnknownThruTest(EightTermTest):
     def setUp(self):
         
@@ -1525,7 +1525,6 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
                 self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal16.coefs[k]) < 1e-10)
                 self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal_lmr16.coefs[k]) < 1e-10)
 
-
 class LMR16Test(SixteenTermTest):
     def setUp(self):
         self.n_ports = 2
@@ -1577,5 +1576,8 @@ class LMR16Test(SixteenTermTest):
             self.thru,
             self.cal.solved_through)
 
+
+
+    
 if __name__ == "__main__":
     unittest.main()
