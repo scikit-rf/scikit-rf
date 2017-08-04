@@ -76,6 +76,25 @@ class ConvenienceTestCase(unittest.TestCase):
         nw_hfss_z0.renormalize(50)
         self.assertTrue(npy.allclose(nw_hfss_50.s, nw_hfss_z0.s))
         
-        
+    def test_Agilent_touchstone_4ports(self):		
+        '''		
+        Try reading an Agilent touchstone 4-ports measurement file		
+        '''		
+        filename = 'Agilent_E5071B.s4p'		
+        self.ntwk = rf.Network(os.path.join(self.test_dir, filename))		
+		          
+        # Check if port characteric impedance is correctly parsed        
+        self.assertTrue(npy.isclose(npy.unique(self.ntwk.z0), 75))      
+          
+    def test_RS_touchstone_4ports(self):		
+        '''		
+        Try reading an R&S touchstone 4-ports measurement file		
+        '''		
+        filename = 'RS_ZNB8.s4p'		
+        ntwk = rf.Network(os.path.join(self.test_dir, filename))		
+        # Check if port characteric impedance is correctly parsed		
+        self.assertTrue(npy.isclose(npy.unique(ntwk.z0), 50))		
+        # For this specific file, the port#1 min return loss is @55.5MHz		
+        self.assertTrue(ntwk.frequency.f[npy.argmin(ntwk.s11.s_mag)], 55.5e6)         
         
         
