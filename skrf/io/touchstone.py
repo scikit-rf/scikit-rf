@@ -349,6 +349,27 @@ class Touchstone:
         noise_source_phase = noise_values[:,3]
         noise_normalized_resistance = noise_values[:,4]
 
+def is_hfss_touchstone(filename):
+    '''
+    Check if a touchstone file has been produced by HFSS.
+    
+    Parameters
+    ------------
+    filename : string
+        touchstone filename
+        
+    Returns
+    ------------
+    status : boolean
+        True if the Touchstone file has been produced by HFSS
+        False otherwise
+    '''    
+    status = False
+    # Open the file and search for the string 'Exported from HFSS'.
+    with open(filename, 'r') as file:
+        if 'Exported from HFSS' in file.read():
+            status = True
+    return status
 
 def hfss_touchstone_2_gamma_z0(filename):
     '''
