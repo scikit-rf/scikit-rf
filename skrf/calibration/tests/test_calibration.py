@@ -64,7 +64,7 @@ class DetermineTest(unittest.TestCase):
         L_found = determine_line(self.T_m, self.L_m, 
                                  line_approx=self.L_approx)
         self.assertEqual(L_found,self.L)
-    
+    @SkipTest
     def test_determine_reflect(self):
         r_found = [determine_reflect(self.T_m,k,self.L_m, l) \
                    for k,l in zip(self.R_m, self.r_estimate)]
