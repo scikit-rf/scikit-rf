@@ -422,37 +422,57 @@ class Network(object):
             out = self.copy()
             out.s = out.s ** other
             return out
-        
+
         else:
             return cascade(self, other)
-            
+
     def __floordiv__(self, other):
         """
-        de-embeding another network[s], from this network
+        de-embedding 1 or 2 network[s], from this network
+
+        :param other: skrf.Network, list, tuple: Network(s) to de-embed
+        :return: skrf.Network: De-embedded network
 
         See Also
         ----------
         inv : inverse s-parameters
         """
-        try:
-            # if they passed 1 ntwks and a tuple of ntwks,
-            # then deEmbed like A.inv*C*B.inv
-            b = other[0]
-            c = other[1]
-            result = copy(self)
-            result.s = (b.inv ** self ** c.inv).s
-            # flip(de_embed( flip(de_embed(c.s,self.s)),b.s))
-            return result
-        except TypeError:
-            pass
 
-        if other.number_of_ports == 2:
+        if isinstance(other, (list, tuple)):
+            if len(other) >= 3:
+                warnings.warn(
+                    "Number of networks greater than 2. Truncating!",
+                    RuntimeWarning
+                )
+                other = other[:2]
+        else:
+            other = (other, )
+
+        for o in other:
+            if o.number_of_ports != 2:
+                raise IndexError('Incorrect number of ports in network {}.'.format(o.name))
+
+        if len(other) == 1:
+            # if passed 1 network (A) and another network B
+            #   e.g. A // B
+            #   e.g. A // (B)
+            # then de-embed like B.inv * A
+            b = other[0]
             result = self.copy()
-            result.s = (other.inv ** self).s
-            # de_embed(self.s,other.s)
+            result.s = (b.inv ** self).s
+            # de_embed(self.s, b.s)
             return result
         else:
-            raise IndexError('Incorrect number of ports.')
+            # if passed 1 network (A) and a list/tuple of 2 networks (B, C),
+            #   e.g. A // (B, C)
+            #   e.g. A // [B, C]
+            # then de-embed like B.inv * A * C.inv
+            b = other[0]
+            c = other[1]
+            result = self.copy()
+            result.s = (b.inv ** self ** c.inv).s
+            # flip(de_embed(flip(de_embed(c.s, self.s)), b.s))
+            return result
 
     def __mul__(self, other):
         """
@@ -1386,7 +1406,7 @@ class Network(object):
         f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
-            
+
         if self.name is None:
             try:
                 self.name = os.path.basename(os.path.splitext(filename)[0])
@@ -1757,7 +1777,7 @@ class Network(object):
              * 'cart' is cartesian is Re/Im
              * 'polar' is unwrapped phase/mag
         return_array: bool
-            return the interpolated array instead of re-asigning it to 
+            return the interpolated array instead of re-asigning it to
             a given attribute
         **kwargs : keyword arguments
             passed to :func:`scipy.interpolate.interp1d` initializer.
@@ -1821,7 +1841,7 @@ class Network(object):
                 new_frequency = self.frequency.copy()
                 new_frequency.npoints = n
             elif dim == 1:
-                # input is a array, or list 
+                # input is a array, or list
                 new_frequency = Frequency.from_f(freq_or_n, **f_kwargs)
 
         # set new frequency and pull some variables
@@ -1849,7 +1869,7 @@ class Network(object):
             interp_rad = interp1d(f, rad, axis=0, **kwargs)
             interp_mag = interp1d(f, mag, axis=0, **kwargs)
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
-            
+
         if return_array:
             return x_new
         else:
@@ -2100,16 +2120,16 @@ class Network(object):
         '''
         if unit == 'deg':
             theta = mf.degree_2_radian(theta )
-        
+
         self.s = self.s * npy.exp(-1j*theta)
-        
+
     def delay(self, d, unit='deg', port=0, media=None,**kw):
         '''
         Add phase delay to a given port.
-        
+
         This will cascade a matched line of length `d/2` from a given `media`
-        in front of `port`. If `media==None`, then freespace is used. 
-        
+        in front of `port`. If `media==None`, then freespace is used.
+
         Parameters
         ----------
         d : number
@@ -2118,19 +2138,19 @@ class Network(object):
                 the units of d.  See :func:`Media.to_meters`, for details
         port : int
             port to add delay to.
-        media: skrf.media.Media 
+        media: skrf.media.Media
             media object to use for generating delay. If None, this will
-            default to freespace. 
+            default to freespace.
         '''
         if d ==0:
             return self
         d=d/2.
-        if self.nports >2: 
+        if self.nports >2:
             raise NotImplementedError('only implemented for 1 and 2 ports')
         if media is None:
             from .media import Freespace
             media = Freespace(frequency=self.frequency,z0=self.z0[:,port])
-        
+
         l =media.line(d=d, unit=unit,**kw)
         return l**self
 
@@ -2167,7 +2187,7 @@ class Network(object):
 
         '''
         window = signal.get_window(window, len(self))
-        
+
         window = window.reshape(-1, 1, 1) * npy.ones((len(self),
                                                       self.nports,
                                                       self.nports))
@@ -2182,7 +2202,7 @@ class Network(object):
     def time_gate(self, *args, **kw):
         '''
         time gate this ntwk
-        
+
         see `skrf.time_domain.time_gate`
         '''
         return time_gate(self, *args, **kw)
@@ -2392,7 +2412,7 @@ class Network(object):
         p : int, number of differential ports
         z0_mm: f x n x n matrix of single ended impedances, optional
             if input is None, assumes 50 Ohm reference impedance
-        
+
         .. warning::
             This is not fully tested, and should be considered as experimental
         '''
@@ -2739,22 +2759,22 @@ def cascade(ntwkA, ntwkB):
     '''
     Cascade two 2, 2N-ports  Networks together
 
-    Connects ports N through 2N-1  on `ntwkA` to ports 0 through N of 
+    Connects ports N through 2N-1  on `ntwkA` to ports 0 through N of
     `ntwkB`. This calls `connect()`, which is a more general function.
-    Use `Network.renumber` to change port order if needed. 
-    
+    Use `Network.renumber` to change port order if needed.
+
     Notes
     ------
     connection diagram::
-            A                B          
-         +---------+   +---------+   
-        -|0      N |---|0      N |-  
-        -|1     N+1|---|1     N+1|-   
-        ...       ... ...       ... 
-        -|N-2  2N-2|---|N-2  2N-2|- 
-        -|N-1  2N-1|---|N-1  2N-1|-  
-         +---------+   +---------+  
-        
+            A                B
+         +---------+   +---------+
+        -|0      N |---|0      N |-
+        -|1     N+1|---|1     N+1|-
+        ...       ... ...       ...
+        -|N-2  2N-2|---|N-2  2N-2|-
+        -|N-1  2N-1|---|N-1  2N-1|-
+         +---------+   +---------+
+
     Parameters
     -----------
     ntwkA : :class:`Network`
@@ -2772,24 +2792,24 @@ def cascade(ntwkA, ntwkB):
     connect : connects two Networks together at arbitrary ports.
     Network.renumber : changes the port order of a network
     '''
-    
+
     if ntwkA.nports<2:
             raise ValueError('nports must be >1')
-        
-    
+
+
     N = int(ntwkA.nports/2 )
     if ntwkB.nports == 1:
-        # we are terminating a N-port with a 1-port. 
+        # we are terminating a N-port with a 1-port.
         # which port on self to use is ambiguous. choose N
         return connect(ntwkA, N, ntwkB, 0)
-    
+
     elif ntwkA.nports %2 == 0 and ntwkA.nports == ntwkB.nports:
         # we have 2N port balanced networks
         return connect(ntwkA, N, ntwkB, 0, num=N)
-    
+
     else:
         raise ValueError('I dont know what to do, check port shapes of Networks')
-    
+
 
 
 def cascade_list(l):
@@ -2917,52 +2937,52 @@ def overlap(ntwkA, ntwkB):
 def concat_ports(ntwk_list, port_order='first', *args, **kw):
     '''
     Concatenate networks along the port axis
-    
-    
+
+
     Notes
     -------
-    The `port_order` ='first', means front-to-back, while 
-    `port_oder`='second' means left-to-right. So, for example, when 
-    concating two 2-networks, `A` and `B`, the ports are ordered as follows: 
-    
-    'first'  
+    The `port_order` ='first', means front-to-back, while
+    `port_oder`='second' means left-to-right. So, for example, when
+    concating two 2-networks, `A` and `B`, the ports are ordered as follows:
+
+    'first'
         a0 o---o a1  ->   0 o---o 1
         b0 o---o b1  ->   2 o---o 3
-    
-    'second'  
+
+    'second'
         a0 o---o a1  ->   0 o---o 2
         b0 o---o b1  ->   1 o---o 3
-    
 
-    use `Network.renumber` to change port ordering. 
-    
-    Parameters 
+
+    use `Network.renumber` to change port ordering.
+
+    Parameters
     -----------
     ntwk_list  : list of skrf.Networks
         ntwks to concatenate
     port_order : ['first', 'second']
         if `len(ntwk_list)>2` then you dont want to use `second`.
         this function calls itself recursively so renumbering should
-        be done at the end. 
-    
+        be done at the end.
+
     Examples
     -----------
-    
+
     >>>concat([ntwkA,ntwkB])
     >>>concat([ntwkA,ntwkB,ntwkC,ntwkD], port_order='second')
-    
+
     To put for lines in parallel
-    >>> from skrf import air 
+    >>> from skrf import air
     >>> l1 = air.line(100, z0=[0,1])
     >>> l2 = air.line(300, z0=[2,3])
     >>> l3 = air.line(400, z0=[4,5])
     >>> l4 = air.line(400, z0=[6,7])
     >>> concat_ports([l1,l2,l3,l4], port_order='second')
-    
+
     See Also
     --------
     stitch :  concatenate two networks along the frequency axis
-    renumber : renumber ports 
+    renumber : renumber ports
     '''
     # if ntwk list is longer than 2, recursively call myself
     # until we are done
@@ -3068,7 +3088,7 @@ def one_port_2_two_port(ntwk):
                         npy.exp(1j * (
                         npy.angle(s11) + npy.pi / 2. * (npy.angle(s11) < 0) - npy.pi / 2 * (npy.angle(s11) > 0)))
     result.s[:, 1, 0] = result.s[:, 0, 1]
-    
+
     result.z0 = npy.hstack([ntwk.z0,ntwk.z0])
     return result
 
@@ -3156,11 +3176,11 @@ def n_twoports_2_nport(ntwk_list, nports, offby=1, **kwargs):
     '''
     Builds a N-port Network from list of two-ports
 
-    This  method was made to reconstruct a n-port network from 2-port 
-    subnetworks as measured by a 2-port VNA. So, for example, given a 
+    This  method was made to reconstruct a n-port network from 2-port
+    subnetworks as measured by a 2-port VNA. So, for example, given a
     3-port DUT, you  might measure the set p12.s2p, p23.s2p, p13.s2p.
     From these measurements, you can construct p.s3p.
-    
+
     By default all entries of result.s are filled with 0's, in case  you
     dont fully specify the entire s-matrix of the resultant ntwk.
 
@@ -3179,7 +3199,7 @@ def n_twoports_2_nport(ntwk_list, nports, offby=1, **kwargs):
     ----------
     nport : n-port :class:`Network`
         result
-    
+
     See Also
     --------
     concat_ports : concatenate ntwks along their ports
@@ -3608,7 +3628,7 @@ def s2t(s):
     # test here for even number of ports.
     # s-parameter networks are square matrix, so x and y are equal.
     if(x % 2 != 0):
-        raise IndexError('Network don\'t have an even number of ports')     
+        raise IndexError('Network don\'t have an even number of ports')
     t = npy.zeros((z, y, x), dtype=complex)
     yh = int(y/2)
     xh = int(x/2)
@@ -3821,7 +3841,7 @@ def z2a(z):
     '''
     Converts impedance parameters to abcd  parameters [#]_ .
 
-   
+
     Parameters
     -----------
     z : :class:`numpy.ndarray` (shape fx2x2)
@@ -3870,12 +3890,12 @@ def s2a(s, z0=50):
     '''
     Converts scattering parameters to abcd  parameters [#]_ .
 
-   
+
     Parameters
     -----------
     s : :class:`numpy.ndarray` (shape fx2x2)
         impedance parameter matrix
-        
+
     z0: number or, :class:`numpy.ndarray` (shape fx2)
         port impedance
 
@@ -4196,8 +4216,8 @@ def passivity(s):
     '''
     Passivity metric for a multi-port network.
 
-    A metric which is proportional to the amount of power lost in a 
-    multiport network, depending on the excitation port. Specifically, 
+    A metric which is proportional to the amount of power lost in a
+    multiport network, depending on the excitation port. Specifically,
     this returns a matrix who's diagonals are equal to the total
     power received at all ports, normalized to the power at a single
     excitement port.
@@ -4219,12 +4239,12 @@ def passivity(s):
 
     where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
     is dot product.
-    
+
     Notes
     ---------
-    The total amount of power disipated in a network depends on the 
-    port matches. For example, given a matched attenuator, this metric 
-    will yield the attenuation value. However, if the attenuator is 
+    The total amount of power disipated in a network depends on the
+    port matches. For example, given a matched attenuator, this metric
+    will yield the attenuation value. However, if the attenuator is
     cascaded with a mismatch, the power disipated will not be equivalent
     to the attenuator value, nor equal for each excitation port.
 
@@ -4523,7 +4543,7 @@ def inv(s):
     #for f in range(len(i)):
     #    i[f, :, :] = npy.linalg.inv(i[f, :, :])  # could also be written as
     #    #   npy.mat(i[f,:,:])**-1  -- Trey
-    
+
     return sinv
 
 
@@ -4545,7 +4565,7 @@ def flip(a):
 
     Note
     -----
-        See renumber    
+        See renumber
     '''
     ## TODO: implement me with  renumber!
     c = a.copy()
@@ -4652,7 +4672,7 @@ def two_port_reflect(ntwk1, ntwk2=None):
     ntwk1 : one-port Network object
             network seen from port 1
     ntwk2 : one-port Network object, or None
-            network seen from port 2. if None then will use ntwk1. 
+            network seen from port 2. if None then will use ntwk1.
 
     Returns
     -------
