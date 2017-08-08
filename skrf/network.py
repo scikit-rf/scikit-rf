@@ -376,7 +376,9 @@ class Network(object):
 
             try:
                 self.read(fid)
-            except(UnpicklingError):
+            except UnicodeDecodeError:  # Support for pickles created in Python2 and loaded in Python3
+                self.read(fid, encoding='latin1')
+            except UnpicklingError:
                 # if unpickling doesn't work then, close fid, reopen in
                 # non-binary mode and try to read it as touchstone
                 filename = fid.name
