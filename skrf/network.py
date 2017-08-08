@@ -2766,14 +2766,14 @@ def cascade(ntwkA, ntwkB):
     Notes
     ------
     connection diagram::
-            A                B
-         +---------+   +---------+
-        -|0      N |---|0      N |-
-        -|1     N+1|---|1     N+1|-
-        ...       ... ...       ...
-        -|N-2  2N-2|---|N-2  2N-2|-
-        -|N-1  2N-1|---|N-1  2N-1|-
-         +---------+   +---------+
+		      A                B          
+		   +---------+   +---------+   
+		  -|0      N |---|0      N |-  
+		  -|1     N+1|---|1     N+1|-   
+		  ...       ... ...       ... 
+		  -|N-2  2N-2|---|N-2  2N-2|- 
+		  -|N-1  2N-1|---|N-1  2N-1|-  
+		   +---------+   +---------+  
 
     Parameters
     -----------
@@ -2993,8 +2993,8 @@ def concat_ports(ntwk_list, port_order='first', *args, **kw):
         # until after the recursive calls
         if port_order == 'second':
             N = out.nports
-            old_order = range(N)
-            new_order = range(0, N, 2) + range(1, N, 2)
+            old_order = list(range(N))
+            new_order = list(range(0, N, 2)) + list(range(1, N, 2))
             out.renumber(new_order, old_order)
         return out
 
@@ -3019,8 +3019,8 @@ def concat_ports(ntwk_list, port_order='first', *args, **kw):
     ntwkC.s = C
     ntwkC.z0 = npy.hstack([ntwkA.z0, ntwkB.z0])
     if port_order == 'second':
-        old_order = range(nC)
-        new_order = range(0, nC, 2) + range(1, nC, 2)
+        old_order = list(range(nC))
+        new_order = list(range(0, nC, 2)) + list(range(1, nC, 2))
         ntwkC.renumber(old_order, new_order)
     return ntwkC
 
