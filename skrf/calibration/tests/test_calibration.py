@@ -64,9 +64,9 @@ class DetermineTest(unittest.TestCase):
         L_found = determine_line(self.T_m, self.L_m, 
                                  line_approx=self.L_approx)
         self.assertEqual(L_found,self.L)
-    @SkipTest
+
     def test_determine_reflect(self):
-        r_found = [determine_reflect(self.T_m,k,self.L_m, l) \
+        r_found = [determine_reflect(self.T_m,k,self.L_m, l, self.L_approx) \
                    for k,l in zip(self.R_m, self.r_estimate)]
 
         [ self.assertEqual(k,l) for k,l in zip(self.r, r_found)]
@@ -1522,8 +1522,8 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
             if k in self.cal16.coefs.keys():
                 if 'isolation' in k:
                     continue
-                self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal16.coefs[k]) < 1e-10)
-                self.assertTrue(npy.abs(self.cal8.coefs[k] - self.cal_lmr16.coefs[k]) < 1e-10)
+                self.assertTrue(all(npy.abs(self.cal8.coefs[k] - self.cal16.coefs[k]) < 1e-10))
+                self.assertTrue(all(npy.abs(self.cal8.coefs[k] - self.cal_lmr16.coefs[k]) < 1e-10))
 
 class LMR16Test(SixteenTermTest):
     def setUp(self):

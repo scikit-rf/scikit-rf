@@ -2467,7 +2467,7 @@ class TRL(EightTerm):
         if solve_reflect:
             for k in range(1,n_reflects+1):
                 # solve for reflect using the last line if they pass >1
-                r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k])
+                r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k], line_approx=self.ideals[-1])
                 self.ideals[k] = two_port_reflect(r,r)
 
 MultilineTRL = TRL
@@ -4404,7 +4404,7 @@ def determine_line(thru_m, line_m, line_approx=None):
 
 
 def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
-                     return_all=False):
+                     line_approx=None, return_all=False):
     '''
     Determine reflect from a thru, reflect, line measurments
     
@@ -4432,8 +4432,11 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     reflect : :class:`~skrf.network.Network`
         a One-port network for the found reflect.
     '''
+
+    #Call determine_line first to solve root choice of the propagation constant
+    line = determine_line(thru_m, line_m, line_approx)
+
     inv = linalg.inv
-    l=1
     rt = thru_m.t
     rd = line_m.t
     tt = einsum('ijk,ikl -> ijl', rd, inv(rt))
@@ -4442,45 +4445,38 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
     b = tt[:,1,1]-tt[:,0,0]
     c = -tt[:,0,1]
 
-    #print a,b,c
     sol1 = (-b-sqrt(b*b-4*a*c))/(2*a)
     sol2 = (-b+sqrt(b*b-4*a*c))/(2*a)
-    a = None
-    b = None
-    c = None
 
-    rootChoice = abs(sol1)>abs(sol2)
+    e2 = line.s[:,0,1]**2
+
+    x1 = (tt[:,1,0]*sol1 + tt[:,1,1])/(tt[:,0,1]/sol2 + tt[:,0,0])
+    x2 = (tt[:,1,0]*sol2 + tt[:,1,1])/(tt[:,0,1]/sol1 + tt[:,0,0])
+
+    rootChoice = [abs(x1[i] - e2[i]) < abs(x2[i] - e2[i]) for i in range(len(x1))]
+
+    y = sol1*invert(rootChoice) + sol2*rootChoice
+    x = sol1*rootChoice + sol2*invert(rootChoice)
+    b = y
+
+    e = thru_m.s[:,0,0]
+    d = -det(thru_m.s)
+    f = -thru_m.s[:,1,1]
+
+    gam = (f-d/x)/(1-e/x)
+    b_A = (e-y)/(d-b*f)
+
+    w1 = reflect_m.s[:,0,0]
+    w2 = reflect_m.s[:,1,1]
+
+    a = sqrt(((w1-y)*(1+w2*b_A)*(d-y*f))/\
+            ((w2+gam)*(1-w1/x)*(1-e/x)))
 
     out = []
-    for rooty in range(2):
-        rootChoice = invert(rootChoice) # stupid
-        y = sol1*invert(rootChoice) + sol2*rootChoice
-        x = sol1*rootChoice + sol2*invert(rootChoice)
-        b = y
-
-
-        #prop per
-        g = 1/thru_m.s[:,1,0]
-        e = thru_m.s[:,0,0]
-        d = -det(thru_m.s)
-        f = -thru_m.s[:,1,1]
-
-        w = g*(1-e/x)/(1-b/x)
-        gam = (f-d/x)/(1-e/x)
-        b_A = (e-y)/(d-b*f)
-        aA = (d-b*f)/(1-e/x)
-
-        w1 = reflect_m.s[:,0,0]
-        w2 = reflect_m.s[:,1,1]
-
-        a = sqrt(((w1-y)*(1+w2*b_A)*(d-y*f))/\
-                ((w2+gam)*(1-w1/x)*(1-e/x)))
-
-        for rootChoice2 in [1,-1] :
-            a= a*rootChoice2
-            unknownReflectS = (w1-y)/(a*(1-w1/x))
-            out.append(unknownReflectS)
-
+    for rootChoice2 in [1,-1] :
+        a= a*rootChoice2
+        unknownReflectS = (w1-y)/(a*(1-w1/x))
+        out.append(unknownReflectS)
 
     if return_all:
         return [Network(frequency=thru_m.frequency, s = k) for k in out]
@@ -4489,20 +4485,12 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         reflect_approx = reflect_m.copy()
         reflect_approx.s[:,0,0]=-1
 
-   
-    close = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
-    closer = find_closest(out[2], out[3], reflect_approx.s11.s.flatten())
-    closest = find_closest(close, closer, reflect_approx.s11.s.flatten())
+    closer = find_closest(out[0], out[1], reflect_approx.s11.s.flatten())
 
-    #import pdb;pdb.set_trace()
     reflect = reflect_approx.copy()
-    # ALEX CHANGED THIS WITHOUT JUSTIFICATION, because it gave correct
-    # results. if this change is `correct` then we need to change 
-    # the rooty in range loop
     reflect.s[:,0,0]=closer
 
     return reflect.s11
-    
 
 
 
