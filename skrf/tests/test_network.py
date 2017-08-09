@@ -44,10 +44,10 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
         self.freq = rf.Frequency(75,110,101,'ghz')
         self.cpw =  rf.media.CPW(self.freq, w=10e-6, s=5e-6, ep_r=10.6)
-        l1 = self.cpw.line(0.2,  'm', z0=50)
+        l1 = self.cpw.line(0.20, 'm', z0=50)
         l2 = self.cpw.line(0.07, 'm', z0=50)
-        l3 = self.cpw.line(0.27, 'm', z0=50)
-        self.F = rf.concat_ports([l1, l1, l1, l1])
+        l3 = self.cpw.line(0.47, 'm', z0=50)
+        self.Fix = rf.concat_ports([l1, l1, l1, l1])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
 
@@ -104,7 +104,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
-        self.assertEqual(self.F ** self.DUT, self.Meas)
+        self.assertEqual(self.Fix ** self.DUT ** self.Fix.flipped(), self.Meas)
 
     def test_connect(self):
         self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
@@ -162,9 +162,10 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(npy.all(npy.abs(c.s - npy.array([[0,1],[1,0]])) < 1e-6))
 
     def test_de_embed_by_inv(self):
+        tinyfloat = 1e-12
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)
-        self.assertEqual(self.F.inv ** self.Meas, self.DUT)
+        self.assertEqual(self.Fix.inv ** self.Meas ** self.Fix.flipped().inv, self.DUT)
 
     def test_plot_one_port_db(self):
         self.ntwk1.plot_s_db(0,0)
@@ -203,7 +204,7 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((abs(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.t2s(rf.s2t(ntwk.s))-ntwk.s) < tinyfloat).all())
-        self.assertTrue((abs(rf.t2s(rf.s2t(self.F.s))-self.F.s) < tinyfloat).all())
+        self.assertTrue((abs(rf.t2s(rf.s2t(self.Fix.s))-self.Fix.s) < tinyfloat).all())
        
 
     def test_yz(self):
