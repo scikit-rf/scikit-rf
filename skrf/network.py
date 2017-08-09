@@ -2034,10 +2034,20 @@ class Network(object):
 
     def flip(self):
         '''
-        swaps the ports of a two port Network
+        swaps the ports of a 2n-port Network
+        in case the network is 2n-port and n > 1, 'second' numbering scheme is
+        assumed to be consistent with the ** cascade operator.
+        ::
+            -|0      n|-        0-|n      0|-n
+            -|1    n+1|- flip   1-|n+1    1|-n+1
+            ...      ...  =>     ...      ... 
+            -|n-1 2n-1|-      n-1-|2n-1 n-1|-2n-1
         '''
-        if self.number_of_ports == 2:
-            self.renumber([0, 1], [1, 0])
+        if self.number_of_ports % 2 == 0:
+            n = int(self.number_of_ports / 2)
+            old = list(range(0, 2*n))
+            new = list(range(n, 2*n)) + list(range(0, n))
+            self.renumber(old, new)
         else:
             raise ValueError('you can only flip two-port Networks')
 
@@ -2934,7 +2944,7 @@ def overlap(ntwkA, ntwkB):
     return ntwkA.interpolate(new_freq), ntwkB.interpolate(new_freq)
 
 
-def concat_ports(ntwk_list, port_order='first', *args, **kw):
+def concat_ports(ntwk_list, port_order='second', *args, **kw):
     '''
     Concatenate networks along the port axis
 
@@ -2961,9 +2971,6 @@ def concat_ports(ntwk_list, port_order='first', *args, **kw):
     ntwk_list  : list of skrf.Networks
         ntwks to concatenate
     port_order : ['first', 'second']
-        if `len(ntwk_list)>2` then you dont want to use `second`.
-        this function calls itself recursively so renumbering should
-        be done at the end.
 
     Examples
     -----------
@@ -4551,13 +4558,20 @@ def inv(s):
 
 def flip(a):
     '''
-    invert the ports of a networks s-matrix, 'flipping' it over
+    invert the ports of a networks s-matrix, 'flipping' it over left and right.
+    in case the network is 2n-port and n > 1, 'second' numbering scheme is
+    assumed to be consistent with the ** cascade operator.
+    ::
+        -|0      n|-        0-|n      0|-n
+        -|1    n+1|- flip   1-|n+1    1|-n+1
+        ...      ...  =>     ...      ... 
+        -|n-1 2n-1|-      n-1-|2n-1 n-1|-2n-1
 
     Parameters
     -----------
     a : :class:`numpy.ndarray`
-            scattering parameter matrix. shape should be should be 2x2, or
-            fx2x2
+            scattering parameter matrix. shape should be should be 2nx2n, or
+            fx2nx2n
 
     Returns
     -------
@@ -4569,19 +4583,22 @@ def flip(a):
     -----
         See renumber
     '''
-    ## TODO: implement me with  renumber!
     c = a.copy()
-
-    if len(a.shape) > 2:
-        for f in range(a.shape[0]):
-            c[f, :, :] = flip(a[f, :, :])
-    elif a.shape == (2, 2):
-        c[0, 0] = a[1, 1]
-        c[1, 1] = a[0, 0]
-        c[0, 1] = a[1, 0]
-        c[1, 0] = a[0, 1]
+    n2 = a.shape[-1]
+    m2 = a.shape[-2]
+    n = int(n2/2)
+    if (n2 == m2) and (n2 % 2 == 0):
+        old = list(range(0,2*n))
+        new = list(range(n,2*n)) + list(range(0,n))
+        if(len(a.shape) == 2):
+            c[new, :] = c[old, :] # renumber rows
+            c[:, new] = c[:, old] # renumber columns
+        else:
+            
+            c[:, new, :] = c[:, old, :] # renumber rows
+            c[:, :, new] = c[:, :, old] # renumber columns
     else:
-        raise IndexError('matrices should be 2x2, or kx2x2')
+        raise IndexError('matrices should be 2nx2n, or kx2nx2n')
     return c
 
 
