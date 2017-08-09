@@ -54,6 +54,28 @@ class TouchstoneTestCase(unittest.TestCase):
         self.assertTrue((s == s_true).all())
         self.assertTrue((z0 == z0_true))
 
+    def test_get_sparameter_data(self):
+        '''
+        This tests the get_sparameter_data function.
+
+        '''
+        with open(os.path.join(self.test_dir, 'simple_touchstone.s2p')) as fid:
+            touch = Touchstone(fid)
+
+        spardict = touch.get_sparameter_data(format="ri")
+        self.assertTrue("frequency" in spardict)
+        self.assertTrue("S11R" in spardict)
+        self.assertTrue("S11I" in spardict)
+        self.assertTrue("S12R" in spardict)
+        self.assertTrue("S12I" in spardict)
+        self.assertTrue("S21R" in spardict)
+        self.assertTrue("S21I" in spardict)
+        self.assertTrue("S22R" in spardict)
+        self.assertTrue("S22I" in spardict)
+        self.assertTrue("S11DB" not in spardict)
+        self.assertTrue("S11M" not in spardict)
+
+
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
 
