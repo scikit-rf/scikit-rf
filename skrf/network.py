@@ -2961,9 +2961,6 @@ def concat_ports(ntwk_list, port_order='second', *args, **kw):
     ntwk_list  : list of skrf.Networks
         ntwks to concatenate
     port_order : ['first', 'second']
-        if `len(ntwk_list)>2` then you dont want to use `second`.
-        this function calls itself recursively so renumbering should
-        be done at the end.
 
     Examples
     -----------
