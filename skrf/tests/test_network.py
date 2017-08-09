@@ -48,14 +48,9 @@ class NetworkTestCase(unittest.TestCase):
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.27, 'm', z0=50)
         self.F = rf.concat_ports([l1, l1, l1, l1])
-        self.F.renumber([0,1,2,3,4,5,6,7],
-                        [0,4,1,5,2,6,3,7])
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
-        self.DUT.renumber([0,1,2,3,4,5,6,7],
-                          [0,4,1,5,2,6,3,7])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
-        self.Meas.renumber([0,1,2,3,4,5,6,7],
-                           [0,4,1,5,2,6,3,7])
+
         
 
     def test_constructor_empty(self):
