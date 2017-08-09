@@ -162,10 +162,10 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(npy.all(npy.abs(c.s - npy.array([[0,1],[1,0]])) < 1e-6))
 
     def test_de_embed_by_inv(self):
-        tinyfloat = 1e-12
         self.assertEqual(self.ntwk1.inv ** self.ntwk3, self.ntwk2)
         self.assertEqual(self.ntwk3 ** self.ntwk2.inv, self.ntwk1)
-        self.assertEqual(self.Fix.inv ** self.Meas ** self.Fix.flipped().inv, self.DUT)
+        self.assertEqual(self.Fix.inv ** self.Meas ** self.Fix.flipped().inv,
+                         self.DUT)
 
     def test_plot_one_port_db(self):
         self.ntwk1.plot_s_db(0,0)
