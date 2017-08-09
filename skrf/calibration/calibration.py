@@ -3010,7 +3010,7 @@ class NISTMultilineTRL(EightTerm):
                         ideal = npy.array([[exp(-gamma[m]*l[n]), 0],[0,exp(gamma[m]*l[n])]])
                         embedded = t2s_single(T1.dot(ideal).dot(g.dot(inv(T2).dot(g))))
 
-                        error += abs(npy.sum(embedded - meas))
+                        error += npy.sum(abs(embedded - meas))
                     if best_error == None or error < best_error:
                         best_error = error
                         best_values = v
