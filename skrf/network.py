@@ -2934,7 +2934,7 @@ def overlap(ntwkA, ntwkB):
     return ntwkA.interpolate(new_freq), ntwkB.interpolate(new_freq)
 
 
-def concat_ports(ntwk_list, port_order='first', *args, **kw):
+def concat_ports(ntwk_list, port_order='second', *args, **kw):
     '''
     Concatenate networks along the port axis
 
