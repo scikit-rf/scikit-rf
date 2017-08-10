@@ -359,7 +359,7 @@ class RectangularWaveguide(Media):
                     sqrt(abs(kc**2- k0**2))*(k0<kc) + \
                     0*(kc==k0) 
 
-        g = g+ self.alpha_c *(self.rho!=None)
+        g = g + self.alpha_c *(self.rho is not None)
         
         return g 
         
