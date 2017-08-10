@@ -4,6 +4,7 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle as pickle
+import warnings
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand, uniform
@@ -970,13 +971,14 @@ class TwelveTermSloppyInitTest(TwelveTermTest):
         
     
         measured = [ self.measure(k) for k in ideals]
-        
-        
-        self.cal= TwelveTerm(
-            ideals = NetworkSet(ideals).to_dict(), 
-            measured = NetworkSet(measured).to_dict(),
-            n_thrus=None,
-            )
+
+        # Catch UserWarning to avoid its output during testing
+        with warnings.catch_warnings(record=True) as w:
+            self.cal= TwelveTerm(
+                ideals = NetworkSet(ideals).to_dict(), 
+                measured = NetworkSet(measured).to_dict(),
+                n_thrus=None,
+                )
      
     def measure(self,ntwk):
         m = ntwk.copy()

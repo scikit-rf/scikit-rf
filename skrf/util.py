@@ -25,6 +25,7 @@ import fnmatch
 import os
 import json
 import zipfile
+import contextlib
 
 try:
     import cPickle as pickle
@@ -664,3 +665,9 @@ class ProgressBar:
 
     def __str__(self):
         return str(self.prog_bar)
+
+@contextlib.contextmanager
+def suppress_numpy_warnings(**kw):
+    olderr = npy.seterr(**kw)
+    yield
+    npy.seterr(**olderr)
