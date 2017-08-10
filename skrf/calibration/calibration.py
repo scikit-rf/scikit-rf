@@ -2502,7 +2502,7 @@ class NISTMultilineTRL(EightTerm):
     family = 'TRL'
     def __init__(self, measured, Grefls, l,
                  er_est=1, refl_offset=None, ref_plane=0,
-                 gamma_root_choice='real', k_method='multical', c0=None,
+                 gamma_root_choice='estimate', k_method='multical', c0=None,
                  z0_ref=50, z0_line=None, *args, **kwargs):
         '''
         NISTMultilineTRL initializer
@@ -2545,6 +2545,11 @@ class NISTMultilineTRL(EightTerm):
         gamma_root_choice : string
             Method to use for choosing the correct eigenvalue for propagation
             constant.
+
+            'estimate' : Choose the root that is closer to the estimated propagation
+            constant. Best choice when data is of good quality. To improve the
+            performance in phatological cases it's possible to give estimate
+            of the propagation constant as a keyword argument with 'gamma_est'.
 
             'real' : Force the real part of the gamma to be positive corresponding
             to a lossy line. Imaginary part can be negative.
@@ -2645,6 +2650,8 @@ class NISTMultilineTRL(EightTerm):
         log = npy.log
         abs = npy.abs
         det = linalg.det
+
+        gamma_est_user = self.kwargs.get('gamma_est', None)
 
         measured_reflects = self.measured_reflects
         measured_lines = self.measured_lines
@@ -2755,16 +2762,39 @@ class NISTMultilineTRL(EightTerm):
                 #Choose the correct root
                 e_val = root_choice(Mij, dl, gamma_est)
 
-                g_dl[k] = -log(0.5*(e_val[0] + 1.0/e_val[1]))
+                g_dl1 = -log(0.5*(e_val[0] + 1.0/e_val[1]))
+                g_dl2 = -log(0.5*(e_val[1] + 1.0/e_val[0]))
 
-                if 'real' in self.gamma_root_choice and (g_dl[k]/dl).real < 0:
-                    g_dl[k] = -g_dl[k]
+                g_dl[k] = g_dl1
 
-                if 'imag' in self.gamma_root_choice and (g_dl[k]/dl).imag < 0:
-                    g_dl[k] = -g_dl[k]
+                if 'real' in self.gamma_root_choice and (g_dl1/dl).real < 0:
+                    #Choose root that has bigger real part (more lossier)
+                    g_dl[k] = g_dl2
 
-                periods = npy.round(((gamma_est*dl).imag - (g_dl[k].imag))/(2*pi))
-                g_dl[k] += 1j*2*pi*periods
+                if 'imag' in self.gamma_root_choice and (g_dl1/dl).imag < 0:
+                    #Choose root that has larger imaginary part
+                    #Only works for short lines
+                    g_dl[k] = g_dl2
+
+                if 'estimate' in self.gamma_root_choice:
+                    #Choose root that is closer to the estimate
+                    if gamma_est_user is not None:
+                        g_est = gamma_est_user[m]
+                    else:
+                        #Use estimate from earlier iterations
+                        g_est = gamma_est
+                    periods1 = npy.round( ((gamma_est*dl).imag - g_dl1.imag)/(2*pi))
+                    periods2 = npy.round( ((gamma_est*dl).imag - g_dl2.imag)/(2*pi))
+                    g_dl1 += 1j*2*pi*periods1
+                    g_dl2 += 1j*2*pi*periods2
+
+                    if abs(g_dl1 - g_est*dl) < abs(g_dl2 - g_est*dl):
+                        g_dl[k] = g_dl1
+                    else:
+                        g_dl[k] = g_dl2
+                else:
+                    periods = npy.round(((gamma_est*dl).imag - (g_dl[k].imag))/(2*pi))
+                    g_dl[k] += 1j*2*pi*periods
                 dl_vec[k] = dl
                 k = k + 1
 
@@ -3010,7 +3040,7 @@ class NISTMultilineTRL(EightTerm):
                         ideal = npy.array([[exp(-gamma[m]*l[n]), 0],[0,exp(gamma[m]*l[n])]])
                         embedded = t2s_single(T1.dot(ideal).dot(g.dot(inv(T2).dot(g))))
 
-                        error += abs(npy.sum(embedded - meas))
+                        error += npy.sum(abs(embedded - meas))
                     if best_error == None or error < best_error:
                         best_error = error
                         best_values = v
