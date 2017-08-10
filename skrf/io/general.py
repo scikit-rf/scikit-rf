@@ -372,7 +372,7 @@ def write_all(dict_objs, dir='.', *args, **kwargs):
                     break
             filename = filename + '.' + extn
         try:
-            with open(os.path.join(dir+'/', filename), 'w') as fid:
+            with open(os.path.join(dir+'/', filename), 'wb') as fid:
                 write(fid, obj,*args, **kwargs)
         except Exception as inst:
             print(inst)
