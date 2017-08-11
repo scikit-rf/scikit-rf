@@ -108,16 +108,12 @@ class CalibrationTest(object):
         self.assertEqual(self.cal.embed(a),self.measure(a))
         
     @suppress_warning_decorator("n_thrus is None")
-    @suppress_warning_decorator("divide by zero encountered in true_divide")
-    @suppress_warning_decorator("invalid value encountered")
     def test_from_coefs(self):
         cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
         ntwk = self.wg.random(n_ports=self.n_ports)
         self.assertEqual(cal_from_coefs.apply_cal(self.cal.embed(ntwk)),ntwk)
         
     @suppress_warning_decorator("n_thrus is None")
-    @suppress_warning_decorator("divide by zero encountered in true_divide")
-    @suppress_warning_decorator("invalid value encountered")
     def test_from_coefs_ntwks(self):
         cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
         ntwk = self.wg.random(n_ports=self.n_ports)
@@ -370,7 +366,6 @@ class PHNTest(OnePortTest):
 
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
-    @suppress_warning_decorator("invalid value encountered")
     def setUp(self):
         self.n_ports = 2
         self.wg =WG
@@ -474,8 +469,6 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
 
 
 class TRLTest(EightTermTest):
-    @suppress_warning_decorator("divide by zero encountered in true_divide")
-    @suppress_warning_decorator("invalid value encountered")
     def setUp(self):
         self.n_ports = 2
         self.wg = WG
@@ -527,8 +520,6 @@ class TRLTest(EightTermTest):
 
 
 class TRLWithNoIdealsTest(EightTermTest):
-    @suppress_warning_decorator("divide by zero encountered in true_divide")
-    @suppress_warning_decorator("invalid value encountered")
     def setUp(self):
         self.n_ports = 2
         self.wg = WG
@@ -574,7 +565,6 @@ class TRLWithNoIdealsTest(EightTermTest):
 
 
 class TRLMultiline(EightTermTest):
-    @suppress_warning_decorator("invalid value encountered")
     def setUp(self):
         self.n_ports = 2
         self.wg = WG
@@ -955,7 +945,6 @@ class TwelveTermSloppyInitTest(TwelveTermTest):
     It must be a entirely seperate test because we want to ensure it 
     creates an accurate calibration.
     '''
-    @suppress_warning_decorator("divide by zero encountered in log10")
     @suppress_warning_decorator("dictionary passed, sloppy_input")
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
@@ -1096,13 +1085,11 @@ class TwoPortOnePathTest(TwelveTermTest):
         raise SkipTest()
 
     @suppress_warning_decorator("n_thrus is None")
-    @suppress_warning_decorator("invalid value encountered in")
     def test_from_coefs(self):
         cal_from_coefs = self.cal.from_coefs(self.cal.frequency, self.cal.coefs)
         ntwk = self.wg.random(n_ports=self.n_ports)
     
     @suppress_warning_decorator("n_thrus is None")
-    @suppress_warning_decorator("invalid value encountered in")
     def test_from_coefs_ntwks(self):
         cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
 
@@ -1215,7 +1202,6 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
     
     
     '''
-    @suppress_warning_decorator("divide by zero encountered in log10")
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
         self.n_ports = 2
@@ -1238,12 +1224,13 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
             ]
 
         measured = [ self.measure(k) for k in ideals]
-
-        self.cal = rf.TwelveTerm(
+        with warnings.catch_warnings(record=False):
+            self.cal = rf.TwelveTerm(
             ideals = ideals,
             measured = measured,
             isolation=measured[2]
             )
+
 
         coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs, redundant_k=1)
         coefs = NetworkSet.from_s_dict(coefs,
