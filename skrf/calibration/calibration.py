@@ -2401,9 +2401,11 @@ class TRL(EightTerm):
         '''
         #warn('Value of Reflect is not solved for yet.')
 
-        n_stds = len(measured)
-
-
+        self.n_stds = n_stds = len(measured)
+        self.n_reflects = n_reflects
+        self.estimate_line = estimate_line
+        self.solve_reflect = solve_reflect
+        
         ## generate ideals, given various inputs
 
         if ideals is None:
@@ -2449,8 +2451,13 @@ class TRL(EightTerm):
             ideals = ideals,
             *args, **kwargs)
 
-
+    def run(self):
         m_ut = self.measured_unterminated
+        n_reflects = self.n_reflects
+        n_stds = self.n_stds
+        estimate_line = self.estimate_line
+        solve_reflect = self.solve_reflect
+        ideals = self.ideals
 
         ## Solve for the line[s]
         for k in range(n_reflects+1,n_stds):
@@ -2469,6 +2476,8 @@ class TRL(EightTerm):
                 # solve for reflect using the last line if they pass >1
                 r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k], line_approx=self.ideals[-1])
                 self.ideals[k] = two_port_reflect(r,r)
+
+        return EightTerm.run(self)
 
 MultilineTRL = TRL
 
