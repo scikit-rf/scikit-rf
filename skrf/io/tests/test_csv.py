@@ -6,6 +6,7 @@ import numpy as npy
 import skrf as rf
 
 from nose.plugins.skip import SkipTest
+from skrf.util import suppress_warning_decorator
 
 class AgilentCSVTestCase(unittest.TestCase):
     ''' 
@@ -50,6 +51,7 @@ class AgilentCSVTestCase(unittest.TestCase):
         '''
         self.assertEqual(self.acsv.frequency, rf.F(750e9, 1100e9, 2, 'hz'))
 
+    @suppress_warning_decorator("CSV format unrecognized")
     def test_networks(self):
         '''
         This only tests for execution, not accuracy

@@ -4,14 +4,18 @@ import skrf as rf
 import numpy as npy
 from skrf.calibration.calibrationSet import Dot
 from skrf.calibration import OnePort, TRL, SOLT, EightTerm
+from skrf.util import suppress_warning_decorator
+
 
 class CalsetTest(object):
+    @suppress_warning_decorator("No switch terms")
     def test_run(self):
         '''
         ensure cal_set can be generated
         '''
         self.calset.run()
-    
+
+    @suppress_warning_decorator("No switch terms")
     def test_correct_ntwk(self):
         '''
         ensure a network can be corrected
@@ -54,6 +58,8 @@ class DotOneport(unittest.TestCase,CalsetTest):
         return out
 
 class DotEightTerm(unittest.TestCase, CalsetTest):
+    @suppress_warning_decorator("invalid value encountered in multiply")
+    @suppress_warning_decorator("divide by zero encountered in true_divide")
     def setUp(self):
         self.n_ports = 2
         self.wg = rf.RectangularWaveguide(rf.F(75,100,3), a=100*rf.mil,z0=50)
