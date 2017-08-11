@@ -1438,16 +1438,16 @@ class TwelveTerm(Calibration):
 
         # if they didnt tell us the number of thrus, then lets
         # hueristcally determine it
+        trans_thres_mag = 10 ** (trans_thres / 20)
 
         if n_thrus is None:
             warn('n_thrus is None, guessing which stds are transmissive')
             n_thrus=0
             for k in self.ideals:
                 mean_trans = NetworkSet([k.s21, k.s12]).mean_s_mag
-                trans_db = npy.mean(mean_trans.s_db.flatten())
-
+                trans_mag = npy.mean(mean_trans.s_mag.flatten())
                 # this number is arbitrary but reasonable
-                if trans_db > trans_thres and not npy.isneginf(trans_db).all():
+                if trans_mag > trans_thres_mag:
                     n_thrus +=1
 
 
