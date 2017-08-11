@@ -72,32 +72,30 @@ PNA interaction
 
 '''
 
-import numpy as npy
+# import itertools
+import json
+# import os
+
+from collections import OrderedDict
+from copy import deepcopy, copy
+# from numbers import Number
+from warnings import warn
+
+# import six.moves.cPickle as pickle
+# import numpy as npy
+
 from numpy import linalg
 from numpy.linalg import det
-from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
-import json
-from numbers import Number
-from collections import OrderedDict
-import os
-from copy import deepcopy, copy
-import itertools
-from warnings import warn
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
+from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap, log, log10
 
-from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
-    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c, cross_ratio
+from .. import __version__ as skrf__version__
+from .. import util
 from ..frequency import *
 from ..network import *
-from ..networkSet import func_on_networks as fon
-from ..networkSet import NetworkSet
-from .. import util
 from ..io.touchstone import read_zipped_touchstones
-from .. import __version__ as skrf__version__
-
+from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
+    find_correct_sign, find_closest,  ALMOST_ZERO, rand_c, cross_ratio
+from ..networkSet import NetworkSet, func_on_networks as fon
 
 ## later imports. delayed to solve circular dependencies
 #from io.general import write
@@ -118,7 +116,6 @@ coefs_list_12term =[
     'reverse source match',
     'reverse isolation'
     ]
-
 
 
 global coefs_list_8term

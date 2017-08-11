@@ -1,29 +1,28 @@
+# import os
 import unittest
-import os
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
-import skrf as rf
+
 import numpy as npy
-from numpy.random  import rand, uniform
+# import six.moves.cPickle as pickle
+import skrf as rf
+
 from nose.tools import nottest
 from nose.plugins.skip import SkipTest
+from numpy.random import rand, uniform
 
-from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect, NISTMultilineTRL
-
+from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse, \
+    TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect, NISTMultilineTRL
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
 
+
 # number of frequency points to test calibration at .
 # i choose 1 for speed, but given that many tests employ *random* 
-# networks values >100 are better for  initialy verification
+# networks values >100 are better for  initial verification
 global NPTS  
 NPTS = 1
 
 WG_lossless =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, z0=50)
 WG =  rf.RectangularWaveguide(rf.F(75,100,NPTS), a=100*rf.mil, z0=50, rho='gold')
-
 
 
 class DetermineTest(unittest.TestCase):

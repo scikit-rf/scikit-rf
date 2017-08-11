@@ -21,23 +21,22 @@ General
 
 """
 from __future__ import print_function
-import fnmatch
-import os
-import json
-import zipfile
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
-
-import numpy as npy
-from datetime import datetime
 import collections
+import fnmatch
+# import json
+import os
 import pprint
 import re
-from subprocess import Popen, PIPE
 import sys
+# import zipfile
+
+from datetime import datetime
+from subprocess import Popen, PIPE
+
+import numpy as npy
+# import six.moves.cPickle as pickle
+
 # globals
 
 try:

@@ -28,30 +28,29 @@ Writing output to spreadsheet
 
 
 '''
-import sys
-try:
-    import cPickle as pickle
-    from cPickle import UnpicklingError
-except ImportError:
-    import pickle as pickle
-    from pickle import UnpicklingError
 import inspect
 import os
-import zipfile
-import warnings
 import sys
+import warnings
+# import zipfile
+from copy import copy
 
-from ..util import get_extn, get_fid
-from ..network import Network
+import six.moves.cPickle as pickle
+import six
+
+from six.moves import StringIO
+from six.moves.cPickle import UnpicklingError
+
+from ..calibration.calibration import Calibration
 from ..frequency import Frequency
 from ..media import  Media
+from ..network import Network
 from ..networkSet import NetworkSet
-from ..calibration.calibration import Calibration
+from ..util import get_extn, get_fid
 
-from copy import copy
 dir_ = copy(dir)
 
-#delayed import: from pandas import DataFrame, Series for ntwk_2_spreadsheet
+# delayed import: from pandas import DataFrame, Series for ntwk_2_spreadsheet
 
 # file extension conventions for skrf objects.
 global OBJ_EXTN
@@ -737,15 +736,12 @@ def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
 
 
 # Provide a StringBuffer that let's me work with Python2 strings and Python3 unicode strings without thinking
-if sys.version_info < (3, 0):
-    import StringIO
-
-    class StringBuffer(StringIO.StringIO):
+if six.PY3:
+    StringBuffer = StringIO
+else:
+    class StringBuffer(StringIO):
         def __enter__(self):
             return self
 
         def __exit__(self, *args):
             self.close()
-else:
-    import io
-    StringBuffer = io.StringIO
