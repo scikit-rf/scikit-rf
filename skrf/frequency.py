@@ -32,7 +32,7 @@ Functions
 '''
 
 # from matplotlib.pyplot import gca,plot, autoscale
-from numpy import pi,linspace
+from numpy import pi, linspace, logspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
 import re
@@ -99,6 +99,8 @@ class Frequency(object):
                 attribute :attr:`f_scaled`. It is also used by the
                 :class:`~skrf.network.Network` class for plots vs.
                 frequency.
+        sweep_type : ['lin', 'log']
+                type of the sweep. 'lin' for linear and 'log' for logarithmic.
 
         Notes
         --------
@@ -126,6 +128,8 @@ class Frequency(object):
 
         if sweep_type.lower() == 'lin':
             self.f = linspace(start, stop, npoints)
+        elif sweep_type.lower() == 'log':
+            self.f = logspace(npy.log10(start), npy.log10(stop), npoints)
         else:
             raise ValueError('Sweep Type not recognized')
 
