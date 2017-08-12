@@ -452,7 +452,7 @@ class AgilentCSV(object):
                 elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
                 else:
-                    warn('CSV format unrecognized. It\'s up to you to intrepret the resultant network correctly.')
+                    warn('CSV format unrecognized in "%s" or "%s". It\'s up to you to intrepret the resultant network correctly.' % (names[k], names[k+1]))
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
 
                 ntwk_list.append(

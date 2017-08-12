@@ -21,9 +21,11 @@ General
 
 """
 from __future__ import print_function
+import contextlib
 import fnmatch
-import os
 import json
+import os
+import warnings
 import zipfile
 
 try:
@@ -38,6 +40,7 @@ import pprint
 import re
 from subprocess import Popen, PIPE
 import sys
+from functools import wraps
 # globals
 
 try:
@@ -664,3 +667,25 @@ class ProgressBar:
 
     def __str__(self):
         return str(self.prog_bar)
+
+
+@contextlib.contextmanager
+def suppress_numpy_warnings(**kw):
+    olderr = npy.seterr(**kw)
+    yield
+    npy.seterr(**olderr)
+
+def suppress_warning_decorator(msg):
+    def suppress_warnings_decorated(func):
+        @wraps(func)
+        def suppressed_func(*k, **kw):
+            show_warnings = []
+            with warnings.catch_warnings(record=True) as wlist:
+                 res = func(*k, **kw)
+                 for w in wlist:
+                     if not w.message.args[0].startswith(msg):
+                         show_warnings.append(w)
+            for w in show_warnings:
+                warnings.warn(w.message.args[0])
+        return suppressed_func
+    return suppress_warnings_decorated

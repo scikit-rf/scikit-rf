@@ -1438,16 +1438,16 @@ class TwelveTerm(Calibration):
 
         # if they didnt tell us the number of thrus, then lets
         # hueristcally determine it
+        trans_thres_mag = 10 ** (trans_thres / 20)
 
         if n_thrus is None:
             warn('n_thrus is None, guessing which stds are transmissive')
             n_thrus=0
             for k in self.ideals:
                 mean_trans = NetworkSet([k.s21, k.s12]).mean_s_mag
-                trans_db = npy.mean(mean_trans.s_db.flatten())
-
+                trans_mag = npy.mean(mean_trans.s_mag.flatten())
                 # this number is arbitrary but reasonable
-                if trans_db > trans_thres and not npy.isneginf(trans_db).all():
+                if trans_mag > trans_thres_mag:
                     n_thrus +=1
 
 
@@ -2401,9 +2401,11 @@ class TRL(EightTerm):
         '''
         #warn('Value of Reflect is not solved for yet.')
 
-        n_stds = len(measured)
-
-
+        self.n_stds = n_stds = len(measured)
+        self.n_reflects = n_reflects
+        self.estimate_line = estimate_line
+        self.solve_reflect = solve_reflect
+        
         ## generate ideals, given various inputs
 
         if ideals is None:
@@ -2449,8 +2451,13 @@ class TRL(EightTerm):
             ideals = ideals,
             *args, **kwargs)
 
-
+    def run(self):
         m_ut = self.measured_unterminated
+        n_reflects = self.n_reflects
+        n_stds = self.n_stds
+        estimate_line = self.estimate_line
+        solve_reflect = self.solve_reflect
+        ideals = self.ideals
 
         ## Solve for the line[s]
         for k in range(n_reflects+1,n_stds):
@@ -2469,6 +2476,8 @@ class TRL(EightTerm):
                 # solve for reflect using the last line if they pass >1
                 r = determine_reflect(m_ut[0],m_ut[k],m_ut[-1],reflect_approx=ideals[k], line_approx=self.ideals[-1])
                 self.ideals[k] = two_port_reflect(r,r)
+
+        return EightTerm.run(self)
 
 MultilineTRL = TRL
 
