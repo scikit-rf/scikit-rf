@@ -1,9 +1,6 @@
 import unittest
 import os
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
+import six.moves.cPickle as pickle
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand, uniform

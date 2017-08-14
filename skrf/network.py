@@ -142,12 +142,8 @@ from functools import reduce
 import os
 import warnings
 
-try:
-    import cPickle as pickle
-    from cPickle import UnpicklingError
-except ImportError:
-    import pickle as pickle
-    from pickle import UnpicklingError
+import six.moves.cPickle as pickle
+from six.moves.cPickle import UnpicklingError
 
 import sys
 import re
@@ -2042,7 +2038,7 @@ class Network(object):
         ::
             -|0      n|-        0-|n      0|-n
             -|1    n+1|- flip   1-|n+1    1|-n+1
-            ...      ...  =>     ...      ... 
+            ...      ...  =>     ...      ...
             -|n-1 2n-1|-      n-1-|2n-1 n-1|-2n-1
         '''
         if self.number_of_ports % 2 == 0:
@@ -2778,14 +2774,14 @@ def cascade(ntwkA, ntwkB):
     Notes
     ------
     connection diagram::
-		      A                B          
-		   +---------+   +---------+   
-		  -|0      N |---|0      N |-  
-		  -|1     N+1|---|1     N+1|-   
-		  ...       ... ...       ... 
-		  -|N-2  2N-2|---|N-2  2N-2|- 
-		  -|N-1  2N-1|---|N-1  2N-1|-  
-		   +---------+   +---------+  
+		      A                B
+		   +---------+   +---------+
+		  -|0      N |---|0      N |-
+		  -|1     N+1|---|1     N+1|-
+		  ...       ... ...       ...
+		  -|N-2  2N-2|---|N-2  2N-2|-
+		  -|N-1  2N-1|---|N-1  2N-1|-
+		   +---------+   +---------+
 
     Parameters
     -----------
@@ -4566,7 +4562,7 @@ def flip(a):
     ::
         -|0      n|-        0-|n      0|-n
         -|1    n+1|- flip   1-|n+1    1|-n+1
-        ...      ...  =>     ...      ... 
+        ...      ...  =>     ...      ...
         -|n-1 2n-1|-      n-1-|2n-1 n-1|-2n-1
 
     Parameters
@@ -4596,7 +4592,7 @@ def flip(a):
             c[new, :] = c[old, :] # renumber rows
             c[:, new] = c[:, old] # renumber columns
         else:
-            
+
             c[:, new, :] = c[:, old, :] # renumber rows
             c[:, :, new] = c[:, :, old] # renumber columns
     else:

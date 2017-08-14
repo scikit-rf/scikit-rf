@@ -29,12 +29,11 @@ Writing output to spreadsheet
 
 '''
 import sys
-try:
-    import cPickle as pickle
-    from cPickle import UnpicklingError
-except ImportError:
-    import pickle as pickle
-    from pickle import UnpicklingError
+
+import six.moves.cPickle as pickle
+from six.moves.cPickle import UnpicklingError
+
+
 import inspect
 import os
 import zipfile
@@ -51,7 +50,7 @@ from ..calibration.calibration import Calibration
 from copy import copy
 dir_ = copy(dir)
 
-#delayed import: from pandas import DataFrame, Series for ntwk_2_spreadsheet
+# delayed import: from pandas import DataFrame, Series for ntwk_2_spreadsheet
 
 # file extension conventions for skrf objects.
 global OBJ_EXTN
@@ -161,7 +160,7 @@ def write(file, obj, overwrite = True):
     other                                                 '.p'
     ====================================================  ===============
 
-    To make file written by this method cross-platform, the pickling
+    To make the file written by this method cross-platform, the pickling
     protocol 2 is used. See :mod:`pickle` for more info.
 
     Examples
