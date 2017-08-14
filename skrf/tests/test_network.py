@@ -1,36 +1,36 @@
 import unittest
 import os
+import tempfile
 import six
 import numpy as npy
-try:
-    import cPickle as pickle 
-except ImportError:
-    import pickle as pickle
+import six.moves.cPickle as pickle
 import skrf as rf
 from nose.plugins.skip import SkipTest
 
 from skrf import setup_pylab
+
+
 class NetworkTestCase(unittest.TestCase):
     '''
     Network class operation test case.
     The following is true, as tested by lihan in ADS,
         test3 == test1 ** test2
-        
-    To test for 2N-port deembeding Meas, F and DUT are created such as:
+
+    To test for 2N-port deembeding Meas, Fix and DUT are created such as:
     ::
-        Meas == F ** DUT
-            Meas              F            DUT
+        Meas == Fix ** DUT
+            Meas             Fix           DUT
          +---------+     +---------+   +---------+
         -|0       4|-   -|0       4|---|0       4|-
         -|1       5|- = -|1       5|---|1       5|-
         -|2       6|-   -|2       6|---|2       6|-
         -|3       7|-   -|3       7|---|3       7|-
          +---------+     +---------+   +---------+
-    
+
     Note:
     -----
     due to the complexity of inv computations, there will be an unavoidable
-    precision loss. thus F.inv ** Meas will show a small difference with DUT.       
+    precision loss. thus Fix.inv ** Meas will show a small difference with DUT.
     '''
     def setUp(self):
         '''
@@ -51,7 +51,7 @@ class NetworkTestCase(unittest.TestCase):
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
 
-        
+
 
     def test_constructor_empty(self):
         rf.Network()
@@ -61,7 +61,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_constructor_from_touchstone(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
-        
+
     def test_constructor_from_hfss_touchstone(self):
         # HFSS can provide the port characteric impedances in its generated touchstone file.
         # Check if reading a HFSS touchstone file with non-50Ohm impedances
@@ -69,32 +69,26 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(npy.isclose(ntwk_hfss.z0[0,0], 50))
 
     def test_constructor_from_pickle(self):
-        if six.PY2:
-            rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
-
+        rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
 
     def test_constructor_from_fid_touchstone(self):
         filename= os.path.join(self.test_dir, 'ntwk1.s2p')
         with open(filename,'rb') as fid:
             rf.Network(fid)
-    
+
     def test_open_saved_touchstone(self):
         self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
         ntwk1Saved = rf.Network(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
         self.assertEqual(self.ntwk1, ntwk1Saved)
         os.remove(os.path.join(self.test_dir, 'ntwk1Saved.s2p'))
-    
+
     def test_pickling(self):
-        if six.PY2:
-            original_ntwk = self.ntwk1
-            f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'),'wb')
-            pickle.dump(original_ntwk,f)
-            f.close()
-            f = open(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
-            unpickled = pickle.load(f)
-            self.assertEqual(original_ntwk, unpickled)
-            f.close()
-            os.remove(os.path.join(self.test_dir, 'pickled_ntwk.ntwk'))
+        original_ntwk = self.ntwk1
+        with tempfile.NamedTemporaryFile(dir=self.test_dir, suffix='ntwk') as fid:
+            pickle.dump(original_ntwk, fid, protocol=2)  # Default Python2: 0, Python3: 3
+            fid.seek(0)
+            unpickled = pickle.load(fid)
+        self.assertEqual(original_ntwk, unpickled)
 
     def test_stitch(self):
         tmp = self.ntwk1.copy()
@@ -128,9 +122,12 @@ class NetworkTestCase(unittest.TestCase):
         b.z0 = npy.arange(4)+10
 
         c=rf.connect(a,2,b,0,2)
+        self.assertTrue((c.z0==[0,1,12,13]).all())
+
         self.assertTrue((c.z0==[1,2,12,13]).all())
 
         d=rf.connect(a,0,b,0,3)
+        self.assertTrue((d.z0==[3,13]).all())
         self.assertTrue((d.z0==[4,13]).all())
 
     def test_connect_fast(self):
@@ -202,7 +199,6 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.t2s(rf.s2t(ntwk.s))-ntwk.s) < tinyfloat).all())
         self.assertTrue((abs(rf.t2s(rf.s2t(self.Fix.s))-self.Fix.s) < tinyfloat).all())
-       
 
     def test_yz(self):
         tinyfloat = 1e-12

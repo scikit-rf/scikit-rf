@@ -28,10 +28,7 @@ import os
 import warnings
 import zipfile
 
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
+import six.moves.cPickle as pickle
 
 import numpy as npy
 from datetime import datetime
@@ -41,6 +38,7 @@ import re
 from subprocess import Popen, PIPE
 import sys
 from functools import wraps
+
 # globals
 
 try:
