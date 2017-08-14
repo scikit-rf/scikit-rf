@@ -1,5 +1,3 @@
-
-
 '''
 .. module:: skrf.plotting
 ========================================
@@ -19,15 +17,15 @@ Plots and Charts
     plot_smith
     plot_rectangular
     plot_polar
-    plot_complex_rectangular 
+    plot_complex_rectangular
     plot_complex_polar
-    
+
 Misc Functions
 -----------------
 
 .. autosummary::
     :toctree: generated/
-    
+
     save_all_figs
     add_markers_to_lines
     legend_off
@@ -69,15 +67,15 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
              * *'zy'* : lines of constant impedance stronger than admittance
              * *'yz'* : lines of constant admittance stronger than impedance
     draw_labels : Boolean
-             annotate real and imaginary parts of impedance on the 
+             annotate real and imaginary parts of impedance on the
              chart (only if smithR=1)
     border : Boolean
-        draw a rectangular border with axis ticks, around the perimeter 
+        draw a rectangular border with axis ticks, around the perimeter
         of the figure. Not used if draw_labels = True
-    
+
     ax : matplotlib.axes object
             existing axes to draw smith chart on
-    
+
     ref_imm : number
             Reference immittance for center of Smith chart. Only changes
             labels, if printed.
@@ -179,15 +177,15 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     # Set axis limits by plotting white points so zooming works properly
     ax1.plot(smithR*npy.array([-1.1, 1.1]), smithR*npy.array([-1.1, 1.1]), 'w.', markersize = 0)
     ax1.axis('image') # Combination of 'equal' and 'tight'
-    
-    
-    if not border: 
+
+
+    if not border:
         ax1.yaxis.set_ticks([])
         ax1.xaxis.set_ticks([])
         for loc, spine in ax1.spines.items():
             spine.set_color('none')
-        
-    
+
+
     if draw_labels:
         #Clear axis
         ax1.yaxis.set_ticks([])
@@ -224,7 +222,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                 S *= smithR * radialScaleFactor
                 rhox = S.real
                 rhoy = S.imag * y_flip_sign
-                
+
                 # Choose alignment anchor point based on label's value
                 if ((value == 1.0) or (value == -1.0)):
                     halignstyle = "center"
@@ -232,7 +230,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                     halignstyle = "right"
                 else:
                     halignstyle = "left"
-                
+
                 if (rhoy < 0):
                     valignstyle = "top"
                 else:
@@ -280,7 +278,7 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
     *args,**kwargs : passed to pylab.plot
-    
+
     '''
     if ax is None:
         ax = plb.gca()
@@ -304,10 +302,10 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
     if axis is not None:
         ax.autoscale(True, 'x', True)
         ax.autoscale(True, 'y', False)
-        
+
     if plb.isinteractive():
         plb.draw()
-    
+
     return my_plot
 
 def plot_polar(theta, r, x_label=None, y_label=None, title=None,
@@ -320,7 +318,7 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     theta : array-like
         data to plot
     r : array-like
-        
+
     x_label : string
         x-axis label
     y_label : string
@@ -332,7 +330,7 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
     *args,**kwargs : passed to pylab.plot
-    
+
     See Also
     ----------
     plot_rectangular : plots rectangular data
@@ -363,7 +361,7 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
 
     if axis_equal:
         ax.axis('equal')
-        
+
     if plb.isinteractive():
         plb.draw()
 
@@ -396,7 +394,7 @@ def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
     plot_polar : plot polar data
     plot_complex_polar : plot complex data on polar plane
     plot_smith : plot complex data on smith chart
-    
+
     '''
     x = npy.real(z)
     y = npy.imag(z)
@@ -467,7 +465,7 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     axis_equal: Boolean
         sets axis to be equal increments (calls axis('equal'))
     force_chart : Boolean
-        forces the re-drawing of smith chart 
+        forces the re-drawing of smith chart
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
     *args,**kwargs : passed to pylab.plot
@@ -480,7 +478,7 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     plot_complex_polar : plot complex data on polar plane
     plot_smith : plot complex data on smith chart
     '''
-    
+
     if ax is None:
         ax = plb.gca()
 
@@ -498,15 +496,15 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
         plb.draw()
 
 
-def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,  
+def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,
                    add_titles=True, keep_it_tight=True,  subplot_kw={}, *args, **kw):
     '''
     Plot all networks parameters individually on subplots
-    
+
     Parameters
     --------------
-    
-    
+
+
     '''
     if newfig:
         f,axs= plb.subplots(ntwk.nports,ntwk.nports,
@@ -514,7 +512,7 @@ def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,
                                       size_per_port*ntwk.nports ),
                                       **subplot_kw)
     else:
-        f = plb.gcf() 
+        f = plb.gcf()
         axs = npy.array(f.get_axes())
 
     for ports,ax in zip(ntwk.port_tuples, axs.flatten()):
@@ -529,23 +527,23 @@ def subplot_params(ntwk, param='s', proj='db', size_per_port=4, newfig=True,
 def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     '''
     Shades frequency bands.
-    
-    when plotting data over a set of frequency bands it is nice to 
+
+    when plotting data over a set of frequency bands it is nice to
     have each band visually separated from the other. The kwarg `alpha`
     is useful.
-    
-    Parameters 
+
+    Parameters
     --------------
     edges : array-like
         x-values separating regions of a given shade
-    y_range : tuple 
-        y-values to shade in 
+    y_range : tuple
+        y-values to shade in
     cmap : str
         see matplotlib.cm  or matplotlib.colormaps for acceptable values
     \*\* : key word arguments
         passed to `matplotlib.fill_between`
-        
-    Examples 
+
+    Examples
     -----------
     >>> rf.shade_bands([325,500,750,1100], alpha=.2)
     '''
@@ -554,8 +552,8 @@ def shade_bands(edges, y_range=None,cmap='prism', **kwargs):
     axis = plb.axis()
     for k in range(len(edges)-1):
         plb.fill_between(
-            [edges[k],edges[k+1]], 
-            y_range[0], y_range[1], 
+            [edges[k],edges[k+1]],
+            y_range[0], y_range[1],
             color = cmap(1.0*k/len(edges)),
             **kwargs)
     plb.axis(axis)
@@ -596,13 +594,13 @@ saf = save_all_figs
 
 def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10):
     '''
-    adds markers to existing lings on a plot 
-    
-    this is convinient if you have already have a plot made, but then 
-    need to add markers afterwards, so that it can be interpreted in 
-    black and white. The markevery argument makes the markers less 
-    frequent than the data, which is generally what you want. 
-    
+    adds markers to existing lings on a plot
+
+    this is convinient if you have already have a plot made, but then
+    need to add markers afterwards, so that it can be interpreted in
+    black and white. The markevery argument makes the markers less
+    frequent than the data, which is generally what you want.
+
     Parameters
     -----------
     ax : matplotlib.Axes
@@ -611,7 +609,7 @@ def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10
         see matplotlib.plot help for possible marker characters
     markevery : int
         markevery number of points with a marker.
-    
+
     '''
     if ax is None:
         ax=plb.gca()
@@ -623,14 +621,14 @@ def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10
 
 def legend_off(ax=None):
     '''
-    turn off the legend for a given axes. 
-    
+    turn off the legend for a given axes.
+
     if no axes is given then it will use current axes.
-    
+
     Parameters
     -----------
     ax : matplotlib.Axes object
-        axes to operate on 
+        axes to operate on
     '''
     if ax is None:
         plb.gca().legend_.set_visible(0)
@@ -640,41 +638,41 @@ def legend_off(ax=None):
 def scrape_legend(n=None, ax=None):
     '''
     scrapes a legend with redundant labels
-    
-    Given a legend of m entries of n groups, this will remove all but 
+
+    Given a legend of m entries of n groups, this will remove all but
     every m/nth entry. This is used when you plot many lines representing
     the same thing, and only want one label entry in the legend  for the
     whole ensemble of lines
-    
+
     '''
-    
+
     if ax is None:
         ax = plb.gca()
-    
+
     handles, labels = ax.get_legend_handles_labels()
-    
+
     if n is None:
         n =len ( set(labels))
-    
+
     if n>len(handles):
         raise ValueError('number of entries is too large')
-    
+
     k_list = [int(k) for k in npy.linspace(0,len(handles)-1,n)]
     ax.legend([handles[k] for k in k_list], [labels[k] for k in k_list])
 
 def func_on_all_figs(func, *args, **kwargs):
     '''
-    runs a function after making all open figures current. 
-    
-    useful if you need to change the properties of many open figures 
-    at once, like turn off the grid. 
-    
+    runs a function after making all open figures current.
+
+    useful if you need to change the properties of many open figures
+    at once, like turn off the grid.
+
     Parameters
     ----------
     func : function
         function to call
     \*args, \*\*kwargs : pased to func
-    
+
     Examples
     ----------
     >>> rf.func_on_all_figs(grid,alpha=.3)
@@ -690,9 +688,9 @@ foaf = func_on_all_figs
 
 def plot_vector(a, off=0+0j, *args, **kwargs):
     '''
-    plot a 2d vector 
+    plot a 2d vector
     '''
-    return quiver(off.real,off.imag,a.real,a.imag,scale_units ='xy', 
+    return quiver(off.real,off.imag,a.real,a.imag,scale_units ='xy',
            angles='xy',scale=1, *args, **kwargs)
 
 
@@ -762,9 +760,9 @@ def __generate_plot_functions(self):
                 gen_label = False
 
 
-            was_interactive = plb.isinteractive
-            if was_interactive:
-                plb.interactive(False)
+            # was_interactive = plb.isinteractive
+            # if was_interactive:
+            #     plb.interactive(False)
 
             for m in M:
                 for n in N:
@@ -794,10 +792,10 @@ def __generate_plot_functions(self):
                          show_legend = show_legend, ax = ax,
                         *args, **kwargs)
 
-            if was_interactive:
-                plb.interactive(True)
-                plb.draw()
-                plb.show()
+            # if was_interactive:
+            #     plb.interactive(True)
+            #     plb.draw()
+            #     plb.show()
 
         plot_prop_polar.__doc__ = '''
 plot the Network attribute :attr:`%s` vs frequency.
