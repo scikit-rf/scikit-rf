@@ -83,10 +83,7 @@ import os
 from copy import deepcopy, copy
 import itertools
 from warnings import warn
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
+import six.moves.cPickle as pickle
 
 from ..mathFunctions import complex_2_db, sqrt_phase_unwrap, \
     find_correct_sign, find_closest,  ALMOST_ZERO, rand_c, cross_ratio

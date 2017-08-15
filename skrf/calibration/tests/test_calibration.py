@@ -1,10 +1,7 @@
 import unittest
 import os
-try:
-    import cPickle as pickle
-except ImportError:
-    import pickle as pickle
 import warnings
+import six.moves.cPickle as pickle
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand, uniform
@@ -56,7 +53,7 @@ class DetermineTest(unittest.TestCase):
         open = wg.open()
         self.r_estimate = [short, short,short, short, open ,open, open ,open]
         self.R_m = [self.embed(k) for k in self.R]
-        
+
     def embed(self,x):
         return self.X**x**self.Y    
         
@@ -370,7 +367,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.n_ports = 2
         self.wg =WG
         wg= self.wg
-        
+
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
         #Isolation terms
@@ -378,7 +375,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         self.Ir = wg.random(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
-        
+
         ideals = [
             wg.short(nports=2, name='short'),
             wg.open(nports=2, name='open'),
@@ -394,7 +391,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             isolation = measured[2],
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-        
+
     def terminate(self, ntwk):
         '''
         terminate a measured network with the switch terms
@@ -407,7 +404,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         out.s[:,1,0] += self.If.s[:,0,0]
         out.s[:,0,1] += self.Ir.s[:,0,0]
         return out
-    
+
     def test_unterminating(self):
         a = self.wg.random(n_ports=self.n_ports)
         #unermintated measurment
@@ -418,7 +415,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
         m.s[:,1,0] -= self.If.s[:,0,0]
         m.s[:,0,1] -= self.Ir.s[:,0,0]
         self.assertEqual(self.cal.unterminate(m), ut)
-        
+
     def test_forward_directivity_accuracy(self):
         self.assertEqual(
             self.X.s11,
@@ -554,7 +551,7 @@ class TRLWithNoIdealsTest(EightTermTest):
             isolation = measured[1],
             switch_terms = (self.gamma_f, self.gamma_r)
             )
-    
+
     def test_found_line(self):
         self.cal.run()
         self.assertTrue(self.cal.ideals[2]==self.actuals[2])
@@ -569,7 +566,7 @@ class TRLMultiline(EightTermTest):
         self.n_ports = 2
         self.wg = WG
         wg= self.wg
-        
+
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name='Y')
         self.If = wg.random(n_ports=1, name='If')
@@ -823,7 +820,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
             wg.random(2,name='rand1'),
             wg.random(2,name='rand2'),
             ]
-        
+
         measured = [ self.measure(k) for k in ideals]
         
         self.cal = rf.TwelveTerm(
