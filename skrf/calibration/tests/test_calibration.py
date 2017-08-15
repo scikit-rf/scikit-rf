@@ -1,5 +1,6 @@
 import unittest
 import os
+import warnings
 import six.moves.cPickle as pickle
 import skrf as rf
 import numpy as npy
