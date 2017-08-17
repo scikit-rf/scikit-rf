@@ -2511,6 +2511,89 @@ class Network(object):
         Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
+    def impulse_response(self, window='hamming', pad=1000):
+        """Calculates time-domain impulse response of one-port.
+
+        First frequency must be 0 Hz for the transformation to be accurate and
+        the frequency step must be uniform.
+
+        Real measurements should be extrapolated to DC and interpolated to
+        uniform frequency spacing.
+
+        Y-axis is the reflection coefficient.
+
+        Parameters
+        -----------
+        window : string
+                FFT windowing function.
+        pad : int
+                Number of zeros to add as padding.
+
+        Returns
+        ---------
+        t : class:`numpy.ndarray`
+            Time vector
+        y : class:`numpy.ndarray`
+            Step response
+
+        See Also
+        -----------
+            impulse_response
+        """
+        if self.nports != 1:
+            raise ValueError('Only one-ports are supported')
+        fstep = self.frequency.step
+        t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
+        if window != None:
+            w = self.windowed(window=window, normalize=False)
+        else:
+            w = self
+        return t, s_to_time(w.s, pad=pad).flatten()
+
+    def step_response(self, window='hamming', pad=1000):
+        """Calculates time-domain step response of one-port.
+
+        First frequency must be 0 Hz for the transformation to be accurate and
+        the frequency step must be uniform.
+
+        Real measurements should be extrapolated to DC and interpolated to
+        uniform frequency spacing.
+
+        Y-axis is the reflection coefficient.
+
+        Parameters
+        -----------
+        window : string
+                FFT windowing function.
+        pad : int
+                Number of zeros to add as padding.
+
+        Returns
+        ---------
+        t : class:`numpy.ndarray`
+            Time vector
+        y : class:`numpy.ndarray`
+            Step response
+
+        See Also
+        -----------
+            impulse_response
+        """
+        if self.nports != 1:
+            raise ValueError('Only one-ports are supported')
+        if self.frequency.f[0] != 0:
+            warnings.warn(
+                "Frequency doesn't begin from 0. Step response will not be correct.",
+                RuntimeWarning
+            )
+        fstep = self.frequency.step
+        t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
+        if window != None:
+            w = self.windowed(window=window, normalize=False)
+        else:
+            w = self
+        return t, npy.cumsum(s_to_time(w.s, pad=pad).flatten())
+
 
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
