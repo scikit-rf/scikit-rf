@@ -173,6 +173,11 @@ from .time import time_gate
 
 from .constants import ZERO
 
+def s_to_time(s, pad=0):
+    """Transforms S-parameters to time-domain"""
+    if len(s.shape) != 1 and s.shape[1:] != (1,1):
+        raise ValueError('Only one-ports are supported')
+    return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=s.shape[0]+pad), axes=0)
 
 class Network(object):
     """
@@ -279,9 +284,9 @@ class Network(object):
                                  npy.abs(x),
         # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': lambda x: fft.fftshift(fft.ifft(x, axis=0), axes=0),
-        'time_db': lambda x: mf.complex_2_db(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
-        'time_mag': lambda x: mf.complex_2_magnitude(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
+        'time': s_to_time,
+        'time_db': lambda x: mf.complex_2_db(s_to_time(x)),
+        'time_mag': lambda x: mf.complex_2_magnitude(s_to_time(x)),
     }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
