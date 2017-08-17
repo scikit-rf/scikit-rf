@@ -175,8 +175,6 @@ from .constants import ZERO
 
 def s_to_time(s, pad=0):
     """Transforms S-parameters to time-domain"""
-    if len(s.shape) != 1 and s.shape[1:] != (1,1):
-        raise ValueError('Only one-ports are supported')
     return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=s.shape[0]+pad), axes=0)
 
 class Network(object):
