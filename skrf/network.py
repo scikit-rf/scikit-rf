@@ -173,6 +173,11 @@ from .time import time_gate
 
 from .constants import ZERO
 
+def s_to_time(s, pad=0):
+    """Transforms S-parameters to time-domain"""
+    if len(s.shape) != 1 and s.shape[1:] != (1,1):
+        raise ValueError('Only one-ports are supported')
+    return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=s.shape[0]+pad), axes=0)
 
 class Network(object):
     """
@@ -279,9 +284,9 @@ class Network(object):
                                  npy.abs(x),
         # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': lambda x: fft.fftshift(fft.ifft(x, axis=0), axes=0),
-        'time_db': lambda x: mf.complex_2_db(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
-        'time_mag': lambda x: mf.complex_2_magnitude(fft.fftshift(fft.ifft(x, axis=0), axes=0)),
+        'time': s_to_time,
+        'time_db': lambda x: mf.complex_2_db(s_to_time(x)),
+        'time_mag': lambda x: mf.complex_2_magnitude(s_to_time(x)),
     }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -2194,7 +2199,8 @@ class Network(object):
         .. [1] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
 
         '''
-        window = signal.get_window(window, len(self))
+
+        window = signal.get_window(window, 2*len(self))[len(self):]
 
         window = window.reshape(-1, 1, 1) * npy.ones((len(self),
                                                       self.nports,
@@ -2504,6 +2510,93 @@ class Network(object):
         Xi = self._Xi(p, z0_se, z0_mm)
         Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
+
+    def impulse_response(self, window='hamming', pad=1000):
+        """Calculates time-domain impulse response of one-port.
+
+        First frequency must be 0 Hz for the transformation to be accurate and
+        the frequency step must be uniform. Positions of the reflections are
+        accurate even if the frequency doesn't begin from 0, but shapes will
+        be distorted.
+
+        Real measurements should be extrapolated to DC and interpolated to
+        uniform frequency spacing.
+
+        Y-axis is the reflection coefficient.
+
+        Parameters
+        -----------
+        window : string
+                FFT windowing function.
+        pad : int
+                Number of zeros to add as padding for FFT.
+                Adding more zeros improves accuracy of peaks.
+
+        Returns
+        ---------
+        t : class:`numpy.ndarray`
+            Time vector
+        y : class:`numpy.ndarray`
+            Impulse response
+
+        See Also
+        -----------
+            step_response
+        """
+        if self.nports != 1:
+            raise ValueError('Only one-ports are supported')
+        fstep = self.frequency.step
+        t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
+        if window != None:
+            w = self.windowed(window=window, normalize=False)
+        else:
+            w = self
+        return t, s_to_time(w.s, pad=pad).flatten()
+
+    def step_response(self, window='hamming', pad=1000):
+        """Calculates time-domain step response of one-port.
+
+        First frequency must be 0 Hz for the transformation to be accurate and
+        the frequency step must be uniform.
+
+        Real measurements should be extrapolated to DC and interpolated to
+        uniform frequency spacing.
+
+        Y-axis is the reflection coefficient.
+
+        Parameters
+        -----------
+        window : string
+                FFT windowing function.
+        pad : int
+                Number of zeros to add as padding for FFT.
+                Adding more zeros improves accuracy of peaks.
+
+        Returns
+        ---------
+        t : class:`numpy.ndarray`
+            Time vector
+        y : class:`numpy.ndarray`
+            Step response
+
+        See Also
+        -----------
+            impulse_response
+        """
+        if self.nports != 1:
+            raise ValueError('Only one-ports are supported')
+        if self.frequency.f[0] != 0:
+            warnings.warn(
+                "Frequency doesn't begin from 0. Step response will not be correct.",
+                RuntimeWarning
+            )
+        fstep = self.frequency.step
+        t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
+        if window != None:
+            w = self.windowed(window=window, normalize=False)
+        else:
+            w = self
+        return t, npy.cumsum(s_to_time(w.s, pad=pad).flatten())
 
 
 ## Functions operating on Network[s]

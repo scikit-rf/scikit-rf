@@ -51,7 +51,9 @@ class NetworkTestCase(unittest.TestCase):
         self.DUT = rf.concat_ports([l2, l2, l2, l2])
         self.Meas = rf.concat_ports([l3, l3, l3, l3])
 
-
+    def test_timedomain(self):
+        t = self.ntwk1.s11.s_time
+        self.assertTrue(npy.sum(npy.abs(t.imag)) == 0)
 
     def test_constructor_empty(self):
         rf.Network()
