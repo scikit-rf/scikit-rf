@@ -2515,7 +2515,9 @@ class Network(object):
         """Calculates time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
-        the frequency step must be uniform.
+        the frequency step must be uniform. Positions of the reflections are
+        accurate even if the frequency doesn't begin from 0, but shapes will
+        be distorted.
 
         Real measurements should be extrapolated to DC and interpolated to
         uniform frequency spacing.
@@ -2527,18 +2529,19 @@ class Network(object):
         window : string
                 FFT windowing function.
         pad : int
-                Number of zeros to add as padding.
+                Number of zeros to add as padding for FFT.
+                Adding more zeros improves accuracy of peaks.
 
         Returns
         ---------
         t : class:`numpy.ndarray`
             Time vector
         y : class:`numpy.ndarray`
-            Step response
+            Impulse response
 
         See Also
         -----------
-            impulse_response
+            step_response
         """
         if self.nports != 1:
             raise ValueError('Only one-ports are supported')
@@ -2566,7 +2569,8 @@ class Network(object):
         window : string
                 FFT windowing function.
         pad : int
-                Number of zeros to add as padding.
+                Number of zeros to add as padding for FFT.
+                Adding more zeros improves accuracy of peaks.
 
         Returns
         ---------
