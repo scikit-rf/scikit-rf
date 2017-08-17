@@ -2194,7 +2194,8 @@ class Network(object):
         .. [1] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
 
         '''
-        window = signal.get_window(window, len(self))
+
+        window = signal.get_window(window, 2*len(self))[len(self):]
 
         window = window.reshape(-1, 1, 1) * npy.ones((len(self),
                                                       self.nports,
