@@ -1994,6 +1994,86 @@ class Network(object):
         # freq = Frequency.from_f(f,**kwargs)
         # self.interpolate_self(freq, **interp_kwargs)
 
+    def extrapolate_to_dc(self, points=None, dc_sparam=None, kind='linear',
+            coords='polar', **kwargs):
+        """
+        Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
+
+        If frequency vector needs to be interpolated aliasing will occur in
+        time-domain. For the best results first frequency point should be a
+        multiple of the frequency step so that points from DC to
+        the first measured point can be added without interpolating rest of the
+        frequency points.
+
+        Parameters
+        -----------
+        points : int or None
+            Number of frequency points to be used in interpolation.
+            If None number of points is calculated based on the frequency step size
+            and spacing between 0 Hz and first measured frequency point.
+        dc_sparam : class:`numpy.ndarray` or None
+            NxN S-parameters matrix at 0 Hz.
+            If None S-parameters at 0 Hz are determined by linear extrapolation.
+        kind : str or int
+            Specifies the kind of interpolation as a string ('linear',
+            'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
+            as an integer specifying the order of the spline
+            interpolator to use.
+        coords : ['cart','polar']
+            coordinate system to use for interpolation.
+             * 'cart' is cartesian is Re/Im
+             * 'polar' is unwrapped phase/mag
+             Passed to :func:`Network.interpolate`
+
+        Returns
+        -----------
+        result : :class:`Network`
+            Extrapolated Network
+
+        See Also
+        ----------
+        interpolate
+        impulse_response
+        step_response
+        """
+        result = self.copy()
+
+        if self.frequency.f[0] == 0:
+            return result
+
+        if points == None:
+            fstep = self.frequency.f[1] - self.frequency.f[0]
+            points = len(self) + int(round(self.frequency.f[0]/fstep))
+        if dc_sparam == None:
+            #Interpolate DC point alone first using linear interpolation, because
+            #interp1d can't extrapolate with other methods.
+            #TODO: Option to enforce passivity
+            x = result.s[:2]
+            f = result.frequency.f[:2]
+            rad = npy.unwrap(npy.angle(x), axis=0)
+            mag = npy.abs(x)
+            interp_rad = interp1d(f, rad, axis=0, fill_value='extrapolate')
+            interp_mag = interp1d(f, mag, axis=0, fill_value='extrapolate')
+            dc_sparam = interp_mag(0) * npy.exp(1j * interp_rad(0)).real
+        else:
+            #Make numpy array if argument was list
+            dc_sparam = npy.array(dc_sparam)
+
+        result.s = npy.insert(result.s, 0, dc_sparam, axis=0)
+        result.frequency.f = npy.insert(result.frequency.f, 0, 0)
+        result.z0 = npy.insert(result.z0, 0, result.z0[0], axis=0)
+
+        new_f = Frequency(0, result.frequency.f_scaled[-1], points,
+                unit=result.frequency.unit)
+        #None of the default interpolation methods are too good
+        #and cause aliasing in the time domain.
+        #Best results are obtained when no interpolation is needed,
+        #e.g. first frequency point is a multiple of frequency step.
+        result.interpolate_self(new_f, kind=kind, coords=coords, **kwargs)
+        #DC value must have zero imaginary part
+        result.s[0,:,:] = result.s[0,:,:].real
+        return result
+
     def crop(self, f_start, f_stop):
         '''
         Crop Network based on start and stop frequencies.
@@ -2540,6 +2620,7 @@ class Network(object):
         See Also
         -----------
             step_response
+            extrapolate_to_dc
         """
         if self.nports != 1:
             raise ValueError('Only one-ports are supported')
@@ -2580,6 +2661,7 @@ class Network(object):
         See Also
         -----------
             impulse_response
+            extrapolate_to_dc
         """
         if self.nports != 1:
             raise ValueError('Only one-ports are supported')
