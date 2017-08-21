@@ -2638,6 +2638,7 @@ class Network(object):
         See Also
         -----------
             step_response
+            extrapolate_to_dc
         """
         if self.nports != 1:
             raise ValueError('Only one-ports are supported')
@@ -2678,6 +2679,7 @@ class Network(object):
         See Also
         -----------
             impulse_response
+            extrapolate_to_dc
         """
         if self.nports != 1:
             raise ValueError('Only one-ports are supported')
