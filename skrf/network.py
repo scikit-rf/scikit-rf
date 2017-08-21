@@ -2165,7 +2165,7 @@ class Network(object):
         l =media.line(d=d, unit=unit,**kw)
         return l**self
 
-    def windowed(self, window=('kaiser', 6), normalize=True):
+    def windowed(self, window=('kaiser', 6), normalize=True, center_to_dc=None):
         '''
         Return a windowed version of s-matrix. Used in time-domain analysis.
 
@@ -2185,6 +2185,12 @@ class Network(object):
         normalize : bool
             Normalize the window to preserve power. ie
             sum(ntwk.s,axis=0) == sum(ntwk.windowed().s,axis=0)
+        center_to_dc : bool or None
+            If True only the positive half of the window is applied to the signal.
+            This should be used if frequency vector begins from DC or from "close enough" to DC.
+            If False full window is used which also attenuates low frequencies.
+            If None then value is determined automatically based on if frequency
+            vector begins from 0.
 
         Examples
         -----------
@@ -2198,7 +2204,13 @@ class Network(object):
 
         '''
 
-        window = signal.get_window(window, 2*len(self))[len(self):]
+        if center_to_dc == None:
+            center_to_dc = self.frequency.f[0] == 0
+
+        if center_to_dc:
+            window = signal.get_window(window, 2*len(self))[len(self):]
+        else:
+            window = signal.get_window(window, len(self))
 
         window = window.reshape(-1, 1, 1) * npy.ones((len(self),
                                                       self.nports,
@@ -2509,7 +2521,7 @@ class Network(object):
         Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window='hamming', pad=1000):
+    def impulse_response(self, window='hamming', pad=1000, bandpass=None):
         """Calculates time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -2529,6 +2541,11 @@ class Network(object):
         pad : int
                 Number of zeros to add as padding for FFT.
                 Adding more zeros improves accuracy of peaks.
+        bandpass : bool or None
+                If False window function is center on 0 Hz.
+                If True full window is used and low frequencies are attenuated.
+                If None value is determined automatically based on if the
+                frequency vector begins from 0.
 
         Returns
         ---------
@@ -2545,8 +2562,12 @@ class Network(object):
             raise ValueError('Only one-ports are supported')
         fstep = self.frequency.step
         t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
+        if bandpass in (True, False):
+            center_to_dc = not bandpass
+        else:
+            center_to_dc = None
         if window != None:
-            w = self.windowed(window=window, normalize=False)
+            w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
         return t, s_to_time(w.s, pad=pad).flatten()
@@ -2591,7 +2612,7 @@ class Network(object):
         fstep = self.frequency.step
         t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
         if window != None:
-            w = self.windowed(window=window, normalize=False)
+            w = self.windowed(window=window, normalize=False, center_to_dc=True)
         else:
             w = self
         return t, npy.cumsum(s_to_time(w.s, pad=pad).flatten())
