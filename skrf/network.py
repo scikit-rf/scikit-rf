@@ -1782,7 +1782,12 @@ class Network(object):
             a given attribute
         **kwargs : keyword arguments
             passed to :func:`scipy.interpolate.interp1d` initializer.
-            `kind` controls interpolation type
+            `kind` controls interpolation type.
+
+            `kind` = `rational` uses interpolation by rational polynomials.
+
+            `d` kwarg controls the degree of rational polynomials
+            when `kind`=`rational`. Defaults to 4.
 
         Returns
         ----------
@@ -1829,6 +1834,13 @@ class Network(object):
         # make new network and fill with interpolated values
         result = self.copy()
 
+        if kwargs.get('kind', None) == 'rational':
+            f_interp = mf.rational_interp
+            #Not supported by rational_interp
+            del kwargs['kind']
+        else:
+            f_interp = interp1d
+
         # interpret input
         if isinstance(freq_or_n, Frequency):
             # input is a frequency object
@@ -1852,23 +1864,23 @@ class Network(object):
 
         # interpolate z0  ( this must happen first, because its needed
         # to compute the basis transform below (like y2s), if basis!='s')
-        interp_z0_re = interp1d(f, self.z0.real, axis=0, **kwargs)
-        interp_z0_im = interp1d(f, self.z0.imag, axis=0, **kwargs)
+        interp_z0_re = f_interp(f, self.z0.real, axis=0, **kwargs)
+        interp_z0_im = f_interp(f, self.z0.imag, axis=0, **kwargs)
         result.z0 = interp_z0_re(f_new) + 1j * interp_z0_im(f_new)
 
         # interpolate  parameter for a given basis
         x = self.__getattribute__(basis)
         if coords == 'cart':
-            interp_re = interp1d(f, x.real, axis=0, **kwargs)
-            interp_im = interp1d(f, x.imag, axis=0, **kwargs)
+            interp_re = f_interp(f, x.real, axis=0, **kwargs)
+            interp_im = f_interp(f, x.imag, axis=0, **kwargs)
             x_new =  interp_re(f_new) + 1j * interp_im(f_new)
 
 
         elif coords == 'polar':
             rad = npy.unwrap(npy.angle(x), axis=0)
             mag = npy.abs(x)
-            interp_rad = interp1d(f, rad, axis=0, **kwargs)
-            interp_mag = interp1d(f, mag, axis=0, **kwargs)
+            interp_rad = f_interp(f, rad, axis=0, **kwargs)
+            interp_mag = f_interp(f, mag, axis=0, **kwargs)
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
 
         if return_array:
@@ -1993,6 +2005,92 @@ class Network(object):
                                 **interp_kwargs)
         # freq = Frequency.from_f(f,**kwargs)
         # self.interpolate_self(freq, **interp_kwargs)
+
+    def extrapolate_to_dc(self, points=None, dc_sparam=None, kind='rational',
+            coords='cart', **kwargs):
+        """
+        Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
+
+        If frequency vector needs to be interpolated aliasing will occur in
+        time-domain. For the best results first frequency point should be a
+        multiple of the frequency step so that points from DC to
+        the first measured point can be added without interpolating rest of the
+        frequency points.
+
+        Parameters
+        -----------
+        points : int or None
+            Number of frequency points to be used in interpolation.
+            If None number of points is calculated based on the frequency step size
+            and spacing between 0 Hz and first measured frequency point.
+        dc_sparam : class:`numpy.ndarray` or None
+            NxN S-parameters matrix at 0 Hz.
+            If None S-parameters at 0 Hz are determined by linear extrapolation.
+        kind : str or int
+            Specifies the kind of interpolation as a string ('linear',
+            'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
+            as an integer specifying the order of the spline
+            interpolator to use for `scipy.interp1d`.
+
+            `kind` = 'rational' uses interpolation by rational polynomials.
+
+            `d` kwarg controls the degree of rational polynomials
+            when `kind` is 'rational'. Defaults to 4.
+
+        coords : ['cart','polar']
+            coordinate system to use for interpolation.
+             * 'cart' is cartesian is Re/Im
+             * 'polar' is unwrapped phase/mag
+             Passed to :func:`Network.interpolate`
+
+        Returns
+        -----------
+        result : :class:`Network`
+            Extrapolated Network
+
+        See Also
+        ----------
+        interpolate
+        impulse_response
+        step_response
+        """
+        result = self.copy()
+
+        if self.frequency.f[0] == 0:
+            return result
+
+        if points == None:
+            fstep = self.frequency.f[1] - self.frequency.f[0]
+            points = len(self) + int(round(self.frequency.f[0]/fstep))
+        if dc_sparam == None:
+            #Interpolate DC point alone first using linear interpolation, because
+            #interp1d can't extrapolate with other methods.
+            #TODO: Option to enforce passivity
+            x = result.s[:2]
+            f = result.frequency.f[:2]
+            rad = npy.unwrap(npy.angle(x), axis=0)
+            mag = npy.abs(x)
+            interp_rad = interp1d(f, rad, axis=0, fill_value='extrapolate')
+            interp_mag = interp1d(f, mag, axis=0, fill_value='extrapolate')
+            dc_sparam = interp_mag(0) * npy.exp(1j * interp_rad(0)).real
+        else:
+            #Make numpy array if argument was list
+            dc_sparam = npy.array(dc_sparam)
+
+        result.s = npy.insert(result.s, 0, dc_sparam, axis=0)
+        result.frequency.f = npy.insert(result.frequency.f, 0, 0)
+        result.z0 = npy.insert(result.z0, 0, result.z0[0], axis=0)
+
+        new_f = Frequency(0, result.frequency.f_scaled[-1], points,
+                unit=result.frequency.unit)
+        #None of the default interpolation methods are too good
+        #and cause aliasing in the time domain.
+        #Best results are obtained when no interpolation is needed,
+        #e.g. first frequency point is a multiple of frequency step.
+        result.interpolate_self(new_f, kind=kind, coords=coords, **kwargs)
+        #DC value must have zero imaginary part
+        result.s[0,:,:] = result.s[0,:,:].real
+        return result
 
     def crop(self, f_start, f_stop):
         '''
