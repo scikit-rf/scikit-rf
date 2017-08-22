@@ -563,3 +563,61 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     # you can't transform to a bandpass signal, only a lowpass.
     #
     return timeVector, signalVector
+
+def rational_interp(x, y, d=4, epsilon=1e-9, axis=0):
+    """
+    Interpolates function using rational polynomials of degree `d`.
+
+    Interpolating function is singular when xi is exactly one of the
+    original x points. If xi is closer than epsilon to one of the original points,
+    then the value at that points is returned instead.
+
+    Implementation is based on [0]_.
+
+    References
+    ------------
+    .. [0] M. S. Floater and K. Hormann, "Barycentric rational interpolation with no poles and high rates of approximation," Numer. Math., vol. 107, no. 2, pp. 315-331, Aug. 2007
+    """
+    n = len(x)
+    w = npy.zeros(n)
+    for k in range(n):
+        for i in range(max(0,k-d), min(k+1, n-d)):
+            p = 1.0
+            for j in range(i,min(n,i+d+1)):
+                if j == k:
+                    continue
+                p *= 1/(x[k] - x[j])
+            w[k] += ((-1)**i)*p
+
+    if axis != 0:
+        raise NotImplementedError("Axis other than 0 is not implemented")
+
+    def fx(xi):
+        def find_nearest(a, values, epsilon):
+            idx = npy.abs(npy.subtract.outer(a, values)).argmin(0)
+            return npy.abs(a[idx] - values) < epsilon
+
+        def find_nearest_value(a, values, y):
+            idx = npy.abs(npy.subtract.outer(a, values)).argmin(0)
+            return y[idx]
+
+        nearest = find_nearest(x, xi, epsilon)
+        nearest_value = find_nearest_value(x, xi, y)
+
+        #There needs to be a cleaner way
+        w_shape = [1]*len(y.shape)
+        w_shape[0] = -1
+        wr = w.reshape(*w_shape)
+
+        with npy.errstate(divide='ignore', invalid='ignore'):
+            #nans will be fixed later
+            v = npy.sum([y[i]*wr[i]/((xi - x[i]).reshape(*w_shape)) for i in range(n)], axis=0)\
+                /npy.sum([w[i]/((xi - x[i]).reshape(*w_shape)) for i in range(n)], axis=0)
+
+        for e, i in enumerate(nearest):
+            if i:
+                v[e] = nearest_value[e]
+
+        return v
+
+    return fx

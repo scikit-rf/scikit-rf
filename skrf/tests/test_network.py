@@ -254,6 +254,12 @@ class NetworkTestCase(unittest.TestCase):
         b = a.interpolate(freq)
         # TODO: numerically test for correct interpolation
 
+    def test_interpolate_rational(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
+        b = a.interpolate(freq, kind='rational')
+        # TODO: numerically test for correct interpolation
+
     def test_interpolate_self_npoints(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
         a.interpolate_self_npoints(4)

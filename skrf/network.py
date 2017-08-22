@@ -1782,7 +1782,12 @@ class Network(object):
             a given attribute
         **kwargs : keyword arguments
             passed to :func:`scipy.interpolate.interp1d` initializer.
-            `kind` controls interpolation type
+            `kind` controls interpolation type.
+
+            `kind` = `rational` uses interpolation by rational polynomials.
+
+            `d` kwarg controls the degree of rational polynomials
+            when `kind`=`rational`. Defaults to 4.
 
         Returns
         ----------
@@ -1829,6 +1834,13 @@ class Network(object):
         # make new network and fill with interpolated values
         result = self.copy()
 
+        if kwargs.get('kind', None) == 'rational':
+            f_interp = mf.rational_interp
+            #Not supported by rational_interp
+            del kwargs['kind']
+        else:
+            f_interp = interp1d
+
         # interpret input
         if isinstance(freq_or_n, Frequency):
             # input is a frequency object
@@ -1852,23 +1864,23 @@ class Network(object):
 
         # interpolate z0  ( this must happen first, because its needed
         # to compute the basis transform below (like y2s), if basis!='s')
-        interp_z0_re = interp1d(f, self.z0.real, axis=0, **kwargs)
-        interp_z0_im = interp1d(f, self.z0.imag, axis=0, **kwargs)
+        interp_z0_re = f_interp(f, self.z0.real, axis=0, **kwargs)
+        interp_z0_im = f_interp(f, self.z0.imag, axis=0, **kwargs)
         result.z0 = interp_z0_re(f_new) + 1j * interp_z0_im(f_new)
 
         # interpolate  parameter for a given basis
         x = self.__getattribute__(basis)
         if coords == 'cart':
-            interp_re = interp1d(f, x.real, axis=0, **kwargs)
-            interp_im = interp1d(f, x.imag, axis=0, **kwargs)
+            interp_re = f_interp(f, x.real, axis=0, **kwargs)
+            interp_im = f_interp(f, x.imag, axis=0, **kwargs)
             x_new =  interp_re(f_new) + 1j * interp_im(f_new)
 
 
         elif coords == 'polar':
             rad = npy.unwrap(npy.angle(x), axis=0)
             mag = npy.abs(x)
-            interp_rad = interp1d(f, rad, axis=0, **kwargs)
-            interp_mag = interp1d(f, mag, axis=0, **kwargs)
+            interp_rad = f_interp(f, rad, axis=0, **kwargs)
+            interp_mag = f_interp(f, mag, axis=0, **kwargs)
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
 
         if return_array:
@@ -1994,8 +2006,8 @@ class Network(object):
         # freq = Frequency.from_f(f,**kwargs)
         # self.interpolate_self(freq, **interp_kwargs)
 
-    def extrapolate_to_dc(self, points=None, dc_sparam=None, kind='linear',
-            coords='polar', **kwargs):
+    def extrapolate_to_dc(self, points=None, dc_sparam=None, kind='rational',
+            coords='cart', **kwargs):
         """
         Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
 
@@ -2018,7 +2030,13 @@ class Network(object):
             Specifies the kind of interpolation as a string ('linear',
             'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
             as an integer specifying the order of the spline
-            interpolator to use.
+            interpolator to use for `scipy.interp1d`.
+
+            `kind` = 'rational' uses interpolation by rational polynomials.
+
+            `d` kwarg controls the degree of rational polynomials
+            when `kind` is 'rational'. Defaults to 4.
+
         coords : ['cart','polar']
             coordinate system to use for interpolation.
              * 'cart' is cartesian is Re/Im
