@@ -932,7 +932,7 @@ Examples
 
             def plot_func(self,  m=None, n=None, ax=None,
                 show_legend=True,attribute=attribute,
-                y_label=y_label,*args, **kwargs):
+                y_label=y_label, pad=0, window='hamming', *args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -956,7 +956,6 @@ Examples
                 #was_interactive = plb.isinteractive
                 #if was_interactive:
                 #    plb.interactive(False)
-
                 for m in M:
                     for n in N:
                         # set the legend label for this trace to the networks
@@ -979,22 +978,46 @@ Examples
                                     (attribute[0].upper(),m+1,n+1)
                             kwargs['label'] = label_string
 
-                        # plot the desired attribute vs frequency
-                        if 'time' in attribute:
+                        # quick and dirty way to plot step and impulse response
+                        if 'time_impulse' in attribute:
                             xlabel = 'Time (ns)'
-                            x = self.frequency.t_ns
-
+                            x,y = self.impulse_response(pad=pad, window=window)
+                            plot_rectangular(
+                                        x = x,
+                                        y = y,
+                                        x_label = xlabel,
+                                        y_label = y_label,
+                                        show_legend = show_legend, ax = ax,
+                                        *args, **kwargs)
+                        elif 'time_step' in attribute:
+                            xlabel = 'Time (ns)'
+                            x,y = self.step_response(pad=pad, window=window)
+                            plot_rectangular(
+                                        x = x,
+                                        y = y,
+                                        x_label = xlabel,
+                                        y_label = y_label,
+                                        show_legend = show_legend, ax = ax,
+                                        *args, **kwargs)
+                            
                         else:
-                            xlabel = 'Frequency (%s)'%self.frequency.unit
-                            x = self.frequency.f_scaled
-
-                        plot_rectangular(
-                                x = x,
-                                y = getattr(self,attribute)[:,m,n],
-                                x_label = xlabel,
-                                y_label = y_label,
-                                show_legend = show_legend, ax = ax,
-                                *args, **kwargs)
+                            
+                            # plot the desired attribute vs frequency
+                            if 'time' in attribute:
+                                xlabel = 'Time (ns)'
+                                x = self.frequency.t_ns
+    
+                            else:
+                                xlabel = 'Frequency (%s)'%self.frequency.unit
+                                x = self.frequency.f_scaled
+    
+                            plot_rectangular(
+                                    x = x,
+                                    y = getattr(self,attribute)[:,m,n],
+                                    x_label = xlabel,
+                                    y_label = y_label,
+                                    show_legend = show_legend, ax = ax,
+                                    *args, **kwargs)
 
 
                 #if was_interactive:

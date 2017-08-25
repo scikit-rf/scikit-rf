@@ -285,6 +285,8 @@ class Network(object):
         'time': s_to_time,
         'time_db': lambda x: mf.complex_2_db(s_to_time(x)),
         'time_mag': lambda x: mf.complex_2_magnitude(s_to_time(x)),
+        'time_impulse': None,
+        'time_step': None,
     }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -308,6 +310,8 @@ class Network(object):
         'time': 'Time (real)',
         'time_db': 'Magnitude (dB)',
         'time_mag': 'Magnitude',
+        'time_impulse': 'Magnitude',
+        'time_step': 'Magnitude',
     }
 
     # CONSTRUCTOR
