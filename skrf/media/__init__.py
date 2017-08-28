@@ -42,6 +42,7 @@ Transmission Line Classes
     ~cpw.CPW
     ~freespace.Freespace
     ~coaxial.Coaxial
+    ~mline.MLine
 
 '''
 
@@ -51,3 +52,4 @@ from .freespace import Freespace
 from .cpw import CPW
 from .rectangularWaveguide import RectangularWaveguide
 from .coaxial import Coaxial
+from .mline import MLine
