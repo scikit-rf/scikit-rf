@@ -14,6 +14,10 @@ by the qucs project [#]_ .
 The variables  and properties of this class are coincident with
 their derivations.
 
+In addition, Djordjevic/Svensson widebande debye dielectric model is considered
+to provide more realistic modelling of broadband microstrip as well as causal
+time domain response.
+
 * Quasi-static characteristic impedance model:
     Hammerstad and Jensen, which is better than 0.001% for W/H <= 1 and better
     than 0.03% for W/H <= 1000, which is better than physical tolerances.
@@ -25,6 +29,12 @@ their derivations.
 
 .. [#] http://qucs.sourceforge.net/docs/technical.pdf
 .. [#] http://www.qucs.sourceforge.net/
+.. C. Svensson, G.E. Dermer,
+    Time domain modeling of lossy interconnects,
+    IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
+.. Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
+    Wideband frequency-domain characterization of FR-4 and time-domain causality,
+    IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
 '''
 import numpy as npy
 from scipy.constants import  epsilon_0, mu_0, c
@@ -57,13 +67,16 @@ class MLine(Media):
 
     '''
     def __init__(self, frequency=None, z0=None, w=3, h=1.6, t=None,
-                 ep_r=4.5, mu_r=1, rho=1.68e-8, tand=0, rough=0, disp=None,
+                 ep_r=4.5, mu_r=1, diel='DjordjevicSvensson',
+                 rho=1.68e-8, tand=0, rough=0, disp='Constant',
+                 f_low=1e3, f_high=1e9, f_epr_tand=1e9,
                  *args, **kwargs):
         Media.__init__(self, frequency=frequency,z0=z0)
         
-        self.w, self.h, self.t, self.ep_r, self.mu_r, self.rho, self.tand, \
-            self.rough, self.disp =\
-            w, h, t, ep_r, mu_r, rho, tand, rough, disp
+        self.w, self.h, self.t = w, h, t
+        self.ep_r, self.mu_r, self.rho, self.tand = ep_r, mu_r, rho, tand
+        self.rough, self.disp = rough, disp
+        self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
 
 
     def __str__(self):
@@ -101,19 +114,37 @@ class MLine(Media):
             return 0.
     
     @property
+    def ep_r_f(self):
+        '''
+        Quasistatic effective relative dielectric
+        constant, accounting for the filling factor between air and substrate.
+        '''
+        ep_r, tand  = self.ep_r, self.tand
+        f_low, f_high, f_epr_tand = self.f_low, self.f_high, self.f_epr_tand
+        f = self.frequency.f
+        m = (ep_r * tand) * npy.log10(f_high/f_low) * npy.log(10)/(2*npy.pi)
+        ep_inf = ep_r - m*npy.log10((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand))
+
+        return ep_inf + m*npy.log10((f_high + 1j*f)/(f_low + 1j*f))
+    
+    @property
+    def tand_f(self):
+        return -npy.imag(self.ep_r_f)/npy.real(self.ep_r_f)
+    
+    @property
     def ep_reff(self):
         '''
         Quasistatic effective relative dielectric
         constant, accounting for the filling factor between air and substrate.
         '''
-        h, ep_r  = self.h, self.ep_r
+        h, ep_r  = self.h, self.ep_r_f
         w1 = self.w + self.delta_w1
         wr = self.w + self.delta_wr
         return ep_re(wr, h, ep_r) * npy.power(ZL1(w1, h)/ZL1(wr, h), 2)
     
     @property
     def G(self):
-        ep_r, ep_reff, ZL = self.ep_r, self.ep_reff, self.Z0
+        ep_r, ep_reff, ZL = self.ep_r_f, self.ep_reff, self.Z0
         ZF0 = npy.sqrt(mu_0/epsilon_0)
         '''
         intermediary parameter. see qucs docs on microstrip lines.
@@ -127,13 +158,13 @@ class MLine(Media):
         constant, accounting for the filling factor between air and substrate.
         '''
         if self.disp == 'hammerstadjensen':
-            ep_r, ep_reff, h  = self.ep_r, self.ep_reff, self.h
+            ep_r, ep_reff, h  = self.ep_r_f, self.ep_reff, self.h
             f = self.frequency.f
             ZL, G = self.Z0, self.G
             fp = ZL/(2*mu_0*h)
             return ep_r - (ep_r - ep_reff) / (1+G*(f/fp)**2)
         elif self.disp == 'kirschningjansen':
-            ep_r, ep_reff, w, h  = self.ep_r, self.ep_reff, self.w, self.h
+            ep_r, ep_reff, w, h  = self.ep_r_f, self.ep_reff, self.w, self.h
             fn = self.frequency.f * h * 1e-6
             P1 = 0.27488+(0.6315+0.525/(1+0.0157*fn)**20)*w/h -0.065683*npy.exp(-8.7513*w/h)
             P2 = 0.33622*(1-npy.exp(-0.03442*ep_r))
@@ -142,13 +173,13 @@ class MLine(Media):
             Pf = P1*P2*((0.1844+P3*P4)*fn)**1.5763
             return ep_r - (ep_r-ep_reff)/(1+Pf)
         elif self.disp == 'yamashita':
-            ep_r, ep_reff, w, h  = self.ep_r, self.ep_reff, self.w, self.h
+            ep_r, ep_reff, w, h  = self.ep_r_f, self.ep_reff, self.w, self.h
             f = self.frequency.f
             k = npy.sqrt(ep_r/ep_reff)
             F = 4*h*f*npy.sqrt(ep_r-1)/c * (0.5+(1+2*npy.log(1+w/h))**2)
             return ep_reff * ((1+1/4*k*F**1.5)/(1+1/4*F**1.5))**2
         elif self.disp == 'kobayashi':
-            ep_r, ep_reff, w, h  = self.ep_r, self.ep_reff, self.w, self.h
+            ep_r, ep_reff, w, h  = self.ep_r_f, self.ep_reff, self.w, self.h
             f = self.frequency.f
             f50 = c/(2*npy.pi*h*(0.75+(0.75-0.332/(ep_r**1.73)*w/h))) \
                 * npy.arctan(ep_r*npy.sqrt((ep_reff-1)/(ep_r-ep_reff)))/ \
@@ -167,7 +198,7 @@ class MLine(Media):
         '''
         Quasistatic characteristic impedance
         '''
-        h, ep_r = self.h, self.ep_r
+        h, ep_r = self.h, self.ep_r_f
         wr = self.w + self.delta_wr
         return ZL1(wr, h)/npy.sqrt(ep_re(wr, h, ep_r))
     
@@ -181,7 +212,27 @@ class MLine(Media):
             return ZL * npy.sqrt(ep_reff/ ep_reff_f) * (ep_reff_f-1)/(ep_reff-1)
         elif self.disp == 'kirschningjansen':
             ZL, ep_reff, ep_reff_f = self.Z0, self. ep_reff, self.ep_reff_f
-            return ZL * npy.sqrt(ep_reff/ ep_reff_f) * (ep_reff_f-1)/(ep_reff-1)
+            u = self.w/self.h
+            fn = self.frequency.f * self.h * 1e-6
+            ep_r = self.ep_r_f
+            R1 = 0.03891*ep_r**1.4
+            R2 = 0.267*u**7
+            R3 = 7.766*npy.exp(-3.228*u**0.641)
+            R4 = 0.016+(0.0514*ep_r)**4.524
+            R5 = (fn/28.843)**12
+            R6 = 22.20*u**1.92
+            R7 = 1.206-0.3144*npy.exp(-R1)*(1-npy.exp(-R2))
+            R8 = 1+1.275*(1-npy.exp(-0.004625*R3*ep_r**1.674)*(fn/18.365)**2.745)
+            R9 = 5.086*R4*R5/(0.3838+0.386*R4)*npy.exp(-R6)/(1+1.2992*R5)*(ep_r-1)**6/(1+10*(ep_r-1)**6)
+            R10 = 0.00044*ep_r**2.136+0.0184
+            R11 = (fn/19.47)**6/(1+0.0962*(fn/19.47)**6)
+            R12 = 1/(1+0.00245*u**2)
+            R13 = 0.9408*ep_reff_f**R8-0.9603
+            R14 = (0.9408-R9)*ep_reff**R8-0.9603
+            R15 = 0.707*R10*(fn/12.3)**1.097
+            R16 = 1+0.0503*ep_r**2*R11*(1-npy.exp(-(u/15)**6))
+            R17 = R7 * (1-1.1241*R12/R16*npy.exp(-0.026*fn**1.15656-R15))
+            return ZL * (R13/R14)**R17
         elif self.disp == 'yamashita':
             ZL, ep_reff, ep_reff_f = self.Z0, self. ep_reff, self.ep_reff_f
             return ZL * npy.sqrt(ep_reff/ ep_reff_f) * (ep_reff_f-1)/(ep_reff-1)
@@ -222,7 +273,7 @@ class MLine(Media):
         Losses due to dielectric
 
         '''
-        ep_reff, ep_r, tand = self.ep_reff, self.ep_r, self.tand
+        ep_reff, ep_r, tand = self.ep_reff, self.ep_r_f, self.tand_f
         f = self.frequency.f
         return ep_r/npy.sqrt(ep_reff) * (ep_reff-1)/(ep_r-1) * npy.pi*f/c * tand
         
