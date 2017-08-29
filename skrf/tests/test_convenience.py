@@ -76,6 +76,26 @@ class ConvenienceTestCase(unittest.TestCase):
         nw_hfss_z0.renormalize(50)
         self.assertTrue(npy.allclose(nw_hfss_50.s, nw_hfss_z0.s))
         
+    def test_cst_touchstone_2_network(self):
+        '''
+        Test the conversion into a Network of CST-generated touchstone file
+        '''
+        nw_cst_4ports = rf.Network(os.path.join(self.test_dir, 'cst_example_4ports.s4p'))
+        nw_cst_6ports = rf.Network(os.path.join(self.test_dir, 'cst_example_6ports.s6p'))
+        
+    def test_cst_touchstone_V2_as_V1_2_network(self):
+        '''
+        Test the conversion into a Network of a CST-generated 
+        touchstone V2 format file (.ts) saved like a touchstone V1 file (.sNp)
+        '''
+        nw_cst_6ports = rf.Network(os.path.join(self.test_dir, 'cst_example_6ports_V2.s6p'))
+ 
+    def test_cst_touchstone_V2_2_network(self):
+        '''
+        Test the conversion into a Network of a CST-generated touchstone V2 format file (.ts) 
+        '''
+        nw_cst_6ports = rf.Network(os.path.join(self.test_dir, 'cst_example_6ports_V2.ts'))       
+        
     def test_Agilent_touchstone_4ports(self):		
         '''		
         Try reading an Agilent touchstone 4-ports measurement file		
