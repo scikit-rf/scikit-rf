@@ -41,9 +41,11 @@ class Touchstone:
     class to read touchstone s-parameter files
 
     The reference for writing this class is the draft of the
-    Touchstone(R) File Format Specification Rev 2.0 [#]_
+    Touchstone(R) File Format Specification Rev 2.0 [#]_ and
+    Touchstone(R) File Format Specification Version 2.0 [##]_
 
-    .. [#] http://www.eda-stds.org/ibis/adhoc/interconnect/touchstone_spec2_draft.pdf
+    .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
+    .. [##] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
     def __init__(self, file):
         """
@@ -70,12 +72,15 @@ class Touchstone:
         ## file name of the touchstone data file
         self.filename = filename
 
-        ## file format version
+        ## file format version. 
+        # Defined by default to 1.0, since version number can be omitted in V1.0 format
         self.version = '1.0'
         ## comments in the file header
         self.comments = None
         ## unit of the frequency (Hz, kHz, MHz, GHz)
         self.frequency_unit = None
+        ## number of frequency points 
+        self.frequency_nb = None
         ## s-parameter type (S,Y,Z,G,H)
         self.parameter = None
         ## s-parameter format (MA, DB, RI)
@@ -104,13 +109,20 @@ class Touchstone:
 
         filename=self.filename
 
-        extention = filename.split('.')[-1].lower()
-        #self.rank = {'s1p':1, 's2p':2, 's3p':3, 's4p':4}.get(extention, None)
-        try:
-            self.rank = int(extention[1:-1])
-        except (ValueError):
-            raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
-
+        # Check the filename extension. 
+        # Should be .sNp for Touchstone format V1.0, and .ts for V2
+        extension = filename.split('.')[-1].lower()
+        
+        if (extension[0] == 's') and (extension[-1] == 'p'): # sNp
+            # check if N is a correct unmber
+            try:
+                self.rank = int(extension[1:-1])
+            except (ValueError):
+                raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
+        elif extension == 'ts':
+            pass
+        else:
+            raise Exception('Filename does not have the expected Touchstone extension (.sNp or .ts)')
 
         linenr = 0
         values = []
@@ -159,9 +171,32 @@ class Touchstone:
 
             # grab the [reference] string
             if line[:11] == '[reference]':
+                # The reference impedances can be span after the keyword  
+                # or on the following line
                 self.reference = [ float(r) for r in line.split()[2:] ]
+                if not self.reference:
+                    line = fid.readline()
+                    self.reference = [ float(r) for r in line.split()]
+                continue
+            
+            # grab the [Number of Ports] string
+            if line[:17] == '[number of ports]':
+                self.rank = int(line.split()[-1])
+                continue
+            
+            # grab the [Number of Frequencies] string
+            if line[:23] == '[number of frequencies]':
+                self.frequency_nb = line.split()[-1]
                 continue
 
+            # skip the [Network Data] keyword
+            if line[:14] == '[network data]':
+                continue
+            
+            # skip the [End] keyword
+            if line[:5] == '[end]':
+                continue
+            
             # the option line
             if line[0] == '#':
                 toks = line[1:].strip().split()
