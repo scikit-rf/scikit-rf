@@ -45,7 +45,7 @@ time domain response.
 import numpy as npy
 from scipy.constants import  epsilon_0, mu_0, c
 from numpy import real, imag, pi, sqrt,log, exp, log10, zeros, ones, tanh, \
-    cosh, arctan
+    cosh, arctan, absolute
 from .media import Media
 from ..tlineFunctions import skin_depth, surface_resistivity
 
@@ -94,8 +94,8 @@ class MLine(Media):
     '''
     def __init__(self, frequency=None, z0=None, w=3, h=1.6, t=None,
                  ep_r=4.5, mu_r=1, diel='djordjevicsvensson',
-                 rho=1.68e-8, tand=0, rough=0, disp='kirschningjansen',
-                 f_low=1e3, f_high=1e9, f_epr_tand=1e9,
+                 rho=1.68e-8, tand=0, rough=0.15e-6, disp='kirschningjansen',
+                 f_low=1e3, f_high=1e12, f_epr_tand=1e9,
                  *args, **kwargs):
         Media.__init__(self, frequency=frequency,z0=z0)
         
@@ -125,7 +125,7 @@ class MLine(Media):
         w, h, t = self.w, self.h, self.t
         if t > 0.:
             # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
-            return (t/h)/pi * log(1. + 4*exp(1.)/((t/h)/(tanh(sqrt(6.517*(w/h)))**2))) * h
+            return t/pi * log(1. + 4*exp(1.)*tanh(sqrt(6.517*w/h))**2/t) * h
         else:
             return 0.
     
@@ -134,9 +134,9 @@ class MLine(Media):
         '''
         intermediary parameter. see qucs docs on microstrip lines.
         '''
-        delta_w1, ep_r = self.delta_w1, self.ep_r_f
+        delta_w1, ep_r = self.delta_w1, real(self.ep_r_f)
         if self.t > 0.:
-            return 1./2 * delta_w1 * (1+1/cosh(sqrt(ep_r-1)))
+            return delta_w1/2 * (1+1/cosh(sqrt(ep_r-1)))
         else:
             return 0.
     
@@ -150,10 +150,10 @@ class MLine(Media):
         f = self.frequency.f
         if self.diel == 'djordjevicsvensson':
             # compute the slope for a log frequency scale, tanD dependant.
-            m = (ep_r*tand) * log10(f_high/f_low) * log(10)/(2*pi)
+            m = (ep_r*tand)  * (pi/(2*log(10)))
             # value for frequency above f_high
-            ep_inf = ep_r - m*log10((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand))
-            return ep_inf + m*log10((f_high + 1j*f)/(f_low + 1j*f))
+            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand)))
+            return ep_inf + m*log((f_high + 1j*f)/(f_low + 1j*f))
         elif self.diel == 'frequencyinvariant':
             return ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
         else:
@@ -185,7 +185,7 @@ class MLine(Media):
         '''
         ep_r, ep_reff, ZL = self.ep_r_f, self.ep_reff, self.Z0
         ZF0 = npy.sqrt(mu_0/epsilon_0)
-        return (pi**2)/12 * (ep_r-1)/ep_reff * sqrt(2*npy.pi*ZL/ZF0)
+        return (pi**2)/12 * (ep_r-1)/ep_reff * sqrt(2*pi*ZL/ZF0)
     
     @property
     def ep_reff_f(self):
@@ -193,7 +193,8 @@ class MLine(Media):
         Frequency dependant effective relative permittivity of dielectric,
         accounting for microstripline dispersion.
         '''
-        ep_r, ep_reff, w, h  = self.ep_r_f, self.ep_reff, self.w, self.h
+        ep_r, ep_reff  = self.ep_r_f, self.ep_reff
+        w, h = self.w + self.delta_wr, self.h
         f = self.frequency.f
         if self.disp == 'hammerstadjensen':
             ZL, G = self.Z0, self.G
@@ -231,29 +232,30 @@ class MLine(Media):
         '''
         Quasistatic characteristic impedance
         '''
-        h, ep_r = self.h, self.ep_r_f
+        h, ep_reff = self.h, real(self.ep_reff)
         wr = self.w + self.delta_wr
-        return ZL1(wr, h)/sqrt(ep_re(wr, h, ep_r))
+        return ZL1(wr, h)/sqrt(ep_reff)
     
     @property
     def Z0_f(self):
         '''
         Frequency dependant characteristic impedance
         '''
-        ZL, ep_reff, ep_reff_f = self.Z0, self. ep_reff, self.ep_reff_f
+        ZL, ep_reff, ep_reff_f = self.Z0, real(self. ep_reff), real(self.ep_reff_f)
+        wr, h = self.w + self.delta_wr, self.h
         if self.disp == 'hammerstadjensen':
             return ZL * sqrt(ep_reff/ ep_reff_f) * (ep_reff_f-1)/(ep_reff-1)
         elif self.disp == 'kirschningjansen':
-            u = self.w/self.h
+            u = wr/h
             fn = self.frequency.f * self.h * 1e-6
-            ep_r = self.ep_r_f
+            ep_r = real(self.ep_r_f)
             R1 = 0.03891*ep_r**1.4
             R2 = 0.267*u**7
-            R3 = 7.766*exp(-3.228*u**0.641)
+            R3 = 4.766*exp(-3.228*u**0.641)
             R4 = 0.016+(0.0514*ep_r)**4.524
             R5 = (fn/28.843)**12
             R6 = 22.20*u**1.92
-            R7 = 1.206-0.3144*exp(-R1)*(1-npy.exp(-R2))
+            R7 = 1.206-0.3144*exp(-R1)*(1-exp(-R2))
             R8 = 1+1.275*(1-exp(-0.004625*R3*ep_r**1.674)*(fn/18.365)**2.745)
             R9 = 5.086*R4*R5/(0.3838+0.386*R4)*exp(-R6)/(1+1.2992*R5)*(ep_r-1)**6/(1+10*(ep_r-1)**6)
             R10 = 0.00044*ep_r**2.136+0.0184
@@ -288,16 +290,18 @@ class MLine(Media):
         surface_resistivity : calculates surface resistivity
         '''
         if self.rho is None or self.t is None:
-            raise(AttributeError('must provide values conductivity and conductor thickness to calculate this. see initializer help'))
+            raise(AttributeError('must provide values conductivity to calculate this. see initializer help'))
         else:
             f = self.frequency.f
             ZF0 = npy.sqrt(mu_0/epsilon_0)
-            ZL, w, rho, mu_r  = self.Z0, self.w, self.rho, self.mu_r
+            ZL, rho, mu_r  = real(self.Z0_f), self.rho, self.mu_r
+            ep_reff= real(self.ep_reff)
+            w = self.w + self.delta_wr
             rough = self.rough
             Kr  = 1 + 2/pi*arctan(1.4*(rough/skin_depth(f, rho, mu_r))**2)
-            Ki  = npy.exp(-1.2*(ZL/ZF0)**0.7)
+            Ki  = exp(-1.2*(ZL/ZF0)**0.7)
             Rs  = surface_resistivity(f=f, rho=rho, mu_r=1)
-        return Rs/(ZL*w) * Kr * Ki
+        return sqrt(ep_reff) * Rs*Kr*Ki/(ZL*w)
     
     @property
     def alpha_dielectric(self):
@@ -305,10 +309,17 @@ class MLine(Media):
         Losses due to dielectric
 
         '''
-        ep_reff, ep_r, tand = self.ep_reff_f, self.ep_r_f, self.tand_f
+        ep_r, ep_reff, tand = real(self.ep_r_f), real(self.ep_reff), self.tand_f
         f = self.frequency.f
-        return ep_r/sqrt(ep_reff) * (ep_reff-1)/(ep_r-1) * pi*f/c * tand
-        
+        return pi*f/c * ep_r/sqrt(ep_reff) * (ep_reff-1)/(ep_r-1) * tand
+    
+    @property
+    def beta_phase(self):
+        '''
+        Phase parameter
+        '''
+        ep_reff, f = real(self.ep_reff_f), self.frequency.f
+        return 2*pi*f*sqrt(ep_reff)/c
 
     @property
     def gamma(self):
@@ -318,14 +329,18 @@ class MLine(Media):
 
         See Also
         --------
-        alpha_conductor : calculates losses to conductors
+        alpha_conductor : calculates losses to conductor
+        alpha_dielectric: calculates losses to dielectric
+        beta            : calculates phase parameter
         '''
-        beta = 1j*2*pi*self.frequency.f*sqrt(self.ep_reff_f*epsilon_0*mu_0)
-        alpha = zeros(len(beta))
-        if self.rho is not None and self.t is not None:
-            alpha = self.alpha_conductor + self.alpha_dielectric
-
-        return beta+alpha
+        f = self.frequency.f
+        alpha = zeros(len(f))
+        beta  = zeros(len(f))
+        beta  = self.beta_phase
+        alpha = self.alpha_dielectric
+        if self.rho is not None:
+            alpha += self.alpha_conductor
+        return alpha + 1j*beta
 
 def a(u):
     '''
