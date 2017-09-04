@@ -2661,7 +2661,7 @@ class NISTMultilineTRL(EightTerm):
 
         measured_reflects = self.measured_reflects
         measured_lines = self.measured_lines
-        measured_lines_t = map(lambda x: s2t(x.s), self.measured_lines)
+        measured_lines_t = list(map(lambda x: s2t(x.s), self.measured_lines))
         l = self.l
         er_est = self.er_est
 
