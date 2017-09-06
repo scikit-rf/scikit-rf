@@ -2948,8 +2948,8 @@ class NISTMultilineTRL(EightTerm):
                         Vb[a,b] = exp_factor2*exp_factor.conjugate() + \
                                 (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
                                 exp(-gamma[m]*len_b)*(exp(-gamma[m]*len_a)).conjugate()
-                        n = (exp_factor2-1/exp_factor2)/ \
-                                (exp_factor - 1/exp_factor).conjugate()
+                        n = (exp_factor - 1/exp_factor).conjugate()* \
+                                (exp_factor2-1/exp_factor2)
                         Vb[a,b] /= n
                         Vb[b,a] = Vb[a,b].conjugate()
 
@@ -3054,8 +3054,8 @@ class NISTMultilineTRL(EightTerm):
                 B1, B2, CoA1, CoA2 = best_values[1:]
                 A1, A2 = solve_A(B1, B2, CoA1, CoA2)
 
-            sigmab = npy.sqrt(1/(sum_inv_Vb.real))
-            sigmac = npy.sqrt(1/(sum_inv_Vc.real))
+            sigmab = npy.sqrt(1/(npy.sum(inv(Vb)).real))
+            sigmac = npy.sqrt(1/(npy.sum(inv(Vc)).real))
 
             nstd[m] = (sigmab + sigmac)/2
 
