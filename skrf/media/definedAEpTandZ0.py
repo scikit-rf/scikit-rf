@@ -7,10 +7,11 @@
 DefinedAEpTandZ0 (:mod:`skrf.media.definedAEpTandZ0`)
 ========================================
 
-Media defined by A, Ep, Tand and Z0 class.
+Transmission line medium defined by A, Ep, Tand and Z0.
 
-This media is defined by attenuation A, relative permittivity Ep_r,
+This medium is defined by attenuation A, relative permittivity Ep_r,
 loss angle tand and characteristic impedance Z0.
+
 These values are either frequency invariant or specified at each frequencies
 to account for dispersion.
 Djirdjevic/Svennson dispersion model is provided, custom model may be use
@@ -22,59 +23,98 @@ from .media import Media
 
 class DefinedAEpTandZ0(Media):
     '''
-    Media defined by A, Ep, Tand and Z0 class.
+    Transmission line medium defined by A, Ep, Tand and Z0.
     
-    A generic physical transmission line is contructed: 
-     * from complex, relative permativity and permiability OR 
-     * from real relative permativity and permiability with loss tangents.  
+    This medium is defined by attenuation `A`, relative permittivity `Ep_r`,
+    loss angle `tand` and characteristic impedance `Z0`.
+    
+    These values are either frequency invariant or specified at each
+    frequencies to account for dispersion.
+    Djirdjevic/Svennson dispersion model is provided, custom model may be used
+    by providing an array with the parameter value for each frequency.
+    
+    A DefinedAEpTandZ0 medium is contructed: 
+     * from scalar attenuation `A`, relative permittivity `Ep_r`,
+       loss angle `tand` and characteristic impedance `Z0`.
+       Frequency invariant behaviour or Djirdjevic/Svennson dispersion can be
+       choosed trough `model`. Default is frequency invariant.
+     * from frequency-long array of complex `A`, relative permittivity `Ep_r`,
+       loss angle `tand` and characteristic impedance `Z0`. In this case the
+       user may have computed his own dispersion model to build those data.
+     * The two upper method may be mixed. If a parameter is specified as a
+       frequency dependant array, the built-in dispersion model is superseded.
      
-    See Examples. There is also a method to initialize from a 
-    existing distributed circuit, appropriately named 
-    :func:`Freespace.from_distributed_circuit`
-    
-    
+     See Examples.
 
     Parameters
     -----------
     frequency : :class:`~skrf.frequency.Frequency` object
-        frequency band of this transmission line medium
+        Frequency band of this transmission line medium
     z0 : number, array-like, or None
-        the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
-        line. if z0 is None then will default to Z0
-    ep_r : number, array-like
-        complex relative permittivity. negative imaginary is lossy.
-    mu_r : number, array-like
-        complex relative permeability. negative imaginary is lossy.
-    ep_loss_tan: None, number, array-like
-        the loss tangent of the permativity. If not None, imag(ep_r) is 
-        ignored. 
-    mu_loss_tan: None, number, array-like
-        the loss tangent of the permeability. If not None, imag(mu_r) is 
-        ignored. 
+        The port impedance for this medium. Only needed if different from the
+        characterisitc impedance of the transmission line.
+        If z0 is None then will default to Z0
+    A : number, array-like, default 0.0
+        Attenuation due to conductor loss in dB/m/sqrt(Hz)
+        The attenuation :math:`A(f)`at frequency :math:`f` is:
+        .. math::
+            A(f) = A*\sqrt{\frac{f}/{f_A}}
+    f_A: number, default 1.0
+        Frequency scaling in Hz for the attenuation. See A.
+    ep_r : number, array-like, default 1.0
+        Real part of the relative permittivity of the dielectric.
+        if `model='frequencyinvariant'`, the complex relative permittivity is:
+        .. math::
+            \epsilon_r(f) = ep\_r + j \cdot ep\_r \cdot tanD
+        if `model='djordjevicsvensson'`, the complex relative permittivity is:
+        .. math::
+            \epsilon_r(f) = ep_\inf + m \cdot \log{\frac{f_{high} - f_0}{f_{low} - f_\epsilon}}
+        In this case, the value of ep_r and tanD are given for frequency f_ep:
+        .. math::
+            \epsilon_r(f_\epsilon) = ep\_r + j \cdot ep\_r \cdot tanD
+    tanD: number, array-like, default 0.0
+        Dielectric relative permittivity loss tangent. See ep_r.
+    Z0: number, array-like, default 50.0
+        Quasi-static characteristic impedance of the medium.
+    f_low: number, default 1e3, , optional
+        Low frequency in Hz for  for Djirdjevic/Svennson dispersion model.
+        See ep_r.
+    f_high: number, default 1e12, optional
+        High frequency in Hz for  for Djirdjevic/Svennson dispersion model.
+        See ep_r.
+    f_ep: number, default 1e9, , optional
+        Specification frequency in Hz for  for Djirdjevic/Svennson dispersion model.
+        ep_r and tanD parameters are specified for this frequency. See ep_r.
+    model: string, 'frequencyinvariant' or 'djordjevicsvensson', optional
+        Use Djirdjevic/Svennson wideband Debye dispersion model or not.
+        Default is frequency invariant behaviour.
     \*args, \*\*kwargs : arguments and keyword arguments
 
 
     Examples
     -----------
-    >>>from skrf.media.freespace import Freespace
+    >>>from skrf.media.definedAEpTandZ0 import DefinedAEpTandZ0
     >>>from skrf.frequency import Frequency
     >>>f = Frequency(75,110,101,'ghz')
-    >>>Freespace(frequency=f, ep_r=11.9)   
-    >>>Freespace(frequency=f, ep_r=11.9-1.1j)
-    >>>Freespace(frequency=f, ep_r=11.9, ep_loss_tan=.1)
-    >>>Freespace(frequency=f, ep_r=11.9-1.1j, mu_r = 1.1-.1j)
+    >>>DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, Z0=50)   
+    >>>DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, tand=0.02, Z0=50)
+    >>>DefinedAEpTandZ0(frequency=f, A=1, f_A=1e9, ep_r=3, tand=0.02, Z0=50,
+                        f_low=1e3, f_high=1e12, f_Ep=1e9,
+                        model='djordjevicsvensson')
     
     
     '''
-    def __init__(self, frequency=None, z0=None, A=0, f_A=1e9, ep_r=1+0j, 
-                 mu_r=1+0j, tand=0, f_low=1e3, f_high=1e12, f_epr_tand=1e9,
-                 diel='djordjevicsvensson', *args, **kwargs):
+    def __init__(self, frequency=None, z0=None,
+                 A=0.0, f_A=1.0, ep_r=1.0, tanD=0.0, Z0=50.0,
+                 f_low=1.0e3, f_high=1.0e12, f_ep=1.0e9,
+                 model='frequencyinvariant', *args, **kwargs):
         
         Media.__init__(self, frequency=frequency,z0=z0)
-        self.ep_r, self.mu_r, self.tand, self.diel = ep_r, mu_r, tand, diel
         self.A, self.f_A = A, f_A
-        self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
+        self.ep_r, self.tanD = ep_r, tanD
+        self.Z0 = Z0,
+        self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
+        self.model = model
     
     def __str__(self):
         f=self.frequency
@@ -88,18 +128,18 @@ class DefinedAEpTandZ0(Media):
     @property
     def ep_r_f(self):
         '''
-        Frequency dependant relative permittivity of dielectric
+        Frequency dependant complex relative permittivity of dielectric
         '''
         ep_r, tand  = self.ep_r, self.tand
-        f_low, f_high, f_epr_tand = self.f_low, self.f_high, self.f_epr_tand
+        f_low, f_high, f_ep = self.f_low, self.f_high, self.f_ep
         f = self.frequency.f
-        if self.diel == 'djordjevicsvensson':
+        if self.model == 'djordjevicsvensson':
             # compute the slope for a log frequency scale, tanD dependant.
             m = (ep_r*tand)  * (pi/(2*log(10)))
             # value for frequency above f_high
-            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand)))
+            ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_ep)/(f_low + 1j*f_ep)))
             return ep_inf + m*log((f_high + 1j*f)/(f_low + 1j*f))
-        elif self.diel == 'frequencyinvariant':
+        elif self.model == 'frequencyinvariant':
             return ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
         else:
             raise ValueError('Unknown dielectric dispersion model')
@@ -116,12 +156,6 @@ class DefinedAEpTandZ0(Media):
     def alpha_conductor(self):
         '''
         Losses due to conductor resistivity
-
-        Returns
-        --------
-        alpha_conductor : array-like
-                lossyness due to conductor losses
-
         '''
         A, f_A, f = self.A, self.f_A, self.frequency.f
         return A * log(10)/20 * sqrt(f/f_A)
@@ -130,7 +164,6 @@ class DefinedAEpTandZ0(Media):
     def alpha_dielectric(self):
         '''
         Losses due to dielectric
-
         '''
         ep_r, tand = real(self.ep_r_f), self.tand_f
         f = self.frequency.f
@@ -149,28 +182,12 @@ class DefinedAEpTandZ0(Media):
         '''
         Propagation constant
 
-
         See Also
         --------
-        alpha_conductor : calculates losses to conductor
-        alpha_dielectric: calculates losses to dielectric
-        beta            : calculates phase parameter
+        alpha_conductor : calculates conductor losses
+        alpha_dielectric: calculates dielectric losses
+        beta_phase      : calculates phase parameter
         '''
         beta  = self.beta_phase
         alpha = self.alpha_conductor + self.alpha_dielectric
         return alpha + 1j*beta
-    
-    @property
-    def Z0(self):
-        '''
-        Characteristic Impedance, :math:`Z0`
-
-        .. math::
-                Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
-
-        Returns
-        --------
-        Z0 : numpy.ndarray
-                Characteristic Impedance in units of ohms
-        '''
-        return zeros(len(self))  
