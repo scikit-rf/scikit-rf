@@ -12,10 +12,8 @@ Transmission line medium defined by A, Ep, Tand and Z0.
 This medium is defined by attenuation A, relative permittivity Ep_r,
 loss angle tand and characteristic impedance Z0.
 
-These values are either frequency invariant or specified at each frequencies
-to account for dispersion.
-Djirdjevic/Svennson dispersion model is provided, custom model may be use
-by providing an array with the parameter value for each frequency.
+Djirdjevic/Svennson dispersion model is provided for dielectric, default
+behaviour is frequency invariant.
 '''
 from scipy.constants import  epsilon_0, c
 from numpy import real, imag, sqrt, ones, zeros, pi, log
@@ -28,21 +26,14 @@ class DefinedAEpTandZ0(Media):
     This medium is defined by attenuation `A`, relative permittivity `Ep_r`,
     loss angle `tand` and characteristic impedance `Z0`.
     
-    These values are either frequency invariant or specified at each
-    frequencies to account for dispersion.
-    Djirdjevic/Svennson dispersion model is provided, custom model may be used
-    by providing an array with the parameter value for each frequency.
+    Djirdjevic/Svennson dispersion model is provided for dielectric, default
+    behaviour is frequency invariant.
     
     A DefinedAEpTandZ0 medium is contructed: 
      * from scalar attenuation `A`, relative permittivity `Ep_r`,
        loss angle `tand` and characteristic impedance `Z0`.
        Frequency invariant behaviour or Djirdjevic/Svennson dispersion can be
        choosed trough `model`. Default is frequency invariant.
-     * from frequency-long array of complex `A`, relative permittivity `Ep_r`,
-       loss angle `tand` and characteristic impedance `Z0`. In this case the
-       user may have computed his own dispersion model to build those data.
-     * The two upper method may be mixed. If a parameter is specified as a
-       frequency dependant array, the built-in dispersion model is superseded.
      
      See Examples.
 
@@ -112,13 +103,13 @@ class DefinedAEpTandZ0(Media):
         Media.__init__(self, frequency=frequency,z0=z0)
         self.A, self.f_A = A, f_A
         self.ep_r, self.tanD = ep_r, tanD
-        self.Z0 = Z0,
+        self._Z0 = Z0
         self.f_low, self.f_high, self.f_ep = f_low, f_high, f_ep
         self.model = model
     
     def __str__(self):
         f=self.frequency
-        output = 'Physical line Media.  %i-%i %s.  %i points'%\
+        output = 'DefinedAEpTandZ0 medium.  %i-%i %s.  %i points'%\
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints)
         return output
 
@@ -130,7 +121,7 @@ class DefinedAEpTandZ0(Media):
         '''
         Frequency dependant complex relative permittivity of dielectric
         '''
-        ep_r, tand  = self.ep_r, self.tand
+        ep_r, tand  = self.ep_r, self.tanD
         f_low, f_high, f_ep = self.f_low, self.f_high, self.f_ep
         f = self.frequency.f
         if self.model == 'djordjevicsvensson':
@@ -191,3 +182,11 @@ class DefinedAEpTandZ0(Media):
         beta  = self.beta_phase
         alpha = self.alpha_conductor + self.alpha_dielectric
         return alpha + 1j*beta
+    
+    @property
+    def Z0(self):
+        return self._Z0
+    
+    @Z0.setter
+    def Z0(self, val):
+        self._Z0 = val
