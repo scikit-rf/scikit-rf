@@ -1,29 +1,28 @@
 
 
 '''
-.. module:: skrf.media.physicalLine
+.. module:: skrf.media.definedAEpTandZ0
 
 ========================================
-physicalLine (:mod:`skrf.media.physicalLine`)
+DefinedAEpTandZ0 (:mod:`skrf.media.definedAEpTandZ0`)
 ========================================
 
-A generic physical transmission line media.
+Media defined by A, Ep, Tand and Z0 class.
 
-Represents a generic physical transmission line, defined by impedance,
-attenuation, relative permittivity and loss angle.
-
-Frequency invariant parameters or Djirdjevic/Svennson dispersion is provided. 
-
-
-
+This media is defined by attenuation A, relative permittivity Ep_r,
+loss angle tand and characteristic impedance Z0.
+These values are either frequency invariant or specified at each frequencies
+to account for dispersion.
+Djirdjevic/Svennson dispersion model is provided, custom model may be use
+by providing an array with the parameter value for each frequency.
 '''
 from scipy.constants import  epsilon_0, c
 from numpy import real, imag, sqrt, ones, zeros, pi, log
 from .media import Media
 
-class PhysicalLine(Media):
+class DefinedAEpTandZ0(Media):
     '''
-    A generic physical transmission line media.
+    Media defined by A, Ep, Tand and Z0 class.
     
     A generic physical transmission line is contructed: 
      * from complex, relative permativity and permiability OR 
