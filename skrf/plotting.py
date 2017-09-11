@@ -932,7 +932,7 @@ Examples
 
             def plot_func(self,  m=None, n=None, ax=None,
                 show_legend=True,attribute=attribute,
-                y_label=y_label, pad=0, window='hamming', *args, **kwargs):
+                y_label=y_label, pad=0, window='hamming', z0=50, *args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -982,6 +982,13 @@ Examples
                         if 'time_impulse' in attribute:
                             xlabel = 'Time (ns)'
                             x,y = self.impulse_response(pad=pad, window=window)
+                            # default is reflexion coefficient axis
+                            if attribute[0].lower() == 'z':
+                                # if they want impedance axis, give it to them
+                                y_label = 'Z (ohm)'
+                                y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                                y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                                y = z0 * (1+y) / (1-y)
                             plot_rectangular(
                                         x = x,
                                         y = y,
@@ -992,6 +999,13 @@ Examples
                         elif 'time_step' in attribute:
                             xlabel = 'Time (ns)'
                             x,y = self.step_response(pad=pad, window=window)
+                            # default is reflexion coefficient axis
+                            if attribute[0].lower() == 'z':
+                                # if they want impedance axis, give it to them
+                                y_label = 'Z (ohm)'
+                                y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
+                                y[x == -1.] = -1. + 1e-12  # solve numerical singularity
+                                y = z0 * (1+y) / (1-y)
                             plot_rectangular(
                                         x = x,
                                         y = y,
