@@ -2528,7 +2528,7 @@ class NISTMultilineTRL(EightTerm):
         measured : list of :class:`~skrf.network.Network`
              must be in order [Thru, Reflect, Line]
 
-        Grefls : list of complex
+        Grefls : complex or list of complex
             Estimated reflection coefficients of reflect standards.
             Usually -1 for short or +1 for open.
 
@@ -2540,13 +2540,16 @@ class NISTMultilineTRL(EightTerm):
             Imaginary part is the loss at 1 GHz.
             Negative imaginary part indicates losses.
 
-        refl_offset : float
-            Estimated offset of the length measured from the center of the through.
-            Negative length is towards the VNA, Units are in meters.
+        refl_offset : float or list of float
+            Estimated offsets of the reflect standards from the center of the through.
+            Negative length is towards the VNA. Units are in meters.
 
-        ref_plane : float
+        ref_plane : float or list of float
             Reference plane shift after the calibration.
-            Negative length is towards the VNA.
+            Negative length is towards the VNA. Units are in meters.
+
+            Different shifts can be given to different ports by giving a two element list.
+            First element is shift of port 1 and second is shift of port 2.
 
         gamma_root_choice : string
             Method to use for choosing the correct eigenvalue for propagation
@@ -2589,7 +2592,7 @@ class NISTMultilineTRL(EightTerm):
             In this case reference impedance of the calibration is characteristic
             impedance of the transmission lines.
 
-        z0_ref : None or complex
+        z0_ref : None, complex or list of complex
             New reference impedance for the characteristic impedance renormalizarion.
 
             No effect if `c0` == None and `z0_line` == None.
@@ -2620,10 +2623,20 @@ class NISTMultilineTRL(EightTerm):
         self.c0 = c0
         self.z0_line = z0_line
 
-        if self.refl_offset == None:
-            self.refl_offset = [0]*len(Grefls)
+        try:
+            self.Grefls[0]
+        except TypeError:
+            self.Grefls = [self.Grefls]
 
-        if len(measured) != len(Grefls) + len(l):
+        if self.refl_offset == None:
+            self.refl_offset = [0]*len(self.Grefls)
+
+        try:
+            self.refl_offset[0]
+        except TypeError:
+            self.refl_offset = [self.refl_offset]
+
+        if len(measured) != len(self.Grefls) + len(l):
             raise ValueError("Amount of measurements doesn't match amount of line lengths and reflection coefficients")
 
         #Not used, but needed for Calibration class init
@@ -2638,7 +2651,7 @@ class NISTMultilineTRL(EightTerm):
 
         m_sw = [k for k in self.measured_unterminated]
 
-        n_reflects = len(Grefls)
+        n_reflects = len(self.Grefls)
 
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
