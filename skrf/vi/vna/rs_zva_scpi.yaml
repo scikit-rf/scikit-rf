@@ -1,0 +1,286 @@
+# vim: shiftwidth=2
+# R&S ZVA SCPI online manual: https://www.rohde-schwarz.com/webhelp/webhelp_zva/start.htm
+
+DEFAULTS:
+  csv: False
+  returns: str
+  strip_outer_quotes: True
+  kwarg_value: ""
+COMMAND_TREE:
+  CALC<cnum=1>:
+    DATA:
+      command: {name: data, set_values: "<SDATA>,<data>", query_values: "<SDATA>"}
+      branch:
+        ALL: {name: data_all, query_values: "<SDATA>"}
+        CALL:
+          command: {name: data_call, query_values: "<SDATA>"}
+          branch:
+            CAT: {name: data_call_catalog, query: ""}
+        DALL: {name: data_dall, query_values: "<SDATA>"}
+        SGR: {name: data_sgroup, query_values: "<SDATA>"}
+    PAR:
+      CAT: {name: par_catalog, query: ""}
+      DEL:
+        command: {name: par_del, set: "'<TRACE>'"}
+        branch:
+          ALL: {name: par_del_all, set: ""}
+          CALL: {name: par_del_call, set: ""}
+          SGR: {name: par_del_sgroup, set: ""}
+      SDEF:
+        command: {name: par_sdef, set: "'<TRACE>', '<COEFF>'"}
+        branch:
+          SGR: {name: par_sdef_sgroup, set: ""}
+      SEL: {name: par_select, set: "'TRACE'", query: ""}
+  DISP:
+    WIND<wnum=1>:
+      CAT: {name: disp_catalog, query: "",
+        help: "Returns the numbers and names of all diagram areas in the current setup."
+      }
+      MAX: {name: disp_maximize, set: "<ONOFF=OFF>", returns: bool,
+        help: "Maximizes all diagram areas in the active setup or restores the previous display configuration."
+      }
+      NAME: {name: disp_name, set: "<name>", query: "",
+        help: "Defines a name for diagram area <Wnd>.\n\n
+        \tThe name appears in the list of diagram areas, to be queried by DISPlay[:WINDow<Wnd>]:CAT?.\n
+        \t"
+      }
+      STAT: {name: disp_state, set: "<ONOFF>", query: "", returns: bool,
+        help: "Creates or deletes a diagram area, identified by its area number <Wnd>.\n\n
+        \tDISPlay[:WINDow<Wnd>]:STATe <Boolean>\n
+        \t"
+      }
+      TITL:
+        DATA: {name: disp_title_data, set: "<TITLE>", query: "",
+          help: "Defines a title for diagram area <Wnd>.\n\n
+          \tDISPlay[:WINDow<Wnd>]:TITLe:DATA '<string>'\n
+          \t"
+        }
+        STAT: {name: disp_title_state, set: "<ONOFF=ON>", query: "", returns: bool,
+          help: "Displays or hides the title for area number <Wnd>, defined by means of DISPlay:WINDow<Wnd>:TITLe:DATA.\n\n
+          \tDISPlay[:WINDow<Wnd>]:TITLe[:STATe] <Boolean>\n
+          \t"
+        }
+      TRAC<tnum=1>:
+        CAT: {name: disp_trace_catalog, query: "",
+          help: "Returns the numbers and names of all traces in diagram area no. <Wnd>."
+        }
+        DEL: {name: disp_trace_delete, set: "",
+          help: "Releases the assignment between a trace and a diagram area.\n\n
+          \tAs defined by means of DISPlay:WINDow<Wnd>:TRACe<WndTr>:FEED <Trace_Name>\n
+          \tand expressed by the <WndTr> suffix. The trace itself is not deleted; this\n
+          \tmust be done via CALCulate<Ch>:PARameter:DELete <Trace_Name>.\n
+          \t"
+        }
+        EFE: {name: disp_trace_efeed, set: "<TRACENAME>",
+          help: "Assigns an existing trace to a diagram area.\n\n
+          \tAssigns an existing trace (CALCulate<Ch>:PARameter:SDEFine <Trace_Name>)\n
+          \tto a diagram area <Wnd>, and displays the trace. Use\n
+          \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:FEED to assign the trace to a diagram area\n
+          \tusing a numeric suffix (e.g. in order to use the\n
+          \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:Y:OFFSet command).\n\n
+          \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:EFEed '<trace_name>'\n
+          \t"
+        }
+        FEED: {name: disp_trace_feed, set: "<TRACENAME>",
+          help: "Assigns an existing traceto a diagram area.\n\n
+          \tAssigns an existing trace (CALCulate<Ch>:PARameter:SDEFine <Trace_Name>)\n
+          \tto a diagram area, using the <WndTr> suffix, and displays the trace. Use\n
+          \tDISPlay[:WINDow<Wnd>]:TRACe:EFEed to assign the trace to a diagram area\n
+          \twithout using a numeric suffix.\n
+          \t"
+        }
+        SHOW: {name: disp_trace_show, set: "<DMTRACES> <TRACENAME>", query: "<DMTRACES>", returns: bool,
+          help: "Displays or hides an existing trace, identified by its trace name, or a group of traces.\n\n
+          \tDisplays or hides an existing trace, identified by its trace name\n
+          \t(CALCulate<Ch>:PARameter:SDEFine <Trace_Name>), or a group of traces.\n\n
+          \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:SHOW DALL | MALL | '<trace_name>', <Boolean>\n
+          \t"
+        }
+        X:
+          OFFS:  {name: disp_trace_x_offset, set: "<range>", query: "",
+            help: "Shifts the trace <WndTr> in horizontal direction, leaving the positions of all markers unchanged."
+          }
+        Y:
+          OFFS:  {name: disp_trace_y_offset, set: "<MAG><PHASE=0><REAL=0><IMAG=0>", query_values: "",
+            help: "Modifies all points of the trace <WndTr> by means of an added and/or a multiplied complex constant."
+          }
+          SCAL:
+            AUTO: {name: disp_trace_auto, set: "ONCE,'<TRACENAME=None>'",
+              help: "Displays the entire trace in the diagram area, leaving an appropriate display margin.\n\n
+              \tThe trace can be referenced either by its number <WndTr> or by its name <trace_name>.\n\n
+              \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:Y[:SCALe]:AUTO ONCE[, '<trace_name>']\n
+              \t"
+            }
+            BOTT:  {name: disp_trace_bottom, set: "<lower_value>,<TRACENAME=None>",
+              help: "Sets the lower (minimum) edge of the diagram area <Wnd>."
+            }
+            PDIV: {name: disp_trace_pdiv, set: "<value>,<TRACENAME=None>",
+              help: "Sets the value between two grid lines (value “per division”) for the diagram area <Wnd>.\n\n
+              \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:Y[:SCALe]:PDIVision  <numeric_value>[, '<trace_name>']\n
+              \t"
+            }
+            RLEV:  {name: disp_trace_reflevel, set: "<value>,<TRACENAME=None>",
+              help: "Sets the reference level (or reference value) for a particular displayed trace.\n\n
+              \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:Y[:SCALe]:RLEVel  <numeric_value>[, '<trace_name>']
+              \t"
+            }
+            RPOS: {name: disp_trace_refpos, set: "<value>,<TRACENAME=None>",
+              help: "Sets the point on the y-axis to be used as the reference position as a percentage of the length of the y-axis.\n\n
+              DISPlay[:WINDow<Wnd>]:TRACe<WndTr>:Y[:SCALe]:RPOSition  <numeric_value>[, '<trace_name>']\n
+              \t"
+              }
+            TOP: {name: disp_trace_top, set: "<upper_value>,<TRACENAME=None>",
+              help: "Sets the upper (maximum) edge of the diagram area <Wnd>.\n\n
+              \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:Y[:SCALe]:TOP  <upper_value>[, '<trace_name>']\n
+              \t"
+              }
+  INIT<cnum=1>:
+    CONT: {name: init_continuous, set: "<STATE=ON>", query: ""}
+    IMM:
+      command: {name: init_immediate, set: ""}
+      branch:
+        SCOP: {name: init_immediate_scope, set: "<SCOPE=ALL>", query: ""}
+  INST:
+    NSEL: {name: active_channel, set: "<channel=1>", query: "", returns: int,
+      help: "Selects channel as the active channel.\n\n
+        \tINSTrument:NSELect <Channel>\n
+        \t"
+      }
+  SENS<cnum=1>:
+    AVER:
+      CLE: {name: averaging_clear, set: ""}
+      COUN:
+        command: {name: averaging_count, set: "<FACTOR=10>"}
+        branch:
+          CURR: {name: average_factor_current, query: "", returns: "int"}
+      STAT: {name: averaging_state, set: "<ONOFF=ON>", query: "", returns: bool}
+    BAND:
+      RES: {name: rbw, set: "<BW>", query: "",
+        help: "Defines the resolution bandwidth of the analyzer (Meas. Bandwidth).\n\n
+        \t[SENSe<Ch>:]BANDwidth|BWIDth[:RESolution] <bandwidth>\n\n
+        \t<Ch>  Channel number. If unspecified the numeric suffix is set to 1.\n
+        \t<bandwidth>\n
+        \tResolution bandwidth\n\t"
+      }
+      DRED: {name: rbw_reduction, set: "<ONOFF=OFF>", query: "", returns: bool,
+        help: "Enables or disables dynamic bandwidth reduction at low frequencies.\n\n
+        \t[SENSe<Ch>:]BANDwidth|BWIDth[:RESolution]:DREDuction <Boolean>\n\n
+        \t<Ch>\t\tChannel number\n
+        \t<Boolean>\tON | OFF – enable or disable dynamic bandwidth reduction.\n\t"
+      }
+      SEL: {name: rbw_select, set: "", query: "",
+        help: "Defines the selectivity of the IF filter for an unsegmented sweep.\n\n
+        \tThe value is also used for all segments of a segmented sweep,\n
+        \tprovided that separate selectivity setting is disabled\n
+        \t([SENSe<Ch>:]SEGMent<Seg>:BWIDth[:RESolution]:SELect:CONTrol OFF).\n\n
+        \t[SENSe<Ch>:]BANDwidth|BWIDth[:RESolution]:SELect NORMal | HIGH\n\t"
+      }
+    CORR:
+      COLL:
+        CONN<pnum=1>:
+          command: {name: corr_connection, set: "<CONN>", query: ""}
+          branch:
+            PORT: {name: corr_connection_ports, set: "<PORTS=ALL>", query: ""}
+            GEND: {name: corr_connection_genders, set: "<GENDERS=ALL>", query: ""}
+      DATE: {name: corr_date, query: ""}
+      STAT: {name: corr_state, set: "<STATE=ON>", query: ""}
+    FREQ:
+      CONV:
+        DEV:
+          MODE: {name: converter_mode, set: "<MODE=RILI>", query: "",
+            help: "Selects the test setup (internal or external sources) for the frequency
+            converter measurement (with option ZVA-K8, Converter Control).\n\n
+            \t[SENSe<Ch>:]FREQuency:CONVersion:DEVice:MODE RILI | RILE | RILI4 | RILI56\n\n
+            \tThe available test setups depend on the instrument type:\n\n
+            \t\t\t\t\t\tRILI\tRILE\tRILI4\tRILI56\n
+            \t---------------------------------------------------\n
+            \tR&S ZVA 24|40|50\t  x\t  x\n
+            \tR&S ZVA 67\t\t\t\t   x\t\tx\n
+            \tR&S ZVT 20\t\t\t\t\t\t\tx\t\tx\n\n
+            \t<Ch>\tChannel number. This suffix is ignored, the command affects all channels.\n
+            \tRILI\tRF internal, LO internal (4-Port)\n
+            \t\t\tPorts 1 and 2: Converter RF Signal\n
+            \t\t\tPorts 3 and 4: Converter LO\n
+            \tRILE\tRF internal, LO external (4-Port)\n
+            \t\t\tPorts 1 to 4: Converter RF Signal\n
+            \t\t\tExternal Generator #1: Converter LO\n
+            \tRILI4\tRF internal, LO internal, Port4=LO (R&S ZVA 67 only)\n
+            \t\t\tPorts 1 and 2: Converter RF Signal\n
+            \t\t\tPort 4: Converter LO\n
+            \tRILI56\tRF internal, LO internal, 6-Port (R&S ZVT 20 only)\n
+            \t\t\tPorts 1 to 4: Converter RF Signal\n
+            \t\t\tPorts 5 and 6: Converter LO
+            \n\t"
+          }
+          NAME: {name: converter_name, set: "<TYPE>", query: "",
+            help: "Selects the frequency converter type for enhanced frequency-converting
+            measurements (with option ZVA-K8, Converter Control).\n\n
+            \tThe preset configuration will be reset to Instrument scope (SYSTem:PRESet:SCOPe ALL)\n
+            \tand Factory Preset (SYSTem:PRESet:USER:STATe OFF).\n\n
+            \t[SENSe<Ch>:]FREQuency:CONVersion:DEVice:NAME '<Converter Type>'\n\n
+            \t<Ch>\t\t\t\tChannel number.\n
+            \t\t\t\t\t\tThis suffix is ignored, the command affects all channels.\n
+            \t'<Converter Type>'  'ZVA-Z110' - Frequency converter R&S ZVA-Z110\n
+            \t\t\t\t\t\t'' - No frequency converter selected
+            \n\t"
+          }
+      STAR: {name: f_start, set: <freq>, query: "", returns: float,
+        help: "Defines the start frequency for a frequency sweep which is equal to the
+        left edge of a Cartesian diagram.\n\n
+            \t[SENSe<Ch>:]FREQuency:STARt <start_frequency>
+            \n\t"
+      }
+      STOP: {name: f_stop, set: <freq>, query: "", returns: float,
+        help: "Defines the stop frequency for a frequency sweep which is equal to the
+        right edge of a Cartesian diagram.\n\n
+        \t[SENSe<Ch>:]FREQuency:STOP <stop_frequency>
+        \n\t"
+      }
+    SWE:
+      COUN: {name: sweep_count, set: "<NUMSWEEP=1>", query: "", returns: int,
+        help: "Defines the number of sweeps to be measured in single sweep mode (INITiate<Ch>:CONTinuous OFF)."
+      }
+      POIN: {name: sweep_n_points, set: "<NUMPOINTS=201>", query: "", returns: int,
+        help: "Defines the total number of measurement points per sweep (Number of Points)."
+      }
+      SPAC: {name: sweep_spacing, set: "<SPACING=LIN>", query: "",
+        help: "Defines the frequency vs. time characteristics of a frequency sweep\n\n
+        \t(Lin. Frequency or Log Frequency). The command has no effect on segmented\n
+        \tfrequency, power or time sweeps.\n\n
+        \t[SENSe<Ch>:]SWEep:SPACing  LINear | LOGarithmic\n
+        \t"
+      }
+      STEP: {name: sweep_step, set: "<step_size>", query: "",
+        help: "Sets the distance between two consecutive sweep points.\n\n
+        \t[SENSe<Ch>:]SWEep:STEP <step_size>\n
+        \t"
+      }
+      TIME:
+        command: {name: sweep_time, set: "<duration>", query: "",
+          help: "Sets the duration of the sweep (Sweep Time).\n\n
+          \tSetting a duration disables the automatic calculation of the (minimum) sweep time;\n
+          \tsee [SENSe<Ch>:]SWEep:TIME:AUTO.\n\n
+          \t[SENSe<Ch>:]SWEep:TIME <duration>\n
+          \t"
+        }
+        branch:
+          AUTO: {name: sweep_time_auto, set: "<ONOFF=ON>", query: "", returns: bool,
+            help: "When enabled, the (minimum) sweep duration is calculated internally\n\n
+            \tusing the other channel settings and zero delay ([SENSe<Ch>:]SWEep:DWELl).\n\n
+            \t[SENSe<Ch>:]SWEep:TIME:AUTO <Boolean>\n
+            \t"
+          }
+      TYPE: {name: sweep_type, set: "<TYPE=LIN>", query: "",
+        help: "Selects the sweep type,\n\n
+        \ti.e. the sweep variable (frequency/power/time) and the position of the\n
+        \tsweep points across the sweep range.\n\n
+        \t[SENSe<Ch>:]SWEep:TYPE LINear | LOGarithmic | SEGMent | POWer | CW | POINt | PULSe | IAMPlitude | IPHase\n
+        \t"
+      }
+  SYST:
+    DISP:
+      COL: {name: disp_color, set: "<COLOR=DBAC>"}
+      UPD: {name: disp_update, set: "<UPDATE=OFF>"}
+    ERR:
+      NEXT: {name: system_err_next, query: ""}
+      ALL: {name: system_error_all, query: ""}
