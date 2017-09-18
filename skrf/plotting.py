@@ -36,6 +36,7 @@ Misc Functions
 import os
 
 import matplotlib as mpl
+from matplotlib import ticker
 import matplotlib.pyplot as plb
 import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
@@ -49,6 +50,21 @@ from . util import now_string_2_dt
 
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
+SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
+SI_CONVERSION = dict([(key, 10**((8-i)*3)) for i, key in enumerate(SI_PREFIXES_ASCII)])
+
+
+def scale_frequency_ticks(ax, funit):
+    if funit.lower() == "hz":
+        prefix = " "
+        scale = 1
+    elif len(funit) == 3:
+        prefix = funit[0]
+        scale = SI_CONVERSION[prefix]
+    else:
+        raise ValueError("invalid funit {}".format(funit))
+    ticks_x = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * scale))
+    ax.xaxis.set_major_formatter(ticks_x)
 
 
 def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
@@ -1025,7 +1041,8 @@ Examples
     
                             else:
                                 xlabel = 'Frequency (%s)' % self.frequency.unit
-                                x = self.frequency.f_scaled
+                                # x = self.frequency.f_scaled
+                                x = self.frequency.f  # always plot f, and then scale the ticks instead
 
                             plot_rectangular(x=x,
                                              y=getattr(self, attribute)[:, m, n],
@@ -1034,6 +1051,11 @@ Examples
                                              show_legend=show_legend, ax=ax,
                                              *args, **kwargs)
 
+                            # scale the ticklabels according to the frequency unit:
+                            if ax is None:
+                                ax = plb.gca()
+
+                            scale_frequency_ticks(ax, self.frequency.unit)
 
                 #if was_interactive:
                 #    plb.interactive(True)
@@ -1101,7 +1123,6 @@ def plot_v_frequency(self, y, *args, **kwargs):
 
     This plots whatever is given vs. `self.f_scaled` and then
     calls `labelXAxis`.
-
     '''
 
     try:
@@ -1123,7 +1144,10 @@ def plot_v_frequency(self, y, *args, **kwargs):
     except(TypeError):
         y = y * npy.ones(len(self))
 
-    plb.plot(self.f_scaled, y, *args, **kwargs)
+    # plb.plot(self.f_scaled, y, *args, **kwargs)
+    plb.plot(self.f, y, *args, **kwargs)
+    ax = plb.gca()
+    scale_frequency_ticks(ax, self.unit)
     plb.autoscale(axis='x', tight=True)
     self.labelXAxis()
 
@@ -1523,9 +1547,11 @@ def animate(self, attr='s_deg', ylims=(-5, 5), xlims=None, show=True,
     if was_interactive:
         plb.ion()
 
-def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
-        type='shade',n_deviations=3, alpha=.3, color_error =None,markevery_error=20,
-        ax=None,ppf=None,kwargs_error={},*args,**kwargs):
+
+def plot_uncertainty_bounds_component(
+        self, attribute, m=None, n=None,
+        type='shade', n_deviations=3, alpha=.3, color_error=None, markevery_error=20,
+        ax=None, ppf=None, kwargs_error={}, *args, **kwargs):
     '''
     plots mean value of the NetworkSet with +- uncertainty bounds
     in an Network's attribute. This is designed to represent
@@ -1549,7 +1575,7 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
                     of error bars
             ax: Axes to plot on
             ppf: post processing function. a function applied to the
-                    upper and low
+                    upper and lower bounds
             *args,**kwargs: passed to Network.plot_s_re command used
                     to plot mean response
             kwargs_error: dictionary of kwargs to pass to the fill_between
@@ -1585,9 +1611,8 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
             ntwk_std = self.__getattribute__('std_'+attribute)
             ntwk_std.s = n_deviations * ntwk_std.s
 
-            upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
-            lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
-
+            upper_bound = (ntwk_mean.s[:, m, n] + ntwk_std.s[:, m, n]).squeeze()
+            lower_bound = (ntwk_mean.s[:, m, n] - ntwk_std.s[:, m, n]).squeeze()
 
             if ppf is not None:
                 if type =='bar':
@@ -1596,38 +1621,41 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
                 lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
-                if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # quickfix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute is 's_mag':
                         plot_attribute = 's_db'
                     elif attribute is 's_time_mag':
                         plot_attribute = 's_time_db'
 
             if type == 'shade':
-                ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+                ntwk_mean.plot_s_re(ax=ax, m=m, n=n, *args, **kwargs)
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
-                ax.fill_between(ntwk_mean.frequency.f_scaled, \
-                        lower_bound,upper_bound, alpha=alpha, color=color_error,
-                        **kwargs_error)
-                #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
-            elif type =='bar':
-                ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+                ax.fill_between(ntwk_mean.frequency.f,
+                                lower_bound, upper_bound, alpha=alpha, color=color_error,
+                                **kwargs_error)
+                # ax.plot(ntwk_mean.frequency.f_scaled, ntwk_mean.s[:,m,n],*args,**kwargs)
+
+            elif type == 'bar':
+                ntwk_mean.plot_s_re(ax=ax, m=m, n=n, *args, **kwargs)
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
-                ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
-                        ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
-                        yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
-                        color=color_error,**kwargs_error)
+                ax.errorbar(ntwk_mean.frequency.f[::markevery_error],
+                            ntwk_mean.s_re[:, m, n].squeeze()[::markevery_error],
+                            yerr=ntwk_std.s_mag[:, m, n].squeeze()[::markevery_error],
+                            color=color_error, **kwargs_error)
 
             else:
                 raise(ValueError('incorrect plot type'))
 
             ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:],''))  # use only the function of the attribute
+            scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
             ax.axis('tight')
 
-def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
-        type='shade', alpha=.3, color_error =None,markevery_error=20,
-        ax=None,ppf=None,kwargs_error={},*args,**kwargs):
+
+def plot_minmax_bounds_component(self, attribute, m=0, n=0,
+                                 type='shade', alpha=.3, color_error=None, markevery_error=20,
+                                 ax=None, ppf=None, kwargs_error={}, *args, **kwargs):
     '''
     plots mean value of the NetworkSet with +- uncertainty bounds
     in an Network's attribute. This is designed to represent
@@ -1667,15 +1695,13 @@ def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
 
     '''
 
-    ax = plb.gca()
+    if ax is None:
+        ax = plb.gca()
 
     ntwk_mean = self.__getattribute__('mean_'+attribute)
 
-
     lower_bound = self.__getattribute__('min_'+attribute).s_re[:,m,n].squeeze()
     upper_bound = self.__getattribute__('max_'+attribute).s_re[:,m,n].squeeze()
-
-
 
     if ppf is not None:
         if type =='bar':
@@ -1694,27 +1720,28 @@ def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
         ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
         if color_error is None:
             color_error = ax.get_lines()[-1].get_color()
-        ax.fill_between(ntwk_mean.frequency.f_scaled, \
-                lower_bound,upper_bound, alpha=alpha, color=color_error,
-                **kwargs_error)
+        ax.fill_between(ntwk_mean.frequency.f,
+                        lower_bound, upper_bound, alpha=alpha, color=color_error,
+                        **kwargs_error)
         #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
     elif type =='bar':
         raise (NotImplementedError)
-        ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+        ntwk_mean.plot_s_re(ax=ax, m=m, n=n, *args, **kwargs)
         if color_error is None:
             color_error = ax.get_lines()[-1].get_color()
-        ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
-                ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
-                yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
-                color=color_error,**kwargs_error)
+        ax.errorbar(ntwk_mean.frequency.f[::markevery_error],
+                    ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error],
+                    yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],
+                    color=color_error,**kwargs_error)
 
     else:
         raise(ValueError('incorrect plot type'))
 
-    ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
+    ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
+    scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
     ax.axis('tight')
 
-def plot_uncertainty_bounds_s_db(self,*args, **kwargs):
+def plot_uncertainty_bounds_s_db(self, *args, **kwargs):
     '''
     this just calls
             plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
@@ -1862,8 +1889,6 @@ def signature(self, m=0, n=0, component='s_mag',
 
     Creates a colored image representing the some component
     of each Network in the  NetworkSet, vs frequency.
-
-
 
 
     Parameters
