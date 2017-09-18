@@ -258,14 +258,17 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         cc=ax1.add_patch(currentContour)
         cc.set_clip_path(clipc)
 
+
 def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
-    show_legend=True, axis='tight', ax=None, *args, **kwargs):
+                     show_legend=True, axis='tight', ax=None, *args, **kwargs):
     '''
     plots rectangular data and optionally label axes.
 
     Parameters
     ------------
-    z : array-like, of complex data
+    x : array-like, of complex data
+        data to plot
+    y : array-like, of complex data
         data to plot
     x_label : string
         x-axis label
@@ -275,9 +278,11 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
         plot title
     show_legend : Boolean
         controls the drawing of the legend
+    axis : str
+        whether or not to autoscale the axis
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
-    *args,**kwargs : passed to pylab.plot
+    *args, **kwargs : passed to pylab.plot
 
     '''
     if ax is None:
@@ -307,6 +312,7 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
         plb.draw()
 
     return my_plot
+
 
 def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     show_legend=True, axis_equal=False, ax=None, *args, **kwargs):
@@ -402,6 +408,7 @@ def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
+
 def plot_complex_polar(z, x_label=None, y_label=None,
     title=None, show_legend=True, axis_equal=False, ax=None,
     *args, **kwargs):
@@ -437,6 +444,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
     plot_polar(theta=theta, r=r, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis_equal=axis_equal,
         ax=ax, *args, **kwargs)
+
 
 def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imaginary', title='Complex Plane', show_legend=True,
@@ -741,8 +749,8 @@ def __generate_plot_functions(self):
     for prop_name in PRIMARY_PROPERTIES:
 
         def plot_prop_polar(self,
-            m=None, n=None, ax=None,
-            show_legend=True ,prop_name=prop_name,*args, **kwargs):
+                            m=None, n=None, ax=None,
+                            show_legend=True, prop_name=prop_name, *args, **kwargs):
 
             # create index lists, if not provided by user
             if m is None:
@@ -758,7 +766,6 @@ def __generate_plot_functions(self):
                 gen_label = True
             else:
                 gen_label = False
-
 
             # was_interactive = plb.isinteractive
             # if was_interactive:
@@ -827,14 +834,13 @@ initialization. This is accomplished by calling
 Examples
 ------------
 >>> myntwk.plot_%s(m=1,n=0,color='r')
-'''%(prop_name,prop_name)
+''' % (prop_name, prop_name)
         # setattr(self.__class__,'plot_%s_polar'%(prop_name), \
-        setattr(self,'plot_%s_polar'%(prop_name), \
-            plot_prop_polar)
+        setattr(self, 'plot_%s_polar'%(prop_name), plot_prop_polar)
 
         def plot_prop_rect(self,
-            m=None, n=None, ax=None,
-            show_legend=True,prop_name=prop_name,*args, **kwargs):
+                           m=None, n=None, ax=None,
+                           show_legend=True, prop_name=prop_name, *args, **kwargs):
 
             # create index lists, if not provided by user
             if m is None:
@@ -850,7 +856,6 @@ Examples
                 gen_label = True
             else:
                 gen_label = False
-
 
             #was_interactive = plb.isinteractive
             #if was_interactive:
@@ -880,8 +885,8 @@ Examples
 
                     # plot the desired attribute vs frequency
                     plot_complex_rectangular(
-                        z = getattr(self,prop_name)[:,m,n],
-                         show_legend = show_legend, ax = ax,
+                        z=getattr(self, prop_name)[:, m, n],
+                        show_legend=show_legend, ax=ax,
                         *args, **kwargs)
 
             #if was_interactive:
@@ -919,7 +924,7 @@ initialization. This is accomplished by calling
 Examples
 ------------
 >>> myntwk.plot_%s(m=1,n=0,color='r')
-'''%(prop_name,prop_name)
+''' % (prop_name, prop_name)
 
         # setattr(self.__class__,'plot_%s_complex'%(prop_name), \
         setattr(self,'plot_%s_complex'%(prop_name), \
@@ -927,12 +932,12 @@ Examples
 
 
         for func_name in COMPONENT_FUNC_DICT:
-            attribute = '%s_%s'%(prop_name, func_name)
+            attribute = '%s_%s' % (prop_name, func_name)
             y_label = Y_LABEL_DICT[func_name]
 
             def plot_func(self,  m=None, n=None, ax=None,
-                show_legend=True,attribute=attribute,
-                y_label=y_label, pad=0, window='hamming', z0=50, *args, **kwargs):
+                          show_legend=True, attribute=attribute,
+                          y_label=y_label, pad=0, window='hamming', z0=50, *args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -953,9 +958,9 @@ Examples
                 # this didnt work because it required a show()
                 # to be called, which in turn, disrupted testCases
                 #
-                #was_interactive = plb.isinteractive
-                #if was_interactive:
-                #    plb.interactive(False)
+                # was_interactive = plb.isinteractive
+                # if was_interactive:
+                #     plb.interactive(False)
                 for m in M:
                     for n in N:
                         # set the legend label for this trace to the networks
@@ -989,16 +994,15 @@ Examples
                                 y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                                 y[x == -1.] = -1. + 1e-12  # solve numerical singularity
                                 y = z0 * (1+y) / (1-y)
-                            plot_rectangular(
-                                        x = x,
-                                        y = y,
-                                        x_label = xlabel,
-                                        y_label = y_label,
-                                        show_legend = show_legend, ax = ax,
-                                        *args, **kwargs)
+                            plot_rectangular(x=x,
+                                             y=y,
+                                             x_label=xlabel,
+                                             y_label=y_label,
+                                             show_legend=show_legend, ax=ax,
+                                             *args, **kwargs)
                         elif 'time_step' in attribute:
                             xlabel = 'Time (ns)'
-                            x,y = self.step_response(pad=pad, window=window)
+                            x, y = self.step_response(pad=pad, window=window)
                             # default is reflexion coefficient axis
                             if attribute[0].lower() == 'z':
                                 # if they want impedance axis, give it to them
@@ -1006,32 +1010,29 @@ Examples
                                 y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                                 y[x == -1.] = -1. + 1e-12  # solve numerical singularity
                                 y = z0 * (1+y) / (1-y)
-                            plot_rectangular(
-                                        x = x,
-                                        y = y,
-                                        x_label = xlabel,
-                                        y_label = y_label,
-                                        show_legend = show_legend, ax = ax,
-                                        *args, **kwargs)
+                            plot_rectangular(x=x,
+                                             y=y,
+                                             x_label=xlabel,
+                                             y_label=y_label,
+                                             show_legend=show_legend, ax=ax,
+                                             *args, **kwargs)
                             
                         else:
-                            
                             # plot the desired attribute vs frequency
                             if 'time' in attribute:
                                 xlabel = 'Time (ns)'
                                 x = self.frequency.t_ns
     
                             else:
-                                xlabel = 'Frequency (%s)'%self.frequency.unit
+                                xlabel = 'Frequency (%s)' % self.frequency.unit
                                 x = self.frequency.f_scaled
-    
-                            plot_rectangular(
-                                    x = x,
-                                    y = getattr(self,attribute)[:,m,n],
-                                    x_label = xlabel,
-                                    y_label = y_label,
-                                    show_legend = show_legend, ax = ax,
-                                    *args, **kwargs)
+
+                            plot_rectangular(x=x,
+                                             y=getattr(self, attribute)[:, m, n],
+                                             x_label=xlabel,
+                                             y_label=y_label,
+                                             show_legend=show_legend, ax=ax,
+                                             *args, **kwargs)
 
 
                 #if was_interactive:
