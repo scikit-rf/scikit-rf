@@ -1044,19 +1044,17 @@ Examples
                                 # x = self.frequency.f_scaled
                                 x = self.frequency.f  # always plot f, and then scale the ticks instead
 
+                                # scale the ticklabels according to the frequency unit:
+                                if ax is None:
+                                    ax = plb.gca()
+                                scale_frequency_ticks(ax, self.frequency.unit)
+
                             plot_rectangular(x=x,
                                              y=getattr(self, attribute)[:, m, n],
                                              x_label=xlabel,
                                              y_label=y_label,
                                              show_legend=show_legend, ax=ax,
                                              *args, **kwargs)
-
-                            # scale the ticklabels according to the frequency unit:
-                            if ax is None:
-                                ax = plb.gca()
-
-                            scale_frequency_ticks(ax, self.frequency.unit)
-
                 #if was_interactive:
                 #    plb.interactive(True)
                 #    plb.draw()
