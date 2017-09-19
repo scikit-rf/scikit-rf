@@ -36,6 +36,7 @@ Misc Functions
 import os
 
 import matplotlib as mpl
+from matplotlib import ticker
 import matplotlib.pyplot as plb
 import numpy as npy
 from matplotlib.patches import Circle   # for drawing smith chart
@@ -49,6 +50,21 @@ from . util import now_string_2_dt
 
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
+SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
+SI_CONVERSION = dict([(key, 10**((8-i)*3)) for i, key in enumerate(SI_PREFIXES_ASCII)])
+
+
+def scale_frequency_ticks(ax, funit):
+    if funit.lower() == "hz":
+        prefix = " "
+        scale = 1
+    elif len(funit) == 3:
+        prefix = funit[0]
+        scale = SI_CONVERSION[prefix]
+    else:
+        raise ValueError("invalid funit {}".format(funit))
+    ticks_x = ticker.FuncFormatter(lambda x, pos: '{0:g}'.format(x * scale))
+    ax.xaxis.set_major_formatter(ticks_x)
 
 
 def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
@@ -258,14 +274,17 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
         cc=ax1.add_patch(currentContour)
         cc.set_clip_path(clipc)
 
+
 def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
-    show_legend=True, axis='tight', ax=None, *args, **kwargs):
+                     show_legend=True, axis='tight', ax=None, *args, **kwargs):
     '''
     plots rectangular data and optionally label axes.
 
     Parameters
     ------------
-    z : array-like, of complex data
+    x : array-like, of complex data
+        data to plot
+    y : array-like, of complex data
         data to plot
     x_label : string
         x-axis label
@@ -275,9 +294,11 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
         plot title
     show_legend : Boolean
         controls the drawing of the legend
+    axis : str
+        whether or not to autoscale the axis
     ax : :class:`matplotlib.axes.AxesSubplot` object
         axes to draw on
-    *args,**kwargs : passed to pylab.plot
+    *args, **kwargs : passed to pylab.plot
 
     '''
     if ax is None:
@@ -307,6 +328,7 @@ def plot_rectangular(x, y, x_label=None, y_label=None, title=None,
         plb.draw()
 
     return my_plot
+
 
 def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     show_legend=True, axis_equal=False, ax=None, *args, **kwargs):
@@ -402,6 +424,7 @@ def plot_complex_rectangular(z, x_label='Real', y_label='Imag',
         title=title, show_legend=show_legend, axis=axis,
         ax=ax, *args, **kwargs)
 
+
 def plot_complex_polar(z, x_label=None, y_label=None,
     title=None, show_legend=True, axis_equal=False, ax=None,
     *args, **kwargs):
@@ -437,6 +460,7 @@ def plot_complex_polar(z, x_label=None, y_label=None,
     plot_polar(theta=theta, r=r, x_label=x_label, y_label=y_label,
         title=title, show_legend=show_legend, axis_equal=axis_equal,
         ax=ax, *args, **kwargs)
+
 
 def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     y_label='Imaginary', title='Complex Plane', show_legend=True,
@@ -741,8 +765,8 @@ def __generate_plot_functions(self):
     for prop_name in PRIMARY_PROPERTIES:
 
         def plot_prop_polar(self,
-            m=None, n=None, ax=None,
-            show_legend=True ,prop_name=prop_name,*args, **kwargs):
+                            m=None, n=None, ax=None,
+                            show_legend=True, prop_name=prop_name, *args, **kwargs):
 
             # create index lists, if not provided by user
             if m is None:
@@ -758,7 +782,6 @@ def __generate_plot_functions(self):
                 gen_label = True
             else:
                 gen_label = False
-
 
             # was_interactive = plb.isinteractive
             # if was_interactive:
@@ -827,14 +850,13 @@ initialization. This is accomplished by calling
 Examples
 ------------
 >>> myntwk.plot_%s(m=1,n=0,color='r')
-'''%(prop_name,prop_name)
+''' % (prop_name, prop_name)
         # setattr(self.__class__,'plot_%s_polar'%(prop_name), \
-        setattr(self,'plot_%s_polar'%(prop_name), \
-            plot_prop_polar)
+        setattr(self, 'plot_%s_polar'%(prop_name), plot_prop_polar)
 
         def plot_prop_rect(self,
-            m=None, n=None, ax=None,
-            show_legend=True,prop_name=prop_name,*args, **kwargs):
+                           m=None, n=None, ax=None,
+                           show_legend=True, prop_name=prop_name, *args, **kwargs):
 
             # create index lists, if not provided by user
             if m is None:
@@ -850,7 +872,6 @@ Examples
                 gen_label = True
             else:
                 gen_label = False
-
 
             #was_interactive = plb.isinteractive
             #if was_interactive:
@@ -880,8 +901,8 @@ Examples
 
                     # plot the desired attribute vs frequency
                     plot_complex_rectangular(
-                        z = getattr(self,prop_name)[:,m,n],
-                         show_legend = show_legend, ax = ax,
+                        z=getattr(self, prop_name)[:, m, n],
+                        show_legend=show_legend, ax=ax,
                         *args, **kwargs)
 
             #if was_interactive:
@@ -919,7 +940,7 @@ initialization. This is accomplished by calling
 Examples
 ------------
 >>> myntwk.plot_%s(m=1,n=0,color='r')
-'''%(prop_name,prop_name)
+''' % (prop_name, prop_name)
 
         # setattr(self.__class__,'plot_%s_complex'%(prop_name), \
         setattr(self,'plot_%s_complex'%(prop_name), \
@@ -927,12 +948,12 @@ Examples
 
 
         for func_name in COMPONENT_FUNC_DICT:
-            attribute = '%s_%s'%(prop_name, func_name)
+            attribute = '%s_%s' % (prop_name, func_name)
             y_label = Y_LABEL_DICT[func_name]
 
             def plot_func(self,  m=None, n=None, ax=None,
-                show_legend=True,attribute=attribute,
-                y_label=y_label, pad=0, window='hamming', z0=50, *args, **kwargs):
+                          show_legend=True, attribute=attribute,
+                          y_label=y_label, pad=0, window='hamming', z0=50, *args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -953,9 +974,9 @@ Examples
                 # this didnt work because it required a show()
                 # to be called, which in turn, disrupted testCases
                 #
-                #was_interactive = plb.isinteractive
-                #if was_interactive:
-                #    plb.interactive(False)
+                # was_interactive = plb.isinteractive
+                # if was_interactive:
+                #     plb.interactive(False)
                 for m in M:
                     for n in N:
                         # set the legend label for this trace to the networks
@@ -989,16 +1010,15 @@ Examples
                                 y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                                 y[x == -1.] = -1. + 1e-12  # solve numerical singularity
                                 y = z0 * (1+y) / (1-y)
-                            plot_rectangular(
-                                        x = x,
-                                        y = y,
-                                        x_label = xlabel,
-                                        y_label = y_label,
-                                        show_legend = show_legend, ax = ax,
-                                        *args, **kwargs)
+                            plot_rectangular(x=x,
+                                             y=y,
+                                             x_label=xlabel,
+                                             y_label=y_label,
+                                             show_legend=show_legend, ax=ax,
+                                             *args, **kwargs)
                         elif 'time_step' in attribute:
                             xlabel = 'Time (ns)'
-                            x,y = self.step_response(pad=pad, window=window)
+                            x, y = self.step_response(pad=pad, window=window)
                             # default is reflexion coefficient axis
                             if attribute[0].lower() == 'z':
                                 # if they want impedance axis, give it to them
@@ -1006,34 +1026,35 @@ Examples
                                 y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                                 y[x == -1.] = -1. + 1e-12  # solve numerical singularity
                                 y = z0 * (1+y) / (1-y)
-                            plot_rectangular(
-                                        x = x,
-                                        y = y,
-                                        x_label = xlabel,
-                                        y_label = y_label,
-                                        show_legend = show_legend, ax = ax,
-                                        *args, **kwargs)
+                            plot_rectangular(x=x,
+                                             y=y,
+                                             x_label=xlabel,
+                                             y_label=y_label,
+                                             show_legend=show_legend, ax=ax,
+                                             *args, **kwargs)
                             
                         else:
-                            
                             # plot the desired attribute vs frequency
                             if 'time' in attribute:
                                 xlabel = 'Time (ns)'
                                 x = self.frequency.t_ns
     
                             else:
-                                xlabel = 'Frequency (%s)'%self.frequency.unit
-                                x = self.frequency.f_scaled
-    
-                            plot_rectangular(
-                                    x = x,
-                                    y = getattr(self,attribute)[:,m,n],
-                                    x_label = xlabel,
-                                    y_label = y_label,
-                                    show_legend = show_legend, ax = ax,
-                                    *args, **kwargs)
+                                xlabel = 'Frequency (%s)' % self.frequency.unit
+                                # x = self.frequency.f_scaled
+                                x = self.frequency.f  # always plot f, and then scale the ticks instead
 
+                                # scale the ticklabels according to the frequency unit:
+                                if ax is None:
+                                    ax = plb.gca()
+                                scale_frequency_ticks(ax, self.frequency.unit)
 
+                            plot_rectangular(x=x,
+                                             y=getattr(self, attribute)[:, m, n],
+                                             x_label=xlabel,
+                                             y_label=y_label,
+                                             show_legend=show_legend, ax=ax,
+                                             *args, **kwargs)
                 #if was_interactive:
                 #    plb.interactive(True)
                 #    plb.draw()
@@ -1100,7 +1121,6 @@ def plot_v_frequency(self, y, *args, **kwargs):
 
     This plots whatever is given vs. `self.f_scaled` and then
     calls `labelXAxis`.
-
     '''
 
     try:
@@ -1122,7 +1142,10 @@ def plot_v_frequency(self, y, *args, **kwargs):
     except(TypeError):
         y = y * npy.ones(len(self))
 
-    plb.plot(self.f_scaled, y, *args, **kwargs)
+    # plb.plot(self.f_scaled, y, *args, **kwargs)
+    plb.plot(self.f, y, *args, **kwargs)
+    ax = plb.gca()
+    scale_frequency_ticks(ax, self.unit)
     plb.autoscale(axis='x', tight=True)
     self.labelXAxis()
 
@@ -1522,9 +1545,11 @@ def animate(self, attr='s_deg', ylims=(-5, 5), xlims=None, show=True,
     if was_interactive:
         plb.ion()
 
-def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
-        type='shade',n_deviations=3, alpha=.3, color_error =None,markevery_error=20,
-        ax=None,ppf=None,kwargs_error={},*args,**kwargs):
+
+def plot_uncertainty_bounds_component(
+        self, attribute, m=None, n=None,
+        type='shade', n_deviations=3, alpha=.3, color_error=None, markevery_error=20,
+        ax=None, ppf=None, kwargs_error={}, *args, **kwargs):
     '''
     plots mean value of the NetworkSet with +- uncertainty bounds
     in an Network's attribute. This is designed to represent
@@ -1548,7 +1573,7 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
                     of error bars
             ax: Axes to plot on
             ppf: post processing function. a function applied to the
-                    upper and low
+                    upper and lower bounds
             *args,**kwargs: passed to Network.plot_s_re command used
                     to plot mean response
             kwargs_error: dictionary of kwargs to pass to the fill_between
@@ -1584,9 +1609,8 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
             ntwk_std = self.__getattribute__('std_'+attribute)
             ntwk_std.s = n_deviations * ntwk_std.s
 
-            upper_bound = (ntwk_mean.s[:,m,n] +ntwk_std.s[:,m,n]).squeeze()
-            lower_bound = (ntwk_mean.s[:,m,n] -ntwk_std.s[:,m,n]).squeeze()
-
+            upper_bound = (ntwk_mean.s[:, m, n] + ntwk_std.s[:, m, n]).squeeze()
+            lower_bound = (ntwk_mean.s[:, m, n] - ntwk_std.s[:, m, n]).squeeze()
 
             if ppf is not None:
                 if type =='bar':
@@ -1595,38 +1619,41 @@ def plot_uncertainty_bounds_component(self,attribute,m=None,n=None,\
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
                 lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
-                if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
+                if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # quickfix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute is 's_mag':
                         plot_attribute = 's_db'
                     elif attribute is 's_time_mag':
                         plot_attribute = 's_time_db'
 
             if type == 'shade':
-                ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+                ntwk_mean.plot_s_re(ax=ax, m=m, n=n, *args, **kwargs)
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
-                ax.fill_between(ntwk_mean.frequency.f_scaled, \
-                        lower_bound,upper_bound, alpha=alpha, color=color_error,
-                        **kwargs_error)
-                #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
-            elif type =='bar':
-                ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+                ax.fill_between(ntwk_mean.frequency.f,
+                                lower_bound, upper_bound, alpha=alpha, color=color_error,
+                                **kwargs_error)
+                # ax.plot(ntwk_mean.frequency.f_scaled, ntwk_mean.s[:,m,n],*args,**kwargs)
+
+            elif type == 'bar':
+                ntwk_mean.plot_s_re(ax=ax, m=m, n=n, *args, **kwargs)
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
-                ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
-                        ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
-                        yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
-                        color=color_error,**kwargs_error)
+                ax.errorbar(ntwk_mean.frequency.f[::markevery_error],
+                            ntwk_mean.s_re[:, m, n].squeeze()[::markevery_error],
+                            yerr=ntwk_std.s_mag[:, m, n].squeeze()[::markevery_error],
+                            color=color_error, **kwargs_error)
 
             else:
                 raise(ValueError('incorrect plot type'))
 
             ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:],''))  # use only the function of the attribute
+            scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
             ax.axis('tight')
 
-def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
-        type='shade', alpha=.3, color_error =None,markevery_error=20,
-        ax=None,ppf=None,kwargs_error={},*args,**kwargs):
+
+def plot_minmax_bounds_component(self, attribute, m=0, n=0,
+                                 type='shade', alpha=.3, color_error=None, markevery_error=20,
+                                 ax=None, ppf=None, kwargs_error={}, *args, **kwargs):
     '''
     plots mean value of the NetworkSet with +- uncertainty bounds
     in an Network's attribute. This is designed to represent
@@ -1666,15 +1693,13 @@ def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
 
     '''
 
-    ax = plb.gca()
+    if ax is None:
+        ax = plb.gca()
 
     ntwk_mean = self.__getattribute__('mean_'+attribute)
 
-
     lower_bound = self.__getattribute__('min_'+attribute).s_re[:,m,n].squeeze()
     upper_bound = self.__getattribute__('max_'+attribute).s_re[:,m,n].squeeze()
-
-
 
     if ppf is not None:
         if type =='bar':
@@ -1693,27 +1718,28 @@ def plot_minmax_bounds_component(self,attribute,m=0,n=0,\
         ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
         if color_error is None:
             color_error = ax.get_lines()[-1].get_color()
-        ax.fill_between(ntwk_mean.frequency.f_scaled, \
-                lower_bound,upper_bound, alpha=alpha, color=color_error,
-                **kwargs_error)
+        ax.fill_between(ntwk_mean.frequency.f,
+                        lower_bound, upper_bound, alpha=alpha, color=color_error,
+                        **kwargs_error)
         #ax.plot(ntwk_mean.frequency.f_scaled,ntwk_mean.s[:,m,n],*args,**kwargs)
     elif type =='bar':
         raise (NotImplementedError)
-        ntwk_mean.plot_s_re(ax=ax,m=m,n=n,*args, **kwargs)
+        ntwk_mean.plot_s_re(ax=ax, m=m, n=n, *args, **kwargs)
         if color_error is None:
             color_error = ax.get_lines()[-1].get_color()
-        ax.errorbar(ntwk_mean.frequency.f_scaled[::markevery_error],\
-                ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error], \
-                yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],\
-                color=color_error,**kwargs_error)
+        ax.errorbar(ntwk_mean.frequency.f[::markevery_error],
+                    ntwk_mean.s_re[:,m,n].squeeze()[::markevery_error],
+                    yerr=ntwk_std.s_mag[:,m,n].squeeze()[::markevery_error],
+                    color=color_error,**kwargs_error)
 
     else:
         raise(ValueError('incorrect plot type'))
 
-    ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:],''))  # use only the function of the attribute
+    ax.set_ylabel(Y_LABEL_DICT.get(attribute[2:], ''))  # use only the function of the attribute
+    scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
     ax.axis('tight')
 
-def plot_uncertainty_bounds_s_db(self,*args, **kwargs):
+def plot_uncertainty_bounds_s_db(self, *args, **kwargs):
     '''
     this just calls
             plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
@@ -1861,8 +1887,6 @@ def signature(self, m=0, n=0, component='s_mag',
 
     Creates a colored image representing the some component
     of each Network in the  NetworkSet, vs frequency.
-
-
 
 
     Parameters
