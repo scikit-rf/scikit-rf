@@ -188,10 +188,10 @@ class VNA(object):
 
     @property
     def idn(self):
-        return self.resource.query("*IDN?")
+        return self.query("*IDN?")
 
     def wait_until_finished(self):
-        self.resource.query("*OPC?")
+        self.query("*OPC?")
 
     def get_list_of_traces(self, **kwargs):
         """
