@@ -48,16 +48,8 @@ class VNA(object):
     get_switch_terms
     set_frequency_sweep
     """
-    DEFAULT_VISA_ADDRESS = "GPIB::16::INSTR"
-    NAME = "Two Port Analyzer"
-    NPORTS = 2
-    NCHANNELS = 32
-    MEASUREMENT_PARAMETERS = {
-        "port1": 1, "port2": 2, "ports": (1, 2),
-        "raw_data": True, "sweep": False,
-    }
 
-    def __init__(self, address=DEFAULT_VISA_ADDRESS, **kwargs):
+    def __init__(self, address, **kwargs):
         """
         Initialize a network analyzer object
 
@@ -119,49 +111,9 @@ class VNA(object):
         self.query = self.resource.query
         self.query_values = self.resource.query_values
 
-        # set the default values that will be used for measurements
-        self._measurement_parameters = self.MEASUREMENT_PARAMETERS.copy()
-
     @property
     def nports(self):
         return self.NPORTS
-
-    @property
-    def measurement_parameters(self):
-        """
-        provide the dict of values that will be the measurement_parameters for grabbing data from the instrument
-        
-        the primary purpose of this is to provide a mechanism to attach desired parameters onto a vna object which
-        may be transient from a "generator" to a "receiver" where a generator would be some object like a Gui Widget 
-        through which the end user sets desired vna parameters and the receiver is something that is calling the
-        measurement routines, but doesn't have direct access to the generator.
-
-        relevant dict keys
-        ------------------
-        port1, port2 : int
-            specify the 1st and second ports
-        ports : tuple of ints
-            specify which set of ports to grab data from
-        corrected : bool
-            whether to retrieve corrected data or not
-        sweep : bool
-            whether to initiate a fresh sweep or not
-        """
-        return self._measurement_parameters
-
-    @property
-    def params_twoport(self):
-        params = copy.copy(self.measurement_parameters)
-        params["ports"] = (params["port1"], params["port2"])
-        return params
-
-    def set_measurement_parameters(self, **kwargs):
-        valid_keys = self._measurement_parameters.keys()
-        for key, value in kwargs.items():
-            if key in valid_keys:
-                self._measurement_parameters[key] = value
-            else:
-                warnings.warn("default parameter {} not recognized and not set".format(key))
 
     def __enter__(self):
         """
