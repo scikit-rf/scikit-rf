@@ -111,10 +111,6 @@ class VNA(object):
         self.query = self.resource.query
         self.query_values = self.resource.query_values
 
-    @property
-    def nports(self):
-        return self.NPORTS
-
     def __enter__(self):
         """
         context manager entry point
