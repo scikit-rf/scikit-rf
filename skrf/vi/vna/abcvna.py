@@ -138,6 +138,9 @@ class VNA(object):
     def idn(self):
         return self.query("*IDN?")
 
+    def reset(self):
+        self.write("*RST")
+
     def wait_until_finished(self):
         self.query("*OPC?")
 
