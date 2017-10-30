@@ -15,11 +15,11 @@ COMMAND_TREE:
         CALL:
           command: {name: data_call, query_values: "<SDATA>"}
           branch:
-            CAT: {name: data_call_catalog, query: ""}
+            CAT: {name: data_call_catalog, query: "", csv: True}
         DALL: {name: data_dall, query_values: "<SDATA>"}
         SGR: {name: data_sgroup, query_values: "<SDATA>"}
     PAR:
-      CAT: {name: par_catalog, query: "",
+      CAT: {name: par_catalog, query: "", csv: True,
         help: "Returns the trace names and measured quantities of all traces assigned to a particular channel."
       }
       DEL:

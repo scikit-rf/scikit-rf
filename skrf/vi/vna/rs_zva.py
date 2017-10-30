@@ -143,3 +143,18 @@ class ZVA(abcvna.VNA):
         self.scpi.set_f_stop(channel, f_stop)
         self.scpi.set_sweep_n_points(f_npoints)
 
+    def get_active_trace_as_network(self, **kwargs):
+        """get the current trace as a 1-port network object"""
+        channel = self.active_channel
+        f_unit = kwargs.get("f_unit", "GHz")
+        ntwk = skrf.Network()
+        ntwk.frequency = self.get_frequency(channel=channel, f_unit=f_unit)
+        sdata = self.scpi.query_data(channel, "SDATA")
+        ntwk.s = sdata[::2] + 1j * sdata[1::2]
+        return ntwk
+
+    def get_twoport(self, ports=(1, 2), **kwargs):
+        # TODO: write get_snp_network function, learning to start
+        # initial code will get a catalog of the measurements and parse for
+        # the indicated ports
+        raise NotImplementedError
