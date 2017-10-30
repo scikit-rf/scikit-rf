@@ -297,12 +297,8 @@ def parse_yaml_file(driver_yaml_file):
     driver = os.path.splitext(driver_yaml_file)[0] + ".py"
 
     driver_template = None
-    try:
-        with open(driver_yaml_file, 'r') as yaml_file:
-            driver_template = yaml.load(yaml_file)
-    except UnicodeDecodeError:
-        with open(driver_yaml_file, 'r', encoding='utf8') as yaml_file:
-            driver_template = yaml.load(yaml_file)
+    with open(driver_yaml_file, 'r', encoding='utf-8') as yaml_file:
+        driver_template = yaml.load(yaml_file)
 
     sets, queries = parse_branch(driver_template["COMMAND_TREE"])
 
@@ -314,7 +310,7 @@ def parse_yaml_file(driver_yaml_file):
     for q in sorted(queries, key=str.lower):
         driver_str += "\n" + indent(q, 1) + "\n"
 
-    with open(driver, 'w') as scpi_driver:
+    with open(driver, 'w', encoding='utf8') as scpi_driver:
         scpi_driver.write(driver_str)
 
 
