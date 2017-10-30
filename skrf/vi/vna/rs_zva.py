@@ -18,7 +18,7 @@ class ZVA(abcvna.VNA):
     NAME = "R&S ZVA"
     NPORTS = 4
     NCHANNELS = 32
-    SCPI_VERSION_TESTED = 'A.09.20.08'  # taken from PNA class
+    SCPI_VERSION_TESTED = 'unconfirmed'
 
     def __init__(self, address=DEFAULT_VISA_ADDRESS, **kwargs):
         """
