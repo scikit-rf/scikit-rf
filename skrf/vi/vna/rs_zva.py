@@ -148,12 +148,28 @@ class ZVA(abcvna.VNA):
         channel = self.active_channel
         f_unit = kwargs.get("f_unit", "GHz")
         ntwk = skrf.Network()
+        ntwk.name = kwargs.get("name", self.scpi.query_par_select(channel))
         ntwk.frequency = self.get_frequency(channel=channel, f_unit=f_unit)
         sdata = self.scpi.query_data(channel, "SDATA")
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
         return ntwk
 
     def get_twoport(self, ports=(1, 2), **kwargs):
+        port_keys = list()
+
+        channel = kwargs.get("channel", self.active_channel)
+        catalogue = self.scpi.query_par_catalog(channel)
+        trace_name = catalogue[::2]
+        trace_data = catalogue[1::2]
+
+        for receive_port in ports:
+            for n, source_port in ports:
+                key = "S{:d}{:d}".format(receive_port, source_port)
+                if key not in trace_data:
+                    raise Exception("missing measurement trace for {:s}".format(key))
+                port_keys.append(key)
+
+        name = kwargs.get("name", self.scpi.query_par_select(channel))
         # TODO: write get_snp_network function, learning to start
         # initial code will get a catalog of the measurements and parse for
         # the indicated ports
