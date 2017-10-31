@@ -52,7 +52,7 @@ COMMAND_TREE:
         \tall channels and traces, including the traces that are not displayed.\n
         \t"
       }
-      SEL: {name: par_select, set: "'TRACE'", query: "",
+      SEL: {name: par_select, set: "'<TRACE>'", query: "",
         help: "Selects an existing trace as the active trace of the channel.\n\n
         \tAll trace commands without explicit reference to the trace name act on\n
         \tthe active trace (e.g. CALCulate<Chn>:FORMat).\n

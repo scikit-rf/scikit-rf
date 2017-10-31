@@ -465,7 +465,7 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":CALC{:}:PAR:SDEF '{:}', '{:}'", cnum, TRACE, COEFF)
         self.write(scpi_command)
 
-    def set_par_select(self, cnum=1):
+    def set_par_select(self, cnum=1, TRACE=""):
         """Selects an existing trace as the active trace of the channel.
     
          All trace commands without explicit reference to the trace name act on
@@ -473,7 +473,7 @@ class SCPI(object):
          CALCulate<Ch>:PARameter:SELect is also necessary if the active trace of
          a channel has been deleted.
          """
-        scpi_command = scpi_preprocess(":CALC{:}:PAR:SEL 'TRACE'", cnum)
+        scpi_command = scpi_preprocess(":CALC{:}:PAR:SEL '{:}'", cnum, TRACE)
         self.write(scpi_command)
 
     def set_rbw(self, cnum=1, BW=""):

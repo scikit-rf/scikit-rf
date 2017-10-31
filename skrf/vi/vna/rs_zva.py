@@ -33,6 +33,7 @@ class ZVA(abcvna.VNA):
         super(ZVA, self).__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = rs_zva_scpi.SCPI(self.resource)
+        self.use_ascii()  # less likely to cause problems than use_binary
         print(self.idn)
 
     def use_binary(self):
@@ -154,23 +155,50 @@ class ZVA(abcvna.VNA):
         ntwk.s = sdata[::2] + 1j * sdata[1::2]
         return ntwk
 
-    def get_twoport(self, ports=(1, 2), **kwargs):
-        port_keys = list()
+    def get_snp_network(self, ports, **kwargs):
+        if "sweep" in kwargs.keys():
+            warnings.warn("Sweep function not yet implemented for ZVA")
+
+        # ensure all ports are ints, unique and in a valid range
+        for i, port in enumerate(ports):
+            if type(port) is not int:
+                raise TypeError("ports must be an iterable of integers, not type: {:d}".format(type(port)))
+            if not 0 < port <= self.NPORTS:
+                raise ValueError("invalid ports, must be between 1 and {:d}".format(self.NPORTS))
+            if port in ports[i+1:]:
+                raise ValueError("duplicate port: {:d}".format(port))
 
         channel = kwargs.get("channel", self.active_channel)
-        catalogue = self.scpi.query_par_catalog(channel)
+        catalogue = self.scpi.query_par_catalog(channel)  # type: list
         trace_name = catalogue[::2]
         trace_data = catalogue[1::2]
 
+        port_keys = list()
         for receive_port in ports:
-            for n, source_port in ports:
+            for source_port in ports:
                 key = "S{:d}{:d}".format(receive_port, source_port)
                 if key not in trace_data:
                     raise Exception("missing measurement trace for {:s}".format(key))
                 port_keys.append(key)
 
-        name = kwargs.get("name", self.scpi.query_par_select(channel))
-        # TODO: write get_snp_network function, learning to start
-        # initial code will get a catalog of the measurements and parse for
-        # the indicated ports
-        raise NotImplementedError
+        nports = len(ports)
+        npoints = self.scpi.query_sweep_n_points(channel)
+        ntwk = skrf.Network()
+        f_unit = kwargs.get("f_unit", "GHz")
+        ntwk.frequency = self.get_frequency(channel=channel, f_unit="GHz")
+        ntwk.s = np.zeros(shape=(npoints, nports, nports), dtype=complex)
+
+        for m, source_port in enumerate(ports):
+            for n, receive_port in enumerate(ports):
+                port_key = "S{:d}{:d}".format(receive_port, source_port)
+                trace = trace_name[trace_data.index(port_key)]
+                self.scpi.set_par_select(channel, trace)
+                sdata = self.scpi.query_data(channel, "SDATA")
+                ntwk.s[:, m, n] = sdata[::2] + 1j * sdata[1::2]
+
+        name = kwargs.get("name", None)
+        if not name:
+            port_string = ",".join(map(str, ports))
+            name = "{:d}-Port Network ({:})".format(nports, port_string)
+        ntwk.name = name
+        return ntwk
