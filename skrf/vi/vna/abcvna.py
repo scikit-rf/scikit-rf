@@ -134,6 +134,9 @@ class VNA(object):
         """
         self.resource.close()
 
+    def close(self):
+        self.__exit__(None, None, None)
+
     @property
     def idn(self):
         return self.query("*IDN?")
@@ -270,7 +273,7 @@ class VNA(object):
                 raise ValueError("specify the port as an integer")
         else:
             if type(port) is int:
-                port = (port)
+                port = (port,)
             else:
                 raise ValueError("specify the port as an integer")
 
