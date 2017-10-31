@@ -15,11 +15,11 @@ COMMAND_TREE:
         CALL:
           command: {name: data_call, query_values: "<SDATA>"}
           branch:
-            CAT: {name: data_call_catalog, query: ""}
+            CAT: {name: data_call_catalog, query: "", csv: True}
         DALL: {name: data_dall, query_values: "<SDATA>"}
         SGR: {name: data_sgroup, query_values: "<SDATA>"}
     PAR:
-      CAT: {name: par_catalog, query: "",
+      CAT: {name: par_catalog, query: "", csv: True,
         help: "Returns the trace names and measured quantities of all traces assigned to a particular channel."
       }
       DEL:
@@ -52,7 +52,7 @@ COMMAND_TREE:
         \tall channels and traces, including the traces that are not displayed.\n
         \t"
       }
-      SEL: {name: par_select, set: "'TRACE'", query: "",
+      SEL: {name: par_select, set: "'<TRACE>'", query: "",
         help: "Selects an existing trace as the active trace of the channel.\n\n
         \tAll trace commands without explicit reference to the trace name act on\n
         \tthe active trace (e.g. CALCulate<Chn>:FORMat).\n

@@ -17,7 +17,7 @@ class ZVA(abcvna.VNA):
     NAME = "R&S ZVA"
     NPORTS = 4
     NCHANNELS = 32
-    SCPI_VERSION_TESTED = 'A.09.20.08'  # taken from PNA class
+    SCPI_VERSION_TESTED = 'unconfirmed'
 
     def __init__(self, address, **kwargs):
         """
@@ -33,6 +33,7 @@ class ZVA(abcvna.VNA):
         super(ZVA, self).__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = rs_zva_scpi.SCPI(self.resource)
+        self.use_ascii()  # less likely to cause problems than use_binary
         print(self.idn)
 
     def use_binary(self):
@@ -143,3 +144,61 @@ class ZVA(abcvna.VNA):
         self.scpi.set_f_stop(channel, f_stop)
         self.scpi.set_sweep_n_points(f_npoints)
 
+    def get_active_trace_as_network(self, **kwargs):
+        """get the current trace as a 1-port network object"""
+        channel = self.active_channel
+        f_unit = kwargs.get("f_unit", "GHz")
+        ntwk = skrf.Network()
+        ntwk.name = kwargs.get("name", self.scpi.query_par_select(channel))
+        ntwk.frequency = self.get_frequency(channel=channel, f_unit=f_unit)
+        sdata = self.scpi.query_data(channel, "SDATA")
+        ntwk.s = sdata[::2] + 1j * sdata[1::2]
+        return ntwk
+
+    def get_snp_network(self, ports, **kwargs):
+        if "sweep" in kwargs.keys():
+            warnings.warn("Sweep function not yet implemented for ZVA")
+
+        # ensure all ports are ints, unique and in a valid range
+        for i, port in enumerate(ports):
+            if type(port) is not int:
+                raise TypeError("ports must be an iterable of integers, not type: {:d}".format(type(port)))
+            if not 0 < port <= self.NPORTS:
+                raise ValueError("invalid ports, must be between 1 and {:d}".format(self.NPORTS))
+            if port in ports[i+1:]:
+                raise ValueError("duplicate port: {:d}".format(port))
+
+        channel = kwargs.get("channel", self.active_channel)
+        catalogue = self.scpi.query_par_catalog(channel)  # type: list
+        trace_name = catalogue[::2]
+        trace_data = catalogue[1::2]
+
+        port_keys = list()
+        for receive_port in ports:
+            for source_port in ports:
+                key = "S{:d}{:d}".format(receive_port, source_port)
+                if key not in trace_data:
+                    raise Exception("missing measurement trace for {:s}".format(key))
+                port_keys.append(key)
+
+        nports = len(ports)
+        npoints = self.scpi.query_sweep_n_points(channel)
+        ntwk = skrf.Network()
+        f_unit = kwargs.get("f_unit", "GHz")
+        ntwk.frequency = self.get_frequency(channel=channel, f_unit="GHz")
+        ntwk.s = np.zeros(shape=(npoints, nports, nports), dtype=complex)
+
+        for m, source_port in enumerate(ports):
+            for n, receive_port in enumerate(ports):
+                port_key = "S{:d}{:d}".format(receive_port, source_port)
+                trace = trace_name[trace_data.index(port_key)]
+                self.scpi.set_par_select(channel, trace)
+                sdata = self.scpi.query_data(channel, "SDATA")
+                ntwk.s[:, m, n] = sdata[::2] + 1j * sdata[1::2]
+
+        name = kwargs.get("name", None)
+        if not name:
+            port_string = ",".join(map(str, ports))
+            name = "{:d}-Port Network ({:})".format(nports, port_string)
+        ntwk.name = name
+        return ntwk

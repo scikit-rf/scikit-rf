@@ -173,6 +173,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         legend = self.plot.legend
         if legend is not None:
             legend.scene().removeItem(legend)
+        self.plot.legend = None
         self.plot.addLegend()
 
     def clear_plot(self):
