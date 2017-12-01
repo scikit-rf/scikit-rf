@@ -719,7 +719,7 @@ def plot_vector(a, off=0+0j, *args, **kwargs):
 
 
 def colors():
-    return rcParams['axes.color_cycle']
+    return [c['color'] for c in rcParams['axes.prop_cycle']]
 
 
 PRIMARY_PROPERTIES = network.PRIMARY_PROPERTIES
