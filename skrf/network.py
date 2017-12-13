@@ -1397,6 +1397,12 @@ class Network(object):
             raise NotImplementedError('only s-parameters supported for now.')
 
         self.comments = touchstoneFile.get_comments()
+        
+        try:
+            self.variables = touchstoneFile.get_comment_variables()
+        except:
+            pass
+        
         self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
@@ -1421,8 +1427,8 @@ class Network(object):
                     print('warning: couldn\'t inspect network name')
                     self.name = ''
                 pass
-                # TODO: add Network property `comments` which is read from
-                # touchstone file.
+               
+        
 
     @classmethod
     def zipped_touchstone(cls, filename, archive):

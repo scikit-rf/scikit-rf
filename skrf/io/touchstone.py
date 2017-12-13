@@ -21,7 +21,7 @@ Functions related to reading/writing touchstones.
     hfss_touchstone_2_media
     hfss_touchstone_2_network
 """
-
+import re
 import os
 import zipfile
 import numpy
@@ -95,6 +95,7 @@ class Touchstone:
         ## Store port names in a list if they exist in the file
         self.port_names = None
 
+        self.comment_variables=None
         self.load_file(fid)
 
     def load_file(self, fid):
@@ -231,7 +232,23 @@ class Touchstone:
             if comment_line:
                 processed_comments = processed_comments + comment_line + '\n'
         return processed_comments
-
+    
+    def get_comment_variables(self):
+        '''
+        convert hfss variable comments to a dict of vars:(numbers,units)
+        '''
+        comments = self.comments
+        p1 = re.compile('\w* = \w*')
+        p2 = re.compile('\s*(\d*)\s*(\w*)')
+        var_dict = {}
+        for k in re.findall(p1, comments):
+            var, value = k.split('=')
+            try:
+                var_dict[var] = p2.match(value).groups()
+            except:
+                pass
+        return var_dict
+    
     def get_format(self, format="ri"):
         """
         returns the file format string used for the given format.
@@ -527,3 +544,4 @@ def read_zipped_touchstones(ziparchive, dir=""):
             network = Network.zipped_touchstone(fname, ziparchive)
             networks[network.name] = network
     return networks
+
