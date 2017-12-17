@@ -3364,7 +3364,7 @@ def chopinhalf(ntwk, *args, **kwargs):
 
     return A
 
-def evenodd2delta(n, z0=50, renormalize=True):
+def evenodd2delta(n, z0=50, renormalize=True, doublehalf=True):
     '''
     Convert ntwk's s-matrix from even/odd mode into a delta (normal) s-matrix 
     
@@ -3380,6 +3380,12 @@ def evenodd2delta(n, z0=50, renormalize=True):
         the characteristic impedance to set output networks port impedance
         to , and used to renormalize s-matrix before conversio if 
         `renormalize`=True. 
+    renormalize : Bool
+        if impedances are in even/odd then they must be renormalized to 
+        get correct transformation 
+    doublehalf: Bool    
+        convert even/odd impedances to double/half their values. this is
+        required if data comes from hfss waveports . 
     Returns 
     ----------
     out: skrf.Network
@@ -3396,6 +3402,8 @@ def evenodd2delta(n, z0=50, renormalize=True):
     n_eo = n.copy()
     n_eo.renumber([0,1,2,3],[0,2,1,3]) 
     
+    if doublehalf:
+        n_eo.z0 = n_eo.z0*[2,2,.5,.5]
     # if the n_eo s-matrix is given with e/o z0's we need 
     # to renormalie into 50
     if renormalize:
