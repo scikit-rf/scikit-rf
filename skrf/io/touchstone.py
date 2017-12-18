@@ -243,6 +243,7 @@ class Touchstone:
         var_dict = {}
         for k in re.findall(p1, comments):
             var, value = k.split('=')
+            var=var.rstrip()
             try:
                 var_dict[var] = p2.match(value).groups()
             except:
@@ -473,11 +474,12 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
     ---------
     hfss_touchstone_2_gamma_z0 : returns gamma, and z0
     '''
-    f, gamma, z0 = hfss_touchstone_2_gamma_z0(filename)
+    ntwk = Network(filename)
 
-    freq = Frequency.from_f(f)
-    freq.unit = f_unit
-
+    freq = ntwk.frequency
+    gamma = ntwk.gamma
+    z0 = ntwk.z0
+    
 
     media_list = []
 
