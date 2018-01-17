@@ -1401,6 +1401,12 @@ class Network(object):
             raise NotImplementedError('only s-parameters supported for now.')
 
         self.comments = touchstoneFile.get_comments()
+        
+        try:
+            self.variables = touchstoneFile.get_comment_variables()
+        except:
+            pass
+        
         self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
@@ -1425,8 +1431,8 @@ class Network(object):
                     print('warning: couldn\'t inspect network name')
                     self.name = ''
                 pass
-                # TODO: add Network property `comments` which is read from
-                # touchstone file.
+               
+        
 
     @classmethod
     def zipped_touchstone(cls, filename, archive):
@@ -3361,6 +3367,66 @@ def chopinhalf(ntwk, *args, **kwargs):
     A = n_oneports_2_nport([a11, a21, a21, a22], *args, **kwargs)
 
     return A
+
+def evenodd2delta(n, z0=50, renormalize=True, doublehalf=True):
+    '''
+    Convert ntwk's s-matrix from even/odd mode into a delta (normal) s-matrix 
+    
+    This assumes even/odd ports are ordered [1e,1o,2e,2o]
+    
+    This is useful for handling coupler sims. Only 4-ports supported for now. 
+    
+    Parameters
+    ----------
+    n : skrf.Network
+        Network with an even/odd mode s-matrix
+    z0: number, list of numbers
+        the characteristic impedance to set output networks port impedance
+        to , and used to renormalize s-matrix before conversio if 
+        `renormalize`=True. 
+    renormalize : Bool
+        if impedances are in even/odd then they must be renormalized to 
+        get correct transformation 
+    doublehalf: Bool    
+        convert even/odd impedances to double/half their values. this is
+        required if data comes from hfss waveports . 
+    Returns 
+    ----------
+    out: skrf.Network
+        same network as `n` but with s-matrix in normal delta basis
+        
+    See Also
+    ----------
+    Network.se2gmm, Network.gmm2se
+    
+    '''
+    
+    # move even and odd ports, so we have even and odd 
+    # s-matrices contiguous
+    n_eo = n.copy()
+    n_eo.renumber([0,1,2,3],[0,2,1,3]) 
+    
+    if doublehalf:
+        n_eo.z0 = n_eo.z0*[2,2,.5,.5]
+    # if the n_eo s-matrix is given with e/o z0's we need 
+    # to renormalie into 50
+    if renormalize:
+        n_eo.renormalize(z0)
+    
+    even = n_eo.s[:,0:2,0:2]
+    odd  = n_eo.s[:,2:4,2:4]
+    
+    # compute sub-networks for symmetric 4port
+    s_a = .5*(even+odd)
+    s_b = .5*(even-odd)
+    
+    # create output network
+    n_delta = n_eo.copy()
+    n_delta.s[:,0:2,0:2] = n_delta.s[:,2:4,2:4] = s_a
+    n_delta.s[:,2:4,0:2] = n_delta.s[:,0:2,2:4] = s_b
+    n_delta.z0=z0
+    
+    return n_delta 
 
 
 ## Building composit networks from sub-networks

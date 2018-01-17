@@ -313,10 +313,8 @@ class NetworkSet(object):
     def __str__(self):
         '''
         '''
-        output =  \
-                'A NetworkSet of length %i'%len(self.ntwk_set)
-
-        return output
+        
+        return self.ntwk_set.__str__()
 
     def __repr__(self):
         return self.__str__()
