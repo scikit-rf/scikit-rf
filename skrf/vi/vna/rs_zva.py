@@ -142,7 +142,7 @@ class ZVA(abcvna.VNA):
         channel = kwargs.get("channel", self.active_channel)
         self.scpi.set_f_start(channel, f_start)
         self.scpi.set_f_stop(channel, f_stop)
-        self.scpi.set_sweep_n_points(f_npoints)
+        self.scpi.set_sweep_n_points(channel, f_npoints)
 
     def get_active_trace_as_network(self, **kwargs):
         """get the current trace as a 1-port network object"""
