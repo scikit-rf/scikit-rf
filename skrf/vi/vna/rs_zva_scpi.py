@@ -279,18 +279,18 @@ class SCPI(object):
     
          DISPlay[:WINDow<Wnd>]:TRACe<WndTr>:EFEed '<trace_name>'
          """
-        scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:EFE {:}", wnum, tnum, TRACENAME)
+        scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:EFE '{:}'", wnum, tnum, TRACENAME)
         self.write(scpi_command)
 
     def set_disp_trace_feed(self, wnum=1, tnum=1, TRACENAME=""):
-        """Assigns an existing traceto a diagram area.
+        """Assigns an existing trace to a diagram area.
     
          Assigns an existing trace (CALCulate<Ch>:PARameter:SDEFine <Trace_Name>)
          to a diagram area, using the <WndTr> suffix, and displays the trace. Use
          DISPlay[:WINDow<Wnd>]:TRACe:EFEed to assign the trace to a diagram area
          without using a numeric suffix.
          """
-        scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:FEED {:}", wnum, tnum, TRACENAME)
+        scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:FEED '{:}'", wnum, tnum, TRACENAME)
         self.write(scpi_command)
 
     def set_disp_trace_pdiv(self, wnum=1, tnum=1, value="", TRACENAME="None"):
