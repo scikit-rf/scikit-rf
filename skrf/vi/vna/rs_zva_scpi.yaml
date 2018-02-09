@@ -133,7 +133,7 @@ COMMAND_TREE:
           \tmust be done via CALCulate<Ch>:PARameter:DELete <Trace_Name>.\n
           \t"
         }
-        EFE: {name: disp_trace_efeed, set: "<TRACENAME>",
+        EFE: {name: disp_trace_efeed, set: "'<TRACENAME>'",
           help: "Assigns an existing trace to a diagram area.\n\n
           \tAssigns an existing trace (CALCulate<Ch>:PARameter:SDEFine <Trace_Name>)\n
           \tto a diagram area <Wnd>, and displays the trace. Use\n
@@ -143,8 +143,8 @@ COMMAND_TREE:
           \tDISPlay[:WINDow<Wnd>]:TRACe<WndTr>:EFEed '<trace_name>'\n
           \t"
         }
-        FEED: {name: disp_trace_feed, set: "<TRACENAME>",
-          help: "Assigns an existing traceto a diagram area.\n\n
+        FEED: {name: disp_trace_feed, set: "'<TRACENAME>'",
+          help: "Assigns an existing trace to a diagram area.\n\n
           \tAssigns an existing trace (CALCulate<Ch>:PARameter:SDEFine <Trace_Name>)\n
           \tto a diagram area, using the <WndTr> suffix, and displays the trace. Use\n
           \tDISPlay[:WINDow<Wnd>]:TRACe:EFEed to assign the trace to a diagram area\n
