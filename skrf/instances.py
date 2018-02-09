@@ -18,7 +18,8 @@ Standard Waveguide Bands
 ++++++++++++++++++++++++++++++++++++++++++++
 These are predefined :class:`~skrf.frequency.Frequency` objects
 that correspond to standard waveguide bands. This information is taken
-from the VDI Application Note 1002 [#]_ .
+from the VDI Application Note 1002 [#]_ . IEEE designators are taken
+from Spinner TD-00036 [*]_ .
 
 
 =======================  ===============================================
@@ -54,6 +55,7 @@ wr1                      WR-1, 750-1100 GHz
 References
 -------------
 .. [#] VDI Application Note:  VDI Waveguide Band Designations (VDI-1002) http://vadiodes.com/VDI/pdf/waveguidechart200908.pdf
+.. [*] Spinner Technical Information: Cross Reference For Hollow Metallic Waveguides (TD-00036) https://www.spinner-group.com/images/download/technical_documents/SPINNER_TD00036.pdf
 '''
 
 from . frequency import Frequency
@@ -92,6 +94,19 @@ f_wr0p8   = Frequency(900,1400,1001, 'ghz')
 f_wr0p65  = Frequency(1100,1700,1001, 'ghz')
 f_wr0p51   = Frequency(1400,2200,1001, 'ghz')
 
+f_wm1295 = f_wr5p1
+f_wm1092 = f_wr4p3
+f_wm864  = f_wr3p4
+f_wm710  = f_wr2p8
+f_wm570  = f_wr2p2
+f_wm470  = f_wr1p9
+f_wm380  = f_wr1p5
+f_wm310  = f_wr1p2
+f_wm250  = f_wr1
+f_wm200  = f_wr0p8
+f_wm164  = f_wr0p65
+f_wm130  = f_wr0p51
+
 
 wr51  = RectangularWaveguide(f_wr51.copy(),a=510*mil,b=255*mil,z0=50)
 wr42  = RectangularWaveguide(f_wr42.copy(),a=420*mil,b=170*mil,z0=50)
@@ -117,4 +132,15 @@ wr0p8   = RectangularWaveguide(f_wr0p8.copy(),a=8*mil,b=4*mil,z0=50)
 wr0p65  = RectangularWaveguide(f_wr0p65.copy(),a=6.5*mil,b=3.25*mil,z0=50)
 wr0p51   = RectangularWaveguide(f_wr0p51.copy(),a=5.1*mil,b=2.55*mil,z0=50)
 
-
+wm1295 = wr5p1
+wm1092 = wr4p3
+wm864  = wr3p4
+wm710  = wr2p8
+wm570  = wr2p2
+wm470  = wr1p9
+wm380  = wr1p5
+wm310  = wr1p2
+wm250  = wr1
+wm200  = wr0p8
+wm164  = wr0p65
+wm130  = wr0p51
