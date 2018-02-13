@@ -55,6 +55,31 @@ class NetworkTestCase(unittest.TestCase):
         t = self.ntwk1.s11.s_time
         self.assertTrue(npy.sum(npy.abs(t.imag)) == 0)
 
+    def test_time_transform(self):
+        spb = (4, 5)
+        data_rate = 5e9
+        num_taps = (100, 101)
+        for i in range(2):
+            tps = 1 / spb[i] / data_rate
+            num_points = spb[i] * num_taps[i]
+            # Frequency terms should NOT contain Nyquist frequency if number of points is odd
+            inc_nyq = True if num_points % 2 == 0 else False
+            freq = npy.linspace(0, 1 / 2 / tps, num_points // 2 + 1, endpoint=inc_nyq)
+
+            dut = self.ntwk1.copy()
+            freq_valid = freq[npy.logical_and(freq >= dut.f[0], freq <= dut.f[-1])]
+            dut.interpolate_self(rf.Frequency.from_f(freq_valid, unit='hz'))
+
+            dut_dc = dut.extrapolate_to_dc()
+            t, y = dut_dc.s21.impulse_response(n=num_points)
+            self.assertEqual(len(t), num_points)
+            self.assertEqual(len(y), num_points)
+            self.assertTrue(npy.isclose(t[1]-t[0], tps))
+            t, y = dut_dc.s21.step_response(n=num_points)
+            self.assertEqual(len(t), num_points)
+            self.assertEqual(len(y), num_points)
+            self.assertTrue(npy.isclose(t[1] - t[0], tps))
+
     def test_constructor_empty(self):
         rf.Network()
 
