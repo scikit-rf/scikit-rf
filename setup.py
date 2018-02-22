@@ -33,7 +33,7 @@ setup(name='scikit-rf',
 		],
 	#ext_modules=[Extension('skrf.src.connect', ['skrf/src/connect.c', ], export_symbols=['innerconnect_s','connect_s'])],
 	package_dir={'skrf':'skrf'},
-	#include_package_data = True,
+	include_package_data = True,
     #data_files = [("", ["LICENSE.txt"])],
 	#exclude_package_data = {'':'doc/*'},
 
