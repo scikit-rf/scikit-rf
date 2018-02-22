@@ -2528,7 +2528,7 @@ class NISTMultilineTRL(EightTerm):
         measured : list of :class:`~skrf.network.Network`
              must be in order [Thru, Reflect, Line]
 
-        Grefls : list of complex
+        Grefls : complex or list of complex
             Estimated reflection coefficients of reflect standards.
             Usually -1 for short or +1 for open.
 
@@ -2540,13 +2540,16 @@ class NISTMultilineTRL(EightTerm):
             Imaginary part is the loss at 1 GHz.
             Negative imaginary part indicates losses.
 
-        refl_offset : float
-            Estimated offset of the length measured from the center of the through.
-            Negative length is towards the VNA, Units are in meters.
+        refl_offset : float or list of float
+            Estimated offsets of the reflect standards from the center of the through.
+            Negative length is towards the VNA. Units are in meters.
 
-        ref_plane : float
+        ref_plane : float or list of float
             Reference plane shift after the calibration.
-            Negative length is towards the VNA.
+            Negative length is towards the VNA. Units are in meters.
+
+            Different shifts can be given to different ports by giving a two element list.
+            First element is shift of port 1 and second is shift of port 2.
 
         gamma_root_choice : string
             Method to use for choosing the correct eigenvalue for propagation
@@ -2589,7 +2592,7 @@ class NISTMultilineTRL(EightTerm):
             In this case reference impedance of the calibration is characteristic
             impedance of the transmission lines.
 
-        z0_ref : None or complex
+        z0_ref : None, complex or list of complex
             New reference impedance for the characteristic impedance renormalizarion.
 
             No effect if `c0` == None and `z0_line` == None.
@@ -2620,10 +2623,20 @@ class NISTMultilineTRL(EightTerm):
         self.c0 = c0
         self.z0_line = z0_line
 
-        if self.refl_offset == None:
-            self.refl_offset = [0]*len(Grefls)
+        try:
+            self.Grefls[0]
+        except TypeError:
+            self.Grefls = [self.Grefls]
 
-        if len(measured) != len(Grefls) + len(l):
+        if self.refl_offset == None:
+            self.refl_offset = [0]*len(self.Grefls)
+
+        try:
+            self.refl_offset[0]
+        except TypeError:
+            self.refl_offset = [self.refl_offset]
+
+        if len(measured) != len(self.Grefls) + len(l):
             raise ValueError("Amount of measurements doesn't match amount of line lengths and reflection coefficients")
 
         #Not used, but needed for Calibration class init
@@ -2638,7 +2651,7 @@ class NISTMultilineTRL(EightTerm):
 
         m_sw = [k for k in self.measured_unterminated]
 
-        n_reflects = len(Grefls)
+        n_reflects = len(self.Grefls)
 
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
@@ -2661,6 +2674,7 @@ class NISTMultilineTRL(EightTerm):
 
         measured_reflects = self.measured_reflects
         measured_lines = self.measured_lines
+        measured_lines_t = list(map(lambda x: s2t(x.s), self.measured_lines))
         l = self.l
         er_est = self.er_est
 
@@ -2737,6 +2751,20 @@ class NISTMultilineTRL(EightTerm):
             #Unreachable
             return e_val
 
+        V_inv = npy.eye(lines-1, dtype=npy.complex) \
+                - (1.0/lines)*npy.ones(shape=(lines-1, lines-1), dtype=npy.complex)
+
+        b1_vec = npy.zeros(lines-1, dtype=npy.complex)
+        b2_vec = npy.zeros(lines-1, dtype=npy.complex)
+        CoA1_vec = npy.zeros(lines-1, dtype=npy.complex)
+        CoA2_vec = npy.zeros(lines-1, dtype=npy.complex)
+
+        b1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+        b2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+        CoA1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+        CoA2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+
+
         for m in range(fpoints):
             min_phi_eff = pi*npy.ones(lines)
             #Find the best common line to use
@@ -2752,6 +2780,9 @@ class NISTMultilineTRL(EightTerm):
             #Common line is selected to be one with the largest phase difference
             line_c[m] = npy.argmax(min_phi_eff)
 
+            #Pre-calculate inverse T-matrix of the common line
+            inv_line_c = inv(measured_lines_t[line_c[m]][m])
+
             #Propagation constant extraction
             #Compute eigenvalues of each line pair
 
@@ -2764,9 +2795,14 @@ class NISTMultilineTRL(EightTerm):
                 if n == line_c[m]:
                     continue
                 dl = l[n] - l[line_c[m]]
-                Mij = s2t_single(measured_lines[n].s[m]).dot(inv(s2t_single(measured_lines[line_c[m]].s[m])))
-                #Choose the correct root
-                e_val = root_choice(Mij, dl, gamma_est)
+                Mij = (measured_lines_t[n][m]).dot(inv_line_c)
+
+                if 'estimate' in self.gamma_root_choice:
+                    #Choose the correct root later
+                    e_val = linalg.eigvals(Mij)
+                else:
+                    #Choose the correct root using heurestics
+                    e_val = root_choice(Mij, dl, gamma_est)
 
                 g_dl1 = -log(0.5*(e_val[0] + 1.0/e_val[1]))
                 g_dl2 = -log(0.5*(e_val[1] + 1.0/e_val[0]))
@@ -2804,24 +2840,11 @@ class NISTMultilineTRL(EightTerm):
                 dl_vec[k] = dl
                 k = k + 1
 
-            V_inv = npy.eye(lines-1, dtype=npy.complex) \
-                    - (1.0/lines)*npy.ones(shape=(lines-1, lines-1), dtype=npy.complex)
-
-            gamma[m] = (dl_vec.conj().transpose().dot(V_inv).dot(g_dl))/(dl_vec.conj().transpose().dot(V_inv).dot(dl_vec))
+            gamma[m] = (dl_vec.transpose().dot(V_inv).dot(g_dl))/(dl_vec.transpose().dot(V_inv).dot(dl_vec))
 
             if m != fpoints-1:
                 gamma_est = gamma[m].real + 1j*gamma[m].imag*freqs[m+1]/freqs[m]
             er_eff[m] = -(gamma[m]/(2*pi*freqs[m]/c))**2
-
-            b1_vec = npy.zeros(lines-1, dtype=npy.complex)
-            b2_vec = npy.zeros(lines-1, dtype=npy.complex)
-            CoA1_vec = npy.zeros(lines-1, dtype=npy.complex)
-            CoA2_vec = npy.zeros(lines-1, dtype=npy.complex)
-
-            b1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
-            b2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
-            CoA1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
-            CoA2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
 
             root1 = []
             root2 = []
@@ -2832,11 +2855,12 @@ class NISTMultilineTRL(EightTerm):
             S_thru = measured_lines[0].s[m]
 
             p = 0
+
             for n in range(lines):
                 if n == line_c[m]:
                     continue
                 #Port 1
-                T = s2t_single(measured_lines[n].s[m]).dot(inv(s2t_single(measured_lines[line_c[m]].s[m])))
+                T = measured_lines_t[n][m].dot(inv_line_c)
                 T = measured_lines[n].s[m,1,0]*measured_lines[line_c[m]].s[m,0,1]*T
                 e_val = linalg.eigvals(T)
 
@@ -2911,6 +2935,7 @@ class NISTMultilineTRL(EightTerm):
                 p += 1
 
             Vb = npy.zeros(shape=(lines-1,lines-1), dtype=npy.complex)
+            Vc = npy.zeros(shape=(lines-1,lines-1), dtype=npy.complex)
             #Fill in upper triangular matrix
             l_not_common = [i for i in l if i != l[line_c[m]]]
             for b in range(len(l_not_common)):
@@ -2921,7 +2946,13 @@ class NISTMultilineTRL(EightTerm):
                         Vb[a,b] = abs(exp_factor)**2 + 1/abs(exp_factor)**2 + \
                                 2*( abs(exp(-gamma[m]*len_l))*\
                                 abs(exp(-gamma[m]*l[line_c[m]])) )**2
-                        Vb[a,b] /= abs(exp_factor - 1/exp_factor)**2
+                        n = abs(exp_factor - 1/exp_factor)**2
+                        Vb[a,b] /= n
+
+                        Vc[a,b] = abs(exp_factor)**2 + 1/(abs(exp_factor))**2 + \
+                                2/( abs(exp(-gamma[m]*l[line_c[m]]))*\
+                                abs(exp(-gamma[m]*len_l)) )**2
+                        Vc[a,b] /= n
                     elif a < b:
                         len_a = l_not_common[a]
                         len_b = l_not_common[b]
@@ -2930,31 +2961,15 @@ class NISTMultilineTRL(EightTerm):
                         Vb[a,b] = exp_factor2*exp_factor.conjugate() + \
                                 (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
                                 exp(-gamma[m]*len_b)*(exp(-gamma[m]*len_a)).conjugate()
-                        Vb[a,b] = Vb[a,b]/(exp_factor - 1/exp_factor).conjugate()/ \
+                        n = (exp_factor - 1/exp_factor).conjugate()* \
                                 (exp_factor2-1/exp_factor2)
+                        Vb[a,b] /= n
                         Vb[b,a] = Vb[a,b].conjugate()
 
-            Vc = npy.zeros(shape=(lines-1,lines-1), dtype=npy.complex)
-            #Fill in upper triangular matrix
-            for b in range(len(l_not_common)):
-                for a in range(b+1):
-                    if a == b:
-                        len_l = l_not_common[a]
-                        exp_factor = exp(-gamma[m]*(len_l - l[line_c[m]]))
-                        Vc[a,b] = abs(exp_factor)**2 + 1/(abs(exp_factor))**2 + \
-                                2/( abs(exp(-gamma[m]*l[line_c[m]]))*\
-                                abs(exp(-gamma[m]*len_l)) )**2
-                        Vc[a,b] /= abs(exp_factor - 1/exp_factor)**2
-                    elif a < b:
-                        len_a = l_not_common[a]
-                        len_b = l_not_common[b]
-                        exp_factor_a = exp(-gamma[m]*(len_a -l[line_c[m]]))
-                        exp_factor_b = exp(-gamma[m]*(len_b -l[line_c[m]]))
-                        Vc[a,b] = 1/(exp_factor_b*exp_factor_a.conjugate()) + \
+                        Vc[a,b] = 1/(exp_factor2*exp_factor.conjugate()) + \
                                 1/( (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
                                 exp(-gamma[m]*len_b)*(exp(-gamma[m]*len_a)).conjugate() )
-                        Vc[a,b] = Vc[a,b]/(exp_factor_a - 1/exp_factor_a).conjugate()/ \
-                                (exp_factor_b - 1/exp_factor_b)
+                        Vc[a,b] /= n
                         Vc[b,a] = Vc[a,b].conjugate()
 
             def solve_A(B1, B2, CoA1, CoA2):
@@ -2985,8 +3000,6 @@ class NISTMultilineTRL(EightTerm):
                 A2 = npy.mean(A2_vals)
                 return A1, A2
 
-            h = npy.ones(lines-1)
-
             values = []
             #List possible root choices for B and CoA
             for i in [(0,0), (0,1), (1,0), (1,1)]:
@@ -3004,14 +3017,15 @@ class NISTMultilineTRL(EightTerm):
                     b2 = b2_vec2
                     coa2 = CoA2_vec2
 
-                B1 = h.conj().transpose().dot(inv(Vb)).dot(b1)/ \
-                        (h.conj().transpose().dot(inv(Vb)).dot(h))
-                B2 = h.conj().transpose().dot(inv(Vb)).dot(b2)/ \
-                        (h.conj().transpose().dot(inv(Vb)).dot(h))
-                CoA1 = h.conj().transpose().dot(inv(Vc)).dot(coa1)/ \
-                        (h.conj().transpose().dot(inv(Vc)).dot(h))
-                CoA2 = h.conj().transpose().dot(inv(Vc)).dot(coa2)/ \
-                        (h.conj().transpose().dot(inv(Vc)).dot(h))
+                inv_Vb = inv(Vb)
+                inv_Vc = inv(Vc)
+                sum_inv_Vb = npy.sum(inv_Vb)
+                sum_inv_Vc = npy.sum(inv_Vc)
+
+                B1 = npy.sum(inv_Vb.dot(b1))/sum_inv_Vb
+                B2 = npy.sum(inv_Vb.dot(b2))/sum_inv_Vb
+                CoA1 = npy.sum(inv_Vc.dot(coa1))/sum_inv_Vc
+                CoA2 = npy.sum(inv_Vc.dot(coa2))/sum_inv_Vc
 
                 denom = 1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*\
                 (S_thru[0,0]*S_thru[1,1] - S_thru[0,1]*S_thru[1,0])
@@ -3053,8 +3067,8 @@ class NISTMultilineTRL(EightTerm):
                 B1, B2, CoA1, CoA2 = best_values[1:]
                 A1, A2 = solve_A(B1, B2, CoA1, CoA2)
 
-            sigmab = npy.sqrt(1/(h.conj().transpose().dot(inv(Vb)).dot(h)).real)
-            sigmac = npy.sqrt(1/(h.conj().transpose().dot(inv(Vc)).dot(h)).real)
+            sigmab = npy.sqrt(1/(npy.sum(inv(Vb)).real))
+            sigmac = npy.sqrt(1/(npy.sum(inv(Vc)).real))
 
             nstd[m] = (sigmab + sigmac)/2
 

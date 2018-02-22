@@ -173,9 +173,9 @@ from .time import time_gate
 
 from .constants import ZERO
 
-def s_to_time(s, pad=0):
+def s_to_time(s, n=None):
     """Transforms S-parameters to time-domain"""
-    return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=s.shape[0]+pad), axes=0)
+    return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=n), axes=0)
 
 class Network(object):
     """
@@ -285,6 +285,8 @@ class Network(object):
         'time': s_to_time,
         'time_db': lambda x: mf.complex_2_db(s_to_time(x)),
         'time_mag': lambda x: mf.complex_2_magnitude(s_to_time(x)),
+        'time_impulse': None,
+        'time_step': None,
     }
     # provides y-axis labels to the plotting functions
     global Y_LABEL_DICT
@@ -308,6 +310,8 @@ class Network(object):
         'time': 'Time (real)',
         'time_db': 'Magnitude (dB)',
         'time_mag': 'Magnitude',
+        'time_impulse': 'Magnitude',
+        'time_step': 'Magnitude',
     }
 
     # CONSTRUCTOR
@@ -1397,12 +1401,12 @@ class Network(object):
             raise NotImplementedError('only s-parameters supported for now.')
 
         self.comments = touchstoneFile.get_comments()
-        
+
         try:
             self.variables = touchstoneFile.get_comment_variables()
         except:
             pass
-        
+
         self.port_names = touchstoneFile.port_names
 
         # set z0 before s so that y and z can be computed
@@ -1427,8 +1431,8 @@ class Network(object):
                     print('warning: couldn\'t inspect network name')
                     self.name = ''
                 pass
-               
-        
+
+
 
     @classmethod
     def zipped_touchstone(cls, filename, archive):
@@ -2625,7 +2629,7 @@ class Network(object):
         Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window='hamming', pad=1000, bandpass=None):
+    def impulse_response(self, window='hamming', n=None, pad=1000, bandpass=None):
         """Calculates time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -2642,6 +2646,10 @@ class Network(object):
         -----------
         window : string
                 FFT windowing function.
+        n : int
+                Length of impulse response output.
+                If n is not specified, 2 * (m - 1) points are used,
+                where m = len(self) + pad
         pad : int
                 Number of zeros to add as padding for FFT.
                 Adding more zeros improves accuracy of peaks.
@@ -2665,8 +2673,16 @@ class Network(object):
         """
         if self.nports != 1:
             raise ValueError('Only one-ports are supported')
+        if n is None:
+            # Use zero-padding specification. Note that this does not allow n odd.
+            n = 2 * (self.frequency.npoints + pad - 1)
+
         fstep = self.frequency.step
-        t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
+        if n % 2 == 0:
+            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n, endpoint=False))
+        else:
+            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n + 1, endpoint=False))
+            t = t[:-1]
         if bandpass in (True, False):
             center_to_dc = not bandpass
         else:
@@ -2675,9 +2691,9 @@ class Network(object):
             w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
-        return t, s_to_time(w.s, pad=pad).flatten()
+        return t, s_to_time(w.s, n=n).flatten()
 
-    def step_response(self, window='hamming', pad=1000):
+    def step_response(self, window='hamming', n=None, pad=1000):
         """Calculates time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -2692,6 +2708,10 @@ class Network(object):
         -----------
         window : string
                 FFT windowing function.
+        n : int
+                Length of step response output.
+                If n is not specified, 2 * (m - 1) points are used,
+                where m = len(self) + pad
         pad : int
                 Number of zeros to add as padding for FFT.
                 Adding more zeros improves accuracy of peaks.
@@ -2715,13 +2735,22 @@ class Network(object):
                 "Frequency doesn't begin from 0. Step response will not be correct.",
                 RuntimeWarning
             )
+        if n is None:
+            # Use zero-padding specification. Note that this does not allow n odd.
+            pad = 1000
+            n = 2 * (self.frequency.npoints + pad - 1)
+
         fstep = self.frequency.step
-        t = npy.linspace(-.5/fstep , .5/fstep, self.frequency.npoints+pad)
+        if n % 2 == 0:
+            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n, endpoint=False))
+        else:
+            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n + 1, endpoint=False))
+            t = t[:-1]
         if window != None:
             w = self.windowed(window=window, normalize=False, center_to_dc=True)
         else:
             w = self
-        return t, npy.cumsum(s_to_time(w.s, pad=pad).flatten())
+        return t, npy.cumsum(s_to_time(w.s, n=n).flatten())
 
 
 ## Functions operating on Network[s]

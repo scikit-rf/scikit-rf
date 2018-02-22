@@ -46,10 +46,10 @@ class CPW(Media):
             resistivity of conductor (None)
 
     '''
-    def __init__(self, frequency=None, z0=None, w=70, s=4, 
+    def __init__(self, frequency=None, z0=None, w=70, s=4,
                  ep_r=3, t=None, rho=None,  *args, **kwargs):
         Media.__init__(self, frequency=frequency,z0=z0)
-        
+
         self.w, self.s, self.ep_r, self.t, self.rho =\
                 w, s, ep_r, t, rho
 
@@ -88,7 +88,7 @@ class CPW(Media):
         k1 = self.k1
 
         if (0 <= k1 <= 1/sqrt(2)):
-            return pi/(log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))
+            return pi/log(2*(1+sqrt(sqrt(1-k1**2)))/(1-sqrt(sqrt(1-k1**2))))
         elif (1/sqrt(2) < k1 <= 1):
             return (log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))/pi
 

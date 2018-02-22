@@ -96,10 +96,15 @@ def generate_set_string(command, command_root):
     command_string = " ".join((command_root, to_string(command["set"]))).strip()
     kwargs_string, scpi_command = parse_command_string(command_string)
 
+    if 'help' not in command:
+        command['help'] = 'no help available'
+    command['help'] = command['help'].replace('\t', '    ')
+
     function_string = \
 """def set_{:s}(self{:}):
+    \"\"\"{:s}\"\"\"
     scpi_command = {:}
-    self.write(scpi_command)""".format(command['name'], kwargs_string, scpi_command)
+    self.write(scpi_command)""".format(command['name'], kwargs_string, command['help'], scpi_command)
 
     return function_string
 
@@ -108,11 +113,16 @@ def generate_set_values_string(command, command_root):
     command_string = " ".join((command_root, to_string(command["set_values"]))).strip()
     kwargs_string, scpi_command, data_variable = parse_write_values_string(command_string)
 
+    if 'help' not in command:
+        command['help'] = 'no help available'
+    command['help'] = command['help'].replace('\t', '    ')
+
     function_string = \
 """def set_{:s}(self{:}):
+    \"\"\"{:s}\"\"\"
     scpi_command = {:}
     self.write_values(scpi_command, {:})""".format(
-            command['name'], kwargs_string, scpi_command, data_variable)
+            command['name'], kwargs_string, command['help'], scpi_command, data_variable)
 
     return function_string
 
@@ -120,6 +130,10 @@ def generate_set_values_string(command, command_root):
 def generate_query_string(command, command_root):
     command_string = "? ".join((command_root, to_string(command["query"]))).strip()
     kwargs_string, scpi_command = parse_command_string(command_string)
+
+    if 'help' not in command:
+        command['help'] = 'no help available'
+    command['help'] = command['help'].replace('\t', '    ')
 
     converter = command.get('returns', "str")
     valid_converters = ("int", "str", "float", "bool")
@@ -140,9 +154,10 @@ def generate_query_string(command, command_root):
 
     function_string = \
 """def query_{:s}(self{:}):
+    \"\"\"{:s}\"\"\"
     scpi_command = {:}
     value = self.query(scpi_command){:}
-    return value""".format(command['name'], kwargs_string, scpi_command, pre_line)
+    return value""".format(command['name'], kwargs_string, command['help'], scpi_command, pre_line)
 
     return function_string
 
@@ -151,11 +166,16 @@ def generate_query_values_string(command, command_root):
     command_string = "? ".join((command_root, to_string(command["query_values"]))).strip()
     kwargs_string, scpi_command = parse_command_string(command_string)
 
+    if 'help' not in command:
+        command['help'] = 'no help available'
+    command['help'] = command['help'].replace('\t', '    ')
+
     function_string = \
 """def query_{:s}(self{:}):
+    \"\"\"{:s}\"\"\"
     scpi_command = {:}
     return self.query_values(scpi_command)""".format(
-            command['name'], kwargs_string, scpi_command)
+            command['name'], kwargs_string, command['help'], scpi_command)
 
     return function_string
 
@@ -250,22 +270,22 @@ class_header = """class SCPI(object):
     def __init__(self, resource):
         self.resource = resource
         self.echo = False  # print scpi command string to scpi out
-    
+
     def write(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
         self.resource.write(scpi, *args, **kwargs)
-    
+
     def query(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
         return self.resource.query(scpi, *args, **kwargs)
-    
+
     def write_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
         self.resource.write_values(scpi, *args, **kwargs)
-    
+
     def query_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
@@ -277,8 +297,9 @@ def parse_yaml_file(driver_yaml_file):
     driver = os.path.splitext(driver_yaml_file)[0] + ".py"
 
     driver_template = None
-    with open(driver_yaml_file, 'r') as yaml_file:
+    with open(driver_yaml_file, 'r', encoding='utf-8') as yaml_file:
         driver_template = yaml.load(yaml_file)
+
     sets, queries = parse_branch(driver_template["COMMAND_TREE"])
 
     driver_str = "\n\n\n".join((header_string, string_converter, scpi_preprocessor, query_processor)) + "\n\n\n"
@@ -289,7 +310,7 @@ def parse_yaml_file(driver_yaml_file):
     for q in sorted(queries, key=str.lower):
         driver_str += "\n" + indent(q, 1) + "\n"
 
-    with open(driver, 'w') as scpi_driver:
+    with open(driver, 'w', encoding='utf8') as scpi_driver:
         scpi_driver.write(driver_str)
 
 
