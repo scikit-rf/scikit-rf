@@ -1001,7 +1001,7 @@ Examples
 
                         # quick and dirty way to plot step and impulse response
                         if 'time_impulse' in attribute:
-                            xlabel = 'Time (ns)'
+                            xlabel = 'Time (s)'
                             x,y = self.impulse_response(pad=pad, window=window)
                             # default is reflexion coefficient axis
                             if attribute[0].lower() == 'z':
@@ -1017,7 +1017,7 @@ Examples
                                              show_legend=show_legend, ax=ax,
                                              *args, **kwargs)
                         elif 'time_step' in attribute:
-                            xlabel = 'Time (ns)'
+                            xlabel = 'Time (s)'
                             x, y = self.step_response(pad=pad, window=window)
                             # default is reflexion coefficient axis
                             if attribute[0].lower() == 'z':
