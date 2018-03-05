@@ -27,6 +27,11 @@ COMMAND_TREE:
       CAT: {name: window_trace_numbers, query: "", csv: True, returns: int}
       TRAC<tnum>:
         FEED: {name: display_trace, set: "'<mname>'"}
+  MMEM:
+    STOR:
+      TRAC:
+        FORM:
+          SNP: {name: snp_format, set: <fmt=RI>, query: ""}
   SENS<cnum=1>:
     AVER:
       COUN: {name: averaging_count, set: <avg_count>, query: "", returns: int}

@@ -248,6 +248,8 @@ class PNA(abcvna.VNA):
 
         npoints = self.scpi.query_sweep_n_points(channel)
 
+        snp_fmt = self.scpi.query_snp_format()
+        self.scpi.set_snp_format("RI")
         if raw_data is True:
             if self.scpi.query_channel_correction_state(channel):
                 self.scpi.set_channel_correction_state(channel, False)
@@ -257,6 +259,7 @@ class PNA(abcvna.VNA):
                 data = self.scpi.query_snp_data(channel, ports)
         else:
             data = self.scpi.query_snp_data(channel, ports)
+        self.scpi.set_snp_format(snp_fmt)  # restore the value before we got the RI data
 
         nrows = int(len(data) / npoints)
         nports = int(np.sqrt(nrows - 1))
