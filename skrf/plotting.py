@@ -1245,7 +1245,7 @@ def plot_reciprocity2(self, db=False, *args, **kwargs):
 
 
 def plot_s_db_time(self,*args,**kwargs):
-    return self.windowed().plot_s_time_db(*args,**kwargs)
+    return self.windowed(center_to_dc=True).plot_s_time_db(*args,**kwargs)
 
 
 # plotting

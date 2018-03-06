@@ -518,7 +518,14 @@ class Frequency(object):
 
         t_period = 1/f_step
         '''
-        return linspace(-.5/self.step , .5/self.step, self.npoints)
+        n = 2 * (self.npoints - 1)
+        if n % 2 == 0:
+            t = npy.flipud(npy.linspace(.5 / self.step, -.5 / self.step, n, endpoint=False))
+        else:
+            t = npy.flipud(npy.linspace(.5 / self.step, -.5 / self.step, n + 1, endpoint=False))
+            t = t[:-1]
+        #return linspace(-.5/self.step , .5/self.step, self.npoints)
+        return t
 
     @property
     def t_ns(self):
