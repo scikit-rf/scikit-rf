@@ -62,6 +62,8 @@ COMMAND_TREE:
       TIME: {name: sweep_time, query: "", returns: float}
       TYPE: {name: sweep_type, set: <sweep_type=LIN>, query: ""}
       POIN: {name: sweep_n_points, set: <n_points=401>, query: "", returns: int}
+    X:
+      VALUES: {name: sweep_data, query_values: ""}
   SYST:
     CHAN:
       CAT: {name: available_channels, query: "", csv: True, returns: int}

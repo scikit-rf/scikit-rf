@@ -366,16 +366,13 @@ class PNA(abcvna.VNA):
         """
         self.resource.clear()
         channel = kwargs.get("channel", self.active_channel)
-        use_log = "LOG" in self.scpi.query_sweep_type(channel).upper()
-        f_start = self.scpi.query_f_start(channel)
-        f_stop = self.scpi.query_f_stop(channel)
-        f_npoints = self.scpi.query_sweep_n_points(channel)
-        if use_log:
-            freq = np.logspace(np.log10(f_start), np.log10(f_stop), f_npoints)
+        sweep_type = self.scpi.query_sweep_type(channel)
+        if sweep_type in ["LIN", "LOG", "SEGM"]:
+            freqs = self.scpi.query_sweep_data(channel)
         else:
-            freq = np.linspace(f_start, f_stop, f_npoints)
+            freqs = np.array([self.scpi.query_f_start(channel)])
 
-        frequency = skrf.Frequency.from_f(freq, unit="Hz")
+        frequency = skrf.Frequency.from_f(freqs, unit="Hz")
         frequency.unit = kwargs.get("f_unit", "Hz")
         return frequency
 
