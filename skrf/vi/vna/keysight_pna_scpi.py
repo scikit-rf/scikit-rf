@@ -193,6 +193,11 @@ class SCPI(object):
         scpi_command = scpi_preprocess(":CALC{:}:PAR:MNUM {:}", cnum, mnum)
         self.write(scpi_command)
 
+    def set_snp_format(self, fmt="RI"):
+        """no help available"""
+        scpi_command = scpi_preprocess(":MMEM:STOR:TRAC:FORM:SNP {:}", fmt)
+        self.write(scpi_command)
+
     def set_sweep_mode(self, cnum=1, sweep_mode="CONT"):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:SWE:MODE {:}", cnum, sweep_mode)
@@ -392,6 +397,18 @@ class SCPI(object):
     def query_snp_data(self, cnum=1, ports=(1, 2)):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA:SNP:PORT? '{:}'", cnum, ports)
+        return self.query_values(scpi_command)
+
+    def query_snp_format(self):
+        """no help available"""
+        scpi_command = ":MMEM:STOR:TRAC:FORM:SNP?"
+        value = self.query(scpi_command)
+        value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
+        return value
+
+    def query_sweep_data(self, cnum=1):
+        """no help available"""
+        scpi_command = scpi_preprocess(":SENS{:}:X:VALUES?", cnum)
         return self.query_values(scpi_command)
 
     def query_sweep_mode(self, cnum=1):

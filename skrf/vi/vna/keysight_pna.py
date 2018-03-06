@@ -248,6 +248,8 @@ class PNA(abcvna.VNA):
 
         npoints = self.scpi.query_sweep_n_points(channel)
 
+        snp_fmt = self.scpi.query_snp_format()
+        self.scpi.set_snp_format("RI")
         if raw_data is True:
             if self.scpi.query_channel_correction_state(channel):
                 self.scpi.set_channel_correction_state(channel, False)
@@ -257,6 +259,7 @@ class PNA(abcvna.VNA):
                 data = self.scpi.query_snp_data(channel, ports)
         else:
             data = self.scpi.query_snp_data(channel, ports)
+        self.scpi.set_snp_format(snp_fmt)  # restore the value before we got the RI data
 
         nrows = int(len(data) / npoints)
         nports = int(np.sqrt(nrows - 1))
@@ -363,16 +366,13 @@ class PNA(abcvna.VNA):
         """
         self.resource.clear()
         channel = kwargs.get("channel", self.active_channel)
-        use_log = "LOG" in self.scpi.query_sweep_type(channel).upper()
-        f_start = self.scpi.query_f_start(channel)
-        f_stop = self.scpi.query_f_stop(channel)
-        f_npoints = self.scpi.query_sweep_n_points(channel)
-        if use_log:
-            freq = np.logspace(np.log10(f_start), np.log10(f_stop), f_npoints)
+        sweep_type = self.scpi.query_sweep_type(channel)
+        if sweep_type in ["LIN", "LOG", "SEGM"]:
+            freqs = self.scpi.query_sweep_data(channel)
         else:
-            freq = np.linspace(f_start, f_stop, f_npoints)
+            freqs = np.array([self.scpi.query_f_start(channel)])
 
-        frequency = skrf.Frequency.from_f(freq, unit="Hz")
+        frequency = skrf.Frequency.from_f(freqs, unit="Hz")
         frequency.unit = kwargs.get("f_unit", "Hz")
         return frequency
 
