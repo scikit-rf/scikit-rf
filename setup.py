@@ -3,7 +3,6 @@
 from setuptools import setup, find_packages
 from distutils.core import Extension
 
-
 with open('skrf/__init__.py') as fid:
     for line in fid:
         if line.startswith('__version__'):
