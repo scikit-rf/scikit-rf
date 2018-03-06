@@ -406,6 +406,11 @@ class SCPI(object):
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
         return value
 
+    def query_sweep_data(self, cnum=1):
+        """no help available"""
+        scpi_command = scpi_preprocess(":SENS{:}:X:VALUES?", cnum)
+        return self.query_values(scpi_command)
+
     def query_sweep_mode(self, cnum=1):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:SWE:MODE?", cnum)
