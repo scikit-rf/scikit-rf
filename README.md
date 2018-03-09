@@ -6,6 +6,10 @@
 
 [![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/installer/conda.svg
 )](https://anaconda.org/conda-forge/scikit-rf)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/downloads.svg)](https://anaconda.org/conda-forge/scikit-rf)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/version.svg)](https://anaconda.org/conda-forge/scikit-rf)
+[![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/scikit-rf)
+
 
 `conda install -c conda-forge scikit-rf `
 
