@@ -173,7 +173,11 @@ from .time import time_gate
 
 from .constants import ZERO
 
-def s_to_time(s, n=None):
+def s_to_time(s):
+    """Transforms S-parameters to time-domain"""
+    return npy.fft.fftshift(npy.fft.ifft(s, axis=0), axes=0).real
+    
+def s_to_time_irfft(s, n=None):
     """Transforms S-parameters to time-domain"""
     return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=n), axes=0)
 
@@ -2691,7 +2695,7 @@ class Network(object):
             w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
-        return t, s_to_time(w.s, n=n).flatten()
+        return t, s_to_time_irfft(w.s, n=n).flatten()
 
     def step_response(self, window='hamming', n=None, pad=1000):
         """Calculates time-domain step response of one-port.
@@ -2750,7 +2754,7 @@ class Network(object):
             w = self.windowed(window=window, normalize=False, center_to_dc=True)
         else:
             w = self
-        return t, npy.cumsum(s_to_time(w.s, n=n).flatten())
+        return t, npy.cumsum(s_to_time_irfft(w.s, n=n).flatten())
 
 
 ## Functions operating on Network[s]
