@@ -621,3 +621,16 @@ def rational_interp(x, y, d=4, epsilon=1e-9, axis=0):
         return v
 
     return fx
+    
+def s_to_time(s):
+    """
+    Transforms S-parameters to time-domain bandpass.
+    """
+    return npy.fft.fftshift(npy.fft.ifft(s, axis=0), axes=0).real
+
+def s_to_time_irfft(s, n=None):
+    """
+    Transforms S-parameters to time-domain, assuming complex conjugates for
+    values corresponding to negative frequencies.
+    """
+    return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=n), axes=0)

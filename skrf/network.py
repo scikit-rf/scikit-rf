@@ -173,14 +173,6 @@ from .time import time_gate
 
 from .constants import ZERO
 
-def s_to_time(s):
-    """Transforms S-parameters to time-domain"""
-    return npy.fft.fftshift(npy.fft.ifft(s, axis=0), axes=0).real
-    
-def s_to_time_irfft(s, n=None):
-    """Transforms S-parameters to time-domain"""
-    return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=n), axes=0)
-
 class Network(object):
     """
     A n-port electrical network [#]_.
@@ -286,9 +278,9 @@ class Network(object):
                                  npy.abs(x),
         # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
         'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': s_to_time,
-        'time_db': lambda x: mf.complex_2_db(s_to_time(x)),
-        'time_mag': lambda x: mf.complex_2_magnitude(s_to_time(x)),
+        'time': mf.s_to_time,
+        'time_db': lambda x: mf.complex_2_db(mf.s_to_time(x)),
+        'time_mag': lambda x: mf.complex_2_magnitude(mf.s_to_time(x)),
         'time_impulse': None,
         'time_step': None,
     }
@@ -2695,7 +2687,7 @@ class Network(object):
             w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
-        return t, s_to_time_irfft(w.s, n=n).flatten()
+        return t, mf.s_to_time_irfft(w.s, n=n).flatten()
 
     def step_response(self, window='hamming', n=None, pad=1000):
         """Calculates time-domain step response of one-port.
@@ -2754,7 +2746,7 @@ class Network(object):
             w = self.windowed(window=window, normalize=False, center_to_dc=True)
         else:
             w = self
-        return t, npy.cumsum(s_to_time_irfft(w.s, n=n).flatten())
+        return t, npy.cumsum(mf.s_to_time_irfft(w.s, n=n).flatten())
 
 
 ## Functions operating on Network[s]
