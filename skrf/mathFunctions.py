@@ -63,7 +63,6 @@ Special Functions
 '''
 import numpy as npy
 from numpy import pi,angle,unwrap, real, imag, array
-from scipy.fftpack import ifft, ifftshift, fftshift
 from scipy import signal
 from scipy.interpolate import interp1d
 
@@ -552,7 +551,7 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     df = abs(f[1]-f[0])
     T = 1./df
     timeVector = npy.linspace(-T/2.,T/2,2*len(f)-1)
-    signalVector = ifftshift(ifft(ifftshift(spectrum)))
+    signalVector = npy.fft.ifftshift(npy.fft.ifft(npy.fft.ifftshift(spectrum)))
 
     #the imaginary part of this signal should be from fft errors only,
     signalVector= npy.real(signalVector)
@@ -622,15 +621,15 @@ def rational_interp(x, y, d=4, epsilon=1e-9, axis=0):
 
     return fx
     
-def s_to_time(s):
+def ifft(x):
     """
     Transforms S-parameters to time-domain bandpass.
     """
-    return npy.fft.fftshift(npy.fft.ifft(s, axis=0), axes=0).real
+    return npy.fft.fftshift(npy.fft.ifft(x, axis=0), axes=0).real
 
-def s_to_time_irfft(s, n=None):
+def irfft(x, n=None):
     """
     Transforms S-parameters to time-domain, assuming complex conjugates for
     values corresponding to negative frequencies.
     """
-    return npy.fft.fftshift(npy.fft.irfft(s, axis=0, n=n), axes=0)
+    return npy.fft.fftshift(npy.fft.irfft(x, axis=0, n=n), axes=0)

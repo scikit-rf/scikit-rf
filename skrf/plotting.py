@@ -1001,7 +1001,7 @@ Examples
 
                         # quick and dirty way to plot step and impulse response
                         if 'time_impulse' in attribute:
-                            xlabel = 'Time (s)'
+                            xlabel = 'Time (ns)'
                             x,y = self.impulse_response(pad=pad, window=window)
                             # default is reflexion coefficient axis
                             if attribute[0].lower() == 'z':
@@ -1010,14 +1010,14 @@ Examples
                                 y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                                 y[x == -1.] = -1. + 1e-12  # solve numerical singularity
                                 y = z0 * (1+y) / (1-y)
-                            plot_rectangular(x=x,
+                            plot_rectangular(x=x * 1e9,
                                              y=y,
                                              x_label=xlabel,
                                              y_label=y_label,
                                              show_legend=show_legend, ax=ax,
                                              *args, **kwargs)
                         elif 'time_step' in attribute:
-                            xlabel = 'Time (s)'
+                            xlabel = 'Time (ns)'
                             x, y = self.step_response(pad=pad, window=window)
                             # default is reflexion coefficient axis
                             if attribute[0].lower() == 'z':
@@ -1026,7 +1026,7 @@ Examples
                                 y[x ==  1.] =  1. + 1e-12  # solve numerical singularity
                                 y[x == -1.] = -1. + 1e-12  # solve numerical singularity
                                 y = z0 * (1+y) / (1-y)
-                            plot_rectangular(x=x,
+                            plot_rectangular(x=x * 1e9,
                                              y=y,
                                              x_label=xlabel,
                                              y_label=y_label,
