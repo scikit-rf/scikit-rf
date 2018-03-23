@@ -53,8 +53,13 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_timedomain(self):
         t = self.ntwk1.s11.s_time
-        self.assertTrue(npy.sum(npy.abs(t.imag)) == 0)
-
+        s = self.ntwk1.s11.s
+        self.assertTrue(len(t)== len(s))
+    def test_time_gate(self):
+        ntwk = self.ntwk1
+        gated = self.ntwk1.s11.time_gate(0,.2)
+        
+        self.assertTrue(len(gated)== len(ntwk))
     def test_time_transform(self):
         spb = (4, 5)
         data_rate = 5e9
