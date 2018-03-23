@@ -625,7 +625,7 @@ def ifft(x):
     """
     Transforms S-parameters to time-domain bandpass.
     """
-    return npy.fft.fftshift(npy.fft.ifft(x, axis=0), axes=0)
+    return npy.abs(npy.fft.fftshift(npy.fft.ifft(x, axis=0), axes=0))
 
 def irfft(x, n=None):
     """
