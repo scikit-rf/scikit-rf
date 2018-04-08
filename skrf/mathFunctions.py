@@ -637,7 +637,8 @@ def irfft(x, n=None):
 
 # Matrix functions
 
-def is_square(mat: npy.matrix) -> bool:
+def is_square(mat):
+    # type: (npy.matrix) -> bool
     """
     Tests whether mat is a square matrix
     :param mat: matrix to test
@@ -646,7 +647,8 @@ def is_square(mat: npy.matrix) -> bool:
     return mat.shape[0] == mat.shape[1]
 
 
-def is_unitary(mat: npy.matrix) -> bool:
+def is_unitary(mat):
+    # type: (npy.matrix) -> bool
     """
     Tests mat for unitariness
     :param mat: matrix to test
@@ -658,7 +660,8 @@ def is_unitary(mat: npy.matrix) -> bool:
                         npy.identity(mat.shape[0]))
 
 
-def is_symmetric(mat: npy.matrix) -> bool:
+def is_symmetric(mat):
+    # type: (npy.matrix) -> bool
     """
     Tests mat for symmetry
     :param mat: matrix to test
@@ -669,7 +672,8 @@ def is_symmetric(mat: npy.matrix) -> bool:
     return npy.array_equal(mat, mat.transpose())
 
 
-def get_Hermitian_transpose(mat: npy.matrix) -> npy.matrix:
+def get_Hermitian_transpose(mat):
+    # type: (npy.matrix) -> npy.matrix
     """
     Computes the conjugate transpose of mat
     :param mat: input matrix
@@ -678,7 +682,8 @@ def get_Hermitian_transpose(mat: npy.matrix) -> npy.matrix:
     return mat.transpose().conjugate()
 
 
-def is_Hermitian(mat: npy.matrix) -> bool:
+def is_Hermitian(mat):
+    # type: (npy.matrix) -> bool
     """
     Tests whether mat is Hermitian
     :param mat: matrix to test
@@ -689,7 +694,8 @@ def is_Hermitian(mat: npy.matrix) -> bool:
     return npy.array_equal(mat, get_Hermitian_transpose(mat))
 
 
-def is_positive_definite(mat: npy.matrix) -> bool:
+def is_positive_definite(mat):
+    # type: (npy.matrix) -> bool
     """
     Tests mat for positive definiteness by checking the following conditions:
     (1) mat is symmetric.
@@ -706,7 +712,8 @@ def is_positive_definite(mat: npy.matrix) -> bool:
         return False
 
 
-def is_positive_semidefinite(mat: npy.matrix, tol=1e-12) -> bool:
+def is_positive_semidefinite(mat, tol=1e-12):
+    # type: (npy.matrix, float) -> bool
     """
     Tests mat for positive semidefiniteness by verifying
     whether all eigenvalues of mat are nonnegative within a certain tolerance
