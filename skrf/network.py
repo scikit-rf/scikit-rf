@@ -1305,30 +1305,53 @@ class Network(object):
 
         return gd
 
-    ## NETWORK CLASIFIERs
+    ## NETWORK CLASSIFIERs
     def is_reciprocal(self):
         '''
         test for reciprocity
         '''
-        raise (NotImplementedError)
+        return self.is_symmetric() and self.is_passive()
 
     def is_symmetric(self):
         '''
         test for symmetry
         '''
-        raise (NotImplementedError)
+        for f_idx in range(len(self.s)):
+            mat = npy.matrix(self.s[f_idx, :, :])
+            if not mf.is_symmetric(mat):
+                return False
+        return True
 
     def is_passive(self):
         '''
         test for passivity
         '''
-        raise (NotImplementedError)
+        try:
+            M = npy.square(self.passivity)
+        except ValueError:
+            return False
+
+        I = npy.identity(M.shape[-1])
+        for f_idx in range(len(M)):
+            D = I - M[f_idx, :, :]  # dissipation matrix
+            if not mf.is_positive_definite(D) \
+                    and not mf.is_positive_semidefinite(mat=D):
+                return False
+        return True
 
     def is_lossless(self):
         '''
         test for losslessness
+
+        [S] is lossless iff [S] is unitary ([S][S]* = [1])
+
+        https://en.wikipedia.org/wiki/Unitary_matrix
         '''
-        raise (NotImplementedError)
+        for f_idx in range(len(self.s)):
+            mat = npy.matrix(self.s[f_idx, :, :])
+            if not mf.is_unitary(mat):
+                return False
+        return True
 
     ## CLASS METHODS
     def copy(self):

@@ -6,7 +6,6 @@ pull request.
 
 Network 
 -----------
-* is_reciprocal, is_passive, is_symetric
 * comments support
 * isolate features in tests (ie dont use touchstones to test cascading)
 * make operators symetric 

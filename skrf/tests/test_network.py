@@ -309,5 +309,52 @@ class NetworkTestCase(unittest.TestCase):
         tinyfloat = 1e-12
         self.assertTrue((abs(b.frequency.f - [2e9,4e9,5e9]) < tinyfloat).all())
 
+    # Network classifiers
+    def test_is_reciprocal(self):
+        a = rf.Network(f=[1,2],
+                       s=[[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+                       z0=50)
+        self.assertFalse(a.is_reciprocal(), 'A circulator is not reciprocal.')
+        b = rf.Network(f=[1,2],
+                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       z0=50)
+        self.assertTrue(b.is_reciprocal(), 'This power divider is reciprocal.')
+        return
+
+    def test_is_symmetric(self):
+        a = rf.Network(f=[1,2],
+                       s=[[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+                       z0=50)
+        self.assertFalse(a.is_symmetric(), 'A circulator is not symmetric.')
+        b = rf.Network(f=[1,2],
+                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       z0=50)
+        self.assertTrue(b.is_symmetric(), 'This power divider is symmetric.')
+        return
+
+    def test_is_passive(self):
+        a = rf.Network(f=[1,2],
+                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       z0=50)
+        self.assertTrue(a.is_passive(), 'This power divider is passive.')
+        b = rf.Network(f=[1,2],
+                       s=[[0, 0], [10, 0]],
+                       z0=50)
+        self.assertFalse(b.is_passive(), 'A unilateral amplifier is not passive.')
+        return
+
+    def test_is_lossless(self):
+        a = rf.Network(f=[1,2],
+                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       z0=50)
+        self.assertFalse(a.is_lossless(), 'A resistive power divider is lossy.')
+        b = rf.Network(f=[1,2],
+                       s=[[0, -1j/npy.sqrt(2), -1j/npy.sqrt(2)],
+                          [-1j/npy.sqrt(2), 1/2, -1/2],
+                          [-1j/npy.sqrt(2), -1/2, 1/2]],
+                       z0=50)
+        self.assertTrue(b.is_lossless(), 'This unmatched power divider is lossless.')
+        return
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

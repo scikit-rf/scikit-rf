@@ -633,3 +633,92 @@ def irfft(x, n=None):
     values corresponding to negative frequencies.
     """
     return npy.fft.fftshift(npy.fft.irfft(x, axis=0, n=n), axes=0)
+
+
+# Matrix functions
+
+def is_square(mat: npy.matrix) -> bool:
+    """
+    Tests whether mat is a square matrix
+    :param mat: matrix to test
+    :return: whether mat is a square matrix
+    """
+    return mat.shape[0] == mat.shape[1]
+
+
+def is_unitary(mat: npy.matrix) -> bool:
+    """
+    Tests mat for unitariness
+    :param mat: matrix to test
+    :return: whether mat is unitary
+    """
+    if not is_square(mat):
+        return False
+    return npy.allclose(get_Hermitian_transpose(mat) * mat,
+                        npy.identity(mat.shape[0]))
+
+
+def is_symmetric(mat: npy.matrix) -> bool:
+    """
+    Tests mat for symmetry
+    :param mat: matrix to test
+    :return: whether mat is symmetric
+    """
+    if not is_square(mat):
+        return False
+    return npy.array_equal(mat, mat.transpose())
+
+
+def get_Hermitian_transpose(mat: npy.matrix) -> npy.matrix:
+    """
+    Computes the conjugate transpose of mat
+    :param mat: input matrix
+    :return: conjugate transpose of mat
+    """
+    return mat.transpose().conjugate()
+
+
+def is_Hermitian(mat: npy.matrix) -> bool:
+    """
+    Tests whether mat is Hermitian
+    :param mat: matrix to test
+    :return: whether mat is Hermitian
+    """
+    if not is_square(mat):
+        return False
+    return npy.array_equal(mat, get_Hermitian_transpose(mat))
+
+
+def is_positive_definite(mat: npy.matrix) -> bool:
+    """
+    Tests mat for positive definiteness by checking the following conditions:
+    (1) mat is symmetric.
+    (2) able to compute the Cholesky decomposition of mat.
+    :param mat: matrix to test
+    :return: whether mat is positive definite
+    """
+    if not is_Hermitian(mat):
+        return False
+    try:
+        npy.linalg.cholesky(mat)
+        return True
+    except npy.linalg.LinAlgError:
+        return False
+
+
+def is_positive_semidefinite(mat: npy.matrix, tol=1e-12) -> bool:
+    """
+    Tests mat for positive semidefiniteness by verifying
+    whether all eigenvalues of mat are nonnegative within a certain tolerance
+    :param mat: matrix to test
+    :param tol: tolerance in determining nonnegativity due to loss of precision
+    in computing the eigenvalues of mat
+    :return: whether mat is positive definite
+    """
+    if not is_Hermitian(mat):
+        return False
+    try:
+        v = npy.linalg.eigvalsh(mat)
+    except npy.linalg.LinAlgError:
+        return False
+    return npy.all(v > -tol)
