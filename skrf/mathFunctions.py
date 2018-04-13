@@ -638,72 +638,92 @@ def irfft(x, n=None):
 # Matrix functions
 
 def is_square(mat):
-    # type: (npy.matrix) -> bool
     """
     Tests whether mat is a square matrix
-    :param mat: matrix to test
-    :return: whether mat is a square matrix
+
+    Parameters
+    ----------
+    mat : npy.matrix
+        Matrix to test for being square
     """
     return mat.shape[0] == mat.shape[1]
 
 
-def is_unitary(mat):
-    # type: (npy.matrix) -> bool
+def is_unitary(mat, tol=ALMOST_ZERO):
     """
     Tests mat for unitariness
-    :param mat: matrix to test
-    :return: whether mat is unitary
+
+    Parameters
+    ----------
+    mat : npy.matrix
+        Matrix to test for unitariness
+    tol : float
+        Absolute tolerance
     """
     if not is_square(mat):
         return False
     return npy.allclose(get_Hermitian_transpose(mat) * mat,
-                        npy.identity(mat.shape[0]))
+                        npy.identity(mat.shape[0]), atol=tol)
 
 
-def is_symmetric(mat):
-    # type: (npy.matrix) -> bool
+def is_symmetric(mat, tol=ALMOST_ZERO):
     """
     Tests mat for symmetry
-    :param mat: matrix to test
-    :return: whether mat is symmetric
+
+    Parameters
+    ----------
+    mat : npy.matrix
+        Matrix to test for symmetry
+    tol : float
+        Absolute tolerance
     """
     if not is_square(mat):
         return False
-    return npy.array_equal(mat, mat.transpose())
+    return npy.allclose(mat, mat.transpose(), atol=tol)
 
 
 def get_Hermitian_transpose(mat):
-    # type: (npy.matrix) -> npy.matrix
     """
-    Computes the conjugate transpose of mat
-    :param mat: input matrix
-    :return: conjugate transpose of mat
+    Returns the conjugate transpose of mat
+
+    Parameters
+    ----------
+    mat : npy.matrix
+        Matrix to compute the conjugate transpose of
     """
     return mat.transpose().conjugate()
 
 
-def is_Hermitian(mat):
-    # type: (npy.matrix) -> bool
+def is_Hermitian(mat, tol=ALMOST_ZERO):
     """
     Tests whether mat is Hermitian
-    :param mat: matrix to test
-    :return: whether mat is Hermitian
+
+    Parameters
+    ----------
+    mat : npy.matrix
+        Matrix to test for being Hermitian
+    tol : float
+        Absolute tolerance
     """
     if not is_square(mat):
         return False
-    return npy.array_equal(mat, get_Hermitian_transpose(mat))
+    return npy.allclose(mat, get_Hermitian_transpose(mat), atol=tol)
 
 
-def is_positive_definite(mat):
-    # type: (npy.matrix) -> bool
+def is_positive_definite(mat, tol=ALMOST_ZERO):
     """
-    Tests mat for positive definiteness by checking the following conditions:
-    (1) mat is symmetric.
-    (2) able to compute the Cholesky decomposition of mat.
-    :param mat: matrix to test
-    :return: whether mat is positive definite
+    Tests mat for positive definiteness by verifying that
+    (1) mat is symmetric
+    (2) it's possible to compute the Cholesky decomposition of mat.
+
+    Parameters
+    ----------
+    mat : npy.matrix
+        Matrix to test for positive definiteness
+    tol : float
+        Absolute tolerance
     """
-    if not is_Hermitian(mat):
+    if not is_Hermitian(mat, tol=tol):
         return False
     try:
         npy.linalg.cholesky(mat)
@@ -712,15 +732,18 @@ def is_positive_definite(mat):
         return False
 
 
-def is_positive_semidefinite(mat, tol=1e-12):
-    # type: (npy.matrix, float) -> bool
+def is_positive_semidefinite(mat, tol=ALMOST_ZERO):
     """
-    Tests mat for positive semidefiniteness by verifying
+    Tests mat for positive semidefiniteness by checking
     whether all eigenvalues of mat are nonnegative within a certain tolerance
-    :param mat: matrix to test
-    :param tol: tolerance in determining nonnegativity due to loss of precision
-    in computing the eigenvalues of mat
-    :return: whether mat is positive definite
+
+    Parameters
+    ----------
+    mat : npy.matrix
+        Matrix to test for positive semidefiniteness
+    tol : float
+        Absolute tolerance in determining nonnegativity due to loss of precision
+        when computing the eigenvalues of mat
     """
     if not is_Hermitian(mat):
         return False

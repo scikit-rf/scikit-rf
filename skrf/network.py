@@ -173,7 +173,6 @@ from .time import time_gate
 
 from .constants import ZERO
 
-from typing import Union, Iterable, Dict, Optional
 
 class Network(object):
     """
@@ -1308,13 +1307,13 @@ class Network(object):
         return gd
 
     ## NETWORK CLASSIFIERs
-    def is_reciprocal(self, tol=ZERO):
+    def is_reciprocal(self, tol=mf.ALMOST_ZERO):
         '''
         test for reciprocity
         '''
-        return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s))
+        return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n=1, port_order={}):
+    def is_symmetric(self, n=1, port_order={}, tol=mf.ALMOST_ZERO):
         '''
         Returns whether the 2N-port network has n-th order reflection symmetry
         by checking s_ii == s_jj for appropriate pair(s) of i and j.
@@ -1327,6 +1326,8 @@ class Network(object):
             Order of line symmetry to test for
         port_order : dict[int, int]
             Renumbering of zero-indexed ports before testing
+        tol: float
+            Numeric tolerance of equality
 
         Raises
         ------
@@ -1341,7 +1342,7 @@ class Network(object):
         z, y, x = self.s.shape  # z is number of frequencies, and x is number of ports (2N)
         if x % 2 != 0 or x != y:
             raise ValueError('test of symmetric is only valid for a 2N-port network')
-        N = int(x / 2)
+        N = x // 2
         if n <= 0 or n > N:
             raise ValueError('specified order n = ' + str(n) + ' must be ' +
                              'between 1 and N = ' + str(N) + ', inclusive')
@@ -1358,17 +1359,17 @@ class Network(object):
         if len(from_ports) > 0 and len(to_ports) > 0:
             test_network.renumber(from_ports, to_ports)
 
-        mirror_lines = range(0, N, int(N / n))
+        mirror_lines = range(0, N, N // n)
         for f_idx in range(z):
             mat = npy.matrix(test_network.s[f_idx, :, :])
             for k in mirror_lines:  # TODO: reduce loop nesting
                 for delta in range(0, N):
                     i, j = k-1 - delta, k + delta
-                    if mat[i, i] != mat[j, j]:
+                    if abs(mat[i, i] - mat[j, j]) > tol:
                         return False
         return True
 
-    def is_passive(self):
+    def is_passive(self, tol=mf.ALMOST_ZERO):
         '''
         test for passivity
         '''
@@ -1381,11 +1382,11 @@ class Network(object):
         for f_idx in range(len(M)):
             D = I - M[f_idx, :, :]  # dissipation matrix
             if not mf.is_positive_definite(D) \
-                    and not mf.is_positive_semidefinite(mat=D):
+                    and not mf.is_positive_semidefinite(mat=D, tol=tol):
                 return False
         return True
 
-    def is_lossless(self):
+    def is_lossless(self, tol=mf.ALMOST_ZERO):
         '''
         test for losslessness
 
