@@ -312,40 +312,79 @@ class NetworkTestCase(unittest.TestCase):
     # Network classifiers
     def test_is_reciprocal(self):
         a = rf.Network(f=[1, 2],
-                       s=[[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+                       s=[[0, 1, 0],
+                          [0, 0, 1],
+                          [1, 0, 0]],
                        z0=50)
         self.assertFalse(a.is_reciprocal(), 'A circulator is not reciprocal.')
         b = rf.Network(f=[1, 2],
-                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       s=[[0, 0.5, 0.5],
+                          [0.5, 0, 0.5],
+                          [0.5, 0.5, 0]],
                        z0=50)
         self.assertTrue(b.is_reciprocal(), 'This power divider is reciprocal.')
         return
 
     def test_is_symmetric(self):
         a = rf.Network(f=[1, 2],
-                       s=[[0, 1, 0], [0, 0, 1], [1, 0, 0]],
+                       s=[[-1, 0],
+                          [0, -1]],
                        z0=50)
-        self.assertFalse(a.is_symmetric(), 'A circulator is not symmetric.')
+        self.assertTrue(a.is_symmetric(), 'A short is symmetric.')
+        self.assertRaises(ValueError, a.is_symmetric, port_order={1: 2})  # raised by renumber()
+        a.s[0, 0, 0] = 1
+        self.assertFalse(a.is_symmetric(), 'non-symmetrical')
         b = rf.Network(f=[1, 2],
-                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       s=[[0, 0.5, 0.5],
+                          [0.5, 0, 0.5],
+                          [0.5, 0.5, 0]],
                        z0=50)
-        self.assertTrue(b.is_symmetric(), 'This power divider is symmetric.')
+        self.assertRaisesRegexp(ValueError, 'test of symmetric is only valid for a 2N-port network',
+                                b.is_symmetric)
+        c = rf.Network(f=[1, 2],
+                       s=[[0, 1j, 1, 0],
+                          [1j, 0, 0, 1],
+                          [1, 0, 0, 1j],
+                          [0, 1, 1j, 0]],
+                       z0=50)
+        self.assertTrue(c.is_symmetric(n=2), 'This quadrature hybrid coupler is symmetric.')
+        self.assertTrue(c.is_symmetric(n=2, port_order={0: 1, 1: 2, 2: 3, 3: 0}),
+                        'This quadrature hybrid coupler is symmetric even after rotation.')
+        self.assertRaisesRegexp(ValueError, 'specified order n = 3 must be between 1 and N = 2, inclusive',
+                                c.is_symmetric, n=3)
+        d = rf.Network(f=[1, 2],
+                       s=[[1, 0, 0, 0],
+                          [1, 0, 0, 0],
+                          [1, 0, 0, 1],
+                          [0, 1, 0, 1]],
+                       z0=50)
+        self.assertTrue(d.is_symmetric(n=1), 'This contrived non-reciprocal device has a line of symmetry.')
+        self.assertFalse(d.is_symmetric(n=2), 'This device only has first-order line symmetry.')
+        self.assertFalse(d.is_symmetric(port_order={0: 1, 1: 0}),
+                         'This device is no longer symmetric after reordering ports 1 and 2.')
+        self.assertTrue(d.is_symmetric(port_order={0: 1, 1: 0, 2: 3, 3: 2}),
+                        'This device is symmetric after swapping ports 1 with 2 and 3 with 4.')
         return
 
     def test_is_passive(self):
         a = rf.Network(f=[1, 2],
-                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       s=[[0, 0.5, 0.5],
+                          [0.5, 0, 0.5],
+                          [0.5, 0.5, 0]],
                        z0=50)
         self.assertTrue(a.is_passive(), 'This power divider is passive.')
         b = rf.Network(f=[1, 2],
-                       s=[[0, 0], [10, 0]],
+                       s=[[0, 0],
+                          [10, 0]],
                        z0=50)
         self.assertFalse(b.is_passive(), 'A unilateral amplifier is not passive.')
         return
 
     def test_is_lossless(self):
         a = rf.Network(f=[1, 2],
-                       s=[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                       s=[[0, 0.5, 0.5],
+                          [0.5, 0, 0.5],
+                          [0.5, 0.5, 0]],
                        z0=50)
         self.assertFalse(a.is_lossless(), 'A resistive power divider is lossy.')
         b = rf.Network(f=[1, 2],
