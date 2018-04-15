@@ -1327,7 +1327,7 @@ class Network(object):
         port_order : dict[int, int]
             Renumbering of zero-indexed ports before testing
         tol: float
-            Numeric tolerance of equality
+            Tolerance in numeric comparisons
 
         Raises
         ------
@@ -1350,23 +1350,20 @@ class Network(object):
             raise ValueError('specified order n = ' + str(n) + ' must evenly divide ' +
                              'N = ' + str(N))
 
-        from_ports = []
-        to_ports = []
-        for k, v in port_order.items():  # TODO: use lambda expression
-            from_ports.append(int(k))
-            to_ports.append(int(v))
-        test_network = self.copy()
+        from_ports = list(map(lambda key: int(key), port_order.keys()))
+        to_ports = list(map(lambda val: int(val), port_order.values()))
+        test_network = self.copy()  # TODO: consider defining renumbered()
         if len(from_ports) > 0 and len(to_ports) > 0:
             test_network.renumber(from_ports, to_ports)
 
-        mirror_lines = range(0, N, N // n)
         for f_idx in range(z):
             mat = npy.matrix(test_network.s[f_idx, :, :])
-            for k in mirror_lines:  # TODO: reduce loop nesting
-                for delta in range(0, N):
-                    i, j = k-1 - delta, k + delta
-                    if abs(mat[i, i] - mat[j, j]) > tol:
-                        return False
+            for k in range(0, N, N // n):  # iterate through n mirror lines
+                offs = npy.array(range(0, N))  # port index offsets from each mirror line
+                mirror = k*npy.ones_like(offs)
+                i, j = mirror-1 - offs, mirror + offs
+                if not npy.allclose(mat[i, i], mat[j, j], atol=tol):
+                    return False
         return True
 
     def is_passive(self, tol=mf.ALMOST_ZERO):
@@ -1396,7 +1393,7 @@ class Network(object):
         '''
         for f_idx in range(len(self.s)):
             mat = npy.matrix(self.s[f_idx, :, :])
-            if not mf.is_unitary(mat):
+            if not mf.is_unitary(mat, tol=tol):
                 return False
         return True
 
