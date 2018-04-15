@@ -1356,14 +1356,13 @@ class Network(object):
         if len(from_ports) > 0 and len(to_ports) > 0:
             test_network.renumber(from_ports, to_ports)
 
-        for f_idx in range(z):
-            mat = npy.matrix(test_network.s[f_idx, :, :])
-            for k in range(0, N, N // n):  # iterate through n mirror lines
-                offs = npy.array(range(0, N))  # port index offsets from each mirror line
-                mirror = k*npy.ones_like(offs)
-                i, j = mirror-1 - offs, mirror + offs
-                if not npy.allclose(mat[i, i], mat[j, j], atol=tol):
-                    return False
+        mat = npy.matrix(test_network.s)
+        offs = npy.array(range(0, N))  # port index offsets from each mirror line
+        for k in range(0, N, N // n):  # iterate through n mirror lines
+            mirror = k*npy.ones_like(offs)
+            i, j = mirror-1 - offs, mirror + offs
+            if not npy.allclose(mat[i, i], mat[j, j], atol=tol):
+                return False
         return True
 
     def is_passive(self, tol=mf.ALMOST_ZERO):
