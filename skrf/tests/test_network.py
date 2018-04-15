@@ -326,21 +326,27 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_is_symmetric(self):
+        # 2-port
         a = rf.Network(f=[1, 2],
                        s=[[-1, 0],
                           [0, -1]],
                        z0=50)
         self.assertTrue(a.is_symmetric(), 'A short is symmetric.')
-        self.assertRaises(ValueError, a.is_symmetric, port_order={1: 2})  # raised by renumber()
+        self.assertRaises(ValueError, a.is_symmetric, port_order={1: 2})  # error raised by renumber()
         a.s[0, 0, 0] = 1
         self.assertFalse(a.is_symmetric(), 'non-symmetrical')
+
+        # 3-port
         b = rf.Network(f=[1, 2],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
                        z0=50)
-        self.assertRaisesRegexp(ValueError, 'test of symmetric is only valid for a 2N-port network',
-                                b.is_symmetric)
+        with self.assertRaises(ValueError) as context:
+            b.is_symmetric()
+        self.assertEqual(str(context.exception), 'test of symmetric is only valid for a 2N-port network')
+
+        # 4-port
         c = rf.Network(f=[1, 2],
                        s=[[0, 1j, 1, 0],
                           [1j, 0, 0, 1],
@@ -350,8 +356,10 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(c.is_symmetric(n=2), 'This quadrature hybrid coupler is symmetric.')
         self.assertTrue(c.is_symmetric(n=2, port_order={0: 1, 1: 2, 2: 3, 3: 0}),
                         'This quadrature hybrid coupler is symmetric even after rotation.')
-        self.assertRaisesRegexp(ValueError, 'specified order n = 3 must be between 1 and N = 2, inclusive',
-                                c.is_symmetric, n=3)
+        with self.assertRaises(ValueError) as context:
+            c.is_symmetric(n=3)
+        self.assertEqual(str(context.exception), 'specified order n = 3 must be between 1 and N = 2, inclusive')
+
         d = rf.Network(f=[1, 2],
                        s=[[1, 0, 0, 0],
                           [1, 0, 0, 0],
@@ -364,6 +372,32 @@ class NetworkTestCase(unittest.TestCase):
                          'This device is no longer symmetric after reordering ports 1 and 2.')
         self.assertTrue(d.is_symmetric(port_order={0: 1, 1: 0, 2: 3, 3: 2}),
                         'This device is symmetric after swapping ports 1 with 2 and 3 with 4.')
+
+        # 6-port
+        x = rf.Network(f=[1, 2],
+                       s=[[0, 0, 0, 0, 0, 0],
+                          [0, 1, 9, 0, 0, 0],
+                          [0, 0, 2, 0, 0, 0],
+                          [0, 0, 0, 2, 0, 0],
+                          [0, 0, 0, 9, 1, 0],
+                          [0, 0, 0, 0, 0, 0]],
+                       z0=50)
+        self.assertFalse(x.is_symmetric(n=3))
+        self.assertFalse(x.is_symmetric(n=2))
+        self.assertTrue(x.is_symmetric(n=1))
+        self.assertTrue(x.is_symmetric(n=1, port_order={-3: -1, -1: -3, 0: 2, 2: 0}))
+
+        # 8-port
+        s8p_diag = [1j, -1j, -1j, 1j, 1j, -1j, -1j, 1j]
+        s8p_mat = npy.identity(8, dtype=complex)
+        for row in range(8):
+            s8p_mat[row, :] *= s8p_diag[row]
+        y = rf.Network(f=[1, 2],
+                       s=s8p_mat,
+                       z0=50)
+        self.assertTrue(y.is_symmetric())
+        self.assertTrue(y.is_symmetric(n=2))
+        self.assertFalse(y.is_symmetric(n=4))
         return
 
     def test_is_passive(self):
