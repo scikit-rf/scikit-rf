@@ -173,6 +173,7 @@ from .time import time_gate
 
 from .constants import ZERO
 
+
 class Network(object):
     """
     A n-port electrical network [#]_.
@@ -1305,30 +1306,95 @@ class Network(object):
 
         return gd
 
-    ## NETWORK CLASIFIERs
-    def is_reciprocal(self):
+    ## NETWORK CLASSIFIERs
+    def is_reciprocal(self, tol=mf.ALMOST_ZERO):
         '''
         test for reciprocity
         '''
-        raise (NotImplementedError)
+        return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self):
+    def is_symmetric(self, n=1, port_order={}, tol=mf.ALMOST_ZERO):
         '''
-        test for symmetry
-        '''
-        raise (NotImplementedError)
+        Returns whether the 2N-port network has n-th order reflection symmetry
+        by checking s_ii == s_jj for appropriate pair(s) of i and j.
 
-    def is_passive(self):
+        https://en.wikipedia.org/wiki/Two-port_network#Scattering_parameters_(S-parameters)
+
+        Parameters
+        ----------
+        n : int
+            Order of line symmetry to test for
+        port_order : dict[int, int]
+            Renumbering of zero-indexed ports before testing
+        tol: float
+            Tolerance in numeric comparisons
+
+        Raises
+        ------
+        ValueError
+            (1) If the network has an odd number of ports
+            (2) If n is not in the range 1 to N
+            (3) If n does not evenly divide 2N
+            (4) If port_order is not a valid reindexing of ports
+            e.g. specifying x->y but not y->z, specifying x->y twice,
+            or using an index outside the range 0 to 2N-1
+        '''
+        z, y, x = self.s.shape  # z is number of frequencies, and x is number of ports (2N)
+        if x % 2 != 0 or x != y:
+            raise ValueError('test of symmetric is only valid for a 2N-port network')
+        N = x // 2
+        if n <= 0 or n > N:
+            raise ValueError('specified order n = ' + str(n) + ' must be ' +
+                             'between 1 and N = ' + str(N) + ', inclusive')
+        if x % n != 0:
+            raise ValueError('specified order n = ' + str(n) + ' must evenly divide ' +
+                             'N = ' + str(N))
+
+        from_ports = list(map(lambda key: int(key), port_order.keys()))
+        to_ports = list(map(lambda val: int(val), port_order.values()))
+        test_network = self.copy()  # TODO: consider defining renumbered()
+        if len(from_ports) > 0 and len(to_ports) > 0:
+            test_network.renumber(from_ports, to_ports)
+
+        mat = npy.matrix(test_network.s)
+        offs = npy.array(range(0, N))  # port index offsets from each mirror line
+        for k in range(0, N, N // n):  # iterate through n mirror lines
+            mirror = k*npy.ones_like(offs)
+            i, j = mirror-1 - offs, mirror + offs
+            if not npy.allclose(mat[i, i], mat[j, j], atol=tol):
+                return False
+        return True
+
+    def is_passive(self, tol=mf.ALMOST_ZERO):
         '''
         test for passivity
         '''
-        raise (NotImplementedError)
+        try:
+            M = npy.square(self.passivity)
+        except ValueError:
+            return False
 
-    def is_lossless(self):
+        I = npy.identity(M.shape[-1])
+        for f_idx in range(len(M)):
+            D = I - M[f_idx, :, :]  # dissipation matrix
+            if not mf.is_positive_definite(D) \
+                    and not mf.is_positive_semidefinite(mat=D, tol=tol):
+                return False
+        return True
+
+    def is_lossless(self, tol=mf.ALMOST_ZERO):
         '''
         test for losslessness
+
+        [S] is lossless iff [S] is unitary ([S][S]* = [1])
+
+        https://en.wikipedia.org/wiki/Unitary_matrix
         '''
-        raise (NotImplementedError)
+        for f_idx in range(len(self.s)):
+            mat = npy.matrix(self.s[f_idx, :, :])
+            if not mf.is_unitary(mat, tol=tol):
+                return False
+        return True
 
     ## CLASS METHODS
     def copy(self):
@@ -4609,7 +4675,7 @@ def reciprocity(s):
 
 ## renormalize
 def renormalize_s(s, z_old, z_new):
-    '''
+    '''wave casca
     Renormalize a s-parameter matrix given old and new port impedances
 
     In the Parameters descriptions, F,N,N = shape(s).
