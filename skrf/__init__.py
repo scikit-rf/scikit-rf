@@ -72,12 +72,19 @@ stylely = None
 
 
 def setup_pylab():
+    try:
+        import matplotlib
+    except ImportError:
+        print("matplotlib not found while setting up plotting")
+        return False
+
     from . import plotting
     plotting.setup_matplotlib_plotting()
 
     global saf, stylely
     saf = plotting.save_all_figs
     stylely = plotting.stylely
+    return True
 
 
 def setup_plotting():
@@ -86,8 +93,8 @@ def setup_plotting():
     if plotting_environment == "pylab":
         setup_pylab()
     elif plotting_environment == "pylab-skrf-style":
-        setup_pylab()
-        stylely()
+        if setup_pylab():
+            stylely()
     # elif some different plotting environment
         # set that up
 
