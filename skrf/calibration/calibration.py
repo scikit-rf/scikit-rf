@@ -952,11 +952,11 @@ class OnePort(Calibration):
 
 
     .. math::
-        e_{11}\mathbf{i_1m_1}-\Delta e\,\mathbf{m_1}+e_{00}=\mathbf{i_1}
+        e_{11}\mathbf{i_1m_1}-\Delta e\,\mathbf{i_1}+e_{00}=\mathbf{m_1}
 
-        e_{11}\mathbf{i_2m_2}-\Delta e\,\mathbf{m_2}+e_{00}=\mathbf{i_2}
+        e_{11}\mathbf{i_2m_2}-\Delta e\,\mathbf{i_2}+e_{00}=\mathbf{m_2}
 
-        e_{11}\mathbf{i_3m_3}-\Delta e\,\mathbf{m_3}+e_{00}=\mathbf{i_3}
+        e_{11}\mathbf{i_3m_3}-\Delta e\,\mathbf{i_3}+e_{00}=\mathbf{m_3}
 
         ...
 
