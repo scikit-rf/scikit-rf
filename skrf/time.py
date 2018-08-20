@@ -231,7 +231,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
         start *= 1e-9
         stop *= 1e-9
         span = abs(stop-start)
-        center = (stop-start)/2.
+        center = (stop+start)/2.
     
     else:
         if center is None:    
@@ -263,7 +263,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
                            npy.zeros(len(t) - stop_idx)]
 
     #IFFT the gate, so we have it's frequency response, aka kernel
-    kernel=fft.fftshift(fft.ifft(fft.fftshift(gate, axes=0), axis=0))
+    kernel=fft.fftshift(fft.ifft(fft.ifftshift(gate, axes=0), axis=0))
     kernel =abs(kernel).flatten() # take mag and flatten
     kernel=kernel/sum(kernel) # normalize kernel
     
