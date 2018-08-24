@@ -2164,7 +2164,8 @@ class Network(object):
         result.s[0,:,:] = result.s[0,:,:].real
         return result
 
-    def crop(self, f_start, f_stop):
+
+    def crop(self, f_start, f_stop,unit =None):
         '''
         Crop Network based on start and stop frequencies.
 
@@ -2174,24 +2175,51 @@ class Network(object):
         Parameters
         -----------
         f_start : number
-            start frequency of crop range, in units of self.frequency.unit
+            start frequency of crop range, in units of self.frequency.unit.
+            If `f_start` is lower than the lowest frequency, no change to the network is made by the lower bound.
         f_stop : number
             stop frequency of crop range, in units of self.frequency.unit
-
-
+            If `f_stop` is higher than the highest frequency, no change to the network is made by the higher bound.
+        unit : string
+            Units that `f_start` and `f_stop` are described in. This must be a string recognized by the Frequency 
+            class, e.g. 'Hz','MHz', etc. A value of `None` assumes units are same as `self`
         '''
-        if f_start < self.frequency.f_scaled.min():
-            raise ValueError('`f_start` is out of range.')
-        elif f_stop > self.frequency.f_scaled.max():
-            raise ValueError('`f_stop` is out of range.')
+        if f_start == None:
+            f_start = -npy.inf
+        if f_stop == None:
+            f_stop = npy.inf
 
-        start_idx = find_nearest_index(self.frequency.f_scaled, f_start)
-        stop_idx = find_nearest_index(self.frequency.f_scaled, f_stop)
+        if f_stop<f_start:
+            raise ValueError("`f_stop` was {}, which was smaller than `f_start`, which was {}".format(f_stop,f_start))
 
+        if unit is not None: # if `unit` is specified, we must retranslate the frequency units
+            scaleFactor = Frequency.multiplier_dict[unit.lower()]/self.frequency.multiplier# make a multiplier to put f_start and f_stop in the right units, e.g. 'GHz' -> 'MHz'
+            f_start *=scaleFactor
+            f_stop *=scaleFactor
+
+        if f_start > self.frequency.f_scaled.max():
+            raise ValueError("`f_start` was {}, which was larger than the largest frequency in this Network object, which was {}".format(f_start,self.frequency.f_scaled.max()))
+        if f_stop < self.frequency.f_scaled.min():
+            raise ValueError("`f_stop` was {}, which was smaller than the smallest frequency in this Network object, which was {}".format(f_stop,self.frequency.f_scaled.min()))
+
+        start_idx,stop_idx = 0,self.frequency.npoints-1 # start with entire frequency range selected 
+
+        if f_start > self.frequency.f_scaled.min():
+            start_idx = find_nearest_index(self.frequency.f_scaled, f_start)
+            if f_start > self.frequency.f_scaled[start_idx]: # we do not want the start index to be at a frequency lower than `f_start`
+                start_idx += 1 
+        if f_stop < self.frequency.f_scaled.max():
+            stop_idx = find_nearest_index(self.frequency.f_scaled, f_stop)
+            if f_stop < self.frequency.f_scaled[stop_idx]: # we don't want the stop index to be at a frequency higher than `f_stop`
+                stop_idx -=1
+
+        if stop_idx < start_idx :
+            raise ValueError("Stop index/frequency lower than start: stop_idx: {}, start_idx: {}, self.frequency.f[stop_idx]: {}, self.frequency.f[start_idx]: {}"\
+                                .format(stop_idx,start_idx,self.frequency.f[stop_idx],self.frequency.f[start_idx]  ))
         ntwk = self[start_idx:stop_idx + 1]
         self.frequency, self.s, self.z0 = ntwk.frequency, ntwk.s, ntwk.z0
 
-    def cropped(self, f_start, f_stop):
+    def cropped(self, f_start, f_stop, unit=None):
         '''
         returns a cropped network, leaves self alone.
 
@@ -2200,7 +2228,7 @@ class Network(object):
         crop
         '''
         out = self.copy()
-        out.crop(f_start=f_start, f_stop=f_stop)
+        out.crop(f_start=f_start, f_stop=f_stop,unit=unit)
         return out
 
     def flip(self):
