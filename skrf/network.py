@@ -1,3 +1,4 @@
+print("blah")
 """
 .. module:: skrf.network
 ========================================
@@ -1517,7 +1518,8 @@ class Network(object):
     def write_touchstone(self, filename=None, dir=None,
                          write_z0=False, skrf_comment=True,
                          return_string=False, to_archive=None,
-                         form='ri'):
+                         form='ri',format_spec_A='{}',format_spec_B='{}',
+                         format_spec_freq='{}'):  
         """
         Write a contents of the :class:`Network` to a touchstone file.
 
@@ -1542,6 +1544,17 @@ class Network(object):
             * db = db, deg
             * ma = mag, deg
             * ri = real, imag
+        format_spec_A : string, optional
+            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the A part of the S parameter, (e.g. the dB magnitude for 'db' format, the linear 
+            magnitude for 'ma' format, or the real part for 'ri' format)
+        format_spec_B : string, optional
+            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the B part of the S parameter, (e.g. the angle in degrees for 'db' format, 
+            the angle in degrees for 'ma' format, or the imaginary part for 'ri' format)
+        format_spec_freq : string, optional
+            Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
+            This specifies the formatting in the resulting touchstone file for the frequency. 
 
         Notes
         -------
@@ -1585,6 +1598,21 @@ class Network(object):
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
+        for name,value in zip(['format_spec_A','format_spec_B','format_spec_freq'],[format_spec_A,format_spec_B,format_spec_freq]):
+            try:  # hopefully this doesn't cause anyone to not be able to use a format specifier that doesn't work on 1
+                value.format(1) # dumping anonymous string to test if format specs actually work before throwing mysterious errors
+            except Exception as e:
+                raise ValueError("{} = '{}' failed for 1.0, check format spec.".format(name,value)) from e # couldn't get a warning to work properly here...
+
+        # add formatting to funcA and funcB so we don't have to write it out many many times. 
+        def c2str_A(c):
+            '''Function which takes a complex number for the A part of param and returns an appropriately formatted string'''
+            return format_spec_A.format(funcA(c))
+
+        def c2str_B(c):
+            '''Function which takes a complex number for B part of param and returns an appropriately formatted string'''
+            return format_spec_B.format(funcB(c))
+
         def get_buffer():
             if return_string is True or type(to_archive) is zipfile.ZipFile:
                 from .io.general import StringBuffer  # avoid circular import
@@ -1618,9 +1646,9 @@ class Network(object):
                 output.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(str(self.frequency.f_scaled[f]) + ' ' \
-                                 + str(funcA(self.s[f, 0, 0])) + ' ' \
-                                 + str(funcB(self.s[f, 0, 0])) + '\n')
+                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]) + ' ' \
+                                 + c2str_A(self.s[f, 0, 0]) + ' ' \
+                                 + c2str_B(self.s[f, 0, 0]) + '\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         output.write('! Port Impedance ')
@@ -1639,15 +1667,15 @@ class Network(object):
                         **formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(str(self.frequency.f_scaled[f]) + ' ' \
-                                 + str(funcA(self.s[f, 0, 0])) + ' ' \
-                                 + str(funcB(self.s[f, 0, 0])) + ' ' \
-                                 + str(funcA(self.s[f, 1, 0])) + ' ' \
-                                 + str(funcB(self.s[f, 1, 0])) + ' ' \
-                                 + str(funcA(self.s[f, 0, 1])) + ' ' \
-                                 + str(funcB(self.s[f, 0, 1])) + ' ' \
-                                 + str(funcA(self.s[f, 1, 1])) + ' ' \
-                                 + str(funcB(self.s[f, 1, 1])) + '\n')
+                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]) + ' ' \
+                                 + c2str_A(self.s[f, 0, 0]) + ' ' \
+                                 + c2str_B(self.s[f, 0, 0]) + ' ' \
+                                 + c2str_A(self.s[f, 1, 0]) + ' ' \
+                                 + c2str_B(self.s[f, 1, 0]) + ' ' \
+                                 + c2str_A(self.s[f, 0, 1]) + ' ' \
+                                 + c2str_B(self.s[f, 0, 1]) + ' ' \
+                                 + c2str_A(self.s[f, 1, 1]) + ' ' \
+                                 + c2str_B(self.s[f, 1, 1]) + '\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
                         output.write('! Port Impedance')
@@ -1667,11 +1695,11 @@ class Network(object):
                 output.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(str(self.frequency.f_scaled[f]))
+                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]))
                     for m in range(3):
                         for n in range(3):
-                            output.write(' ' + str(funcA(self.s[f, m, n])) + ' ' \
-                                         + str(funcB(self.s[f, m, n])))
+                            output.write(' ' + c2str_A(self.s[f, m, n]) + ' ' \
+                                         + c2str_B(self.s[f, m, n]))
                         output.write('\n')
                     # write out the z0 following hfss's convention if desired
                     if write_z0:
@@ -1699,13 +1727,13 @@ class Network(object):
                 output.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(str(self.frequency.f_scaled[f]))
+                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]))
                     for m in range(self.number_of_ports):
                         for n in range(self.number_of_ports):
                             if (n > 0 and (n % 4) == 0):
                                 output.write('\n')
-                            output.write(' ' + str(funcA(self.s[f, m, n])) + ' ' \
-                                         + str(funcB(self.s[f, m, n])))
+                            output.write(' ' + c2str_A(self.s[f, m, n]) + ' ' \
+                                         + c2str_B(self.s[f, m, n]))
                         output.write('\n')
 
                     # write out the z0 following hfss's convention if desired
