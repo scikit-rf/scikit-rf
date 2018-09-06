@@ -1597,12 +1597,6 @@ class Network(object):
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
-        for name,value in zip(['format_spec_A','format_spec_B','format_spec_freq'],[format_spec_A,format_spec_B,format_spec_freq]):
-            try:  # hopefully this doesn't cause anyone to not be able to use a format specifier that doesn't work on 1
-                value.format(1) # dumping anonymous string to test if format specs actually work before throwing mysterious errors
-            except Exception as e:
-                raise ValueError("{} = '{}' failed for 1.0, check format spec.".format(name,value)) from e # couldn't get a warning to work properly here...
-
         # add formatting to funcA and funcB so we don't have to write it out many many times. 
         def c2str_A(c):
             '''Function which takes a complex number for the A part of param and returns an appropriately formatted string'''
