@@ -11,7 +11,7 @@ A coaxial transmission line defined in terms of its inner/outer diameters and pe
 
 #from copy import deepcopy
 from scipy.constants import  epsilon_0, mu_0, pi
-from numpy import sqrt, log, imag,exp
+from numpy import sqrt, log, real, imag, exp
 from ..tlineFunctions import surface_resistivity
 from .distributedCircuit import DistributedCircuit
 from .media import Media
@@ -151,14 +151,18 @@ class Coaxial( DistributedCircuit,Media ):
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
                 '\nDint= %.2f mm, Dout= %.2f mm '% \
                 (self.Dint*1e3, self.Dout*1e3) +\
-                '\nCharacteristic Impedance=%.1f-%.1f Ohm'%(self.Z0[0],self.Z0[-1]) +\
-                '\nPort impedance Z0=%.1f-%.1f Ohm'%(self.z0[0],self.z0[-1]) 
+                '\nCharacteristic Impedance=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
+                (real(self.Z0[0]), imag(self.Z0[0]), real(self.Z0[-1]), imag(self.Z0[-1])) +\
+                '\nPort impedance Z0=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
+                (real(self.z0[0]), imag(self.z0[0]), real(self.z0[-1]), imag(self.z0[-1]))
         except(TypeError):
             output =  \
                 'Coaxial Transmission Line.  %i-%i %s.  %i points'%\
                 (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
                 '\nDint= %.2f mm, Dout= %.2f mm '% \
                 (self.Dint[0]*1e3, self.Dout[0]*1e3) +\
-                '\nCharacteristic Impedance=%.1f-%.1f Ohm'%(self.Z0[0],self.Z0[-1]) +\
-                '\nPort impedance Z0=%.1f-%.1f Ohm'%(self.z0[0],self.z0[-1]) 
+                '\nCharacteristic Impedance=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
+                (real(self.Z0[0]), imag(self.Z0[0]), real(self.Z0[-1]), imag(self.Z0[-1])) +\
+                '\nPort impedance Z0=(%.1f,%.1fj)-(%.1f,%.1fj) Ohm'% \
+                (real(self.z0[0]), imag(self.z0[0]), real(self.z0[-1]), imag(self.z0[-1]))
         return output
