@@ -106,6 +106,8 @@ f_wm250  = f_wr1
 f_wm200  = f_wr0p8
 f_wm164  = f_wr0p65
 f_wm130  = f_wr0p51
+f_wm106  = Frequency(1700,2600,1001, 'ghz')
+f_wm86   = Frequency(2200,3300,1001, 'ghz')
 
 
 wr51  = RectangularWaveguide(f_wr51.copy(),a=510*mil,b=255*mil,z0=50)
@@ -132,15 +134,17 @@ wr0p8   = RectangularWaveguide(f_wr0p8.copy(),a=8*mil,b=4*mil,z0=50)
 wr0p65  = RectangularWaveguide(f_wr0p65.copy(),a=6.5*mil,b=3.25*mil,z0=50)
 wr0p51   = RectangularWaveguide(f_wr0p51.copy(),a=5.1*mil,b=2.55*mil,z0=50)
 
-wm1295 = wr5p1
-wm1092 = wr4p3
-wm864  = wr3p4
-wm710  = wr2p8
-wm570  = wr2p2
-wm470  = wr1p9
-wm380  = wr1p5
-wm310  = wr1p2
-wm250  = wr1
-wm200  = wr0p8
-wm164  = wr0p65
-wm130  = wr0p51
+wm1295 = RectangularWaveguide(f_wm1295.copy(),a=1295e-6,b=647.5e-6,z0=50)
+wm1092 = RectangularWaveguide(f_wm1092.copy(),a=1092e-6,b=546e-6,z0=50)
+wm864  = RectangularWaveguide(f_wm864.copy(),a=864e-6,b=432e-6,z0=50)
+wm710  = RectangularWaveguide(f_wm710.copy(),a=710e-6,b=355e-6,z0=50)
+wm570  = RectangularWaveguide(f_wm570.copy(),a=570e-6,b=285e-6,z0=50)
+wm470  = RectangularWaveguide(f_wm470.copy(),a=470e-6,b=235e-6,z0=50)
+wm380  = RectangularWaveguide(f_wm380.copy(),a=380e-6,b=190e-6,z0=50)
+wm310  = RectangularWaveguide(f_wm310.copy(),a=310e-6,b=155e-6,z0=50)
+wm250  = RectangularWaveguide(f_wm250.copy(),a=250e-6,b=125e-6,z0=50)
+wm200  = RectangularWaveguide(f_wm200.copy(),a=200e-6,b=100e-6,z0=50)
+wm164  = RectangularWaveguide(f_wm164.copy(),a=164e-6,b=82e-6,z0=50)
+wm130  = RectangularWaveguide(f_wm130.copy(),a=130e-6,b=65e-6,z0=50)
+wm106  = RectangularWaveguide(f_wm106.copy(),a=106e-6,b=53e-6,z0=50)
+wm86   = RectangularWaveguide(f_wm86.copy(),a=86e-6,b=43e-6,z0=50)

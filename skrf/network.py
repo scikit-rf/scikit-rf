@@ -1101,8 +1101,8 @@ class Network(object):
         """
         a :class:`Network` object with 'inverse' s-parameters.
 
-        This is used for de-embedding. It is defined so that the inverse
-        of a Network cascaded with itself is unity.
+        This is used for de-embedding.
+        It is defined such that the inverse of the s-matrix cascaded with itself is a unity scattering transfer parameter (T) matrix.
 
         Returns
         ---------
@@ -4932,9 +4932,8 @@ def inv(s):
     '''
     Calculates 'inverse' s-parameter matrix, used for de-embedding
 
-    This is not literally the inverse of the s-parameter matrix. Instead, it
-    is defined such that the inverse of the s-matrix cascaded
-    with itself is unity.
+    This is not literally the inverse of the s-parameter matrix.
+    Instead, it is defined such that the inverse of the s-matrix cascaded with itself is a unity scattering transfer parameter (T) matrix.
 
     .. math::
 

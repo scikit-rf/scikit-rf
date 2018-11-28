@@ -295,13 +295,12 @@ class MLine(Media):
             f = self.frequency.f
             ZF0 = npy.sqrt(mu_0/epsilon_0)
             ZL, rho, mu_r  = real(self.Z0_f), self.rho, self.mu_r
-            ep_reff= real(self.ep_reff)
             w = self.w + self.delta_wr
             rough = self.rough
             Kr  = 1 + 2/pi*arctan(1.4*(rough/skin_depth(f, rho, mu_r))**2)
             Ki  = exp(-1.2*(ZL/ZF0)**0.7)
             Rs  = surface_resistivity(f=f, rho=rho, mu_r=1)
-        return sqrt(ep_reff) * Rs*Kr*Ki/(ZL*w)
+        return  Rs*Kr*Ki/(ZL*w)
     
     @property
     def alpha_dielectric(self):

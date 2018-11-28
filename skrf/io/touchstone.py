@@ -119,7 +119,7 @@ class Touchstone:
             try:
                 self.rank = int(extension[1:-1])
             except (ValueError):
-                raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extention)))
+                raise (ValueError("filename does not have a s-parameter extension. It has  [%s] instead. please, correct the extension to of form: 'sNp', where N is any integer." %(extension)))
         elif extension == 'ts':
             pass
         else:
