@@ -135,10 +135,10 @@ class PNA(abcvna.VNA):
                 sweep_mode = "GROUPS"
                 number_of_sweeps = self.scpi.query_averaging_count(channel)
                 self.scpi.set_groups_count(channel, number_of_sweeps)
-                number_of_sweeps *= self.nports
+                number_of_sweeps *= self.NPORTS
             else:
                 sweep_mode = "SINGLE"
-                number_of_sweeps = self.nports
+                number_of_sweeps = self.NPORTS
             channels[i] = {
                 "cnum": channel,
                 "sweep_time": sweep_time,
@@ -222,7 +222,11 @@ class PNA(abcvna.VNA):
         ports : Iterable
             a iterable of integers designating the ports to query
         kwargs : dict
-            channel(int), sweep(bool), name(str), f_unit(str), corrected(bool)
+            channel(int) [ default 'self.active_channel' ]
+            sweep(bool) [default True]
+            name(str) [defaut \"\"]
+            f_unit(str) [ default \"GHz\" ]
+            raw_data(bool)  [default False]
 
         Returns
         -------
@@ -235,7 +239,7 @@ class PNA(abcvna.VNA):
         # force activate channel to avoid possible errors:
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
 
-        sweep = kwargs.get("sweep", False)
+        sweep = kwargs.get("sweep", True)
         name = kwargs.get("name", "")
         f_unit = kwargs.get("f_unit", "GHz")
         raw_data = kwargs.get("raw_data", False)
@@ -259,6 +263,7 @@ class PNA(abcvna.VNA):
                 data = self.scpi.query_snp_data(channel, ports)
         else:
             data = self.scpi.query_snp_data(channel, ports)
+        self.scpi.set_snp_format(snp_fmt)  # restore the value before we got the RI data
         self.scpi.set_snp_format(snp_fmt)  # restore the value before we got the RI data
 
         nrows = int(len(data) / npoints)
