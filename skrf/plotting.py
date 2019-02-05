@@ -1395,9 +1395,8 @@ def stylely(rc_dict={}, style_file = 'skrf.mplstyle'):
     '''
 
     from skrf.data import pwd # delayed to solve circular import
-    rc = mpl.rc_params_from_file(os.path.join(pwd, style_file))
-    mpl.rcParams.update(rc)
-    mpl.rcParams.update(rc_dict)
+    mpl.style.use(os.path.join(pwd, style_file))
+    mpl.rc(rc_dict)
 
 
 def plot_calibration_errors(self, *args, **kwargs):
