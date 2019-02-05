@@ -135,10 +135,10 @@ class PNA(abcvna.VNA):
                 sweep_mode = "GROUPS"
                 number_of_sweeps = self.scpi.query_averaging_count(channel)
                 self.scpi.set_groups_count(channel, number_of_sweeps)
-                number_of_sweeps *= self.nports
+                number_of_sweeps *= self.NPORTS
             else:
                 sweep_mode = "SINGLE"
-                number_of_sweeps = self.nports
+                number_of_sweeps = self.NPORTS
             channels[i] = {
                 "cnum": channel,
                 "sweep_time": sweep_time,
