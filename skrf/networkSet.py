@@ -44,6 +44,7 @@ import zipfile
 from copy import deepcopy
 import warnings
 import numpy as npy
+from scipy.interpolate import interp1d
 # import matplotlib.pyplot as plb
 from . util import now_string_2_dt
 # delayed imports due to circular dependencies
@@ -792,6 +793,43 @@ class NetworkSet(object):
             index = index,
             )
         return df
+
+    def interpolate_from_network(self, ntw_param, x, interp_kind='linear'):
+        '''
+        Interpolate a Network from a NetworkSet, as a multi-file N-port network.
+        
+        Assumes that the NetworkSet contains N-port networks 
+        with same number of ports N and same number of frequency points. 
+        
+        These networks differ from an given array parameter `interp_param`, 
+        which is used to interpolate the returned Network. Length of `interp_param`
+        should be equal to the length of the NetworkSet.
+        
+        Parameters
+        ----------
+        ntw_param : (N,) array_like 
+            A 1-D array of real values. The length of ntw_param must be equal
+            to the length of the NetworkSet
+        x : real
+            Point to evaluate the interpolated network at
+        interp_kind: str
+            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailled description.
+            Default is 'linear'.
+           
+        Returns
+        -------
+        ntw : class:`~skrf.network.Network`
+            Network interpolated at x
+        
+        '''              
+        ntw = self[0].copy()
+        # Interpolating the scattering parameters 
+        s = npy.array([self[idx].s for idx in range(len(self))])
+        f = interp1d(ntw_param, s, axis=0, kind=interp_kind)
+        ntw.s = f(x)
+        
+        return ntw
+    
 
 def plot_uncertainty_bounds_s_db(ntwk_list, *args, **kwargs):
     NetworkSet(ntwk_list).plot_uncertainty_bounds_s_db(*args, **kwargs)
