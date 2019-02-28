@@ -4327,8 +4327,27 @@ def s2a(s, z0=50):
     -------
     abcd : numpy.ndarray
         scattering transfer parameters (aka wave cascading matrix)
-    '''
-    return z2a(s2z(s, z0))
+    '''    
+    nfreqs, nports, nports = s.shape
+
+    if nports != 2:
+        raise IndexError('abcd parameters are defined for 2-ports networks only')
+
+    z0 = fix_z0_shape(z0, nfreqs, nports)
+    z01 = z0[:,0]
+    z02 = z0[:,1]
+    denom = (2*s[:,1,0]*npy.sqrt(z01.real * z02.real))
+    a = npy.array([
+        [
+            ((z01.conj() + s[:,0,0]*z01)*(1 - s[:,1,1]) + s[:,0,1]*s[:,1,0]*z01) / denom,
+            ((1 - s[:,0,0])*(1 - s[:,1,1]) - s[:,0,1]*s[:,1,0]) / denom,
+        ],
+        [
+            ((z01.conj() + s[:,0,0]*z01)*(z02.conj() + s[:,1,1]*z02) - s[:,0,1]*s[:,1,0]*z01*z02) / denom,
+            ((1 - s[:,0,0])*(z02.conj() + s[:,1,1]*z02) + s[:,0,1]*s[:,1,0]*z02) / denom,
+        ],
+    ]).transpose()
+    return a
 
 
 def y2s(y, z0=50):
