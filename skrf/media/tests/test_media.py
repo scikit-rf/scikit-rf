@@ -168,6 +168,50 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.s[:,1,0], S21)
         npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
 
+    def test_s_lossless_line(self):
+        '''
+        Lossless transmission line of characteristic impedance z1, length l
+        and wavenumber beta
+              _______
+        ○-----       -----○
+          z0     z1    z0
+        ○-----_______-----○
+
+        '''
+        l = 5
+        z1 = 30
+        z0 = self.dummy_media.z0
+
+        ntw = self.dummy_media.line(d=0, unit='m', z0=z0) \
+            ** self.dummy_media.line(d=l, unit='m', z0=z1) \
+            ** self.dummy_media.line(d=0, unit='m', z0=z0)
+
+        beta = self.dummy_media.beta
+        _z1 = z1/z0
+        S11 = 1j*(_z1**2 - 1)*npy.sin(beta*l) / \
+            (2*_z1*npy.cos(beta*l) + 1j*(_z1**2 + 1)*npy.sin(beta*l))
+        S21 = 2*_z1 / \
+            (2*_z1*npy.cos(beta*l) + 1j*(_z1**2 + 1)*npy.sin(beta*l))
+        npy.testing.assert_array_almost_equal(ntw.s[:,0,0], S11)
+        npy.testing.assert_array_almost_equal(ntw.s[:,0,1], S21)
+        npy.testing.assert_array_almost_equal(ntw.s[:,1,0], S21)
+        npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
+
+    def test_s_lossy_line(self):
+        '''
+        Lossy transmission line of characteristic impedance Z0, length l
+        and propagation constant gamma = alpha + j beta
+
+        ○---------○
+
+        ○---------○
+
+        has ABCD matrix of the form:
+
+        [ cosh(gamma l)       Z0 sinh(gamma l) ]
+        [ 1/Z0 sinh(gamma l)  cosh(gamma l) ]
+        '''
+
 
 class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
     '''
