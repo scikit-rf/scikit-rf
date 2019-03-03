@@ -4213,8 +4213,34 @@ def a2s(a, z0=50):
         abcd parameters
 
     '''
+    nfreqs, nports, nports = a.shape
 
-    return z2s(a2z(a), z0)
+    if nports != 2:
+        raise IndexError('abcd parameters are defined for 2-ports networks only')
+
+    z0 = fix_z0_shape(z0, nfreqs, nports)
+    z01 = z0[:,0]
+    z02 = z0[:,1]
+    A = a[:,0,0]
+    B = a[:,0,1]
+    C = a[:,1,0]
+    D = a[:,1,1]
+    denom = A*z02 + B + C*z01*z02 + D*z01 
+    
+    s = npy.array([
+        [
+            (A*z02 + B - C*z01.conj()*z02 - D*z01.conj() ) / denom,
+            (2*(A*D - B*C)*npy.sqrt(z01.real * z02.real)) / denom,
+        ],
+        [
+            (2*npy.sqrt(z01.real * z02.real)) / denom,
+            (-A*z02.conj() + B - C*z01*z02.conj() + D*z01) / denom,
+        ],
+    ]).transpose()
+    return s
+
+    #return z2s(a2z(a), z0)
+    
 
 
 def a2z(a):
