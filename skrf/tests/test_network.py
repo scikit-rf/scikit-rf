@@ -218,11 +218,11 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
-        tinyfloat = 1e-12
+        tinyfloat = 1e-11
         for test_z0 in (50, 10, 90+10j, 4-100j):
             for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3):
                 ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
-
+       
                 self.assertTrue((abs(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
