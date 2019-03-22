@@ -172,6 +172,8 @@ from .time import time_gate
 # from media import Freespace
 
 from .constants import ZERO
+from .constants import K_BOLTZMANN
+from .constants import T0
 
 
 class Network(object):
@@ -1149,7 +1151,7 @@ class Network(object):
       """
       the frequency vector for the noise of the network, in Hz.
       """
-      return self.freq_noise
+      return self.noise_freq
 
     @property
     def y_opt(self):
@@ -1176,9 +1178,7 @@ class Network(object):
       if self.noise is None:
         raise ValueError('network does not have noise')
 
-      k = 1.38064852e-23
-      T0 = 290.
-      return npy.real(1. + (self.noise[:,0,1] + self.noise[:,0,0] * npy.conj(self.y_opt))/(2*k*T0))
+      return npy.real(1. + (self.noise[:,0,1] + self.noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*T0))
 
     @property
     def nfmin_db(self):
@@ -1208,9 +1208,7 @@ class Network(object):
       """
       if self.noise is None:
         raise ValueError('network does not have noise')
-      k = 1.38064852e-23
-      T0 = 290.
-      return npy.real(self.noise[:,0,0]/(4.*k*T0))
+      return npy.real(self.noise[:,0,0]/(4.*K_BOLTZMANN*T0))
 
     # SECONDARY PROPERTIES
     @property
@@ -1557,7 +1555,7 @@ class Network(object):
         self.frequency.unit = touchstoneFile.frequency_unit
 
         if touchstoneFile.noise is not None:
-          noise_freq = touchstoneFile.noise[:, 0]
+          noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
           nf_min_log = touchstoneFile.noise[:, 1]
           gamma_opt_mag = touchstoneFile.noise[:, 2]
           gamma_opt_angle = touchstoneFile.noise[:, 3]
@@ -1572,13 +1570,14 @@ class Network(object):
           nf_min = npy.power(10., nf_min_log/10.)
           y_opt = 1./(self.z0[:, 0] * (1. + gamma_opt)/(1. - gamma_opt))
           
-          k = 1.38064852e-23
-          T0 = 290.
-          self.noise = 4.*k*T0*npy.array(
+          # use the voltage/current correlation matrix; this works nicely with
+          # cascading networks
+          self.noise = 4.*K_BOLTZMANN*T0*npy.array(
                 [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
                 [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
               ).swapaxes(0, 2).swapaxes(1, 2)
-          self.noise_freq = noise_freq
+          self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
+          self.noise_freq.unit = touchstoneFile.frequency_unit
 
         if self.name is None:
             try:
