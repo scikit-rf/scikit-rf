@@ -1122,7 +1122,9 @@ class Network(object):
     @property
     def f(self):
         """
-        the frequency vector for the network, in Hz.
+        The frequency vector for the network, in Hz.
+        
+        This is a convenience property which aliases `self.frequency.f`
 
         Returns
         --------
@@ -1137,9 +1139,8 @@ class Network(object):
         return self.frequency.f
 
     @f.setter
-    def f(self, f):
-        tmpUnit = self.frequency.unit
-        self.frequency = Frequency.from_f(f, unit=tmpUnit)
+    def f(self,f):
+        self.frequency.f = f
 
     # SECONDARY PROPERTIES
     @property
