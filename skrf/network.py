@@ -2083,10 +2083,21 @@ class Network(object):
             interp_mag = f_interp(f, mag, axis=0, **kwargs)
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
 
+        # interpolate noise data too
+        if self.noisy:
+          f_noise = self.noise_freq.f
+          f_noise_new = new_frequency.f
+          interp_noise_re = f_interp(f_noise, self.noise.real, axis=0, **kwargs)
+          interp_noise_im = f_interp(f_noise, self.noise.imag, axis=0, **kwargs)
+          noise_new = interp_noise_re(f_noise_new) + 1j * interp_noise_im(f_noise_new)
+
         if return_array:
             return x_new
         else:
             result.__setattr__(basis, x_new)
+            if self.noisy:
+              result.noise = noise_new
+              result.noise_freq = new_frequency
         return result
 
     def interpolate_self_npoints(self, npoints, **kwargs):
@@ -2159,6 +2170,8 @@ class Network(object):
         '''
         ntwk = self.interpolate(freq_or_n, **kwargs)
         self.frequency, self.s, self.z0 = ntwk.frequency, ntwk.s, ntwk.z0
+        if self.noisy:
+          self.noise, self.noise_freq = ntwk.noise, ntwk.noise_freq
 
     ##convenience
     resample = interpolate_self
