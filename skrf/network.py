@@ -372,6 +372,9 @@ class Network(object):
         self.comments = comments
         self.port_names = None
 
+        self.noise = None
+        self.noise_freq = None
+
         if file is not None:
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and
@@ -396,7 +399,7 @@ class Network(object):
             self.frequency.unit = f_unit
 
         # allow properties to be set through the constructor
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'n']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -1141,6 +1144,74 @@ class Network(object):
         tmpUnit = self.frequency.unit
         self.frequency = Frequency.from_f(f, unit=tmpUnit)
 
+    @property
+    def f_noise(self):
+      """
+      the frequency vector for the noise of the network, in Hz.
+      """
+      return self.freq_noise
+
+    @property
+    def y_opt(self):
+      """
+      the optimum source admittance to minimize noise, relative to the frequency values in self.noise_freq
+      """
+      if self.noise is None:
+        raise ValueError('network does not have noise')
+      return (npy.sqrt(self.noise[:,1,1]/self.noise[:,0,0] - npy.square(npy.imag(self.noise[:,0,1]/self.noise[:,0,0])))
+          + 1.j*npy.imag(self.noise[:,0,1]/self.noise[:,0,0]))
+
+    @property
+    def z_opt(self):
+      """
+      the optimum source impedance to minimize noise, relative to the frequency values in self.noise_freq
+      """
+      return 1./self.y_opt
+
+    @property
+    def nfmin(self):
+      """
+      the minimum noise figure for the network, relative to the frequency values in self.noise_freq
+      """
+      if self.noise is None:
+        raise ValueError('network does not have noise')
+
+      k = 1.38064852e-23
+      T0 = 290.
+      return npy.real(1. + (self.noise[:,0,1] + self.noise[:,0,0] * npy.conj(self.y_opt))/(2*k*T0))
+
+    @property
+    def nfmin_db(self):
+      """
+      the minimum noise figure for the network in dB, relative to the frequency values in self.noise_freq
+      """
+      return 10.*npy.log10(self.nfmin)
+
+    def nf(self, z):
+      """
+      the noise figure for the network if the source impedance is z
+      """
+      # TODO interpolate/broadcast/whatever z0 to get the right vector here
+      z0 = self.z0
+      y_opt = self.y_opt
+      fmin = self.nfmin
+      rn = self.rn
+
+      ys = 1./z
+      gs = npy.real(ys)
+      return fmin + rn/gs * npy.square(npy.absolute(ys - y_opt))
+ 
+    @property
+    def rn(self):
+      """
+      the equivalent noise resistance for the network, relative to the frequency values in self.noise_freq
+      """
+      if self.noise is None:
+        raise ValueError('network does not have noise')
+      k = 1.38064852e-23
+      T0 = 290.
+      return npy.real(self.noise[:,0,0]/(4.*k*T0))
+
     # SECONDARY PROPERTIES
     @property
     def number_of_ports(self):
@@ -1410,6 +1481,11 @@ class Network(object):
                        )
 
         ntwk.name = self.name
+
+        if self.noise is not None and self.noise_freq is not None:
+          ntwk.noise = npy.copy(self.noise)
+          ntwk.noise_freq = npy.copy(self.noise_freq)
+
         try:
             ntwk.port_names = copy(self.port_names)
         except(AttributeError):
@@ -1479,6 +1555,30 @@ class Network(object):
         f, self.s = touchstoneFile.get_sparameter_arrays()  # note: freq in Hz
         self.frequency = Frequency.from_f(f, unit='hz')
         self.frequency.unit = touchstoneFile.frequency_unit
+
+        if touchstoneFile.noise is not None:
+          noise_freq = touchstoneFile.noise[:, 0]
+          nf_min_log = touchstoneFile.noise[:, 1]
+          gamma_opt_mag = touchstoneFile.noise[:, 2]
+          gamma_opt_angle = touchstoneFile.noise[:, 3]
+
+          if touchstoneFile.version == '1.0':
+            rn = touchstoneFile.noise[:, 4] * self.z0[:,0]
+          else:
+            rn = touchstoneFile.noise[:, 4]
+
+          gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
+
+          nf_min = npy.power(10., nf_min_log/10.)
+          y_opt = 1./(self.z0[:, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          
+          k = 1.38064852e-23
+          T0 = 290.
+          self.noise = 4.*k*T0*npy.array(
+                [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
+                [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
+              ).swapaxes(0, 2).swapaxes(1, 2)
+          self.noise_freq = noise_freq
 
         if self.name is None:
             try:
@@ -2962,6 +3062,34 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
         ntwkC.renumber(from_ports=from_ports,
                        to_ports=to_ports)
+
+    # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
+    if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and (ntwkA.noise is not None or ntwkB.noise is not None):
+      # TODO check that the frequencies match up
+      cA = ntwkA.noise
+      cB = ntwkB.noise
+
+      if cA is None:
+        cA = npy.broadcast_arrays(npy.array([[0., 0.], [0., 0.]]), ntwkB.noise)[0]
+      if cB is None:
+        cB = npy.broadcast_arrays(npy.array([[0., 0.], [0., 0.]]), ntwkA.noise)[0]
+
+      if k == 0:
+        # if we're connecting to the "input" port of ntwkA, recalculate the equivalent noise of ntwkA,
+        # since we're modeling the noise as a pair of sources at the "input" port
+        # TODO
+        raise (NotImplementedError)
+      if l == 1:
+        # if we're connecting to the "output" port of ntwkB, recalculate the equivalent noise,
+        # since we're modeling the noise as a pair of sources at the "input" port
+        # TODO
+        raise (NotImplementedError)
+
+      # TODO: get abcd for each noise_freq instead of assuming it lines up with the scattering parameters
+      a = ntwkA.a
+      a_H = npy.conj(a.transpose(0, 2, 1))
+      cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
+      ntwkC.noise = cC
 
     return ntwkC
 
