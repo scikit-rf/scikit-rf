@@ -1147,6 +1147,13 @@ class Network(object):
         self.frequency = Frequency.from_f(f, unit=tmpUnit)
 
     @property
+    def noisy(self):
+      """
+      whether this network has noise
+      """
+      return self.noise is not None and self.noise_freq is not None
+
+    @property
     def f_noise(self):
       """
       the frequency vector for the noise of the network, in Hz.
@@ -1158,7 +1165,7 @@ class Network(object):
       """
       the optimum source admittance to minimize noise, relative to the frequency values in self.noise_freq
       """
-      if self.noise is None:
+      if not self.noisy:
         raise ValueError('network does not have noise')
       return (npy.sqrt(self.noise[:,1,1]/self.noise[:,0,0] - npy.square(npy.imag(self.noise[:,0,1]/self.noise[:,0,0])))
           + 1.j*npy.imag(self.noise[:,0,1]/self.noise[:,0,0]))
@@ -1175,9 +1182,8 @@ class Network(object):
       """
       the minimum noise figure for the network, relative to the frequency values in self.noise_freq
       """
-      if self.noise is None:
+      if not self.noisy:
         raise ValueError('network does not have noise')
-
       return npy.real(1. + (self.noise[:,0,1] + self.noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*T0))
 
     @property
@@ -1191,6 +1197,8 @@ class Network(object):
       """
       the noise figure for the network if the source impedance is z
       """
+      if not self.noisy:
+        raise ValueError('network does not have noise')
       # TODO interpolate/broadcast/whatever z0 to get the right vector here
       z0 = self.z0
       y_opt = self.y_opt
@@ -1206,7 +1214,7 @@ class Network(object):
       """
       the equivalent noise resistance for the network, relative to the frequency values in self.noise_freq
       """
-      if self.noise is None:
+      if not self.noisy:
         raise ValueError('network does not have noise')
       return npy.real(self.noise[:,0,0]/(4.*K_BOLTZMANN*T0))
 
@@ -3063,8 +3071,9 @@ def connect(ntwkA, k, ntwkB, l, num=1):
                        to_ports=to_ports)
 
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
-    if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and (ntwkA.noise is not None or ntwkB.noise is not None):
-      # TODO check that the frequencies match up
+    if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and (ntwkA.noisy or ntwkB.noisy):
+      if ntwkA.noise_freq != ntwkB.noise_freq:
+          raise IndexError('Networks must have same noise frequency. See `Network.interpolate`')
       cA = ntwkA.noise
       cB = ntwkB.noise
 
