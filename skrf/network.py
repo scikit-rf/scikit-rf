@@ -313,6 +313,8 @@ class Network(object):
         'time_step': 'Magnitude',
     }
 
+    noise_interp_kind = 'linear'
+
     # CONSTRUCTOR
     def __init__(self, file=None, name=None, comments=None, f_unit=None, **kwargs):
         '''
@@ -1154,6 +1156,18 @@ class Network(object):
       return self.noise is not None and self.noise_freq is not None
 
     @property
+    def n(self):
+      """
+      the ABCD form of the noise correlation matrix for the network
+      """
+      if not self.noisy:
+        raise ValueError('network does not have noise')
+
+      noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind)
+      noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind)
+      return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
+
+    @property
     def f_noise(self):
       """
       the frequency vector for the noise of the network, in Hz.
@@ -1163,33 +1177,31 @@ class Network(object):
     @property
     def y_opt(self):
       """
-      the optimum source admittance to minimize noise, relative to the frequency values in self.noise_freq
+      the optimum source admittance to minimize noise
       """
-      if not self.noisy:
-        raise ValueError('network does not have noise')
-      return (npy.sqrt(self.noise[:,1,1]/self.noise[:,0,0] - npy.square(npy.imag(self.noise[:,0,1]/self.noise[:,0,0])))
-          + 1.j*npy.imag(self.noise[:,0,1]/self.noise[:,0,0]))
+      noise = self.n
+      return (npy.sqrt(noise[:,1,1]/noise[:,0,0] - npy.square(npy.imag(noise[:,0,1]/noise[:,0,0])))
+          + 1.j*npy.imag(noise[:,0,1]/noise[:,0,0]))
 
     @property
     def z_opt(self):
       """
-      the optimum source impedance to minimize noise, relative to the frequency values in self.noise_freq
+      the optimum source impedance to minimize noise
       """
       return 1./self.y_opt
 
     @property
     def nfmin(self):
       """
-      the minimum noise figure for the network, relative to the frequency values in self.noise_freq
+      the minimum noise figure for the network
       """
-      if not self.noisy:
-        raise ValueError('network does not have noise')
-      return npy.real(1. + (self.noise[:,0,1] + self.noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*T0))
+      noise = self.n
+      return npy.real(1. + (noise[:,0,1] + noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*T0))
 
     @property
     def nfmin_db(self):
       """
-      the minimum noise figure for the network in dB, relative to the frequency values in self.noise_freq
+      the minimum noise figure for the network in dB
       """
       return 10.*npy.log10(self.nfmin)
 
@@ -1197,9 +1209,6 @@ class Network(object):
       """
       the noise figure for the network if the source impedance is z
       """
-      if not self.noisy:
-        raise ValueError('network does not have noise')
-      # TODO interpolate/broadcast/whatever z0 to get the right vector here
       z0 = self.z0
       y_opt = self.y_opt
       fmin = self.nfmin
@@ -1212,11 +1221,9 @@ class Network(object):
     @property
     def rn(self):
       """
-      the equivalent noise resistance for the network, relative to the frequency values in self.noise_freq
+      the equivalent noise resistance for the network
       """
-      if not self.noisy:
-        raise ValueError('network does not have noise')
-      return npy.real(self.noise[:,0,0]/(4.*K_BOLTZMANN*T0))
+      return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*T0))
 
     # SECONDARY PROPERTIES
     @property
@@ -1568,15 +1575,18 @@ class Network(object):
           gamma_opt_mag = touchstoneFile.noise[:, 2]
           gamma_opt_angle = touchstoneFile.noise[:, 3]
 
+          # TODO maybe properly interpolate z0?
+          # it probably never actually changes
           if touchstoneFile.version == '1.0':
-            rn = touchstoneFile.noise[:, 4] * self.z0[:,0]
+            rn = touchstoneFile.noise[:, 4] * self.z0[0, 0]
           else:
             rn = touchstoneFile.noise[:, 4]
 
           gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
 
           nf_min = npy.power(10., nf_min_log/10.)
-          y_opt = 1./(self.z0[:, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          # TODO maybe interpolate z0 as above
+          y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
           
           # use the voltage/current correlation matrix; this works nicely with
           # cascading networks
@@ -3106,8 +3116,13 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         # TODO
         raise (NotImplementedError)
 
-      # TODO: get abcd for each noise_freq instead of assuming it lines up with the scattering parameters
-      a = ntwkA.a
+      # interpolate abcd into the set of noise frequencies
+
+      a_real = interp1d(ntwkA.freq.f, ntwkA.a.real, 
+              axis=0, kind=Network.noise_interp_kind)
+      a_imag = interp1d(ntwkA.freq.f, ntwkA.a.imag, 
+              axis=0, kind=Network.noise_interp_kind)
+      a = a_real(ntwkA.noise_freq.f) + 1.j * a_imag(ntwkA.noise_freq.f)
       a_H = npy.conj(a.transpose(0, 2, 1))
       cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC

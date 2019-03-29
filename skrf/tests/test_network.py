@@ -429,6 +429,10 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.is_lossless(), 'This unmatched power divider is lossless.')
         return
 
+    def test_noise(self):
+        a = rf.Network('ntwk_noise.s2p')
+        return
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
