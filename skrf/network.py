@@ -1172,6 +1172,8 @@ class Network(object):
       """
       the frequency vector for the noise of the network, in Hz.
       """
+      if not self.noisy:
+        raise ValueError('network does not have noise')
       return self.noise_freq
 
     @property
@@ -3095,10 +3097,14 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
     if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and (ntwkA.noisy or ntwkB.noisy):
-      if ntwkA.noise_freq != ntwkB.noise_freq:
+      if ntwkA.noise_freq is not None and ntwkB.noise_freq is not None and ntwkA.noise_freq != ntwkB.noise_freq:
           raise IndexError('Networks must have same noise frequency. See `Network.interpolate`')
       cA = ntwkA.noise
       cB = ntwkB.noise
+
+      noise_freq = ntwkA.noise_freq
+      if noise_freq is None:
+        noise_freq = ntwkB.noise_freq
 
       if cA is None:
         cA = npy.broadcast_arrays(npy.array([[0., 0.], [0., 0.]]), ntwkB.noise)[0]
@@ -3118,14 +3124,15 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
       # interpolate abcd into the set of noise frequencies
 
-      a_real = interp1d(ntwkA.freq.f, ntwkA.a.real, 
+      a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
               axis=0, kind=Network.noise_interp_kind)
-      a_imag = interp1d(ntwkA.freq.f, ntwkA.a.imag, 
+      a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
               axis=0, kind=Network.noise_interp_kind)
-      a = a_real(ntwkA.noise_freq.f) + 1.j * a_imag(ntwkA.noise_freq.f)
+      a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
       a_H = npy.conj(a.transpose(0, 2, 1))
       cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC
+      ntwkC.noise_freq = noise_freq
 
     return ntwkC
 
