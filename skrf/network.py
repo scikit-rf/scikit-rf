@@ -1575,7 +1575,7 @@ class Network(object):
           noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
           nf_min_log = touchstoneFile.noise[:, 1]
           gamma_opt_mag = touchstoneFile.noise[:, 2]
-          gamma_opt_angle = touchstoneFile.noise[:, 3]
+          gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
 
           # TODO maybe properly interpolate z0?
           # it probably never actually changes
