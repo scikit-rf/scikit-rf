@@ -1153,7 +1153,10 @@ class Network(object):
       """
       whether this network has noise
       """
-      return self.noise is not None and self.noise_freq is not None
+      try:
+        return self.noise is not None and self.noise_freq is not None
+      except:
+        return False
 
     @property
     def n(self):
@@ -3096,7 +3099,13 @@ def connect(ntwkA, k, ntwkB, l, num=1):
                        to_ports=to_ports)
 
     # if ntwkA and ntwkB are both 2port, and either one has noise, calculate ntwkC's noise
-    if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and (ntwkA.noisy or ntwkB.noisy):
+    either_are_noisy = False
+    try:
+      either_are_noisy = ntwkA.noisy or ntwkB.noisy
+    except:
+      pass
+
+    if num == 1 and ntwkA.nports == 2 and ntwkB.nports == 2 and either_are_noisy:
       if ntwkA.noise_freq is not None and ntwkB.noise_freq is not None and ntwkA.noise_freq != ntwkB.noise_freq:
           raise IndexError('Networks must have same noise frequency. See `Network.interpolate`')
       cA = ntwkA.noise
