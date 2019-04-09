@@ -51,6 +51,8 @@ class Circuit():
         connections : list of list
             List of the intersections of the circuit. 
             Each intersection is a list of tuples containing the network
+            Example of an intersection between two network:
+                [ [(network1, network1_port_nb), (network2, network2_port_nb) ]
 
 
         '''
@@ -118,14 +120,34 @@ class Circuit():
         return [ntw for ntw in ntw_dict.values() if ntw.nports >= min_nports]
 
     @property
+    def connections_nb(self):
+        '''
+        Returns the number of intersections in the circuit. 
+        '''
+        return len(self.connections)
+    
+    @property
+    def networks_nb(self):
+        '''
+        Return the number of connected networks (port excluded)
+        '''
+        return len(self.networks_list(self.connections))
+    
+    @property
     def nodes_nb(self):
         '''
         Return the number of nodes in the circuit.
-
-        The number of nodes is the sum of the connections and
-        of the unique networks
         '''
-        return len(self.connections) + len(self.networks_list(self.connections))
+        return self.connections_nb + self.networks_nb
+
+    @property
+    def dim(self):
+        '''
+        Return the dimension of the C, X and global S matrices.
+        
+        It correspond to the sum of all connections
+        '''
+        return np.sum([len(cnx) for cnx in self.connections])
 
     @property
     def G(self):
@@ -252,8 +274,7 @@ class Circuit():
                 ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
         
         # re-ordering scattering parameters
-        dim = self.nodes_nb
-        S = np.zeros((len(self.frequency), dim, dim), dtype='complex' )
+        S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex' )
         
         for (ntw_name, ntw_ports) in ntws_ports_reordering.items():    
             # get the port re-ordering indexes (from -> to)
@@ -275,7 +296,7 @@ class Circuit():
         Return the global scattering parameter of the circuit, that is with 
         both "inner" and "outer" ports
         '''
-        return self.X @ np.linalg.inv(np.eye(self.nodes_nb) - self.C @ self.X)
+        return self.X @ np.linalg.inv(np.eye(self.dim) - self.C @ self.X)
 
     @property
     def port_indexes(self):

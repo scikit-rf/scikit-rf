@@ -2,6 +2,7 @@
 import skrf as rf
 import numpy as np
 import unittest
+import os
 from numpy.testing import assert_array_almost_equal, run_module_suite
 
 class CircuitTestWilkinson(unittest.TestCase):
@@ -122,37 +123,39 @@ class CircuitTestWilkinson(unittest.TestCase):
         assert_array_almost_equal(S_ext[0], S_theoretical)
 
 
-    # def test_cascade(self):
-    #     self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
-    #     self.assertEqual(self.Fix ** self.DUT ** self.Fix.flipped(), self.Meas)
+class CircuitTestCascadeNetworks(unittest.TestCase):
+    '''
+    Build a circuit made of cascading two Network and compare the result
+    to usual cascading of two networks.
+    '''
+    def setUp(self):
+        # Importing network examples
+        self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
+        self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
+        self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
+        self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
+        self.freq = self.ntwk1.frequency        
+        # circuit external ports 
+        self.port1 = rf.Circuit.Port(self.freq, name='Port1')
+        self.port2 = rf.Circuit.Port(self.freq, name='Port2')
+        
+    def test_cascade(self):
+        # ntwk3 is the cascade of ntwk1 and ntwk2, ie. self.ntwk1 ** self.ntwk2
+        connections = [  [(self.port1, 0), (self.ntwk1, 0)], 
+                         [(self.ntwk1, 1), (self.ntwk2, 0)], 
+                         [(self.ntwk2, 1), (self.port2, 0)] ]
+        circuit = rf.Circuit(connections)
+        # checl that all scattering parameters are equals
+        assert_array_almost_equal(circuit.S_external, self.ntwk3.s)
 
-    # def test_connect(self):
-    #     self.assertEqual(rf.connect(self.ntwk1, 1, self.ntwk2, 0) , \
-    #         self.ntwk3)
+    def test_cascade2(self):
+        # same thing with different ordering of the connections.
+        connections = [  [(self.port1, 0), (self.ntwk1, 0)], 
+                         [(self.ntwk2, 0), (self.ntwk1, 1)], 
+                         [(self.port2, 0), (self.ntwk2, 1)] ]
+        circuit = rf.Circuit(connections)
+        assert_array_almost_equal(circuit.S_external, self.ntwk3.s)    
 
-    #     xformer = rf.Network()
-    #     xformer.frequency=(1,)
-    #     xformer.s = ((0,1),(1,0))  # connects thru
-    #     xformer.z0 = (50,25)  # transforms 50 ohm to 25 ohm
-    #     c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
-    #     self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
-
-    # def test_connect_multiports(self):
-    #     a = rf.Network()
-    #     a.frequency=(1,)
-    #     a.s = npy.arange(16).reshape(4,4)
-    #     a.z0 = npy.arange(4) + 1 #  Z0 should never be zero
-
-    #     b = rf.Network()
-    #     b.frequency=(1,)
-    #     b.s = npy.arange(16).reshape(4,4)
-    #     b.z0 = npy.arange(4)+10
-
-    #     c=rf.connect(a,2,b,0,2)
-    #     self.assertTrue((c.z0==[1,2,12,13]).all())
-
-    #     d=rf.connect(a,0,b,0,3)
-    #     self.assertTrue((d.z0==[4,13]).all())
 
 if __name__ == "__main__" :
     run_module_suite()
