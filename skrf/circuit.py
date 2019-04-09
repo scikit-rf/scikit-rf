@@ -5,8 +5,8 @@ circuit (:mod:`skrf.circuit`)
 ========================================
 
 
-Provides a class representing a circuit of arbitrary topology, 
-consisting of an arbitrary number of N-ports networks or impedance elements. 
+Provides a class representing a circuit of arbitrary topology,
+consisting of an arbitrary number of N-ports networks or impedance elements.
 
 The results are returned in :class:`~skrf.network.Circuit` objects
 
@@ -33,50 +33,54 @@ class Circuit():
     '''
     Notes
     -----
-    The algorithm used to calculate the resultant network can be found in [#]_. 
-    
+    The algorithm used to calculate the resultant network can be found in [#]_.
+
     References
     ----------
     .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
-    
+
     '''
     def __init__(self, connections):
         '''
         Circuit constructor.
-        
-        Creates a circuit made of a set of N-ports networks. 
-        
+
+        Creates a circuit made of a set of N-ports networks.
+
         Parameters
         -----------
         connections : list of list
-            List of the intersections of the circuit. 
+            List of the intersections of the circuit.
             Each intersection is a list of tuples containing the network
             Example of an intersection between two network:
-                [ [(network1, network1_port_nb), (network2, network2_port_nb) ]
+            [ [(network1, network1_port_nb), (network2, network2_port_nb)],
+              [(network1, network1_port_nb), (network2, network2_port_nb)]
+
+        ! The external ports indexing is defined by the order of appearance of
+        the ports in the connections list.
 
 
         '''
         self.connections = connections
-        # TODO: check all network frequencies are the same    
-        
+        # TODO: check all network frequencies are the same
+
         ntws = self.networks_list(self.connections)
         self.frequency = ntws[0].frequency
-        
+
     @classmethod
-    def Port(cls, frequency, name, Z0=50+0*1j):
+    def Port(cls, frequency, name, z0=50+0*1j):
         '''
         Return a port Network. Passing the frequency and name is mendatory
-        
+
         Parameters
         -----------
         frequency : :class:`~skrf.frequency.Frequency`
             Frequency common to all other networks in the circuit
         name : string
-            Name of the port. 
+            Name of the port.
             Must inlude the word 'port' inside. (ex: 'Port1' or 'port_3')
-        Z0 : complex       
+        Z0 : complex
             Characteristic impedance of the port. Default is 50 Ohm.
-        
+
         Returns
         --------
         port : :class:`~skrf.network.Network` object
@@ -88,21 +92,21 @@ class Circuit():
 
             @suppress
             In [16]: import skrf as rf
-        
+
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
-            
+
             In [18]: port1 = rf.Circuit.Port(freq, name='Port1')
         '''
-        _media = media.DefinedGammaZ0(frequency, Z0=Z0)
+        _media = media.DefinedGammaZ0(frequency, z0=z0)
         return _media.match(name=name)
-        
+
     def networks_dict(self, connections=None, min_nports=1):
         '''
         Return the dictionnary of Networks from the connection setup X
         '''
         if not connections:
             connections = self.connections
-        
+
         ntws = []
         for cnx in connections:
             for (ntw,port) in cnx:
@@ -115,24 +119,24 @@ class Circuit():
         '''
         if not connections:
             connections = self.connections
-            
+
         ntw_dict = self.networks_dict(connections)
         return [ntw for ntw in ntw_dict.values() if ntw.nports >= min_nports]
 
     @property
     def connections_nb(self):
         '''
-        Returns the number of intersections in the circuit. 
+        Returns the number of intersections in the circuit.
         '''
         return len(self.connections)
-    
+
     @property
     def networks_nb(self):
         '''
         Return the number of connected networks (port excluded)
         '''
         return len(self.networks_list(self.connections))
-    
+
     @property
     def nodes_nb(self):
         '''
@@ -144,7 +148,7 @@ class Circuit():
     def dim(self):
         '''
         Return the dimension of the C, X and global S matrices.
-        
+
         It correspond to the sum of all connections
         '''
         return np.sum([len(cnx) for cnx in self.connections])
@@ -191,7 +195,7 @@ class Circuit():
         '''
         y_ns = []
         for (ntw, ntw_port) in cnx:
-
+            # formula (2)
             y_ns.append(1/ntw.z0[:,ntw_port] )
 
         y_k = np.array(y_ns).sum(axis=0)  # shape: (nb_freq,)
@@ -205,6 +209,7 @@ class Circuit():
         y_k = self._Y_k(cnx_k)
 
         for (ntw, ntw_port) in cnx_k:
+            # formula (1)
             X_nn.append( 2/(ntw.z0[:,ntw_port]*y_k) - 1)
 
         return np.array(X_nn).T  # shape: (nb_freq, nb_n)
@@ -218,8 +223,24 @@ class Circuit():
         X_mn = []
         y_k = self._Y_k(cnx_k)
 
-        for (ntw, ntw_port) in cnx_k:
-            X_mn.append( 2/(ntw.z0[:,ntw_port]*y_k) )
+        # There is a problem in the case of two-ports connexion:
+        # the formula (3) in P. Hallbjörner (2003) seems incorrect.
+        # Instead of Z_n one should have sqrt(Z_1 x Z_2).
+        # The formula works with respect to the example given in the paper
+        # (3 port connection), but not with 2-port connections made with skrf
+        if len(cnx_k) == 2:
+            z0s = []
+            for (ntw, ntw_port) in cnx_k:
+                z0s.append(ntw.z0[:,ntw_port])
+
+            z0eq = np.array(z0s).prod(axis=0)
+
+            for (ntw, ntw_port) in cnx_k:
+                X_mn.append( 2/(np.sqrt(z0eq) *y_k) )
+        else:
+            # formula (3)
+            for (ntw, ntw_port) in cnx_k:
+                X_mn.append( 2/(ntw.z0[:,ntw_port]*y_k) )
 
         return np.array(X_mn).T  # shape: (nb_freq, nb_n)
 
@@ -238,7 +259,7 @@ class Circuit():
             Xs.append(_X)
 
         return np.array(Xs) # shape : nb_freq, nb_n, nb_n
-        
+
     @property
     def X(self):
         '''
@@ -251,52 +272,54 @@ class Circuit():
         for cnx in self.connections:
             Xk.append(self._Xk(cnx))
         Xk = np.array(Xk)
-        
+
         #X = np.zeros(len(C.frequency), )
         Xf = []
         for (idx, f) in enumerate(self.frequency):
             Xf.append(block_diag(*Xk[:,idx,:]))
         return np.array(Xf)  # shape: (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
-    
+
     @property
     def C(self):
         '''
         Return the global scattering matrix of the networks
-        '''        
+        '''
         # list all networks with at least two ports
         ntws = self.networks_dict(min_nports=2)
-        
+
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
         for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
             ntw, ntw_port = cnx
             if ntw.name in ntws.keys():
                 ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
-        
+
         # re-ordering scattering parameters
         S = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex' )
-        
-        for (ntw_name, ntw_ports) in ntws_ports_reordering.items():    
+
+        for (ntw_name, ntw_ports) in ntws_ports_reordering.items():
             # get the port re-ordering indexes (from -> to)
             ntw_ports = np.array(ntw_ports)
             # create the port permutations
             from_port = list(product(ntw_ports[:,0], repeat=2))
             to_port = list(product(ntw_ports[:,1], repeat=2))
-            
+
             #print(ntw_name, from_port, to_port)
             for (_from, _to) in zip(from_port, to_port):
                 #print(f'{_from} --> {_to}')
                 S[:, _to[0], _to[1]] = ntws[ntw_name].s[:, _from[0], _from[1]]
-            
+
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
     @property
     def S(self):
         '''
-        Return the global scattering parameter of the circuit, that is with 
+        Return the global scattering parameter of the circuit, that is with
         both "inner" and "outer" ports
         '''
-        return self.X @ np.linalg.inv(np.eye(self.dim) - self.C @ self.X)
+        # transpose is necessary to get expected result
+        return np.transpose(self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X), axes=(0,2,1))
+        #return self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X)
 
     @property
     def port_indexes(self):
@@ -309,7 +332,7 @@ class Circuit():
             if 'port' in str.lower(ntw.name):
                 port_indexes.append(idx_cnx)
         return port_indexes
-    
+
     @property
     def S_external(self):
         '''
@@ -319,4 +342,3 @@ class Circuit():
         a, b = np.meshgrid(port_indexes, port_indexes)
         S_ext = self.S[:, a, b]
         return S_ext  #  shape (nb_frequency, nb_ports, nb_ports)
-        

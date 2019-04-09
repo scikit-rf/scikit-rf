@@ -134,15 +134,15 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
-        self.freq = self.ntwk1.frequency        
-        # circuit external ports 
+        self.freq = self.ntwk1.frequency
+        # circuit external ports
         self.port1 = rf.Circuit.Port(self.freq, name='Port1')
         self.port2 = rf.Circuit.Port(self.freq, name='Port2')
-        
+
     def test_cascade(self):
         # ntwk3 is the cascade of ntwk1 and ntwk2, ie. self.ntwk1 ** self.ntwk2
-        connections = [  [(self.port1, 0), (self.ntwk1, 0)], 
-                         [(self.ntwk1, 1), (self.ntwk2, 0)], 
+        connections = [  [(self.port1, 0), (self.ntwk1, 0)],
+                         [(self.ntwk1, 1), (self.ntwk2, 0)],
                          [(self.ntwk2, 1), (self.port2, 0)] ]
         circuit = rf.Circuit(connections)
         # checl that all scattering parameters are equals
@@ -150,12 +150,236 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
 
     def test_cascade2(self):
         # same thing with different ordering of the connections.
-        connections = [  [(self.port1, 0), (self.ntwk1, 0)], 
-                         [(self.ntwk2, 0), (self.ntwk1, 1)], 
+        connections = [  [(self.port1, 0), (self.ntwk1, 0)],
+                         [(self.ntwk2, 0), (self.ntwk1, 1)],
                          [(self.port2, 0), (self.ntwk2, 1)] ]
         circuit = rf.Circuit(connections)
-        assert_array_almost_equal(circuit.S_external, self.ntwk3.s)    
+        assert_array_almost_equal(circuit.S_external, self.ntwk3.s)
+
+    def test_cascade3(self):
+        # Inverting the cascading network order
+        connections = [  [(self.port1, 0), (self.ntwk2, 0)],
+                         [(self.ntwk2, 1), (self.ntwk1, 0)],
+                         [(self.port2, 0), (self.ntwk1, 1)] ]
+        circuit = rf.Circuit(connections)
+        ntw = self.ntwk2 ** self.ntwk1
+        assert_array_almost_equal(circuit.S_external, ntw.s)
+
+class CircuitTestMultiPortNetworkCascading(unittest.TestCase):
+
+    def test_1port_matched_network_default_impedance(self):
+        '''
+        Connect a 2 port network to a matched load
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(4).reshape(2,2)
+        line = rf.media.DefinedGammaZ0(frequency=freq)
+        match_load = line.match(name='match_load')
+        b = a ** match_load
+
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        connections = [[(port1, 0), (a,0)], [(a, 1), (match_load, 0)]]
+        circuit = rf.Circuit(connections)
+
+        assert_array_almost_equal(b.s, circuit.S_external)
+
+    def test_1port_matched_network_complex_impedance(self):
+        '''
+        Connect a 2 port network to a matched load. Both ports are complex.
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(4).reshape(2,2)
+        a.z0 = [1-1j, 2+4j]
+        line = rf.media.DefinedGammaZ0(frequency=freq, z0=2+4j)
+        match_load = line.match(name='match_load')
+        b = a ** match_load
+
+        port1 = rf.Circuit.Port(freq, z0=1-1j, name='port1')
+        connections = [[(port1, 0), (a,0)], [(a, 1), (match_load, 0)]]
+        circuit = rf.Circuit(connections)
+
+        assert_array_almost_equal(b.s, circuit.S_external)
+
+    def test_2ports_default_characteristic_impedance(self):
+        # default charact impedance (50 Ohm) for all ports
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(4).reshape(2,2)
+
+        b = rf.Network(name='b')
+        b.frequency = freq
+        b.s = np.random.rand(4).reshape(2,2)
+
+        c = rf.connect(a, 1, b, 0)
+
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        port2 = rf.Circuit.Port(freq,  name='port2')
+
+        connections = [[(port1, 0), (a, 0)],
+                        [(a, 1), (b, 0)],
+                        [(b, 1), (port2, 0)]]
+        circuit = rf.Circuit(connections)
+
+        assert_array_almost_equal(c.s, circuit.S_external)
+
+    def test_2ports_complex_characteristic_impedance(self):
+        # same charact impedance (1+1j) for all ports
+        z0 = 1 + 1j
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(4).reshape(2,2)
+        a.z0 = z0
+
+        b = rf.Network(name='b')
+        b.frequency = freq
+        b.s = np.random.rand(4).reshape(2,2)
+        b.z0 = z0
+
+        c = rf.connect(a, 1, b, 0)
+
+        port1 = rf.Circuit.Port(freq, z0=z0, name='port1')
+        port2 = rf.Circuit.Port(freq, z0=z0, name='port2')
+
+        connections = [[(port1, 0), (a, 0)],
+                        [(a, 1), (b, 0)],
+                        [(b, 1), (port2, 0)]]
+        circuit = rf.Circuit(connections)
+
+        assert_array_almost_equal(c.s, circuit.S_external)
+
+    def test_2ports_different_characteristic_impedances(self):
+        # different characteristic impedances for each network ports
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(4).reshape(2,2)
+        a.z0 = [1,2] #np.arange(2) + 1 #  Z0 should never be zero
+
+        b = rf.Network(name='b')
+        b.frequency = freq
+        b.s = np.random.rand(4).reshape(2,2)
+        b.z0 = [11,12] #np.arange(2) + 10
+
+        c = rf.connect(a, 1, b, 0)
+
+        port1 = rf.Circuit.Port(freq, z0=1, name='port1')
+        port2 = rf.Circuit.Port(freq, z0=12, name='port2')
+
+        connections = [[(port1, 0), (a, 0)],
+                        [(a, 1), (b, 0)],
+                        [(b, 1), (port2, 0)] ]
+        circuit = rf.Circuit(connections)
+
+        assert_array_almost_equal(c.s, circuit.S_external)
+
+    def test_4ports_default_characteristic_impedances(self):
+        '''
+        Connect two 4-ports networks in a resulting 4 port network,
+        with default characteric impedances
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(16).reshape(4,4)
+
+        b = rf.Network(name='b')
+        b.frequency = freq
+        b.s = np.random.rand(16).reshape(4,4)
+
+        c = rf.connect(a, 2, b, 0, 2)
+
+        port1 = rf.Circuit.Port(freq, name='port1')
+        port2 = rf.Circuit.Port(freq, name='port2')
+        port3 = rf.Circuit.Port(freq, name='port3')
+        port4 = rf.Circuit.Port(freq, name='port4')
+
+        connections = [ [(port1, 0), (a, 0)],
+                        [(port2, 0), (a, 1)],
+                        [(a, 2), (b, 0)],
+                        [(a, 3), (b, 1)],
+                        [(b, 2), (port3, 0)],
+                        [(b, 3), (port4, 0)]]
+        circuit = rf.Circuit(connections)
+
+        assert_array_almost_equal(c.s, circuit.S_external)
+
+    def test_4ports_complex_characteristic_impedances(self):
+        '''
+        Connect two 4-ports networks in a resulting 4 port network,
+        with default characteric impedances
+        '''
+        z0 = 5 + 4j
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(16).reshape(4,4)
+        a.z0 = z0
+
+        b = rf.Network(name='b')
+        b.frequency = freq
+        b.s = np.random.rand(16).reshape(4,4)
+        b.z0 = z0
+
+        c = rf.connect(a, 2, b, 0, 2)
+
+        port1 = rf.Circuit.Port(freq, z0=z0, name='port1')
+        port2 = rf.Circuit.Port(freq, z0=z0, name='port2')
+        port3 = rf.Circuit.Port(freq, z0=z0, name='port3')
+        port4 = rf.Circuit.Port(freq, z0=z0, name='port4')
+
+        connections = [ [(port1, 0), (a, 0)],
+                        [(port2, 0), (a, 1)],
+                        [(a, 2), (b, 0)],
+                        [(a, 3), (b, 1)],
+                        [(b, 2), (port3, 0)],
+                        [(b, 3), (port4, 0)]]
+        circuit = rf.Circuit(connections)
+
+        assert_array_almost_equal(c.s, circuit.S_external)
+
+    def test_4ports_different_characteristic_impedances(self):
+        '''
+        Connect two 4-ports networks in a resulting 4 port network,
+        with default characteric impedances
+        '''
+        z0 = [1,2,3,4]
+        freq = rf.Frequency(start=1, npoints=1)
+        a = rf.Network(name='a')
+        a.frequency = freq
+        a.s = np.random.rand(16).reshape(4,4)
+        a.z0 = z0
+
+        b = rf.Network(name='b')
+        b.frequency = freq
+        b.s = np.random.rand(16).reshape(4,4)
+        b.z0 = [11,12,13,14]
+
+        _c = rf.connect(a, 2, b, 0)
+        c = rf.innerconnect(_c, 2, 3)
+
+        port1 = rf.Circuit.Port(freq, z0=1, name='port1')
+        port2 = rf.Circuit.Port(freq, z0=2, name='port2')
+        port3 = rf.Circuit.Port(freq, z0=13, name='port3')
+        port4 = rf.Circuit.Port(freq, z0=14, name='port4')
+
+        connections = [ [(port1, 0), (a, 0)],
+                        [(port2, 0), (a, 1)],
+                        [(a, 2), (b, 0)],
+                        [(a, 3), (b, 1)],
+                        [(b, 2), (port3, 0)],
+                        [(b, 3), (port4, 0)]]
+        circuit = rf.Circuit(connections)
+        circuit.plot()
+        assert_array_almost_equal(c.s, circuit.S_external)
+
 
 
 if __name__ == "__main__" :
     run_module_suite()
+
