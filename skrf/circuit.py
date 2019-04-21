@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 '''
 .. module:: skrf.circuit
 ========================================
@@ -190,7 +191,7 @@ class Circuit():
 
         # Adding edges in the graph between connections and networks
         for (idx, cnx) in enumerate(self.connections):
-            cnx_name = f'$X_{idx}$'
+            cnx_name = '$X_'+str(idx)+'$'
             # Adding connection nodes and edges
             G.add_node(cnx_name)
             for (ntw, ntw_port) in cnx:
