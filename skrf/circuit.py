@@ -260,6 +260,11 @@ class Circuit():
 
         return np.array(Xs) # shape : nb_freq, nb_n, nb_n
 
+        # TEST : Could we use media.splitter() instead ? -> does not work
+        # _media = media.DefinedGammaZ0(frequency=self.frequency)
+        # Xs = _media.splitter(len(cnx_k), z0=self._cnx_z0(cnx_k))
+        # return Xs.s
+
     @property
     def X(self):
         '''
@@ -319,7 +324,6 @@ class Circuit():
         '''
         # transpose is necessary to get expected result
         return np.transpose(self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X), axes=(0,2,1))
-        #return self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X)
 
     @property
     def port_indexes(self):
@@ -333,6 +337,28 @@ class Circuit():
                 port_indexes.append(idx_cnx)
         return port_indexes
 
+    def _cnx_z0(self, cnx_k):
+        '''
+        Return the characteristic impedances of a specific connection
+        '''
+        z0s = []
+        for (ntw, ntw_port) in cnx_k:
+            z0s.append(ntw.z0[:,ntw_port])
+
+        return np.array(z0s).T  # shape (nb_freq, nb_ports_at_cnx)
+    
+    @property
+    def port_z0(self):
+        '''
+        Return the external port impedances 
+        '''
+        z0s = []
+        for cnx in self.connections:
+            for (ntw, ntw_port) in cnx:
+                z0s.append(ntw.z0[:,ntw_port])
+
+        return np.array(z0s)[self.port_indexes, :].T # shape (nb_freq, nb_ports )
+
     @property
     def S_external(self):
         '''
@@ -341,4 +367,15 @@ class Circuit():
         port_indexes = self.port_indexes
         a, b = np.meshgrid(port_indexes, port_indexes)
         S_ext = self.S[:, a, b]
-        return S_ext  #  shape (nb_frequency, nb_ports, nb_ports)
+        return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
+
+    @property
+    def network(self):
+        '''
+        Return the Network associated to external ports
+        '''
+        ntw = Network()
+        ntw.frequency = self.frequency
+        ntw.z0 = self.port_z0
+        ntw.s = self.S_external
+        return ntw
