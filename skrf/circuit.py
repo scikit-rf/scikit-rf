@@ -61,10 +61,33 @@ class Circuit():
 
         '''
         self.connections = connections
-        # TODO: check all network frequencies are the same
 
-        ntws = self.networks_list(self.connections)
-        self.frequency = ntws[0].frequency
+        # check if all networks have a name
+        for cnx in self.connections:
+            for (ntw, _) in cnx:
+                if not self._is_named(ntw):
+                    raise AttributeError('All Networks must have a name.')
+
+        # create a list of networks for initial checks
+        self.ntws = self.networks_list(self.connections)
+
+        # check if all networks have same frequency
+        ref_freq = self.ntws[0].frequency
+        for ntw in self.ntws:
+            if ntw.frequency != ref_freq:
+                raise AttributeError('All Networks must have same frequencies')
+        # All frequencies are the same, Circuit frequency can be any of the ntw
+        self.frequency = self.ntws[0].frequency
+
+
+    def _is_named(self, ntw):
+        '''
+        Return True is the network has a name, False otherwise
+        '''
+        if not ntw.name or ntw.name == '':
+            return False
+        else:
+            return True
 
     @classmethod
     def Port(cls, frequency, name, z0=50+0*1j):
@@ -109,7 +132,7 @@ class Circuit():
 
         ntws = []
         for cnx in connections:
-            for (ntw,port) in cnx:
+            for (ntw, port) in cnx:
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
@@ -346,18 +369,18 @@ class Circuit():
             z0s.append(ntw.z0[:,ntw_port])
 
         return np.array(z0s).T  # shape (nb_freq, nb_ports_at_cnx)
-    
+
     @property
     def port_z0(self):
         '''
-        Return the external port impedances 
+        Return the external port impedances
         '''
         z0s = []
         for cnx in self.connections:
             for (ntw, ntw_port) in cnx:
                 z0s.append(ntw.z0[:,ntw_port])
 
-        return np.array(z0s)[self.port_indexes, :].T # shape (nb_freq, nb_ports )
+        return np.array(z0s)[self.port_indexes, :].T  # shape (nb_freq, nb_ports)
 
     @property
     def S_external(self):

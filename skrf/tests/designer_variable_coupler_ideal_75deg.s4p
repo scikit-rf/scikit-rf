@@ -1,0 +1,26 @@
+! Touchstone file exported from Circuit Design 2018.2.0
+!        File:           C:/Users/JH218595/Documents/ICRH/TWA/Master Fusion Hands-on/Designer/Resonant Ring.aedt
+!        Generated:      10:33:44  avr. 21, 2019
+!        Design:         Variable Coupler Ideal
+!        Project:        Resonant Ring
+!        Setup:          LinearFrequency
+!        Solution:       LinearFrequency
+!
+! Variables:
+!        $Variable_Coupler_Index = 0
+!        $phase_tuner_Index = 1
+!        phase_shift = 75deg
+!
+!Data is not renormalized
+# GHZ S RI
+! Modal data exported
+! Port[1] = Port1
+! Port[2] = Port2
+! Port[3] = Port3
+! Port[4] = Port4
+1.5              -1.25607396694702E-16 -2.17538466146969E-32 -0.370604976255642 -0.482951787818706 0.482962913016395 0.629409522384265 1.08771738663589E-32 -1.77637729897828E-16 
+                -0.370604976255642 -0.482951787818706 -0               1.73470349569001E-17 -1.73474345603348E-17 -3.46948691206696E-17 0.482962913016395 0.629409522384265 
+                0.482962913016395 0.629409522384265 -1.73470349569001E-17 -3.46940699138001E-17 -0               -1.73474345603348E-17 0.37057597864184 0.482974038470363 
+                1.08769233073484E-32 -8.88168189793283E-17 0.482962913016395 0.629409522384265 0.37057597864184 0.482974038470363 1.25607396694702E-16 5.43858693317944E-33 
+! Port Impedance50               0                50               0                50               0                50               0                
+
