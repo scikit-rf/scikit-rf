@@ -593,7 +593,7 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         '''
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         for phase_angle in [20, 75]:
-            vc_designer = rf.Network(os.path.join(self.test_dir, f'designer_variable_coupler_ideal_{phase_angle}deg.s4p'))
+            vc_designer = rf.Network(os.path.join(self.test_dir, f'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
             vc_circuit = self.variable_coupler_network_from_circuit(phase_angle)
             assert_array_almost_equal(vc_designer.s, vc_circuit.s, decimal=4)
 
@@ -603,7 +603,7 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         '''
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         for phase_angle in [20, 75]:
-            vc_designer = rf.Network(os.path.join(self.test_dir, f'designer_variable_coupler_ideal_{phase_angle}deg.s4p'))
+            vc_designer = rf.Network(os.path.join(self.test_dir, 'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
             vc_connect = self.variable_coupler_network_from_connect(phase_angle)
             assert_array_almost_equal(vc_designer.s, vc_connect.s, decimal=4)
 
