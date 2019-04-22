@@ -347,8 +347,11 @@ class Circuit():
         both "inner" and "outer" ports
         '''
         # transpose is necessary to get expected result
-        return np.transpose(self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X), axes=(0,2,1))
+        #return np.transpose(self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X), axes=(0,2,1))
+        # does not use the @ operator for backward Python version compatibility
+        return np.transpose(np.matmul(self.X, np.linalg.inv(np.identity(self.dim) - np.matmul(self.C, self.X))), axes=(0,2,1))
 
+    
     @property
     def port_indexes(self):
         '''
