@@ -339,28 +339,28 @@ class Circuit():
         # labels shifts
         pos_labels = {}
         for node, coords in pos.items():
-            pos_labels[node] = (coords[0] + label_shift_x, 
+            pos_labels[node] = (coords[0] + label_shift_x,
                                 coords[1] + label_shift_y)
-                
+
         # network labels
         if is_network_labels:
             network_labels = {lab:lab for lab in ntw_names}
-            
-            nx.draw_networkx_labels(G, pos_labels, labels=network_labels, 
+
+            nx.draw_networkx_labels(G, pos_labels, labels=network_labels,
                                     fontsize=network_fontsize, ax=ax)
 
         # intersection labels
         if is_inter_labels:
             inter_labels = {'X'+str(k):'X'+str(k) for k in range(self.connections_nb)}
 
-            nx.draw_networkx_labels(G, pos_labels, labels=inter_labels, 
+            nx.draw_networkx_labels(G, pos_labels, labels=inter_labels,
                                     fontsize=network_fontsize, ax=ax)
 
         if is_port_labels:
             port_labels = {lab:lab for lab in port_names}
 
-            nx.draw_networkx_labels(G, pos_labels, labels=port_labels, 
-                                    fontsize=network_fontsize, ax=ax)           
+            nx.draw_networkx_labels(G, pos_labels, labels=port_labels,
+                                    fontsize=network_fontsize, ax=ax)
 
         # draw edges
         nx.draw_networkx_edges(G, pos, ax=ax)
@@ -373,7 +373,7 @@ class Circuit():
         plt.tight_layout()
 
         return fig, ax
-    
+
     def _Y_k(self, cnx):
         '''
         Return the sum of the system admittances of each intersection
@@ -433,17 +433,24 @@ class Circuit():
         '''
         Return the scattering matrices [X]_k of the individual intersections k
         '''
-        Xnn = self._Xnn_k(cnx_k)
-        Xmn = self._Xmn_k(cnx_k)
-        # repeat Xmn along the lines
-        # TODO : avoid the loop?
-        Xs = []
-        for (_Xnn, _Xmn) in zip(Xnn, Xmn):  # for all frequencies
-            _X = np.tile(_Xmn, (len(_Xmn), 1))
-            _X[np.diag_indices(len(_Xmn))] = _Xnn
-            Xs.append(_X)
+        Xnn = self._Xnn_k(cnx_k)  # shape: (nb_freq, nb_n)
+        Xmn = self._Xmn_k(cnx_k)  # shape: (nb_freq, nb_n)
+        # # for loop version
+        # Xs = []
+        # for (_Xnn, _Xmn) in zip(Xnn, Xmn):  # for all frequencies
+        #       # repeat Xmn along the lines
+        #     _X = np.tile(_Xmn, (len(_Xmn), 1))
+        #     _X[np.diag_indices(len(_Xmn))] = _Xnn
+        #     Xs.append(_X)
 
-        return np.array(Xs) # shape : nb_freq, nb_n, nb_n
+        # return np.array(Xs) # shape : nb_freq, nb_n, nb_n
+
+        # vectorized version
+        nb_n = Xnn.shape[1]
+        Xs = np.tile(Xmn, (nb_n, 1, 1)).swapaxes(1, 0)
+        Xs[:, np.arange(nb_n), np.arange(nb_n)] = Xnn
+
+        return Xs # shape : nb_freq, nb_n, nb_n
 
         # TEST : Could we use media.splitter() instead ? -> does not work
         # _media = media.DefinedGammaZ0(frequency=self.frequency)
@@ -458,16 +465,26 @@ class Circuit():
         It is composed of the individual intersection matrices [X]_k assembled
         by bloc diagonal.
         '''
-        Xk = []
-        for cnx in self.connections:
-            Xk.append(self._Xk(cnx))
-        Xk = np.array(Xk)
+        # Xk = []
+        # for cnx in self.connections:
+        #     Xk.append(self._Xk(cnx))
+        # Xk = np.array(Xk)
 
-        #X = np.zeros(len(C.frequency), )
-        Xf = []
-        for (idx, f) in enumerate(self.frequency):
-            Xf.append(block_diag(*Xk[:,idx,:]))
-        return np.array(Xf)  # shape: (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
+        # #X = np.zeros(len(C.frequency), )
+        # Xf = []
+        # for (idx, f) in enumerate(self.frequency):
+        #     Xf.append(block_diag(*Xk[:,idx,:]))
+        # return np.array(Xf)  # shape: (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
+
+        # Slightly faster version
+        Xks = [self._Xk(cnx) for cnx in self.connections]
+
+        Xf = np.zeros((len(self.frequency), self.dim, self.dim))
+        # TODO: avoid this for loop which is a bottleneck for large frequencies
+        for idx in np.nditer(np.arange(len(self.frequency))):
+            mat_list = [Xk[idx,:] for Xk in Xks]
+            Xf[idx,:] = block_diag(*mat_list)  # bottleneck 
+        return Xf
 
     @property
     def C(self):

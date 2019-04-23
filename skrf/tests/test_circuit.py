@@ -198,6 +198,8 @@ class CircuitTestWilkinson(unittest.TestCase):
     def test_compare_with_designer_wilkinson(self):
         '''
         Compare the result with ANSYS Designer model
+        
+        Built as in https://www.microwaves101.com/encyclopedias/wilkinson-power-splitters
         '''
         designer_wilkinson = rf.Network('designer_wilkinson_splitter.s3p')
         ntw_C = self.C.network
