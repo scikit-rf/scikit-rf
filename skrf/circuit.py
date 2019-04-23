@@ -26,6 +26,7 @@ from . media import media
 
 import numpy as np
 import networkx as nx
+import matplotlib.pyplot as plt
 
 from itertools import chain, product
 from scipy.linalg import block_diag
@@ -79,7 +80,6 @@ class Circuit():
                 raise AttributeError('All Networks must have same frequencies')
         # All frequencies are the same, Circuit frequency can be any of the ntw
         self.frequency = self.ntws[0].frequency
-
 
     def _is_named(self, ntw):
         '''
@@ -155,6 +155,21 @@ class Circuit():
         return len(self.connections)
 
     @property
+    def connections_list(self):
+        '''
+        Return the full list of connections, including intersections.
+        The resulting list if of the form:
+        [
+         [connexion_number, connexion],
+         [connexion_number, connexion],
+         ...
+        ]
+        '''
+        return [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
+
+
+
+    @property
     def networks_nb(self):
         '''
         Return the number of connected networks (port excluded)
@@ -191,7 +206,7 @@ class Circuit():
 
         # Adding edges in the graph between connections and networks
         for (idx, cnx) in enumerate(self.connections):
-            cnx_name = '$X_'+str(idx)+'$'
+            cnx_name = 'X'+str(idx)
             # Adding connection nodes and edges
             G.add_node(cnx_name)
             for (ntw, ntw_port) in cnx:
@@ -206,13 +221,159 @@ class Circuit():
         '''
         return nx.algorithms.components.is_connected(self.G)
 
-    def plot(self):
+    @property
+    def intersections_dict(self):
         '''
-        Plot the graph of the circuit
+        Return a dictionnary of all intersections with associated ports and z0
+        { k: [ntw1_name, ntw1_port, ntw1_z0, ntw2_name, ntw2_port, ntw2_z0], ... }
         '''
-        nx.draw(self.G, with_labels=True)
+        inter_dict = {}
+        # for k in range(self.connections_nb):
+        #     # get all edges connected to intersection Xk
+        #     inter_dict[k] = list(nx.algorithms.boundary.edge_boundary(self.G, ('X'+str(k),) ))
 
+        for (k, cnx) in enumerate(self.connections):
+            (ntw1, ntw1_port), (ntw2, ntw2_port) = cnx
+            inter_dict[k] = [ntw1.name, ntw1_port, ntw1.z0[0, ntw1_port],
+                             ntw2.name, ntw2_port, ntw1.z0[0, ntw2_port]]
 
+        return inter_dict
+
+    @property
+    def edges(self):
+        '''
+        Return the list of all circuit connections
+        '''
+        return list(self.G.edges)
+
+    @property
+    def edge_labels(self):
+        '''
+        Return a dictionnary describing the port and z0 of all graph edges.
+
+        Dictionnary is in the form:
+            {('ntw1_name', 'X0'): '3 (50+0j)',
+             ('ntw2_name', 'X0'): '0 (50+0j)',
+             ('ntw2_name', 'X1'): '2 (50+0j)', ... }
+        which can be used in networkx.draw_networkx_edge_labels
+        '''
+        # for all connections Xk, get the two interconnected networks
+        # and associated ports and z0
+        edge_labels = {}
+        for k in range(self.connections_nb):
+            (ntw1_name, ntw1_port, ntw1_z0,
+             ntw2_name, ntw2_port, ntw2_z0) = self.intersections_dict[k]
+            # forge the dictionnary elements
+            edge_labels[(ntw1_name, 'X'+str(k))] = str(ntw1_port)+'\n'+str(ntw1_z0)
+            edge_labels[(ntw2_name, 'X'+str(k))] = str(ntw2_port)+'\n'+str(ntw2_z0)
+
+        return edge_labels
+
+    def plot(self, **kwargs):
+        '''
+        Plot the graph of the circuit using networkx drawing capabilities.
+
+        Customisation options:
+        'network_shape': 's'
+        'network_color': 'gray'
+        'network_size', 300
+        'network_fontsize': 7
+        'inter_shape': 'o'
+        'inter_color': 'lightblue'
+        'inter_size', 300
+        'port_shape': '>'
+        'port_color': 'red'
+        'port_size', 300
+        'edges_fontsize': 5
+        'is_network_legend': False
+        'is_edge_legend': False
+        'is_inter_labels': False
+        'is_port_labels': False
+        'label_shift_x': 0
+        'label_shift_y': 0
+
+        '''
+        # default values
+        network_shape = kwargs.pop('network_shape', 's')
+        network_color = kwargs.pop('network_color', 'gray')
+        network_fontsize = kwargs.pop('network_fontsize', 7)
+        network_size = kwargs.pop('network_size', 300)
+        inter_shape = kwargs.pop('inter_shape', 'o')
+        inter_color = kwargs.pop('inter_color', 'lightblue')
+        inter_size = kwargs.pop('inter_size', 300)
+        port_shape = kwargs.pop('port_shape', '>')
+        port_color = kwargs.pop('port_color', 'red')
+        port_size = kwargs.pop('port_size', 300)
+        edge_fontsize = kwargs.pop('edges_fontsize', 5)
+        label_shift_x = kwargs.pop('label_shift_x', 0)
+        label_shift_y = kwargs.pop('label_shift_y', 0)
+        is_network_labels = kwargs.pop('is_network_labels', False)
+        is_edge_labels = kwargs.pop('is_edge_labels', False)
+        is_inter_labels = kwargs.pop('is_inter_labels', False)
+        is_port_labels = kwargs.pop('is_port_labels', False)
+
+        # sort between network nodes and port nodes
+        all_ntw_names = [ntw.name for ntw in self.networks_list()]
+        port_names = [ntw_name for ntw_name in all_ntw_names if 'port' in ntw_name]
+        ntw_names = [ntw_name for ntw_name in all_ntw_names if 'port' not in ntw_name]
+        # generate connectins nodes names
+        int_names = ['X'+str(k) for k in range(self.connections_nb)]
+
+        fig, ax = plt.subplots()
+
+        G = self.G
+        pos = nx.spring_layout(G)
+        edge_labels = self.edge_labels
+
+        # draw Networks
+        nx.draw_networkx_nodes(G, pos, port_names, ax=ax,
+                               node_size=port_size,
+                               node_color=port_color, node_shape=port_shape)
+        nx.draw_networkx_nodes(G, pos, ntw_names, ax=ax,
+                               node_size=network_size,
+                               node_color=network_color, node_shape=network_shape)
+        # draw intersections
+        nx.draw_networkx_nodes(G, pos, int_names, ax=ax,
+                               node_size=inter_size,
+                               node_color=inter_color, node_shape=inter_shape)
+        # labels shifts
+        pos_labels = {}
+        for node, coords in pos.items():
+            pos_labels[node] = (coords[0] + label_shift_x, 
+                                coords[1] + label_shift_y)
+                
+        # network labels
+        if is_network_labels:
+            network_labels = {lab:lab for lab in ntw_names}
+            
+            nx.draw_networkx_labels(G, pos_labels, labels=network_labels, 
+                                    fontsize=network_fontsize, ax=ax)
+
+        # intersection labels
+        if is_inter_labels:
+            inter_labels = {'X'+str(k):'X'+str(k) for k in range(self.connections_nb)}
+
+            nx.draw_networkx_labels(G, pos_labels, labels=inter_labels, 
+                                    fontsize=network_fontsize, ax=ax)
+
+        if is_port_labels:
+            port_labels = {lab:lab for lab in port_names}
+
+            nx.draw_networkx_labels(G, pos_labels, labels=port_labels, 
+                                    fontsize=network_fontsize, ax=ax)           
+
+        # draw edges
+        nx.draw_networkx_edges(G, pos, ax=ax)
+        if is_edge_labels:
+            nx.draw_networkx_edge_labels(G, pos,
+                                          edge_labels=edge_labels, label_pos=0.5,
+                                          font_size=edge_fontsize, ax=ax)
+        # remove x and y axis and labels
+        plt.axis('off')
+        plt.tight_layout()
+
+        return fig, ax
+    
     def _Y_k(self, cnx):
         '''
         Return the sum of the system admittances of each intersection
@@ -318,7 +479,7 @@ class Circuit():
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
-        for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
+        for (idx_cnx, cnx) in self.connections_list:
             ntw, ntw_port = cnx
             if ntw.name in ntws.keys():
                 ntws_ports_reordering[ntw.name].append([ntw_port, idx_cnx])
@@ -351,7 +512,7 @@ class Circuit():
         # does not use the @ operator for backward Python version compatibility
         return np.transpose(np.matmul(self.X, np.linalg.inv(np.identity(self.dim) - np.matmul(self.C, self.X))), axes=(0,2,1))
 
-    
+
     @property
     def port_indexes(self):
         '''
