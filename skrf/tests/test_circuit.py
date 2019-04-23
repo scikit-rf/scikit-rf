@@ -195,14 +195,6 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         assert_array_almost_equal(ntw_C.z0, wilkinson.z0)
 
-    def test_compare_with_designer_wilkinson(self):
-        '''
-        Compare the result with ANSYS Designer model
-        '''
-        designer_wilkinson = rf.Network('designer_wilkinson_splitter.s3p')
-        ntw_C = self.C.network
-        
-        assert_array_almost_equal(ntw_C.s_db[0], designer_wilkinson.s_db[0], decimal=4)
 
 class CircuitTestCascadeNetworks(unittest.TestCase):
     '''
