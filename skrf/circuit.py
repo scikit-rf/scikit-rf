@@ -25,7 +25,6 @@ from . network import Network
 from . media import media
 
 import numpy as np
-import sys
 
 try:
     import networkx as nx

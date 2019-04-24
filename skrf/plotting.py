@@ -2020,11 +2020,9 @@ def plot_circuit_graph(self, **kwargs):
     int_names = ['X'+str(k) for k in range(self.connections_nb)]
 
     fig, ax = plb.subplots()
-
     
     pos = nx.spring_layout(G)
-    edge_labels = self.edge_labels
-
+    
     # draw Networks
     nx.draw_networkx_nodes(G, pos, port_names, ax=ax,
                            node_size=port_size,
@@ -2065,6 +2063,7 @@ def plot_circuit_graph(self, **kwargs):
     # draw edges
     nx.draw_networkx_edges(G, pos, ax=ax)
     if is_edge_labels:
+        edge_labels = self.edge_labels
         nx.draw_networkx_edge_labels(G, pos,
                                       edge_labels=edge_labels, label_pos=0.5,
                                       font_size=edge_fontsize, ax=ax)
