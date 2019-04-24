@@ -25,7 +25,12 @@ from . network import Network
 from . media import media
 
 import numpy as np
-import networkx as nx
+import sys
+
+try:
+    import networkx as nx
+except ImportError as e:
+    pass
 
 from itertools import chain, product
 from scipy.linalg import block_diag
@@ -200,6 +205,9 @@ class Circuit():
         '''
         Generate the graph of the circuit
         '''
+        if 'nx' not in sys.modules:
+            raise ImportError('networkx package as not been installed and is required. ')
+
         G = nx.Graph()
         # Adding network nodes
         G.add_nodes_from([it for it in self.networks_dict(self.connections)])
@@ -219,7 +227,11 @@ class Circuit():
         Check if the circuit's graph is connected, that is if
         if every pair of vertices in the graph is connected.
         '''
-        return nx.algorithms.components.is_connected(self.G)
+        # Get the circuit graph. Will raise an error if the networkx package
+        # is not installed. 
+        G = self.G
+    
+        return nx.algorithms.components.is_connected(G)
 
     @property
     def intersections_dict(self):

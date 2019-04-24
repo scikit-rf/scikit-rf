@@ -1984,10 +1984,9 @@ def plot_circuit_graph(self, **kwargs):
     'label_shift_y': 0
 
     '''
-    try:
-        import networkx as nx
-    except ImportError as e:
-        print(e)
+    # Get the circuit graph. Will raise an error if the networkx package
+    # is not installed. 
+    G = self.G
         
     # default values
     network_shape = kwargs.pop('network_shape', 's')
@@ -2017,7 +2016,7 @@ def plot_circuit_graph(self, **kwargs):
 
     fig, ax = plb.subplots()
 
-    G = self.G
+    
     pos = nx.spring_layout(G)
     edge_labels = self.edge_labels
 
