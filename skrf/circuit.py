@@ -205,7 +205,9 @@ class Circuit():
         '''
         Generate the graph of the circuit
         '''
-        if 'nx' not in sys.modules:
+        try:
+            import networkx as nx
+        except ImportError as e:
             raise ImportError('networkx package as not been installed and is required. ')
 
         G = nx.Graph()

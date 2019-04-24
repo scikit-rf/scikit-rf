@@ -48,6 +48,11 @@ from . import network, frequency, calibration, networkSet, circuit
 from . import mathFunctions as mf
 from . util import now_string_2_dt
 
+try:
+    import networkx as nx
+except ImportError as e:
+    pass
+
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
 SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
