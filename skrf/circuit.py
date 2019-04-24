@@ -375,7 +375,7 @@ class Circuit():
         # Slightly faster version
         Xks = [self._Xk(cnx) for cnx in self.connections]
 
-        Xf = np.zeros((len(self.frequency), self.dim, self.dim))
+        Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex')
         # TODO: avoid this for loop which is a bottleneck for large frequencies
         for idx in np.nditer(np.arange(len(self.frequency))):
             mat_list = [Xk[idx,:] for Xk in Xks]
