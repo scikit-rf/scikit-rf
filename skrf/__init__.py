@@ -67,6 +67,7 @@ from copy import deepcopy as copy
 F = Frequency
 N = Network
 NS = NetworkSet
+C = Circuit
 lat = load_all_touchstones
 # saf  = save_all_figs
 saf = None

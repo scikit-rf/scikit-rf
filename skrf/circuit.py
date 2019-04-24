@@ -26,7 +26,6 @@ from . media import media
 
 import numpy as np
 import networkx as nx
-import matplotlib.pyplot as plt
 
 from itertools import chain, product
 from scipy.linalg import block_diag
@@ -70,16 +69,16 @@ class Circuit():
                 if not self._is_named(ntw):
                     raise AttributeError('All Networks must have a name.')
 
-        # create a list of networks for initial checks
-        self.ntws = self.networks_list(self.connections)
+        # list of networks for initial checks
+        ntws = self.networks_list
 
         # check if all networks have same frequency
-        ref_freq = self.ntws[0].frequency
-        for ntw in self.ntws:
+        ref_freq = ntws[0].frequency
+        for ntw in ntws:
             if ntw.frequency != ref_freq:
                 raise AttributeError('All Networks must have same frequencies')
         # All frequencies are the same, Circuit frequency can be any of the ntw
-        self.frequency = self.ntws[0].frequency
+        self.frequency = ntws[0].frequency
 
     def _is_named(self, ntw):
         '''
@@ -137,6 +136,7 @@ class Circuit():
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
+    @property
     def networks_list(self, connections=None, min_nports=1):
         '''
         return a list of unique networks (sorted by appearing order in connections)
@@ -269,110 +269,6 @@ class Circuit():
 
         return edge_labels
 
-    def plot(self, **kwargs):
-        '''
-        Plot the graph of the circuit using networkx drawing capabilities.
-
-        Customisation options:
-        'network_shape': 's'
-        'network_color': 'gray'
-        'network_size', 300
-        'network_fontsize': 7
-        'inter_shape': 'o'
-        'inter_color': 'lightblue'
-        'inter_size', 300
-        'port_shape': '>'
-        'port_color': 'red'
-        'port_size', 300
-        'edges_fontsize': 5
-        'is_network_legend': False
-        'is_edge_legend': False
-        'is_inter_labels': False
-        'is_port_labels': False
-        'label_shift_x': 0
-        'label_shift_y': 0
-
-        '''
-        # default values
-        network_shape = kwargs.pop('network_shape', 's')
-        network_color = kwargs.pop('network_color', 'gray')
-        network_fontsize = kwargs.pop('network_fontsize', 7)
-        network_size = kwargs.pop('network_size', 300)
-        inter_shape = kwargs.pop('inter_shape', 'o')
-        inter_color = kwargs.pop('inter_color', 'lightblue')
-        inter_size = kwargs.pop('inter_size', 300)
-        port_shape = kwargs.pop('port_shape', '>')
-        port_color = kwargs.pop('port_color', 'red')
-        port_size = kwargs.pop('port_size', 300)
-        edge_fontsize = kwargs.pop('edges_fontsize', 5)
-        label_shift_x = kwargs.pop('label_shift_x', 0)
-        label_shift_y = kwargs.pop('label_shift_y', 0)
-        is_network_labels = kwargs.pop('is_network_labels', False)
-        is_edge_labels = kwargs.pop('is_edge_labels', False)
-        is_inter_labels = kwargs.pop('is_inter_labels', False)
-        is_port_labels = kwargs.pop('is_port_labels', False)
-
-        # sort between network nodes and port nodes
-        all_ntw_names = [ntw.name for ntw in self.networks_list()]
-        port_names = [ntw_name for ntw_name in all_ntw_names if 'port' in ntw_name]
-        ntw_names = [ntw_name for ntw_name in all_ntw_names if 'port' not in ntw_name]
-        # generate connectins nodes names
-        int_names = ['X'+str(k) for k in range(self.connections_nb)]
-
-        fig, ax = plt.subplots()
-
-        G = self.G
-        pos = nx.spring_layout(G)
-        edge_labels = self.edge_labels
-
-        # draw Networks
-        nx.draw_networkx_nodes(G, pos, port_names, ax=ax,
-                               node_size=port_size,
-                               node_color=port_color, node_shape=port_shape)
-        nx.draw_networkx_nodes(G, pos, ntw_names, ax=ax,
-                               node_size=network_size,
-                               node_color=network_color, node_shape=network_shape)
-        # draw intersections
-        nx.draw_networkx_nodes(G, pos, int_names, ax=ax,
-                               node_size=inter_size,
-                               node_color=inter_color, node_shape=inter_shape)
-        # labels shifts
-        pos_labels = {}
-        for node, coords in pos.items():
-            pos_labels[node] = (coords[0] + label_shift_x,
-                                coords[1] + label_shift_y)
-
-        # network labels
-        if is_network_labels:
-            network_labels = {lab:lab for lab in ntw_names}
-
-            nx.draw_networkx_labels(G, pos_labels, labels=network_labels,
-                                    fontsize=network_fontsize, ax=ax)
-
-        # intersection labels
-        if is_inter_labels:
-            inter_labels = {'X'+str(k):'X'+str(k) for k in range(self.connections_nb)}
-
-            nx.draw_networkx_labels(G, pos_labels, labels=inter_labels,
-                                    fontsize=network_fontsize, ax=ax)
-
-        if is_port_labels:
-            port_labels = {lab:lab for lab in port_names}
-
-            nx.draw_networkx_labels(G, pos_labels, labels=port_labels,
-                                    fontsize=network_fontsize, ax=ax)
-
-        # draw edges
-        nx.draw_networkx_edges(G, pos, ax=ax)
-        if is_edge_labels:
-            nx.draw_networkx_edge_labels(G, pos,
-                                          edge_labels=edge_labels, label_pos=0.5,
-                                          font_size=edge_fontsize, ax=ax)
-        # remove x and y axis and labels
-        plt.axis('off')
-        plt.tight_layout()
-
-        return fig, ax
 
     def _Y_k(self, cnx):
         '''
