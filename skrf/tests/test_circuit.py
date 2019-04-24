@@ -65,6 +65,7 @@ class CircuitTestWilkinson(unittest.TestCase):
         '''
         Circuit setup
         '''
+        self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.freq = rf.Frequency(start=1, stop=2, npoints=101)
         # characteristic impedance of the ports
         Z0_ports = 50
@@ -201,7 +202,7 @@ class CircuitTestWilkinson(unittest.TestCase):
         
         Built as in https://www.microwaves101.com/encyclopedias/wilkinson-power-splitters
         '''
-        designer_wilkinson = rf.Network('designer_wilkinson_splitter.s3p')
+        designer_wilkinson = rf.Network(os.path.join(self.test_dir, 'designer_wilkinson_splitter.s3p'))
         ntw_C = self.C.network
         
         assert_array_almost_equal(ntw_C.s[0], designer_wilkinson.s[0], decimal=4)
@@ -529,6 +530,7 @@ class CircuitTestVariableCoupler(unittest.TestCase):
     def setUp(self):
         self.freq = rf.Frequency(start=1.5, stop=1.5, npoints=1, unit='GHz')
         self.coax = rf.media.DefinedGammaZ0(frequency=self.freq)
+        self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
 
     def phase_shifter(self, phase_deg):
         return self.coax.line(d=phase_deg, unit='deg')
@@ -600,7 +602,6 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         '''
         Compare with the S-parameters obtained from ANSYS Designer
         '''
-        self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         for phase_angle in [20, 75]:
             vc_designer = rf.Network(os.path.join(self.test_dir, 'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
             vc_circuit = self.variable_coupler_network_from_circuit(phase_angle)
@@ -610,7 +611,6 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         '''
         Compare S-parameters obtained from ANSYS Designer with Network.connect
         '''
-        self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         for phase_angle in [20, 75]:
             vc_designer = rf.Network(os.path.join(self.test_dir, 'designer_variable_coupler_ideal_'+str(phase_angle)+'deg.s4p'))
             vc_connect = self.variable_coupler_network_from_connect(phase_angle)
