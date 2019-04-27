@@ -267,17 +267,18 @@ class Circuit():
              ('ntw2_name', 'X1'): '2 (50+0j)', ... }
         which can be used in networkx.draw_networkx_edge_labels
         '''
-        # for all connections Xk, get the N interconnected networks
-        # and associated ports and z0
+        # for all intersections, 
+        # get the N interconnected networks and associated ports and z0
         # and forge the edge label dictionnary containing labels between
         # two nodes
         edge_labels = {}
-        for k in range(self.connections_nb):
-            (ntw1_name, ntw1_port, ntw1_z0,
-             ntw2_name, ntw2_port, ntw2_z0) = self.intersections_dict[k]
-            # forge the dictionnary elements
-            edge_labels[(ntw1_name, 'X'+str(k))] = str(ntw1_port)+'\n'+str(ntw1_z0)
-            edge_labels[(ntw2_name, 'X'+str(k))] = str(ntw2_port)+'\n'+str(ntw2_z0)
+        for it in self.intersections_dict.items():
+            k, cnx = it
+            for idx in range(len(cnx)):
+                ntw, ntw_port, ntw_z0 = cnx[idx]
+                #ntw_z0 = ntw.z0[0,ntw_port]
+                edge_labels[(ntw.name, 'X'+str(k))] = str(ntw_port)+'\n'+\
+                                        str(np.round(ntw_z0, decimals=1))
 
         return edge_labels
 

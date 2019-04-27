@@ -1980,6 +1980,7 @@ def plot_circuit_graph(self, **kwargs):
     'port_shape': '>'
     'port_color': 'red'
     'port_size', 300
+    'port_fontsize': 7
     'edges_fontsize': 5
     'is_network_legend': False
     'is_edge_legend': False
@@ -2004,6 +2005,7 @@ def plot_circuit_graph(self, **kwargs):
     port_shape = kwargs.pop('port_shape', '>')
     port_color = kwargs.pop('port_color', 'red')
     port_size = kwargs.pop('port_size', 300)
+    port_fontsize = kwargs.pop('port_fontsize', 7)
     edge_fontsize = kwargs.pop('edges_fontsize', 5)
     label_shift_x = kwargs.pop('label_shift_x', 0)
     label_shift_y = kwargs.pop('label_shift_y', 0)
@@ -2054,11 +2056,12 @@ def plot_circuit_graph(self, **kwargs):
         nx.draw_networkx_labels(G, pos_labels, labels=inter_labels,
                                 fontsize=network_fontsize, ax=ax)
 
+    # port labels
     if is_port_labels:
         port_labels = {lab:lab for lab in port_names}
 
         nx.draw_networkx_labels(G, pos_labels, labels=port_labels,
-                                fontsize=network_fontsize, ax=ax)
+                                fontsize=port_fontsize, ax=ax)
 
     # draw edges
     nx.draw_networkx_edges(G, pos, ax=ax)

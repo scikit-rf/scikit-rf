@@ -2,7 +2,7 @@
 import skrf as rf
 import numpy as np
 import unittest
-import os
+import os, sys
 from numpy.testing import assert_array_almost_equal, run_module_suite
 
 
@@ -617,7 +617,53 @@ class CircuitTestVariableCoupler(unittest.TestCase):
             assert_array_almost_equal(vc_designer.s, vc_connect.s, decimal=4)
 
 
-if __name__ == "__main__" :
+class CircuitTestGraph(unittest.TestCase):
+    '''
+    Test functionalities linked to graph method, used in particular for plotting
+    '''
+    def test_is_networkx_available(self):
+        'The networkx package should be available to run these tests'
+        self.failUnless('networkx' in sys.modules)
+
+    def setUp(self):
+        '''
+        Dummy Circuit setup
+
+        Setup a circuit which has various interconnections (2 or 3)
+        '''
+        self.freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+        # dummy components
+        self.R = 100
+        self.line_resistor = rf.media.DefinedGammaZ0(frequency=self.freq, Z0=self.R)
+        resistor1 = self.line_resistor.resistor(self.R, name='resistor1')
+        resistor2 = self.line_resistor.resistor(self.R, name='resistor2')
+        resistor3 = self.line_resistor.resistor(self.R, name='resistor3')
+        port1 = rf.Circuit.Port(self.freq, name='port1')
+
+        # Connection setup
+        self.connections = [
+                   [(port1, 0), (resistor1, 0), (resistor3, 0)],
+                   [(resistor1, 1), (resistor2, 0)],
+                   [(resistor2, 1), (resistor3, 1)]
+                ]
+
+        self.C = rf.Circuit(self.connections)
+
+    def test_interstection_dict(self):
+        inter_dict = self.C.intersections_dict
+        # should have 3 intersections
+        self.assert_(len(inter_dict) == 3)
+        # All intersections should have at least 2 edges
+        for it in inter_dict.items():
+            k, cnx = it
+            self.assert_(len(cnx) >= 2)
+
+    def test_edge_labels(self):
+        edge_labels = self.C.edge_labels
+        self.assert_(len(edge_labels) == 7)
+
+
+if __name__ == "__main__":
     # Launch all tests
     run_module_suite()
-
