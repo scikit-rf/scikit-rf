@@ -74,7 +74,7 @@ class Circuit():
                     raise AttributeError('All Networks must have a name.')
 
         # list of networks for initial checks
-        ntws = self.networks_list
+        ntws = self.networks_list()
 
         # check if all networks have same frequency
         ref_freq = ntws[0].frequency
@@ -140,7 +140,6 @@ class Circuit():
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
-    @property
     def networks_list(self, connections=None, min_nports=1):
         '''
         return a list of unique networks (sorted by appearing order in connections)
@@ -238,7 +237,7 @@ class Circuit():
     def intersections_dict(self):
         '''
         Return a dictionnary of all intersections with associated ports and z0
-        { k: [ntw1_name, ntw1_port, ntw1_z0, ntw2_name, ntw2_port, ntw2_z0], ... }
+        { k: [(ntw1_name, ntw1_port), (ntw1_z0, ntw2_name, ntw2_port), ntw2_z0], ... }
         '''
         inter_dict = {}
         # for k in range(self.connections_nb):
@@ -246,10 +245,8 @@ class Circuit():
         #     inter_dict[k] = list(nx.algorithms.boundary.edge_boundary(self.G, ('X'+str(k),) ))
 
         for (k, cnx) in enumerate(self.connections):
-            (ntw1, ntw1_port), (ntw2, ntw2_port) = cnx
-            inter_dict[k] = [ntw1.name, ntw1_port, ntw1.z0[0, ntw1_port],
-                             ntw2.name, ntw2_port, ntw1.z0[0, ntw2_port]]
-
+            inter_dict[k] = [(ntw, ntw_port, ntw.z0[0, ntw_port]) \
+                                  for (ntw, ntw_port) in cnx]
         return inter_dict
 
     @property
@@ -270,8 +267,10 @@ class Circuit():
              ('ntw2_name', 'X1'): '2 (50+0j)', ... }
         which can be used in networkx.draw_networkx_edge_labels
         '''
-        # for all connections Xk, get the two interconnected networks
+        # for all connections Xk, get the N interconnected networks
         # and associated ports and z0
+        # and forge the edge label dictionnary containing labels between
+        # two nodes
         edge_labels = {}
         for k in range(self.connections_nb):
             (ntw1_name, ntw1_port, ntw1_z0,

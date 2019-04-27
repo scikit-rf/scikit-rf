@@ -2013,7 +2013,7 @@ def plot_circuit_graph(self, **kwargs):
     is_port_labels = kwargs.pop('is_port_labels', False)
 
     # sort between network nodes and port nodes
-    all_ntw_names = [ntw.name for ntw in self.networks_list]
+    all_ntw_names = [ntw.name for ntw in self.networks_list()]
     port_names = [ntw_name for ntw_name in all_ntw_names if 'port' in ntw_name]
     ntw_names = [ntw_name for ntw_name in all_ntw_names if 'port' not in ntw_name]
     # generate connectins nodes names
