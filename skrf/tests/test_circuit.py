@@ -505,6 +505,37 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
 
         assert_array_almost_equal(c.s, circuit.S_external)
 
+    def test_shunt_element(self):
+        '''
+        Compare a shunt element network (here a capacitor) 
+        '''
+        freq = rf.Frequency(start=1, stop=2, npoints=101)
+        line = rf.media.DefinedGammaZ0(frequency=freq, z0=50)
+        # usual way
+        cap_shunt_manual = line.shunt_capacitor(50e-12)
+        
+        # A Circuit way
+        port1 = rf.Circuit.Port(frequency=freq, name='port1', z0=50)
+        port2 = rf.Circuit.Port(frequency=freq, name='port2', z0=50)
+        cap_shunt = line.capacitor(50e-12, name='cap_shunt')
+        ground = rf.Circuit.Ground(frequency=freq, name='ground', z0=50)
+
+        connections = [
+            [(port1, 0), (cap_shunt, 0), (port2, 0)],
+            [(cap_shunt, 1), (ground, 0)]
+        ]
+        
+        # # Another possibility could have been without ground :
+        # shunt_cap = line.shunt_capacitor(50e-12)
+        # shunt_cap.name='shunt_cap'
+        # connections = [
+        #     [(port1, 0), (shunt_cap, 0)],
+        #     [(shunt_cap ,1), (port2, 0)]
+        # ]
+        
+        cap_shunt_from_circuit = rf.Circuit(connections).network
+
+        assert_array_almost_equal(cap_shunt_manual.s, cap_shunt_from_circuit.s)
 
 class CircuitTestVariableCoupler(unittest.TestCase):
     '''

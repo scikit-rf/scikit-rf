@@ -21,8 +21,9 @@ Circuit Class
    Circuit
 
 '''
-from . network import Network
+from . network import Network, a2s
 from . media import media
+from . constants import INF
 
 import numpy as np
 
@@ -105,7 +106,7 @@ class Circuit():
         name : string
             Name of the port.
             Must inlude the word 'port' inside. (ex: 'Port1' or 'port_3')
-        Z0 : complex
+        z0 : complex
             Characteristic impedance of the port. Default is 50 Ohm.
 
         Returns
@@ -126,6 +127,49 @@ class Circuit():
         '''
         _media = media.DefinedGammaZ0(frequency, z0=z0)
         return _media.match(name=name)
+
+    @classmethod
+    def Ground(cls, frequency, name, z0=50+0j):
+        '''
+        Ground network. Passing the frequency and name is mendatory.
+        
+        Ground is considered as in infinite admittance.
+        
+        Parameters
+        -----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        name : string
+            Name of the ground.
+        z0 : complex
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        --------
+        ground : :class:`~skrf.network.Network` object
+            (External) 2-port network
+
+        Examples
+        -----------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: ground = rf.Circuit.Ground(freq, name='GND')
+        
+        '''
+        Y = INF
+        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
+        A[:, 0, 0] = 1
+        A[:, 0, 1] = 0
+        A[:, 1, 0] = Y
+        A[:, 1, 1] = 1
+        ntw = Network(frequency=frequency, z0=z0, name=name)
+        ntw.s = a2s(A)
+        return ntw
 
     def networks_dict(self, connections=None, min_nports=1):
         '''
