@@ -762,7 +762,7 @@ def setup_matplotlib_plotting():
     networkSet.NetworkSet.plot_uncertainty_bounds_s = plot_uncertainty_bounds_s
     networkSet.NetworkSet.plot_logsigma = plot_logsigma
     networkSet.NetworkSet.signature = signature
-    
+
     circuit.Circuit.plot_graph = plot_circuit_graph
 
 def __generate_plot_functions(self):
@@ -1038,13 +1038,13 @@ Examples
                                              y_label=y_label,
                                              show_legend=show_legend, ax=ax,
                                              *args, **kwargs)
-                            
+
                         else:
                             # plot the desired attribute vs frequency
                             if 'time' in attribute:
                                 xlabel = 'Time (ns)'
                                 x = self.frequency.t_ns
-    
+
                             else:
                                 xlabel = 'Frequency (%s)' % self.frequency.unit
                                 # x = self.frequency.f_scaled
@@ -1982,38 +1982,39 @@ def plot_circuit_graph(self, **kwargs):
     'port_size', 300
     'port_fontsize': 7
     'edges_fontsize': 5
-    'is_network_legend': False
-    'is_edge_legend': False
-    'is_inter_labels': False
-    'is_port_labels': False
+    'network_labels': False
+    'edge_labels': False
+    'inter_labels': False
+    'port_labels': False
     'label_shift_x': 0
     'label_shift_y': 0
 
     '''
     # Get the circuit graph. Will raise an error if the networkx package
-    # is not installed. 
+    # is not installed.
     G = self.G
-        
+
     # default values
+    network_labels = kwargs.pop('network_labels', False)
     network_shape = kwargs.pop('network_shape', 's')
     network_color = kwargs.pop('network_color', 'gray')
     network_fontsize = kwargs.pop('network_fontsize', 7)
     network_size = kwargs.pop('network_size', 300)
+    inter_labels = kwargs.pop('inter_labels', False)
     inter_shape = kwargs.pop('inter_shape', 'o')
     inter_color = kwargs.pop('inter_color', 'lightblue')
     inter_size = kwargs.pop('inter_size', 300)
+    port_labels = kwargs.pop('port_labels', False)
     port_shape = kwargs.pop('port_shape', '>')
     port_color = kwargs.pop('port_color', 'red')
     port_size = kwargs.pop('port_size', 300)
     port_fontsize = kwargs.pop('port_fontsize', 7)
-    edge_fontsize = kwargs.pop('edges_fontsize', 5)
+    edge_labels = kwargs.pop('edge_labels', False)
+    edge_fontsize = kwargs.pop('edge_fontsize', 5)
     label_shift_x = kwargs.pop('label_shift_x', 0)
     label_shift_y = kwargs.pop('label_shift_y', 0)
-    is_network_labels = kwargs.pop('is_network_labels', False)
-    is_edge_labels = kwargs.pop('is_edge_labels', False)
-    is_inter_labels = kwargs.pop('is_inter_labels', False)
-    is_port_labels = kwargs.pop('is_port_labels', False)
 
+    
     # sort between network nodes and port nodes
     all_ntw_names = [ntw.name for ntw in self.networks_list()]
     port_names = [ntw_name for ntw_name in all_ntw_names if 'port' in ntw_name]
@@ -2021,10 +2022,10 @@ def plot_circuit_graph(self, **kwargs):
     # generate connectins nodes names
     int_names = ['X'+str(k) for k in range(self.connections_nb)]
 
-    fig, ax = plb.subplots()
-    
+    fig, ax = plb.subplots(figsize=(10,8))
+
     pos = nx.spring_layout(G)
-    
+
     # draw Networks
     nx.draw_networkx_nodes(G, pos, port_names, ax=ax,
                            node_size=port_size,
@@ -2043,29 +2044,29 @@ def plot_circuit_graph(self, **kwargs):
                             coords[1] + label_shift_y)
 
     # network labels
-    if is_network_labels:
+    if network_labels:
         network_labels = {lab:lab for lab in ntw_names}
 
         nx.draw_networkx_labels(G, pos_labels, labels=network_labels,
-                                fontsize=network_fontsize, ax=ax)
+                                font_size=network_fontsize, ax=ax)
 
     # intersection labels
-    if is_inter_labels:
+    if inter_labels:
         inter_labels = {'X'+str(k):'X'+str(k) for k in range(self.connections_nb)}
 
         nx.draw_networkx_labels(G, pos_labels, labels=inter_labels,
-                                fontsize=network_fontsize, ax=ax)
+                                font_size=network_fontsize, ax=ax)
 
     # port labels
-    if is_port_labels:
+    if port_labels:
         port_labels = {lab:lab for lab in port_names}
 
         nx.draw_networkx_labels(G, pos_labels, labels=port_labels,
-                                fontsize=port_fontsize, ax=ax)
+                                font_size=port_fontsize, ax=ax)
 
     # draw edges
     nx.draw_networkx_edges(G, pos, ax=ax)
-    if is_edge_labels:
+    if edge_labels:
         edge_labels = self.edge_labels
         nx.draw_networkx_edge_labels(G, pos,
                                       edge_labels=edge_labels, label_pos=0.5,
