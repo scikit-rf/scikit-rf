@@ -416,7 +416,7 @@ class Touchstone:
             False otherwise
         '''    
         status = False
-        if 'Exported from HFSS' in self.comments:
+        if 'exported from hfss' in str.lower(self.comments):
             status = True
         return status      
     
