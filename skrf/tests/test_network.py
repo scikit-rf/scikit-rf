@@ -8,7 +8,7 @@ import skrf as rf
 from nose.plugins.skip import SkipTest
 
 from skrf import setup_pylab
-
+from skrf.media import CPW
 
 class NetworkTestCase(unittest.TestCase):
     '''
@@ -43,7 +43,7 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
         self.freq = rf.Frequency(75,110,101,'ghz')
-        self.cpw =  rf.media.CPW(self.freq, w=10e-6, s=5e-6, ep_r=10.6)
+        self.cpw =  CPW(self.freq, w=10e-6, s=5e-6, ep_r=10.6)
         l1 = self.cpw.line(0.20, 'm', z0=50)
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
