@@ -3931,16 +3931,26 @@ def s2z(s, z0=50):
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
 
-    z = npy.zeros(s.shape, dtype='complex')
-    I = npy.mat(npy.identity(s.shape[1]))
-    s = s.copy()  # to prevent the original array from being altered
-    s[s == 1.] = 1. + 1e-12  # solve numerical singularity
-    s[s == -1.] = -1. + 1e-12  # solve numerical singularity
-    for fidx in xrange(s.shape[0]):
-        sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
-        z[fidx] = sqrtz0 * (I - s[fidx]) ** -1 * (I + s[fidx]) * sqrtz0
-    return z
+    # z = npy.zeros(s.shape, dtype='complex')
+    # I = npy.mat(npy.identity(s.shape[1]))
+    # s = s.copy()  # to prevent the original array from being altered
+    # s[s == 1.] = 1. + 1e-12  # solve numerical singularity
+    # s[s == -1.] = -1. + 1e-12  # solve numerical singularity
+    # for fidx in xrange(s.shape[0]):
+    #     sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
+    #     z[fidx] = sqrtz0 * (I - s[fidx]) ** -1 * (I + s[fidx]) * sqrtz0
+    # return z
 
+    # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+    Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', Id)[...] = 1  
+    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+    # y -> s 
+    z = npy.zeros_like(s)
+    z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0
+    return z
 
 def s2y(s, z0=50):
     """
@@ -3989,16 +3999,30 @@ def s2y(s, z0=50):
 
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    y = npy.zeros(s.shape, dtype='complex')
-    I = npy.mat(npy.identity(s.shape[1]))
+    # y = npy.zeros(s.shape, dtype='complex')
+    # I = npy.mat(npy.identity(s.shape[1]))
+    # s = s.copy()  # to prevent the original array from being altered
+    # s[s == -1.] = -1. + 1e-12  # solve numerical singularity
+    # s[s == 1.] = 1. + 1e-12  # solve numerical singularity
+    # for fidx in xrange(s.shape[0]):
+    #     sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0 / z0[fidx])))
+    #     y[fidx] = sqrty0 * (I - s[fidx]) * (I + s[fidx]) ** -1 * sqrty0
+    # return y
+
     s = s.copy()  # to prevent the original array from being altered
     s[s == -1.] = -1. + 1e-12  # solve numerical singularity
     s[s == 1.] = 1. + 1e-12  # solve numerical singularity
-    for fidx in xrange(s.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0 / z0[fidx])))
-        y[fidx] = sqrty0 * (I - s[fidx]) * (I + s[fidx]) ** -1 * sqrty0
+    
+    # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+    Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', Id)[...] = 1  
+    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1/z0)
+    # s -> y 
+    y = npy.zeros_like(s)
+    y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0
     return y
-
 
 def s2t(s):
     """
@@ -4098,13 +4122,23 @@ def z2s(z, z0=50):
     """
     nfreqs, nports, nports = z.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    s = npy.zeros(z.shape, dtype='complex')
-    I = npy.mat(npy.identity(z.shape[1]))
-    for fidx in xrange(z.shape[0]):
-        sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0 / z0[fidx])))
-        s[fidx] = (sqrty0 * z[fidx] * sqrty0 - I) * (sqrty0 * z[fidx] * sqrty0 + I) ** -1
-    return s
+    # s = npy.zeros(z.shape, dtype='complex')
+    # I = npy.mat(npy.identity(z.shape[1]))
+    # for fidx in xrange(z.shape[0]):
+    #     sqrty0 = npy.mat(npy.sqrt(npy.diagflat(1.0 / z0[fidx])))
+    #     s[fidx] = (sqrty0 * z[fidx] * sqrty0 - I) * (sqrty0 * z[fidx] * sqrty0 + I) ** -1
+    # return s
 
+    # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+    Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', Id)[...] = 1  
+    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1/z0)
+    # z -> s 
+    s = npy.zeros_like(z)
+    s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)
+    return s
 
 def z2y(z):
     '''
@@ -4424,13 +4458,23 @@ def y2s(y, z0=50):
     '''
     nfreqs, nports, nports = y.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    s = npy.zeros(y.shape, dtype='complex')
-    I = npy.mat(npy.identity(s.shape[1]))
-    for fidx in xrange(s.shape[0]):
-        sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
-        s[fidx] = (I - sqrtz0 * y[fidx] * sqrtz0) * (I + sqrtz0 * y[fidx] * sqrtz0) ** -1
+    # s = npy.zeros(y.shape, dtype='complex')
+    # I = npy.mat(npy.identity(s.shape[1]))
+    # for fidx in xrange(s.shape[0]):
+    #     sqrtz0 = npy.mat(npy.sqrt(npy.diagflat(z0[fidx])))
+    #     s[fidx] = (I - sqrtz0 * y[fidx] * sqrtz0) * (I + sqrtz0 * y[fidx] * sqrtz0) ** -1
+    # return s 
+        
+    # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+    Id = npy.zeros_like(y)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', Id)[...] = 1  
+    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+    # y -> s 
+    s = npy.zeros_like(y)
+    s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)
     return s
-
 
 def y2z(y):
     '''
