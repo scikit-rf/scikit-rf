@@ -166,7 +166,7 @@ class CircuitTestWilkinson(unittest.TestCase):
                                   [1, 0, 0]]) * (-1j/np.sqrt(2))
 
         # extracting the external ports
-        S_ext = self.C.S_external
+        S_ext = self.C.s_external
 
         assert_array_almost_equal(S_ext[0], S_theoretical)
 
@@ -233,7 +233,7 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
                          [(self.ntwk2, 1), (self.port2, 0)] ]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(circuit.S_external, self.ntwk3.s)
+        assert_array_almost_equal(circuit.s_external, self.ntwk3.s)
 
     def test_cascade2(self):
         '''
@@ -246,7 +246,7 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
                          [(self.port2, 0), (self.ntwk2, 1)] ]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(circuit.S_external, self.ntwk3.s)
+        assert_array_almost_equal(circuit.s_external, self.ntwk3.s)
 
     def test_cascade3(self):
         '''
@@ -259,7 +259,7 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
                          [(self.port2, 0), (self.ntwk1, 1)] ]
         circuit = rf.Circuit(connections)
         ntw = self.ntwk2 ** self.ntwk1
-        assert_array_almost_equal(circuit.S_external, ntw.s)
+        assert_array_almost_equal(circuit.s_external, ntw.s)
 
 class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
     '''
@@ -284,7 +284,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         connections = [[(port1, 0), (a, 0)], [(a, 1), (match_load, 0)]]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(b.s, circuit.S_external)
+        assert_array_almost_equal(b.s, circuit.s_external)
 
     def test_1port_matched_network_complex_impedance(self):
         '''
@@ -308,7 +308,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
         connections = [[(port1, 0), (a,0)], [(a, 1), (match_load, 0)]]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(b.s, circuit.S_external)
+        assert_array_almost_equal(b.s, circuit.s_external)
 
     def test_2ports_default_characteristic_impedance(self):
         '''
@@ -336,7 +336,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
                        [(b, 1), (port2, 0)]]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(c.s, circuit.S_external)
+        assert_array_almost_equal(c.s, circuit.s_external)
 
     def test_2ports_complex_characteristic_impedance(self):
         '''
@@ -367,7 +367,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
                        [(b, 1), (port2, 0)]]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(c.s, circuit.S_external)
+        assert_array_almost_equal(c.s, circuit.s_external)
 
     def test_2ports_different_characteristic_impedances(self):
         '''
@@ -397,7 +397,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
                        [(b, 1), (port2, 0)] ]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(c.s, circuit.S_external)
+        assert_array_almost_equal(c.s, circuit.s_external)
 
     def test_4ports_default_characteristic_impedances(self):
         '''
@@ -430,7 +430,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
                        [(b, 3), (port4, 0)]]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(c.s, circuit.S_external)
+        assert_array_almost_equal(c.s, circuit.s_external)
 
     def test_4ports_complex_characteristic_impedances(self):
         '''
@@ -466,7 +466,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
                         [(b, 3), (port4, 0)]]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(c.s, circuit.S_external)
+        assert_array_almost_equal(c.s, circuit.s_external)
 
     def test_4ports_different_characteristic_impedances(self):
         '''
@@ -503,7 +503,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
                        [(b, 3), (port4, 0)]]
         circuit = rf.Circuit(connections)
 
-        assert_array_almost_equal(c.s, circuit.S_external)
+        assert_array_almost_equal(c.s, circuit.s_external)
 
     def test_shunt_element(self):
         '''

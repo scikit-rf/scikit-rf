@@ -472,7 +472,7 @@ class Circuit():
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
     @property
-    def S(self):
+    def s(self):
         '''
         Return the global scattering parameter of the circuit, that is with
         both "inner" and "outer" ports
@@ -518,13 +518,13 @@ class Circuit():
         return np.array(z0s)[self.port_indexes, :].T  # shape (nb_freq, nb_ports)
 
     @property
-    def S_external(self):
+    def s_external(self):
         '''
         Return the scattering parameter for the external ports
         '''
         port_indexes = self.port_indexes
         a, b = np.meshgrid(port_indexes, port_indexes)
-        S_ext = self.S[:, a, b]
+        S_ext = self.s[:, a, b]
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
     @property
@@ -535,5 +535,8 @@ class Circuit():
         ntw = Network()
         ntw.frequency = self.frequency
         ntw.z0 = self.port_z0
-        ntw.s = self.S_external
+        ntw.s = self.s_external
         return ntw
+
+
+        
