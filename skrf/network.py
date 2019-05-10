@@ -1196,6 +1196,13 @@ class Network(object):
       return 1./self.y_opt
 
     @property
+    def gamma_opt(self):
+      """
+      the optimum source reflection coefficient to minimize noise
+      """
+      return z2s(self.z_opt, self.z0)
+
+    @property
     def nfmin(self):
       """
       the minimum noise figure for the network
@@ -1587,11 +1594,11 @@ class Network(object):
           else:
             rn = touchstoneFile.noise[:, 4]
 
-          gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
+          self.gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
 
           nf_min = npy.power(10., nf_min_log/10.)
           # TODO maybe interpolate z0 as above
-          y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          y_opt = 1./(self.z0[0, 0] * (1. + self.gamma_opt)/(1. - self.gamma_opt))
           
           # use the voltage/current correlation matrix; this works nicely with
           # cascading networks
