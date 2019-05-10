@@ -1965,7 +1965,7 @@ def signature(self, m=0, n=0, component='s_mag',
 
     return img
 
-def plot_circuit_graph(self, **kwargs):
+def plot_circuit_graph(self, ax=None, **kwargs):
     '''
     Plot the graph of the circuit using networkx drawing capabilities.
 
@@ -2014,6 +2014,7 @@ def plot_circuit_graph(self, **kwargs):
     label_shift_x = kwargs.pop('label_shift_x', 0)
     label_shift_y = kwargs.pop('label_shift_y', 0)
 
+
     
     # sort between network nodes and port nodes
     all_ntw_names = [ntw.name for ntw in self.networks_list()]
@@ -2022,9 +2023,10 @@ def plot_circuit_graph(self, **kwargs):
     # generate connectins nodes names
     int_names = ['X'+str(k) for k in range(self.connections_nb)]
 
-    fig, ax = plb.subplots(figsize=(10,8))
+    if ax is None:
+        fig, ax = plb.subplots(figsize=(10,8))    
 
-    pos = nx.spring_layout(G)
+    pos = nx.kamada_kawai_layout(G)#spring_layout(G)
 
     # draw Networks
     nx.draw_networkx_nodes(G, pos, port_names, ax=ax,
