@@ -1200,7 +1200,7 @@ class Network(object):
       """
       the optimum source reflection coefficient to minimize noise
       """
-      return z2s(self.z_opt, self.z0)
+      return z2s(self.z_opt.reshape((self.f.shape[0], 1, 1)), self.z0[:,0])[:,0,0]
 
     @property
     def nfmin(self):
