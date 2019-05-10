@@ -1196,7 +1196,7 @@ class Network(object):
       return 1./self.y_opt
 
     @property
-    def gamma_opt(self):
+    def g_opt(self):
       """
       the optimum source reflection coefficient to minimize noise
       """
