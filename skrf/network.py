@@ -5367,7 +5367,7 @@ def s2s_active(s, a):
     s[ s == 0 ] = 1e-12  # solve numerical singularity
 
     for fidx in xrange(s.shape[0]):
-        s_act[fidx] = (s[fidx] @ a) / a
+        s_act[fidx] = npy.matmul(s[fidx], a) / a
     return s_act  # shape : (n_freqs, n_ports)
 
 def s2z_active(s, z0, a):
