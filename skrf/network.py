@@ -3944,7 +3944,8 @@ def s2z(s, z0=50):
     npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
     # s -> z 
     z = npy.zeros_like(s)
-    z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0
+    # z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0  # Python>3.5
+    z = npy.matmul(npy.matmul(npy.matmul(sqrtz0, npy.linalg.inv(Id - s)), (Id + s)), sqrtz0)
     return z
 
 def s2y(s, z0=50):
@@ -4007,7 +4008,8 @@ def s2y(s, z0=50):
     npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1/z0)
     # s -> y 
     y = npy.zeros_like(s)
-    y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0
+    # y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0  # Python>3.5
+    y = npy.matmul(npy.matmul(npy.matmul(sqrty0, (Id - s)), npy.linalg.inv(Id + s)), sqrty0)
     return y
 
 def s2t(s):
@@ -4118,7 +4120,9 @@ def z2s(z, z0=50):
     npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1/z0)
     # z -> s 
     s = npy.zeros_like(z)
-    s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)
+    # s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)  # Python>3.5
+    s = npy.matmul((npy.matmul(npy.matmul(sqrty0, z), sqrty0) - Id), 
+                    npy.linalg.inv(npy.matmul(npy.matmul(sqrty0, z), sqrty0) + Id))
     return s
 
 def z2y(z):
@@ -4449,7 +4453,9 @@ def y2s(y, z0=50):
     npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
     # y -> s 
     s = npy.zeros_like(y)
-    s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)
+    # s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)  # Python>3.5
+    s = npy.matmul( Id - npy.matmul(npy.matmul(sqrtz0, y), sqrtz0),
+                   npy.linalg.inv(Id + npy.matmul(npy.matmul(sqrtz0, y), sqrtz0)))
     return s
 
 def y2z(y):
