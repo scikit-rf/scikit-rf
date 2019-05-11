@@ -48,6 +48,19 @@ class CircuitTestConstructor(unittest.TestCase):
         _ntwk1.frequency = rf.Frequency(start=1, stop=1, npoints=1)
         self.assertRaises(AttributeError, rf.Circuit, connections)
 
+    def test_s_active(self):
+        '''
+        Test the active s-parameter of a 2-ports network
+        '''
+        connections = [[(self.port1, 0), (self.ntwk1, 0)],
+                       [(self.ntwk1, 1), (self.ntwk2, 0)],
+                       [(self.ntwk2, 1), (self.port2, 0)]]
+        circuit = rf.Circuit(connections)
+        # s_act should be equal to s11 if a = [1,0]
+        assert_array_almost_equal(circuit.s_active([1, 0])[:,0], circuit.s_external[:,0,0])
+        # s_act should be equal to s22 if a = [0,1]
+        assert_array_almost_equal(circuit.s_active([0, 1])[:,1], circuit.s_external[:,1,1])
+                
 
 class CircuitTestWilkinson(unittest.TestCase):
     '''
@@ -207,6 +220,17 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         assert_array_almost_equal(ntw_C.s[0], designer_wilkinson.s[0], decimal=4)
 
+    def test_s_active(self):
+        '''
+        Test the active s-parameter of a 3-ports network
+        '''
+        # s_act should be equal to s11 if a = [1,0,0]
+        assert_array_almost_equal(self.C.network.s_active([1, 0, 0])[:,0], self.C.s_external[:,0,0])
+        # s_act should be equal to s22 if a = [0,1,0]
+        assert_array_almost_equal(self.C.network.s_active([0, 1, 0])[:,1], self.C.s_external[:,1,1])
+        # s_act should be equal to s33 if a = [0,0,1]
+        assert_array_almost_equal(self.C.network.s_active([0, 0, 1])[:,2], self.C.s_external[:,2,2])
+        
 class CircuitTestCascadeNetworks(unittest.TestCase):
     '''
     Build a circuit made of two Networks cascaded and compare the result

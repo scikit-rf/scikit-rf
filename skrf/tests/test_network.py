@@ -8,6 +8,7 @@ import skrf as rf
 from nose.plugins.skip import SkipTest
 
 from skrf import setup_pylab
+from skrf.media import CPW
 
 
 class NetworkTestCase(unittest.TestCase):
@@ -43,7 +44,7 @@ class NetworkTestCase(unittest.TestCase):
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
         self.freq = rf.Frequency(75,110,101,'ghz')
-        self.cpw =  rf.media.CPW(self.freq, w=10e-6, s=5e-6, ep_r=10.6)
+        self.cpw =  CPW(self.freq, w=10e-6, s=5e-6, ep_r=10.6)
         l1 = self.cpw.line(0.20, 'm', z0=50)
         l2 = self.cpw.line(0.07, 'm', z0=50)
         l3 = self.cpw.line(0.47, 'm', z0=50)
@@ -222,7 +223,7 @@ class NetworkTestCase(unittest.TestCase):
         for test_z0 in (50, 10, 90+10j, 4-100j):
             for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3):
                 ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
-       
+
                 self.assertTrue((abs(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
@@ -429,6 +430,34 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(b.is_lossless(), 'This unmatched power divider is lossless.')
         return
 
+    def test_s_active(self):
+        '''
+        Test the active s-parameters of a 2-ports network
+        '''
+        s_ref = self.ntwk1.s
+        # s_act should be equal to s11 if a = [1,0]
+        npy.testing.assert_array_almost_equal(rf.s2s_active(s_ref, [1, 0])[:,0], s_ref[:,0,0])
+        # s_act should be equal to s22 if a = [0,1]
+        npy.testing.assert_array_almost_equal(rf.s2s_active(s_ref, [0, 1])[:,1], s_ref[:,1,1])
+        # s_act should be equal to s11 if a = [1,0]
+        npy.testing.assert_array_almost_equal(self.ntwk1.s_active([1, 0])[:,0], s_ref[:,0,0])
+        # s_act should be equal to s22 if a = [0,1]
+        npy.testing.assert_array_almost_equal(self.ntwk1.s_active([0, 1])[:,1], s_ref[:,1,1])        
+
+    def test_vswr_active(self):
+        '''
+        Test the active vswr-parameters of a 2-ports network
+        '''
+        s_ref = self.ntwk1.s
+        vswr_ref = self.ntwk1.s_vswr
+        # vswr_act should be equal to vswr11 if a = [1,0]
+        npy.testing.assert_array_almost_equal(rf.s2vswr_active(s_ref, [1, 0])[:,0], vswr_ref[:,0,0])
+        # vswr_act should be equal to vswr22 if a = [0,1]
+        npy.testing.assert_array_almost_equal(rf.s2vswr_active(s_ref, [0, 1])[:,1], vswr_ref[:,1,1])
+        # vswr_act should be equal to vswr11 if a = [1,0]
+        npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([1, 0])[:,0], vswr_ref[:,0,0])
+        # vswr_act should be equal to vswr22 if a = [0,1]
+        npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([0, 1])[:,1], vswr_ref[:,1,1])
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
