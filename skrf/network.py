@@ -3938,7 +3938,7 @@ def s2z(s, z0=50):
     # The following is a vectorized version of a for loop for all frequencies.    
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', Id)[...] = 1     
+    npy.einsum('ijj->ij', Id)[...] = 1.0     
     # Creating diagonal matrices of shape (nports, nports) for each nfreqs
     sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
@@ -4002,10 +4002,10 @@ def s2y(s, z0=50):
     # The following is a vectorized version of a for loop for all frequencies.
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', Id)[...] = 1  
+    npy.einsum('ijj->ij', Id)[...] = 1.0  
     # Creating diagonal matrices of shape (nports, nports) for each nfreqs
     sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1/z0)
+    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
     # s -> y 
     y = npy.zeros_like(s)
     # y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0  # Python>3.5
@@ -4114,10 +4114,10 @@ def z2s(z, z0=50):
     # The following is a vectorized version of a for loop for all frequencies.
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', Id)[...] = 1  
+    npy.einsum('ijj->ij', Id)[...] = 1.0  
     # Creating diagonal matrices of shape (nports, nports) for each nfreqs
     sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1/z0)
+    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
     # z -> s 
     s = npy.zeros_like(z)
     # s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)  # Python>3.5
@@ -4447,7 +4447,7 @@ def y2s(y, z0=50):
     # The following is a vectorized version of a for loop for all frequencies.        
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(y)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', Id)[...] = 1  
+    npy.einsum('ijj->ij', Id)[...] = 1.0  
     # Creating diagonal matrices of shape (nports, nports) for each nfreqs
     sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
