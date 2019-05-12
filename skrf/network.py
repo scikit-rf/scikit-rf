@@ -911,11 +911,11 @@ class Network(object):
         return s2t(self.s)
 
     @property
-    def sa(self):
+    def s_invert(self):
         """
-        Active scattering parameter matrix.
+        Inverted scattering parameter matrix.
 
-        Active scattering parameters are simply inverted s-parameters,
+        Inverted scattering parameters are simply inverted s-parameters,
         defined as a = 1/s. Useful in analysis of active networks.
         The a-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
@@ -925,8 +925,8 @@ class Network(object):
 
         Returns
         ---------
-        a : complex :class:`numpy.ndarray` of shape `fxnxn`
-                the active scattering parameter matrix.
+        s_inv : complex :class:`numpy.ndarray` of shape `fxnxn`
+                the inverted scattering parameter matrix.
 
         See Also
         ------------
@@ -938,8 +938,8 @@ class Network(object):
         """
         return 1 / self.s
 
-    @sa.setter
-    def sa(self, value):
+    @s_invert.setter
+    def s_invert(self, value):
         raise NotImplementedError
 
     @property
