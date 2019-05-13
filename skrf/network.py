@@ -911,11 +911,11 @@ class Network(object):
         return s2t(self.s)
 
     @property
-    def sa(self):
+    def s_invert(self):
         """
-        Active scattering parameter matrix.
+        Inverted scattering parameter matrix.
 
-        Active scattering parameters are simply inverted s-parameters,
+        Inverted scattering parameters are simply inverted s-parameters,
         defined as a = 1/s. Useful in analysis of active networks.
         The a-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
@@ -925,8 +925,8 @@ class Network(object):
 
         Returns
         ---------
-        a : complex :class:`numpy.ndarray` of shape `fxnxn`
-                the active scattering parameter matrix.
+        s_inv : complex :class:`numpy.ndarray` of shape `fxnxn`
+                the inverted scattering parameter matrix.
 
         See Also
         ------------
@@ -938,8 +938,8 @@ class Network(object):
         """
         return 1 / self.s
 
-    @sa.setter
-    def sa(self, value):
+    @s_invert.setter
+    def s_invert(self, value):
         raise NotImplementedError
 
     @property
@@ -2863,6 +2863,140 @@ class Network(object):
             w = self
         return t, npy.cumsum(mf.irfft(w.s, n=n).flatten())
 
+    # Network Active s/z/y/vswr parameters
+    def s_active(self, a):
+        '''
+        Returns the active s-parameters of the network for a defined wave excitation a.
+        
+        The active s-parameter at a port is the reflection coefficients 
+        when other ports are excited. It is an important quantity for active
+        phased array antennas.
+        
+        Active s-parameters are defined by [#]_:
+        
+        .. math::
+                    
+            \mathrm{active}(s)_{m} = \sum_{i=1}^N\left( s_{mi} a_i \right) / a_m
+    
+        where :math:`s` are the scattering parameters and :math:`N` the number of ports
+    
+        Parameters
+        ----------       
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude (pseudowave formulation [#]_)
+        
+        Returns
+        ---------
+        s_act : complex array of shape (n_freqs, n_ports)
+            active S-parameters for the excitation a
+    
+        See Also
+        -----------
+            z_active : active Z-parameters
+            y_active : active Y-parameters
+            vswr_active : active VSWR   
+    
+        References
+        ---------- 
+        .. [#] D. M. Pozar, IEEE Trans. Antennas Propag. 42, 1176 (1994).
+        
+        .. [#] D. Williams, IEEE Microw. Mag. 14, 38 (2013).
+        
+        '''        
+        return s2s_active(self.s, a)
+
+    def z_active(self, a):
+        '''
+        Returns the active Z-parameters of the network for a defined wave excitation a.
+        
+        The active Z-parameters are defined by:
+            
+        .. math::
+                    
+            \mathrm{active}(z)_{m} = z_{0,m} \frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
+            
+        where :math:`z_{0,m}` is the characteristic impedance and
+        :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
+        
+        Parameters
+        ----------
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude
+    
+        Returns
+        ----------
+        z_act : complex array of shape (nfreqs, nports)
+            active Z-parameters for the excitation a
+            
+        See Also
+        -----------
+            s_active : active S-parameters
+            y_active : active Y-parameters
+            vswr_active : active VSWR        
+        '''
+        return s2z_active(self.s, self.z0, a)
+
+    def y_active(self, a):
+        '''
+        Returns the active Y-parameters of the network for a defined wave excitation a.
+        
+        The active Y-parameters are defined by:
+            
+        .. math::
+                    
+            \mathrm{active}(y)_{m} = y_{0,m} \frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+            
+        where :math:`y_{0,m}` is the characteristic admittance and
+        :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.    
+        
+        Parameters
+        ----------            
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude 
+        
+        Returns
+        ----------
+        y_act : complex array of shape (nfreqs, nports)
+            active Y-parameters for the excitation a
+            
+        See Also
+        -----------
+            s_active : active S-parameters
+            z_active : active Z-parameters
+            vswr_active : active VSWR       
+        '''
+        return s2y_active(self.s, self.z0, a)
+    
+    def vswr_active(self, a):
+        '''
+        Returns the active VSWR of the network for a defined wave excitation a.
+        
+        The active VSWR is defined by :
+            
+        .. math::
+                    
+            \mathrm{active}(vswr)_{m} = \frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+    
+        where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
+        
+        Parameters
+        ----------       
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude
+    
+        Returns
+        ----------
+        vswr_act : complex array of shape (nfreqs, nports)
+            active VSWR for the excitation a
+            
+        See Also
+        -----------
+            s_active : active S-parameters
+            z_active : active Z-parameters
+            y_active : active Y-parameters  
+        '''        
+        return s2vswr_active(self.s, a)
+    
 
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
@@ -5210,3 +5344,185 @@ def two_port_reflect(ntwk1, ntwk2=None):
     except(TypeError):
         pass
     return result
+
+def s2s_active(s, a):
+    '''
+    Returns active s-parameters for a defined wave excitation a.
+    
+    The active s-parameter at a port is the reflection coefficients 
+    when other ports are excited. It is an important quantity for active
+    phased array antennas.
+    
+    Active s-parameters are defined by [#]_:
+    
+    .. math::
+                
+        \mathrm{active}(s)_{m} = \sum_{i=1}^N\left( s_{mi} a_i \right) / a_m
+
+    where :math:`s` are the scattering parameters and :math:`N` the number of ports
+
+    Parameters
+    ----------
+    s : complex array
+        scattering parameters (nfreqs, nports, nports)
+    
+    a : complex array of shape (n_ports)
+        forward wave complex amplitude (pseudowave formulation [#]_)
+    
+    Returns
+    ---------
+    s_act : complex array of shape (n_freqs, n_ports)
+        active S-parameters for the excitation a
+
+    See Also
+    -----------
+        s2z_active : active Z-parameters
+        s2y_active : active Y-parameters
+        s2vswr_active : active VSWR   
+
+    References
+    ---------- 
+    .. [#] D. M. Pozar, IEEE Trans. Antennas Propag. 42, 1176 (1994).
+    
+    .. [#] D. Williams, IEEE Microw. Mag. 14, 38 (2013).
+    
+    '''
+    # TODO : vectorize the for loop
+    nfreqs, nports, nports = s.shape
+    s_act = npy.zeros((nfreqs, nports), dtype='complex')
+    s[ s == 0 ] = 1e-12  # solve numerical singularity
+
+    for fidx in xrange(s.shape[0]):
+        s_act[fidx] = npy.matmul(s[fidx], a) / a
+    return s_act  # shape : (n_freqs, n_ports)
+
+def s2z_active(s, z0, a):
+    '''
+    Returns the active Z-parameters for a defined wave excitation a.
+    
+    The active Z-parameters are defined by:
+        
+    .. math::
+                
+        \mathrm{active}(z)_{m} = z_{0,m} \frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
+        
+    where :math:`z_{0,m}` is the characteristic impedance and
+    :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
+    
+    Parameters
+    ----------
+    s : complex array
+        scattering parameters (nfreqs, nports, nports)
+        
+    z0 : complex array-like or number
+        port impedances.
+        
+    a : complex array of shape (n_ports)
+        forward wave complex amplitude
+
+    Returns
+    ----------
+    z_act : complex array of shape (nfreqs, nports)
+        active Z-parameters for the excitation a
+        
+    See Also
+    -----------
+        s2s_active : active S-parameters
+        s2y_active : active Y-parameters
+        s2vswr_active : active VSWR        
+        
+    '''
+    # TODO : vectorize the for loop
+    nfreqs, nports, nports = s.shape
+    z0 = fix_z0_shape(z0, nfreqs, nports)
+    z_act = npy.zeros((nfreqs, nports), dtype='complex')
+    s_act = s2s_active(s, a)
+    
+    for fidx in xrange(s.shape[0]):
+        z_act[fidx] = z0[fidx] * (1 + s_act[fidx])/(1 - s_act[fidx])
+    return z_act
+
+def s2y_active(s, z0, a):
+    '''
+    Returns the active Y-parameters for a defined wave excitation a.
+    
+    The active Y-parameters are defined by:
+        
+    .. math::
+                
+        \mathrm{active}(y)_{m} = y_{0,m} \frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+        
+    where :math:`y_{0,m}` is the characteristic admittance and
+    :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.    
+    
+    Parameters
+    ----------
+    s : complex array
+        scattering parameters (nfreqs, nports, nports)
+        
+    z0 : complex array-like or number
+        port impedances.
+        
+    a : complex array of shape (n_ports)
+        forward wave complex amplitude 
+    
+    Returns
+    ----------
+    y_act : complex array of shape (nfreqs, nports)
+        active Y-parameters for the excitation a
+        
+    See Also
+    -----------
+        s2s_active : active S-parameters
+        s2z_active : active Z-parameters
+        s2vswr_active : active VSWR       
+    '''
+    nfreqs, nports, nports = s.shape
+    z0 = fix_z0_shape(z0, nfreqs, nports)
+    y_act = npy.zeros((nfreqs, nports), dtype='complex')
+    s_act = s2s_active(s, a)
+    
+    for fidx in xrange(s.shape[0]):
+        y_act[fidx] = 1/z0[fidx] * (1 - s_act[fidx])/(1 + s_act[fidx])
+    return y_act    
+
+def s2vswr_active(s, a):
+    '''
+    Returns the active VSWR for a defined wave excitation a..
+    
+    The active VSWR is defined by :
+        
+    .. math::
+                
+        \mathrm{active}(vswr)_{m} = \frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+
+    where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.    
+            
+    
+    Parameters
+    ----------
+    s : complex array
+        scattering parameters (nfreqs, nports, nports)
+        
+    a : complex array of shape (n_ports)
+        forward wave complex amplitude
+
+    Returns
+    ----------
+    vswr_act : complex array of shape (nfreqs, nports)
+        active VSWR for the excitation a
+        
+    See Also
+    -----------
+        s2s_active : active S-parameters
+        s2z_active : active Z-parameters
+        s2y_active : active Y-parameters  
+    '''
+    nfreqs, nports, nports = s.shape
+    vswr_act = npy.zeros((nfreqs, nports), dtype='complex')
+    s_act = s2s_active(s, a)
+    
+    for fidx in xrange(s.shape[0]):
+        vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
+    
+    return vswr_act

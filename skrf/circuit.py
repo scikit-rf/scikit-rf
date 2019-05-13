@@ -539,4 +539,128 @@ class Circuit():
         return ntw
 
 
+    def s_active(self, a):
+        '''
+        Returns active s-parameters of the circuit's network for a defined wave excitation a.
         
+        The active s-parameter at a port is the reflection coefficients 
+        when other ports are excited. It is an important quantity for active
+        phased array antennas.
+        
+        Active s-parameters are defined by [#]_:
+        
+        .. math::
+                    
+            \mathrm{active}(s)_{mn} = \sum_i\left( s_{mi} a_i \right) / a_n
+        
+        Parameters
+        ----------
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude (pseudowave formulation [#]_)
+        
+        Returns
+        ---------
+        s_act : complex array of shape (n_freqs, n_ports)
+            active s-parameters for the excitation a
+        
+        
+        References
+        ---------- 
+        .. [#] D. M. Pozar, IEEE Trans. Antennas Propag. 42, 1176 (1994).
+        
+        .. [#] D. Williams, IEEE Microw. Mag. 14, 38 (2013).
+        
+        '''
+        return self.network.s_active(a)
+
+    def z_active(self, a):
+        '''
+        Returns the active Z-parameters of the circuit's network for a defined wave excitation a.
+        
+        The active Z-parameters are defined by:
+            
+        .. math::
+                    
+            \mathrm{active}(z)_{m} = z_{0,m} \frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
+            
+        where :math:`z_{0,m}` is the characteristic impedance and
+        :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
+        
+        Parameters
+        ----------
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude
+    
+        Returns
+        ----------
+        z_act : complex array of shape (nfreqs, nports)
+            active Z-parameters for the excitation a
+            
+        See Also
+        -----------
+            s_active : active S-parameters
+            y_active : active Y-parameters
+            vswr_active : active VSWR        
+        '''
+        return self.network.z_active(a)
+
+    def y_active(self, a):
+        '''
+        Returns the active Y-parameters of the circuit's network for a defined wave excitation a.
+        
+        The active Y-parameters are defined by:
+            
+        .. math::
+                    
+            \mathrm{active}(y)_{m} = y_{0,m} \frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+            
+        where :math:`y_{0,m}` is the characteristic admittance and
+        :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.    
+        
+        Parameters
+        ----------            
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude 
+        
+        Returns
+        ----------
+        y_act : complex array of shape (nfreqs, nports)
+            active Y-parameters for the excitation a
+            
+        See Also
+        -----------
+            s_active : active S-parameters
+            z_active : active Z-parameters
+            vswr_active : active VSWR       
+        '''
+        return self.network.y_active(a)
+
+    def vswr_active(self, a):
+        '''
+        Returns the active VSWR of the circuit's network for a defined wave excitation a.
+        
+        The active VSWR is defined by :
+            
+        .. math::
+                    
+            \mathrm{active}(vswr)_{m} = \frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+    
+        where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
+        
+        Parameters
+        ----------       
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude
+    
+        Returns
+        ----------
+        vswr_act : complex array of shape (nfreqs, nports)
+            active VSWR for the excitation a
+            
+        See Also
+        -----------
+            s_active : active S-parameters
+            z_active : active Z-parameters
+            y_active : active Y-parameters  
+        '''        
+        return self.network.vswr_active(a)        
