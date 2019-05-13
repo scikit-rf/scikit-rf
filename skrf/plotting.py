@@ -1594,6 +1594,9 @@ def plot_uncertainty_bounds_component(
 
     '''
 
+    if ax is None:
+        ax = plb.gca()
+
     if m is None:
         M = range(self[0].number_of_ports)
     else:
@@ -1608,8 +1611,6 @@ def plot_uncertainty_bounds_component(
 
             plot_attribute = attribute
 
-            ax = plb.gca()
-
             ntwk_mean = self.__getattribute__('mean_'+attribute)
             ntwk_std = self.__getattribute__('std_'+attribute)
             ntwk_std.s = n_deviations * ntwk_std.s
@@ -1618,12 +1619,12 @@ def plot_uncertainty_bounds_component(
             lower_bound = (ntwk_mean.s[:, m, n] - ntwk_std.s[:, m, n]).squeeze()
 
             if ppf is not None:
-                if type =='bar':
+                if type == 'bar':
                     raise NotImplementedError('the \'ppf\' options don\'t work correctly with the bar-type error plots')
                 ntwk_mean.s = ppf(ntwk_mean.s)
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
-                lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+                lower_bound[npy.isnan(lower_bound)] = min(lower_bound)
                 if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # quickfix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute is 's_mag':
                         plot_attribute = 's_db'
@@ -1635,7 +1636,7 @@ def plot_uncertainty_bounds_component(
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
                 ax.fill_between(ntwk_mean.frequency.f,
-                                lower_bound, upper_bound, alpha=alpha, color=color_error,
+                                lower_bound.real, upper_bound.real, alpha=alpha, color=color_error,
                                 **kwargs_error)
                 # ax.plot(ntwk_mean.frequency.f_scaled, ntwk_mean.s[:,m,n],*args,**kwargs)
 
@@ -1651,7 +1652,7 @@ def plot_uncertainty_bounds_component(
             else:
                 raise(ValueError('incorrect plot type'))
 
-            ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:],''))  # use only the function of the attribute
+            ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:], ''))  # use only the function of the attribute
             scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
             ax.axis('tight')
 
