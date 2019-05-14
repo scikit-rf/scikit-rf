@@ -3088,14 +3088,14 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports - 1 + l, num - 1)
 
     # if ntwkB is a 2port, then keep port indices where you expect.
-    if ntwkB.nports == 2 and ntwkA.nports > 2:
-        from_ports = list(range(ntwkC.nports))
-        to_ports = list(range(ntwkC.nports))
-        to_ports.pop(k);
-        to_ports.append(k)
+    #if ntwkB.nports == 2 and ntwkA.nports > 2:
+    #    from_ports = list(range(ntwkC.nports))
+    #    to_ports = list(range(ntwkC.nports))
+    #    to_ports.pop(k);
+    #    to_ports.append(k)
 
-        ntwkC.renumber(from_ports=from_ports,
-                       to_ports=to_ports)
+    #    ntwkC.renumber(from_ports=from_ports,
+    #                   to_ports=to_ports)
 
     return ntwkC
 
@@ -3303,8 +3303,12 @@ def cascade(ntwkA, ntwkB):
         # which port on self to use is ambiguous. choose N
         return connect(ntwkA, N, ntwkB, 0)
 
-    elif ntwkA.nports %2 == 0 and ntwkA.nports == ntwkB.nports:
-        # we have 2N port balanced networks
+    elif ntwkA.nports % 2 == 0 and ntwkA.nports == ntwkB.nports:
+        # we have two 2N-port balanced networks
+        return connect(ntwkA, N, ntwkB, 0, num=N)
+    
+    elif ntwkA.nports % 2 == 0 and ntwkA.nports == 2 * ntwkB.nports:
+        # we have a 2N-port balanced network terminated by a N-port network
         return connect(ntwkA, N, ntwkB, 0, num=N)
 
     else:
