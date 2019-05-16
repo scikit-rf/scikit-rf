@@ -1634,12 +1634,14 @@ class Network(object):
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
             output.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0, 0]))))
 
+            scaled_freq = self.frequency.f_scaled
+
             if self.number_of_ports == 1:
                 # write comment line for users (optional)
                 output.write('!freq {labelA}S11 {labelB}S11\n'.format(**formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]) + ' ' \
+                    output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
                                  + c2str_A(self.s[f, 0, 0]) + ' ' \
                                  + c2str_B(self.s[f, 0, 0]) + '\n')
                     # write out the z0 following hfss's convention if desired
@@ -1660,7 +1662,7 @@ class Network(object):
                         **formatDic))
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]) + ' ' \
+                    output.write(format_spec_freq.format(scaled_freq[f]) + ' ' \
                                  + c2str_A(self.s[f, 0, 0]) + ' ' \
                                  + c2str_B(self.s[f, 0, 0]) + ' ' \
                                  + c2str_A(self.s[f, 1, 0]) + ' ' \
@@ -1688,7 +1690,7 @@ class Network(object):
                 output.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]))
+                    output.write(format_spec_freq.format(scaled_freq[f]))
                     for m in range(3):
                         for n in range(3):
                             output.write(' ' + c2str_A(self.s[f, m, n]) + ' ' \
@@ -1720,7 +1722,7 @@ class Network(object):
                 output.write('\n')
                 # write out data
                 for f in range(len(self.f)):
-                    output.write(format_spec_freq.format(self.frequency.f_scaled[f]))
+                    output.write(format_spec_freq.format(scaled_freq[f]))
                     for m in range(self.number_of_ports):
                         for n in range(self.number_of_ports):
                             if (n > 0 and (n % 4) == 0):
