@@ -2165,7 +2165,7 @@ class Network(object):
             mag = npy.abs(x)
             interp_rad = interp1d(f, rad, axis=0, fill_value='extrapolate')
             interp_mag = interp1d(f, mag, axis=0, fill_value='extrapolate')
-            dc_sparam = interp_mag(0) * npy.exp(1j * interp_rad(0)).real
+            dc_sparam = interp_mag(0) * npy.exp(1j * interp_rad(0))
         else:
             #Make numpy array if argument was list
             dc_sparam = npy.array(dc_sparam)
@@ -3088,14 +3088,14 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         ntwkC = innerconnect(ntwkC, k, ntwkA.nports - 1 + l, num - 1)
 
     # if ntwkB is a 2port, then keep port indices where you expect.
-    #if ntwkB.nports == 2 and ntwkA.nports > 2:
-    #    from_ports = list(range(ntwkC.nports))
-    #    to_ports = list(range(ntwkC.nports))
-    #    to_ports.pop(k);
-    #    to_ports.append(k)
+    if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
+        from_ports = list(range(ntwkC.nports))
+        to_ports = list(range(ntwkC.nports))
+        to_ports.pop(k);
+        to_ports.append(k)
 
-    #    ntwkC.renumber(from_ports=from_ports,
-    #                   to_ports=to_ports)
+        ntwkC.renumber(from_ports=from_ports,
+                       to_ports=to_ports)
 
     return ntwkC
 
