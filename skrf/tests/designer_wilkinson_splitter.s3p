@@ -1,0 +1,19 @@
+! Touchstone file exported from Circuit Design 2018.2.0
+!        File:           C:/Users/JH218595/Documents/Ansoft/Project1.aedt
+!        Generated:      7:18:29  avr. 23, 2019
+!        Design:         Circuit1
+!        Project:        Project1
+!        Setup:          LinearFrequency
+!        Solution:       LinearFrequency
+!
+!Data is not renormalized
+# GHZ S DB
+! Modal data exported
+! Port[1] = Port1
+! Port[2] = Port2
+! Port[3] = Port3
+1                -305.970440190181 2.46725894847133 -3.01029995663981 -90              -3.01029995663981 -90              
+                -3.01029995663981 -90              -318.019601937506 -0.266232623866018 -314.431393718684 -7.07964433083589 
+                -3.01029995663981 -90              -316.53368036617 -9.03276205095497 -364.676860394429 -90              
+! Port Impedance50               0                50               0                50               0                
+

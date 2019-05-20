@@ -323,11 +323,22 @@ class Calibration(object):
 
     def apply_cal_to_all_in_dir(self, *args, **kwargs):
         '''
+        Apply correction to all touchstone files in a given directory.
+        See `skrf.io.general.read_all_networks`.
         '''
 
         from ..io.general import read_all_networks
         ntwkDict = read_all_networks(*args, **kwargs)
         return self.apply_cal_to_list(ntwkDict)
+
+    def apply_cal_to_network_set(self, ntwk_set):
+        '''
+        Apply correction to a NetworkSet.
+        '''
+        cal_ns = NetworkSet([self.apply_cal(ntwk) for ntwk in ntwk_set])
+        if hasattr(ntwk_set, 'name'):
+            cal_ns.name = ntwk_set.name
+        return cal_ns
 
     def embed(self,ntwk):
         '''

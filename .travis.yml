@@ -17,7 +17,7 @@ before_install:
 install:
 - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
 - source activate test-environment
-- conda install numpy matplotlib scipy pandas nose pip ipython=5.1
+- conda install numpy matplotlib scipy pandas networkx nose pip ipython=5.1
 - pip install -r tools/travis-requirements.txt
 - python setup.py install
 script:
