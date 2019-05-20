@@ -9,6 +9,7 @@ from nose.plugins.skip import SkipTest
 
 from skrf import setup_pylab
 from skrf.media import CPW
+from skrf.media import DistributedCircuit
 
 
 class NetworkTestCase(unittest.TestCase):
@@ -469,7 +470,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(abs(a.z_opt[0] - 50.) < 1.e-6, 'optimal resistance was altered')
         self.assertTrue(abs(a.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance was altered')
 
-        tem = rf.media.DistributedCircuit(z0=50)
+        tem = DistributedCircuit(z0=50)
         inductor = tem.inductor(1e-9).interpolate(a.frequency)
 
         f = inductor ** a
