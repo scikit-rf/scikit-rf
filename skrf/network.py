@@ -2992,7 +2992,6 @@ class Network(object):
             )
         if n is None:
             # Use zero-padding specification. Note that this does not allow n odd.
-            pad = 1000
             n = 2 * (self.frequency.npoints + pad - 1)
 
         fstep = self.frequency.step
