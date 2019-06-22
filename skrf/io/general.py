@@ -233,7 +233,7 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None)
     obj_type : str
         Name of skrf object types to read (ie 'Network')
     files : list, optional
-        list of files to load, bypassed dir.
+        list of files to load, bypasses dir parameter.
 
     Returns
     ---------
