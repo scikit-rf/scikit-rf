@@ -169,7 +169,7 @@ def surface_resistivity(f,rho,mu_r):
 def distributed_circuit_2_propagation_impedance( distributed_admittance,\
         distributed_impedance):
     '''
-    Converts distrubuted circuit values to wave quantities.
+    Converts distributed circuit values to wave quantities.
 
     This converts complex distributed impedance and admittance to
     propagation constant and characteristic impedance. The relation is
