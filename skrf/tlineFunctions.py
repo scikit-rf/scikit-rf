@@ -248,7 +248,7 @@ def electrical_length(gamma, f , d, deg=False):
     Parameters
     ----------
     gamma : function
-            propagation constant function, which takes frequency in hz as a
+            propagation constant function, which takes frequency in Hz as a
             sole argument. see Notes.
     l : number or array-like
             length of line, in meters
