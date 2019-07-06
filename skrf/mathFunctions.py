@@ -139,8 +139,10 @@ def complex_components(z):
 
 def complex_2_reim(z):
     '''
+    returns real and imaginary parts of a complex number.
+    
     takes:
-             input: complex number or array
+            input: complex number or array
     return:
             real: real part of input
             imag: imaginary part of input
