@@ -212,7 +212,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
+def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None):
     '''
     Read all skrf objects in a directory
 
@@ -232,6 +232,8 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
         frequencies's :attr:`~skrf.frequency.Frequency.f_unit`
     obj_type : str
         Name of skrf object types to read (ie 'Network')
+    files : list, optional
+        list of files to load, bypasses dir parameter.
 
     Returns
     ---------
@@ -253,7 +255,10 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
     {'delay_short': 1-Port Network: 'delay_short',  75-110 GHz, 201 pts, z0=[ 50.+0.j],
     'line': 2-Port Network: 'line',  75-110 GHz, 201 pts, z0=[ 50.+0.j  50.+0.j],
     'ntwk1': 2-Port Network: 'ntwk1',  1-10 GHz, 91 pts, z0=[ 50.+0.j  50.+0.j],
-    ...
+
+    >>> rf.read_all(files = ['skrf/data/delay_short.s1p', 'skrf/data/line.s2p'], obj_type = 'Network')
+    {'delay_short': 1-Port Network: 'delay_short',  75-110 GHz, 201 pts, z0=[ 50.+0.j],
+    'line': 2-Port Network: 'line',  75-110 GHz, 201 pts, z0=[ 50.+0.j  50.+0.j]}
 
     See Also
     ----------
@@ -264,11 +269,20 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None):
     '''
 
     out={}
-    for filename in os.listdir(dir):
+    
+    filelist = files
+    if files == None:
+        filelist = os.listdir(dir)
+    
+    for filename in filelist:
         if contains is not None and contains not in filename:
             continue
-        fullname = os.path.join(dir,filename)
-        keyname = os.path.splitext(filename)[0]
+        if files == None:
+            fullname = os.path.join(dir,filename)
+            keyname = os.path.splitext(filename)[0]
+        else:
+            fullname = filename
+            keyname = os.path.splitext(os.path.basename(filename))[0]
         try:
             out[keyname] = read(fullname)
             continue

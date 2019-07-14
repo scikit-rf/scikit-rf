@@ -22,6 +22,7 @@ class IOTestCase(unittest.TestCase):
         self.short = rf.Network(os.path.join(self.test_dir, 'short.s1p'))
         self.match = rf.Network(os.path.join(self.test_dir, 'match.s1p'))
         self.open = rf.Network(os.path.join(self.test_dir, 'open.s1p'))
+        self.test_files = [os.path.join(self.test_dir, test_file) for test_file in ['ntwk1.s2p', 'ntwk2.s2p']]
         self.embeding_network= rf.Network(os.path.join(self.test_dir, 'embedingNetwork.s2p'))
         self.freq = rf.F(75,110,101)
 
@@ -38,6 +39,9 @@ class IOTestCase(unittest.TestCase):
 
     def test_read_all(self):
         rf.read_all(self.test_dir)
+    
+    def test_read_all_files(self):
+        rf.read_all(files=self.test_files)
 
     def test_save_sesh(self):
         a=self.ntwk1

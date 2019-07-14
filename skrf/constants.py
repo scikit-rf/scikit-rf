@@ -21,6 +21,9 @@ INF = 1e99
 ONE = 1.0 + 1/1e14
 ZERO = 1e-6
 
+K_BOLTZMANN = 1.38064852e-23
+T0 = 290.
+
 global distance_dict
 distance_dict = {'m':1.,
                  'cm':1e-2,

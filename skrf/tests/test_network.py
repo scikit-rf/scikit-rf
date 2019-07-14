@@ -9,6 +9,7 @@ from nose.plugins.skip import SkipTest
 
 from skrf import setup_pylab
 from skrf.media import CPW
+from skrf.media import DistributedCircuit
 
 
 class NetworkTestCase(unittest.TestCase):
@@ -428,6 +429,55 @@ class NetworkTestCase(unittest.TestCase):
                           [-1j/npy.sqrt(2), -1./2, 1./2]],
                        z0=50)
         self.assertTrue(b.is_lossless(), 'This unmatched power divider is lossless.')
+        return
+
+    def test_noise(self):
+        a = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+
+        nf = 10**(0.05)
+        self.assertTrue(a.noisy)
+        self.assertTrue(abs(a.nfmin[0] - nf) < 1.e-6, 'noise figure does not match original spec')
+        self.assertTrue(abs(a.z_opt[0] - 50.) < 1.e-6, 'optimal resistance does not match original spec')
+        self.assertTrue(abs(a.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance does not match original spec')
+        self.assertTrue(npy.all(abs(a.g_opt) < 1.e-6), 'calculated optimal reflection coefficient does not match original coefficients')
+
+        b = rf.Network(f=[1, 2],
+                       s=[[[0, 1], [1, 0]], [[0, 1], [1, 0]]],
+                       z0=50).interpolate(a.frequency)
+        with self.assertRaises(ValueError) as context:
+            b.n
+        with self.assertRaises(ValueError) as context:
+            b.f_noise
+        self.assertEqual(str(context.exception), 'network does not have noise')
+
+        c = a ** b
+        self.assertTrue(a.noisy)
+        self.assertTrue(abs(c.nfmin[0] - nf) < 1.e-6, 'noise figure does not match original spec')
+        self.assertTrue(abs(c.z_opt[0] - 50.) < 1.e-6, 'optimal resistance does not match original spec')
+        self.assertTrue(abs(c.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance does not match original spec')
+
+        d = b ** a
+        self.assertTrue(d.noisy)
+        self.assertTrue(abs(d.nfmin[0] - nf) < 1.e-6, 'noise figure does not match original spec')
+        self.assertTrue(abs(d.z_opt[0] - 50.) < 1.e-6, 'optimal resistance does not match original spec')
+        self.assertTrue(abs(d.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance does not match original spec')
+
+        e = a ** a
+        self.assertTrue(abs(e.nfmin[0] - (nf + (nf-1)/(10**2))) < 1.e-6, 'noise figure does not match Friis formula')
+
+        self.assertTrue(a.noisy)
+        self.assertTrue(abs(a.nfmin[0] - nf) < 1.e-6, 'noise figure was altered')
+        self.assertTrue(abs(a.z_opt[0] - 50.) < 1.e-6, 'optimal resistance was altered')
+        self.assertTrue(abs(a.rn[0] - 0.1159*50.) < 1.e-6, 'equivalent resistance was altered')
+
+        tem = DistributedCircuit(z0=50)
+        inductor = tem.inductor(1e-9).interpolate(a.frequency)
+
+        f = inductor ** a
+        expected_zopt = 50 - 2j*npy.pi*1e+9*1e-9
+        self.assertTrue(abs(f.z_opt[0] - expected_zopt) < 1.e-6, 'optimal resistance was not 50 ohms - inductor')
+
+
         return
 
     def test_s_active(self):
