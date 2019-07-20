@@ -151,3 +151,7 @@ class IOTestCase(unittest.TestCase):
         self.assertEqual(actual, given)
         self.assertEqual(actual.frequency, given.frequency)
         self.assertEqual(actual.name, given.name)
+        self.assertEqual(actual.comments, given.comments)
+        self.assertEqual(actual.z0.tolist(), given.z0.tolist())
+        self.assertEqual(actual.port_names, given.port_names)
+        self.assertEqual(actual.variables, given.variables)
