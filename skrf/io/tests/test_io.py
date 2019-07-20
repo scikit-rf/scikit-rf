@@ -141,3 +141,13 @@ class IOTestCase(unittest.TestCase):
             )
         self.read_write(a_media)
 
+    def test_snp_json_roundtrip(self):
+        '''
+        Tests if snp object saved to json and reloaded is still the same.
+        :return:
+        '''
+        given = self.ntwk1
+        actual = rf.from_json_string(rf.to_json_string(given))
+        self.assertEqual(actual, given)
+        self.assertEqual(actual.frequency, given.frequency)
+        self.assertEqual(actual.name, given.name)
