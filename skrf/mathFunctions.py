@@ -197,7 +197,7 @@ def mag_2_db10(input,zero_nan=True):
 
 def db_2_magnitude(input):
     '''
-    converts db to linear magnitude.
+    converts dB to linear magnitude.
 
     returns:
             10**((z)/20.)
@@ -210,7 +210,7 @@ db_2_mag = db_2_magnitude
 
 def db10_2_mag(input):
     '''
-    converts db to linear magnitude
+    converts dB to linear magnitude
 
     returns:
             10**((z)/10.)
@@ -227,19 +227,21 @@ def magdeg_2_reim(mag,deg):
 
 def dbdeg_2_reim(db,deg):
     '''
-    converts db magnitude and phase (in deg) arrays into a complex array
+    converts dB magnitude and phase (in deg) arrays into a complex array
     '''
     return magdeg_2_reim(db_2_magnitude(db),deg)
 
 
 def db_2_np(x):
     '''
-    converts a value in Nepers to dB
+    Converts a value in decibel (dB) to neper (Np).
     '''
     return (npy.log(10)/20) * x
+
+
 def np_2_db(x):
     '''
-    converts a value in dB to Nepers
+    Converts a value in Nepers (Np) to decibel (dB).
     '''
     return 20/npy.log(10) * x
 
@@ -248,6 +250,64 @@ def radian_2_degree(rad):
 
 def degree_2_radian(deg):
     return (deg)*pi/180.
+
+def feet_2_meter(feet=1):
+    '''
+    Convert length in feet to meter.
+    
+    1 foot is equal to 0.3048 meters:
+        
+    Parameters
+    ----------
+    feet : number or array-like
+        length in feet
+
+    Returns
+    -------
+    meter: number or array-like
+        length in meter
+
+    '''
+    return 0.3048*feet
+
+def meter_2_feet(meter=1):
+    '''
+    Convert length in meter to feet.
+    
+    1 meter is equal to 0.3.28084 feet:
+            
+    Parameters
+    ----------
+    meter : number or array-like
+        length in meter
+
+    Returns
+    -------
+    feet : number or array-like
+        length in feet
+
+    '''
+    return 3.28084*meter
+
+
+def db_per_100feet_2_db_per_100meter(db_per_100feet=1):
+    '''
+    Convert attenuation values given in dB/100ft to dB/100m.
+    
+    db_per_100meter = db_per_100feet * rf.meter_2_feet()
+    
+    Parameters
+    ----------
+    db_per_100feet : number or array-like
+        Attenuation in dB/ 100 ft
+
+    Returns
+    -------
+    db_per_100meter : number or array-like
+        Attenuation in dB/ 100 m
+
+    '''
+    return db_per_100feet * 100 / feet_2_meter(100)
 
 def unwrap_rad(input):
     '''
