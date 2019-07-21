@@ -1,6 +1,7 @@
 import skrf as rf
 import unittest
-from numpy import real, imag, linspace, pi, tanh, array
+from numpy import real, imag, linspace, pi, tanh, array, conj
+from numpy.random import rand
 from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
 
 
@@ -138,8 +139,9 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         z0 = 50
         v1 = 3
         i1 = 2
+        theta = gamma * d
         
-        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, gamma, d)
+        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
         
         assert_almost_equal(v2, v1)
         assert_almost_equal(i2, i1)
@@ -150,13 +152,12 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         Voltage and current are equal.
         """
         gamma = array([1j])
-        d = 2*pi
         z0 = 50
-        v1 = 3
-        i1 = 2
+        v1 = rand()
+        i1 = rand()
+        theta = 1j*2*pi
         
-        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, gamma, d)
-        
+        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
         assert_almost_equal(v2, v1)
         assert_almost_equal(i2, i1)
 
@@ -166,12 +167,12 @@ class TestVoltageCurrentPropagation(unittest.TestCase):
         Voltage and current are inversed.
         """
         gamma = array([1j])
-        d = pi
         z0 = 50
-        v1 = 3
-        i1 = 2
+        v1 = rand()
+        i1 = rand()
+        theta = 1j*pi
         
-        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, gamma, d)
+        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
         
         assert_almost_equal(v2, -v1)
         assert_almost_equal(i2, -i1)
