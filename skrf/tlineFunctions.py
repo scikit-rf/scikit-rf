@@ -609,12 +609,12 @@ def zl_2_swr(z0, zl):
     return Gamma0_2_swr(Gamma0)
 
 
-def voltage_current_propagation(v1, i1, z0, gamma, d):
+def voltage_current_propagation(v1, i1, z0, theta):
     """
-    Propagate voltage and current on length d of a transmissio line.
+    Propagate voltage and current on electrical length theta of a transmission line.
 
-    Give voltage v2 and current i1 at z=-L, given voltage v1 
-    and current i1 (at z=0) and given characteristic parameters gamma and Z0.
+    Give voltage v2 and current i1 at theta, given voltage v1 
+    and current i1 (at theta=0) and given characteristic parameters gamma and z0.
     
     
       i1                     i2
@@ -626,7 +626,7 @@ def voltage_current_propagation(v1, i1, z0, gamma, d):
     
     <------------ d ------------->
     
-    z=0                         z=d
+    0                         theta
     
     Use (inverse) ABCD parameters of a transmission line. 
     
@@ -638,20 +638,18 @@ def voltage_current_propagation(v1, i1, z0, gamma, d):
         total current at z=0, directed toward the transmission line
     z0: array-like (nfreqs,)
         characteristic impedance
-    gamma : array-like (nfreqs,)
-        propagation constant
-    d : array-like (nd,)
-        transmission line length
+    theta : number or array-like (nfreq, ntheta)
+        electrical length of the line (may be complex).
     
     Return
     ------
-    v2 : array-like (nfreqs, nd)
+    v2 : array-like (nfreqs, ntheta)
         total voltage at z=d
-    i2 : array-like (nfreqs, nd)
+    i2 : array-like (nfreqs, ndtheta
         total current at z=d, directed outtoward the transmission line
     """
     # outer product by broadcasting of the electrical length
-    theta = gamma[:, npy.newaxis] * d  # (nbfreqs x nbd)
+    #theta = gamma[:, npy.newaxis] * d  # (nbfreqs x nbd)
     # ABCD parameters of a transmission line (gamma, z0)
     A = npy.cosh(theta)
     B = z0*npy.sinh(theta)
@@ -665,6 +663,41 @@ def voltage_current_propagation(v1, i1, z0, gamma, d):
     v2 = inv_ABCD[0,0] * v1 + inv_ABCD[0,1] * i1
     i2 = inv_ABCD[1,0] * v1 + inv_ABCD[1,1] * i1
     return v2, i2
+
+
+def zl_2_total_loss(z0, zl, theta):
+    '''
+    Total loss of terminated transmission line (in natural unit)
+    
+    The total loss expressed in terms of the load impedance is [#]_:
+
+        .. math::
+            TL = \\frac{R_{in}}{R_L} \\left| \\cosh \\theta  + \\frac{Z_L}{Z_0} \\sinh\\theta \\right|^2
+    
+    Parameters
+    ----------
+    z0 : number or array-like
+        characteristic impedance.
+    zl : number or array-like
+        load impedance
+    theta : number or array-like
+        electrical length of the line (may be complex).
+
+    Returns
+    -------
+    total_loss: number or array-like
+        total loss in natural unit
+        
+    References
+    ----------
+    .. [#]: Steve Stearns (K6OIK), Transmission Line Power Paradoxand Its Resolution. ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014. https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
+    
+    
+    '''
+    Rin = npy.real(zl_2_zin(z0, zl, theta))
+    total_loss = Rin/npy.real(zl)*npy.abs(npy.cosh(theta) + zl/z0*npy.sinh(theta))**2
+    return total_loss
+
 
 # short hand convenience.
 # admittedly these follow no logical naming scheme, but they closely
