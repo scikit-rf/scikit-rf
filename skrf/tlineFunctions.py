@@ -558,6 +558,114 @@ def reflection_coefficient_2_propagation_constant(Gamma_in, Gamma_l, d):
     return gamma
 
 
+def Gamma0_2_swr(Gamma0):
+    r"""
+    Return Standing Wave Ratio (SWR) for a given reflection coefficient.
+
+    Standing Wave Ratio value is defined by:
+
+        .. math::
+            VSWR = \\frac{1 + |\\Gamma_0|}{1 - |\Gamma_0|}
+
+    Parameters
+    ----------
+    Gamma0 : number or array-like
+        Reflection coefficient
+
+    Returns
+    -------
+    swr : number or array-like
+        Standing Wave Ratio.
+
+    """
+    return (1 + npy.abs(Gamma0)) / (1 - npy.abs(Gamma0))
+
+
+def zl_2_swr(z0, zl):
+    r"""
+    Return Standing Wave Ratio (SWR) for a given load impedance.
+
+    Standing Wave Ratio value is defined by:
+
+        .. math::
+            VSWR = \\frac{1 + |\\Gamma|}{1 - |\Gamma|}
+            where
+            \\Gamma = \\frac{Z_L - Z_0}{Z_L + Z_0}
+
+    Parameters
+    ----------
+    z0 : number or array-like
+        line characteristic impedance [Ohm]
+    zl : number or array-like
+        load impedance [Ohm]
+
+    Returns
+    -------
+    swr : number or array-like
+        Standing Wave Ratio.
+
+    """
+    Gamma0 = load_impedance_2_reflection_coefficient(z0, zl)
+    return Gamma0_2_swr(Gamma0)
+
+
+def voltage_current_propagation(v1, i1, z0, gamma, d):
+    """
+    Propagate voltage and current on length d of a transmissio line.
+
+    Give voltage v2 and current i1 at z=-L, given voltage v1 
+    and current i1 (at z=0) and given characteristic parameters gamma and Z0.
+    
+    
+      i1                     i2
+    ○-->---------------------->--○
+    
+    v1         gamma,z0         v2
+    
+    ○----------------------------○
+    
+    <------------ d ------------->
+    
+    z=0                         z=d
+    
+    Use (inverse) ABCD parameters of a transmission line. 
+    
+    Parameters
+    ----------
+    v1 : array-like (nfreqs,)
+        total voltage at z=0
+    i1 : array-like (nfreqs,)
+        total current at z=0, directed toward the transmission line
+    z0: array-like (nfreqs,)
+        characteristic impedance
+    gamma : array-like (nfreqs,)
+        propagation constant
+    d : array-like (nd,)
+        transmission line length
+    
+    Return
+    ------
+    v2 : array-like (nfreqs, nd)
+        total voltage at z=d
+    i2 : array-like (nfreqs, nd)
+        total current at z=d, directed outtoward the transmission line
+    """
+    # outer product by broadcasting of the electrical length
+    theta = gamma[:, npy.newaxis] * d  # (nbfreqs x nbd)
+    # ABCD parameters of a transmission line (gamma, z0)
+    A = npy.cosh(theta)
+    B = z0*npy.sinh(theta)
+    C = npy.sinh(theta)/z0
+    D = npy.cosh(theta)
+    # transpose and de-transpose operations are necessary 
+    # for linalg.inv to inverse square matrices
+    ABCD = npy.array([[A, B],[C, D]]).transpose()   
+    inv_ABCD = npy.linalg.inv(ABCD).transpose()
+    
+    v2 = inv_ABCD[0,0] * v1 + inv_ABCD[0,1] * i1
+    i2 = inv_ABCD[1,0] * v1 + inv_ABCD[1,1] * i1
+    return v2, i2
+
 # short hand convenience.
 # admittedly these follow no logical naming scheme, but they closely
 # correspond to common symbolic conventions, and are convenient
