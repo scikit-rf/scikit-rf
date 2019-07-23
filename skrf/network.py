@@ -151,6 +151,7 @@ import zipfile
 from copy import deepcopy as copy
 from numbers import Number
 from itertools import product
+from io import TextIOWrapper
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
@@ -383,18 +384,21 @@ class Network(object):
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and
             # unpickle it first
-            fid = get_fid(file, 'rb')
+            if isinstance(file, TextIOWrapper):
+                self.read_touchstone(file)
+            else:
+                fid = get_fid(file, 'rb')
 
-            try:
-                self.read(fid)
-            except UnicodeDecodeError:  # Support for pickles created in Python2 and loaded in Python3
-                self.read(fid, encoding='latin1')
-            except UnpicklingError:
-                # if unpickling doesn't work then, close fid, reopen in
-                # non-binary mode and try to read it as touchstone
-                filename = fid.name
-                fid.close()
-                self.read_touchstone(filename)
+                try:
+                    self.read(fid)
+                except UnicodeDecodeError:  # Support for pickles created in Python2 and loaded in Python3
+                    self.read(fid, encoding='latin1')
+                except UnpicklingError:
+                    # if unpickling doesn't work then, close fid, reopen in
+                    # non-binary mode and try to read it as touchstone
+                    filename = fid.name
+                    fid.close()
+                    self.read_touchstone(filename)
 
             if name is None and isinstance(file, str):
                 name = os.path.splitext(os.path.basename(file))[0]
