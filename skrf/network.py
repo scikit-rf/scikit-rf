@@ -151,7 +151,7 @@ import zipfile
 from copy import deepcopy as copy
 from numbers import Number
 from itertools import product
-from io import TextIOWrapper
+import io
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
@@ -384,7 +384,7 @@ class Network(object):
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and
             # unpickle it first
-            if isinstance(file, TextIOWrapper):
+            if isinstance(file, io.TextIOWrapper):
                 self.read_touchstone(file)
             else:
                 fid = get_fid(file, 'rb')
