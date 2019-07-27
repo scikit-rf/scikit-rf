@@ -1969,6 +1969,20 @@ class Network(object):
         from .io.general import network_2_dataframe
         return network_2_dataframe(self, *args, **kwargs)
 
+    def write_to_json_string(self):
+        """
+        Serialize and convert network to a JSON string.
+        This is ~3x faster than writing to and reading back from touchstone for a 4port 20,000 point device.
+
+        See Also
+        ---------
+        skrf.io.general.to_json_string
+        """
+        from .io.general import to_json_string
+        return to_json_string(self)
+
+
+
     # interpolation
     def interpolate(self, freq_or_n, basis='s', coords='cart',
                     f_kwargs={}, return_array=False, **kwargs):
