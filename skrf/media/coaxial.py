@@ -77,7 +77,34 @@ class Coaxial( DistributedCircuit,Media ):
     def from_attenuation_VF(cls, frequency=None, z0=None, Z0=50,
                          att=0, unit='dB/m', VF=1):
         """
+        Init from electrical properties of the line: attenuation and velocity factor.
 
+        Attenuation can be expressed in dB/m, dB/100m, dB/ft, dB/100ft, Neper/m or Neper/ft.
+        Default unit is dB/m. A different unit is set by the `unit` parameter.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency` object
+
+        z0 : number, array-like, or None
+            the port impedance for media. Only needed if its different
+            from the characterisitc impedance of the transmission
+            line. if z0 is None then will default to Z0
+        Z0 : number
+            desired characteristic impedance
+        att : number, or array-like. optional
+            Attenuation of the coaxial line. The default is 0.
+            If passed as an array, should be of same size than the frequency.
+        unit : string, optional
+            Unit of the attenuation. Can be: 'dB/m', dB/100m'', 'dB/ft', 'dB/100ft',
+            'Neper/m' or 'Neper/ft' (or 'Np/m', 'Np/ft'). The default is 'dB/m'.
+        VF : number, or array-like. optional
+            Velocity Factor VF [VF]_. The default is 1.
+            If passed as an array, should be of same size than the frequency.
+
+        References
+        ----------
+        .. [VF] : https://www.microwaves101.com/encyclopedias/light-phase-and-group-velocities
 
         """
         # test size of parameters

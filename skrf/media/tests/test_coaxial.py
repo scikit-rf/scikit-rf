@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import unittest
 import os
 import skrf as rf
@@ -79,7 +80,7 @@ class MediaTestCase(unittest.TestCase):
         # test the resulting alpha values (real part of gamma)
         frequency = rf.Frequency(start=1, stop=2, unit='GHz', npoints=101)
         # k0k1k2 attenuation model
-        # values taken for HUBER+SUHNER® DATA SHEET Coaxial Cable S_10172_B-1
+        # values taken for HUBER+SUHNER DATA SHEET Coaxial Cable S_10172_B-1
         # attenuation in dB/m for frequency in GHz
         att = 0 + 0.0826*npy.sqrt(frequency.f_scaled) + 0.0129*frequency.f_scaled
 
