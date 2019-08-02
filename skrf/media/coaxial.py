@@ -77,7 +77,10 @@ class Coaxial( DistributedCircuit,Media ):
     def from_attenuation_VF(cls, frequency=None, z0=None, Z0=50,
                          att=0, unit='dB/m', VF=1):
         """
+        Init from electrical properties of the line: attenuation and velocity factor.
 
+        Attenuation can be expressed in dB/m, dB/100m, dB/ft, dB/100ft, Neper/m or Neper/ft.
+        Default unit is dB/m. A different unit is set by the `unit` parameter.
 
         Parameters
         ----------
