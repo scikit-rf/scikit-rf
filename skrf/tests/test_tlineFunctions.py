@@ -1,6 +1,7 @@
 import skrf as rf
 import unittest
-from numpy import real, imag, linspace, pi
+from numpy import real, imag, linspace, pi, tanh, array, conj
+from numpy.random import rand
 from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
 
 
@@ -123,6 +124,60 @@ class ElectricalLengthTests(unittest.TestCase):
         
         
         
+        
+class TestVoltageCurrentPropagation(unittest.TestCase):
+    def setUp(self):
+        pass
+    
+    def test_d_zero(self):
+        """
+        Propagate voltage and current on a d=0 transmission line.
+        Voltage and current are of course equal.
+        """
+        gamma = array([1j])
+        d = 0
+        z0 = 50
+        v1 = 3
+        i1 = 2
+        theta = gamma * d
+        
+        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
+        
+        assert_almost_equal(v2, v1)
+        assert_almost_equal(i2, i1)
+        
+    def test_d_wavelength(self):
+        """
+        Propagate voltage and current on a d=lambda lossless transmission line.
+        Voltage and current are equal.
+        """
+        gamma = array([1j])
+        z0 = 50
+        v1 = rand()
+        i1 = rand()
+        theta = 1j*2*pi
+        
+        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
+        assert_almost_equal(v2, v1)
+        assert_almost_equal(i2, i1)
+
+    def test_d_half_wavelength(self):
+        """
+        Propagate voltage and current on a d=lambda/2 lossless transmission line. 
+        Voltage and current are inversed.
+        """
+        gamma = array([1j])
+        z0 = 50
+        v1 = rand()
+        i1 = rand()
+        theta = 1j*pi
+        
+        v2, i2 = rf.voltage_current_propagation(v1, i1, z0, theta)
+        
+        assert_almost_equal(v2, -v1)
+        assert_almost_equal(i2, -i1)
+
+
 if __name__ == "__main__":
     # Launch all tests
     run_module_suite()

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 .. module:: skrf.tlineFunctions
 ===============================================
@@ -556,6 +557,147 @@ def reflection_coefficient_2_propagation_constant(Gamma_in, Gamma_l, d):
     gamma.imag = gamma.imag % (pi/d)
 
     return gamma
+
+
+def Gamma0_2_swr(Gamma0):
+    r"""
+    Return Standing Wave Ratio (SWR) for a given reflection coefficient.
+
+    Standing Wave Ratio value is defined by:
+
+        .. math::
+            VSWR = \\frac{1 + |\\Gamma_0|}{1 - |\Gamma_0|}
+
+    Parameters
+    ----------
+    Gamma0 : number or array-like
+        Reflection coefficient
+
+    Returns
+    -------
+    swr : number or array-like
+        Standing Wave Ratio.
+
+    """
+    return (1 + npy.abs(Gamma0)) / (1 - npy.abs(Gamma0))
+
+
+def zl_2_swr(z0, zl):
+    r"""
+    Return Standing Wave Ratio (SWR) for a given load impedance.
+
+    Standing Wave Ratio value is defined by:
+
+        .. math::
+            VSWR = \\frac{1 + |\\Gamma|}{1 - |\Gamma|}
+            where
+            \\Gamma = \\frac{Z_L - Z_0}{Z_L + Z_0}
+
+    Parameters
+    ----------
+    z0 : number or array-like
+        line characteristic impedance [Ohm]
+    zl : number or array-like
+        load impedance [Ohm]
+
+    Returns
+    -------
+    swr : number or array-like
+        Standing Wave Ratio.
+
+    """
+    Gamma0 = load_impedance_2_reflection_coefficient(z0, zl)
+    return Gamma0_2_swr(Gamma0)
+
+
+def voltage_current_propagation(v1, i1, z0, theta):
+    """
+    Propagate voltage and current on electrical length theta of a transmission line.
+
+    Give voltage v2 and current i1 at theta, given voltage v1 
+    and current i1 (at theta=0) and given characteristic parameters gamma and z0.
+    
+    
+      i1                     i2
+    ○-->---------------------->--○
+    
+    v1         gamma,z0         v2
+    
+    ○----------------------------○
+    
+    <------------ d ------------->
+    
+    0                         theta
+    
+    Use (inverse) ABCD parameters of a transmission line. 
+    
+    Parameters
+    ----------
+    v1 : array-like (nfreqs,)
+        total voltage at z=0
+    i1 : array-like (nfreqs,)
+        total current at z=0, directed toward the transmission line
+    z0: array-like (nfreqs,)
+        characteristic impedance
+    theta : number or array-like (nfreq, ntheta)
+        electrical length of the line (may be complex).
+    
+    Return
+    ------
+    v2 : array-like (nfreqs, ntheta)
+        total voltage at z=d
+    i2 : array-like (nfreqs, ndtheta
+        total current at z=d, directed outtoward the transmission line
+    """
+    # outer product by broadcasting of the electrical length
+    #theta = gamma[:, npy.newaxis] * d  # (nbfreqs x nbd)
+    # ABCD parameters of a transmission line (gamma, z0)
+    A = npy.cosh(theta)
+    B = z0*npy.sinh(theta)
+    C = npy.sinh(theta)/z0
+    D = npy.cosh(theta)
+    # transpose and de-transpose operations are necessary 
+    # for linalg.inv to inverse square matrices
+    ABCD = npy.array([[A, B],[C, D]]).transpose()   
+    inv_ABCD = npy.linalg.inv(ABCD).transpose()
+    
+    v2 = inv_ABCD[0,0] * v1 + inv_ABCD[0,1] * i1
+    i2 = inv_ABCD[1,0] * v1 + inv_ABCD[1,1] * i1
+    return v2, i2
+
+
+def zl_2_total_loss(z0, zl, theta):
+    '''
+    Total loss of terminated transmission line (in natural unit)
+    
+    The total loss expressed in terms of the load impedance is [#]_:
+
+        .. math::
+            TL = \\frac{R_{in}}{R_L} \\left| \\cosh \\theta  + \\frac{Z_L}{Z_0} \\sinh\\theta \\right|^2
+    
+    Parameters
+    ----------
+    z0 : number or array-like
+        characteristic impedance.
+    zl : number or array-like
+        load impedance
+    theta : number or array-like
+        electrical length of the line (may be complex).
+
+    Returns
+    -------
+    total_loss: number or array-like
+        total loss in natural unit
+        
+    References
+    ----------
+    .. [#]: Steve Stearns (K6OIK), Transmission Line Power Paradoxand Its Resolution. ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014. https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
+    
+    
+    '''
+    Rin = npy.real(zl_2_zin(z0, zl, theta))
+    total_loss = Rin/npy.real(zl)*npy.abs(npy.cosh(theta) + zl/z0*npy.sinh(theta))**2
+    return total_loss
 
 
 # short hand convenience.
