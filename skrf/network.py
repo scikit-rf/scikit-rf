@@ -3248,8 +3248,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
         from_ports = list(range(ntwkC.nports))
         to_ports = list(range(ntwkC.nports))
-        to_ports.pop(k);
-        to_ports.append(k)
+        to_ports.pop(k-1);
+        to_ports.append(k-1)
 
         ntwkC.renumber(from_ports=from_ports,
                        to_ports=to_ports)
