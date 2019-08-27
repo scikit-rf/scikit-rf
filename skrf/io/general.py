@@ -39,11 +39,13 @@ import os
 import zipfile
 import warnings
 import sys
+import json
+import numpy as npy
 
 from ..util import get_extn, get_fid
 from ..network import Network
 from ..frequency import Frequency
-from ..media import  Media
+from ..media import Media
 from ..networkSet import NetworkSet
 from ..calibration.calibration import Calibration
 
@@ -762,3 +764,52 @@ if sys.version_info < (3, 0):
 else:
     import io
     StringBuffer = io.StringIO
+
+
+class TouchstoneEncoder(json.JSONEncoder):
+    '''
+    Serializes Network object by converting arrays to lists,
+    splitting complex numbers into real and imaginary,
+    and breaking down frequency objects into dicts.
+    '''
+    def default(self, obj):
+        if isinstance(obj, npy.ndarray):
+            return obj.tolist()
+        if isinstance(obj, npy.complex):
+            return npy.real(obj), npy.imag(obj)  # split into [real, im]
+        if isinstance(obj, Frequency):
+            return {'flist': obj.f_scaled.tolist(), 'funit': obj.unit}
+        return json.JSONEncoder.default(self, obj)
+
+
+def to_json_string(network):
+    '''
+    Dumps Network to JSON string. Faster than converting and saving as touchstone.
+    Safer than pickling (no arbitrary code execution on load).
+    :param network: :class:`~skrf.network.Network` object
+        A Network object to be serialized and returned as a JSON string.
+    :return: str
+        JSON string representation of a network object.
+    '''
+    return json.dumps(network.__dict__, cls=TouchstoneEncoder)
+
+
+def from_json_string(obj_string):
+    '''
+    Loads network object from JSON string representation.
+    :param obj_string: str
+        JSON string representation of a network object.
+    :return: :class:`~skrf.network.Network` object
+        A Network object, rebuilt from JSON.
+    '''
+    obj = json.loads(obj_string)
+    ntwk = Network()
+    ntwk.variables = obj['variables']
+    ntwk.name = obj['name']
+    ntwk.comments = obj['comments']
+    ntwk.port_names = obj['port_names']
+    ntwk.z0 = npy.array(obj['_z0'])[..., 0] + npy.array(obj['_z0'])[..., 1] * 1j  # recreate complex numbers
+    ntwk.s = npy.array(obj['_s'])[..., 0] + npy.array(obj['_s'])[..., 1] * 1j
+    ntwk.frequency = Frequency.from_f(npy.array(obj['_frequency']['flist']),
+                                         unit=obj['_frequency']['funit'])
+    return ntwk

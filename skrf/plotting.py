@@ -959,7 +959,7 @@ Examples
 
             def plot_func(self,  m=None, n=None, ax=None,
                           show_legend=True, attribute=attribute,
-                          y_label=y_label, pad=0, window='hamming', z0=50, *args, **kwargs):
+                          y_label=y_label, logx=False, pad=0, window='hamming', z0=50, *args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -1050,10 +1050,15 @@ Examples
                                 # x = self.frequency.f_scaled
                                 x = self.frequency.f  # always plot f, and then scale the ticks instead
 
-                                # scale the ticklabels according to the frequency unit:
+                                # scale the ticklabels according to the frequency unit and set log-scale if desired:
                                 if ax is None:
                                     ax = plb.gca()
+                                if logx:
+                                    ax.set_xscale('log')
+
                                 scale_frequency_ticks(ax, self.frequency.unit)
+								
+								
 
                             plot_rectangular(x=x,
                                              y=getattr(self, attribute)[:, m, n],
@@ -1083,6 +1088,8 @@ Examples
         Network attribute to plot
     y_label : string, optional
         the y-axis label
+    logx : Boolean, optional
+        Enable logarithmic x-axis, default off
 
     \*args,\\**kwargs : arguments, keyword arguments
         passed to :func:`matplotlib.plot`
