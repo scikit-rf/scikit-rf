@@ -17,6 +17,7 @@ class ConvenienceTestCase(unittest.TestCase):
         self.hfss_twoport_file = os.path.join(self.test_dir, 'hfss_twoport.s2p')
         self.hfss_threeport_file=os.path.join(self.test_dir, 'hfss_threeport_DB.s3p')
         self.hfss_threeport_file_50ohm=os.path.join(self.test_dir, 'hfss_threeport_DB_50Ohm.s3p')
+        self.hfss_18dot2 = os.path.join(self.test_dir, 'hfss_18.2.s3p')
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
@@ -61,6 +62,7 @@ class ConvenienceTestCase(unittest.TestCase):
         self.assertTrue(rf.Touchstone(self.hfss_oneport_file).is_from_hfss() )
         self.assertTrue(rf.Touchstone(self.hfss_twoport_file).is_from_hfss() )
         self.assertTrue(rf.Touchstone(self.hfss_threeport_file).is_from_hfss() )
+        self.assertTrue(rf.Touchstone(self.hfss_18dot2).is_from_hfss())
         # Touchstone file not from HFSS       
         self.assertFalse(rf.Touchstone(os.path.join(self.test_dir, 'ntwk1.s2p')).is_from_hfss() )
         
@@ -126,4 +128,8 @@ class ConvenienceTestCase(unittest.TestCase):
         self.assertTrue(npy.allclose(ntwk.s_im[0][2], # check s3n_im
                                     [4.457944078457155E-6, 5.341399484369366E-6, -4.531402467395991E-1, 5.667857998796495E-7]))                 
         
-        
+
+if __name__ == "__main__":
+    from numpy.testing import run_module_suite
+    # Launch all tests
+    run_module_suite()            

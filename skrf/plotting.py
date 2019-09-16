@@ -44,9 +44,14 @@ from matplotlib.pyplot import quiver
 from matplotlib import rcParams
 from matplotlib.dates import date2num
 
-from . import network, frequency, calibration, networkSet
+from . import network, frequency, calibration, networkSet, circuit
 from . import mathFunctions as mf
 from . util import now_string_2_dt
+
+try:
+    import networkx as nx
+except ImportError as e:
+    pass
 
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
@@ -758,6 +763,7 @@ def setup_matplotlib_plotting():
     networkSet.NetworkSet.plot_logsigma = plot_logsigma
     networkSet.NetworkSet.signature = signature
 
+    circuit.Circuit.plot_graph = plot_circuit_graph
 
 def __generate_plot_functions(self):
     '''
@@ -953,7 +959,7 @@ Examples
 
             def plot_func(self,  m=None, n=None, ax=None,
                           show_legend=True, attribute=attribute,
-                          y_label=y_label, pad=0, window='hamming', z0=50, *args, **kwargs):
+                          y_label=y_label, logx=False, pad=0, window='hamming', z0=50, *args, **kwargs):
 
                 # create index lists, if not provided by user
                 if m is None:
@@ -1032,22 +1038,27 @@ Examples
                                              y_label=y_label,
                                              show_legend=show_legend, ax=ax,
                                              *args, **kwargs)
-                            
+
                         else:
                             # plot the desired attribute vs frequency
                             if 'time' in attribute:
                                 xlabel = 'Time (ns)'
                                 x = self.frequency.t_ns
-    
+
                             else:
                                 xlabel = 'Frequency (%s)' % self.frequency.unit
                                 # x = self.frequency.f_scaled
                                 x = self.frequency.f  # always plot f, and then scale the ticks instead
 
-                                # scale the ticklabels according to the frequency unit:
+                                # scale the ticklabels according to the frequency unit and set log-scale if desired:
                                 if ax is None:
                                     ax = plb.gca()
+                                if logx:
+                                    ax.set_xscale('log')
+
                                 scale_frequency_ticks(ax, self.frequency.unit)
+								
+								
 
                             plot_rectangular(x=x,
                                              y=getattr(self, attribute)[:, m, n],
@@ -1077,6 +1088,8 @@ Examples
         Network attribute to plot
     y_label : string, optional
         the y-axis label
+    logx : Boolean, optional
+        Enable logarithmic x-axis, default off
 
     \*args,\\**kwargs : arguments, keyword arguments
         passed to :func:`matplotlib.plot`
@@ -1588,6 +1601,9 @@ def plot_uncertainty_bounds_component(
 
     '''
 
+    if ax is None:
+        ax = plb.gca()
+
     if m is None:
         M = range(self[0].number_of_ports)
     else:
@@ -1602,8 +1618,6 @@ def plot_uncertainty_bounds_component(
 
             plot_attribute = attribute
 
-            ax = plb.gca()
-
             ntwk_mean = self.__getattribute__('mean_'+attribute)
             ntwk_std = self.__getattribute__('std_'+attribute)
             ntwk_std.s = n_deviations * ntwk_std.s
@@ -1612,12 +1626,12 @@ def plot_uncertainty_bounds_component(
             lower_bound = (ntwk_mean.s[:, m, n] - ntwk_std.s[:, m, n]).squeeze()
 
             if ppf is not None:
-                if type =='bar':
+                if type == 'bar':
                     raise NotImplementedError('the \'ppf\' options don\'t work correctly with the bar-type error plots')
                 ntwk_mean.s = ppf(ntwk_mean.s)
                 upper_bound = ppf(upper_bound)
                 lower_bound = ppf(lower_bound)
-                lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
+                lower_bound[npy.isnan(lower_bound)] = min(lower_bound)
                 if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # quickfix of wrong ylabels due to usage of ppf for *_db plots
                     if attribute is 's_mag':
                         plot_attribute = 's_db'
@@ -1629,7 +1643,7 @@ def plot_uncertainty_bounds_component(
                 if color_error is None:
                     color_error = ax.get_lines()[-1].get_color()
                 ax.fill_between(ntwk_mean.frequency.f,
-                                lower_bound, upper_bound, alpha=alpha, color=color_error,
+                                lower_bound.real, upper_bound.real, alpha=alpha, color=color_error,
                                 **kwargs_error)
                 # ax.plot(ntwk_mean.frequency.f_scaled, ntwk_mean.s[:,m,n],*args,**kwargs)
 
@@ -1645,7 +1659,7 @@ def plot_uncertainty_bounds_component(
             else:
                 raise(ValueError('incorrect plot type'))
 
-            ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:],''))  # use only the function of the attribute
+            ax.set_ylabel(Y_LABEL_DICT.get(plot_attribute[2:], ''))  # use only the function of the attribute
             scale_frequency_ticks(ax, ntwk_mean.frequency.unit)
             ax.axis('tight')
 
@@ -1958,3 +1972,113 @@ def signature(self, m=0, n=0, component='s_mag',
         cbar.set_label(cbar_label)
 
     return img
+
+def plot_circuit_graph(self, **kwargs):
+    '''
+    Plot the graph of the circuit using networkx drawing capabilities.
+
+    Customisation options:
+    'network_shape': 's'
+    'network_color': 'gray'
+    'network_size', 300
+    'network_fontsize': 7
+    'inter_shape': 'o'
+    'inter_color': 'lightblue'
+    'inter_size', 300
+    'port_shape': '>'
+    'port_color': 'red'
+    'port_size', 300
+    'port_fontsize': 7
+    'edges_fontsize': 5
+    'network_labels': False
+    'edge_labels': False
+    'inter_labels': False
+    'port_labels': False
+    'label_shift_x': 0
+    'label_shift_y': 0
+
+    '''
+    # Get the circuit graph. Will raise an error if the networkx package
+    # is not installed.
+    G = self.G
+
+    # default values
+    network_labels = kwargs.pop('network_labels', False)
+    network_shape = kwargs.pop('network_shape', 's')
+    network_color = kwargs.pop('network_color', 'gray')
+    network_fontsize = kwargs.pop('network_fontsize', 7)
+    network_size = kwargs.pop('network_size', 300)
+    inter_labels = kwargs.pop('inter_labels', False)
+    inter_shape = kwargs.pop('inter_shape', 'o')
+    inter_color = kwargs.pop('inter_color', 'lightblue')
+    inter_size = kwargs.pop('inter_size', 300)
+    port_labels = kwargs.pop('port_labels', False)
+    port_shape = kwargs.pop('port_shape', '>')
+    port_color = kwargs.pop('port_color', 'red')
+    port_size = kwargs.pop('port_size', 300)
+    port_fontsize = kwargs.pop('port_fontsize', 7)
+    edge_labels = kwargs.pop('edge_labels', False)
+    edge_fontsize = kwargs.pop('edge_fontsize', 5)
+    label_shift_x = kwargs.pop('label_shift_x', 0)
+    label_shift_y = kwargs.pop('label_shift_y', 0)
+
+    
+    # sort between network nodes and port nodes
+    all_ntw_names = [ntw.name for ntw in self.networks_list()]
+    port_names = [ntw_name for ntw_name in all_ntw_names if 'port' in ntw_name]
+    ntw_names = [ntw_name for ntw_name in all_ntw_names if 'port' not in ntw_name]
+    # generate connectins nodes names
+    int_names = ['X'+str(k) for k in range(self.connections_nb)]
+
+    fig, ax = plb.subplots(figsize=(10,8))
+
+    pos = nx.spring_layout(G)
+
+    # draw Networks
+    nx.draw_networkx_nodes(G, pos, port_names, ax=ax,
+                           node_size=port_size,
+                           node_color=port_color, node_shape=port_shape)
+    nx.draw_networkx_nodes(G, pos, ntw_names, ax=ax,
+                           node_size=network_size,
+                           node_color=network_color, node_shape=network_shape)
+    # draw intersections
+    nx.draw_networkx_nodes(G, pos, int_names, ax=ax,
+                           node_size=inter_size,
+                           node_color=inter_color, node_shape=inter_shape)
+    # labels shifts
+    pos_labels = {}
+    for node, coords in pos.items():
+        pos_labels[node] = (coords[0] + label_shift_x,
+                            coords[1] + label_shift_y)
+
+    # network labels
+    if network_labels:
+        network_labels = {lab:lab for lab in ntw_names}
+
+        nx.draw_networkx_labels(G, pos_labels, labels=network_labels,
+                                font_size=network_fontsize, ax=ax)
+
+    # intersection labels
+    if inter_labels:
+        inter_labels = {'X'+str(k):'X'+str(k) for k in range(self.connections_nb)}
+
+        nx.draw_networkx_labels(G, pos_labels, labels=inter_labels,
+                                font_size=network_fontsize, ax=ax)
+
+    # port labels
+    if port_labels:
+        port_labels = {lab:lab for lab in port_names}
+
+        nx.draw_networkx_labels(G, pos_labels, labels=port_labels,
+                                font_size=port_fontsize, ax=ax)
+
+    # draw edges
+    nx.draw_networkx_edges(G, pos, ax=ax)
+    if edge_labels:
+        edge_labels = self.edge_labels
+        nx.draw_networkx_edge_labels(G, pos,
+                                      edge_labels=edge_labels, label_pos=0.5,
+                                      font_size=edge_fontsize, ax=ax)
+    # remove x and y axis and labels
+    plb.axis('off')
+    plb.tight_layout()

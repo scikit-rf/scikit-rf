@@ -15,6 +15,7 @@ from . import frequency
 from . import network
 from . import networkSet
 from . import media
+from . import circuit
 
 from . import calibration
 # from . import plotting
@@ -33,6 +34,7 @@ from .network import *
 from .networkSet import *
 from .calibration import *
 from .util import *
+from .circuit import *
 # from .plotting import  *
 from .mathFunctions import *
 from .tlineFunctions import *
@@ -65,6 +67,7 @@ from copy import deepcopy as copy
 F = Frequency
 N = Network
 NS = NetworkSet
+C = Circuit
 lat = load_all_touchstones
 # saf  = save_all_figs
 saf = None
