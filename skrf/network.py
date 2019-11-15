@@ -681,8 +681,22 @@ class Network(object):
                 return ntwk
             else:
                 raise ValueError("Don't understand index: {0}".format(key))
-        sliced_frequency = self.frequency[key]
-        return self.interpolate(sliced_frequency)
+            sliced_frequency = self.frequency[key]
+            return self.interpolate(sliced_frequency)
+        if isinstance(key, str):
+            sliced_frequency = self.frequency[key]
+            return self.interpolate(sliced_frequency)
+        if isinstance(key, Frequency):
+            return self.interpolate(key)
+        # This avoids interpolation when slicing directly the indices
+        ntwk = self.copy()
+        ntwk.frequency = self.frequency[key]
+        ntwk.s = self.s[key,:]
+        ntwk.z0 = self.z0[key,:]
+        if ntwk.noise is not None and ntwk.noise_freq is not None:
+            ntwk.noise = self.noise[key,:]
+            ntwk.noise_freq = ntwk.noise_freq[key]
+        return ntwk
 
     def __str__(self):
         """
@@ -3164,6 +3178,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     `l` thru `l+num-1` on `ntwkB`. The resultant network has
     (ntwkA.nports+ntwkB.nports-2*num) ports. The port indices ('k','l')
     start from 0. Port impedances **are** taken into account.
+    When the two networks have overlapping frequencies, the resulting
+    network will contain only the overlapping frequencies.
 
     Parameters
     -----------
@@ -3207,7 +3223,16 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
     '''
     # some checking
-    check_frequency_equal(ntwkA, ntwkB)
+    try:
+        check_frequency_equal(ntwkA, ntwkB)
+    except IndexError as e:
+        common_freq = npy.intersect1d(ntwkA.frequency.f, ntwkB.frequency.f, return_indices=True)
+        if common_freq[0].size is 0:
+            raise e
+        else:
+            ntwkA = ntwkA[common_freq[1]]
+            ntwkB = ntwkB[common_freq[2]]
+            print("Using a frequency subset:\n" + str(ntwkA.frequency))
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
