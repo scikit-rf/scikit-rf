@@ -18,10 +18,35 @@ class ConvenienceTestCase(unittest.TestCase):
         self.hfss_threeport_file=os.path.join(self.test_dir, 'hfss_threeport_DB.s3p')
         self.hfss_threeport_file_50ohm=os.path.join(self.test_dir, 'hfss_threeport_DB_50Ohm.s3p')
         self.hfss_18dot2 = os.path.join(self.test_dir, 'hfss_18.2.s3p')
+        self.hfss_8ports = os.path.join(self.test_dir, 'hfss_19.2.s8p')
+        self.hfss_10ports = os.path.join(self.test_dir, 'hfss_19.2.s10p')
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
         self.ntwk2 = rf.Network(os.path.join(self.test_dir, 'ntwk2.s2p'))
         self.ntwk3 = rf.Network(os.path.join(self.test_dir, 'ntwk3.s2p'))
 
+    def test_hfss_high_port_number(self):
+        '''
+        Check dimensions s, gamma and z0 of Network from HFSS .sNp files 
+        
+        HFSS exports .sNp files with N > 4 with Gamma and Z0 as comments and
+        written on multiple lines. The additional lines start with a '!' that 
+        need to be escaped to avoid numerical conversion error. 
+        '''
+        _3ports = rf.Network(self.hfss_18dot2)
+        self.assertTrue(_3ports.s.shape[1:] == (3,3))
+        self.assertTrue(_3ports.z0.shape[1] == 3)
+        self.assertTrue(_3ports.gamma.shape[1] == 3)
+        
+        _8ports = rf.Network(self.hfss_8ports)
+        self.assertTrue(_8ports.s.shape[1:] == (8,8))
+        self.assertTrue(_8ports.z0.shape[1] == 8)
+        self.assertTrue(_8ports.gamma.shape[1] == 8)
+
+        _10ports = rf.Network(self.hfss_10ports)
+        self.assertTrue(_10ports.s.shape[1:] == (10,10))
+        self.assertTrue(_10ports.z0.shape[1] == 10)
+        self.assertTrue(_10ports.gamma.shape[1] == 10)
+        
 
     def test_hfss_touchstone_2_media(self):
         '''
@@ -63,6 +88,8 @@ class ConvenienceTestCase(unittest.TestCase):
         self.assertTrue(rf.Touchstone(self.hfss_twoport_file).is_from_hfss() )
         self.assertTrue(rf.Touchstone(self.hfss_threeport_file).is_from_hfss() )
         self.assertTrue(rf.Touchstone(self.hfss_18dot2).is_from_hfss())
+        self.assertTrue(rf.Touchstone(self.hfss_8ports).is_from_hfss())
+        self.assertTrue(rf.Touchstone(self.hfss_10ports).is_from_hfss())
         # Touchstone file not from HFSS       
         self.assertFalse(rf.Touchstone(os.path.join(self.test_dir, 'ntwk1.s2p')).is_from_hfss() )
         
