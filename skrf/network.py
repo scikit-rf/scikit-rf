@@ -5047,6 +5047,148 @@ def t2y(t):
     raise (NotImplementedError)
 
 
+def h2z(h):
+    '''
+    Converts hybrid parameters to z parameters [#]_ .
+
+
+    Parameters
+    -----------
+    h : :class:`numpy.ndarray` (shape fx2x2)
+        hybrid parameter matrix
+
+    Returns
+    -------
+    z : numpy.ndarray
+        impedance parameters
+
+    See Also
+    ---------
+    inv : calculates inverse s-parameters
+
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
+    y2z
+    y2z
+    t2s
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+
+    References
+    -----------
+    .. [#] https://en.wikipedia.org/wiki/Two-port_network
+    '''
+
+    return z2h(h)
+
+
+def h2s(h, z0=50):
+    '''
+    convert hybrid parameters to s parameters
+
+    Parameters
+    ------------
+    h : complex array-like
+        hybrid parameters
+    z0 : complex array-like or number
+        port impedances
+
+    Returns
+    ---------
+    s : complex array-like
+        scattering parameters
+
+    '''
+
+    return z2s(h2z(h), z0)
+
+
+def s2h(s, z0=50):
+    '''
+    Convert scattering parameters [1]_ to hybrid parameters
+
+
+    Parameters
+    ------------
+    s : complex array-like
+        scattering parameters
+    z0 : complex array-like or number
+        port impedances.
+
+    Returns
+    ---------
+    h : complex array-like
+        hybrid parameters
+
+
+
+    References
+    ----------
+    .. [1] http://en.wikipedia.org/wiki/S-parameters
+    .. [2] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
+
+    '''
+    return z2h(s2z(s, z0))
+
+
+def z2h(z):
+    '''
+    Converts impedance parameters to hybrid parameters [#]_ .
+
+
+    Parameters
+    -----------
+    z : :class:`numpy.ndarray` (shape fx2x2)
+        impedance parameter matrix
+
+    Returns
+    -------
+    h : numpy.ndarray
+        hybrid parameters
+
+    See Also
+    ---------
+    inv : calculates inverse s-parameters
+
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
+    y2z
+    y2z
+    t2s
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+
+    References
+    -----------
+    .. [#] https://en.wikipedia.org/wiki/Two-port_network
+    '''
+    h = npy.array([
+        [(z[:, 0, 0] * z[:, 1, 1] - z[:, 1, 0] * z[:, 0, 1]) / z[:, 1, 1],
+         -z[:, 1, 0] / z[:, 1, 1]],
+        [z[:, 0, 1] / z[:, 1, 1],
+         1. / z[:, 1, 1]],
+    ]).transpose()
+    return h
+
+
 ## these methods are used in the secondary properties
 def passivity(s):
     '''

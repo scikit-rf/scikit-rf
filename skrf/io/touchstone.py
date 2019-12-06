@@ -438,12 +438,25 @@ class Touchstone:
     
         with open(self.filename) as f:
             gamma, z0 = [],[]
-    
+            
             for line in f:
+
+                # HFSS adds gamma and z0 data in .sNp files using comments.
+                # NB : Each line describe gamma and z0 up to 4 ports
+                #      for N > 4, gamma and z0 are given by additional lines
                 if '! Gamma' in line:
-                    gamma.append(line2ComplexVector(line.replace('! Gamma', '')))
+                    _line = line.replace('! Gamma', '').rstrip()
+                    # case of Nport > 4
+                    for _ in range(self.rank // 5):
+                        _line += next(f).replace('!', '').rstrip()
+                    gamma.append(line2ComplexVector(_line))
+             
                 if '! Port Impedance' in line:
-                    z0.append(line2ComplexVector(line.replace('! Port Impedance', '')))
+                    _line = line.replace('! Port Impedance', '').rstrip()
+                    # case of Nport > 4
+                    for _ in range(self.rank // 5):
+                        _line += next(f).replace('!', '').rstrip()
+                    z0.append(line2ComplexVector(_line))
     
             # If the file does not contain valid port impedance comments, set to default one
             if len(z0) == 0:
