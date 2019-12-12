@@ -262,7 +262,7 @@ class Network(object):
     """
 
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a']
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
@@ -845,7 +845,7 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
         """
-        return s2h(self._s, self.z0)
+        return s2h(self.s, self.z0)
 
     @h.setter
     def h(self, value):
