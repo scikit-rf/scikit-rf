@@ -1,24 +1,15 @@
+name: skrf-env
+
 channels:
-    - conda-forge
+  - conda-forge
 dependencies:
-    - python=3.5
-    - pandas
-    - setuptools
-    - ipython
-    - numpy
-    - scipy
-    - matplotlib
-    - mock
-    - nose
-    - future
-    - pandoc
-    - nbconvert=4.2
-    - ipykernel
-    - ipywidgets
-    - xlwt
-    - xlrd
-    - nbsphinx
-    - pip:
-        - python-ivi
-        - PyVisa
-        #- git+https://github.com/arsenovic/nbsphinx.git@master
+  - python>=3.6
+  - numpy
+  - xarray
+  - pandas
+  - matplotlib
+  - cartopy
+  - basemap
+  - pandoc
+  - ipykernel
+  - pip
