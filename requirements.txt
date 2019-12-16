@@ -1,0 +1,10 @@
+matplotlib
+scipy
+pandas
+nbsphinx
+ipython
+ipykernel
+jupyter_client
+python-ivi
+pyvisa
+networkx
