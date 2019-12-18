@@ -8,3 +8,4 @@ jupyter_client
 python-ivi
 pyvisa
 networkx
+git+https://github.com/scikit-rf/scikit-rf.git@master
