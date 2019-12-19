@@ -4,6 +4,7 @@ pandas
 nbsphinx
 ipython
 ipykernel
+ipywidgets
 jupyter_client
 python-ivi
 pyvisa
