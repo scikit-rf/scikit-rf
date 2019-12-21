@@ -44,8 +44,14 @@ Plotting
     
     plotting/*
     
+Circuit
+------------------
+.. toctree::
+    :maxdepth: 1
+    :glob:
 
-    
+    circuit/*
+   
 
 Internals
 ------------------

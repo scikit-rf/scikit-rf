@@ -10,7 +10,8 @@ API
     frequency
     network
     networkSet
-    
+    circuit
+
     plotting
     time
     mathFunctions

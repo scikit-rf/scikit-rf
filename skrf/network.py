@@ -262,7 +262,7 @@ class Network(object):
     """
 
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a']
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
@@ -829,6 +829,41 @@ class Network(object):
         self._s = npy.array(s, dtype=complex)
         self.__generate_secondary_properties()
         self.__generate_subnetworks()
+
+    @property
+    def h(self):
+        """
+        Hybrid parameter matrix.
+
+        The h-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
+        `fxnxn`, where `f` is frequency axis and `n` is number of ports.
+        Note that indexing starts at 0, so h11 can be accessed by
+        taking the slice `h[:,0,0]`.
+
+
+        Returns
+        ---------
+        h : complex :class:`numpy.ndarray` of shape `fxnxn`
+                the hybrid parameter matrix.
+
+        See Also
+        ------------
+        s
+        y
+        z
+        t
+        a
+        h
+
+        References
+        ------------
+        .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
+        """
+        return s2h(self.s, self.z0)
+
+    @h.setter
+    def h(self, value):
+        self._s = h2s(value, self.z0)
 
     @property
     def y(self):
