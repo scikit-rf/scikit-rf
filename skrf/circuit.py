@@ -5,20 +5,71 @@
 circuit (:mod:`skrf.circuit`)
 ========================================
 
+Circuit class represents a circuit of arbitrary topology,
+consisting of an arbitrary number of N-ports networks. 
 
-Provides a class representing a circuit of arbitrary topology,
-consisting of an arbitrary number of N-ports networks or impedance elements.
+Like in an electronic circuit simulator, the circuit must have one or more ports 
+connected to the circuit. The Circuit object allows one retrieving the M-ports network, 
+where M is the number of ports defined. 
 
-The results are returned in :class:`~skrf.network.Circuit` objects
+The results are returned in :class:`~skrf.network.Circuit` object.
 
-
-Circuit Class
-================
-
+   
+Building a Circuit 
+==================
 .. autosummary::
    :toctree: generated/
 
    Circuit
+   Circuit.Port
+   Circuit.Ground
+
+Representing a Circuit
+=======================
+.. autosummary::
+   :toctree: generated/
+   
+   Circuit.plot_graph
+
+Network Representations
+========================
+.. autosummary::
+   :toctree: generated/
+   
+   Circuit.network
+   Circuit.s
+   Circuit.s_external
+   Circuit.s_active
+   Circuit.z_active
+   Circuit.y_active
+   Circuit.vswr_active
+   Circuit.port_z0
+
+Circuit internals
+==================
+.. autosummary::
+   :toctree: generated/
+   
+   Circuit.networks_dict
+   Circuit.networks_list
+   Circuit.connections_nb
+   Circuit.connections_list
+   Circuit.nodes_nb
+   Circuit.dim
+   Circuit.intersections_dict
+   Circuit.port_indexes
+   Circuit.C
+   Circuit.X
+
+Graph representation
+========================
+.. autosummary::
+   :toctree: generated/
+   
+   Circuit.graph
+   Circuit.G
+   Circuit.edges
+   Circuit.edge_labels
 
 '''
 from . network import Network, a2s
@@ -37,8 +88,13 @@ from scipy.linalg import block_diag
 
 class Circuit():
     '''
-    Notes
-    -----
+    Creates a circuit made of a set of N-ports networks.
+    
+    For instructions on how to create Circuit see  :func:`__init__`.
+    
+    A Circuit object is representation a circuit assembly of an arbitrary 
+    number of N-ports networks connected together via an arbitrary topology.
+
     The algorithm used to calculate the resultant network can be found in [#]_.
 
     References
@@ -48,21 +104,57 @@ class Circuit():
     '''
     def __init__(self, connections):
         '''
-        Circuit constructor.
-
-        Creates a circuit made of a set of N-ports networks.
+        Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
         Parameters
         -----------
-        connections : list of list
-            List of the intersections of the circuit.
-            Each intersection is a list of tuples containing the network
-            Example of an intersection between two network:
-            [ [(network1, network1_port_nb), (network2, network2_port_nb)],
-              [(network1, network1_port_nb), (network2, network2_port_nb)]
+        connections : list of list of tuples
+            Description of circuit connections.
+            Each connection is a described by a list of tuple. 
+            Each tuple contains (network, network_port_nb). 
+            Port number indexing starts from zero.
+            
+        
+        Example
+        ------------
+        Example of connections between two 1-port networks:
+        ::
+            connections = [ 
+                [(network1, 0), (network2, 0)],
+            ]
+        
+        Example of a connection between three 1-port networks connected 
+        to a single node:
+        ::
+            connections = [ 
+                [(network1, 0), (network2, 0), (network3, 0)]
+            ]
+            
+        Example of a connection between two 1-port networks (port1 and port2)
+        and two 2-ports networks (ntw1 and ntw2):
+        ::
+            connections = [
+                [(port1, 0), (ntw1, 0)],
+                [(ntw1, 1), (ntw2, 0)],
+                [(ntw2, 1), (port2, 0)]
+            ]
 
-        ! The external ports indexing is defined by the order of appearance of
-        the ports in the connections list.
+        Example of a connection between three 1-port networks (port1, port2 and port3)
+        and a 3-ports network (ntw):
+        ::
+            connections = [
+                [(port1, 0), (ntw, 0)],
+                [(port2, 0), (ntw, 1)],
+                [(port3, 0), (ntw, 2)]
+            ]
+
+        NB1: Creating 1-port network to be used a port can be made with :func:`Port`
+
+        NB2: The external ports indexing is defined by the order of appearance of
+        the ports in the connections list. Thus, the first network identified 
+        as a port will be the 1st port of the resulting network (index 0), 
+        the second network identified as a port will be the second port (index 1), 
+        etc.
 
 
         '''
@@ -97,7 +189,10 @@ class Circuit():
     @classmethod
     def Port(cls, frequency, name, z0=50+0*1j):
         '''
-        Return a port Network. Passing the frequency and name is mendatory
+        Return a 1-port Network to be used as a Circuit port. 
+        
+        Passing the frequency and name is mendatory. Port name must include 
+        the word 'port' inside. (ex: 'Port1' or 'port_3')
 
         Parameters
         -----------
@@ -109,7 +204,7 @@ class Circuit():
         z0 : complex
             Characteristic impedance of the port. Default is 50 Ohm.
 
-        Returns
+        Return
         --------
         port : :class:`~skrf.network.Network` object
             (External) 1-port network
@@ -131,9 +226,11 @@ class Circuit():
     @classmethod
     def Ground(cls, frequency, name, z0=50+0j):
         '''
-        Ground network. Passing the frequency and name is mendatory.
+        Return a 1-port network of a grounded link, to be used in a Circuit description. 
         
-        Ground is considered as in infinite admittance.
+        Passing the frequency and name is mendatory.
+        
+        The ground link is modelled as an infinite admittance.
         
         Parameters
         -----------
@@ -144,7 +241,7 @@ class Circuit():
         z0 : complex
             Characteristic impedance of the port. Default is 50 Ohm.
 
-        Returns
+        Return
         --------
         ground : :class:`~skrf.network.Network` object
             (External) 2-port network
@@ -186,7 +283,7 @@ class Circuit():
 
     def networks_list(self, connections=None, min_nports=1):
         '''
-        return a list of unique networks (sorted by appearing order in connections)
+        Return a list of unique networks (sorted by appearing order in connections)
         '''
         if not connections:
             connections = self.connections
@@ -197,7 +294,7 @@ class Circuit():
     @property
     def connections_nb(self):
         '''
-        Returns the number of intersections in the circuit.
+        Return the number of intersections in the circuit.
         '''
         return len(self.connections)
 
@@ -206,11 +303,12 @@ class Circuit():
         '''
         Return the full list of connections, including intersections.
         The resulting list if of the form:
-        [
-         [connexion_number, connexion],
-         [connexion_number, connexion],
-         ...
-        ]
+        ::
+            [
+             [connexion_number, connexion],
+             [connexion_number, connexion],
+             ...
+            ]
         '''
         return [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
 
@@ -241,11 +339,21 @@ class Circuit():
 
     @property
     def G(self):
+        '''
+        Generate the graph of the circuit. Same as :func:`graph`.
+        '''
         return self.graph()
 
     def graph(self):
         '''
-        Generate the graph of the circuit
+        Generate the graph of the circuit.
+        
+        Return
+        ------
+        G: `networkx  <https://networkx.github.io/>`_ 
+            graph object.
+        
+        
         '''
         try:
             import networkx as nx
@@ -280,8 +388,9 @@ class Circuit():
     @property
     def intersections_dict(self):
         '''
-        Return a dictionnary of all intersections with associated ports and z0
-        { k: [(ntw1_name, ntw1_port), (ntw1_z0, ntw2_name, ntw2_port), ntw2_z0], ... }
+        Return a dictionnary of all intersections with associated ports and z0:
+        ::
+            { k: [(ntw1_name, ntw1_port), (ntw1_z0, ntw2_name, ntw2_port), ntw2_z0], ... }
         '''
         inter_dict = {}
         # for k in range(self.connections_nb):
@@ -306,10 +415,12 @@ class Circuit():
         Return a dictionnary describing the port and z0 of all graph edges.
 
         Dictionnary is in the form:
+        ::
             {('ntw1_name', 'X0'): '3 (50+0j)',
              ('ntw2_name', 'X0'): '0 (50+0j)',
              ('ntw2_name', 'X1'): '2 (50+0j)', ... }
-        which can be used in networkx.draw_networkx_edge_labels
+        
+        which can be used in `networkx.draw_networkx_edge_labels`
         '''
         # for all intersections, 
         # get the N interconnected networks and associated ports and z0
@@ -474,7 +585,7 @@ class Circuit():
     @property
     def s(self):
         '''
-        Return the global scattering parameter of the circuit, that is with
+        Return the global scattering parameters of the circuit, that is with
         both "inner" and "outer" ports
         '''
         # transpose is necessary to get expected result
@@ -520,7 +631,7 @@ class Circuit():
     @property
     def s_external(self):
         '''
-        Return the scattering parameter for the external ports
+        Return the scattering parameters for the external ports
         '''
         port_indexes = self.port_indexes
         a, b = np.meshgrid(port_indexes, port_indexes)
@@ -541,7 +652,7 @@ class Circuit():
 
     def s_active(self, a):
         '''
-        Returns active s-parameters of the circuit's network for a defined wave excitation a.
+        Return active s-parameters of the circuit's network for a defined wave excitation a.
         
         The active s-parameter at a port is the reflection coefficients 
         when other ports are excited. It is an important quantity for active
@@ -551,14 +662,14 @@ class Circuit():
         
         .. math::
                     
-            \mathrm{active}(s)_{mn} = \sum_i\left( s_{mi} a_i \right) / a_n
+            \mathrm{active}(s)_{mn} = \sum_i s_{mi} \\frac{a_i}{a_n}
         
         Parameters
         ----------
         a : complex array of shape (n_ports)
             forward wave complex amplitude (pseudowave formulation [#]_)
         
-        Returns
+        Return
         ---------
         s_act : complex array of shape (n_freqs, n_ports)
             active s-parameters for the excitation a
@@ -575,13 +686,13 @@ class Circuit():
 
     def z_active(self, a):
         '''
-        Returns the active Z-parameters of the circuit's network for a defined wave excitation a.
+        Return the active Z-parameters of the circuit's network for a defined wave excitation a.
         
         The active Z-parameters are defined by:
             
         .. math::
                     
-            \mathrm{active}(z)_{m} = z_{0,m} \frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
+            \mathrm{active}(z)_{m} = z_{0,m} \\frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
             
         where :math:`z_{0,m}` is the characteristic impedance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
@@ -591,7 +702,7 @@ class Circuit():
         a : complex array of shape (n_ports)
             forward wave complex amplitude
     
-        Returns
+        Return
         ----------
         z_act : complex array of shape (nfreqs, nports)
             active Z-parameters for the excitation a
@@ -606,13 +717,13 @@ class Circuit():
 
     def y_active(self, a):
         '''
-        Returns the active Y-parameters of the circuit's network for a defined wave excitation a.
+        Return the active Y-parameters of the circuit's network for a defined wave excitation a.
         
         The active Y-parameters are defined by:
             
         .. math::
                     
-            \mathrm{active}(y)_{m} = y_{0,m} \frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+            \mathrm{active}(y)_{m} = y_{0,m} \\frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
             
         where :math:`y_{0,m}` is the characteristic admittance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.    
@@ -622,7 +733,7 @@ class Circuit():
         a : complex array of shape (n_ports)
             forward wave complex amplitude 
         
-        Returns
+        Return
         ----------
         y_act : complex array of shape (nfreqs, nports)
             active Y-parameters for the excitation a
@@ -637,13 +748,13 @@ class Circuit():
 
     def vswr_active(self, a):
         '''
-        Returns the active VSWR of the circuit's network for a defined wave excitation a.
+        Return the active VSWR of the circuit's network for a defined wave excitation a.
         
         The active VSWR is defined by :
             
         .. math::
                     
-            \mathrm{active}(vswr)_{m} = \frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+            \mathrm{active}(vswr)_{m} = \\frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
     
         where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
         
@@ -652,7 +763,7 @@ class Circuit():
         a : complex array of shape (n_ports)
             forward wave complex amplitude
     
-        Returns
+        Return
         ----------
         vswr_act : complex array of shape (nfreqs, nports)
             active VSWR for the excitation a

@@ -1977,25 +1977,26 @@ def plot_circuit_graph(self, **kwargs):
     '''
     Plot the graph of the circuit using networkx drawing capabilities.
 
-    Customisation options:
-    'network_shape': 's'
-    'network_color': 'gray'
-    'network_size', 300
-    'network_fontsize': 7
-    'inter_shape': 'o'
-    'inter_color': 'lightblue'
-    'inter_size', 300
-    'port_shape': '>'
-    'port_color': 'red'
-    'port_size', 300
-    'port_fontsize': 7
-    'edges_fontsize': 5
-    'network_labels': False
-    'edge_labels': False
-    'inter_labels': False
-    'port_labels': False
-    'label_shift_x': 0
-    'label_shift_y': 0
+    Customisation options with default values:
+    ::
+        'network_shape': 's'
+        'network_color': 'gray'
+        'network_size', 300
+        'network_fontsize': 7
+        'inter_shape': 'o'
+        'inter_color': 'lightblue'
+        'inter_size', 300
+        'port_shape': '>'
+        'port_color': 'red'
+        'port_size', 300
+        'port_fontsize': 7
+        'edges_fontsize': 5
+        'network_labels': False
+        'edge_labels': False
+        'inter_labels': False
+        'port_labels': False
+        'label_shift_x': 0
+        'label_shift_y': 0
 
     '''
     # Get the circuit graph. Will raise an error if the networkx package
