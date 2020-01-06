@@ -220,18 +220,47 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
-        tinyfloat = 1e-11
         for test_z0 in (50, 10, 90+10j, 4-100j):
             for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3):
                 ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
+                npy.testing.assert_allclose(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0), ntwk.s)
+                npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0), ntwk.s)
+                npy.testing.assert_allclose(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0), ntwk.s)
+                npy.testing.assert_allclose(rf.h2s(rf.s2h(ntwk.s, test_z0), test_z0), ntwk.s)
+                npy.testing.assert_allclose(rf.t2s(rf.s2t(ntwk.s)), ntwk.s)
+        npy.testing.assert_allclose(rf.t2s(rf.s2t(self.Fix.s)), self.Fix.s)        
 
-                self.assertTrue((abs(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
-                self.assertTrue((abs(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
-                self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
-                self.assertTrue((abs(rf.h2s(rf.s2h(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
-                self.assertTrue((abs(rf.t2s(rf.s2t(ntwk.s))-ntwk.s) < tinyfloat).all())
-        self.assertTrue((abs(rf.t2s(rf.s2t(self.Fix.s))-self.Fix.s) < tinyfloat).all())
+    def test_conversion_complex_char_impedance(self):
+        # Example based on scikit-rf issue #313 
+        # Renormalize a 2-port network wrt a complex characteristic impedance
+        f0 = rf.Frequency(75.8, npoints=1, unit='GHz')
+        S0 = npy.array([
+            [-0.194 - 0.228j, -0.721 + 0.160j],
+            [-0.721 + 0.160j, +0.071 - 0.204j]
+        ])
+        ntw = rf.Network(frequency=f0, s=S0, z0=50, name='dut')
+        
+        # complex characteristic impedance to renormalize to on port 2
+        zdut = 100 + 10j
+        
+        # 1: 50, 2: zdut
+        # reference solution from ANSYS Circuit
+        s_ref = npy.array([[
+            [-0.01629813-0.29764199j, -0.6726785 +0.24747539j],
+            [-0.6726785 +0.24747539j, -0.30104687-0.10693578j]]])
+        npy.testing.assert_allclose(rf.z2s(ntw.z, z0=[50, zdut]), s_ref)       
+        npy.testing.assert_allclose(rf.renormalize_s(ntw.s, [50,50], [50,zdut]), s_ref)
 
+
+        # 1: zdut, 2: zdut
+        # reference solution from ANSYS Circuit
+        s_ref = npy.array([[
+            [-0.402829859501534 - 0.165007172677339j,-0.586542065592524 + 0.336098534178339j],
+            [-0.586542065592524 + 0.336098534178339j,-0.164707376748782 - 0.21617153431756j]]])
+        npy.testing.assert_allclose(rf.z2s(ntw.z, z0=[zdut, zdut]), s_ref)
+        npy.testing.assert_allclose(rf.renormalize_s(ntw.s, [50,50], [zdut,zdut]), s_ref)
+
+        
     def test_yz(self):
         tinyfloat = 1e-12
         ntwk = rf.Network()

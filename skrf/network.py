@@ -4311,16 +4311,32 @@ def s2z(s, z0=50):
     s[s == 1.] = 1. + 1e-12  # solve numerical singularity
 
     # The following is a vectorized version of a for loop for all frequencies.    
-    # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+    # # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', Id)[...] = 1.0     
-    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
-    # s -> z 
-    z = npy.zeros_like(s)
-    # z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0  # Python>3.5
-    z = npy.matmul(npy.matmul(npy.matmul(sqrtz0, npy.linalg.inv(Id - s)), (Id + s)), sqrtz0)
+    
+    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    # sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
+    # npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+    # # s -> z 
+    # z = npy.zeros_like(s)
+    # # z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0  # Python>3.5
+    # z = npy.matmul(npy.matmul(npy.matmul(sqrtz0, npy.linalg.inv(Id - s)), (Id + s)), sqrtz0)
+
+    # # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    # ZR, U = npy.zeros_like(s), npy.zeros_like(s)
+    # npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
+    # npy.einsum('ijj->ij', ZR)[...] = z0
+    # USU = npy.linalg.inv(U) @ s @ U
+    # z = npy.linalg.inv(Id - USU) @ (Id + USU) @ ZR
+    
+    # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    F, G = npy.zeros_like(s), npy.zeros_like(s)
+    npy.einsum('ijj->ij', F)[...] = npy.sqrt(1.0/z0.real)*0.5
+    npy.einsum('ijj->ij', G)[...] = z0
+    z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F
+
+
     return z
 
 def s2y(s, z0=50):
@@ -4378,13 +4394,29 @@ def s2y(s, z0=50):
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', Id)[...] = 1.0  
-    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
-    # s -> y 
-    y = npy.zeros_like(s)
-    # y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0  # Python>3.5
-    y = npy.matmul(npy.matmul(npy.matmul(sqrty0, (Id - s)), npy.linalg.inv(Id + s)), sqrty0)
+    
+    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    # sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
+    # npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
+    # # s -> y 
+    # y = npy.zeros_like(s)
+    # # y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0  # Python>3.5
+    # y = npy.matmul(npy.matmul(npy.matmul(sqrty0, (Id - s)), npy.linalg.inv(Id + s)), sqrty0)
+    
+    # # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    # YR, U = npy.zeros_like(s), npy.zeros_like(s)
+    # npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
+    # npy.einsum('ijj->ij', YR)[...] = 1/z0
+    # USU = npy.linalg.inv(U) @ s @ U
+    # y = YR @ npy.linalg.inv(Id + USU) @ (Id - USU)
+    
+    # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    F, G = npy.zeros_like(s), npy.zeros_like(s)
+    npy.einsum('ijj->ij', F)[...] = npy.sqrt(1.0/z0.real)*0.5
+    npy.einsum('ijj->ij', G)[...] = z0
+    y = npy.linalg.inv(F) @ npy.linalg.inv(G) @ npy.linalg.inv(Id + s) @ (Id - s) @ F
+
+
     return y
 
 def s2t(s):
@@ -4487,17 +4519,31 @@ def z2s(z, z0=50):
     z0 = fix_z0_shape(z0, nfreqs, nports)
     
     # The following is a vectorized version of a for loop for all frequencies.
-    # Creating Identity matrices of shape (nports,nports) for each nfreqs 
-    Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', Id)[...] = 1.0  
-    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
-    # z -> s 
-    s = npy.zeros_like(z)
-    # s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)  # Python>3.5
-    s = npy.matmul((npy.matmul(npy.matmul(sqrty0, z), sqrty0) - Id), 
-                    npy.linalg.inv(npy.matmul(npy.matmul(sqrty0, z), sqrty0) + Id))
+    
+    # # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+    # Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
+    # npy.einsum('ijj->ij', Id)[...] = 1.0  
+    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    # sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
+    # npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
+    # # z -> s 
+    # s = npy.zeros_like(z)
+    # # s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)  # Python>3.5
+    # s = npy.matmul((npy.matmul(npy.matmul(sqrty0, z), sqrty0) - Id), 
+    #                 npy.linalg.inv(npy.matmul(npy.matmul(sqrty0, z), sqrty0) + Id))
+    
+    # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    F, G = npy.zeros_like(z), npy.zeros_like(z)
+    npy.einsum('ijj->ij', F)[...] = npy.sqrt(1.0/z0.real)*0.5
+    npy.einsum('ijj->ij', G)[...] = z0
+    s = F @ (z - npy.conjugate(G)) @ npy.linalg.inv(z + G) @ npy.linalg.inv(F)
+
+    # # # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    # ZR, U = npy.zeros_like(z), npy.zeros_like(z)
+    # npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
+    # npy.einsum('ijj->ij', ZR)[...] = z0
+    # s = U @ (z - ZR) @ npy.linalg.inv(z + ZR) @ npy.linalg.inv(U)
+    
     return s
 
 def z2y(z):
@@ -4823,14 +4869,22 @@ def y2s(y, z0=50):
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(y)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', Id)[...] = 1.0  
-    # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
-    npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
-    # y -> s 
-    s = npy.zeros_like(y)
-    # s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)  # Python>3.5
-    s = npy.matmul( Id - npy.matmul(npy.matmul(sqrtz0, y), sqrtz0),
-                   npy.linalg.inv(Id + npy.matmul(npy.matmul(sqrtz0, y), sqrtz0)))
+    
+    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+    # sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
+    # npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+    # # y -> s 
+    # s = npy.zeros_like(y)
+    # # s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)  # Python>3.5
+    # s = npy.matmul( Id - npy.matmul(npy.matmul(sqrtz0, y), sqrtz0),
+    #                npy.linalg.inv(Id + npy.matmul(npy.matmul(sqrtz0, y), sqrtz0)))
+    
+    # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    F, G = npy.zeros_like(y), npy.zeros_like(y)
+    npy.einsum('ijj->ij', F)[...] = npy.sqrt(1.0/z0.real)*0.5
+    npy.einsum('ijj->ij', G)[...] = z0
+    s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)
+    
     return s
 
 def y2z(y):
@@ -5312,7 +5366,7 @@ def reciprocity(s):
 
 ## renormalize
 def renormalize_s(s, z_old, z_new):
-    '''wave casca
+    '''
     Renormalize a s-parameter matrix given old and new port impedances
 
     In the Parameters descriptions, F,N,N = shape(s).
@@ -5330,10 +5384,10 @@ def renormalize_s(s, z_old, z_new):
     s : complex array of shape FxNxN
         s-parameter matrix
 
-    z_old : complex array of shape FxN, F, N or a  scalar
+    z_old : complex array of shape FxN, F, N or a scalar
         old (original) port impedances
 
-    z_new : complex array of shape FxN, F, N or a  scalar
+    z_new : complex array of shape FxN, F, N or a scalar
         new port impedances
 
 
@@ -5359,8 +5413,7 @@ def renormalize_s(s, z_old, z_new):
     -------------
     .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
 
-
-    .. [2] http://www.anritsu.com/en-gb/downloads/application-notes/application-note/dwl1334.aspx
+    .. [2] Anritsu Application Note: Arbitrary Impedance
 
     Examples
     ------------
@@ -5404,8 +5457,9 @@ def renormalize_s_pw(s, z_old, z_new):
 
     References
     -------------
-    .. [1] http://www.anritsu.com/en-gb/downloads/application-notes/application-note/dwl1334.aspx
-        power-wave Eq 10,11,12 in page 10
+    .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
+ 
+    .. [2] Anritsu Application Note: Arbitrary Impedance, power-wave Eqs 10-12 p.10
 
     See Also
     ----------
