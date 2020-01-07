@@ -4324,18 +4324,19 @@ def s2z(s, z0=50):
     # z = npy.matmul(npy.matmul(npy.matmul(sqrtz0, npy.linalg.inv(Id - s)), (Id + s)), sqrtz0)
 
     # # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    # # Pseudo-waves
     # ZR, U = npy.zeros_like(s), npy.zeros_like(s)
     # npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
     # npy.einsum('ijj->ij', ZR)[...] = z0
     # USU = npy.linalg.inv(U) @ s @ U
     # z = npy.linalg.inv(Id - USU) @ (Id + USU) @ ZR
     
-    # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    # Creating diagonal matrices of shape (nports,nports) for each nfreqs
+    # Power-waves
     F, G = npy.zeros_like(s), npy.zeros_like(s)
     npy.einsum('ijj->ij', F)[...] = npy.sqrt(1.0/z0.real)*0.5
     npy.einsum('ijj->ij', G)[...] = z0
     z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F
-
 
     return z
 
@@ -4521,11 +4522,11 @@ def z2s(z, z0=50):
     # The following is a vectorized version of a for loop for all frequencies.
     
     # # Creating Identity matrices of shape (nports,nports) for each nfreqs 
-    # Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    # npy.einsum('ijj->ij', Id)[...] = 1.0  
+    Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', Id)[...] = 1.0  
     # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    # sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    # npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
+    sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
+    npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
     # # z -> s 
     # s = npy.zeros_like(z)
     # # s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)  # Python>3.5
@@ -4533,16 +4534,19 @@ def z2s(z, z0=50):
     #                 npy.linalg.inv(npy.matmul(npy.matmul(sqrty0, z), sqrty0) + Id))
     
     # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    # Power-waves
     F, G = npy.zeros_like(z), npy.zeros_like(z)
     npy.einsum('ijj->ij', F)[...] = npy.sqrt(1.0/z0.real)*0.5
     npy.einsum('ijj->ij', G)[...] = z0
     s = F @ (z - npy.conjugate(G)) @ npy.linalg.inv(z + G) @ npy.linalg.inv(F)
 
-    # # # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+    # # # Creating diagonal matrices of shape (nports,nports) for each nfreqs
+    # # Pseudo-waves
     # ZR, U = npy.zeros_like(z), npy.zeros_like(z)
     # npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
     # npy.einsum('ijj->ij', ZR)[...] = z0
     # s = U @ (z - ZR) @ npy.linalg.inv(z + ZR) @ npy.linalg.inv(U)
+
     
     return s
 
