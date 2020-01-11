@@ -4281,18 +4281,18 @@ def s2z(s, z0=50, s_def='power'):
 
 
     For power-waves, Eq.(19) from [3]:
-    .. math::
 
+    .. math::
         Z = F^{-1} (1 - S)^{-1} (S G + G^*) F
 
     where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`  
         
     For pseudo-waves, Eq.(74) from [4]:
-    .. math::
 
+    .. math::
         Z = (1 - U^{-1} S U)^{-1}  (1 + U^{-1} S U) G
 
-    where :math:`U = \\sqrt(Re(Z_0))/|Z_0|`
+    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
     
     Parameters
     ------------
@@ -4531,18 +4531,18 @@ def z2s(z, z0=50, s_def='power'):
     convert impedance parameters [1]_ to scattering parameters [2]_
 
     For power-waves, Eq.(18) from [3]:
+
     .. math::
-        
         S = F (Z – G^*) (Z + G)^{-1} F^{-1}
 
     where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`  
         
     For pseudo-waves, Eq.(73) from [4]:
-    .. math::
 
+    .. math::
         S = U (Z - G) (Z + G)^{-1}  U^{-1}
 
-    where :math:`U = \\sqrt(Re(Z_0))/|Z_0|`
+    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
 
 
     Parameters
@@ -4889,18 +4889,18 @@ def y2s(y, z0=50, s_def='power'):
     convert admittance parameters [#]_ to scattering parameters [#]_
 
     For power-waves, from [3]:
-    .. math::
-        
+
+    .. math::        
         S = F (1 – G Y) (1 + G Y)^{-1} F^{-1}
 
     where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`  
         
     For pseudo-waves, Eq.(73) from [4]:
-    .. math::
 
+    .. math::
         S = U (Y^{-1} - G) (Y^{-1} + G)^{-1}  U^{-1}        
 
-    where :math:`U = \\sqrt(Re(Z_0))/|Z_0|`
+    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
 
 
     Parameters
