@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 .. module:: skrf.network
 ========================================
@@ -4338,8 +4339,11 @@ def s2z(s, z0=50, s_definition='power'):
         F, G = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
-        z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F
-
+        # z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F  # Python > 3.5
+        z = npy.matmul(npy.linalg.inv(F), 
+                       npy.matmul(npy.linalg.inv(Id - s), 
+                                  npy.matmul(npy.matmul(s, G) + npy.conjugate(G), F)))
+        
     elif s_definition == 'pseudo':
         # Pseudo-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
@@ -4426,7 +4430,10 @@ def s2y(s, z0=50, s_definition='power'):
         F, G = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
-        y = npy.linalg.inv(F) @ npy.linalg.inv((s @ G + npy.conjugate(G))) @ (Id - s) @ F
+        # y = npy.linalg.inv(F) @ npy.linalg.inv((s @ G + npy.conjugate(G))) @ (Id - s) @ F  # Python > 3.5
+        y = npy.matmul(npy.linalg.inv(F), 
+                       npy.matmul(npy.linalg.inv(npy.matmul(s, G) + npy.conjugate(G)), 
+                                  npy.matmul((Id - s), F)))
 
     elif s_definition == 'pseudo':
         # pseudo-waves
@@ -4563,7 +4570,11 @@ def z2s(z, z0=50, s_definition='power'):
         F, G = npy.zeros_like(z), npy.zeros_like(z)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
-        s = F @ (z - npy.conjugate(G)) @ npy.linalg.inv(z + G) @ npy.linalg.inv(F)
+        # s = F @ (z - npy.conjugate(G)) @ npy.linalg.inv(z + G) @ npy.linalg.inv(F)  # Python > 3.5
+        s = npy.matmul(F, 
+                       npy.matmul((z - npy.conjugate(G)), 
+                                  npy.matmul(npy.linalg.inv(z + G), npy.linalg.inv(F))))
+
 
     elif s_definition == 'pseudo':    
         # Pseudo-waves
@@ -4919,8 +4930,11 @@ def y2s(y, z0=50, s_definition='power'):
         F, G = npy.zeros_like(y), npy.zeros_like(y)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
-        s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)
-    
+        # s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)  # Python > 3.5
+        s = npy.matmul(F, 
+                       npy.matmul((Id - npy.matmul(npy.conjugate(G), y)), 
+                                  npy.matmul(npy.linalg.inv(Id + G @ y), npy.linalg.inv(F))))
+
     elif s_definition == 'pseudo':
         # Pseudo-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
