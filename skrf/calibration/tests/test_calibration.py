@@ -726,7 +726,7 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         dut_feed = self.wg.thru()**feed**dut**feed**self.wg.thru()
         dut_meas = self.measure(dut_feed)
         npy.testing.assert_allclose(self.cal.apply_cal(dut_meas).s, 
-                                    dut.s, atol=1e-3)
+                                    dut.s, atol=1.1e-3)
 
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
