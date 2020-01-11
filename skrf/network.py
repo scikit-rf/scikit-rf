@@ -4350,8 +4350,10 @@ def s2z(s, z0=50, s_definition='power'):
         ZR, U = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
         npy.einsum('ijj->ij', ZR)[...] = z0
-        USU = npy.linalg.inv(U) @ s @ U
-        z = npy.linalg.inv(Id - USU) @ (Id + USU) @ ZR
+        # USU = npy.linalg.inv(U) @ s @ U
+        # z = npy.linalg.inv(Id - USU) @ (Id + USU) @ ZR
+        USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s , U))
+        z = npy.matmul(npy.linalg.inv(Id - USU), npy.matmul((Id + USU), ZR))
 
     return z
 
@@ -4440,8 +4442,10 @@ def s2y(s, z0=50, s_definition='power'):
         YR, U = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
         npy.einsum('ijj->ij', YR)[...] = 1/z0
-        USU = npy.linalg.inv(U) @ s @ U
-        y = YR @ npy.linalg.inv(Id + USU) @ (Id - USU)        
+        # USU = npy.linalg.inv(U) @ s @ U
+        # y = YR @ npy.linalg.inv(Id + USU) @ (Id - USU)        
+        USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s, U))
+        y = npy.matmaul(YR, npy.matmul(npy.linalg.inv(Id + USU), (Id - USU)))
 
     return y
 
@@ -4582,7 +4586,10 @@ def z2s(z, z0=50, s_definition='power'):
         ZR, U = npy.zeros_like(z), npy.zeros_like(z)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
         npy.einsum('ijj->ij', ZR)[...] = z0
-        s = U @ (z - ZR) @ npy.linalg.inv(z + ZR) @ npy.linalg.inv(U)
+        # s = U @ (z - ZR) @ npy.linalg.inv(z + ZR) @ npy.linalg.inv(U)  # Python > 3.5
+        s = npy.matmul(U, 
+                       npy.matmul((z - ZR),
+                                  npy.matmul(npy.linalg.inv(z + ZR), npy.linalg.inv(U))))
     
     return s
 
@@ -4938,10 +4945,13 @@ def y2s(y, z0=50, s_definition='power'):
     elif s_definition == 'pseudo':
         # Pseudo-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
-        ZR, U = npy.zeros_like(z), npy.zeros_like(z)
+        ZR, U = npy.zeros_like(y), npy.zeros_like(y)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
         npy.einsum('ijj->ij', ZR)[...] = z0
-        s = U @ (np.linalg.inv(y) - ZR) @ npy.linalg.inv(np.linalg.inv(y) + ZR) @ npy.linalg.inv(U)
+        # s = U @ (npy.linalg.inv(y) - ZR) @ npy.linalg.inv(npy.linalg.inv(y) + ZR) @ npy.linalg.inv(U)  # Python > 3.5
+        s = npy.matmul(U, 
+                       npy.matmul((npy.linalg.inv(y) - ZR), 
+                                  npy.matmul(npy.linalg.inv(npy.linalg.inv(y) + ZR), npy.linalg.inv(U))))
         
     return s
 
