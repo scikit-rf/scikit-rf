@@ -231,15 +231,16 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(rf.t2s(rf.s2t(self.Fix.s)), self.Fix.s)        
 
     def test_sparam_conversion_with_complex_char_impedance(self):
-        # Example based on scikit-rf issue #313:
-        # Renormalize a 2-port network wrt a complex characteristic impedances
-        # using power-waves definition of s-param
+        '''
+        Renormalize a 2-port network wrt to complex characteristic impedances
+        using power-waves definition of s-param
+        Example based on scikit-rf issue #313
+        '''
         f0 = rf.Frequency(75.8, npoints=1, unit='GHz')
-        S0 = npy.array([
-            [-0.194 - 0.228j, -0.721 + 0.160j],
-            [-0.721 + 0.160j, +0.071 - 0.204j]
-        ])
-        ntw = rf.Network(frequency=f0, s=S0, z0=50, name='dut')
+        s0 = npy.array([
+                [-0.194 - 0.228j, -0.721 + 0.160j],
+                [-0.721 + 0.160j, +0.071 - 0.204j]])
+        ntw = rf.Network(frequency=f0, s=s0, z0=50, name='dut')
         
         # complex characteristic impedance to renormalize to
         zdut = 100 + 10j
@@ -259,6 +260,54 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(rf.z2s(ntw.z, z0=[zdut, zdut]), s_ref)
         npy.testing.assert_allclose(rf.renormalize_s(ntw.s, [50,50], [zdut,zdut]), s_ref)
 
+        # Compararing Z and Y matrices from reference ones (from ADS)
+        # Z or Y matrices do not depend of characteristic impedances.
+        # Precision is 1e-4 due to rounded results in ADS export files
+        z_ref = npy.array([[
+            [34.1507 -65.6786j, -37.7994 +73.7669j],
+            [-37.7994 +73.7669j, 55.2001 -86.8618j]]])       
+        npy.testing.assert_allclose(ntw.z, z_ref, atol=1e-4)
+
+        y_ref = npy.array([[
+            [0.0926 +0.0368j, 0.0770 +0.0226j],
+            [0.0770 +0.0226j, 0.0686 +0.0206j]]]) 
+        npy.testing.assert_allclose(ntw.y, y_ref, atol=1e-4)
+
+    def test_sparam_conversion_vs_sdefinition(self):
+        '''
+        Check that power-wave or pseudo-waves scattering parameters definitions 
+        give same results for real characteristic impedances
+        '''
+        f0 = rf.Frequency(75.8, npoints=1, unit='GHz')
+        s_ref = npy.array([[  # random values
+            [-0.1000 -0.2000j, -0.3000 +0.4000j],
+            [-0.3000 +0.4000j, 0.5000 -0.6000j]]])
+        ntw = rf.Network(frequency=f0, s=s_ref, z0=50, name='dut')
+        
+        # renormalize s parameter according one of the definition. 
+        # As characteristic impedances are all real, should be all equal
+        npy.testing.assert_allclose(ntw.s, s_ref)
+        npy.testing.assert_allclose(rf.renormalize_s(ntw.s, 50, 50, s_def='power'), s_ref)
+        npy.testing.assert_allclose(rf.renormalize_s(ntw.s, 50, 50, s_def='pseudo'), s_ref)
+        npy.testing.assert_allclose(rf.renormalize_s(ntw.s, 50, 50, s_def='old'), s_ref)
+        
+        # also check Z and Y matrices, just in case
+        z_ref = npy.array([[
+            [18.0000 -16.0000j, 20.0000 + 40.0000j],
+            [20.0000 +40.0000j, 10.0000 -80.0000j]]])
+        npy.testing.assert_allclose(ntw.z, z_ref, atol=1e-4)
+            
+        y_ref = npy.array([[
+            [0.0251 +0.0023j, 0.0123 -0.0066j],
+            [0.0123 -0.0066j, 0.0052 +0.0055j]]])
+        npy.testing.assert_allclose(ntw.y, y_ref, atol=1e-4)
+
+        # creating network by specifying s-params definition
+        ntw_power = rf.Network(frequency=f0, s=s_ref, z0=50, s_def='power')
+        ntw_pseudo = rf.Network(frequency=f0, s=s_ref, z0=50, s_def='pseudo')
+        ntw_legacy = rf.Network(frequency=f0, s=s_ref, z0=50, s_def='old')
+        self.assertTrue(ntw_power == ntw_pseudo)
+        self.assertTrue(ntw_power == ntw_legacy)
         
     def test_yz(self):
         tinyfloat = 1e-12
