@@ -717,7 +717,7 @@ class NISTMultilineTRLTest2(unittest.TestCase):
 
     def test_shift(self):
         npy.testing.assert_allclose(self.cal.apply_cal(self.measured[3]).s, 
-                                    self.wg.thru().s, atol=1e-3)
+                                    self.wg.thru().s, atol=1e-11)
         
     def test_shift2(self):
         feed = self.rlgc.line(50,'um')
@@ -726,7 +726,7 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         dut_feed = self.wg.thru()**feed**dut**feed**self.wg.thru()
         dut_meas = self.measure(dut_feed)
         npy.testing.assert_allclose(self.cal.apply_cal(dut_meas).s, 
-                                    dut.s, atol=1.1e-3)
+                                    dut.s, atol=1e-11)
 
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):

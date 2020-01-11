@@ -2285,11 +2285,11 @@ class EightTerm(Calibration):
         z = npy.array([z0_new, z0_old]).transpose()
 
         if powerwave:
-            S1 = renormalize_s_pw(S1, z, z0_new)
-            S2 = renormalize_s_pw(S2, z, z0_new)
+            S1 = renormalize_s(S1, z, z0_new, s_def='power')
+            S2 = renormalize_s(S2, z, z0_new, s_def='power')
         else:
-            S1 = renormalize_s(S1, z, z0_new)
-            S2 = renormalize_s(S2, z, z0_new)
+            S1 = renormalize_s(S1, z, z0_new, s_def='old')
+            S2 = renormalize_s(S2, z, z0_new, s_def='old')
 
         self.coefs['forward directivity'] = S1[:,0,0]
         self.coefs['forward source match'] = S1[:,1,1]

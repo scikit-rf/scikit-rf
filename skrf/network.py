@@ -317,7 +317,7 @@ class Network(object):
     noise_interp_kind = 'linear'
 
     # CONSTRUCTOR
-    def __init__(self, file=None, name=None, comments=None, f_unit=None, s_definition='power', **kwargs):
+    def __init__(self, file=None, name=None, comments=None, f_unit=None, s_def='power', **kwargs):
         '''
         Network constructor.
 
@@ -337,9 +337,10 @@ class Network(object):
             its a str
         comments : str
             Comments associated with the Network
-        s_definition : str
+        s_def : str
             Scattering parameter definition : 'power' for power-waves definition, 
             'pseudo' for pseudo-waves definition. Default is 'power'.
+            NB: results are the same for real-valued characteristic impedances.
         \*\*kwargs :
             key word arguments can be used to assign properties of the
             Network, such as `s`, `f` and `z0`.
@@ -378,7 +379,7 @@ class Network(object):
 
         self.name = name
         self.comments = comments
-        self.s_definition = s_definition
+        self.s_def = s_def
         self.port_names = None
 
         self.noise = None
@@ -884,11 +885,11 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
         """
-        return s2y(self._s, self.z0, s_definition=self.s_definition)
+        return s2y(self._s, self.z0, s_def=self.s_def)
 
     @y.setter
     def y(self, value):
-        self._s = y2s(value, self.z0, s_definition=self.s_definition)
+        self._s = y2s(value, self.z0, s_def=self.s_def)
 
     @property
     def z(self):
@@ -918,11 +919,11 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        return s2z(self._s, self.z0, s_definition=self.s_definition)
+        return s2z(self._s, self.z0, s_def=self.s_def)
 
     @z.setter
     def z(self, value):
-        self._s = z2s(value, self.z0, s_definition=self.s_definition)
+        self._s = z2s(value, self.z0, s_def=self.s_def)
 
     @property
     def t(self):
@@ -1542,7 +1543,7 @@ class Network(object):
         '''
         ntwk = Network(s=self.s,
                        frequency=self.frequency.copy(),
-                       z0=self.z0,
+                       z0=self.z0, s_def=self.s_def
                        )
 
         ntwk.name = self.name
@@ -2481,7 +2482,7 @@ class Network(object):
         out.flip()
         return out
 
-    def renormalize(self, z_new, powerwave=False):
+    def renormalize(self, z_new, s_def='power'):
         '''
         Renormalize s-parameter matrix given a new port impedances
 
@@ -2491,23 +2492,17 @@ class Network(object):
         z_new : complex array of shape FxN, F, N or a  scalar
             new port impedances
 
-        powerwave : bool
-            if true this calls :func:`renormalize_s_pw`, which assumes
-            a powerwave formulation. Otherwise it calls
-            :func:`renormalize_s` which implements the default pseudowave
-            formulation. If z_new or self.z0 is complex, then these
-            produce different results.
+        s_def : str
+            Scattering parameter definition : 'power' for power-waves definition, 
+            'pseudo' for pseudo-waves definition. Default is 'power'.
+            NB: results are the same for real-valued characteristic impedances.
 
         See Also
         ----------
         renormalize_s
-        renormalize_s_pw
         fix_z0_shape
         '''
-        if powerwave:
-            self.s = renormalize_s_pw(self.s, self.z0, z_new)
-        else:
-            self.s = renormalize_s(self.s, self.z0, z_new)
+        self.s = renormalize_s(self.s, self.z0, z_new, s_def)
         self.z0 = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
 
     def renumber(self, from_ports, to_ports):
@@ -4280,7 +4275,7 @@ def innerconnect_s(A, k, l):
 
 
 ## network parameter conversion
-def s2z(s, z0=50, s_definition='power'):
+def s2z(s, z0=50, s_def='power'):
     '''
     Convert scattering parameters [1]_ to impedance parameters [2]_
 
@@ -4294,7 +4289,7 @@ def s2z(s, z0=50, s_definition='power'):
         scattering parameters
     z0 : complex array-like or number
         port impedances.
-    s_definition : str
+    s_def : str
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
             
@@ -4325,15 +4320,7 @@ def s2z(s, z0=50, s_definition='power'):
     Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', Id)[...] = 1.0     
     
-    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    # sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
-    # npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
-    # # s -> z 
-    # z = npy.zeros_like(s)
-    # # z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0  # Python>3.5
-    # z = npy.matmul(npy.matmul(npy.matmul(sqrtz0, npy.linalg.inv(Id - s)), (Id + s)), sqrtz0)
-
-    if s_definition == 'power':    
+    if s_def == 'power':    
         # Power-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         F, G = npy.zeros_like(s), npy.zeros_like(s)
@@ -4344,7 +4331,7 @@ def s2z(s, z0=50, s_definition='power'):
                        npy.matmul(npy.linalg.inv(Id - s), 
                                   npy.matmul(npy.matmul(s, G) + npy.conjugate(G), F)))
         
-    elif s_definition == 'pseudo':
+    elif s_def == 'pseudo':
         # Pseudo-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
         ZR, U = npy.zeros_like(s), npy.zeros_like(s)
@@ -4355,9 +4342,19 @@ def s2z(s, z0=50, s_definition='power'):
         USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s , U))
         z = npy.matmul(npy.linalg.inv(Id - USU), npy.matmul((Id + USU), ZR))
 
+    elif s_def == 'old':
+        # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+        sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
+        npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+        # s -> z 
+        z = npy.zeros_like(s)
+        # z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0  # Python>3.5
+        z = npy.matmul(npy.matmul(npy.matmul(sqrtz0, npy.linalg.inv(Id - s)), (Id + s)), sqrtz0)
+
+
     return z
 
-def s2y(s, z0=50, s_definition='power'):
+def s2y(s, z0=50, s_def='power'):
     """
     convert scattering parameters [#]_ to admittance parameters [#]_
 
@@ -4371,7 +4368,7 @@ def s2y(s, z0=50, s_definition='power'):
         scattering parameters
     z0 : complex array-like or number
         port impedances
-    s_definition : str
+    s_def : str
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
 
@@ -4417,16 +4414,8 @@ def s2y(s, z0=50, s_definition='power'):
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', Id)[...] = 1.0  
-    
-    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    # sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
-    # npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
-    # # s -> y 
-    # y = npy.zeros_like(s)
-    # # y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0  # Python>3.5
-    # y = npy.matmul(npy.matmul(npy.matmul(sqrty0, (Id - s)), npy.linalg.inv(Id + s)), sqrty0)
-        
-    if s_definition == 'power':
+            
+    if s_def == 'power':
         # Power-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
         F, G = npy.zeros_like(s), npy.zeros_like(s)
@@ -4437,7 +4426,7 @@ def s2y(s, z0=50, s_definition='power'):
                        npy.matmul(npy.linalg.inv(npy.matmul(s, G) + npy.conjugate(G)), 
                                   npy.matmul((Id - s), F)))
 
-    elif s_definition == 'pseudo':
+    elif s_def == 'pseudo':
         # pseudo-waves
         YR, U = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
@@ -4446,6 +4435,15 @@ def s2y(s, z0=50, s_definition='power'):
         # y = YR @ npy.linalg.inv(Id + USU) @ (Id - USU)        
         USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s, U))
         y = npy.matmaul(YR, npy.matmul(npy.linalg.inv(Id + USU), (Id - USU)))
+
+    elif s_def == 'old':
+        # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+        sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
+        npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
+        # s -> y 
+        y = npy.zeros_like(s)
+        # y = sqrty0 @ (Id - s) @  npy.linalg.inv(Id + s) @ sqrty0  # Python>3.5
+        y = npy.matmul(npy.matmul(npy.matmul(sqrty0, (Id - s)), npy.linalg.inv(Id + s)), sqrty0)
 
     return y
 
@@ -4519,7 +4517,7 @@ def s2t(s):
     return t
 
 
-def z2s(z, z0=50, s_definition='power'):
+def z2s(z, z0=50, s_def='power'):
     """
     convert impedance parameters [1]_ to scattering parameters [2]_
 
@@ -4532,7 +4530,7 @@ def z2s(z, z0=50, s_definition='power'):
         impedance parameters
     z0 : complex array-like or number
         port impedances
-    s_definition : str
+    s_def : str
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
 
@@ -4556,19 +4554,7 @@ def z2s(z, z0=50, s_definition='power'):
     
     # The following is a vectorized version of a for loop for all frequencies.
     
-    # # Creating Identity matrices of shape (nports,nports) for each nfreqs 
-    # Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    # npy.einsum('ijj->ij', Id)[...] = 1.0  
-    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    # sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
-    # npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
-    # # z -> s 
-    # s = npy.zeros_like(z)
-    # # s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)  # Python>3.5
-    # s = npy.matmul((npy.matmul(npy.matmul(sqrty0, z), sqrty0) - Id), 
-    #                 npy.linalg.inv(npy.matmul(npy.matmul(sqrty0, z), sqrty0) + Id))
-    
-    if s_definition == 'power':
+    if s_def == 'power':
         # Power-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
         F, G = npy.zeros_like(z), npy.zeros_like(z)
@@ -4580,7 +4566,7 @@ def z2s(z, z0=50, s_definition='power'):
                                   npy.matmul(npy.linalg.inv(z + G), npy.linalg.inv(F))))
 
 
-    elif s_definition == 'pseudo':    
+    elif s_def == 'pseudo':    
         # Pseudo-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         ZR, U = npy.zeros_like(z), npy.zeros_like(z)
@@ -4590,6 +4576,20 @@ def z2s(z, z0=50, s_definition='power'):
         s = npy.matmul(U, 
                        npy.matmul((z - ZR),
                                   npy.matmul(npy.linalg.inv(z + ZR), npy.linalg.inv(U))))
+
+    elif s_def == 'old':
+        # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+        Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
+        npy.einsum('ijj->ij', Id)[...] = 1.0  
+        # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+        sqrty0 = npy.zeros_like(z)  # (nfreqs, nports, nports)
+        npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
+        # z -> s 
+        s = npy.zeros_like(z)
+        # s = (sqrty0 @ z @ sqrty0 - Id) @  npy.linalg.inv(sqrty0 @ z @ sqrty0 + Id)  # Python>3.5
+        s = npy.matmul((npy.matmul(npy.matmul(sqrty0, z), sqrty0) - Id), 
+                        npy.linalg.inv(npy.matmul(npy.matmul(sqrty0, z), sqrty0) + Id))
+  
     
     return s
 
@@ -4863,7 +4863,7 @@ def s2a(s, z0=50):
     return a
 
 
-def y2s(y, z0=50, s_definition='power'):
+def y2s(y, z0=50, s_def='power'):
     '''
     convert admittance parameters [#]_ to scattering parameters [#]_
 
@@ -4879,7 +4879,7 @@ def y2s(y, z0=50, s_definition='power'):
     z0 : complex array-like or number
         port impedances
 
-    s_definition : str
+    s_def : str
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
 
@@ -4922,17 +4922,8 @@ def y2s(y, z0=50, s_definition='power'):
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 
     Id = npy.zeros_like(y)  # (nfreqs, nports, nports)
     npy.einsum('ijj->ij', Id)[...] = 1.0  
-    
-    # # Creating diagonal matrices of shape (nports, nports) for each nfreqs
-    # sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
-    # npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
-    # # y -> s 
-    # s = npy.zeros_like(y)
-    # # s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)  # Python>3.5
-    # s = npy.matmul( Id - npy.matmul(npy.matmul(sqrtz0, y), sqrtz0),
-    #                npy.linalg.inv(Id + npy.matmul(npy.matmul(sqrtz0, y), sqrtz0)))
-    
-    if s_definition == 'power':
+        
+    if s_def == 'power':
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
         F, G = npy.zeros_like(y), npy.zeros_like(y)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
@@ -4942,7 +4933,7 @@ def y2s(y, z0=50, s_definition='power'):
                        npy.matmul((Id - npy.matmul(npy.conjugate(G), y)), 
                                   npy.matmul(npy.linalg.inv(Id + npy.matmul(G, y)), npy.linalg.inv(F))))
 
-    elif s_definition == 'pseudo':
+    elif s_def == 'pseudo':
         # Pseudo-waves
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         ZR, U = npy.zeros_like(y), npy.zeros_like(y)
@@ -4952,6 +4943,17 @@ def y2s(y, z0=50, s_definition='power'):
         s = npy.matmul(U, 
                        npy.matmul((npy.linalg.inv(y) - ZR), 
                                   npy.matmul(npy.linalg.inv(npy.linalg.inv(y) + ZR), npy.linalg.inv(U))))
+
+    elif s_def == 'old':
+        # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+        sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
+        npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+        # y -> s 
+        s = npy.zeros_like(y)
+        # s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)  # Python>3.5
+        s = npy.matmul( Id - npy.matmul(npy.matmul(sqrtz0, y), sqrtz0),
+                       npy.linalg.inv(Id + npy.matmul(npy.matmul(sqrtz0, y), sqrtz0)))
+
         
     return s
 
@@ -5433,7 +5435,7 @@ def reciprocity(s):
 
 
 ## renormalize
-def renormalize_s(s, z_old, z_new):
+def renormalize_s(s, z_old, z_new, s_def='power'):
     '''
     Renormalize a s-parameter matrix given old and new port impedances
 
@@ -5441,10 +5443,10 @@ def renormalize_s(s, z_old, z_new):
 
     Notes
     ------
-    This re-normalization assumes pseudo-wave formulation. The
-    function :func:`renormalize_s_pw` implements the power-wave
-    formulation. However, the two implementation are only different
-    for complex characteristic impedances.
+    This re-normalization assumes power-wave formulation per default. 
+    To use the pseudo-wave formulation, use s_def='pseudo. 
+    However, the two implementation are only different for complex 
+    characteristic impedances.
     See the [1]_ and [2]_ for more details.
 
     Parameters
@@ -5458,6 +5460,10 @@ def renormalize_s(s, z_old, z_new):
     z_new : complex array of shape FxN, F, N or a scalar
         new port impedances
 
+    s_def : str
+        Scattering parameter definition : 'power' for power-waves definition, 
+        'pseudo' for pseudo-waves definition. Default is 'power'.
+        NB: results are the same for real-valued characteristic impedances.
 
     Notes
     ------
@@ -5491,90 +5497,90 @@ def renormalize_s(s, z_old, z_new):
 
     '''
     # thats a heck of a one-liner!
-    return z2s(s2z(s, z0=z_old), z0=z_new)
+    return z2s(s2z(s, z0=z_old, s_def=s_def), z0=z_new, s_def=s_def)
 
 
-def renormalize_s_pw(s, z_old, z_new):
-    '''
-    Renormalize a s-parameter matrix given old and new port impedances
-    by the power wave renormalization
+# def renormalize_s_pw(s, z_old, z_new):
+#     '''
+#     Renormalize a s-parameter matrix given old and new port impedances
+#     by the power wave renormalization
 
-    In the Parameters descriptions, F,N,N = shape(s).
+#     In the Parameters descriptions, F,N,N = shape(s).
 
-    Parameters
-    ---------------
-    s : complex array of shape FxNxN
-        s-parameter matrix
+#     Parameters
+#     ---------------
+#     s : complex array of shape FxNxN
+#         s-parameter matrix
 
-    z_old : complex array of shape FxN, F, N or a  scalar
-        old (original) port impedances
+#     z_old : complex array of shape FxN, F, N or a  scalar
+#         old (original) port impedances
 
-    z_new : complex array of shape FxN, F, N or a  scalar
-        new port impedances
-
-
-    Notes
-    ------
-    This re-normalization assumes psuedo-wave formulation. The
-    function :func:`renormalize_s_pw` implementes the power-wave
-    formulation. However, the two implementation are only different
-    for complex characteristic impedances.
-    See the [1]_ and [2]_ for more details.
+#     z_new : complex array of shape FxN, F, N or a  scalar
+#         new port impedances
 
 
+#     Notes
+#     ------
+#     This re-normalization assumes psuedo-wave formulation. The
+#     function :func:`renormalize_s_pw` implementes the power-wave
+#     formulation. However, the two implementation are only different
+#     for complex characteristic impedances.
+#     See the [1]_ and [2]_ for more details.
 
-    References
-    -------------
-    .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
+
+
+#     References
+#     -------------
+#     .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
  
-    .. [2] Anritsu Application Note: Arbitrary Impedance, power-wave Eqs 10-12 p.10
+#     .. [2] Anritsu Application Note: Arbitrary Impedance, power-wave Eqs 10-12 p.10
 
-    See Also
-    ----------
-    renormalize_s : renormalize using psuedo wave formulation
-    Network.renormalize : method of Network  to renormalize s
-    fix_z0_shape
-    fix_z0_shape
-    ssz
-    z2s
+#     See Also
+#     ----------
+#     renormalize_s : renormalize using psuedo wave formulation
+#     Network.renormalize : method of Network  to renormalize s
+#     fix_z0_shape
+#     fix_z0_shape
+#     ssz
+#     z2s
 
-    Examples
-    ------------
-    >>> z_old = 50.+0.j # original reference impedance
-    >>> z_new = 50.+50.j # new reference impedance to change to
-    >>> load = rf.wr10.load(0.+0.j, nports=1, z0=z_old)
-    >>> s = load.s
-    >>> renormalize_s_powerwave(s, z_old, z_new)
-    '''
+#     Examples
+#     ------------
+#     >>> z_old = 50.+0.j # original reference impedance
+#     >>> z_new = 50.+50.j # new reference impedance to change to
+#     >>> load = rf.wr10.load(0.+0.j, nports=1, z0=z_old)
+#     >>> s = load.s
+#     >>> renormalize_s_powerwave(s, z_old, z_new)
+#     '''
 
-    nfreqs, nports, nports = s.shape
-    A = fix_z0_shape(z_old, nfreqs, nports)
-    B = fix_z0_shape(z_new, nfreqs, nports)
+#     nfreqs, nports, nports = s.shape
+#     A = fix_z0_shape(z_old, nfreqs, nports)
+#     B = fix_z0_shape(z_new, nfreqs, nports)
 
-    S_pw = npy.zeros(s.shape, dtype='complex')
-    I = npy.mat(npy.identity(s.shape[1]))
-    s = s.copy()  # to prevent the original array from being altered
-    s[s == 1.] = 1. + 1e-12  # solve numerical singularity
-    s[s == -1.] = -1. + 1e-12  # solve numerical singularity
-    # make sure real part of impedance is not zero
-    A[A.real == 0] = 1e-12 + 1.j * A.imag[A.real <= 0]
-    B[B.real == 0] = 1e-12 + 1.j * B.imag[B.real <= 0]
+#     S_pw = npy.zeros(s.shape, dtype='complex')
+#     I = npy.mat(npy.identity(s.shape[1]))
+#     s = s.copy()  # to prevent the original array from being altered
+#     s[s == 1.] = 1. + 1e-12  # solve numerical singularity
+#     s[s == -1.] = -1. + 1e-12  # solve numerical singularity
+#     # make sure real part of impedance is not zero
+#     A[A.real == 0] = 1e-12 + 1.j * A.imag[A.real <= 0]
+#     B[B.real == 0] = 1e-12 + 1.j * B.imag[B.real <= 0]
 
-    for fidx in xrange(s.shape[0]):
-        A_ii = A[fidx]
-        B_ii = B[fidx]
+#     for fidx in xrange(s.shape[0]):
+#         A_ii = A[fidx]
+#         B_ii = B[fidx]
 
-        # Eq. 11, Eq. 12
-        Q_ii = npy.sqrt(npy.absolute(B_ii.real / A_ii.real)) * (A_ii + A_ii.conj()) / (B_ii.conj() + A_ii)  # Eq(11)
-        G_ii = (B_ii - A_ii) / (B_ii + A_ii.conj())  # Eq(12)
+#         # Eq. 11, Eq. 12
+#         Q_ii = npy.sqrt(npy.absolute(B_ii.real / A_ii.real)) * (A_ii + A_ii.conj()) / (B_ii.conj() + A_ii)  # Eq(11)
+#         G_ii = (B_ii - A_ii) / (B_ii + A_ii.conj())  # Eq(12)
 
-        Q = npy.mat(npy.diagflat(Q_ii))
-        G = npy.mat(npy.diagflat(G_ii))
-        S = s[fidx]
+#         Q = npy.mat(npy.diagflat(Q_ii))
+#         G = npy.mat(npy.diagflat(G_ii))
+#         S = s[fidx]
 
-        # Eq. 10
-        S_pw[fidx] = Q ** -1 * (S - G.conj().T) * (I - G * S) ** -1 * Q.conj().T
-    return S_pw
+#         # Eq. 10
+#         S_pw[fidx] = Q ** -1 * (S - G.conj().T) * (I - G * S) ** -1 * Q.conj().T
+#     return S_pw
 
 
 def fix_z0_shape(z0, nfreqs, nports):
