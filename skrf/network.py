@@ -4940,7 +4940,7 @@ def y2s(y, z0=50, s_definition='power'):
         # s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)  # Python > 3.5
         s = npy.matmul(F, 
                        npy.matmul((Id - npy.matmul(npy.conjugate(G), y)), 
-                                  npy.matmul(npy.linalg.inv(Id + G @ y), npy.linalg.inv(F))))
+                                  npy.matmul(npy.linalg.inv(Id + npy.matmul(G, y)), npy.linalg.inv(F))))
 
     elif s_definition == 'pseudo':
         # Pseudo-waves
