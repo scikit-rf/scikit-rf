@@ -689,13 +689,7 @@ class Network(object):
         if isinstance(key, Frequency):
             return self.interpolate(key)
         # The following avoids interpolation when the slice is done directly with indices
-        ntwk = self.copy() # to prevent the original array from being altered
-        ntwk.frequency = ntwk.frequency[key]
-        ntwk.s = ntwk.s[key,:]
-        ntwk.z0 = ntwk.z0[key,:]
-        if ntwk.noise is not None and ntwk.noise_freq is not None:
-            ntwk.noise = ntwk.noise[key,:]
-            ntwk.noise_freq = ntwk.noise_freq[key]
+        ntwk = self.copy_subset(key)
         return ntwk
 
     def __str__(self):
@@ -1585,6 +1579,38 @@ class Network(object):
         '''
         for attr in ['_s', 'frequency', '_z0', 'name']:
             self.__setattr__(attr, copy(other.__getattribute__(attr)))
+
+    def copy_subset(self, key):
+        '''
+        Returns a copy of a frequency subset of this Network
+
+        Needed to allow pass-by-value for a subset Network instead of
+        pass-by-reference
+        
+        Parameters
+        -----------
+        key : numpy array
+            the array indices of the frequencies to take
+        '''
+        ntwk = Network(s=self.s[key,:],
+                       frequency=self.frequency[key].copy(),
+                       z0=self.z0[key,:],
+                       )
+
+        if isinstance(self.name, str):
+            ntwk.name = self.name + '_subset'
+        else:
+            ntwk.name = self.name
+
+        if self.noise is not None and self.noise_freq is not None:
+            ntwk.noise = npy.copy(self.noise[key,:])
+            ntwk.noise_freq = npy.copy(self.noise_freq[key])
+
+        try:
+            ntwk.port_names = copy(self.port_names)
+        except(AttributeError):
+            ntwk.port_names = None
+        return ntwk
 
     # touchstone file IO
     def read_touchstone(self, filename):
