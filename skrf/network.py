@@ -688,13 +688,13 @@ class Network(object):
             return self.interpolate(sliced_frequency)
         if isinstance(key, Frequency):
             return self.interpolate(key)
-        # This avoids interpolation when slicing directly the indices
-        ntwk = self.copy()
-        ntwk.frequency = self.frequency[key]
-        ntwk.s = self.s[key,:]
-        ntwk.z0 = self.z0[key,:]
+        # The following avoids interpolation when the slice is done directly with indices
+        ntwk = self.copy() # to prevent the original array from being altered
+        ntwk.frequency = ntwk.frequency[key]
+        ntwk.s = ntwk.s[key,:]
+        ntwk.z0 = ntwk.z0[key,:]
         if ntwk.noise is not None and ntwk.noise_freq is not None:
-            ntwk.noise = self.noise[key,:]
+            ntwk.noise = ntwk.noise[key,:]
             ntwk.noise_freq = ntwk.noise_freq[key]
         return ntwk
 
