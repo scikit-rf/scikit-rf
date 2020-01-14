@@ -308,7 +308,7 @@ COMMAND_TREE:
             \t\t\tPorts 5 and 6: Converter LO
             \n\t"
           }
-          NAME: {name: converter_name, set: "<TYPE>", query: "",
+          NAME: {name: converter_name, set: "'<TYPE>'", query: "",
             help: "Selects the frequency converter type for enhanced frequency-converting measurements\n\n
             \t(with option ZVA-K8, Converter Control).\n\n
             \tThe preset configuration will be reset to Instrument scope (SYSTem:PRESet:SCOPe ALL)\n
