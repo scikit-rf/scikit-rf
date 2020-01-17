@@ -1,8 +1,13 @@
-conda:
-  file: readthedocs-environment.yml
+# .readthedocs.yml
+# Read the Docs configuration file
+version: 2
+
+# Python config
+build:
+  image: latest
 
 python:
-  version: 3
+  version: 3.7
+  install:
+    - requirements: requirements.txt
 
-python:
-   setup_py_install: true

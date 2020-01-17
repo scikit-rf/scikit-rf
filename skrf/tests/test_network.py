@@ -228,6 +228,7 @@ class NetworkTestCase(unittest.TestCase):
                 self.assertTrue((abs(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.y2s(rf.s2y(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
+                self.assertTrue((abs(rf.h2s(rf.s2h(ntwk.s, test_z0), test_z0)-ntwk.s) < tinyfloat).all())
                 self.assertTrue((abs(rf.t2s(rf.s2t(ntwk.s))-ntwk.s) < tinyfloat).all())
         self.assertTrue((abs(rf.t2s(rf.s2t(self.Fix.s))-self.Fix.s) < tinyfloat).all())
 

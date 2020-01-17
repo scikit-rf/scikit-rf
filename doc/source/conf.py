@@ -14,35 +14,27 @@
 import sys, os
 import sphinx_rtd_theme
 
-#import skrf as rf 
-#rf.setup_pylab()
-
 import warnings
 warnings.filterwarnings('ignore')
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('../../'))
 
 # -- General configuration -----------------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
-needs_sphinx = '1.3'
+#needs_sphinx = '1.3'
 
 #from subprocess import call
 #call(['make','notebooks'])
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 sys.path.insert(0, os.path.abspath('../sphinxext'))
-#sys.path.insert(0, os.path.abspath('../../build/lib.linux-x86_64-2.7/'))
-
-#import matplotlib#
-# Force matplotlib to not use any Xwindows backend.
-#matplotlib.use('Agg')
 
 import skrf as rf 
 rf.setup_pylab()
-
 
 extensions = [
     #'notebook_sphinxext_alex',
@@ -57,8 +49,6 @@ extensions = [
     #'inheritance_diagram',
     'IPython.sphinxext.ipython_directive',
     'IPython.sphinxext.ipython_console_highlighting',
-    'matplotlib.sphinxext.only_directives',
-    'matplotlib.sphinxext.plot_directive',
     ]
 
 import nbsphinx
