@@ -10,7 +10,7 @@ from nose.plugins.skip import SkipTest
 from skrf import setup_pylab
 from skrf.media import CPW
 from skrf.media import DistributedCircuit
-
+from skrf.constants import S_DEFINITIONS
 
 class NetworkTestCase(unittest.TestCase):
     '''
@@ -289,7 +289,7 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(ntw.s, s_ref)
         npy.testing.assert_allclose(rf.renormalize_s(ntw.s, 50, 50, s_def='power'), s_ref)
         npy.testing.assert_allclose(rf.renormalize_s(ntw.s, 50, 50, s_def='pseudo'), s_ref)
-        npy.testing.assert_allclose(rf.renormalize_s(ntw.s, 50, 50, s_def='old'), s_ref)
+        npy.testing.assert_allclose(rf.renormalize_s(ntw.s, 50, 50, s_def='traveling'), s_ref)
         
         # also check Z and Y matrices, just in case
         z_ref = npy.array([[
@@ -305,9 +305,37 @@ class NetworkTestCase(unittest.TestCase):
         # creating network by specifying s-params definition
         ntw_power = rf.Network(frequency=f0, s=s_ref, z0=50, s_def='power')
         ntw_pseudo = rf.Network(frequency=f0, s=s_ref, z0=50, s_def='pseudo')
-        ntw_legacy = rf.Network(frequency=f0, s=s_ref, z0=50, s_def='old')
+        ntw_legacy = rf.Network(frequency=f0, s=s_ref, z0=50, s_def='traveling')
         self.assertTrue(ntw_power == ntw_pseudo)
         self.assertTrue(ntw_power == ntw_legacy)
+
+    def test_network_from_z_or_y(self):
+        ' Construct a network from its z or y parameters '
+        # test for both real and complex char. impedance 
+        # and for 2 frequencies
+        z0 = [npy.random.rand(), npy.random.rand()+1j*npy.random.rand()]
+        freqs = npy.array([1, 2])
+        # generate arbitrary complex z and y
+        z_ref = npy.random.rand(2,3,3) + 1j*npy.random.rand(2,3,3)
+        y_ref = npy.random.rand(2,3,3) + 1j*npy.random.rand(2,3,3)
+        # create networks from z or y and compare ntw.z to the reference
+        # check that the conversions work for all s-param definitions
+        for s_def in S_DEFINITIONS:
+            ntwk = rf.Network(s_def=s_def)
+            ntwk.z0 = rf.fix_z0_shape(z0, 2, 3)
+            ntwk.f = freqs
+            # test #1: define the network directly from z
+            ntwk.z = z_ref
+            npy.testing.assert_allclose(ntwk.z, z_ref)
+            # test #2: define the network from s, after z -> s (s_def is important)
+            ntwk.s = rf.z2s(z_ref, z0, s_def=s_def)
+            npy.testing.assert_allclose(ntwk.z, z_ref)
+            # test #3: define the network directly from y
+            ntwk.y = y_ref    
+            npy.testing.assert_allclose(ntwk.y, y_ref)
+            # test #4: define the network from s, after y -> s (s_def is important)
+            ntwk.s = rf.y2s(y_ref, z0, s_def=s_def)
+            npy.testing.assert_allclose(ntwk.y, y_ref)
         
     def test_yz(self):
         tinyfloat = 1e-12

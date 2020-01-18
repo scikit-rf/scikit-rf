@@ -2288,8 +2288,8 @@ class EightTerm(Calibration):
             S1 = renormalize_s(S1, z, z0_new, s_def='power')
             S2 = renormalize_s(S2, z, z0_new, s_def='power')
         else:
-            S1 = renormalize_s(S1, z, z0_new, s_def='old')
-            S2 = renormalize_s(S2, z, z0_new, s_def='old')
+            S1 = renormalize_s(S1, z, z0_new, s_def='traveling')
+            S2 = renormalize_s(S2, z, z0_new, s_def='traveling')
 
         self.coefs['forward directivity'] = S1[:,0,0]
         self.coefs['forward source match'] = S1[:,1,1]

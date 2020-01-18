@@ -175,6 +175,7 @@ from .time import time_gate
 from .constants import ZERO
 from .constants import K_BOLTZMANN
 from .constants import T0
+from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 
 class Network(object):
@@ -317,7 +318,7 @@ class Network(object):
     noise_interp_kind = 'linear'
 
     # CONSTRUCTOR
-    def __init__(self, file=None, name=None, comments=None, f_unit=None, s_def='power', **kwargs):
+    def __init__(self, file=None, name=None, comments=None, f_unit=None, s_def=S_DEF_DEFAULT, **kwargs):
         '''
         Network constructor.
 
@@ -379,11 +380,15 @@ class Network(object):
 
         self.name = name
         self.comments = comments
-        self.s_def = s_def
         self.port_names = None
 
         self.noise = None
         self.noise_freq = None
+
+        if s_def not in S_DEFINITIONS:
+            raise ValueError('s_def parameter should be either:', s_def)
+        else:
+            self.s_def = s_def
 
         if file is not None:
             # allows user to pass filename or file obj
@@ -2504,7 +2509,7 @@ class Network(object):
         out.flip()
         return out
 
-    def renormalize(self, z_new, s_def='power'):
+    def renormalize(self, z_new, s_def=S_DEF_DEFAULT):
         '''
         Renormalize s-parameter matrix given a new port impedances
 
@@ -4297,7 +4302,7 @@ def innerconnect_s(A, k, l):
 
 
 ## network parameter conversion
-def s2z(s, z0=50, s_def='power'):
+def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
     '''
     Convert scattering parameters [1]_ to impedance parameters [2]_
 
@@ -4375,7 +4380,8 @@ def s2z(s, z0=50, s_def='power'):
         USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s , U))
         z = npy.matmul(npy.linalg.inv(Id - USU), npy.matmul((Id + USU), ZR))
 
-    elif s_def == 'old':
+    elif s_def == 'traveling':
+        # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
         # Creating diagonal matrices of shape (nports, nports) for each nfreqs
         sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
         npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
@@ -4387,7 +4393,7 @@ def s2z(s, z0=50, s_def='power'):
 
     return z
 
-def s2y(s, z0=50, s_def='power'):
+def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
     """
     convert scattering parameters [#]_ to admittance parameters [#]_
 
@@ -4465,9 +4471,10 @@ def s2y(s, z0=50, s_def='power'):
         # USU = npy.linalg.inv(U) @ s @ U
         # y = YR @ npy.linalg.inv(Id + USU) @ (Id - USU)        
         USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s, U))
-        y = npy.matmaul(YR, npy.matmul(npy.linalg.inv(Id + USU), (Id - USU)))
+        y = npy.matmul(YR, npy.matmul(npy.linalg.inv(Id + USU), (Id - USU)))
 
-    elif s_def == 'old':
+    elif s_def == 'traveling':
+        # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
         # Creating diagonal matrices of shape (nports, nports) for each nfreqs
         sqrty0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
         npy.einsum('ijj->ij', sqrty0)[...] = npy.sqrt(1.0/z0)
@@ -4548,7 +4555,7 @@ def s2t(s):
     return t
 
 
-def z2s(z, z0=50, s_def='power'):
+def z2s(z, z0=50, s_def=S_DEF_DEFAULT):
     """
     convert impedance parameters [1]_ to scattering parameters [2]_
 
@@ -4594,9 +4601,7 @@ def z2s(z, z0=50, s_def='power'):
     """
     nfreqs, nports, nports = z.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-    
-    # The following is a vectorized version of a for loop for all frequencies.
-    
+   
     if s_def == 'power':
         # Power-waves. Eq.(18) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
@@ -4620,7 +4625,8 @@ def z2s(z, z0=50, s_def='power'):
                        npy.matmul((z - ZR),
                                   npy.matmul(npy.linalg.inv(z + ZR), npy.linalg.inv(U))))
 
-    elif s_def == 'old':
+    elif s_def == 'traveling':
+        # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
         # Creating Identity matrices of shape (nports,nports) for each nfreqs 
         Id = npy.zeros_like(z)  # (nfreqs, nports, nports)
         npy.einsum('ijj->ij', Id)[...] = 1.0  
@@ -4906,7 +4912,7 @@ def s2a(s, z0=50):
     return a
 
 
-def y2s(y, z0=50, s_def='power'):
+def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
     '''
     convert admittance parameters [#]_ to scattering parameters [#]_
 
@@ -4998,7 +5004,8 @@ def y2s(y, z0=50, s_def='power'):
                        npy.matmul((npy.linalg.inv(y) - ZR), 
                                   npy.matmul(npy.linalg.inv(npy.linalg.inv(y) + ZR), npy.linalg.inv(U))))
 
-    elif s_def == 'old':
+    elif s_def == 'traveling':
+        # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
         # Creating diagonal matrices of shape (nports, nports) for each nfreqs
         sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
         npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
@@ -5489,7 +5496,7 @@ def reciprocity(s):
 
 
 ## renormalize
-def renormalize_s(s, z_old, z_new, s_def='power'):
+def renormalize_s(s, z_old, z_new, s_def=S_DEF_DEFAULT):
     '''
     Renormalize a s-parameter matrix given old and new port impedances
 
@@ -5530,7 +5537,6 @@ def renormalize_s(s, z_old, z_new, s_def='power'):
 
     See Also
     --------
-    renormalize_s_pw : renormalize using power wave formulation
     Network.renormalize : method of Network  to renormalize s
     fix_z0_shape
     ssz
@@ -5540,7 +5546,7 @@ def renormalize_s(s, z_old, z_new, s_def='power'):
     -------------
     .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
 
-    .. [2] Anritsu Application Note: Arbitrary Impedance
+    .. [2] Anritsu Application Note: Arbitrary Impedance, https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
 
     Examples
     ------------
@@ -5549,6 +5555,8 @@ def renormalize_s(s, z_old, z_new, s_def='power'):
 
 
     '''
+    if s_def not in S_DEFINITIONS:
+        raise ValueError('s_def parameter should be either:', s_def)    
     # thats a heck of a one-liner!
     return z2s(s2z(s, z0=z_old, s_def=s_def), z0=z_new, s_def=s_def)
 
