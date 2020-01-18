@@ -419,6 +419,28 @@ class Network(object):
     @classmethod
     def from_z(cls, z, *args, **kw):
         '''
+        Create a Network from its Z-parameters
+        
+        Parameters:
+        ------------
+        z : Numpy array
+            Impedance matrix. Should be of shape fxnxn, 
+            where f is frequency axis and n is number of ports
+        \*\*kwargs :
+            key word arguments can be used to assign properties of the
+            Network, `f` and `z0`.
+        
+        Return
+        --------
+        ntw : :class:`Network`
+            Created Network
+            
+        Example
+        --------
+        >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
+        >>> z = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port z-matrix: shape=(4,2,2)
+        >>> ntw = rf.Network.from_z(z, f=f)
+            
         '''
         s = npy.zeros(shape=z.shape)
         me = cls(s=s, *args, **kw)
