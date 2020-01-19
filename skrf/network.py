@@ -4349,6 +4349,11 @@ def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
    
+    # Add a small real part in case of pure imaginary char impedance
+    # to prevent numerical errors for both pseudo and power waves definitions
+    z0 = z0.astype(dtype=npy.complex)
+    z0[z0.real == 0] += ZERO  
+
     s = s.copy()  # to prevent the original array from being altered
     s[s == -1.] = -1. + 1e-12  # solve numerical singularity
     s[s == 1.] = 1. + 1e-12  # solve numerical singularity
@@ -4442,6 +4447,11 @@ def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
     """
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
+
+    # Add a small real part in case of pure imaginary char impedance
+    # to prevent numerical errors for both pseudo and power waves definitions
+    z0 = z0.astype(dtype=npy.complex)
+    z0[z0.real == 0] += ZERO  
 
     s = s.copy()  # to prevent the original array from being altered
     s[s == -1.] = -1. + 1e-12  # solve numerical singularity
@@ -4605,7 +4615,7 @@ def z2s(z, z0=50, s_def=S_DEF_DEFAULT):
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
     z0 = z0.astype(dtype=npy.complex)
-    z0[~npy.isreal(z0)] += ZERO    
+    z0[z0.real == 0] += ZERO    
 
     if s_def == 'power':
         # Power-waves. Eq.(18) from [3]
@@ -4982,6 +4992,11 @@ def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
     '''
     nfreqs, nports, nports = y.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
+
+    # Add a small real part in case of pure imaginary char impedance
+    # to prevent numerical errors for both pseudo and power waves definitions
+    z0 = z0.astype(dtype=npy.complex)
+    z0[z0.real == 0] += ZERO  
 
     # The following is a vectorized version of a for loop for all frequencies.        
     # Creating Identity matrices of shape (nports,nports) for each nfreqs 

@@ -336,6 +336,17 @@ class NetworkTestCase(unittest.TestCase):
             # test #4: define the network from s, after y -> s (s_def is important)
             ntwk.s = rf.y2s(y_ref, z0, s_def=s_def)
             npy.testing.assert_allclose(ntwk.y, y_ref)
+
+    def test_z0_pure_imaginary(self):
+        ' Test cases where z0 is pure imaginary '
+        # test that conversion to Z or Y does not give NaN for pure imag z0
+        for s_def in S_DEFINITIONS:
+            ntwk = rf.Network(s_def=s_def)
+            ntwk.z0 = npy.array([50j, -50j])
+            ntwk.f = npy.array([1000])
+            ntwk.s = npy.random.rand(1,2,2) + npy.random.rand(1,2,2)*1j
+            self.assertFalse(npy.any(npy.isnan(ntwk.z)))
+            self.assertFalse(npy.any(npy.isnan(ntwk.y)))
         
     def test_yz(self):
         tinyfloat = 1e-12
