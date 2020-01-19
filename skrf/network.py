@@ -4601,7 +4601,12 @@ def z2s(z, z0=50, s_def=S_DEF_DEFAULT):
     """
     nfreqs, nports, nports = z.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
-   
+
+    # Add a small real part in case of pure imaginary char impedance
+    # to prevent numerical errors for both pseudo and power waves definitions
+    z0 = z0.astype(dtype=npy.complex)
+    z0[~npy.isreal(z0)] += ZERO    
+
     if s_def == 'power':
         # Power-waves. Eq.(18) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
