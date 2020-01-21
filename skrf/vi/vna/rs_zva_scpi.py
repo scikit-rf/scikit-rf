@@ -173,7 +173,7 @@ class SCPI(object):
          |-----------|--------------------|
      
         """
-        scpi_command = scpi_preprocess(":SENS{:}:FREQ:CONV:DEV:NAME {:}", cnum, TYPE)
+        scpi_command = scpi_preprocess(":SENS{:}:FREQ:CONV:DEV:NAME '{:}'", cnum, TYPE)
         self.write(scpi_command)
 
     def set_corr_connection(self, cnum=1, pnum=1, CONN=""):
