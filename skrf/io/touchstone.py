@@ -414,12 +414,15 @@ class Touchstone:
         status : boolean
             True if the Touchstone file has been produced by HFSS
             False otherwise
-        '''    
-        status = False
+        '''
+        if self.comments is None:
+            return False
+
         if 'exported from hfss' in str.lower(self.comments):
-            status = True
-        return status      
-    
+            return True
+
+        return False
+
     def get_gamma_z0(self):
         '''
         Extracts Z0 and Gamma comments from touchstone file (is provided)
