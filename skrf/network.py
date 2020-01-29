@@ -1881,7 +1881,7 @@ class Network(object):
                     for n in range(1, 1 + self.number_of_ports):
                         if (n > 0 and (n % 4) == 0):
                             output.write('\n!')
-                            output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
+                        output.write(" {labelA}S{m}{n} {labelB}S{m}{n}".format(m=m, n=n, **formatDic))
                     output.write('\n!')
                 output.write('\n')
                 # write out data
