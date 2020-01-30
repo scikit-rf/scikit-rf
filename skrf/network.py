@@ -681,8 +681,16 @@ class Network(object):
                 return ntwk
             else:
                 raise ValueError("Don't understand index: {0}".format(key))
-        sliced_frequency = self.frequency[key]
-        return self.interpolate(sliced_frequency)
+            sliced_frequency = self.frequency[key]
+            return self.interpolate(sliced_frequency)
+        if isinstance(key, str):
+            sliced_frequency = self.frequency[key]
+            return self.interpolate(sliced_frequency)
+        if isinstance(key, Frequency):
+            return self.interpolate(key)
+        # The following avoids interpolation when the slice is done directly with indices
+        ntwk = self.copy_subset(key)
+        return ntwk
 
     def __str__(self):
         """
@@ -1571,6 +1579,38 @@ class Network(object):
         '''
         for attr in ['_s', 'frequency', '_z0', 'name']:
             self.__setattr__(attr, copy(other.__getattribute__(attr)))
+
+    def copy_subset(self, key):
+        '''
+        Returns a copy of a frequency subset of this Network
+
+        Needed to allow pass-by-value for a subset Network instead of
+        pass-by-reference
+        
+        Parameters
+        -----------
+        key : numpy array
+            the array indices of the frequencies to take
+        '''
+        ntwk = Network(s=self.s[key,:],
+                       frequency=self.frequency[key].copy(),
+                       z0=self.z0[key,:],
+                       )
+
+        if isinstance(self.name, str):
+            ntwk.name = self.name + '_subset'
+        else:
+            ntwk.name = self.name
+
+        if self.noise is not None and self.noise_freq is not None:
+            ntwk.noise = npy.copy(self.noise[key,:])
+            ntwk.noise_freq = npy.copy(self.noise_freq[key])
+
+        try:
+            ntwk.port_names = copy(self.port_names)
+        except(AttributeError):
+            ntwk.port_names = None
+        return ntwk
 
     # touchstone file IO
     def read_touchstone(self, filename):
@@ -3199,6 +3239,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     `l` thru `l+num-1` on `ntwkB`. The resultant network has
     (ntwkA.nports+ntwkB.nports-2*num) ports. The port indices ('k','l')
     start from 0. Port impedances **are** taken into account.
+    When the two networks have overlapping frequencies, the resulting
+    network will contain only the overlapping frequencies.
 
     Parameters
     -----------
@@ -3242,7 +3284,16 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
     '''
     # some checking
-    check_frequency_equal(ntwkA, ntwkB)
+    try:
+        check_frequency_equal(ntwkA, ntwkB)
+    except IndexError as e:
+        common_freq = npy.intersect1d(ntwkA.frequency.f, ntwkB.frequency.f, return_indices=True)
+        if common_freq[0].size is 0:
+            raise e
+        else:
+            ntwkA = ntwkA[common_freq[1]]
+            ntwkB = ntwkB[common_freq[2]]
+            warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency))
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
