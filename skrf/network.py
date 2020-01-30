@@ -172,9 +172,7 @@ from .time import time_gate
 # from .io.general import network_2_spreadsheet
 # from media import Freespace
 
-from .constants import ZERO
-from .constants import K_BOLTZMANN
-from .constants import T0
+from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 
@@ -338,7 +336,7 @@ class Network(object):
             its a str
         comments : str
             Comments associated with the Network
-        s_def : str
+        s_def : str -> s_def : ['power','pseudo']
             Scattering parameter definition : 'power' for power-waves definition, 
             'pseudo' for pseudo-waves definition. Default is 'power'.
             NB: results are the same for real-valued characteristic impedances.
@@ -386,7 +384,7 @@ class Network(object):
         self.noise_freq = None
 
         if s_def not in S_DEFINITIONS:
-            raise ValueError('s_def parameter should be either:', s_def)
+            raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
         else:
             self.s_def = s_def
 
@@ -2519,7 +2517,7 @@ class Network(object):
         z_new : complex array of shape FxN, F, N or a  scalar
             new port impedances
 
-        s_def : str
+        s_def : str -> s_def : ['power','pseudo']
             Scattering parameter definition : 'power' for power-waves definition, 
             'pseudo' for pseudo-waves definition. Default is 'power'.
             NB: results are the same for real-valued characteristic impedances.
@@ -4327,7 +4325,7 @@ def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
         scattering parameters
     z0 : complex array-like or number
         port impedances.
-    s_def : str
+    s_def : str -> s_def : ['power','pseudo']
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
             
@@ -4410,7 +4408,7 @@ def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
         scattering parameters
     z0 : complex array-like or number
         port impedances
-    s_def : str
+    s_def : str -> s_def : ['power','pseudo']
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
 
@@ -4590,7 +4588,7 @@ def z2s(z, z0=50, s_def=S_DEF_DEFAULT):
         impedance parameters
     z0 : complex array-like or number
         port impedances
-    s_def : str
+    s_def : str -> s_def : ['power','pseudo']
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
 
@@ -4954,7 +4952,7 @@ def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
     z0 : complex array-like or number
         port impedances
 
-    s_def : str
+    s_def : str -> s_def : ['power','pseudo']
         Scattering parameter definition : 'power' for power-waves definition [3], 
         'pseudo' for pseudo-waves definition [4]. Default is 'power'.
 
@@ -5540,7 +5538,7 @@ def renormalize_s(s, z_old, z_new, s_def=S_DEF_DEFAULT):
     z_new : complex array of shape FxN, F, N or a scalar
         new port impedances
 
-    s_def : str
+    s_def : str -> s_def : ['power','pseudo']
         Scattering parameter definition : 'power' for power-waves definition, 
         'pseudo' for pseudo-waves definition. Default is 'power'.
         NB: results are the same for real-valued characteristic impedances.
@@ -5576,7 +5574,7 @@ def renormalize_s(s, z_old, z_new, s_def=S_DEF_DEFAULT):
 
     '''
     if s_def not in S_DEFINITIONS:
-        raise ValueError('s_def parameter should be either:', s_def)    
+        raise ValueError('s_def parameter should be either:', S_DEFINITIONS)    
     # thats a heck of a one-liner!
     return z2s(s2z(s, z0=z_old, s_def=s_def), z0=z_new, s_def=s_def)
 
