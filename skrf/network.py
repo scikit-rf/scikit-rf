@@ -3293,7 +3293,7 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         else:
             ntwkA = ntwkA[common_freq[1]]
             ntwkB = ntwkB[common_freq[2]]
-            print("Using a frequency subset:\n" + str(ntwkA.frequency))
+            warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency))
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
