@@ -1059,7 +1059,7 @@ class OnePort(Calibration):
             # construct the matrix
             Q = npy.hstack([i, one, i*m])
             # calculate least squares
-            abcTmp, residualsTmp = npy.linalg.lstsq(Q,m)[0:2]
+            abcTmp, residualsTmp = npy.linalg.lstsq(Q,m,rcond=None)[0:2]
             if numStds > 3:
                 measurement_variance[f,:]= residualsTmp/(numStds-numCoefs)
                 parameter_variance[f,:] = \
@@ -2122,7 +2122,7 @@ class EightTerm(Calibration):
                         ])
 
             # calculate least squares
-            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
+            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M,rcond=None)[0:2]
             #if len (residualsTmp )==0:
             #       raise ValueError( 'matrix has singular values, check standards')
 
@@ -3751,7 +3751,7 @@ class SixteenTerm(Calibration):
                         ])
 
             ## calculate least squares
-            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M)[0:2]
+            error_vector_at_f, residuals_at_f = npy.linalg.lstsq(Q,M,rcond=None)[0:2]
             ##if len (residualsTmp )==0:
             ##       raise ValueError( 'matrix has singular values, check standards')
 
