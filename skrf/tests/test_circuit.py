@@ -197,10 +197,10 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         _wilkinson1 = rf.connect(T0, 1, self.branch1, 0)
         _wilkinson2 = rf.connect(_wilkinson1, 2, self.branch2, 0)
-        _wilkinson3 = rf.connect(_wilkinson2, 1, T1, 0)
-        _wilkinson4 = rf.connect(_wilkinson3, 1, T2, 0)
+        _wilkinson3 = rf.connect(_wilkinson2, 0, T1, 0)
+        _wilkinson4 = rf.connect(_wilkinson3, 0, T2, 0)
         _wilkinson5 = rf.connect(_wilkinson4, 1, self.resistor, 0)
-        wilkinson = rf.innerconnect(_wilkinson5, 1, 3)
+        wilkinson = rf.innerconnect(_wilkinson5, 0, 3)
 
         ntw_C = self.C.network
 
@@ -606,11 +606,11 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         # to define different port characteristic impedances like
         # hybrid1.z0 = [11, 12, 13, 14]
         # hybrid2.z0 = [21, 22, 23, 24]
-        # etc
+        # ps.z0 = [31, 32]
         # and to make a drawing of each steps.
         # This is not convenient, that's why the Circuit approach can be easier.
         _temp = rf.connect(hybrid1, 2, ps, 0)
-        _temp = rf.connect(_temp, 1, hybrid2, 0)
+        _temp = rf.connect(_temp, 2, hybrid2, 0)
         _temp = rf.innerconnect(_temp, 1, 5)
         # re-order port numbers to match the example
         _temp.renumber([0, 1, 2, 3], [3, 0, 2, 1])
