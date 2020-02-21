@@ -287,11 +287,67 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
 
 class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
     '''
-    Various 2-ports and 4-ports circuits and associated tests
+    Various 1-ports, 2-ports and 4-ports circuits and associated tests
     '''
+    def test_1port_matched_load(self):
+        '''
+        Connect a matched load directly to the port
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        line = rf.media.DefinedGammaZ0(frequency=freq)
+        match_load = line.match(name='match_load')
+        
+        cnx = [
+            [(port1, 0), (match_load, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+        
+        assert_array_almost_equal(match_load.s, cir.s_external)
+    
+    def test_1port_short(self):
+        '''
+        Connect a short directly to the port
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        line = rf.media.DefinedGammaZ0(frequency=freq)
+        short = line.short(name='short')
+        gnd1 = rf.Circuit.Ground(freq, name='gnd')
+        # method 1 : use the Ground Network (which 2 port actually)
+        cnx = [
+            [(port1, 0), (gnd1, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+        assert_array_almost_equal(short.s, cir.s_external)
+        # method 2 : use a short Network (1 port)
+        cnx = [
+            [(port1, 0), (short, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+
+        assert_array_almost_equal(short.s, cir.s_external)
+        
+    def test_1port_random_load(self):
+        '''
+        Connect a random load directly to the port
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        line = rf.media.DefinedGammaZ0(frequency=freq)
+        gamma = np.random.rand(1,1) + 1j*np.random.rand(1,1)
+        load = line.load(gamma, name='load')
+        
+        cnx = [
+            [(port1, 0), (load, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+
+        assert_array_almost_equal(load.s, cir.s_external)
+        
     def test_1port_matched_network_default_impedance(self):
         '''
-        Connect a 2 port network to a matched load
+        Connect a random 2 port network connected to a matched load
         '''
         freq = rf.Frequency(start=1, npoints=1)
         a = rf.Network(name='a')

@@ -555,8 +555,9 @@ class Circuit():
         '''
         Return the global scattering matrix of the networks
         '''
-        # list all networks with at least two ports
-        ntws = self.networks_dict(min_nports=2)
+        # list all networks which are not considered as "ports", 
+        # that is which do not contain "port" in their network name
+        ntws = {k:v for k,v in self.networks_dict().items() if 'port' not in k.lower()}
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}
