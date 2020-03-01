@@ -16,6 +16,7 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     Networks
     Plotting
     NetworkSet
+    Circuit
     VirtualInstruments 
     Calibration
     Media       
