@@ -64,7 +64,7 @@ class Frequency(object):
     '''
     unit_dict = {\
             'hz':'Hz',\
-            'khz':'KHz',\
+            'khz':'kHz',\
             'mhz':'MHz',\
             'ghz':'GHz',\
             'thz':'THz'\
