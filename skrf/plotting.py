@@ -55,7 +55,7 @@ except ImportError as e:
 
 #from matplotlib.lines import Line2D            # for drawing smith chart
 
-SI_PREFIXES_ASCII = 'yzafpnum kMGTPEZY'
+SI_PREFIXES_ASCII = 'yzafpnum KMGTPEZY'
 SI_CONVERSION = dict([(key, 10**((8-i)*3)) for i, key in enumerate(SI_PREFIXES_ASCII)])
 
 
