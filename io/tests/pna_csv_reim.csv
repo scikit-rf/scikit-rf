@@ -1,0 +1,9 @@
+!this is a comment
+!line
+
+BEGIN CH1_DATA
+Freq(Hz),"A,1"(REAL),"A,1"(IMAG),"R1,1"(REAL),"R1,1"(IMAG)
+750000000000,1,2,3,4
+1100000000000,5,6,7,8
+END
+

@@ -1,0 +1,54 @@
+# style for skrf (www.scikit-rf.org) ( based off ggplot.mplstyle)
+patch.linewidth : 0.5
+patch.facecolor : 348ABD  # blue
+patch.edgecolor : EEEEEE
+patch.antialiased : True
+
+font.family         : serif
+font.serif : ['Times New Roman','Computer Modern Roman',   'Times', 'Palatino', 'Charter']
+
+font.size           : 8.0
+text.usetex : True
+axes.facecolor : white
+axes.edgecolor : 888888 
+axes.linewidth : 1
+axes.grid : True
+axes.titlesize : large
+axes.labelsize : medium
+axes.labelcolor : black
+axes.axisbelow : True     
+axes.color_cycle : 348ABD, E24A33,8EBA42, FBC15E, 988ED5,  FFB5B8, 777777
+
+xtick.color : 555555
+xtick.direction : out
+xtick.labelsize     :small
+
+ytick.color : 555555
+ytick.direction : out
+ytick.labelsize     : small 
+
+grid.color : E0E0E0  
+grid.linestyle : -    # solid line
+grid.linewidth :.5
+
+figure.figsize      : 3.4, 2.5 
+figure.facecolor : white
+figure.edgecolor : 0.50
+figure.dpi          : 300
+      
+figure.subplot.left	    : 0.18
+figure.subplot.right	: 0.95    
+figure.subplot.bottom	: 0.15
+figure.subplot.top      : 0.985 
+
+
+lines.linewidth     : 1     
+lines.markersize    : 5        
+lines.markeredgewidth :.1
+legend.fontsize     : 8  
+legend.loc			: best
+
+path.simplify       : True  
+
+savefig.dpi         : 120      
+
