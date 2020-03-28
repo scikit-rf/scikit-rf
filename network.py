@@ -380,6 +380,7 @@ class Network(object):
         self.comments = comments
         self.port_names = None
 
+        self.deembed = None
         self.noise = None
         self.noise_freq = None
 
@@ -1198,6 +1199,7 @@ class Network(object):
             raise (TypeError('One-Port Networks don\'t have inverses'))
         out = self.copy()
         out.s = inv(self.s)
+        out.deembed = True
         return out
 
     @property
@@ -3254,6 +3256,7 @@ class Network(object):
         '''        
         return s2vswr_active(self.s, a)
     
+#%%
 
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
@@ -3400,18 +3403,29 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
       # interpolate abcd into the set of noise frequencies
 
-      a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
-              axis=0, kind=Network.noise_interp_kind)
-      a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
-              axis=0, kind=Network.noise_interp_kind)
-      a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-      a_H = npy.conj(a.transpose(0, 2, 1))
-      cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
+      
+      if ntwkA.deembed :
+          a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          a = npy.linalg.inv(a)
+          a_H = npy.conj(a.transpose(0, 2, 1))
+          cC = npy.matmul(a, npy.matmul(cB, a_H)) 
+      else : 
+          a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          a_H = npy.conj(a.transpose(0, 2, 1))
+          cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC
       ntwkC.noise_freq = noise_freq
 
     return ntwkC
-
+#%%
 
 def connect_fast(ntwkA, k, ntwkB, l):
     """
