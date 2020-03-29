@@ -262,7 +262,7 @@ class Network(object):
     """
 
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 'g_opt', 'nfmin_db', 'rn']
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
@@ -413,7 +413,7 @@ class Network(object):
             self.frequency.unit = f_unit
 
         # allow properties to be set through the constructor
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'noise', 'noise_freq']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'noise', 'noise_freq', 'g_opt', 'nfmin_db', 'rn']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -1645,7 +1645,7 @@ class Network(object):
             ntwk.port_names = None
         return ntwk
     
-    @classmethod
+#    @classmethod
     def set_noise_a(self, noise_freq, nfmin_db, gamma_opt, rn ) :
           '''
           sets the "A" (ie cascade) representation of the correlation matrix, based on the 
@@ -1654,15 +1654,13 @@ class Network(object):
           
           nf_min = npy.power(10., nfmin_db/10.)
           # TODO maybe interpolate z0 as above
-          Z0 = npy.copy(self.z0)
-          g_opt = npy.copy(gamma_opt)
-#          y_opt = 1./(Z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
-          y_opt = 1./(Z0 * (1. + g_opt)/(1. - g_opt))
+          y_opt = 1./(self.z0[:, 0] * (1. + gamma_opt)/(1. - gamma_opt))
           self.noise = 4.*K_BOLTZMANN*T0*npy.array(
                 [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
                 [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
               ).swapaxes(0, 2).swapaxes(1, 2)
           self.noise_freq = noise_freq
+          xx=1
         
         
         
@@ -1728,14 +1726,17 @@ class Network(object):
 
           nf_min = npy.power(10., nfmin_db/10.)
           # TODO maybe interpolate z0 as above
-          y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          y_opt = 1./(self.z0[:, 0] * (1. + gamma_opt)/(1. - gamma_opt))
           
           # use the voltage/current correlation matrix; this works nicely with
           # cascading networks
-          self.noise = 4.*K_BOLTZMANN*T0*npy.array(
+          if False : 
+              self.noise = 4.*K_BOLTZMANN*T0*npy.array(
                 [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
                 [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
               ).swapaxes(0, 2).swapaxes(1, 2)
+              self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
+              self.noise_freq.unit = touchstoneFile.frequency_unit
           noise_freq = Frequency.from_f(noise_freq, unit='hz')
           noise_freq.unit = touchstoneFile.frequency_unit
 
