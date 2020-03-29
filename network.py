@@ -262,7 +262,7 @@ class Network(object):
     """
 
     global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
+    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h', 'g_opt', 'nfmin_db', 'rn']
 
     global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
@@ -1644,7 +1644,29 @@ class Network(object):
         except(AttributeError):
             ntwk.port_names = None
         return ntwk
-
+    
+    @classmethod
+    def set_noise_a(self, noise_freq, nfmin_db, gamma_opt, rn ) :
+          '''
+          sets the "A" (ie cascade) representation of the correlation matrix, based on the 
+          noise frequency and input parameters. 
+          '''
+          
+          nf_min = npy.power(10., nfmin_db/10.)
+          # TODO maybe interpolate z0 as above
+          Z0 = npy.copy(self.z0)
+          g_opt = npy.copy(gamma_opt)
+#          y_opt = 1./(Z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          y_opt = 1./(Z0 * (1. + g_opt)/(1. - g_opt))
+          self.noise = 4.*K_BOLTZMANN*T0*npy.array(
+                [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
+                [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
+              ).swapaxes(0, 2).swapaxes(1, 2)
+          self.noise_freq = noise_freq
+        
+        
+        
+        
     # touchstone file IO
     def read_touchstone(self, filename):
         """
@@ -1691,7 +1713,7 @@ class Network(object):
 
         if touchstoneFile.noise is not None:
           noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
-          nf_min_log = touchstoneFile.noise[:, 1]
+          nfmin_db = touchstoneFile.noise[:, 1]
           gamma_opt_mag = touchstoneFile.noise[:, 2]
           gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
 
@@ -1704,7 +1726,7 @@ class Network(object):
 
           gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
 
-          nf_min = npy.power(10., nf_min_log/10.)
+          nf_min = npy.power(10., nfmin_db/10.)
           # TODO maybe interpolate z0 as above
           y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
           
@@ -1714,8 +1736,10 @@ class Network(object):
                 [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
                 [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
               ).swapaxes(0, 2).swapaxes(1, 2)
-          self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-          self.noise_freq.unit = touchstoneFile.frequency_unit
+          noise_freq = Frequency.from_f(noise_freq, unit='hz')
+          noise_freq.unit = touchstoneFile.frequency_unit
+
+          self.set_noise_a(noise_freq, nfmin_db, gamma_opt, rn )
 
         if self.name is None:
             try:
@@ -3410,9 +3434,9 @@ def connect(ntwkA, k, ntwkB, l, num=1):
           a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag, 
                   axis=0, kind=Network.noise_interp_kind)
           a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-          a = npy.linalg.inv(a)
+          a = npy_inv(a)
           a_H = npy.conj(a.transpose(0, 2, 1))
-          cC = npy.matmul(a, npy.matmul(cB, a_H)) 
+          cC = npy.matmul(a, npy.matmul(cB -cA, a_H)) 
       else : 
           a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
                   axis=0, kind=Network.noise_interp_kind)
