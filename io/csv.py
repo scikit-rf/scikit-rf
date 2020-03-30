@@ -567,7 +567,7 @@ def pna_csv_2_ntwks(filename):
         name = os.path.splitext(os.path.basename(filename))[0]
         return Network(f=f, s=s, name=name, comments=comments)
     else:
-        for k in range((d.shape[1]-1)/2):
+        for k in range(int((d.shape[1]-1)/2)):
             f = d[:,0]*1e-9
             name = names[k]
             print((names[k], names[k+1]))
