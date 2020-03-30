@@ -380,6 +380,7 @@ class Network(object):
         self.comments = comments
         self.port_names = None
 
+        self.deembed = None
         self.noise = None
         self.noise_freq = None
 
@@ -412,7 +413,7 @@ class Network(object):
             self.frequency.unit = f_unit
 
         # allow properties to be set through the constructor
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'noise', 'noise_freq']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'noise', 'noise_freq', 'g_opt', 'nfmin_db', 'rn']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -1198,6 +1199,7 @@ class Network(object):
             raise (TypeError('One-Port Networks don\'t have inverses'))
         out = self.copy()
         out.s = inv(self.s)
+        out.deembed = True
         return out
 
     @property
@@ -1642,7 +1644,27 @@ class Network(object):
         except(AttributeError):
             ntwk.port_names = None
         return ntwk
-
+    
+#    @classmethod
+    def set_noise_a(self, noise_freq, nfmin_db, gamma_opt, rn ) :
+          '''
+          sets the "A" (ie cascade) representation of the correlation matrix, based on the 
+          noise frequency and input parameters. 
+          '''
+          
+          nf_min = npy.power(10., nfmin_db/10.)
+          # TODO maybe interpolate z0 as above
+          y_opt = 1./(self.z0[:, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          self.noise = 4.*K_BOLTZMANN*T0*npy.array(
+                [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
+                [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
+              ).swapaxes(0, 2).swapaxes(1, 2)
+          self.noise_freq = noise_freq
+          xx=1
+        
+        
+        
+        
     # touchstone file IO
     def read_touchstone(self, filename):
         """
@@ -1689,7 +1711,7 @@ class Network(object):
 
         if touchstoneFile.noise is not None:
           noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
-          nf_min_log = touchstoneFile.noise[:, 1]
+          nfmin_db = touchstoneFile.noise[:, 1]
           gamma_opt_mag = touchstoneFile.noise[:, 2]
           gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
 
@@ -1702,18 +1724,23 @@ class Network(object):
 
           gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
 
-          nf_min = npy.power(10., nf_min_log/10.)
+          nf_min = npy.power(10., nfmin_db/10.)
           # TODO maybe interpolate z0 as above
-          y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          y_opt = 1./(self.z0[:, 0] * (1. + gamma_opt)/(1. - gamma_opt))
           
           # use the voltage/current correlation matrix; this works nicely with
           # cascading networks
-          self.noise = 4.*K_BOLTZMANN*T0*npy.array(
+          if False : 
+              self.noise = 4.*K_BOLTZMANN*T0*npy.array(
                 [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
                 [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
               ).swapaxes(0, 2).swapaxes(1, 2)
-          self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-          self.noise_freq.unit = touchstoneFile.frequency_unit
+              self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
+              self.noise_freq.unit = touchstoneFile.frequency_unit
+          noise_freq = Frequency.from_f(noise_freq, unit='hz')
+          noise_freq.unit = touchstoneFile.frequency_unit
+
+          self.set_noise_a(noise_freq, nfmin_db, gamma_opt, rn )
 
         if self.name is None:
             try:
@@ -3254,6 +3281,7 @@ class Network(object):
         '''        
         return s2vswr_active(self.s, a)
     
+#%%
 
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
@@ -3400,18 +3428,29 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
       # interpolate abcd into the set of noise frequencies
 
-      a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
-              axis=0, kind=Network.noise_interp_kind)
-      a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
-              axis=0, kind=Network.noise_interp_kind)
-      a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-      a_H = npy.conj(a.transpose(0, 2, 1))
-      cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
+      
+      if ntwkA.deembed :
+          a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          a = npy_inv(a)
+          a_H = npy.conj(a.transpose(0, 2, 1))
+          cC = npy.matmul(a, npy.matmul(cB -cA, a_H)) 
+      else : 
+          a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          a_H = npy.conj(a.transpose(0, 2, 1))
+          cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC
       ntwkC.noise_freq = noise_freq
 
     return ntwkC
-
+#%%
 
 def connect_fast(ntwkA, k, ntwkB, l):
     """
