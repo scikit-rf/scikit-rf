@@ -1308,23 +1308,33 @@ class Network(object):
  
     def nfdb_gs(self, gs):
       """
-      the noise figure for the network if the source impedance is z
+      return dB(NF) foreach gamma_source x noise_frequency
       """
       g = self.copy().s11
-      if isinstance(gs, float):
+      nfreq = self.noise_freq.npoints
+
+      if isinstance(gs, (int, float, complex)) :
           g.s[:,0,0] = gs
-      elif isinstance(gs, npy.ndarray) :  
-          g = npy.broadcast_to(gs, self.s.shape)
+          nfdb = 10.*npy.log10(self.nf( g.z[:,0,0]))
+      elif isinstance(gs, npy.ndarray) : 
+          npt =  gs.shape[0]
+          z = self.z0[0,0] * (1+gs)/(1-gs)
+          zf = npy.broadcast_to(z[:,None], tuple((npt, nfreq)))
+          nfdb = 10.*npy.log10(self.nf( zf))
       else :
-          g.s[:,0,0] = 0
-      return 10.*npy.log10((self.nf( g.z[:,0,0])))
-#    '''
-#    newnetw.nfdb_gs(complex(.7,-0.2))
-#    gs = complex(.7,-0.2)
-#    self = newnetw
-#    
-#    '''
-#
+          g.s[:,0,0] = -1
+          nfdb = 10.*npy.log10(self.nf( g.z[:,0,0]))
+      return nfdb
+
+    '''
+    newnetw.nfdb_gs(complex(.7,-0.2))
+    gs = complex(.7,-0.2)
+    gs = np.arange(0,0.9,0.1)
+    self = newnetw
+    self.    
+    
+    '''
+
     @property
     def rn(self):
       """
