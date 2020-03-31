@@ -176,6 +176,12 @@ from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 
+from matplotlib import cm
+import matplotlib.pyplot as plt
+import matplotlib.tri as tri
+#from scipy.interpolate import interp1d
+
+
 class Network(object):
     """
     A n-port electrical network [#]_.
@@ -380,6 +386,7 @@ class Network(object):
         self.comments = comments
         self.port_names = None
 
+        self.deembed = None
         self.noise = None
         self.noise_freq = None
 
@@ -1198,6 +1205,7 @@ class Network(object):
             raise (TypeError('One-Port Networks don\'t have inverses'))
         out = self.copy()
         out.s = inv(self.s)
+        out.deembed = True
         return out
 
     @property
@@ -1304,6 +1312,35 @@ class Network(object):
       gs = npy.real(ys)
       return fmin + rn/gs * npy.square(npy.absolute(ys - y_opt))
  
+    def nfdb_gs(self, gs):
+      """
+      return dB(NF) foreach gamma_source x noise_frequency
+      """
+      g = self.copy().s11
+      nfreq = self.noise_freq.npoints
+
+      if isinstance(gs, (int, float, complex)) :
+          g.s[:,0,0] = gs
+          nfdb = 10.*npy.log10(self.nf( g.z[:,0,0]))
+      elif isinstance(gs, npy.ndarray) : 
+          npt =  gs.shape[0]
+          z = self.z0[0,0] * (1+gs)/(1-gs)
+          zf = npy.broadcast_to(z[:,None], tuple((npt, nfreq)))
+          nfdb = 10.*npy.log10(self.nf( zf))
+      else :
+          g.s[:,0,0] = -1
+          nfdb = 10.*npy.log10(self.nf( g.z[:,0,0]))
+      return nfdb
+
+    '''
+    newnetw.nfdb_gs(complex(.7,-0.2))
+    gs = complex(.7,-0.2)
+    gs = np.arange(0,0.9,0.1)
+    self = newnetw
+    self.    
+    
+    '''
+
     @property
     def rn(self):
       """
@@ -1582,8 +1619,11 @@ class Network(object):
         ntwk.name = self.name
 
         if self.noise is not None and self.noise_freq is not None:
-          ntwk.noise = npy.copy(self.noise)
-          ntwk.noise_freq = npy.copy(self.noise_freq)
+          if False : 
+              ntwk.noise = npy.copy(self.noise)
+              ntwk.noise_freq = npy.copy(self.noise_freq)
+          ntwk.noise = self.noise.copy()
+          ntwk.noise_freq = self.noise_freq.copy()
 
         try:
             ntwk.port_names = copy(self.port_names)
@@ -1642,7 +1682,33 @@ class Network(object):
         except(AttributeError):
             ntwk.port_names = None
         return ntwk
-
+    
+#    @classmethod
+    def set_noise_a(self, noise_freq=None, nfmin_db=0, gamma_opt=0, rn=1 ) :
+          '''
+          sets the "A" (ie cascade) representation of the correlation matrix, based on the 
+          noise frequency and input parameters. 
+          '''
+          sh_fr = noise_freq.f.shape 
+          nfmin_db = npy.broadcast_to(npy.atleast_1d(nfmin_db), sh_fr)
+          gamma_opt = npy.broadcast_to(npy.atleast_1d(gamma_opt), sh_fr)
+          rn = npy.broadcast_to(npy.atleast_1d(rn), sh_fr)
+          
+              
+          nf_min = npy.power(10., nfmin_db/10.)
+          # TODO maybe interpolate z0 as above
+          y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
+          noise = 4.*K_BOLTZMANN*T0*npy.array(
+                [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
+                [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
+              )
+          self.noise = noise.swapaxes(0, 2).swapaxes(1, 2)
+          self.noise_freq = noise_freq
+          xx=1
+        
+        
+        
+        
     # touchstone file IO
     def read_touchstone(self, filename):
         """
@@ -1689,7 +1755,7 @@ class Network(object):
 
         if touchstoneFile.noise is not None:
           noise_freq = touchstoneFile.noise[:, 0] * touchstoneFile.frequency_mult
-          nf_min_log = touchstoneFile.noise[:, 1]
+          nfmin_db = touchstoneFile.noise[:, 1]
           gamma_opt_mag = touchstoneFile.noise[:, 2]
           gamma_opt_angle = npy.deg2rad(touchstoneFile.noise[:, 3])
 
@@ -1702,18 +1768,22 @@ class Network(object):
 
           gamma_opt = gamma_opt_mag * npy.exp(1j * gamma_opt_angle)
 
-          nf_min = npy.power(10., nf_min_log/10.)
+          nf_min = npy.power(10., nfmin_db/10.)
           # TODO maybe interpolate z0 as above
           y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
-          
           # use the voltage/current correlation matrix; this works nicely with
           # cascading networks
-          self.noise = 4.*K_BOLTZMANN*T0*npy.array(
+          if False : 
+              self.noise = 4.*K_BOLTZMANN*T0*npy.array(
                 [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
                 [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
               ).swapaxes(0, 2).swapaxes(1, 2)
-          self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-          self.noise_freq.unit = touchstoneFile.frequency_unit
+              self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
+              self.noise_freq.unit = touchstoneFile.frequency_unit
+          else :
+              self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
+              self.noise_freq.unit = touchstoneFile.frequency_unit
+              self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn )
 
         if self.name is None:
             try:
@@ -3254,6 +3324,7 @@ class Network(object):
         '''        
         return s2vswr_active(self.s, a)
     
+#%%
 
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
@@ -3400,18 +3471,29 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
       # interpolate abcd into the set of noise frequencies
 
-      a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
-              axis=0, kind=Network.noise_interp_kind)
-      a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
-              axis=0, kind=Network.noise_interp_kind)
-      a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-      a_H = npy.conj(a.transpose(0, 2, 1))
-      cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
+      
+      if ntwkA.deembed :
+          a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          a = npy_inv(a)
+          a_H = npy.conj(a.transpose(0, 2, 1))
+          cC = npy.matmul(a, npy.matmul(cB -cA, a_H)) 
+      else : 
+          a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          a_H = npy.conj(a.transpose(0, 2, 1))
+          cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC
       ntwkC.noise_freq = noise_freq
 
     return ntwkC
-
+#%%
 
 def connect_fast(ntwkA, k, ntwkB, l):
     """
@@ -6084,3 +6166,51 @@ def s2vswr_active(s, a):
         vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
     
     return vswr_act
+
+
+
+
+def plot_contour(freq, x,y,z,min0max1, graph=True, cmap=cm.plasma_r, **kw) :
+    ri =  npy.linspace(0,1, 50); 
+    ti =  npy.linspace(0,2*npy.pi, 150);
+    Ri , Ti = npy.meshgrid(ri, ti)
+    xi = npy.linspace(-1,1, 50);    
+    Xi, Yi = npy.meshgrid(xi, xi)
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, z)
+    Zi = interpolator(Xi, Yi)
+    if min0max1 == 1 : 
+        VALopt = npy.max(z)
+    else : 
+        VALopt = npy.min(z)
+    GAMopt = Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
+
+    if graph : 
+        fig, ax = plt.subplots()
+        an = npy.linspace(0, 2*npy.pi, 50)
+        cs,sn=npy.cos(an), npy.sin(an)
+        plt.plot(cs,sn, color='k', lw=0.25)
+        plt.plot(cs,sn*0, color='g', lw=0.25)
+        plt.plot((1+cs)/2, sn/2, color='k', lw=0.25)
+        plt.axis('equal')
+        ax.set_axis_off()
+        ax.contour(Xi, Yi, Zi, levels=20, vmin=Zi.min(), vmax= Zi.max(), linewidths=0.5,  colors='k')
+        cntr1 = ax.contourf(Xi, Yi, Zi, levels=20, vmin=Zi.min(), vmax= Zi.max(),cmap=cmap, **kw)
+        fig.colorbar(cntr1, ax=ax)
+        ax.plot(x, y, 'o', ms=0.3, color='k')
+        ax.set(xlim=(-1, 1), ylim=(-1, 1))
+        plt.show()
+    return GAMopt, VALopt
+
+
+def tuner_constellation():            
+    r = npy.linspace(0.1,0.9,9)
+    a = npy.linspace(0,2*npy.pi,21)
+    r_, a_ = npy.meshgrid(r,a)
+    c_ = r_ *npy.exp(1j * a_)
+    g= c_.flatten()
+    x =  npy.real(g)
+    y =  npy.imag(g)
+    return x,y,g
+
+  
