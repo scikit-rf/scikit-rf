@@ -1683,7 +1683,6 @@ class Network(object):
             ntwk.port_names = None
         return ntwk
     
-#    @classmethod
     def set_noise_a(self, noise_freq=None, nfmin_db=0, gamma_opt=0, rn=1 ) :
           '''
           sets the "A" (ie cascade) representation of the correlation matrix, based on the 
@@ -1704,7 +1703,6 @@ class Network(object):
               )
           self.noise = noise.swapaxes(0, 2).swapaxes(1, 2)
           self.noise_freq = noise_freq
-          xx=1
         
         
         
@@ -1773,17 +1771,9 @@ class Network(object):
           y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
           # use the voltage/current correlation matrix; this works nicely with
           # cascading networks
-          if False : 
-              self.noise = 4.*K_BOLTZMANN*T0*npy.array(
-                [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
-                [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
-              ).swapaxes(0, 2).swapaxes(1, 2)
-              self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-              self.noise_freq.unit = touchstoneFile.frequency_unit
-          else :
-              self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
-              self.noise_freq.unit = touchstoneFile.frequency_unit
-              self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn )
+          self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
+          self.noise_freq.unit = touchstoneFile.frequency_unit
+          self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn )
 
         if self.name is None:
             try:
