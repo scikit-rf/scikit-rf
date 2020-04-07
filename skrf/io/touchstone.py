@@ -359,7 +359,7 @@ class Touchstone:
         for i,n in enumerate(self.get_sparameter_names(format=format)):
             ret[n] = values[:,i]
 
-        # transpose V1 2-port files
+        # transpose Touchstone V1 2-port files (.2p), as the order is (11) (21) (12) (22)
         file_name_ending = self.filename.split('.')[-1].lower()
         if self.rank == 2 and file_name_ending == "s2p":
             swaps = [ k for k in ret if '21' in k]
@@ -606,4 +606,3 @@ def read_zipped_touchstones(ziparchive, dir=""):
             network = Network.zipped_touchstone(fname, ziparchive)
             networks[network.name] = network
     return networks
-
