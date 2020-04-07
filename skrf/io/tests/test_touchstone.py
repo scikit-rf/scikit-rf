@@ -62,18 +62,40 @@ class TouchstoneTestCase(unittest.TestCase):
         with open(os.path.join(self.test_dir, 'simple_touchstone.s2p')) as fid:
             touch = Touchstone(fid)
 
-        spardict = touch.get_sparameter_data(format="ri")
-        self.assertTrue("frequency" in spardict)
-        self.assertTrue("S11R" in spardict)
-        self.assertTrue("S11I" in spardict)
-        self.assertTrue("S12R" in spardict)
-        self.assertTrue("S12I" in spardict)
-        self.assertTrue("S21R" in spardict)
-        self.assertTrue("S21I" in spardict)
-        self.assertTrue("S22R" in spardict)
-        self.assertTrue("S22I" in spardict)
-        self.assertTrue("S11DB" not in spardict)
-        self.assertTrue("S11M" not in spardict)
+        expected_keys = ["frequency", "S11R", "S11I", "S12R", "S12I",
+                "S21R", "S21I", "S22R", "S22I", ]
+
+        unexpected_keys = ['S11DB', 'S11M', ]
+
+        # get dict data structure
+        sp_ri = touch.get_sparameter_data(format="ri")
+
+        # test data structure
+        for ek in expected_keys:
+            self.assertTrue(ek in sp_ri)
+
+        for uk in unexpected_keys:
+            self.assertFalse(uk in sp_ri)
+
+        # test data contents
+        expected_sp_ri = {
+            'frequency': npy.array([1.0e+09, 1.1e+09]),
+            'S11R': npy.array([1., 9.]),
+            'S11I': npy.array([ 2., 10.]),
+            'S21R': npy.array([ 3., 11.]),
+            'S21I': npy.array([ 4., 12.]),
+            'S12R': npy.array([ 5., 13.]),
+            'S12I': npy.array([ 6., 14.]),
+            'S22R': npy.array([ 7., 15.]),
+            'S22I': npy.array([ 8., 16.]),
+        }
+
+        for k in sp_ri:
+            self.assertTrue(k in expected_sp_ri)
+
+            self.assertTrue( (expected_sp_ri[k] == sp_ri[k]).all(),
+                    msg='Field %s does not match. Expected "%s", got "%s"'%(
+                        k, str(expected_sp_ri[k]), str(sp_ri[k]))  )
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
