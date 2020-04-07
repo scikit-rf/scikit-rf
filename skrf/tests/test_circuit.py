@@ -197,10 +197,10 @@ class CircuitTestWilkinson(unittest.TestCase):
 
         _wilkinson1 = rf.connect(T0, 1, self.branch1, 0)
         _wilkinson2 = rf.connect(_wilkinson1, 2, self.branch2, 0)
-        _wilkinson3 = rf.connect(_wilkinson2, 1, T1, 0)
-        _wilkinson4 = rf.connect(_wilkinson3, 1, T2, 0)
+        _wilkinson3 = rf.connect(_wilkinson2, 0, T1, 0)
+        _wilkinson4 = rf.connect(_wilkinson3, 0, T2, 0)
         _wilkinson5 = rf.connect(_wilkinson4, 1, self.resistor, 0)
-        wilkinson = rf.innerconnect(_wilkinson5, 1, 3)
+        wilkinson = rf.innerconnect(_wilkinson5, 0, 3)
 
         ntw_C = self.C.network
 
@@ -287,11 +287,67 @@ class CircuitTestCascadeNetworks(unittest.TestCase):
 
 class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
     '''
-    Various 2-ports and 4-ports circuits and associated tests
+    Various 1-ports, 2-ports and 4-ports circuits and associated tests
     '''
+    def test_1port_matched_load(self):
+        '''
+        Connect a matched load directly to the port
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        line = rf.media.DefinedGammaZ0(frequency=freq)
+        match_load = line.match(name='match_load')
+        
+        cnx = [
+            [(port1, 0), (match_load, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+        
+        assert_array_almost_equal(match_load.s, cir.s_external)
+    
+    def test_1port_short(self):
+        '''
+        Connect a short directly to the port
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        line = rf.media.DefinedGammaZ0(frequency=freq)
+        short = line.short(name='short')
+        gnd1 = rf.Circuit.Ground(freq, name='gnd')
+        # method 1 : use the Ground Network (which 2 port actually)
+        cnx = [
+            [(port1, 0), (gnd1, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+        assert_array_almost_equal(short.s, cir.s_external)
+        # method 2 : use a short Network (1 port)
+        cnx = [
+            [(port1, 0), (short, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+
+        assert_array_almost_equal(short.s, cir.s_external)
+        
+    def test_1port_random_load(self):
+        '''
+        Connect a random load directly to the port
+        '''
+        freq = rf.Frequency(start=1, npoints=1)
+        port1 = rf.Circuit.Port(freq,  name='port1')
+        line = rf.media.DefinedGammaZ0(frequency=freq)
+        gamma = np.random.rand(1,1) + 1j*np.random.rand(1,1)
+        load = line.load(gamma, name='load')
+        
+        cnx = [
+            [(port1, 0), (load, 0)]
+        ]
+        cir = rf.Circuit(cnx)
+
+        assert_array_almost_equal(load.s, cir.s_external)
+        
     def test_1port_matched_network_default_impedance(self):
         '''
-        Connect a 2 port network to a matched load
+        Connect a random 2 port network connected to a matched load
         '''
         freq = rf.Frequency(start=1, npoints=1)
         a = rf.Network(name='a')
@@ -606,11 +662,11 @@ class CircuitTestVariableCoupler(unittest.TestCase):
         # to define different port characteristic impedances like
         # hybrid1.z0 = [11, 12, 13, 14]
         # hybrid2.z0 = [21, 22, 23, 24]
-        # etc
+        # ps.z0 = [31, 32]
         # and to make a drawing of each steps.
         # This is not convenient, that's why the Circuit approach can be easier.
         _temp = rf.connect(hybrid1, 2, ps, 0)
-        _temp = rf.connect(_temp, 1, hybrid2, 0)
+        _temp = rf.connect(_temp, 2, hybrid2, 0)
         _temp = rf.innerconnect(_temp, 1, 5)
         # re-order port numbers to match the example
         _temp.renumber([0, 1, 2, 3], [3, 0, 2, 1])
@@ -718,6 +774,101 @@ class CircuitTestGraph(unittest.TestCase):
         edge_labels = self.C.edge_labels
         self.assert_(len(edge_labels) == 7)
 
+
+class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):
+    '''
+    Test creating circuits with real and complex port charac.impedances
+    '''
+    def setUp(self):
+        self.f0 = rf.Frequency(75.8, npoints=1, unit='GHz')
+        # initial s-param values of A 2 ports network
+        self.s0 = np.array([  # dummy values 
+            [-0.1000 -0.2000j, -0.3000 +0.4000j],
+            [-0.3000 +0.4000j, 0.5000 -0.6000j]]).reshape(-1,2,2)
+
+        # build initial network (under z0=50)
+        self.ntw0 = rf.Network(frequency=self.f0, s=self.s0, z0=50, name='dut')
+
+        # complex characteristic impedance to renormalize to
+        self.zdut = 100 + 10j
+        
+        # reference solutions obtained from ANSYS Circuit or ADS (same res) 
+        # when z0=[50, zdut]
+        self.z_ref = np.array([  # not affected by z0
+            [18.0000 -16.0000j, 20.0000 +40.0000j],
+            [20.0000 +40.0000j, 10.0000 -80.0000j]]).reshape(-1,2,2)
+
+        self.y_ref = np.array([  # not affected by z0
+            [0.0251 +0.0023j, 0.0123 -0.0066j],
+            [0.0123 -0.0066j, 0.0052 +0.0055j]]).reshape(-1,2,2)
+        
+        self.s_ref = np.array([  # renormalized s (power-waves)
+            [-0.1374 -0.2957j, -0.1995 +0.5340j],
+            [-0.1995 +0.5340j, -0.0464 -0.7006j]]).reshape(-1,2,2)
+
+        # Creating equivalent reference circuit
+        port1 = rf.Circuit.Port(self.f0, z0=50, name='port1')
+        port2 = rf.Circuit.Port(self.f0, z0=50, name='port2')
+        ntw0 = rf.Network(frequency=self.f0, z0=50, s=self.s0, name='dut')
+
+        cnx = [  # z0=[50,50]
+            [(port1, 0), (ntw0, 0)],
+            [(ntw0, 1), (port2, 0)]
+            ]
+        self.cir = rf.Circuit(cnx)
+
+        # Creating equivalent circuit with z0 real
+        port2_real = rf.Circuit.Port(self.f0, z0=100, name='port2')
+        cnx_real = [  # z0=[50,100]
+            [(port1, 0), (ntw0, 0)],
+            [(ntw0, 1), (port2_real, 0)]
+            ]
+        self.cir_real = rf.Circuit(cnx_real)
+
+        # Creating equivalent circuit with z0 complex
+        port2_complex = rf.Circuit.Port(self.f0, z0=self.zdut, name='port2')
+        cnx_complex = [  # z0=[50,zdut]
+            [(port1, 0), (ntw0, 0)],
+            [(ntw0, 1), (port2_complex, 0)]
+            ]
+        self.cir_complex = rf.Circuit(cnx_complex)
+
+        # references for each s-param definition
+        self.s_legacy = rf.renormalize_s(self.s0, [50,50], [50,self.zdut],
+                                         s_def='traveling')
+        self.s_power = rf.renormalize_s(self.s0, [50,50], [50,self.zdut],
+                                         s_def='power')
+        self.s_pseudo = rf.renormalize_s(self.s0, [50,50], [50,self.zdut],
+                                         s_def='pseudo')
+        # for real values, should be = whatever s-param definition
+        self.s_real = rf.renormalize_s(self.s0, [50,50], [50,100])
+
+    def test_verify_reference(self):
+        ' Check that the reference results comes from power-waves definition'
+        np.testing.assert_allclose(self.s_ref, self.s_power, atol=1e-4)
+
+    def test_reference_s(self):
+        ' Check reference z0 circuit, just in case '
+        np.testing.assert_allclose(self.cir.network.s, self.s0, atol=1e-4)
+
+    def test_real_z0_s(self):
+        ' Check real z0 circuit '
+        np.testing.assert_allclose(self.cir_real.network.s, self.s_real, atol=1e-4)
+
+    def test_complexz0_s_vs_legacy(self):
+        ' Check complex z0 circuit vs legacy renormalization '
+        np.testing.assert_allclose(self.cir_complex.network.s, self.s_legacy, atol=1e-4)
+
+    @unittest.expectedFailure
+    def test_complexz0_s_vs_powerwaves(self):
+        ' Check complex z0 circuit vs power-waves renormalization '
+        np.testing.assert_allclose(self.cir_complex.network.s, self.s_ref, atol=1e-4)
+        np.testing.assert_allclose(self.cir_complex.network.s, self.s_power, atol=1e-4)
+
+    @unittest.expectedFailure
+    def test_complexz0_s_vs_powerwaves(self):
+        ' Check complex z0 circuit vs pseudo-waves renormalization '
+        np.testing.assert_allclose(self.cir_complex.network.s, self.s_pseudo, atol=1e-4)
 
 if __name__ == "__main__":
     # Launch all tests

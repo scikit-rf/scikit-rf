@@ -13,6 +13,7 @@ from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTe
 from skrf import two_port_reflect
 from skrf.networkSet import NetworkSet
 from skrf.util import suppress_warning_decorator
+from skrf.media import DistributedCircuit
 
 # number of frequency points to test calibration at .
 # i choose 1 for speed, but given that many tests employ *random* 
@@ -664,7 +665,7 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         g = npy.zeros(NPTS)
         c = 1e-12*npy.random.uniform(100,200,NPTS)
 
-        rlgc = rf.media.DistributedCircuit(frequency=wg.frequency, z0=None, R=r, L=l, G=g, C=c)
+        rlgc = DistributedCircuit(frequency=wg.frequency, z0=None, R=r, L=l, G=g, C=c)
         self.rlgc = rlgc
 
         self.X = wg.random(n_ports =2, name = 'X')
@@ -715,16 +716,17 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         self.assertTrue(max(npy.abs(self.rlgc.z0-self.cal.z0)) < 1e-3)
 
     def test_shift(self):
-        self.assertTrue(self.cal.apply_cal(self.measured[3]) == self.wg.thru())
-
+        npy.testing.assert_allclose(self.cal.apply_cal(self.measured[3]).s, 
+                                    self.wg.thru().s, atol=1e-11)
+        
     def test_shift2(self):
         feed = self.rlgc.line(50,'um')
         dut = self.wg.random(n_ports=2)
         #Thrus convert the port impedances to 50 ohm
         dut_feed = self.wg.thru()**feed**dut**feed**self.wg.thru()
         dut_meas = self.measure(dut_feed)
-        self.assertTrue(self.cal.apply_cal(dut_meas) == dut)
-
+        npy.testing.assert_allclose(self.cal.apply_cal(dut_meas).s, 
+                                    dut.s, atol=1e-11)
 
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):

@@ -187,7 +187,7 @@ class Circuit():
             return True
 
     @classmethod
-    def Port(cls, frequency, name, z0=50+0*1j):
+    def Port(cls, frequency, name, z0=50):
         '''
         Return a 1-port Network to be used as a Circuit port. 
         
@@ -201,7 +201,7 @@ class Circuit():
         name : string
             Name of the port.
             Must inlude the word 'port' inside. (ex: 'Port1' or 'port_3')
-        z0 : complex
+        z0 : real
             Characteristic impedance of the port. Default is 50 Ohm.
 
         Return
@@ -224,7 +224,7 @@ class Circuit():
         return _media.match(name=name)
 
     @classmethod
-    def Ground(cls, frequency, name, z0=50+0j):
+    def Ground(cls, frequency, name, z0=50):
         '''
         Return a 1-port network of a grounded link, to be used in a Circuit description. 
         
@@ -238,7 +238,7 @@ class Circuit():
             Frequency common to all other networks in the circuit
         name : string
             Name of the ground.
-        z0 : complex
+        z0 : real
             Characteristic impedance of the port. Default is 50 Ohm.
 
         Return
@@ -555,8 +555,9 @@ class Circuit():
         '''
         Return the global scattering matrix of the networks
         '''
-        # list all networks with at least two ports
-        ntws = self.networks_dict(min_nports=2)
+        # list all networks which are not considered as "ports", 
+        # that is which do not contain "port" in their network name
+        ntws = {k:v for k,v in self.networks_dict().items() if 'port' not in k.lower()}
 
         # generate the port reordering indexes from each connections
         ntws_ports_reordering = {ntw:[] for ntw in ntws}

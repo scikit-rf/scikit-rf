@@ -24,6 +24,10 @@ ZERO = 1e-6
 K_BOLTZMANN = 1.38064852e-23
 T0 = 290.
 
+# S-parameter definition labels and default definition
+S_DEFINITIONS = ['power', 'pseudo', 'traveling']
+S_DEF_DEFAULT = 'power'
+
 global distance_dict
 distance_dict = {'m':1.,
                  'cm':1e-2,

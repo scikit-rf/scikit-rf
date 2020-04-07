@@ -40,6 +40,7 @@ requirements:
     - future    
     - xlwt
     - xlrd
+    - networkx
     
 
 test:

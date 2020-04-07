@@ -16,6 +16,14 @@ Network Theory
     
     networktheory/*
 
+Matching
+------------------
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    matching/*
+
 Metrology and Calibration
 --------------------------
 
