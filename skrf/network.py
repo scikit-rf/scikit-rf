@@ -3463,22 +3463,34 @@ def connect(ntwkA, k, ntwkB, l, num=1):
 
       
       if ntwkA.deembed :
-          a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real, 
-                  axis=0, kind=Network.noise_interp_kind)
-          a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag, 
-                  axis=0, kind=Network.noise_interp_kind)
-          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          if ntwkA.frequency.f.size > 1 : 
+              a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real, 
+                      axis=0, kind=Network.noise_interp_kind)
+              a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag, 
+                      axis=0, kind=Network.noise_interp_kind)
+              a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          else :
+              a_real = ntwkA.inv.a.real
+              a_imag = ntwkA.inv.a.imag
+              a = a_real + 1.j * a_imag
+              
           a = npy_inv(a)
           a_H = npy.conj(a.transpose(0, 2, 1))
           cC = npy.matmul(a, npy.matmul(cB -cA, a_H)) 
       else : 
-          a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
-                  axis=0, kind=Network.noise_interp_kind)
-          a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
-                  axis=0, kind=Network.noise_interp_kind)
-          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-          a_H = npy.conj(a.transpose(0, 2, 1))
-          cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
+          if ntwkA.frequency.f.size > 1 : 
+              a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
+                      axis=0, kind=Network.noise_interp_kind)
+              a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
+                      axis=0, kind=Network.noise_interp_kind)
+              a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+          else :
+              a_real = ntwkA.a.real
+              a_imag = ntwkA.a.imag
+              a = a_real + 1.j * a_imag
+
+      a_H = npy.conj(a.transpose(0, 2, 1))
+      cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC
       ntwkC.noise_freq = noise_freq
 
@@ -3651,14 +3663,14 @@ def cascade(ntwkA, ntwkB):
     Notes
     ------
     connection diagram::
-		      A                B
-		   +---------+   +---------+
-		  -|0      N |---|0      N |-
-		  -|1     N+1|---|1     N+1|-
-		  ...       ... ...       ...
-		  -|N-2  2N-2|---|N-2  2N-2|-
-		  -|N-1  2N-1|---|N-1  2N-1|-
-		   +---------+   +---------+
+              A                B
+           +---------+   +---------+
+          -|0      N |---|0      N |-
+          -|1     N+1|---|1     N+1|-
+          ...       ... ...       ...
+          -|N-2  2N-2|---|N-2  2N-2|-
+          -|N-1  2N-1|---|N-1  2N-1|-
+           +---------+   +---------+
 
     Parameters
     -----------
