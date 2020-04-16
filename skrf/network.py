@@ -1297,7 +1297,7 @@ class Network(object):
       """
       the minimum noise figure for the network in dB
       """
-      return 10.*npy.log10(self.nfmin)
+      return mf.complex_2_db10(self.nfmin)
 
     def nf(self, z):
       """
