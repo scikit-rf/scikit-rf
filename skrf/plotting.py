@@ -230,6 +230,8 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                     halignstyle = "right"
                 else:
                     halignstyle = "left"
+                if y_flip_sign is -1:  # 'y' and 'yz' charts
+                    value = 1/value                          
                 ax1.annotate(str(value*ref_imm), xy=(rho*smithR, 0.01),
                     xytext=(rho*smithR, 0.01), ha = halignstyle, va = "baseline")
 
@@ -256,15 +258,21 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                     valignstyle = "top"
                 else:
                     valignstyle = "bottom"
+                if y_flip_sign is -1:  # 'y' and 'yz' charts
+                    value = 1/value                    
                 #Annotate value
                 ax1.annotate(str(value*ref_imm) + 'j', xy=(rhox, rhoy),
                              xytext=(rhox, rhoy), ha = halignstyle, va = valignstyle)
 
             #Annotate 0 and inf
-            ax1.annotate('0.0', xy=(-1.02, 0), xytext=(-1.02, 0),
-                         ha = "right", va = "center")
-            ax1.annotate('$\infty$', xy=(radialScaleFactor, 0), xytext=(radialScaleFactor, 0),
-                         ha = "left", va = "center")
+            if y_flip_sign is 1:  # z and zy charts
+                label_left, label_right = '0.0', '$\infty$'
+            else:  # y and yz charts
+                label_left, label_right = '$\infty$', '0.0'
+            ax1.annotate(label_left, xy=(-1.02, 0), xytext=(-1.02, 0),
+                             ha = "right", va = "center")
+            ax1.annotate(label_right, xy=(radialScaleFactor, 0), xytext=(radialScaleFactor, 0),
+                             ha = "left", va = "center")
 
             # annotate vswr circles
             for vswr in vswrVeryLightList:
