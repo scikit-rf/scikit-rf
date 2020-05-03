@@ -3489,8 +3489,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
               a_imag = ntwkA.a.imag
               a = a_real + 1.j * a_imag
 
-      a_H = npy.conj(a.transpose(0, 2, 1))
-      cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
+          a_H = npy.conj(a.transpose(0, 2, 1))
+          cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC
       ntwkC.noise_freq = noise_freq
 
