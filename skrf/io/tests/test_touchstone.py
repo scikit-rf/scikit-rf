@@ -2,6 +2,8 @@
 import unittest
 import os
 import numpy as npy
+from pathlib import Path
+from zipfile import ZipFile
 
 import skrf as rf
 from skrf.io.touchstone import Touchstone
@@ -75,6 +77,43 @@ class TouchstoneTestCase(unittest.TestCase):
         self.assertTrue("S11DB" not in spardict)
         self.assertTrue("S11M" not in spardict)
 
+
+    def test_HFSS_touchstone_files(self):
+        """ 
+        HFSS can export additional information in the Touchstone file
+        such as gamma and z0 for each port. However, the way there are stored
+        depend of the HFSS version... 
+        
+        In versions before 2020 R2, data were stored as following:
+        
+        ! Gamma ! re1 im2 re2 im2 re3 im3 re4 im4  
+        !       re5 im5 re6 im6 re7 im7 re8 im8
+        !       re9 im9  [etc]
+        ! Port Impedancere1 im2 re2 im2 re3 im3 re4 im4  
+        !       re5 im5 re6 im6 re7 im7 re8 im8
+        !       re9 im9  [etc]
+            [NB: there is an extra ! before re1 for Gamma]
+            [NB: re1 value is stuck to the 'e' of Impedance]
+        
+        Since version 2020 R2n the data are stored in a single line:
+        
+        ! Gamma re1 im2 re2 im2 re3 im3 re4 im4 re5 im5 re6 im6 re7 im7 re8 im8 [etc]
+        ! Port Impedance re1 im2 re2 im2 re3 im3 re4 im4 re5 im5 re6 im6 re7 im7 re8 im8 [etc]
+            [NB: re1 value is no more stuck to the 'e' of Impedance]
+        
+        This test checks that the shape of gamma and z0 matche the rank of the Network 
+        for Touchstone files of various port obtained from different HFSS version
+        """
+        HFSS_RELEASES= ['HFSS_2019R2', 'HFSS_2020R2']
+
+        p = Path('.')
+        for hfss_release in HFSS_RELEASES:
+            for sNp_file in p.glob(hfss_release+'/*.s*'):
+                touchst = Touchstone(sNp_file.as_posix())
+                gamma, z0 = touchst.get_gamma_z0()
+                
+                assert(gamma.shape[-1] == touchst.rank)
+                assert(z0.shape[-1] == touchst.rank)
 
 suite = unittest.TestLoader().loadTestsFromTestCase(TouchstoneTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
