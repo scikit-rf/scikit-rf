@@ -1,0 +1,26 @@
+! Touchstone file exported from HFSS 2020.2.0
+!        Generated:      11:13:49  avr. 27, 2020
+!        Design:         test
+!        Project:        test_multiport
+!        Setup:          Setup1
+!        Solution:       Sweep
+!
+!Data is not renormalized
+# GHZ S MA
+! Terminal data exported
+! Port[1] = 1
+0.9                            0.000214377741033167 179.999999999973 
+! Gamma         59.9337028691208 0                
+! Port Impedance         0                29.2501744499094 
+0.95                           0.000211378374477933 180              
+! Gamma         59.5937706544122 0                
+! Port Impedance         0                31.0513002067763 
+1                              0.000207930260709976 -180             
+! Gamma         59.2333519129155 0                
+! Port Impedance         0                32.8844610262858 
+1.05                           0.000203957642363373 179.999999999987 
+! Gamma         58.8520702583171 0                
+! Port Impedance         0                34.7523821209283 
+1.1                            0.000199368540587885 180              
+! Gamma         58.4495174091494 0                
+! Port Impedance         0                36.657999837421  
