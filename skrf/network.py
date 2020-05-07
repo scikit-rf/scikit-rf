@@ -6180,47 +6180,5 @@ def s2vswr_active(s, a):
 
 
 
-def plot_contour(freq, x,y,z,min0max1, graph=True, cmap=cm.plasma_r, **kw) :
-    ri =  npy.linspace(0,1, 50); 
-    ti =  npy.linspace(0,2*npy.pi, 150);
-    Ri , Ti = npy.meshgrid(ri, ti)
-    xi = npy.linspace(-1,1, 50);    
-    Xi, Yi = npy.meshgrid(xi, xi)
-    triang = tri.Triangulation(x, y)
-    interpolator = tri.LinearTriInterpolator(triang, z)
-    Zi = interpolator(Xi, Yi)
-    if min0max1 == 1 : 
-        VALopt = npy.max(z)
-    else : 
-        VALopt = npy.min(z)
-    GAMopt = Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
-
-    if graph : 
-        fig, ax = plt.subplots()
-        an = npy.linspace(0, 2*npy.pi, 50)
-        cs,sn=npy.cos(an), npy.sin(an)
-        plt.plot(cs,sn, color='k', lw=0.25)
-        plt.plot(cs,sn*0, color='g', lw=0.25)
-        plt.plot((1+cs)/2, sn/2, color='k', lw=0.25)
-        plt.axis('equal')
-        ax.set_axis_off()
-        ax.contour(Xi, Yi, Zi, levels=20, vmin=Zi.min(), vmax= Zi.max(), linewidths=0.5,  colors='k')
-        cntr1 = ax.contourf(Xi, Yi, Zi, levels=20, vmin=Zi.min(), vmax= Zi.max(),cmap=cmap, **kw)
-        fig.colorbar(cntr1, ax=ax)
-        ax.plot(x, y, 'o', ms=0.3, color='k')
-        ax.set(xlim=(-1, 1), ylim=(-1, 1))
-        plt.show()
-    return GAMopt, VALopt
-
-
-def tuner_constellation():            
-    r = npy.linspace(0.1,0.9,9)
-    a = npy.linspace(0,2*npy.pi,21)
-    r_, a_ = npy.meshgrid(r,a)
-    c_ = r_ *npy.exp(1j * a_)
-    g= c_.flatten()
-    x =  npy.real(g)
-    y =  npy.imag(g)
-    return x,y,g
 
   
