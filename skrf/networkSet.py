@@ -932,8 +932,9 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
     
     if TNWformat :
         TNL = dict()
+        # for ii, gi in enumerate(g) :
         for ii, gi in enumerate(g) :
-            TNL['pos'+str(ii)] = Network(f = [singlefreq ], s=[[[g]]], z0=[[Z0]], name=name +'_' + str(ii))
+            TNL['pos'+str(ii)] = Network(f = [singlefreq ], s=[[[gi]]], z0=[[Z0]], name=name +'_' + str(ii))
         TNW = NetworkSet(TNL, name=name)
         return x,y,g,TNW
     else :  
