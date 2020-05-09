@@ -386,7 +386,6 @@ class Network(object):
         self.comments = comments
         self.port_names = None
 
-        self.deembed = None
         self.noise = None
         self.noise_freq = None
 
@@ -1205,7 +1204,24 @@ class Network(object):
             raise (TypeError('One-Port Networks don\'t have inverses'))
         out = self.copy()
         out.s = inv(self.s)
-        out.deembed = True
+        
+        
+        if out.frequency.f.size > 1 : 
+            a_real = interp1d(out.frequency.f, out.a.real, 
+                    axis=0, kind=Network.noise_interp_kind)
+            a_imag = interp1d(out.frequency.f, out.a.imag, 
+                    axis=0, kind=Network.noise_interp_kind)
+            a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+        else :
+            a_real = out.a.real
+            a_imag = out.a.imag
+            a = a_real + 1.j * a_imag
+        cA = self.noise
+        a_inv= npy.linalg.inv(a)
+        a_inv_H = npy.conj(a_inv.transpose(0, 2, 1))
+        cAinv = -npy.matmul(a_inv, npy.matmul(cA, a_inv_H))         
+        out.noise = cAinv
+        
         return out
 
     @property
@@ -3470,35 +3486,19 @@ def connect(ntwkA, k, ntwkB, l, num=1):
       # interpolate abcd into the set of noise frequencies
 
       
-      if ntwkA.deembed :
-          if ntwkA.frequency.f.size > 1 : 
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.inv.a.real, 
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.inv.a.imag, 
-                      axis=0, kind=Network.noise_interp_kind)
-              a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-          else :
-              a_real = ntwkA.inv.a.real
-              a_imag = ntwkA.inv.a.imag
-              a = a_real + 1.j * a_imag
-              
-          a = npy_inv(a)
-          a_H = npy.conj(a.transpose(0, 2, 1))
-          cC = npy.matmul(a, npy.matmul(cB -cA, a_H)) 
-      else : 
-          if ntwkA.frequency.f.size > 1 : 
-              a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
-                      axis=0, kind=Network.noise_interp_kind)
-              a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
-                      axis=0, kind=Network.noise_interp_kind)
-              a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
-          else :
-              a_real = ntwkA.a.real
-              a_imag = ntwkA.a.imag
-              a = a_real + 1.j * a_imag
-
-          a_H = npy.conj(a.transpose(0, 2, 1))
-          cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
+      if ntwkA.frequency.f.size > 1 : 
+          a_real = interp1d(ntwkA.frequency.f, ntwkA.a.real, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a_imag = interp1d(ntwkA.frequency.f, ntwkA.a.imag, 
+                  axis=0, kind=Network.noise_interp_kind)
+          a = a_real(noise_freq.f) + 1.j * a_imag(noise_freq.f)
+      else :
+          a_real = ntwkA.a.real
+          a_imag = ntwkA.a.imag
+          a = a_real + 1.j * a_imag
+      
+      a_H = npy.conj(a.transpose(0, 2, 1))
+      cC = npy.matmul(a, npy.matmul(cB, a_H)) + cA
       ntwkC.noise = cC
       ntwkC.noise_freq = noise_freq
 
