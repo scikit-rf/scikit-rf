@@ -600,12 +600,6 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_noise_deembed(self):
-        def pn(nw):
-          npy.set_printoptions(precision=2)
-          try :
-            print  (nw.nfmin, nw.rn, nw.g_opt,nw.frequency.f ,nw.noise_freq.f ,nw.name , sep='\t')
-          except :
-            print (nw.name , sep='\t')
           
           
         f1_ =[75.5, 75.5] ; f2_=[75.5, 75.6] ; npt_ = [1,2]     # single freq and multifreq
