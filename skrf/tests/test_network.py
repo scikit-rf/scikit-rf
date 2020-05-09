@@ -631,7 +631,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(abs(thru.rn[0]    - retrieve_n_thru.rn[0])    < 1.e-6, 'rn not retrieved by noise deembed')
         self.assertTrue(abs(thru.z_opt[0] - retrieve_n_thru.z_opt[0]) < 1.e-6, 'noise figure does not match original spec')
 
-        x,y,g = tuner_constellation()
+        tuner, x,y,g = tuner_constellation()
         newnetw = thru.copy()
         nfmin_set=4.5; gamma_opt_set=complex(.7,-0.2); rn_set=1
         newnetw.set_noise_a(thru.noise_freq, nfmin_db=nfmin_set, gamma_opt=gamma_opt_set, rn=rn_set )
