@@ -919,3 +919,25 @@ def getset(ntwk_dict, s, *args, **kwargs):
     else:
         print('Warning: No keys in ntwk_dict contain \'%s\''%s)
         return None
+
+
+def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=21, TNWformat=True):            
+    r = npy.linspace(0.1,0.9,r_lin)
+    a = npy.linspace(0,2*npy.pi,phi_lin)
+    r_, a_ = npy.meshgrid(r,a)
+    c_ = r_ *npy.exp(1j * a_)
+    g= c_.flatten()
+    x =  npy.real(g)
+    y =  npy.imag(g)
+    
+    if TNWformat :
+        TNL = dict()
+        # for ii, gi in enumerate(g) :
+        for ii, gi in enumerate(g) :
+            TNL['pos'+str(ii)] = Network(f = [singlefreq ], s=[[[gi]]], z0=[[Z0]], name=name +'_' + str(ii))
+        TNW = NetworkSet(TNL, name=name)
+        return TNW, x,y,g
+    else :  
+        return x,y,g
+
+

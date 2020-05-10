@@ -47,6 +47,7 @@ from matplotlib.dates import date2num
 from . import network, frequency, calibration, networkSet, circuit
 from . import mathFunctions as mf
 from . util import now_string_2_dt
+import matplotlib.tri as tri
 
 try:
     import networkx as nx
@@ -2091,3 +2092,48 @@ def plot_circuit_graph(self, **kwargs):
     # remove x and y axis and labels
     plb.axis('off')
     plb.tight_layout()
+
+
+
+
+def plot_contour(freq, x,y,z,min0max1, graph=True, cmap='plasma_r',title='',  **kw) :
+    ri =  npy.linspace(0,1, 50); 
+    ti =  npy.linspace(0,2*npy.pi, 150);
+    Ri , Ti = npy.meshgrid(ri, ti)
+    xi = npy.linspace(-1,1, 50);    
+    Xi, Yi = npy.meshgrid(xi, xi)
+    triang = tri.Triangulation(x, y)
+    interpolator = tri.LinearTriInterpolator(triang, z)
+    Zi = interpolator(Xi, Yi)
+    if min0max1 == 1 : 
+        VALopt = npy.max(z)
+    else : 
+        VALopt = npy.min(z)
+    GAMopt = network.Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
+
+    if graph : 
+        fig, ax = plb.subplots(**kw)
+        an = npy.linspace(0, 2*npy.pi, 50)
+        cs,sn=npy.cos(an), npy.sin(an)
+        plb.plot(cs,sn, color='k', lw=0.25)
+        plb.plot(cs,sn*0, color='g', lw=0.25)
+        plb.plot((1+cs)/2, sn/2, color='k', lw=0.25)
+        plb.axis('equal')
+        ax.set_axis_off()
+        ax.contour(Xi, Yi, Zi, levels=20, vmin=Zi.min(), vmax= Zi.max(), linewidths=0.5,  colors='k')
+        cntr1 = ax.contourf(Xi, Yi, Zi, levels=20, vmin=Zi.min(), vmax= Zi.max(),cmap=cmap)
+        fig.colorbar(cntr1, ax=ax)
+        ax.plot(x, y, 'o', ms=0.3, color='k')
+        ax.set(xlim=(-1, 1), ylim=(-1, 1))
+        plb.title(title)
+        plb.show()
+    return GAMopt, VALopt
+
+
+
+
+
+
+
+
+
