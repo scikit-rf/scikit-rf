@@ -454,21 +454,38 @@ class Touchstone:
             for line in f:
 
                 # HFSS adds gamma and z0 data in .sNp files using comments.
-                # NB : Each line describe gamma and z0 up to 4 ports
-                #      for N > 4, gamma and z0 are given by additional lines
+                # NB : each line(s) describe gamma and z0. 
+                #  But, depending on the HFSS version, either:
+                #  - up to 4 ports only. 
+                #        for N > 4, gamma and z0 are given by additional lines
+                #  - all gamma and z0 are given on a single line (since 2020R2)
+                # In addition, some spurious '!' can remain in these lines
                 if '! Gamma' in line:
-                    _line = line.replace('! Gamma', '').rstrip()
-                    # case of Nport > 4
-                    for _ in range(self.rank // 5):
-                        _line += next(f).replace('!', '').rstrip()
-                    gamma.append(line2ComplexVector(_line))
+                    _line = line.replace('! Gamma', '').replace('!', '').rstrip()
+
+                    # check how many elements are in the first line
+                    nb_elem = len(_line.split())
+
+                    if nb_elem == 2*self.rank:
+                        # case of all data in a single line
+                        gamma.append(line2ComplexVector(_line.replace('!', '').rstrip()))
+                    else:
+                        # case of Nport > 4 *and* data on additional multiple lines
+                        for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
+                            _line += next(f).replace('!', '').rstrip()
+                        gamma.append(line2ComplexVector(_line))
+
              
                 if '! Port Impedance' in line:
                     _line = line.replace('! Port Impedance', '').rstrip()
-                    # case of Nport > 4
-                    for _ in range(self.rank // 5):
-                        _line += next(f).replace('!', '').rstrip()
-                    z0.append(line2ComplexVector(_line))
+                    nb_elem = len(_line.split())
+
+                    if nb_elem == 2*self.rank:
+                        z0.append(line2ComplexVector(_line.replace('!', '').rstrip()))
+                    else:
+                        for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
+                            _line += next(f).replace('!', '').rstrip()
+                        z0.append(line2ComplexVector(_line))
     
             # If the file does not contain valid port impedance comments, set to default one
             if len(z0) == 0:
