@@ -242,11 +242,12 @@ class RectangularWaveguide(Media):
 
             max ( \frac{m \cdot v}{2a} , \frac{n \cdot v}{2b})
 
-        where v= sqrt(ep*mu)
+        where v= 1/sqrt(ep*mu)
 
 
 
         '''
+        # TODO: Implement correct cutoff frequency
         v = 1/sqrt(self.ep*self.mu)
         if not ( self.m==1 and self.n==0):
             print('f_cutoff not verified as correct for this mode ')
@@ -311,13 +312,12 @@ class RectangularWaveguide(Media):
         cuttoff wavelength
 
         .. math::
+            v/f
 
-            f_c * v
-
-         where v= sqrt(ep*mu)
+         where v= 1/sqrt(ep*mu)
         '''
         v = 1/sqrt(self.ep*self.mu)
-        return self.f_cutoff*v
+        return v/self.f_cutoff
 
     @property
     def gamma(self):
