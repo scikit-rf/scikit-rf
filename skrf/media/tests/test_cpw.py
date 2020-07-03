@@ -16,8 +16,7 @@ class CPWTestCase(unittest.TestCase):
             os.path.dirname(os.path.abspath(__file__)),
             'qucs_prj'
             )        
-        fname = os.path.join(self.files_dir,\
-                'cpw.s2p')
+        fname = os.path.join(self.files_dir, 'cpw.s2p')
         self.qucs_ntwk = rf.Network(fname)
 
         # create various examples
@@ -60,7 +59,9 @@ class CPWTestCase(unittest.TestCase):
         
         Reference data comes from Qucs Documentation (Fig 12.2)
         """        
-        w_over_s_qucs, Z0_qucs = npy.loadtxt('qucs_prj/cpw_qucs_ep_r9dot5.csv', delimiter=';', unpack=True)
+        w_over_s_qucs, Z0_qucs = npy.loadtxt(
+            os.path.join(self.files_dir, 'cpw_qucs_ep_r9dot5.csv'), 
+            delimiter=';', unpack=True)
                
         w = 1
         Z0 = []
