@@ -176,9 +176,9 @@ from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import matplotlib.tri as tri
+#from matplotlib import cm
+#import matplotlib.pyplot as plt
+#import matplotlib.tri as tri
 #from scipy.interpolate import interp1d
 
 
