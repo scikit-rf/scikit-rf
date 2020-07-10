@@ -21,8 +21,9 @@ flexible and scalable.
 
 * [Home Page](http://www.scikit-rf.org)
 * [Docs](http://scikit-rf.readthedocs.org/)
+* [Slack Channel](http://scikit-rf.slack.com)
 * [Mailing List](http://groups.google.com/group/scikit-rf)
-* [Development](https://github.com/scikit-rf/scikit-rf/wiki/Development)
+* [Development Guide](https://github.com/scikit-rf/scikit-rf/wiki/Development)
 
 
 

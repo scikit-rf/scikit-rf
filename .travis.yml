@@ -27,13 +27,13 @@ script:
 - python -c "import numpy; print('numpy %s' % numpy.__version__)"
 - python -c "import scipy; print('scipy %s' % scipy.__version__)"
 - python -c "import skrf; print('skrf %s' % skrf.__version__)"
-- nosetests skrf -c nose.cfg
+- nosetests skrf --nocapture -c nose.cfg
 after_success:
 - coveralls
-deploy:
-  provider: pypi
-  user: arsenovic
-  password:
-    secure: CXC4a1iOePqzjr9+i0dfvAAMATIZvDd1xAagx3phwyh9iCrJva2hPNlZ0bRVhrmf0j8aBx1OzhiYrLN/mG+el5UROuQZXdovogr/TfyDgDxshLf5YAIUukubSJoiesAKtkgLYvp4xnUsbgqS1ONyHim3PBpfVF5v32jGUoMbSJU=
-  on:
-    tags: true
+#deploy:
+#  provider: pypi
+#  user: arsenovic
+#  password:
+#    secure: CXC4a1iOePqzjr9+i0dfvAAMATIZvDd1xAagx3phwyh9iCrJva2hPNlZ0bRVhrmf0j8aBx1OzhiYrLN/mG+el5UROuQZXdovogr/TfyDgDxshLf5YAIUukubSJoiesAKtkgLYvp4xnUsbgqS1ONyHim3PBpfVF5v32jGUoMbSJU=
+#  on:
+#    tags: true

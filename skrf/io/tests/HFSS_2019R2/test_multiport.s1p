@@ -1,0 +1,26 @@
+! Touchstone file from project test_multiport
+! Exported from HFSS 2019.2.0
+!Data is not renormalized
+# GHZ S MA
+! Modal data exported
+! Port[1] = 1:1
+0.9                            0.00163520800702988 -179.99999999999 
+! Gamma         !               59.9336998748617 0                
+! Port Impedance0                29.2524260229679 
+
+0.95                           0.0016302039852405 180              
+! Gamma         !               59.5937676430734 0                
+! Port Impedance0                31.053689496305  
+
+1                              0.00162455328240685 -180             
+! Gamma         !               59.2333488832535 0                
+! Port Impedance0                32.8869903109419 
+
+1.05                           0.00161816244184468 -179.999999999994 
+! Gamma         !               58.8520672090269 0                
+! Port Impedance0                34.7550538236958 
+
+1.1                            0.00161091998847307 -179.999999999993 
+! Gamma         !               58.4495143388583 0                
+! Port Impedance0                36.6608167148763 
+

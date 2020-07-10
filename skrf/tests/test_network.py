@@ -11,6 +11,8 @@ from skrf import setup_pylab
 from skrf.media import CPW
 from skrf.media import DistributedCircuit
 from skrf.constants import S_DEFINITIONS
+from skrf.networkSet import tuner_constellation   
+from skrf.plotting import plot_contour   
 
 class NetworkTestCase(unittest.TestCase):
     '''
@@ -596,6 +598,49 @@ class NetworkTestCase(unittest.TestCase):
 
 
         return
+
+    def test_noise_deembed(self):
+          
+          
+        f1_ =[75.5, 75.5] ; f2_=[75.5, 75.6] ; npt_ = [1,2]     # single freq and multifreq
+        for f1,f2,npt in zip (f1_,f2_,npt_) :
+          freq=rf.Frequency(f1,f2,npt,'ghz')
+          ntwk4_n = rf.Network(os.path.join(self.test_dir,'ntwk4_n.s2p'), f_unit='GHz').interpolate(freq)
+          ntwk4 = rf.Network(os.path.join(self.test_dir,'ntwk4.s2p'),f_unit='GHz').interpolate(freq)
+          thru = rf.Network(os.path.join(self.test_dir,'thru.s2p'),f_unit='GHz').interpolate(freq)
+          
+          ntwk4_thru = ntwk4 ** thru                  ;ntwk4_thru.name ='ntwk4_thru'
+          retrieve_thru =  ntwk4.inv ** ntwk4_thru    ;retrieve_thru.name ='retrieve_thru'
+          self.assertEqual(retrieve_thru, thru)
+          self.assertTrue(ntwk4_thru.noisy)
+          self.assertTrue(retrieve_thru.noisy)
+          self.assertTrue((abs(thru.nfmin - retrieve_thru.nfmin)        < 1.e-6).all(), 'nf not retrieved by noise deembed')
+          self.assertTrue((abs(thru.rn    - retrieve_thru.rn)           < 1.e-6).all(), 'rn not retrieved by noise deembed')
+          self.assertTrue((abs(thru.z_opt - retrieve_thru.z_opt)        < 1.e-6).all(), 'noise figure does not match original spec')
+  
+          ntwk4_n_thru = ntwk4_n ** thru                    ;ntwk4_n_thru.name ='ntwk4_n_thru'
+          retrieve_n_thru =  ntwk4_n.inv ** ntwk4_n_thru    ;retrieve_n_thru.name ='retrieve_n_thru'
+          self.assertTrue(ntwk4_n_thru.noisy)
+          self.assertEqual(retrieve_n_thru, thru)
+          self.assertTrue(ntwk4_n_thru.noisy)
+          self.assertTrue(retrieve_n_thru.noisy)
+          self.assertTrue((abs(thru.nfmin - retrieve_n_thru.nfmin) < 1.e-6).all(), 'nf not retrieved by noise deembed')
+          self.assertTrue((abs(thru.rn    - retrieve_n_thru.rn)    < 1.e-6).all(), 'rn not retrieved by noise deembed')
+          self.assertTrue((abs(thru.z_opt - retrieve_n_thru.z_opt) < 1.e-6).all(), 'noise figure does not match original spec')
+  
+          tuner, x,y,g = tuner_constellation()
+          newnetw = thru.copy()
+          nfmin_set=4.5; gamma_opt_set=complex(.7,-0.2); rn_set=1
+          newnetw.set_noise_a(thru.noise_freq, nfmin_db=nfmin_set, gamma_opt=gamma_opt_set, rn=rn_set )
+          z = newnetw.nfdb_gs(g)[:,0]
+          freq = thru.noise_freq.f[0]       
+          gamma_opt_rb, nfmin_rb = plot_contour(freq,x,y,z, min0max1=0, graph=False) 
+          self.assertTrue(abs(nfmin_set - nfmin_rb) < 1.e-2, 'nf not retrieved by noise deembed')
+          self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
+
+
+
+
 
     def test_s_active(self):
         '''

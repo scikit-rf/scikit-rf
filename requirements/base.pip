@@ -6,4 +6,5 @@ xlwt>=0.7.4
 xlrd>=0.6.1
 nose-exclude
 future
+pathlib
 
