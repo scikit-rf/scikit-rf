@@ -274,7 +274,7 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None)
     
     filelist = files
     if files == None:
-        filelist = os.listdir(dir)
+        filelist = sorted(os.listdir(dir))
     
     for filename in filelist:
         if contains is not None and contains not in filename:
