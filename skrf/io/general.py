@@ -1,11 +1,16 @@
 
 '''
 .. module:: skrf.io.general
+
 ========================================
 general (:mod:`skrf.io.general`)
 ========================================
 
-General io functions for reading and writing skrf objects
+General input/output functions for reading and writing skrf objects
+
+
+General functions
+------------------
 
 .. autosummary::
     :toctree: generated/
@@ -19,6 +24,7 @@ General io functions for reading and writing skrf objects
 
 
 Writing output to spreadsheet
+-----------------------------
 
 .. autosummary::
     :toctree: generated/
@@ -26,6 +32,13 @@ Writing output to spreadsheet
     network_2_spreadsheet
     networkset_2_spreadsheet
 
+Writing output to pandas dataframe
+----------------------------------
+
+.. autosummary::
+    :toctree: generated/
+
+    network_2_dataframe
 
 '''
 import sys

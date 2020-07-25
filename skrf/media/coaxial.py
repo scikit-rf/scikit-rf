@@ -6,6 +6,12 @@ coaxial (:mod:`skrf.media.coaxial`)
 ============================================================
 
 A coaxial transmission line defined from its electrical or geometrical/physical properties
+
+.. autosummary::
+    :toctree: generated/
+
+    Coaxial
+
 '''
 
 #from copy import deepcopy

@@ -20,6 +20,14 @@ Network Class
 
     Network
 
+Building Network
+----------------
+
+.. autosummary::
+    :toctree: generated/
+
+    Network.from_z
+
 Network Representations
 ============================
 

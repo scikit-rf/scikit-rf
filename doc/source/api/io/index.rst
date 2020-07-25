@@ -1,1 +1,3 @@
 .. automodule:: skrf.io
+    :noindex:
+

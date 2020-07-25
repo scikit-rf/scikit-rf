@@ -71,7 +71,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'scikit-rf'
-copyright = u'2017, scikit-rf development team'
+copyright = u'2020, scikit-rf development team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

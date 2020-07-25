@@ -5,8 +5,15 @@
 media (:mod:`skrf.media.media`)
 ========================================
 
-Contains Media class.
+Media class.
 
+.. autosummary::
+    :toctree: generated/
+
+    Media
+    DefinedGammaZ0
+
+    
 
 '''
 import warnings
@@ -1224,8 +1231,7 @@ class Media(object):
 
 class DefinedGammaZ0(Media):
     '''
-    A media directly defined by its propagation constant and 
-    characteristic impedance
+    A media directly defined by its propagation constant and characteristic impedance
     
     Parameters
     --------------

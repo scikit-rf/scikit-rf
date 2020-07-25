@@ -1,6 +1,7 @@
 
 '''
 .. module:: skrf.vi
+
 ========================================================
 virtual instruments (:mod:`skrf.vi`)
 ========================================================
@@ -9,7 +10,9 @@ This module holds Virtual Instruments.
 
 
 .. automodule:: skrf.vi.vna
+
 .. automodule:: skrf.vi.sa
+
 .. automodule:: skrf.vi.stages
 
 
