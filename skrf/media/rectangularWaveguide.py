@@ -121,9 +121,10 @@ class RectangularWaveguide(Media):
 
     
     @classmethod
-    def from_Z0(cls,frequency, Z0,f, m=1,n=0,ep_r=1, mu_r=1, **kw):
+    def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
         '''
-        Initialize from specfied impedance at a given frequency.
+        Initialize from specfied impedance at a given frequency, assuming 
+        the fundamental TE mode.
         
         Parameters
         -------------
@@ -142,7 +143,7 @@ class RectangularWaveguide(Media):
         w = 2*pi*f
         a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
         
-        kw.update(dict(frequency=frequency,a=a, m=m, n=n, ep_r=ep_r, mu_r=mu_r))
+        kw.update(dict(frequency=frequency,a=a, m=1, n=0, ep_r=ep_r, mu_r=mu_r))
         
         return cls(**kw)
     

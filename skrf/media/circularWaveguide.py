@@ -119,9 +119,10 @@ class CircularWaveguide(Media):
 
     
     @classmethod
-    def from_Z0(cls,frequency, Z0,f, m=1,n=0,ep_r=1, mu_r=1, **kw):
+    def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
         '''
-        Initialize from specfied impedance at a given frequency.
+        Initialize from specfied impedance at a given frequency, assuming the 
+        fundamental TE-11 mode.
         
         Parameters
         -------------
@@ -138,10 +139,11 @@ class CircularWaveguide(Media):
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
-        #TODO: replace with radius from Z0
-        a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
+        # if self.mode_type =="te":
+        u = jnp_zeros(1, 1)[-1] 
+        r =u/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
         
-        kw.update(dict(frequency=frequency,a=a, m=m, n=n, ep_r=ep_r, mu_r=mu_r))
+        kw.update(dict(frequency=frequency, r=r, m=1, n=1, ep_r=ep_r, mu_r=mu_r))
         
         return cls(**kw)
     
@@ -259,7 +261,7 @@ class CircularWaveguide(Media):
         and v= 1/sqrt(ep*mu) is the bulk velocity inside the filling material.
         '''
         v = 1/sqrt(self.ep*self.mu)
-        return v* self.kc/(2*np.pi)
+        return v* self.kc/(2*npy.pi)
         
     @property
     def f_norm(self):
@@ -286,7 +288,7 @@ class CircularWaveguide(Media):
         >>> wg.rho = 2.8e-8 * ones(len(wg.frequency))
         >>> wg.rho = 'al'
         >>> wg.rho = 'aluminum'
-        '''
+        '''        
         # if self.roughness != None:
         #     delta = skin_depth(self.frequency.f, self._rho, self.mu_r)
         #     k_w = 1. +exp(-(delta/(2*self.roughness))**1.6)
@@ -409,8 +411,7 @@ class CircularWaveguide(Media):
         '''
 
         # TODO: Implement version for circular geometry
-        print('Not implemented correctly.')
-        return 0
+        raise NotImplementedError
 
         # if self.rho is None:
         #     return 0
