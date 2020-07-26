@@ -237,7 +237,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
             spine.set_color('none')
 
         # Make annotations only if the radius is 1
-        if smithR is 1:
+        if smithR == 1:
             #Make room for annotation
             ax1.plot(npy.array([-1.25, 1.25]), npy.array([-1.1, 1.1]), 'w.', markersize = 0)
             ax1.axis('image')
@@ -248,11 +248,11 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                 # chart, y_flip_sign == 1) or right (Y chart, y_flip_sign == -1)
                 # so label doesn't overlap chart's circles
                 rho = (value - 1)/(value + 1) - y_flip_sign*0.01
-                if y_flip_sign is 1:
+                if y_flip_sign == 1:
                     halignstyle = "right"
                 else:
                     halignstyle = "left"
-                if y_flip_sign is -1:  # 'y' and 'yz' charts
+                if y_flip_sign == -1:  # 'y' and 'yz' charts
                     value = 1/value                          
                 ax1.annotate(str(value*ref_imm), xy=(rho*smithR, 0.01),
                     xytext=(rho*smithR, 0.01), ha = halignstyle, va = "baseline")
@@ -280,14 +280,14 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
                     valignstyle = "top"
                 else:
                     valignstyle = "bottom"
-                if y_flip_sign is -1:  # 'y' and 'yz' charts
+                if y_flip_sign == -1:  # 'y' and 'yz' charts
                     value = 1/value                    
                 #Annotate value
                 ax1.annotate(str(value*ref_imm) + 'j', xy=(rhox, rhoy),
                              xytext=(rhox, rhoy), ha = halignstyle, va = valignstyle)
 
             #Annotate 0 and inf
-            if y_flip_sign is 1:  # z and zy charts
+            if y_flip_sign == 1:  # z and zy charts
                 label_left, label_right = '0.0', '$\infty$'
             else:  # y and yz charts
                 label_left, label_right = '$\infty$', '0.0'
@@ -1680,9 +1680,9 @@ def plot_uncertainty_bounds_component(
                 lower_bound = ppf(lower_bound)
                 lower_bound[npy.isnan(lower_bound)] = min(lower_bound)
                 if ppf in [mf.magnitude_2_db, mf.mag_2_db]:  # quickfix of wrong ylabels due to usage of ppf for *_db plots
-                    if attribute is 's_mag':
+                    if attribute == 's_mag':
                         plot_attribute = 's_db'
-                    elif attribute is 's_time_mag':
+                    elif attribute == 's_time_mag':
                         plot_attribute = 's_time_db'
 
             if type == 'shade':
@@ -1779,9 +1779,9 @@ def plot_minmax_bounds_component(self, attribute, m=0, n=0,
         lower_bound = ppf(lower_bound)
         lower_bound[npy.isnan(lower_bound)]=min(lower_bound)
         if ppf in [mf.magnitude_2_db, mf.mag_2_db]: # quickfix of wrong ylabels due to usage of ppf for *_db plots
-            if attribute is 's_mag':
+            if attribute == 's_mag':
                 attribute = 's_db'
-            elif attribute is 's_time_mag':
+            elif attribute == 's_time_mag':
                 attribute = 's_time_db'
 
     if type == 'shade':
