@@ -1,5 +1,6 @@
 '''
 .. module:: skrf.media.rectangularWaveguide
+
 ================================================================
 rectangularWaveguide (:mod:`skrf.media.rectangularWaveguide`)
 ================================================================
@@ -21,9 +22,9 @@ Characteristic Impedance              :math:`z_0`    :attr:`Z0`
 ====================================  =============  ===============
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    RectangularWaveguide
+   RectangularWaveguide
 
 '''
 from scipy.constants import  epsilon_0, mu_0,pi,c

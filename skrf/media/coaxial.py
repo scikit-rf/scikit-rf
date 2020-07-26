@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 '''
 .. module:: skrf.media.coaxial
+
 ============================================================
 coaxial (:mod:`skrf.media.coaxial`)
 ============================================================
@@ -8,9 +9,9 @@ coaxial (:mod:`skrf.media.coaxial`)
 A coaxial transmission line defined from its electrical or geometrical/physical properties
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    Coaxial
+   Coaxial
 
 '''
 

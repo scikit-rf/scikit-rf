@@ -2,6 +2,7 @@
 
 '''
 .. module:: skrf.media.cpw
+
 ========================================
 cpw (:mod:`skrf.media.cpw`)
 ========================================
@@ -17,9 +18,9 @@ their derivations.
 .. [#] http://www.qucs.sourceforge.net/
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    CPW
+   CPW
 
 '''
 from scipy.constants import  epsilon_0, mu_0
