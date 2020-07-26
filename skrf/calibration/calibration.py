@@ -1839,7 +1839,8 @@ class TwoPortOnePath(TwelveTerm):
     def run(self):
         '''
         run
-
+        '''
+        '''
         if self.sp !=0:
             raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
         n_thrus = self.n_thrus

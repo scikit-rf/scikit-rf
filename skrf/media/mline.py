@@ -43,9 +43,9 @@ time domain response.
     IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    MLine
+   MLine
 
 '''
 import numpy as npy

@@ -10,9 +10,9 @@ distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 A transmission line mode defined in terms of distributed impedance and admittance values. 
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    DistributedCircuit
+   DistributedCircuit
 
 '''
 

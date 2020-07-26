@@ -8,20 +8,20 @@ touchstone (:mod:`skrf.io.touchstone`)
 Touchstone class
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    Touchstone
+   Touchstone
 
 Functions related to reading/writing touchstones.
 -------------------------------------------------
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    hfss_touchstone_2_gamma_z0
-    hfss_touchstone_2_media
-    hfss_touchstone_2_network
-    read_zipped_touchstones
+   hfss_touchstone_2_gamma_z0
+   hfss_touchstone_2_media
+   hfss_touchstone_2_network
+   read_zipped_touchstones
 
 """
 import re
