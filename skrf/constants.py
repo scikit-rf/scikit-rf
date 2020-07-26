@@ -10,6 +10,31 @@ constants (:mod:`skrf.constants`)
 This module contains constants, numerical approximations, and unit conversions
 
 
+.. data:: INF
+
+    A very very large value (1e99)
+
+.. data:: ONE
+
+    1 + epsilon where epsilon is small. Used to avoid numerical error.
+
+.. data:: ZERO
+
+    0 + epsilon where epsilon is small. Used to avoid numerical error.
+
+.. data::K_BOLTZMANN
+
+    Boltzmann constant (1.38064852e-23)
+
+.. data::S_DEFINITIONS
+
+    S-parameter definition labels. Default is 'power'
+
+.. autosummary::
+   :toctree: generated/
+
+   to_meters
+
 '''
 
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi

@@ -69,7 +69,15 @@ Internals
     :glob:
     
     internals/*
-    
+
+Instrument Control
+------------------
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    instrumentcontrol/*
+
 Interactive
 ------------------
 

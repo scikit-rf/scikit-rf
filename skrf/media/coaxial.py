@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 '''
 .. module:: skrf.media.coaxial
+
 ============================================================
 coaxial (:mod:`skrf.media.coaxial`)
 ============================================================
 
 A coaxial transmission line defined from its electrical or geometrical/physical properties
+
+.. autosummary::
+   :toctree: generated/
+
+   Coaxial
+
 '''
 
 #from copy import deepcopy
@@ -176,34 +183,97 @@ class Coaxial( DistributedCircuit,Media ):
 
     @property
     def Rs(self):
+        '''
+        Surface resistivity in Ohm/area
+
+        Returns
+        -------
+        Rs : number or array
+            surface resistivity
+
+        '''
         f  = self.frequency.f
         rho = 1./self.sigma
         mu_r =1
         return surface_resistivity(f=f,rho=rho, mu_r=mu_r)
+
     @property
     def a(self):
+        '''
+        Inner radius of the coaxial line
+
+        Returns
+        -------
+        a : float
+            Inner radius
+
+        '''
         return self.Dint/2.
 
     @property
     def b(self):
+        '''
+        Outer radius of the coaxial line
+        
+        Returns
+        -------
+        b : float
+            Outer radius
+        '''
         return self.Dout/2.
 
 
     # derivation of distributed circuit parameters
     @property
     def R(self):
+        '''
+        Distributed resistance R, in Ohm/m
+
+        Returns
+        -------
+        R : number, or array-like
+            distributed resistance, in Ohm/m
+
+        '''
         return self.Rs/(2.*pi)*(1./self.a + 1./self.b)
 
     @property
     def L(self):
+        '''
+        Distributed inductance L, in H/m
+
+        Returns
+        -------
+        L : number, or array-like
+            distributed inductance, in  H/m
+
+        '''
         return mu_0/(2.*pi)*log(self.b/self.a)
 
     @property
     def C(self):
+        '''
+        Distributed capacitance C, in F/m
+
+        Returns
+        -------
+        C : number, or array-like
+            distributed capacitance, in F/m
+
+        '''
         return 2.*pi*self.epsilon_prime/log(self.b/self.a)
 
     @property
     def G(self):
+        '''
+        Distributed conductance G, in S/m
+
+        Returns
+        -------        
+        G : number, or array-like
+            distributed conductance, in S/m
+
+        '''
         f =  self.frequency.f
         return f*self.epsilon_second/log(self.b/self.a)
 

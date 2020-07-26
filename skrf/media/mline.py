@@ -1,7 +1,7 @@
 
 
 '''
-.. module:: skrf.media.MLine
+.. module:: skrf.media.mline
 ========================================
 MLine (:mod:`skrf.media.MLine`)
 ========================================
@@ -41,6 +41,12 @@ time domain response.
 .. Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
     Wideband frequency-domain characterization of FR-4 and time-domain causality,
     IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
+
+.. autosummary::
+   :toctree: generated/
+
+   MLine
+
 '''
 import numpy as npy
 from scipy.constants import  epsilon_0, mu_0, c
