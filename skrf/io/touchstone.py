@@ -515,7 +515,7 @@ class Touchstone:
     
             # If the file does not contain valid port impedance comments, set to default one
             if len(z0) == 0:
-                z0 = self.resistance
+                z0 = npy.complex(self.resistance)
                 #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
 
 
