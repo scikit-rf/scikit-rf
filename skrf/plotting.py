@@ -19,6 +19,25 @@ Plots and Charts
     plot_polar
     plot_complex_rectangular
     plot_complex_polar
+    plot_v_frequency
+    plot_it_all
+    
+    plot_minmax_bounds_component
+    plot_minmax_bounds_s_db
+    plot_minmax_bounds_s_db10
+    plot_minmax_bounds_s_time_db
+    
+    plot_uncertainty_bounds_component
+    plot_uncertainty_bounds_s
+    plot_uncertainty_bounds_s_db
+    plot_uncertainty_bounds_s_time_db
+    
+    plot_passivity    
+    plot_logsigma
+    
+    plot_circuit_graph
+
+    plot_contour
 
 Misc Functions
 -----------------
@@ -26,11 +45,13 @@ Misc Functions
 .. autosummary::
     :toctree: generated/
 
+    stylely
     save_all_figs
     add_markers_to_lines
     legend_off
     func_on_all_figs
     scrape_legend
+    signature
 
 '''
 import os
@@ -1175,7 +1196,7 @@ def plot_v_frequency(self, y, *args, **kwargs):
 ## specific ploting functions
 def plot(self, *args, **kw):
     '''
-    plot somthing vs frequency
+    Plot something vs frequency
     '''
     return self.frequency.plot(*args, **kw)
 
@@ -1567,46 +1588,63 @@ def animate(self, attr='s_deg', ylims=(-5, 5), xlims=None, show=True,
         plb.ion()
 
 
+#------------------------------
+#
+# NetworkSet plotting functions
+#
+#------------------------------
+
 def plot_uncertainty_bounds_component(
         self, attribute, m=None, n=None,
         type='shade', n_deviations=3, alpha=.3, color_error=None, markevery_error=20,
         ax=None, ppf=None, kwargs_error={}, *args, **kwargs):
     '''
-    plots mean value of the NetworkSet with +- uncertainty bounds
-    in an Network's attribute. This is designed to represent
-    uncertainty in a scalar component of the s-parameter. for example
-    plotting the uncertainty in the magnitude would be expressed by,
-
+    plots mean value of a NetworkSet with +/- uncertainty bounds in an Network's attribute. 
+    
+    This is designed to represent uncertainty in a scalar component of the s-parameter. 
+    for example plotting the uncertainty in the magnitude would be expressed by,
+    .. maths::
             mean(abs(s)) +- std(abs(s))
 
     the order of mean and abs is important.
 
 
-    takes:
-            attribute: attribute of Network type to analyze [string]
-            m: first index of attribute matrix [int]
-            n: second index of attribute matrix [int]
-            type: ['shade' | 'bar'], type of plot to draw
-            n_deviations: number of std deviations to plot as bounds [number]
-            alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-            color_error: color of the +- std dev fill shading
-            markevery_error: if type=='bar', this controls frequency
-                    of error bars
-            ax: Axes to plot on
-            ppf: post processing function. a function applied to the
-                    upper and lower bounds
-            *args,**kwargs: passed to Network.plot_s_re command used
-                    to plot mean response
-            kwargs_error: dictionary of kwargs to pass to the fill_between
-                    or errorbar plot command depending on value of type.
+    Parameters
+    ----------
+    attribute: str
+        attribute of Network type to analyze     
+    m: int
+        first index of attribute matrix 
+    n: int
+        second index of attribute matrix     
+    type: str
+        ['shade' | 'bar'], type of plot to draw
+    n_deviations: float
+        number of std deviations to plot as bounds
+    alpha: float
+        passed to matplotlib.fill_between() command. [number, 0-1]
+    color_error: str
+        color of the +- std dev fill shading. Default is None.
+    markevery_error: float
+        tbd
+    type: str
+        if type=='bar', this controls frequency of error bars
+    ax: matplotlib axe object
+        Axes to plot on. Default is None.
+    ppf: function
+        post processing function. a function applied to the
+        upper and lower bounds. Default is None
+    *args,**kwargs: 
+        passed to Network.plot_s_re command used to plot mean response
+     kwargs_error: dict
+         dictionary of kwargs to pass to the fill_between or 
+         errorbar plot command depending on value of type.
 
-    returns:
-            None
 
-
-    Note:
-            for phase uncertainty you probably want s_deg_unwrap, or
-            similar. uncerainty for wrapped phase blows up at +-pi.
+    Note
+    ----
+    for phase uncertainty you probably want s_deg_unwrap, or
+    similar. uncerainty for wrapped phase blows up at +-pi.
 
     '''
 
@@ -1677,41 +1715,51 @@ def plot_minmax_bounds_component(self, attribute, m=0, n=0,
                                  type='shade', alpha=.3, color_error=None, markevery_error=20,
                                  ax=None, ppf=None, kwargs_error={}, *args, **kwargs):
     '''
-    plots mean value of the NetworkSet with +- uncertainty bounds
-    in an Network's attribute. This is designed to represent
-    uncertainty in a scalar component of the s-parameter. for example
+    plots mean value of the NetworkSet with +/- uncertainty bounds in an Network's attribute. 
+    
+    This is designed to represent uncertainty in a scalar component of the s-parameter. for example
     plotting the uncertainty in the magnitude would be expressed by,
-
+    .. maths::
             mean(abs(s)) +- std(abs(s))
 
     the order of mean and abs is important.
 
+    Parameters
+    ----------
+    attribute: str
+        attribute of Network type to analyze     
+    m: int
+        first index of attribute matrix 
+    n: int
+        second index of attribute matrix     
+    type: str
+        ['shade' | 'bar'], type of plot to draw
+    n_deviations: float
+        number of std deviations to plot as bounds
+    alpha: float
+        passed to matplotlib.fill_between() command. [number, 0-1]
+    color_error: str
+        color of the +- std dev fill shading. Default is None.
+    markevery_error: float
+        tbd
+    type: str
+        if type=='bar', this controls frequency of error bars
+    ax: matplotlib axe object
+        Axes to plot on. Default is None.
+    ppf: function
+        post processing function. a function applied to the
+        upper and lower bounds. Default is None
+    *args,**kwargs: 
+        passed to Network.plot_s_re command used to plot mean response
+     kwargs_error: dict
+         dictionary of kwargs to pass to the fill_between or 
+         errorbar plot command depending on value of type.
 
-    takes:
-            attribute: attribute of Network type to analyze [string]
-            m: first index of attribute matrix [int]
-            n: second index of attribute matrix [int]
-            type: ['shade' | 'bar'], type of plot to draw
-            n_deviations: number of std deviations to plot as bounds [number]
-            alpha: passed to matplotlib.fill_between() command. [number, 0-1]
-            color_error: color of the +- std dev fill shading
-            markevery_error: if type=='bar', this controls frequency
-                    of error bars
-            ax: Axes to plot on
-            ppf: post processing function. a function applied to the
-                    upper and low
-            *args,**kwargs: passed to Network.plot_s_re command used
-                    to plot mean response
-            kwargs_error: dictionary of kwargs to pass to the fill_between
-                    or errorbar plot command depending on value of type.
 
-    returns:
-            None
-
-
-    Note:
-            for phase uncertainty you probably want s_deg_unwrap, or
-            similar.  uncertainty for wrapped phase blows up at +-pi.
+    Note
+    ----
+    for phase uncertainty you probably want s_deg_unwrap, or
+    similar.  uncertainty for wrapped phase blows up at +-pi.
 
     '''
 
@@ -1763,18 +1811,18 @@ def plot_minmax_bounds_component(self, attribute, m=0, n=0,
 
 def plot_uncertainty_bounds_s_db(self, *args, **kwargs):
     '''
-    this just calls
-            plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+    Calls ``plot_uncertainty_bounds(attribute='s_mag','ppf':mf.magnitude_2_db*args,**kwargs)``
+    
     see plot_uncertainty_bounds for help
 
     '''
     kwargs.update({'attribute':'s_mag','ppf':mf.magnitude_2_db})
     self.plot_uncertainty_bounds_component(*args,**kwargs)
 
-def plot_minmax_bounds_s_db(self,*args, **kwargs):
+def plot_minmax_bounds_s_db(self, *args, **kwargs):
     '''
-    this just calls
-            plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+    Calls ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``
+
     see plot_uncertainty_bounds for help
 
     '''
@@ -1783,8 +1831,8 @@ def plot_minmax_bounds_s_db(self,*args, **kwargs):
 
 def plot_minmax_bounds_s_db10(self,*args, **kwargs):
     '''
-    this just calls
-            plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+    Calls ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``
+    
     see plot_uncertainty_bounds for help
 
     '''
@@ -1793,8 +1841,8 @@ def plot_minmax_bounds_s_db10(self,*args, **kwargs):
 
 def plot_uncertainty_bounds_s_time_db(self,*args, **kwargs):
     '''
-    this just calls
-            plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+    Calls ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``
+    
     see plot_uncertainty_bounds for help
 
     '''
@@ -1803,8 +1851,8 @@ def plot_uncertainty_bounds_s_time_db(self,*args, **kwargs):
 
 def plot_minmax_bounds_s_time_db(self,*args, **kwargs):
     '''
-    this just calls
-            plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)
+    Calls ``plot_uncertainty_bounds(attribute= 's_mag','ppf':mf.magnitude_2_db*args,**kwargs)``
+    
     see plot_uncertainty_bounds for help
 
     '''
@@ -1887,19 +1935,20 @@ def plot_uncertainty_bounds_s(self, multiplier =200, *args, **kwargs):
     plb.show()
 
 def plot_logsigma(self, label_axis=True, *args,**kwargs):
-        '''
-        plots the uncertainty for the set in units of log-sigma.
-        Log-sigma is the complex standard deviation, plotted in units
-        of dB's.
+    '''
+    plots the uncertainty for the set in units of log-sigma.
+    
+    Log-sigma is the complex standard deviation, plotted in units
+    of dB's.
 
-        Parameters
-        ------------
-        \\*args, \\*\\*kwargs : arguments
-            passed to self.std_s.plot_s_db()
-        '''
-        self.std_s.plot_s_db(*args,**kwargs)
-        if label_axis:
-            plb.ylabel('Standard Deviation(dB)')
+    Parameters
+    ------------
+    \\*args, \\*\\*kwargs : arguments
+        passed to self.std_s.plot_s_db()
+    '''
+    self.std_s.plot_s_db(*args,**kwargs)
+    if label_axis:
+        plb.ylabel('Standard Deviation(dB)')
 
 def signature(self, m=0, n=0, component='s_mag',
               vmax=None, vs_time=False, cbar_label=None,
@@ -2096,7 +2145,39 @@ def plot_circuit_graph(self, **kwargs):
 
 
 
-def plot_contour(freq, x,y,z,min0max1, graph=True, cmap='plasma_r',title='',  **kw) :
+def plot_contour(freq, x, y, z, min0max1, graph=True, cmap='plasma_r', title='',  **kwargs):
+    '''
+    Countour plot
+
+    Parameters
+    ----------
+    freq : :skrf.Frequency:
+        Frequency object.
+    x : array
+        x points
+    y : array
+        y points.
+    z : array
+        z points.
+    min0max1 : int
+        0 for min, 1 for max.
+    graph : bool, optional
+        plot graph if True. The default is True.
+    cmap : str, optional
+        Colormap label. The default is 'plasma_r'.
+    title : str, optional
+        Figure title. The default is ''.
+    **kwargs : dict
+        Other parameters passed to `matplotlib.plot()`.
+
+    Returns
+    -------
+    GAMopt : :skrf.Network:
+        Network
+    VALopt : float
+        min or max.
+
+    '''
     ri =  npy.linspace(0,1, 50); 
     ti =  npy.linspace(0,2*npy.pi, 150);
     Ri , Ti = npy.meshgrid(ri, ti)
@@ -2112,11 +2193,11 @@ def plot_contour(freq, x,y,z,min0max1, graph=True, cmap='plasma_r',title='',  **
     GAMopt = network.Network(f=[freq], s=x[z==VALopt] +1j*y[z==VALopt])
 
     if graph : 
-        fig, ax = plb.subplots(**kw)
+        fig, ax = plb.subplots(**kwargs)
         an = npy.linspace(0, 2*npy.pi, 50)
-        cs,sn=npy.cos(an), npy.sin(an)
-        plb.plot(cs,sn, color='k', lw=0.25)
-        plb.plot(cs,sn*0, color='g', lw=0.25)
+        cs, sn = npy.cos(an), npy.sin(an)
+        plb.plot(cs, sn, color='k', lw=0.25)
+        plb.plot(cs, sn*0, color='g', lw=0.25)
         plb.plot((1+cs)/2, sn/2, color='k', lw=0.25)
         plb.axis('equal')
         ax.set_axis_off()
