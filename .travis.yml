@@ -10,8 +10,8 @@ services:
   - xvfb
 before_install:
 - sudo apt-get update
-- if [[ "$TRAVIS_PYTHON_VERSION" == 2* ]]; then wget http://repo.continuum.io/miniconda/Miniconda3-3.8.0-Linux-x86_64.sh
-  -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.8.0-Linux-x86_64.sh
+- if [[ "$TRAVIS_PYTHON_VERSION" == 2* ]]; then wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+  -O miniconda.sh; else wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
   -O miniconda.sh; fi
 - bash miniconda.sh -b -p $HOME/miniconda
 - export PATH="$HOME/miniconda/bin:$PATH"
