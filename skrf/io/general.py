@@ -1,31 +1,44 @@
 
 '''
 .. module:: skrf.io.general
+
 ========================================
 general (:mod:`skrf.io.general`)
 ========================================
 
-General io functions for reading and writing skrf objects
+General input/output functions for reading and writing skrf objects
+
+
+General functions
+------------------
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    read
-    read_all
-    read_all_networks
-    write
-    write_all
-    save_sesh
+   read
+   read_all
+   read_all_networks
+   write
+   write_all
+   save_sesh
 
 
 Writing output to spreadsheet
+-----------------------------
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    network_2_spreadsheet
-    networkset_2_spreadsheet
+   network_2_spreadsheet
+   networkset_2_spreadsheet
 
+Writing output to pandas dataframe
+----------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   network_2_dataframe
 
 '''
 import sys
@@ -274,7 +287,7 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None)
     
     filelist = files
     if files == None:
-        filelist = os.listdir(dir)
+        filelist = sorted(os.listdir(dir))
     
     for filename in filelist:
         if contains is not None and contains not in filename:

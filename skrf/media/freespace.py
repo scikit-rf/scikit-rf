@@ -12,6 +12,10 @@ A plane-wave (TEM Mode) in Freespace.
 Represents a plane-wave in a homogeneous freespace, defined by
 the space's relative permittivity and relative permeability.
 
+.. autosummary::
+    :toctree: generated/
+
+    Freespace
 
 
 '''

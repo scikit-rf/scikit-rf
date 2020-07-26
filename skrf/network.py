@@ -20,6 +20,14 @@ Network Class
 
     Network
 
+Building Network
+----------------
+
+.. autosummary::
+    :toctree: generated/
+
+    Network.from_z
+
 Network Representations
 ============================
 
@@ -176,9 +184,9 @@ from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 
-from matplotlib import cm
-import matplotlib.pyplot as plt
-import matplotlib.tri as tri
+#from matplotlib import cm
+#import matplotlib.pyplot as plt
+#import matplotlib.tri as tri
 #from scipy.interpolate import interp1d
 
 
@@ -3670,7 +3678,8 @@ def cascade(ntwkA, ntwkB):
 
     Notes
     ------
-    connection diagram::
+    connection diagram:
+    ::
               A                B
            +---------+   +---------+
           -|0      N |---|0      N |-

@@ -2,12 +2,12 @@
 
 '''
 .. module:: skrf.media.cpw
+
 ========================================
 cpw (:mod:`skrf.media.cpw`)
 ========================================
 
 Coplanar waveguide class
-
 
 This class was made from the technical documentation [#]_ provided
 by the qucs project [#]_ .
@@ -16,6 +16,12 @@ their derivations.
 
 .. [#] http://qucs.sourceforge.net/docs/technical.pdf
 .. [#] http://www.qucs.sourceforge.net/
+
+.. autosummary::
+   :toctree: generated/
+
+   CPW
+
 '''
 from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
@@ -25,26 +31,27 @@ from ..tlineFunctions import skin_depth, surface_resistivity
 
 class CPW(Media):
     '''
-    Coplanar Waveguide initializer
+    Coplanar Waveguide Media
 
     Parameters
     -------------
-    frequency : :class:`~skrf.frequency.Frequency` object
-        frequency band of the media
-    z0 : number, array-like, or None
-        the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
-    w : number, or array-like
-            width of center conductor, in m.
+    frequency : :class:`~skrf.frequency.Frequency` object, optional
+        frequency band of the media. The default is None.
+    z0 : number, array-like, optional
+        the port impedance for media. The default is None.
+        Only needed if  its different from the characterisitc impedance 
+        of the transmission.
+    w : number, or array-like, optional
+            width of center conductor, in m. Default is 70.
     s : number, or array-like
-            width of gap, in m.
-    ep_r : number, or array-like
-            relative permativity of substrate
+            width of gap, in m. Default is 4.
+    ep_r : number, or array-like, optional
+            relative permativity of substrate. Default is 3.
     t : number, or array-like, optional
-            conductor thickness, in m.
+            conductor thickness, in m. Default is None (metalization thickness neglected)
     rho: number, or array-like, optional
-            resistivity of conductor (None)
-
+            resistivity of conductor. Default is None
+      
     '''
     def __init__(self, frequency=None, z0=None, w=70, s=4,
                  ep_r=3, t=None, rho=None,  *args, **kwargs):
@@ -69,14 +76,32 @@ class CPW(Media):
     @property
     def ep_re(self):
         '''
-        intermediary parameter. see qucs docs on cpw lines.
+        Effective permittivity of the CPW (also known as Keff).
+        
+        If the thickness of the dielectric susbtrate is large, 
+        the effective dielectric constant of the even mode can be approx as:
+        
+        .. math::
+
+                \epsilon_{eff} = \\frac{\epsilon_r + 1}{2} 
+        
+        The effective permittivity can be defined as in the case of a 
+        microstripa line, that is as the square of ratio 
+        of the capacitance per unit length to the phase velocity. 
         '''
-        return (self.ep_r+1)/2.
+        return (self.ep_r+1)/2.0
 
     @property
     def k1(self):
         '''
-        intermediary parameter. see qucs docs on cpw lines.
+        Intermediary parameter. see qucs docs on cpw lines.
+        
+        Defined as:
+            
+        .. math::
+                
+                k = \\frac{w}{w + 2s}
+        
         '''
         return self.w/(self.w +2*self.s)
 
@@ -84,13 +109,16 @@ class CPW(Media):
     def K_ratio(self):
         '''
         intermediary parameter. see qucs docs on cpw lines.
+        K_ratio is the ratio of two elliptic integrals
         '''
         k1 = self.k1
+        # k prime
+        k_p = sqrt(1 - k1**2)
 
         if (0 <= k1 <= 1/sqrt(2)):
-            return pi/log(2*(1+sqrt(sqrt(1-k1**2)))/(1-sqrt(sqrt(1-k1**2))))
+            return pi/log(2*(1 + sqrt(k1))/(1 - sqrt(k1)))
         elif (1/sqrt(2) < k1 <= 1):
-            return (log(2*(1+sqrt(k1))/(1-sqrt(k1)) ))/pi
+            return (log(2*(1 + sqrt(k_p))/(1 - sqrt(k_p)) ))/pi
 
 
 

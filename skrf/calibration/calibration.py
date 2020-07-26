@@ -1,5 +1,6 @@
 '''
 .. module:: skrf.calibration.calibration
+
 ================================================================
 calibration (:mod:`skrf.calibration.calibration`)
 ================================================================
@@ -154,11 +155,11 @@ class Calibration(object):
     Base class for all Calibration objects.
 
     This class implements the common mechanisms for all calibration
-    algorithms. Specific calibration algorithms should inheret this
+    algorithms. Specific calibration algorithms should inherit this
     class and overide the methods:
-        *  :func:`Calibration.run`
-        *  :func:`Calibration.apply_cal`
-        *  :func:`Calibration.embed` (optional)
+    * :func:`Calibration.run`
+    * :func:`Calibration.apply_cal`
+    * :func:`Calibration.embed` (optional)
 
 
     The family of properties prefixed `coefs` and
@@ -809,6 +810,8 @@ class Calibration(object):
         -------
         Mathematically, this is
 
+        .. math::
+
             mean_s(|mean_c(r)|)
 
         Where:
@@ -882,8 +885,7 @@ class Calibration(object):
 
         where:
         * r : complex residual errors
-        * std_cs : standard deviation taken across connections
-                and standards
+        * std_cs : standard deviation taken across connections and standards
 
         See Also
         ---------
@@ -1395,7 +1397,7 @@ class TwelveTerm(Calibration):
         Use the  `n_thrus` argument to explicitly define the number of
         transmissive standards. Otherwise, if `n_thrus=None`, then we
         will try and guess which are transmissive, by comparing the mean
-        |s21| and |s12| responses (in dB) to `trans_thres`.
+        :math:`|s21|` and :math:`|s12|` responses (in dB) to `trans_thres`.
 
         Notes
         ------
@@ -1794,7 +1796,7 @@ class TwoPortOnePath(TwelveTerm):
         Use the  `n_thrus` argument to explicitly define the number of
         transmissive standards. Otherwise, if `n_thrus=None`, then we
         will try and guess which are transmissive, by comparing the mean
-        |s21| and |s12| responses (in dB) to `trans_thres`.
+        :math: `|s21|` and :math: `|s12|` responses (in dB) to `trans_thres`.
 
         Notes
         ------
@@ -1836,7 +1838,9 @@ class TwoPortOnePath(TwelveTerm):
 
     def run(self):
         '''
-
+        run
+        '''
+        '''
         if self.sp !=0:
             raise NotImplementedError('not implemented yet. you can just flip() all your data though. ')
         n_thrus = self.n_thrus

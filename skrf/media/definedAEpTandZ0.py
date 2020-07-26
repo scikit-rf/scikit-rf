@@ -3,9 +3,9 @@
 '''
 .. module:: skrf.media.definedAEpTandZ0
 
-========================================
+======================================================
 DefinedAEpTandZ0 (:mod:`skrf.media.definedAEpTandZ0`)
-========================================
+======================================================
 
 Transmission line medium defined by A, Ep, Tand and Z0.
 
@@ -14,6 +14,11 @@ loss angle tand and characteristic impedance Z0.
 
 Djirdjevic/Svennson dispersion model is provided for dielectric, default
 behaviour is frequency invariant.
+
+.. autosummary::
+   :toctree: generated/
+
+   DefinedAEpTandZ0
 '''
 from scipy.constants import  epsilon_0, c
 from numpy import real, imag, sqrt, ones, zeros, pi, log
