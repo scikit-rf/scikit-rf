@@ -3044,7 +3044,7 @@ class Network(object):
             Pca[l, 4 * (l + 1) - 1 - 1] = True
             Pdb[l, 4 * (l + 1) - 2 - 1] = True
             Pcb[l, 4 * (l + 1) - 1] = True
-            if Pa.shape[0] is not 0:
+            if Pa.shape[0] != 0:
                 Pa[l, 4 * p + 2 * (l + 1) - 1 - 1] = True
                 Pb[l, 4 * p + 2 * (l + 1) - 1] = True
         return npy.concatenate((Pda, Pca, Pa, Pdb, Pcb, Pb))
@@ -3390,7 +3390,7 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         check_frequency_equal(ntwkA, ntwkB)
     except IndexError as e:
         common_freq = npy.intersect1d(ntwkA.frequency.f, ntwkB.frequency.f, return_indices=True)
-        if common_freq[0].size is 0:
+        if common_freq[0].size == 0:
             raise e
         else:
             ntwkA = ntwkA[common_freq[1]]
