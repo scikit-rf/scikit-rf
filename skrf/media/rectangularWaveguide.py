@@ -47,7 +47,7 @@ class RectangularWaveguide(Media):
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if z0 is None then will default to Z0
+        line. if z0 is None then will default to z0
     a : number
             width of waveguide, in meters.
     b : number
@@ -121,7 +121,7 @@ class RectangularWaveguide(Media):
 
     
     @classmethod
-    def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
+    def from_z0(cls,frequency, z0,f, ep_r=1, mu_r=1, **kw):
         '''
         Initialize from specfied impedance at a given frequency, assuming 
         the fundamental TE mode.
@@ -129,10 +129,10 @@ class RectangularWaveguide(Media):
         Parameters
         -------------
         frequency : Frequency Object
-        Z0 : number /array
+        z0 : number /array
             scharacteristic impedance to create at `f`
         f : number 
-            frequency (in Hz) that the resultant waveguide has Z0=Z0
+            frequency (in Hz) that the resultant waveguide has z0=z0
         '''
         if n !=0: 
             raise NotImplemented()
@@ -141,7 +141,7 @@ class RectangularWaveguide(Media):
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
-        a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
+        a =pi/(w*mu) * 1./sqrt((1/(z0*1j)**2+ep/mu))
         
         kw.update(dict(frequency=frequency,a=a, m=1, n=0, ep_r=ep_r, mu_r=mu_r))
         
@@ -423,7 +423,7 @@ class RectangularWaveguide(Media):
             sqrt(1-(1/f_n)**2)
 
     @property
-    def Z0(self):
+    def z0(self):
         '''
         The characteristic impedance
         '''

@@ -1,12 +1,14 @@
 '''
-.. module:: skrf.media.rectangularWaveguide
+.. module:: skrf.media.circularWaveguide
 ================================================================
 rectangularWaveguide (:mod:`skrf.media.rectangularWaveguide`)
 ================================================================
 
 Represents a single mode of a homogeneously filled circular
 waveguide of cross-section `r^2 pi`. The mode is determined by
-`mode-type` (`'te'` or `'tm'`) and mode indices ( `m` and `n` ).
+`mode-type` (`'te'` or `'tm'`) and mode indices ( `m` and `n` ). 
+Corrugated circular waveguides, which also support HE modes, are not 
+supported.
 
 
 ====================================  =============  ===============
@@ -17,7 +19,7 @@ Cut-off Wave Number                   :math:`k_c`    :attr:`kc`
 Longitudinal Wave Number              :math:`k_z`    :attr:`gamma`
 Transverse Wave Number (a)            :math:`k_x`    :attr:`kx`
 Transverse Wave Number (b)            :math:`k_y`    :attr:`ky`
-Characteristic Impedance              :math:`z_0`    :attr:`Z0`
+Characteristic Impedance              :math:`z_0`    :attr:`z0`
 ====================================  =============  ===============
 
 '''
@@ -119,7 +121,7 @@ class CircularWaveguide(Media):
 
     
     @classmethod
-    def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
+    def from_z0(cls,frequency, z0,f, ep_r=1, mu_r=1, **kw):
         '''
         Initialize from specfied impedance at a given frequency, assuming the 
         fundamental TE-11 mode.
@@ -127,10 +129,10 @@ class CircularWaveguide(Media):
         Parameters
         -------------
         frequency : Frequency Object
-        Z0 : number /array
+        z0 : number /array
             scharacteristic impedance to create at `f`
         f : number 
-            frequency (in Hz) that the resultant waveguide has Z0=Z0
+            frequency (in Hz) that the resultant waveguide has z0=z0
         '''
         if n !=0: 
             raise NotImplemented()
@@ -141,7 +143,7 @@ class CircularWaveguide(Media):
         w = 2*pi*f
         # if self.mode_type =="te":
         u = jnp_zeros(1, 1)[-1] 
-        r =u/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
+        r =u/(w*mu) * 1./sqrt((1/(z0*1j)**2+ep/mu))
         
         kw.update(dict(frequency=frequency, r=r, m=1, n=1, ep_r=ep_r, mu_r=mu_r))
         
@@ -421,7 +423,7 @@ class CircularWaveguide(Media):
         #     sqrt(1-(1/f_n)**2)
 
     @property
-    def Z0(self):
+    def z0(self):
         '''
         The characteristic impedance
         '''
