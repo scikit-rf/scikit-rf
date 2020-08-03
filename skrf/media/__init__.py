@@ -25,28 +25,18 @@ each specific media instance.
 Media base-class
 -------------------------
 .. autosummary::
-    :toctree: generated/
-    :nosignatures:
+   :toctree: generated/
+   :nosignatures:
 
-    ~media.Media
+   ~media.Media
 
-Transmission Line Classes
--------------------------
-.. autosummary::
-    :toctree: generated/
-    :nosignatures:
-    
-    ~media.DefinedGammaZ0
-    ~distributedCircuit.DistributedCircuit
-    ~rectangularWaveguide.RectangularWaveguide
-    ~cpw.CPW
-    ~freespace.Freespace
-    ~coaxial.Coaxial
-    ~mline.MLine
+
+
+
 
 '''
 
-from .media import Media, DefinedGammaZ0
+from .media import *
 from .distributedCircuit import DistributedCircuit
 from .freespace import Freespace
 from .cpw import CPW

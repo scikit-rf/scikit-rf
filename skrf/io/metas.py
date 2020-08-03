@@ -9,7 +9,7 @@ Functions for reading and writing file formats defined by METAS
 http://www.metas.ch/metas/en/home/fabe/hochfrequenz/vna-tools.html
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
     
 '''
