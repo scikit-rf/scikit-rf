@@ -145,6 +145,7 @@ import warnings
 
 import six.moves.cPickle as pickle
 from six.moves.cPickle import UnpicklingError
+from six import string_types
 
 import sys
 import re
@@ -163,8 +164,9 @@ import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
 from .frequency import Frequency
+from .networkNoiseCov import NetworkNoiseCov
 from .tlineFunctions import zl_2_Gamma0
-from .util import get_fid, get_extn, find_nearest_index, slice_domain
+from .util import get_fid, get_extn, find_nearest_index, slice_domain, network_array
 from .time import time_gate
 # later imports. delayed to solve circular dependencies
 # from .io.general import read, write
@@ -387,8 +389,10 @@ class Network(object):
         self.port_names = None
 
         self.deembed = None
-        self.noise = None
+        self.noise = None # This is the ABCD form of the covariance matrix
+        self.noise_cov = None # This is the NetworkNoiseCov object, some of this will be duplicate with noise for now
         self.noise_freq = None
+        self.T0 = T0 # Temperature at measurement
 
         if s_def not in S_DEFINITIONS:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -452,10 +456,95 @@ class Network(object):
         >>> ntw = rf.Network.from_z(z, f=f)
             
         '''
+
         s = npy.zeros(shape=z.shape)
         me = cls(s=s, *args, **kw)
         me.z = z
+
         return me
+
+    @classmethod
+    def from_y(cls, y, *args, **kw):
+        '''
+        Create a Network from its Y-parameters
+        
+        Parameters:
+        ------------
+        y : Numpy array
+            Admittance matrix. Should be of shape fxnxn, 
+            where f is frequency axis and n is number of ports
+        \*\*kwargs :
+            key word arguments can be used to assign properties of the
+            Network, `f` and `z0`.
+        
+        Return
+        --------
+        ntw : :class:`Network`
+            Created Network
+            
+        Example
+        --------
+        >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
+        >>> y = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port y-matrix: shape=(4,2,2)
+        >>> ntw = rf.Network.from_y(y, f=f)
+            
+        '''
+        s = npy.zeros(shape=y.shape)
+        me = cls(s=s, *args, **kw)
+        me.y = y
+        return me
+
+    @classmethod
+    def from_a(cls, y, *args, **kw):
+        '''
+        Create a Network from its ABCD-parameters
+        
+        Parameters:
+        ------------
+        a : Numpy array
+            ABCD matrix. Should be of shape fxnxn, 
+            where f is frequency axis and n is number of ports
+        \*\*kwargs :
+            key word arguments can be used to assign properties of the
+            Network, `f` and `z0`.
+        
+        Return
+        --------
+        ntw : :class:`Network`
+            Created Network
+            
+        Example
+        --------
+        >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
+        >>> y = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port y-matrix: shape=(4,2,2)
+        >>> ntw = rf.Network.from_a(a, f=f)
+            
+        '''
+        s = npy.zeros(shape=a.shape)
+        me = cls(s=s, *args, **kw)
+        me.a = a
+        return me
+
+    @classmethod
+    def from_series_rlc(cls, r, l, c, frequency):
+        pass
+
+    @classmethod
+    def from_shunt_rlc(cls, r, l, c, frequency):
+        pass
+
+    def noise_source(self, source='passive', T0=None):
+        if isinstance(source, string_types):
+            if source == 'passive':
+                if T0:
+                    self.T0 = T0
+
+                self.noise_cov = NetworkNoiseCov.from_passive_s(self.s, T0=self.T0)
+        elif isinstance(source, NetworkNoiseCov):
+            self._validate_covariance_setter(source.mat_vec)
+            self.noise_cov = source
+        else:
+            raise ValueError("Input must be the string 'passive' or a NetworkNoiseCov object, otherwise use setters 'cs', 'ct', 'cz', etc.")
 
     # OPERATORS
     def __pow__(self, other):
@@ -998,6 +1087,13 @@ class Network(object):
         """
         return s2t(self.s)
 
+    @t.setter
+    def t(self, value):
+        self._s = t2s(value)
+
+
+    
+
     @property
     def s_invert(self):
         """
@@ -1064,6 +1160,55 @@ class Network(object):
     @a.setter
     def a(self, value):
         self._s = a2s(value, self.z0)
+
+    @property
+    def cs(self):
+        return self.noise_cov.get_cs(self.s)
+
+    @cs.setter
+    def cs(self, value):
+       self._validate_covariance_setter(value)
+       self.noise_cov = NetworkNoiseCov(value, form='s')
+
+    @property
+    def ct(self):
+        return self.noise_cov.get_ct(self.t)
+
+    @ct.setter
+    def ct(self, value):
+        self._validate_covariance_setter(value)
+        self.noise_cov = NetworkNoiseCov(value, form='t')
+
+    @property
+    def cz(self):
+        return self.noise_cov.get_cz(self.z)
+
+    @cz.setter
+    def cz(self, s):
+       self._validate_covariance_setter(value)
+       self.noise_cov = NetworkNoiseCov(value, form='z')
+
+    @property
+    def cy(self):
+        return self.noise_cov.get_cy(self.y)
+
+    @cy.setter
+    def cy(self, value):
+       self._validate_covariance_setter(value)
+       self.noise_cov = NetworkNoiseCov(value, form='y')
+
+    @property
+    def ca(self):
+        return self.noise_cov.get_ca(self.a)
+
+    @ca.setter
+    def ca(self, value):
+       self._validate_covariance_setter(value)
+       self.noise_cov = NetworkNoiseCov(value, form='a')
+
+    def _validate_covariance_setter(self, value):
+        if value.shape != self.s.shape:
+            raise ValueError("Covariance data must be the same size as the network data")
 
     @property
     def z0(self):
@@ -1257,9 +1402,6 @@ class Network(object):
             noise_imag = self.noise.imag
             return noise_real + 1.0j * noise_imag
 
-
-
-
     @property
     def f_noise(self):
       """
@@ -1274,51 +1416,80 @@ class Network(object):
       """
       the optimum source admittance to minimize noise
       """
-      noise = self.n
-      return (npy.sqrt(noise[:,1,1]/noise[:,0,0] - npy.square(npy.imag(noise[:,0,1]/noise[:,0,0])))
-          + 1.j*npy.imag(noise[:,0,1]/noise[:,0,0]))
+      if self.noise_cov:
+        nca = self.noise_cov.get_ca(self.a)
+        return nca.y_opt 
+      else:  
+        noise = self.n
+        return (npy.sqrt(noise[:,1,1]/noise[:,0,0] - npy.square(npy.imag(noise[:,0,1]/noise[:,0,0])))
+            + 1.j*npy.imag(noise[:,0,1]/noise[:,0,0]))
 
     @property
     def z_opt(self):
       """
       the optimum source impedance to minimize noise
       """
-      return 1./self.y_opt
+      if self.noise_cov:
+        nca = self.noise_cov.get_ca(self.a)
+        return nca.z_opt
+      else:  
+        return 1./self.y_opt
 
     @property
     def g_opt(self):
       """
       the optimum source reflection coefficient to minimize noise
       """
-      return z2s(self.z_opt.reshape((self.f.shape[0], 1, 1)), self.z0[:,0])[:,0,0]
+      if self.noise_cov:
+        nca = self.noise_cov.get_ca(self.a)
+        return z2s(nca.z_opt.reshape((self.f.shape[0], 1, 1)), self.z0[:,0])[:,0,0]
+      else:  
+        return z2s(self.z_opt.reshape((self.f.shape[0], 1, 1)), self.z0[:,0])[:,0,0]
 
     @property
     def nfmin(self):
       """
       the minimum noise figure for the network
       """
-      noise = self.n
-      return npy.real(1. + (noise[:,0,1] + noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*T0))
+      if self.noise_cov:
+        nca = self.noise_cov.get_ca(self.a)
+        return nca.nfmin
+      else:
+        noise = self.n
+        return npy.real(1. + (noise[:,0,1] + noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*self.T0))
 
     @property
     def nfmin_db(self):
       """
       the minimum noise figure for the network in dB
       """
-      return mf.complex_2_db10(self.nfmin)
+      if self.noise_cov:
+        nca = self.noise_cov.get_ca(self.a)
+        return mf.complex_2_db10(nca.nfmin)
+      else:
+        return mf.complex_2_db10(self.nfmin)
 
     def nf(self, z):
       """
       the noise figure for the network if the source impedance is z
       """
       z0 = self.z0
-      y_opt = self.y_opt
-      fmin = self.nfmin
-      rn = self.rn
+      if self.noise_cov:
+        nca = self.noise_cov.get_ca(self.a)
+        y_opt = nca.y_opt
+        fmin = nca.nfmin
+        rn = nca.rn
+      else:
+        y_opt = self.y_opt
+        fmin = self.nfmin
+        rn = self.rn
 
       ys = 1./z
       gs = npy.real(ys)
       return fmin + rn/gs * npy.square(npy.absolute(ys - y_opt))
+
+    def nf_db(self, z):
+        return mf.complex_2_db10(self.nf(z))
  
     def nfdb_gs(self, gs):
       """
@@ -1354,7 +1525,11 @@ class Network(object):
       """
       the equivalent noise resistance for the network
       """
-      return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*T0))
+      if self.noise_cov:
+        nca = self.noise_cov.get_ca(self.a)
+        return nca.rn
+      else:
+        return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*self.T0))
 
     # SECONDARY PROPERTIES
     @property
@@ -1705,15 +1880,12 @@ class Network(object):
           nf_min = npy.power(10., nfmin_db/10.)
           # TODO maybe interpolate z0 as above
           y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
-          noise = 4.*K_BOLTZMANN*T0*npy.array(
-                [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
-                [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
+          noise = 4.*K_BOLTZMANN*self.T0*npy.array(
+                [[rn,                         (nf_min-1.)/2. - rn*npy.conj(y_opt)],
+                [(nf_min-1.)/2. - rn*y_opt,   npy.square(npy.absolute(y_opt)) * rn]]
               )
           self.noise = noise.swapaxes(0, 2).swapaxes(1, 2)
           self.noise_freq = noise_freq
-        
-        
-        
         
     # touchstone file IO
     def read_touchstone(self, filename):
@@ -2161,7 +2333,7 @@ class Network(object):
     def interpolate(self, freq_or_n, basis='s', coords='cart',
                     f_kwargs={}, return_array=False, **kwargs):
         """
-        Interpolate a Network allong frequency axis
+        Interpolate a Network along frequency axis
 
         The input 'freq_or_n` can be either a new
         :class:`~skrf.frequency.Frequency` or an `int`, or a new
@@ -3739,6 +3911,186 @@ def cascade_list(l):
 
     """
     return reduce(cascade, l)
+
+def _noisy_two_port_verify(ntwkA, ntwkB):
+
+    if ntwkA.nports!=2 or ntwkB.nports!=2:
+        raise ValueError('nports must be equal to 2 for both networks')
+
+    if (ntwkA.frequency != ntwkB.frequency) or (ntwkA.noise_freq != ntwkB.noise_freq):
+        raise ValueError('both networks must have same frequency data')
+
+    #if ntwkA.noise_freq != ntwkA.frequency:
+     #   raise ValueError('network frequency and noise frequency vectors must be the same')
+
+    #if ntwkA.z0 != ntwkB.z0:
+        #raise ValueError('currently, z0 must be the same for both networks')
+
+    return True
+
+
+def cascade_2port(ntwkA, ntwkB, calc_noise=True):
+    '''
+    cascade combination of two 2-ports Networks and handles noise
+
+    Connects two 2-port Networks in cascade configuration, if noise information
+    is available, use it to determine the total covariance matrix for the combined
+    system.
+
+    Notes
+    ------
+    For a description of the parallel-parallel two-port connection see 
+    https://en.wikipedia.org/wiki/Two-port_network 
+
+    Parameters
+    -----------
+    ntwkA : :class:`Network`
+            network `ntwkA`
+    ntwkB : Network
+            network `ntwkB`
+    calc_noise : Bool
+                Set to false if no noise calculations are desired
+
+    Returns
+    --------
+    C : Network
+            the resultant two-port network of ntwkA parallel-parallel with ntwkB
+
+    See Also
+    ---------
+    series_series_2port
+    '''
+
+    _noisy_two_port_verify(ntwkA, ntwkB)
+
+    ta = ntwkA.t
+    tb = ntwkB.t
+    tt = npy.matmul(ta, tb)
+
+    nwk = ntwkA.copy()
+    nwk.t = tt
+
+    if ntwkA.noise_cov and ntwkB.noise_cov and calc_noise:
+        cta = ntwkA.ct
+        ctb = ntwkB.ct
+        ctt = cta.mat_vec + npy.matmul(ta, npy.matmul(ctb.mat_vec, npy.conjugate(ta.swapaxes(1, 2))))
+        nwk.ct = ctt
+    
+    return nwk
+
+
+def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
+    '''
+    parallel combination of two 2-ports  Networks
+
+    Connects two 2-port Networks in parallel-parallel configuration
+
+    Notes
+    ------
+    For a description of the parallel-parallel two-port connection see 
+    https://en.wikipedia.org/wiki/Two-port_network 
+
+    Parameters
+    -----------
+    ntwkA : :class:`Network`
+            network `ntwkA`
+    ntwkB : Network
+            network `ntwkB`
+    calc_noise : Bool
+                Set to false if no noise calculations are desired
+
+    Returns
+    --------
+    C : Network
+            the resultant two-port network of ntwkA parallel-parallel with ntwkB
+
+    See Also
+    ---------
+    series_series_2port
+    '''
+
+    _noisy_two_port_verify(ntwkA, ntwkB)
+
+    ya = ntwkA.y
+    yb = ntwkB.y
+    yt = ya + yb # not sure I can do this with np arrays
+
+     # make the new resulting network
+    s = npy.zeros(shape=ya.shape)
+    nwk = Network(frequency = ntwka.frequency, s=s)
+    nwk.y = yt
+    nwk.z0 = ntwkA.z0
+
+    if ntwkA.noisy and ntwkB.noisy and calc_noise:
+        cya = ntwkA.cy
+        cyb = ntwkB.cy
+        cyt = cya + cyb
+
+        nwk.cy = cyt
+        nwk.noise_freq = ntwkA.noise_freq
+    
+    return nwk
+
+def series_series_2port(ntwkA, ntwkB, calc_noise=True):
+    '''
+    series combination of two 2-ports Networks
+
+    Connects two 2-port Networks in series-series configuration
+
+    Notes
+    ------
+    For a description of the series_series two-port connection see 
+    https://en.wikipedia.org/wiki/Two-port_network 
+
+    Parameters
+    -----------
+    ntwkA : :class:`Network`
+            network `ntwkA`
+    ntwkB : Network
+            network `ntwkB`
+    calc_noise : Bool
+                Set to false if no noise calculations are desired
+
+    Returns
+    --------
+    C : Network
+            the resultant two-port network of ntwkA in series-series with ntwkB
+
+    See Also
+    ---------
+    parallel_parallel
+    cascade
+    '''
+
+    _noisy_two_port_verify(ntwkA, ntwkB)
+
+    za = ntwkA.z
+    zb = ntwkB.z
+    zt = za + zb # not sure I can do this with np arrays
+
+     # make the new resulting network
+     # make the new resulting network
+    s = npy.zeros(shape=za.shape)
+    nwk = Network(frequency = ntwka.frequency, s=s)
+    nwk.z = zt
+    nwk.z0 = ntwkA.z0
+
+    if ntwkA.noisy and ntwkB.noisy and calc_noise:
+        cza = ntwkA.cz
+        czb = ntwkB.cz
+        czt = cza + czb
+
+        nwk.cz = czt
+        nwk.noise_freq = ntwkA.noise_freq
+    
+    return nwk
+
+def series_parallel_2port(ntwkA, ntwkB, calc_noise=True):
+    raise NotImplemented()
+
+def parallel_series_2port(ntwkA, ntwkB, calc_noise=True):
+    raise NotImplemented()
+
 
 
 def de_embed(ntwkA, ntwkB):
@@ -5569,7 +5921,6 @@ def z2h(z):
     ]).transpose()
     return h
 
-
 ## these methods are used in the secondary properties
 def passivity(s):
     '''
@@ -6178,6 +6529,10 @@ def s2vswr_active(s, a):
     return vswr_act
 
 
+
+
+    
+    
 
 
 
