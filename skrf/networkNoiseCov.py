@@ -180,7 +180,11 @@ class NetworkNoiseCov(object):
         raise NotImplemented()
 
     def _cs2ca(self, mat, A):
-        raise NotImplemented()
+        Z = self._z2a(A)
+        cz = self._cs2cz(mat, Z)
+        ca = self._cz2ca(cz.mat_vec, A)
+        ca.form = 'a'
+        return ca
 
     ## T to other
     def _ct2cs(self, mat, S):

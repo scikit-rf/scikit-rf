@@ -495,7 +495,7 @@ class Network(object):
         return me
 
     @classmethod
-    def from_a(cls, y, *args, **kw):
+    def from_a(cls, a, *args, **kw):
         '''
         Create a Network from its ABCD-parameters
         
@@ -1155,11 +1155,13 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        return s2a(self.s, self.z0)
+        z = s2z(self.s, self.z0)
+        return z2a(z)
 
     @a.setter
     def a(self, value):
-        self._s = a2s(value, self.z0)
+        z = a2z(value)
+        self._s = z2s(z, self.z0)
 
     @property
     def cs(self):
@@ -5242,6 +5244,8 @@ def z2t(z):
 
 def a2s(a, z0=50):
     '''
+    TODO: Fix, doesn't seem to be correct, looks like there is a transpose problem
+
     convert abcd parameters to s parameters
 
     Parameters
@@ -5382,6 +5386,8 @@ def z2a(z):
 
 def s2a(s, z0=50):
     '''
+    TODO: Fix there seems to be a transpose problem
+    
     Converts scattering parameters to abcd  parameters [#]_ .
 
 
