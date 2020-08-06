@@ -164,7 +164,7 @@ class Circuit():
         for cnx in self.connections:
             for (ntw, _) in cnx:
                 if not self._is_named(ntw):
-                    raise AttributeError('All Networks must have a name.')
+                    raise AttributeError(f'All Networks must have a name. Faulty network:{ntw}')
 
         # list of networks for initial checks
         ntws = self.networks_list()
@@ -775,4 +775,245 @@ class Circuit():
             z_active : active Z-parameters
             y_active : active Y-parameters  
         '''        
-        return self.network.vswr_active(a)        
+        return self.network.vswr_active(a)
+    
+    @property
+    def z0(self):
+        '''
+        Characteristic impedances of "internal" ports
+
+        Returns
+        -------
+        z0 : complex array of shape (nfreqs, nports)
+            Characteristic impedances of both "inner" and "outer" ports
+
+        '''
+        z0s = []
+        for cnx_idx, (ntw, ntw_port) in self.connections_list:
+            z0s.append(ntw.z0[:,ntw_port])
+        return np.array(z0s).T
+
+    @property
+    def connections_pair(self):
+        '''
+        List the connections by pair. 
+        
+        Each connection in the circuit is between a specific pair of two 
+        (networks, port, z0).  
+
+        Returns
+        -------
+        connections_pair : list
+            list of pair of connections
+
+        '''
+        return [self.connections_list[i:i+2] for i in range(0, len(self.connections_list), 2)]
+        
+    
+    @property
+    def _currents_directions(self):
+        '''
+        Create a array of indices to define the sign of the current.
+        
+        The currents are defined positive when entering an internal network.
+        
+        
+
+        Returns
+        -------
+        directions : array of int (nports, 2)
+        
+        Note
+        ----
+        This function is used in internal currents and voltages calculations.
+
+        '''
+        directions = np.zeros((self.dim,2), dtype='int')
+        for cnx_pair in self.connections_pair:
+            (cnx_idx_A, cnx_A), (cnx_idx_B, cnx_B) = cnx_pair
+            directions[cnx_idx_A,:] = cnx_idx_A, cnx_idx_B
+            directions[cnx_idx_B,:] = cnx_idx_B, cnx_idx_A
+        return directions
+    
+    def _a(self, a_external):
+        '''
+        Wave input array at "internal" ports
+
+        Parameters
+        ----------
+        a_external : array
+            power-wave input vector at ports
+            
+        Returns
+        -------
+        a_internal : array
+            Wave input array at internal ports
+
+        '''
+        # create a zero array and fill the values corresponding to ports
+        a_internal = np.zeros(self.dim, dtype='complex')
+        a_internal[self.port_indexes] = a_external
+        return a_internal
+
+    def _a_external(self, power, phase):
+        '''
+        Wave input array at Circuit's ports ("external" ports).
+        
+        The array is defined from power and phase by:
+        
+        .. math::
+            
+            a = \sqrt(2 P_{in} ) e^{j \phi}
+            
+        The factor 2 is in order to deal with peak values.
+
+        Parameters
+        ----------
+        power : list or array
+            Input power at external ports in Watts [W]
+        phase : list or array
+            Input phase at external ports in radian [rad]
+
+        NB: the size of the power and phase array should match the number of ports
+
+        Returns
+        -------
+        a_external: array
+            Wave input array  at Circuit's ports
+
+        '''
+        if len(power) != len(self.port_indexes):
+            raise ValueError('Length of power array does not match the number of ports of the circuit.')
+        if len(phase) != len(self.port_indexes):
+            raise ValueError('Length of phase array does not match the number of ports of the circuit.')
+        return np.sqrt(2*np.array(power))*np.exp(1j*np.array(phase))
+    
+    def _b(self, a_internal):
+        '''
+        Wave output array at "internal" ports
+        
+        Parameters
+        ----------
+        a_internal : array
+            Wave input array at internal ports
+        
+        Returns
+        -------
+        b_internal : array
+            Wave output array at internal ports
+            
+        Note
+        ----
+        Wave input array at internal ports can be derived from power and 
+        phase excitation at "external" ports using `_a(power, phase)` method.
+        
+        '''
+        return self.s @ a_internal
+    
+    def currents(self, power, phase):
+        '''
+        Currents at internal ports. 
+        
+        NB: current direction is defined as positive when entering a node.
+        
+        NB: external current sign are opposite than corresponding internal ones,
+            as the internal currents are actually flowing into the "port" networks
+
+        Parameters
+        ----------
+        power : list or array
+            Input power at external ports in Watts [W]
+        phase : list or array
+            Input phase at external ports in radian [rad]
+
+        Returns
+        -------
+        I : complex array of shape (nfreqs, nports)
+            Currents in Amperes [A] (peak) at internal ports.
+
+        '''
+        a = self._a(self._a_external(power, phase))
+        b = self._b(a)
+        z0s = self.z0
+        directions = self._currents_directions
+        Is = (b[:,directions[:,0]] - b[:,directions[:,1]])/np.sqrt(z0s)
+        return Is
+
+
+    def voltages(self, power, phase):
+        '''
+        Voltages at internal ports. 
+        
+        NB: 
+
+        Parameters
+        ----------
+        power : list or array
+            Input power at external ports in Watts [W]
+        phase : list or array
+            Input phase at external ports in radian [rad]
+
+        Returns
+        -------
+        V : complex array of shape (nfreqs, nports)
+            Voltages in Amperes [A] (peak) at internal ports.
+
+        '''
+        a = self._a(self._a_external(power, phase))
+        b = self._b(a)
+        z0s = self.z0
+        directions = self._currents_directions
+        Vs = (b[:,directions[:,0]] + b[:,directions[:,1]])*np.sqrt(z0s)
+        return Vs        
+    
+    def currents_external(self, power, phase):
+        '''
+        Currents at external ports. 
+        
+        NB: current direction is defined positive when "entering" into port.
+
+        Parameters
+        ----------
+        power : list or array
+            Input power at external ports in Watts [W]
+        phase : list or array
+            Input phase at external ports in radian [rad]
+
+        Returns
+        -------
+        I : complex array of shape (nfreqs, nports)
+            Currents in Amperes [A] (peak) at external ports. 
+
+        '''
+        a = self._a(self._a_external(power, phase))
+        b = self._b(a)
+        z0s = self.z0
+        Is = []
+        for port_idx in self.port_indexes:
+            Is.append((a[port_idx] - b[:,port_idx])/np.sqrt(z0s[:,port_idx]))
+        return np.array(Is).T
+    
+    def voltages_external(self, power, phase):
+        '''
+        Voltages at external ports
+
+        Parameters
+        ----------
+        power : list or array
+            Input power at external ports in Watts [W]
+        phase : list or array
+            Input phase at external ports in radian [rad]
+
+        Returns
+        -------
+        V : complex array of shape (nfreqs, nports)
+            Voltages in Volt [V] (peak)  at ports
+
+        '''        
+        a = self._a(self._a_external(power, phase))
+        b = self._b(a)
+        z0s = self.z0
+        Vs = []
+        for port_idx in self.port_indexes:
+            Vs.append((a[port_idx] + b[:,port_idx])*np.sqrt(z0s[:,port_idx]))
+        return np.array(Vs).T
