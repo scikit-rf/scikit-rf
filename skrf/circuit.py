@@ -164,7 +164,7 @@ class Circuit():
         for cnx in self.connections:
             for (ntw, _) in cnx:
                 if not self._is_named(ntw):
-                    raise AttributeError(f'All Networks must have a name. Faulty network:{ntw}')
+                    raise AttributeError('All Networks must have a name. Faulty network:', ntw)
 
         # list of networks for initial checks
         ntws = self.networks_list()
@@ -908,7 +908,8 @@ class Circuit():
         phase excitation at "external" ports using `_a(power, phase)` method.
         
         '''
-        return self.s @ a_internal
+        # return self.s @ a_internal
+        return np.matmul(self.s, a_internal)
     
     def currents(self, power, phase):
         '''
