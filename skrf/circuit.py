@@ -933,6 +933,34 @@ class Circuit():
             Currents in Amperes [A] (peak) at internal ports.
 
         '''
+        # It is possible with Circuit to define connections between 
+        # multiple (>2) ports at the same time in the connection setup, like : 
+        # cnx = [
+        #       [(ntw1, portA), (ntw2, portB), (ntw3, portC)], ...
+        #]
+        # Such a case is not supported with the present calculation method
+        # which only works with pair connections between ports, ie like:
+        # cnx = [
+        #       [(ntw1, portA), (ntw2, portB)],
+        #       [(ntw2, portD), (ntw3, portC)], ...
+        #]
+        # It should not be a huge limitation (?), since it should be always possible
+        # to add the proper splitting Network (such a "T" or hybrid or more)
+        # and connect this splitting Network ports to other Network ports.
+        # ie going from:
+        # [ntwA]  ---- [ntwB]
+        #          |
+        #          |
+        #        [ntwC]
+        # to:
+        # [ntwA] ------ [ntwD] ------ [ntwB]
+        #                 |
+        #                 |
+        #              [ntwC]
+        for inter_idx, inter in self.intersections_dict.items():
+            if len(inter) > 2:
+                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
+
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
@@ -960,6 +988,11 @@ class Circuit():
             Voltages in Amperes [A] (peak) at internal ports.
 
         '''
+        # cf currents() for more details
+        for inter_idx, inter in self.intersections_dict.items():
+            if len(inter) > 2:
+                raise NotImplementedError('Connections between more than 2 ports are not supported (yet?)')
+
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
