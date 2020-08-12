@@ -775,8 +775,8 @@ if sys.version_info < (3, 0):
         def __exit__(self, *args):
             self.close()
 else:
-    import io
-    StringBuffer = io.StringIO
+    from io import StringIO
+    StringBuffer = StringIO
 
 
 class TouchstoneEncoder(json.JSONEncoder):
