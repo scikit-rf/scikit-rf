@@ -77,6 +77,10 @@ class NetworkNoiseCov(object):
             raise ValueError("mat_vec " + str(value.shape) +  " to " + str(self._mat_vec.shape) + " incompatible" )
         self._mat_vec = value
 
+    @property
+    def cc(self):
+        return self.mat_vec
+
 
     def get_cs(self, S):
         return self.transform_to_s[self.form](self._mat_vec, S)
