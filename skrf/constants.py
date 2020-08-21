@@ -22,6 +22,7 @@ ONE = 1.0 + 1/1e14
 ZERO = 1e-6
 
 K_BOLTZMANN = 1.38064852e-23
+h_PLANK = 6.62607004e-34
 T0 = 290.
 
 # S-parameter definition labels and default definition

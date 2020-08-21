@@ -2,7 +2,7 @@ import numpy as npy
 from copy import deepcopy as copy
 
 from .util import network_array
-from .constants import ZERO, K_BOLTZMANN
+from .constants import ZERO, K_BOLTZMANN, h_PLANK
 
 class NetworkNoiseCov(object):
 
@@ -28,26 +28,51 @@ class NetworkNoiseCov(object):
         self.transform_to_a = {'s': self._cs2ca, 't': self._ct2ca, 'z': self._cz2ca, 'y': self._cy2ca,'a': self._do_nothing }
 
     @classmethod
+    def Tnoise(cls,f,T0):
+
+        #This is the correct blackbody noise that accounts for the quantum limit to thermal noise for low values of T0 as well as
+        #the upper noise limit for frequencies that exceed 200 GHz. 
+        #Insert reference here - MBG
+
+        X = (h_PLANK*f)/(2*K_BOLTZMANN*T0)
+        Tn = ((h_PLANK*f)/(2*K_BOLTZMANN))*(1/npy.tanh(X))
+
+        return Tn
+
+
+    @classmethod
     def from_passive_z(cls, z, z0=50, T0=290):
 
-        cov = 4.*K_BOLTZMANN*T0*npy.real(z)
+        Tn = cls.Tnoise(f,T0)
+        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(s)[1],npy.shape(s)[2]))
+
+        cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(z)
         return cls(cov, form='z', z0=z0, T0=T0)
 
     @classmethod
-    def from_passive_y(cls, y, z0=50, T0=290):
+    def from_passive_y(cls, y, f, z0=50, T0=290):
 
-        cov = 4.*K_BOLTZMANN*T0*npy.real(y)
+        Tn = cls.Tnoise(f,T0)
+        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(s)[1],npy.shape(s)[2]))
+
+        cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(y)
         return cls(cov, form='y', z0=z0, T0=T0)
 
     @classmethod
-    def from_passive_s(cls, s, z0=50, T0=290):
+    def from_passive_s(cls, s, f, z0=50, T0=290):
 
-        ovec = npy.ones(s.shape[0])
-        zvec = npy.zeros(s.shape[0])
+        Tn = cls.Tnoise(f,T0)
+        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(s)[1],npy.shape(s)[2]))
+  
+        #ovec = npy.ones(s.shape[0])
+        #zvec = npy.zeros(s.shape[0])
         SM =  npy.matmul(s, npy.conjugate(s.swapaxes(1, 2)))
-        I = network_array([[ovec, zvec],[zvec, ovec]])
-        cov = K_BOLTZMANN*T0*(I - SM)/2
+        I_2D = npy.identity(npy.shape(s)[1])
+        I = npy.repeat(I_2D[npy.newaxis,:, :], npy.shape(s)[0], axis=0)
+        #I = network_array([[ovec, zvec],[zvec, ovec]])
+        cov = K_BOLTZMANN*Tn_mat*(I - SM)/2
         return cls(cov, form='s', z0=z0, T0=T0)
+
 
     def copy(self):
         '''
@@ -76,6 +101,10 @@ class NetworkNoiseCov(object):
         if value.shape != self._mat_vec.shape:
             raise ValueError("mat_vec " + str(value.shape) +  " to " + str(self._mat_vec.shape) + " incompatible" )
         self._mat_vec = value
+
+    @property
+    def cc(self):
+        return self.mat_vec
 
 
     def get_cs(self, S):
