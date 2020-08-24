@@ -44,7 +44,7 @@ class NetworkNoiseCov(object):
     def from_passive_z(cls, z, z0=50, T0=290):
 
         Tn = cls.Tnoise(f,T0)
-        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(s)[1],npy.shape(s)[2]))
+        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(z)[1],npy.shape(z)[2]))
 
         cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(z)
         return cls(cov, form='z', z0=z0, T0=T0)
@@ -53,7 +53,7 @@ class NetworkNoiseCov(object):
     def from_passive_y(cls, y, f, z0=50, T0=290):
 
         Tn = cls.Tnoise(f,T0)
-        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(s)[1],npy.shape(s)[2]))
+        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(y)[1],npy.shape(y)[2]))
 
         cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(y)
         return cls(cov, form='y', z0=z0, T0=T0)
