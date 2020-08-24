@@ -16,3 +16,6 @@ dist/
 *__pycache__/
 qtapps/sandbox*
 *.iml
+
+*.s1p
+.vscode/

@@ -214,9 +214,22 @@ class NetworkNoiseCov(object):
         return n
 
     def _cs2ca(self, mat, A):
+        y0 = 1/self._z0
+
+        #a11 = A[:, 0, 0]
+        #a12 = A[:, 0, 1]
+        #a21 = A[:, 1, 0]
+        #a22 = A[:, 1, 1]
+
+        #Tm = self._k_norm/2*network_array([[a12*y0 + 1, -a11],[a22*y0, -a21 - y0]])
+        #n = self.copy()
+        #n.mat_vec = npy.matmul(Tm, npy.matmul(mat, npy.conjugate(Tm.swapaxes(1, 2))))
+        #n.form = 'a'
+
         Z = self._z2a(A)
         cz = self._cs2cz(mat, Z)
         ca = self._cz2ca(cz.mat_vec, A)
+
         ca.form = 'a'
         return ca
 
