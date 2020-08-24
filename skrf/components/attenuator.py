@@ -5,7 +5,7 @@ from ..util import network_array
 
 class Attenuator(Network):
 
-    def __init__(self, attenuation_db, name=None, comments=None, f_unit=None, s_def='power', **kwargs):
+    def __init__(self, attenuation_db, name=None, comments=None, f_unit=None, T0=None, s_def='power', **kwargs):
         super().__init__(name=name, comments=comments, f_unit=f_unit, s_def=s_def, **kwargs)
 
         if attenuation_db < 0:
@@ -20,7 +20,7 @@ class Attenuator(Network):
                                      [self._attenuation*ovec,                    zvec]])
 
         self.s = attn_vec
-        self.noise_source('passive')
+        self.noise_source('passive', T0)
 
 
 

@@ -538,7 +538,6 @@ class Network(object):
             if source == 'passive':
                 if T0:
                     self.T0 = T0
-
                 self.noise_cov = NetworkNoiseCov.from_passive_s(self.s, self.f, T0=self.T0)
         elif isinstance(source, NetworkNoiseCov):
             self._validate_covariance_setter(source.mat_vec)
@@ -4018,10 +4017,8 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
     yt = ya + yb # not sure I can do this with np arrays
 
      # make the new resulting network
-    s = npy.zeros(shape=ya.shape)
-    nwk = Network(frequency = ntwka.frequency, s=s)
+    nwk = ntwkA.copy()
     nwk.y = yt
-    nwk.z0 = ntwkA.z0
 
     if ntwkA.noisy and ntwkB.noisy and calc_noise:
         cya = ntwkA.cy
@@ -4070,12 +4067,8 @@ def series_series_2port(ntwkA, ntwkB, calc_noise=True):
     zb = ntwkB.z
     zt = za + zb # not sure I can do this with np arrays
 
-     # make the new resulting network
-     # make the new resulting network
-    s = npy.zeros(shape=za.shape)
-    nwk = Network(frequency = ntwka.frequency, s=s)
+    nwk = ntwkA.copy()
     nwk.z = zt
-    nwk.z0 = ntwkA.z0
 
     if ntwkA.noisy and ntwkB.noisy and calc_noise:
         cza = ntwkA.cz
@@ -4092,7 +4085,6 @@ def series_parallel_2port(ntwkA, ntwkB, calc_noise=True):
 
 def parallel_series_2port(ntwkA, ntwkB, calc_noise=True):
     raise NotImplemented()
-
 
 
 def de_embed(ntwkA, ntwkB):
