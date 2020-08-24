@@ -103,7 +103,6 @@ class NetworkNoiseCov(object):
     def cc(self):
         return self.mat_vec
 
-
     def get_cs(self, S):
         return self.transform_to_s[self.form](self._mat_vec, S)
 
@@ -203,7 +202,16 @@ class NetworkNoiseCov(object):
         return n
 
     def _cs2cy(self, mat, Y):
-        raise NotImplemented()
+        y0 = 1/self._z0
+        Yn = Y*self._z0
+        ovec = npy.ones(mat.shape[0])
+        zvec = npy.zeros(mat.shape[0])
+        I = network_array([[ovec, zvec],[zvec, ovec]])
+        Tm = self._k_norm/y0*(Yn + I)
+        n = self.copy()
+        n.mat_vec = npy.matmul(Tm, npy.matmul(mat, npy.conjugate(Tm.swapaxes(1, 2))))
+        n.form = 'y'
+        return n
 
     def _cs2ca(self, mat, A):
         Z = self._z2a(A)
@@ -258,7 +266,7 @@ class NetworkNoiseCov(object):
         return ct
 
     def _cz2cy(self, mat, Y):
-        Tm = Z
+        Tm = Y
         n = self.copy()
         n.mat_vec = npy.matmul(Tm, npy.matmul(mat, npy.conjugate(Tm.swapaxes(1, 2))))
         n.form = 'y'
