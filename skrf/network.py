@@ -541,6 +541,7 @@ class Network(object):
                 self.noise_cov = NetworkNoiseCov.from_passive_s(self.s, self.f, T0=self.T0)
         elif isinstance(source, NetworkNoiseCov):
             self._validate_covariance_setter(source.mat_vec)
+            self.noise
             self.noise_cov = source
         else:
             raise ValueError("Input must be the string 'passive' or a NetworkNoiseCov object, otherwise use setters 'cs', 'ct', 'cz', etc.")
@@ -1164,7 +1165,8 @@ class Network(object):
 
     @property
     def cs(self):
-        return self.noise_cov.get_cs(self.s)
+        ntwkNoiseCov = self.noise_cov.get_cs(self.s)
+        return ntwkNoiseCov.cc
 
     @cs.setter
     def cs(self, value):
@@ -1173,7 +1175,8 @@ class Network(object):
 
     @property
     def ct(self):
-        return self.noise_cov.get_ct(self.t)
+        ntwkNoiseCov = self.noise_cov.get_ct(self.t)
+        return ntwkNoiseCov.cc
 
     @ct.setter
     def ct(self, value):
@@ -1182,16 +1185,18 @@ class Network(object):
 
     @property
     def cz(self):
-        return self.noise_cov.get_cz(self.z)
+        ntwkNoiseCov = self.noise_cov.get_cz(self.z)
+        return ntwkNoiseCov.cc
 
     @cz.setter
-    def cz(self, s):
+    def cz(self, value):
        self._validate_covariance_setter(value)
        self.noise_cov = NetworkNoiseCov(value, form='z')
 
     @property
     def cy(self):
-        return self.noise_cov.get_cy(self.y)
+        ntwkNoiseCov = self.noise_cov.get_cy(self.y)
+        return ntwkNoiseCov.cc
 
     @cy.setter
     def cy(self, value):
@@ -1200,7 +1205,8 @@ class Network(object):
 
     @property
     def ca(self):
-        return self.noise_cov.get_ca(self.a)
+        ntwkNoiseCov = self.noise_cov.get_ca(self.a)
+        return ntwkNoiseCov.cc
 
     @ca.setter
     def ca(self, value):
@@ -3974,7 +3980,7 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
     if ntwkA.noise_cov and ntwkB.noise_cov and calc_noise:
         cta = ntwkA.ct
         ctb = ntwkB.ct
-        ctt = cta.mat_vec + npy.matmul(ta, npy.matmul(ctb.mat_vec, npy.conjugate(ta.swapaxes(1, 2))))
+        ctt = cta + npy.matmul(ta, npy.matmul(ctb, npy.conjugate(ta.swapaxes(1, 2))))
         nwk.ct = ctt
     
     return nwk
@@ -4020,13 +4026,11 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
     nwk = ntwkA.copy()
     nwk.y = yt
 
-    if ntwkA.noisy and ntwkB.noisy and calc_noise:
+    if ntwkA.noise_cov and ntwkB.noise_cov and calc_noise:
         cya = ntwkA.cy
         cyb = ntwkB.cy
         cyt = cya + cyb
-
         nwk.cy = cyt
-        nwk.noise_freq = ntwkA.noise_freq
     
     return nwk
 
@@ -4070,13 +4074,12 @@ def series_series_2port(ntwkA, ntwkB, calc_noise=True):
     nwk = ntwkA.copy()
     nwk.z = zt
 
-    if ntwkA.noisy and ntwkB.noisy and calc_noise:
+    if ntwkA.noise_cov and ntwkB.noise_cov and calc_noise:
         cza = ntwkA.cz
         czb = ntwkB.cz
         czt = cza + czb
 
         nwk.cz = czt
-        nwk.noise_freq = ntwkA.noise_freq
     
     return nwk
 

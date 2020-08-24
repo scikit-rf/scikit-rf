@@ -110,7 +110,7 @@ class NetworkNoiseCov(object):
         return self.transform_to_t[self.form](self._mat_vec, T)
 
     def get_cz(self, Z):
-        return self.transform_to_t[self.form](self._mat_vec, Z)
+        return self.transform_to_z[self.form](self._mat_vec, Z)
 
     def get_cy(self, Y):
         return self.transform_to_y[self.form](self._mat_vec, Y)
@@ -176,7 +176,7 @@ class NetworkNoiseCov(object):
 
     ## Covariance form conversions
     def _do_nothing(self, value, M):
-        return value
+        return self
 
     ## S to other
     def _cs2ct(self, mat, T):
