@@ -538,7 +538,6 @@ class Network(object):
             if source == 'passive':
                 if T0:
                     self.T0 = T0
-
                 self.noise_cov = NetworkNoiseCov.from_passive_s(self.s, self.f, T0=self.T0)
         elif isinstance(source, NetworkNoiseCov):
             self._validate_covariance_setter(source.mat_vec)
