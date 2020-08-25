@@ -17,5 +17,5 @@ dist/
 qtapps/sandbox*
 *.iml
 
-*.s1p
 .vscode/
+.coverage
