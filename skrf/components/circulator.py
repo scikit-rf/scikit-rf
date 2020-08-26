@@ -18,7 +18,7 @@ class Circulator(Network):
 
         circ_vec = network_array([[zvec,                                      zvec,            self._attenuation*ovec], \
                                   [self._attenuation*ovec,                    zvec,                              zvec], \
-                                  [zvec                     self._attenuation*ovec,                              zvec]])
+                                  [zvec,                     self._attenuation*ovec,                              zvec]])
 
         self.s = circ_vec
         self.noise_source('passive', T0)

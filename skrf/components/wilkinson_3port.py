@@ -22,7 +22,7 @@ class Wilkinson_3port(Network):
         ovec = npy.ones(len(self.frequency))
         zvec = npy.zeros(len(self.frequency))
 
-        dev_vec  = network_array([[zvec,                             self._S12*ovec,                   self._S13*ovec], \
+        div_vec  = network_array([[zvec,                             self._S12*ovec,                   self._S13*ovec], \
                                   [self._S12*ovec,                             zvec,                             zvec], \
                                   [self._S13*ovec,                             zvec,                             zvec]])
 
