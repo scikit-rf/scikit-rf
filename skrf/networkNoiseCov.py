@@ -28,13 +28,12 @@ class NetworkNoiseCov(object):
         self.transform_to_a = {'s': self._cs2ca, 't': self._ct2ca, 'z': self._cz2ca, 'y': self._cy2ca,'a': self._do_nothing }
 
     @classmethod
-    def Tnoise(cls,f,T0):
+    def Tnoise(cls,f,T):
 
-        #This is the correct blackbody noise that accounts for the quantum limit to thermal noise for low values of T0 as well as
+        #This is the correct blackbody noise that accounts for the quantum limit thermal noise floor for low values of T0 as well as
         #the upper noise limit for frequencies that exceed 200 GHz. 
         #Insert reference here - MBG
-
-        X = (h_PLANK*f)/(2*K_BOLTZMANN*T0)
+        X = (h_PLANK*f)/(2*K_BOLTZMANN*T)
         Tn = ((h_PLANK*f)/(2*K_BOLTZMANN))*(1/npy.tanh(X))
 
         return Tn
@@ -47,7 +46,7 @@ class NetworkNoiseCov(object):
         Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(z)[1],npy.shape(z)[2]))
 
         cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(z)
-        return cls(cov, form='z', z0=z0, T0=T0)
+        return cls(cov, form='z', z0=z0, T0=Tn)
 
     @classmethod
     def from_passive_y(cls, y, f, z0=50, T0=290):
@@ -56,7 +55,7 @@ class NetworkNoiseCov(object):
         Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(y)[1],npy.shape(y)[2]))
 
         cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(y)
-        return cls(cov, form='y', z0=z0, T0=T0)
+        return cls(cov, form='y', z0=z0, T0=Tn)
 
     @classmethod
     def from_passive_s(cls, s, f, z0=50, T0=290):
@@ -67,7 +66,7 @@ class NetworkNoiseCov(object):
         SM =  npy.matmul(s, npy.conjugate(s.swapaxes(1, 2)))
         I_2D = npy.identity(npy.shape(s)[1])
         I = npy.repeat(I_2D[npy.newaxis,:, :], npy.shape(s)[0], axis=0)
-        cov = K_BOLTZMANN*Tn_mat*(I - SM)/2
+        cov = K_BOLTZMANN*Tn_mat*(I - SM)
         return cls(cov, form='s', z0=z0, T0=T0)
 
 
