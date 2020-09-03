@@ -67,8 +67,8 @@ class MultiNetworkSystem(object):
         for ntwk in self.ntwk_dict:
             if first:
                 first = False
-                ln = len(ntwk)
-            if ln != len(ntwk):
+                ln = len(self.ntwk_dict[ntwk]['ntwk'].frequency)
+            if ln != len(self.ntwk_dict[ntwk]['ntwk'].frequency):
                 enumb += 1
                 errors[enumb] = ('Number of frequencies for each network must be the same'  )
 
