@@ -18,7 +18,7 @@ class NetworkNoiseCov(object):
         self._form = form
         self._z0 = z0
         self._T0 = T0
-        self._k_norm = 1/npy.sqrt(2*self._z0)
+        self._k_norm = 1/npy.sqrt(self._z0)  # I took the sqrt(2) out so I could use the covariance forms from references (not to myself [Randy] clean up later)
 
         # dictionaries of transforms. Transforming is carried out during getter and setter operations 
         self.transform_to_s = {'s': self._do_nothing, 't': self._ct2cs, 'z': self._cz2cs, 'y': self._cy2cs,'a': self._ca2cs }
@@ -55,7 +55,7 @@ class NetworkNoiseCov(object):
         Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(y)[1],npy.shape(y)[2]))
 
         cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(y)
-        return cls(cov, form='y', z0=z0, T0=Tn)
+        return cls(cov, form='y', z0=z0, T0=T0)
 
     @classmethod
     def from_passive_s(cls, s, f, z0=50, T0=290):
@@ -66,9 +66,8 @@ class NetworkNoiseCov(object):
         SM =  npy.matmul(s, npy.conjugate(s.swapaxes(1, 2)))
         I_2D = npy.identity(npy.shape(s)[1])
         I = npy.repeat(I_2D[npy.newaxis,:, :], npy.shape(s)[0], axis=0)
-        cov = K_BOLTZMANN*Tn_mat*(I - SM)
+        cov = K_BOLTZMANN*Tn_mat*(I - SM) 
         return cls(cov, form='s', z0=z0, T0=T0)
-
 
     def copy(self):
         '''
@@ -245,10 +244,18 @@ class NetworkNoiseCov(object):
         return n
 
     def _ct2cz(self, mat, Z):
-        raise NotImplemented()
+        S = self._z2s(Z) 
+        cs = self._ct2cs(mat, S)
+        cz = self._cs2cz(cs.mat_vec, Z)
+        cz.form = 'z'
+        return cz
 
     def _ct2cy(self, mat, Y):
-        raise NotImplemented()
+        S = self._z2s(Y) 
+        cs = self._ct2cs(mat, S)
+        cy = self._cs2cy(cs.mat_vec, Y)
+        cy.form = 'y'
+        return cy
 
     def _ct2ca(self, mat, A):
         Z = self._z2a(A) # equivalent to a2z

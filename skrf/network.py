@@ -539,6 +539,10 @@ class Network(object):
                 if T0:
                     self.T0 = T0
                 self.noise_cov = NetworkNoiseCov.from_passive_s(self.s, self.f, T0=self.T0)
+            elif source == 'none':
+                #TODO: Clean this up
+                self.noise_cov = NetworkNoiseCov.from_passive_s(npy.zeros(shape=self.s.shape), self.f, T0=self.T0) 
+                self.noise_cov.mat_vec = npy.zeros(shape=self.s.shape)
         elif isinstance(source, NetworkNoiseCov):
             self._validate_covariance_setter(source.mat_vec)
             self.noise
@@ -4069,7 +4073,7 @@ def series_series_2port(ntwkA, ntwkB, calc_noise=True):
 
     za = ntwkA.z
     zb = ntwkB.z
-    zt = za + zb # not sure I can do this with np arrays
+    zt = za + zb 
 
     nwk = ntwkA.copy()
     nwk.z = zt
