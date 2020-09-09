@@ -17,7 +17,7 @@ class SmallSig_NPN_BJT_CE_2port(Network):
         Network ([type]): [description]
     """
 
-    def __init__(self, ic_ma=0, beta0=100, cpi=1e-18, cu=1e-18, rbb=0, rc=0, re=0, ru=0, r0=0, cjx=0, cjs=0, name=None, comments=None, f_unit=None, T0=None, s_def='power', **kwargs):
+    def __init__(self, ic_ma=0, beta0=100, cpi=1e-18, cu=1e-18, rbb=0, rc=0, re=0, ru=0, r0=0, cjx=1e-20, cjs=1e-20, name=None, comments=None, f_unit=None, T0=None, s_def='power', **kwargs):
         super().__init__(name=name, comments=comments, f_unit=f_unit, s_def=s_def, **kwargs)
 
         nwrk_rbb = components.RLC_Series_2port(R=rbb, frequency=self.frequency, T0 = T0)
@@ -60,8 +60,8 @@ class SmallSig_NPN_BJT_CE_2port(Network):
         ntwkT = cascade_2port(nwrk_rbb, ntwkT)
         ntwkT = cascade_2port(ntwkT, nwrk_r0)
         ntwkT = series_series_2port(ntwkT, nwrk_re)
-        #ntwkT = cascade_2port(ntwkT, nwrk_cjs)
-        #ntwkT = parallel_parallel_2port(ntwkT, nwrk_cjx)
+        ntwkT = parallel_parallel_2port(ntwkT, nwrk_cjx)
+        ntwkT = cascade_2port(ntwkT, nwrk_cjs)
         ntwkT = cascade_2port(ntwkT, nwrk_rc)
 
         self.s = ntwkT.s
