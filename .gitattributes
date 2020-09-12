@@ -1,2 +1,37 @@
 
-#* text eol=lf
+# Set the default behavior for line endings, in case people don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files you want to always be normalized and converted
+# to native line endings on checkout.
+*.py text
+*.yml text
+*.cfg text
+*.txt
+*.s1p
+*.s2p
+*.s3p
+*.s4p
+*.s5p
+*.s6p
+*.s7p
+*.s8p
+*.s9p
+*.s10p
+*.json
+*.rst
+*.md
+*.dat
+*.dpl
+Makefile
+*.in
+*.ipynb
+
+*.bat text eol=crlf
+
+
+# Denote all files that are truly binary and should not be modified.
+*.png binary
+*.jpg binary
+*.svg binary
+*.pdf binary
