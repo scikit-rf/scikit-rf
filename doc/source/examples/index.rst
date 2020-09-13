@@ -16,6 +16,14 @@ Network Theory
     
     networktheory/*
 
+Network Noise Analysis
+----------------------
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    noisynetworks/*
+
 Matching
 ------------------
 .. toctree::
