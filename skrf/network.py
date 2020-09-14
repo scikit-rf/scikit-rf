@@ -20,6 +20,14 @@ Network Class
 
     Network
 
+Building Network
+----------------
+
+.. autosummary::
+    :toctree: generated/
+
+    Network.from_z
+
 Network Representations
 ============================
 
@@ -342,9 +350,11 @@ class Network(object):
             its a str
         comments : str
             Comments associated with the Network
-        s_def : str -> s_def : ['power','pseudo']
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition, 
-            'pseudo' for pseudo-waves definition. Default is 'power'.
+            'pseudo' for pseudo-waves definition. 
+            'traveling' corresponds to the initial implementation. 
+            Default is 'power'.
             NB: results are the same for real-valued characteristic impedances.
         \*\*kwargs :
             key word arguments can be used to assign properties of the
@@ -2625,9 +2635,11 @@ class Network(object):
         z_new : complex array of shape FxN, F, N or a  scalar
             new port impedances
 
-        s_def : str -> s_def : ['power','pseudo']
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition, 
-            'pseudo' for pseudo-waves definition. Default is 'power'.
+            'pseudo' for pseudo-waves definition. 
+            'traveling' corresponds to the initial implementation. 
+            Default is 'power'.
             NB: results are the same for real-valued characteristic impedances.
 
         See Also
@@ -3036,7 +3048,7 @@ class Network(object):
             Pca[l, 4 * (l + 1) - 1 - 1] = True
             Pdb[l, 4 * (l + 1) - 2 - 1] = True
             Pcb[l, 4 * (l + 1) - 1] = True
-            if Pa.shape[0] is not 0:
+            if Pa.shape[0] != 0:
                 Pa[l, 4 * p + 2 * (l + 1) - 1 - 1] = True
                 Pb[l, 4 * p + 2 * (l + 1) - 1] = True
         return npy.concatenate((Pda, Pca, Pa, Pdb, Pcb, Pb))
@@ -3382,7 +3394,7 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         check_frequency_equal(ntwkA, ntwkB)
     except IndexError as e:
         common_freq = npy.intersect1d(ntwkA.frequency.f, ntwkB.frequency.f, return_indices=True)
-        if common_freq[0].size is 0:
+        if common_freq[0].size == 0:
             raise e
         else:
             ntwkA = ntwkA[common_freq[1]]
@@ -3670,7 +3682,8 @@ def cascade(ntwkA, ntwkB):
 
     Notes
     ------
-    connection diagram::
+    connection diagram:
+    ::
               A                B
            +---------+   +---------+
           -|0      N |---|0      N |-
@@ -4468,9 +4481,11 @@ def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
         scattering parameters
     z0 : complex array-like or number
         port impedances.
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
             
     Returns
     ---------
@@ -4551,9 +4566,11 @@ def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
         scattering parameters
     z0 : complex array-like or number
         port impedances
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
 
     Returns
     ---------
@@ -4731,9 +4748,11 @@ def z2s(z, z0=50, s_def=S_DEF_DEFAULT):
         impedance parameters
     z0 : complex array-like or number
         port impedances
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
 
     Returns
     ---------
@@ -5095,9 +5114,11 @@ def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
     z0 : complex array-like or number
         port impedances
 
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
 
     Returns
     ---------
@@ -5681,9 +5702,11 @@ def renormalize_s(s, z_old, z_new, s_def=S_DEF_DEFAULT):
     z_new : complex array of shape FxN, F, N or a scalar
         new port impedances
 
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition, 
-        'pseudo' for pseudo-waves definition. Default is 'power'.
+        'pseudo' for pseudo-waves definition. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
         NB: results are the same for real-valued characteristic impedances.
 
     Notes

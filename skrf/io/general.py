@@ -1,31 +1,44 @@
 
 '''
 .. module:: skrf.io.general
+
 ========================================
 general (:mod:`skrf.io.general`)
 ========================================
 
-General io functions for reading and writing skrf objects
+General input/output functions for reading and writing skrf objects
+
+
+General functions
+------------------
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    read
-    read_all
-    read_all_networks
-    write
-    write_all
-    save_sesh
+   read
+   read_all
+   read_all_networks
+   write
+   write_all
+   save_sesh
 
 
 Writing output to spreadsheet
+-----------------------------
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    network_2_spreadsheet
-    networkset_2_spreadsheet
+   network_2_spreadsheet
+   networkset_2_spreadsheet
 
+Writing output to pandas dataframe
+----------------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   network_2_dataframe
 
 '''
 import sys
@@ -762,8 +775,8 @@ if sys.version_info < (3, 0):
         def __exit__(self, *args):
             self.close()
 else:
-    import io
-    StringBuffer = io.StringIO
+    from io import StringIO
+    StringBuffer = StringIO
 
 
 class TouchstoneEncoder(json.JSONEncoder):
