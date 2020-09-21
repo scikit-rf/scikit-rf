@@ -27,6 +27,8 @@ Building Network
     :toctree: generated/
 
     Network.from_z
+    Network.from_y
+    Network.from_a
 
 Network Representations
 ============================
@@ -53,6 +55,15 @@ Connecting Networks
     de_embed
     flip
 
+Connecting Networks with Noise Analysis
+=======================================
+
+.. autosummary::
+    :toctree: generated/
+
+    cascade_2port
+    parallel_parallel_2port
+    series_series_2port
 
 
 Interpolation and Concatenation Along Frequency Axis
@@ -79,8 +90,6 @@ Combining Networks
     n_twoports_2_nport
     concat_ports
 
-
-
 IO
 ====
 
@@ -102,6 +111,18 @@ Noise
     Network.add_noise_polar
     Network.add_noise_polar_flatband
     Network.multiply_noise
+    Network.noise_source
+
+Network Noise Covariance Representations
+========================================
+.. autosummary::
+    :toctree: generated/
+
+    Network.cs
+    Network.ct
+    Network.cz
+    Network.cy
+    Network.ca
 
 
 Supporting Functions
@@ -1169,8 +1190,7 @@ class Network(object):
         ------------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
-        z = s2z(self.s, self.z0)
-        return z2a(z)
+        return s2a(self.s, self.z0)
 
     @a.setter
     def a(self, value):
@@ -3955,7 +3975,7 @@ def _noisy_two_port_verify(ntwkA, ntwkB):
 
 def cascade_2port(ntwkA, ntwkB, calc_noise=True):
     '''
-    cascade combination of two 2-ports Networks and handles noise
+    cascade combination of two two-ports Networks (:class:`Network`), which also combines noise covariance matrices.
 
     Connects two 2-port Networks in cascade configuration, if noise information
     is available, use it to determine the total covariance matrix for the combined
@@ -3970,7 +3990,7 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
     -----------
     ntwkA : :class:`Network`
             network `ntwkA`
-    ntwkB : Network
+    ntwkB : :class:`Network`
             network `ntwkB`
     calc_noise : Bool
                 Set to false if no noise calculations are desired
@@ -3983,6 +4003,7 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
     See Also
     ---------
     series_series_2port
+    parallel_parallel_2port
     '''
 
     _noisy_two_port_verify(ntwkA, ntwkB)
@@ -4005,9 +4026,9 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
 
 def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
     '''
-    parallel combination of two 2-ports  Networks
+    parallel combination of two two-ports  Networks (:class:`Network`), which also combines noise covariance matrices.
 
-    Connects two 2-port Networks in parallel-parallel configuration
+    Connects two two-port Networks in parallel-parallel configuration
 
     Notes
     ------
@@ -4018,7 +4039,7 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
     -----------
     ntwkA : :class:`Network`
             network `ntwkA`
-    ntwkB : Network
+    ntwkB : :class:`Network`
             network `ntwkB`
     calc_noise : Bool
                 Set to false if no noise calculations are desired
@@ -4031,6 +4052,7 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
     See Also
     ---------
     series_series_2port
+    cascade_2port
     '''
 
     _noisy_two_port_verify(ntwkA, ntwkB)
@@ -4053,9 +4075,9 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
 
 def series_series_2port(ntwkA, ntwkB, calc_noise=True):
     '''
-    series combination of two 2-ports Networks
+    series combination of two two-ports Networks (:class:`Network`), which also combines noise covariance matrices.
 
-    Connects two 2-port Networks in series-series configuration
+    Connects two two-port Networks in series-series configuration
 
     Notes
     ------
@@ -4066,7 +4088,7 @@ def series_series_2port(ntwkA, ntwkB, calc_noise=True):
     -----------
     ntwkA : :class:`Network`
             network `ntwkA`
-    ntwkB : Network
+    ntwkB : :class:`Network`
             network `ntwkB`
     calc_noise : Bool
                 Set to false if no noise calculations are desired

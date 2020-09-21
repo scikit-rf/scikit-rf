@@ -1,3 +1,71 @@
+# -*- coding: utf-8 -*-
+"""
+.. module:: skrf.networkNoiseCov
+=============================================
+networkNoiseCov (:mod:`skrf.networkNoiseCov`)
+=============================================
+
+
+Provides a class for encapsulating the covariance matrix for a network. The 
+encapsulation provides a mechanism for easily transforming between various 
+covariance matrix forms. Noise parameters can be calculated directly from 
+this object. 
+
+NetworkNoiseCov Class
+=====================
+
+.. autosummary::
+    :toctree: generated/
+
+    NetworkNoiseCov
+
+Building NetworkNoiseCov
+------------------------
+
+.. autosummary::
+    :toctree: generated/
+
+    Network.from_z
+
+NetworkNoiseCov Representations
+===============================
+
+.. autosummary::
+    :toctree: generated/
+
+    NetworkNoiseCov.cs
+    NetworkNoiseCov.cz
+    NetworkNoiseCov.cy
+    NetworkNoiseCov.ca
+    NetworkNoiseCov.ct
+
+Connecting Networks
+===============================
+
+.. autosummary::
+    :toctree: generated/
+
+    connect
+    innerconnect
+    cascade
+    cascade_list
+    de_embed
+    flip
+
+
+Combining Networks
+===================================
+
+.. autosummary::
+    :toctree: generated/
+
+    n_oneports_2_nport
+    four_oneports_2_twoport
+    three_twoports_2_threeport
+    n_twoports_2_nport
+    concat_ports
+"""
+
 import numpy as npy
 from copy import deepcopy as copy
 
@@ -5,6 +73,89 @@ from .util import network_array
 from .constants import ZERO, K_BOLTZMANN, h_PLANK
 
 class NetworkNoiseCov(object):
+    """
+    Encapsulation of a Covariance Matrix [#]_.
+
+    For instructions on how to create Network see  :func:`__init__`.
+
+    A n-port network may be defined by three quantities,
+     * network parameter matrix (s, z, or y-matrix)
+     * port characteristic impedance matrix
+     * frequency information
+
+    The :class:`Network` class stores these data structures internally
+    in the form of complex :class:`numpy.ndarray`'s. These arrays are not
+    interfaced directly but instead through the use of the properties:
+
+    =====================  =============================================
+    Property               Meaning
+    =====================  =============================================
+    :attr:`s`              scattering parameter matrix
+    :attr:`z0`             characteristic impedance matrix
+    :attr:`f`              frequency vector
+    =====================  =============================================
+
+    Although these docs focus on s-parameters, other equivalent network
+    representations such as :attr:`z` and  :attr:`y` are
+    available. Scalar projections of the complex network parameters
+    are accessible through properties as well. These also return
+    :class:`numpy.ndarray`'s.
+
+    =====================  =============================================
+    Property               Meaning
+    =====================  =============================================
+    :attr:`s_re`           real part of the s-matrix
+    :attr:`s_im`           imaginary part of the s-matrix
+    :attr:`s_mag`          magnitude of the s-matrix
+    :attr:`s_db`           magnitude in log scale of the s-matrix
+    :attr:`s_deg`          phase of the s-matrix in degrees
+    =====================  =============================================
+
+    The following operations act on the networks s-matrix.
+
+    =====================  =============================================
+    Operator               Function
+    =====================  =============================================
+    \+                     element-wise addition of the s-matrix
+    \-                     element-wise difference of the s-matrix
+    \*                     element-wise multiplication of the s-matrix
+    \/                     element-wise division of the s-matrix
+    \*\*                   cascading (only for 2-ports)
+    \//                    de-embedding (for 2-ports, see :attr:`inv`)
+    =====================  =============================================
+
+    Different components of the :class:`Network` can be visualized
+    through various plotting methods. These methods can be used to plot
+    individual elements of the s-matrix or all at once. For more info
+    about plotting see the :doc:`../../tutorials/plotting` tutorial.
+
+    =========================  =============================================
+    Method                     Meaning
+    =========================  =============================================
+    :func:`plot_s_smith`       plot complex s-parameters on smith chart
+    :func:`plot_s_re`          plot real part of s-parameters vs frequency
+    :func:`plot_s_im`          plot imaginary part of s-parameters vs frequency
+    :func:`plot_s_mag`         plot magnitude of s-parameters vs frequency
+    :func:`plot_s_db`          plot magnitude (in dB) of s-parameters vs frequency
+    :func:`plot_s_deg`         plot phase of s-parameters (in degrees) vs frequency
+    :func:`plot_s_deg_unwrap`  plot phase of s-parameters (in unwrapped degrees) vs frequency
+
+    =========================  =============================================
+
+    :class:`Network`  objects can be  created from a touchstone or pickle
+    file  (see :func:`__init__`), by a
+    :class:`~skrf.media.media.Media` object, or manually by assigning the
+    network properties directly. :class:`Network`  objects
+    can be saved to disk in the form of touchstone files with the
+    :func:`write_touchstone` method.
+
+    An exhaustive list of :class:`Network` Methods and Properties
+    (Attributes) are given below
+
+    References
+    ------------
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    """
 
     COVARIANCE_FORMS = ['s', 't', 'z', 'y', 'a']
 
