@@ -28,7 +28,7 @@ Building Network
 
     Network.from_z
     Network.from_y
-    Network.from_a
+    Network.from_s
 
 Network Representations
 ============================
@@ -556,15 +556,52 @@ class Network(object):
         me.a = a
         return me
 
-    @classmethod
-    def from_series_rlc(cls, r, l, c, frequency):
-        pass
-
-    @classmethod
-    def from_shunt_rlc(cls, r, l, c, frequency):
-        pass
 
     def noise_source(self, source='passive', T0=None):
+        '''
+        Set the :class:`.NetworkNoiseCov` within :class:`Network` to model noise.
+
+        To model noise, use this method to set the noise covariance matrix within the network.
+
+        Parameters
+        -----------
+        source : :class:`.NetworkNoiseCov` or string
+            Sets the noise covariance matrix for the network. The noise covariance matrix is stored within
+            a :class:`.NetworkNoiseCov` object. The matrix can be used to model all kinds of noise (e.g., thermal,
+            shot, flicker, etc.). However, if the network is passive, `source` may be set to source='passive'. Doing so
+            will use the matrix `s` within :class:`Network` to calculate the covariance matrix for thermal noise.
+            If you don't want the network to produce any noise, and yet use the network in noise calculations, you can
+            pass source='none'.
+
+        T0 : 
+            The physical temperature of the network. Leave unset for room temperature.
+
+        Example
+        --------
+        Create a network and set its noise source manually: 
+
+        >>> frequency = rf.Frequency(start=1000, stop=2000, npoints=10, unit='MHz')
+        >>> ovec = npy.ones(len(frequency))
+        >>> zvec = npy.zeros(len(frequency))
+        >>> R = 200*ovec
+        >>> R_shunt_z = rf.network_array([[R, R], [R, R]])
+        >>> R_shunt_cov = 4*K_BOLTZMANN*T0*npy.real(R_shunt_z)
+        >>> ntwk = rf.Network.from_z(R_shunt_z)
+        >>> ntwk_cz = rf.NetworkNoiseCov(R_shunt_cov, form='z')
+        >>> ntwk.noise_source(ntwk_cz)
+
+        Create a network and set its noise source using source='passive':
+
+        >>> frequency = rf.Frequency(start=1000, stop=2000, npoints=10, unit='MHz')
+        >>> ovec = npy.ones(len(frequency))
+        >>> zvec = npy.zeros(len(frequency))
+        >>> R = 200*ovec
+        >>> R_shunt_z = rf.network_array([[R, R], [R, R]])
+        >>> ntwk = rf.Network.from_z(R_shunt_z)
+        >>> ntwk.noise_source('passive')
+
+
+        '''
         if isinstance(source, string_types):
             if source == 'passive':
                 if T0:
@@ -1199,6 +1236,22 @@ class Network(object):
 
     @property
     def cs(self):
+        """
+        Noise covariance matrix in s-form
+
+        Returns
+        ---------
+        cs : complex :class:`numpy.ndarray` of shape `fxnxn`
+                noise covariance matrix as a function of frequency
+
+        See Also
+        ------------
+        ct
+        cy
+        cz
+        ca
+
+        """
         ntwkNoiseCov = self.noise_cov.get_cs(self.s)
         return ntwkNoiseCov.cc
 
@@ -1209,6 +1262,22 @@ class Network(object):
 
     @property
     def ct(self):
+        """
+        Noise covariance matrix in t-form
+
+        Returns
+        ---------
+        ct : complex :class:`numpy.ndarray` of shape `fxnxn`
+                noise covariance matrix as a function of frequency
+
+        See Also
+        ------------
+        cs
+        cy
+        cz
+        ca
+
+        """
         ntwkNoiseCov = self.noise_cov.get_ct(self.t)
         return ntwkNoiseCov.cc
 
@@ -1219,6 +1288,22 @@ class Network(object):
 
     @property
     def cz(self):
+        """
+        Noise covariance matrix in z-form
+
+        Returns
+        ---------
+        cz : complex :class:`numpy.ndarray` of shape `fxnxn`
+                noise covariance matrix as a function of frequency
+
+        See Also
+        ------------
+        cs
+        ct
+        cy
+        ca
+
+        """
         ntwkNoiseCov = self.noise_cov.get_cz(self.z)
         return ntwkNoiseCov.cc
 
@@ -1229,6 +1314,22 @@ class Network(object):
 
     @property
     def cy(self):
+        """
+        Noise covariance matrix in y-form
+
+        Returns
+        ---------
+        cy : complex :class:`numpy.ndarray` of shape `fxnxn`
+                noise covariance matrix as a function of frequency
+
+        See Also
+        ------------
+        cs
+        ct
+        cz
+        ca
+
+        """
         ntwkNoiseCov = self.noise_cov.get_cy(self.y)
         return ntwkNoiseCov.cc
 
@@ -1239,6 +1340,22 @@ class Network(object):
 
     @property
     def ca(self):
+        """
+        Noise covariance matrix in a-form
+
+        Returns
+        ---------
+        ca : complex :class:`numpy.ndarray` of shape `fxnxn`
+                noise covariance matrix as a function of frequency
+
+        See Also
+        ------------
+        cs
+        ct
+        cy
+        cz
+
+        """
         ntwkNoiseCov = self.noise_cov.get_ca(self.a)
         return ntwkNoiseCov.cc
 
@@ -3977,13 +4094,13 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
     '''
     cascade combination of two two-ports Networks (:class:`Network`), which also combines noise covariance matrices.
 
-    Connects two 2-port Networks in cascade configuration, if noise information
+    Connects two two-port Networks in cascade configuration, if noise information
     is available, use it to determine the total covariance matrix for the combined
     system.
 
     Notes
     ------
-    For a description of the parallel-parallel two-port connection see 
+    For a description of the cascade two-port connection see 
     https://en.wikipedia.org/wiki/Two-port_network 
 
     Parameters
@@ -3997,13 +4114,13 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
 
     Returns
     --------
-    C : Network
-            the resultant two-port network of ntwkA parallel-parallel with ntwkB
+    C : :class:`Network`
+            the resultant two-port network of ntwkA in cascade with ntwkB
 
     See Also
     ---------
-    series_series_2port
-    parallel_parallel_2port
+    :func:`series_series_2port`
+    :func:`parallel_parallel_2port`
     '''
 
     _noisy_two_port_verify(ntwkA, ntwkB)
@@ -4046,13 +4163,13 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
 
     Returns
     --------
-    C : Network
+    C : :class:`Network`
             the resultant two-port network of ntwkA parallel-parallel with ntwkB
 
     See Also
     ---------
-    series_series_2port
-    cascade_2port
+    :func:`series_series_2port`
+    :func:`cascade_2port`
     '''
 
     _noisy_two_port_verify(ntwkA, ntwkB)
@@ -4081,7 +4198,7 @@ def series_series_2port(ntwkA, ntwkB, calc_noise=True):
 
     Notes
     ------
-    For a description of the series_series two-port connection see 
+    For a description of the series-series two-port connection see 
     https://en.wikipedia.org/wiki/Two-port_network 
 
     Parameters
@@ -4095,13 +4212,13 @@ def series_series_2port(ntwkA, ntwkB, calc_noise=True):
 
     Returns
     --------
-    C : Network
+    C : :class:`Network`
             the resultant two-port network of ntwkA in series-series with ntwkB
 
     See Also
     ---------
-    parallel_parallel
-    cascade
+    :func:`parallel_parallel_2port`
+    :func:`cascade_2port`
     '''
 
     _noisy_two_port_verify(ntwkA, ntwkB)

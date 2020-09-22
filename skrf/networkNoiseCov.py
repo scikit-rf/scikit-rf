@@ -5,11 +5,11 @@
 networkNoiseCov (:mod:`skrf.networkNoiseCov`)
 =============================================
 
+Provides a class for encapsulating the covariance matrix for a network. The covariance
+matrix can be represented in a number of forms; this class provides functions for easily
+transforming between those forms. 
 
-Provides a class for encapsulating the covariance matrix for a network. The 
-encapsulation provides a mechanism for easily transforming between various 
-covariance matrix forms. Noise parameters can be calculated directly from 
-this object. 
+Noise parameters (Fmin, Rn, Yopt) can be calculated directly from this object.
 
 NetworkNoiseCov Class
 =====================
@@ -25,45 +25,44 @@ Building NetworkNoiseCov
 .. autosummary::
     :toctree: generated/
 
-    Network.from_z
+    NetworkNoiseCov.from_passive_z
+    NetworkNoiseCov.from_passive_y
+    NetworkNoiseCov.from_passive_s
 
-NetworkNoiseCov Representations
-===============================
-
-.. autosummary::
-    :toctree: generated/
-
-    NetworkNoiseCov.cs
-    NetworkNoiseCov.cz
-    NetworkNoiseCov.cy
-    NetworkNoiseCov.ca
-    NetworkNoiseCov.ct
-
-Connecting Networks
-===============================
+NetworkNoiseCov Transforms
+==========================
 
 .. autosummary::
     :toctree: generated/
 
-    connect
-    innerconnect
-    cascade
-    cascade_list
-    de_embed
-    flip
+    NetworkNoiseCov.get_cs
+    NetworkNoiseCov.get_ct
+    NetworkNoiseCov.get_cz
+    NetworkNoiseCov.get_cy
+    NetworkNoiseCov.get_ca
 
-
-Combining Networks
-===================================
+NetworkNoiseCov Noise Parameters
+================================
 
 .. autosummary::
     :toctree: generated/
 
-    n_oneports_2_nport
-    four_oneports_2_twoport
-    three_twoports_2_threeport
-    n_twoports_2_nport
-    concat_ports
+    NetworkNoiseCov.nfmin
+    NetworkNoiseCov.nfmin_db
+    NetworkNoiseCov.rn
+    NetworkNoiseCov.y_opt
+    NetworkNoiseCov.z_opt
+    NetworkNoiseCov.nf
+
+NetworkNoiseCov Access Covariance Matrix
+========================================
+
+.. autosummary::
+    :toctree: generated/
+
+    NetworkNoiseCov.cc
+    NetworkNoiseCov.form
+
 """
 
 import numpy as npy
@@ -71,105 +70,126 @@ from copy import deepcopy as copy
 
 from .util import network_array
 from .constants import ZERO, K_BOLTZMANN, h_PLANK
+from .mathFunctions import complex_2_db10
 
 class NetworkNoiseCov(object):
     """
-    Encapsulation of a Covariance Matrix [#]_.
+    Encapsulates the Covariance Matrix [1] of a network.
 
-    For instructions on how to create Network see  :func:`__init__`.
+    For instructions on how to instantiate :class:`NetworkNoiseCov` see :func:`__init__` as well as
+    :func:`from_z`, :func:`from_y` and :func:`from_s`.
 
-    A n-port network may be defined by three quantities,
-     * network parameter matrix (s, z, or y-matrix)
-     * port characteristic impedance matrix
-     * frequency information
+    To account for noise, a multiport network will have a covariance matrix 
+    associated with it. Noise parameters are calculated directly from the 
+    covariance matrix (for example, Fmin, Rn, Y_opt), and these perameters 
+    enable us to characterize how signals become degraded as they pass through 
+    networks.
 
-    The :class:`Network` class stores these data structures internally
-    in the form of complex :class:`numpy.ndarray`'s. These arrays are not
-    interfaced directly but instead through the use of the properties:
+    The :class:`NetworkNoiseCov` class contains the covariance matrix of a :class:`.Network` over 
+    a set of frequencies. Properties of :class:`NetworkNoiseCov` are used to access parameters
+    such as the minimum noise figure (:attr:`nfmin`) or the covariance matrix itself (:attr:`cc`).
+
+    The greatest utility of :class:`NetworkNoiseCov` is its ability to transform covariance 
+    matrices to various forms. Suppose two two-port networks are connected together in cascade; the 
+    resulting combined two-port network will have its own covariance matrix that is a combination
+    of the covariance matrices of the individual two-port networks. Combining covariance 
+    matrices can be learned about in chapter 7 of Vendelin's book [1]. When combining networks
+    in cascade, it is most convenient to have the covariance matrix in either the Ct or Ca form. When
+    combining networks in parallel, it is most convenient to have the covariance matrix in Cy form. These 
+    matrices can be obtained from a :class:`NetworkNoiseCov` object via :func:`get_ct`, :func:`get_ca` and
+    :func:`get_cy`.
+
+    You can set the covariance matrix of a :class:`.Network` using :meth:`.Network.noise_source`.
+
+    The covariance matrix can be stored in any form within :class:`NetworkNoiseCov`. You can retrieve the 
+    matrix as a function of frequency, and determine its form via properies: 
 
     =====================  =============================================
     Property               Meaning
     =====================  =============================================
-    :attr:`s`              scattering parameter matrix
-    :attr:`z0`             characteristic impedance matrix
-    :attr:`f`              frequency vector
+    :attr:`cc`             vector of covariance matrices
+    :attr:`form`           the form of the covariance matrix (s, t, z, y, a)
     =====================  =============================================
 
-    Although these docs focus on s-parameters, other equivalent network
-    representations such as :attr:`z` and  :attr:`y` are
-    available. Scalar projections of the complex network parameters
-    are accessible through properties as well. These also return
-    :class:`numpy.ndarray`'s.
+    You can obtain the :class:`NetworkNoiseCov` object in various forms provided you have the associated
+    network matrix used for the calculation. Note, that these functions are called automatically within
+    :class:`.Network` when they are required:
 
     =====================  =============================================
     Property               Meaning
     =====================  =============================================
-    :attr:`s_re`           real part of the s-matrix
-    :attr:`s_im`           imaginary part of the s-matrix
-    :attr:`s_mag`          magnitude of the s-matrix
-    :attr:`s_db`           magnitude in log scale of the s-matrix
-    :attr:`s_deg`          phase of the s-matrix in degrees
+    :func:`get_cs`         Get the S-form of the covariance matrix
+    :func:`get_ct`         Get the T-form of the covariance matrix
+    :func:`get_cy`         Get the Y-form of the covariance matrix
+    :func:`get_cz`         Get the Z-form of the covariance matrix
+    :func:`get_ca`         Get the ABCD-form of the covariance matrix
     =====================  =============================================
 
-    The following operations act on the networks s-matrix.
+    All noise parameters can be caclulated from an :class:`NetworkNoiseCov` object:
 
     =====================  =============================================
-    Operator               Function
+    Property               Meaning
     =====================  =============================================
-    \+                     element-wise addition of the s-matrix
-    \-                     element-wise difference of the s-matrix
-    \*                     element-wise multiplication of the s-matrix
-    \/                     element-wise division of the s-matrix
-    \*\*                   cascading (only for 2-ports)
-    \//                    de-embedding (for 2-ports, see :attr:`inv`)
+    :attr:`nfmin`          Minimum noise factor
+    :attr:`nfmin_db`       Minimum noise figure (only difference is in dB)
+    :attr:`rn`             Rn
+    :attr:`y_opt`          Optimal source admittance
+    :attr:`z_opt`          Optimal source impedance
+    :func:`nf`             Noise factor given source impedance
     =====================  =============================================
 
-    Different components of the :class:`Network` can be visualized
-    through various plotting methods. These methods can be used to plot
-    individual elements of the s-matrix or all at once. For more info
-    about plotting see the :doc:`../../tutorials/plotting` tutorial.
+    Other functions
 
-    =========================  =============================================
-    Method                     Meaning
-    =========================  =============================================
-    :func:`plot_s_smith`       plot complex s-parameters on smith chart
-    :func:`plot_s_re`          plot real part of s-parameters vs frequency
-    :func:`plot_s_im`          plot imaginary part of s-parameters vs frequency
-    :func:`plot_s_mag`         plot magnitude of s-parameters vs frequency
-    :func:`plot_s_db`          plot magnitude (in dB) of s-parameters vs frequency
-    :func:`plot_s_deg`         plot phase of s-parameters (in degrees) vs frequency
-    :func:`plot_s_deg_unwrap`  plot phase of s-parameters (in unwrapped degrees) vs frequency
+    =====================  =============================================
+    Property               Meaning
+    =====================  =============================================
+    :func:`copy`           Returns a copy of the function
+    =====================  =============================================
 
-    =========================  =============================================
-
-    :class:`Network`  objects can be  created from a touchstone or pickle
-    file  (see :func:`__init__`), by a
-    :class:`~skrf.media.media.Media` object, or manually by assigning the
-    network properties directly. :class:`Network`  objects
-    can be saved to disk in the form of touchstone files with the
-    :func:`write_touchstone` method.
-
-    An exhaustive list of :class:`Network` Methods and Properties
-    (Attributes) are given below
 
     References
     ------------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [1] George D Vendelin, Anthony M Pavio, and Ulrich L Rohde. "Noise in Linear Two-Ports" in *Microwave circuit design using linear and nonlinear techniques.* John Wiley & Sons, 2005.
     """
 
     COVARIANCE_FORMS = ['s', 't', 'z', 'y', 'a']
 
-    def __init__(self, mat_vec, form='s', z0 = 50, T0=290):
+    def __init__(self, cc, form='s', z0 = 50, T0=290):
+        '''
+        NetworkNoiseCov constructor.
 
-        self._validate_mat_vec_form(mat_vec)
+        Stores a covariance matrix vector (cc) of a particular form (s, t, y, z, a). The shape of cc must be
+        the same as the shape of s within :class:`.Network`.
+
+        Parameters
+        -----------
+        cc: Numpy Array
+            Must be the same shape as the network matrix that :class:`NetworkNoiseCov` is attached to. 
+        form: Char 
+            One of 's', 't', 'z', 'y', or 'a' depending on the format of the covariance matrix
+        z0: 
+            The reference characteristic impedance of the ports [this is constant and the same right now for each port].
+        T0: 
+            The physical temperature of the device for which the covariance matrix is valid
+
+        Examples
+        --------
+        A two-port network with covariance matrix in 'y' form, which has two frequencies, can be constructed as
+
+        >>> cy = numpy.array([[[1, -1],[-1, 1]], [[1, -1],[-1, 1]]])
+        >>> ntwk_cy = NetworkNoiseCov(cy, 'y')
+
+        '''
+
+        self._validate_mat_vec_form(cc)
         self._validate_form(form)
         self._validate_z0(z0)
 
-        self._mat_vec = mat_vec
+        self._mat_vec = cc
         self._form = form
         self._z0 = z0
         self._T0 = T0
-        self._k_norm = 1/npy.sqrt(self._z0)  # I took the sqrt(2) out so I could use the covariance forms from references (not to myself [Randy] clean up later)
+        self._k_norm = 1/npy.sqrt(self._z0) 
 
         # dictionaries of transforms. Transforming is carried out during getter and setter operations 
         self.transform_to_s = {'s': self._do_nothing, 't': self._ct2cs, 'z': self._cz2cs, 'y': self._cy2cs,'a': self._ca2cs }
@@ -180,10 +200,12 @@ class NetworkNoiseCov(object):
 
     @classmethod
     def Tnoise(cls,f,T):
+        '''
+        This is the correct blackbody noise that accounts for the quantum limit thermal noise floor for low values of T0 as well as
+        the upper noise limit for frequencies that exceed 200 GHz. 
+        Insert reference here - MBG
+        '''
 
-        #This is the correct blackbody noise that accounts for the quantum limit thermal noise floor for low values of T0 as well as
-        #the upper noise limit for frequencies that exceed 200 GHz. 
-        #Insert reference here - MBG
         X = (h_PLANK*f)/(2*K_BOLTZMANN*T)
         Tn = ((h_PLANK*f)/(2*K_BOLTZMANN))*(1/npy.tanh(X))
 
@@ -191,28 +213,138 @@ class NetworkNoiseCov(object):
 
 
     @classmethod
-    def from_passive_z(cls, z, f, z0=50, T0=290):
+    def from_passive_z(cls, z, f=None, z0=50, T0=290):
+        '''
+        Create a :class:`NetworkNoiseCov` object from impedance matrix.
 
-        Tn = cls.Tnoise(f,T0)
-        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(z)[1],npy.shape(z)[2]))
+        NOTE: this function should only be used in association with passive networks. If there are any other sources
+        of noise, they should be modeled with the :class:`NetworkNoiseCov` constructor.
+
+        Parameters
+        -----------
+        z : Numpy Array
+            Impedance matrix. Should be of shape fxnxn
+            where f is the frequency axis and n is the number of ports.
+        f : 
+            Vector of frequencies, which is necessary when taking into consideration proper blackbody noise effects. 
+            Leave this parameter if you are not interested in these effects.
+        z0 : 
+            Characteristic impedance reference of all ports.
+        T0 : 
+            Physical temperature of the passive device.
+
+        Return
+        -------
+        ntw_cz : :class:`NetworkNoiseCov` 
+            The object in 'z' form
+
+        Example
+        --------
+        A two-port shunted resistor R=100 will have an impedance matrix of form Z = [[R R],[R R]]. To create a
+        :class:`NetworkNoiseCov` object:
+
+        >>> Z = network_array([[R, R], [R, R]])
+        >>> ntwk_cz = NetworkNoiseCov.from_passive_z(Z) 
+
+        '''
+
+        if f is None:
+            Tn_mat = T0
+        else:
+            Tn = cls.Tnoise(f,T0)
+            Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(z)[1],npy.shape(z)[2]))
 
         cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(z)
         return cls(cov, form='z', z0=z0, T0=Tn)
 
     @classmethod
     def from_passive_y(cls, y, f, z0=50, T0=290):
+        '''
+        Create a :class:`NetworkNoiseCov` object from admittance matrix.
 
-        Tn = cls.Tnoise(f,T0)
-        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(y)[1],npy.shape(y)[2]))
+        NOTE: this function should only be used in association with passive networks. If there are any other sources
+        of noise, they should be modeled with the :class:`NetworkNoiseCov` constructor.
+
+        Parameters
+        -----------
+        y : Numpy Array
+            Admittance matrix. Should be of shape fxnxn
+            where f is the frequency axis and n is the number of ports.
+        f : 
+            Vector of frequencies, which is necessary when taking into consideration proper blackbody noise effects. 
+            Leave this parameter if you are not interested in these effects.
+        z0 : 
+            Characteristic impedance reference of all ports.
+        T0 : 
+            Physical temperature of the passive device.
+
+        Return
+        -------
+        ntw_cz : :class:`NetworkNoiseCov` 
+            The object in 'z' form
+
+        Example
+        --------
+        A two-port series resistor R=100 will have an admittance matrix of form Y = [[1/R -1/R],[-1/R 1/R]]. To create a
+        :class:`NetworkNoiseCov` object:
+
+        >>> Y = network_array([[R, R], [R, R]])
+        >>> ntwk_cy = NetworkNoiseCov.from_passive_y(Y) 
+
+        '''
+
+        if f is None:
+            Tn_mat = T0
+        else:
+            Tn = cls.Tnoise(f,T0)
+            Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(y)[1],npy.shape(y)[2]))
 
         cov = 4.*K_BOLTZMANN*Tn_mat*npy.real(y)
         return cls(cov, form='y', z0=z0, T0=T0)
 
     @classmethod
     def from_passive_s(cls, s, f, z0=50, T0=290):
+        '''
+        Create a :class:`NetworkNoiseCov` object from S-parameters.
 
-        Tn = cls.Tnoise(f,T0)
-        Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(s)[1],npy.shape(s)[2]))
+        NOTE: this function should only be used in association with passive networks. If there are any other sources
+        of noise, they should be modeled with the :class:`NetworkNoiseCov` constructor.
+
+        Parameters
+        -----------
+        s : Numpy Array
+            S-parameter matrix. Should be of shape fxnxn
+            where f is the frequency axis and n is the number of ports.
+        f : 
+            Vector of frequencies, which is necessary when taking into consideration proper blackbody noise effects. 
+            Leave this parameter if you are not interested in these effects.
+        z0 : 
+            Characteristic impedance reference of all ports.
+        T0 : 
+            Physical temperature of the passive device.
+
+        Return
+        -------
+        ntw_cz : :class:`NetworkNoiseCov` 
+            The object in 'z' form
+
+        Example
+        --------
+        A two-port attenuator with attenuation attn_db = 3 will have an S matrix of S = [[0 10**(-3/10)],[10**(-3/10) 0]]. 
+        To create a
+        :class:`NetworkNoiseCov` object:
+
+        >>> attn_db = 3
+        >>> S = network_array([[0 10**(-attn_db/10)],[10**(-attn_db/10) 0]])
+        >>> ntwk_cs = NetworkNoiseCov.from_passive_y(S) 
+
+        '''
+
+        if f is None:
+            Tn_mat = T0
+        else:
+            Tn = cls.Tnoise(f,T0)
+            Tn_mat = npy.tile(Tn[:,None,None], (1,npy.shape(s)[1],npy.shape(s)[2]))
   
         SM =  npy.matmul(s, npy.conjugate(s.swapaxes(1, 2)))
         I_2D = npy.identity(npy.shape(s)[1])
@@ -225,50 +357,227 @@ class NetworkNoiseCov(object):
         Returns a copy of this NetworkNoiseCov
 
         '''
-        n = NetworkNoiseCov(mat_vec=self._mat_vec, form = self._form, z0 = self._z0)
+        n = NetworkNoiseCov(cc=self._mat_vec, form = self._form, z0 = self._z0)
         return n
 
     @property
     def form(self):
+        """
+        Returns the form of the covariance matrix within :class:`NetworkNoiseCov`
+
+        Returns
+        ---------
+        form : Char
+            One of 's', 't', 'y', 'z', 'a'
+
+        """
         return self._form
 
     @form.setter
     def form(self, value):
+        """
+        Manually set the form of the covariance matrix within :class:`NetworkNoiseCov`
+
+        """
         if value not in self.COVARIANCE_FORMS:
             raise ValueError("form must be one of \'s\', \'t\', \'z\', \'y\', \'a\'" )
         self._form = value
 
     @property
     def mat_vec(self):
+        """
+        Same as :attr:`cc`
+
+        """
         return self._mat_vec
 
     @mat_vec.setter
     def mat_vec(self, value):
+        """
+        Same as :attr:`cc`
+
+        """
         if value.shape != self._mat_vec.shape:
             raise ValueError("mat_vec " + str(value.shape) +  " to " + str(self._mat_vec.shape) + " incompatible" )
         self._mat_vec = value
 
     @property
     def cc(self):
+        """
+        Returns the vector of covariance matrices.
+
+        Returns
+        --------
+        cc : Numpy Array of shape `fxnxn`
+            the vector of covariance matrices
+
+        """
         return self.mat_vec
 
+    @cc.setter
+    def cc(self, value):
+        """
+        the input matrix should be the same shape as s from :class:`.Network`
+        """
+        self.mat_vec = value
+
     def get_cs(self, S):
+        '''
+        Transform current :class:`NetworkNoiseCov` to its s-form.
+
+        Uses the S-parameters of a network to transform the current form of :class:`NetworkNoiseCov` to 
+        its s-form. 
+
+        Parameters
+        -----------
+        S : Numpy Array
+            S-parameter matrix. Should be the same shape as :attr:`cc`.
+
+        Return
+        -------
+        ntwk_cs : :class:`NetworkNoiseCov` 
+            The object in 's' form
+
+        Example
+        --------
+        Transform covariance matrix in y-form to s-form
+
+        >>> Y = network_array([[R, R], [R, R]])
+        >>> ntwk_cy = NetworkNoiseCov.from_passive_y(Y) 
+        >>> S = y2s(Y)
+        >>> ntwk_cs = ntwk_cy.get_cs(S)
+
+        '''
         return self.transform_to_s[self.form](self._mat_vec, S)
 
     def get_ct(self, T):
+        '''
+        Transform current :class:`NetworkNoiseCov` to its t-form.
+
+        Uses the T-parameters of a network to transform the current form of :class:`NetworkNoiseCov` to 
+        its t-form. 
+
+        Parameters
+        -----------
+        T : Numpy Array
+            T-parameter matrix. Should be the same shape as :attr:`cc`.
+
+        Return
+        -------
+        ntwk_ct : :class:`NetworkNoiseCov` 
+            The object in 't' form
+
+        Example
+        --------
+        Transform covariance matrix in y-form to t-form
+
+        >>> Y = network_array([[R, R], [R, R]])
+        >>> ntwk_cy = NetworkNoiseCov.from_passive_y(Y) 
+        >>> T = y2t(Y)
+        >>> ntwk_ct = ntwk_cy.get_ct(T)
+
+        '''
         return self.transform_to_t[self.form](self._mat_vec, T)
 
     def get_cz(self, Z):
+        '''
+        Transform current :class:`NetworkNoiseCov` to its z-form.
+
+        Uses the impedance matrix of a network to transform the current form of :class:`NetworkNoiseCov` to 
+        its z-form. 
+
+        Parameters
+        -----------
+        Z : Numpy Array
+            Impedance matrix. Should be the same shape as :attr:`cc`.
+
+        Return
+        -------
+        ntwk_cz : :class:`NetworkNoiseCov` 
+            The object in 'z' form
+
+        Example
+        --------
+        Transform covariance matrix in s-form to z-form
+
+        >>> S = network_array([[0, 1/2], [1/2, 0]])
+        >>> ntwk_cs = NetworkNoiseCov.from_passive_s(S) 
+        >>> Z = s2z(S)
+        >>> ntwk_cz = ntwk_cs.get_cz(Z)
+
+        '''
         return self.transform_to_z[self.form](self._mat_vec, Z)
 
     def get_cy(self, Y):
+        '''
+        Transform current :class:`NetworkNoiseCov` to its y-form.
+
+        Uses the admittance matrix of a network to transform the current form of :class:`NetworkNoiseCov` to 
+        its y-form. 
+
+        Parameters
+        -----------
+        Y : Numpy Array
+            Admittance matrix. Should be the same shape as :attr:`cc`.
+
+        Return
+        -------
+        ntwk_cy : :class:`NetworkNoiseCov` 
+            The object in 'y' form
+
+        Example
+        --------
+        Transform covariance matrix in s-form to y-form
+
+        >>> S = network_array([[0, 1/2], [1/2, 0]])
+        >>> ntwk_cs = NetworkNoiseCov.from_passive_s(S) 
+        >>> Y = s2y(S)
+        >>> ntwk_cy = ntwk_cs.get_cy(Y)
+
+        '''
         return self.transform_to_y[self.form](self._mat_vec, Y)
 
     def get_ca(self, A):
+        '''
+        Transform current :class:`NetworkNoiseCov` to its a-form.
+
+        Uses the ABCD matrix of a network to transform the current form of :class:`NetworkNoiseCov` to 
+        its a-form. 
+
+        Parameters
+        -----------
+        A : Numpy Array
+            ABCD matrix. Should be the same shape as :attr:`cc`.
+
+        Return
+        -------
+        ntwk_ca : :class:`NetworkNoiseCov` 
+            The object in 'a' form
+
+        Example
+        --------
+        Transform covariance matrix in s-form to a-form
+
+        >>> S = network_array([[0, 1/2], [1/2, 0]])
+        >>> ntwk_cs = NetworkNoiseCov.from_passive_s(S) 
+        >>> A = s2a(S)
+        >>> ntwk_ca = ntwk_cs.get_ca(A)
+
+        '''
         return self.transform_to_a[self.form](self._mat_vec, A)
 
     @property
     def y_opt(self):
+        """
+        Returns the optimum source admittance to minimize noise figure.
+
+        Returns
+        --------
+        y_opt : Numpy Array
+               a vector the same length as `frequency`
+
+        """
+
         self._validate_only_if_ca()
         ca = self.mat_vec
         return (npy.sqrt(ca[:,1,1]/ca[:,0,0] - npy.square(npy.imag(ca[:,0,1]/ca[:,0,0])))
@@ -276,25 +585,78 @@ class NetworkNoiseCov(object):
 
     @property
     def z_opt(self):
+        """
+        Returns the optimum source impedance to minimize noise figure.
+
+        Returns
+        --------
+        z_opt : Numpy Array
+               a vector the same length as `frequency`
+
+        """
         return 1./self.y_opt
 
     @property
     def nfmin(self):
+        """
+        Returns the minimum noise factor (linear form of noise figure).
+
+        Returns
+        --------
+        nfmin : Numpy Array
+               a vector the same length as `frequency`
+
+        """
+
         self._validate_only_if_ca()
         ca = self.mat_vec
         return npy.real(1. + (ca[:,0,1] + ca[:,0,0] * npy.conj(self.y_opt))/(2.*K_BOLTZMANN*self._T0))
 
     @property
     def nfmin_db(self):
-        return mf.complex_2_db10(self.nfmin)
+        """
+        Returns the minimum noise figure (logarithmic form of noise factor).
+
+        Returns
+        --------
+        nfmin_db : Numpy Array
+               a vector the same length as `frequency`
+
+        """
+        return complex_2_db10(self.nfmin)
 
     @property
     def rn(self):
+        """
+        Returns the equivalent noise resistance for the network
+
+        Returns
+        --------
+        rn : Numpy Array
+               a vector the same length as `frequency`
+
+        """
+
         self._validate_only_if_ca()
         ca11 = self.mat_vec[:,0,0]
         return npy.real(ca11/(4.*K_BOLTZMANN*self._T0))
 
     def nf(self, z):
+        """
+        Returns the noise factor (linear form of noise figure) for a a given source impedance. 
+
+        Parameters
+        -----------
+        z : Numpy Array
+            Source impedance
+
+        Return
+        -------
+        nf : Numpy Array
+            a vector the same length as `frequency`
+
+        """
+
      
         z0 = self.z0
         y_opt = self.y_opt

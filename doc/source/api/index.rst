@@ -11,7 +11,9 @@ API
     network
     networkSet
     circuit
+    
     networkNoiseCov
+    multiNetworkSystem
 
     plotting
     mathFunctions
