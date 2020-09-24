@@ -206,6 +206,8 @@ from .time import time_gate
 from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
+from . import is_alt_ops
+
 
 #from matplotlib import cm
 #import matplotlib.pyplot as plt
@@ -685,17 +687,32 @@ class Network(object):
     def __mul__(self, other):
         """
         Element-wise complex multiplication of s-matrix
+
+        if skrf.alternative_ops() has been set, this operator performs
+        cascade_2port operation.
         """
-        result = self.copy()
 
-        if isinstance(other, Network):
-            self.__compatable_for_scalar_operation_test(other)
-            result.s = self.s * other.s
+        # see skrf __init__.py for is_alt_ops() usage
+        if not is_alt_ops():
+            result = self.copy()
+
+            if isinstance(other, Network):
+                self.__compatable_for_scalar_operation_test(other)
+                result.s = self.s * other.s
+            else:
+                # other may be an array or a number
+                result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
+
+            return result
+
         else:
-            # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
+            return cascade_2port(self, other)
 
-        return result
+    def __or__(self, other):
+        """parallel_parallel_2port operator
+
+        """
+        return parallel_parallel_2port(self, other)
 
     def __rmul__(self, other):
         """
@@ -716,17 +733,27 @@ class Network(object):
     def __add__(self, other):
         """
         Element-wise complex addition of s-matrix
+
+        if skrf.alternative_ops() has been set, this operator performs
+        series_series_2port operation.
+
         """
-        result = self.copy()
+        # see skrf __init__.py for is_alt_ops() usage
+        if not is_alt_ops():
+            
+            result = self.copy()
 
-        if isinstance(other, Network):
-            self.__compatable_for_scalar_operation_test(other)
-            result.s = self.s + other.s
+            if isinstance(other, Network):
+                self.__compatable_for_scalar_operation_test(other)
+                result.s = self.s + other.s
+            else:
+                # other may be an array or a number
+                result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
+
+            return result
+
         else:
-            # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
-
-        return result
+            return series_series_2port(self, other)
 
     def __radd__(self, other):
         """
@@ -5015,6 +5042,8 @@ def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
         # Power-waves. Eq.(19) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         F, G = npy.zeros_like(s), npy.zeros_like(s)
+        F = F.astype(dtype=npy.complex)
+        G = G.astype(dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F  # Python > 3.5
@@ -5116,6 +5145,8 @@ def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
         # Power-waves. Inverse of Eq.(19) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
         F, G = npy.zeros_like(s), npy.zeros_like(s)
+        F = F.astype(dtype=npy.complex)
+        G = G.astype(dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # y = npy.linalg.inv(F) @ npy.linalg.inv((s @ G + npy.conjugate(G))) @ (Id - s) @ F  # Python > 3.5
@@ -5445,8 +5476,27 @@ def a2s(a, z0=50):
     return s
 
     #return z2s(a2z(a), z0)
-    
 
+def a2t(a, z0=50):
+    '''
+    Converts abcd parameters to scattering-transfer parameters paramters [#]_ .
+
+    Parameters
+    -----------
+    a : :class:`numpy.ndarray` (shape fx2x2)
+        abcd parameter matrix
+
+    Returns
+    -------
+    t : numpy.ndarray
+        scattering-transfer parameters
+
+    References
+    -----------
+    .. [#] https://en.wikipedia.org/wiki/Two-port_network
+    '''
+    s = a2s(a, z0)
+    return s2t(s)
 
 def a2z(a):
     '''
@@ -5543,8 +5593,6 @@ def z2a(z):
 
 def s2a(s, z0=50):
     '''
-    TODO: Fix there seems to be a transpose problem
-    
     Converts scattering parameters to abcd  parameters [#]_ .
 
 
@@ -5664,6 +5712,8 @@ def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
     if s_def == 'power':
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
         F, G = npy.zeros_like(y), npy.zeros_like(y)
+        F = F.astype(dtype=npy.complex)
+        G = G.astype(dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)  # Python > 3.5
@@ -5739,6 +5789,12 @@ def y2z(y):
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
     return npy.array([npy.mat(y[f, :, :]) ** -1 for f in xrange(y.shape[0])])
+
+def y2a(y, z0=50, s_def=S_DEF_DEFAULT):
+    ''' TODO: Calculate directly without going through s and add a2s
+    '''
+    s = y2s(y, z0, s_def)
+    return s2a(s, z0)
 
 
 def y2t(y):
@@ -5854,10 +5910,8 @@ def t2s(t):
     return s
 
 
-def t2z(t):
+def t2z(t, z0=50, s_def=S_DEF_DEFAULT):
     '''
-    Not Implemented  Yet
-
     Convert scattering transfer parameters [#]_ to impedance parameters [#]_
 
 
@@ -5896,17 +5950,15 @@ def t2z(t):
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
-    raise (NotImplementedError)
+
+    s = t2s(t)
+    return s2z(s, z0, s_def)
 
 
-def t2y(t):
+def t2y(t, z0=50, s_def=S_DEF_DEFAULT):
     '''
-    Not Implemented Yet
 
     Convert scattering transfer parameters to admittance parameters [#]_
-
-
-
 
     Parameters
     ------------
@@ -5942,7 +5994,13 @@ def t2y(t):
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
 
     '''
-    raise (NotImplementedError)
+    s = t2s(t)
+    return s2y(s, z0, s_def)
+
+def t2a(t, z0=50):
+
+    s = t2s(t)
+    return s2a(s, z0)
 
 
 def h2z(h):

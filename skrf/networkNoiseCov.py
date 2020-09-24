@@ -69,7 +69,7 @@ import numpy as npy
 from copy import deepcopy as copy
 
 from .util import network_array
-from .constants import ZERO, K_BOLTZMANN, h_PLANK
+from .constants import ZERO, K_BOLTZMANN, h_PLANK, S_DEF_DEFAULT
 from .mathFunctions import complex_2_db10
 
 class NetworkNoiseCov(object):
@@ -714,11 +714,11 @@ class NetworkNoiseCov(object):
 
     def _cs2cy(self, mat, Y):
         y0 = 1/self._z0
-        Yn = Y*self._z0
+        Yn = Y/y0
         ovec = npy.ones(mat.shape[0])
         zvec = npy.zeros(mat.shape[0])
         I = network_array([[ovec, zvec],[zvec, ovec]])
-        Tm = self._k_norm/y0*(Yn + I)
+        Tm = y0/self._k_norm*(Yn + I)  # why is this true (fix notes)
         n = self.copy()
         n.mat_vec = npy.matmul(Tm, npy.matmul(mat, npy.conjugate(Tm.swapaxes(1, 2))))
         n.form = 'y'
@@ -764,7 +764,7 @@ class NetworkNoiseCov(object):
         return cz
 
     def _ct2cy(self, mat, Y):
-        S = self._z2s(Y) 
+        S = self._y2s(Y) 
         cs = self._ct2cs(mat, S)
         cy = self._cs2cy(cs.mat_vec, Y)
         cy.form = 'y'
@@ -817,10 +817,11 @@ class NetworkNoiseCov(object):
 
     ## Y to other
     def _cy2cs(self, mat, S):
+        y0 = 1/self._z0
         ovec = npy.ones(mat.shape[0])
         zvec = npy.zeros(mat.shape[0])
         I = network_array([[ovec, zvec],[zvec, ovec]])
-        Tm = (I + S)*self._k_norm*self._z0/2
+        Tm = (I + S)*self._k_norm/(y0*2)
         n = self.copy()
         n.mat_vec = npy.matmul(Tm, npy.matmul(mat, npy.conjugate(Tm.swapaxes(1, 2))))
         n.form = 's'
@@ -853,10 +854,18 @@ class NetworkNoiseCov(object):
 
     ## A to other
     def _ca2cs(self, mat, S):
-        raise NotImplemented()
+        Z = self._s2z(S) 
+        cs = self._ca2cz(mat, Z)
+        cs = self._cz2cs(cs.mat_vec, S)
+        cs.form = 's'
+        return cs
 
     def _ca2ct(self, mat, T):
-        raise NotImplemented()
+        Z = self._t2z(T) 
+        c = self._ca2cz(mat, Z)
+        ct = self._cz2ct(c.mat_vec, T)
+        ct.form = 't'
+        return ct
 
     def _ca2cz(self, mat, Z):
         z11 = Z[:,0,0]
@@ -1045,6 +1054,106 @@ class NetworkNoiseCov(object):
         else:
             raise IndexError('z0 is not an acceptable shape')
 
+    def _s2z(self, s, z0=50, s_def=S_DEF_DEFAULT):
+        '''
+        Convert scattering parameters [1]_ to impedance parameters [2]_
+
+
+        For power-waves, Eq.(19) from [3]:
+
+        .. math::
+            Z = F^{-1} (1 - S)^{-1} (S G + G^*) F
+
+        where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`  
+            
+        For pseudo-waves, Eq.(74) from [4]:
+
+        .. math::
+            Z = (1 - U^{-1} S U)^{-1}  (1 + U^{-1} S U) G
+
+        where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+        
+        Parameters
+        ------------
+        s : complex array-like
+            scattering parameters
+        z0 : complex array-like or number
+            port impedances.
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+            Scattering parameter definition : 'power' for power-waves definition [3], 
+            'pseudo' for pseudo-waves definition [4]. 
+            'traveling' corresponds to the initial implementation. 
+            Default is 'power'.
+                
+        Returns
+        ---------
+        z : complex array-like
+            impedance parameters
+
+
+
+        References
+        ----------
+        .. [1] http://en.wikipedia.org/wiki/S-parameters
+        .. [2] http://en.wikipedia.org/wiki/impedance_parameters
+        .. [3] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+        .. [4] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+
+        '''
+        nfreqs, nports, nports = s.shape
+        z0 = self._fix_z0_shape(z0, nfreqs, nports)
+    
+        # Add a small real part in case of pure imaginary char impedance
+        # to prevent numerical errors for both pseudo and power waves definitions
+        z0 = z0.astype(dtype=npy.complex)
+        z0[z0.real == 0] += ZERO  
+
+        s = s.copy()  # to prevent the original array from being altered
+        s[s == -1.] = -1. + 1e-12  # solve numerical singularity
+        s[s == 1.] = 1. + 1e-12  # solve numerical singularity
+
+        # The following is a vectorized version of a for loop for all frequencies.    
+        # # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+        Id = npy.zeros_like(s)  # (nfreqs, nports, nports)
+        npy.einsum('ijj->ij', Id)[...] = 1.0     
+        
+        if s_def == 'power':    
+            # Power-waves. Eq.(19) from [3]
+            # Creating diagonal matrices of shape (nports,nports) for each nfreqs
+            F, G = npy.zeros_like(s), npy.zeros_like(s)
+            F = F.astype(dtype=npy.complex)
+            G = G.astype(dtype=npy.complex)
+            npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
+            npy.einsum('ijj->ij', G)[...] = z0
+            # z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F  # Python > 3.5
+            z = npy.matmul(npy.linalg.inv(F), 
+                        npy.matmul(npy.linalg.inv(Id - s), 
+                                    npy.matmul(npy.matmul(s, G) + npy.conjugate(G), F)))
+            
+        elif s_def == 'pseudo':
+            # Pseudo-waves. Eq.(74) from [4]
+            # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+            ZR, U = npy.zeros_like(s), npy.zeros_like(s)
+            npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
+            npy.einsum('ijj->ij', ZR)[...] = z0
+            # USU = npy.linalg.inv(U) @ s @ U
+            # z = npy.linalg.inv(Id - USU) @ (Id + USU) @ ZR
+            USU = npy.matmul(npy.linalg.inv(U), npy.matmul(s , U))
+            z = npy.matmul(npy.linalg.inv(Id - USU), npy.matmul((Id + USU), ZR))
+
+        elif s_def == 'traveling':
+            # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
+            # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+            sqrtz0 = npy.zeros_like(s)  # (nfreqs, nports, nports)
+            npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+            # s -> z 
+            z = npy.zeros_like(s)
+            # z = sqrtz0 @ npy.linalg.inv(Id - s) @ (Id + s) @ sqrtz0  # Python>3.5
+            z = npy.matmul(npy.matmul(npy.matmul(sqrtz0, npy.linalg.inv(Id - s)), (Id + s)), sqrtz0)
+
+
+        return z
+
     def _t2s(self, t):
         '''
         converts scattering transfer parameters [#]_ to scattering parameters [#]_
@@ -1112,6 +1221,125 @@ class NetworkNoiseCov(object):
             # S_II,II = -T_II,II^-1 . T_II,I
             s[k, yh:y, xh:x] = -tinv[k].dot(t[k, yh:y, 0:xh])
         return s
+
+    def _y2s(self, y, z0=50, s_def=S_DEF_DEFAULT):
+        '''
+        convert admittance parameters [#]_ to scattering parameters [#]_
+
+        For power-waves, from [3]:
+
+        .. math::        
+            S = F (1 – G Y) (1 + G Y)^{-1} F^{-1}
+
+        where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`  
+            
+        For pseudo-waves, Eq.(73) from [4]:
+
+        .. math::
+            S = U (Y^{-1} - G) (Y^{-1} + G)^{-1}  U^{-1}        
+
+        where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+
+
+        Parameters
+        ------------
+        y : complex array-like
+            admittance parameters
+
+        z0 : complex array-like or number
+            port impedances
+
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
+            Scattering parameter definition : 'power' for power-waves definition [3], 
+            'pseudo' for pseudo-waves definition [4]. 
+            'traveling' corresponds to the initial implementation. 
+            Default is 'power'.
+
+        Returns
+        ---------
+        s : complex array-like or number
+            scattering parameters
+
+        See Also
+        ----------
+        s2z
+        s2y
+        s2t
+        z2s
+        z2y
+        z2t
+        y2s
+        y2z
+        y2z
+        t2s
+        t2z
+        t2y
+        Network.s
+        Network.y
+        Network.z
+        Network.t
+
+
+        References
+        ----------
+        .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
+        .. [#] http://en.wikipedia.org/wiki/S-parameters
+        .. [3] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+        .. [4] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.    
+        '''
+        nfreqs, nports, nports = y.shape
+        z0 = self._fix_z0_shape(z0, nfreqs, nports)
+
+        # Add a small real part in case of pure imaginary char impedance
+        # to prevent numerical errors for both pseudo and power waves definitions
+        z0 = z0.astype(dtype=npy.complex)
+        z0[z0.real == 0] += ZERO  
+
+        # The following is a vectorized version of a for loop for all frequencies.        
+        # Creating Identity matrices of shape (nports,nports) for each nfreqs 
+        Id = npy.zeros_like(y)  # (nfreqs, nports, nports)
+        npy.einsum('ijj->ij', Id)[...] = 1.0  
+            
+        if s_def == 'power':
+            # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
+            F, G = npy.zeros_like(y), npy.zeros_like(y)
+            F = F.astype(dtype=npy.complex)
+            G = G.astype(dtype=npy.complex)
+            npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
+            npy.einsum('ijj->ij', G)[...] = z0
+            # s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)  # Python > 3.5
+            s = npy.matmul(F, 
+                        npy.matmul((Id - npy.matmul(npy.conjugate(G), y)), 
+                                    npy.matmul(npy.linalg.inv(Id + npy.matmul(G, y)), npy.linalg.inv(F))))
+
+        elif s_def == 'pseudo':
+            # Pseudo-waves
+            # Creating diagonal matrices of shape (nports,nports) for each nfreqs
+            ZR, U = npy.zeros_like(y), npy.zeros_like(y)
+            npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
+            npy.einsum('ijj->ij', ZR)[...] = z0
+            # s = U @ (npy.linalg.inv(y) - ZR) @ npy.linalg.inv(npy.linalg.inv(y) + ZR) @ npy.linalg.inv(U)  # Python > 3.5
+            s = npy.matmul(U, 
+                        npy.matmul((npy.linalg.inv(y) - ZR), 
+                                    npy.matmul(npy.linalg.inv(npy.linalg.inv(y) + ZR), npy.linalg.inv(U))))
+
+        elif s_def == 'traveling':
+            # Traveling-waves definition. Cf.Wikipedia "Impedance parameters" page.
+            # Creating diagonal matrices of shape (nports, nports) for each nfreqs
+            sqrtz0 = npy.zeros_like(y)  # (nfreqs, nports, nports)
+            npy.einsum('ijj->ij', sqrtz0)[...] = npy.sqrt(z0)
+            # y -> s 
+            s = npy.zeros_like(y)
+            # s = (Id - sqrtz0 @ y @ sqrtz0) @ npy.linalg.inv(Id + sqrtz0 @ y @ sqrtz0)  # Python>3.5
+            s = npy.matmul( Id - npy.matmul(npy.matmul(sqrtz0, y), sqrtz0),
+                        npy.linalg.inv(Id + npy.matmul(npy.matmul(sqrtz0, y), sqrtz0)))
+
+            
+        return s
+
+    def _t2z(self, t, z0=50, s_def=S_DEF_DEFAULT):
+        s = self._t2s(t)
+        return self._s2z(s, z0, s_def)
 
 
 
