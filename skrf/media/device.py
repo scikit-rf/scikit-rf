@@ -1,20 +1,32 @@
 
 
 '''
-.. currentmodule:: skrf.media.circuit
+.. currentmodule:: skrf.media.device
+
 ========================================
-frequency (:mod:`skrf.media.circuit`)
+device (:mod:`skrf.media.device`)
 ========================================
 
+Device is a generic n-port microwave device class to create common Network.
 
-
-
-Circuit Class
-===============
+Device Class
+---------------
 .. autosummary::
-   :toctree: generated/
+    :toctree: generated/
 
-   Circuit
+    Device
+
+Example Devices
+---------------
+.. autosummary::
+    :toctree: generated/
+
+    MatchedSymmetricCoupler
+    Hybrid
+    QuadratureHybrid
+    Hybrid180
+    DualCoupler
+
 '''
 
 
@@ -25,9 +37,9 @@ from ..network  import connect
 from numpy import sqrt,exp
 
 
-class Circuit(object):
+class Device(object):
     '''
-    A n-port microwave circuit
+    A n-port microwave device
     
     Parameters 
     -----------
@@ -41,12 +53,12 @@ class Circuit(object):
     @abstractproperty
     def ntwk(self):
         '''
-        the network representation of a given circuit
+        the network representation of a given device
         '''
         return None
         
         
-class MatchedSymmetricCoupler(Circuit):
+class MatchedSymmetricCoupler(Device):
     '''
     A Matched Symmetric Coupler
     
@@ -58,7 +70,7 @@ class MatchedSymmetricCoupler(Circuit):
     '''
     def __init__(self, media, c=None, t=None, t_phase=0, phase_diff=0, 
                  nports=4, *args, **kw):
-        Circuit.__init__(self, media=media, *args, **kw)
+        Device.__init__(self, media=media, *args, **kw)
         
         if c is None and t is None:
             raise ValueError('Must pass either `c`  or `t`')
@@ -158,7 +170,7 @@ class QuadratureHybrid(MatchedSymmetricCoupler):
                                          phase_diff=-90, *args, **kw)
 
     
-class Hybrid180(Circuit):
+class Hybrid180(Device):
     '''
     180degree hybrid
     
@@ -175,7 +187,7 @@ class Hybrid180(Circuit):
     http://www.microwaves101.com/encyclopedias/hybrid-couplers
     '''
     def __init__(self, media, nports=4, *args, **kw):
-        Circuit.__init__(self, media=media, *args, **kw)
+        Device.__init__(self, media=media, *args, **kw)
         self.nports = nports
     @property
     def ntwk(self):
@@ -191,7 +203,7 @@ class Hybrid180(Circuit):
             a = connect(a,3,match,0)
         return a
         
-class DualCoupler(Circuit):
+class DualCoupler(Device):
     '''
     Pair of back-to-back directional couplers
     
@@ -202,7 +214,7 @@ class DualCoupler(Circuit):
         * 3 : coupled on coupler 2
     '''
     def __init__(self, media, c1=1/sqrt(2), c2=None, c1kw={},c2kw ={}):
-        Circuit.__init__(self,media=media)
+        Device.__init__(self,media=media)
         if c2 is None:
             c2= c1
         self.c1 = MatchedSymmetricCoupler(media=media,c=c1,nports=3,**c1kw)
