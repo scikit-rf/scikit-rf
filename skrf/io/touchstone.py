@@ -1,5 +1,6 @@
 """
 .. module:: skrf.io.touchstone
+
 ========================================
 touchstone (:mod:`skrf.io.touchstone`)
 ========================================
@@ -7,19 +8,21 @@ touchstone (:mod:`skrf.io.touchstone`)
 Touchstone class
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    Touchstone
-
+   Touchstone
 
 Functions related to reading/writing touchstones.
+-------------------------------------------------
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    hfss_touchstone_2_gamma_z0
-    hfss_touchstone_2_media
-    hfss_touchstone_2_network
+   hfss_touchstone_2_gamma_z0
+   hfss_touchstone_2_media
+   hfss_touchstone_2_network
+   read_zipped_touchstones
+
 """
 import re
 import os
@@ -301,11 +304,19 @@ class Touchstone:
 
     def get_sparameter_names(self, format="ri"):
         """
-        generate a list of column names for the s-parameter data
+        Generate a list of column names for the s-parameter data. 
         The names are different for each format.
-        posible format parameters:
-          ri, ma, db, orig  (where orig refers to one of the three others)
-        returns a list of strings.
+
+        Parameters
+        ----------
+        format : str
+          Format: ri, ma, db, orig (where orig refers to one of the three others)
+
+        Returns
+        -------
+        names : list
+            list of strings
+
         """
         names = ['frequency']
         if format == 'orig':
@@ -320,12 +331,23 @@ class Touchstone:
     def get_sparameter_data(self, format='ri'):
         """
         get the data of the s-parameter with the given format.
+
+        Parameters
+        ----------
+        format : str
+          Format: ri, ma, db, orig
+
         supported formats are:
           orig:  unmodified s-parameter data
           ri:    data in real/imaginary
           ma:    data in magnitude and angle (degree)
           db:    data in log magnitute and angle (degree)
-        Returns a list of numpy.arrays
+
+        Returns
+        -------
+        ret: list
+            list of numpy.arrays
+
         """
         ret = {}
         if format == 'orig':
@@ -371,12 +393,16 @@ class Touchstone:
 
     def get_sparameter_arrays(self):
         """
-        Returns the s-parameters as a tuple of arrays, where the first element is
-        the frequency vector (in Hz) and the s-parameters are a 3d numpy array.
+        Returns the s-parameters as a tuple of arrays.
+
+        The first element is the frequency vector (in Hz) and the s-parameters are a 3d numpy array.
         The values of the s-parameters are complex number.
-        usage:
+
+        Example
+        -------
           f,a = self.sgetparameter_arrays()
           s11 = a[:,0,0]
+
         """
         v = self.sparameters
 
@@ -489,7 +515,7 @@ class Touchstone:
     
             # If the file does not contain valid port impedance comments, set to default one
             if len(z0) == 0:
-                z0 = self.resistance
+                z0 = npy.complex(self.resistance)
                 #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
 
 

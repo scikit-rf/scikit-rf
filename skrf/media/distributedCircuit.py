@@ -2,11 +2,17 @@
 
 '''
 .. module:: skrf.media.distributedCircuit
+
 ============================================================
 distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 ============================================================
 
+A transmission line mode defined in terms of distributed impedance and admittance values. 
 
+.. autosummary::
+   :toctree: generated/
+
+   DistributedCircuit
 
 '''
 
@@ -24,8 +30,7 @@ from ..constants import INF, ONE, ZERO
 
 class DistributedCircuit(Media):
     '''
-    A transmission line mode defined in terms of distributed impedance
-    and admittance values. 
+    A transmission line mode defined in terms of distributed impedance and admittance values. 
 
     Parameters
     ------------

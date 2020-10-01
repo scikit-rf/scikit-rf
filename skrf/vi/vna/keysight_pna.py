@@ -267,7 +267,7 @@ class PNA(abcvna.VNA):
         self.scpi.set_snp_format(snp_fmt)  # restore the value before we got the RI data
 
         nrows = int(len(data) / npoints)
-        nports = int(np.sqrt(nrows - 1))
+        nports = int(np.sqrt((nrows - 1)/2))
         data = data.reshape([nrows, -1])
 
         fdata = data[0]

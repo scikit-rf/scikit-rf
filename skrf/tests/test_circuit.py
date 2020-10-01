@@ -870,6 +870,53 @@ class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):
         ' Check complex z0 circuit vs pseudo-waves renormalization '
         np.testing.assert_allclose(self.cir_complex.network.s, self.s_pseudo, atol=1e-4)
 
+class CircuitTestVoltagesCurrents(unittest.TestCase):
+    def setUp(self):
+        # setup a test transmission line randomly excited
+        self.P_f = np.random.rand()  # forward power in Watt
+        self.phase_f = np.random.rand()  # forward phase in rad
+        self.Z = np.random.rand()  # source internal impedance, line characteristic impedance and load impedance
+        self.L = np.random.rand()  # line length in [m]
+        self.freq = rf.Frequency(1, 10, 10, unit='GHz')
+        self.line_media = rf.media.DefinedGammaZ0(self.freq, z0=self.Z)  # lossless line medium
+        self.line = self.line_media.line(d=self.L, unit='m', name='line')  # transmisison line Network
+        
+        # forward voltages and currents at the input of the test line
+        self.V_in = np.sqrt(2*self.Z*self.P_f)*np.exp(1j*self.phase_f)
+        self.I_in = np.sqrt(2*self.P_f/self.Z)*np.exp(1j*self.phase_f)
+        # forward voltages and currents at the output of the test line
+        theta = rf.theta(self.line_media.gamma, self.freq.f, self.L)  # electrical length 
+        self.V_out, self.I_out = rf.tlineFunctions.voltage_current_propagation(self.V_in, self.I_in, self.Z, theta)
+
+        # Equivalent model with Circuit 
+        port1 = rf.Circuit.Port(frequency=self.freq, name='port1', z0=self.Z)
+        port2 = rf.Circuit.Port(frequency=self.freq, name='port2', z0=self.Z)
+        cnx = [
+            [(port1, 0), (self.line, 0)],
+            [(port2, 0), (self.line, 1)]
+        ]
+        self.crt = rf.Circuit(cnx)
+        # power and phase arrays for Circuit.voltages() and currents()
+        self.power = [self.P_f, 0]
+        self.phase = [self.phase_f, 0]
+        
+    def test_tline_voltages(self):
+        ' Test voltages for a simple transmission line '
+        V_ports = self.crt.voltages_external(self.power, self.phase)
+        
+        np.testing.assert_allclose(self.V_in, V_ports[:,0])
+        np.testing.assert_allclose(self.V_out, V_ports[:,1])
+        
+    def test_tline_currents(self):
+        ' Test currents for a simple transmission line '
+        I_ports = self.crt.currents_external(self.power, self.phase)
+        
+        np.testing.assert_allclose(self.I_in, I_ports[:,0])
+        # output current is * -1 as Circuit definition is opposite
+        # (toward the Circuit's Port)
+        np.testing.assert_allclose(self.I_out, -1*I_ports[:,1])
+        
+
 if __name__ == "__main__":
     # Launch all tests
     run_module_suite()

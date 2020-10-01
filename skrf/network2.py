@@ -11,7 +11,7 @@ import numpy as npy
 from numpy import fft
 import matplotlib.pyplot as plb
 
-from IPython.display import Image, SVG, Math
+from IPython.display import Image
 from IPython.core.pylabtools import print_figure
 
 from abc import ABCMeta, abstractmethod

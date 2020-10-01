@@ -2,12 +2,12 @@
 
 '''
 .. module:: skrf.media.cpw
+
 ========================================
 cpw (:mod:`skrf.media.cpw`)
 ========================================
 
 Coplanar waveguide class
-
 
 This class was made from the technical documentation [#]_ provided
 by the qucs project [#]_ .
@@ -16,6 +16,12 @@ their derivations.
 
 .. [#] http://qucs.sourceforge.net/docs/technical.pdf
 .. [#] http://www.qucs.sourceforge.net/
+
+.. autosummary::
+   :toctree: generated/
+
+   CPW
+
 '''
 from scipy.constants import  epsilon_0, mu_0
 from scipy.special import ellipk
