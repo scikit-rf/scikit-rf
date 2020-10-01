@@ -5,6 +5,7 @@ import six
 import numpy as npy
 import six.moves.cPickle as pickle
 import skrf as rf
+from copy import deepcopy
 from nose.plugins.skip import SkipTest
 
 from skrf import setup_pylab
@@ -639,8 +640,15 @@ class NetworkTestCase(unittest.TestCase):
           self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
 
 
+    def test_se2gmm2se_mag(self):
+        ntwk4 = rf.Network(os.path.join(self.test_dir, 'cst_example_4ports.s4p'))
+        ntwk4t = deepcopy(ntwk4)
+        ntwk4t.se2gmm(p=2)
+        ntwk4t.gmm2se(p=2)
 
-
+        self.assertTrue(npy.allclose(abs(ntwk4.s), abs(ntwk4t.s), rtol=1E-7, atol=0))
+        # phase testing does not pass - see #367
+        #self.assertTrue(npy.allclose(npy.angle(ntwk4.s), npy.angle(ntwk4t.s), rtol=1E-7, atol=1E-10))
 
     def test_s_active(self):
         '''
