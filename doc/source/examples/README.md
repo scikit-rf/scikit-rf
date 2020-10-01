@@ -3,4 +3,4 @@ Usage Examples of scikit-rf
 =============================
 
 These can be viewed through the nbviewer or downloaded and run through the ipython notebook 
-http://nbviewer.ipython.org/github/scikit-rf/examples/blob/master/index.ipynb
+https://nbviewer.jupyter.org/github/scikit-rf/scikit-rf/blob/master/doc/source/examples/networktheory/Properties%20of%20Rectangular%20Waveguides.ipynb
