@@ -54,6 +54,7 @@ Plotting
     
 Circuit
 ------------------
+
 .. toctree::
     :maxdepth: 1
     :glob:
@@ -62,6 +63,7 @@ Circuit
 
 Mixed Mode
 ------------------
+
 .. toctree::
     :maxdepth: 1
     :glob:
