@@ -105,6 +105,7 @@ class Touchstone:
 
         self.comment_variables=None
         self.load_file(fid)
+        fid.close()
 
     def load_file(self, fid):
         """
@@ -276,8 +277,8 @@ class Touchstone:
         convert hfss variable comments to a dict of vars:(numbers,units)
         '''
         comments = self.comments
-        p1 = re.compile('\w* = \w*')
-        p2 = re.compile('\s*(\d*)\s*(\w*)')
+        p1 = re.compile(r'\w* = \w*')
+        p2 = re.compile(r'\s*(\d*)\s*(\w*)')
         var_dict = {}
         for k in re.findall(p1, comments):
             var, value = k.split('=')
