@@ -385,6 +385,7 @@ class MultiNetworkSystem(object):
         idx = 0
         self.con_list = []
         self.port_ext_idx = []
+        self.port_ext_unordered = []
         self.port_ext_reorder= []
         for p, ntwk in enumerate(self.ntwk_dict):
             nports = self.ntwk_dict[ntwk]['ntwk'].nports
@@ -396,13 +397,11 @@ class MultiNetworkSystem(object):
                     self.gamma[:, row, col] = ovec
                 else:
                     self.port_ext_reorder.append(self.ntwk_dict[ntwk]['connections'][m][1])
-                    self.port_ext_idx.append(idx + m) # used for generating re and ri
+                    self.port_ext_unordered.append(idx + m) # used for generating re and ri
 
             idx += nports
-        
-        #arrayinds = self.port_ext_reorder.argsort()
-        self.port_ext_idx = [self.port_ext_idx for _,self.port_ext_idx in sorted(zip(self.port_ext_reorder,self.port_ext_idx))]
-        #self.port_ext_idx = self.port_ext_idx[self.port_ext_reorder - 1]
+
+        self.port_ext_idx = [self.port_ext_unordered for _,self.port_ext_unordered in sorted(zip(self.port_ext_reorder,self.port_ext_unordered))]
 
     def _create_re_ri_matrix(self):
 
