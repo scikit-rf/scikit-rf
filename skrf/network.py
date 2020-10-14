@@ -28,7 +28,6 @@ Building Network
 
     Network.from_z
     Network.from_y
-    Network.from_s
 
 Network Representations
 ============================
