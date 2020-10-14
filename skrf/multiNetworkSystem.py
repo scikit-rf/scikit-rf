@@ -339,7 +339,6 @@ class MultiNetworkSystem(object):
         >>> ntwk_r = mns.reduce()
         >>> print(ntwk_r.nfmin_db)
         """
-
         self._create_block_diagonal_matrices_and_gamma()
         self._create_re_ri_matrix()
 
@@ -386,6 +385,8 @@ class MultiNetworkSystem(object):
         idx = 0
         self.con_list = []
         self.port_ext_idx = []
+        self.port_ext_unordered = []
+        self.port_ext_reorder= []
         for p, ntwk in enumerate(self.ntwk_dict):
             nports = self.ntwk_dict[ntwk]['ntwk'].nports
             for m in range(nports):
@@ -395,18 +396,26 @@ class MultiNetworkSystem(object):
                     self.con_list.append((row, col))
                     self.gamma[:, row, col] = ovec
                 else:
-                    self.port_ext_idx.append(idx + m) # used for generating re and ri
+                    self.port_ext_reorder.append(self.ntwk_dict[ntwk]['connections'][m][1])
+                    self.port_ext_unordered.append(idx + m) # used for generating re and ri
 
             idx += nports
+
+        self.port_ext_idx = [self.port_ext_unordered for _,self.port_ext_unordered in sorted(zip(self.port_ext_reorder,self.port_ext_unordered))]
 
     def _create_re_ri_matrix(self):
 
         Identity = npy.identity(self.n_ports_total)
 
         re_single = npy.take(Identity, self.port_ext_idx, axis=0)
+
         ri_single = npy.delete(Identity, self.port_ext_idx, axis=0)
 
         self.re = npy.array([re_single]*self.n_freqs, dtype=npy.complex)
+
+        #print(self.port_ext_idx)
+        #print(npy.real(self.re[0,:,:]))
+
         self.ri = npy.array([ri_single]*self.n_freqs, dtype=npy.complex)
 
 
