@@ -223,8 +223,10 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        ntwk_random = rf.Network(s=s_random, frequency=self.freq)
         for test_z0 in (50, 10, 90+10j, 4-100j):
-            for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3):
+            for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3, ntwk_random):
                 ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
                 npy.testing.assert_allclose(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0), ntwk.s)
                 npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0), ntwk.s)
