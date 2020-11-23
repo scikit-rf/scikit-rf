@@ -28,6 +28,7 @@ Building Network
 
     Network.from_z
     Network.from_y
+    Network.from_a
 
 Network Representations
 ============================
@@ -99,7 +100,6 @@ Noise
     Network.add_noise_polar
     Network.add_noise_polar_flatband
     Network.multiply_noise
-    Network.noise_source
 
 Supporting Functions
 ======================

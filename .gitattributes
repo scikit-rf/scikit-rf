@@ -8,3 +8,5 @@
 *.png binary
 *.jpg binary
 *.zip binary
+*.ntwk binary
+*.ns binary

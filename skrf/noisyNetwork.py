@@ -5,12 +5,14 @@
 noisyNetwork (:mod:`skrf.noisyNetwork`)
 ========================================
 
+Provides an n-port network class that holds noise covariance matrices. This
+is useful when you want to calculate the noise figure and noise parameters
+of a network. 
 
-Provides a n-port network class and associated functions.
-
-Much of the functionality in this module is provided as methods and
-properties of the :class:`NoisyNetwork` Class.
-
+:class:`NoisyNetwork` derives from :class:`Network`. Therefore, any methods
+within the :class:`Network` class can be used from :class:`NoisyNetwork`. 
+For example, *resample*, *interpolate*, and any of the plotting functions
+within :class:`Network` and be used on this object.
 
 NoisyNetwork Class
 ==================
@@ -20,8 +22,46 @@ NoisyNetwork Class
 
     NoisyNetwork
 
-Building NoisyNetwork
----------------------
+Set Noise Source
+================
+*noise_source* is the primary method that sets a :class:`NoisyNetwork`
+apart from a :class:`Network`. This function is used to associate a noise
+covariance matrix with a network.
+
+.. autosummary::
+    :toctree: generated/
+
+    NoisyNetwork.noise_source
+
+Noise Parameters
+================
+.. autosummary::
+    :toctree: generated/
+
+    NoisyNetwork.y_opt
+    NoisyNetwork.z_opt
+    NoisyNetwork.g_opt
+    NoisyNetwork.rn
+    NoisyNetwork.nfmin
+    NoisyNetwork.nfmin_db
+    NoisyNetwork.nf
+    NoisyNetwork.nf_db
+
+Network Noise Covariance Representations
+========================================
+.. autosummary::
+    :toctree: generated/
+
+    NoisyNetwork.cs
+    NoisyNetwork.ct
+    NoisyNetwork.cz
+    NoisyNetwork.cy
+    NoisyNetwork.ca
+
+Network Methods
+---------------
+These functions are part of the parent class :class:`Network` and are 
+provided here for convenience.
 
 .. autosummary::
     :toctree: generated/
@@ -29,6 +69,11 @@ Building NoisyNetwork
     Network.from_z
     Network.from_y
     Network.from_a
+    Network.s
+    Network.z
+    Network.y
+    Network.a
+    Network.t
 
 Connecting Networks with Noise Analysis
 =======================================
@@ -40,16 +85,7 @@ Connecting Networks with Noise Analysis
     parallel_parallel_2port
     series_series_2port
 
-Network Noise Covariance Representations
-========================================
-.. autosummary::
-    :toctree: generated/
 
-    Network.cs
-    Network.ct
-    Network.cz
-    Network.cy
-    Network.ca
 """
 
 from six.moves import xrange
@@ -72,25 +108,23 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
 class NoisyNetwork(Network):
     """
-    A n-port electrical network that takes noise into account [#]_.
+    A :class:`Network` with associated noise covariance matrix and methods.
 
-    For instructions on how to create Network see  :func:`__init__`.
+    For instructions on how to create a NoisyNetwork see  :func:`__init__`.
 
     =====================  =============================================
     Operator               Function
     =====================  =============================================
-    \+                     element-wise addition of the s-matrix
-    \-                     element-wise difference of the s-matrix
-    \*                     element-wise multiplication of the s-matrix
-    \/                     element-wise division of the s-matrix
-    \*\*                   cascading (only for 2-ports)
-    \//                    de-embedding (for 2-ports, see :attr:`inv`)
+    \+                     combines noisy networks in series
+    \|                     combines noisy networks in parallel
+    \*\*                   cascades noisy networks
     =====================  =============================================
 
-    Different components of the :class:`Network` can be visualized
-    through various plotting methods. These methods can be used to plot
+    Different components of the :class:`NoisyNetwork` can be visualized
+    using the same methods used to visualize :class:`Network` through 
+    various plotting methods. These methods can be used to plot
     individual elements of the s-matrix or all at once. For more info
-    about plotting see the :doc:`../../tutorials/plotting` tutorial.
+    about plotting see the tutorials.
 
     =========================  =============================================
     Method                     Meaning
@@ -105,19 +139,9 @@ class NoisyNetwork(Network):
 
     =========================  =============================================
 
-    :class:`Network`  objects can be  created from a touchstone or pickle
-    file  (see :func:`__init__`), by a
-    :class:`~skrf.media.media.Media` object, or manually by assigning the
-    network properties directly. :class:`Network`  objects
-    can be saved to disk in the form of touchstone files with the
-    :func:`write_touchstone` method.
 
-    An exhaustive list of :class:`Network` Methods and Properties
+    An exhaustive list of :class:`NoisyNetwork` Methods and Properties
     (Attributes) are given below
-
-    References
-    ------------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
     """
 
     # CONSTRUCTOR
@@ -163,13 +187,13 @@ class NoisyNetwork(Network):
 
         Create a blank network, then fill in values
 
-        >>> n = rf.Network()
+        >>> n = rf.NoisyNetwork()
         >>> freq = rf.Frequency(1,3,3,'ghz')
         >>> n.frequency, n.s, n.z0 = freq,[1,2,3], [1,2,3]
 
         Directly from values
 
-        >>> n = rf.Network(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
+        >>> n = rf.NoisyNetwork(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
 
         See Also
         -----------
@@ -190,7 +214,7 @@ class NoisyNetwork(Network):
 
     def noise_source(self, source='passive', T0=None):
         '''
-        Set the :class:`.NetworkNoiseCov` within :class:`Network` to model noise.
+        Set the :class:`.NetworkNoiseCov` within :class:`NoisyNetwork` to model noise.
 
         To model noise, use this method to set the noise covariance matrix within the network.
 
@@ -200,7 +224,7 @@ class NoisyNetwork(Network):
             Sets the noise covariance matrix for the network. The noise covariance matrix is stored within
             a :class:`.NetworkNoiseCov` object. The matrix can be used to model all kinds of noise (e.g., thermal,
             shot, flicker, etc.). However, if the network is passive, `source` may be set to source='passive'. Doing so
-            will use the matrix `s` within :class:`Network` to calculate the covariance matrix for thermal noise.
+            will use the matrix `s` within :class:`NoisyNetwork` to calculate the covariance matrix for thermal noise.
             If you don't want the network to produce any noise, and yet use the network in noise calculations, you can
             pass source='none'.
 
@@ -217,7 +241,7 @@ class NoisyNetwork(Network):
         >>> R = 200*ovec
         >>> R_shunt_z = rf.network_array([[R, R], [R, R]])
         >>> R_shunt_cov = 4*K_BOLTZMANN*T0*npy.real(R_shunt_z)
-        >>> ntwk = rf.Network.from_z(R_shunt_z)
+        >>> ntwk = rf.NoisyNetwork.from_z(R_shunt_z)
         >>> ntwk_cz = rf.NetworkNoiseCov(R_shunt_cov, form='z')
         >>> ntwk.noise_source(ntwk_cz)
 
@@ -228,7 +252,7 @@ class NoisyNetwork(Network):
         >>> zvec = npy.zeros(len(frequency))
         >>> R = 200*ovec
         >>> R_shunt_z = rf.network_array([[R, R], [R, R]])
-        >>> ntwk = rf.Network.from_z(R_shunt_z)
+        >>> ntwk = rf.NoisyNetwork.from_z(R_shunt_z)
         >>> ntwk.noise_source('passive')
 
 
@@ -303,7 +327,7 @@ class NoisyNetwork(Network):
     @property
     def cs(self):
         """
-        Noise covariance matrix in s-form
+        Returns the noise covariance matrix in s-form
 
         Returns
         ---------
@@ -329,7 +353,7 @@ class NoisyNetwork(Network):
     @property
     def ct(self):
         """
-        Noise covariance matrix in t-form
+        Returns the noise covariance matrix in t-form
 
         Returns
         ---------
@@ -355,7 +379,7 @@ class NoisyNetwork(Network):
     @property
     def cz(self):
         """
-        Noise covariance matrix in z-form
+        Returns the noise covariance matrix in z-form
 
         Returns
         ---------
@@ -381,7 +405,7 @@ class NoisyNetwork(Network):
     @property
     def cy(self):
         """
-        Noise covariance matrix in y-form
+        Returns the noise covariance matrix in y-form
 
         Returns
         ---------
@@ -407,7 +431,7 @@ class NoisyNetwork(Network):
     @property
     def ca(self):
         """
-        Noise covariance matrix in a-form
+        Returns the noise covariance matrix in a-form
 
         Returns
         ---------
@@ -438,7 +462,7 @@ class NoisyNetwork(Network):
     @property
     def y_opt(self):
       """
-      the optimum source admittance to minimize noise
+      The optimum source admittance to minimize noise
       """
       if self.noise_cov:
         nca = self.noise_cov.get_ca(self.a)
@@ -451,7 +475,7 @@ class NoisyNetwork(Network):
     @property
     def z_opt(self):
       """
-      the optimum source impedance to minimize noise
+      The optimum source impedance to minimize noise
       """
       if self.noise_cov:
         nca = self.noise_cov.get_ca(self.a)
@@ -462,7 +486,7 @@ class NoisyNetwork(Network):
     @property
     def g_opt(self):
       """
-      the optimum source reflection coefficient to minimize noise
+      The optimum source reflection coefficient to minimize noise
       """
       if self.noise_cov:
         nca = self.noise_cov.get_ca(self.a)
@@ -473,7 +497,7 @@ class NoisyNetwork(Network):
     @property
     def nfmin(self):
       """
-      the minimum noise figure for the network
+      The minimum noise figure for the network
       """
       if self.noise_cov:
         nca = self.noise_cov.get_ca(self.a)
@@ -485,7 +509,7 @@ class NoisyNetwork(Network):
     @property
     def nfmin_db(self):
       """
-      the minimum noise figure for the network in dB
+      The minimum noise figure for the network in dB
       """
       if self.noise_cov:
         nca = self.noise_cov.get_ca(self.a)
@@ -495,7 +519,7 @@ class NoisyNetwork(Network):
 
     def nf(self, z):
       """
-      the noise figure for the network if the source impedance is z
+      The noise figure for the network if the source impedance is z
       """
       z0 = self.z0
       if self.noise_cov:
@@ -513,6 +537,9 @@ class NoisyNetwork(Network):
       return fmin + rn/gs * npy.square(npy.absolute(ys - y_opt))
 
     def nf_db(self, z):
+        """
+      The noise figure for the network in dB
+      """
         return mf.complex_2_db10(self.nf(z))
  
     def nfdb_gs(self, gs):
@@ -547,7 +574,7 @@ class NoisyNetwork(Network):
     @property
     def rn(self):
       """
-      the equivalent noise resistance for the network
+      The equivalent noise resistance for the network
       """
       if self.noise_cov:
         nca = self.noise_cov.get_ca(self.a)
@@ -559,9 +586,9 @@ class NoisyNetwork(Network):
     ## CLASS METHODS
     def copy(self):
         '''
-        Returns a copy of this Network
+        Returns a copy of this NoisyNetwork
 
-        Needed to allow pass-by-value for a Network instead of
+        Needed to allow pass-by-value for a NoisyNetwork instead of
         pass-by-reference
         '''
         ntwk = NoisyNetwork(s=self.s,
@@ -587,9 +614,9 @@ class NoisyNetwork(Network):
 
 def cascade_2port(ntwkA, ntwkB, calc_noise=True):
     '''
-    cascade combination of two two-ports Networks (:class:`Network`), which also combines noise covariance matrices.
+    Cascade combination of two two-ports NoisyNetwork (:class:`NoisyNetwork`), which also combines noise covariance matrices.
 
-    Connects two two-port Networks in cascade configuration, if noise information
+    Connects two two-port NoisyNetwork in cascade configuration, if noise information
     is available, use it to determine the total covariance matrix for the combined
     system.
 
@@ -600,16 +627,16 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
 
     Parameters
     -----------
-    ntwkA : :class:`Network`
+    ntwkA : :class:`NoisyNetwork`
             network `ntwkA`
-    ntwkB : :class:`Network`
+    ntwkB : :class:`NoisyNetwork`
             network `ntwkB`
     calc_noise : Bool
                 Set to false if no noise calculations are desired
 
     Returns
     --------
-    C : :class:`Network`
+    C : :class:`NoisyNetwork`
             the resultant two-port network of ntwkA in cascade with ntwkB
 
     See Also
@@ -638,9 +665,9 @@ def cascade_2port(ntwkA, ntwkB, calc_noise=True):
 
 def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
     '''
-    parallel combination of two two-ports  Networks (:class:`Network`), which also combines noise covariance matrices.
+    Parallel combination of two two-ports  NoisyNetwork (:class:`NoisyNetwork`), which also combines noise covariance matrices.
 
-    Connects two two-port Networks in parallel-parallel configuration
+    Connects two two-port NoisyNetwork in parallel-parallel configuration
 
     Notes
     ------
@@ -649,16 +676,16 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
 
     Parameters
     -----------
-    ntwkA : :class:`Network`
+    ntwkA : :class:`NoisyNetwork`
             network `ntwkA`
-    ntwkB : :class:`Network`
+    ntwkB : :class:`NoisyNetwork`
             network `ntwkB`
     calc_noise : Bool
                 Set to false if no noise calculations are desired
 
     Returns
     --------
-    C : :class:`Network`
+    C : :class:`NoisyNetwork`
             the resultant two-port network of ntwkA parallel-parallel with ntwkB
 
     See Also
@@ -687,9 +714,9 @@ def parallel_parallel_2port(ntwkA, ntwkB, calc_noise=True):
 
 def series_series_2port(ntwkA, ntwkB, calc_noise=True):
     '''
-    series combination of two two-ports Networks (:class:`Network`), which also combines noise covariance matrices.
+    Series combination of two two-ports NoisyNetwork (:class:`NoisyNetwork`), which also combines noise covariance matrices.
 
-    Connects two two-port Networks in series-series configuration
+    Connects two two-port NoisyNetwork in series-series configuration
 
     Notes
     ------
@@ -698,16 +725,16 @@ def series_series_2port(ntwkA, ntwkB, calc_noise=True):
 
     Parameters
     -----------
-    ntwkA : :class:`Network`
+    ntwkA : :class:`NoisyNetwork`
             network `ntwkA`
-    ntwkB : :class:`Network`
+    ntwkB : :class:`NoisyNetwork`
             network `ntwkB`
     calc_noise : Bool
                 Set to false if no noise calculations are desired
 
     Returns
     --------
-    C : :class:`Network`
+    C : :class:`NoisyNetwork`
             the resultant two-port network of ntwkA in series-series with ntwkB
 
     See Also

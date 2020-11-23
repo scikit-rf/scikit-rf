@@ -1,27 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-.. module:: skrf.multiNetworkSystem
-========================================
-multiNetworkSystem (:mod:`skrf.multiNetworkSystem`)
-========================================
+.. module:: skrf.multiNoisyNetworkSystem
+=============================================================
+multiNoisyNetworkSystem (:mod:`skrf.multiNoisyNetworkSystem`)
+=============================================================
 
-Tools for combining multiple networks into a single network that also calculates noise covariance matrices. Each of the individual
-multiport networks are added to a :class:`MultiNetworkSystem` object via the :func:`MultiNetworkSystem.add`
-method. These networks are then connected together via the :func:`MultiNetworkSystem.connect` method. A new
-:class:`.Network` is then created out of the collection of networks by calling :func:`MultiNetworkSystem.reduce`
+Tools for combining multiple :class:`NoisyNetworks` into a single network that also calculates noise covariance matrices. Each of the individual
+multiport :class:`NoisyNetworks` are added to a :class:`MultiNoisyNetworkSystem` object via the :func:`MultiNoisyNetworkSystem.add`
+method. These networks are then connected together via the :func:`MultiNoisyNetworkSystem.connect` method. A new
+:class:`NoisyNetwork` is then created out of the collection of networks by calling :func:`MultiNoisyNetworkSystem.reduce`
 
-See scikit-rf examples on MultiNetworkSystems
-
-[I think there is overlap with this and the circuit.py module, needs investigation.]
+See scikit-rf examples on MultiNoisyNetworkSystem
 
 
-MultiNetworkSystem Class
-========================
+MultiNoisyNetworkSystem Class
+=============================
 
 .. autosummary::
     :toctree: generated/
 
-    MultiNetworkSystem
+    MultiNoisyNetworkSystem
 
 Building a Network from Multiple Networks
 =========================================
@@ -29,11 +27,11 @@ Building a Network from Multiple Networks
 .. autosummary::
     :toctree: generated/
 
-    MultiNetworkSystem.add
-    MultiNetworkSystem.connect
-    MultiNetworkSystem.external_port
-    MultiNetworkSystem.verify
-    MultiNetworkSystem.reduce
+    MultiNoisyNetworkSystem.add
+    MultiNoisyNetworkSystem.connect
+    MultiNoisyNetworkSystem.external_port
+    MultiNoisyNetworkSystem.verify
+    MultiNoisyNetworkSystem.reduce
 
 Extras
 ============================
@@ -41,7 +39,7 @@ Extras
 .. autosummary::
     :toctree: generated/
 
-    MultiNetworkSystem.num_networks
+    MultiNoisyNetworkSystem.num_networks
 
 """
 
@@ -114,7 +112,7 @@ class MultiNoisyNetworkSystem(object):
 
     @property
     def num_networks(self):
-        ''' Returns the number of networks that have been added to :class:`MultiNetworkSystem`
+        ''' Returns the number of networks that have been added to :class:`MultiNoisyNetworkSystem`
         '''
         return len(self.ntwk_list)
 
@@ -122,7 +120,7 @@ class MultiNoisyNetworkSystem(object):
         """
         Add a :class:`.NoisyNetwork` to the object.
 
-        To add a :class:`.NoisyNetwork` to a :class:`MultiNetworkSystem`, you must provide
+        To add a :class:`.NoisyNetwork` to a :class:`MultiNoisyNetworkSystem`, you must provide
         a unique name for the added network. You can do this either by adding a network
         that has a name (i.e., ntwk.name != None), or you can add the name within this 
         add function itself. 
@@ -130,7 +128,7 @@ class MultiNoisyNetworkSystem(object):
         Parameters
         -----------
         ntwk : :class:`.NoisyNetwork`
-            Any multiport network the user would like to combine within a MultiNetworkSystem
+            Any multiport network the user would like to combine within a MultiNoisyNetworkSystem
         name : optional string
             The unique name for the added network. If left blank, the function will use the name within
             the NoisyNetwork object (i.e., ntwk.name). If no name is provided, the function will raise a 
