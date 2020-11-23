@@ -1,9 +1,9 @@
 
 import numpy as npy
-from ..network import Network
+from ..noisyNetwork import NoisyNetwork
 from ..util import network_array
 
-class Attenuator(Network):
+class Attenuator(NoisyNetwork):
 
     def __init__(self, attenuation_db, name=None, comments=None, f_unit=None, T0=None, s_def='power', **kwargs):
         super().__init__(name=name, comments=comments, f_unit=f_unit, s_def=s_def, **kwargs)

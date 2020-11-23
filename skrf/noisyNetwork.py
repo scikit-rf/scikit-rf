@@ -28,31 +28,7 @@ Building NoisyNetwork
 
     Network.from_z
     Network.from_y
-
-Network Representations
-============================
-
-.. autosummary::
-    :toctree: generated/
-
-    Network.s
-    Network.z
-    Network.y
-    Network.a
-    Network.t
-
-Connecting Networks
-===============================
-
-.. autosummary::
-    :toctree: generated/
-
-    connect
-    innerconnect
-    cascade
-    cascade_list
-    de_embed
-    flip
+    Network.from_a
 
 Connecting Networks with Noise Analysis
 =======================================
@@ -64,54 +40,6 @@ Connecting Networks with Noise Analysis
     parallel_parallel_2port
     series_series_2port
 
-
-Interpolation and Concatenation Along Frequency Axis
-=====================================================
-
-.. autosummary::
-    :toctree: generated/
-
-    stitch
-    overlap
-    Network.resample
-    Network.interpolate
-    Network.interpolate_self
-
-Combining Networks
-===================================
-
-.. autosummary::
-    :toctree: generated/
-
-    n_oneports_2_nport
-    four_oneports_2_twoport
-    three_twoports_2_threeport
-    n_twoports_2_nport
-    concat_ports
-
-IO
-====
-
-.. autosummary::
-
-    skrf.io.general.read
-    skrf.io.general.write
-    skrf.io.general.ntwk_2_spreadsheet
-    Network.write
-    Network.write_touchstone
-    Network.read
-    Network.write_spreadsheet
-
-Noise
-============
-.. autosummary::
-    :toctree: generated/
-
-    Network.add_noise_polar
-    Network.add_noise_polar_flatband
-    Network.multiply_noise
-    Network.noise_source
-
 Network Noise Covariance Representations
 ========================================
 .. autosummary::
@@ -122,139 +50,31 @@ Network Noise Covariance Representations
     Network.cz
     Network.cy
     Network.ca
-
-
-Supporting Functions
-======================
-
-.. autosummary::
-    :toctree: generated/
-
-    inv
-    connect_s
-    innerconnect_s
-    s2z
-    s2y
-    s2t
-    s2a
-    z2s
-    z2y
-    z2t
-    z2a
-    y2s
-    y2z
-    y2t
-    t2s
-    t2z
-    t2y
-    fix_z0_shape
-    renormalize_s
-    passivity
-    reciprocity
-
-Misc Functions
-=====================
-.. autosummary::
-    :toctree: generated/
-
-    average
-    two_port_reflect
-    chopinhalf
-    Network.nudge
-    Network.renormalize
-
 """
 
 from six.moves import xrange
-from functools import reduce
-
-import os
-import warnings
-
-import six.moves.cPickle as pickle
-from six.moves.cPickle import UnpicklingError
 from six import string_types
 
-import sys
-import re
-import zipfile
-from copy import deepcopy as copy
-from numbers import Number
-from itertools import product
 
 import numpy as npy
-from numpy.linalg import inv as npy_inv
-from numpy import fft, gradient, reshape, shape, ones
-from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
-from scipy.interpolate import interp1d  # for Network.interpolate()
-from scipy.ndimage.filters import convolve1d
-import unittest  # fotr unitest.skip
+from copy import deepcopy as copy
 
 from . import mathFunctions as mf
-from .frequency import Frequency
 from .network import Network
+from .network import z2a, z2s, z2t, z2y, y2a, y2s, y2t, y2z, s2a, s2h, s2t, s2y
+from .network import  s2z, a2s, a2t, a2z, t2a, t2s, t2y, t2z
+from .frequency import Frequency
 from .networkNoiseCov import NetworkNoiseCov
-from .tlineFunctions import zl_2_Gamma0
-from .util import get_fid, get_extn, find_nearest_index, slice_domain, network_array
-from .time import time_gate
-# later imports. delayed to solve circular dependencies
-# from .io.general import read, write
-# from .io import touchstone
-# from .io.general import network_2_spreadsheet
-# from media import Freespace
 
 from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
-from . import is_alt_ops
 
-
-#from matplotlib import cm
-#import matplotlib.pyplot as plt
-#import matplotlib.tri as tri
-#from scipy.interpolate import interp1d
-
-
-class NoiseyNetwork(Network):
+class NoisyNetwork(Network):
     """
-    A n-port electrical network [#]_.
+    A n-port electrical network that takes noise into account [#]_.
 
     For instructions on how to create Network see  :func:`__init__`.
-
-    A n-port network may be defined by three quantities,
-     * network parameter matrix (s, z, or y-matrix)
-     * port characteristic impedance matrix
-     * frequency information
-
-    The :class:`Network` class stores these data structures internally
-    in the form of complex :class:`numpy.ndarray`'s. These arrays are not
-    interfaced directly but instead through the use of the properties:
-
-    =====================  =============================================
-    Property               Meaning
-    =====================  =============================================
-    :attr:`s`              scattering parameter matrix
-    :attr:`z0`             characteristic impedance matrix
-    :attr:`f`              frequency vector
-    =====================  =============================================
-
-    Although these docs focus on s-parameters, other equivalent network
-    representations such as :attr:`z` and  :attr:`y` are
-    available. Scalar projections of the complex network parameters
-    are accessible through properties as well. These also return
-    :class:`numpy.ndarray`'s.
-
-    =====================  =============================================
-    Property               Meaning
-    =====================  =============================================
-    :attr:`s_re`           real part of the s-matrix
-    :attr:`s_im`           imaginary part of the s-matrix
-    :attr:`s_mag`          magnitude of the s-matrix
-    :attr:`s_db`           magnitude in log scale of the s-matrix
-    :attr:`s_deg`          phase of the s-matrix in degrees
-    =====================  =============================================
-
-    The following operations act on the networks s-matrix.
 
     =====================  =============================================
     Operator               Function
@@ -300,64 +120,10 @@ class NoiseyNetwork(Network):
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     """
 
-    global PRIMARY_PROPERTIES
-    PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
-
-    global COMPONENT_FUNC_DICT
-    COMPONENT_FUNC_DICT = {
-        're': npy.real,
-        'im': npy.imag,
-        'mag': npy.abs,
-        'db': mf.complex_2_db,
-        'db10': mf.complex_2_db10,
-        'rad': npy.angle,
-        'deg': lambda x: npy.angle(x, deg=True),
-        'arcl': lambda x: npy.angle(x) * npy.abs(x),
-        'rad_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)),
-        'deg_unwrap': lambda x: mf.radian_2_degree(mf.unwrap_rad( \
-            npy.angle(x))),
-        'arcl_unwrap': lambda x: mf.unwrap_rad(npy.angle(x)) * \
-                                 npy.abs(x),
-        # 'gd' : lambda x: -1 * npy.gradient(mf.unwrap_rad(npy.angle(x)))[0], # removed because it depends on `f` as well as `s`
-        'vswr': lambda x: (1 + abs(x)) / (1 - abs(x)),
-        'time': mf.ifft,
-        'time_db': lambda x: mf.complex_2_db(mf.ifft(x)),
-        'time_mag': lambda x: mf.complex_2_magnitude(mf.ifft(x)),
-        'time_impulse': None,
-        'time_step': None,
-    }
-    # provides y-axis labels to the plotting functions
-    global Y_LABEL_DICT
-    Y_LABEL_DICT = {
-        're': 'Real Part',
-        'im': 'Imag Part',
-        'mag': 'Magnitude',
-        'abs': 'Magnitude',
-        'db': 'Magnitude (dB)',
-        'db10': 'Magnitude (dB)',
-        'deg': 'Phase (deg)',
-        'deg_unwrap': 'Phase (deg)',
-        'rad': 'Phase (rad)',
-        'rad_unwrap': 'Phase (rad)',
-        'arcl': 'Arc Length',
-        'arcl_unwrap': 'Arc Length',
-        'gd': 'Group Delay (s)',
-        'vswr': 'VSWR',
-        'passivity': 'Passivity',
-        'reciprocity': 'Reciprocity',
-        'time': 'Time (real)',
-        'time_db': 'Magnitude (dB)',
-        'time_mag': 'Magnitude',
-        'time_impulse': 'Magnitude',
-        'time_step': 'Magnitude',
-    }
-
-    noise_interp_kind = 'linear'
-
     # CONSTRUCTOR
-    def __init__(self, file=None, name=None, comments=None, f_unit=None, s_def=S_DEF_DEFAULT, **kwargs):
+    def __init__(self, *args, **kwargs):
         '''
-        Network constructor.
+        NoisyNetwork constructor.
 
         Creates an n-port microwave network from a `file` or directly
         from data. If no file or data is given, then an empty Network
@@ -413,12 +179,14 @@ class NoiseyNetwork(Network):
         write_touchstone : write a network to a touchstone file
         '''
 
-        super().__init__(self, file=None, name=None, comments=None, f_unit=None, s_def=S_DEF_DEFAULT, **kwargs)
+        super(NoisyNetwork, self).__init__(*args, **kwargs)
 
         
         self.noise_cov = None # This is the NetworkNoiseCov object, some of this will be duplicate with noise for now
         self.noise_freq = None
         self.T0 = T0 # Temperature at measurement
+
+
 
     def noise_source(self, source='passive', T0=None):
         '''
@@ -484,42 +252,19 @@ class NoiseyNetwork(Network):
     # OPERATORS
     def __pow__(self, other):
         """
-        cascade this network with another network
+        Cascade this network with another network
 
         See `cascade`
         """
-        # if they pass a number then use power operator
-        if isinstance(other, Number):
-            out = self.copy()
-            out.s = out.s ** other
-            return out
-
-        else:
-            return cascade(self, other)
+        return cascade_2port(self, other)
 
     def __mul__(self, other):
         """
-        Element-wise complex multiplication of s-matrix
+        Cascade this network with another network
 
-        if skrf.alternative_ops() has been set, this operator performs
-        cascade_2port operation.
+        See `cascade`
         """
-
-        # see skrf __init__.py for is_alt_ops() usage
-        if not is_alt_ops():
-            result = self.copy()
-
-            if isinstance(other, Network):
-                self.__compatable_for_scalar_operation_test(other)
-                result.s = self.s * other.s
-            else:
-                # other may be an array or a number
-                result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
-
-            return result
-
-        else:
-            return cascade_2port(self, other)
+        return cascade_2port(self, other)
 
     def __or__(self, other):
         """parallel_parallel_2port operator
@@ -527,121 +272,12 @@ class NoiseyNetwork(Network):
         """
         return parallel_parallel_2port(self, other)
 
-    def __rmul__(self, other):
-        """
-        Element-wise complex multiplication of s-matrix
-        """
-
-        result = self.copy()
-
-        if isinstance(other, Network):
-            self.__compatable_for_scalar_operation_test(other)
-            result.s = self.s * other.s
-        else:
-            # other may be an array or a number
-            result.s = self.s * npy.array(other).reshape(-1, self.nports, self.nports)
-
-        return result
-
     def __add__(self, other):
         """
-        Element-wise complex addition of s-matrix
-
-        if skrf.alternative_ops() has been set, this operator performs
-        series_series_2port operation.
+        Add two two-port networks in series
 
         """
-        # see skrf __init__.py for is_alt_ops() usage
-        if not is_alt_ops():
-            
-            result = self.copy()
-
-            if isinstance(other, Network):
-                self.__compatable_for_scalar_operation_test(other)
-                result.s = self.s + other.s
-            else:
-                # other may be an array or a number
-                result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
-
-            return result
-
-        else:
-            return series_series_2port(self, other)
-
-    def __radd__(self, other):
-        """
-        Element-wise complex addition of s-matrix
-        """
-        result = self.copy()
-
-        if isinstance(other, Network):
-            self.__compatable_for_scalar_operation_test(other)
-            result.s = self.s + other.s
-        else:
-            # other may be an array or a number
-            result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
-
-        return result
-
-    def __sub__(self, other):
-        """
-        Element-wise complex subtraction of s-matrix
-        """
-        result = self.copy()
-
-        if isinstance(other, Network):
-            self.__compatable_for_scalar_operation_test(other)
-            result.s = self.s - other.s
-        else:
-            # other may be an array or a number
-            result.s = self.s - npy.array(other).reshape(-1, self.nports, self.nports)
-
-        return result
-
-    def __rsub__(self, other):
-        """
-        Element-wise complex subtraction of s-matrix
-        """
-        result = self.copy()
-
-        if isinstance(other, Network):
-            self.__compatable_for_scalar_operation_test(other)
-            result.s = other.s - self.s
-        else:
-            # other may be an array or a number
-            result.s = npy.array(other).reshape(-1, self.nports, self.nports) - self.s
-
-        return result
-
-    def __truediv__(self, other):
-        return self.__div__(other)
-
-    def __div__(self, other):
-        """
-        Element-wise complex multiplication of s-matrix
-        """
-        result = self.copy()
-
-        if isinstance(other, Network):
-            self.__compatable_for_scalar_operation_test(other)
-            result.s = self.s / other.s
-        else:
-            # other may be an array or a number
-            result.s = self.s / npy.array(other).reshape(-1, self.nports, self.nports)
-
-        return result
-
-    def __eq__(self, other):
-        if other is None:
-            return False
-        if npy.all(npy.abs(self.s - other.s) < ZERO):
-            return True
-        else:
-            return False
-
-    def __ne__(self, other):
-        return (not self.__eq__(other))
-
+        return series_series_2port(self, other)
 
     def __str__(self):
         """
@@ -657,7 +293,7 @@ class NoiseyNetwork(Network):
         else:
             z0 = str(self.z0[0, :])
 
-        output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), z0)
+        output = '%i-Port NoisyNetwork: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), z0)
 
         return output
 
@@ -928,7 +564,7 @@ class NoiseyNetwork(Network):
         Needed to allow pass-by-value for a Network instead of
         pass-by-reference
         '''
-        ntwk = Network(s=self.s,
+        ntwk = NoisyNetwork(s=self.s,
                        frequency=self.frequency.copy(),
                        z0=self.z0, s_def=self.s_def
                        )
@@ -1104,8 +740,21 @@ def series_parallel_2port(ntwkA, ntwkB, calc_noise=True):
 def parallel_series_2port(ntwkA, ntwkB, calc_noise=True):
     raise NotImplemented()
 
+def _noisy_two_port_verify(ntwkA, ntwkB):
 
+    if ntwkA.nports!=2 or ntwkB.nports!=2:
+        raise ValueError('nports must be equal to 2 for both networks')
 
+    if (ntwkA.frequency != ntwkB.frequency) or (ntwkA.noise_freq != ntwkB.noise_freq):
+        raise ValueError('both networks must have same frequency data')
+
+    #if ntwkA.noise_freq != ntwkA.frequency:
+     #   raise ValueError('network frequency and noise frequency vectors must be the same')
+
+    #if ntwkA.z0 != ntwkB.z0:
+        #raise ValueError('currently, z0 must be the same for both networks')
+
+    return True
 
 
 
