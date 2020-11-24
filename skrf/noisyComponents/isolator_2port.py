@@ -1,9 +1,9 @@
 
 import numpy as npy
-from ..network import Network
+from ..noisyNetwork import NoisyNetwork
 from ..util import network_array
 
-class Isolator_2port(Network):
+class Isolator_2port(NoisyNetwork):
 
     def __init__(self, loss_db, name=None, comments=None, f_unit=None, T0=None, s_def='power', **kwargs):
         super().__init__(name=name, comments=comments, f_unit=f_unit, s_def=s_def, **kwargs)

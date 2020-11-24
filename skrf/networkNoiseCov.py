@@ -5,7 +5,7 @@
 networkNoiseCov (:mod:`skrf.networkNoiseCov`)
 =============================================
 
-Provides a class for encapsulating the covariance matrix for a network. The covariance
+Provides a class for encapsulating the covariance matrix for a :class:`NoisyNetwork`. The covariance
 matrix can be represented in a number of forms; this class provides functions for easily
 transforming between those forms. 
 
@@ -74,7 +74,7 @@ from .mathFunctions import complex_2_db10
 
 class NetworkNoiseCov(object):
     """
-    Encapsulates the Covariance Matrix [1] of a network.
+    Encapsulates the Covariance Matrix [1] of a :class:`NoisyNetwork`.
 
     For instructions on how to instantiate :class:`NetworkNoiseCov` see :func:`__init__` as well as
     :func:`from_z`, :func:`from_y` and :func:`from_s`.
@@ -82,10 +82,10 @@ class NetworkNoiseCov(object):
     To account for noise, a multiport network will have a covariance matrix 
     associated with it. Noise parameters are calculated directly from the 
     covariance matrix (for example, Fmin, Rn, Y_opt), and these perameters 
-    enable us to characterize how signals become degraded as they pass through 
+    enable us to characterize how signals become degraded by noise as they pass through 
     networks.
 
-    The :class:`NetworkNoiseCov` class contains the covariance matrix of a :class:`.Network` over 
+    The :class:`NetworkNoiseCov` class contains the covariance matrix of a :class:`.NoisyNetwork` over 
     a set of frequencies. Properties of :class:`NetworkNoiseCov` are used to access parameters
     such as the minimum noise figure (:attr:`nfmin`) or the covariance matrix itself (:attr:`cc`).
 
@@ -93,13 +93,13 @@ class NetworkNoiseCov(object):
     matrices to various forms. Suppose two two-port networks are connected together in cascade; the 
     resulting combined two-port network will have its own covariance matrix that is a combination
     of the covariance matrices of the individual two-port networks. Combining covariance 
-    matrices can be learned about in chapter 7 of Vendelin's book [1]. When combining networks
+    matrices can be read about in chapter 7 of Vendelin's book [1]. When combining networks
     in cascade, it is most convenient to have the covariance matrix in either the Ct or Ca form. When
     combining networks in parallel, it is most convenient to have the covariance matrix in Cy form. These 
     matrices can be obtained from a :class:`NetworkNoiseCov` object via :func:`get_ct`, :func:`get_ca` and
     :func:`get_cy`.
 
-    You can set the covariance matrix of a :class:`.Network` using :meth:`.Network.noise_source`.
+    You can set the covariance matrix of a :class:`.NoisyNetwork` using :meth:`.NoisyNetwork.noise_source`.
 
     The covariance matrix can be stored in any form within :class:`NetworkNoiseCov`. You can retrieve the 
     matrix as a function of frequency, and determine its form via properies: 
@@ -113,7 +113,7 @@ class NetworkNoiseCov(object):
 
     You can obtain the :class:`NetworkNoiseCov` object in various forms provided you have the associated
     network matrix used for the calculation. Note, that these functions are called automatically within
-    :class:`.Network` when they are required:
+    :class:`.NoisyNetwork` when they are required:
 
     =====================  =============================================
     Property               Meaning
@@ -159,7 +159,7 @@ class NetworkNoiseCov(object):
         NetworkNoiseCov constructor.
 
         Stores a covariance matrix vector (cc) of a particular form (s, t, y, z, a). The shape of cc must be
-        the same as the shape of s within :class:`.Network`.
+        the same as the shape of s within :class:`.NoisyNetwork`.
 
         Parameters
         -----------
@@ -417,7 +417,7 @@ class NetworkNoiseCov(object):
     @cc.setter
     def cc(self, value):
         """
-        the input matrix should be the same shape as s from :class:`.Network`
+        the input matrix should be the same shape as s from :class:`.NoisyNetwork`
         """
         self.mat_vec = value
 

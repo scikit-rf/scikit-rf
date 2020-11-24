@@ -1,9 +1,9 @@
 
 import numpy as npy
-from ..network import Network
+from ..noisyNetwork import NoisyNetwork
 from ..util import network_array
 
-class Wilkinson_Nport(Network):
+class Wilkinson_Nport(NoisyNetwork):
 
     #Ideal wilkinson with isolated output ports 2 and 3 with port 1 as common port
     def __init__(self, N_outs, loss_db = 0, phases = [], name=None, comments=None, f_unit=None, T0=None, s_def='power', **kwargs):

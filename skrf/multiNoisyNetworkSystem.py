@@ -1,27 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-.. module:: skrf.multiNetworkSystem
-========================================
-multiNetworkSystem (:mod:`skrf.multiNetworkSystem`)
-========================================
+.. module:: skrf.multiNoisyNetworkSystem
+=============================================================
+multiNoisyNetworkSystem (:mod:`skrf.multiNoisyNetworkSystem`)
+=============================================================
 
-Tools for combining multiple networks into a single network that also calculates noise covariance matrices. Each of the individual
-multiport networks are added to a :class:`MultiNetworkSystem` object via the :func:`MultiNetworkSystem.add`
-method. These networks are then connected together via the :func:`MultiNetworkSystem.connect` method. A new
-:class:`.Network` is then created out of the collection of networks by calling :func:`MultiNetworkSystem.reduce`
+Tools for combining multiple :class:`NoisyNetworks` into a single network that also calculates noise covariance matrices. Each of the individual
+multiport :class:`NoisyNetworks` are added to a :class:`MultiNoisyNetworkSystem` object via the :func:`MultiNoisyNetworkSystem.add`
+method. These networks are then connected together via the :func:`MultiNoisyNetworkSystem.connect` method. A new
+:class:`NoisyNetwork` is then created out of the collection of networks by calling :func:`MultiNoisyNetworkSystem.reduce`
 
-See scikit-rf examples on MultiNetworkSystems
-
-[I think there is overlap with this and the circuit.py module, needs investigation.]
+See scikit-rf examples on MultiNoisyNetworkSystem
 
 
-MultiNetworkSystem Class
-========================
+MultiNoisyNetworkSystem Class
+=============================
 
 .. autosummary::
     :toctree: generated/
 
-    MultiNetworkSystem
+    MultiNoisyNetworkSystem
 
 Building a Network from Multiple Networks
 =========================================
@@ -29,11 +27,11 @@ Building a Network from Multiple Networks
 .. autosummary::
     :toctree: generated/
 
-    MultiNetworkSystem.add
-    MultiNetworkSystem.connect
-    MultiNetworkSystem.external_port
-    MultiNetworkSystem.verify
-    MultiNetworkSystem.reduce
+    MultiNoisyNetworkSystem.add
+    MultiNoisyNetworkSystem.connect
+    MultiNoisyNetworkSystem.external_port
+    MultiNoisyNetworkSystem.verify
+    MultiNoisyNetworkSystem.reduce
 
 Extras
 ============================
@@ -41,24 +39,24 @@ Extras
 .. autosummary::
     :toctree: generated/
 
-    MultiNetworkSystem.num_networks
+    MultiNoisyNetworkSystem.num_networks
 
 """
 
 import numpy as npy
 from scipy.linalg import block_diag
-from .network import Network
+from .noisyNetwork import NoisyNetwork
 from .networkNoiseCov import NetworkNoiseCov
 
-class MultiNetworkSystem(object):
+class MultiNoisyNetworkSystem(object):
     """
-    An object for calculating a resulting :class:`.Network` from a set of connected Networks. An 
+    An object for calculating a resulting :class:`.NoisyNetwork` from a set of connected NoisyNetworks. An 
     arbitrary number of networks can be connected together within this object, the function :func:`reduce` is
-    called on this object, which returns a new :class:`.Network`. The reduced network contains the correctly 
+    called on this object, which returns a new :class:`.NoisyNetwork`. The reduced network contains the correctly 
     calculated covariance matrix object :class:`.NetworksNoiseCov` assembled from the covariance matricies
     of the individual networks.
 
-    For instructions on how to create MultiNetworkSystem see :func:`__init__`.
+    For instructions on how to create MultiNoisyNetworkSystem see :func:`__init__`.
 
     See scikit-rf Examples for several examples on how to use this object.
 
@@ -77,11 +75,11 @@ class MultiNetworkSystem(object):
     =====================  =============================================
     Methods                Meaning
     =====================  =============================================
-    :func:`add`            Add a :class:`.Network` to the object
+    :func:`add`            Add a :class:`.NoisyNetwork` to the object
     :func:`connect`        Connect ports between Networks
     :func:`external_port`  Label external ports
     :func:`verify`         Verify that all ports have been connected correctly
-    :func:`reduce`         Produce a new :class:`.Network` from the individual networks
+    :func:`reduce`         Produce a new :class:`.NoisyNetwork` from the individual networks
     =====================  =============================================
 
    
@@ -89,9 +87,9 @@ class MultiNetworkSystem(object):
 
     def __init__(self):
         '''
-        MultiNetworkSystem constructor.
+        MultiNoisyNetworkSystem constructor.
 
-        Holds the set of networks to be connected and reduced into a final :class:`.Network`.
+        Holds the set of networks to be connected and reduced into a final :class:`.NoisyNetwork`.
 
         No parameters need to be passed to this constructor.
         '''
@@ -114,33 +112,33 @@ class MultiNetworkSystem(object):
 
     @property
     def num_networks(self):
-        ''' Returns the number of networks that have been added to :class:`MultiNetworkSystem`
+        ''' Returns the number of networks that have been added to :class:`MultiNoisyNetworkSystem`
         '''
         return len(self.ntwk_list)
 
     def add(self, ntwk, name=None):
         """
-        Add a :class:`.Network` to the object.
+        Add a :class:`.NoisyNetwork` to the object.
 
-        To add a :class:`.Network` to a :class:`MultiNetworkSystem`, you must provide
+        To add a :class:`.NoisyNetwork` to a :class:`MultiNoisyNetworkSystem`, you must provide
         a unique name for the added network. You can do this either by adding a network
         that has a name (i.e., ntwk.name != None), or you can add the name within this 
         add function itself. 
 
         Parameters
         -----------
-        ntwk : :class:`.Network`
-            Any multiport network the user would like to combine within a MultiNetworkSystem
+        ntwk : :class:`.NoisyNetwork`
+            Any multiport network the user would like to combine within a MultiNoisyNetworkSystem
         name : optional string
             The unique name for the added network. If left blank, the function will use the name within
-            the Network object (i.e., ntwk.name). If no name is provided, the function will raise a 
+            the NoisyNetwork object (i.e., ntwk.name). If no name is provided, the function will raise a 
             ValueError.
 
         Examples
         -----------
         >>> import skrf as rf
-        >>> ntwk = rf.Network('sometouchstonefile.s2p')
-        >>> mns = rf.MultiNetworkSystem()
+        >>> ntwk = rf.NoisyNetwork('sometouchstonefile.s2p')
+        >>> mns = rf.MultiNoisyNetworkSystem()
         >>> mns.add(ntwk, 'splitter1')
       
         """
@@ -158,9 +156,9 @@ class MultiNetworkSystem(object):
 
     def connect(self, ntwk_name1, port_num1, ntwk_name2, port_num2):
         """
-        Connect two Networks together that have been added to the :class:`MultiNetworkSystem` object.
+        Connect two Networks together that have been added to the :class:`MultiNoisyNetworkSystem` object.
 
-        Once a set of networks have been added to the MultiNetworkSystem object, they can be connected
+        Once a set of networks have been added to the MultiNoisyNetworkSystem object, they can be connected
         using this method. The user provides the unique string names (`ntwk_name1`, `ntwk_name2`) of the 
         two networks that are to be connected, as well as the individual port numbers of the associated networks that 
         are to be connected together.
@@ -168,24 +166,24 @@ class MultiNetworkSystem(object):
         Parameters
         -----------
         ntwk_name1 : string
-            The name of the first Network that is to be connected to the second Network.
+            The name of the first NoisyNetwork that is to be connected to the second NoisyNetwork.
         port_num1 : integer
-            The port number (enumerated as 1, 2, 3, etc.) associated with the first Network that will be
-            connected to a port of the second Network.
+            The port number (enumerated as 1, 2, 3, etc.) associated with the first NoisyNetwork that will be
+            connected to a port of the second NoisyNetwork.
         ntwk_name2 : string
-            The name of the second Network that is to be connected to the first Network.
+            The name of the second NoisyNetwork that is to be connected to the first NoisyNetwork.
         port_num2 : integer
-            The port number (enumerated as 1, 2, 3, etc.) associated with the second Network that will be
-            connected to a port of the first Network.
+            The port number (enumerated as 1, 2, 3, etc.) associated with the second NoisyNetwork that will be
+            connected to a port of the first NoisyNetwork.
 
         Examples
         -----------
         Create two attenuators and connect port two of the first attenuator to port one of the second
 
         >>> import skrf as rf
-        >>> ntwk1 = rf.Network('attenuator1.s2p')
-        >>> ntwk2 = rf.Network('attenuator2.s2p')
-        >>> mns = rf.MultiNetworkSystem()
+        >>> ntwk1 = rf.NoisyNetwork('attenuator1.s2p')
+        >>> ntwk2 = rf.NoisyNetwork('attenuator2.s2p')
+        >>> mns = rf.MultiNoisyNetworkSystem()
         >>> mns.add(ntwk, 'attn1')
         >>> mns.add(ntwk, 'attn2')
         >>> mns.connect('attn1', 2, 'attn2', 1)
@@ -203,13 +201,13 @@ class MultiNetworkSystem(object):
         """
         Label external ports of the reduced network.
 
-        The output ports of the reduced network are labeled using this method. If the resulting Network
+        The output ports of the reduced network are labeled using this method. If the resulting NoisyNetwork
         has three ports, the labels must be 1, 2, and 3 (enumerated as 1, 2, 3, etc.). 
 
         Parameters
         -----------
         ntwk_name : string
-            The name of the Network that has a port exposed to the output of the reduced network.
+            The name of the NoisyNetwork that has a port exposed to the output of the reduced network.
         port_num : integer
             The port number of the named Nework that will be exposed as an output of the reduced network.
         external_port_number : integer
@@ -222,9 +220,9 @@ class MultiNetworkSystem(object):
         reduced network will also be a two-port network; therefore, we must label the two output ports as 1 and 2.
 
         >>> import skrf as rf
-        >>> ntwk1 = rf.Network('attenuator1.s2p')
-        >>> ntwk2 = rf.Network('attenuator2.s2p')
-        >>> mns = rf.MultiNetworkSystem()
+        >>> ntwk1 = rf.NoisyNetwork('attenuator1.s2p')
+        >>> ntwk2 = rf.NoisyNetwork('attenuator2.s2p')
+        >>> mns = rf.MultiNoisyNetworkSystem()
         >>> mns.add(ntwk, 'attn1')
         >>> mns.add(ntwk, 'attn2')
         >>> mns.connect('attn1', 2, 'attn2', 1)
@@ -263,9 +261,9 @@ class MultiNetworkSystem(object):
         been made in the connection and labeling proceedures.
 
         >>> import skrf as rf
-        >>> ntwk1 = rf.Network('attenuator1.s2p')
-        >>> ntwk2 = rf.Network('attenuator2.s2p')
-        >>> mns = rf.MultiNetworkSystem()
+        >>> ntwk1 = rf.NoisyNetwork('attenuator1.s2p')
+        >>> ntwk2 = rf.NoisyNetwork('attenuator2.s2p')
+        >>> mns = rf.MultiNoisyNetworkSystem()
         >>> mns.add(ntwk, 'attn1')
         >>> mns.add(ntwk, 'attn2')
         >>> mns.connect('attn1', 2, 'attn2', 1)
@@ -311,14 +309,14 @@ class MultiNetworkSystem(object):
 
     def reduce(self):
         """
-        Calculates the final :class:`.Network` from the interconnected Networks.
+        Calculates the final :class:`.NoisyNetwork` from the interconnected Networks.
 
-        This method will return the final :class:`.Network` that is the result of connecting all the Networks
-        that have been added to the :class:`MultiNetworkSystem` object.
+        This method will return the final :class:`.NoisyNetwork` that is the result of connecting all the Networks
+        that have been added to the :class:`MultiNoisyNetworkSystem` object.
 
         Returns
         -----------
-        ntwk_r : :class:`.Network`
+        ntwk_r : :class:`.NoisyNetwork`
             The reduced network.
 
         Examples
@@ -326,9 +324,9 @@ class MultiNetworkSystem(object):
         Connect two attenuators together to produce a final two port. Print the noise figure.
 
         >>> import skrf as rf
-        >>> ntwk1 = rf.Network('attenuator1.s2p')
-        >>> ntwk2 = rf.Network('attenuator2.s2p')
-        >>> mns = rf.MultiNetworkSystem()
+        >>> ntwk1 = rf.NoisyNetwork('attenuator1.s2p')
+        >>> ntwk2 = rf.NoisyNetwork('attenuator2.s2p')
+        >>> mns = rf.MultiNoisyNetworkSystem()
         >>> mns.add(ntwk, 'attn1')
         >>> mns.add(ntwk, 'attn2')
         >>> mns.connect('attn1', 2, 'attn2', 1)
@@ -354,7 +352,7 @@ class MultiNetworkSystem(object):
 
         self.ct = npy.matmul(TGD, npy.matmul(self.cdiag, TGD_H))
         self.st = npy.matmul(sei, npy.matmul(w, sie)) + see
-        ntwk = Network(s=self.st, frequency = self.frequency)
+        ntwk = NoisyNetwork(s=self.st, frequency = self.frequency)
         ncov = NetworkNoiseCov(self.ct)
         ntwk.noise_source(ncov)
 
