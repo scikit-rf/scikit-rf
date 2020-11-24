@@ -169,7 +169,6 @@ import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
 from .frequency import Frequency
-from .networkNoiseCov import NetworkNoiseCov
 from .tlineFunctions import zl_2_Gamma0
 from .util import get_fid, get_extn, find_nearest_index, slice_domain, network_array
 from .time import time_gate
@@ -461,11 +460,9 @@ class Network(object):
         >>> ntw = rf.Network.from_z(z, f=f)
             
         '''
-
         s = npy.zeros(shape=z.shape)
         me = cls(s=s, *args, **kw)
         me.z = z
-
         return me
 
     @classmethod
@@ -597,10 +594,7 @@ class Network(object):
     def __mul__(self, other):
         """
         Element-wise complex multiplication of s-matrix
-
         """
-
-        
         result = self.copy()
 
         if isinstance(other, Network):
@@ -631,9 +625,7 @@ class Network(object):
     def __add__(self, other):
         """
         Element-wise complex addition of s-matrix
-
         """
-      
         result = self.copy()
 
         if isinstance(other, Network):
@@ -644,7 +636,6 @@ class Network(object):
             result.s = self.s + npy.array(other).reshape(-1, self.nports, self.nports)
 
         return result
-
 
     def __radd__(self, other):
         """
@@ -1316,13 +1307,13 @@ class Network(object):
 
     @property
     def noisy(self):
-        """
-        whether this network has noise
-        """
-        try:
-            return self.noise is not None and self.noise_freq is not None
-        except:
-            return False
+      """
+      whether this network has noise
+      """
+      try:
+          return self.noise is not None and self.noise_freq is not None
+      except:
+          return False
 
     @property
     def n(self):
@@ -1343,43 +1334,41 @@ class Network(object):
 
     @property
     def f_noise(self):
-        """
-        the frequency vector for the noise of the network, in Hz.
-        """
-        if not self.noisy:
-            raise ValueError('network does not have noise')
-        return self.noise_freq
+      """
+      the frequency vector for the noise of the network, in Hz.
+      """
+      if not self.noisy:
+          raise ValueError('network does not have noise')
+      return self.noise_freq
 
     @property
     def y_opt(self):
-        """
-        the optimum source admittance to minimize noise
-        """
-
-        noise = self.n
-        return (npy.sqrt(noise[:,1,1]/noise[:,0,0] - npy.square(npy.imag(noise[:,0,1]/noise[:,0,0])))
-            + 1.j*npy.imag(noise[:,0,1]/noise[:,0,0]))
+      """
+      the optimum source admittance to minimize noise
+      """
+      noise = self.n
+      return (npy.sqrt(noise[:,1,1]/noise[:,0,0] - npy.square(npy.imag(noise[:,0,1]/noise[:,0,0])))
+          + 1.j*npy.imag(noise[:,0,1]/noise[:,0,0]))
 
     @property
     def z_opt(self):
-        """
-        the optimum source impedance to minimize noise
-        """ 
-        return 1./self.y_opt
+      """
+      the optimum source impedance to minimize noise
+      """ 
+      return 1./self.y_opt
 
     @property
     def g_opt(self):
-        """
-        the optimum source reflection coefficient to minimize noise
-        """
-        return z2s(self.z_opt.reshape((self.f.shape[0], 1, 1)), self.z0[:,0])[:,0,0]
+      """
+      the optimum source reflection coefficient to minimize noise
+      """
+      return z2s(self.z_opt.reshape((self.f.shape[0], 1, 1)), self.z0[:,0])[:,0,0]
 
     @property
     def nfmin(self):
       """
       the minimum noise figure for the network
       """
-    
       noise = self.n
       return npy.real(1. + (noise[:,0,1] + noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*self.T0))
 
@@ -1388,15 +1377,13 @@ class Network(object):
       """
       the minimum noise figure for the network in dB
       """
-      
       return mf.complex_2_db10(self.nfmin)
 
     def nf(self, z):
       """
       the noise figure for the network if the source impedance is z
       """
-      z0 = self.z0
-      
+      z0 = self.z0  
       y_opt = self.y_opt
       fmin = self.nfmin
       rn = self.rn
@@ -1406,6 +1393,9 @@ class Network(object):
       return fmin + rn/gs * npy.square(npy.absolute(ys - y_opt))
 
     def nf_db(self, z):
+        """
+        the noise figure for the network if the source impedance is z in dB
+        """
         return mf.complex_2_db10(self.nf(z))
  
     def nfdb_gs(self, gs):
@@ -1439,11 +1429,10 @@ class Network(object):
 
     @property
     def rn(self):
-        """
-        the equivalent noise resistance for the network
-        """
-     
-        return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*self.T0))
+      """
+      the equivalent noise resistance for the network
+      """
+      return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*self.T0))
 
     # SECONDARY PROPERTIES
     @property
@@ -3409,7 +3398,9 @@ class Network(object):
             y_active : active Y-parameters  
         '''        
         return s2vswr_active(self.s, a)
-        
+
+#%%   
+
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
     '''
@@ -4987,7 +4978,6 @@ def z2t(z):
 
 def a2s(a, z0=50):
     '''
-    TODO: Fix, doesn't seem to be correct, looks like there is a transpose problem
 
     convert abcd parameters to s parameters
 

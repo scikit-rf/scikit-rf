@@ -6,19 +6,6 @@ implemented in Python.
 from __future__ import absolute_import, print_function, division
 from six.moves import xrange
 
-# Global functions for setting alternative Network overloaded operators switch
-# this will change the behavior of *, +, and | so that they work with two-port
-# Network algebra
-import sys
-this = sys.modules[__name__]
-this.skrf_alt_ops = False
-def alternative_ops(value = True):
-    this.skrf_alt_ops = value
-
-def is_alt_ops():
-    return this.skrf_alt_ops
-
-
 __version__ = '0.15.4'
 ## Import all  module names for coherent reference of name-space
 #import io
