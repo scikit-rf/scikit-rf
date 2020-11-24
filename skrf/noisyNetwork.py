@@ -195,20 +195,43 @@ class NoisyNetwork(Network):
 
         >>> n = rf.NoisyNetwork(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
 
+        Create NoisyNetwork from a regular Network
+
+        >>> n = rf.NoisyNetwork(ntwk)
+
         See Also
         -----------
         from_z : init from impedance values
+        from_y : init from admittance values
+        from_a : init from ABCD matrix
         read : read a network from a file
         write : write a network to a file, using pickle
         write_touchstone : write a network to a touchstone file
         '''
 
-        super(NoisyNetwork, self).__init__(*args, **kwargs)
-
         
-        self.noise_cov = None # This is the NetworkNoiseCov object, some of this will be duplicate with noise for now
+        if len(args) == 1: 
+            if isinstance(args[0], Network): # Convert Network to NoisyNetwork
+                ntwk = args[0]
+                port_names = None
+                try:
+                    port_names = copy(ntwk.port_names)
+                except(AttributeError):
+                     pass
+                
+                super(NoisyNetwork, self).__init__(s=ntwk.s.copy(),
+                       frequency=ntwk.frequency.copy(),
+                       z0=ntwk.z0, s_def=ntwk.s_def,
+                       name = ntwk.name, port_names = port_names
+                       )
+            else:
+                super(NoisyNetwork, self).__init__(*args, **kwargs)
+        else:
+            super(NoisyNetwork, self).__init__(*args, **kwargs)
+
+        self.noise_cov = None 
         self.noise_freq = None
-        self.T0 = T0 # Temperature at measurement
+        self.T0 = T0 
 
 
 
@@ -582,8 +605,6 @@ class NoisyNetwork(Network):
       else:
         return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*self.T0))
 
-
-    ## CLASS METHODS
     def copy(self):
         '''
         Returns a copy of this NoisyNetwork
@@ -591,7 +612,7 @@ class NoisyNetwork(Network):
         Needed to allow pass-by-value for a NoisyNetwork instead of
         pass-by-reference
         '''
-        ntwk = NoisyNetwork(s=self.s,
+        ntwk = NoisyNetwork(s=self.s.copy(),
                        frequency=self.frequency.copy(),
                        z0=self.z0, s_def=self.s_def
                        )
@@ -599,16 +620,14 @@ class NoisyNetwork(Network):
         ntwk.name = self.name
 
         if self.noise is not None and self.noise_freq is not None:
-          if False : 
-              ntwk.noise = npy.copy(self.noise)
-              ntwk.noise_freq = npy.copy(self.noise_freq)
-          ntwk.noise = self.noise.copy()
-          ntwk.noise_freq = self.noise_freq.copy()
+            ntwk.noise_cov = self.noise_cov.copy()
+            ntwk.noise_freq = self.noise_freq.copy()
 
         try:
             ntwk.port_names = copy(self.port_names)
         except(AttributeError):
             ntwk.port_names = None
+        
         return ntwk
 
 
