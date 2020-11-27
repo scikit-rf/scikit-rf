@@ -34,19 +34,9 @@ class FieldFox(abcvna.VNA):
         super().__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = keysight_fieldfox_scpi.SCPI(self.resource)
-        self.use_ascii()
-
-    def use_binary(self):
-        raise Exception("binary not working correctly")
-        """setup the analyzer to transfer in binary which is faster, especially for large datasets"""
-        self.resource.write(':FORM:BORD SWAP')
-        self.resource.write(':FORM:DATA REAL,64')
-        # self.resource.write(':FORM:DATA REAL')
-        self.resource.values_format.use_binary(datatype='d', is_big_endian=False, container=np.array)
-
-    def use_ascii(self):
-        self.resource.write(':FORM:DATA ASCII')
-        self.resource.values_format.use_ascii(converter='f', separator=',', container=np.array)
+        # TODO: There is currently no way to change ascii vs binary modes for commands like get_twoport.
+        # Because of the update to pyvisa, there are now two commands generated for query commands: an ascii and a binary version.
+        # At present all commands which call a query command like this use ascii. 
 
     @property
     def echo(self):
@@ -286,12 +276,12 @@ class FieldFox(abcvna.VNA):
         sdata = []
         for i in range(1,5):
             self.scpi.set_current_trace(i)
-            sdata.append(self.scpi.query_current_trace_data())
+            sdata.append(self.scpi.query_current_trace_data_ascii())
 
-        ntwk.s[:, 0, 0] = sdata[0][::2] + 1j * sdata[0][1::2]
-        ntwk.s[:, 1, 0] = sdata[1][::2] + 1j * sdata[1][1::2]
-        ntwk.s[:, 0, 1] = sdata[2][::2] + 1j * sdata[2][1::2]
-        ntwk.s[:, 1, 1] = sdata[3][::2] + 1j * sdata[3][1::2]
+        ntwk.s[:, 0, 0] = [re + 1j*im for (re,im) in zip(sdata[0][::2], sdata[0][1::2])]
+        ntwk.s[:, 1, 0] = [re + 1j*im for (re,im) in zip(sdata[1][::2], sdata[1][1::2])]
+        ntwk.s[:, 0, 1] = [re + 1j*im for (re,im) in zip(sdata[2][::2], sdata[2][1::2])]
+        ntwk.s[:, 1, 1] = [re + 1j*im for (re,im) in zip(sdata[3][::2], sdata[3][1::2])]
 
         ntwk.z0 = kwargs.get("z0", 50.)
 
@@ -394,7 +384,7 @@ class FieldFox(abcvna.VNA):
             self.sweep()
 
         ntwk = skrf.Network()
-        sdata = self.scpi.query_current_trace_data()
-        ntwk.s = sdata[::2] + 1j * sdata[1::2]
+        sdata = self.scpi.query_current_trace_data_ascii()
+        ntwk.s = [re + 1j*im for (re,im) in zip(sdata[::2], sdata[1::2])]
         ntwk.frequency = self.get_frequency()
         return ntwk

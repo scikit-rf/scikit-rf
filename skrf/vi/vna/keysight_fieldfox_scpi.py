@@ -63,15 +63,25 @@ class SCPI:
             print(scpi)
         return self.resource.query(scpi, *args, **kwargs)
 
-    def write_values(self, scpi, *args, **kwargs):
+    def write_ascii_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        self.resource.write_values(scpi, *args, **kwargs)
+        self.resource.write_ascii_values(scpi, *args, **kwargs)
 
-    def query_values(self, scpi, *args, **kwargs):
+    def write_binary_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        return self.resource.query_values(scpi, *args, **kwargs)
+        self.resource.write_binary_values(scpi, *args, **kwargs)
+
+    def query_ascii_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_ascii_values(scpi, *args, **kwargs)
+
+    def query_binary_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_binary_values(scpi, *args, **kwargs)
 
     def set_averaging_count(self, avg_count=""):
         """no help available"""
@@ -174,10 +184,16 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='bool')
         return value
 
-    def query_current_trace_data(self):
+    def query_current_trace_data_ascii(self):
         """no help available"""
         scpi_command = ":CALC:DATA:SDAT?"
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_current_trace_data_binary(self):
+        """no help available"""
+        scpi_command = ":CALC:DATA:SDAT?"
+        return self.query_binary_values(scpi_command)
+    
 
     def query_display_format(self):
         """no help available"""

@@ -63,15 +63,25 @@ class SCPI:
             print(scpi)
         return self.resource.query(scpi, *args, **kwargs)
 
-    def write_values(self, scpi, *args, **kwargs):
+    def write_ascii_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        self.resource.write_values(scpi, *args, **kwargs)
+        self.resource.write_ascii_values(scpi, *args, **kwargs)
 
-    def query_values(self, scpi, *args, **kwargs):
+    def write_binary_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        return self.resource.query_values(scpi, *args, **kwargs)
+        self.resource.write_binary_values(scpi, *args, **kwargs)
+
+    def query_ascii_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_ascii_values(scpi, *args, **kwargs)
+
+    def query_binary_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_binary_values(scpi, *args, **kwargs)
 
     def set_active_channel(self, channel=1):
         """Selects channel as the active channel.
@@ -196,10 +206,16 @@ class SCPI:
         scpi_command = scpi_preprocess(":SENS{:}:CORR:STAT {:}", cnum, STATE)
         self.write(scpi_command)
 
-    def set_data(self, cnum=1, SDATA="", data=None):
+    def set_data_ascii(self, cnum=1, SDATA="", data=None):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA {:},", cnum, SDATA)
-        self.write_values(scpi_command, data)
+        self.write_ascii_values(scpi_command, data)
+    
+    def set_data_binary(self, cnum=1, SDATA="", data=None):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA {:},", cnum, SDATA)
+        self.write_binary_values(scpi_command, data)
+    
 
     def set_disp_color(self, COLOR="DBAC"):
         """no help available"""
@@ -738,20 +754,38 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
         return value
 
-    def query_data(self, cnum=1, SDATA=""):
-        """no help available"""
-        scpi_command = scpi_preprocess(":CALC{:}:DATA? {:}", cnum, SDATA)
-        return self.query_values(scpi_command)
-
-    def query_data_all(self, cnum=1, SDATA=""):
+    def query_data_all_ascii(self, cnum=1, SDATA=""):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA:ALL? {:}", cnum, SDATA)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_data_all_binary(self, cnum=1, SDATA=""):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA:ALL? {:}", cnum, SDATA)
+        return self.query_binary_values(scpi_command)
+    
 
-    def query_data_call(self, cnum=1, SDATA=""):
+    def query_data_ascii(self, cnum=1, SDATA=""):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA? {:}", cnum, SDATA)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_data_binary(self, cnum=1, SDATA=""):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA? {:}", cnum, SDATA)
+        return self.query_binary_values(scpi_command)
+    
+
+    def query_data_call_ascii(self, cnum=1, SDATA=""):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA:CALL? {:}", cnum, SDATA)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_data_call_binary(self, cnum=1, SDATA=""):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA:CALL? {:}", cnum, SDATA)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_data_call_catalog(self, cnum=1):
         """no help available"""
@@ -760,15 +794,27 @@ class SCPI:
         value = process_query(value, csv=True, strip_outer_quotes=True, returns='str')
         return value
 
-    def query_data_dall(self, cnum=1, SDATA=""):
+    def query_data_dall_ascii(self, cnum=1, SDATA=""):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA:DALL? {:}", cnum, SDATA)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_data_dall_binary(self, cnum=1, SDATA=""):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA:DALL? {:}", cnum, SDATA)
+        return self.query_binary_values(scpi_command)
+    
 
-    def query_data_sgroup(self, cnum=1, SDATA=""):
+    def query_data_sgroup_ascii(self, cnum=1, SDATA=""):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA:SGR? {:}", cnum, SDATA)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_data_sgroup_binary(self, cnum=1, SDATA=""):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA:SGR? {:}", cnum, SDATA)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_disp_catalog(self, wnum=1):
         """Returns the numbers and names of all diagram areas in the current setup."""
@@ -844,10 +890,16 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
         return value
 
-    def query_disp_trace_y_offset(self, wnum=1, tnum=1):
+    def query_disp_trace_y_offset_ascii(self, wnum=1, tnum=1):
         """Modifies all points of the trace <WndTr> by means of an added and/or a multiplied complex constant."""
         scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:Y:OFFS?", wnum, tnum)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_disp_trace_y_offset_binary(self, wnum=1, tnum=1):
+        """Modifies all points of the trace <WndTr> by means of an added and/or a multiplied complex constant."""
+        scpi_command = scpi_preprocess(":DISP:WIND{:}:TRAC{:}:Y:OFFS?", wnum, tnum)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_f_start(self, cnum=1):
         """Defines the start frequency for a frequency sweep which is equal to the left edge of a Cartesian diagram.

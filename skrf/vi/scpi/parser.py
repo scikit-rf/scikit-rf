@@ -118,11 +118,17 @@ def generate_set_values_string(command, command_root):
     command['help'] = command['help'].replace('\t', '    ')
 
     function_string = \
-"""def set_{:s}(self{:}):
-    \"\"\"{:s}\"\"\"
-    scpi_command = {:}
-    self.write_values(scpi_command, {:})""".format(
-            command['name'], kwargs_string, command['help'], scpi_command, data_variable)
+"""def set_{name:s}_ascii(self{args:}):
+    \"\"\"{help:s}\"\"\"
+    scpi_command = {scpi:}
+    self.write_ascii_values(scpi_command, {data:})
+
+def set_{name:s}_binary(self{args:}):
+    \"\"\"{help:s}\"\"\"
+    scpi_command = {scpi:}
+    self.write_binary_values(scpi_command, {data:})
+""".format(
+            name=command['name'], args=kwargs_string, help=command['help'], scpi=scpi_command, data=data_variable)
 
     return function_string
 
@@ -171,11 +177,17 @@ def generate_query_values_string(command, command_root):
     command['help'] = command['help'].replace('\t', '    ')
 
     function_string = \
-"""def query_{:s}(self{:}):
-    \"\"\"{:s}\"\"\"
-    scpi_command = {:}
-    return self.query_values(scpi_command)""".format(
-            command['name'], kwargs_string, command['help'], scpi_command)
+"""def query_{name:s}_ascii(self{args:}):
+    \"\"\"{help:s}\"\"\"
+    scpi_command = {scpi:}
+    return self.query_ascii_values(scpi_command)
+
+def query_{name:s}_binary(self{args:}):
+    \"\"\"{help:s}\"\"\"
+    scpi_command = {scpi:}
+    return self.query_binary_values(scpi_command)
+""".format(
+            name=command['name'], args=kwargs_string, help=command['help'], scpi=scpi_command)
 
     return function_string
 
@@ -281,15 +293,25 @@ class_header = """class SCPI(object):
             print(scpi)
         return self.resource.query(scpi, *args, **kwargs)
 
-    def write_values(self, scpi, *args, **kwargs):
+    def write_ascii_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        self.resource.write_values(scpi, *args, **kwargs)
+        self.resource.write_ascii_values(scpi, *args, **kwargs)
 
-    def query_values(self, scpi, *args, **kwargs):
+    def write_binary_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        return self.resource.query_values(scpi, *args, **kwargs)
+        self.resource.write_binary_values(scpi, *args, **kwargs)
+
+    def query_ascii_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_ascii_values(scpi, *args, **kwargs)
+
+    def query_binary_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_binary_values(scpi, *args, **kwargs)
 """
 
 

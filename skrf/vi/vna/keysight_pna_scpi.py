@@ -63,15 +63,25 @@ class SCPI:
             print(scpi)
         return self.resource.query(scpi, *args, **kwargs)
 
-    def write_values(self, scpi, *args, **kwargs):
+    def write_ascii_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        self.resource.write_values(scpi, *args, **kwargs)
+        self.resource.write_ascii_values(scpi, *args, **kwargs)
 
-    def query_values(self, scpi, *args, **kwargs):
+    def write_binary_values(self, scpi, *args, **kwargs):
         if self.echo:
             print(scpi)
-        return self.resource.query_values(scpi, *args, **kwargs)
+        self.resource.write_binary_values(scpi, *args, **kwargs)
+
+    def query_ascii_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_ascii_values(scpi, *args, **kwargs)
+
+    def query_binary_values(self, scpi, *args, **kwargs):
+        if self.echo:
+            print(scpi)
+        return self.resource.query_binary_values(scpi, *args, **kwargs)
 
     def set_active_calset(self, cnum=1, calset_name="", onoff=1):
         """no help available"""
@@ -93,20 +103,32 @@ class SCPI:
         scpi_command = scpi_preprocess(":SENS{:}:AVER:STAT {:}", cnum, onoff)
         self.write(scpi_command)
 
-    def set_calset_data(self, cnum=1, eterm="", portA=1, portB=2, param="", eterm_data=None):
+    def set_calset_data_ascii(self, cnum=1, eterm="", portA=1, portB=2, param="", eterm_data=None):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:DATA {:},{:},{:},{:},", cnum, eterm, portA, portB, param)
-        self.write_values(scpi_command, eterm_data)
+        self.write_ascii_values(scpi_command, eterm_data)
+    
+    def set_calset_data_binary(self, cnum=1, eterm="", portA=1, portB=2, param="", eterm_data=None):
+        """no help available"""
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:DATA {:},{:},{:},{:},", cnum, eterm, portA, portB, param)
+        self.write_binary_values(scpi_command, eterm_data)
+    
 
     def set_calset_description(self, cnum=1, description=""):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:DESC '{:}'", cnum, description)
         self.write(scpi_command)
 
-    def set_calset_eterm(self, cnum=1, eterm="", eterm_data=None):
+    def set_calset_eterm_ascii(self, cnum=1, eterm="", eterm_data=None):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:ETER '{:}',", cnum, eterm)
-        self.write_values(scpi_command, eterm_data)
+        self.write_ascii_values(scpi_command, eterm_data)
+    
+    def set_calset_eterm_binary(self, cnum=1, eterm="", eterm_data=None):
+        """no help available"""
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:ETER '{:}',", cnum, eterm)
+        self.write_binary_values(scpi_command, eterm_data)
+    
 
     def set_calset_name(self, cnum=1, calset_name=""):
         """no help available"""
@@ -128,10 +150,16 @@ class SCPI:
         scpi_command = scpi_preprocess(":CALC{:}:PAR:DEF:EXT '{:}','{:}'", cnum, mname, param)
         self.write(scpi_command)
 
-    def set_data(self, cnum=1, fmt="SDATA", data=None):
+    def set_data_ascii(self, cnum=1, fmt="SDATA", data=None):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA {:},", cnum, fmt)
-        self.write_values(scpi_command, data)
+        self.write_ascii_values(scpi_command, data)
+    
+    def set_data_binary(self, cnum=1, fmt="SDATA", data=None):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA {:},", cnum, fmt)
+        self.write_binary_values(scpi_command, data)
+    
 
     def set_delete_calset(self, cnum=1, calset_name=""):
         """no help available"""
@@ -267,10 +295,16 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
         return value
 
-    def query_calset_data(self, cnum=1, eterm="", portA=1, portB=2):
+    def query_calset_data_ascii(self, cnum=1, eterm="", portA=1, portB=2):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:DATA? {:},{:},{:}", cnum, eterm, portA, portB)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_calset_data_binary(self, cnum=1, eterm="", portA=1, portB=2):
+        """no help available"""
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:DATA? {:},{:},{:}", cnum, eterm, portA, portB)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_calset_description(self, cnum=1):
         """no help available"""
@@ -279,10 +313,16 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
         return value
 
-    def query_calset_eterm(self, cnum=1, eterm=""):
+    def query_calset_eterm_ascii(self, cnum=1, eterm=""):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:ETER? '{:}'", cnum, eterm)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_calset_eterm_binary(self, cnum=1, eterm=""):
+        """no help available"""
+        scpi_command = scpi_preprocess(":SENS{:}:CORR:CSET:ETER? '{:}'", cnum, eterm)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_calset_eterm_catalog(self, cnum=1):
         """no help available"""
@@ -305,10 +345,16 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='bool')
         return value
 
-    def query_data(self, cnum=1, fmt="SDATA"):
+    def query_data_ascii(self, cnum=1, fmt="SDATA"):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA? {:}", cnum, fmt)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_data_binary(self, cnum=1, fmt="SDATA"):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA? {:}", cnum, fmt)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_display_format(self, cnum=1):
         """no help available"""
@@ -394,10 +440,16 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='int')
         return value
 
-    def query_snp_data(self, cnum=1, ports=(1, 2)):
+    def query_snp_data_ascii(self, cnum=1, ports=(1, 2)):
         """no help available"""
         scpi_command = scpi_preprocess(":CALC{:}:DATA:SNP:PORT? '{:}'", cnum, ports)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_snp_data_binary(self, cnum=1, ports=(1, 2)):
+        """no help available"""
+        scpi_command = scpi_preprocess(":CALC{:}:DATA:SNP:PORT? '{:}'", cnum, ports)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_snp_format(self):
         """no help available"""
@@ -406,10 +458,16 @@ class SCPI:
         value = process_query(value, csv=False, strip_outer_quotes=True, returns='str')
         return value
 
-    def query_sweep_data(self, cnum=1):
+    def query_sweep_data_ascii(self, cnum=1):
         """no help available"""
         scpi_command = scpi_preprocess(":SENS{:}:X:VALUES?", cnum)
-        return self.query_values(scpi_command)
+        return self.query_ascii_values(scpi_command)
+    
+    def query_sweep_data_binary(self, cnum=1):
+        """no help available"""
+        scpi_command = scpi_preprocess(":SENS{:}:X:VALUES?", cnum)
+        return self.query_binary_values(scpi_command)
+    
 
     def query_sweep_mode(self, cnum=1):
         """no help available"""

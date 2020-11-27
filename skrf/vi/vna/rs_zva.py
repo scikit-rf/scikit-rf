@@ -31,22 +31,10 @@ class ZVA(abcvna.VNA):
         super().__init__(address, **kwargs)
         self.resource.timeout = kwargs.get("timeout", 2000)
         self.scpi = rs_zva_scpi.SCPI(self.resource)
-        self.use_ascii()  # less likely to cause problems than use_binary
         print(self.idn)
-
-    def use_binary(self):
-        """setup the analyzer to transfer in binary which is faster, especially
-        for large datasets"""
-        self.scpi.set_format_binary(ORDER='SWAP')
-        self.scpi.set_format_data(DATA='REAL,64')
-        self.resource.values_format.use_binary(datatype='d',
-                                               is_big_endian=False,
-                                               container=np.array)
-
-    def use_ascii(self):
-        self.scpi.set_format_data(DATA='ASCII')
-        self.resource.values_format.use_ascii(converter='f', separator=',',
-                                              container=np.array)
+        # TODO: There is currently no way to change ascii vs binary modes for commands like get_twoport.
+        # Because of the update to pyvisa, there are now two commands generated for query commands: an ascii and a binary version.
+        # At present all commands which call a query command like this use ascii. 
 
     @property
     def echo(self):

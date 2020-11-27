@@ -102,8 +102,14 @@ class VNA:
 
         # convenience pyvisa functions
         self.write = self.resource.write
+        self.write_ascii_values = self.resource.write_ascii_values
+        self.write_binary_values = self.resource.write_binary_values
         self.read = self.resource.read
+        self.read_ascii_values = self.resource.read_ascii_values
+        self.read_binary_values = self.resource.read_binary_values
         self.query = self.resource.query
+        self.query_ascii_values = self.resource.query_ascii_values
+        self.query_binary_values = self.resource.query_binary_values
 
     def __enter__(self):
         """
