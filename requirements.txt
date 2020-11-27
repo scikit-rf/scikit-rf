@@ -13,4 +13,3 @@ pathlib
 git+https://github.com/scikit-rf/scikit-rf.git@master
 nose
 sip
-docscrape
