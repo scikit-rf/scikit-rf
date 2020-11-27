@@ -10,4 +10,5 @@ python-ivi
 pyvisa
 networkx
 pathlib
+nose
 git+https://github.com/scikit-rf/scikit-rf.git@master
