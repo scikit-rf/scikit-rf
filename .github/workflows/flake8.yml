@@ -1,0 +1,16 @@
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+name: Style linters
+jobs:
+  gitHubActionForFlake8:
+    name: flake8
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: GitHub Action for Flake8
+      uses: cclauss/GitHub-Action-for-Flake8@master
+      with:
+        args: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics --extend-exclude ".jupyter"
