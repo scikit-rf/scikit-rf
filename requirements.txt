@@ -11,4 +11,5 @@ pyvisa
 networkx
 pathlib
 nose
+nose-exclude
 git+https://github.com/scikit-rf/scikit-rf.git@master
