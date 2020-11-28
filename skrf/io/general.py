@@ -593,7 +593,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         remove_tmp_file = True
 
     # This breaks compatibility with python 2.6 and older
-    with file(file_name, 'r') as old_file, open(new_file_name, 'w') as new_file: 
+    with open(file_name, 'r') as old_file, open(new_file_name, 'w') as new_file: 
         new_file.write('%s\n'%header_string)
         for line in old_file:
             new_file.write(line)

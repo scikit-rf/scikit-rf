@@ -17,7 +17,7 @@ class Network2TestCase(unittest.TestCase):
         self.n = n2.Network(frequency=self.freq, s=self.s_2port, z0=50)
 
 
-    def get_abs_file_path(filename):
+    def get_abs_file_path(self, filename):
         return os.path.join(self.test_dir, filename)
 
     ## inits
