@@ -412,7 +412,7 @@ class AgilentCSV(object):
             else:
                 # I dont know how to seperate column names
                 warn('Cant decipher header, so I\'m creating one. check output. ')
-                cols = ['Freq(?),']+['%s-%i'%(util.basename_noext(filename),k) \
+                cols = ['Freq(?),']+['%s-%i'%(util.basename_noext(self.filename),k) \
                     for k in range(n_traces)]
         return cols
 

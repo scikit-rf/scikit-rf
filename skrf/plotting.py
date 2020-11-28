@@ -1772,6 +1772,7 @@ def plot_minmax_bounds_component(self, attribute, m=0, n=0,
         ax = plb.gca()
 
     ntwk_mean = self.__getattribute__('mean_'+attribute)
+    ntwk_std = self.__getattribute__('std_'+attribute)
 
     lower_bound = self.__getattribute__('min_'+attribute).s_re[:,m,n].squeeze()
     upper_bound = self.__getattribute__('max_'+attribute).s_re[:,m,n].squeeze()
