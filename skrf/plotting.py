@@ -57,7 +57,11 @@ Misc Functions
 import os
 
 import matplotlib as mpl
-mpl.use('Agg')  # Python 2.7
+# if running on remote mode on a server which does not have a display (like Docker images for CI)
+if not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg': 
+    print('No display found. Using non-interactive Agg backend.') 
+    # https://matplotlib.org/faq/usage_faq.html 
+    mpl.use('Agg') 
 from matplotlib import ticker
 import matplotlib.pyplot as plb
 import numpy as npy
