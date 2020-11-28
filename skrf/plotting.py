@@ -57,8 +57,8 @@ Misc Functions
 import os
 
 import matplotlib as mpl
-# if running on remote mode on a server which does not have a display (like Docker images for CI)
-if not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg': 
+# if running on remote mode on a linux server which does not have a display (like Docker images for CI)
+if os.name == 'posix' and not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg': 
     print('No display found. Using non-interactive Agg backend.') 
     # https://matplotlib.org/faq/usage_faq.html 
     mpl.use('Agg') 
