@@ -600,9 +600,9 @@ def psd2TimeDomain(f,y, windowType='hamming'):
 
 
     # apply window function
-    #TODO: make sure windowType exists in scipy.signal
-    if (windowType != 'rect' ):
-        window = exec("signal.%s(%i)" % (windowType,len(f)))
+    # make sure windowType exists in scipy.signal
+    if callable(getattr(signal, windowType)) and (windowType != 'rect' ):
+        window = getattr(signal, windowType)(len(f))
         y = y * window
 
     #create other half of spectrum
