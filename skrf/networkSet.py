@@ -394,7 +394,7 @@ class NetworkSet(object):
         '''
         def plot_func(self,*args, **kwargs):
             kwargs.update({'attribute':network_property_name})
-            plot_uncertainty_bounds_component(*args,**kwargs)
+            self.plot_uncertainty_bounds_component(*args,**kwargs)
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)

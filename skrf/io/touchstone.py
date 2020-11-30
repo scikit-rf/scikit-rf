@@ -434,12 +434,12 @@ class Touchstone:
         """
         TODO: NIY
         """
-        TBD = 1
-        noise_frequency = noise_values[:,0]
-        noise_minimum_figure = noise_values[:,1]
-        noise_source_reflection = noise_values[:,2]
-        noise_source_phase = noise_values[:,3]
-        noise_normalized_resistance = noise_values[:,4]
+        # TBD = 1
+        # noise_frequency = noise_values[:,0]
+        # noise_minimum_figure = noise_values[:,1]
+        # noise_source_reflection = noise_values[:,2]
+        # noise_source_phase = noise_values[:,3]
+        # noise_normalized_resistance = noise_values[:,4]
         
     def is_from_hfss(self):
         '''

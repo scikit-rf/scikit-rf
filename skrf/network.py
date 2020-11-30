@@ -4587,9 +4587,7 @@ def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
     if s_def == 'power':    
         # Power-waves. Eq.(19) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
-        F, G = npy.zeros_like(s), npy.zeros_like(s)
-        F = F.astype(dtype=npy.complex)
-        G = G.astype(dtype=npy.complex)
+        F, G = npy.zeros_like(s, dtype=npy.complex), npy.zeros_like(s, dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F  # Python > 3.5
@@ -4690,9 +4688,7 @@ def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
     if s_def == 'power':
         # Power-waves. Inverse of Eq.(19) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
-        F, G = npy.zeros_like(s), npy.zeros_like(s)
-        F = F.astype(dtype=npy.complex)
-        G = G.astype(dtype=npy.complex)
+        F, G = npy.zeros_like(s, dtype=npy.complex), npy.zeros_like(s, dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # y = npy.linalg.inv(F) @ npy.linalg.inv((s @ G + npy.conjugate(G))) @ (Id - s) @ F  # Python > 3.5
@@ -5256,9 +5252,7 @@ def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
         
     if s_def == 'power':
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
-        F, G = npy.zeros_like(y), npy.zeros_like(y)
-        F = F.astype(dtype=npy.complex)
-        G = G.astype(dtype=npy.complex)
+        F, G = npy.zeros_like(y, dtype=npy.complex), npy.zeros_like(y, dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)  # Python > 3.5
@@ -5543,6 +5537,44 @@ def t2y(t, z0=50, s_def=S_DEF_DEFAULT):
     return s2y(s, z0, s_def)
 
 def t2a(t, z0=50):
+    '''
+
+    Convert scattering transfer parameters to abcd parameters [#]_
+
+    Parameters
+    ------------
+    t : complex array-like or number
+        t-parameters
+
+    Returns
+    ---------
+    a : complex array-like or number
+        abcd parameters
+
+    See Also
+    ----------
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
+    y2z
+    y2z
+    t2s
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+
+    '''
 
     s = t2s(t)
     return s2a(s, z0)
