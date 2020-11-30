@@ -1143,8 +1143,7 @@ class Network(object):
 
     @a.setter
     def a(self, value):
-        z = a2z(value)
-        self._s = z2s(z, self.z0)
+        self._s = a2s(value, self.z0)
 
     @property
     def z0(self):
