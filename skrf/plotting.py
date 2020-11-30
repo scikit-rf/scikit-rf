@@ -57,6 +57,11 @@ Misc Functions
 import os
 
 import matplotlib as mpl
+# if running on remote mode on a linux server which does not have a display (like Docker images for CI)
+if os.name == 'posix' and not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg': 
+    print('No display found. Using non-interactive Agg backend.') 
+    # https://matplotlib.org/faq/usage_faq.html 
+    mpl.use('Agg') 
 from matplotlib import ticker
 import matplotlib.pyplot as plb
 import numpy as npy
@@ -1767,6 +1772,7 @@ def plot_minmax_bounds_component(self, attribute, m=0, n=0,
         ax = plb.gca()
 
     ntwk_mean = self.__getattribute__('mean_'+attribute)
+    ntwk_std = self.__getattribute__('std_'+attribute)
 
     lower_bound = self.__getattribute__('min_'+attribute).s_re[:,m,n].squeeze()
     upper_bound = self.__getattribute__('max_'+attribute).s_re[:,m,n].squeeze()

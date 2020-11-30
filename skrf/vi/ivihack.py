@@ -9,6 +9,7 @@ instrument backends will be cleaned up soon.
 
 '''
 from ivi import Driver
+import numpy as npy
 
 try:
     # rename the ivi method so our legacy VI's still work
