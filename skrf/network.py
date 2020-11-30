@@ -55,6 +55,8 @@ Connecting Networks
     de_embed
     flip
 
+
+
 Interpolation and Concatenation Along Frequency Axis
 =====================================================
 
@@ -79,6 +81,8 @@ Combining Networks
     n_twoports_2_nport
     concat_ports
 
+
+
 IO
 ====
 
@@ -100,6 +104,7 @@ Noise
     Network.add_noise_polar
     Network.add_noise_polar_flatband
     Network.multiply_noise
+
 
 Supporting Functions
 ======================
@@ -180,6 +185,7 @@ from .time import time_gate
 
 from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
+
 
 #from matplotlib import cm
 #import matplotlib.pyplot as plt
@@ -1332,6 +1338,9 @@ class Network(object):
             noise_imag = self.noise.imag
             return noise_real + 1.0j * noise_imag
 
+
+
+
     @property
     def f_noise(self):
       """
@@ -1790,6 +1799,9 @@ class Network(object):
           self.noise = noise.swapaxes(0, 2).swapaxes(1, 2)
           self.noise_freq = noise_freq
         
+
+
+
     # touchstone file IO
     def read_touchstone(self, filename):
         """
@@ -4974,7 +4986,6 @@ def z2t(z):
 
 def a2s(a, z0=50):
     '''
-
     convert abcd parameters to s parameters
 
     Parameters
@@ -6329,4 +6340,9 @@ def s2vswr_active(s, a):
         vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
     
     return vswr_act
+
+
+
+
+
 
