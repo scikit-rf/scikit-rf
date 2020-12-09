@@ -19,6 +19,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         ("phase unwrapped (rad)", "rad_unwrap"),
         ("real", "re"),
         ("imaginary", "im"),
+        ("group delay", "group_delay")
     ))
     S_UNITS = list(S_VALS.keys())
 
@@ -274,25 +275,34 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         primary = self.comboBox_primarySelector.currentText().lower()
         s_units = self.comboBox_unitsSelector.currentText()
-        attr = primary + "_" + self.S_VALS[s_units]
-        s = getattr(ntwk, attr)
-        for n in range(ntwk.s.shape[2]):
-            for m in range(ntwk.s.shape[1]):
-                if trace > 0:
-                    if not n == n_ or not m == m_:
-                        continue
+        if s_units == "group delay":
+            s_params = ['S11', 'S12', 'S21', 'S22']
+            for param in s_params:
+                s = getattr(ntwk, param.lower())
                 c = next(colors)
-                label = "S{:d}{:d}".format(m + 1, n + 1)
+                self.plot.plot(ntwk.f, abs(s.group_delay[:, 0, 0]), pen=pg.mkPen(c), name=param)
+                self.plot.setLabel("left", s_units)
+                self.plot.setTitle(ntwk.name)
+        else:
+            attr = primary + "_" + self.S_VALS[s_units]
+            s = getattr(ntwk, attr)
+            for n in range(ntwk.s.shape[2]):
+                for m in range(ntwk.s.shape[1]):
+                    if trace > 0:
+                        if not n == n_ or not m == m_:
+                            continue
+                    c = next(colors)
+                    label = "S{:d}{:d}".format(m + 1, n + 1)
 
-                if "db" in attr:
-                    splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
-                    if not np.any(s[:, m, n] == -np.inf):
-                        splot.setData(ntwk.f, s[:, m, n])
-                    self.plot.addItem(splot)
-                else:
-                    self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
-        self.plot.setLabel("left", s_units)
-        self.plot.setTitle(ntwk.name)
+                    if "db" in attr:
+                        splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
+                        if not np.any(s[:, m, n] == -np.inf):
+                            splot.setData(ntwk.f, s[:, m, n])
+                        self.plot.addItem(splot)
+                    else:
+                        self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
+            self.plot.setLabel("left", s_units)
+            self.plot.setTitle(ntwk.name)
 
     def plot_ntwk_list(self):
         if self.use_corrected and self.ntwk_corrected is not None:
