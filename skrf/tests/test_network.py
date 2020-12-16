@@ -2,6 +2,7 @@ import unittest
 import os
 import tempfile
 import six
+import sys
 import numpy as npy
 import six.moves.cPickle as pickle
 import skrf as rf
@@ -104,6 +105,11 @@ class NetworkTestCase(unittest.TestCase):
         # Check if reading a HFSS touchstone file with non-50Ohm impedances
         ntwk_hfss = rf.Network(os.path.join(self.test_dir, 'hfss_threeport_DB.s3p'))
         self.assertFalse(npy.isclose(ntwk_hfss.z0[0,0], 50))
+
+    def test_constructor_from_pathlib(self):
+        if sys.version_info.major == 3 and sys.version_info.minor >= 4:  # pathlib added in 3.4
+            from pathlib import Path
+            rf.Network(Path(self.test_dir) / 'ntwk1.ntwk')
 
     def test_constructor_from_pickle(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))

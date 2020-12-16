@@ -406,6 +406,14 @@ class Network(object):
             self.s_def = s_def
 
         if file is not None:
+            # Check for pathlib Path object, convert to string
+            if sys.version_info.major == 3 and sys.version_info.minor >= 4:  # pathlib added in 3.4
+                from pathlib import Path
+                if isinstance(file, Path):
+                    file = str(file.resolve())
+                else:
+                    pass
+
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and
             # unpickle it first
