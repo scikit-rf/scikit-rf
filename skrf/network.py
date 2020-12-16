@@ -4941,10 +4941,10 @@ def a2s(a, z0=50):
     s = npy.array([
         [
             (A*z02 + B - C*z01.conj()*z02 - D*z01.conj() ) / denom,
-            (2*(A*D - B*C)*npy.sqrt(z01.real * z02.real)) / denom,
+            (2*npy.sqrt(z01.real * z02.real)) / denom,
         ],
         [
-            (2*npy.sqrt(z01.real * z02.real)) / denom,
+            (2*(A*D - B*C)*npy.sqrt(z01.real * z02.real)) / denom,
             (-A*z02.conj() + B - C*z01*z02.conj() + D*z01) / denom,
         ],
     ]).transpose()

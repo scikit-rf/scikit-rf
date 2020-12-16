@@ -54,12 +54,21 @@ Plotting
     
 Circuit
 ------------------
+
 .. toctree::
     :maxdepth: 1
     :glob:
 
     circuit/*
-   
+
+Mixed Mode
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    mixedmodeanalysis/*
 
 Internals
 ------------------

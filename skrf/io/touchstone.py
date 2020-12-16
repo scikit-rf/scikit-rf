@@ -105,6 +105,7 @@ class Touchstone:
 
         self.comment_variables=None
         self.load_file(fid)
+        fid.close()
 
     def load_file(self, fid):
         """
@@ -276,8 +277,8 @@ class Touchstone:
         convert hfss variable comments to a dict of vars:(numbers,units)
         '''
         comments = self.comments
-        p1 = re.compile('\w* = \w*')
-        p2 = re.compile('\s*(\d*)\s*(\w*)')
+        p1 = re.compile(r'\w* = \w*')
+        p2 = re.compile(r'\s*(\d*)\s*(\w*)')
         var_dict = {}
         for k in re.findall(p1, comments):
             var, value = k.split('=')
@@ -433,12 +434,12 @@ class Touchstone:
         """
         TODO: NIY
         """
-        TBD = 1
-        noise_frequency = noise_values[:,0]
-        noise_minimum_figure = noise_values[:,1]
-        noise_source_reflection = noise_values[:,2]
-        noise_source_phase = noise_values[:,3]
-        noise_normalized_resistance = noise_values[:,4]
+        # TBD = 1
+        # noise_frequency = noise_values[:,0]
+        # noise_minimum_figure = noise_values[:,1]
+        # noise_source_reflection = noise_values[:,2]
+        # noise_source_phase = noise_values[:,3]
+        # noise_normalized_resistance = noise_values[:,4]
         
     def is_from_hfss(self):
         '''
