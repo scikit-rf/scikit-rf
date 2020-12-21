@@ -275,15 +275,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         primary = self.comboBox_primarySelector.currentText().lower()
         s_units = self.comboBox_unitsSelector.currentText()
-        if s_units == "group delay":
-            s_params = ['S11', 'S12', 'S21', 'S22']
-            for param in s_params:
-                s = getattr(ntwk, param.lower())
-                c = next(colors)
-                self.plot.plot(ntwk.f, abs(s.group_delay[:, 0, 0]), pen=pg.mkPen(c), name=param)
-                self.plot.setLabel("left", s_units)
-                self.plot.setTitle(ntwk.name)
-        else:
+        try:
             attr = primary + "_" + self.S_VALS[s_units]
             s = getattr(ntwk, attr)
             for n in range(ntwk.s.shape[2]):
@@ -301,8 +293,23 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                         self.plot.addItem(splot)
                     else:
                         self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
-            self.plot.setLabel("left", s_units)
-            self.plot.setTitle(ntwk.name)
+        except AttributeError:
+            s_params = ['S11', 'S12', 'S21', 'S22']
+            for param in s_params:
+                s = getattr(ntwk, param.lower(), None)
+                if s is None:
+                    continue
+                c = next(colors)
+                if s_units == 'group delay':
+                    self.plot.plot(ntwk.f, abs(s.group_delay[:, 0, 0]), pen=pg.mkPen(c), name=param)
+                else:
+                    attr = self.S_VALS[s_units]
+                    self.plot.plot(ntwk.f, getattr(s, attr)[:, 0, 0], pen=pg.mkPen(c), name=param)
+                self.plot.setLabel("left", s_units)     # Included here incase of missing/ill-formatted data
+                self.plot.setTitle(ntwk.name)
+
+        self.plot.setLabel("left", s_units)
+        self.plot.setTitle(ntwk.name)
 
     def plot_ntwk_list(self):
         if self.use_corrected and self.ntwk_corrected is not None:
