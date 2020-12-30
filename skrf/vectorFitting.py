@@ -25,15 +25,14 @@ class VectorFitting:
         Creates a VectorFitting instance based on a supplied scikit-rf Network instance containing the frequency
         responses of the N-port.
 
-        :param network: scikit-rf Network instance of the N-port to be fitted.
+        :param network:
+            scikit-rf Network instance of the N-port to be fitted.
         """
 
         self.network = network
         self.initial_poles = None
         self.poles = None
-        self.poles_admittance = None
         self.zeros = None
-        self.zeros_admittance = None
         self.proportional_coeff = None
         self.constant_coeff = None
         self.max_iterations = 100
@@ -394,9 +393,10 @@ class VectorFitting:
 
         print('\n### Vector fitting finished.\n')
 
-    def export_npy(self, path):
+    def export_npz(self, path):
         """
-        Exports the poles matrix, zeros vector, proportional coefficients vector and constants vector as NumPy arrays.
+        Exports the poles vector, zeros matrix, proportional coefficients vector and constants vector as a NumPy .npz
+        array.
 
         :param path:
             Target path for the export.
@@ -420,11 +420,38 @@ class VectorFitting:
 
         filename = self.network.name
 
-        print('Exporting results as NumPy arrays to {}'.format(path))
-        np.save(os.path.join(path, '/{}_poles'.format(filename)), self.poles)
-        np.save(os.path.join(path, '/{}_zeros'.format(filename)), self.zeros)
-        np.save(os.path.join(path, '/{}_proportionals'.format(filename)), self.proportional_coeff)
-        np.save(os.path.join(path, '/{}_constants'.format(filename)), self.constant_coeff)
+        print('Exporting results as pickled NumPy array to {}'.format(path))
+        np.savez(os.path.join(path, 'coefficients_{}'.format(filename)),
+                 poles=self.poles, zeros=self.zeros, proportionals=self.proportional_coeff,
+                 constants=self.constant_coeff)
+
+    def import_npz(self, file):
+        """
+        Imports all model parameters (poles, zeros, proportionals, constants) from a provided NumPy .npz file.
+
+        :param file:
+            NumPy .npz file containing all parameters as properly labeled arrays with the correct lengths (matching the
+            number of ports of the scikit-rf Network in self.network).
+
+        :return:
+            None
+        """
+
+        with np.load(file) as data:
+            poles = data['poles']
+            zeros = data['zeros']
+            proportional_coeff = data['proportionals']
+            constant_coeff = data['constants']
+
+            if np.alen(zeros) == self.network.nports and \
+                    np.alen(proportional_coeff) == self.network.nports and \
+                    np.alen(constant_coeff) == self.network.nports:
+                self.poles = poles
+                self.zeros = zeros
+                self.proportional_coeff = proportional_coeff
+                self.constant_coeff = constant_coeff
+            else:
+                print('IMPORT ERROR: Length of the provided parameters does not match the network size.')
 
     def get_model_response(self, i, j, freqs=None):
         """
