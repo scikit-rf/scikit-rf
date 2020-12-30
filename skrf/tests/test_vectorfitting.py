@@ -20,10 +20,10 @@ class VectorFittingTestCase(unittest.TestCase):
         vf.vectorfit(n_poles_real=2, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
 
         # compare both sets of parameters
-        self.assertTrue(np.isclose(vf.poles, expected_poles))
-        self.assertTrue(np.isclose(vf.zeros, expected_zeros))
-        self.assertTrue(np.isclose(vf.proportional_coeff, expected_props))
-        self.assertTrue(np.isclose(vf.constant_coeff, expected_const))
+        self.assertTrue(np.all(np.isclose(vf.poles, expected_poles)))
+        self.assertTrue(np.all(np.isclose(vf.zeros, expected_zeros)))
+        self.assertTrue(np.all(np.isclose(vf.proportional_coeff, expected_props)))
+        self.assertTrue(np.all(np.isclose(vf.constant_coeff, expected_const)))
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)
