@@ -40,14 +40,17 @@ class VectorFitting:
         self.d_res_history = []
         self.delta_max_history = []
 
-    def vectorfit(self, n_poles=10, init_pole_spacing='lin', parameter_type='S', fit_constant=True,
-                  fit_proportional=False):
+    def vectorfit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
+                  fit_constant=True, fit_proportional=True):
         """
         Main work routine performing the vector fit. The results will be stored in the class variables 'poles', 'zeros',
         'proportional_coeff' and 'constant_coeff'.
 
-        :param n_poles:
-            Number of poles to be used. Optimal number depends on the behaviour of the responses (e.g. resonances, ...).
+        :param n_poles_real:
+            Number of initial real poles.
+
+        :param n_poles_cmplx:
+            Number of initial complex conjugate poles. Depends on the behaviour of the responses (e.g. resonances, ...).
 
         :param init_pole_spacing:
             Type of pole spacing for the initialisation. Either linear (lin) or logarithmic (log).
@@ -77,19 +80,35 @@ class VectorFitting:
         fmax = np.amax(freqs_norm)
         weight_regular = 1.0
         if init_pole_spacing == 'log':
-            pole_freqs = np.geomspace(fmin, fmax, n_poles)
+            pole_freqs = np.geomspace(fmin, fmax, n_poles_real + n_poles_cmplx)
         elif init_pole_spacing == 'lin':
-            pole_freqs = np.linspace(fmin, fmax, n_poles)
+            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
         else:
             print('Invalid choice of initial pole spacing; proceeding with linear spacing')
-            pole_freqs = np.linspace(fmin, fmax, n_poles)
+            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
         poles = []
-        for f in pole_freqs:
-            # add complex poles for the remaining frequencies
-            # just one pole of a complex conjugate pair gets stored (the one with the posivive imaginary part)
-            # the initial real part should be -1/100 of the imaginary part as a rule of thumb from the VF paper [1]
-            poles.append((-1 / 100 + 0j) * f)
-            #poles.append((-1 / 100 + 1j) * f)
+        k_real = 0
+        k_cmplx = 0
+        for i, f in enumerate(pole_freqs):
+            if i % 2 == 0 and k_real < n_poles_real:
+                # add a real pole
+                poles.append((-1 / 100 + 0j) * f)
+                k_real += 1
+            elif i % 2 == 1 and k_cmplx < n_poles_cmplx:
+                # add a complex conjugate pole (store only the positive part)
+                poles.append((-1 / 100 + 1j) * f)
+                k_cmplx += 1
+            elif k_real < n_poles_real:
+                # add a real pole
+                poles.append((-1 / 100 + 0j) * f)
+                k_real += 1
+            elif k_cmplx < n_poles_cmplx:
+                # add a complex conjugate pole (store only the positive part)
+                poles.append((-1 / 100 + 1j) * f)
+                k_cmplx += 1
+            else:
+                # this should never occur
+                print('error in pole init')
         poles = np.array(poles)
 
         # save initial poles (un-normalize first)
