@@ -9,11 +9,11 @@ class VectorFittingTestCase(unittest.TestCase):
     def test_vectorfitting_ring_slot(self):
         # load expected model parameters
         expected_parameters = np.load(os.path.join(os.path.dirname(os.path.abspath(skrf.__file__)), 'tests',
-                                                   'vectorfit_ring slot_2poles.npz'))
-        expected_poles = expected_parameters['poles']
-        expected_zeros = expected_parameters['zeros']
-        expected_props = expected_parameters['proportionals']
-        expected_const = expected_parameters['constants']
+                                                   'vectorfit_ringslot_2poles.npz'))
+        expected_poles = expected_parameters['arr_0']
+        expected_zeros = expected_parameters['arr_1']
+        expected_props = expected_parameters['arr_2']
+        expected_const = expected_parameters['arr_3']
 
         # perform the fit
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
