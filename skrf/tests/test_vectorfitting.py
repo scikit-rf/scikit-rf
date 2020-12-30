@@ -8,7 +8,7 @@ class VectorFittingTestCase(unittest.TestCase):
 
     def test_vectorfitting_ring_slot(self):
         # load expected model parameters
-        expected_parameters = np.load(os.path.join(os.path.dirname(os.path.abspath(self.__file__)),
+        expected_parameters = np.load(os.path.join(os.path.dirname(os.path.abspath(skrf.__file__)), 'tests',
                                                    'vectorfit_ring slot_2poles.npz'))
         expected_poles = expected_parameters['poles']
         expected_zeros = expected_parameters['zeros']
