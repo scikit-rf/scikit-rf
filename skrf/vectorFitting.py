@@ -41,8 +41,8 @@ class VectorFitting:
         self.d_res_history = []
         self.delta_max_history = []
 
-    def vectorfit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
-                  fit_constant=True, fit_proportional=True):
+    def vector_fit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
+                   fit_constant=True, fit_proportional=True):
         """
         Main work routine performing the vector fit. The results will be stored in the class variables 'poles', 'zeros',
         'proportional_coeff' and 'constant_coeff'.
@@ -411,9 +411,9 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
-    def export_npz(self, path):
+    def write_npz(self, path):
         """
-        Exports the poles vector, zeros matrix, proportional coefficients vector and constants vector as a NumPy .npz
+        Writes the poles vector, zeros matrix, proportional coefficients vector and constants vector as a NumPy .npz
         array.
 
         :param path:
@@ -443,9 +443,9 @@ class VectorFitting:
                             poles=self.poles, zeros=self.zeros, proportionals=self.proportional_coeff,
                             constants=self.constant_coeff)
 
-    def import_npz(self, file):
+    def read_npz(self, file):
         """
-        Imports all model parameters (poles, zeros, proportionals, constants) from a provided NumPy .npz file.
+        Reads all model parameters (poles, zeros, proportionals, constants) from a provided NumPy .npz file.
 
         :param file:
             NumPy .npz file containing all parameters as properly labeled arrays with the correct lengths (matching the
@@ -517,7 +517,7 @@ class VectorFitting:
                 resp += zeros[i] / (s - pole) + np.conjugate(zeros[i]) / (s - np.conjugate(pole))
         return resp
 
-    def plot_fit_linear(self, i, j, freqs=None):
+    def plot_s_db(self, i, j, freqs=None):
         """
         Plots the magnitude in dB of the response **S_i,j** in the fit.
 
@@ -538,13 +538,10 @@ class VectorFitting:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
         mplt.figure()
-        #mplt.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
-        mplt.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
-        #mplt.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
-        mplt.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        mplt.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
+        mplt.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
         mplt.xlabel('Frequency (Hz)')
-        #mplt.ylabel('Magnitude (dB)')
-        mplt.ylabel('Magnitude')
+        mplt.ylabel('Magnitude (dB)')
         mplt.legend(loc='best')
         mplt.title('i={}, j={}'.format(i, j))
         mplt.tight_layout()
@@ -580,9 +577,9 @@ class VectorFitting:
 
     def plot_convergence(self):
         """
-            Plots the history of the model parameter **d_res** during the iterative pole relocation process of the
-            vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
-            maximum singular value of the coefficient matrix **A** are plotted, which serve as a convergence indicator.
+        Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
+        vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
+        maximum singular value of the coefficient matrix **A** are plotted, which serve as a convergence indicator.
 
         :return:
             None
@@ -597,7 +594,7 @@ class VectorFitting:
         mplt.tight_layout()
         mplt.show()
 
-    def write_spice_subckt_s(self, file):
+    def write_spice_subcircuit_s(self, file):
         """
         Creates an equivalent N-port SPICE subcircuit based on its vector fitted S parameter responses. In the SPICE
         subcircuit, all ports will share a common reference node (global SPICE ground on node 0). The equivalent circuit
@@ -623,11 +620,11 @@ class VectorFitting:
             return subcircuits[-1]
 
         # use engineering notation for the numbers in the SPICE file (1000 --> 1k)
-        self.formatter = EngFormatter(sep="", places=3)
+        formatter = EngFormatter(sep="", places=3)
         # replace "micron" sign by "u" and "mega" sign by "meg"
-        letters_dict = self.formatter.ENG_PREFIXES
+        letters_dict = formatter.ENG_PREFIXES
         letters_dict.update({-6: 'u', 6: 'meg'})
-        self.formatter.ENG_PREFIXES = letters_dict
+        formatter.ENG_PREFIXES = letters_dict
 
         with open(file, 'w') as f:
             # write title line
@@ -688,19 +685,15 @@ class VectorFitting:
 
                     # add R for constant term
                     if g < 0:
-                        f.write('R{}{} nt{}{}_inv 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1,
-                                                                 self.formatter(np.abs(1 / g))))
+                        f.write('R{}{} nt{}{}_inv 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(np.abs(1 / g))))
                     elif g > 0:
-                        f.write('R{}{} nt{}{} 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1,
-                                                             self.formatter(1 / g)))
+                        f.write('R{}{} nt{}{} 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(1 / g)))
 
                     # add C for proportional term
                     if c < 0:
-                        f.write('C{}{} nt{}{}_inv 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1,
-                                                                 self.formatter(np.abs(c))))
+                        f.write('C{}{} nt{}{}_inv 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(np.abs(c))))
                     elif c > 0:
-                        f.write('C{}{} nt{}{} 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1,
-                                                             self.formatter(c)))
+                        f.write('C{}{} nt{}{} 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(c)))
 
                     # add pairs of poles and zeros
                     for i_pole in range(len(self.poles)):
@@ -718,9 +711,7 @@ class VectorFitting:
                             # real pole; add rl_admittance
                             l = 1 / np.real(zero)
                             r = -1 * np.real(pole) / np.real(zero)
-                            f.write(node + ' 0 rl_admittance res={} ind={}\n'.format(
-                                self.formatter(r),
-                                self.formatter(l)))
+                            f.write(node + ' 0 rl_admittance res={} ind={}\n'.format(formatter(r), formatter(l)))
                         else:
                             # complex pole of a conjugate pair; add rcl_vccs_admittance
                             l = 1 / (2 * np.real(zero))
@@ -733,10 +724,10 @@ class VectorFitting:
                             else:
                                 m = 1
                             f.write(node + ' 0 rcl_vccs_admittance res={} cap={} ind={} gm={} mult={}\n'.format(
-                                self.formatter(r),
-                                self.formatter(c),
-                                self.formatter(l),
-                                self.formatter(np.abs(gm_add)),
+                                formatter(r),
+                                formatter(c),
+                                formatter(l),
+                                formatter(np.abs(gm_add)),
                                 int(m)))
 
             f.write('.ENDS s_equivalent\n')
@@ -744,8 +735,11 @@ class VectorFitting:
             f.write('*\n')
 
             # subcircuit for an active RCL+VCCS equivalent admittance Y(s) of a complex conjugated pole-zero pair H(s)
-            # H(s) = z / (s - p) + conj(z) / (s - conj(p))
-            # Y(S) =
+            # z = z' + j * z"
+            # p = p' + j * p"
+            # H(s)  = z / (s - p) + conj(z) / (s - conj(p))
+            #       = (2 * z' * s - 2 * (z'p' + z"p")) / (s ** 2 - 2 * p' * s + |p| ** 2)
+            # Y(S)  = (1 / L * s + b) / (s ** 2 + R / L * s + 1 / (L * C))
             f.write('.SUBCKT rcl_vccs_admittance n_pos n_neg res=1k cap=1n ind=100p gm=1m mult=1\n')
             f.write('L1 n_pos 1 {ind}\n')
             f.write('C1 1 2 {cap}\n')
@@ -757,7 +751,7 @@ class VectorFitting:
 
             # subcircuit for a passive RL equivalent admittance Y(s) of a real pole-zero H(s)
             # H(s) = z / (s - p)
-            # Y(s) =
+            # Y(s) = 1 / L / (s + s * R / L)
             f.write('.SUBCKT rl_admittance n_pos n_neg res=1k ind=100p\n')
             f.write('L1 n_pos 1 {ind}\n')
             f.write('R1 1 n_neg {res}\n')
