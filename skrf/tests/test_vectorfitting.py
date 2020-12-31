@@ -23,7 +23,7 @@ class VectorFittingTestCase(unittest.TestCase):
 
         # perform the fit
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
-        vf.vectorfit(n_poles_real=2, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
+        vf.vector_fit(n_poles_real=2, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
 
         # compare both sets of parameters
         self.assertTrue(np.allclose(vf.poles, expected_poles))
