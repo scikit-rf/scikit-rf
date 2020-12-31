@@ -439,10 +439,10 @@ class VectorFitting:
 
         filename = self.network.name
 
-        print('Exporting results as pickled NumPy array to {}'.format(path))
-        np.savez(os.path.join(path, 'coefficients_{}'.format(filename)),
-                 poles=self.poles, zeros=self.zeros, proportionals=self.proportional_coeff,
-                 constants=self.constant_coeff)
+        print('Exporting results as compressed NumPy array to {}'.format(path))
+        np.savez_compressed(os.path.join(path, 'coefficients_{}'.format(filename)),
+                            poles=self.poles, zeros=self.zeros, proportionals=self.proportional_coeff,
+                            constants=self.constant_coeff)
 
     def import_npz(self, file):
         """

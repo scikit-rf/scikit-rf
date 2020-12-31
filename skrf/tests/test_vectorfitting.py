@@ -1,19 +1,25 @@
 import unittest
 import skrf
 import numpy as np
-import os.path
 
 
 class VectorFittingTestCase(unittest.TestCase):
 
     def test_vectorfitting_ring_slot(self):
-        # load expected model parameters
-        expected_parameters = np.load(os.path.join(os.path.dirname(os.path.abspath(skrf.__file__)), 'tests',
-                                                   'vectorfit_ringslot_2poles.npz'))
-        expected_poles = expected_parameters['arr_0']
-        expected_zeros = expected_parameters['arr_1']
-        expected_props = expected_parameters['arr_2']
-        expected_const = expected_parameters['arr_3']
+        # expected fitting parameters for skrf.data.ring_slot with 2 initial real poles
+        expected_poles = np.array([-7.80605445e+10+5.32645184e+11j])
+        expected_zeros = np.array([[7.01837934e+10+1.14737278e+10j],
+                                   [7.93470695e+10-4.54467471e+09j],
+                                   [7.93470695e+10-4.54467471e+09j],
+                                   [8.19724835e+10-2.11876421e+10j]])
+        expected_props = np.array([-2.06451610e-15,
+                                   -2.45016478e-14,
+                                   -2.45016478e-14,
+                                   7.79744644e-13])
+        expected_const = np.array([-0.9871906,
+                                   -0.06043898,
+                                   -0.06043898,
+                                   -0.99401152])
 
         # perform the fit
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
