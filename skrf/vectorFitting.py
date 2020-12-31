@@ -2,6 +2,7 @@ import numpy as np
 import os
 import matplotlib.pyplot as mplt
 from matplotlib.ticker import EngFormatter
+import logging
 
 
 class VectorFitting:
@@ -84,7 +85,7 @@ class VectorFitting:
         elif init_pole_spacing == 'lin':
             pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
         else:
-            print('Invalid choice of initial pole spacing; proceeding with linear spacing')
+            logging.warning('Invalid choice of initial pole spacing; proceeding with linear spacing')
             pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
         poles = []
         k_real = 0
@@ -108,14 +109,14 @@ class VectorFitting:
                 k_cmplx += 1
             else:
                 # this should never occur
-                print('error in pole init')
+                logging.error('error in pole init: number of poles does not add up')
         poles = np.array(poles)
 
         # save initial poles (un-normalize first)
         self.initial_poles = poles * norm
         max_singular = 1
 
-        print('### Starting pole relocation process.\n')
+        logging.info('### Starting pole relocation process.\n')
 
         # stack frequency responses as a single vector
         # stacking order:
@@ -130,7 +131,7 @@ class VectorFitting:
                 elif parameter_type == 'Y':
                     freq_responses.append(self.network.y[:, i, j])
                 else:
-                    print('Invalid choice of matrix parameter type (S, Z, or Y); using S representation.')
+                    logging.warning('Invalid choice of matrix parameter type (S, Z, or Y); using S representation.')
                     freq_responses.append(self.network.s[:, i, j])
         freq_responses = np.array(freq_responses)
 
@@ -139,7 +140,7 @@ class VectorFitting:
         iterations = self.max_iterations
         converged = False
         while iterations > 0:
-            print('Iteration {}'.format(self.max_iterations - iterations + 1))
+            logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
 
             # generate coefficients of approximation function for each target frequency response
             # responses will be treated independently using QR decomposition
@@ -242,7 +243,7 @@ class VectorFitting:
                 A_matrix = np.vstack((A_matrix, np.sqrt(weight_extra) * A_k))
                 b_vector = np.append(b_vector, np.sqrt(weight_extra) * len(freqs_norm))
 
-            print('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
+            logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
             # solve least squares for real parts
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=-1)
@@ -256,10 +257,10 @@ class VectorFitting:
             if np.abs(d_res) < tol_res:
                 # d_res is too small, discard solution and proceed the |d_res| = tol_res
                 d_res = tol_res * (d_res / np.abs(d_res))
-                print('Replacing d_res solution')
+                logging.warning('Replacing d_res solution as it was too small')
 
             self.d_res_history.append(d_res)
-            print('d_res = {}'.format(d_res))
+            logging.info('d_res = {}'.format(d_res))
 
             # build test matrix H, which will hold the new poles as Eigenvalues
             A_matrix = np.zeros((len(c_res), len(c_res)))
@@ -297,15 +298,15 @@ class VectorFitting:
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
             self.delta_max_history.append(delta_max)
-            print('Delta_max = {}'.format(delta_max))
-            print()
+            logging.info('Delta_max = {}'.format(delta_max))
             max_singular = new_max_singular
 
             stop = False
             if delta_max < self.max_tol:
                 if converged:
                     # is really converged, finish
-                    print('Pole relocation process converged after {} iterations.'.format(self.max_iterations - iterations + 1))
+                    logging.info('Pole relocation process converged after {} iterations.'.format(
+                        self.max_iterations - iterations + 1))
                     stop = True
                 else:
                     # might be converged, but do one last run to be sure
@@ -319,11 +320,11 @@ class VectorFitting:
 
             if iterations == 0:
                 if converged and stop is False:
-                    print('Reached tolerance only after max. number of iterations (N_max = {}). '
-                          'Results might not have converged properly.'.format(self.max_iterations))
+                    logging.warning('Reached tolerance only after max. number of iterations (N_max = {}). '
+                                    'Results might not have converged properly.'.format(self.max_iterations))
                 else:
-                    print('Reached maximum number of iterations (N_max = {}). '
-                          'Results did not converge.'.format(self.max_iterations))
+                    logging.warning('Reached maximum number of iterations (N_max = {}). '
+                                    'Results did not converge.'.format(self.max_iterations))
 
             if stop:
                 iterations = 0
@@ -331,15 +332,13 @@ class VectorFitting:
         # ITERATIONS DONE
         poles = np.array(poles)
 
-        print('Initial poles before relocation:')
-        print(self.initial_poles)
-        print()
+        logging.info('Initial poles before relocation:')
+        logging.info(self.initial_poles)
 
-        print('Final poles:')
-        print(poles * norm)
-        print()
+        logging.info('Final poles:')
+        logging.info(poles * norm)
 
-        print('\n### Starting zeros calculation process.\n')
+        logging.info('\n### Starting zeros calculation process.\n')
 
         # finally, solve for the residues with the previously calculated poles
         zeros = []
@@ -379,7 +378,7 @@ class VectorFitting:
             A_matrix = np.vstack((np.real(A_matrix), np.imag(A_matrix)))
             b_vector = np.append(np.real(b_vector), np.imag(b_vector))
 
-            print('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
+            logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
             # solve least squares and obtain results as stack of real part vector and imaginary part vector
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=-1)
@@ -410,7 +409,7 @@ class VectorFitting:
         self.constant_coeff = np.array(constant_coeff)
         self.proportional_coeff = np.array(proportional_coeff) / norm
 
-        print('\n### Vector fitting finished.\n')
+        logging.info('\n### Vector fitting finished.\n')
 
     def export_npz(self, path):
         """
@@ -425,21 +424,21 @@ class VectorFitting:
         """
 
         if self.poles is None:
-            print('Nothing to export; Poles have not been fitted.')
+            logging.error('Nothing to export; Poles have not been fitted.')
             return
         if self.zeros is None:
-            print('Nothing to export; Zeros have not been fitted.')
+            logging.error('Nothing to export; Zeros have not been fitted.')
             return
         if self.proportional_coeff is None:
-            print('Nothing to export; Proportional coefficients have not been fitted.')
+            logging.error('Nothing to export; Proportional coefficients have not been fitted.')
             return
         if self.constant_coeff is None:
-            print('Nothing to export; Constants have not been fitted.')
+            logging.error('Nothing to export; Constants have not been fitted.')
             return
 
         filename = self.network.name
 
-        print('Exporting results as compressed NumPy array to {}'.format(path))
+        logging.warning('Exporting results as compressed NumPy array to {}'.format(path))
         np.savez_compressed(os.path.join(path, 'coefficients_{}'.format(filename)),
                             poles=self.poles, zeros=self.zeros, proportionals=self.proportional_coeff,
                             constants=self.constant_coeff)
@@ -470,7 +469,7 @@ class VectorFitting:
                 self.proportional_coeff = proportional_coeff
                 self.constant_coeff = constant_coeff
             else:
-                print('IMPORT ERROR: Length of the provided parameters does not match the network size.')
+                logging.error('Length of the provided parameters does not match the network size.')
 
     def get_model_response(self, i, j, freqs=None):
         """
@@ -490,16 +489,16 @@ class VectorFitting:
         """
 
         if self.poles is None:
-            print('Returning zero; Poles have not been fitted.')
+            logging.error('Returning zero; Poles have not been fitted.')
             return np.zeros_like(freqs)
         if self.zeros is None:
-            print('Returning zero; Zeros have not been fitted.')
+            logging.error('Returning zero; Zeros have not been fitted.')
             return np.zeros_like(freqs)
         if self.proportional_coeff is None:
-            print('Returning zero; Proportional coefficients have not been fitted.')
+            logging.error('Returning zero; Proportional coefficients have not been fitted.')
             return np.zeros_like(freqs)
         if self.constant_coeff is None:
-            print('Returning zero; Constants have not been fitted.')
+            logging.error('Returning zero; Constants have not been fitted.')
             return np.zeros_like(freqs)
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
