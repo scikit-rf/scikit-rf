@@ -479,11 +479,17 @@ class VectorFitting:
         Parameters
         ----------
         file : str
-            NumPy .npz file containing the parameters. Needs to match the network properties (correct number of ports).
+            NumPy .npz file containing the parameters. See notes.
 
         Returns
         -------
         None
+
+        Notes
+        -----
+        The .npz file needs to include the model parameters as individual `ndarray`s labeled *poles*, *zeros*,
+        *proportionals* and *constants*. The shapes of those `ndarray`s need to match the network properties in
+        :attribute:`self.network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
 
         See Also
         --------
