@@ -7,9 +7,13 @@ import logging
 
 class VectorFitting:
     """
-    This is a Python implementation of the Vector Fitting algorithm [1]. The code is based on two improvements for
-    relaxed pole relocation [2] and efficient (fast) solving [3]. See also the Vector Fitting website [4] for further
-    information and download of the papers listed below. A Matlab implementation is also available there for reference.
+    This is a Python implementation of the Vector Fitting algorithm [1].
+
+    Notes
+    -----
+    The code is based on two improvements for relaxed pole relocation [2] and efficient (fast) solving [3]. See also the
+    Vector Fitting website [4] for further information and download of the papers listed below. A Matlab implementation
+    is also available there for reference.
 
     [1] B. Gustavsen, A. Semlyen, "Rational Approximation of Frequency Domain Responses by Vector Fitting", IEEE
         Transactions on Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999
@@ -23,11 +27,13 @@ class VectorFitting:
 
     def __init__(self, network):
         """
-        Creates a VectorFitting instance based on a supplied scikit-rf Network instance containing the frequency
+        Creates a VectorFitting instance based on a supplied :class:`skrf.network.Network` containing the frequency
         responses of the N-port.
 
-        :param network:
-            scikit-rf Network instance of the N-port to be fitted.
+        Parameters
+        ----------
+        network : :class:`skrf.network.Network`
+            Network instance of the N-port holding the S-matrix to be fitted.
         """
 
         self.network = network
@@ -44,32 +50,46 @@ class VectorFitting:
     def vector_fit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
                    fit_constant=True, fit_proportional=True):
         """
-        Main work routine performing the vector fit. The results will be stored in the class variables 'poles', 'zeros',
-        'proportional_coeff' and 'constant_coeff'.
+        Main work routine performing the vector fit. The results will be stored in the class variables
+        :attribute:`self.poles`, :attribute:`self.zeros`, :attribute:`self.proportional_coeff` and
+        :attribute:`self.constant_coeff`.
 
-        :param n_poles_real:
-            Number of initial real poles.
+        Parameters
+        ----------
+        n_poles_real : int, optional
+            Number of initial real poles. See notes.
 
-        :param n_poles_cmplx:
-            Number of initial complex conjugate poles. Depends on the behaviour of the responses (e.g. resonances, ...).
+        n_poles_cmplx : int, optional
+            Number of initial complex conjugate poles. See notes.
 
-        :param init_pole_spacing:
-            Type of pole spacing for the initialisation. Either linear (lin) or logarithmic (log).
+        init_pole_spacing : str, optional
+            Type of initial pole spacing across the frequency interval of the S-matrix. Either linear (lin) or
+            logarithmic (log).
 
-        :param parameter_type:
+        parameter_type : str, optional
             Representation type of the frequency responses to be fitted. Either **scattering (S)**, **impedance (Z)**
             or **admittance (Y)**. As scikit-rf can currently only read S parameters from a Touchstone file, the fit
             should also be performed on the original S parameters. Otherwise, scikit-rf will convert the responses from
             S to Z or Y, which might work for the fit but can cause other issues.
 
-        :param fit_constant:
-            Include the constant term **d** in the fit.
+        fit_constant : bool, optional
+            Include a constant term **d** in the fit.
 
-        :param fit_proportional:
-            Include the proportional term **e** in the fit.
+        fit_proportional : bool, optional
+            Include a proportional term **e** in the fit.
 
-        :return:
-            None
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        The required number of real or complex conjugate starting poles depends on the behaviour of the frequency
+        responses. To fit a smooth response such as a low-pass characteristic, 1-3 real poles and no complex conjugate
+        poles is usually sufficient. If resonances or other types of peaks are present in some or all of the responses,
+        a similar number of complex conjugate poles is required. Be careful not to use too many poles, as excessive
+        poles will not only increase the computation workload during the fitting and the subsequent use of the model,
+        but they can also introduce unwanted resonances at frequencies well outside the fit interval.
         """
 
         # create initial poles and space them across the frequencies in the provided Touchstone file
@@ -413,14 +433,22 @@ class VectorFitting:
 
     def write_npz(self, path):
         """
-        Writes the poles vector, zeros matrix, proportional coefficients vector and constants vector as a NumPy .npz
-        array.
+        Writes the model parameters in :attribute:`self.poles`, :attribute:`self.zeros`,
+        :attribute:`self.proportional_coeff` and :attribute:`self.constant_coeff` to a labeled NumPy .npz file.
 
-        :param path:
-            Target path for the export.
+        Parameters
+        ----------
+        path : str
+            Target path without filename for the export. The filename will be added automatically based on the network
+            name in :attribute:`self.network`
 
-        :return:
-            None
+        Returns
+        -------
+        None
+
+        See Also
+        --------
+        read_npz : Reads all model parameters from a .npz file
         """
 
         if self.poles is None:
@@ -445,14 +473,21 @@ class VectorFitting:
 
     def read_npz(self, file):
         """
-        Reads all model parameters (poles, zeros, proportionals, constants) from a provided NumPy .npz file.
+        Reads all model parameters :attribute:`self.poles`, :attribute:`self.zeros`,
+        :attribute:`self.proportional_coeff` and :attribute:`self.constant_coeff` from a labeled NumPy .npz file.
 
-        :param file:
-            NumPy .npz file containing all parameters as properly labeled arrays with the correct lengths (matching the
-            number of ports of the scikit-rf Network in self.network).
+        Parameters
+        ----------
+        file : str
+            NumPy .npz file containing the parameters. Needs to match the network properties (correct number of ports).
 
-        :return:
-            None
+        Returns
+        -------
+        None
+
+        See Also
+        --------
+        write_npz : Writes all model parameters to a .npz file
         """
 
         with np.load(file) as data:
@@ -475,17 +510,22 @@ class VectorFitting:
         """
         Returns the frequency response of the fitted model.
 
-        :param i:
+        Parameters
+        ----------
+        i : int
             Row index of the response.
 
-        :param j:
+        j : int
             Column index of the response.
 
-        :param freqs:
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network are used.
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+             :attribute:`self.network` are used.
 
-        :return:
-            Model response at the provided frequencies (complex valued list).
+        Returns
+        -------
+        ndarray
+            Model response at the frequencies specified in freqs (complex-valued ndarray).
         """
 
         if self.poles is None:
@@ -519,19 +559,23 @@ class VectorFitting:
 
     def plot_s_db(self, i, j, freqs=None):
         """
-        Plots the magnitude in dB of the response **S_i,j** in the fit.
+        Plots the magnitude in dB of the response **S_(i+1,j+1)** in the fit.
 
-        :param i:
+        Parameters
+        ----------
+        i : int
             Row index of the response.
 
-        :param j:
+        j : int
             Column index of the response.
 
-        :param freqs:
-            List of frequencies for the response plot. If None, the sample frequencies of the fitted network are used.
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+             :attribute:`self.network` are used.
 
-        :return:
-            None
+        Returns
+        -------
+        None
         """
 
         if freqs is None:
@@ -549,16 +593,19 @@ class VectorFitting:
 
     def plot_pz(self, i, j):
         """
-        Plots a pole-zero diagram of the fit of the response **S_i,j**.
+        Plots a pole-zero diagram of the fit of the response **S_(i+1,j+1)**.
 
-        :param i:
+        Parameters
+        ----------
+        i : int
             Row index of the response.
 
-        :param j:
+        j : int
             Column index of the response.
 
-        :return:
-            None
+        Returns
+        -------
+        None
         """
 
         i_response = i * self.network.nports + j
@@ -581,9 +628,11 @@ class VectorFitting:
         vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
         maximum singular value of the coefficient matrix **A** are plotted, which serve as a convergence indicator.
 
-        :return:
-            None
+        Returns
+        -------
+        None
         """
+
         mplt.figure()
         mplt.semilogy(np.arange(np.alen(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
         mplt.xlabel('Iteration step')
@@ -596,19 +645,25 @@ class VectorFitting:
 
     def write_spice_subcircuit_s(self, file):
         """
-        Creates an equivalent N-port SPICE subcircuit based on its vector fitted S parameter responses. In the SPICE
-        subcircuit, all ports will share a common reference node (global SPICE ground on node 0). The equivalent circuit
-        uses linear dependent current sources on all ports, which are controlled by the currents through equivalent
-        admittances modelling the parameters from a vector fit. This approach is based on [5].
+        Creates an equivalent N-port SPICE subcircuit based on its vector fitted S parameter responses.
+
+        Parameters
+        ----------
+        file : str
+            Path and filename including file extension (usually .sp) for the SPICE subcircuit file.
+
+        Returns
+        -------
+        None
+
+        Notes
+        -----
+        In the SPICE subcircuit, all ports will share a common reference node (global SPICE ground on node 0). The
+        equivalent circuit uses linear dependent current sources on all ports, which are controlled by the currents
+        through equivalent admittances modelling the parameters from a vector fit. This approach is based on [5].
 
         [5] G. Antonini, "SPICE Equivalent Circuits of Frequency-Domain Responses", IEEE Transactions on Electromagnetic
             Compatibility, vol. 45, no. 3, pp. 502-512, August 2003
-
-        :param file:
-            String of the path and filename including file extension (usually .sp) for the SPICE file.
-
-        :return:
-            None
         """
 
         # list of subcircuits for the equivalent admittances
