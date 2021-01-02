@@ -593,7 +593,41 @@ class VectorFitting:
         mplt.xlabel('Frequency (Hz)')
         mplt.ylabel('Magnitude (dB)')
         mplt.legend(loc='best')
-        mplt.title('i={}, j={}'.format(i, j))
+        mplt.title('Response i={}, j={}'.format(i, j))
+        mplt.tight_layout()
+        mplt.show()
+
+    def plot_s_mag(self, i, j, freqs=None):
+        """
+        Plots the magnitude in linear scale of the response **S_(i+1,j+1)** in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+             :attribute:`self.network` are used.
+
+        Returns
+        -------
+        None
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        mplt.figure()
+        mplt.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
+        mplt.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        mplt.xlabel('Frequency (Hz)')
+        mplt.ylabel('Magnitude')
+        mplt.legend(loc='best')
+        mplt.title('Response i={}, j={}'.format(i, j))
         mplt.tight_layout()
         mplt.show()
 
