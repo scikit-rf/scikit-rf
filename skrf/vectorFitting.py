@@ -706,14 +706,14 @@ class VectorFitting:
                 f.write('*\n')
                 f.write('* port {}\n'.format(n + 1))
                 # add port reference impedance z0 (has to be resistive, no imaginary part)
-                f.write('R{} a{} 0 {}\n'.format(n + 1, n + 1, self.network.z0[0, n]))
+                f.write('R{} a{} 0 {}\n'.format(n + 1, n + 1, np.real(self.network.z0[0, n])))
 
                 # add dummy voltage sources (V=0) to measure the input current
                 f.write('V{} p{} a{} 0\n'.format(n + 1, n + 1, n + 1))
 
                 # CCVS and VCVS driving the transfer admittances with a = V/2/sqrt(Z0) + I/2*sqrt(Z0)
                 # In
-                f.write('H{} nt{} nts{} V{} {}\n'.format(n + 1, n + 1, n + 1, n + 1, self.network.z0[0, n]))
+                f.write('H{} nt{} nts{} V{} {}\n'.format(n + 1, n + 1, n + 1, n + 1, np.real(self.network.z0[0, n])))
                 # Vn
                 f.write('E{} nts{} 0 p{} 0 {}\n'.format(n + 1, n + 1, n + 1, 1))
 
@@ -727,8 +727,10 @@ class VectorFitting:
                     # add CCCS to generate the scattered current I_nj at port n
                     # control current is measured by the dummy voltage source at the transfer network Y_nj
                     # the scattered current is injected into the port (source positive connected to ground)
-                    f.write('F{}{} 0 a{} V{}{} {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1, 1 / self.network.z0[0, n]))
-                    f.write('F{}{}_inv a{} 0 V{}{}_inv {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1, 1 / self.network.z0[0, n]))
+                    f.write('F{}{} 0 a{} V{}{} {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
+                                                            1 / np.real(self.network.z0[0, n])))
+                    f.write('F{}{}_inv a{} 0 V{}{}_inv {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
+                                                                    1 / np.real(self.network.z0[0, n])))
 
                     # add dummy voltage source (V=0) in series with Y_nj to measure current through transfer admittance
                     f.write('V{}{} nt{} nt{}{} 0\n'.format(n + 1, j + 1, j + 1, n + 1, j + 1))
