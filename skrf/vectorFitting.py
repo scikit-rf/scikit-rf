@@ -95,7 +95,7 @@ class VectorFitting:
         # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
         norm = np.average(self.network.f)
-        freqs_norm = 2 * np.pi * self.network.f / norm
+        freqs_norm = self.network.f / norm
 
         fmin = np.amin(freqs_norm)
         fmax = np.amax(freqs_norm)
@@ -111,21 +111,22 @@ class VectorFitting:
         k_real = 0
         k_cmplx = 0
         for i, f in enumerate(pole_freqs):
+            omega = 2 * np.pi * f
             if i % 2 == 0 and k_real < n_poles_real:
                 # add a real pole
-                poles.append((-1 / 100 + 0j) * f)
+                poles.append((-1 / 100 + 0j) * omega)
                 k_real += 1
             elif i % 2 == 1 and k_cmplx < n_poles_cmplx:
                 # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * f)
+                poles.append((-1 / 100 + 1j) * omega)
                 k_cmplx += 1
             elif k_real < n_poles_real:
                 # add a real pole
-                poles.append((-1 / 100 + 0j) * f)
+                poles.append((-1 / 100 + 0j) * omega)
                 k_real += 1
             elif k_cmplx < n_poles_cmplx:
                 # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * f)
+                poles.append((-1 / 100 + 1j) * omega)
                 k_cmplx += 1
             else:
                 # this should never occur
@@ -178,7 +179,7 @@ class VectorFitting:
                 n_unused = 0
 
                 for k, f_sample in enumerate(freqs_norm):
-                    s_k = 1j * f_sample
+                    s_k = 2j * np.pi * f_sample
                     A_k = []
                     n_unused = 0
 
@@ -243,7 +244,7 @@ class VectorFitting:
                 weight_extra = np.linalg.norm(weight_regular * freq_response) / len(freq_response)
                 A_k = np.zeros(np.shape(A_matrix)[1])
                 for k, f_sample in enumerate(freqs_norm):
-                    s_k = 1j * f_sample
+                    s_k = 2j * np.pi * f_sample
                     i = 0
 
                     # part 3: second sum of rational functions (variable c_res)
@@ -374,7 +375,7 @@ class VectorFitting:
             b_vector = []
 
             for k, f_sample in enumerate(freqs_norm):
-                s_k = 1j * f_sample
+                s_k = 2j * np.pi * f_sample
                 A_k = []
                 # add coefficients for a pair of complex conjugate poles
                 # part 1: first sum of rational functions (residue variable c)
