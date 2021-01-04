@@ -67,10 +67,10 @@ class VectorFitting:
             logarithmic (log).
 
         parameter_type : str, optional
-            Representation type of the frequency responses to be fitted. Either **scattering (S)**, **impedance (Z)**
-            or **admittance (Y)**. As scikit-rf can currently only read S parameters from a Touchstone file, the fit
-            should also be performed on the original S parameters. Otherwise, scikit-rf will convert the responses from
-            S to Z or Y, which might work for the fit but can cause other issues.
+            Representation type of the frequency responses to be fitted. Either **scattering** (`s` or `S`),
+            **impedance** (`z` or `Z`) or **admittance** (`y` or `Y`). As scikit-rf can currently only read S parameters
+            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
+            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
 
         fit_constant : bool, optional
             Include a constant term **d** in the fit.
@@ -145,14 +145,14 @@ class VectorFitting:
         freq_responses = []
         for i in range(self.network.nports):
             for j in range(self.network.nports):
-                if parameter_type == 'S':
+                if parameter_type.lower() == 's':
                     freq_responses.append(self.network.s[:, i, j])
-                elif parameter_type == 'Z':
+                elif parameter_type.lower() == 'z':
                     freq_responses.append(self.network.z[:, i, j])
-                elif parameter_type == 'Y':
+                elif parameter_type.lower() == 'y':
                     freq_responses.append(self.network.y[:, i, j])
                 else:
-                    logging.warning('Invalid choice of matrix parameter type (S, Z, or Y); using S representation.')
+                    logging.warning('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with S representation.')
                     freq_responses.append(self.network.s[:, i, j])
         freq_responses = np.array(freq_responses)
 
