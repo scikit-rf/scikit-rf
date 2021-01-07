@@ -1,3 +1,13 @@
+"""
+=========================================
+VectorFitting (:mod:`skrf.vectorFitting`)
+=========================================
+
+.. autoclass:: VectorFitting
+    :members:
+
+"""
+
 import numpy as np
 import os
 import matplotlib.pyplot as mplt
@@ -7,22 +17,32 @@ import logging
 
 class VectorFitting:
     """
-    This is a Python implementation of the Vector Fitting algorithm [1].
+    =========================================================
+    VectorFitting (:class:`skrf.vectorFitting.VectorFitting`)
+    =========================================================
+
+    This class provides a Python implementation of the Vector Fitting algorithm and various functions for the fit
+    analysis and export of SPICE equivalent circuits.
 
     Notes
     -----
-    The code is based on two improvements for relaxed pole relocation [2] and efficient (fast) solving [3]. See also the
-    Vector Fitting website [4] for further information and download of the papers listed below. A Matlab implementation
-    is also available there for reference.
+    The fitting code is based on the original algorithm [1]_ and on two improvements for relaxed pole relocation [2]_
+    and efficient (fast) solving [3]_. See also the Vector Fitting website [4]_ for further information and download of
+    the papers listed below. A Matlab implementation is also available there for reference.
 
-    [1] B. Gustavsen, A. Semlyen, "Rational Approximation of Frequency Domain Responses by Vector Fitting", IEEE
-        Transactions on Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999
-    [2] B. Gustavsen, "Improving the Pole Relocating Properties of Vector Fitting", IEEE Transactions on Power Delivery,
-        vol. 21, no. 3, pp. 1587-1592, July 2006
-    [3] D. Deschrijver, M. Mrozowski, T. Dhaene, D. De Zutter, "Marcomodeling of Multiport Systems Using a Fast
+    References
+    ----------
+    .. [1] B. Gustavsen, A. Semlyen, "Rational Approximation of Frequency Domain Responses by Vector Fitting", IEEE
+        Transactions on Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999, DOI: https://doi.org/10.1109/61.772353
+
+    .. [2] B. Gustavsen, "Improving the Pole Relocating Properties of Vector Fitting", IEEE Transactions on Power
+        Delivery, vol. 21, no. 3, pp. 1587-1592, July 2006, DOI: https://doi.org/10.1109/TPWRD.2005.860281
+
+    .. [3] D. Deschrijver, M. Mrozowski, T. Dhaene, D. De Zutter, "Marcomodeling of Multiport Systems Using a Fast
         Implementation of the Vector Fitting Method", IEEE Microwave and Wireless Components Letters, vol. 18, no. 6,
-        pp. 383-385, June 2008
-    [4] https://www.sintef.no/projectweb/vectorfitting/
+        pp. 383-385, June 2008, DOI: https://doi.org/10.1109/LMWC.2008.922585
+
+    .. [4] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
     def __init__(self, network):
@@ -51,8 +71,7 @@ class VectorFitting:
                    fit_constant=True, fit_proportional=True):
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
-        :attribute:`self.poles`, :attribute:`self.zeros`, :attribute:`self.proportional_coeff` and
-        :attribute:`self.constant_coeff`.
+        :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
 
         Parameters
         ----------
@@ -67,10 +86,11 @@ class VectorFitting:
             logarithmic (log).
 
         parameter_type : str, optional
-            Representation type of the frequency responses to be fitted. Either **scattering** (`s` or `S`),
-            **impedance** (`z` or `Z`) or **admittance** (`y` or `Y`). As scikit-rf can currently only read S parameters
-            from a Touchstone file, the fit should also be performed on the original S parameters. Otherwise, scikit-rf
-            will convert the responses from S to Z or Y, which might work for the fit but can cause other issues.
+            Representation type of the frequency responses to be fitted. Either *scattering* (:attr:`s` or :attr:`S`),
+            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). As scikit-rf can currently
+            only read S parameters from a Touchstone file, the fit should also be performed on the original S
+            parameters. Otherwise, scikit-rf will convert the responses from S to Z or Y, which might work for the fit
+            but can cause other issues.
 
         fit_constant : bool, optional
             Include a constant term **d** in the fit.
@@ -434,14 +454,14 @@ class VectorFitting:
 
     def write_npz(self, path):
         """
-        Writes the model parameters in :attribute:`self.poles`, :attribute:`self.zeros`,
-        :attribute:`self.proportional_coeff` and :attribute:`self.constant_coeff` to a labeled NumPy .npz file.
+        Writes the model parameters in :attr:`poles`, :attr:`zeros`,
+        :attr:`proportional_coeff` and :attr:`constant_coeff` to a labeled NumPy .npz file.
 
         Parameters
         ----------
         path : str
             Target path without filename for the export. The filename will be added automatically based on the network
-            name in :attribute:`self.network`
+            name in :attr:`network`
 
         Returns
         -------
@@ -474,8 +494,8 @@ class VectorFitting:
 
     def read_npz(self, file):
         """
-        Reads all model parameters :attribute:`self.poles`, :attribute:`self.zeros`,
-        :attribute:`self.proportional_coeff` and :attribute:`self.constant_coeff` from a labeled NumPy .npz file.
+        Reads all model parameters :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`
+        from a labeled NumPy .npz file.
 
         Parameters
         ----------
@@ -490,7 +510,7 @@ class VectorFitting:
         -----
         The .npz file needs to include the model parameters as individual `ndarray`s labeled *poles*, *zeros*,
         *proportionals* and *constants*. The shapes of those `ndarray`s need to match the network properties in
-        :attribute:`self.network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
+        :attr:`network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
 
         See Also
         --------
@@ -527,7 +547,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-             :attribute:`self.network` are used.
+            :attr:`network` are used.
 
         Returns
         -------
@@ -578,7 +598,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-             :attribute:`self.network` are used.
+            :attr:`network` are used.
 
         Returns
         -------
@@ -612,7 +632,7 @@ class VectorFitting:
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
-             :attribute:`self.network` are used.
+            :attr:`network` are used.
 
         Returns
         -------
@@ -701,10 +721,13 @@ class VectorFitting:
         -----
         In the SPICE subcircuit, all ports will share a common reference node (global SPICE ground on node 0). The
         equivalent circuit uses linear dependent current sources on all ports, which are controlled by the currents
-        through equivalent admittances modelling the parameters from a vector fit. This approach is based on [5].
+        through equivalent admittances modelling the parameters from a vector fit. This approach is based on [5]_.
 
-        [5] G. Antonini, "SPICE Equivalent Circuits of Frequency-Domain Responses", IEEE Transactions on Electromagnetic
-            Compatibility, vol. 45, no. 3, pp. 502-512, August 2003
+        References
+        ----------
+        .. [5] G. Antonini, "SPICE Equivalent Circuits of Frequency-Domain Responses", IEEE Transactions on
+            Electromagnetic Compatibility, vol. 45, no. 3, pp. 502-512, August 2003,
+            DOI: https://doi.org/10.1109/TEMC.2003.815528
         """
 
         # list of subcircuits for the equivalent admittances

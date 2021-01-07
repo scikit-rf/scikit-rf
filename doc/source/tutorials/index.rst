@@ -20,6 +20,4 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     VirtualInstruments 
     Calibration
     Media       
-
-
-
+    VectorFitting
