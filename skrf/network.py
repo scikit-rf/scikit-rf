@@ -27,6 +27,8 @@ Building Network
     :toctree: generated/
 
     Network.from_z
+    Network.from_y
+    Network.from_a
 
 Network Representations
 ============================
@@ -153,6 +155,7 @@ import warnings
 
 import six.moves.cPickle as pickle
 from six.moves.cPickle import UnpicklingError
+from six import string_types
 
 import sys
 import re
@@ -172,7 +175,7 @@ import unittest  # fotr unitest.skip
 from . import mathFunctions as mf
 from .frequency import Frequency
 from .tlineFunctions import zl_2_Gamma0
-from .util import get_fid, get_extn, find_nearest_index, slice_domain
+from .util import get_fid, get_extn, find_nearest_index, slice_domain, network_array
 from .time import time_gate
 # later imports. delayed to solve circular dependencies
 # from .io.general import read, write
@@ -397,8 +400,9 @@ class Network(object):
         self.port_names = None
 
         self.deembed = None
-        self.noise = None
+        self.noise = None # This is the ABCD form of the covariance matrix
         self.noise_freq = None
+        self.T0 = T0 # Temperature at measurement
 
         if s_def not in S_DEFINITIONS:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -473,6 +477,68 @@ class Network(object):
         s = npy.zeros(shape=z.shape)
         me = cls(s=s, *args, **kw)
         me.z = z
+        return me
+
+    @classmethod
+    def from_y(cls, y, *args, **kw):
+        '''
+        Create a Network from its Y-parameters
+        
+        Parameters:
+        ------------
+        y : Numpy array
+            Admittance matrix. Should be of shape fxnxn, 
+            where f is frequency axis and n is number of ports
+        \*\*kwargs :
+            key word arguments can be used to assign properties of the
+            Network, `f` and `z0`.
+        
+        Return
+        --------
+        ntw : :class:`Network`
+            Created Network
+            
+        Example
+        --------
+        >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
+        >>> y = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port y-matrix: shape=(4,2,2)
+        >>> ntw = rf.Network.from_y(y, f=f)
+            
+        '''
+        s = npy.zeros(shape=y.shape)
+        me = cls(s=s, *args, **kw)
+        me.y = y
+        return me
+
+    @classmethod
+    def from_a(cls, a, *args, **kw):
+        '''
+        Create a Network from its ABCD-parameters
+        
+        Parameters:
+        ------------
+        a : Numpy array
+            ABCD matrix. Should be of shape fxnxn, 
+            where f is frequency axis and n is number of ports
+        \*\*kwargs :
+            key word arguments can be used to assign properties of the
+            Network, `f` and `z0`.
+        
+        Return
+        --------
+        ntw : :class:`Network`
+            Created Network
+            
+        Example
+        --------
+        >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
+        >>> y = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port y-matrix: shape=(4,2,2)
+        >>> ntw = rf.Network.from_a(a, f=f)
+            
+        '''
+        s = npy.zeros(shape=a.shape)
+        me = cls(s=s, *args, **kw)
+        me.a = a
         return me
 
     # OPERATORS
@@ -1016,6 +1082,10 @@ class Network(object):
         """
         return s2t(self.s)
 
+    @t.setter
+    def t(self, value):
+        self._s = t2s(value)
+
     @property
     def s_invert(self):
         """
@@ -1254,9 +1324,9 @@ class Network(object):
       whether this network has noise
       """
       try:
-        return self.noise is not None and self.noise_freq is not None
+          return self.noise is not None and self.noise_freq is not None
       except:
-        return False
+          return False
 
     @property
     def n(self):
@@ -1284,7 +1354,7 @@ class Network(object):
       the frequency vector for the noise of the network, in Hz.
       """
       if not self.noisy:
-        raise ValueError('network does not have noise')
+          raise ValueError('network does not have noise')
       return self.noise_freq
 
     @property
@@ -1300,7 +1370,7 @@ class Network(object):
     def z_opt(self):
       """
       the optimum source impedance to minimize noise
-      """
+      """ 
       return 1./self.y_opt
 
     @property
@@ -1316,7 +1386,7 @@ class Network(object):
       the minimum noise figure for the network
       """
       noise = self.n
-      return npy.real(1. + (noise[:,0,1] + noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*T0))
+      return npy.real(1. + (noise[:,0,1] + noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*self.T0))
 
     @property
     def nfmin_db(self):
@@ -1329,7 +1399,7 @@ class Network(object):
       """
       the noise figure for the network if the source impedance is z
       """
-      z0 = self.z0
+      z0 = self.z0  
       y_opt = self.y_opt
       fmin = self.nfmin
       rn = self.rn
@@ -1337,6 +1407,12 @@ class Network(object):
       ys = 1./z
       gs = npy.real(ys)
       return fmin + rn/gs * npy.square(npy.absolute(ys - y_opt))
+
+    def nf_db(self, z):
+        """
+        the noise figure for the network if the source impedance is z in dB
+        """
+        return mf.complex_2_db10(self.nf(z))
  
     def nfdb_gs(self, gs):
       """
@@ -1372,7 +1448,7 @@ class Network(object):
       """
       the equivalent noise resistance for the network
       """
-      return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*T0))
+      return npy.real(self.n[:,0,0]/(4.*K_BOLTZMANN*self.T0))
 
     # SECONDARY PROPERTIES
     @property
@@ -1723,16 +1799,16 @@ class Network(object):
           nf_min = npy.power(10., nfmin_db/10.)
           # TODO maybe interpolate z0 as above
           y_opt = 1./(self.z0[0, 0] * (1. + gamma_opt)/(1. - gamma_opt))
-          noise = 4.*K_BOLTZMANN*T0*npy.array(
-                [[rn, (nf_min-1.)/2. - rn*npy.conj(y_opt)],
-                [(nf_min-1.)/2. - rn*y_opt, npy.square(npy.absolute(y_opt)) * rn]]
+          noise = 4.*K_BOLTZMANN*self.T0*npy.array(
+                [[rn,                         (nf_min-1.)/2. - rn*npy.conj(y_opt)],
+                [(nf_min-1.)/2. - rn*y_opt,   npy.square(npy.absolute(y_opt)) * rn]]
               )
           self.noise = noise.swapaxes(0, 2).swapaxes(1, 2)
           self.noise_freq = noise_freq
         
-        
-        
-        
+
+
+
     # touchstone file IO
     def read_touchstone(self, filename):
         """
@@ -2179,7 +2255,7 @@ class Network(object):
     def interpolate(self, freq_or_n, basis='s', coords='cart',
                     f_kwargs={}, return_array=False, **kwargs):
         """
-        Interpolate a Network allong frequency axis
+        Interpolate a Network along frequency axis
 
         The input 'freq_or_n` can be either a new
         :class:`~skrf.frequency.Frequency` or an `int`, or a new
@@ -3341,8 +3417,8 @@ class Network(object):
             y_active : active Y-parameters  
         '''        
         return s2vswr_active(self.s, a)
-    
-#%%
+
+#%%   
 
 ## Functions operating on Network[s]
 def connect(ntwkA, k, ntwkB, l, num=1):
@@ -4530,7 +4606,7 @@ def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
     if s_def == 'power':    
         # Power-waves. Eq.(19) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
-        F, G = npy.zeros_like(s), npy.zeros_like(s)
+        F, G = npy.zeros_like(s, dtype=npy.complex), npy.zeros_like(s, dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # z = npy.linalg.inv(F) @ npy.linalg.inv(Id - s) @ (s @ G + npy.conjugate(G)) @ F  # Python > 3.5
@@ -4631,7 +4707,7 @@ def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
     if s_def == 'power':
         # Power-waves. Inverse of Eq.(19) from [3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
-        F, G = npy.zeros_like(s), npy.zeros_like(s)
+        F, G = npy.zeros_like(s, dtype=npy.complex), npy.zeros_like(s, dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # y = npy.linalg.inv(F) @ npy.linalg.inv((s @ G + npy.conjugate(G))) @ (Id - s) @ F  # Python > 3.5
@@ -4959,8 +5035,27 @@ def a2s(a, z0=50):
     return s
 
     #return z2s(a2z(a), z0)
-    
 
+def a2t(a, z0=50):
+    '''
+    Converts abcd parameters to scattering-transfer parameters paramters [#]_ .
+
+    Parameters
+    -----------
+    a : :class:`numpy.ndarray` (shape fx2x2)
+        abcd parameter matrix
+
+    Returns
+    -------
+    t : numpy.ndarray
+        scattering-transfer parameters
+
+    References
+    -----------
+    .. [#] https://en.wikipedia.org/wiki/Two-port_network
+    '''
+    s = a2s(a, z0)
+    return s2t(s)
 
 def a2z(a):
     '''
@@ -5175,7 +5270,7 @@ def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
         
     if s_def == 'power':
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs 
-        F, G = npy.zeros_like(y), npy.zeros_like(y)
+        F, G = npy.zeros_like(y, dtype=npy.complex), npy.zeros_like(y, dtype=npy.complex)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
         npy.einsum('ijj->ij', G)[...] = z0
         # s = F @ (Id - npy.conjugate(G) @ y) @ npy.linalg.inv(Id + G @ y) @ npy.linalg.inv(F)  # Python > 3.5
@@ -5251,6 +5346,12 @@ def y2z(y):
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
     return npy.array([npy.mat(y[f, :, :]) ** -1 for f in xrange(y.shape[0])])
+
+def y2a(y, z0=50, s_def=S_DEF_DEFAULT):
+    ''' TODO: Calculate directly without going through s and add a2s
+    '''
+    s = y2s(y, z0, s_def)
+    return s2a(s, z0)
 
 
 def y2t(y):
@@ -5366,10 +5467,8 @@ def t2s(t):
     return s
 
 
-def t2z(t):
+def t2z(t, z0=50, s_def=S_DEF_DEFAULT):
     '''
-    Not Implemented  Yet
-
     Convert scattering transfer parameters [#]_ to impedance parameters [#]_
 
 
@@ -5408,17 +5507,15 @@ def t2z(t):
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     '''
-    raise (NotImplementedError)
+
+    s = t2s(t)
+    return s2z(s, z0, s_def)
 
 
-def t2y(t):
+def t2y(t, z0=50, s_def=S_DEF_DEFAULT):
     '''
-    Not Implemented Yet
 
     Convert scattering transfer parameters to admittance parameters [#]_
-
-
-
 
     Parameters
     ------------
@@ -5454,7 +5551,51 @@ def t2y(t):
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
 
     '''
-    raise (NotImplementedError)
+    s = t2s(t)
+    return s2y(s, z0, s_def)
+
+def t2a(t, z0=50):
+    '''
+
+    Convert scattering transfer parameters to abcd parameters [#]_
+
+    Parameters
+    ------------
+    t : complex array-like or number
+        t-parameters
+
+    Returns
+    ---------
+    a : complex array-like or number
+        abcd parameters
+
+    See Also
+    ----------
+    s2z
+    s2y
+    s2t
+    z2s
+    z2y
+    z2t
+    y2s
+    y2z
+    y2z
+    t2s
+    t2z
+    t2y
+    Network.s
+    Network.y
+    Network.z
+    Network.t
+
+    References
+    ----------
+    .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
+
+    '''
+
+    s = t2s(t)
+    return s2a(s, z0)
 
 
 def h2z(h):
@@ -5597,7 +5738,6 @@ def z2h(z):
          1. / z[:, 1, 1]],
     ]).transpose()
     return h
-
 
 ## these methods are used in the secondary properties
 def passivity(s):
@@ -6212,4 +6352,4 @@ def s2vswr_active(s, a):
 
 
 
-  
+

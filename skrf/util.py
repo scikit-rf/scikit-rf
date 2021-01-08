@@ -46,6 +46,19 @@ try:
 except NameError:
     basestring = (str, bytes)
 
+def network_array(v):
+    '''
+    Convenience function for creating properly formed network matrix vectors
+
+     Examples
+    -----------
+    >>> rseries = npy.ones(len(frequency))
+    >>> r_series_y = skrf.network_array([[1/rseries,  -1/rseries], [-1/rseries,  1/rseries]])
+    >>> n_rseries = skrf.Network.from_y(r_series_y)
+
+    '''
+    v = npy.array(v)
+    return v.swapaxes(0, 2).swapaxes(1, 2)
 
 def now_string():
     '''
