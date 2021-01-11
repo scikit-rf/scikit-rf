@@ -26,6 +26,7 @@ from . import constants
 from . import util
 from . import io
 from . import instances
+from . import vectorFitting
 
 
 # Import contents into current namespace for ease of calling
@@ -41,7 +42,8 @@ from .tlineFunctions import *
 from .io import * 
 from .constants import * 
 from .taper import * 
-from .instances import * 
+from .instances import *
+from .vectorFitting import *
 
 # Try to import vi, but if except if pyvisa not installed
 try:

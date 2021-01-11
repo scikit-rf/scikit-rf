@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="78.581253mm"
+   height="71.4375mm"
+   version="1.2"
+   id="svg54"
+   sodipodi:docname="ngspice_ringslot_sp_smith.svg"
+   inkscape:version="1.0.1 (1.0.1+r74)">
+  <metadata
+     id="metadata58">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Qt Svg Document</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1031"
+     id="namedview56"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="1.5575991"
+     inkscape:cx="224.69784"
+     inkscape:cy="241.01946"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg54" />
+  <title
+     id="title2">Qt Svg Document</title>
+  <desc
+     id="desc4">Generated with Qt</desc>
+  <defs
+     id="defs6" />
+  <g
+     fill="none"
+     stroke="#000000"
+     stroke-width="1"
+     fill-rule="evenodd"
+     stroke-linecap="square"
+     stroke-linejoin="bevel"
+     id="g52">
+    <g
+       fill="#ffffff"
+       fill-opacity="1"
+       stroke="none"
+       font-family="Helvetica"
+       font-size="12px"
+       font-weight="400"
+       font-style="normal"
+       id="g10">
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="M 0,0 H 297 V 270 H 0 V 0"
+         id="path8" />
+    </g>
+    <g
+       fill="none"
+       stroke="#c0c0c0"
+       stroke-opacity="1"
+       stroke-width="1"
+       stroke-linecap="square"
+       stroke-linejoin="bevel"
+       font-family="Helvetica"
+       font-size="12px"
+       font-weight="400"
+       font-style="normal"
+       id="g32">
+      <polyline
+         fill="none"
+         vector-effect="non-scaling-stroke"
+         points="44,115 244,115 "
+         id="polyline12" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="M 214.187,44.1231 C 206.658,51.6356 202,62.0238 202,73.5 c 0,22.9198 18.58,41.5 41.5,41.5"
+         id="path14" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 243.5,115 c -22.92,0 -41.5,18.58 -41.5,41.5 0,11.476 4.658,21.864 12.187,29.377"
+         id="path16" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 144,14.8909 c 0,0.0364 0,0.0727 0,0.1091 0,55.2285 44.772,100 100,100"
+         id="path18" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 244,115 c -55.228,0 -100,44.772 -100,100 0,0.037 0,0.073 0,0.11"
+         id="path20" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="M 72.7337,44.2663 C 116.437,87.9692 176.812,115 243.5,115"
+         id="path22" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 243.5,115 c -66.688,0 -127.063,27.031 -170.7663,70.734"
+         id="path24" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 244,115 c 0,-41.4214 -33.579,-75 -75,-75 -41.421,0 -75,33.5786 -75,75 0,41.421 33.579,75 75,75 41.421,0 75,-33.579 75,-75"
+         id="path26" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 244,115 c 0,-27.6142 -22.386,-50 -50,-50 -27.614,0 -50,22.3858 -50,50 0,27.614 22.386,50 50,50 27.614,0 50,-22.386 50,-50"
+         id="path28" />
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 244,115 c 0,-13.807 -11.193,-25 -25,-25 -13.807,0 -25,11.193 -25,25 0,13.807 11.193,25 25,25 13.807,0 25,-11.193 25,-25"
+         id="path30" />
+    </g>
+    <g
+       fill="none"
+       stroke="#000000"
+       stroke-opacity="1"
+       stroke-width="1"
+       stroke-linecap="square"
+       stroke-linejoin="bevel"
+       font-family="Helvetica"
+       font-size="12px"
+       font-weight="400"
+       font-style="normal"
+       id="g36">
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="M 244,115 C 244,59.7715 199.228,15 144,15 88.7715,15 44,59.7715 44,115 c 0,55.228 44.7715,100 100,100 55.228,0 100,-44.772 100,-100"
+         id="path34" />
+    </g>
+    <g
+       fill="none"
+       stroke="#0000ff"
+       stroke-opacity="1"
+       stroke-width="1"
+       stroke-linecap="square"
+       stroke-linejoin="bevel"
+       font-family="Helvetica"
+       font-size="12px"
+       font-weight="400"
+       font-style="normal"
+       id="g40">
+      <path
+         vector-effect="non-scaling-stroke"
+         fill-rule="evenodd"
+         d="m 44.8476,114.695 0.0029,-0.304 0.0049,-0.306 0.0069,-0.305 0.0089,-0.307 0.0109,-0.308 0.0129,-0.31 0.0151,-0.311 0.0173,-0.313 0.0194,-0.315 0.0218,-0.317 0.0241,-0.32 0.0265,-0.324 0.0291,-0.326 0.0317,-0.329 0.0344,-0.334 0.0373,-0.337 0.0403,-0.342 0.0435,-0.347 0.0468,-0.351 0.0502,-0.357 0.054,-0.363 0.0578,-0.369 0.0619,-0.375 0.0664,-0.382 0.0709,-0.389 0.0759,-0.398 0.0812,-0.405 0.0869,-0.414 0.0928,-0.423 0.0993,-0.433 0.1062,-0.443 0.1136,-0.454 0.1216,-0.466 0.1301,-0.477 0.1395,-0.491 0.1494,-0.504 0.1603,-0.518 0.172,-0.534 0.1848,-0.5489 0.1985,-0.5662 0.2136,-0.584 0.23,-0.6027 0.2478,-0.6225 0.2674,-0.6433 0.2887,-0.6653 0.3122,-0.6884 0.3379,-0.7128 0.3663,-0.7384 0.3974,-0.7652 0.4319,-0.7935 0.4699,-0.8229 0.512,-0.8537 0.5587,-0.8857 0.6107,-0.9189 0.6683,-0.9532 0.7326,-0.9883 0.8045,-1.0239 0.8846,-1.0598 0.9744,-1.0953 1.0748,-1.1299 1.1875,-1.1624 1.3139,-1.1917 1.4554,-1.2162 1.6143,-1.2339 1.792,-1.2418 1.9905,-1.2367 2.2118,-1.2141 2.4567,-1.1685 2.7265,-1.093 3.0205,-0.9794 3.3366,-0.8176 3.6705,-0.5962 4.0137,-0.3024 4.3536,0.0769 4.671,0.5543 4.9402,1.1384 5.128,1.8318 5.196,2.6265 5.102,3.4998 4.808,4.4107 4.291,5.301 3.544,6.0988 2.596,6.7295 1.499,7.127 0.332,7.254 -0.814,7.103 -1.859,6.7 -2.74,6.102 -3.422,5.374 -3.897,4.585 -4.18,3.793 -4.299,3.042 -4.287,2.359 -4.178,1.758 -4.002,1.246 -3.7837,0.815 -3.544,0.462 -3.2957,0.176 -3.0491,-0.052 -2.8108,-0.232 -2.585,-0.371 -2.3739,-0.477 -2.1784,-0.557 -1.9987,-0.615 -1.8343,-0.655 -1.6845,-0.683 -1.5482,-0.699 -1.4245,-0.706 -1.3122,-0.708 -1.2104,-0.704 -1.118,-0.697 -1.034,-0.685 -0.9579,-0.673 -0.8885,-0.658 -0.8255,-0.643 -0.768,-0.626 -0.7155,-0.609 -0.6676,-0.593 -0.6237,-0.575 -0.5835,-0.559 -0.5467,-0.542 -0.5127,-0.526 -0.4817,-0.51 -0.4529,-0.494 -0.4264,-0.479 -0.4019,-0.465 -0.3793,-0.45 -0.3583,-0.437 -0.3389,-0.424 -0.3208,-0.411 -0.304,-0.399 -0.2883,-0.387 -0.2738,-0.376 -0.2602,-0.364 -0.2475,-0.355 -0.2356,-0.344 -0.2245,-0.334 -0.2141,-0.325 -0.2043,-0.316 -0.1951,-0.308 -0.1865,-0.299 -0.1784,-0.291 -0.1707,-0.283 -0.1635,-0.276 -0.1568,-0.269 -0.1503,-0.261 -0.1443,-0.255 -0.1385,-0.249 -0.1331,-0.243 -0.128,-0.236 -0.1231,-0.231 -0.1184,-0.226 -0.1141,-0.22 -0.1099,-0.214 -0.106,-0.21 -0.1022,-0.205 -0.0986,-0.201 -0.0952,-0.195 -0.092,-0.192 -0.0888,-0.187 -0.0859,-0.183 -0.0831,-0.18 -0.0803,-0.175 -0.0778,-0.172 -0.0753,-0.168 -0.073,-0.165 -0.0707,-0.161 -0.0685,-0.158 -0.0665,-0.155 -0.0644,-0.152 -0.0626,-0.149 -0.0607,-0.146 -0.059,-0.143 -0.0573,-0.14 -0.0557,-0.138 -0.0541,-0.135 -0.0526,-0.133 -0.0512,-0.13 -0.0498,-0.128 -0.0484,-0.126 -0.0472,-0.123 -0.0459,-0.122 -0.0447,-0.119 -0.0436,-0.117 -0.0424,-0.115 -0.0414,-0.113 -0.0404,-0.111 -0.0393,-0.109 -0.0384,-0.108 -0.0375,-0.106 -0.0365,-0.104 -0.0357,-0.102 -0.0348,-0.101 -0.034,-0.099 -0.0333,-0.097 -0.0324,-0.096 -0.0317,-0.095 -0.031,-0.093 -0.0303,-0.091"
+         id="path38" />
+    </g>
+    <g
+       fill="none"
+       stroke="#0000ff"
+       stroke-opacity="1"
+       stroke-width="1"
+       stroke-linecap="square"
+       stroke-linejoin="bevel"
+       transform="translate(109,236)"
+       font-family="Helvetica"
+       font-size="12px"
+       font-weight="400"
+       font-style="normal"
+       id="g44">
+      <text
+         fill="#0000ff"
+         fill-opacity="1"
+         stroke="none"
+         xml:space="preserve"
+         x="0"
+         y="0"
+         font-family="Helvetica"
+         font-size="12px"
+         font-weight="400"
+         font-style="normal"
+         id="text42">frequency</text>
+    </g>
+    <g
+       fill="none"
+       stroke="#0000ff"
+       stroke-opacity="1"
+       stroke-width="1"
+       stroke-linecap="square"
+       stroke-linejoin="bevel"
+       transform="rotate(-90,101,67)"
+       font-family="Helvetica"
+       font-size="12px"
+       font-weight="400"
+       font-style="normal"
+       id="g48">
+      <text
+         fill="#0000ff"
+         fill-opacity="1"
+         stroke="none"
+         xml:space="preserve"
+         x="0"
+         y="0"
+         font-family="Helvetica"
+         font-size="12px"
+         font-weight="400"
+         font-style="normal"
+         id="text46">ngspice/ac.s11</text>
+    </g>
+    <g
+       fill="none"
+       stroke="#0000ff"
+       stroke-opacity="1"
+       stroke-width="1"
+       stroke-linecap="square"
+       stroke-linejoin="bevel"
+       font-family="Helvetica"
+       font-size="12px"
+       font-weight="400"
+       font-style="normal"
+       id="g50" />
+  </g>
+</svg>
