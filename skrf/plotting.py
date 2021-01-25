@@ -404,8 +404,14 @@ def plot_polar(theta, r, x_label=None, y_label=None, title=None,
     plot_smith : plot complex data on smith chart
 
     '''
-    if ax is None:
+    # get number of axis handles in figure
+    num_axes = len(plb.gcf().get_axes())
+    # if in subplot, require axis to be passed
+    if num_axes < 2:
         ax = plb.gca(polar=True)
+    else:
+        if ax is None:
+            raise ValueError('Must explicitly specify subplot axis when using polar plot in a subplot.')
 
     ax.plot(theta, r, *args, **kwargs)
 
