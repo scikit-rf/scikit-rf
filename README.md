@@ -1,6 +1,7 @@
 [![Build Status](https://travis-ci.org/scikit-rf/scikit-rf.svg?branch=master)](https://travis-ci.org/scikit-rf/scikit-rf)
 [![Documentation Status](https://readthedocs.org/projects/scikit-rf/badge/?version=latest)](https://readthedocs.org/projects/scikit-rf/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/scikit-rf/scikit-rf/badge.png)](https://coveralls.io/r/scikit-rf/scikit-rf)
+[![Code Testing](https://github.com/scikit-rf/scikit-rf/workflows/Code%20linting%20and%20testing/badge.svg)](https://github.com/scikit-rf/scikit-rf/actions?query=workflow%3A%22Code+linting+and+testing%22)
 
 ## Install
 
