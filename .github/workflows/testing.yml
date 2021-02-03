@@ -31,3 +31,7 @@ jobs:
       run: |
         sudo apt-get install xvfb  
         nosetests skrf --nocapture -c nose.cfg
+    - name: Coveralls
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
