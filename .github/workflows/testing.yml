@@ -48,7 +48,7 @@ jobs:
         COVERALLS_PARALLEL: true
       run: |
         pip install coveralls    
-        coveralls --service=gihtub
+        coveralls --service=github
   
   coveralls:
     name: Indicate completion to coveralls.io (Finish)
