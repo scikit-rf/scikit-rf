@@ -23,7 +23,6 @@ jobs:
         pip install flake8 pytest
         sudo apt-get install xvfb
         pip install coverage
-        pip install coveralls    
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     # code quality check (linting)
@@ -43,11 +42,13 @@ jobs:
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
       env:
-        COVERALLS_REPO_TOKEN: WxQed4rsdEnwTLwyt4WnkrYOdXJeUpovo
-        #COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        #COVERALLS_REPO_TOKEN: WxQed4rsdEnwTLwyt4WnkrYOdXJeUpovo
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
         COVERALLS_PARALLEL: true
-      run: coveralls --service=gihtub
+      run: |
+        pip install coveralls    
+        coveralls --service=gihtub
   
   coveralls:
     name: Indicate completion to coveralls.io (Finish)
