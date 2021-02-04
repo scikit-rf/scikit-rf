@@ -19,12 +19,14 @@ jobs:
         uses: conda-incubator/setup-miniconda@v1
         with:
           activate-environment: jupyter-actions
-          environment-file: conda.recipe/meta.yaml
+          #environment-file: conda.recipe/meta.yaml
           python-version: 3.7
 
       - name: Execute all Notebooks
         shell: bash -l {0}
         run: |
           conda activate jupyter-actions
+          conda install numpy matplotlib scipy pandas networkx nose pip ipython
+          pip install -r tools/travis-requirements.txt
           pytest
 
