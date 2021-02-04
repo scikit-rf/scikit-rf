@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        python-version: [3.5, 3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -37,13 +37,11 @@ jobs:
     - name: Test with nose
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
-        #coverage run -m nose skrf --nocapture --with-coverage -c nose.cfg
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        #COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
         COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
         COVERALLS_PARALLEL: true
       run: |
