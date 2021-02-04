@@ -3,7 +3,7 @@ name: Code linting and testing
 on: [push, pull_request]
 
 jobs:
-  build:
+  Tests:
 
     runs-on: ubuntu-latest
     strategy:
