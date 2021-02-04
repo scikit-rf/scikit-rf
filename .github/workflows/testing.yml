@@ -21,16 +21,25 @@ jobs:
         python -m pip install --upgrade pip
         pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    # code quality check (linting)
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    # test suite
     - name: Test with nose
       run: |
         sudo apt-get install xvfb  
         nosetests skrf --nocapture -c nose.cfg
+    # create coverage report
+    - name: Create Coverage report
+      uses: romeovs/lcov-reporter-action@v0.2.16
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        lcov-file: ./coverage/lcov.info
+    # report coverage on PR
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
