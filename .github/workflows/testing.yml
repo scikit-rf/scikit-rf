@@ -36,4 +36,8 @@ jobs:
         pip install coveralls
         #nosetests skrf --nocapture --with-coverage -c nose.cfg
         coverage run -m nose skrf --nocapture --with-coverage -c nose.cfg
-        coveralls
+    - env:
+        COVERALLS_PARALLEL: true
+        COVERALLS_REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      name: Submit to coveralls
+      run: coveralls
