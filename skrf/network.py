@@ -2536,6 +2536,39 @@ class Network(object):
         return result
 
 
+    def subnetwork(self, ports, offby=1):
+        '''
+        Returns a subnetwork of a the Network from a list of port numbers.
+
+        A subnetwork is Network which S-parameters corresponds to selected ports, 
+        with all non-selected ports considered matched.
+
+        The resulting subNetwork is given a new Network.name property 
+        from the initial name and adding the kept ports indices 
+        (ex: 'device' -> 'device13'). Such name should make easier the use 
+        of functions such as n_twoports_2_nport.
+
+        Parameters
+        -----------
+        ports : list of int
+            List of ports to keep in the resultant Network. 
+            Indices are the Python indices (starts at 0)
+        offby : int
+            starting value for s-parameters indexes in the sub-Network name parameter. 
+            A value of `1`, assumes that a s21 = ntwk.s[:,1,0]. Default is 1.
+
+        Returns
+        --------
+        subntw : :class:`Network` object
+            Resulting subnetwork of the Network from the given ports
+
+        See also
+        --------
+        subnetwork, n_twoports_2_nport
+
+        '''
+        return subnetwork(self, ports, offby)
+
     def crop(self, f_start, f_stop,unit =None):
         '''
         Crop Network based on start and stop frequencies.
@@ -4128,6 +4161,55 @@ def evenodd2delta(n, z0=50, renormalize=True, doublehalf=True):
     
     return n_delta 
 
+
+def subnetwork(ntw, ports, offby=1):
+    '''
+    Returns a subnetwork of a given Network from a list of port numbers.
+
+    A subnetwork is Network which S-parameters corresponds to selected ports, 
+    with all non-selected ports considered matched.
+
+    The resulting subNetwork is given a new Network.name property 
+    from the initial name and adding the kept ports indices 
+    (ex: 'device' -> 'device13'). Such name should make easier the use 
+    of functions such as n_twoports_2_nport.
+
+    Parameters
+    -----------
+    ntw : :class:`Network` object
+        Network to split into a subnetwork 
+    ports : list of int
+        List of ports to keep in the resultant Network. 
+        Indices are the Python indices (starts at 0)
+    offby : int
+        starting value for s-parameters indexes in the sub-Network name parameter. 
+        A value of `1`, assumes that a s21 = ntwk.s[:,1,0]. Default is 1.
+
+    Returns
+    --------
+    subntw : :class:`Network` object
+        Resulting subnetwork from the given ports
+
+    See also
+    --------
+    Network.subnetwork, n_twoports_2_nport
+
+    Example
+    --------
+
+    >>> tee = rf.data.tee  # 3 port Network
+    >>> tee12 = rf.subnetwork(tee, [0, 1])  # 2 port Network from ports 1 & 2, port 3 matched
+    >>> tee23 = rf.subnetwork(tee, [1, 2])  # 2 port Network from ports 2 & 3, port 1 matched
+    >>> tee13 = rf.subnetwork(tee, [0, 2])  # 2 port Network from ports 1 & 3, port 2 matched
+
+    '''
+    # forging subnetwork name
+    subntw_name = (ntw.name or 'p') + ''.join([str(index+offby) for index in ports])
+    # create a dummy Network with same frequency and z0 from the original
+    subntw = Network(frequency=ntw.frequency, z0=ntw.z0[:,ports], name=subntw_name)
+    # keep requested rows and columns of the s-matrix. ports can be not contiguous 
+    subntw.s = ntw.s[npy.ix_(npy.arange(ntw.s.shape[0]), ports, ports)]
+    return subntw
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):
