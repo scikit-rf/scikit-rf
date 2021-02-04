@@ -26,7 +26,8 @@ jobs:
         shell: bash -l {0}
         run: |
           conda activate jupyter-actions
-          conda install numpy matplotlib scipy pandas networkx nose pip ipython pytest qtpy docscrape
+          conda install numpy matplotlib scipy pandas networkx nose pip ipython pytest qtpy 
+          pip install docscrape
           pip install -r tools/travis-requirements.txt
           conda install -c conda-forge scikit-rf
           pytest
