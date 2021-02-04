@@ -19,7 +19,7 @@ jobs:
         uses: conda-incubator/setup-miniconda@v1
         with:
           activate-environment: jupyter-actions
-          environment-file: environment.yml
+          environment-file: conda.recipe/meta.yaml
           python-version: 3.7
 
       - name: Execute all Notebooks
