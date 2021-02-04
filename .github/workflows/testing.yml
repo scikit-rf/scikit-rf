@@ -3,7 +3,7 @@ name: Code linting and testing
 on: [push, pull_request]
 
 jobs:
-  build:
+  Tests:
 
     runs-on: ubuntu-latest
     strategy:
@@ -42,3 +42,16 @@ jobs:
         #${{ secrets.GITHUB_TOKEN }}
       name: Submit to coveralls
       run: coveralls --service=gihtub
+  
+  Coveralls:
+    name: Finish Coveralls
+    needs: Tests
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - name: Finished
+        run: |
+          pip3 install coveralls
+          coveralls --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
