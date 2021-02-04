@@ -33,6 +33,7 @@ jobs:
       run: |
         sudo apt-get install xvfb
         pip install coverage
+        pip install coveralls
         #nosetests skrf --nocapture --with-coverage -c nose.cfg
         coverage run -m nose skrf --nocapture --with-coverage -c nose.cfg
         coveralls
