@@ -37,8 +37,8 @@ jobs:
     # tests suite & creates coverage report
     - name: Test with nose
       run: |
-        #nosetests skrf --nocapture --with-coverage -c nose.cfg
-        coverage run -m nose skrf --nocapture --with-coverage -c nose.cfg
+        nosetests skrf --nocapture --with-coverage -c nose.cfg
+        #coverage run -m nose skrf --nocapture --with-coverage -c nose.cfg
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
