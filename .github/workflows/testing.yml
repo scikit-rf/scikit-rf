@@ -35,9 +35,10 @@ jobs:
         pip install coverage
         #nosetests skrf --nocapture --with-coverage -c nose.cfg
         coverage run -m nose  skrf --nocapture --with-coverage -c nose.cfg
+        coverage xml -o coverage.xml
     # report coverage on PR
     - name: Coveralls
       uses: coverallsapp/github-action@master
       with:
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: .coverage
+        path-to-lcov: coverage.xml
