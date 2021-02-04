@@ -4162,7 +4162,7 @@ def evenodd2delta(n, z0=50, renormalize=True, doublehalf=True):
     return n_delta 
 
 
-def subnetwork(ntw, ports, offby=1):
+def subnetwork(ntwk, ports, offby=1):
     '''
     Returns a subnetwork of a given Network from a list of port numbers.
 
@@ -4176,7 +4176,7 @@ def subnetwork(ntw, ports, offby=1):
 
     Parameters
     -----------
-    ntw : :class:`Network` object
+    ntwk : :class:`Network` object
         Network to split into a subnetwork 
     ports : list of int
         List of ports to keep in the resultant Network. 
@@ -4187,7 +4187,7 @@ def subnetwork(ntw, ports, offby=1):
 
     Returns
     --------
-    subntw : :class:`Network` object
+    subntwk : :class:`Network` object
         Resulting subnetwork from the given ports
 
     See also
@@ -4204,12 +4204,12 @@ def subnetwork(ntw, ports, offby=1):
 
     '''
     # forging subnetwork name
-    subntw_name = (ntw.name or 'p') + ''.join([str(index+offby) for index in ports])
+    subntwk_name = (ntwk.name or 'p') + ''.join([str(index+offby) for index in ports])
     # create a dummy Network with same frequency and z0 from the original
-    subntw = Network(frequency=ntw.frequency, z0=ntw.z0[:,ports], name=subntw_name)
+    subntwk = Network(frequency=ntwk.frequency, z0=ntwk.z0[:,ports], name=subntwk_name)
     # keep requested rows and columns of the s-matrix. ports can be not contiguous 
-    subntw.s = ntw.s[npy.ix_(npy.arange(ntw.s.shape[0]), ports, ports)]
-    return subntw
+    subntwk.s = ntwk.s[npy.ix_(npy.arange(ntwk.s.shape[0]), ports, ports)]
+    return subntwk
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):
