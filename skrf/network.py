@@ -4256,7 +4256,8 @@ def n_twoports_2_nport(ntwk_list, nports, offby=1, **kwargs):
     Parameters
     -----------
     ntwk_list : list of :class:`Network` objects
-        the names must contain the port index, ie 'p12' or 'p43'
+        the names must contain the port index, ie 'p12' or 'p43', 
+        ie. define the Network.name property of the :class:`Network` object.
     offby : int
         starting value for s-parameters idecies. ie  a value of `1`,
         assumes that a s21 = ntwk.s[:,1,0]
