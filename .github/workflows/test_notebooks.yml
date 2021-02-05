@@ -31,5 +31,5 @@ jobs:
           #conda install -c conda-forge scikit-rf
           ls
           echo "PYTHONPATH=skrf" >> $GITHUB_ENV
-          pytest skrf
+          pytest skrf/
 
