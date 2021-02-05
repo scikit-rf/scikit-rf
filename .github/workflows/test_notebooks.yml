@@ -23,6 +23,7 @@ jobs:
           python-version: 3.7
       # install python packages...
       - name: Install other dependances
+        shell: bash -l {0}        
         run: |
           conda activate jupyter-actions
           conda install numpy matplotlib scipy pandas networkx nose pip ipython pytest qtpy numpydoc sphinx pyqtgraph
@@ -30,7 +31,6 @@ jobs:
           #conda install -c conda-forge scikit-rf
       # Run all Notebooks      
       - name: Execute all Notebooks
-        shell: bash -l {0}
         run: |
           pytest skrf
 
