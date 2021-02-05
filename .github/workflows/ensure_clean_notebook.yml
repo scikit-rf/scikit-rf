@@ -11,7 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: enforces rules on certain cells and metadata in Jupyter Notebooks
+      # Checks-out the repository under $GITHUB_WORKSPACE, so the job can access it
+      - name: checkout code
+        uses: actions/checkout@v2
+      # run checker
+      - name: Ensure clear Jupyter Notebooks
         uses: ResearchSoftwareActions/EnsureCleanNotebooksAction@1.1
-        with:
-          disable-checks: outputs,execution_count
