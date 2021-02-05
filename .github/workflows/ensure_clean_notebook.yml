@@ -1,0 +1,17 @@
+name: ensure-clean-notebooks
+
+# Run every time a new commit is pushed
+on: push
+
+jobs:
+  # Set the job key
+  ensure-clean-notebooks:
+    name: Test Jupyter Notebooks
+    # Set the type of machine to run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: enforces rules on certain cells and metadata in Jupyter Notebooks
+        uses: ResearchSoftwareActions/EnsureCleanNotebooksAction@1.1
+        with:
+          disable-checks: outputs,execution_count
