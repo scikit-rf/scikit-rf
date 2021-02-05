@@ -12,22 +12,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # checkout the code 
       - name: Checkout code
         uses: actions/checkout@v2
-
+      # install python env
       - name: Install conda environment
         uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: jupyter-actions
           #environment-file: conda.recipe/meta.yaml
           python-version: 3.7
-
-      - name: Execute all Notebooks
-        shell: bash -l {0}
         run: |
           conda activate jupyter-actions
           conda install numpy matplotlib scipy pandas networkx nose pip ipython pytest qtpy numpydoc sphinx
           pip install -r tools/travis-requirements.txt
           conda install -c conda-forge pyqtgraph scikit-rf
+      # Run all Notebooks      
+      - name: Execute all Notebooks
+        shell: bash -l {0}
+        run: |
           pytest
 
