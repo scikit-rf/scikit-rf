@@ -29,8 +29,5 @@ jobs:
           conda install numpy matplotlib scipy pandas networkx nose pip ipython pytest qtpy numpydoc sphinx pyqtgraph
           pip install -r tools/travis-requirements.txt
           #conda install -c conda-forge scikit-rf
-      # Run all Notebooks      
-      - name: Execute all Notebooks
-        run: |
           pytest skrf
 
