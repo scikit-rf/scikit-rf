@@ -1,7 +1,7 @@
 '''
 .. module:: skrf.media.circularWaveguide
 ================================================================
-rectangularWaveguide (:mod:`skrf.media.rectangularWaveguide`)
+circularWaveguide (:mod:`skrf.media.circularWaveguide`)
 ================================================================
 
 Represents a single mode of a homogeneously filled circular
@@ -42,34 +42,28 @@ class CircularWaveguide(Media):
     frequency : :class:`~skrf.frequency.Frequency` object
             frequency band of this transmission line medium
     z0 : number, array-like, or None
-        the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
+        the port impedance for media. Only needed if it's different
+        from the characterisic impedance of the transmission
         line. if z0 is None then will default to Z0
     r : number
-            radius of the waveguide, in meters. 
+            radius of the waveguide, in meters.
     mode_type : ['te','tm']
             mode type, transverse electric (te) or transverse magnetic
             (tm) to-z. where z is direction of propagation
     m : int
-            mode index in 'phi'-direction
+            mode index in 'phi'-direction, the azimuthal index
     n : int
-            mode index in 'r'-direction
+            mode index in 'r'-direction, the radial index
     ep_r : number, array-like,
             filling material's relative permittivity
     mu_r : number, array-like
             filling material's relative permeability
-    
-    
-    ###### TODO: implement
     rho : number, array-like, string
         resistivity (ohm-m) of the conductor walls. If array-like
         must be same length as frequency. if str, it must be a key in
         `skrf.data.materials`.
-    roughness : number, or array-like
-        surface roughness of the conductor walls in units of RMS
-        deviation from surface
-
-    *args,**kwargs : arguments, keywrod arguments
+    
+    *args,**kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
 
@@ -99,7 +93,7 @@ class CircularWaveguide(Media):
 
         
         self.r = r
-        self.mode_type = mode_type
+        self.mode_type = mode_type.lower()
         self.m = m
         self.n = n
         self.ep_r = ep_r
@@ -111,7 +105,7 @@ class CircularWaveguide(Media):
         f=self.frequency
         output =  \
                 'Circular Waveguide Media.  %i-%i %s.  %i points'%\
-                (f.f_scaled[0],f.f_scaled[-1],f.unit, f.npoints) + \
+                (f.f_scaled[0], f.f_scaled[-1], f.unit, f.npoints) + \
                 '\n r= %.2em'% \
                 (self.r)
         return output
@@ -134,9 +128,6 @@ class CircularWaveguide(Media):
         f : number 
             frequency (in Hz) that the resultant waveguide has z0=z0
         '''
-        if n !=0: 
-            raise NotImplemented()
-        
         
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
@@ -375,52 +366,33 @@ class CircularWaveguide(Media):
     @property
     def alpha_c(self):
         '''
-        Loss due to finite conductivity and roughness of sidewalls
+        Loss due to finite conductivity of the sidewalls for the fundamental mode TE11. Higher order 
+        modes are not implemented, as well as effects due to surface roughness.
 
         In units of np/m
         See property `rho` for setting conductivity.
 
-        Effects of finite conductivity are taken from [#]_. If
-        :attr:`roughness` is not None, then its effects the conductivity
-        by
-
-
-        .. math::
-
-            \\sigma_c = \\frac{\\sigma}{k_w^2}
-
-
-        where
-
-        .. math::
-
-            k_w = 1 + e^{(-\\delta/2h)^{1.6}}
-
-            \\delta = \\mbox{skin depth}
-
-            h = \\mbox{surface roughness }
-
-
-        This is taken from Ansoft HFSS help documents.
-
-
+        Effects of finite conductivity are taken from [#]_, but expressed in the same terms as in [#]_.
 
         References
         --------------
 
-        .. [#] Chapter 9, (eq 9.8.1) of Electromagnetic Waves and Antennas by Sophocles J. Orfanidis
+        .. [#] Eq. (3.133), Chapter 3.4, Microwave Engineering, Pozar David, 2011
+        .. [#] Eq. (9.8.1), Chapter 9, Electromagnetic Waves and Antennas by Sophocles J. Orfanidis
         http://eceweb1.rutgers.edu/~orfanidi/ewa/
         '''
 
-        # TODO: Implement version for circular geometry
-        raise NotImplementedError
+        # TODO: Generalize to higher order modes
+        if (self.mode_type != "te") or (self.m != 1) or (self.n != 1): 
+            raise NotImplementedError
 
-        # if self.rho is None:
-        #     return 0
-        # a,b,w,ep,rho,f_n = self.a, self.b, self.frequency.w, self.ep, \
-        #     self.rho, self.f_norm
-        # return 1./b * sqrt( (w*ep)/(2./rho) ) * (1+2.*b/a*(1/f_n)**2)/\
-        #     sqrt(1-(1/f_n)**2)
+        if self.rho is None:
+            return 0
+        r, w, ep, rho, f_n = self.r, self.frequency.w, self.ep, \
+            self.rho, self.f_norm
+        u= self.kc*r
+        return 1./r * sqrt( (w*ep)/(2./rho) ) * ( (1/f_n)**2 + 1/(u**2 - 1) ) \
+            /sqrt(1-(1/f_n)**2)
 
     @property
     def z0(self):

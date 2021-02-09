@@ -98,7 +98,7 @@ class RectangularWaveguide(Media):
         
         self.a = a
         self.b = b
-        self.mode_type = mode_type
+        self.mode_type = mode_type.lower()
         self.m = m
         self.n = n
         self.ep_r = ep_r
@@ -130,13 +130,12 @@ class RectangularWaveguide(Media):
         -------------
         frequency : Frequency Object
         z0 : number /array
-            scharacteristic impedance to create at `f`
+            characteristic impedance to create at `f`
         f : number 
             frequency (in Hz) that the resultant waveguide has z0=z0
         '''
-        if n !=0: 
+        if (n != 0) or (m != 1): 
             raise NotImplemented()
-        
         
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
