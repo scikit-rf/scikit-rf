@@ -23,6 +23,7 @@ jobs:
         pip install flake8 pytest
         sudo apt-get install xvfb
         pip install coverage
+        pip install nbsmoke
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     # code quality check (linting)
@@ -33,10 +34,16 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    # tests suite & creates coverage report
+    # tests suites & creates coverage report
     - name: Test with nose
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
+    - name: Run examples notebooks with nbsmoke
+      run: |
+        pytest --nbsmoke-run -k ".ipynb" doc/source/examples
+    - name: Run tutorials notebooks with nbsmoke
+      run: |
+        pytest --nbsmoke-run -k ".ipynb" doc/source/tutorials
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
