@@ -124,7 +124,7 @@ class RectangularWaveguide(Media):
     def from_z0(cls,frequency, z0,f, ep_r=1, mu_r=1, **kw):
         '''
         Initialize from specfied impedance at a given frequency, assuming 
-        the fundamental TE mode.
+        the fundamental TE10 mode.
         
         Parameters
         -------------
@@ -134,9 +134,7 @@ class RectangularWaveguide(Media):
         f : number 
             frequency (in Hz) that the resultant waveguide has z0=z0
         '''
-        if (n != 0) or (m != 1): 
-            raise NotImplemented()
-        
+                
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f

@@ -83,8 +83,7 @@ class CircularWaveguide(Media):
 
     '''
     def __init__(self, frequency=None, z0=None, r=1,
-                 mode_type = 'te', m=1, n=1, ep_r=1, mu_r=1, rho=None, 
-                 roughness=None, *args, **kwargs):
+                 mode_type = 'te', m=1, n=1, ep_r=1, mu_r=1, rho=None, *args, **kwargs):
         
         Media.__init__(self, frequency=frequency,z0=z0)
         
@@ -99,7 +98,6 @@ class CircularWaveguide(Media):
         self.ep_r = ep_r
         self.mu_r = mu_r
         self.rho = rho
-        self.roughness = roughness
         
     def __str__(self):
         f=self.frequency
@@ -118,7 +116,7 @@ class CircularWaveguide(Media):
     def from_z0(cls,frequency, z0,f, ep_r=1, mu_r=1, **kw):
         '''
         Initialize from specfied impedance at a given frequency, assuming the 
-        fundamental TE-11 mode.
+        fundamental TE11 mode.
         
         Parameters
         -------------
