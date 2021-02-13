@@ -222,7 +222,7 @@ class Frequency(object):
 
         Parameters
         -----------
-        f : array-like
+        f : scalar or array-like
                 frequency vector
 
         *args, **kwargs : arguments, keyword arguments
@@ -238,6 +238,8 @@ class Frequency(object):
         >>> f = npy.linspace(75,100,101)
         >>> rf.Frequency.from_f(f, unit='ghz')
         '''
+        if npy.isscalar(f):
+            f = [f]
         temp_freq =  cls(0,0,0,*args, **kwargs)
         temp_freq.f = npy.array(f) * temp_freq.multiplier
         return temp_freq

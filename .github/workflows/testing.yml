@@ -1,0 +1,62 @@
+name: Code linting and testing
+
+on: [push, pull_request]
+
+jobs:
+  Tests:
+
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 pytest
+        sudo apt-get install xvfb
+        pip install coverage
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    # code quality check (linting)
+    - name: Lint with flake8
+      run: |
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+    # tests suite & creates coverage report
+    - name: Test with nose
+      run: |
+        nosetests skrf --nocapture --with-coverage -c nose.cfg
+
+    # Upload coverage data to coveralls.io
+    - name: Upload coverage data to coveralls.io
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
+        COVERALLS_PARALLEL: true
+      run: |
+        pip install coveralls    
+        coveralls --service=github
+  
+  coveralls:
+    name: Indicate completion to coveralls.io (Finish)
+    needs: Tests
+    runs-on: ubuntu-latest
+    container: python:3-slim
+    steps:
+      - name: Finished
+        run: |
+          pip3 install --upgrade coveralls
+          coveralls --finish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

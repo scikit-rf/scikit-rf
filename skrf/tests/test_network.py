@@ -2,9 +2,11 @@ import unittest
 import os
 import tempfile
 import six
+import sys
 import numpy as npy
 import six.moves.cPickle as pickle
 import skrf as rf
+from copy import deepcopy
 from nose.plugins.skip import SkipTest
 
 from skrf import setup_pylab
@@ -103,6 +105,11 @@ class NetworkTestCase(unittest.TestCase):
         # Check if reading a HFSS touchstone file with non-50Ohm impedances
         ntwk_hfss = rf.Network(os.path.join(self.test_dir, 'hfss_threeport_DB.s3p'))
         self.assertFalse(npy.isclose(ntwk_hfss.z0[0,0], 50))
+
+    def test_constructor_from_pathlib(self):
+        if sys.version_info.major == 3 and sys.version_info.minor >= 4:  # pathlib added in 3.4
+            from pathlib import Path
+            rf.Network(Path(self.test_dir) / 'ntwk1.ntwk')
 
     def test_constructor_from_pickle(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
@@ -222,8 +229,10 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_conversions(self):
         #Converting to other format and back to S-parameters should return the original network
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        ntwk_random = rf.Network(s=s_random, frequency=self.freq)
         for test_z0 in (50, 10, 90+10j, 4-100j):
-            for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3):
+            for test_ntwk in (self.ntwk1, self.ntwk2, self.ntwk3, ntwk_random):
                 ntwk = rf.Network(s=test_ntwk.s, f=test_ntwk.f, z0=test_z0)
                 npy.testing.assert_allclose(rf.a2s(rf.s2a(ntwk.s, test_z0), test_z0), ntwk.s)
                 npy.testing.assert_allclose(rf.z2s(rf.s2z(ntwk.s, test_z0), test_z0), ntwk.s)
@@ -639,8 +648,15 @@ class NetworkTestCase(unittest.TestCase):
           self.assertTrue(abs(gamma_opt_rb.s[0,0,0] - gamma_opt_set) < 1.e-1, 'nf not retrieved by noise deembed')
 
 
+    def test_se2gmm2se_mag(self):
+        ntwk4 = rf.Network(os.path.join(self.test_dir, 'cst_example_4ports.s4p'))
+        ntwk4t = deepcopy(ntwk4)
+        ntwk4t.se2gmm(p=2)
+        ntwk4t.gmm2se(p=2)
 
-
+        self.assertTrue(npy.allclose(abs(ntwk4.s), abs(ntwk4t.s), rtol=1E-7, atol=0))
+        # phase testing does not pass - see #367
+        #self.assertTrue(npy.allclose(npy.angle(ntwk4.s), npy.angle(ntwk4t.s), rtol=1E-7, atol=1E-10))
 
     def test_s_active(self):
         '''
@@ -670,6 +686,32 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([1, 0])[:,0], vswr_ref[:,0,0])
         # vswr_act should be equal to vswr22 if a = [0,1]
         npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([0, 1])[:,1], vswr_ref[:,1,1])
+
+    def test_subnetwork(self):
+        ''' Test subnetwork creation and recombination '''
+        tee = rf.data.tee # 3 port Network
+        
+        # modify the z0 to dummy values just to check it works for any z0
+        tee.z0 = npy.random.rand(3) + 1j*npy.random.rand(3)
+        
+        # Using rf.subnetwork()
+        # 2 port Networks as if one measures the tee with a 2 ports VNA
+        tee12 = rf.subnetwork(tee, [0, 1])  # 2 port Network from ports 1 & 2, port 3 matched
+        tee23 = rf.subnetwork(tee, [1, 2])  # 2 port Network from ports 2 & 3, port 1 matched
+        tee13 = rf.subnetwork(tee, [0, 2])  # 2 port Network from ports 1 & 3, port 2 matched
+        # recreate the original 3 ports Network from the thee 2-port sub-Networks
+        ntw_list = [tee12, tee23, tee13]
+        tee2 = rf.n_twoports_2_nport(ntw_list, nports=3)
+        self.assertTrue(tee2 == tee)
+
+        # Same from the subnetwork() method.
+        tee12 = tee.subnetwork([0, 1])
+        tee23 = tee.subnetwork([1, 2])
+        tee13 = tee.subnetwork([0, 2])
+        ntw_list = [tee12, tee23, tee13]
+        tee2 = rf.n_twoports_2_nport(ntw_list, nports=3)
+        self.assertTrue(tee2 == tee)
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

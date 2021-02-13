@@ -350,9 +350,11 @@ class Network(object):
             its a str
         comments : str
             Comments associated with the Network
-        s_def : str -> s_def : ['power','pseudo']
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition, 
-            'pseudo' for pseudo-waves definition. Default is 'power'.
+            'pseudo' for pseudo-waves definition. 
+            'traveling' corresponds to the initial implementation. 
+            Default is 'power'.
             NB: results are the same for real-valued characteristic impedances.
         \*\*kwargs :
             key word arguments can be used to assign properties of the
@@ -404,6 +406,14 @@ class Network(object):
             self.s_def = s_def
 
         if file is not None:
+            # Check for pathlib Path object, convert to string
+            if sys.version_info.major == 3 and sys.version_info.minor >= 4:  # pathlib added in 3.4
+                from pathlib import Path
+                if isinstance(file, Path):
+                    file = str(file.resolve())
+                else:
+                    pass
+
             # allows user to pass filename or file obj
             # open file in 'binary' mode because we are going to try and
             # unpickle it first
@@ -2526,6 +2536,39 @@ class Network(object):
         return result
 
 
+    def subnetwork(self, ports, offby=1):
+        '''
+        Returns a subnetwork of a the Network from a list of port numbers.
+
+        A subnetwork is Network which S-parameters corresponds to selected ports, 
+        with all non-selected ports considered matched.
+
+        The resulting subNetwork is given a new Network.name property 
+        from the initial name and adding the kept ports indices 
+        (ex: 'device' -> 'device13'). Such name should make easier the use 
+        of functions such as n_twoports_2_nport.
+
+        Parameters
+        -----------
+        ports : list of int
+            List of ports to keep in the resultant Network. 
+            Indices are the Python indices (starts at 0)
+        offby : int
+            starting value for s-parameters indexes in the sub-Network name parameter. 
+            A value of `1`, assumes that a s21 = ntwk.s[:,1,0]. Default is 1.
+
+        Returns
+        --------
+        subntw : :class:`Network` object
+            Resulting subnetwork of the Network from the given ports
+
+        See also
+        --------
+        subnetwork, n_twoports_2_nport
+
+        '''
+        return subnetwork(self, ports, offby)
+
     def crop(self, f_start, f_stop,unit =None):
         '''
         Crop Network based on start and stop frequencies.
@@ -2633,9 +2676,11 @@ class Network(object):
         z_new : complex array of shape FxN, F, N or a  scalar
             new port impedances
 
-        s_def : str -> s_def : ['power','pseudo']
+        s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition, 
-            'pseudo' for pseudo-waves definition. Default is 'power'.
+            'pseudo' for pseudo-waves definition. 
+            'traveling' corresponds to the initial implementation. 
+            Default is 'power'.
             NB: results are the same for real-valued characteristic impedances.
 
         See Also
@@ -3044,7 +3089,7 @@ class Network(object):
             Pca[l, 4 * (l + 1) - 1 - 1] = True
             Pdb[l, 4 * (l + 1) - 2 - 1] = True
             Pcb[l, 4 * (l + 1) - 1] = True
-            if Pa.shape[0] is not 0:
+            if Pa.shape[0] != 0:
                 Pa[l, 4 * p + 2 * (l + 1) - 1 - 1] = True
                 Pb[l, 4 * p + 2 * (l + 1) - 1] = True
         return npy.concatenate((Pda, Pca, Pa, Pdb, Pcb, Pb))
@@ -3390,7 +3435,7 @@ def connect(ntwkA, k, ntwkB, l, num=1):
         check_frequency_equal(ntwkA, ntwkB)
     except IndexError as e:
         common_freq = npy.intersect1d(ntwkA.frequency.f, ntwkB.frequency.f, return_indices=True)
-        if common_freq[0].size is 0:
+        if common_freq[0].size == 0:
             raise e
         else:
             ntwkA = ntwkA[common_freq[1]]
@@ -4117,6 +4162,55 @@ def evenodd2delta(n, z0=50, renormalize=True, doublehalf=True):
     return n_delta 
 
 
+def subnetwork(ntwk, ports, offby=1):
+    '''
+    Returns a subnetwork of a given Network from a list of port numbers.
+
+    A subnetwork is Network which S-parameters corresponds to selected ports, 
+    with all non-selected ports considered matched.
+
+    The resulting subNetwork is given a new Network.name property 
+    from the initial name and adding the kept ports indices 
+    (ex: 'device' -> 'device13'). Such name should make easier the use 
+    of functions such as n_twoports_2_nport.
+
+    Parameters
+    -----------
+    ntwk : :class:`Network` object
+        Network to split into a subnetwork 
+    ports : list of int
+        List of ports to keep in the resultant Network. 
+        Indices are the Python indices (starts at 0)
+    offby : int
+        starting value for s-parameters indexes in the sub-Network name parameter. 
+        A value of `1`, assumes that a s21 = ntwk.s[:,1,0]. Default is 1.
+
+    Returns
+    --------
+    subntwk : :class:`Network` object
+        Resulting subnetwork from the given ports
+
+    See also
+    --------
+    Network.subnetwork, n_twoports_2_nport
+
+    Example
+    --------
+
+    >>> tee = rf.data.tee  # 3 port Network
+    >>> tee12 = rf.subnetwork(tee, [0, 1])  # 2 port Network from ports 1 & 2, port 3 matched
+    >>> tee23 = rf.subnetwork(tee, [1, 2])  # 2 port Network from ports 2 & 3, port 1 matched
+    >>> tee13 = rf.subnetwork(tee, [0, 2])  # 2 port Network from ports 1 & 3, port 2 matched
+
+    '''
+    # forging subnetwork name
+    subntwk_name = (ntwk.name or 'p') + ''.join([str(index+offby) for index in ports])
+    # create a dummy Network with same frequency and z0 from the original
+    subntwk = Network(frequency=ntwk.frequency, z0=ntwk.z0[:,ports], name=subntwk_name)
+    # keep requested rows and columns of the s-matrix. ports can be not contiguous 
+    subntwk.s = ntwk.s[npy.ix_(npy.arange(ntwk.s.shape[0]), ports, ports)]
+    return subntwk
+
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list, *args, **kwargs):
     '''
@@ -4162,7 +4256,8 @@ def n_twoports_2_nport(ntwk_list, nports, offby=1, **kwargs):
     Parameters
     -----------
     ntwk_list : list of :class:`Network` objects
-        the names must contain the port index, ie 'p12' or 'p43'
+        the names must contain the port index, ie 'p12' or 'p43', 
+        ie. define the Network.name property of the :class:`Network` object.
     offby : int
         starting value for s-parameters idecies. ie  a value of `1`,
         assumes that a s21 = ntwk.s[:,1,0]
@@ -4477,9 +4572,11 @@ def s2z(s, z0=50, s_def=S_DEF_DEFAULT):
         scattering parameters
     z0 : complex array-like or number
         port impedances.
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
             
     Returns
     ---------
@@ -4560,9 +4657,11 @@ def s2y(s, z0=50, s_def=S_DEF_DEFAULT):
         scattering parameters
     z0 : complex array-like or number
         port impedances
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
 
     Returns
     ---------
@@ -4740,9 +4839,11 @@ def z2s(z, z0=50, s_def=S_DEF_DEFAULT):
         impedance parameters
     z0 : complex array-like or number
         port impedances
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
 
     Returns
     ---------
@@ -4931,10 +5032,10 @@ def a2s(a, z0=50):
     s = npy.array([
         [
             (A*z02 + B - C*z01.conj()*z02 - D*z01.conj() ) / denom,
-            (2*(A*D - B*C)*npy.sqrt(z01.real * z02.real)) / denom,
+            (2*npy.sqrt(z01.real * z02.real)) / denom,
         ],
         [
-            (2*npy.sqrt(z01.real * z02.real)) / denom,
+            (2*(A*D - B*C)*npy.sqrt(z01.real * z02.real)) / denom,
             (-A*z02.conj() + B - C*z01*z02.conj() + D*z01) / denom,
         ],
     ]).transpose()
@@ -5104,9 +5205,11 @@ def y2s(y, z0=50, s_def=S_DEF_DEFAULT):
     z0 : complex array-like or number
         port impedances
 
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition [3], 
-        'pseudo' for pseudo-waves definition [4]. Default is 'power'.
+        'pseudo' for pseudo-waves definition [4]. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
 
     Returns
     ---------
@@ -5690,9 +5793,11 @@ def renormalize_s(s, z_old, z_new, s_def=S_DEF_DEFAULT):
     z_new : complex array of shape FxN, F, N or a scalar
         new port impedances
 
-    s_def : str -> s_def : ['power','pseudo']
+    s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
         Scattering parameter definition : 'power' for power-waves definition, 
-        'pseudo' for pseudo-waves definition. Default is 'power'.
+        'pseudo' for pseudo-waves definition. 
+        'traveling' corresponds to the initial implementation. 
+        Default is 'power'.
         NB: results are the same for real-valued characteristic impedances.
 
     Notes

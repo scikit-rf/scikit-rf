@@ -394,7 +394,7 @@ class NetworkSet(object):
         '''
         def plot_func(self,*args, **kwargs):
             kwargs.update({'attribute':network_property_name})
-            plot_uncertainty_bounds_component(*args,**kwargs)
+            self.plot_uncertainty_bounds_component(*args,**kwargs)
 
         setattr(self.__class__,'plot_uncertainty_bounds_'+\
                 network_property_name,plot_func)
@@ -597,13 +597,13 @@ class NetworkSet(object):
     @property
     def std_s_db(self):
         '''
-        the mean magnitude in dB.
+        the standard deviation magnitude in dB.
 
         note:
-                the mean is taken on the magnitude before converted to db, so
-                        magnitude_2_db( mean(s_mag))
+                the standard deviation is taken on the magnitude before converted to db, so
+                        magnitude_2_db( std(s_mag))
                 which is NOT the same as
-                        mean(s_db)
+                        std(s_db)
         '''
         ntwk= self.std_s_mag
         ntwk.s = ntwk.s_db

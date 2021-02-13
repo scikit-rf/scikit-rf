@@ -54,12 +54,21 @@ Plotting
     
 Circuit
 ------------------
+
 .. toctree::
     :maxdepth: 1
     :glob:
 
     circuit/*
-   
+
+Mixed Mode
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    mixedmodeanalysis/*
 
 Internals
 ------------------
@@ -72,6 +81,7 @@ Internals
 
 Instrument Control
 ------------------
+
 .. toctree::
     :maxdepth: 1
     :glob:
@@ -86,3 +96,12 @@ Interactive
     :glob:
     
     interactive/*
+
+Vector Fitting
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    vectorfitting/*

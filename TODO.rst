@@ -37,8 +37,7 @@ Calibration
 
 Frequency 
 -----------
-* add write() method 
-
+* add write() method
 
 vi 
 --------------------
@@ -46,12 +45,16 @@ vi
 * use consistent method names so VNA's are inter-changable as much as possible
 * make a generic VNA that uses IDN? to load the correct class (durrants idea)
 
+VectorFitting
+-------------
+* implement passivity evaluation and enforcement routines
 
 Other
 ------
 * switch to BSD license similar to scipy/numpy/etc
 * use doctests or ipython doctests
-* change ininstance() calls so that the we dont depend on module name 
+* change ininstance() calls so that the we dont depend on module name
+
  -- see Network.frequency.setter upon change of skrf to skrf2 or similar
 
 plotting

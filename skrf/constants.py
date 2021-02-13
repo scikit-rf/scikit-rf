@@ -22,13 +22,20 @@ This module contains constants, numerical approximations, and unit conversions
 
     0 + epsilon where epsilon is small. Used to avoid numerical error.
 
-.. data::K_BOLTZMANN
+.. data:: K_BOLTZMANN
 
     Boltzmann constant (1.38064852e-23)
 
-.. data::S_DEFINITIONS
+.. data:: S_DEFINITIONS
 
-    S-parameter definition labels. Default is 'power'
+    S-parameter definition labels: 
+        - 'power' for power-waves definition, 
+        - 'pseudo' for pseudo-waves definition. 
+        - 'traveling' corresponds to the initial implementation. 
+
+.. data:: S_DEF_DEFAULT
+
+    Default S-parameter definition: 'power', for power-wave definition.
 
 .. autosummary::
    :toctree: generated/
