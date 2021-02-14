@@ -687,5 +687,31 @@ class NetworkTestCase(unittest.TestCase):
         # vswr_act should be equal to vswr22 if a = [0,1]
         npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([0, 1])[:,1], vswr_ref[:,1,1])
 
+    def test_subnetwork(self):
+        ''' Test subnetwork creation and recombination '''
+        tee = rf.data.tee # 3 port Network
+        
+        # modify the z0 to dummy values just to check it works for any z0
+        tee.z0 = npy.random.rand(3) + 1j*npy.random.rand(3)
+        
+        # Using rf.subnetwork()
+        # 2 port Networks as if one measures the tee with a 2 ports VNA
+        tee12 = rf.subnetwork(tee, [0, 1])  # 2 port Network from ports 1 & 2, port 3 matched
+        tee23 = rf.subnetwork(tee, [1, 2])  # 2 port Network from ports 2 & 3, port 1 matched
+        tee13 = rf.subnetwork(tee, [0, 2])  # 2 port Network from ports 1 & 3, port 2 matched
+        # recreate the original 3 ports Network from the thee 2-port sub-Networks
+        ntw_list = [tee12, tee23, tee13]
+        tee2 = rf.n_twoports_2_nport(ntw_list, nports=3)
+        self.assertTrue(tee2 == tee)
+
+        # Same from the subnetwork() method.
+        tee12 = tee.subnetwork([0, 1])
+        tee23 = tee.subnetwork([1, 2])
+        tee13 = tee.subnetwork([0, 2])
+        ntw_list = [tee12, tee23, tee13]
+        tee2 = rf.n_twoports_2_nport(ntw_list, nports=3)
+        self.assertTrue(tee2 == tee)
+
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
