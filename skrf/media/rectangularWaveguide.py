@@ -245,22 +245,14 @@ class RectangularWaveguide(Media):
 
         .. math::
 
-            max ( \frac{m \cdot v}{2a} , \frac{n \cdot v}{2b})
+            f_c = \\frac{v}{2 \\pi} \\sqrt {
+                {m \\frac{\pi}{a}}^2 + {n \\frac{\pi}{b}}^2}
 
         where v= 1/sqrt(ep*mu)
 
-
-
         '''
-        # TODO: Implement correct cutoff frequency
         v = 1/sqrt(self.ep*self.mu)
-        if not ( self.m==1 and self.n==0):
-            print('f_cutoff not verified as correct for this mode ')
-        
-        if self.m/self.a > self.n/self.b: 
-            return self.m*v/(2*self.a)
-        else: 
-            return self.n*v/(2*self.b)
+        return v* self.kc/(2*npy.pi)
 
     @property
     def f_norm(self):
