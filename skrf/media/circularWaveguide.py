@@ -113,7 +113,7 @@ class CircularWaveguide(Media):
 
     
     @classmethod
-    def from_z0(cls,frequency, z0,f, ep_r=1, mu_r=1, **kw):
+    def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
         '''
         Initialize from specfied impedance at a given frequency, assuming the 
         fundamental TE11 mode.
@@ -121,10 +121,11 @@ class CircularWaveguide(Media):
         Parameters
         -------------
         frequency : Frequency Object
-        z0 : number /array
-            scharacteristic impedance to create at `f`
+        Z0 : number /array
+            characteristic impedance to create at `f`
         f : number 
-            frequency (in Hz) that the resultant waveguide has z0=z0
+            frequency (in Hz) at which the resultant waveguide has the 
+            characteristic impedance Z0
         '''
         
         mu = mu_0*mu_r
@@ -132,7 +133,7 @@ class CircularWaveguide(Media):
         w = 2*pi*f
         # if self.mode_type =="te":
         u = jnp_zeros(1, 1)[-1] 
-        r =u/(w*mu) * 1./sqrt((1/(z0*1j)**2+ep/mu))
+        r =u/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
         
         kw.update(dict(frequency=frequency, r=r, m=1, n=1, ep_r=ep_r, mu_r=mu_r))
         
@@ -174,43 +175,7 @@ class CircularWaveguide(Media):
                 characteristic wave number
         '''
         return 2*pi*self.frequency.f*sqrt(self.ep * self.mu)
-
-    # @property
-    # def ky(self):
-    #     '''
-    #     Eigen-value in the `b` direction.
-
-    #     Defined as
-
-    #     .. math::
-
-    #             k_y = n \\frac{\pi}{b}
-
-    #     Returns
-    #     -------
-    #     ky : number
-    #             eigen-value in `b` direction
-    #     '''
-    #     return self.n*pi/self.b
-
-    # @property
-    # def kx(self):
-    #     '''
-    #     Eigen value in the 'a' direction
-
-    #     Defined as
-
-    #     .. math::
-
-    #             k_x = m \\frac{\pi}{a}
-
-    #     Returns
-    #     -------
-    #     kx : number
-    #             eigen-value in `a` direction
-    #     '''
-    #     return self.m*pi/self.a
-
+    
     @property
     def kc(self):
         '''
@@ -393,7 +358,7 @@ class CircularWaveguide(Media):
             /sqrt(1-(1/f_n)**2)
 
     @property
-    def z0(self):
+    def Z0(self):
         '''
         The characteristic impedance
         '''

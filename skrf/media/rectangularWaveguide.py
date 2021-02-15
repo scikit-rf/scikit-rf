@@ -121,7 +121,7 @@ class RectangularWaveguide(Media):
 
     
     @classmethod
-    def from_z0(cls,frequency, z0,f, ep_r=1, mu_r=1, **kw):
+    def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
         '''
         Initialize from specfied impedance at a given frequency, assuming 
         the fundamental TE10 mode.
@@ -129,16 +129,17 @@ class RectangularWaveguide(Media):
         Parameters
         -------------
         frequency : Frequency Object
-        z0 : number /array
+        Z0 : number /array
             characteristic impedance to create at `f`
         f : number 
-            frequency (in Hz) that the resultant waveguide has z0=z0
+            frequency (in Hz) at which the resultant waveguide has the 
+            characteristic impedance Z0
         '''
                 
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
-        a =pi/(w*mu) * 1./sqrt((1/(z0*1j)**2+ep/mu))
+        a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
         
         kw.update(dict(frequency=frequency,a=a, m=1, n=0, ep_r=ep_r, mu_r=mu_r))
         
@@ -420,7 +421,7 @@ class RectangularWaveguide(Media):
             sqrt(1-(1/f_n)**2)
 
     @property
-    def z0(self):
+    def Z0(self):
         '''
         The characteristic impedance
         '''
