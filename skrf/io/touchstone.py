@@ -278,7 +278,7 @@ class Touchstone:
         '''
         comments = self.comments
         p1 = re.compile(r'\w* = \w*')
-        p2 = re.compile(r'\s*(\d*)\s*(\w*)')
+        p2 = re.compile(r'\s*(\d*\.?\d*)\s*(\w*)')
         var_dict = {}
         for k in re.findall(p1, comments):
             var, value = k.split('=')
