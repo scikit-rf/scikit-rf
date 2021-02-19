@@ -22,6 +22,7 @@ class IOTestCase(unittest.TestCase):
         self.short = rf.Network(os.path.join(self.test_dir, 'short.s1p'))
         self.match = rf.Network(os.path.join(self.test_dir, 'match.s1p'))
         self.open = rf.Network(os.path.join(self.test_dir, 'open.s1p'))
+        self.ntwk_comments_file = os.path.join(self.test_dir, 'comments.s3p')
         self.test_files = [os.path.join(self.test_dir, test_file) for test_file in ['ntwk1.s2p', 'ntwk2.s2p']]
         self.embeding_network= rf.Network(os.path.join(self.test_dir, 'embedingNetwork.s2p'))
         self.freq = rf.F(75,110,101)
@@ -144,7 +145,6 @@ class IOTestCase(unittest.TestCase):
     def test_snp_json_roundtrip(self):
         '''
         Tests if snp object saved to json and reloaded is still the same.
-        :return:
         '''
         given = self.ntwk1
         actual = rf.from_json_string(rf.to_json_string(given))
@@ -155,3 +155,12 @@ class IOTestCase(unittest.TestCase):
         self.assertEqual(actual.z0.tolist(), given.z0.tolist())
         self.assertEqual(actual.port_names, given.port_names)
         self.assertEqual(actual.variables, given.variables)
+
+    def test_touchstone_get_comment_variables(self):
+        '''
+        Tests if comments are parsed correctly with get_comment_variables() method.
+        '''
+
+        given = {'p1': ('.03', ''), 'p2': ('0.03', ''), 'p3': ('100', ''), 'p4': ('2.5', 'um')}
+        actual = rf.io.Touchstone(self.ntwk_comments_file).get_comment_variables()
+        self.assertEqual(given, actual)
