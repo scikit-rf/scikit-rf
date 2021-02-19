@@ -81,6 +81,7 @@ Internals
 
 Instrument Control
 ------------------
+
 .. toctree::
     :maxdepth: 1
     :glob:
@@ -95,3 +96,12 @@ Interactive
     :glob:
     
     interactive/*
+
+Vector Fitting
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    vectorfitting/*

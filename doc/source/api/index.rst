@@ -23,4 +23,4 @@ API
     media/index
     media/device
     vi/index
-
+    vectorFitting
