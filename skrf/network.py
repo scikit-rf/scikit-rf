@@ -1955,6 +1955,16 @@ class Network(object):
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
             output.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0, 0]))))
 
+            # write ports
+            try:
+                if self.port_names and len(self.port_names) == self.number_of_ports:
+                    ports = ''
+                    for port_idx, port_name in enumerate(self.port_names):
+                        ports += '! Port[{}] = {}\n'.format(port_idx, port_name)
+                    output.write(ports)
+            except(AttributeError):
+                pass
+
             scaled_freq = self.frequency.f_scaled
 
             if self.number_of_ports == 1:
