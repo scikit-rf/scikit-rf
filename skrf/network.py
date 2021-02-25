@@ -1838,8 +1838,8 @@ class Network(object):
     def write_touchstone(self, filename=None, dir=None,
                          write_z0=False, skrf_comment=True,
                          return_string=False, to_archive=None,
-                         form='ri',format_spec_A='{}',format_spec_B='{}',
-                         format_spec_freq='{}'):  
+                         form='ri', format_spec_A='{}', format_spec_B='{}',
+                         format_spec_freq='{}'):
         """
         Write a contents of the :class:`Network` to a touchstone file.
 
@@ -1874,7 +1874,7 @@ class Network(object):
             the angle in degrees for 'ma' format, or the imaginary part for 'ri' format)
         format_spec_freq : string, optional
             Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
-            This specifies the formatting in the resulting touchstone file for the frequency. 
+            This specifies the formatting in the resulting touchstone file for the frequency.
 
         Notes
         -------
@@ -1918,7 +1918,7 @@ class Network(object):
         else:
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
-        # add formatting to funcA and funcB so we don't have to write it out many many times. 
+        # add formatting to funcA and funcB so we don't have to write it out many many times.
         def c2str_A(c):
             '''Function which takes a complex number for the A part of param and returns an appropriately formatted string'''
             return format_spec_A.format(funcA(c))
@@ -1942,7 +1942,7 @@ class Network(object):
                 if self.comments:
                     for comment_line in self.comments.split('\n'):
                         commented_header += '!{}\n'.format(comment_line)
-            except(AttributeError):
+            except AttributeError:
                 pass
             if skrf_comment:
                 commented_header += '!Created with skrf (http://scikit-rf.org).\n'
@@ -1954,6 +1954,16 @@ class Network(object):
             # exactly this format, to work
             # [HZ/KHZ/MHZ/GHZ] [S/Y/Z/G/H] [MA/DB/RI] [R n]
             output.write('# {} S {} R {} \n'.format(self.frequency.unit, form, str(abs(self.z0[0, 0]))))
+
+            # write ports
+            try:
+                if self.port_names and len(self.port_names) == self.number_of_ports:
+                    ports = ''
+                    for port_idx, port_name in enumerate(self.port_names):
+                        ports += '! Port[{}] = {}\n'.format(port_idx, port_name)
+                    output.write(ports)
+            except AttributeError:
+                pass
 
             scaled_freq = self.frequency.f_scaled
 
