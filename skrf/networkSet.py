@@ -15,7 +15,7 @@ deviation, on an entire set of n-port networks. To facilitate these
 calculations the :class:`NetworkSet` class provides convenient
 ways to make such calculations.
 
-Another usage is to interpolate a set of Networks which depend of 
+Another usage is to interpolate a set of Networks which depend of
 an parameter (like a knob, or a geometrical parameter).
 
 The results are returned in :class:`~skrf.network.Network` objects, so they can be plotted and saved in the same way one would do with a
@@ -38,7 +38,7 @@ NetworkSet Utilities
 
 .. autosummary::
    :toctree: generated/
-   
+
    func_on_networks
    getset
 
@@ -249,7 +249,7 @@ class NetworkSet(object):
         ---------------
         dir : str
             directory containing Network files.
-        
+
         \*args, \*\*kwargs :
             passed to NetworkSet constructor
 
@@ -260,8 +260,8 @@ class NetworkSet(object):
         '''
         from . io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
-        
-        
+
+
 
     @classmethod
     def from_s_dict(cls,d, frequency, *args, **kwargs):
@@ -293,8 +293,8 @@ class NetworkSet(object):
         return cls([Network(s=d[k], frequency=frequency, name=k,
                             *args, **kwargs)  for k in d])
 
-    
-        
+
+
 
     def __add_a_operator(self,operator_name):
         '''
@@ -324,7 +324,7 @@ class NetworkSet(object):
     def __str__(self):
         '''
         '''
-        
+
         return self.ntwk_set.__str__()
 
     def __repr__(self):
@@ -485,77 +485,77 @@ class NetworkSet(object):
         copies each network of the network set.
         '''
         return NetworkSet([k.copy() for k in self.ntwk_set])
-    
+
     def sort(self, key=lambda x: x.name, **kwargs):
         '''
-        sort this network set. 
-        
+        sort this network set.
+
         Parameters
         -------------
         **kwargs : dict
             keyword args passed to builtin sorted acting on self.ntwk_set
-            
+
         Examples
         -----------
         >>> ns = rf.NetworkSet.from_dir('mydir')
         >>> ns.sort()
-        
-        Sort by other property 
+
+        Sort by other property
         >>> ns.sort(key= lambda x: x.voltage)
         '''
         self.ntwk_set = sorted(self.ntwk_set, key = key, **kwargs)
-        
+
     def rand(self,n=1):
         '''
         return `n` random samples from this NetworkSet
-        
+
         Parameters
         ----------
         n : int
-            number of samples to return 
+            number of samples to return
         '''
         idx = npy.random.randint(0,len(self), n)
         out = [self.ntwk_set[k] for k in idx]
-        
+
         if n ==1:
             return out[0]
         else:
             return out
-    
+
     def filter(self,s):
         '''
         filter networkset based on a string in Network.name
-        
+
         Notes
         -----
-        This is just 
-        
+        This is just
+
         `NetworkSet([k for k in self if s in k.name])`
-        
-        
-        Parameters 
+
+
+        Parameters
         -------------
         s: str
             string contained in network elements to be filtered
-        
+
         Returns
         --------
         ns : NetworkSet
-            
-            
+
+
         Examples
         -----------
         >>> ns.filter('monday')
         '''
         return NetworkSet([k for k in self if s in k.name])
-    
+
     def scalar_mat(self, param='s',order='F'):
         '''
         scalar ndarray representing `param` data vs freq and element idx
-        
+
         output is a 3d array with axes  (freq, ns_index, port/ri)
-        
-        freq is frequency 
+
+        freq is frequency
         ns_index is  index of this networkset
         ports is a flattened re/im components of port index (len =2*nports**2)
         '''
@@ -564,21 +564,21 @@ class NetworkSet(object):
         # x will have the axes ( frequency,observations, ports)
         x = npy.array([[mf.flatten_c_mat(k.__getattribute__(param)[f]) \
             for k in self] for f in range(nfreq)])
-            
+
         return x
 
 
     def cov(self, **kw):
         '''
-        covariance matrix 
-        
+        covariance matrix
+
         shape of output  will be  (nfreq, 2*nports**2, 2*nports**2)
         '''
         smat=self.scalar_mat(**kw)
         return npy.array([npy.cov(k.T) for k in smat])
 
-        
-    
+
+
     @property
     def mean_s_db(self):
         '''
@@ -640,7 +640,7 @@ class NetworkSet(object):
         '''
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
-  
+
 
     def uncertainty_ntwk_triplet(self, attribute,n_deviations=3):
         '''
@@ -661,17 +661,17 @@ class NetworkSet(object):
 
     def datetime_index(self):
         '''
-        Create a datetime index from networks names 
-        
+        Create a datetime index from networks names
+
         this is just:
-        
+
         [rf.now_string_2_dt(k.name ) for k in self]
-        
-        
+
+
         '''
         return [now_string_2_dt(k.name ) for k in self]
 
-        
+
     # io
     def write(self, file=None,  *args, **kwargs):
         '''
@@ -753,17 +753,17 @@ class NetworkSet(object):
     def interpolate_from_network(self, ntw_param, x, interp_kind='linear'):
         '''
         Interpolate a Network from a NetworkSet, as a multi-file N-port network.
-        
-        Assumes that the NetworkSet contains N-port networks 
-        with same number of ports N and same number of frequency points. 
-        
-        These networks differ from an given array parameter `interp_param`, 
+
+        Assumes that the NetworkSet contains N-port networks
+        with same number of ports N and same number of frequency points.
+
+        These networks differ from an given array parameter `interp_param`,
         which is used to interpolate the returned Network. Length of `interp_param`
         should be equal to the length of the NetworkSet.
-        
+
         Parameters
         ----------
-        ntw_param : (N,) array_like 
+        ntw_param : (N,) array_like
             A 1-D array of real values. The length of ntw_param must be equal
             to the length of the NetworkSet
         x : real
@@ -771,21 +771,21 @@ class NetworkSet(object):
         interp_kind: str
             Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailled description.
             Default is 'linear'.
-           
+
         Returns
         -------
         ntw : class:`~skrf.network.Network`
             Network interpolated at x
-        
-        '''              
+
+        '''
         ntw = self[0].copy()
-        # Interpolating the scattering parameters 
+        # Interpolating the scattering parameters
         s = npy.array([self[idx].s for idx in range(len(self))])
         f = interp1d(ntw_param, s, axis=0, kind=interp_kind)
         ntw.s = f(x)
-        
+
         return ntw
-    
+
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
@@ -874,7 +874,7 @@ def getset(ntwk_dict, s, *args, **kwargs):
         return None
 
 
-def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=21, TNWformat=True):            
+def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=21, TNWformat=True):
     r = npy.linspace(0.1,0.9,r_lin)
     a = npy.linspace(0,2*npy.pi,phi_lin)
     r_, a_ = npy.meshgrid(r,a)
@@ -882,7 +882,7 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
     g= c_.flatten()
     x =  npy.real(g)
     y =  npy.imag(g)
-    
+
     if TNWformat :
         TNL = dict()
         # for ii, gi in enumerate(g) :
@@ -890,7 +890,7 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
             TNL['pos'+str(ii)] = Network(f = [singlefreq ], s=[[[gi]]], z0=[[Z0]], name=name +'_' + str(ii))
         TNW = NetworkSet(TNL, name=name)
         return TNW, x,y,g
-    else :  
+    else :
         return x,y,g
 
 

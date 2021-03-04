@@ -23,7 +23,7 @@ General functions
    save_sesh
 
 
-Writing output to spreadsheet
+Spreadsheets
 -----------------------------
 
 .. autosummary::
@@ -32,13 +32,25 @@ Writing output to spreadsheet
    network_2_spreadsheet
    networkset_2_spreadsheet
 
-Writing output to pandas dataframe
+Pandas dataframe
 ----------------------------------
 
 .. autosummary::
    :toctree: generated/
 
    network_2_dataframe
+
+
+JSON
+-------
+
+.. autosummary::
+   :toctree: generated/
+
+   TouchstoneEncoder
+   to_json_string
+   from_json_string
+
 
 '''
 import sys
@@ -284,11 +296,11 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None)
     '''
 
     out={}
-    
+
     filelist = files
     if files == None:
         filelist = sorted(os.listdir(dir))
-    
+
     for filename in filelist:
         if contains is not None and contains not in filename:
             continue
@@ -593,7 +605,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
         remove_tmp_file = True
 
     # This breaks compatibility with python 2.6 and older
-    with open(file_name, 'r') as old_file, open(new_file_name, 'w') as new_file: 
+    with open(file_name, 'r') as old_file, open(new_file_name, 'w') as new_file:
         new_file.write('%s\n'%header_string)
         for line in old_file:
             new_file.write(line)
