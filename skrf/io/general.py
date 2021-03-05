@@ -9,8 +9,11 @@ general (:mod:`skrf.io.general`)
 General input/output functions for reading and writing skrf objects
 
 
-General functions
+Pickle functions
 ------------------
+
+The read/write methods use the pickle module. These should only be used
+for temporary storage.
 
 .. autosummary::
    :toctree: generated/
