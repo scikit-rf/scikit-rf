@@ -47,7 +47,7 @@ class RectangularWaveguide(Media):
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
         from the characterisitc impedance of the transmission
-        line. if z0 is None then will default to z0
+        line. if z0 is None then will default to Z0.
     a : number
             width of waveguide, in meters.
     b : number
