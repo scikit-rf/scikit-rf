@@ -41,6 +41,7 @@ from .distributedCircuit import DistributedCircuit
 from .freespace import Freespace
 from .cpw import CPW
 from .rectangularWaveguide import RectangularWaveguide
+from .circularWaveguide import CircularWaveguide
 from .coaxial import Coaxial
 from .mline import MLine
 from .definedAEpTandZ0 import DefinedAEpTandZ0

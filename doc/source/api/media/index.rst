@@ -12,6 +12,7 @@ Transmission Line Classes
    ~media.DefinedGammaZ0
    ~distributedCircuit.DistributedCircuit
    ~rectangularWaveguide.RectangularWaveguide
+   ~circularWaveguide.CircularWaveguide
    ~cpw.CPW
    ~coaxial.Coaxial
    ~mline.MLine
