@@ -320,7 +320,6 @@ class Frequency(object):
         set the number of points in the frequency
         '''
 
-        print("self.sweep type")
         if self.sweep_type == 'lin':
             self.f = linspace(self.start, self.stop, n)
         elif self.sweep_type == 'log':
@@ -420,8 +419,6 @@ class Frequency(object):
         sets the frequency object by passing a vector in Hz
         '''
         self._f = npy.array(new_f)
-
-        print(new_f)
 
         if npy.allclose(    new_f,  
                             npy.linspace(new_f[0], new_f[-1], len(new_f))):
