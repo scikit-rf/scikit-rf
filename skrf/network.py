@@ -3236,8 +3236,6 @@ class Network(object):
             impulse_response
             extrapolate_to_dc
         """
-        if self.nports != 1:
-            raise ValueError('Only one-ports are supported')
         if self.frequency.sweep_type != 'lin':
             raise NotImplementedError(
                 'Unable to transform non equidistant sampled points to time domain')
@@ -3247,21 +3245,9 @@ class Network(object):
                 "Frequency doesn't begin from 0. Step response will not be correct.",
                 RuntimeWarning
             )
-        if n is None:
-            # Use zero-padding specification. Note that this does not allow n odd.
-            n = 2 * (self.frequency.npoints + pad - 1)
 
-        fstep = self.frequency.step
-        if n % 2 == 0:
-            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n, endpoint=False))
-        else:
-            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n + 1, endpoint=False))
-            t = t[:-1]
-        if window != None:
-            w = self.windowed(window=window, normalize=False, center_to_dc=True)
-        else:
-            w = self
-        return t, npy.cumsum(mf.irfft(w.s, n=n).flatten())
+        t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False)
+        return t, npy.cumsum(y)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a):
