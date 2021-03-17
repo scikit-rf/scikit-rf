@@ -127,9 +127,9 @@ class Frequency(object):
         stop = self.multiplier * stop
 
         if sweep_type.lower() == 'lin':
-            self.f = linspace(start, stop, npoints)
+            self._f = linspace(start, stop, npoints)
         elif sweep_type.lower() == 'log':
-            self.f = logspace(npy.log10(start), npy.log10(stop), npoints)
+            self._f = logspace(npy.log10(start), npy.log10(stop), npoints)
         else:
             raise ValueError('Sweep Type not recognized')
 
@@ -242,6 +242,7 @@ class Frequency(object):
             f = [f]
         temp_freq =  cls(0,0,0,*args, **kwargs)
         temp_freq.f = npy.array(f) * temp_freq.multiplier
+
         return temp_freq
 
     def __eq__(self, other):
@@ -318,7 +319,15 @@ class Frequency(object):
         '''
         set the number of points in the frequency
         '''
-        self.f = linspace(self.start, self.stop, n)
+
+        print("self.sweep type")
+        if self.sweep_type == 'lin':
+            self.f = linspace(self.start, self.stop, n)
+        elif self.sweep_type == 'log':
+            self.f = logspace(npy.log10(self.start), npy.log10(self.stop), n)
+        else:
+            raise ValueError(
+                'Unable to change number of points for sweep type', self.sweep_type)
 
 
 
@@ -411,6 +420,17 @@ class Frequency(object):
         sets the frequency object by passing a vector in Hz
         '''
         self._f = npy.array(new_f)
+
+        print(new_f)
+
+        if npy.allclose(    new_f,  
+                            npy.linspace(new_f[0], new_f[-1], len(new_f))):
+            self.sweep_typesweep_type = 'lin'
+        elif npy.allclose(  new_f, 
+                            npy.logspace(npy.log10(new_f[0]), npy.log10(new_f[-1]), len(new_f))):
+            self.sweep_type = 'log'
+        else:
+            self.sweep_type = 'unknown'
 
 
 

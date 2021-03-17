@@ -3223,6 +3223,14 @@ class Network(object):
         y : class:`numpy.ndarray`
             Step response
 
+        Raises
+        ------
+        ValueError
+            If used with an Network with more than one port
+
+        NotImplementedError
+            If used with non equidistant sampled frequency vector
+
         See Also
         -----------
             impulse_response
@@ -3230,6 +3238,10 @@ class Network(object):
         """
         if self.nports != 1:
             raise ValueError('Only one-ports are supported')
+        if self.frequency.sweep_type != 'lin':
+            raise NotImplementedError(
+                'Unable to transform non equidistant sampled points to time domain')
+        
         if self.frequency.f[0] != 0:
             warnings.warn(
                 "Frequency doesn't begin from 0. Step response will not be correct.",
