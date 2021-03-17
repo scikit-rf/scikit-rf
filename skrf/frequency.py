@@ -32,7 +32,7 @@ Functions
 '''
 
 # from matplotlib.pyplot import gca,plot, autoscale
-from numpy import pi, linspace, logspace
+from numpy import pi, linspace, geomspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
 import re
@@ -129,7 +129,7 @@ class Frequency(object):
         if sweep_type.lower() == 'lin':
             self._f = linspace(start, stop, npoints)
         elif sweep_type.lower() == 'log':
-            self._f = logspace(npy.log10(start), npy.log10(stop), npoints)
+            self._f = geomspace(start, stop, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
 
@@ -323,7 +323,7 @@ class Frequency(object):
         if self.sweep_type == 'lin':
             self.f = linspace(self.start, self.stop, n)
         elif self.sweep_type == 'log':
-            self.f = logspace(npy.log10(self.start), npy.log10(self.stop), n)
+            self.f = geomspace(self.start, self.stop, n)
         else:
             raise ValueError(
                 'Unable to change number of points for sweep type', self.sweep_type)
@@ -421,10 +421,10 @@ class Frequency(object):
         self._f = npy.array(new_f)
 
         if npy.allclose(    new_f,  
-                            npy.linspace(new_f[0], new_f[-1], len(new_f))):
+                            linspace(new_f[0], new_f[-1], len(new_f))):
             self.sweep_typesweep_type = 'lin'
         elif npy.allclose(  new_f, 
-                            npy.logspace(npy.log10(new_f[0]), npy.log10(new_f[-1]), len(new_f))):
+                            geomspace(new_f[0], new_f[-1], len(new_f))):
             self.sweep_type = 'log'
         else:
             self.sweep_type = 'unknown'
