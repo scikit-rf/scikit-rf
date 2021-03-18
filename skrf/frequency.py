@@ -422,7 +422,7 @@ class Frequency(object):
 
         if npy.allclose(    new_f,  
                             linspace(new_f[0], new_f[-1], len(new_f))):
-            self.sweep_typesweep_type = 'lin'
+            self.sweep_type = 'lin'
         elif npy.allclose(  new_f, 
                             geomspace(new_f[0], new_f[-1], len(new_f))):
             self.sweep_type = 'log'
