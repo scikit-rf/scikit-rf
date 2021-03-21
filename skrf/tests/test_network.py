@@ -100,6 +100,12 @@ class NetworkTestCase(unittest.TestCase):
         with self.assertWarns(RuntimeWarning):
             self.ntwk1.s11.step_response()
 
+    def test_time_transform_multiport(self):
+        dut_dc = self.ntwk1.extrapolate_to_dc()
+        
+        with self.assertRaises(ValueError):
+            t, y = dut_dc.step_response()
+
     def test_constructor_empty(self):
         rf.Network()
 

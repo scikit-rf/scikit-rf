@@ -128,7 +128,7 @@ class Frequency(object):
 
         if sweep_type.lower() == 'lin':
             self._f = linspace(start, stop, npoints)
-        elif sweep_type.lower() == 'log':
+        elif sweep_type.lower() == 'log' and start > 0:
             self._f = geomspace(start, stop, npoints)
         else:
             raise ValueError('Sweep Type not recognized')
@@ -423,7 +423,7 @@ class Frequency(object):
         if npy.allclose(    new_f,  
                             linspace(new_f[0], new_f[-1], len(new_f))):
             self.sweep_type = 'lin'
-        elif npy.allclose(  new_f, 
+        elif new_f[0] and npy.allclose(  new_f, 
                             geomspace(new_f[0], new_f[-1], len(new_f))):
             self.sweep_type = 'log'
         else:
