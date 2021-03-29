@@ -91,6 +91,21 @@ class NetworkTestCase(unittest.TestCase):
             self.assertEqual(len(t), num_points)
             self.assertEqual(len(y), num_points)
             self.assertTrue(npy.isclose(t[1] - t[0], tps))
+            
+    def test_time_transform_nonlinear_f(self):
+        netw_nonlinear_f = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
+        with self.assertRaises(NotImplementedError):
+            netw_nonlinear_f.s11.step_response()
+
+    def test_time_transform(self):
+        with self.assertWarns(RuntimeWarning):
+            self.ntwk1.s11.step_response()
+
+    def test_time_transform_multiport(self):
+        dut_dc = self.ntwk1.extrapolate_to_dc()
+        
+        with self.assertRaises(ValueError):
+            t, y = dut_dc.step_response()
 
     def test_constructor_empty(self):
         rf.Network()
