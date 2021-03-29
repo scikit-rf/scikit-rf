@@ -1444,7 +1444,7 @@ def stylely(rc_dict={}, style_file = 'skrf.mplstyle'):
     loads the rc-params from the specified file (file must be located in skrf/data)
     '''
 
-    from skrf.data import pwd # delayed to solve circular import
+    from .data import pwd # delayed to solve circular import
     mpl.style.use(os.path.join(pwd, style_file))
     mpl.rc(rc_dict)
 
