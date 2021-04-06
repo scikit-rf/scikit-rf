@@ -2,15 +2,16 @@
 [![Documentation Status](https://readthedocs.org/projects/scikit-rf/badge/?version=latest)](https://readthedocs.org/projects/scikit-rf/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/scikit-rf/scikit-rf/badge.png)](https://coveralls.io/r/scikit-rf/scikit-rf)
 [![Code Testing](https://github.com/scikit-rf/scikit-rf/workflows/Code%20linting%20and%20testing/badge.svg)](https://github.com/scikit-rf/scikit-rf/actions?query=workflow%3A%22Code+linting+and+testing%22)
+[![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](./LICENSE.md)
+
+![PyPI Downloads](https://img.shields.io/pypi/dm/scikit-rf)
+[![Conda Downloads](https://anaconda.org/conda-forge/scikit-rf/badges/downloads.svg)](https://anaconda.org/conda-forge/scikit-rf)
 
 ## Install
 
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/installer/conda.svg
-)](https://anaconda.org/conda-forge/scikit-rf)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/downloads.svg)](https://anaconda.org/conda-forge/scikit-rf)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/version.svg)](https://anaconda.org/conda-forge/scikit-rf)
-[![Anaconda-Server Badge](https://anaconda.org/conda-forge/scikit-rf/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/scikit-rf)
-
+[![PyPI version](https://img.shields.io/pypi/v/scikit-rf?style=flat&logo=pypi)](https://pypi.org/project/scikit-rf/)
+[![Install with Conda](https://anaconda.org/conda-forge/scikit-rf/badges/installer/conda.svg)](https://anaconda.org/conda-forge/scikit-rf)
+[![Conda version](https://anaconda.org/conda-forge/scikit-rf/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/scikit-rf)
 
 `conda install -c conda-forge scikit-rf `
 
@@ -29,5 +30,9 @@ flexible and scalable.
 
 
 ## Join the **scikit-rf** team!
+[![Mailing List](https://img.shields.io/badge/mail-Mailing%20list-brightgreen)](http://groups.google.com/group/scikit-rf)
+[![Slack](https://img.shields.io/badge/Slack-join%20chat-blueviolet?style=flat&logo=slack)](https://scikit-rf.slack.com)
+[![Matrix](https://img.shields.io/badge/Matrix-join%20chat-blueviolet?style=flat&logo=matrix)](https://app.element.io/#/room/#scikit-rf:matrix.org)
+
 
 ![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
