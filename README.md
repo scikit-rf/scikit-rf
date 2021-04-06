@@ -14,7 +14,7 @@ in the Python programming language. It provides a modern, object-oriented librar
 flexible and scalable.  
 
 * [Home Page](http://www.scikit-rf.org)
-* [Docs](http://scikit-rf.readthedocs.org/)
+* [Documentation](http://scikit-rf.readthedocs.org/)
 
 ## Install
 
