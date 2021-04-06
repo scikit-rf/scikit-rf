@@ -14,7 +14,19 @@
 ![Conda-forge version](https://img.shields.io/conda/vn/conda-forge/scikit-rf)
 [![Conda version](https://anaconda.org/conda-forge/scikit-rf/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/scikit-rf)
 
-`conda install -c conda-forge scikit-rf `
+If you have [installed Python](https://wiki.python.org/moin/BeginnersGuide/Download),
+you can install PlasmaPy from [pip](https://pypi.org/project/pip/)
+via
+```Shell
+python -m pip install scikit-rf
+```
+
+If you have
+[installed conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html),
+then you can also get PlasmaPy from
+```Shell
+conda install -c conda-forge scikit-rf 
+```
 
 ## Description 
 
