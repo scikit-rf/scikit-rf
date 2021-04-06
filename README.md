@@ -19,7 +19,7 @@ flexible and scalable.
 ## Install
 
 [![PyPI version](https://img.shields.io/pypi/v/scikit-rf?style=flat&logo=pypi)](https://pypi.org/project/scikit-rf/)
-![Conda-forge version](https://img.shields.io/conda/vn/conda-forge/scikit-rf)
+[![Conda-forge version](https://img.shields.io/conda/v/conda-forge/scikit-rf?style=flat&logo=anaconda)](https://img.shields.io/conda/v/conda-forge/scikit-rf)
 [![Conda version](https://anaconda.org/conda-forge/scikit-rf/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/scikit-rf)
 
 If you have [installed Python](https://wiki.python.org/moin/BeginnersGuide/Download),
