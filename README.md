@@ -10,7 +10,7 @@
 ## Install
 
 [![PyPI version](https://img.shields.io/pypi/v/scikit-rf?style=flat&logo=pypi)](https://pypi.org/project/scikit-rf/)
-[![Install with Conda](https://anaconda.org/conda-forge/scikit-rf/badges/installer/conda.svg)](https://anaconda.org/conda-forge/scikit-rf)
+![Conda-forge version](https://img.shields.io/conda/vn/conda-forge/scikit-rf)
 [![Conda version](https://anaconda.org/conda-forge/scikit-rf/badges/latest_release_date.svg)](https://anaconda.org/conda-forge/scikit-rf)
 
 `conda install -c conda-forge scikit-rf `
