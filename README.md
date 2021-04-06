@@ -23,16 +23,13 @@ flexible and scalable.
 
 * [Home Page](http://www.scikit-rf.org)
 * [Docs](http://scikit-rf.readthedocs.org/)
-* [Slack Channel](http://scikit-rf.slack.com)
-* [Mailing List](http://groups.google.com/group/scikit-rf)
-* [Development Guide](https://github.com/scikit-rf/scikit-rf/wiki/Development)
-
-
 
 ## Join the **scikit-rf** team!
 [![Mailing List](https://img.shields.io/badge/mail-Mailing%20list-brightgreen)](http://groups.google.com/group/scikit-rf)
 [![Slack](https://img.shields.io/badge/Slack-join%20chat-blueviolet?style=flat&logo=slack)](https://scikit-rf.slack.com)
 [![Matrix](https://img.shields.io/badge/Matrix-join%20chat-blueviolet?style=flat&logo=matrix)](https://app.element.io/#/room/#scikit-rf:matrix.org)
 
+* [Development Guide](https://github.com/scikit-rf/scikit-rf/wiki/Development)
+ 
 
 ![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
