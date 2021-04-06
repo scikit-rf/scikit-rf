@@ -36,13 +36,23 @@ then you can also get PlasmaPy from
 conda install -c conda-forge scikit-rf 
 ```
 
+## Questions or comments? Ask the Community
 
-## Join the **scikit-rf** team!
 [![Mailing List](https://img.shields.io/badge/mail-Mailing%20list-brightgreen)](http://groups.google.com/group/scikit-rf)
 [![Slack](https://img.shields.io/badge/Slack-join%20chat-blueviolet?style=flat&logo=slack)](https://scikit-rf.slack.com)
 [![Matrix](https://img.shields.io/badge/Matrix-join%20chat-blueviolet?style=flat&logo=matrix)](https://app.element.io/#/room/#scikit-rf:matrix.org)
 
+* [Mailing list](http://groups.google.com/group/scikit-rf): You can suscribe to our mailing list to ask (and answer) questions and to receive scikit-rf annoucements.
+* Chat: scikit-rf have channels on both [Slack](https://scikit-rf.slack.com) and [Matrix](https://app.element.io/#/room/#scikit-rf:matrix.org)  
+* [Suggestion box](https://docs.google.com/forms/d/e/1FAIpQLSfkSNy8KzoHwdDxYGCmHHiA3GsHgN6zKTFI2NrcUR29U7Xx6A/viewform?usp=sf_link): if you would like to (optionally anonymoulsy) suggest a feature/topic for consideration.
+
+## Join the **scikit-rf** team!
+
 * [Development Guide](https://github.com/scikit-rf/scikit-rf/wiki/Development)
  
-
+ 
 ![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
+
+## License
+
+scikit-rf is permissively licensed under a [3-clause BSD license](LICENSE.txt).
