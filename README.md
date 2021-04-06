@@ -1,12 +1,20 @@
 [![Build Status](https://travis-ci.org/scikit-rf/scikit-rf.svg?branch=master)](https://travis-ci.org/scikit-rf/scikit-rf)
 [![Documentation Status](https://readthedocs.org/projects/scikit-rf/badge/?version=latest)](https://readthedocs.org/projects/scikit-rf/?badge=latest)
 [![Coverage Status](https://coveralls.io/repos/scikit-rf/scikit-rf/badge.png)](https://coveralls.io/r/scikit-rf/scikit-rf)
-[![Code Testing](https://github.com/scikit-rf/scikit-rf/workflows/Code%20linting%20and%20testing/badge.svg)](https://github.com/scikit-rf/scikit-rf/actions?query=workflow%3A%22Code+linting+and+testing%22)
-
+[![Code Testing](https://github.com/scikit-rf/scikit-rf/workflows/Code%20linting%20and%20testing/badge.svg)](https://github.com/scikit-rf/scikit-rf/actions?query=workflow%3A%22Code+linting+and+testing%22) 
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](./LICENSE.md)
 
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/scikit-rf)
 [![Conda Downloads](https://anaconda.org/conda-forge/scikit-rf/badges/downloads.svg)](https://anaconda.org/conda-forge/scikit-rf)
+
+## Description 
+
+**scikit-rf** (aka `skrf`) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented 
+in the Python programming language. It provides a modern, object-oriented library which is both 
+flexible and scalable.  
+
+* [Home Page](http://www.scikit-rf.org)
+* [Docs](http://scikit-rf.readthedocs.org/)
 
 ## Install
 
@@ -28,14 +36,6 @@ then you can also get PlasmaPy from
 conda install -c conda-forge scikit-rf 
 ```
 
-## Description 
-
-**scikit-rf** (aka `skrf`) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented 
-in the Python programming language. It provides a modern, object-oriented library which is both 
-flexible and scalable.  
-
-* [Home Page](http://www.scikit-rf.org)
-* [Docs](http://scikit-rf.readthedocs.org/)
 
 ## Join the **scikit-rf** team!
 [![Mailing List](https://img.shields.io/badge/mail-Mailing%20list-brightgreen)](http://groups.google.com/group/scikit-rf)
