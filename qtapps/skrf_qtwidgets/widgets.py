@@ -88,7 +88,8 @@ class OverwriteFilesQuery(QtWidgets.QDialog):
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.No|QtWidgets.QDialogButtonBox.Yes|QtWidgets.QDialogButtonBox.YesToAll)
+        self.buttonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.No | QtWidgets.QDialogButtonBox.Yes | QtWidgets.QDialogButtonBox.YesToAll)
 
         self.choice = None
 
@@ -202,7 +203,7 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.verticalLayout.addLayout(self.gridLayout)
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.verticalLayout.addWidget(self.buttonBox)
 
         self.buttonBox.accepted.connect(self.accept)
@@ -242,7 +243,8 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.evaluate()
 
     @property
-    def ready(self): return self._ready
+    def ready(self):
+        return self._ready
 
     @ready.setter
     def ready(self, val):
@@ -273,6 +275,7 @@ class VnaControllerDialog(QtWidgets.QDialog):
     """
     a convenience Dialog class that contains a VnaController Widget
     """
+
     def __init__(self, vna, parent=None):
         super(VnaControllerDialog, self).__init__(parent)
         self.controller = VnaController(vna, self)
@@ -292,7 +295,6 @@ class VnaController(QtWidgets.QWidget):
     FCONVERSIONS = {"Hz": 1., "kHz": 1e-3, "MHz": 1e-6, "GHz": 1e-9, "THz": 1e-12, "PHz": 1e-15}
 
     def __init__(self, vna, parent=None):
-
         """
         set the instrument state for the given vna
 
@@ -354,7 +356,8 @@ class VnaController(QtWidgets.QWidget):
         f_start = self.start_frequency
         f_stop = self.stop_frequency
         f_npoints = self.spinBox_numberOfPoints.value()
-        self.vna.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop, f_npoints=f_npoints)
+        self.vna.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop,
+                                     f_npoints=f_npoints)
 
     def set_start_freequency(self, value):
         self._start_frequency = float(value)
@@ -543,7 +546,7 @@ class ReflectDialog(QtWidgets.QDialog):
         self.verticalLayout.addLayout(self.gridLayout)
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.verticalLayout.addWidget(self.buttonBox)
 
         self.buttonBox.accepted.connect(self.accept)
@@ -605,7 +608,8 @@ class ReflectDialog(QtWidgets.QDialog):
         self.evaluate()
 
     @property
-    def ready(self): return self._ready
+    def ready(self):
+        return self._ready
 
     @ready.setter
     def ready(self, val):
@@ -643,7 +647,6 @@ class ReflectDialog(QtWidgets.QDialog):
 
 
 class MeasurementDialog(QtWidgets.QDialog):
-
     measurements_available = QtCore.Signal(object)
 
     def __init__(self, nwa, parent=None):
@@ -733,7 +736,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         else:
             self.spinBox_channel.setEnabled(False)
 
-        self.lineEdit_ports.setText(",".join([str(port+1) for port in range(self.nwa.nports)]))
+        self.lineEdit_ports.setText(",".join([str(port + 1) for port in range(self.nwa.nports)]))
         self.spinBox_timeout.valueChanged.connect(self.set_timeout)
 
     def set_timeout(self):
@@ -778,3 +781,26 @@ class MeasurementDialog(QtWidgets.QDialog):
             item.setText(trace["label"])
             item.trace = trace
             self.listWidget_traces.addItem(item)
+
+
+class rename_file_label(QtWidgets.QWidget):
+    def __init__(self, parent, item=None):
+        super(rename_file_label, self).__init__(parent)
+        self.pushButton = QtWidgets.QPushButton(self)
+        self.pushButton.clicked.connect(self.EnterPressed)
+        self.pushButton.setAutoDefault(True)
+        self.lineEdit = QtWidgets.QLineEdit(self)
+        self.lineEdit.returnPressed.connect(self.pushButton.click)
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self)
+        self.horizontalLayout.addWidget(self.lineEdit)
+
+        self.item = item
+        if self.item is not None:
+            self.lineEdit.setText(item.ntwk.name)
+        self.show()
+
+    def EnterPressed(self):
+        if self.item is not None:
+            self.item.ntwk.name = self.lineEdit.text()
+            self.item.set_text()
+        self.close()
