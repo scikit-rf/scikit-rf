@@ -781,26 +781,3 @@ class MeasurementDialog(QtWidgets.QDialog):
             item.setText(trace["label"])
             item.trace = trace
             self.listWidget_traces.addItem(item)
-
-
-class rename_file_label(QtWidgets.QWidget):
-    def __init__(self, parent, item=None):
-        super(rename_file_label, self).__init__(parent)
-        self.pushButton = QtWidgets.QPushButton(self)
-        self.pushButton.clicked.connect(self.EnterPressed)
-        self.pushButton.setAutoDefault(True)
-        self.lineEdit = QtWidgets.QLineEdit(self)
-        self.lineEdit.returnPressed.connect(self.pushButton.click)
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self)
-        self.horizontalLayout.addWidget(self.lineEdit)
-
-        self.item = item
-        if self.item is not None:
-            self.lineEdit.setText(item.ntwk.name)
-        self.show()
-
-    def EnterPressed(self):
-        if self.item is not None:
-            self.item.ntwk.name = self.lineEdit.text()
-            self.item.set_text()
-        self.close()

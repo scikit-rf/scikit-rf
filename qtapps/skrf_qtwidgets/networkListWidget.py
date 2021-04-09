@@ -224,10 +224,9 @@ class NetworkListWidget(QtWidgets.QListWidget):
                 self.takeItem(self.row(item))
 
     def rename_item(self):
-        items = self.selectedItems()
-        if len(items) == 1:
-            item = items[0]
-            widgets.rename_file_label(self, item)
+        item = self.currentItem()
+        item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+        self.editItem(item)
 
     def get_save_which_mode(self):
         """
