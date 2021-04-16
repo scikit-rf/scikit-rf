@@ -16,12 +16,19 @@ try:
     from matplotlib.ticker import EngFormatter
 except ImportError:
     mplt = None
-    pass
 
 import logging
 
 
 def check_plotting(func):
+    """This decorator checks if matplotlib is available under the name mplt.
+    If not, raise an RuntimeError.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
     def wrapper(*args, **kwargs):
         if mplt is None:
             raise RuntimeError('Plotting is not available')
