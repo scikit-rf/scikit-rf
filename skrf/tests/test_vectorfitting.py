@@ -36,6 +36,13 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertTrue(np.allclose(vf.proportional_coeff, expected_props, rtol=rtol, atol=atol))
         self.assertTrue(np.allclose(vf.constant_coeff, expected_const, rtol=rtol, atol=atol))
 
+    def test_matplotlib_missing(self):
+        vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
+        skrf.vectorFitting.mplt = None
+        with self.assertRaises(RuntimeError):
+            vf.plot_convergence()
+
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
