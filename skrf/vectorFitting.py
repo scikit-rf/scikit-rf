@@ -10,10 +10,31 @@ VectorFitting (:mod:`skrf.vectorFitting`)
 
 import numpy as np
 import os
-from . import plotting    # will perform the correct setup for matplotlib before it is called below
-import matplotlib.pyplot as mplt
-from matplotlib.ticker import EngFormatter
+try:
+    from . import plotting    # will perform the correct setup for matplotlib before it is called below
+    import matplotlib.pyplot as mplt
+    from matplotlib.ticker import EngFormatter
+except ImportError:
+    mplt = None
+
 import logging
+
+
+def check_plotting(func):
+    """This decorator checks if matplotlib is available under the name mplt.
+    If not, raise an RuntimeError.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+    def wrapper(*args, **kwargs):
+        if mplt is None:
+            raise RuntimeError('Plotting is not available')
+        func(*args, **kwargs)
+
+    return wrapper
 
 
 class VectorFitting:
@@ -585,6 +606,7 @@ class VectorFitting:
                 resp += zeros[i] / (s - pole) + np.conjugate(zeros[i]) / (s - np.conjugate(pole))
         return resp
 
+    @check_plotting
     def plot_s_db(self, i, j, freqs=None):
         """
         Plots the magnitude in dB of the response **S_(i+1,j+1)** in the fit.
@@ -619,6 +641,7 @@ class VectorFitting:
         mplt.tight_layout()
         mplt.show()
 
+    @check_plotting
     def plot_s_mag(self, i, j, freqs=None):
         """
         Plots the magnitude in linear scale of the response **S_(i+1,j+1)** in the fit.
@@ -653,6 +676,7 @@ class VectorFitting:
         mplt.tight_layout()
         mplt.show()
 
+    @check_plotting
     def plot_pz(self, i, j):
         """
         Plots a pole-zero diagram of the fit of the response **S_(i+1,j+1)**.
@@ -684,6 +708,7 @@ class VectorFitting:
         mplt.tight_layout()
         mplt.show()
 
+    @check_plotting
     def plot_convergence(self):
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
