@@ -13,5 +13,6 @@ networkx
 pathlib
 nose
 nose-exclude
+typing-extensions
 xlwt
 git+https://github.com/scikit-rf/scikit-rf.git@master

@@ -145,7 +145,7 @@ Misc Functions
 
 """
 
-from typing import Union, TYPE_CHECKING
+from typing import Any, Union
 from six.moves import xrange
 from functools import reduce
 
@@ -171,7 +171,10 @@ from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
 import unittest  # fotr unitest.skip
 
-import numpy.typing as npt
+try:
+    from numpy.typing import ArrayLike
+except ImportError:
+    ArrayLike = Any
 
 from . import mathFunctions as mf
 from .frequency import Frequency
@@ -455,7 +458,7 @@ class Network(object):
                 # self.nports = self.number_of_ports
 
     @classmethod
-    def from_z(cls, z: npt.ArrayLike, *args, **kw) -> 'Network':
+    def from_z(cls, z: ArrayLike, *args, **kw) -> 'Network':
         '''
         Create a Network from its Z-parameters
 
@@ -873,7 +876,7 @@ class Network(object):
         return self._s
 
     @s.setter
-    def s(self, s: npt.ArrayLike) -> None:
+    def s(self, s: ArrayLike) -> None:
         """
         the input s-matrix should be of shape fxnxn,
         where f is frequency axis and n is number of ports
@@ -922,7 +925,7 @@ class Network(object):
         return s2h(self.s, self.z0)
 
     @h.setter
-    def h(self, value: npt.ArrayLike) -> None:
+    def h(self, value: ArrayLike) -> None:
         self._s = h2s(value, self.z0)
 
     @property
@@ -956,7 +959,7 @@ class Network(object):
         return s2y(self._s, self.z0, s_def=self.s_def)
 
     @y.setter
-    def y(self, value: npt.ArrayLike) -> None:
+    def y(self, value: ArrayLike) -> None:
         self._s = y2s(value, self.z0, s_def=self.s_def)
 
     @property
@@ -990,7 +993,7 @@ class Network(object):
         return s2z(self._s, self.z0, s_def=self.s_def)
 
     @z.setter
-    def z(self, value: npt.ArrayLike) -> None:
+    def z(self, value: ArrayLike) -> None:
         self._s = z2s(value, self.z0, s_def=self.s_def)
 
     @property
@@ -1055,7 +1058,7 @@ class Network(object):
         return 1 / self.s
 
     @s_invert.setter
-    def s_invert(self, value: npt.ArrayLike) -> None:
+    def s_invert(self, value: ArrayLike) -> None:
         raise NotImplementedError
 
     @property
@@ -1090,7 +1093,7 @@ class Network(object):
         return s2a(self.s, self.z0)
 
     @a.setter
-    def a(self, value: npt.ArrayLike) -> None:
+    def a(self, value: ArrayLike) -> None:
         self._s = a2s(value, self.z0)
 
     @property
@@ -1156,7 +1159,7 @@ class Network(object):
             return self.z0  # this is not an error, its a recursive call
 
     @z0.setter
-    def z0(self, z0: npt.ArrayLike) -> None:
+    def z0(self, z0: ArrayLike) -> None:
         """z0=npy.array(z0)
         if len(z0.shape) < 2:
                 try:
@@ -1200,7 +1203,7 @@ class Network(object):
             return self._frequency
 
     @frequency.setter
-    def frequency(self, new_frequency: Union[Frequency, int, npt.ArrayLike]):
+    def frequency(self, new_frequency: Union[Frequency, int, ArrayLike]):
         """
         takes a Frequency object, see  frequency.py
         """
