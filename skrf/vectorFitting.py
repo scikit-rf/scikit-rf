@@ -5,6 +5,8 @@ VectorFitting (:mod:`skrf.vectorFitting`)
 
 .. autoclass:: VectorFitting
     :members:
+    :member-order: groupwise
+    :special-members: __init__
 
 """
 
@@ -21,7 +23,8 @@ import logging
 
 
 def check_plotting(func):
-    """This decorator checks if matplotlib is available under the name mplt.
+    """
+    This decorator checks if matplotlib is available under the name mplt.
     If not, raise an RuntimeError.
 
     Raises
@@ -29,6 +32,7 @@ def check_plotting(func):
     RuntimeError
         When trying to run the decorated function without matplotlib
     """
+
     def wrapper(*args, **kwargs):
         if mplt is None:
             raise RuntimeError('Plotting is not available')
@@ -80,18 +84,28 @@ class VectorFitting:
 
         self.network = network
         self.initial_poles = None
+
         self.poles = None
-        """ Instance variable holding the list of fitted poles. """
+        """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
+
         self.zeros = None
-        """ Instance variable holding the list of fitted zeros. """
+        """ Instance variable holding the list of fitted zeros. Will be initialized by :func:`vector_fit`. """
+
         self.proportional_coeff = None
-        """ Instance variable holding the list of fitted proportional coefficients. """
+        """ Instance variable holding the list of fitted proportional coefficients. Will be initialized by 
+        :func:`vector_fit`. """
+
         self.constant_coeff = None
-        """ Instance variable holding the list of fitted constants. """
+        """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
+
         self.max_iterations = 100
-        """ Instance variable specifying the maximum number of iterations for the fitting process. """
+        """ Instance variable specifying the maximum number of iterations for the fitting process. Will be initialized 
+        by :func:`vector_fit`. """
+
         self.max_tol = 1e-6
-        """ Instance variable specifying the convergence criterion in terms of relative tolerance. """
+        """ Instance variable specifying the convergence criterion in terms of relative tolerance. Will be initialized 
+        by :func:`vector_fit`. """
+
         self.d_res_history = []
         self.delta_max_history = []
 
@@ -536,9 +550,9 @@ class VectorFitting:
 
         Notes
         -----
-        The .npz file needs to include the model parameters as individual `ndarray`s labeled *poles*, *zeros*,
-        *proportionals* and *constants*. The shapes of those `ndarray`s need to match the network properties in
-        :attr:`network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
+        The .npz file needs to include the model parameters as individual NumPy arrays (ndarray) labeled '*poles*',
+        '*zeros*', '*proportionals*' and '*constants*'. The shapes of those arrays need to match the network properties
+        in :class:`network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
 
         See Also
         --------
