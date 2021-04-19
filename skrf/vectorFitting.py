@@ -221,6 +221,8 @@ class VectorFitting:
         # ITERATIVE FITTING OF POLES to the provided frequency responses
         # inital set of poles will be replaced with new poles after every iteration
         iterations = self.max_iterations
+        self.d_res_history = []
+        self.delta_max_history = []
         converged = False
         while iterations > 0:
             logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
