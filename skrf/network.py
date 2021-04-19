@@ -172,6 +172,9 @@ from scipy.ndimage.filters import convolve1d
 import unittest  # fotr unitest.skip
 
 try:
+    # Numpy introduces the typing module in numpy-1.20
+    # There's no release canditate for Python 3.6 anymore
+    # This catch can be removed with the end of Python 3.6 support
     from numpy.typing import ArrayLike
 except ImportError:
     ArrayLike = Any
