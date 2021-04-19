@@ -81,11 +81,17 @@ class VectorFitting:
         self.network = network
         self.initial_poles = None
         self.poles = None
+        """ Instance variable holding the list of fitted poles. """
         self.zeros = None
+        """ Instance variable holding the list of fitted zeros. """
         self.proportional_coeff = None
+        """ Instance variable holding the list of fitted proportional coefficients. """
         self.constant_coeff = None
+        """ Instance variable holding the list of fitted constants. """
         self.max_iterations = 100
+        """ Instance variable specifying the maximum number of iterations for the fitting process. """
         self.max_tol = 1e-6
+        """ Instance variable specifying the convergence criterion in terms of relative tolerance. """
         self.d_res_history = []
         self.delta_max_history = []
 
@@ -623,6 +629,9 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used.
 
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
         Returns
         -------
         None
@@ -659,6 +668,9 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used.
 
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
         Returns
         -------
         None
@@ -691,6 +703,9 @@ class VectorFitting:
         j : int
             Column index of the response.
 
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
         Returns
         -------
         None
@@ -718,6 +733,11 @@ class VectorFitting:
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
         vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
         maximum singular value of the coefficient matrix **A** are plotted, which serve as a convergence indicator.
+
+        Parameters
+        ----------
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
 
         Returns
         -------
