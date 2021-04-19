@@ -2776,7 +2776,7 @@ class Network(object):
             media = Freespace(frequency=self.frequency,z0=self.z0[:,port])
 
         l =media.line(d=d, unit=unit,**kw)
-        if port < 1:
+        if port == 0:
             return connect(l, 1, self, port)
         else:
             return connect(self, port, l, 0)
