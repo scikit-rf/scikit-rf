@@ -2771,14 +2771,15 @@ class Network(object):
         if d ==0:
             return self
         d=d/2.
-        if self.nports >2:
-            raise NotImplementedError('only implemented for 1 and 2 ports')
         if media is None:
             from .media import Freespace
             media = Freespace(frequency=self.frequency,z0=self.z0[:,port])
 
         l =media.line(d=d, unit=unit,**kw)
-        return l**self
+        if port < 1:
+            return connect(l, 1, self, port)
+        else:
+            return connect(self, port, l, 0)
 
     def windowed(self, window=('kaiser', 6), normalize=True, center_to_dc=None):
         '''
