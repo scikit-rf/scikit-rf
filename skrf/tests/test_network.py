@@ -178,6 +178,30 @@ class NetworkTestCase(unittest.TestCase):
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
 
+    def test_delay(self):
+        ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
+        self.assertTrue(
+            npy.all(
+                self.ntwk1.group_delay[:,:,:]
+                -ntwk1_delayed.group_delay[:,:,:]
+                -npy.array(
+                    [[-1.e-09+0.j, -5.e-10+0.j],
+                     [-5.e-10+0.j,  0.e+00+0.j]]
+                ) < 1e-9
+            )
+        )
+        ntwk2_delayed = self.ntwk2.delay(1,'ps',port=1)
+        self.assertTrue(
+            npy.all(
+                self.ntwk2.group_delay[:,:,:]
+                -ntwk2_delayed.group_delay[:,:,:]
+                -npy.array(
+                    [[ 0.e+00+0.j, -5.e-13+0.j],
+                     [-5.e-13+0.j, -1.e-12+0.j]]
+                ) < 1e-9
+            )
+        )
+
     def test_connect_multiports(self):
         a = rf.Network()
         a.frequency=(1,)
