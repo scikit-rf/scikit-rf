@@ -145,6 +145,7 @@ Misc Functions
 
 """
 
+from typing import Union, TYPE_CHECKING
 from six.moves import xrange
 from functools import reduce
 
@@ -169,6 +170,8 @@ from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
 import unittest  # fotr unitest.skip
+
+import numpy.typing as npt
 
 from . import mathFunctions as mf
 from .frequency import Frequency
@@ -331,7 +334,7 @@ class Network(object):
     noise_interp_kind = 'linear'
 
     # CONSTRUCTOR
-    def __init__(self, file=None, name=None, comments=None, f_unit=None, s_def=S_DEF_DEFAULT, **kwargs):
+    def __init__(self, file:str=None, name:str=None, comments:str=None, f_unit:str=None, s_def=S_DEF_DEFAULT, **kwargs):
         '''
         Network constructor.
 
@@ -452,7 +455,7 @@ class Network(object):
                 # self.nports = self.number_of_ports
 
     @classmethod
-    def from_z(cls, z, *args, **kw):
+    def from_z(cls, z: npt.ArrayLike, *args, **kw) -> 'Network':
         '''
         Create a Network from its Z-parameters
 
@@ -483,7 +486,7 @@ class Network(object):
         return me
 
     # OPERATORS
-    def __pow__(self, other):
+    def __pow__(self, other: 'Network') -> 'Network':
         """
         cascade this network with another network
 
@@ -498,7 +501,7 @@ class Network(object):
         else:
             return cascade(self, other)
 
-    def __floordiv__(self, other):
+    def __floordiv__(self, other: 'Network') -> 'Network':
         """
         de-embedding 1 or 2 network[s], from this network
 
@@ -546,7 +549,7 @@ class Network(object):
             # flip(de_embed(flip(de_embed(c.s, self.s)), b.s))
             return result
 
-    def __mul__(self, other):
+    def __mul__(self, other:'Network') -> 'Network':
         """
         Element-wise complex multiplication of s-matrix
         """
@@ -561,7 +564,7 @@ class Network(object):
 
         return result
 
-    def __rmul__(self, other):
+    def __rmul__(self, other: 'Network') -> 'Network':
         """
         Element-wise complex multiplication of s-matrix
         """
@@ -577,7 +580,7 @@ class Network(object):
 
         return result
 
-    def __add__(self, other):
+    def __add__(self, other:'Network') -> 'Network':
         """
         Element-wise complex addition of s-matrix
         """
@@ -592,7 +595,7 @@ class Network(object):
 
         return result
 
-    def __radd__(self, other):
+    def __radd__(self, other:'Network') -> 'Network':
         """
         Element-wise complex addition of s-matrix
         """
@@ -607,7 +610,7 @@ class Network(object):
 
         return result
 
-    def __sub__(self, other):
+    def __sub__(self, other:'Network') -> 'Network':
         """
         Element-wise complex subtraction of s-matrix
         """
@@ -622,7 +625,7 @@ class Network(object):
 
         return result
 
-    def __rsub__(self, other):
+    def __rsub__(self, other:'Network') -> 'Network':
         """
         Element-wise complex subtraction of s-matrix
         """
@@ -637,10 +640,10 @@ class Network(object):
 
         return result
 
-    def __truediv__(self, other):
+    def __truediv__(self, other: 'Network') -> 'Network':
         return self.__div__(other)
 
-    def __div__(self, other):
+    def __div__(self, other: 'Network') -> 'Network':
         """
         Element-wise complex multiplication of s-matrix
         """
@@ -655,7 +658,7 @@ class Network(object):
 
         return result
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Network') -> bool:
         if other is None:
             return False
         if npy.all(npy.abs(self.s - other.s) < ZERO):
@@ -663,10 +666,10 @@ class Network(object):
         else:
             return False
 
-    def __ne__(self, other):
+    def __ne__(self, other:'Network') -> bool:
         return (not self.__eq__(other))
 
-    def __getitem__(self, key):
+    def __getitem__(self, key:Union[str, int, slice]) -> 'Network':
         """
         Slices a Network object based on an index, or human readable string
 
@@ -755,7 +758,7 @@ class Network(object):
         ntwk = self.copy_subset(key)
         return ntwk
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         """
         f = self.frequency
@@ -773,17 +776,17 @@ class Network(object):
 
         return output
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         length of frequency axis
         """
         return len(self.s)
 
     # INTERNAL CODE GENERATION METHODS
-    def __compatable_for_scalar_operation_test(self, other):
+    def __compatable_for_scalar_operation_test(self, other:'Network') -> None:
         """
         tests to make sure other network's s-matrix is of same shape
         """
@@ -793,7 +796,7 @@ class Network(object):
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    def __generate_secondary_properties(self):
+    def __generate_secondary_properties(self) -> None:
         """
         creates numerous `secondary properties` which are various
         different scalar projects of the primary properties. the primary
@@ -820,13 +823,13 @@ class Network(object):
                 setattr(self.__class__, '%s_%s' % (prop_name, func_name), \
                         property(fget, doc=doc))
 
-    def __generate_subnetworks(self):
+    def __generate_subnetworks(self) -> None:
         """
         generates all one-port sub-networks
         """
         for m in range(self.number_of_ports):
             for n in range(self.number_of_ports):
-                def fget(self, m=m, n=n):
+                def fget(self, m:int=m, n:int=n) -> 'Network':
                     ntwk = self.copy()
                     ntwk.s = self.s[:, m, n]
                     ntwk.z0 = self.z0[:, m]
@@ -840,7 +843,7 @@ class Network(object):
 
     # PRIMARY PROPERTIES
     @property
-    def s(self):
+    def s(self) -> npy.ndarray:
         """
         Scattering parameter matrix.
 
@@ -870,7 +873,7 @@ class Network(object):
         return self._s
 
     @s.setter
-    def s(self, s):
+    def s(self, s: npt.ArrayLike) -> None:
         """
         the input s-matrix should be of shape fxnxn,
         where f is frequency axis and n is number of ports
@@ -888,7 +891,7 @@ class Network(object):
         self.__generate_subnetworks()
 
     @property
-    def h(self):
+    def h(self) -> npy.ndarray:
         """
         Hybrid parameter matrix.
 
@@ -919,11 +922,11 @@ class Network(object):
         return s2h(self.s, self.z0)
 
     @h.setter
-    def h(self, value):
+    def h(self, value: npt.ArrayLike) -> None:
         self._s = h2s(value, self.z0)
 
     @property
-    def y(self):
+    def y(self) -> npy.ndarray:
         """
         Admittance parameter matrix.
 
@@ -953,11 +956,11 @@ class Network(object):
         return s2y(self._s, self.z0, s_def=self.s_def)
 
     @y.setter
-    def y(self, value):
+    def y(self, value: npt.ArrayLike) -> None:
         self._s = y2s(value, self.z0, s_def=self.s_def)
 
     @property
-    def z(self):
+    def z(self) -> npy.ndarray:
         """
         Impedance parameter matrix.
 
@@ -987,11 +990,11 @@ class Network(object):
         return s2z(self._s, self.z0, s_def=self.s_def)
 
     @z.setter
-    def z(self, value):
+    def z(self, value: npt.ArrayLike) -> None:
         self._s = z2s(value, self.z0, s_def=self.s_def)
 
     @property
-    def t(self):
+    def t(self) -> npy.ndarray:
         """
         Scattering transfer parameters
 
@@ -1024,7 +1027,7 @@ class Network(object):
         return s2t(self.s)
 
     @property
-    def s_invert(self):
+    def s_invert(self) -> npy.ndarray:
         """
         Inverted scattering parameter matrix.
 
@@ -1052,11 +1055,11 @@ class Network(object):
         return 1 / self.s
 
     @s_invert.setter
-    def s_invert(self, value):
+    def s_invert(self, value: npt.ArrayLike) -> None:
         raise NotImplementedError
 
     @property
-    def a(self):
+    def a(self) -> npy.ndarray:
         """
         abcd parameter matrix. Used to cascade two-ports
 
@@ -1087,11 +1090,11 @@ class Network(object):
         return s2a(self.s, self.z0)
 
     @a.setter
-    def a(self, value):
+    def a(self, value: npt.ArrayLike) -> None:
         self._s = a2s(value, self.z0)
 
     @property
-    def z0(self):
+    def z0(self) -> npy.ndarray:
         """
         Characteristic impedance[s] of the network ports.
 
@@ -1153,7 +1156,7 @@ class Network(object):
             return self.z0  # this is not an error, its a recursive call
 
     @z0.setter
-    def z0(self, z0):
+    def z0(self, z0: npt.ArrayLike) -> None:
         """z0=npy.array(z0)
         if len(z0.shape) < 2:
                 try:
@@ -1167,7 +1170,7 @@ class Network(object):
         self._z0 = npy.array(z0, dtype=complex)
 
     @property
-    def frequency(self):
+    def frequency(self) -> Frequency:
         """
         frequency information for the network.
 
@@ -1197,7 +1200,7 @@ class Network(object):
             return self._frequency
 
     @frequency.setter
-    def frequency(self, new_frequency):
+    def frequency(self, new_frequency: Union[Frequency, int, npt.ArrayLike]):
         """
         takes a Frequency object, see  frequency.py
         """
