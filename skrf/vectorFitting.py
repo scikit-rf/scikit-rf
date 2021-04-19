@@ -607,7 +607,7 @@ class VectorFitting:
         return resp
 
     @check_plotting
-    def plot_s_db(self, i, j, freqs=None):
+    def plot_s_db(self, i, j, freqs=None, ax=None):
         """
         Plots the magnitude in dB of the response **S_(i+1,j+1)** in the fit.
 
@@ -631,18 +631,19 @@ class VectorFitting:
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
-        mplt.figure()
-        mplt.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
-        mplt.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
-        mplt.xlabel('Frequency (Hz)')
-        mplt.ylabel('Magnitude (dB)')
-        mplt.legend(loc='best')
-        mplt.title('Response i={}, j={}'.format(i, j))
-        mplt.tight_layout()
-        mplt.show()
+        if ax is None and mplt is not None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
+        ax.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
 
     @check_plotting
-    def plot_s_mag(self, i, j, freqs=None):
+    def plot_s_mag(self, i, j, freqs=None, ax=None):
         """
         Plots the magnitude in linear scale of the response **S_(i+1,j+1)** in the fit.
 
@@ -666,18 +667,19 @@ class VectorFitting:
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
-        mplt.figure()
-        mplt.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
-        mplt.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
-        mplt.xlabel('Frequency (Hz)')
-        mplt.ylabel('Magnitude')
-        mplt.legend(loc='best')
-        mplt.title('Response i={}, j={}'.format(i, j))
-        mplt.tight_layout()
-        mplt.show()
+        if ax is None and mplt is not None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
+        ax.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Magnitude')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
 
     @check_plotting
-    def plot_pz(self, i, j):
+    def plot_pz(self, i, j, ax=None):
         """
         Plots a pole-zero diagram of the fit of the response **S_(i+1,j+1)**.
 
@@ -694,22 +696,24 @@ class VectorFitting:
         None
         """
 
+        if ax is None and mplt is not None:
+            ax = mplt.gca()
+
         i_response = i * self.network.nports + j
-        mplt.figure()
-        mplt.scatter((np.real(self.poles), np.real(self.poles)),
+
+        ax.scatter((np.real(self.poles), np.real(self.poles)),
                      (np.imag(self.poles), -1 * np.imag(self.poles)),
                      marker='x', label='Pole')
-        mplt.scatter((np.real(self.zeros[i_response]), np.real(self.zeros[i_response])),
+        ax.scatter((np.real(self.zeros[i_response]), np.real(self.zeros[i_response])),
                      (np.imag(self.zeros[i_response]), -1 * np.imag(self.zeros[i_response])),
                      marker='o', label='Zero')
-        mplt.xlabel('Re{s} (rad/s)')
-        mplt.ylabel('Im{s} (rad/s)')
-        mplt.legend(loc='best')
-        mplt.tight_layout()
-        mplt.show()
+        ax.set_xlabel('Re{s} (rad/s)')
+        ax.set_ylabel('Im{s} (rad/s)')
+        ax.legend(loc='best')
+        return ax
 
     @check_plotting
-    def plot_convergence(self):
+    def plot_convergence(self, ax=None):
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
         vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
@@ -720,15 +724,16 @@ class VectorFitting:
         None
         """
 
-        mplt.figure()
-        mplt.semilogy(np.arange(np.alen(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
-        mplt.xlabel('Iteration step')
-        mplt.ylabel('Max. relative change', color='darkblue')
-        ax2 = mplt.twinx()
+        if ax is None and mplt is not None:
+            ax = mplt.gca()
+
+        ax.semilogy(np.arange(np.alen(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
+        ax.set_xlabel('Iteration step')
+        ax.set_ylabel('Max. relative change', color='darkblue')
+        ax2 = ax.twinx()
         ax2.plot(np.arange(np.alen(self.d_res_history)) + 1, self.d_res_history, color='orangered')
         ax2.set_ylabel('Residue', color='orangered')
-        mplt.tight_layout()
-        mplt.show()
+        return ax
 
     def write_spice_subcircuit_s(self, file):
         """
