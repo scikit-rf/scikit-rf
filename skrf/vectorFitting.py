@@ -24,7 +24,7 @@ import logging
 
 def check_plotting(func):
     """
-    This decorator checks if matplotlib is available under the name mplt.
+    This decorator checks if matplotlib.pyplot is available under the name mplt.
     If not, raise an RuntimeError.
 
     Raises
@@ -656,7 +656,7 @@ class VectorFitting:
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
-        if ax is None and mplt is not None:
+        if ax is None:
             ax = mplt.gca()
 
         ax.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
@@ -695,7 +695,7 @@ class VectorFitting:
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
-        if ax is None and mplt is not None:
+        if ax is None:
             ax = mplt.gca()
 
         ax.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
@@ -727,7 +727,7 @@ class VectorFitting:
         None
         """
 
-        if ax is None and mplt is not None:
+        if ax is None:
             ax = mplt.gca()
 
         i_response = i * self.network.nports + j
@@ -760,7 +760,7 @@ class VectorFitting:
         None
         """
 
-        if ax is None and mplt is not None:
+        if ax is None:
             ax = mplt.gca()
 
         ax.semilogy(np.arange(np.alen(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
