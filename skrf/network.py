@@ -145,7 +145,7 @@ Misc Functions
 
 """
 
-from typing import Any, Union
+from typing import Any, Sized, Union, Tuple, List
 from six.moves import xrange
 from functools import reduce
 
@@ -171,14 +171,6 @@ from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
 import unittest  # fotr unitest.skip
 
-try:
-    # Numpy introduces the typing module in numpy-1.20
-    # There's no release canditate for Python 3.6 anymore
-    # This catch can be removed with the end of Python 3.6 support
-    from numpy.typing import ArrayLike
-except ImportError:
-    ArrayLike = Any
-
 from . import mathFunctions as mf
 from .frequency import Frequency
 from .tlineFunctions import zl_2_Gamma0
@@ -192,7 +184,6 @@ from .time import time_gate
 
 from .constants import ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
-
 
 #from matplotlib import cm
 #import matplotlib.pyplot as plt
@@ -285,10 +276,7 @@ class Network(object):
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
     """
 
-    global PRIMARY_PROPERTIES
     PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
-
-    global COMPONENT_FUNC_DICT
     COMPONENT_FUNC_DICT = {
         're': npy.real,
         'im': npy.imag,
@@ -312,7 +300,6 @@ class Network(object):
         'time_step': None,
     }
     # provides y-axis labels to the plotting functions
-    global Y_LABEL_DICT
     Y_LABEL_DICT = {
         're': 'Real Part',
         'im': 'Imag Part',
@@ -461,7 +448,7 @@ class Network(object):
                 # self.nports = self.number_of_ports
 
     @classmethod
-    def from_z(cls, z: ArrayLike, *args, **kw) -> 'Network':
+    def from_z(cls, z: npy.ndarray, *args, **kw) -> 'Network':
         '''
         Create a Network from its Z-parameters
 
@@ -507,7 +494,7 @@ class Network(object):
         else:
             return cascade(self, other)
 
-    def __floordiv__(self, other: 'Network') -> 'Network':
+    def __floordiv__(self, other: Union['Network', Tuple['Network', ...]] ) -> 'Network':
         """
         de-embedding 1 or 2 network[s], from this network
 
@@ -525,20 +512,20 @@ class Network(object):
                     "Number of networks greater than 2. Truncating!",
                     RuntimeWarning
                 )
-                other = other[:2]
+                other_tpl = other[:2]
         else:
-            other = (other, )
+            other_tpl = (other, )
 
-        for o in other:
+        for o in other_tpl:
             if o.number_of_ports != 2:
                 raise IndexError('Incorrect number of ports in network {}.'.format(o.name))
 
-        if len(other) == 1:
+        if len(other_tpl) == 1:
             # if passed 1 network (A) and another network B
             #   e.g. A // B
             #   e.g. A // (B)
             # then de-embed like B.inv * A
-            b = other[0]
+            b = other_tpl[0]
             result = self.copy()
             result.s = (b.inv ** self).s
             # de_embed(self.s, b.s)
@@ -548,8 +535,8 @@ class Network(object):
             #   e.g. A // (B, C)
             #   e.g. A // [B, C]
             # then de-embed like B.inv * A * C.inv
-            b = other[0]
-            c = other[1]
+            b = other_tpl[0]
+            c = other_tpl[1]
             result = self.copy()
             result.s = (b.inv ** self ** c.inv).s
             # flip(de_embed(flip(de_embed(c.s, self.s)), b.s))
@@ -664,18 +651,18 @@ class Network(object):
 
         return result
 
-    def __eq__(self, other: 'Network') -> bool:
-        if other is None:
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, self.__class__):
             return False
         if npy.all(npy.abs(self.s - other.s) < ZERO):
             return True
         else:
             return False
 
-    def __ne__(self, other:'Network') -> bool:
+    def __ne__(self, other:object) -> bool:
         return (not self.__eq__(other))
 
-    def __getitem__(self, key:Union[str, int, slice]) -> 'Network':
+    def __getitem__(self, key:Union[str, int, slice, Sized]) -> 'Network':
         """
         Slices a Network object based on an index, or human readable string
 
@@ -723,7 +710,7 @@ class Network(object):
 
         a = self.z0  # HACK: to force getter for z0 to re-shape it (z0 getter has side effects...)
         # If user passes a multidimensional index, try to return that 1 port subnetwork
-        if type(key) == tuple:
+        if isinstance(key, tuple):
             if len(key) == 3:
                 slice_like, p1_name, p2_name = key
                 return self[slice_like][p1_name, p2_name]
@@ -879,7 +866,7 @@ class Network(object):
         return self._s
 
     @s.setter
-    def s(self, s: ArrayLike) -> None:
+    def s(self, s: npy.ndarray) -> None:
         """
         the input s-matrix should be of shape fxnxn,
         where f is frequency axis and n is number of ports
@@ -928,7 +915,7 @@ class Network(object):
         return s2h(self.s, self.z0)
 
     @h.setter
-    def h(self, value: ArrayLike) -> None:
+    def h(self, value: npy.ndarray) -> None:
         self._s = h2s(value, self.z0)
 
     @property
@@ -962,7 +949,7 @@ class Network(object):
         return s2y(self._s, self.z0, s_def=self.s_def)
 
     @y.setter
-    def y(self, value: ArrayLike) -> None:
+    def y(self, value: npy.ndarray) -> None:
         self._s = y2s(value, self.z0, s_def=self.s_def)
 
     @property
@@ -996,7 +983,7 @@ class Network(object):
         return s2z(self._s, self.z0, s_def=self.s_def)
 
     @z.setter
-    def z(self, value: ArrayLike) -> None:
+    def z(self, value: npy.ndarray) -> None:
         self._s = z2s(value, self.z0, s_def=self.s_def)
 
     @property
@@ -1061,7 +1048,7 @@ class Network(object):
         return 1 / self.s
 
     @s_invert.setter
-    def s_invert(self, value: ArrayLike) -> None:
+    def s_invert(self, value: npy.ndarray) -> None:
         raise NotImplementedError
 
     @property
@@ -1096,7 +1083,7 @@ class Network(object):
         return s2a(self.s, self.z0)
 
     @a.setter
-    def a(self, value: ArrayLike) -> None:
+    def a(self, value: npy.ndarray) -> None:
         self._s = a2s(value, self.z0)
 
     @property
@@ -1162,7 +1149,7 @@ class Network(object):
             return self.z0  # this is not an error, its a recursive call
 
     @z0.setter
-    def z0(self, z0: ArrayLike) -> None:
+    def z0(self, z0: npy.ndarray) -> None:
         """z0=npy.array(z0)
         if len(z0.shape) < 2:
                 try:
@@ -1206,7 +1193,7 @@ class Network(object):
             return self._frequency
 
     @frequency.setter
-    def frequency(self, new_frequency: Union[Frequency, int, ArrayLike]):
+    def frequency(self, new_frequency: Union[Frequency, int, npy.ndarray]):
         """
         takes a Frequency object, see  frequency.py
         """
@@ -3398,6 +3385,10 @@ class Network(object):
             y_active : active Y-parameters
         '''
         return s2vswr_active(self.s, a)
+
+COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
+PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
+Y_LABEL_DICT = Network.Y_LABEL_DICT
 
 #%%
 

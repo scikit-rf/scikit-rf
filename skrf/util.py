@@ -39,14 +39,6 @@ from subprocess import Popen, PIPE
 import sys
 from functools import wraps
 
-# globals
-
-try:
-    basestring
-except NameError:
-    basestring = (str, bytes)
-
-
 def now_string():
     '''
     returns a unique sortable string, representing the current time
@@ -164,7 +156,7 @@ def get_fid(file, *args, **kwargs):
     \*args, \*\*kwargs : arguments and keyword arguments to `open()`
 
     '''
-    if isinstance(file, basestring):
+    if isinstance(file, str):
         return open(file, *args, **kwargs)
     else:
         return file
