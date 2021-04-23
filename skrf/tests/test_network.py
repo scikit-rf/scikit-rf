@@ -91,7 +91,7 @@ class NetworkTestCase(unittest.TestCase):
             self.assertEqual(len(t), num_points)
             self.assertEqual(len(y), num_points)
             self.assertTrue(npy.isclose(t[1] - t[0], tps))
-            
+
     def test_time_transform_nonlinear_f(self):
         netw_nonlinear_f = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         with self.assertRaises(NotImplementedError):
@@ -103,7 +103,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_time_transform_multiport(self):
         dut_dc = self.ntwk1.extrapolate_to_dc()
-        
+
         with self.assertRaises(ValueError):
             t, y = dut_dc.step_response()
 
@@ -177,6 +177,28 @@ class NetworkTestCase(unittest.TestCase):
         xformer.z0 = (50,25)  # transforms 50 ohm to 25 ohm
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
+
+    def test_connect_nport_2port(self):
+        for nport_portnum in [3,4,5,6,7,8]:
+            # create a Nport network with random resistance at each port
+            _z = npy.random.rand(nport_portnum)*100
+            _z = npy.diag(_z)+0j
+            _z = npy.array([_z])
+            _nport = rf.Network.from_z(_z,f=[1])
+
+            # create a line which can be connected to each port
+            _med = rf.Freespace(_nport.frequency,z0=50)
+            _line = _med.line(90)
+
+            # Connect the line to each port and check that the magnitude is
+            # unchanged. By connecting a matched line only the phase is changed
+            # but not the magnitude.
+            for port in range(nport_portnum):
+                _nport_line = rf.connect(_nport, port, _line, 0)
+                npy.testing.assert_allclose(
+                        npy.abs(_nport.s),
+                        npy.abs(_nport_line.s)
+                    )
 
     def test_delay(self):
         ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
