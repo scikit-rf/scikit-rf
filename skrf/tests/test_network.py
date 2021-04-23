@@ -179,25 +179,29 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
 
     def test_connect_nport_2port(self):
+        freq = rf.Frequency(1, 10, npoints=10, unit='GHz')
+
+        # create a line which can be connected to each port
+        med = rf.DefinedGammaZ0(freq)
+        line = med.line(1, unit='m')
+        line.z0 = [10, 20]
+
         for nport_portnum in [3,4,5,6,7,8]:
-            # create a Nport network with random resistance at each port
-            _z = npy.random.rand(nport_portnum)*100
-            _z = npy.diag(_z)+0j
-            _z = npy.array([_z])
-            _nport = rf.Network.from_z(_z,f=[1])
 
-            # create a line which can be connected to each port
-            _med = rf.Freespace(_nport.frequency,z0=50)
-            _line = _med.line(90)
+            # create a Nport network with port impedance i at port i
+            nport = rf.Network()
+            nport.frequency = freq
+            nport.s = npy.zeros((10, nport_portnum, nport_portnum))
+            nport.z0 = npy.arange(nport_portnum)
 
-            # Connect the line to each port and check that the magnitude is
-            # unchanged. By connecting a matched line only the phase is changed
-            # but not the magnitude.
+            # Connect the line to each port and check for port impedance
             for port in range(nport_portnum):
-                _nport_line = rf.connect(_nport, port, _line, 0)
+                nport_line = rf.connect(nport, port, line, 0)
+                z0_expected = nport.z0
+                z0_expected[:,port] = line.z0[:,1]
                 npy.testing.assert_allclose(
-                        npy.abs(_nport.s),
-                        npy.abs(_nport_line.s)
+                        nport_line.z0,
+                        z0_expected
                     )
 
     def test_delay(self):
