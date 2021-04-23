@@ -400,6 +400,7 @@ class Network(object):
         self.deembed = None
         self.noise = None
         self.noise_freq = None
+        self._z0: npy.ndarray = npy.array(50, dtype=complex)
 
         if s_def not in S_DEFINITIONS:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -1109,62 +1110,41 @@ class Network(object):
                 characteristic impedance for network
 
         """
-        # i hate this function
-        # it was written this way because id like to allow the user to
-        # set the z0 before the s-parameters are set. However, in this
-        # case we dont know how to re-shape the z0 to fxn. to solve this
-        # i attempt to do the re-shaping when z0 is accessed, not when
-        # it is set. this is what makes this function confusing.
-
-        try:
-            if len(npy.shape(self._z0)) == 0:
-                try:
-                    # try and re-shape z0 to match s
-                    self._z0 = self._z0 * npy.ones(self.s.shape[:-1])
-                except(AttributeError):
-                    print('Warning: Network has improper \'z0\' shape.')
-                    # they have yet to set s .
-
-            elif len(npy.shape(self._z0)) == 1:
-                try:
-                    if len(self._z0) == self.frequency.npoints:
-                        # this z0 is frequency dependent but not port dependent
-                        self._z0 = \
-                            npy.repeat(npy.reshape(self._z0, (-1, 1)), self.number_of_ports, 1)
-
-                    elif len(self._z0) == self.number_of_ports:
-                        # this z0 is port dependent but not frequency dependent
-                        self._z0 = self._z0 * npy.ones( \
-                            (self.frequency.npoints, self.number_of_ports))
-
-                    else:
-                        raise (IndexError('z0 has bad shape'))
-
-                except AttributeError:
-                    # there is no self.frequency, or self.number_of_ports
-                    raise AttributeError('Error: I cant reshape z0 through inspection. you must provide correctly '
-                                         'shaped z0, or s-matrix first.')
-
+        if self._z0.ndim == 0:
+            if hasattr(self, '_s'):
+                return npy.full(self._s.shape[:2], self._z0)
+            else:
+                return self._z0
+        else:
             return self._z0
-
-        except AttributeError:
-            # print('Warning: z0 is undefined. Defaulting to 50.')
-            self.z0 = 50
-            return self.z0  # this is not an error, its a recursive call
 
     @z0.setter
     def z0(self, z0):
-        """z0=npy.array(z0)
-        if len(z0.shape) < 2:
-                try:
-                        #try and re-shape z0 to match s
-                        z0=z0*npy.ones(self.s.shape[:-1])
-                except(AttributeError):
-                        print ('Warning: you should store a Network\'s \'s\' matrix before its \'z0\'')
-                        #they have yet to set s .
-                        pass
-        """
-        self._z0 = npy.array(z0, dtype=complex)
+        if isinstance(z0, Number):
+            self._z0 = npy.array(z0, dtype=complex)
+            return
+
+        z0 = npy.array(z0, dtype=complex)
+
+        if z0.ndim == 0:
+            self._z0 = z0
+            return
+
+        if not hasattr(self, '_s'):
+            raise AttributeError('Load s-matrix first before assigning non-scalar z0 matrix')
+
+        self._z0 = npy.zeros(self.s.shape[:2], dtype=complex)
+        if z0.ndim == 1:
+            if len(z0) == self.frequency.npoints:
+                self._z0[:] = z0[:,None]
+            elif len(z0) == self.nports:
+                self._z0[:] = z0[None, :]
+            else:
+                raise AttributeError('Unable to broadcast z0 to s shape')
+        elif z0.shape == self._s.shape[:2]:
+            self._z0 = z0
+        else:
+            raise AttributeError('Unable to broadcast z0 to s shape')
 
     @property
     def frequency(self):
