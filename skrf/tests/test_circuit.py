@@ -198,7 +198,7 @@ class CircuitTestWilkinson(unittest.TestCase):
         _wilkinson1 = rf.connect(T0, 1, self.branch1, 0)
         _wilkinson2 = rf.connect(_wilkinson1, 2, self.branch2, 0)
         _wilkinson3 = rf.connect(_wilkinson2, 1, T1, 0)
-        _wilkinson4 = rf.connect(_wilkinson3, 2, T2, 0)
+        _wilkinson4 = rf.connect(_wilkinson3, 1, T2, 0)
         _wilkinson5 = rf.connect(_wilkinson4, 1, self.resistor, 0)
         wilkinson = rf.innerconnect(_wilkinson5, 1, 3)
 
