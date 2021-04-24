@@ -466,13 +466,13 @@ class NetworkTestCase(unittest.TestCase):
 
     # Network classifiers
     def test_is_reciprocal(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 1, 0],
                           [0, 0, 1],
                           [1, 0, 0]],
                        z0=50)
         self.assertFalse(a.is_reciprocal(), 'A circulator is not reciprocal.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
@@ -482,7 +482,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_is_symmetric(self):
         # 2-port
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[-1, 0],
                           [0, -1]],
                        z0=50)
@@ -492,7 +492,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(a.is_symmetric(), 'non-symmetrical')
 
         # 3-port
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
@@ -502,7 +502,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(str(context.exception), 'test of symmetric is only valid for a 2N-port network')
 
         # 4-port
-        c = rf.Network(f=[1, 2],
+        c = rf.Network(f=[1],
                        s=[[0, 1j, 1, 0],
                           [1j, 0, 0, 1],
                           [1, 0, 0, 1j],
@@ -515,7 +515,7 @@ class NetworkTestCase(unittest.TestCase):
             c.is_symmetric(n=3)
         self.assertEqual(str(context.exception), 'specified order n = 3 must be between 1 and N = 2, inclusive')
 
-        d = rf.Network(f=[1, 2],
+        d = rf.Network(f=[1],
                        s=[[1, 0, 0, 0],
                           [1, 0, 0, 0],
                           [1, 0, 0, 1],
@@ -529,7 +529,7 @@ class NetworkTestCase(unittest.TestCase):
                         'This device is symmetric after swapping ports 1 with 2 and 3 with 4.')
 
         # 6-port
-        x = rf.Network(f=[1, 2],
+        x = rf.Network(f=[1],
                        s=[[0, 0, 0, 0, 0, 0],
                           [0, 1, 9, 0, 0, 0],
                           [0, 0, 2, 0, 0, 0],
@@ -547,7 +547,7 @@ class NetworkTestCase(unittest.TestCase):
         s8p_mat = npy.identity(8, dtype=complex)
         for row in range(8):
             s8p_mat[row, :] *= s8p_diag[row]
-        y = rf.Network(f=[1, 2],
+        y = rf.Network(f=[1],
                        s=s8p_mat,
                        z0=50)
         self.assertTrue(y.is_symmetric())
@@ -556,13 +556,13 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_is_passive(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
                        z0=50)
         self.assertTrue(a.is_passive(), 'This power divider is passive.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0],
                           [10, 0]],
                        z0=50)
@@ -570,13 +570,13 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_is_lossless(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
                        z0=50)
         self.assertFalse(a.is_lossless(), 'A resistive power divider is lossy.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, -1j/npy.sqrt(2), -1j/npy.sqrt(2)],
                           [-1j/npy.sqrt(2), 1./2, -1./2],
                           [-1j/npy.sqrt(2), -1./2, 1./2]],

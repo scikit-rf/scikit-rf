@@ -445,7 +445,7 @@ class Network(object):
             self.frequency.unit = f_unit
 
         # allow properties to be set through the constructor
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'noise', 'noise_freq']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'z0', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -765,12 +765,14 @@ class Network(object):
         else:
             name = self.name
 
-        if len(npy.shape(self.z0)) == 0 or npy.shape(self.z0)[0] == 0:
-            z0 = str(self.z0)
-        else:
-            z0 = str(self.z0[0, :])
+        _z0 = self.z0
 
-        output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), z0)
+        if _z0.ndim < 2:
+            z0 = _z0
+        else:
+            z0 = self.z0[0, :]
+
+        output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), str(z0))
 
         return output
 
@@ -1110,12 +1112,20 @@ class Network(object):
                 characteristic impedance for network
 
         """
+        if not hasattr(self, '_s'):
+            return self._z0
+        
         if self._z0.ndim == 0:
-            if hasattr(self, '_s'):
-                return npy.full(self._s.shape[:2], self._z0)
+            return npy.full(self._s.shape[:2], self._z0)
+        elif self._z0.ndim == 1:
+            z0 = npy.ones(self._s.shape[:2], dtype=complex)
+            if len(self._z0) == self.nports:
+                z0[:] = self._z0[None, :]
+            #elif len(self._z0) == self.frequency.npoints:
             else:
-                return self._z0
-        else:
+                z0[:] = self._z0[:,None]
+            return z0
+        elif self._z0.ndim == 2:
             return self._z0
 
     @z0.setter
@@ -1129,22 +1139,21 @@ class Network(object):
         if z0.ndim == 0:
             self._z0 = z0
             return
-
         if not hasattr(self, '_s'):
-            raise AttributeError('Load s-matrix first before assigning non-scalar z0 matrix')
+            if 1 <= z0.ndim <= 2:
+                self._z0 = z0
+                return
 
-        self._z0 = npy.zeros(self.s.shape[:2], dtype=complex)
         if z0.ndim == 1:
-            if len(z0) == self.frequency.npoints:
-                self._z0[:] = z0[:,None]
-            elif len(z0) == self.nports:
-                self._z0[:] = z0[None, :]
-            else:
-                raise AttributeError('Unable to broadcast z0 to s shape')
-        elif z0.shape == self._s.shape[:2]:
-            self._z0 = z0
-        else:
-            raise AttributeError('Unable to broadcast z0 to s shape')
+            if len(z0) in (self.frequency.npoints, self.nports):
+                self._z0 = z0
+                return
+        elif z0.ndim == 2:
+            if z0.shape == (self.frequency.npoints, self.nports):
+                self._z0 = z0
+                return
+
+        raise AttributeError('Unable to broadcast z0 to s shape')
 
     @property
     def frequency(self):
