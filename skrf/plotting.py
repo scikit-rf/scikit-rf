@@ -56,6 +56,7 @@ Misc Functions
 '''
 import os
 import sys
+import getpass
 
 import matplotlib as mpl
 # if running on remote mode on a linux server which does not have a display (like Docker images for CI)
@@ -63,7 +64,8 @@ import matplotlib as mpl
 if os.name == 'posix' and not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg' and sys.version.startswith('2'):
     print('No display found. Using non-interactive Agg backend.')
     # https://matplotlib.org/faq/usage_faq.html
-    mpl.use('Agg')
+    if getpass.getuser() != 'jovyan':  # only if not running on Binder
+        mpl.use('Agg')
 from matplotlib import ticker
 import matplotlib.pyplot as plb
 import numpy as npy
