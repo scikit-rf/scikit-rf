@@ -400,7 +400,7 @@ class Network(object):
         self.deembed = None
         self.noise = None
         self.noise_freq = None
-        self._z0: npy.ndarray = npy.array(50, dtype=complex)
+        self._z0 = npy.array(50, dtype=complex)
 
         if s_def not in S_DEFINITIONS:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -6306,7 +6306,6 @@ def s2vswr_active(s, a):
         vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
 
     return vswr_act
-
 
 
 
