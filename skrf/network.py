@@ -1135,8 +1135,8 @@ class Network(object):
     @z0.setter
     def z0(self, z0):
         # cast any array like type (tuple, list) to a npy.array
-        z0 = npy.squeeze(npy.array(z0, dtype=complex))
-        
+        z0 = npy.array(z0, dtype=complex)
+
         # assign _z0 directly if z0 is a scalar
         if z0.ndim == 0:
             self._z0 = z0
