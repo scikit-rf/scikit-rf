@@ -765,10 +765,8 @@ class Network(object):
         else:
             name = self.name
 
-        _z0 = self.z0
-
-        if _z0.ndim < 2:
-            z0 = _z0
+        if self.z0.ndim < 2:
+            z0 = self.z0
         else:
             z0 = self.z0[0, :]
 
@@ -6294,7 +6292,6 @@ def s2vswr_active(s, a):
         vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
 
     return vswr_act
-
 
 
 
