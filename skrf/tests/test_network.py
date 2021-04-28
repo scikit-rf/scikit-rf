@@ -384,6 +384,59 @@ class NetworkTestCase(unittest.TestCase):
             self.assertFalse(npy.any(npy.isnan(ntwk.z)))
             self.assertFalse(npy.any(npy.isnan(ntwk.y)))
 
+    def test_z0_scalar(self):
+        'Test a scalar z0'
+        ntwk = rf.Network()
+        ntwk.z0 = 1
+        # Test setting the z0 before and after setting the s shape
+        self.assertEqual(ntwk.z0, 1)
+        ntwk.s = npy.random.rand(1,2,2)
+        ntwk.z0 = 10
+        self.assertTrue(npy.allclose(ntwk.z0, npy.full((1,2), 10)))
+
+    def test_z0_vector(self):
+        'Test a 1 dimensional z0'
+        ntwk = rf.Network()
+        z0 = [1,2]
+        # Test setting the z0 before and after setting the s shape
+        ntwk.z0 = [1,2] # Passing as List
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+        ntwk.z0 = npy.array(z0[::-1]) # Passing as npy.array
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0[::-1], dtype=complex)))
+
+        # If the s-array has been set, the z0 value should broadcast to the required shape
+        ntwk.s = npy.random.rand(3,2,2)
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0, z0, z0], dtype=complex)))
+
+        # If the s-array has been set and we want to set z0 along the frequency axis, 
+        # wer require the frequency vector to be set too.
+        # Unfortunately the frequency vector and the s shape can distinguish
+        z0 = [1,2,3]
+        ntwk.s = npy.random.rand(3,2,2)
+        with self.assertRaises(AttributeError):
+            ntwk.z0 = z0
+
+        ntwk.f = [1,2,3]
+        ntwk.z0 = z0[::-1]
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0[::-1], z0[::-1]], dtype=complex).T))
+
+    def test_z0_matrix(self):
+        ntwk = rf.Network()
+        z0 = [[1,2]]
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+        ntwk.z0 = npy.array(z0) + 1 # Passing as npy.array
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)+1))
+
+        # Setting the frequency is required to be set, as the matrix size is checked against the 
+        # frequency vector
+        ntwk.s = npy.random.rand(1,2,2)
+        ntwk.f = [1]
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+
+
     def test_yz(self):
         tinyfloat = 1e-12
         ntwk = rf.Network()
