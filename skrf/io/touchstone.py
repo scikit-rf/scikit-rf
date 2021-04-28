@@ -26,7 +26,6 @@ Functions related to reading/writing touchstones.
 """
 import re
 import os
-import io
 import zipfile
 import numpy
 import numpy as npy
