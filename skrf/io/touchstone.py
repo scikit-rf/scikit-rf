@@ -465,6 +465,10 @@ class Touchstone:
         '''
         Extracts Z0 and Gamma comments from fid
         
+        Parameter
+        -------------
+        fid : file object
+        
         Returns
         --------
         gamma : complex numpy.ndarray
