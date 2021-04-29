@@ -114,15 +114,6 @@ class Touchstone:
 
         fid.close()
 
-    def get_line(self, fid):
-        while (1):
-            line = fid.readline()
-            if not type(line) == str:
-                line = line.decode("ascii")  # for python3 zipfile compatibility
-            if not line:
-                break
-            yield line
-
     def load_file(self, fid):
         """
         Load the touchstone file into the interal data structures
@@ -146,8 +137,10 @@ class Touchstone:
             raise Exception('Filename does not have the expected Touchstone extension (.sNp or .ts)')
 
         values = []
-
-        for linenr, line in enumerate(self.get_line(fid)):
+        while True:
+            line = fid.readline()
+            if not line:
+                break
             # store comments if they precede the option line
             line = line.split('!',1)
             if len(line) == 2:
@@ -486,7 +479,10 @@ class Touchstone:
                                                 if k != ''][self.rank*-2:],
                                                 dtype='float'))
         fid.seek(0)
-        for line in self.get_line(fid):
+        while True:
+            line = fid.readline()
+            if not line:
+                break
             line = line.replace('\t', ' ')
 
             # HFSS adds gamma and z0 data in .sNp files using comments.
