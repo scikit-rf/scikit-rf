@@ -530,7 +530,7 @@ class Touchstone:
 
     def get_gamma_z0(self):
         '''
-        Extracts Z0 and Gamma comments from touchstone file (is provided)
+        Extracts Z0 and Gamma comments from touchstone file (if provided)
         
         Returns
         --------
