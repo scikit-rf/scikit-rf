@@ -490,11 +490,6 @@ class Touchstone:
             #  But, depending on the HFSS version, either:
             #  - up to 4 ports only. 
                 #  - up to 4 ports only. 
-            #  - up to 4 ports only. 
-                #  - up to 4 ports only. 
-            #  - up to 4 ports only. 
-                #  - up to 4 ports only. 
-            #  - up to 4 ports only. 
             #        for N > 4, gamma and z0 are given by additional lines
             #  - all gamma and z0 are given on a single line (since 2020R2)
             # In addition, some spurious '!' can remain in these lines
