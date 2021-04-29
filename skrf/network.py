@@ -400,6 +400,7 @@ class Network(object):
         self.deembed = None
         self.noise = None
         self.noise_freq = None
+        self._z0 = npy.array(50, dtype=complex)
 
         if s_def not in S_DEFINITIONS:
             raise ValueError('s_def parameter should be either:', S_DEFINITIONS)
@@ -444,7 +445,7 @@ class Network(object):
             self.frequency.unit = f_unit
 
         # allow properties to be set through the constructor
-        for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'noise', 'noise_freq']:
+        for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'z0', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
@@ -764,12 +765,14 @@ class Network(object):
         else:
             name = self.name
 
-        if len(npy.shape(self.z0)) == 0 or npy.shape(self.z0)[0] == 0:
-            z0 = str(self.z0)
-        else:
-            z0 = str(self.z0[0, :])
+        _z0 = self.z0
 
-        output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), z0)
+        if _z0.ndim < 2:
+            z0 = _z0
+        else:
+            z0 = self.z0[0, :]
+
+        output = '%i-Port Network: \'%s\',  %s, z0=%s' % (self.number_of_ports, name, str(f), str(z0))
 
         return output
 
@@ -1109,62 +1112,60 @@ class Network(object):
                 characteristic impedance for network
 
         """
-        # i hate this function
-        # it was written this way because id like to allow the user to
-        # set the z0 before the s-parameters are set. However, in this
-        # case we dont know how to re-shape the z0 to fxn. to solve this
-        # i attempt to do the re-shaping when z0 is accessed, not when
-        # it is set. this is what makes this function confusing.
-
-        try:
-            if len(npy.shape(self._z0)) == 0:
-                try:
-                    # try and re-shape z0 to match s
-                    self._z0 = self._z0 * npy.ones(self.s.shape[:-1])
-                except(AttributeError):
-                    print('Warning: Network has improper \'z0\' shape.')
-                    # they have yet to set s .
-
-            elif len(npy.shape(self._z0)) == 1:
-                try:
-                    if len(self._z0) == self.frequency.npoints:
-                        # this z0 is frequency dependent but not port dependent
-                        self._z0 = \
-                            npy.repeat(npy.reshape(self._z0, (-1, 1)), self.number_of_ports, 1)
-
-                    elif len(self._z0) == self.number_of_ports:
-                        # this z0 is port dependent but not frequency dependent
-                        self._z0 = self._z0 * npy.ones( \
-                            (self.frequency.npoints, self.number_of_ports))
-
-                    else:
-                        raise (IndexError('z0 has bad shape'))
-
-                except AttributeError:
-                    # there is no self.frequency, or self.number_of_ports
-                    raise AttributeError('Error: I cant reshape z0 through inspection. you must provide correctly '
-                                         'shaped z0, or s-matrix first.')
-
+        # if we are unable to determine the s-matrix shape we return an scalar
+        if not hasattr(self, '_s'):
             return self._z0
-
-        except AttributeError:
-            # print('Warning: z0 is undefined. Defaulting to 50.')
-            self.z0 = 50
-            return self.z0  # this is not an error, its a recursive call
+        
+        # _z0 is an scalar, so a npy.array with shape fxn is filled with _z0
+        if self._z0.ndim == 0:
+            return npy.full(self._s.shape[:2], self._z0)
+        elif self._z0.ndim == 1:
+            # _z0 is a vector, either of length nports or frequency.npoints.
+            # Create a npy.array with shape fxn and broadcast vector to array.
+            z0 = npy.zeros(self._s.shape[:2], dtype=complex)
+            if len(self._z0) == self.nports:
+                z0[:] = self._z0[None, :]
+            else:
+                z0[:] = self._z0[:,None]
+            return z0
+        elif self._z0.ndim == 2:
+            # _z0 is a matrix of correct shape, so we can return directly
+            return self._z0
 
     @z0.setter
     def z0(self, z0):
-        """z0=npy.array(z0)
-        if len(z0.shape) < 2:
-                try:
-                        #try and re-shape z0 to match s
-                        z0=z0*npy.ones(self.s.shape[:-1])
-                except(AttributeError):
-                        print ('Warning: you should store a Network\'s \'s\' matrix before its \'z0\'')
-                        #they have yet to set s .
-                        pass
-        """
-        self._z0 = npy.array(z0, dtype=complex)
+        # cast any array like type (tuple, list) to a npy.array
+        z0 = npy.array(z0, dtype=complex)
+
+        # assign _z0 directly if z0 is a scalar
+        if z0.ndim == 0:
+            self._z0 = z0
+            return
+
+        # if _z0 is a vector or matrix, we check if _s is already assigned.
+        # If not, we cannot proof the correct dimensions and silently accept
+        # any vector or fxn array    
+        if not hasattr(self, '_s'):
+            if 1 <= z0.ndim <= 2:
+                self._z0 = z0
+                return
+
+        # if _z0 is a vector, we check if the dimension matches with either 
+        # nports or frequency.npoints. If yes, we accept the value.
+        # Note that there can be an ambiguity in theory, if nports == npoints
+        # 
+        # if _z0 is a matrix, we check if the shape matches with _s
+        # In any other case raise an Exception
+        if z0.ndim == 1:
+            if len(z0) in (self.frequency.npoints, self.nports):
+                self._z0 = z0
+                return
+        elif z0.ndim == 2:
+            if z0.shape == (self.frequency.npoints, self.nports):
+                self._z0 = z0
+                return
+
+        raise AttributeError('Unable to broadcast z0 to s shape')
 
     @property
     def frequency(self):
@@ -6305,7 +6306,6 @@ def s2vswr_active(s, a):
         vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
 
     return vswr_act
-
 
 
 

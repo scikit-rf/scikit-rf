@@ -384,6 +384,59 @@ class NetworkTestCase(unittest.TestCase):
             self.assertFalse(npy.any(npy.isnan(ntwk.z)))
             self.assertFalse(npy.any(npy.isnan(ntwk.y)))
 
+    def test_z0_scalar(self):
+        'Test a scalar z0'
+        ntwk = rf.Network()
+        ntwk.z0 = 1
+        # Test setting the z0 before and after setting the s shape
+        self.assertEqual(ntwk.z0, 1)
+        ntwk.s = npy.random.rand(1,2,2)
+        ntwk.z0 = 10
+        self.assertTrue(npy.allclose(ntwk.z0, npy.full((1,2), 10)))
+
+    def test_z0_vector(self):
+        'Test a 1 dimensional z0'
+        ntwk = rf.Network()
+        z0 = [1,2]
+        # Test setting the z0 before and after setting the s shape
+        ntwk.z0 = [1,2] # Passing as List
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+        ntwk.z0 = npy.array(z0[::-1]) # Passing as npy.array
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0[::-1], dtype=complex)))
+
+        # If the s-array has been set, the z0 value should broadcast to the required shape
+        ntwk.s = npy.random.rand(3,2,2)
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0, z0, z0], dtype=complex)))
+
+        # If the s-array has been set and we want to set z0 along the frequency axis, 
+        # wer require the frequency vector to be set too.
+        # Unfortunately the frequency vector and the s shape can distinguish
+        z0 = [1,2,3]
+        ntwk.s = npy.random.rand(3,2,2)
+        with self.assertRaises(AttributeError):
+            ntwk.z0 = z0
+
+        ntwk.f = [1,2,3]
+        ntwk.z0 = z0[::-1]
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0[::-1], z0[::-1]], dtype=complex).T))
+
+    def test_z0_matrix(self):
+        ntwk = rf.Network()
+        z0 = [[1,2]]
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+        ntwk.z0 = npy.array(z0) + 1 # Passing as npy.array
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)+1))
+
+        # Setting the frequency is required to be set, as the matrix size is checked against the 
+        # frequency vector
+        ntwk.s = npy.random.rand(1,2,2)
+        ntwk.f = [1]
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+
+
     def test_yz(self):
         tinyfloat = 1e-12
         ntwk = rf.Network()
@@ -466,13 +519,13 @@ class NetworkTestCase(unittest.TestCase):
 
     # Network classifiers
     def test_is_reciprocal(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 1, 0],
                           [0, 0, 1],
                           [1, 0, 0]],
                        z0=50)
         self.assertFalse(a.is_reciprocal(), 'A circulator is not reciprocal.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
@@ -482,7 +535,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_is_symmetric(self):
         # 2-port
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[-1, 0],
                           [0, -1]],
                        z0=50)
@@ -492,7 +545,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(a.is_symmetric(), 'non-symmetrical')
 
         # 3-port
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
@@ -502,7 +555,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(str(context.exception), 'test of symmetric is only valid for a 2N-port network')
 
         # 4-port
-        c = rf.Network(f=[1, 2],
+        c = rf.Network(f=[1],
                        s=[[0, 1j, 1, 0],
                           [1j, 0, 0, 1],
                           [1, 0, 0, 1j],
@@ -515,7 +568,7 @@ class NetworkTestCase(unittest.TestCase):
             c.is_symmetric(n=3)
         self.assertEqual(str(context.exception), 'specified order n = 3 must be between 1 and N = 2, inclusive')
 
-        d = rf.Network(f=[1, 2],
+        d = rf.Network(f=[1],
                        s=[[1, 0, 0, 0],
                           [1, 0, 0, 0],
                           [1, 0, 0, 1],
@@ -529,7 +582,7 @@ class NetworkTestCase(unittest.TestCase):
                         'This device is symmetric after swapping ports 1 with 2 and 3 with 4.')
 
         # 6-port
-        x = rf.Network(f=[1, 2],
+        x = rf.Network(f=[1],
                        s=[[0, 0, 0, 0, 0, 0],
                           [0, 1, 9, 0, 0, 0],
                           [0, 0, 2, 0, 0, 0],
@@ -547,7 +600,7 @@ class NetworkTestCase(unittest.TestCase):
         s8p_mat = npy.identity(8, dtype=complex)
         for row in range(8):
             s8p_mat[row, :] *= s8p_diag[row]
-        y = rf.Network(f=[1, 2],
+        y = rf.Network(f=[1],
                        s=s8p_mat,
                        z0=50)
         self.assertTrue(y.is_symmetric())
@@ -556,13 +609,13 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_is_passive(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
                        z0=50)
         self.assertTrue(a.is_passive(), 'This power divider is passive.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0],
                           [10, 0]],
                        z0=50)
@@ -570,13 +623,13 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_is_lossless(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
                        z0=50)
         self.assertFalse(a.is_lossless(), 'A resistive power divider is lossy.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, -1j/npy.sqrt(2), -1j/npy.sqrt(2)],
                           [-1j/npy.sqrt(2), 1./2, -1./2],
                           [-1j/npy.sqrt(2), -1./2, 1./2]],
