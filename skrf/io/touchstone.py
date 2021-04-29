@@ -468,13 +468,6 @@ class Touchstone:
         Parameter
         -------------
         fid : file object
-        
-        Returns
-        --------
-        gamma : complex numpy.ndarray
-            complex  propagation constant
-        z0 : numpy.ndarray
-            complex port impedance    
         '''
         gamma = []
         z0 = []
