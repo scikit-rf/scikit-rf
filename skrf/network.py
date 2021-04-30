@@ -2772,14 +2772,12 @@ class Network(object):
         if d ==0:
             return self
         d=d/2.
-        if self.nports >2:
-            raise NotImplementedError('only implemented for 1 and 2 ports')
         if media is None:
             from .media import Freespace
             media = Freespace(frequency=self.frequency,z0=self.z0[:,port])
 
         l =media.line(d=d, unit=unit,**kw)
-        return l**self
+        return connect(self, port, l, 0)
 
     def windowed(self, window=('kaiser', 6), normalize=True, center_to_dc=None):
         '''
@@ -3497,8 +3495,8 @@ def connect(ntwkA, k, ntwkB, l, num=1):
     if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
         from_ports = list(range(ntwkC.nports))
         to_ports = list(range(ntwkC.nports))
-        to_ports.pop(k-1);
-        to_ports.append(k-1)
+        to_ports.pop(k);
+        to_ports.append(k)
 
         ntwkC.renumber(from_ports=from_ports,
                        to_ports=to_ports)

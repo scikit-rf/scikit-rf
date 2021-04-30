@@ -91,7 +91,7 @@ class NetworkTestCase(unittest.TestCase):
             self.assertEqual(len(t), num_points)
             self.assertEqual(len(y), num_points)
             self.assertTrue(npy.isclose(t[1] - t[0], tps))
-            
+
     def test_time_transform_nonlinear_f(self):
         netw_nonlinear_f = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         with self.assertRaises(NotImplementedError):
@@ -103,7 +103,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_time_transform_multiport(self):
         dut_dc = self.ntwk1.extrapolate_to_dc()
-        
+
         with self.assertRaises(ValueError):
             t, y = dut_dc.step_response()
 
@@ -177,6 +177,56 @@ class NetworkTestCase(unittest.TestCase):
         xformer.z0 = (50,25)  # transforms 50 ohm to 25 ohm
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
+
+    def test_connect_nport_2port(self):
+        freq = rf.Frequency(1, 10, npoints=10, unit='GHz')
+
+        # create a line which can be connected to each port
+        med = rf.DefinedGammaZ0(freq)
+        line = med.line(1, unit='m')
+        line.z0 = [10, 20]
+
+        for nport_portnum in [3,4,5,6,7,8]:
+
+            # create a Nport network with port impedance i at port i
+            nport = rf.Network()
+            nport.frequency = freq
+            nport.s = npy.zeros((10, nport_portnum, nport_portnum))
+            nport.z0 = npy.arange(nport_portnum)
+
+            # Connect the line to each port and check for port impedance
+            for port in range(nport_portnum):
+                nport_line = rf.connect(nport, port, line, 0)
+                z0_expected = nport.z0
+                z0_expected[:,port] = line.z0[:,1]
+                npy.testing.assert_allclose(
+                        nport_line.z0,
+                        z0_expected
+                    )
+
+    def test_delay(self):
+        ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
+        self.assertTrue(
+            npy.all(
+                self.ntwk1.group_delay[:,:,:]
+                -ntwk1_delayed.group_delay[:,:,:]
+                -npy.array(
+                    [[-1.e-09+0.j, -5.e-10+0.j],
+                     [-5.e-10+0.j,  0.e+00+0.j]]
+                ) < 1e-9
+            )
+        )
+        ntwk2_delayed = self.ntwk2.delay(1,'ps',port=1)
+        self.assertTrue(
+            npy.all(
+                self.ntwk2.group_delay[:,:,:]
+                -ntwk2_delayed.group_delay[:,:,:]
+                -npy.array(
+                    [[ 0.e+00+0.j, -5.e-13+0.j],
+                     [-5.e-13+0.j, -1.e-12+0.j]]
+                ) < 1e-9
+            )
+        )
 
     def test_connect_multiports(self):
         a = rf.Network()
