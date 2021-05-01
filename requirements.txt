@@ -14,4 +14,4 @@ pathlib
 nose
 nose-exclude
 xlwt
-git+https://github.com/scikit-rf/scikit-rf.git@master
+openpyxl
