@@ -42,12 +42,12 @@ jobs:
     - name: Run examples notebooks with nbval
       if: ${{ always() }}
       run: |
-        pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
+        python -m pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
         
     - name: Run tutorials notebooks with nbval
       if: ${{ always() }}
       run: |
-        pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
+        python -m pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
