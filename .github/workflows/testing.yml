@@ -25,10 +25,12 @@ jobs:
         pip install coverage
         pip install nbval
         pip install nbsmoke
+        pip install pytest-notebook
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     # code quality check (linting)
     - name: Lint with flake8
+      if: ${{ always() }}    
       run: |
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -37,25 +39,31 @@ jobs:
 
     # tests suites & creates coverage report
     - name: Test with nose
+      if: ${{ always() }}    
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
 
     - name: Display Python version
+      if: ${{ always() }}    
       run: python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
 
     - name: Run tutorials notebooks with nbsmoke
+      if: ${{ always() }}
       run: |
         pytest --nbsmoke-run doc/source/tutorials/
 
     - name: Run tutorials notebooks with nbsmoke
+      if: ${{ always() }}
       run: |
         python -m pytest --nbsmoke-run doc/source/tutorials/
 
     - name: Run examples notebooks with nbval
+      if: ${{ always() }}    
       run: |
         python -m pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
         
     - name: Run tutorials notebooks with nbval
+      if: ${{ always() }}    
       run: |
         python -m pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
 
