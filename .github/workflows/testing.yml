@@ -30,8 +30,8 @@ jobs:
     - name: Setup conda environment
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
-        $CONDA/bin/conda env update --file environment.yml --name base
-        $CONDA/bin/pip install .
+        # $CONDA/bin/conda env update --file environment.yml --name base
+        # $CONDA/bin/pip install .
         $CONDA/bin/pip install pytest
         $CONDA/bin/pip install nbval
         
