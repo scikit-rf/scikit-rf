@@ -40,9 +40,6 @@ jobs:
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
 
-    - name: Display Python path
-      run: wheris python
-
     - name: Display Python version
       run: python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
 
