@@ -23,11 +23,18 @@ jobs:
         pip install flake8 pytest
         sudo apt-get install xvfb
         pip install coverage
-        pip install nbval
-        pip install nbsmoke
-        pip install pytest-notebook
+        # pip install nbval
+        # pip install nbsmoke
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
+        
+    - name: Setup conda environment
+      run: |
+        # $CONDA is an environment variable pointing to the root of the miniconda directory
+        $CONDA/bin/conda env update --file environment.yml --name base
+        $CONDA/bin/pip install .
+        $CONDA/bin/pip install pytest
+        $CONDA/bin/pip install nbval
+        
     # code quality check (linting)
     - name: Lint with flake8
       if: ${{ always() }}    
@@ -46,6 +53,11 @@ jobs:
     - name: Display Python version
       if: ${{ always() }}    
       run: python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
+
+    - name: Run tutorials notebooks with nbsmoke via conda
+      if: ${{ always() }}
+      run: |
+        $CONDA/bin/pytest -v --nbval-lax --current-env -p no:python doc/source/tutorials/
 
     - name: Run tutorials notebooks with nbsmoke
       if: ${{ always() }}
