@@ -42,8 +42,6 @@ jobs:
     - name: Run examples notebooks with nbval
       if: ${{ always() }}
       run: |
-        python -m pytest --nbsmoke-run -k ".ipynb" doc/source/examples
-    - name: Run tutorials notebooks with nbsmoke
         pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
         
     - name: Run tutorials notebooks with nbval
