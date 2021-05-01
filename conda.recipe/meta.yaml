@@ -26,6 +26,7 @@ requirements:
     - matplotlib
     - six 
     - future
+	- openpyxl
 
     
   run:
