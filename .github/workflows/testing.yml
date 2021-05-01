@@ -49,7 +49,6 @@ jobs:
     - name: Run tutorials notebooks with nbval
       if: ${{ always() }}
       run: |
-        python -m pytest --nbsmoke-run -k ".ipynb" doc/source/tutorials
         pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
 
     # Upload coverage data to coveralls.io
