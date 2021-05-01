@@ -24,6 +24,7 @@ jobs:
         sudo apt-get install xvfb
         pip install coverage
         pip install nbval
+        pip install nbsmoke
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     # code quality check (linting)
@@ -39,9 +40,20 @@ jobs:
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
 
+    - name: Display Python path
+      run: wheris python
+
     - name: Display Python version
       run: python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
-      
+
+    - name: Run tutorials notebooks with nbsmoke
+      run: |
+        pytest --nbsmoke-run doc/source/tutorials/
+
+    - name: Run tutorials notebooks with nbsmoke
+      run: |
+        python -m pytest --nbsmoke-run doc/source/tutorials/
+
     - name: Run examples notebooks with nbval
       run: |
         python -m pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
