@@ -48,7 +48,7 @@ NetworkSet Utilities
 import os
 from . network import average as network_average
 from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT, Y_LABEL_DICT
-
+from io import StringIO
 from . import mathFunctions as mf
 import zipfile
 from copy import deepcopy
@@ -220,9 +220,15 @@ class NetworkSet(object):
 
         for filename in filename_list:
             # try/except block in case not all files are touchstones
-            n= Network()
+            n = Network()
             try:
-                n.read_touchstone(z.open(filename))
+                # convert ZipExtFile to StringIO
+                # io.StringIO doesn't have an attribute called name like in 
+                # file objects created with open(). So create it as it is 
+                # required for the touchstone parser.
+                fileobj = StringIO(z.open(filename).read().decode('UTF-8'))
+                fileobj.name = filename
+                n.read_touchstone(fileobj)
                 ntwk_list.append(n)
                 continue
             except:
