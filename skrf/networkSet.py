@@ -1,6 +1,5 @@
-
-
-'''
+# -*- coding: utf-8 -*-
+"""
 .. module:: skrf.networkSet
 
 ========================================
@@ -18,7 +17,8 @@ ways to make such calculations.
 Another usage is to interpolate a set of Networks which depend of
 an parameter (like a knob, or a geometrical parameter).
 
-The results are returned in :class:`~skrf.network.Network` objects, so they can be plotted and saved in the same way one would do with a
+The results are returned in :class:`~skrf.network.Network` objects,
+so they can be plotted and saved in the same way one would do with a
 :class:`~skrf.network.Network`.
 
 The functionality in this module is provided as methods and
@@ -43,25 +43,23 @@ NetworkSet Utilities
    getset
 
 
-'''
-
-import os
-from . network import average as network_average
-from . network import Network, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT, Y_LABEL_DICT
-from io import StringIO
-from . import mathFunctions as mf
+"""
 import zipfile
-from copy import deepcopy
-import warnings
 import numpy as npy
+import typing
+from io import StringIO, BytesIO
 from scipy.interpolate import interp1d
-# import matplotlib.pyplot as plb
+from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
+from . import mathFunctions as mf
 from . util import now_string_2_dt
-# delayed imports due to circular dependencies
-# NetworkSet.from_dir : from io.general import read_all_networks
+
+try:
+    from numpy.typing import ArrayLike
+except ImportError:
+    ArrayLike = typing.Any
 
 class NetworkSet(object):
-    '''
+    """
     A set of Networks.
 
     This class allows functions on sets of Networks, such as mean or
@@ -119,30 +117,38 @@ class NetworkSet(object):
     not available.
 
 
-    '''
+    """
 
-    def __init__(self, ntwk_set, name = None):
-        '''
-        Initializer for NetworkSet
+    def __init__(self, ntwk_set: typing.Union[list, dict], name: str = None):
+        """
+        Initialize for NetworkSet.
 
         Parameters
-        -----------
+        ----------
         ntwk_set : list of :class:`~skrf.network.Network` objects
                 the set of :class:`~skrf.network.Network` objects
         name : string
                 the name of the NetworkSet, given to the Networks returned
                 from properties of this class.
-        '''
-        ## type checking
+        """
+        if not isinstance(ntwk_set, (list, dict)):
+            raise ValueError('NetworkSet requires a list as argument')
+
+        # dict is authorized for convenience
+        # but if a dict is passed instead of a list -> list
         if hasattr(ntwk_set, 'values'):
             ntwk_set = list(ntwk_set.values())
 
+        # list should not be empty
+        if len(ntwk_set) == 0:
+            raise ValueError('Input list should not be empty')
+
         # did they pass a list of Networks?
-        if not isinstance(ntwk_set[0], Network):
+        if not all([isinstance(ntwk, Network) for ntwk in ntwk_set]):
             raise(TypeError('input must be list of Network types'))
 
         # do all Networks have the same # ports?
-        if len (set([ntwk.number_of_ports for ntwk in ntwk_set])) >1:
+        if len (set([ntwk.number_of_ports for ntwk in ntwk_set])) > 1:
             raise(ValueError('All elements in list of Networks must have same number of ports'))
 
         # is all frequency information the same?
@@ -188,27 +194,26 @@ class NetworkSet(object):
             self.__add_a_operator(operator_name)
 
     @classmethod
-    def from_zip(cls, zip_file_name, sort_filenames=True, *args, **kwargs):
-        '''
-        creates a NetworkSet from a zipfile of touchstones.
+    def from_zip(cls, zip_file_name: str, sort_filenames: bool = True, *args, **kwargs):
+        r"""
+        Create a NetworkSet from a zipfile of touchstones.
 
         Parameters
-        -----------
+        ----------
         zip_file_name : string
             name of zipfile
         sort_filenames: Boolean
             sort the filenames in the zip file before constructing the
             NetworkSet
-        \\*args,\\*\\*kwargs : arguments
+        \\*args, \\*\\*kwargs : arguments
             passed to NetworkSet constructor
 
         Examples
-        ----------
-
+        --------
         >>> import skrf as rf
         >>> my_set = rf.NetworkSet.from_zip('myzip.zip')
 
-        '''
+        """
         z = zipfile.ZipFile(zip_file_name)
         filename_list = z.namelist()
 
@@ -220,21 +225,23 @@ class NetworkSet(object):
 
         for filename in filename_list:
             # try/except block in case not all files are touchstones
-            n = Network()
-            try:
+
+            try:  # Ascii files (Touchstone, etc)
                 # convert ZipExtFile to StringIO
-                # io.StringIO doesn't have an attribute called name like in 
-                # file objects created with open(). So create it as it is 
+                # io.StringIO doesn't have an attribute called name like in
+                # file objects created with open(). So create it as it is
                 # required for the touchstone parser.
                 fileobj = StringIO(z.open(filename).read().decode('UTF-8'))
                 fileobj.name = filename
-                n.read_touchstone(fileobj)
+                n = Network(fileobj)
                 ntwk_list.append(n)
                 continue
             except:
                 pass
-            try:
-                n.read(z.open(filename))
+            try:  # Binary files (pickled Network)
+                fileobj = BytesIO(z.open(filename).read())
+                fileobj.name = filename                
+                n = Network(fileobj)
                 ntwk_list.append(n)
                 continue
             except:
@@ -243,35 +250,35 @@ class NetworkSet(object):
         return cls(ntwk_list)
 
     @classmethod
-    def from_dir(cls, dir='.',*args, **kwargs):
-        '''
-        Create a NetworkSet from a directory containing Networks
+    def from_dir(cls, dir: str = '.', *args, **kwargs):
+        r"""
+        Create a NetworkSet from a directory containing Networks.
 
         This just calls ::
 
             rf.NetworkSet(rf.read_all_networks(dir), *args, **kwargs)
 
         Parameters
-        ---------------
+        ----------
         dir : str
             directory containing Network files.
 
-        \*args, \*\*kwargs :
+        \\*args, \\*\\*kwargs :
             passed to NetworkSet constructor
 
         Examples
-        ----------
-
+        --------
         >>> my_set = rf.NetworkSet.from_dir('./data/')
-        '''
+
+        """
         from . io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
 
 
 
     @classmethod
-    def from_s_dict(cls,d, frequency, *args, **kwargs):
-        '''
+    def from_s_dict(cls, d: dict, frequency: Frequency, *args, **kwargs):
+        r"""
         Create a NetworkSet from a dictionary of s-parameters
 
         The resultant elements of the NetworkSet are named by the keys of
@@ -285,7 +292,7 @@ class NetworkSet(object):
         frequency: :class:`~skrf.frequency.Frequency` object
             frequency assigned to each network
 
-        \*args, \*\*kwargs :
+        \\*args, \\*\\*kwargs :
             passed to Network.__init__ for each key/value pair of d
 
         Returns
@@ -295,16 +302,13 @@ class NetworkSet(object):
         See Also
         ----------
         NetworkSet.to_s_dict
-        '''
+        """
         return cls([Network(s=d[k], frequency=frequency, name=k,
                             *args, **kwargs)  for k in d])
 
-
-
-
-    def __add_a_operator(self,operator_name):
-        '''
-        adds a operator method to the NetworkSet.
+    def __add_a_operator(self, operator_name):
+        """
+        Add an operator method to the NetworkSet.
 
         this is made to
         take either a Network or a NetworkSet. if a Network is passed
@@ -312,7 +316,7 @@ class NetworkSet(object):
         Network. If a NetworkSet is passed to the operator, and is the
         same length as self. then it will operate element-to-element
         like a dot-product.
-        '''
+        """
         def operator_func(self, other):
             if isinstance(other, NetworkSet):
                 if len(other) != len(self):
@@ -328,18 +332,17 @@ class NetworkSet(object):
 
 
     def __str__(self):
-        '''
-        '''
-
+        """
+        """
         return self.ntwk_set.__str__()
 
     def __repr__(self):
         return self.__str__()
 
     def __getitem__(self,key):
-        '''
-        returns an element of the network set
-        '''
+        """
+        Return an element of the network set.
+        """
         if isinstance(key, str):
             # if they pass a string then slice each network in this set
             return NetworkSet([k[key] for k in self.ntwk_set],
@@ -347,57 +350,90 @@ class NetworkSet(object):
         else:
             return self.ntwk_set[key]
 
-    def __len__(self):
-        '''
-        returns an element of the network set
-        '''
+    def __len__(self) -> int:
+        """
+        Return the number of Networks in a NetworkSet.
+        
+        Return
+        ------
+        len: int
+            Number of Networks in a NetworkSet
+            
+        """
         return len(self.ntwk_set)
 
+    def __eq__(self, other: 'NetworkSet') -> bool:
+        """
+        Compare the NetworkSet with another NetworkSet.
+        
+        Two NetworkSets are considered equal of their Networks are all equals
+        (in the same order)
 
-    def __add_a_element_wise_method(self,network_method_name):
+        Returns
+        -------
+        is_equal: bool
+
+        """
+        # of course they should have equal lengths
+        if len(self) != len(other):
+            return False
+        # compare all networks in the order of the list
+        # return False as soon as 2 networks are different
+        for (ntwk, ntwk_other) in zip(self.ntwk_set, other):
+            if ntwk != ntwk_other:
+                return False
+        
+        return True
+
+
+    def __add_a_element_wise_method(self, network_method_name: str):
         def func(self,  *args, **kwargs):
             return self.element_wise_method(network_method_name, *args, **kwargs)
         setattr(self.__class__,network_method_name,func)
 
 
-    def __add_a_func_on_property(self,func,network_property_name):
-        '''
-        dynamically adds a property to this class (NetworkSet).
+    def __add_a_func_on_property(self, func, network_property_name: str):
+        """
+        Dynamically add a property to this class (NetworkSet).
+        
         this is mostly used internally to genrate all of the classes
         properties.
 
-        takes:
-                network_property_name: a property of the Network class,
-                        a string. this must have a matrix output of shape fxnxn
-                func: a function to be applied to the network_property
-                        accross the first axis of the property's output
+        Parameters
+        ----------
+        func: a function to be applied to the network_property
+                accross the first axis of the property's output
+        network_property_name: str
+            a property of the Network class,
+            which must have a matrix output of shape (f, n, n)
+
+        example
+        -------
+        >>> my_ntwk_set.add_a_func_on_property(mean, 's')
 
 
-
-        example:
-                my_ntwk_set.add_a_func_on_property('s',mean)
-
-
-        '''
+        """
         fget = lambda self: fon(self.ntwk_set,func,network_property_name,\
                 name = self.name)
         setattr(self.__class__,func.__name__+'_'+network_property_name,\
                 property(fget))
 
-    def __add_a_plot_uncertainty(self,network_property_name):
-        '''
+    def __add_a_plot_uncertainty(self, network_property_name: str):
+        """
+        Add a plot uncertainty to a Network property.
+        
+        Parameter
+        ---------
+        network_property_name: str
+            A property of the Network class,
+            which must have a matrix output of shape (f, n, n)
 
-        takes:
-                network_property_name: a property of the Network class,
-                        a string. this must have a matrix output of shape fxnxn
+        Parameter
+        ---------
+        >>> my_ntwk_set.__add_a_plot_uncertainty('s')
 
 
-
-        example:
-                my_ntwk_set.add_a_func_on_property('s',mean)
-
-
-        '''
+        """
         def plot_func(self,*args, **kwargs):
             kwargs.update({'attribute':network_property_name})
             self.plot_uncertainty_bounds_component(*args,**kwargs)
@@ -408,20 +444,21 @@ class NetworkSet(object):
         setattr(self.__class__,'plot_ub_'+\
                 network_property_name,plot_func)
 
-    def __add_a_plot_minmax(self,network_property_name):
-        '''
+    def __add_a_plot_minmax(self, network_property_name: str):
+        """
 
-        takes:
-                network_property_name: a property of the Network class,
-                        a string. this must have a matrix output of shape fxnxn
+        Parameter
+        ---------
+        network_property_name: str
+            A property of the Network class,
+            which must have a matrix output of shape (f, n, n)
+
+        Example
+        -------
+        >>> my_ntwk_set.__add_a_plot_minmax('s')
 
 
-
-        example:
-                my_ntwk_set.add_a_func_on_property('s',mean)
-
-
-        '''
+        """
         def plot_func(self,*args, **kwargs):
             kwargs.update({'attribute':network_property_name})
             self.plot_minmax_bounds_component(*args,**kwargs)
@@ -432,94 +469,124 @@ class NetworkSet(object):
         setattr(self.__class__,'plot_mm_'+\
                 network_property_name,plot_func)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         """
-        Returns a dictionary representation of the NetworkSet
+        Return a dictionary representation of the NetworkSet.
+        
+        Return
+        ------
+        d : dict
+            The returned dictionary has the Network names for keys, 
+            and the Networks as values.
 
-        The returned dictionary has the Network names for keys, and the
-        Networks as values.
         """
         return dict([(k.name, k) for k in self.ntwk_set])
 
-    def to_s_dict(ns, *args, **kwargs):
+    def to_s_dict(self):
         """
-        Converts a NetworkSet to a dictionary of s-parameters
+        Converts a NetworkSet to a dictionary of s-parameters.
 
-        The resultant  keys of the dictionary are the names of the Networks
+        The resultant keys of the dictionary are the names of the Networks
         in NetworkSet
 
-        Parameters
-        -------------
-        ns : NetworkSet
-            dictionary of s-parameters data. values of this should be
-            :class:`numpy.ndarray` assignable to :attr:`skrf.network.Network.s`
-        frequency: :class:`~skrf.frequency.Frequency` object
-            frequency assigned to each network
-
-        \*args, \*\*kwargs :
-            passed to Network.__init__ for each key/value pair of d
-
-        Returns
-        ----------
+         Returns
+        -------
         s_dict : dictionary
             contains s-parameters in the form of complex numpy arrays
 
         See Also
         --------
         NetworkSet.from_s_dict
+
         """
-        d = ns.to_dict()
+        d = self.to_dict()
         for k in d:
             d[k] = d[k].s
         return d
 
-
-
-    def element_wise_method(self,network_method_name, *args, **kwargs):
-        '''
-        calls a given method of each element and returns the result as
+    def element_wise_method(self, network_method_name: str, *args, **kwargs) -> 'NetworkSet':
+        """
+        Call a given method of each element and returns the result as
         a new NetworkSet if the output is a Network.
-        '''
+        
+        Parameter
+        ---------
+        network_property_name: str
+            A property of the Network class,
+            which must have a matrix output of shape (f, n, n)
+            
+        Return
+        ------
+        ns: :class: `~skrf.networkSet.NetworkSet`
+            
+        """
         output = [ntwk.__getattribute__(network_method_name)(*args, **kwargs) for ntwk in self.ntwk_set]
         if isinstance(output[0],Network):
             return NetworkSet(output)
         else:
             return output
 
-    def copy(self):
-        '''
-        copies each network of the network set.
-        '''
+    def copy(self) -> 'NetworkSet':
+        """
+        Copie each network of the network set.
+        
+        Return
+        ------
+        ns: :class: `~skrf.networkSet.NetworkSet`
+        
+        """
         return NetworkSet([k.copy() for k in self.ntwk_set])
 
-    def sort(self, key=lambda x: x.name, **kwargs):
-        '''
-        sort this network set.
+    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> typing.Union[None, 'NetworkSet']:
+        r"""
+        Sort this network set.
 
         Parameters
-        -------------
-        **kwargs : dict
+        ----------
+        key:
+            
+        inplace: bool
+            Sort the NetworkSet object directly if True, 
+            return the sorted NetworkSet if False. Default is True.
+        
+        \\*\\*kwargs : dict
             keyword args passed to builtin sorted acting on self.ntwk_set
 
+        Return
+        ------
+        ns: None if inplace=True, NetworkSet if False        
+
         Examples
-        -----------
+        --------
         >>> ns = rf.NetworkSet.from_dir('mydir')
         >>> ns.sort()
 
-        Sort by other property
+        Sort by other property:
+        
         >>> ns.sort(key= lambda x: x.voltage)
-        '''
-        self.ntwk_set = sorted(self.ntwk_set, key = key, **kwargs)
+        
+        Returns a new NetworkSet:
+            
+        >>> sorted_ns = ns.sort(inplace=False)
+        
 
-    def rand(self,n=1):
-        '''
-        return `n` random samples from this NetworkSet
+        """
+        sorted_ns = sorted(self.ntwk_set, key = key, **kwargs)
+        if inplace:
+            self.ntwk_set = sorted_ns
+        else:
+            return sorted_ns
+
+    def rand(self, n: int = 1):
+        """
+        Return `n` random samples from this NetworkSet.
 
         Parameters
         ----------
         n : int
-            number of samples to return
-        '''
+            number of samples to return (default is 1)
+
+        """
         idx = npy.random.randint(0,len(self), n)
         out = [self.ntwk_set[k] for k in idx]
 
@@ -528,9 +595,9 @@ class NetworkSet(object):
         else:
             return out
 
-    def filter(self,s):
-        '''
-        filter networkset based on a string in Network.name
+    def filter(self, s: str) -> 'NetworkSet':
+        """
+        Filter NetworkSet based on a string in `Network.name`.
 
         Notes
         -----
@@ -538,90 +605,135 @@ class NetworkSet(object):
 
         `NetworkSet([k for k in self if s in k.name])`
 
-
         Parameters
-        -------------
+        ----------
         s: str
             string contained in network elements to be filtered
 
         Returns
         --------
-        ns : NetworkSet
+        ns : :class: `skrf.NetworkSet`
 
 
         Examples
         -----------
         >>> ns.filter('monday')
-        '''
+
+        """
         return NetworkSet([k for k in self if s in k.name])
 
-    def scalar_mat(self, param='s',order='F'):
-        '''
-        scalar ndarray representing `param` data vs freq and element idx
+    def scalar_mat(self, param: str = 's') -> npy.ndarray:
+        """
+        Return a scalar ndarray representing `param` data vs freq and element idx.
 
         output is a 3d array with axes  (freq, ns_index, port/ri)
 
-        freq is frequency
-        ns_index is  index of this networkset
-        ports is a flattened re/im components of port index (len =2*nports**2)
-        '''
-        ntwk=self[0]
+        ports is a flattened re/im components of port index (`len = 2*nports**2`)
+        
+        Parameter
+        ---------
+        param : str
+            name of the parameter to export. Default is 's'.
+            
+        Return
+        ------
+        x : :class: Numpy.ndarray
+            
+        """
+        ntwk = self[0]
         nfreq = len(ntwk)
-        # x will have the axes ( frequency,observations, ports)
+        # x will have the axes (frequency, observations, ports)
         x = npy.array([[mf.flatten_c_mat(k.__getattribute__(param)[f]) \
             for k in self] for f in range(nfreq)])
 
         return x
 
-
-    def cov(self, **kw):
-        '''
-        covariance matrix
+    def cov(self, **kw) -> npy.ndarray:
+        """
+        Covariance matrix.
 
         shape of output  will be  (nfreq, 2*nports**2, 2*nports**2)
-        '''
+        """
         smat=self.scalar_mat(**kw)
         return npy.array([npy.cov(k.T) for k in smat])
 
-
-
     @property
-    def mean_s_db(self):
-        '''
-        the mean magnitude in dB.
-
-        note:
-                the mean is taken on the magnitude before converted to db, so
-                        magnitude_2_db( mean(s_mag))
-                which is NOT the same as
-                        mean(s_db)
-        '''
-        ntwk= self.mean_s_mag
+    def mean_s_db(self) -> 'Network':
+        """
+        Return Network of mean magnitude in dB.
+        
+        Return
+        ------
+        ntwk : :class: `~skrf.network.Network`
+            Network of the mean magnitude in dB
+            
+        Note
+        ----
+        The mean is taken on the magnitude before converted to db, so
+        
+        `magnitude_2_db(mean(s_mag))`
+                        
+        which is NOT the same as
+                
+        `mean(s_db)`
+                        
+        """
+        ntwk = self.mean_s_mag
         ntwk.s = ntwk.s_db
         return ntwk
 
     @property
-    def std_s_db(self):
-        '''
-        the standard deviation magnitude in dB.
+    def std_s_db(self) -> 'Network':
+        """
+        Return the Network of the standard deviation magnitude in dB.
 
-        note:
-                the standard deviation is taken on the magnitude before converted to db, so
-                        magnitude_2_db( std(s_mag))
-                which is NOT the same as
-                        std(s_db)
-        '''
+        Return
+        ------
+        ntwk : :class: `~skrf.network.Network`
+            Network of the mean magnitude in dB
+            
+        Note
+        ----
+        The standard deviation is taken on the magnitude before converted to db, so
+                       
+        `magnitude_2_db(std(s_mag))`
+                       
+        which is NOT the same as
+                
+        `std(s_db)
+                        
+        """
         ntwk= self.std_s_mag
         ntwk.s = ntwk.s_db
         return ntwk
 
     @property
-    def inv(self):
+    def inv(self) -> 'NetworkSet':
+        """
+        Return the NetworkSet of inverted Networks (Network.inv()).
+        
+        Returns
+        -------
+        ntwkSet : :class: `~skrf.networkSet.NetworkSet`
+            NetworkSet of inverted Networks
+
+        """
         return NetworkSet( [ntwk.inv for ntwk in self.ntwk_set])
 
+    def add_polar_noise(self, ntwk: 'Network') -> 'Network':
+        """
+        
+        Parameters
+        ----------
+        ntwk : :class: `~skrf.network.Network`
 
 
-    def add_polar_noise(self, ntwk):
+        Returns
+        -------
+        ntwk : :class: `~skrf.network.Network`
+
+
+        """
         from scipy import stats
         from numpy import frompyfunc
 
@@ -631,70 +743,98 @@ class NetworkSet(object):
         s_deg_rv = npy.array(map(ugimme_norm, self.std_s_deg.s_re), dtype=float)
         s_mag_rv = npy.array(map(ugimme_norm, self.std_s_mag.s_re), dtype=float)
 
-        mag = ntwk.s_mag+s_mag_rv
-        deg = ntwk.s_deg+s_deg_rv
-        ntwk.s = mag* npy.exp(1j*npy.pi/180.*deg)
+        mag = ntwk.s_mag + s_mag_rv
+        deg = ntwk.s_deg + s_deg_rv
+        ntwk.s = mag * npy.exp(1j*npy.pi/180*deg)
         return ntwk
 
-    def set_wise_function(self, func, a_property, *args, **kwargs):
-        '''
-        calls a function on a specific property of the networks in
-        this NetworkSet.
+    def set_wise_function(self, func, a_property: str, *args, **kwargs):
+        """
+        Calls a function on a specific property of the Networks in this NetworkSet.
+        
+        Parameters
+        ----------
+        func  : callable
+        
+        a_property : str
+            
 
-        example:
-                my_ntwk_set.set_wise_func(mean,'s')
-        '''
+        Example
+        -------
+        >>> my_ntwk_set.set_wise_func(mean,'s')
+        
+        """
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
 
-
-    def uncertainty_ntwk_triplet(self, attribute,n_deviations=3):
-        '''
-        returns a 3-tuple of Network objects which contain the
+    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3):
+        """
+        Return a 3-tuple of Network objects which contain the
         mean, upper_bound, and lower_bound for the given Network
         attribute.
 
         Used to save and plot uncertainty information data
-        '''
+
+        Parameters
+        ----------
+        attribute : str
+            Attribute to operate on.
+        n_deviations : int, optional
+            Number of standard deviation. The default is 3.
+
+        Returns
+        -------
+        ntwk_mean : :class: `~skrf.network.Network`
+            Network of the averaged attribute
+        lower_bound : :class: `~skrf.network.Network`
+            Network of the lower bound of N*sigma deviation.
+        upper_bound : :class: `~skrf.network.Network`
+            Network of the upper bound of N*sigma deviation.
+            
+        Example
+        -------
+        >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s')
+
+        """
         ntwk_mean = self.__getattribute__('mean_'+attribute)
         ntwk_std = self.__getattribute__('std_'+attribute)
         ntwk_std.s = n_deviations * ntwk_std.s
 
-        upper_bound = (ntwk_mean +ntwk_std)
-        lower_bound = (ntwk_mean -ntwk_std)
+        upper_bound = (ntwk_mean + ntwk_std)
+        lower_bound = (ntwk_mean - ntwk_std)
 
         return (ntwk_mean, lower_bound, upper_bound)
 
-    def datetime_index(self):
-        '''
-        Create a datetime index from networks names
+    def datetime_index(self) -> list:
+        """
+        Create a datetime index from networks names.
 
         this is just:
 
-        [rf.now_string_2_dt(k.name ) for k in self]
+        `[rf.now_string_2_dt(k.name ) for k in self]`
 
 
-        '''
+        """
         return [now_string_2_dt(k.name ) for k in self]
 
 
     # io
     def write(self, file=None,  *args, **kwargs):
-        '''
+        r"""
         Write the NetworkSet to disk using :func:`~skrf.io.general.write`
 
 
         Parameters
-        -----------
+        ----------
         file : str or file-object
             filename or a file-object. If left as None then the
             filename will be set to Calibration.name, if its not None.
             If both are None, ValueError is raised.
-        \*args, \*\*kwargs : arguments and keyword arguments
+        \\*args, \\*\\*kwargs : arguments and keyword arguments
             passed through to :func:`~skrf.io.general.write`
 
         Notes
-        ------
+        -----
         If the self.name is not None and file is  can left as None
         and the resultant file will have the `.ns` extension appended
         to the filename.
@@ -709,7 +849,7 @@ class NetworkSet(object):
         skrf.io.general.write
         skrf.io.general.read
 
-        '''
+        """
         # this import is delayed until here because of a circular dependency
         from . io.general import write
 
@@ -718,31 +858,36 @@ class NetworkSet(object):
                  raise (ValueError('No filename given. You must provide a filename, or set the name attribute'))
             file = self.name
 
-        write(file,self, *args, **kwargs)
+        write(file, self, *args, **kwargs)
 
 
     def write_spreadsheet(self, *args, **kwargs):
-        '''
+        """
         Write contents of network to a spreadsheet, for your boss to use.
+
+        Example
+        -------
+        >>> ns.write_spreadsheet()  # the ns.name attribute must exist
+        >>> ns.write_spreadsheet(file_name='testing.xlsx')
 
         See Also
         ---------
         skrf.io.general.network_2_spreadsheet
-        '''
+
+        """
         from . io.general import networkset_2_spreadsheet
         networkset_2_spreadsheet(self, *args, **kwargs)
 
     def ntwk_attr_2_df(self, attr='s_db',m=0, n=0, *args, **kwargs):
-        '''
-        Converts an attributes of the Networks within a NetworkSet to a
-        Pandas DataFrame
+        """
+        Converts an attributes of the Networks within a NetworkSet to a Pandas DataFrame.
 
         Examples
-        ---------
-        df = ns.ntwk_attr_2_df('s_db',m=1,n=0)
-        df.to_excel('output.xls') # see Pandas docs for more info
+        --------
+        >>> df = ns.ntwk_attr_2_df('s_db', m=1, n=0)
+        >>> df.to_excel('output.xls')  # see Pandas docs for more info
 
-        '''
+        """
         from pandas import DataFrame, Series, Index
         index = Index(
             self[0].frequency.f_scaled,
@@ -756,8 +901,8 @@ class NetworkSet(object):
             )
         return df
 
-    def interpolate_from_network(self, ntw_param, x, interp_kind='linear'):
-        '''
+    def interpolate_from_network(self, ntw_param: ArrayLike, x: float, interp_kind: str = 'linear'):
+        """
         Interpolate a Network from a NetworkSet, as a multi-file N-port network.
 
         Assumes that the NetworkSet contains N-port networks
@@ -782,8 +927,17 @@ class NetworkSet(object):
         -------
         ntw : class:`~skrf.network.Network`
             Network interpolated at x
+            
+        Example
+        -------
+        Assuming that `ns` is a NetworkSet containing 3 Networks (length=3) :
+        
+        >>> param_x = [1, 2, 3]  # a parameter associated to each Network
+        >>> x0 = 1.5  # parameter value to interpolate for
+        >>> interp_ntwk = ns.interpolate_from_network(param_x, x0)
 
-        '''
+
+        """
         ntw = self[0].copy()
         # Interpolating the scattering parameters
         s = npy.array([self[idx].s for idx in range(len(self))])
@@ -795,7 +949,7 @@ class NetworkSet(object):
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
-    '''
+    """
     Applies a function to some attribute of a list of networks.
 
 
@@ -825,9 +979,9 @@ def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
     ----------
     averaging can be implemented with func_on_networks by
 
-    >>> func_on_networks(ntwk_list,mean)
+    >>> func_on_networks(ntwk_list, mean)
 
-    '''
+    """
     data_matrix = \
             npy.array([ntwk.__getattribute__(attribute) for ntwk in ntwk_list])
 
@@ -844,7 +998,7 @@ fon = func_on_networks
 
 
 def getset(ntwk_dict, s, *args, **kwargs):
-    '''
+    """
     Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
     objects in a dictionary that contain `s` in its key. This is useful
     for dealing with the output of
@@ -871,7 +1025,7 @@ def getset(ntwk_dict, s, *args, **kwargs):
     >>>ntwk_dict = rf.load_all_touchstone('my_dir')
     >>>set5v = getset(ntwk_dict,'5v')
     >>>set10v = getset(ntwk_dict,'10v')
-    '''
+    """
     ntwk_list = [ntwk_dict[k] for k in ntwk_dict if s in k]
     if len(ntwk_list) > 0:
         return NetworkSet( ntwk_list,*args, **kwargs)
