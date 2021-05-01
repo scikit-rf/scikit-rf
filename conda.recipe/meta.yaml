@@ -42,6 +42,7 @@ requirements:
     - xlwt
     - xlrd
     - networkx
+	- openpyxl
     
 
 test:
