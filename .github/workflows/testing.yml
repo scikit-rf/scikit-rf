@@ -41,11 +41,11 @@ jobs:
     - name: Run examples notebooks with nbsmoke
       if: ${{ always() }}
       run: |
-        pytest --nbsmoke-run -k ".ipynb" doc/source/examples
+        python -m pytest --nbsmoke-run -k ".ipynb" doc/source/examples
     - name: Run tutorials notebooks with nbsmoke
       if: ${{ always() }}
       run: |
-        pytest --nbsmoke-run -k ".ipynb" doc/source/tutorials
+        python -m pytest --nbsmoke-run -k ".ipynb" doc/source/tutorials
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
