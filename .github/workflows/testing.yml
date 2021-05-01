@@ -38,7 +38,10 @@ jobs:
     - name: Test with nose
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
-        
+
+    - name: Display Python version
+      run: python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
+      
     - name: Run examples notebooks with nbval
       run: |
         python -m pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
