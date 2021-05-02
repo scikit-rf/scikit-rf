@@ -41,9 +41,10 @@ jobs:
         python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
         pwd
         ls
-        print $PYTHONPATH
-        export PYTHONPATH=${PYTHONPATH}:${PWD}
-        print $PYTHONPATH
+        echo $PYTHONPATH
+        echo "${PWD}" >> $GITHUB_PATH
+        echo "PYTHONPATH=${PWD}" >> $GITHUB_ENV
+        echo $PYTHONPATH
 
     # code quality check (linting)
     - name: Lint with flake8
