@@ -57,11 +57,16 @@ jobs:
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
  
-     - name: Run all notebooks with nbval via conda
+    - name: Run all notebooks with nbval via conda
       if: ${{ always() }}
       run: |
         $CONDA/bin/pytest -v --nbval-lax --current-env -p no:python
- 
+
+    - name: Run all notebooks with nbval via conda
+      if: ${{ always() }}
+      run: |
+        $CONDA/bin/python -m pytest -v --nbval-lax --current-env -p no:python
+		
     - name: Run tutorials notebooks with nbval via conda
       if: ${{ always() }}
       run: |
