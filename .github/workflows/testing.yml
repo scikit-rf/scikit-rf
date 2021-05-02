@@ -23,30 +23,21 @@ jobs:
         pip install flake8 pytest
         sudo apt-get install xvfb
         pip install coverage
-        # pip install nbval
-        # pip install nbsmoke
+        pip install nbval
+        pip install nbsmoke
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Setup conda environment
-      run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        # $CONDA/bin/conda env update --file environment.yml --name base
-        # $CONDA/bin/pip install .
-        $CONDA/bin/conda install pytest
-        $CONDA/bin/conda install -c conda-forge nbval
         
     - name: Display Python version
       if: ${{ always() }}    
       run: |
         python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
         pwd
-        ls
         echo $PYTHONPATH
         echo "${PWD}" >> $GITHUB_PATH
         echo "PYTHONPATH=${PWD}" >> $GITHUB_ENV
         export PYTHONPATH=${PWD}
         echo $PYTHONPATH
-        # python setup.py install
+        python setup.py install
 
     # code quality check (linting)
     - name: Lint with flake8
@@ -62,21 +53,6 @@ jobs:
       if: ${{ always() }}    
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
- 
-    - name: Run all notebooks with nbval via conda
-      if: ${{ always() }}
-      run: |
-        $CONDA/bin/pytest -v --nbval-lax --current-env -p no:python
-
-    - name: Run all notebooks with nbval via conda
-      if: ${{ always() }}
-      run: |
-        $CONDA/bin/python -m pytest -v --nbval-lax --current-env -p no:python
-
-    - name: Run tutorials notebooks with nbval via conda
-      if: ${{ always() }}
-      run: |
-        $CONDA/bin/pytest -v --nbval-lax --current-env -p no:python doc/source/tutorials/
 
     - name: Run tutorials notebooks with nbsmoke
       if: ${{ always() }}
