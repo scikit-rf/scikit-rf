@@ -41,6 +41,7 @@ jobs:
         python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
         pwd
         ls
+        PYTHONPATH=${PYTHONPATH}:${PWD}:${PWD}/skrf
 
     # code quality check (linting)
     - name: Lint with flake8
