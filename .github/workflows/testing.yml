@@ -20,21 +20,18 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest
+        pip install flake8 pytest pytest-cov
         sudo apt-get install xvfb
         pip install coverage
-        # pip install nbval
-        # pip install nbsmoke
+        pip install nbval
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
         
-    - name: Setup conda environment
+    - name: Installing package locally for pytest and nbval
+      if: ${{ always() }}    
       run: |
-        # $CONDA is an environment variable pointing to the root of the miniconda directory
-        # $CONDA/bin/conda env update --file environment.yml --name base
-        # $CONDA/bin/pip install .
-        $CONDA/bin/pip install pytest
-        $CONDA/bin/pip install nbval
-        
+        # this is required to test the notebooks. If not done, module skrf will not be found
+        python setup.py install
+
     # code quality check (linting)
     - name: Lint with flake8
       if: ${{ always() }}    
@@ -50,34 +47,16 @@ jobs:
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
 
-    - name: Display Python version
+    # test notebooks
+    - name: Run tutorials notebooks with nbval
       if: ${{ always() }}    
-      run: python -c "import sys; print(sys.version); import skrf as rf; print(rf.__version__)"
-
-    - name: Run tutorials notebooks with nbsmoke via conda
-      if: ${{ always() }}
       run: |
-        $CONDA/bin/pytest -v --nbval-lax --current-env -p no:python doc/source/tutorials/
-
-    - name: Run tutorials notebooks with nbsmoke
-      if: ${{ always() }}
-      run: |
-        pytest --nbsmoke-run doc/source/tutorials/
-
-    - name: Run tutorials notebooks with nbsmoke
-      if: ${{ always() }}
-      run: |
-        python -m pytest --nbsmoke-run doc/source/tutorials/
+        python -m pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
 
     - name: Run examples notebooks with nbval
       if: ${{ always() }}    
       run: |
         python -m pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
-        
-    - name: Run tutorials notebooks with nbval
-      if: ${{ always() }}    
-      run: |
-        python -m pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
