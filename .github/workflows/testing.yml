@@ -44,7 +44,9 @@ jobs:
         echo $PYTHONPATH
         echo "${PWD}" >> $GITHUB_PATH
         echo "PYTHONPATH=${PWD}" >> $GITHUB_ENV
+        export PYTHONPATH=${PWD}
         echo $PYTHONPATH
+        # python setup.py install
 
     # code quality check (linting)
     - name: Lint with flake8
