@@ -33,7 +33,7 @@ jobs:
         # $CONDA/bin/conda env update --file environment.yml --name base
         # $CONDA/bin/pip install .
         $CONDA/bin/conda install pytest
-        $CONDA/bin/conda install nbval
+        $CONDA/bin/conda install -c conda-forge nbval
         
     - name: Display Python version
       if: ${{ always() }}    
