@@ -1129,20 +1129,6 @@ class Network(object):
             return self._z0
 
     @z0.setter
-<<<<<<< HEAD
-    def z0(self, z0: npy.ndarray) -> None:
-        """z0=npy.array(z0)
-        if len(z0.shape) < 2:
-                try:
-                        #try and re-shape z0 to match s
-                        z0=z0*npy.ones(self.s.shape[:-1])
-                except(AttributeError):
-                        print ('Warning: you should store a Network\'s \'s\' matrix before its \'z0\'')
-                        #they have yet to set s .
-                        pass
-        """
-        self._z0 = npy.array(z0, dtype=complex)
-=======
     def z0(self, z0):
         # cast any array like type (tuple, list) to a npy.array
         z0 = npy.array(z0, dtype=complex)
@@ -1176,7 +1162,6 @@ class Network(object):
                 return
 
         raise AttributeError('Unable to broadcast z0 to s shape')
->>>>>>> master
 
     @property
     def frequency(self) -> Frequency:
