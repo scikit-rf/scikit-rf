@@ -105,6 +105,13 @@ class Touchstone:
 
         self.comment_variables=None
         self.load_file(fid)
+
+        self.gamma = []
+        self.z0 = []
+
+        if self.is_from_hfss:
+            self.get_gamma_z0_from_fid(fid)
+
         fid.close()
 
     def load_file(self, fid):
@@ -129,16 +136,11 @@ class Touchstone:
         else:
             raise Exception('Filename does not have the expected Touchstone extension (.sNp or .ts)')
 
-        linenr = 0
         values = []
-        while (1):
-            linenr +=1
+        while True:
             line = fid.readline()
-            if not type(line) == str:
-                line = line.decode("ascii")  # for python3 zipfile compatibility
             if not line:
                 break
-
             # store comments if they precede the option line
             line = line.split('!',1)
             if len(line) == 2:
@@ -459,9 +461,73 @@ class Touchstone:
 
         return False
 
+    def get_gamma_z0_from_fid(self, fid):
+        '''
+        Extracts Z0 and Gamma comments from fid
+        
+        Parameter
+        -------------
+        fid : file object
+        '''
+        gamma = []
+        z0 = []
+        def line2ComplexVector(s):
+            return mf.scalar2Complex(npy.array([k for k in s.strip().split(' ')
+                                                if k != ''][self.rank*-2:],
+                                                dtype='float'))
+        fid.seek(0)
+        while True:
+            line = fid.readline()
+            if not line:
+                break
+            line = line.replace('\t', ' ')
+
+            # HFSS adds gamma and z0 data in .sNp files using comments.
+            # NB : each line(s) describe gamma and z0. 
+            #  But, depending on the HFSS version, either:
+            #  - up to 4 ports only. 
+                #  - up to 4 ports only. 
+            #        for N > 4, gamma and z0 are given by additional lines
+            #  - all gamma and z0 are given on a single line (since 2020R2)
+            # In addition, some spurious '!' can remain in these lines
+            if '! Gamma' in line:
+                _line = line.replace('! Gamma', '').replace('!', '').rstrip()
+
+                # check how many elements are in the first line
+                nb_elem = len(_line.split())
+
+                if nb_elem == 2*self.rank:
+                    # case of all data in a single line
+                    gamma.append(line2ComplexVector(_line.replace('!', '').rstrip()))
+                else:
+                    # case of Nport > 4 *and* data on additional multiple lines
+                    for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
+                        _line += fid.readline().replace('!', '').rstrip()
+                    gamma.append(line2ComplexVector(_line))
+
+            
+            if '! Port Impedance' in line:
+                _line = line.replace('! Port Impedance', '').rstrip()
+                nb_elem = len(_line.split())
+
+                if nb_elem == 2*self.rank:
+                    z0.append(line2ComplexVector(_line.replace('!', '').rstrip()))
+                else:
+                    for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
+                        _line += fid.readline().replace('!', '').rstrip()
+                    z0.append(line2ComplexVector(_line))
+
+        # If the file does not contain valid port impedance comments, set to default one
+        if len(z0) == 0:
+            z0 = npy.complex(self.resistance)
+            #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
+
+        self.gamma = npy.array(gamma) 
+        self.z0 = npy.array(z0)
+
     def get_gamma_z0(self):
         '''
-        Extracts Z0 and Gamma comments from touchstone file (is provided)
+        Extracts Z0 and Gamma comments from touchstone file (if provided)
         
         Returns
         --------
@@ -470,57 +536,7 @@ class Touchstone:
         z0 : numpy.ndarray
             complex port impedance    
         '''
-        def line2ComplexVector(s):
-            return mf.scalar2Complex(npy.array([k for k in s.strip().split(' ')
-                                                if k != ''][self.rank*-2:],
-                                                dtype='float'))
-    
-        with open(self.filename) as f:
-            gamma, z0 = [],[]
-            
-            for line in f:
-
-                # HFSS adds gamma and z0 data in .sNp files using comments.
-                # NB : each line(s) describe gamma and z0. 
-                #  But, depending on the HFSS version, either:
-                #  - up to 4 ports only. 
-                #        for N > 4, gamma and z0 are given by additional lines
-                #  - all gamma and z0 are given on a single line (since 2020R2)
-                # In addition, some spurious '!' can remain in these lines
-                if '! Gamma' in line:
-                    _line = line.replace('! Gamma', '').replace('!', '').rstrip()
-
-                    # check how many elements are in the first line
-                    nb_elem = len(_line.split())
-
-                    if nb_elem == 2*self.rank:
-                        # case of all data in a single line
-                        gamma.append(line2ComplexVector(_line.replace('!', '').rstrip()))
-                    else:
-                        # case of Nport > 4 *and* data on additional multiple lines
-                        for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
-                            _line += next(f).replace('!', '').rstrip()
-                        gamma.append(line2ComplexVector(_line))
-
-             
-                if '! Port Impedance' in line:
-                    _line = line.replace('! Port Impedance', '').rstrip()
-                    nb_elem = len(_line.split())
-
-                    if nb_elem == 2*self.rank:
-                        z0.append(line2ComplexVector(_line.replace('!', '').rstrip()))
-                    else:
-                        for _ in range(int(npy.ceil(self.rank/4.0)) - 1):
-                            _line += next(f).replace('!', '').rstrip()
-                        z0.append(line2ComplexVector(_line))
-    
-            # If the file does not contain valid port impedance comments, set to default one
-            if len(z0) == 0:
-                z0 = npy.complex(self.resistance)
-                #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
-
-
-        return npy.array(gamma), npy.array(z0)
+        return self.gamma, self.z0
 
 def hfss_touchstone_2_gamma_z0(filename):
     '''

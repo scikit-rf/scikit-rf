@@ -91,7 +91,7 @@ class NetworkTestCase(unittest.TestCase):
             self.assertEqual(len(t), num_points)
             self.assertEqual(len(y), num_points)
             self.assertTrue(npy.isclose(t[1] - t[0], tps))
-            
+
     def test_time_transform_nonlinear_f(self):
         netw_nonlinear_f = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         with self.assertRaises(NotImplementedError):
@@ -103,7 +103,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_time_transform_multiport(self):
         dut_dc = self.ntwk1.extrapolate_to_dc()
-        
+
         with self.assertRaises(ValueError):
             t, y = dut_dc.step_response()
 
@@ -141,7 +141,14 @@ class NetworkTestCase(unittest.TestCase):
         with open(filename) as fid:
             data = fid.read()
             sio = io.StringIO(data)
-            sio.name = filename # hack a bug to touchstone reader
+            sio.name = os.path.basename(filename) # hack a bug to touchstone reader
+            rf.Network(sio)
+            
+        filename = os.path.join(self.test_dir, 'hfss_oneport.s1p')
+        with open(filename) as fid:
+            data = fid.read()
+            sio = io.StringIO(data)
+            sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
 
     def test_open_saved_touchstone(self):
@@ -177,6 +184,56 @@ class NetworkTestCase(unittest.TestCase):
         xformer.z0 = (50,25)  # transforms 50 ohm to 25 ohm
         c = rf.connect(xformer,0,xformer,1)  # connect 50 ohm port to 25 ohm port
         self.assertTrue(npy.all(npy.abs(c.s-rf.impedance_mismatch(50, 25)) < 1e-6))
+
+    def test_connect_nport_2port(self):
+        freq = rf.Frequency(1, 10, npoints=10, unit='GHz')
+
+        # create a line which can be connected to each port
+        med = rf.DefinedGammaZ0(freq)
+        line = med.line(1, unit='m')
+        line.z0 = [10, 20]
+
+        for nport_portnum in [3,4,5,6,7,8]:
+
+            # create a Nport network with port impedance i at port i
+            nport = rf.Network()
+            nport.frequency = freq
+            nport.s = npy.zeros((10, nport_portnum, nport_portnum))
+            nport.z0 = npy.arange(nport_portnum)
+
+            # Connect the line to each port and check for port impedance
+            for port in range(nport_portnum):
+                nport_line = rf.connect(nport, port, line, 0)
+                z0_expected = nport.z0
+                z0_expected[:,port] = line.z0[:,1]
+                npy.testing.assert_allclose(
+                        nport_line.z0,
+                        z0_expected
+                    )
+
+    def test_delay(self):
+        ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
+        self.assertTrue(
+            npy.all(
+                self.ntwk1.group_delay[:,:,:]
+                -ntwk1_delayed.group_delay[:,:,:]
+                -npy.array(
+                    [[-1.e-09+0.j, -5.e-10+0.j],
+                     [-5.e-10+0.j,  0.e+00+0.j]]
+                ) < 1e-9
+            )
+        )
+        ntwk2_delayed = self.ntwk2.delay(1,'ps',port=1)
+        self.assertTrue(
+            npy.all(
+                self.ntwk2.group_delay[:,:,:]
+                -ntwk2_delayed.group_delay[:,:,:]
+                -npy.array(
+                    [[ 0.e+00+0.j, -5.e-13+0.j],
+                     [-5.e-13+0.j, -1.e-12+0.j]]
+                ) < 1e-9
+            )
+        )
 
     def test_connect_multiports(self):
         a = rf.Network()
@@ -384,6 +441,59 @@ class NetworkTestCase(unittest.TestCase):
             self.assertFalse(npy.any(npy.isnan(ntwk.z)))
             self.assertFalse(npy.any(npy.isnan(ntwk.y)))
 
+    def test_z0_scalar(self):
+        'Test a scalar z0'
+        ntwk = rf.Network()
+        ntwk.z0 = 1
+        # Test setting the z0 before and after setting the s shape
+        self.assertEqual(ntwk.z0, 1)
+        ntwk.s = npy.random.rand(1,2,2)
+        ntwk.z0 = 10
+        self.assertTrue(npy.allclose(ntwk.z0, npy.full((1,2), 10)))
+
+    def test_z0_vector(self):
+        'Test a 1 dimensional z0'
+        ntwk = rf.Network()
+        z0 = [1,2]
+        # Test setting the z0 before and after setting the s shape
+        ntwk.z0 = [1,2] # Passing as List
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+        ntwk.z0 = npy.array(z0[::-1]) # Passing as npy.array
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0[::-1], dtype=complex)))
+
+        # If the s-array has been set, the z0 value should broadcast to the required shape
+        ntwk.s = npy.random.rand(3,2,2)
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0, z0, z0], dtype=complex)))
+
+        # If the s-array has been set and we want to set z0 along the frequency axis, 
+        # wer require the frequency vector to be set too.
+        # Unfortunately the frequency vector and the s shape can distinguish
+        z0 = [1,2,3]
+        ntwk.s = npy.random.rand(3,2,2)
+        with self.assertRaises(AttributeError):
+            ntwk.z0 = z0
+
+        ntwk.f = [1,2,3]
+        ntwk.z0 = z0[::-1]
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array([z0[::-1], z0[::-1]], dtype=complex).T))
+
+    def test_z0_matrix(self):
+        ntwk = rf.Network()
+        z0 = [[1,2]]
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+        ntwk.z0 = npy.array(z0) + 1 # Passing as npy.array
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)+1))
+
+        # Setting the frequency is required to be set, as the matrix size is checked against the 
+        # frequency vector
+        ntwk.s = npy.random.rand(1,2,2)
+        ntwk.f = [1]
+        ntwk.z0 = z0
+        self.assertTrue(npy.allclose(ntwk.z0, npy.array(z0, dtype=complex)))
+
+
     def test_yz(self):
         tinyfloat = 1e-12
         ntwk = rf.Network()
@@ -466,13 +576,13 @@ class NetworkTestCase(unittest.TestCase):
 
     # Network classifiers
     def test_is_reciprocal(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 1, 0],
                           [0, 0, 1],
                           [1, 0, 0]],
                        z0=50)
         self.assertFalse(a.is_reciprocal(), 'A circulator is not reciprocal.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
@@ -482,7 +592,7 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_is_symmetric(self):
         # 2-port
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[-1, 0],
                           [0, -1]],
                        z0=50)
@@ -492,7 +602,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(a.is_symmetric(), 'non-symmetrical')
 
         # 3-port
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
@@ -502,7 +612,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertEqual(str(context.exception), 'test of symmetric is only valid for a 2N-port network')
 
         # 4-port
-        c = rf.Network(f=[1, 2],
+        c = rf.Network(f=[1],
                        s=[[0, 1j, 1, 0],
                           [1j, 0, 0, 1],
                           [1, 0, 0, 1j],
@@ -515,7 +625,7 @@ class NetworkTestCase(unittest.TestCase):
             c.is_symmetric(n=3)
         self.assertEqual(str(context.exception), 'specified order n = 3 must be between 1 and N = 2, inclusive')
 
-        d = rf.Network(f=[1, 2],
+        d = rf.Network(f=[1],
                        s=[[1, 0, 0, 0],
                           [1, 0, 0, 0],
                           [1, 0, 0, 1],
@@ -529,7 +639,7 @@ class NetworkTestCase(unittest.TestCase):
                         'This device is symmetric after swapping ports 1 with 2 and 3 with 4.')
 
         # 6-port
-        x = rf.Network(f=[1, 2],
+        x = rf.Network(f=[1],
                        s=[[0, 0, 0, 0, 0, 0],
                           [0, 1, 9, 0, 0, 0],
                           [0, 0, 2, 0, 0, 0],
@@ -547,7 +657,7 @@ class NetworkTestCase(unittest.TestCase):
         s8p_mat = npy.identity(8, dtype=complex)
         for row in range(8):
             s8p_mat[row, :] *= s8p_diag[row]
-        y = rf.Network(f=[1, 2],
+        y = rf.Network(f=[1],
                        s=s8p_mat,
                        z0=50)
         self.assertTrue(y.is_symmetric())
@@ -556,13 +666,13 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_is_passive(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
                        z0=50)
         self.assertTrue(a.is_passive(), 'This power divider is passive.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, 0],
                           [10, 0]],
                        z0=50)
@@ -570,13 +680,13 @@ class NetworkTestCase(unittest.TestCase):
         return
 
     def test_is_lossless(self):
-        a = rf.Network(f=[1, 2],
+        a = rf.Network(f=[1],
                        s=[[0, 0.5, 0.5],
                           [0.5, 0, 0.5],
                           [0.5, 0.5, 0]],
                        z0=50)
         self.assertFalse(a.is_lossless(), 'A resistive power divider is lossy.')
-        b = rf.Network(f=[1, 2],
+        b = rf.Network(f=[1],
                        s=[[0, -1j/npy.sqrt(2), -1j/npy.sqrt(2)],
                           [-1j/npy.sqrt(2), 1./2, -1./2],
                           [-1j/npy.sqrt(2), -1./2, 1./2]],

@@ -23,7 +23,7 @@ jobs:
         pip install flake8 pytest
         sudo apt-get install xvfb
         pip install coverage
-        pip install nbsmoke
+        pip install nbval
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     # code quality check (linting)
@@ -38,14 +38,16 @@ jobs:
     - name: Test with nose
       run: |
         nosetests skrf --nocapture --with-coverage -c nose.cfg
-    - name: Run examples notebooks with nbsmoke
+        
+    - name: Run examples notebooks with nbval
       if: ${{ always() }}
       run: |
-        pytest --nbsmoke-run -k ".ipynb" doc/source/examples
-    - name: Run tutorials notebooks with nbsmoke
+        pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
+        
+    - name: Run tutorials notebooks with nbval
       if: ${{ always() }}
       run: |
-        pytest --nbsmoke-run -k ".ipynb" doc/source/tutorials
+        pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
