@@ -12,6 +12,7 @@ VectorFitting (:mod:`skrf.vectorFitting`)
 
 import numpy as np
 import os
+from functools import wraps
 try:
     from . import plotting    # will perform the correct setup for matplotlib before it is called below
     import matplotlib.pyplot as mplt
@@ -33,6 +34,7 @@ def check_plotting(func):
         When trying to run the decorated function without matplotlib
     """
 
+    @wraps(func)
     def wrapper(*args, **kwargs):
         if mplt is None:
             raise RuntimeError('Plotting is not available')
