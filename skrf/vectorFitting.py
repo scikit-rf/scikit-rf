@@ -651,7 +651,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if freqs is None:
@@ -690,7 +692,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if freqs is None:
@@ -725,7 +729,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if ax is None:
@@ -758,7 +764,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if ax is None:
