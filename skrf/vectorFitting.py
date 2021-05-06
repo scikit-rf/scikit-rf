@@ -333,7 +333,7 @@ class VectorFitting:
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
             # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=-1)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
