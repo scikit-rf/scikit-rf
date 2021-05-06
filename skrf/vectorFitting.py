@@ -569,9 +569,8 @@ class VectorFitting:
             proportional_coeff = data['proportionals']
             constant_coeff = data['constants']
 
-            if np.alen(zeros) == self.network.nports and \
-                    np.alen(proportional_coeff) == self.network.nports and \
-                    np.alen(constant_coeff) == self.network.nports:
+            n_resp = self.network.nports ** 2
+            if np.shape(zeros)[0] == np.shape(proportional_coeff)[0] == np.shape(constant_coeff)[0] == n_resp:
                 self.poles = poles
                 self.zeros = zeros
                 self.proportional_coeff = proportional_coeff

@@ -2,6 +2,7 @@ import unittest
 import skrf
 import numpy as np
 import tempfile
+import os
 
 
 class VectorFittingTestCase(unittest.TestCase):
@@ -82,6 +83,26 @@ class VectorFittingTestCase(unittest.TestCase):
         # written tmp file should contain 69 lines
         n_lines = len(open(tmp_file.name, 'r').readlines())
         self.assertEqual(n_lines, 69)
+
+    def test_read_write_npz(self):
+        # fit ring slot example network
+        nw = skrf.data.ring_slot
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        vf.vector_fit(n_poles_real=2, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
+
+        # export (write) fitted parameters to .npz file in tmp directory
+        tmp_dir = tempfile.TemporaryDirectory()
+        vf.write_npz(tmp_dir.name)
+
+        # create a new vector fitting instance and import (read) those fitted parameters
+        vf2 = skrf.vectorFitting.VectorFitting(nw)
+        vf2.read_npz(os.path.join(tmp_dir.name, 'coefficients_{}.npz'.format(nw.name)))
+
+        # compare both sets of parameters
+        self.assertTrue(np.allclose(vf.poles, vf2.poles))
+        self.assertTrue(np.allclose(vf.zeros, vf2.zeros))
+        self.assertTrue(np.allclose(vf.proportional_coeff, vf2.proportional_coeff))
+        self.assertTrue(np.allclose(vf.constant_coeff, vf2.constant_coeff))
 
     def test_matplotlib_missing(self):
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
