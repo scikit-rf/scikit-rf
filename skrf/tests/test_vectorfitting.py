@@ -49,26 +49,26 @@ class VectorFittingTestCase(unittest.TestCase):
         nw_s11 = nw.s[:, 0, 0]
         fit_s11 = vf.get_model_response(0, 0, freqs=nw.f)
         delta_s11_maxabs = np.amax(np.abs((fit_s11 - nw_s11) / nw_s11))
-        self.assertTrue(delta_s11_maxabs < 0.01)
+        self.assertLess(delta_s11_maxabs, 0.05)
 
         # s12
         nw_s12 = nw.s[:, 0, 1]
         fit_s12 = vf.get_model_response(0, 1, freqs=nw.f)
         delta_s12_maxabs = np.amax(np.abs((fit_s12 - nw_s12) / nw_s12))
-        self.assertTrue(delta_s12_maxabs < 0.01)
+        self.assertLess(delta_s12_maxabs, 0.05)
 
         # s21
         nw_s21 = nw.s[:, 1, 0]
         fit_s21 = vf.get_model_response(1, 0, freqs=nw.f)
         delta_s21_maxabs = np.amax(np.abs((fit_s21 - nw_s21) / nw_s21))
-        self.assertTrue(delta_s21_maxabs < 0.01)
+        self.assertLess(delta_s21_maxabs, 0.05)
 
         # s22
         nw_s22 = nw.s[:, 1, 1]
         fit_s22 = vf.get_model_response(1, 1, freqs=nw.f)
         delta_s22_maxabs = np.amax(np.abs((fit_s22 - nw_s22) / nw_s22))
         print(delta_s22_maxabs)
-        self.assertTrue(delta_s22_maxabs < 0.01)
+        self.assertLess(delta_s22_maxabs, 0.05)
 
     def test_spice_subcircuit(self):
         # fit ring slot example network
