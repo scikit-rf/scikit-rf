@@ -15,4 +15,4 @@ nose
 nose-exclude
 coverage
 xlwt
-git+https://github.com/scikit-rf/scikit-rf.git@master
+openpyxl
