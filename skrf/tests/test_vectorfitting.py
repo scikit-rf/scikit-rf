@@ -1,6 +1,7 @@
 import unittest
 import skrf
 import numpy as np
+import tempfile
 
 
 class VectorFittingTestCase(unittest.TestCase):
@@ -67,6 +68,20 @@ class VectorFittingTestCase(unittest.TestCase):
         delta_s22_maxabs = np.amax(np.abs((fit_s22 - nw_s22) / nw_s22))
         print(delta_s22_maxabs)
         self.assertTrue(delta_s22_maxabs < 0.01)
+
+    def test_spice_subcircuit(self):
+        # fit ring slot example network
+        nw = skrf.data.ring_slot
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
+
+        # write equivalent SPICE subcircuit to tmp file
+        tmp_file = tempfile.NamedTemporaryFile(suffix='.sp')
+        vf.write_spice_subcircuit_s(tmp_file.name)
+
+        # written tmp file should contain 69 lines
+        n_lines = len(open(tmp_file.name, 'r').readlines())
+        self.assertEqual(n_lines, 69)
 
     def test_matplotlib_missing(self):
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
