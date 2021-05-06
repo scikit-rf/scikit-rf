@@ -36,6 +36,38 @@ class VectorFittingTestCase(unittest.TestCase):
         self.assertTrue(np.allclose(vf.proportional_coeff, expected_props, rtol=rtol, atol=atol))
         self.assertTrue(np.allclose(vf.constant_coeff, expected_const, rtol=rtol, atol=atol))
 
+    def test_model_response(self):
+        # fit ring slot example network
+        nw = skrf.data.ring_slot
+        vf = skrf.vectorFitting.VectorFitting(nw)
+        vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_constant=True, fit_proportional=True)
+
+        # compare fitted model responses to original network responses (should match with less than 1% error)
+        # s11
+        nw_s11 = nw.s[:, 0, 0]
+        fit_s11 = vf.get_model_response(0, 0, freqs=nw.f)
+        delta_s11_maxabs = np.amax(np.abs((fit_s11 - nw_s11) / nw_s11))
+        self.assertTrue(delta_s11_maxabs < 0.01)
+
+        # s12
+        nw_s12 = nw.s[:, 0, 1]
+        fit_s12 = vf.get_model_response(0, 1, freqs=nw.f)
+        delta_s12_maxabs = np.amax(np.abs((fit_s12 - nw_s12) / nw_s12))
+        self.assertTrue(delta_s12_maxabs < 0.01)
+
+        # s21
+        nw_s21 = nw.s[:, 1, 0]
+        fit_s21 = vf.get_model_response(1, 0, freqs=nw.f)
+        delta_s21_maxabs = np.amax(np.abs((fit_s21 - nw_s21) / nw_s21))
+        self.assertTrue(delta_s21_maxabs < 0.01)
+
+        # s22
+        nw_s22 = nw.s[:, 1, 1]
+        fit_s22 = vf.get_model_response(1, 1, freqs=nw.f)
+        delta_s22_maxabs = np.amax(np.abs((fit_s22 - nw_s22) / nw_s22))
+        print(delta_s22_maxabs)
+        self.assertTrue(delta_s22_maxabs < 0.01)
+
     def test_matplotlib_missing(self):
         vf = skrf.vectorFitting.VectorFitting(skrf.data.ring_slot)
         skrf.vectorFitting.mplt = None
