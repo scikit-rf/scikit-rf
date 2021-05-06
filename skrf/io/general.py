@@ -729,7 +729,7 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
 
     return DataFrame(d)
 
-def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
+def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
     '''
     Write a NetworkSet object to a spreadsheet, for your boss
@@ -770,10 +770,15 @@ def networkset_2_spreadsheet(ntwkset, file_name=None, file_type= 'excel',
     from pandas import DataFrame, Series, ExcelWriter # delayed because its not a requirement
     if ntwkset.name is None and file_name is None:
         raise(ValueError('Either ntwkset must have name or give a file_name'))
+    if file_name is None:
+        file_name = ntwkset.name
 
     if file_type == 'excel':
+        # add file extension if missing
+        if not file_name.endswith('.xlsx'):
+            file_name += '.xlsx'
         writer = ExcelWriter(file_name)
-        [network_2_spreadsheet(k, writer, sheet_name =k.name, *args, **kwargs) for k in ntwkset]
+        [network_2_spreadsheet(k, writer, sheet_name=k.name, *args, **kwargs) for k in ntwkset]
         writer.save()
     else:
         [network_2_spreadsheet(k,*args, **kwargs) for k in ntwkset]
