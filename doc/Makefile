@@ -37,8 +37,8 @@ help:
 all: notebooks  html
 
 notebooks:
-	for file in ./source/tutorials/*.ipynb; do\
-	  runipy  --pylab -o $$file;\
+	for file in source/tutorials/*.ipynb; do\
+	  cd ${CURDIR}/..; runipy  --pylab -o doc/$$file;\
 	done
 	cd ./source/tutorials;ipython nbconvert --to rst *.ipynb
 	sed -i 's/``/`/g' ./source/tutorials/*.rst

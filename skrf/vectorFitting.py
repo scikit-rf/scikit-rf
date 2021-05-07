@@ -12,6 +12,7 @@ VectorFitting (:mod:`skrf.vectorFitting`)
 
 import numpy as np
 import os
+from functools import wraps
 try:
     from . import plotting    # will perform the correct setup for matplotlib before it is called below
     import matplotlib.pyplot as mplt
@@ -33,6 +34,7 @@ def check_plotting(func):
         When trying to run the decorated function without matplotlib
     """
 
+    @wraps(func)
     def wrapper(*args, **kwargs):
         if mplt is None:
             raise RuntimeError('Plotting is not available')
@@ -331,7 +333,7 @@ class VectorFitting:
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
             # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=-1)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
@@ -567,9 +569,8 @@ class VectorFitting:
             proportional_coeff = data['proportionals']
             constant_coeff = data['constants']
 
-            if np.alen(zeros) == self.network.nports and \
-                    np.alen(proportional_coeff) == self.network.nports and \
-                    np.alen(constant_coeff) == self.network.nports:
+            n_resp = self.network.nports ** 2
+            if np.shape(zeros)[0] == np.shape(proportional_coeff)[0] == np.shape(constant_coeff)[0] == n_resp:
                 self.poles = poles
                 self.zeros = zeros
                 self.proportional_coeff = proportional_coeff
@@ -650,7 +651,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if freqs is None:
@@ -689,7 +692,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if freqs is None:
@@ -724,7 +729,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if ax is None:
@@ -757,7 +764,9 @@ class VectorFitting:
 
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if ax is None:

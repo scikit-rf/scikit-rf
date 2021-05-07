@@ -26,6 +26,7 @@ requirements:
     - matplotlib
     - six 
     - future
+    - openpyxl
 
     
   run:
@@ -41,6 +42,7 @@ requirements:
     - xlwt
     - xlrd
     - networkx
+    - openpyxl
     
 
 test:
