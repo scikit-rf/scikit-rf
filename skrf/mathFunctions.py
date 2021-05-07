@@ -161,7 +161,7 @@ def magnitude_2_db(input, zero_nan:bool = True):
     '''
     out = 20 * npy.log10(input)
     if zero_nan:
-        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG)
+        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG, neginf=-npy.inf)
     return out
 
 mag_2_db = magnitude_2_db
@@ -176,7 +176,7 @@ def mag_2_db10(input,zero_nan:bool = True):
     '''
     out = 10 * npy.log10(input)
     if zero_nan:
-        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG)
+        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG, neginf=-npy.inf)
     return out
 
 def db_2_magnitude(input):

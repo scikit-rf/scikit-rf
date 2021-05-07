@@ -1,7 +1,7 @@
 from skrf.mathFunctions import LOG_OF_NEG
 import skrf as rf
 import unittest
-from numpy import e, log, pi, isnan
+from numpy import e, log, pi, isnan, inf
 from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
 
 
@@ -66,6 +66,7 @@ class TestUnitConversions(unittest.TestCase):
         assert_almost_equal(rf.magnitude_2_db(10, True), 20)
         assert_almost_equal(rf.magnitude_2_db(10, False), 20)
 
+        assert_almost_equal(rf.magnitude_2_db(0), -inf)
         assert_almost_equal(rf.magnitude_2_db(-1, True), LOG_OF_NEG)
         assert_almost_equal(rf.magnitude_2_db([10, -1], True), [20, LOG_OF_NEG])
         self.assertTrue(isnan(rf.magnitude_2_db(-1, False)))
@@ -80,6 +81,7 @@ class TestUnitConversions(unittest.TestCase):
         assert_almost_equal(rf.mag_2_db10(10, True), 10)
         assert_almost_equal(rf.mag_2_db10(10, False), 10)
 
+        assert_almost_equal(rf.magnitude_2_db(0), -inf)
         assert_almost_equal(rf.mag_2_db10(-1, True), LOG_OF_NEG)
         assert_almost_equal(rf.mag_2_db10([10, -1], True), [10, LOG_OF_NEG])
         self.assertTrue(isnan(rf.mag_2_db10(-1, False)))
