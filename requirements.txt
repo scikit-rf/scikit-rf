@@ -13,5 +13,6 @@ networkx
 pathlib
 nose
 nose-exclude
+coverage
 xlwt
 openpyxl
