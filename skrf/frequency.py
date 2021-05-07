@@ -32,6 +32,9 @@ Functions
 '''
 
 # from matplotlib.pyplot import gca,plot, autoscale
+from numbers import Number
+from skrf.constants import FloatLike
+from typing import Any, Literal, Sequence, Union
 from numpy import pi, linspace, geomspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
@@ -41,7 +44,6 @@ from .util import slice_domain,find_nearest_index
 global ZER0
 ZERO=1e-4 # currently needed to allow frequency __eq__ method to work
 # comparing 1e-4hz is very small for most applications
-
 
 class Frequency(object):
     '''
@@ -78,7 +80,7 @@ class Frequency(object):
             }
 
 
-    def __init__(self,start=0, stop=0, npoints=0, unit='ghz', sweep_type='lin'):
+    def __init__(self,start:float = 0, stop:float = 0, npoints: float = 0, unit: str = 'ghz', sweep_type: Literal['lin', 'log'] = 'lin'):
         '''
         Frequency initializer.
 
@@ -133,7 +135,7 @@ class Frequency(object):
         else:
             raise ValueError('Sweep Type not recognized')
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''
         '''
         try:
@@ -145,18 +147,18 @@ class Frequency(object):
 
         return output
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         '''
         '''
         return self.__str__()
 
-    def __getitem__(self,key):
+    def __getitem__(self,key: Union[str, int, slice]) -> 'Frequency':
         '''
         Slices a Frequency object based on an index, or human readable string
 
         Parameters
         -----------
-        key : str, or slice
+        key : str, int, or slice
             if int; then it is interpreted as the index of the frequency
             if str, then should be like '50.1-75.5ghz', or just '50'.
             If the frequency unit is omited then self.frequency.unit is
@@ -214,7 +216,7 @@ class Frequency(object):
 
 
     @classmethod
-    def from_f(cls,f, *args,**kwargs):
+    def from_f(cls,f: FloatLike, *args,**kwargs) -> 'Frequency':
         '''
         Construct Frequency object from a frequency vector.
 
@@ -245,9 +247,11 @@ class Frequency(object):
 
         return temp_freq
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         #return (list(self.f) == list(other.f))
         # had to do this out of practicality
+        if not isinstance(other, self.__class__):
+            return False
         if len(self.f) != len(other.f):
             return False
         elif len(self.f) == len(other.f) == 0:
@@ -255,45 +259,45 @@ class Frequency(object):
         else:
             return (max(abs(self.f-other.f)) < ZERO)
 
-    def __ne__(self,other):
+    def __ne__(self,other: object) -> bool:
         return (not self.__eq__(other))
 
-    def __len__(self):
+    def __len__(self) -> int:
         '''
         The number of frequeny points
         '''
         return self.npoints
 
-    def __mul__(self,other):
+    def __mul__(self,other: 'Frequency'):
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __rmul__(self,other):
+    def __rmul__(self,other: 'Frequency'):
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __div__(self,other):
+    def __div__(self,other: 'Frequency'):
         out = self.copy()
         out.f = self.f/other
         return out
 
     @property
-    def start(self):
+    def start(self) -> float:
         '''
         starting frequency in Hz
         '''
         return self.f[0]
 
     @property
-    def start_scaled(self):
+    def start_scaled(self) -> float:
         '''
         starting frequency in :attr:`unit`'s
         '''
         return self.f_scaled[0]
     @property
-    def stop_scaled(self):
+    def stop_scaled(self) -> float:
         '''
         stop frequency in :attr:`unit`'s
         '''
@@ -301,21 +305,21 @@ class Frequency(object):
 
 
     @property
-    def stop(self):
+    def stop(self) -> float:
         '''
         stop frequency in Hz
         '''
         return self.f[-1]
 
     @property
-    def npoints(self):
+    def npoints(self) -> int:
         '''
         number of points in the frequency
         '''
         return len(self.f)
 
     @npoints.setter
-    def npoints(self, n):
+    def npoints(self, n: int) -> None:
         '''
         set the number of points in the frequency
         '''
@@ -331,7 +335,7 @@ class Frequency(object):
 
 
     @property
-    def center(self):
+    def center(self) -> float:
         '''
         Center frequency in Hz
 
@@ -343,14 +347,14 @@ class Frequency(object):
         return self.start + (self.stop-self.start)/2.
 
     @property
-    def center_idx(self):
+    def center_idx(self) -> int:
         '''
         closes idx of :attr:`f` to the center frequency
         '''
         return int(self.npoints)/2
 
     @property
-    def center_scaled(self):
+    def center_scaled(self) -> float:
         '''
         Center frequency in :attr:`unit`'s
 
@@ -362,7 +366,7 @@ class Frequency(object):
         return self.start_scaled + (self.stop_scaled-self.start_scaled)/2.
 
     @property
-    def step(self):
+    def step(self) -> float:
         '''
         the inter-frequency step size (in hz) for evenly-spaced
         frequency sweeps
@@ -372,7 +376,7 @@ class Frequency(object):
         return self.span/(self.npoints-1.)
 
     @property
-    def step_scaled(self):
+    def step_scaled(self) -> float:
         '''
         the inter-frequency step size (in self.unit) for evenly-spaced
         frequency sweeps
@@ -382,21 +386,21 @@ class Frequency(object):
         return self.span_scaled/(self.npoints-1.)
 
     @property
-    def span(self):
+    def span(self) -> float:
         '''
         the frequency span
         '''
         return abs(self.stop-self.start)
 
     @property
-    def span_scaled(self):
+    def span_scaled(self) -> float:
         '''
         the frequency span
         '''
         return abs(self.stop_scaled-self.start_scaled)
 
     @property
-    def f(self):
+    def f(self) -> npy.ndarray:
         '''
         Frequency vector  in Hz
 
@@ -414,17 +418,17 @@ class Frequency(object):
         return self._f
 
     @f.setter
-    def f(self,new_f):
+    def f(self,new_f: FloatLike) -> None:
         '''
         sets the frequency object by passing a vector in Hz
         '''
         self._f = npy.array(new_f)
 
-        if npy.allclose(    new_f,  
-                            linspace(new_f[0], new_f[-1], len(new_f))):
+        if npy.allclose(    self._f,  
+                            linspace(self._f[0], self._f[-1], len(self._f))):
             self.sweep_type = 'lin'
-        elif new_f[0] and npy.allclose(  new_f, 
-                            geomspace(new_f[0], new_f[-1], len(new_f))):
+        elif self._f[0] and npy.allclose(  self._f, 
+                            geomspace(self._f[0], self._f[-1], len(self._f))):
             self.sweep_type = 'log'
         else:
             self.sweep_type = 'unknown'
@@ -432,7 +436,7 @@ class Frequency(object):
 
 
     @property
-    def f_scaled(self):
+    def f_scaled(self) -> npy.ndarray:
         '''
         Frequency vector in units of :attr:`unit`
 
@@ -449,7 +453,7 @@ class Frequency(object):
         return self.f/self.multiplier
 
     @property
-    def w(self):
+    def w(self) -> npy.ndarray:
         '''
         Frequency vector in radians/s
 
@@ -468,26 +472,26 @@ class Frequency(object):
         return 2*pi*self.f
 
     @property
-    def df(self):
+    def df(self) -> npy.ndarray:
         '''
         the gradient of the frequency vector (in hz)
         '''
         return gradient(self.f)
     @property
-    def df_scaled(self):
+    def df_scaled(self) -> npy.ndarray:
         '''
         the gradient of the frequency vector (in self.unit)
         '''
         return gradient(self.f_scaled)
     @property
-    def dw(self):
+    def dw(self) -> npy.ndarray:
         '''
         the gradient of the frequency vector (in radians)
         '''
         return gradient(self.w)
 
     @property
-    def unit(self):
+    def unit(self) -> str:
         '''
         Unit of this frequency band.
 
@@ -504,11 +508,11 @@ class Frequency(object):
         return self.unit_dict[self._unit]
 
     @unit.setter
-    def unit(self,unit):
+    def unit(self, unit: str) -> None:
         self._unit = unit.lower()
 
     @property
-    def multiplier(self):
+    def multiplier(self) -> float:
         '''
         Multiplier for formatting axis
 
@@ -522,7 +526,7 @@ class Frequency(object):
         '''
         return self.multiplier_dict[self._unit]
 
-    def copy(self):
+    def copy(self) -> 'Frequency':
         '''
         returns a new copy of this frequency
         '''
@@ -531,7 +535,7 @@ class Frequency(object):
         return freq
 
     @property
-    def t(self):
+    def t(self) -> npy.ndarray:
         '''
         time vector in s.
 
@@ -540,7 +544,7 @@ class Frequency(object):
         return linspace(-.5/self.step , .5/self.step, self.npoints)
 
     @property
-    def t_ns(self):
+    def t_ns(self) -> npy.ndarray:
         '''
         time vector in ns.
 
@@ -548,7 +552,7 @@ class Frequency(object):
         '''
         return self.t*1e9
 
-    def round_to(self, val = 'hz'):
+    def round_to(self, val: Union[str, Number] = 'hz') -> None:
         '''
         Round off frequency values to a specified precision.
 
@@ -573,7 +577,7 @@ class Frequency(object):
 
         self.f = npy.round_(self.f/val)*val
 
-    def overlap(self,f2):
+    def overlap(self,f2: 'Frequency') -> 'Frequency':
         '''
         Calculates overlapping frequency  between self and f2
 
@@ -586,7 +590,7 @@ class Frequency(object):
         return overlap_freq(self, f2)
 
 
-def overlap_freq(f1,f2):
+def overlap_freq(f1: 'Frequency',f2: 'Frequency') -> Frequency:
     '''
     Calculates overlapping frequency between f1 and f2.
 
@@ -625,7 +629,7 @@ def overlap_freq(f1,f2):
     return freq
 
 
-def f_2_frequency(f):
+def f_2_frequency(f: Union[Sequence[float], npy.ndarray]) -> 'Frequency':
     '''
     converts a frequency vector to a Frequency object
 
