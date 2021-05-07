@@ -33,8 +33,8 @@ Functions
 
 # from matplotlib.pyplot import gca,plot, autoscale
 from numbers import Number
-from skrf.constants import FloatLike
-from typing import Any, Literal, Sequence, Union
+from skrf.constants import NumberLike
+from typing import Any, Literal, Sequence, Union, NoReturn
 from numpy import pi, linspace, geomspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
@@ -216,7 +216,7 @@ class Frequency(object):
 
 
     @classmethod
-    def from_f(cls,f: FloatLike, *args,**kwargs) -> 'Frequency':
+    def from_f(cls,f: NumberLike, *args,**kwargs) -> 'Frequency':
         '''
         Construct Frequency object from a frequency vector.
 
@@ -319,7 +319,7 @@ class Frequency(object):
         return len(self.f)
 
     @npoints.setter
-    def npoints(self, n: int) -> None:
+    def npoints(self, n: int) -> NoReturn:
         '''
         set the number of points in the frequency
         '''
@@ -418,7 +418,7 @@ class Frequency(object):
         return self._f
 
     @f.setter
-    def f(self,new_f: FloatLike) -> None:
+    def f(self,new_f: NumberLike) -> NoReturn:
         '''
         sets the frequency object by passing a vector in Hz
         '''
@@ -508,7 +508,7 @@ class Frequency(object):
         return self.unit_dict[self._unit]
 
     @unit.setter
-    def unit(self, unit: str) -> None:
+    def unit(self, unit: str) -> NoReturn:
         self._unit = unit.lower()
 
     @property
@@ -552,7 +552,7 @@ class Frequency(object):
         '''
         return self.t*1e9
 
-    def round_to(self, val: Union[str, Number] = 'hz') -> None:
+    def round_to(self, val: Union[str, Number] = 'hz') -> NoReturn:
         '''
         Round off frequency values to a specified precision.
 
