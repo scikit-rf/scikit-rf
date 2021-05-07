@@ -43,7 +43,8 @@ This module contains constants, numerical approximations, and unit conversions
    to_meters
 
 '''
-
+from typing import Sequence, Union
+import numpy as npy
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
 
@@ -59,6 +60,8 @@ T0 = 290.
 # S-parameter definition labels and default definition
 S_DEFINITIONS = ['power', 'pseudo', 'traveling']
 S_DEF_DEFAULT = 'power'
+
+FloatLike = Union[float, Sequence[float], npy.ndarray]
 
 global distance_dict
 distance_dict = {'m':1.,
