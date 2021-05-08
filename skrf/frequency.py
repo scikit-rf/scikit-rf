@@ -34,7 +34,7 @@ Functions
 # from matplotlib.pyplot import gca,plot, autoscale
 from numbers import Number
 from skrf.constants import NumberLike
-from typing import Sequence, Union, NoReturn
+from typing import Sequence, Union
 from numpy import pi, linspace, geomspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
@@ -80,7 +80,8 @@ class Frequency(object):
             }
 
 
-    def __init__(self,start:float = 0, stop:float = 0, npoints: float = 0, unit: str = 'ghz', sweep_type = 'lin'):
+    def __init__(self, start: float = 0, stop: float = 0, npoints: float = 0, 
+        unit: str = 'ghz', sweep_type: str = 'lin') -> None:
         '''
         Frequency initializer.
 
@@ -268,17 +269,17 @@ class Frequency(object):
         '''
         return self.npoints
 
-    def __mul__(self,other: 'Frequency'):
+    def __mul__(self,other: 'Frequency') -> 'Frequency':
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __rmul__(self,other: 'Frequency'):
+    def __rmul__(self,other: 'Frequency') -> 'Frequency':
         out = self.copy()
         out.f = self.f*other
         return out
 
-    def __div__(self,other: 'Frequency'):
+    def __div__(self,other: 'Frequency') -> 'Frequency':
         out = self.copy()
         out.f = self.f/other
         return out
@@ -319,7 +320,7 @@ class Frequency(object):
         return len(self.f)
 
     @npoints.setter
-    def npoints(self, n: int) -> NoReturn:
+    def npoints(self, n: int) -> None:
         '''
         set the number of points in the frequency
         '''
@@ -418,7 +419,7 @@ class Frequency(object):
         return self._f
 
     @f.setter
-    def f(self,new_f: NumberLike) -> NoReturn:
+    def f(self,new_f: NumberLike) -> None:
         '''
         sets the frequency object by passing a vector in Hz
         '''
@@ -508,7 +509,7 @@ class Frequency(object):
         return self.unit_dict[self._unit]
 
     @unit.setter
-    def unit(self, unit: str) -> NoReturn:
+    def unit(self, unit: str) -> None:
         self._unit = unit.lower()
 
     @property
@@ -552,7 +553,7 @@ class Frequency(object):
         '''
         return self.t*1e9
 
-    def round_to(self, val: Union[str, Number] = 'hz') -> NoReturn:
+    def round_to(self, val: Union[str, Number] = 'hz') -> None:
         '''
         Round off frequency values to a specified precision.
 

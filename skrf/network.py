@@ -145,7 +145,8 @@ Misc Functions
 
 """
 
-from typing import Any, NoReturn, Sequence, Sized, Union, Tuple, Callable
+from typing import (Any, NoReturn, Optional, Sequence, 
+    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
 from numbers import Number
 from six.moves import xrange
 from functools import reduce
@@ -166,7 +167,7 @@ from itertools import product
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
-from numpy import fft, gradient, reshape, shape, ones
+from numpy import fft, gradient, ndarray, reshape, shape, ones
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
@@ -191,6 +192,9 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 #import matplotlib.tri as tri
 #from scipy.interpolate import interp1d
 
+if TYPE_CHECKING:
+    import pandas as pd
+    from .media import Media
 
 class Network(object):
     """
@@ -329,7 +333,7 @@ class Network(object):
 
     # CONSTRUCTOR
     def __init__(self, file: str = None, name : str = None, comments: str = None, 
-        f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs):
+        f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
         '''
         Network constructor.
 
@@ -784,7 +788,7 @@ class Network(object):
         return len(self.s)
 
     # INTERNAL CODE GENERATION METHODS
-    def __compatable_for_scalar_operation_test(self, other:'Network') -> NoReturn:
+    def __compatable_for_scalar_operation_test(self, other:'Network') -> None:
         """
         tests to make sure other network's s-matrix is of same shape
         """
@@ -794,7 +798,7 @@ class Network(object):
         if other.s.shape != self.s.shape:
             raise IndexError('Networks must have same number of ports.')
 
-    def __generate_secondary_properties(self) -> NoReturn:
+    def __generate_secondary_properties(self) -> None:
         """
         creates numerous `secondary properties` which are various
         different scalar projects of the primary properties. the primary
@@ -821,7 +825,7 @@ class Network(object):
                 setattr(self.__class__, '%s_%s' % (prop_name, func_name), \
                         property(fget, doc=doc))
 
-    def __generate_subnetworks(self) -> NoReturn:
+    def __generate_subnetworks(self) -> None:
         """
         generates all one-port sub-networks
         """
@@ -871,7 +875,7 @@ class Network(object):
         return self._s
 
     @s.setter
-    def s(self, s: npy.ndarray) -> NoReturn:
+    def s(self, s: npy.ndarray) -> None:
         """
         the input s-matrix should be of shape fxnxn,
         where f is frequency axis and n is number of ports
@@ -920,7 +924,7 @@ class Network(object):
         return s2h(self.s, self.z0)
 
     @h.setter
-    def h(self, value: npy.ndarray) -> NoReturn:
+    def h(self, value: npy.ndarray) -> None:
         self._s = h2s(value, self.z0)
 
     @property
@@ -954,7 +958,7 @@ class Network(object):
         return s2y(self._s, self.z0, s_def=self.s_def)
 
     @y.setter
-    def y(self, value: npy.ndarray) -> NoReturn:
+    def y(self, value: npy.ndarray) -> None:
         self._s = y2s(value, self.z0, s_def=self.s_def)
 
     @property
@@ -988,7 +992,7 @@ class Network(object):
         return s2z(self._s, self.z0, s_def=self.s_def)
 
     @z.setter
-    def z(self, value: npy.ndarray) -> NoReturn:
+    def z(self, value: npy.ndarray) -> None:
         self._s = z2s(value, self.z0, s_def=self.s_def)
 
     @property
@@ -1088,7 +1092,7 @@ class Network(object):
         return s2a(self.s, self.z0)
 
     @a.setter
-    def a(self, value: npy.ndarray) -> NoReturn:
+    def a(self, value: npy.ndarray) -> None:
         self._s = a2s(value, self.z0)
 
     @property
@@ -1131,7 +1135,7 @@ class Network(object):
             return self._z0
 
     @z0.setter
-    def z0(self, z0: Union[Number, npy.ndarray]):
+    def z0(self, z0: Union[Number, npy.ndarray]) -> None:
         # cast any array like type (tuple, list) to a npy.array
         z0 = npy.array(z0, dtype=complex)
 
@@ -1196,7 +1200,7 @@ class Network(object):
             return self._frequency
 
     @frequency.setter
-    def frequency(self, new_frequency: Union[Frequency, int, npy.ndarray]):
+    def frequency(self, new_frequency: Union[Frequency, int, npy.ndarray]) -> None:
         """
         takes a Frequency object, see  frequency.py
         """
@@ -1209,7 +1213,7 @@ class Network(object):
                 raise TypeError('Could not convert argument to a frequency vector')
 
     @property
-    def inv(self):
+    def inv(self) -> 'Network':
         """
         a :class:`Network` object with 'inverse' s-parameters.
 
@@ -1233,7 +1237,7 @@ class Network(object):
         return out
 
     @property
-    def f(self):
+    def f(self) -> Frequency:
         """
         the frequency vector for the network, in Hz.
 
@@ -1250,12 +1254,12 @@ class Network(object):
         return self.frequency.f
 
     @f.setter
-    def f(self, f):
+    def f(self, f: NumberLike) -> None:
         tmpUnit = self.frequency.unit
         self.frequency = Frequency.from_f(f, unit=tmpUnit)
 
     @property
-    def noisy(self):
+    def noisy(self) -> bool:
       """
       whether this network has noise
       """
@@ -1265,7 +1269,7 @@ class Network(object):
         return False
 
     @property
-    def n(self):
+    def n(self) -> npy.ndarray:
         """
         the ABCD form of the noise correlation matrix for the network
         """
@@ -1285,7 +1289,7 @@ class Network(object):
 
 
     @property
-    def f_noise(self):
+    def f_noise(self) -> Frequency:
       """
       the frequency vector for the noise of the network, in Hz.
       """
@@ -1294,7 +1298,7 @@ class Network(object):
       return self.noise_freq
 
     @property
-    def y_opt(self):
+    def y_opt(self) -> npy.ndarray:
       """
       the optimum source admittance to minimize noise
       """
@@ -1303,21 +1307,21 @@ class Network(object):
           + 1.j*npy.imag(noise[:,0,1]/noise[:,0,0]))
 
     @property
-    def z_opt(self):
+    def z_opt(self) -> npy.ndarray:
       """
       the optimum source impedance to minimize noise
       """
       return 1./self.y_opt
 
     @property
-    def g_opt(self):
+    def g_opt(self) -> npy.ndarray:
       """
       the optimum source reflection coefficient to minimize noise
       """
       return z2s(self.z_opt.reshape((self.f.shape[0], 1, 1)), self.z0[:,0])[:,0,0]
 
     @property
-    def nfmin(self):
+    def nfmin(self) -> npy.ndarray:
       """
       the minimum noise figure for the network
       """
@@ -1325,13 +1329,13 @@ class Network(object):
       return npy.real(1. + (noise[:,0,1] + noise[:,0,0] * npy.conj(self.y_opt))/(2*K_BOLTZMANN*T0))
 
     @property
-    def nfmin_db(self):
+    def nfmin_db(self) -> npy.ndarray:
       """
       the minimum noise figure for the network in dB
       """
       return mf.complex_2_db10(self.nfmin)
 
-    def nf(self, z):
+    def nf(self, z: NumberLike) -> npy.ndarray:
       """
       the noise figure for the network if the source impedance is z
       """
@@ -1344,7 +1348,7 @@ class Network(object):
       gs = npy.real(ys)
       return fmin + rn/gs * npy.square(npy.absolute(ys - y_opt))
 
-    def nfdb_gs(self, gs):
+    def nfdb_gs(self, gs: NumberLike) -> npy.ndarray:
       """
       return dB(NF) foreach gamma_source x noise_frequency
       """
@@ -1374,7 +1378,7 @@ class Network(object):
     '''
 
     @property
-    def rn(self):
+    def rn(self) -> npy.ndarray:
       """
       the equivalent noise resistance for the network
       """
@@ -1382,7 +1386,7 @@ class Network(object):
 
     # SECONDARY PROPERTIES
     @property
-    def number_of_ports(self):
+    def number_of_ports(self) -> int:
         """
         the number of ports the network has.
 
@@ -1398,7 +1402,7 @@ class Network(object):
             return 0
 
     @property
-    def nports(self):
+    def nports(self) -> int:
         """
         the number of ports the network has.
 
@@ -1411,7 +1415,7 @@ class Network(object):
         return self.number_of_ports
 
     @property
-    def port_tuples(self):
+    def port_tuples(self) -> List[Tuple[int, int]]:
         """
         Returns a list of tuples, for each port index pair
 
@@ -1424,7 +1428,7 @@ class Network(object):
         return [(y, x) for x in range(self.nports) for y in range(self.nports)]
 
     @property
-    def passivity(self):
+    def passivity(self) -> ndarray:
         """
         passivity metric for a multi-port network.
 
@@ -1461,7 +1465,7 @@ class Network(object):
         return passivity(self.s)
 
     @property
-    def reciprocity(self):
+    def reciprocity(self) -> npy.ndarray:
         """
         reciprocity metric for a multi-port network.
 
@@ -1486,7 +1490,7 @@ class Network(object):
         return reciprocity(self.s)
 
     @property
-    def reciprocity2(self):
+    def reciprocity2(self) -> npy.ndarray:
         """
         Reciprocity metric #2
 
@@ -1501,7 +1505,7 @@ class Network(object):
         return abs(1 - self.s / self.s.swapaxes(1, 2))
 
     @property
-    def stability(self):
+    def stability(self) -> npy.ndarray:
         """
         Stability factor
 
@@ -1520,7 +1524,7 @@ class Network(object):
         return K
 
     @property
-    def group_delay(self):
+    def group_delay(self) -> npy.ndarray:
         """
         The group delay
 
@@ -1546,13 +1550,14 @@ class Network(object):
         return gd
 
     ## NETWORK CLASSIFIERs
-    def is_reciprocal(self, tol=mf.ALMOST_ZERO):
+    def is_reciprocal(self, tol: float = mf.ALMOST_ZERO) -> bool:
         '''
         test for reciprocity
         '''
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n=1, port_order={}, tol=mf.ALMOST_ZERO):
+    def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {}, 
+        tol: float = mf.ALMOST_ZERO) -> bool:
         '''
         Returns whether the 2N-port network has n-th order reflection symmetry
         by checking s_ii == s_jj for appropriate pair(s) of i and j.
@@ -1604,7 +1609,7 @@ class Network(object):
                 return False
         return True
 
-    def is_passive(self, tol=mf.ALMOST_ZERO):
+    def is_passive(self, tol: float = mf.ALMOST_ZERO) -> bool:
         '''
         test for passivity
         '''
@@ -1621,7 +1626,7 @@ class Network(object):
                 return False
         return True
 
-    def is_lossless(self, tol=mf.ALMOST_ZERO):
+    def is_lossless(self, tol: float = mf.ALMOST_ZERO) -> bool:
         '''
         test for losslessness
 
@@ -1636,7 +1641,7 @@ class Network(object):
         return True
 
     ## CLASS METHODS
-    def copy(self):
+    def copy(self) -> 'Network':
         '''
         Returns a copy of this Network
 
@@ -1663,7 +1668,7 @@ class Network(object):
             ntwk.port_names = None
         return ntwk
 
-    def copy_from(self, other):
+    def copy_from(self, other: 'Network') -> None:
         '''
         Copies the contents of another Network into self
 
@@ -1683,7 +1688,7 @@ class Network(object):
         for attr in ['_s', 'frequency', '_z0', 'name']:
             self.__setattr__(attr, copy(other.__getattribute__(attr)))
 
-    def copy_subset(self, key):
+    def copy_subset(self, key: npy.ndarray) -> 'Network':
         '''
         Returns a copy of a frequency subset of this Network
 
@@ -1715,7 +1720,8 @@ class Network(object):
             ntwk.port_names = None
         return ntwk
 
-    def set_noise_a(self, noise_freq=None, nfmin_db=0, gamma_opt=0, rn=1 ) :
+    def set_noise_a(self, noise_freq: Frequency = None, nfmin_db: float = 0, 
+        gamma_opt: float = 0, rn: NumberLike = 1 ) -> None:
           '''
           sets the "A" (ie cascade) representation of the correlation matrix, based on the
           noise frequency and input parameters.
@@ -1740,7 +1746,7 @@ class Network(object):
 
 
     # touchstone file IO
-    def read_touchstone(self, filename):
+    def read_touchstone(self, filename: str) -> None:
         """
         loads values from a touchstone file.
 
@@ -1824,7 +1830,7 @@ class Network(object):
 
 
     @classmethod
-    def zipped_touchstone(cls, filename, archive):
+    def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> 'Network':
         """
         read a Network from a touchstone file in a ziparchive
 
@@ -1841,11 +1847,11 @@ class Network(object):
             ntwk.read_touchstone(touchstone_file)
         return ntwk
 
-    def write_touchstone(self, filename=None, dir=None,
-                         write_z0=False, skrf_comment=True,
-                         return_string=False, to_archive=None,
-                         form='ri', format_spec_A='{}', format_spec_B='{}',
-                         format_spec_freq='{}'):
+    def write_touchstone(self, filename: str = None, dir: str = None,
+                         write_z0: bool = False, skrf_comment: bool = True,
+                         return_string: bool = False, to_archive: bool = None,
+                         form: str = 'ri', format_spec_A: str = '{}', format_spec_B: str = '{}',
+                         format_spec_freq : str = '{}') -> Optional[str]:
         """
         Write a contents of the :class:`Network` to a touchstone file.
 
@@ -1925,15 +1931,15 @@ class Network(object):
             raise ValueError('`form` must be either `db`,`ma`,`ri`')
 
         # add formatting to funcA and funcB so we don't have to write it out many many times.
-        def c2str_A(c):
+        def c2str_A(c: NumberLike) -> str:
             '''Function which takes a complex number for the A part of param and returns an appropriately formatted string'''
             return format_spec_A.format(funcA(c))
 
-        def c2str_B(c):
+        def c2str_B(c: NumberLike) -> str:
             '''Function which takes a complex number for B part of param and returns an appropriately formatted string'''
             return format_spec_B.format(funcB(c))
 
-        def get_buffer():
+        def get_buffer() -> StringIO:
             if return_string is True or type(to_archive) is zipfile.ZipFile:
                 from .io.general import StringBuffer  # avoid circular import
                 buf = StringBuffer()
@@ -2080,7 +2086,7 @@ class Network(object):
             elif return_string is True:
                 return output.getvalue()
 
-    def write(self, file=None, *args, **kwargs):
+    def write(self, file: str = None, *args, **kwargs) -> None:
         """
         Write the Network to disk using the :mod:`pickle` module.
 
@@ -2125,7 +2131,7 @@ class Network(object):
 
         write(file, self, *args, **kwargs)
 
-    def read(self, *args, **kwargs):
+    def read(self, *args, **kwargs) -> None:
         """
         Read a Network from a 'ntwk' file
 
@@ -2155,7 +2161,7 @@ class Network(object):
         from .io.general import read
         self.copy_from(read(*args, **kwargs))
 
-    def write_spreadsheet(self, *args, **kwargs):
+    def write_spreadsheet(self, *args, **kwargs) -> None:
         '''
         Write contents of network to a spreadsheet, for your boss to use.
 
@@ -2166,7 +2172,7 @@ class Network(object):
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, *args, **kwargs):
+    def to_dataframe(self, *args, **kwargs) -> pd.DataFrame:
         """
         Convert attributes of a Network to a pandas DataFrame
 
@@ -2347,7 +2353,7 @@ class Network(object):
               result.noise_freq = new_frequency
         return result
 
-    def interpolate_self_npoints(self, npoints: int, **kwargs) -> NoReturn:
+    def interpolate_self_npoints(self, npoints: int, **kwargs) -> None:
         '''
 
         Interpolate network based on a new number of frequency points
@@ -2394,7 +2400,7 @@ class Network(object):
         new_frequency.npoints = npoints
         self.interpolate_self(new_frequency, **kwargs)
 
-    def interpolate_self(self, freq_or_n: Union[Frequency, NumberLike], **kwargs) -> NoReturn:
+    def interpolate_self(self, freq_or_n: Union[Frequency, NumberLike], **kwargs) -> None:
         '''
         Interpolates s-parameters given a new
 
@@ -2586,7 +2592,7 @@ class Network(object):
         '''
         return subnetwork(self, ports, offby)
 
-    def crop(self, f_start: float, f_stop: float, unit: str = None) -> NoReturn:
+    def crop(self, f_start: float, f_stop: float, unit: str = None) -> None:
         '''
         Crop Network based on start and stop frequencies.
 
@@ -2652,7 +2658,7 @@ class Network(object):
         out.crop(f_start=f_start, f_stop=f_stop,unit=unit)
         return out
 
-    def flip(self) -> NoReturn:
+    def flip(self) -> None:
         '''
         swaps the ports of a 2n-port Network
         in case the network is 2n-port and n > 1, 'second' numbering scheme is
@@ -2683,7 +2689,7 @@ class Network(object):
         out.flip()
         return out
 
-    def renormalize(self, z_new: NumberLike, s_def: str = S_DEF_DEFAULT) -> NoReturn:
+    def renormalize(self, z_new: NumberLike, s_def: str = S_DEF_DEFAULT) -> None:
         '''
         Renormalize s-parameter matrix given a new port impedances
 
@@ -2708,7 +2714,7 @@ class Network(object):
         self.s = renormalize_s(self.s, self.z0, z_new, s_def)
         self.z0 = fix_z0_shape(z_new, self.frequency.npoints, self.nports)
 
-    def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> NoReturn:
+    def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> None:
         '''
         renumbers  ports of a  Network
 
@@ -2740,7 +2746,7 @@ class Network(object):
         self.z0[:, to_ports] = self.z0[:, from_ports]
 
 
-    def rotate(self, theta: NumberLike, unit: str = 'deg') -> NoReturn:
+    def rotate(self, theta: NumberLike, unit: str = 'deg') -> None:
         '''
         Rotate S-parameters
         '''
@@ -2749,7 +2755,7 @@ class Network(object):
 
         self.s = self.s * npy.exp(-1j*theta)
 
-    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Any = None, **kw) -> 'Network':
+    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Media = None, **kw) -> 'Network':
         '''
         Add phase delay to a given port.
 
@@ -2847,7 +2853,7 @@ class Network(object):
 
 
     # noise
-    def add_noise_polar(self, mag_dev: float, phase_dev: float, **kwargs) -> NoReturn:
+    def add_noise_polar(self, mag_dev: float, phase_dev: float, **kwargs) -> None:
         '''
         adds a complex zero-mean gaussian white-noise.
 
@@ -2870,7 +2876,7 @@ class Network(object):
         mag = self.s_mag + mag_rv
         self.s = mag * npy.exp(1j * npy.pi / 180. * phase)
 
-    def add_noise_polar_flatband(self, mag_dev: float, phase_dev: float, **kwargs) -> NoReturn:
+    def add_noise_polar_flatband(self, mag_dev: float, phase_dev: float, **kwargs) -> None:
         '''
         adds a flatband complex zero-mean gaussian white-noise signal of
         given standard deviations for magnitude and phase
@@ -2890,7 +2896,7 @@ class Network(object):
         mag = self.s_mag + mag_rv
         self.s = mag * npy.exp(1j * npy.pi / 180. * phase)
 
-    def multiply_noise(self, mag_dev: float, phase_dev: float, **kwargs) -> NoReturn:
+    def multiply_noise(self, mag_dev: float, phase_dev: float, **kwargs) -> None:
         '''
         multiplys a complex bivariate gaussian white-noise signal
         of given standard deviations for magnitude and phase.
@@ -2985,7 +2991,7 @@ class Network(object):
     # generalized mixed mode transformations
     # XXX: experimental implementation of gmm s parameters
     # TODO: automated test cases
-    def se2gmm(self, p: int, z0_mm: npy.ndarray = None) -> NoReturn:
+    def se2gmm(self, p: int, z0_mm: npy.ndarray = None) -> None:
         '''
         Transform network from single ended parameters to generalized mixed mode parameters [1]
 
@@ -3037,7 +3043,7 @@ class Network(object):
                                (0, 2, 1)).conj()  # (34)
         self.z0 = z0_mm
 
-    def gmm2se(self, p: int, z0_se: NumberLike = None) -> NoReturn:
+    def gmm2se(self, p: int, z0_se: NumberLike = None) -> None:
         '''
         Transform network from generalized mixed mode parameters [1] to single ended parameters
 
@@ -6008,7 +6014,7 @@ def flip(a: npy.ndarray) -> npy.ndarray:
 
 
 ## COMMON CHECKS (raise exceptions)
-def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> NoReturn:
+def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
     '''
     checks if two Networks have same frequency
     '''
@@ -6016,7 +6022,7 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> NoReturn:
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 
-def check_z0_equal(ntwkA: Network, ntwkB: Network) -> NoReturn:
+def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     '''
     checks if two Networks have same port impedances
     '''
@@ -6025,7 +6031,7 @@ def check_z0_equal(ntwkA: Network, ntwkB: Network) -> NoReturn:
         raise ValueError('Networks don\'t have matching z0.')
 
 
-def check_nports_equal(ntwkA: Network, ntwkB: Network) -> NoReturn:
+def check_nports_equal(ntwkA: Network, ntwkB: Network) -> None:
     '''
     checks if two Networks have same number of ports
     '''
