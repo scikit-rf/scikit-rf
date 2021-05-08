@@ -144,7 +144,6 @@ Misc Functions
     Network.renormalize
 
 """
-from __future__ import annotations
 from typing import (Any, NoReturn, Optional, Sequence, 
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
 from numbers import Number
@@ -193,9 +192,6 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 #import matplotlib.tri as tri
 #from scipy.interpolate import interp1d
 
-if TYPE_CHECKING: # Avoid circular imports
-    from .media import Media
-    
 class Network(object):
     """
     A n-port electrical network [#]_.
@@ -2755,7 +2751,7 @@ class Network(object):
 
         self.s = self.s * npy.exp(-1j*theta)
 
-    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Media = None, **kw) -> 'Network':
+    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: 'Media' = None, **kw) -> 'Network':
         '''
         Add phase delay to a given port.
 
