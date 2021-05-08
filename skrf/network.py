@@ -2751,7 +2751,7 @@ class Network(object):
 
         self.s = self.s * npy.exp(-1j*theta)
 
-    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: 'Media' = None, **kw) -> 'Network':
+    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Any = None, **kw) -> 'Network':
         '''
         Add phase delay to a given port.
 
