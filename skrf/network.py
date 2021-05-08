@@ -144,7 +144,7 @@ Misc Functions
     Network.renormalize
 
 """
-
+from __future__ import annotations
 from typing import (Any, NoReturn, Optional, Sequence, 
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
 from numbers import Number
@@ -168,6 +168,7 @@ from itertools import product
 import numpy as npy
 from numpy.linalg import inv as npy_inv
 from numpy import fft, gradient, ndarray, reshape, shape, ones
+import pandas as pd
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
@@ -192,10 +193,9 @@ from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 #import matplotlib.tri as tri
 #from scipy.interpolate import interp1d
 
-if TYPE_CHECKING:
-    import pandas as pd
+if TYPE_CHECKING: # Avoid circular imports
     from .media import Media
-
+    
 class Network(object):
     """
     A n-port electrical network [#]_.
