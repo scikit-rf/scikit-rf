@@ -328,7 +328,8 @@ class Network(object):
     noise_interp_kind = 'linear'
 
     # CONSTRUCTOR
-    def __init__(self, file:str=None, name:str=None, comments:str=None, f_unit:str=None, s_def: str = S_DEF_DEFAULT, **kwargs):
+    def __init__(self, file: str = None, name : str = None, comments: str = None, 
+        f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs):
         '''
         Network constructor.
 
