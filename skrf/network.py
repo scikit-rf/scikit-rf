@@ -145,8 +145,7 @@ Misc Functions
 
 """
 
-from skrf.media.media import Media
-from typing import Any, Literal, NewType, NoReturn, Sequence, Sized, Union, Tuple, List, Callable
+from typing import Any, NoReturn, Sequence, Sized, Union, Tuple, Callable
 from numbers import Number
 from six.moves import xrange
 from functools import reduce
@@ -2347,7 +2346,7 @@ class Network(object):
               result.noise_freq = new_frequency
         return result
 
-    def interpolate_self_npoints(self, npoints: int, **kwargs) -> 'Network':
+    def interpolate_self_npoints(self, npoints: int, **kwargs) -> NoReturn:
         '''
 
         Interpolate network based on a new number of frequency points
@@ -2466,7 +2465,7 @@ class Network(object):
         # freq = Frequency.from_f(f,**kwargs)
         # self.interpolate_self(freq, **interp_kwargs)
 
-    def extrapolate_to_dc(self, points:int = None, dc_sparam: NumberLike = None, kind: str = 'rational',
+    def extrapolate_to_dc(self, points: int = None, dc_sparam: NumberLike = None, kind: str = 'rational',
             coords: str = 'cart', **kwargs) -> 'Network':
         """
         Extrapolate S-parameters down to 0 Hz and interpolate to uniform spacing.
@@ -2749,7 +2748,7 @@ class Network(object):
 
         self.s = self.s * npy.exp(-1j*theta)
 
-    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Media = None, **kw) -> 'Network':
+    def delay(self, d: float, unit: str = 'deg', port: int = 0, media: Any = None, **kw) -> 'Network':
         '''
         Add phase delay to a given port.
 
@@ -5895,7 +5894,6 @@ def fix_z0_shape(z0: NumberLike, nfreqs: int, nports: int) -> npy.ndarray:
 
 
     '''
-    z0 = npy.array(z0)
     if npy.shape(z0) == (nfreqs, nports):
         # z0 is of correct shape. super duper.return it quick.
         return z0.copy()

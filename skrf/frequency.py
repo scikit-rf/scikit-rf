@@ -34,7 +34,7 @@ Functions
 # from matplotlib.pyplot import gca,plot, autoscale
 from numbers import Number
 from skrf.constants import NumberLike
-from typing import Any, Literal, Sequence, Union, NoReturn
+from typing import Sequence, Union, NoReturn
 from numpy import pi, linspace, geomspace
 import numpy as npy
 from numpy import fft, shape, gradient# used to center attribute `t` at 0
@@ -80,7 +80,7 @@ class Frequency(object):
             }
 
 
-    def __init__(self,start:float = 0, stop:float = 0, npoints: float = 0, unit: str = 'ghz', sweep_type: Literal['lin', 'log'] = 'lin'):
+    def __init__(self,start:float = 0, stop:float = 0, npoints: float = 0, unit: str = 'ghz', sweep_type = 'lin'):
         '''
         Frequency initializer.
 
