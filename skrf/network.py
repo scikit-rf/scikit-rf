@@ -4081,18 +4081,18 @@ def chopinhalf(ntwk, *args, **kwargs):
 
         .. math::
 
-            B = A\\cdot\\cdotA
+            B = A\\cdot A
 
         Return A, where A port2 is connected to A port1. The result may
         be found through signal flow graph analysis and is,
 
         .. math::
 
-            a_{11} = \frac{b_{11}}{1+b_{12}}
+            a_{11} = \\frac{b_{11}}{1+b_{12}}
 
-            a_{22} = \frac{b_{22}}{1+b_{12}}
+            a_{22} = \\frac{b_{22}}{1+b_{12}}
 
-            a_{12}^2 = b_{21}(1-\frac{b_{11}b_{22}}{(1+b_{12})^2}
+            a_{12}^2 = b_{21}(1-\\frac{b_{11}b_{22}}{(1+b_{12})^2}
 
         Parameters
         ------------
