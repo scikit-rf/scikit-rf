@@ -479,15 +479,23 @@ class VectorFitting:
                 else:
                     zeros_response.append(x[i] + 1j * x[i + 1])
                     i += 2
-
             zeros.append(zeros_response)
-            if fit_constant:
+
+            if fit_constant and fit_proportional:
+                # both constant d and proportional e were fitted
                 constant_coeff.append(x[-2])
-            else:
+                proportional_coeff.append(x[-1])
+            elif fit_constant:
+                # only constant d was fitted
+                constant_coeff.append(x[-1])
+                proportional_coeff.append(0.0)
+            elif fit_proportional:
+                # only proportional e was fitted
                 constant_coeff.append(0.0)
-            if fit_proportional:
                 proportional_coeff.append(x[-1])
             else:
+                # neither constant d nor proportional e was fitted
+                constant_coeff.append(0.0)
                 proportional_coeff.append(0.0)
 
         # save poles, zeros, d, e in actual frequencies (un-normalized)
