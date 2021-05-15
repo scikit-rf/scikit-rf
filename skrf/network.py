@@ -1131,7 +1131,7 @@ class Network(object):
             return self._z0
 
     @z0.setter
-    def z0(self, z0: Union[Number, npy.ndarray]) -> None:
+    def z0(self, z0: NumberLike) -> None:
         # cast any array like type (tuple, list) to a npy.array
         z0 = npy.array(z0, dtype=complex)
 
@@ -1196,7 +1196,7 @@ class Network(object):
             return self._frequency
 
     @frequency.setter
-    def frequency(self, new_frequency: Union[Frequency, int, npy.ndarray]) -> None:
+    def frequency(self, new_frequency: Union[Frequency, int, Sequence[float], npy.ndarray]) -> None:
         """
         takes a Frequency object, see  frequency.py
         """
