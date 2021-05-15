@@ -498,6 +498,59 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
+    def find_passivity_violations(self):
+        if self.poles is None:
+            logging.error('Nothing to do; you need to run vector_fit() first.')
+            return
+        if self.zeros is None:
+            logging.error('Nothing to do; you need to run vector_fit() first.')
+            return
+        if self.proportional_coeff is None:
+            logging.error('Nothing to do; you need to run vector_fit() first.')
+            return
+        if self.constant_coeff is None:
+            logging.error('Nothing to do; you need to run vector_fit() first.')
+            return
+
+        # assemble real-valued state-space matrices A, B, C, D from fitted complex-valued pole-residue model
+
+        # assemble A = [[poles_real,   0,                  0],
+        #               [0,            real(poles_cplx),   imag(poles_cplx],
+        #               [0,            -imag(poles_cplx),  real(poles_cplx]]
+        n_poles_real = 0
+        n_poles_cplx = 0
+        for pole in self.poles:
+            if np.imag(pole) == 0.0:
+                n_poles_real += 1
+            else:
+                n_poles_cplx += 1
+        A = np.identity(self.network.nports * (n_poles_real + 2 * n_poles_cplx))
+        i_A = 0
+        for pole in self.poles:
+            if np.imag(pole) == 0.0:
+                A[i_A, i_A] = np.real(pole)
+                i_A += 1
+            else:
+                A[i_A, i_A] = np.real(pole)
+                A[i_A, i_A + 1] = np.imag(pole)
+                A[i_A + 1, i_A] = -1 * np.imag(pole)
+                A[i_A + 1, i_A + 1] = np.real(pole)
+                i_A += 2
+
+        print(A)
+
+        # assemble B as identity matrix
+        B = np.identity(n_poles_real + 2 * n_poles_cplx)
+
+        for i in range(self.network.nports):
+            for j in range(self.network.nports):
+                # i: row index
+                # j: column index
+                i_response = i * self.network.nports + j
+
+                for zero in self.zeros[i_response]:
+                    pass
+
     def write_npz(self, path):
         """
         Writes the model parameters in :attr:`poles`, :attr:`zeros`,
