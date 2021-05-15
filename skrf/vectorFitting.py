@@ -101,12 +101,12 @@ class VectorFitting:
         """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
 
         self.max_iterations = 100
-        """ Instance variable specifying the maximum number of iterations for the fitting process. Will be initialized 
-        by :func:`vector_fit`. """
+        """ Instance variable specifying the maximum number of iterations for the fitting process. To be changed by the
+         user before calling :func:`vector_fit`. """
 
         self.max_tol = 1e-6
-        """ Instance variable specifying the convergence criterion in terms of relative tolerance. Will be initialized 
-        by :func:`vector_fit`. """
+        """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
+         user before calling :func:`vector_fit`. """
 
         self.d_res_history = []
         self.delta_max_history = []
