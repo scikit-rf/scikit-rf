@@ -112,7 +112,7 @@ class VectorFitting:
         self.delta_max_history = []
 
     def vector_fit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
-                   fit_constant=True, fit_proportional=True):
+                   fit_constant=True, fit_proportional=False):
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
         :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
@@ -165,36 +165,25 @@ class VectorFitting:
         fmax = np.amax(freqs_norm)
         weight_regular = 1.0
         if init_pole_spacing == 'log':
-            pole_freqs = np.geomspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
         elif init_pole_spacing == 'lin':
-            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
         else:
             logging.warning('Invalid choice of initial pole spacing; proceeding with linear spacing')
-            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
         poles = []
-        k_real = 0
-        k_cmplx = 0
-        for i, f in enumerate(pole_freqs):
+
+        # add real poles
+        for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            if i % 2 == 0 and k_real < n_poles_real:
-                # add a real pole
-                poles.append((-1 / 100 + 0j) * omega)
-                k_real += 1
-            elif i % 2 == 1 and k_cmplx < n_poles_cmplx:
-                # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * omega)
-                k_cmplx += 1
-            elif k_real < n_poles_real:
-                # add a real pole
-                poles.append((-1 / 100 + 0j) * omega)
-                k_real += 1
-            elif k_cmplx < n_poles_cmplx:
-                # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * omega)
-                k_cmplx += 1
-            else:
-                # this should never occur
-                logging.error('error in pole init: number of poles does not add up')
+            poles.append((-1 / 100 + 0j) * omega)
+        # add complex-conjugate poles (store only positive imaginary parts)
+        for i, f in enumerate(pole_freqs_cmplx):
+            omega = 2 * np.pi * f
+            poles.append((-1 / 100 + 1j) * omega)
         poles = np.array(poles)
 
         # save initial poles (un-normalize first)
@@ -360,12 +349,12 @@ class VectorFitting:
                     A_matrix[i] -= c_res / d_res
                     i += 1
                 else:
-                    A_matrix[i] -= 2 * c_res / d_res
                     # two rows for a complex pole of a conjugated pair
                     A_matrix[i, i] = np.real(pole)
                     A_matrix[i, i + 1] = np.imag(pole)
                     A_matrix[i + 1, i] = -1 * np.imag(pole)
                     A_matrix[i + 1, i + 1] = np.real(pole)
+                    A_matrix[i] -= 2 * c_res / d_res
                     i += 2
             poles_new = np.linalg.eigvals(A_matrix)
 
@@ -385,7 +374,7 @@ class VectorFitting:
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
             self.delta_max_history.append(delta_max)
-            logging.info('Delta_max = {}'.format(delta_max))
+            logging.info('Max. relative change in residues = {}\n'.format(delta_max))
             max_singular = new_max_singular
 
             stop = False
