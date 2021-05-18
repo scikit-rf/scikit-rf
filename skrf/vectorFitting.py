@@ -495,7 +495,7 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
-    def find_passivity_violations(self):
+    def find_passivity_violations(self, parameter_type='S'):
         if self.poles is None:
             logging.error('Nothing to do; you need to run vector_fit() first.')
             return
@@ -509,11 +509,16 @@ class VectorFitting:
             logging.error('Nothing to do; you need to run vector_fit() first.')
             return
 
+        if parameter_type.lower() != 's':
+            logging.error('Passivity testing is only supported for scattering (S) parameters.')
+            return
+        if len(np.flatnonzero(self.proportional_coeff)) > 0:
+            logging.error('Passivity testing with nonzero proportional coefficients is not supported; '
+                          'you need to run vector_fit() with option fit_proportional=False first.')
+            return
+
         # assemble real-valued state-space matrices A, B, C, D from fitted complex-valued pole-residue model
 
-        # assemble A = [[poles_real,   0,                  0],
-        #               [0,            real(poles_cplx),   imag(poles_cplx],
-        #               [0,            -imag(poles_cplx),  real(poles_cplx]]
         n_poles_real = 0
         n_poles_cplx = 0
         for pole in self.poles:
@@ -521,32 +526,71 @@ class VectorFitting:
                 n_poles_real += 1
             else:
                 n_poles_cplx += 1
-        A = np.identity(self.network.nports * (n_poles_real + 2 * n_poles_cplx))
-        i_A = 0
-        for pole in self.poles:
-            if np.imag(pole) == 0.0:
-                A[i_A, i_A] = np.real(pole)
-                i_A += 1
-            else:
-                A[i_A, i_A] = np.real(pole)
-                A[i_A, i_A + 1] = np.imag(pole)
-                A[i_A + 1, i_A] = -1 * np.imag(pole)
-                A[i_A + 1, i_A + 1] = np.real(pole)
-                i_A += 2
+        n_matrix = (n_poles_real + 2 * n_poles_cplx) * self.network.nports
 
-        print(A)
+        # assemble A = [[poles_real,   0,                  0],
+        #               [0,            real(poles_cplx),   imag(poles_cplx],
+        #               [0,            -imag(poles_cplx),  real(poles_cplx]]
+        A = np.identity(n_matrix)
+        B = np.zeros(shape=(n_matrix, self.network.nports))
+        i_A = 0     # index on diagonal of A
+        for j in range(self.network.nports):
+            for pole in self.poles:
+                if np.imag(pole) == 0.0:
+                    A[i_A, i_A] = np.real(pole)
+                    B[i_A, j] = 1
+                    i_A += 1
+                else:
+                    A[i_A, i_A] = np.real(pole)
+                    A[i_A, i_A + 1] = np.imag(pole)
+                    A[i_A + 1, i_A] = -1 * np.imag(pole)
+                    A[i_A + 1, i_A + 1] = np.real(pole)
+                    B[i_A, j] = 2
+                    i_A += 2
 
-        # assemble B as identity matrix
-        B = np.identity(n_poles_real + 2 * n_poles_cplx)
-
+        # vector C holds the residues (zeros)
+        # assemble C = [[R1.11, R1.12, R1.13, ...], [R2.11, R2.12, R2.13, ...], ...]
+        C = np.zeros(shape=(self.network.nports, n_matrix))
         for i in range(self.network.nports):
             for j in range(self.network.nports):
                 # i: row index
                 # j: column index
                 i_response = i * self.network.nports + j
 
+                j_zeros = 0
                 for zero in self.zeros[i_response]:
-                    pass
+                    if np.imag(zero) == 0.0:
+                        C[i, j_zeros * self.network.nports + j] = np.real(zero)
+                        j_zeros += 1
+                    else:
+                        C[i, (j_zeros) * self.network.nports + j] = np.real(zero)
+                        C[i, (j_zeros + 1) * self.network.nports + j] = np.imag(zero)
+                        j_zeros += 2
+
+        # vector D holds the constants
+        # assemble D = [[d11, d12, ...], [d21, d22, ...], ...]
+        D = np.zeros(shape=(self.network.nports, self.network.nports))
+        for i in range(self.network.nports):
+            for j in range(self.network.nports):
+                # i: row index
+                # j: column index
+                i_response = i * self.network.nports + j
+                D[i, j] = self.constant_coeff[i_response]
+
+        # calculate test matrix P from A, B, C, D
+        P1 = np.linalg.inv(D - np.identity(self.network.nports))
+        P2 = np.linalg.inv(D + np.identity(self.network.nports))
+        P = np.matmul(A - np.matmul(np.matmul(B, P1), C), A - np.matmul(np.matmul(B, P2), C))
+
+        P_eigs = np.linalg.eigvals(P)
+
+        # purely imaginary square roots of eigenvalues identify frequencies (2*pi*f) for borders of passivity violations
+        freqs_violation = []
+        for sqrt_eigenval in np.sqrt(P_eigs):
+            if np.real(sqrt_eigenval) == 0.0:
+                freqs_violation.append(np.imag(sqrt_eigenval) / (2 * np.pi))
+        freqs_violation = np.array(freqs_violation)
+        print(freqs_violation)
 
     def write_npz(self, path):
         """
