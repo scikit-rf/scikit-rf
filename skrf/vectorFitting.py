@@ -101,18 +101,18 @@ class VectorFitting:
         """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
 
         self.max_iterations = 100
-        """ Instance variable specifying the maximum number of iterations for the fitting process. Will be initialized 
-        by :func:`vector_fit`. """
+        """ Instance variable specifying the maximum number of iterations for the fitting process. To be changed by the
+         user before calling :func:`vector_fit`. """
 
         self.max_tol = 1e-6
-        """ Instance variable specifying the convergence criterion in terms of relative tolerance. Will be initialized 
-        by :func:`vector_fit`. """
+        """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
+         user before calling :func:`vector_fit`. """
 
         self.d_res_history = []
         self.delta_max_history = []
 
     def vector_fit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
-                   fit_constant=True, fit_proportional=True):
+                   fit_constant=True, fit_proportional=False):
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
         :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
@@ -165,36 +165,25 @@ class VectorFitting:
         fmax = np.amax(freqs_norm)
         weight_regular = 1.0
         if init_pole_spacing == 'log':
-            pole_freqs = np.geomspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
         elif init_pole_spacing == 'lin':
-            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
         else:
             logging.warning('Invalid choice of initial pole spacing; proceeding with linear spacing')
-            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
         poles = []
-        k_real = 0
-        k_cmplx = 0
-        for i, f in enumerate(pole_freqs):
+
+        # add real poles
+        for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            if i % 2 == 0 and k_real < n_poles_real:
-                # add a real pole
-                poles.append((-1 / 100 + 0j) * omega)
-                k_real += 1
-            elif i % 2 == 1 and k_cmplx < n_poles_cmplx:
-                # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * omega)
-                k_cmplx += 1
-            elif k_real < n_poles_real:
-                # add a real pole
-                poles.append((-1 / 100 + 0j) * omega)
-                k_real += 1
-            elif k_cmplx < n_poles_cmplx:
-                # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * omega)
-                k_cmplx += 1
-            else:
-                # this should never occur
-                logging.error('error in pole init: number of poles does not add up')
+            poles.append((-1 / 100 + 0j) * omega)
+        # add complex-conjugate poles (store only positive imaginary parts)
+        for i, f in enumerate(pole_freqs_cmplx):
+            omega = 2 * np.pi * f
+            poles.append((-1 / 100 + 1j) * omega)
         poles = np.array(poles)
 
         # save initial poles (un-normalize first)
@@ -360,12 +349,12 @@ class VectorFitting:
                     A_matrix[i] -= c_res / d_res
                     i += 1
                 else:
-                    A_matrix[i] -= 2 * c_res / d_res
                     # two rows for a complex pole of a conjugated pair
                     A_matrix[i, i] = np.real(pole)
                     A_matrix[i, i + 1] = np.imag(pole)
                     A_matrix[i + 1, i] = -1 * np.imag(pole)
                     A_matrix[i + 1, i + 1] = np.real(pole)
+                    A_matrix[i] -= 2 * c_res / d_res
                     i += 2
             poles_new = np.linalg.eigvals(A_matrix)
 
@@ -385,7 +374,7 @@ class VectorFitting:
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
             self.delta_max_history.append(delta_max)
-            logging.info('Delta_max = {}'.format(delta_max))
+            logging.info('Max. relative change in residues = {}\n'.format(delta_max))
             max_singular = new_max_singular
 
             stop = False
@@ -468,7 +457,7 @@ class VectorFitting:
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
             # solve least squares and obtain results as stack of real part vector and imaginary part vector
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=-1)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
 
             i = 0
             zeros_response = []
@@ -479,15 +468,23 @@ class VectorFitting:
                 else:
                     zeros_response.append(x[i] + 1j * x[i + 1])
                     i += 2
-
             zeros.append(zeros_response)
-            if fit_constant:
+
+            if fit_constant and fit_proportional:
+                # both constant d and proportional e were fitted
                 constant_coeff.append(x[-2])
-            else:
+                proportional_coeff.append(x[-1])
+            elif fit_constant:
+                # only constant d was fitted
+                constant_coeff.append(x[-1])
+                proportional_coeff.append(0.0)
+            elif fit_proportional:
+                # only proportional e was fitted
                 constant_coeff.append(0.0)
-            if fit_proportional:
                 proportional_coeff.append(x[-1])
             else:
+                # neither constant d nor proportional e was fitted
+                constant_coeff.append(0.0)
                 proportional_coeff.append(0.0)
 
         # save poles, zeros, d, e in actual frequencies (un-normalized)
