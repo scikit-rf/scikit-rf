@@ -1968,7 +1968,7 @@ class Network(object):
                 if self.port_names and len(self.port_names) == self.number_of_ports:
                     ports = ''
                     for port_idx, port_name in enumerate(self.port_names):
-                        ports += '! Port[{}] = {}\n'.format(port_idx, port_name)
+                        ports += '! Port[{}] = {}\n'.format(port_idx+1, port_name)
                     output.write(ports)
             except AttributeError:
                 pass
