@@ -658,7 +658,7 @@ class NetworkSet(object):
         return npy.array([npy.cov(k.T) for k in smat])
 
     @property
-    def mean_s_db(self) -> 'Network':
+    def mean_s_db(self) -> Network:
         """
         Return Network of mean magnitude in dB.
         
@@ -683,7 +683,7 @@ class NetworkSet(object):
         return ntwk
 
     @property
-    def std_s_db(self) -> 'Network':
+    def std_s_db(self) -> Network:
         """
         Return the Network of the standard deviation magnitude in dB.
 
@@ -720,7 +720,7 @@ class NetworkSet(object):
         """
         return NetworkSet( [ntwk.inv for ntwk in self.ntwk_set])
 
-    def add_polar_noise(self, ntwk: 'Network') -> 'Network':
+    def add_polar_noise(self, ntwk: Network) -> Network:
         """
         
         Parameters

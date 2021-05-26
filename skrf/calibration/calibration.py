@@ -258,7 +258,7 @@ class Calibration(object):
         # ensure that all ideals have same frequency of the measured
         # if not, then attempt to interpolate
         for k in list(range(len(self.ideals))):
-            if self.ideals[k].frequency != self.measured[0]:
+            if self.ideals[k].frequency != self.measured[0].frequency:
                 print('Warning: Frequency information doesn\'t match on ideals[{}], attempting to interpolate the ideal[{}] Network ..'.format(k,k))
                 try:
                     # try to resample our ideals network to match

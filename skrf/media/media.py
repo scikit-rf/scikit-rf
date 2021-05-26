@@ -31,11 +31,11 @@ from .. import mathFunctions as mf
 
 from ..constants import to_meters ,ZERO
 
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import re
 from copy import deepcopy as copy
 
-class Media(object):
+class Media(ABC):
     '''
     Abstract Base Class for a single mode on a transmission line media.
     
@@ -78,7 +78,6 @@ class Media(object):
     prevent accidental impedance mis-match, you may want to manually
     set the z0 .
     '''
-    __metaclass__ = ABCMeta
     def __init__(self, frequency=None, z0=None):
         if frequency is None:
             frequency = Frequency(1,10,101,'ghz')
@@ -142,7 +141,8 @@ class Media(object):
     def z0(self, val):
         self._z0 = val
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def gamma(self):
         '''
         Propagation constant
@@ -160,9 +160,6 @@ class Media(object):
         '''
         return None
     
-    @gamma.setter
-    def gamma(self, val):
-        pass
         
     @property
     def alpha(self):
@@ -178,15 +175,11 @@ class Media(object):
         '''
         return imag(self.gamma)
     
-    @abstractproperty
+    @property
+    @abstractmethod
     def Z0(self):
         return None
-    
-    @Z0.setter
-    def Z0(self, val):
-        pass 
         
-    
 
     @property
     def v_p(self):
