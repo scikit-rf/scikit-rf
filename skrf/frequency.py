@@ -33,7 +33,7 @@ Functions
 
 # from matplotlib.pyplot import gca,plot, autoscale
 from numbers import Number
-from skrf.constants import NumberLike
+from .constants import NumberLike
 from typing import Sequence, Union
 from numpy import pi, linspace, geomspace
 import numpy as npy
