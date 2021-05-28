@@ -167,7 +167,6 @@ from itertools import product
 import numpy as npy
 from numpy.linalg import inv as npy_inv
 from numpy import fft, gradient, ndarray, reshape, shape, ones
-import pandas as pd
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
@@ -2168,7 +2167,7 @@ class Network(object):
         from .io.general import network_2_spreadsheet
         network_2_spreadsheet(self, *args, **kwargs)
 
-    def to_dataframe(self, *args, **kwargs) -> pd.DataFrame:
+    def to_dataframe(self, *args, **kwargs) -> 'pd.DataFrame':
         """
         Convert attributes of a Network to a pandas DataFrame
 
