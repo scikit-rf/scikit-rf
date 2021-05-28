@@ -186,6 +186,9 @@ from .time import time_gate
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
 
+if TYPE_CHECKING:
+    import pandas as pd
+
 #from matplotlib import cm
 #import matplotlib.pyplot as plt
 #import matplotlib.tri as tri
