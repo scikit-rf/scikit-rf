@@ -5,7 +5,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'scikit-rf'
-copyright = '2020, scikit-rf team'
+copyright = '2021, scikit-rf team'
 author = 'scikit-rf team'
 
 # -- General configuration ---------------------------------------------------

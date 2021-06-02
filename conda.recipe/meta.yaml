@@ -1,5 +1,5 @@
 {% set name = "scikit-rf" %}
-{% set version = "0.18.0" %}
+{% set version = "0.18.1" %}
 {% set hash_val = "8223204281599ba14b685d7e28b7e361" %}
 
 package:
@@ -17,7 +17,7 @@ build:
 
 requirements:
   build:
-    - python
+    - python>=3.6
     - setuptools
     - pandas
     - ipython
@@ -30,7 +30,7 @@ requirements:
 
     
   run:
-    - python
+    - python>=3.6
     - setuptools
     - pandas
     - ipython
@@ -55,7 +55,7 @@ test:
 
 about:
   home: http://www.scikit-rf.org
-  license: BSD 3-clause
+  license: BSD-3-Clause
   summary: 'Object Oriented Microwave Engineering'
   doc_url: http://scikit-rf.readthedocs.io/
   dev_url: https://github.com/scikit-rf/scikit-rf
