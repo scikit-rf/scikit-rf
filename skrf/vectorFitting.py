@@ -495,18 +495,18 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
-    def find_passivity_violations(self, parameter_type='S'):
+    def passivity_test(self, parameter_type='S'):
         if self.poles is None:
-            logging.error('Nothing to do; you need to run vector_fit() first.')
+            logging.error('self.poles = None; nothing to do. You need to run vector_fit() first.')
             return
         if self.zeros is None:
-            logging.error('Nothing to do; you need to run vector_fit() first.')
+            logging.error('self.zeros = None; nothing to do. You need to run vector_fit() first.')
             return
         if self.proportional_coeff is None:
-            logging.error('Nothing to do; you need to run vector_fit() first.')
+            logging.error('self.proportional_coeff = None; nothing to do. You need to run vector_fit() first.')
             return
         if self.constant_coeff is None:
-            logging.error('Nothing to do; you need to run vector_fit() first.')
+            logging.error('self.constant_coeff = None; nothing to do. You need to run vector_fit() first.')
             return
 
         if parameter_type.lower() != 's':
@@ -514,11 +514,12 @@ class VectorFitting:
             return
         if len(np.flatnonzero(self.proportional_coeff)) > 0:
             logging.error('Passivity testing with nonzero proportional coefficients is not supported; '
-                          'you need to run vector_fit() with option fit_proportional=False first.')
+                          'you need to run vector_fit() with option \'fit_proportional=False\' first.')
             return
 
         # assemble real-valued state-space matrices A, B, C, D from fitted complex-valued pole-residue model
 
+        # determine size of the matrix system
         n_poles_real = 0
         n_poles_cplx = 0
         for pole in self.poles:
@@ -528,6 +529,8 @@ class VectorFitting:
                 n_poles_cplx += 1
         n_matrix = (n_poles_real + 2 * n_poles_cplx) * self.network.nports
 
+        # state-space matrix A holds the poles on the diagonal as real values with imaginary parts on the sub-diagonal
+        # state-space matrix B holds coefficients (1, 2, or 0), depending on the respective type of pole in A
         # assemble A = [[poles_real,   0,                  0],
         #               [0,            real(poles_cplx),   imag(poles_cplx],
         #               [0,            -imag(poles_cplx),  real(poles_cplx]]
@@ -537,10 +540,12 @@ class VectorFitting:
         for j in range(self.network.nports):
             for pole in self.poles:
                 if np.imag(pole) == 0.0:
+                    # adding a real pole
                     A[i_A, i_A] = np.real(pole)
                     B[i_A, j] = 1
                     i_A += 1
                 else:
+                    # adding a complex-conjugate pole
                     A[i_A, i_A] = np.real(pole)
                     A[i_A, i_A + 1] = np.imag(pole)
                     A[i_A + 1, i_A] = -1 * np.imag(pole)
@@ -548,7 +553,7 @@ class VectorFitting:
                     B[i_A, j] = 2
                     i_A += 2
 
-        # vector C holds the residues (zeros)
+        # state-space matrix C holds the residues (zeros)
         # assemble C = [[R1.11, R1.12, R1.13, ...], [R2.11, R2.12, R2.13, ...], ...]
         C = np.zeros(shape=(self.network.nports, n_matrix))
         for i in range(self.network.nports):
@@ -560,14 +565,14 @@ class VectorFitting:
                 j_zeros = 0
                 for zero in self.zeros[i_response]:
                     if np.imag(zero) == 0.0:
-                        C[i, j_zeros * self.network.nports + j] = np.real(zero)
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros] = np.real(zero)
                         j_zeros += 1
                     else:
-                        C[i, (j_zeros) * self.network.nports + j] = np.real(zero)
-                        C[i, (j_zeros + 1) * self.network.nports + j] = np.imag(zero)
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros] = np.real(zero)
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros + 1] = np.imag(zero)
                         j_zeros += 2
 
-        # vector D holds the constants
+        # state-space matrix D holds the constants
         # assemble D = [[d11, d12, ...], [d21, d22, ...], ...]
         D = np.zeros(shape=(self.network.nports, self.network.nports))
         for i in range(self.network.nports):
@@ -577,20 +582,23 @@ class VectorFitting:
                 i_response = i * self.network.nports + j
                 D[i, j] = self.constant_coeff[i_response]
 
-        # calculate test matrix P from A, B, C, D
-        P1 = np.linalg.inv(D - np.identity(self.network.nports))
-        P2 = np.linalg.inv(D + np.identity(self.network.nports))
-        P = np.matmul(A - np.matmul(np.matmul(B, P1), C), A - np.matmul(np.matmul(B, P2), C))
+        # build test matrix P from state-space matrices A, B, C, D
+        inv_neg = np.linalg.inv(D - np.identity(self.network.nports))
+        inv_pos = np.linalg.inv(D + np.identity(self.network.nports))
+        prod_neg = np.matmul(np.matmul(B, inv_neg), C)
+        prod_pos = np.matmul(np.matmul(B, inv_pos), C)
+        P = np.matmul(A - prod_neg, A - prod_pos)
 
+        # extract eigenvalues of P
         P_eigs = np.linalg.eigvals(P)
 
-        # purely imaginary square roots of eigenvalues identify frequencies (2*pi*f) for borders of passivity violations
+        # purely imaginary square roots of eigenvalues identify frequencies (2*pi*f) of borders of passivity violations
         freqs_violation = []
         for sqrt_eigenval in np.sqrt(P_eigs):
             if np.real(sqrt_eigenval) == 0.0:
                 freqs_violation.append(np.imag(sqrt_eigenval) / (2 * np.pi))
-        freqs_violation = np.array(freqs_violation)
-        print(freqs_violation)
+
+        return np.sort(freqs_violation)
 
     def write_npz(self, path):
         """
