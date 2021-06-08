@@ -39,7 +39,7 @@ class Deembedding(object):
         '''
         Apply correction to a Network
         '''
-        raise NotImplementedError('The Subclass must implement this')
+        pass
 
 class OpenShort(Deembedding):
     '''
