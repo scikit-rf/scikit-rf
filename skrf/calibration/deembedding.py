@@ -34,8 +34,8 @@ class Deembedding(object):
 
     def __repr_():
         pass
-
-    def apply_cal(self,ntwk):
+    @abstractmethod
+    def apply_cal(self, ntwk):
         '''
         Apply correction to a Network
         '''
