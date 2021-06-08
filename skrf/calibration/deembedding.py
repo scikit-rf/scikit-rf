@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from ..frequency import *
 from ..network import *
 
@@ -34,7 +35,8 @@ class Deembedding(object):
 
     def __repr_():
         pass
-
+    
+    @abstractmethod
     def apply_cal(self,ntwk):
         '''
         Apply correction to a Network
