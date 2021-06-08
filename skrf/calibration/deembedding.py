@@ -13,7 +13,7 @@ class Deembedding(object):
         -----
         Parameters
         ----------
-        dummies: network objects of dummy structures used for de-embedding 
+        dummies: list of :class:`~skrf.network.Network` objects used for de-embedding 
         '''
 
         # fill dummy with copied lists of input
