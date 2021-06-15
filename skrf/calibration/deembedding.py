@@ -143,6 +143,25 @@ class OpenShort(Deembedding):
         args, kwargs:
             Passed to :func:`Deembedding.__init__`
 
+        Examples
+        --------
+        >>> import skrf as rf
+        >>> import skrf.calibration import OpenShort
+
+        Create network objects for dummy structures and dut
+
+        >>> op = rf.Network('open_ckt.s2p')
+        >>> sh = rf.Network('short_ckt.s2p')
+        >>> dut = rf.Network('full_ckt.s2p')
+
+        Create de-embedding object
+
+        >>> dm = OpenShort(dummy_open = op, dummy_short = sh, name = 'test_deembed')
+        
+        Remove parasitics to get the actual device network
+        
+        >>> realdut = dm.deembed(dut)
+
         See Also
         ---------
         :func:`Deembedding.__init__`
