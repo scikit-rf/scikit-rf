@@ -10,7 +10,7 @@ from . import qt
 from .analyzers import analyzers
 
 
-def load_network_file(caption="load network file", filter="touchstone file (*.s*p)"):
+def load_network_file(caption="load network file", filter="touchstone file (*.s*p *.S*P)"):
     fname = qt.getOpenFileName_Global(caption, filter)
     if not fname:
         return None
@@ -24,7 +24,7 @@ def load_network_file(caption="load network file", filter="touchstone file (*.s*
     return ntwk
 
 
-def load_network_files(caption="load network file", filter="touchstone file (*.s*p)"):
+def load_network_files(caption="load network file", filter="touchstone file (*.s*p *.S*P)"):
     fnames = qt.getOpenFileNames_Global(caption, filter)
     if not fnames:
         return None
