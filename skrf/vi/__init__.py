@@ -24,7 +24,7 @@ SCPI Commands
 ------------------
 
 To learn about SCPI, you can read the `IVI website`_, or `Wikipedia`_.  For this tutorial you only need to know that
-SCPI comamnds are provided in a tree structure where similar commands are grouped in branches of the tree.  All scpi
+SCPI commands are provided in a tree structure where similar commands are grouped in branches of the tree.  All scpi
 commands are either 'set' commands where the user writes something to instrument or 'query' commands where the user
 is requesting data or information from the instrument and the syntax is like this:
 
@@ -90,7 +90,7 @@ For a node that is a command, there are only 2 requirements:
 Optionally you may also specify the following options in the command for query processing:
 
 3. 'returns' : default 'str'; specify the return type (int, float, str, bool) and the value returned from the functions will be converted into the appropriate python type.
-4. 'csv' : defalt False; if the return value is a csv list, parse it as such and return a python list where the members are individually converted to the type specified by 'returns'
+4. 'csv' : default False; if the return value is a csv list, parse it as such and return a python list where the members are individually converted to the type specified by 'returns'
 5. 'strip_outer_quotes' : default True; check if the return value is a string literal encapsulated in quotes and strip these out for proper parsing of the return value.
 
 If a command is read or write only, then you specify only the query or set items.  If it is read/write, then you

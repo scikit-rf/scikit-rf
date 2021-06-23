@@ -496,7 +496,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
         name_prefix : str
             typically "meas", but some text that will be the default name of new measurements
         item_parameters : Iterable
-            a list of dictionaries that contain the attributes each item will ahve
+            a list of dictionaries that contain the attributes each item will have
         parent : QtWidgets.QWidget
             the parent widget of the NetworkListWidget
         """

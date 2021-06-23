@@ -1,5 +1,5 @@
 '''
-this is just a hack to allow ivi Drivers to be back-ward compatable 
+this is just a hack to allow ivi Drivers to be back-ward compatible 
 with the pyvisa GpibInstrument class. 
 
 Efforts are underway for a unification of visa/vxi and things by the 

@@ -210,7 +210,7 @@ class VectorFitting:
         freq_responses = np.array(freq_responses)
 
         # ITERATIVE FITTING OF POLES to the provided frequency responses
-        # inital set of poles will be replaced with new poles after every iteration
+        # initial set of poles will be replaced with new poles after every iteration
         iterations = self.max_iterations
         self.d_res_history = []
         self.delta_max_history = []
@@ -241,7 +241,7 @@ class VectorFitting:
                     # add coefficients for a pair of complex conjugate poles
                     # part 1: first sum of rational functions (residue variable c)
                     for pole in poles:
-                        # seperate and stack real and imaginary part to preserve conjugacy of the pole pair
+                        # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                         if np.imag(pole) == 0.0:
                             A_k.append(1 / (s_k - pole))
                             n_unused += 1
@@ -261,7 +261,7 @@ class VectorFitting:
 
                     # part 3: second sum of rational functions (variable c_res)
                     for pole in poles:
-                        # seperate and stack real and imaginary part to preserve conjugacy of the pole pair
+                        # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                         if np.imag(pole) == 0.0:
                             A_k.append(-1 * freq_response[k] / (s_k - pole))
                         else:

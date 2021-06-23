@@ -68,7 +68,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
 
     def test_scalar_gamma_z0_media(self):
         '''
-        test ability to create a Media from scalar quanties for gamma/z0
+        test ability to create a Media from scalar quantities for gamma/z0
         and change frequency resolution
         '''
         a = DefinedGammaZ0 (Frequency(1,10,101),gamma=1j,z0 = 50)
@@ -83,7 +83,7 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
 
     def test_vector_gamma_z0_media(self):
         '''
-        test ability to create a Media from vector quanties for gamma/z0
+        test ability to create a Media from vector quantities for gamma/z0
         '''
         freq = Frequency(1,10,101)
         a = DefinedGammaZ0(freq,

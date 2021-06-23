@@ -37,7 +37,7 @@ wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.s1p'))
 
 '''
 The following networks have been saved using Python2 Pickler. 
-Numpy arrays pickled in Python2 can't be reopenned using Python3, 
+Numpy arrays pickled in Python2 can't be reopened using Python3, 
 as a consequence (?) of the utf8 support in Python3.
 So the following lines shall only work with Python2.  
 '''

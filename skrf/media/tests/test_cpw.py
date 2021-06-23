@@ -21,11 +21,11 @@ class CPWTestCase(unittest.TestCase):
 
         # create various examples
         self.freq = rf.Frequency(start=1, stop=20, npoints=21, unit='GHz')
-        # infinite dielectric substrate, infinitly thin metal
+        # infinite dielectric substrate, infinitely thin metal
         self.cpw1 = CPW(frequency=self.freq, w=40e-6, s=20e-6, ep_r=3)
-        # infinite GaAs substrate, infinitly thin metal
+        # infinite GaAs substrate, infinitely thin metal
         self.cpw2 = CPW(frequency=self.freq, w=75e-6, s=50e-6, ep_r=12.9)
-        # infinite GaAs substrate, finite metal thickess
+        # infinite GaAs substrate, finite metal thickness
         # TODO: not used yet
         self.cpw3 = CPW(frequency=self.freq, w=75e-6, s=50e-6, ep_r=12.9, t=1e-6)
 
@@ -70,7 +70,7 @@ class CPWTestCase(unittest.TestCase):
             Z0.append(_cpw.Z0[0].real)
             
         # all to a 3% relative difference
-        # this is quite a large discrepency, but I extracted the ref values from the plot
+        # this is quite a large discrepancy, but I extracted the ref values from the plot
         # one could do better eventually by extracting values from Qucs directly
         rel_diff = (Z0_qucs-npy.array(Z0))/Z0_qucs
         assert_allclose(rel_diff  - 3/100, 0, atol=0.1)

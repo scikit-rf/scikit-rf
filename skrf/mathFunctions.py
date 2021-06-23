@@ -482,7 +482,7 @@ def complexify(f, name = None):
 # old functions just for reference
 def complex2Scalar(input):
     '''
-    Serializes a list/arary of complex numbers
+    Serializes a list/array of complex numbers
     
     
     produces the following output for input list `x`

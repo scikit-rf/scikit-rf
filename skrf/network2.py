@@ -602,7 +602,7 @@ class Network(object):
         Return a windowed version of s-matrix. Used in time-domain analysis.
 
         When using time domain through :attr:`s_time_db`,
-        or similar properties, the spectrum is ussually windowed,
+        or similar properties, the spectrum is usually windowed,
         before the IFFT is taken. This is done to
         compensate for the band-pass nature of a spectrum [1]_ .
 
@@ -1171,7 +1171,7 @@ def t2s(t):
     '''
     converts scattering transfer parameters [#]_ to scattering parameters [#]_
 
-    transfer parameters are also refered to as
+    transfer parameters are also referred to as
     'wave cascading matrix', this function only operates on 2-port
     networks. this function only operates on 2-port scattering
     parameters.

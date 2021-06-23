@@ -39,7 +39,7 @@ class CPW(Media):
         frequency band of the media. The default is None.
     z0 : number, array-like, optional
         the port impedance for media. The default is None.
-        Only needed if  its different from the characterisitc impedance 
+        Only needed if  its different from the characteristic impedance 
         of the transmission.
     w : number, or array-like, optional
             width of center conductor, in m. Default is 70.
@@ -78,7 +78,7 @@ class CPW(Media):
         '''
         Effective permittivity of the CPW (also known as Keff).
         
-        If the thickness of the dielectric susbtrate is large, 
+        If the thickness of the dielectric substrate is large, 
         the effective dielectric constant of the even mode can be approx as:
         
         .. math::
@@ -86,7 +86,7 @@ class CPW(Media):
                 \epsilon_{eff} = \\frac{\epsilon_r + 1}{2} 
         
         The effective permittivity can be defined as in the case of a 
-        microstripa line, that is as the square of ratio 
+        microstrip line, that is as the square of ratio 
         of the capacitance per unit length to the phase velocity. 
         '''
         return (self.ep_r+1)/2.0
@@ -156,7 +156,7 @@ class CPW(Media):
     @property
     def Z0(self):
         '''
-        Characterisitc impedance
+        Characteristic impedance
         '''
         return (30.*pi / sqrt(self.ep_re) * self.K_ratio)*ones(len(self.frequency.f), dtype='complex')
 
