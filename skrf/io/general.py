@@ -305,7 +305,11 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
 
     filelist = []
     if files is None:
-        for filename in glob.iglob(os.path.join(dir + '**', '*.s*p'), recursive=recursive):
+        if recursive:
+            if not dir.endswith(os.path.sep):
+                dir += os.path.sep
+            dir += '**'
+        for filename in glob.iglob(os.path.join(dir, '*.s*p'), recursive=recursive):
             filelist.append(filename)
     else:
         filelist.extend(files)
