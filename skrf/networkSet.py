@@ -767,7 +767,7 @@ class NetworkSet(object):
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
 
-    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3):
+    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3) -> (Network, Network, Network):
         """
         Return a 3-tuple of Network objects which contain the
         mean, upper_bound, and lower_bound for the given Network
@@ -800,8 +800,10 @@ class NetworkSet(object):
         ntwk_std = self.__getattribute__('std_'+attribute)
         ntwk_std.s = n_deviations * ntwk_std.s
 
-        upper_bound = (ntwk_mean + ntwk_std)
-        lower_bound = (ntwk_mean - ntwk_std)
+        upper_bound = ntwk_mean.copy()
+        lower_bound = ntwk_mean.copy()
+        upper_bound.s = (ntwk_mean.s + ntwk_std.s)
+        lower_bound.s = (ntwk_mean.s - ntwk_std.s)
 
         return (ntwk_mean, lower_bound, upper_bound)
 
