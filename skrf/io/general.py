@@ -69,6 +69,7 @@ import warnings
 import sys
 import json
 import numpy as npy
+import glob
 
 from ..util import get_extn, get_fid
 from ..network import Network
@@ -242,7 +243,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None):
+def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=[], recursive=False) -> dict:
     '''
     Read all skrf objects in a directory
 
@@ -301,8 +302,9 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None)
     out={}
 
     filelist = files
-    if files == None:
-        filelist = sorted(os.listdir(dir))
+    if len(files) == 0:
+        for filename in glob.iglob(dir + '/**/*.s*p', recursive=recursive):
+            filelist.append(filename)
 
     for filename in filelist:
         if contains is not None and contains not in filename:
