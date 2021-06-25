@@ -322,12 +322,8 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
     for filename in filelist:
         if contains is not None and contains not in filename:
             continue
-        if files == None:
-            fullname = os.path.join(dir,filename)
-            keyname = os.path.splitext(filename)[0]
-        else:
-            fullname = filename
-            keyname = os.path.splitext(os.path.basename(filename))[0]
+        fullname = filename
+        keyname = os.path.splitext(filename.split(os.path.sep)[-1])[0]
         try:
             out[keyname] = read(fullname)
             continue
