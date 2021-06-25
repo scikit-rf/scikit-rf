@@ -144,7 +144,7 @@ Misc Functions
     Network.renormalize
 
 """
-from typing import (Any, NoReturn, Optional, Sequence, 
+from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
 from numbers import Number
 from six.moves import xrange
@@ -166,7 +166,7 @@ from itertools import product
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
-from numpy import fft, gradient, ndarray, reshape, shape, ones
+from numpy import fft, gradient, ndarray, reshape, shape, ones, std, dstack
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
@@ -330,7 +330,7 @@ class Network(object):
     noise_interp_kind = 'linear'
 
     # CONSTRUCTOR
-    def __init__(self, file: str = None, name : str = None, comments: str = None, 
+    def __init__(self, file: str = None, name : str = None, comments: str = None,
         f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
         '''
         Network constructor.
@@ -1115,7 +1115,7 @@ class Network(object):
         # if we are unable to determine the s-matrix shape we return an scalar
         if not hasattr(self, '_s'):
             return self._z0
-        
+
         # _z0 is an scalar, so a npy.array with shape fxn is filled with _z0
         if self._z0.ndim == 0:
             return npy.full(self._s.shape[:2], self._z0)
@@ -1554,7 +1554,7 @@ class Network(object):
         '''
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {}, 
+    def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {},
         tol: float = mf.ALMOST_ZERO) -> bool:
         '''
         Returns whether the 2N-port network has n-th order reflection symmetry
@@ -1718,7 +1718,7 @@ class Network(object):
             ntwk.port_names = None
         return ntwk
 
-    def set_noise_a(self, noise_freq: Frequency = None, nfmin_db: float = 0, 
+    def set_noise_a(self, noise_freq: Frequency = None, nfmin_db: float = 0,
         gamma_opt: float = 0, rn: NumberLike = 1 ) -> None:
           '''
           sets the "A" (ie cascade) representation of the correlation matrix, based on the
@@ -2196,8 +2196,8 @@ class Network(object):
 
 
     # interpolation
-    def interpolate(self, freq_or_n: Union[Frequency, NumberLike], basis: str = 's', 
-                    coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False, 
+    def interpolate(self, freq_or_n: Union[Frequency, NumberLike], basis: str = 's',
+                    coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
                     **kwargs) -> Union['Network', npy.ndarray]:
         """
         Interpolate a Network allong frequency axis
@@ -2782,7 +2782,7 @@ class Network(object):
         l =media.line(d=d, unit=unit,**kw)
         return connect(self, port, l, 0)
 
-    def windowed(self, window: Union[str, float, Tuple[str, float]]=('kaiser', 6), 
+    def windowed(self, window: Union[str, float, Tuple[str, float]]=('kaiser', 6),
             normalize: bool = True, center_to_dc: bool = None) -> 'Network':
         '''
         Return a windowed version of s-matrix. Used in time-domain analysis.
@@ -3139,7 +3139,7 @@ class Network(object):
         Xi_tilde = npy.einsum('...ij,...jk->...ik', npy.einsum('...ij,...jk->...ik', P, Xi), QT)
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
-    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 1000, 
+    def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 1000,
                         bandpass: bool = None) -> Tuple[npy.ndarray, npy.ndarray]:
         """Calculates time-domain impulse response of one-port.
 
@@ -3250,7 +3250,7 @@ class Network(object):
         if self.frequency.sweep_type != 'lin':
             raise NotImplementedError(
                 'Unable to transform non equidistant sampled points to time domain')
-        
+
         if self.frequency.f[0] != 0:
             warnings.warn(
                 "Frequency doesn't begin from 0. Step response will not be correct.",
@@ -3920,7 +3920,7 @@ def overlap(ntwkA: Network, ntwkB: Network) -> Tuple[Network, Network]:
     return ntwkA.interpolate(new_freq), ntwkB.interpolate(new_freq)
 
 
-def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second', 
+def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
         *args, **kw) -> Network:
     '''
     Concatenate networks along the port axis
@@ -4052,6 +4052,47 @@ def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network
     return out_ntwk
 
 
+def stdev(list_of_networks: Sequence[Network], polar: bool = False) -> Network:
+    '''
+    Calculates the standard deviation of network values from a list of Networks.
+
+    This is the standard deviation for complex values of the s-parameters for a list of Networks.
+
+
+    Parameters
+    -----------
+    list_of_networks : list of :class:`Network` objects
+        the list of networks to average
+
+    Returns
+    ---------
+    ntwk : :class:`Network`
+            the resultant averaged Network
+
+    Notes
+    ------
+    This same function can be accomplished with properties of a
+    :class:`~skrf.networkset.NetworkSet` class.
+
+    Examples
+    ---------
+
+    >>> ntwk_list = [rf.Network('myntwk.s1p'), rf.Network('myntwk2.s1p')]
+    >>> mean_ntwk = rf.stdev(ntwk_list)
+    '''
+    out_ntwk = list_of_networks[0].copy()
+
+    if polar:
+        # compute standard deviation of the mag/phase components individually
+        raise NotImplementedError
+    else:
+        # compute standard deviation of the re/im components individually
+        df_list = [network.to_dataframe() for network in list_of_networks]
+        # out_ntwk.s = out_ntwk.s / (len(list_of_networks))
+
+
+    return out_ntwk
+
 def one_port_2_two_port(ntwk: Network) -> Network:
     '''
     calculates the two-port network given a symmetric, reciprocal and
@@ -4125,7 +4166,7 @@ def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
 
     return A
 
-def evenodd2delta(n: Network, z0: NumberLike = 50, renormalize: bool = True, 
+def evenodd2delta(n: Network, z0: NumberLike = 50, renormalize: bool = True,
         doublehalf: bool = True) -> Network:
     '''
     Convert ntwk's s-matrix from even/odd mode into a delta (normal) s-matrix
@@ -4266,7 +4307,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
     return Network(s=s_out, z0=z0, frequency=frequency, *args, **kwargs)
 
 
-def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int, 
+def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
         offby:int = 1, **kwargs) -> Network:
     '''
     Builds a N-port Network from list of two-ports
