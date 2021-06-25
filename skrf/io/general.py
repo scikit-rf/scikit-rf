@@ -243,9 +243,11 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=[], recursive=False) -> dict:
+def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     '''
     Read all skrf objects in a directory
+
+
 
 
     Attempts to load all files in `dir`, using :func:`read`. Any file
@@ -301,10 +303,12 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=[], r
 
     out={}
 
-    filelist = files
-    if len(files) == 0:
-        for filename in glob.iglob(dir + '/**/*.s*p', recursive=recursive):
+    filelist = []
+    if files is None:
+        for filename in glob.iglob(os.path.join(dir + '**', '*.s*p'), recursive=recursive):
             filelist.append(filename)
+    else:
+        filelist.extend(files)
 
     for filename in filelist:
         if contains is not None and contains not in filename:
