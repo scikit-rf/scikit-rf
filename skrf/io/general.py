@@ -303,6 +303,11 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
 
     out={}
 
+    if not os.path.isdir(dir):
+        dir = os.path.join(os.getcwd(), dir)
+    else:
+        dir = os.path.abspath(dir)
+
     filelist = []
     if files is None:
         if recursive:
