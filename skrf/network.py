@@ -4052,11 +4052,12 @@ def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network
     return out_ntwk
 
 
-def stdev(list_of_networks: Sequence[Network], polar: bool = False) -> Network:
+def stdev(list_of_networks: Sequence[Network], attr: str = 's_db') -> npy.ndarray:
     '''
-    Calculates the standard deviation of network values from a list of Networks.
+    Calculates the standard deviation of a network attribute from a list of Networks.
 
-    This is the standard deviation for complex values of the s-parameters for a list of Networks.
+    This is the standard deviation for complex values of the s-parameters and other related attributes
+    for a list of Networks.
 
 
     Parameters
@@ -4064,34 +4065,20 @@ def stdev(list_of_networks: Sequence[Network], polar: bool = False) -> Network:
     list_of_networks : list of :class:`Network` objects
         the list of networks to average
 
+
     Returns
     ---------
-    ntwk : :class:`Network`
-            the resultant averaged Network
-
-    Notes
-    ------
-    This same function can be accomplished with properties of a
-    :class:`~skrf.networkset.NetworkSet` class.
+    stdev_array : ndarray
+    An array of standard deviation values computed after combining the s-parameter values of the given networks.
 
     Examples
     ---------
 
     >>> ntwk_list = [rf.Network('myntwk.s1p'), rf.Network('myntwk2.s1p')]
-    >>> mean_ntwk = rf.stdev(ntwk_list)
+    >>> ntwk_stdev = rf.stdev(ntwk_list)
     '''
-    out_ntwk = list_of_networks[0].copy()
+    return npy.array([getattr(network, attr) for network in list_of_networks]).std(axis=0)
 
-    if polar:
-        # compute standard deviation of the mag/phase components individually
-        raise NotImplementedError
-    else:
-        # compute standard deviation of the re/im components individually
-        df_list = [network.to_dataframe() for network in list_of_networks]
-        # out_ntwk.s = out_ntwk.s / (len(list_of_networks))
-
-
-    return out_ntwk
 
 def one_port_2_two_port(ntwk: Network) -> Network:
     '''
