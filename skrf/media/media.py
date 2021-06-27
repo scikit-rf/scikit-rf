@@ -950,7 +950,7 @@ class Media(ABC):
         Returns
         --------
         shunt_capacitor : :class:`~skrf.network.Network` object
-                shunted capaciton(2-port)
+                shunted capacitor (2-port)
 
         Notes
         --------
