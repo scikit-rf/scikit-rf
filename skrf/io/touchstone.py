@@ -116,7 +116,7 @@ class Touchstone:
 
     def load_file(self, fid):
         """
-        Load the touchstone file into the interal data structures
+        Load the touchstone file into the internal data structures
         """
 
         filename=self.filename
@@ -126,7 +126,7 @@ class Touchstone:
         extension = filename.split('.')[-1].lower()
         
         if (extension[0] == 's') and (extension[-1] == 'p'): # sNp
-            # check if N is a correct unmber
+            # check if N is a correct number
             try:
                 self.rank = int(extension[1:-1])
             except (ValueError):
@@ -226,7 +226,7 @@ class Touchstone:
                 continue
 
             # collect all values without taking care of there meaning
-            # we're seperating them later
+            # we're separating them later
             values.extend([ float(v) for v in line.split() ])
 
         # let's do some post-processing to the read values
@@ -344,7 +344,7 @@ class Touchstone:
           orig:  unmodified s-parameter data
           ri:    data in real/imaginary
           ma:    data in magnitude and angle (degree)
-          db:    data in log magnitute and angle (degree)
+          db:    data in log magnitude and angle (degree)
 
         Returns
         -------

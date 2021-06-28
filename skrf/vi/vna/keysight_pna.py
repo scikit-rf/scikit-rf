@@ -11,7 +11,7 @@ from . import keysight_pna_scpi
 
 class PNA(abcvna.VNA):
     """
-    Class for modern Keysight/Agilent Peformance Network Analyzers
+    Class for modern Keysight/Agilent Performance Network Analyzers
     """
 
     DEFAULT_VISA_ADDRESS = "GPIB::16::INSTR"
@@ -89,7 +89,7 @@ class PNA(abcvna.VNA):
         There is no specific command to activate a channel, so we ask which channel we want and then activate the first
         trace on that channel.  We do this because if the analyzer gets into a state where it doesn't recognize
         any activated measurements, the get_snp_network method will fail, and possibly others as well.  That is why in
-        some methods you will see the fillowing line:
+        some methods you will see the following line:
         self.active_channel = channel = kwargs.get("channel", self.active_channel)
         this way we force this property to be set, even if it just resets itself to the same value, but then a trace
         will become active and our get_snp_network method will succeed.
@@ -224,7 +224,7 @@ class PNA(abcvna.VNA):
         kwargs : dict
             channel(int) [ default 'self.active_channel' ]
             sweep(bool) [default True]
-            name(str) [defaut \"\"]
+            name(str) [default \"\"]
             f_unit(str) [ default \"GHz\" ]
             raw_data(bool)  [default False]
 
@@ -290,7 +290,7 @@ class PNA(abcvna.VNA):
         for channel in channels:
             meas_list = self.scpi.query_meas_name_list(channel)
             if len(meas_list) == 1:
-                continue  # if there isnt a single comma, then there aren't any measurments
+                continue  # if there isnt a single comma, then there aren't any measurements
             parameters = dict([(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)])
 
             meas_numbers = self.scpi.query_meas_number_list()
@@ -540,7 +540,7 @@ class PNA(abcvna.VNA):
         channel = kwargs.get("channel", self.active_channel)
         meas_list = self.scpi.query_meas_name_list(channel)
         if len(meas_list) == 1:
-            return None  # if there isnt a single comma, then there arent any measurments
+            return None  # if there isnt a single comma, then there arent any measurements
         return [(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)]
 
     @property

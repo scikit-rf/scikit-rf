@@ -58,7 +58,7 @@ class VNA(object):
         address : str
             a visa resource string, or an ip address
         kwargs : dict
-            visa_library (str), timemout in milliseconds (int), card_number
+            visa_library (str), timeout in milliseconds (int), card_number
             (int), interface (str)
 
         Notes

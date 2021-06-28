@@ -14,7 +14,7 @@ by the qucs project [#]_ .
 The variables  and properties of this class are coincident with
 their derivations.
 
-In addition, Djordjevic/Svensson widebande debye dielectric model is considered
+In addition, Djordjevic/Svensson wideband debye dielectric model is considered
 to provide more realistic modelling of broadband microstrip as well as causal
 time domain response.
 
@@ -65,11 +65,11 @@ class MLine(Media):
         frequency band of the media
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
+        from the characteristic impedance of the transmission
     w : number, or array-like
         width of conductor, in m.
     h : number, or array-like
-        height of subtrate between ground plane and conductor, in m.
+        height of substrate between ground plane and conductor, in m.
     t : number, or array-like, optional
         conductor thickness, in m.
     ep_r : number, or array-like
@@ -83,7 +83,7 @@ class MLine(Media):
     tand: number, or array-like
         dielectric loss factor at frequency f_epr_tand
     rough: number, or array-like
-        RMS rhougness of conductor in m.
+        RMS roughness of conductor in m.
     disp: number, or array-like
         microstripline dispersion model in
         * kirschningjansen
@@ -149,13 +149,13 @@ class MLine(Media):
     @property
     def ep_r_f(self):
         '''
-        Frequency dependant relative permittivity of dielectric
+        Frequency dependent relative permittivity of dielectric
         '''
         ep_r, tand  = self.ep_r, self.tand
         f_low, f_high, f_epr_tand = self.f_low, self.f_high, self.f_epr_tand
         f = self.frequency.f
         if self.diel == 'djordjevicsvensson':
-            # compute the slope for a log frequency scale, tanD dependant.
+            # compute the slope for a log frequency scale, tanD dependent.
             m = (ep_r*tand)  * (pi/(2*log(10)))
             # value for frequency above f_high
             ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_epr_tand)/(f_low + 1j*f_epr_tand)))
@@ -168,7 +168,7 @@ class MLine(Media):
     @property
     def tand_f(self):
         '''
-        Frequency dependant dielectric loss factor
+        Frequency dependent dielectric loss factor
         '''
         ep_r = self.ep_r_f
         return -imag(ep_r) / real(ep_r)
@@ -196,7 +196,7 @@ class MLine(Media):
     @property
     def ep_reff_f(self):
         '''
-        Frequency dependant effective relative permittivity of dielectric,
+        Frequency dependent effective relative permittivity of dielectric,
         accounting for microstripline dispersion.
         '''
         ep_r, ep_reff  = self.ep_r_f, self.ep_reff
@@ -245,7 +245,7 @@ class MLine(Media):
     @property
     def Z0_f(self):
         '''
-        Frequency dependant characteristic impedance
+        Frequency dependent characteristic impedance
         '''
         ZL, ep_reff, ep_reff_f = self.Z0, real(self. ep_reff), real(self.ep_reff_f)
         wr, h = self.w + self.delta_wr, self.h

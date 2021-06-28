@@ -156,7 +156,7 @@ class Calibration(object):
 
     This class implements the common mechanisms for all calibration
     algorithms. Specific calibration algorithms should inherit this
-    class and overide the methods:
+    class and override the methods:
     * :func:`Calibration.run`
     * :func:`Calibration.apply_cal`
     * :func:`Calibration.embed` (optional)
@@ -262,7 +262,7 @@ class Calibration(object):
                 print('Warning: Frequency information doesn\'t match on ideals[{}], attempting to interpolate the ideal[{}] Network ..'.format(k,k))
                 try:
                     # try to resample our ideals network to match
-                    # the meaurement frequency
+                    # the measurement frequency
                     self.ideals[k].interpolate_self(\
                         self.measured[0].frequency)
                     print('Success')
@@ -536,7 +536,7 @@ class Calibration(object):
 
     def update_coefs(self, d):
         '''
-        update currect dict of error coefficients
+        update current dict of error coefficients
 
         '''
         for k in d:
@@ -618,7 +618,7 @@ class Calibration(object):
         try:
             out = {}
             for direction in ['forward','reverse']:
-                out[direction + ' normalized directvity'] =\
+                out[direction + ' normalized directivity'] =\
                     self.coefs_ntwks[direction + ' directivity']/\
                     self.coefs_ntwks[direction + ' reflection tracking']
             return out
@@ -947,7 +947,7 @@ class Calibration(object):
         skrf.io.general.read
 
         '''
-        # this import is delayed untill here because of a circular depency
+        # this import is delayed until here because of a circular dependency
         from ..io.general import write
 
         if file is None:
@@ -1164,7 +1164,7 @@ class SDDLWeikle(OnePort):
 
 
     def run(self):
-        #meaured reflection coefficients
+        #measured reflection coefficients
         w_s = self.measured[0].s.flatten() # short
         w_1 = self.measured[1].s.flatten() # delay short 1
         w_2 = self.measured[2].s.flatten() # delay short 2
@@ -1270,7 +1270,7 @@ class SDDL(OnePort):
 
     def run(self):
 
-        #meaured impedances
+        #measured impedances
         d = s2z(self.measured[0].s,1) # short
         a = s2z(self.measured[1].s,1) # delay short 1
         b = s2z(self.measured[2].s,1) # delay short 2
@@ -1312,7 +1312,7 @@ class PHN(OnePort):
         c = s2z(self.ideals[2].s,1).flatten() # fully known
         d = s2z(self.ideals[3].s,1).flatten() # fully known
 
-        # meaured (in impedances)
+        # measured (in impedances)
         a_ = s2z(self.measured[0].s,1).flatten() # half known
         b_ = s2z(self.measured[1].s,1).flatten() # half known
         c_ = s2z(self.measured[2].s,1).flatten() # fully known
@@ -1415,7 +1415,7 @@ class TwelveTerm(Calibration):
             The order must align with `ideals` list ( or use sloppy_input
 
         n_thrus : int
-            Number of transmissve standards. If None, we will try and
+            Number of transmissive standards. If None, we will try and
             guess for you by comparing measure transmission to trans_thres,
 
         trans_thres: float
@@ -1443,11 +1443,11 @@ class TwelveTerm(Calibration):
         kwargs.update({'measured':measured,
                        'ideals':ideals})
 
-        # note: this will enable sloppy_input and align stds if neccesary
+        # note: this will enable sloppy_input and align stds if necessary
         Calibration.__init__(self, *args, **kwargs)
 
         # if they didnt tell us the number of thrus, then lets
-        # hueristcally determine it
+        # heuristically determine it
         trans_thres_mag = 10 ** (trans_thres / 20)
 
         if n_thrus is None:
@@ -1462,7 +1462,7 @@ class TwelveTerm(Calibration):
 
 
             if n_thrus ==0:
-                raise ValueError('couldnt find a transimssive standard. check your data, or explicitly use `n_thrus` argument')
+                raise ValueError('couldnt find a transmissive standard. check your data, or explicitly use `n_thrus` argument')
         self.n_thrus = n_thrus
 
         # if they didntly give explicit order, lets try and put the
@@ -1471,7 +1471,7 @@ class TwelveTerm(Calibration):
         if self.sloppy_input is True:
             trans = [npy.mean(k.s21.s_mag) for k in self.ideals]
             # see http://stackoverflow.com/questions/6618515/sorting-list-based-on-values-from-another-list
-            # get order of indecies of sorted means s21
+            # get order of indices of sorted means s21
             order = [x for (y,x) in sorted(zip(trans, range(len(trans))),\
                                            key=lambda pair: pair[0])]
             self.measured = [self.measured[k] for k in order]
@@ -1692,7 +1692,7 @@ class SOLT(TwelveTerm):
             The thru standard can be None
 
         n_thrus : int
-            number of thru measurments
+            number of thru measurements
 
         isolation : :class:`~skrf.network.Network` object
             Measurement with loads on both ports. Used for determining the
@@ -1814,7 +1814,7 @@ class TwoPortOnePath(TwelveTerm):
             The order must align with `ideals` list ( or use sloppy_input
 
         n_thrus : int
-            number of thru measurments
+            number of thru measurements
 
         source_port : [1,2]
             The port on which the source is active. should be 1 or 2
@@ -2342,13 +2342,13 @@ class TRL(EightTerm):
         used if more than one line is passed. A multi-reflect algorithm
         is used if multiple reflects are passed, see `n_reflects` argument.
 
-        All of the `ideals` can be indivdually set to None, or the entire
+        All of the `ideals` can be individually set to None, or the entire
         list set to None (`ideals=None`). For each ideal set to None 
         the following assumptions are made: 
         
         * thru : flush thru 
         * reflect : flush shorts 
-        * line : and approximaitly  90deg  matched line (can be lossy)
+        * line : and approximately  90deg  matched line (can be lossy)
         
         The reflect ideals can also be given as a +-1. 
         
@@ -2356,7 +2356,7 @@ class TRL(EightTerm):
         automatically  estimate the initial guess for the line length 
         from measurements . This is sensible
         if you have no idea what the line length is, but your **error 
-        networks** are well macthed (E_ij >>E_ii).
+        networks** are well matched (E_ij >>E_ii).
 
 
         Notes
@@ -2816,7 +2816,7 @@ class NISTMultilineTRL(EightTerm):
                     #Choose the correct root later
                     e_val = linalg.eigvals(Mij)
                 else:
-                    #Choose the correct root using heurestics
+                    #Choose the correct root using heuristics
                     e_val = root_choice(Mij, dl, gamma_est)
 
                 g_dl1 = -log(0.5*(e_val[0] + 1.0/e_val[1]))
@@ -4402,7 +4402,7 @@ def determine_line(thru_m, line_m, line_approx=None):
 
     Given raw measurements of a `thru` and a matched `line` with unknown
     s21, this will calculate the response of the line. This works for 
-    lossy lines, and attentuators. The `line_approx`
+    lossy lines, and attenuators. The `line_approx`
     is an approximation to line, this used  to choose the correct
     root sign. If left as None, it will be estimated from raw measurements, 
     which requires your error networks to be well matched  (S_ij >>S_ii). 
@@ -4452,7 +4452,7 @@ def determine_line(thru_m, line_m, line_approx=None):
     zero = npy.zeros(npts)
 
     if line_approx is None:
-        # estimate line length, by assumeing error networks are well
+        # estimate line length, by assuming error networks are well
         # matched
         line_approx = line_m/thru_m
 
@@ -4471,7 +4471,7 @@ def determine_line(thru_m, line_m, line_approx=None):
 def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
                      line_approx=None, return_all=False):
     '''
-    Determine reflect from a thru, reflect, line measurments
+    Determine reflect from a thru, reflect, line measurements
     
     This is used in the TRL algorithm, but is made modular for 
     multi-line, multi-reflect options. 
@@ -4489,8 +4489,8 @@ def determine_reflect(thru_m, reflect_m, line_m, reflect_approx=None,
         approximate One-port network for the reflect.  if None, then
         we assume its a flush short (gamma=-1)
     return_all: bool
-        return all possible values fo relfect, one for each root-choice.
-        useful for troublshooting.
+        return all possible values fo reflect, one for each root-choice.
+        useful for troubleshooting.
         
     Returns
     -------

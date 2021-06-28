@@ -406,11 +406,11 @@ class AgilentCSV(object):
             # we can split it on  `)'` instead
             if header.count('),') == n_traces:
                 cols = header.split('),')
-                # we need to add back the paranthesis we split on to all but
+                # we need to add back the parenthesis we split on to all but
                 # last columns
                 cols =  [col + ')'  for col in cols[:-1]] + [cols[-1]]
             else:
-                # I dont know how to seperate column names
+                # I dont know how to separate column names
                 warn('Cant decipher header, so I\'m creating one. check output. ')
                 cols = ['Freq(?),']+['%s-%i'%(util.basename_noext(self.filename),k) \
                     for k in range(n_traces)]
@@ -487,7 +487,7 @@ class AgilentCSV(object):
                 elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
                 else:
-                    warn('CSV format unrecognized in "%s" or "%s". It\'s up to you to intrepret the resultant network correctly.' % (names[k], names[k+1]))
+                    warn('CSV format unrecognized in "%s" or "%s". It\'s up to you to interpret the resultant network correctly.' % (names[k], names[k+1]))
                     s = d[:,k*2+1]+1j*d[:,k*2+2]
 
                 ntwk_list.append(
@@ -555,11 +555,11 @@ def pna_csv_header_split(filename):
         # we can split it on  `)'` instead
         if header.count('),') == n_traces:
             cols = header.split('),')
-            # we need to add back the paranthesis we split on to all but
+            # we need to add back the parenthesis we split on to all but
             # last columns
             cols =  [col + ')'  for col in cols[:-1]] + [cols[-1]]
         else:
-            # i dont know how to seperate column names
+            # i dont know how to separate column names
             warn('Cant decipher header, so im creating one. check output. ')
             cols = ['Freq(?),']+['%s-%i'%(util.basename_noext(filename),k) \
                 for k in range(n_traces)]
@@ -611,7 +611,7 @@ def pna_csv_2_ntwks(filename):
             elif 'real' in names[k].lower() and 'imag' in names[k+1].lower():
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
             else:
-                print('WARNING: csv format unrecognized. ts up to you to  intrepret the resultant network correctly.')
+                print('WARNING: csv format unrecognized. ts up to you to  interpret the resultant network correctly.')
                 s = d[:,k*2+1]+1j*d[:,k*2+2]
 
             ntwk_list.append(

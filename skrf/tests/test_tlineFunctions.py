@@ -13,7 +13,7 @@ class TestBasicTransmissionLine(unittest.TestCase):
     def setUp(self):
         # define example test case
         self.d = 1.5  # line length [m]
-        self.z0 = 100  # line characteric impedance [Ohm]
+        self.z0 = 100  # line characteristic impedance [Ohm]
         self.zin = 40 - 280j  # line input impedance [Ohm]
         
     def test_input_reflection_coefficient(self):

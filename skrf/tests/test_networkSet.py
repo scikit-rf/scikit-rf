@@ -115,7 +115,7 @@ class NetworkSetTestCase(unittest.TestCase):
 
     def test_copy(self):
         """
-        Test the `copy()`method and the equallity of two NetworkSets
+        Test the `copy()`method and the equality of two NetworkSets
         """
         copy = self.ns.copy()
         self.assertEqual(copy, self.ns)

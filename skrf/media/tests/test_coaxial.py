@@ -76,7 +76,7 @@ class MediaTestCase(unittest.TestCase):
         Test passing array as attenuation in the Coaxial classmethod
         `from_attenuation_VF_units`.
         """
-        # create a Coaxial media for frequency-dependant attenuation and 
+        # create a Coaxial media for frequency-dependent attenuation and 
         # test the resulting alpha values (real part of gamma)
         frequency = rf.Frequency(start=1, stop=2, unit='GHz', npoints=101)
         # k0k1k2 attenuation model

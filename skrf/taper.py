@@ -54,7 +54,7 @@ class Taper1D(object):
         to do this we inspect the `med` class for a `from_z0` 
         init method, and if it exists, we assign it to `med` attribute, 
         in `__init__`.
-        addmitantly having `med` be a class or a method is abuse,
+        admittedly having `med` be a class or a method is abuse,
         it makes for a intuitive operation
     
         Examples

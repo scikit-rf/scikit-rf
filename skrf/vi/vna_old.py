@@ -556,7 +556,7 @@ class PNA(Driver):
         Parameters
         ------------
         ports : list of ints
-            list of port indecies to retrieve data from
+            list of port indices to retrieve data from
 
         \*args,\*\*kwargs :
             passed to Network init
@@ -589,7 +589,7 @@ class PNA(Driver):
         Parameters
         ------------
         ports : list of ints
-            list of port indecies to retrieve data from
+            list of port indices to retrieve data from
 
         \*args,\*\*kwargs :
             passed to Network init
@@ -623,7 +623,7 @@ class PNA(Driver):
         Parameters
         ------------
         ports : list of ints
-            list of port indecies to retrieve data from
+            list of port indices to retrieve data from
 
         See Also
         ----------
@@ -664,7 +664,7 @@ class PNA(Driver):
 
     def get_data(self, char='SDATA', cnum = None):
         '''
-        Get data for current active measuremnent
+        Get data for current active measurement
 
         Note that this doesnt do any sweep timing. It just gets whatever
         data is in the registers according to char.  If you want the
@@ -720,12 +720,12 @@ class PNA(Driver):
 
     def get_rdata(self, char='A', cnum = None):
         '''
-        Get data directly from the recievers.
+        Get data directly from the receivers.
 
         Parameters
         -----------
         char : ['A', 'B', 'C', ... , 'REF']
-            the reciever to measure, the 'REF' number  (like R1, R2)
+            the receiver to measure, the 'REF' number  (like R1, R2)
             depends on the source port.
         cnum : int
             channel number
@@ -791,7 +791,7 @@ class PNA(Driver):
 
     def set_yscale_auto(self, window_n=None, trace_n=None):
         '''
-        Display a given measurment on specified trace number.
+        Display a given measurement on specified trace number.
 
         Parameters
         ------------
@@ -836,7 +836,7 @@ class PNA(Driver):
 
         meas = meas_list[1:-1].split(',')
         if len(meas)==1:
-            # if there isnt a single comma, then there arent any measurments
+            # if there isnt a single comma, then there arent any measurements
             return None
 
 
@@ -888,7 +888,7 @@ class PNA(Driver):
         Parameters
         ------------
         name : str
-            name given to measurment
+            name given to measurement
         meas : str
             something like
             * S11
@@ -911,7 +911,7 @@ class PNA(Driver):
         Parameters
         ------------
         name : str
-            name given to measurment
+            name given to measurement
         meas : str
             something like
             * S11
@@ -1286,7 +1286,7 @@ class PNA(Driver):
                     %(channel,cset,int(apply_stim_values) ))
     def save_active_cset(self,channel=None):
         '''
-        Save the activer calset
+        Save the active calset
         '''
         if channel is None:
             channel  = self.channel
@@ -1411,7 +1411,7 @@ class PNA(Driver):
         Examples
         ---------
         >>> p = PNA()
-        >>> my_cal =  p.get_calbration()
+        >>> my_cal =  p.get_calibration()
         >>> p.set_calibration(my_cal, ports = (1,2))
 
         See Also
@@ -1449,7 +1449,7 @@ PNAX = PNA
 
 class ZVA40(PNA):
     '''
-    Rohde&Scharz ZVA40
+    Rohde&Schwarz ZVA40
 
     Examples
     -----------
@@ -1483,7 +1483,7 @@ class ZVA40(PNA):
 
         meas = meas_list[1:-1].split(',')
         if len(meas)==1:
-            # if there isnt a single comma, then there arent any measurments
+            # if there isnt a single comma, then there arent any measurements
             return None
 
 
@@ -1491,7 +1491,7 @@ class ZVA40(PNA):
 
     def get_data(self, char='SDATA', cnum = None):
         '''
-        Get data for current active measuremnent
+        Get data for current active measurement
 
         Note that this doesnt do any sweep timing. It just gets whatever
         data is in the registers according to char.  If you want the
@@ -1517,7 +1517,7 @@ class ZVA40(PNA):
         '''
         Get the name of the active measurement
         '''
-        warn('Retriving active trace is not functional. This is a stub.')
+        warn('Retrieving active trace is not functional. This is a stub.')
 
         return ''
 
@@ -1528,7 +1528,7 @@ class ZVA40(PNA):
         Parameters
         ------------
         name : str
-            name given to measurment
+            name given to measurement
         meas : str
            measurement string
 
@@ -1538,7 +1538,7 @@ class ZVA40(PNA):
 
     def setup_twoport(self, ports=[1,2]):
         '''
-        Sets up traces appropriate for 2-port s-parameter measurment
+        Sets up traces appropriate for 2-port s-parameter measurement
 
         Parameters
         -----------
@@ -1631,7 +1631,7 @@ class ZVA40(PNA):
             power offset (dB)
         only : bool
             if true: only set port power. ignore channel power.
-            if false: the port power is added to channel ower.
+            if false: the port power is added to channel power.
         '''
 
         if only:
@@ -1647,7 +1647,7 @@ class ZVA40(PNA):
         '''
         Turn a given port's power on or off
 
-        This  overides the PNA's implementation with because
+        This overrides the PNA's implementation with because
         I dont think RS supports it. This uses the permanent power on
         option which is equivalent to clicking 'gen' in teh port config
         window
