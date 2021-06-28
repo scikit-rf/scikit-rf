@@ -267,6 +267,8 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
         Name of skrf object types to read (ie 'Network')
     files : list, optional
         list of files to load, bypasses dir parameter.
+    recursive : bool, optional
+        If True, search in the specified directory and all other nested directories
 
     Returns
     ---------
@@ -302,11 +304,6 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
     '''
 
     out={}
-
-    if not os.path.isdir(dir):
-        dir = os.path.join(os.getcwd(), dir)
-    else:
-        dir = os.path.abspath(dir)
 
     filelist = []
     if files is None:

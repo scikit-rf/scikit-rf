@@ -800,10 +800,8 @@ class NetworkSet(object):
         ntwk_std = self.__getattribute__('std_'+attribute)
         ntwk_std.s = n_deviations * ntwk_std.s
 
-        upper_bound = ntwk_mean.copy()
-        lower_bound = ntwk_mean.copy()
-        upper_bound.s = (ntwk_mean.s + ntwk_std.s)
-        lower_bound.s = (ntwk_mean.s - ntwk_std.s)
+        upper_bound = (ntwk_mean + ntwk_std.s)
+        lower_bound = (ntwk_mean - ntwk_std.s)
 
         return (ntwk_mean, lower_bound, upper_bound)
 

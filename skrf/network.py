@@ -4052,7 +4052,7 @@ def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network
     return out_ntwk
 
 
-def stdev(list_of_networks: Sequence[Network], attr: str = 's_db') -> npy.ndarray:
+def stdev(list_of_networks: Sequence[Network], attr: str = 's') -> npy.ndarray:
     '''
     Calculates the standard deviation of a network attribute from a list of Networks.
 
@@ -4064,7 +4064,8 @@ def stdev(list_of_networks: Sequence[Network], attr: str = 's_db') -> npy.ndarra
     -----------
     list_of_networks : list of :class:`Network` objects
         the list of networks to average
-
+    attr : str, optional
+        name of attribute to average
 
     Returns
     ---------
