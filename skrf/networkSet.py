@@ -402,7 +402,7 @@ class NetworkSet(object):
         Parameters
         ----------
         func: a function to be applied to the network_property
-                accross the first axis of the property's output
+                across the first axis of the property's output
         network_property_name: str
             a property of the Network class,
             which must have a matrix output of shape (f, n, n)
@@ -920,7 +920,7 @@ class NetworkSet(object):
         x : real
             Point to evaluate the interpolated network at
         interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailled description.
+            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
 
         Returns

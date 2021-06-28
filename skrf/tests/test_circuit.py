@@ -64,7 +64,7 @@ class CircuitTestConstructor(unittest.TestCase):
 
 class CircuitTestWilkinson(unittest.TestCase):
     '''
-    Create a Wilkison power divider Circuit [#]_ and test the results
+    Create a Wilkinson power divider Circuit [#]_ and test the results
     against theoretical ones (obtained in [#]_)
 
     References
@@ -482,7 +482,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
     def test_4ports_default_characteristic_impedances(self):
         '''
         Connect two 4-ports networks in a resulting 4-ports network,
-        with default characteric impedances
+        with default characteristic impedances
         '''
         freq = rf.Frequency(start=1, npoints=1)
         a = rf.Network(name='a')
@@ -515,7 +515,7 @@ class CircuitTestMultiPortCascadeNetworks(unittest.TestCase):
     def test_4ports_complex_characteristic_impedances(self):
         '''
         Connect two 4-ports networks in a resulting 4-ports network,
-        with same complex characteric impedances
+        with same complex characteristic impedances
         '''
         z0 = 5 + 4j
         freq = rf.Frequency(start=1, npoints=1)
@@ -634,7 +634,7 @@ class CircuitTestVariableCoupler(unittest.TestCase):
     Then we have a variable coupler. The coupling factor can be adjusted
     by changing the phase of the phase shifter.
 
-    The port order in this example is volontary complicated to make a good
+    The port order in this example is voluntary complicated to make a good
     example.
 
     '''
@@ -761,7 +761,7 @@ class CircuitTestGraph(unittest.TestCase):
 
         self.C = rf.Circuit(self.connections)
 
-    def test_interstection_dict(self):
+    def test_intersection_dict(self):
         inter_dict = self.C.intersections_dict
         # should have 3 intersections
         self.assert_(len(inter_dict) == 3)
@@ -879,7 +879,7 @@ class CircuitTestVoltagesCurrents(unittest.TestCase):
         self.L = np.random.rand()  # line length in [m]
         self.freq = rf.Frequency(1, 10, 10, unit='GHz')
         self.line_media = rf.media.DefinedGammaZ0(self.freq, z0=self.Z)  # lossless line medium
-        self.line = self.line_media.line(d=self.L, unit='m', name='line')  # transmisison line Network
+        self.line = self.line_media.line(d=self.L, unit='m', name='line')  # transmission line Network
 
         # forward voltages and currents at the input of the test line
         self.V_in = np.sqrt(2*self.Z*self.P_f)*np.exp(1j*self.phase_f)

@@ -43,17 +43,17 @@ def plot_rectangular(ntwk, **kwargs):
         )
 
     labels = []
-    glpyhs = []
+    glyphs = []
 
     for n in range(ntwk.nports):
         for m in range(ntwk.nports):
             x = ntwk.frequency.f_scaled
             y = getattr(ntwk, primary_property + "_" + property_type)[:, m, n]
-            glpyhs.append(fig.line(x, y, line_color=next(colors)))
+            glyphs.append(fig.line(x, y, line_color=next(colors)))
             labels.append("S{:d}{:d}".format(n + 1, m + 1))
 
     legend_items = []
-    for label, glyph in zip(labels, glpyhs):
+    for label, glyph in zip(labels, glyphs):
         legend_items.append((label, [glyph]))
 
     legend = models.Legend(items=legend_items, location=(0, -30))

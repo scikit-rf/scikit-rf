@@ -117,7 +117,7 @@ class NetworkTestCase(unittest.TestCase):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
 
     def test_constructor_from_hfss_touchstone(self):
-        # HFSS can provide the port characteric impedances in its generated touchstone file.
+        # HFSS can provide the port characteristic impedances in its generated touchstone file.
         # Check if reading a HFSS touchstone file with non-50Ohm impedances
         ntwk_hfss = rf.Network(os.path.join(self.test_dir, 'hfss_threeport_DB.s3p'))
         self.assertFalse(npy.isclose(ntwk_hfss.z0[0,0], 50))
@@ -353,7 +353,7 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(rf.z2s(ntw.z, z0=[zdut, zdut]), s_ref)
         npy.testing.assert_allclose(rf.renormalize_s(ntw.s, [50,50], [zdut,zdut]), s_ref)
 
-        # Compararing Z and Y matrices from reference ones (from ADS)
+        # Comparing Z and Y matrices from reference ones (from ADS)
         # Z or Y matrices do not depend of characteristic impedances.
         # Precision is 1e-4 due to rounded results in ADS export files
         z_ref = npy.array([[

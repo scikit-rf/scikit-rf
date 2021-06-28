@@ -38,7 +38,7 @@ class Coaxial( DistributedCircuit,Media ):
 
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
+        from the characteristic impedance of the transmission
         line. if z0 is None then will default to Z0
     Dint : number, or array-like
         inner conductor diameter, in m
@@ -95,7 +95,7 @@ class Coaxial( DistributedCircuit,Media ):
 
         z0 : number, array-like, or None
             the port impedance for media. Only needed if its different
-            from the characterisitc impedance of the transmission
+            from the characteristic impedance of the transmission
             line. if z0 is None then will default to Z0
         Z0 : number
             desired characteristic impedance
@@ -157,7 +157,7 @@ class Coaxial( DistributedCircuit,Media ):
 
         z0 : number, array-like, or None
             the port impedance for media. Only needed if  its different
-            from the characterisitc impedance of the transmission
+            from the characteristic impedance of the transmission
             line. if z0 is None then will default to Z0
         Z0 : number
             desired characteristic impedance

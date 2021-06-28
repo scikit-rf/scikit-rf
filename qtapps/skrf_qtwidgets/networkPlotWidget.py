@@ -305,7 +305,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                 else:
                     attr = self.S_VALS[s_units]
                     self.plot.plot(ntwk.f, getattr(s, attr)[:, 0, 0], pen=pg.mkPen(c), name=param)
-                self.plot.setLabel("left", s_units)     # Included here incase of missing/ill-formatted data
+                self.plot.setLabel("left", s_units)     # Included here in case of missing/ill-formatted data
                 self.plot.setTitle(ntwk.name)
 
         self.plot.setLabel("left", s_units)

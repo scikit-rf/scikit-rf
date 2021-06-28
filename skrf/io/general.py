@@ -156,7 +156,7 @@ def write(file, obj, overwrite = True):
     objects
     or :class:`~skrf.calibration.calibration.Calibration` objects. This
     will write out a single file. If you would like to write out a
-    seperate file for each object, use :func:`write_all`.
+    separate file for each object, use :func:`write_all`.
 
     Parameters
     ------------
@@ -498,7 +498,7 @@ def load_all_touchstones(dir = '.', contains=None, f_unit=None):
 
     Returns
     ---------
-    ntwkDict : a dictonary with keys equal to the file name (without
+    ntwkDict : a dictionary with keys equal to the file name (without
             a suffix), and values equal to the corresponding ntwk types
 
     Examples
@@ -549,7 +549,7 @@ def read_csv(filename):
     '''
     Read a 2-port s-parameter data from a csv file.
 
-    Specifically, this reads a two-port csv file saved from a Rohde Shcwarz
+    Specifically, this reads a two-port csv file saved from a Rohde Schwarz
     ZVA-40, and possibly other network analyzers. It returns into a
     :class:`Network` object.
 
