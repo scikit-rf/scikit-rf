@@ -773,7 +773,10 @@ class NetworkSet(object):
         mean, upper_bound, and lower_bound for the given Network
         attribute.
 
-        Used to save and plot uncertainty information data
+        Used to save and plot uncertainty information data.
+
+        Note that providing 's' and 's_mag' as attributes will provide different results.
+        For those who want to directly find uncertainty on dB performance, use 's_mag'.
 
         Parameters
         ----------
@@ -794,6 +797,7 @@ class NetworkSet(object):
         Example
         -------
         >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s')
+        >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s_mag')
 
         """
         ntwk_mean = self.__getattribute__('mean_'+attribute)

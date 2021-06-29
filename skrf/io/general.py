@@ -248,8 +248,6 @@ def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files
     Read all skrf objects in a directory
 
 
-
-
     Attempts to load all files in `dir`, using :func:`read`. Any file
     that is not readable by skrf is skipped. Optionally, simple filtering
     can be achieved through the use of `contains` argument.
