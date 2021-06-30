@@ -166,7 +166,7 @@ from itertools import product
 
 import numpy as npy
 from numpy.linalg import inv as npy_inv
-from numpy import fft, gradient, ndarray, reshape, shape, ones, std, dstack
+from numpy import fft, gradient, ndarray, reshape, shape, ones, std
 from scipy import stats, signal  # for Network.add_noise_*, and Network.windowed
 from scipy.interpolate import interp1d  # for Network.interpolate()
 from scipy.ndimage.filters import convolve1d
@@ -6344,7 +6344,6 @@ def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
         vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
 
     return vswr_act
-
 
 
 
