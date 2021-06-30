@@ -804,8 +804,8 @@ class NetworkSet(object):
         ntwk_std = self.__getattribute__('std_'+attribute)
         ntwk_std.s = n_deviations * ntwk_std.s
 
-        upper_bound = (ntwk_mean + ntwk_std.s)
-        lower_bound = (ntwk_mean - ntwk_std.s)
+        upper_bound = (ntwk_mean + ntwk_std)
+        lower_bound = (ntwk_mean - ntwk_std)
 
         return (ntwk_mean, lower_bound, upper_bound)
 
@@ -1056,5 +1056,4 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
         return TNW, x,y,g
     else :
         return x,y,g
-
 
