@@ -3201,7 +3201,7 @@ class Network(object):
             w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
-        return t, mf.irfft(w.s, n=n).flatten()
+        return t, mf.irfft(w.s, n=n).ravel()
 
     def step_response(self, window: str = 'hamming', n: int = None, pad: int = 1000) -> Tuple[npy.ndarray, npy.ndarray]:
         """Calculates time-domain step response of one-port.
