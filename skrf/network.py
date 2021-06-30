@@ -3190,10 +3190,9 @@ class Network(object):
 
         fstep = self.frequency.step
         if n % 2 == 0:
-            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n, endpoint=False))
+            t = npy.fft.ifftshift(npy.fft.fftfreq(n, fstep))
         else:
-            t = npy.flipud(npy.linspace(.5 / fstep, -.5 / fstep, n + 1, endpoint=False))
-            t = t[:-1]
+            t = npy.fft.ifftshift(npy.fft.fftfreq(n+1, fstep))[1:]
         if bandpass in (True, False):
             center_to_dc = not bandpass
         else:
