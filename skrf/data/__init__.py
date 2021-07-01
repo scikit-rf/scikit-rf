@@ -34,6 +34,9 @@ wr2p2_delayshort = Network(os.path.join(pwd, 'wr2p2,delayshort.s1p'))
 wr2p2_short = Network(os.path.join(pwd, 'wr2p2,short.s1p'))
 wr1p5_line = Network(os.path.join(pwd, 'wr1p5,line.s2p'))
 wr1p5_short = Network(os.path.join(pwd, 'wr1p5,short.s1p'))
+ro_1 = Network(os.path.join(pwd, 'ro,1.s1p'))
+ro_2 = Network(os.path.join(pwd, 'ro,2.s1p'))
+ro_3 = Network(os.path.join(pwd, 'ro,3.s1p'))
 
 '''
 The following networks have been saved using Python2 Pickler. 
