@@ -767,13 +767,16 @@ class NetworkSet(object):
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
 
-    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3):
+    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3) -> (Network, Network, Network):
         """
         Return a 3-tuple of Network objects which contain the
         mean, upper_bound, and lower_bound for the given Network
         attribute.
 
-        Used to save and plot uncertainty information data
+        Used to save and plot uncertainty information data.
+
+        Note that providing 's' and 's_mag' as attributes will provide different results.
+        For those who want to directly find uncertainty on dB performance, use 's_mag'.
 
         Parameters
         ----------
@@ -794,6 +797,7 @@ class NetworkSet(object):
         Example
         -------
         >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s')
+        >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s_mag')
 
         """
         ntwk_mean = self.__getattribute__('mean_'+attribute)
@@ -1052,5 +1056,4 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
         return TNW, x,y,g
     else :
         return x,y,g
-
 
