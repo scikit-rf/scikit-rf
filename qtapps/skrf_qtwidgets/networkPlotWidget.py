@@ -19,7 +19,8 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         ("phase unwrapped (rad)", "rad_unwrap"),
         ("real", "re"),
         ("imaginary", "im"),
-        ("group delay", "group_delay")
+        ("group delay", "group_delay"),
+        ("vswr", "vswr")
     ))
     S_UNITS = list(S_VALS.keys())
 
