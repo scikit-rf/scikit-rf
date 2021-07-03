@@ -234,6 +234,29 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                 "Freq: {:g} ({:s}), S(re): {:g}, S(im): {:g}  -  R: {:g}, X: {:g}".format(
                     frequency, curve.ntwk.frequency.unit, S11.real, S11.imag, Z.real, Z.imag))
 
+    def _plot_attr(self, ntwk, attr, colors, trace, n_, m_):
+        if hasattr(ntwk, attr):
+            s = getattr(ntwk, attr)
+            for n in range(ntwk.s.shape[2]):
+                for m in range(ntwk.s.shape[1]):
+                    if trace > 0:
+                        if not n == n_ or not m == m_:
+                            continue
+                    c = next(colors)
+                    label = ntwk.name
+                    if ntwk.s.shape[1] > 1:
+                        label += " - S{:d}{:d}".format(m + 1, n + 1)
+
+                    if "db" in attr:
+                        splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
+                        if not np.any(s[:, m, n] == -np.inf):
+                            splot.setData(ntwk.f, s[:, m, n])
+                        self.plot.addItem(splot)
+                    else:
+                        self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
+        else:
+            self.plot_special_attribute(ntwk, attr, colors)
+
     def update_plot(self):
         if self.corrected_data_enabled:
             if self.ntwk_corrected:
@@ -294,7 +317,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                     else:
                         self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
         else:
-            self.plot_special_attribute(ntwk, s_units, colors)
+            self.plot_special_attribute(ntwk, attr, colors)
 
         self.plot.setLabel("left", s_units)
         self.plot.setTitle(ntwk.name)
@@ -327,27 +350,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         attr = primary + "_" + self.S_VALS[s_units]
 
         for ntwk in ntwk_list:
-            if hasattr(ntwk, attr):
-                s = getattr(ntwk, attr)
-                for n in range(ntwk.s.shape[2]):
-                    for m in range(ntwk.s.shape[1]):
-                        if trace > 0:
-                            if not n == n_ or not m == m_:
-                                continue
-                        c = next(colors)
-                        label = ntwk.name
-                        if ntwk.s.shape[1] > 1:
-                            label += " - S{:d}{:d}".format(m + 1, n + 1)
-
-                        if "db" in attr:
-                            splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
-                            if not np.any(s[:, m, n] == -np.inf):
-                                splot.setData(ntwk.f, s[:, m, n])
-                            self.plot.addItem(splot)
-                        else:
-                            self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
-            else:
-                self.plot_special_attribute(ntwk, attr, colors)
+            self._plot_attr(ntwk, attr, colors, trace, n_, m_)
         self.plot.setLabel("left", s_units)
 
     def plot_smith(self):
