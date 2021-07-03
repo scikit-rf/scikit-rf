@@ -275,8 +275,8 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         primary = self.comboBox_primarySelector.currentText().lower()
         s_units = self.comboBox_unitsSelector.currentText()
-        try:
-            attr = primary + "_" + self.S_VALS[s_units]
+        attr = primary + "_" + self.S_VALS[s_units]
+        if hasattr(ntwk, attr):
             s = getattr(ntwk, attr)
             for n in range(ntwk.s.shape[2]):
                 for m in range(ntwk.s.shape[1]):
@@ -293,20 +293,8 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                         self.plot.addItem(splot)
                     else:
                         self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
-        except AttributeError:
-            s_params = ['S11', 'S12', 'S21', 'S22']
-            for param in s_params:
-                s = getattr(ntwk, param.lower(), None)
-                if s is None:
-                    continue
-                c = next(colors)
-                if s_units == 'group delay':
-                    self.plot.plot(ntwk.f, abs(s.group_delay[:, 0, 0]), pen=pg.mkPen(c), name=param)
-                else:
-                    attr = self.S_VALS[s_units]
-                    self.plot.plot(ntwk.f, getattr(s, attr)[:, 0, 0], pen=pg.mkPen(c), name=param)
-                self.plot.setLabel("left", s_units)     # Included here in case of missing/ill-formatted data
-                self.plot.setTitle(ntwk.name)
+        else:
+            self.plot_special_attribute(ntwk, s_units, colors)
 
         self.plot.setLabel("left", s_units)
         self.plot.setTitle(ntwk.name)
@@ -339,24 +327,27 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         attr = primary + "_" + self.S_VALS[s_units]
 
         for ntwk in ntwk_list:
-            s = getattr(ntwk, attr)
-            for n in range(ntwk.s.shape[2]):
-                for m in range(ntwk.s.shape[1]):
-                    if trace > 0:
-                        if not n == n_ or not m == m_:
-                            continue
-                    c = next(colors)
-                    label = ntwk.name
-                    if ntwk.s.shape[1] > 1:
-                        label += " - S{:d}{:d}".format(m + 1, n + 1)
+            if hasattr(ntwk, attr):
+                s = getattr(ntwk, attr)
+                for n in range(ntwk.s.shape[2]):
+                    for m in range(ntwk.s.shape[1]):
+                        if trace > 0:
+                            if not n == n_ or not m == m_:
+                                continue
+                        c = next(colors)
+                        label = ntwk.name
+                        if ntwk.s.shape[1] > 1:
+                            label += " - S{:d}{:d}".format(m + 1, n + 1)
 
-                    if "db" in attr:
-                        splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
-                        if not np.any(s[:, m, n] == -np.inf):
-                            splot.setData(ntwk.f, s[:, m, n])
-                        self.plot.addItem(splot)
-                    else:
-                        self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
+                        if "db" in attr:
+                            splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
+                            if not np.any(s[:, m, n] == -np.inf):
+                                splot.setData(ntwk.f, s[:, m, n])
+                            self.plot.addItem(splot)
+                        else:
+                            self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
+            else:
+                self.plot_special_attribute(ntwk, attr, colors)
         self.plot.setLabel("left", s_units)
 
     def plot_smith(self):
@@ -430,3 +421,17 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                     curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)
                     curve.curve.setClickable(True)
                     curve.curve.ntwk = ntwk
+
+    def plot_special_attribute(self, ntwk, s_units, colors):
+        s_params = ['S11', 'S12', 'S21', 'S22']
+        for param in s_params:
+            label = ntwk.name + " - " + param
+            s = getattr(ntwk, param.lower(), None)
+            if s is None:
+                continue
+            c = next(colors)
+            if s_units in ['group delay', 's_group_delay']:
+                self.plot.plot(ntwk.f, abs(s.group_delay[:, 0, 0]), pen=pg.mkPen(c), name=label)
+            else:
+                attr = self.S_VALS[s_units]
+                self.plot.plot(ntwk.f, getattr(s, attr)[:, 0, 0], pen=pg.mkPen(c), name=label)
