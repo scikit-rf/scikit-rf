@@ -144,6 +144,16 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         self.update_plot()
 
+    def _calc_traces(self):
+        trace = self.comboBox_traceSelector.currentIndex()
+        n_ = m_ = 0
+        if trace > 0:
+            mn = trace - 1
+            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
+            m_ = mn % nports
+            n_ = int((mn - mn % nports) / nports)
+        return m_, n_, trace
+
     def reset_plot(self, smith=False):
         self.plot.clear()
 
@@ -296,13 +306,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle(ntwk.s.shape[1] ** 2)
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
         primary = self.comboBox_primarySelector.currentText().lower()
         s_units = self.comboBox_unitsSelector.currentText()
@@ -326,13 +330,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle()
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
         primary = self.comboBox_primarySelector.currentText().lower()
         s_units = self.comboBox_unitsSelector.currentText()
@@ -341,6 +339,22 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         for ntwk in ntwk_list:
             self._plot_attr(ntwk, attr, colors, trace, n_, m_)
         self.plot.setLabel("left", s_units)
+
+    def _map_smith(self, ntwk, colors, trace, n_, m_):
+        for n in range(ntwk.s.shape[2]):
+            for m in range(ntwk.s.shape[1]):
+                if trace > 0:
+                    if not n == n_ or not m == m_:
+                        continue
+                c = next(colors)
+                label = ntwk.name
+                if ntwk.s.shape[1] > 1:
+                    label += " - S{:d}{:d}".format(m + 1, n + 1)
+
+                s = ntwk.s[:, m, n]
+                curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)
+                curve.curve.setClickable(True)
+                curve.curve.ntwk = ntwk
 
     def plot_smith(self):
         if self.use_corrected and self.ntwk_corrected is not None:
@@ -359,26 +373,9 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle(ntwk.s.shape[1] ** 2)
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
-        for n in range(ntwk.s.shape[2]):
-            for m in range(ntwk.s.shape[1]):
-                if trace > 0:
-                    if not n == n_ or not m == m_:
-                        continue
-                c = next(colors)
-                label = "S{:d}{:d}".format(m + 1, n + 1)
-
-                s = ntwk.s[:, m, n]
-                curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)
-                curve.curve.setClickable(True)
-                curve.curve.ntwk = ntwk
+        self._map_smith(ntwk, colors, trace, n_, m_)
         self.plot.setTitle(ntwk.name)
 
     def plot_smith_list(self):
@@ -390,26 +387,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle()
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
         for ntwk in ntwk_list:
-            for n in range(ntwk.s.shape[2]):
-                for m in range(ntwk.s.shape[1]):
-                    if trace > 0:
-                        if not n == n_ or not m == m_:
-                            continue
-                    c = next(colors)
-                    label = ntwk.name
-                    if ntwk.s.shape[1] > 1:
-                        label += " - S{:d}{:d}".format(m + 1, n + 1)
-
-                    s = ntwk.s[:, m, n]
-                    curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)
-                    curve.curve.setClickable(True)
-                    curve.curve.ntwk = ntwk
+            self._map_smith(ntwk, colors, trace, n_, m_)
