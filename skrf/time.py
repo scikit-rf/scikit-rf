@@ -6,8 +6,6 @@ time (:mod:`skrf.time`)
 
 Time domain functions 
 
-Methods
-------------
 
 .. autosummary::
    :toctree: generated/
@@ -29,7 +27,8 @@ import numpy as np # so i dont have to change indexes (from peakutils)
 from numpy import fft
 
 def indexes(y, thres=0.3, min_dist=1):
-    """Peak detection routine.
+    """
+    Peak detection routine.
 
     Finds the numeric index of the peaks in *y* by taking its first order difference. By using
     *thres* and *min_dist* parameters, it is possible to reduce the number of
