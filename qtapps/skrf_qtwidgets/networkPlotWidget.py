@@ -19,7 +19,8 @@ class NetworkPlotWidget(QtWidgets.QWidget):
         ("phase unwrapped (rad)", "rad_unwrap"),
         ("real", "re"),
         ("imaginary", "im"),
-        ("group delay", "group_delay")
+        ("group delay", "group_delay"),
+        ("vswr", "vswr")
     ))
     S_UNITS = list(S_VALS.keys())
 
@@ -144,6 +145,16 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         self.update_plot()
 
+    def _calc_traces(self):
+        trace = self.comboBox_traceSelector.currentIndex()
+        n_ = m_ = 0
+        if trace > 0:
+            mn = trace - 1
+            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
+            m_ = mn % nports
+            n_ = int((mn - mn % nports) / nports)
+        return m_, n_, trace
+
     def reset_plot(self, smith=False):
         self.plot.clear()
 
@@ -234,6 +245,37 @@ class NetworkPlotWidget(QtWidgets.QWidget):
                 "Freq: {:g} ({:s}), S(re): {:g}, S(im): {:g}  -  R: {:g}, X: {:g}".format(
                     frequency, curve.ntwk.frequency.unit, S11.real, S11.imag, Z.real, Z.imag))
 
+    def _plot_attr(self, ntwk, attr, colors, trace, n_, m_):
+        for n in range(ntwk.s.shape[2]):
+            for m in range(ntwk.s.shape[1]):
+                if trace > 0:
+                    if not n == n_ or not m == m_:
+                        continue
+                c = next(colors)
+                label = ntwk.name
+                param = "S{:d}{:d}".format(m + 1, n + 1)
+                if ntwk.s.shape[1] > 1:
+                    label += " - " + param
+
+                if hasattr(ntwk, attr):
+                    s = getattr(ntwk, attr)
+                    if "db" in attr:
+                        splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
+                        if not np.any(s[:, m, n] == -np.inf):
+                            splot.setData(ntwk.f, s[:, m, n])
+                        self.plot.addItem(splot)
+                    else:
+                        self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
+                else:
+                    s = getattr(ntwk, param.lower(), None)
+                    if s is None:
+                        continue
+                    if attr == 's_group_delay':
+                        self.plot.plot(ntwk.f, abs(s.group_delay[:, 0, 0]), pen=pg.mkPen(c), name=label)
+                    else:
+                        attr = self.S_VALS[attr]
+                        self.plot.plot(ntwk.f, getattr(s, attr)[:, 0, 0], pen=pg.mkPen(c), name=label)
+
     def update_plot(self):
         if self.corrected_data_enabled:
             if self.ntwk_corrected:
@@ -265,49 +307,12 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle(ntwk.s.shape[1] ** 2)
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
         primary = self.comboBox_primarySelector.currentText().lower()
         s_units = self.comboBox_unitsSelector.currentText()
-        try:
-            attr = primary + "_" + self.S_VALS[s_units]
-            s = getattr(ntwk, attr)
-            for n in range(ntwk.s.shape[2]):
-                for m in range(ntwk.s.shape[1]):
-                    if trace > 0:
-                        if not n == n_ or not m == m_:
-                            continue
-                    c = next(colors)
-                    label = "S{:d}{:d}".format(m + 1, n + 1)
-
-                    if "db" in attr:
-                        splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
-                        if not np.any(s[:, m, n] == -np.inf):
-                            splot.setData(ntwk.f, s[:, m, n])
-                        self.plot.addItem(splot)
-                    else:
-                        self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
-        except AttributeError:
-            s_params = ['S11', 'S12', 'S21', 'S22']
-            for param in s_params:
-                s = getattr(ntwk, param.lower(), None)
-                if s is None:
-                    continue
-                c = next(colors)
-                if s_units == 'group delay':
-                    self.plot.plot(ntwk.f, abs(s.group_delay[:, 0, 0]), pen=pg.mkPen(c), name=param)
-                else:
-                    attr = self.S_VALS[s_units]
-                    self.plot.plot(ntwk.f, getattr(s, attr)[:, 0, 0], pen=pg.mkPen(c), name=param)
-                self.plot.setLabel("left", s_units)     # Included here in case of missing/ill-formatted data
-                self.plot.setTitle(ntwk.name)
-
+        attr = primary + "_" + self.S_VALS[s_units]
+        self._plot_attr(ntwk, attr, colors, trace, n_, m_)
         self.plot.setLabel("left", s_units)
         self.plot.setTitle(ntwk.name)
 
@@ -326,38 +331,31 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle()
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
         primary = self.comboBox_primarySelector.currentText().lower()
         s_units = self.comboBox_unitsSelector.currentText()
         attr = primary + "_" + self.S_VALS[s_units]
 
         for ntwk in ntwk_list:
-            s = getattr(ntwk, attr)
-            for n in range(ntwk.s.shape[2]):
-                for m in range(ntwk.s.shape[1]):
-                    if trace > 0:
-                        if not n == n_ or not m == m_:
-                            continue
-                    c = next(colors)
-                    label = ntwk.name
-                    if ntwk.s.shape[1] > 1:
-                        label += " - S{:d}{:d}".format(m + 1, n + 1)
-
-                    if "db" in attr:
-                        splot = pg.PlotDataItem(pen=pg.mkPen(c), name=label)
-                        if not np.any(s[:, m, n] == -np.inf):
-                            splot.setData(ntwk.f, s[:, m, n])
-                        self.plot.addItem(splot)
-                    else:
-                        self.plot.plot(ntwk.f, s[:, m, n], pen=pg.mkPen(c), name=label)
+            self._plot_attr(ntwk, attr, colors, trace, n_, m_)
         self.plot.setLabel("left", s_units)
+
+    def _map_smith(self, ntwk, colors, trace, n_, m_):
+        for n in range(ntwk.s.shape[2]):
+            for m in range(ntwk.s.shape[1]):
+                if trace > 0:
+                    if not n == n_ or not m == m_:
+                        continue
+                c = next(colors)
+                label = ntwk.name
+                if ntwk.s.shape[1] > 1:
+                    label += " - S{:d}{:d}".format(m + 1, n + 1)
+
+                s = ntwk.s[:, m, n]
+                curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)
+                curve.curve.setClickable(True)
+                curve.curve.ntwk = ntwk
 
     def plot_smith(self):
         if self.use_corrected and self.ntwk_corrected is not None:
@@ -376,26 +374,9 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle(ntwk.s.shape[1] ** 2)
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
-        for n in range(ntwk.s.shape[2]):
-            for m in range(ntwk.s.shape[1]):
-                if trace > 0:
-                    if not n == n_ or not m == m_:
-                        continue
-                c = next(colors)
-                label = "S{:d}{:d}".format(m + 1, n + 1)
-
-                s = ntwk.s[:, m, n]
-                curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)
-                curve.curve.setClickable(True)
-                curve.curve.ntwk = ntwk
+        self._map_smith(ntwk, colors, trace, n_, m_)
         self.plot.setTitle(ntwk.name)
 
     def plot_smith_list(self):
@@ -407,26 +388,7 @@ class NetworkPlotWidget(QtWidgets.QWidget):
 
         colors = util.trace_color_cycle()
 
-        trace = self.comboBox_traceSelector.currentIndex()
-        n_ = m_ = 0
-        if trace > 0:
-            mn = trace - 1
-            nports = int(sqrt(self.comboBox_traceSelector.count() - 1))
-            m_ = mn % nports
-            n_ = int((mn - mn % nports) / nports)
+        m_, n_, trace = self._calc_traces()
 
         for ntwk in ntwk_list:
-            for n in range(ntwk.s.shape[2]):
-                for m in range(ntwk.s.shape[1]):
-                    if trace > 0:
-                        if not n == n_ or not m == m_:
-                            continue
-                    c = next(colors)
-                    label = ntwk.name
-                    if ntwk.s.shape[1] > 1:
-                        label += " - S{:d}{:d}".format(m + 1, n + 1)
-
-                    s = ntwk.s[:, m, n]
-                    curve = self.plot.plot(s.real, s.imag, pen=pg.mkPen(c), name=label)
-                    curve.curve.setClickable(True)
-                    curve.curve.ntwk = ntwk
+            self._map_smith(ntwk, colors, trace, n_, m_)
