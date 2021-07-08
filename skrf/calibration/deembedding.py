@@ -68,7 +68,7 @@ class Deembedding(ABC):
         -----
         Each de-embedding algorithm may use a different number of
         dummy networks. We check that each of these dummy networks
-        have matching frequecies to perform de-embedding.
+        have matching frequencies to perform de-embedding.
 
         It should be known a-priori what the equivalent circuit 
         of the parasitic network looks like. The proper de-embedding
