@@ -5,8 +5,22 @@
 deembedding (:mod:`skrf.calibration.deembedding`)
 ====================================================
 
-This module provides objects to implement de-embedding methods
-that are often used for on-wafer applications. 
+De-embedding is the procedure of removing effects of the 
+test fixture that is often present in the measurement of a device
+or circuit. It is based on a lumped element approximation of the
+test fixture which needs removal from the raw data, and its 
+equivalent circuit often needs to be known a-priori. This is often
+required since implementation of calibration methods such as
+Thru-Reflect-Line (TRL) becomes too expensive for implementation
+in on-wafer measurement environments where space is limited, or
+insufficiently accurate as in the case of Short-Open-Load-Thru
+(SOLT) calibration where the load cannot be manufactured accurately.
+De-embedding is often performed as a second step, after a
+SOLT, TRL or similar calibration to the end of a known reference 
+plane, like the probe-tips in on-wafer measurements.
+
+This module provides objects to implement commonly used de-embedding 
+method in on-wafer applications.  
 Each de-embedding method inherits from the common abstract base 
 class :class:`Deembedding`.
 
@@ -34,6 +48,7 @@ from abc import ABC, abstractmethod
 from ..frequency import *
 from ..network import *
 
+
 class Deembedding(ABC):
     '''
     Abstract Base Class for all de-embedding objects.
@@ -44,6 +59,7 @@ class Deembedding(ABC):
     * :func:`Deembedding.deembed`
 
     '''
+
     def __init__(self, dummies, name=None, *args, **kwargs):
         '''
         De-embedding Initializer
@@ -76,20 +92,31 @@ class Deembedding(ABC):
        # ensure all the dummy Networks' frequency's are the same
         for dmyntwk in dummies:
             if dummies[0].frequency != dmyntwk.frequency:
-                raise(ValueError('Dummy Networks dont have matching frequencies.')) 
+                raise(ValueError('Dummy Networks dont have matching frequencies.'))
 
         # TODO: attempt to interpolate if frequencies do not match
 
+        self.frequency = dummies[0].frequency
+        self.dummies = dummies
         self.args = args
         self.kwargs = kwargs
         self.name = name
 
-    def __str__():
-        pass
+    def __str__(self):
+        if self.name is None:
+            name = ''
+        else:
+            name = self.name
 
-    def __repr_():
-        pass
-    
+        output = '%s Deembedding: %s, %s, %s dummy structures'\
+                %(self.__class__.__name__, name, str(self.frequency),\
+                    len(self.dummies))
+
+        return output
+
+    def __repr_(self):
+        return self.__str__()
+
     @abstractmethod
     def deembed(self, ntwk):
         '''
@@ -97,10 +124,11 @@ class Deembedding(ABC):
         '''
         pass
 
+
 class OpenShort(Deembedding):
     '''
     Remove open parasitics followed by short parasitics. 
-    
+
     This is a commonly used de-embedding method for on-wafer applications.
 
     A deembedding object is created with two dummy measurements: `dummy_open` 
@@ -113,6 +141,12 @@ class OpenShort(Deembedding):
     where the series parasitics are closest to device-under-test, 
     followed by parallel parasitics. For more information, see [1]_
 
+    References
+    ------------
+
+    .. [1] M. C. A. M. Koolen, J. A. M. Geelen and M. P. J. G. Versleijen, "An improved 
+        de-embedding technique for on-wafer high frequency characterization", 
+        IEEE 1991 Bipolar Circuits and Technology Meeting, pp. 188-191, Sep. 1991.
 
     Example
     --------
@@ -128,18 +162,13 @@ class OpenShort(Deembedding):
     Create de-embedding object
 
     >>> dm = OpenShort(dummy_open = op, dummy_short = sh, name = 'test_openshort')
-        
+
     Remove parasitics to get the actual device network
-        
+
     >>> realdut = dm.deembed(dut)
 
-    References
-    ------------
-
-    .. [1] M. C. A. M. Koolen, J. A. M. Geelen and M. P. J. G. Versleijen, "An improved 
-        de-embedding technique for on-wafer high frequency characterization", 
-        IEEE 1991 Bipolar Circuits and Technology Meeting, pp. 188-191, Sep. 1991.
     '''
+
     def __init__(self, dummy_open, dummy_short, name=None, *args, **kwargs):
         '''
         Open-Short De-embedding Initializer
@@ -179,12 +208,19 @@ class OpenShort(Deembedding):
         ntwk : :class:`~skrf.network.Network` object
             Network data of device measurement from which
             parasitics needs to be removed via de-embedding
+
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+
         '''
-        
+
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.')) 
-        
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
         # TODO: attempt to interpolate if frequencies do not match
 
         caled = ntwk.copy()
@@ -195,6 +231,7 @@ class OpenShort(Deembedding):
         caled.z = caled.z - self.short.z
 
         return caled
+
 
 class Open(Deembedding):
     '''
@@ -222,9 +259,9 @@ class Open(Deembedding):
     Create de-embedding object
 
     >>> dm = Open(dummy_open = op, name = 'test_open')
-        
+
     Remove parasitics to get the actual device network
-        
+
     >>> realdut = dm.deembed(dut)
     '''
 
@@ -263,12 +300,18 @@ class Open(Deembedding):
         ntwk : :class:`~skrf.network.Network` object
             Network data of device measurement from which
             parasitics needs to be removed via de-embedding
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+
         '''
-        
+
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.')) 
-        
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
         # TODO: attempt to interpolate if frequencies do not match
 
         caled = ntwk.copy()
@@ -277,7 +320,8 @@ class Open(Deembedding):
         caled.y = ntwk.y - self.open.y
 
         return caled
-    
+
+
 class ShortOpen(Deembedding):
     '''
     Remove short parasitics followed by open parasitics.
@@ -306,12 +350,13 @@ class ShortOpen(Deembedding):
     Create de-embedding object
 
     >>> dm = ShortOpen(dummy_short = sh, dummy_open = op, name = 'test_shortopen')
-        
+
     Remove parasitics to get the actual device network
-        
+
     >>> realdut = dm.deembed(dut)
 
     '''
+
     def __init__(self, dummy_short, dummy_open, name=None, *args, **kwargs):
         '''
         Short-Open De-embedding Initializer
@@ -351,12 +396,18 @@ class ShortOpen(Deembedding):
         ntwk : :class:`~skrf.network.Network` object
             Network data of device measurement from which
             parasitics needs to be removed via de-embedding
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+
         '''
-        
+
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.')) 
-        
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
         # TODO: attempt to interpolate if frequencies do not match
 
         caled = ntwk.copy()
@@ -367,11 +418,12 @@ class ShortOpen(Deembedding):
         caled.y = caled.y - self.open.y
 
         return caled
-    
+
+
 class Short(Deembedding):
     '''
     Remove short parasitics only. 
-    
+
     This is a useful method to remove pad contact resistances from measurement.
 
     A deembedding object is created with just one dummy measurement: `dummy_short`.
@@ -395,12 +447,13 @@ class Short(Deembedding):
     Create de-embedding object
 
     >>> dm = Short(dummy_short = sh, name = 'test_short')
-        
+
     Remove parasitics to get the actual device network
-        
+
     >>> realdut = dm.deembed(dut)
 
     '''
+
     def __init__(self, dummy_short, name=None, *args, **kwargs):
         '''
         Short De-embedding Initializer
@@ -436,12 +489,18 @@ class Short(Deembedding):
         ntwk : :class:`~skrf.network.Network` object
             Network data of device measurement from which
             parasitics needs to be removed via de-embedding
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+
         '''
-        
+
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
-            raise(ValueError('Network frequencies dont match dummy frequencies.')) 
-        
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
         # TODO: attempt to interpolate if frequencies do not match
 
         caled = ntwk.copy()
