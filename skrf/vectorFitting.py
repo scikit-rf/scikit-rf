@@ -108,6 +108,10 @@ class VectorFitting:
         """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
          user before calling :func:`vector_fit`. """
 
+        self.violation_bands = None
+        """ Instance variable holding a list of frequency bands of passivity violation, including the frequency of 
+        maximum violation for each band: [[f_start_1, f_max_1, f_stop_1], [f_start_2, f_max_2, f_stop_2], ...]. """
+
         self.d_res_history = []
         self.delta_max_history = []
 
@@ -495,7 +499,23 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
-    def passivity_test(self, parameter_type='S'):
+    def passivity_test(self, sing_freqs, parameter_type='S'):
+        """
+        Evaluates the passivity of the vector fitted model. Any existing frequency bands of passivity violations will
+        be stored in the class variable :attr:`violation_bands`.
+
+        Parameters
+        ----------
+        parameter_type: str, optional
+            Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
+            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). Currently, only scattering
+            parameters are supported for passivity evaluation.
+
+        Returns
+        -------
+        None
+        """
+
         if self.poles is None:
             logging.error('self.poles = None; nothing to do. You need to run vector_fit() first.')
             return
@@ -510,12 +530,20 @@ class VectorFitting:
             return
 
         if parameter_type.lower() != 's':
-            logging.error('Passivity testing is only supported for scattering (S) parameters.')
+            logging.error('Passivity testing is currently only supported for scattering (S) parameters.')
             return
         if len(np.flatnonzero(self.proportional_coeff)) > 0:
             logging.error('Passivity testing with nonzero proportional coefficients is not supported; '
                           'you need to run vector_fit() with option \'fit_proportional=False\' first.')
             return
+
+        # # the network needs to be reciprocal for this passivity test method to work: S = transpose(S)
+        # if not np.allclose(self.zeros, np.transpose(self.zeros)) or \
+        #         not np.allclose(self.constant_coeff, np.transpose(self.constant_coeff)) or \
+        #         not np.allclose(self.proportional_coeff, np.transpose(self.proportional_coeff)):
+        #     logging.error('Passivity testing with unsymmetrical model parameters is not supported. '
+        #                   'The model needs to be reciprocal.')
+        #     return
 
         # assemble real-valued state-space matrices A, B, C, D from fitted complex-valued pole-residue model
 
@@ -582,6 +610,16 @@ class VectorFitting:
                 i_response = i * self.network.nports + j
                 D[i, j] = self.constant_coeff[i_response]
 
+        # state-space matrix E holds the proportional coefficients (usually 0 in case of fitted S-parameters)
+        # assemble E = [[e11, e12, ...], [e21, e22, ...], ...]
+        E = np.zeros(shape=(self.network.nports, self.network.nports))
+        for i in range(self.network.nports):
+            for j in range(self.network.nports):
+                # i: row index
+                # j: column index
+                i_response = i * self.network.nports + j
+                E[i, j] = self.proportional_coeff[i_response]
+
         # build test matrix P from state-space matrices A, B, C, D
         inv_neg = np.linalg.inv(D - np.identity(self.network.nports))
         inv_pos = np.linalg.inv(D + np.identity(self.network.nports))
@@ -596,9 +634,57 @@ class VectorFitting:
         freqs_violation = []
         for sqrt_eigenval in np.sqrt(P_eigs):
             if np.real(sqrt_eigenval) == 0.0:
-                freqs_violation.append(np.imag(sqrt_eigenval) / (2 * np.pi))
+                freqs_violation.append(np.imag(sqrt_eigenval) / 2 / np.pi)
 
-        return np.sort(freqs_violation)
+        # sort the output from lower to higher frequencies
+        freqs_violation = np.sort(freqs_violation)
+
+        print(freqs_violation)
+        print()
+
+        # identify frequency bands of passivity violations, including frequencies of maximum violation
+
+        def get_singular_value(freq):
+            # calculates the N singular values of the N-port
+            dim_A = np.shape(A)[0]
+            stsp_poles = np.linalg.inv(2j * np.pi * freq * np.identity(dim_A) - A)
+            stsp_S = np.matmul(np.matmul(C, stsp_poles), B)
+            stsp_S += D + 2j * np.pi * freq * E
+            u, s, vh = np.linalg.svd(stsp_S)
+            return s
+
+        # sweep the bands between crossover frequencies and identify bands of passivity violations
+        bands = []
+        for i, freq in enumerate(freqs_violation):
+            if i == 0:
+                f_start = 0
+                f_stop = freq
+            else:
+                f_start = freqs_violation[i - 1]
+                f_stop = freq
+
+            # calculate singular values at the center frequency between crossover frequencies to identify violations
+            f_center = 0.5 * (f_start + f_stop)
+            singvals_center = get_singular_value(f_center)
+            passive = True
+            for singval in singvals_center:
+                if singval > 1:
+                    # passivity violation in this band
+                    passive = False
+            if not passive:
+                # add this band to the list of passivity violations
+                if self.violation_bands is None:
+                    self.violation_bands = [[f_start, f_center, f_stop]]
+                else:
+                    self.violation_bands.append([f_start, f_center, f_stop])
+
+        self.violation_bands = np.array(self.violation_bands)
+
+        singvals = np.zeros((len(sing_freqs), self.network.nports))
+        for i, freq_i in enumerate(sing_freqs):
+            singvals[i] = get_singular_value(freq_i)
+
+        return singvals
 
     def write_npz(self, path):
         """
