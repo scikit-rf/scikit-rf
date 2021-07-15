@@ -46,8 +46,8 @@ class RectangularWaveguide(Media):
             frequency band of this transmission line medium
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
-        line. if z0 is None then will default to Z0
+        from the characteristic impedance of the transmission
+        line. if z0 is None then will default to Z0.
     a : number
             width of waveguide, in meters.
     b : number
@@ -71,7 +71,7 @@ class RectangularWaveguide(Media):
         surface roughness of the conductor walls in units of RMS
         deviation from surface
 
-    *args,**kwargs : arguments, keywrod arguments
+    *args,**kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
 
@@ -98,7 +98,7 @@ class RectangularWaveguide(Media):
         
         self.a = a
         self.b = b
-        self.mode_type = mode_type
+        self.mode_type = mode_type.lower()
         self.m = m
         self.n = n
         self.ep_r = ep_r
@@ -121,28 +121,27 @@ class RectangularWaveguide(Media):
 
     
     @classmethod
-    def from_Z0(cls,frequency, Z0,f, m=1,n=0,ep_r=1, mu_r=1, **kw):
+    def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
         '''
-        Initialize from specfied impedance at a given frequency.
+        Initialize from specified impedance at a given frequency, assuming 
+        the fundamental TE10 mode.
         
         Parameters
         -------------
         frequency : Frequency Object
         Z0 : number /array
-            scharacteristic impedance to create at `f`
+            characteristic impedance to create at `f`
         f : number 
-            frequency (in Hz) that the resultant waveguide has Z0=Z0
+            frequency (in Hz) at which the resultant waveguide has the 
+            characteristic impedance Z0
         '''
-        if n !=0: 
-            raise NotImplemented()
-        
-        
+                
         mu = mu_0*mu_r
         ep = epsilon_0*ep_r
         w = 2*pi*f
         a =pi/(w*mu) * 1./sqrt((1/(Z0*1j)**2+ep/mu))
         
-        kw.update(dict(frequency=frequency,a=a, m=m, n=n, ep_r=ep_r, mu_r=mu_r))
+        kw.update(dict(frequency=frequency,a=a, m=1, n=0, ep_r=ep_r, mu_r=mu_r))
         
         return cls(**kw)
     
@@ -246,21 +245,14 @@ class RectangularWaveguide(Media):
 
         .. math::
 
-            max ( \frac{m \cdot v}{2a} , \frac{n \cdot v}{2b})
+            f_c = \\frac{v}{2 \\pi} \\sqrt {
+                {m \\frac{\pi}{a}}^2 + {n \\frac{\pi}{b}}^2}
 
-        where v= sqrt(ep*mu)
-
-
+        where v= 1/sqrt(ep*mu)
 
         '''
         v = 1/sqrt(self.ep*self.mu)
-        if not ( self.m==1 and self.n==0):
-            print('f_cutoff not verified as correct for this mode ')
-        
-        if self.m/self.a > self.n/self.b: 
-            return self.m*v/(2*self.a)
-        else: 
-            return self.n*v/(2*self.b)
+        return v* self.kc/(2*npy.pi)
 
     @property
     def f_norm(self):
@@ -272,7 +264,7 @@ class RectangularWaveguide(Media):
     @property
     def rho(self):
         '''
-        conductivty of sidewalls in ohm*m
+        conductivity of sidewalls in ohm*m
 
         Parameters
         --------------
@@ -314,16 +306,15 @@ class RectangularWaveguide(Media):
     @property
     def lambda_cutoff(self):
         '''
-        cuttoff wavelength
+        cutoff wavelength
 
         .. math::
+            v/f
 
-            f_c * v
-
-         where v= sqrt(ep*mu)
+         where v= 1/sqrt(ep*mu)
         '''
         v = 1/sqrt(self.ep*self.mu)
-        return self.f_cutoff*v
+        return v/self.f_cutoff
 
     @property
     def gamma(self):

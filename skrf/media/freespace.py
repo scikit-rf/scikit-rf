@@ -31,8 +31,8 @@ class Freespace(Media):
     A plane-wave (TEM Mode) in Freespace.
     
     A Freespace media can be constructed in two ways: 
-     * from complex, relative permativity and permiability OR 
-     * from real relative permativity and permiability with loss tangents.  
+     * from complex, relative permativity and permeability OR 
+     * from real relative permativity and permeability with loss tangents.  
      
     See Examples. There is also a method to initialize from a 
     existing distributed circuit, appropriately named 
@@ -46,7 +46,7 @@ class Freespace(Media):
         frequency band of this transmission line medium
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
+        from the characteristic impedance of the transmission
         line. if z0 is None then will default to Z0
     ep_r : number, array-like
         complex relative permittivity. negative imaginary is lossy.
@@ -114,7 +114,7 @@ class Freespace(Media):
     @classmethod
     def from_distributed_circuit(cls,dc, *args, **kwargs):
         '''
-        initialize a freespace  from media.DistributedCirctuit
+        initialize a freespace  from media.DistributedCircuit
         
         Parameters 
         -----------
@@ -149,7 +149,7 @@ class Freespace(Media):
     @property
     def rho(self):
         '''
-        conductivty in ohm*m
+        conductivity in ohm*m
 
         Parameters
         --------------

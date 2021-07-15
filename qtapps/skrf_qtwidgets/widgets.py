@@ -10,7 +10,7 @@ from . import qt
 from .analyzers import analyzers
 
 
-def load_network_file(caption="load network file", filter="touchstone file (*.s*p)"):
+def load_network_file(caption="load network file", filter="touchstone file (*.s*p *.S*P)"):
     fname = qt.getOpenFileName_Global(caption, filter)
     if not fname:
         return None
@@ -24,7 +24,7 @@ def load_network_file(caption="load network file", filter="touchstone file (*.s*
     return ntwk
 
 
-def load_network_files(caption="load network file", filter="touchstone file (*.s*p)"):
+def load_network_files(caption="load network file", filter="touchstone file (*.s*p *.S*P)"):
     fnames = qt.getOpenFileNames_Global(caption, filter)
     if not fnames:
         return None
@@ -88,7 +88,8 @@ class OverwriteFilesQuery(QtWidgets.QDialog):
         self.horizontalLayout = QtWidgets.QHBoxLayout()
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.No|QtWidgets.QDialogButtonBox.Yes|QtWidgets.QDialogButtonBox.YesToAll)
+        self.buttonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.No | QtWidgets.QDialogButtonBox.Yes | QtWidgets.QDialogButtonBox.YesToAll)
 
         self.choice = None
 
@@ -202,7 +203,7 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.verticalLayout.addLayout(self.gridLayout)
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.verticalLayout.addWidget(self.buttonBox)
 
         self.buttonBox.accepted.connect(self.accept)
@@ -242,7 +243,8 @@ class SwitchTermsDialog(QtWidgets.QDialog):
         self.evaluate()
 
     @property
-    def ready(self): return self._ready
+    def ready(self):
+        return self._ready
 
     @ready.setter
     def ready(self, val):
@@ -273,6 +275,7 @@ class VnaControllerDialog(QtWidgets.QDialog):
     """
     a convenience Dialog class that contains a VnaController Widget
     """
+
     def __init__(self, vna, parent=None):
         super(VnaControllerDialog, self).__init__(parent)
         self.controller = VnaController(vna, self)
@@ -292,7 +295,6 @@ class VnaController(QtWidgets.QWidget):
     FCONVERSIONS = {"Hz": 1., "kHz": 1e-3, "MHz": 1e-6, "GHz": 1e-9, "THz": 1e-12, "PHz": 1e-15}
 
     def __init__(self, vna, parent=None):
-
         """
         set the instrument state for the given vna
 
@@ -354,9 +356,10 @@ class VnaController(QtWidgets.QWidget):
         f_start = self.start_frequency
         f_stop = self.stop_frequency
         f_npoints = self.spinBox_numberOfPoints.value()
-        self.vna.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop, f_npoints=f_npoints)
+        self.vna.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop,
+                                     f_npoints=f_npoints)
 
-    def set_start_freequency(self, value):
+    def set_start_frequency(self, value):
         self._start_frequency = float(value)
         self.lineEdit_startFrequency.setText("{:g}".format(self._start_frequency))
 
@@ -364,9 +367,9 @@ class VnaController(QtWidgets.QWidget):
         self._start_frequency = float(self.lineEdit_startFrequency.text())
         return self._start_frequency
 
-    start_frequency = property(get_start_frequency, set_start_freequency)
+    start_frequency = property(get_start_frequency, set_start_frequency)
 
-    def set_stop_freequency(self, value):
+    def set_stop_frequency(self, value):
         self._stop_frequency = float(value)
         self.lineEdit_stopFrequency.setText("{:g}".format(self._stop_frequency))
 
@@ -374,7 +377,7 @@ class VnaController(QtWidgets.QWidget):
         self._stop_frequency = float(self.lineEdit_stopFrequency.text())
         return self._stop_frequency
 
-    stop_frequency = property(get_stop_frequency, set_stop_freequency)
+    stop_frequency = property(get_stop_frequency, set_stop_frequency)
 
     def frequency_changed(self):
         self.funit = self.comboBox_funit.currentText()
@@ -543,7 +546,7 @@ class ReflectDialog(QtWidgets.QDialog):
         self.verticalLayout.addLayout(self.gridLayout)
         self.buttonBox = QtWidgets.QDialogButtonBox(self)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel|QtWidgets.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Cancel | QtWidgets.QDialogButtonBox.Ok)
         self.verticalLayout.addWidget(self.buttonBox)
 
         self.buttonBox.accepted.connect(self.accept)
@@ -605,7 +608,8 @@ class ReflectDialog(QtWidgets.QDialog):
         self.evaluate()
 
     @property
-    def ready(self): return self._ready
+    def ready(self):
+        return self._ready
 
     @ready.setter
     def ready(self, val):
@@ -643,7 +647,6 @@ class ReflectDialog(QtWidgets.QDialog):
 
 
 class MeasurementDialog(QtWidgets.QDialog):
-
     measurements_available = QtCore.Signal(object)
 
     def __init__(self, nwa, parent=None):
@@ -673,9 +676,9 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.horizontalLayout_timeout.addWidget(self.spinBox_timeout)
         self.checkBox_sweepNew = QtWidgets.QCheckBox("Sweep New", self.groupBox_options)
         self.checkBox_autoTimeOut = QtWidgets.QCheckBox("Auto Timeout", self.groupBox_options)
-        self.horizonatlLayout_sweep = QtWidgets.QHBoxLayout()
-        self.horizonatlLayout_sweep.addWidget(self.checkBox_sweepNew)
-        self.horizonatlLayout_sweep.addWidget(self.checkBox_autoTimeOut)
+        self.horizontalLayout_sweep = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_sweep.addWidget(self.checkBox_sweepNew)
+        self.horizontalLayout_sweep.addWidget(self.checkBox_autoTimeOut)
         self.label_channel = QtWidgets.QLabel("Channel", self.groupBox_options)
         self.spinBox_channel = QtWidgets.QSpinBox(self.groupBox_options)
         self.horizontalLayout_channel = QtWidgets.QHBoxLayout()
@@ -685,7 +688,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.verticalLayout_options = QtWidgets.QVBoxLayout(self.groupBox_options)
         self.verticalLayout_options.addLayout(self.horizontalLayout_namePrefix)
         self.verticalLayout_options.addLayout(self.horizontalLayout_timeout)
-        self.verticalLayout_options.addLayout(self.horizonatlLayout_sweep)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_sweep)
         self.verticalLayout_options.addLayout(self.horizontalLayout_channel)
         self.verticalLayout_left.addWidget(self.groupBox_options)
 
@@ -733,7 +736,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         else:
             self.spinBox_channel.setEnabled(False)
 
-        self.lineEdit_ports.setText(",".join([str(port+1) for port in range(self.nwa.nports)]))
+        self.lineEdit_ports.setText(",".join([str(port + 1) for port in range(self.nwa.nports)]))
         self.spinBox_timeout.valueChanged.connect(self.set_timeout)
 
     def set_timeout(self):

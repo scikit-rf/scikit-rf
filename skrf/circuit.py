@@ -191,7 +191,7 @@ class Circuit():
         '''
         Return a 1-port Network to be used as a Circuit port. 
         
-        Passing the frequency and name is mendatory. Port name must include 
+        Passing the frequency and name is mandatory. Port name must include 
         the word 'port' inside. (ex: 'Port1' or 'port_3')
 
         Parameters
@@ -200,7 +200,7 @@ class Circuit():
             Frequency common to all other networks in the circuit
         name : string
             Name of the port.
-            Must inlude the word 'port' inside. (ex: 'Port1' or 'port_3')
+            Must include the word 'port' inside. (ex: 'Port1' or 'port_3')
         z0 : real
             Characteristic impedance of the port. Default is 50 Ohm.
 
@@ -228,7 +228,7 @@ class Circuit():
         '''
         Return a 1-port network of a grounded link, to be used in a Circuit description. 
         
-        Passing the frequency and name is mendatory.
+        Passing the frequency and name is mandatory.
         
         The ground link is modelled as an infinite admittance.
         
@@ -270,7 +270,7 @@ class Circuit():
 
     def networks_dict(self, connections=None, min_nports=1):
         '''
-        Return the dictionnary of Networks from the connection setup X
+        Return the dictionary of Networks from the connection setup X
         '''
         if not connections:
             connections = self.connections
@@ -388,7 +388,7 @@ class Circuit():
     @property
     def intersections_dict(self):
         '''
-        Return a dictionnary of all intersections with associated ports and z0:
+        Return a dictionary of all intersections with associated ports and z0:
         ::
             { k: [(ntw1_name, ntw1_port), (ntw1_z0, ntw2_name, ntw2_port), ntw2_z0], ... }
         '''
@@ -412,9 +412,9 @@ class Circuit():
     @property
     def edge_labels(self):
         '''
-        Return a dictionnary describing the port and z0 of all graph edges.
+        Return a dictionary describing the port and z0 of all graph edges.
 
-        Dictionnary is in the form:
+        Dictionary is in the form:
         ::
             {('ntw1_name', 'X0'): '3 (50+0j)',
              ('ntw2_name', 'X0'): '0 (50+0j)',
@@ -424,7 +424,7 @@ class Circuit():
         '''
         # for all intersections, 
         # get the N interconnected networks and associated ports and z0
-        # and forge the edge label dictionnary containing labels between
+        # and forge the edge label dictionary containing labels between
         # two nodes
         edge_labels = {}
         for it in self.intersections_dict.items():

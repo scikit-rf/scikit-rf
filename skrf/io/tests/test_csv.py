@@ -15,7 +15,7 @@ class AgilentCSVTestCase(unittest.TestCase):
     def setUp(self):
         ''' 
         Sets up the test directory and the initializes the members.
-        This method gets the currect file path to this file, then gets the file
+        This method gets the current file path to this file, then gets the file
         name for pna_csv_reim.csv file, then reads it in.
         '''
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'

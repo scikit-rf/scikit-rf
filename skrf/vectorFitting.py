@@ -5,15 +5,42 @@ VectorFitting (:mod:`skrf.vectorFitting`)
 
 .. autoclass:: VectorFitting
     :members:
+    :member-order: groupwise
+    :special-members: __init__
 
 """
 
 import numpy as np
 import os
-import skrf.plotting    # will perform the correct setup for matplotlib before it is called below
-import matplotlib.pyplot as mplt
-from matplotlib.ticker import EngFormatter
+from functools import wraps
+try:
+    from . import plotting    # will perform the correct setup for matplotlib before it is called below
+    import matplotlib.pyplot as mplt
+    from matplotlib.ticker import EngFormatter
+except ImportError:
+    mplt = None
+
 import logging
+
+
+def check_plotting(func):
+    """
+    This decorator checks if matplotlib.pyplot is available under the name mplt.
+    If not, raise an RuntimeError.
+
+    Raises
+    ------
+    RuntimeError
+        When trying to run the decorated function without matplotlib
+    """
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        if mplt is None:
+            raise RuntimeError('Plotting is not available')
+        func(*args, **kwargs)
+
+    return wrapper
 
 
 class VectorFitting:
@@ -59,17 +86,33 @@ class VectorFitting:
 
         self.network = network
         self.initial_poles = None
+
         self.poles = None
+        """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
+
         self.zeros = None
+        """ Instance variable holding the list of fitted zeros. Will be initialized by :func:`vector_fit`. """
+
         self.proportional_coeff = None
+        """ Instance variable holding the list of fitted proportional coefficients. Will be initialized by 
+        :func:`vector_fit`. """
+
         self.constant_coeff = None
+        """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
+
         self.max_iterations = 100
+        """ Instance variable specifying the maximum number of iterations for the fitting process. To be changed by the
+         user before calling :func:`vector_fit`. """
+
         self.max_tol = 1e-6
+        """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
+         user before calling :func:`vector_fit`. """
+
         self.d_res_history = []
         self.delta_max_history = []
 
     def vector_fit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
-                   fit_constant=True, fit_proportional=True):
+                   fit_constant=True, fit_proportional=False):
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
         :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
@@ -122,36 +165,25 @@ class VectorFitting:
         fmax = np.amax(freqs_norm)
         weight_regular = 1.0
         if init_pole_spacing == 'log':
-            pole_freqs = np.geomspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
         elif init_pole_spacing == 'lin':
-            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
         else:
             logging.warning('Invalid choice of initial pole spacing; proceeding with linear spacing')
-            pole_freqs = np.linspace(fmin, fmax, n_poles_real + n_poles_cmplx)
+            pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
+            pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
         poles = []
-        k_real = 0
-        k_cmplx = 0
-        for i, f in enumerate(pole_freqs):
+
+        # add real poles
+        for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            if i % 2 == 0 and k_real < n_poles_real:
-                # add a real pole
-                poles.append((-1 / 100 + 0j) * omega)
-                k_real += 1
-            elif i % 2 == 1 and k_cmplx < n_poles_cmplx:
-                # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * omega)
-                k_cmplx += 1
-            elif k_real < n_poles_real:
-                # add a real pole
-                poles.append((-1 / 100 + 0j) * omega)
-                k_real += 1
-            elif k_cmplx < n_poles_cmplx:
-                # add a complex conjugate pole (store only the positive part)
-                poles.append((-1 / 100 + 1j) * omega)
-                k_cmplx += 1
-            else:
-                # this should never occur
-                logging.error('error in pole init: number of poles does not add up')
+            poles.append((-1 / 100 + 0j) * omega)
+        # add complex-conjugate poles (store only positive imaginary parts)
+        for i, f in enumerate(pole_freqs_cmplx):
+            omega = 2 * np.pi * f
+            poles.append((-1 / 100 + 1j) * omega)
         poles = np.array(poles)
 
         # save initial poles (un-normalize first)
@@ -178,8 +210,10 @@ class VectorFitting:
         freq_responses = np.array(freq_responses)
 
         # ITERATIVE FITTING OF POLES to the provided frequency responses
-        # inital set of poles will be replaced with new poles after every iteration
+        # initial set of poles will be replaced with new poles after every iteration
         iterations = self.max_iterations
+        self.d_res_history = []
+        self.delta_max_history = []
         converged = False
         while iterations > 0:
             logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
@@ -207,7 +241,7 @@ class VectorFitting:
                     # add coefficients for a pair of complex conjugate poles
                     # part 1: first sum of rational functions (residue variable c)
                     for pole in poles:
-                        # seperate and stack real and imaginary part to preserve conjugacy of the pole pair
+                        # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                         if np.imag(pole) == 0.0:
                             A_k.append(1 / (s_k - pole))
                             n_unused += 1
@@ -227,7 +261,7 @@ class VectorFitting:
 
                     # part 3: second sum of rational functions (variable c_res)
                     for pole in poles:
-                        # seperate and stack real and imaginary part to preserve conjugacy of the pole pair
+                        # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                         if np.imag(pole) == 0.0:
                             A_k.append(-1 * freq_response[k] / (s_k - pole))
                         else:
@@ -288,7 +322,7 @@ class VectorFitting:
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
             # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=-1)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
@@ -315,12 +349,12 @@ class VectorFitting:
                     A_matrix[i] -= c_res / d_res
                     i += 1
                 else:
-                    A_matrix[i] -= 2 * c_res / d_res
                     # two rows for a complex pole of a conjugated pair
                     A_matrix[i, i] = np.real(pole)
                     A_matrix[i, i + 1] = np.imag(pole)
                     A_matrix[i + 1, i] = -1 * np.imag(pole)
                     A_matrix[i + 1, i + 1] = np.real(pole)
+                    A_matrix[i] -= 2 * c_res / d_res
                     i += 2
             poles_new = np.linalg.eigvals(A_matrix)
 
@@ -340,7 +374,7 @@ class VectorFitting:
             new_max_singular = np.amax(singular_vals)
             delta_max = np.abs(1 - new_max_singular / max_singular)
             self.delta_max_history.append(delta_max)
-            logging.info('Delta_max = {}'.format(delta_max))
+            logging.info('Max. relative change in residues = {}\n'.format(delta_max))
             max_singular = new_max_singular
 
             stop = False
@@ -423,7 +457,7 @@ class VectorFitting:
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
             # solve least squares and obtain results as stack of real part vector and imaginary part vector
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=-1)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
 
             i = 0
             zeros_response = []
@@ -434,15 +468,23 @@ class VectorFitting:
                 else:
                     zeros_response.append(x[i] + 1j * x[i + 1])
                     i += 2
-
             zeros.append(zeros_response)
-            if fit_constant:
+
+            if fit_constant and fit_proportional:
+                # both constant d and proportional e were fitted
                 constant_coeff.append(x[-2])
-            else:
+                proportional_coeff.append(x[-1])
+            elif fit_constant:
+                # only constant d was fitted
+                constant_coeff.append(x[-1])
+                proportional_coeff.append(0.0)
+            elif fit_proportional:
+                # only proportional e was fitted
                 constant_coeff.append(0.0)
-            if fit_proportional:
                 proportional_coeff.append(x[-1])
             else:
+                # neither constant d nor proportional e was fitted
+                constant_coeff.append(0.0)
                 proportional_coeff.append(0.0)
 
         # save poles, zeros, d, e in actual frequencies (un-normalized)
@@ -509,9 +551,9 @@ class VectorFitting:
 
         Notes
         -----
-        The .npz file needs to include the model parameters as individual `ndarray`s labeled *poles*, *zeros*,
-        *proportionals* and *constants*. The shapes of those `ndarray`s need to match the network properties in
-        :attr:`network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
+        The .npz file needs to include the model parameters as individual NumPy arrays (ndarray) labeled '*poles*',
+        '*zeros*', '*proportionals*' and '*constants*'. The shapes of those arrays need to match the network properties
+        in :class:`network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
 
         See Also
         --------
@@ -524,9 +566,8 @@ class VectorFitting:
             proportional_coeff = data['proportionals']
             constant_coeff = data['constants']
 
-            if np.alen(zeros) == self.network.nports and \
-                    np.alen(proportional_coeff) == self.network.nports and \
-                    np.alen(constant_coeff) == self.network.nports:
+            n_resp = self.network.nports ** 2
+            if np.shape(zeros)[0] == np.shape(proportional_coeff)[0] == np.shape(constant_coeff)[0] == n_resp:
                 self.poles = poles
                 self.zeros = zeros
                 self.proportional_coeff = proportional_coeff
@@ -585,7 +626,8 @@ class VectorFitting:
                 resp += zeros[i] / (s - pole) + np.conjugate(zeros[i]) / (s - np.conjugate(pole))
         return resp
 
-    def plot_s_db(self, i, j, freqs=None):
+    @check_plotting
+    def plot_s_db(self, i, j, freqs=None, ax=None):
         """
         Plots the magnitude in dB of the response **S_(i+1,j+1)** in the fit.
 
@@ -601,25 +643,32 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used.
 
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
-        mplt.figure()
-        mplt.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
-        mplt.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
-        mplt.xlabel('Frequency (Hz)')
-        mplt.ylabel('Magnitude (dB)')
-        mplt.legend(loc='best')
-        mplt.title('Response i={}, j={}'.format(i, j))
-        mplt.tight_layout()
-        mplt.show()
+        if ax is None:
+            ax = mplt.gca()
 
-    def plot_s_mag(self, i, j, freqs=None):
+        ax.scatter(self.network.f, 20 * np.log10(np.abs(self.network.s[:, i, j])), color='r', label='Samples')
+        ax.plot(freqs, 20 * np.log10(np.abs(self.get_model_response(i, j, freqs))), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Magnitude (dB)')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_mag(self, i, j, freqs=None, ax=None):
         """
         Plots the magnitude in linear scale of the response **S_(i+1,j+1)** in the fit.
 
@@ -635,25 +684,32 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used.
 
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
-        mplt.figure()
-        mplt.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
-        mplt.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
-        mplt.xlabel('Frequency (Hz)')
-        mplt.ylabel('Magnitude')
-        mplt.legend(loc='best')
-        mplt.title('Response i={}, j={}'.format(i, j))
-        mplt.tight_layout()
-        mplt.show()
+        if ax is None:
+            ax = mplt.gca()
 
-    def plot_pz(self, i, j):
+        ax.scatter(self.network.f, np.abs(self.network.s[:, i, j]), color='r', label='Samples')
+        ax.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Magnitude')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_pz(self, i, j, ax=None):
         """
         Plots a pole-zero diagram of the fit of the response **S_(i+1,j+1)**.
 
@@ -665,45 +721,61 @@ class VectorFitting:
         j : int
             Column index of the response.
 
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
+        if ax is None:
+            ax = mplt.gca()
+
         i_response = i * self.network.nports + j
-        mplt.figure()
-        mplt.scatter((np.real(self.poles), np.real(self.poles)),
+
+        ax.scatter((np.real(self.poles), np.real(self.poles)),
                      (np.imag(self.poles), -1 * np.imag(self.poles)),
                      marker='x', label='Pole')
-        mplt.scatter((np.real(self.zeros[i_response]), np.real(self.zeros[i_response])),
+        ax.scatter((np.real(self.zeros[i_response]), np.real(self.zeros[i_response])),
                      (np.imag(self.zeros[i_response]), -1 * np.imag(self.zeros[i_response])),
                      marker='o', label='Zero')
-        mplt.xlabel('Re{s} (rad/s)')
-        mplt.ylabel('Im{s} (rad/s)')
-        mplt.legend(loc='best')
-        mplt.tight_layout()
-        mplt.show()
+        ax.set_xlabel('Re{s} (rad/s)')
+        ax.set_ylabel('Im{s} (rad/s)')
+        ax.legend(loc='best')
+        return ax
 
-    def plot_convergence(self):
+    @check_plotting
+    def plot_convergence(self, ax=None):
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
         vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
         maximum singular value of the coefficient matrix **A** are plotted, which serve as a convergence indicator.
 
+        Parameters
+        ----------
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
         Returns
         -------
-        None
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
         """
 
-        mplt.figure()
-        mplt.semilogy(np.arange(np.alen(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
-        mplt.xlabel('Iteration step')
-        mplt.ylabel('Max. relative change', color='darkblue')
-        ax2 = mplt.twinx()
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.semilogy(np.arange(np.alen(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
+        ax.set_xlabel('Iteration step')
+        ax.set_ylabel('Max. relative change', color='darkblue')
+        ax2 = ax.twinx()
         ax2.plot(np.arange(np.alen(self.d_res_history)) + 1, self.d_res_history, color='orangered')
         ax2.set_ylabel('Residue', color='orangered')
-        mplt.tight_layout()
-        mplt.show()
+        return ax
 
     def write_spice_subcircuit_s(self, file):
         """
@@ -867,7 +939,7 @@ class VectorFitting:
             f.write('C1 1 2 {cap}\n')
             f.write('R1 2 n_neg {res}\n')
             f.write('G1 n_pos n_neg 1 2 {gm} m={mult}\n')
-            f.write('.ENDS rcl_admittance\n')
+            f.write('.ENDS rcl_vccs_admittance\n')
 
             f.write('*\n')
 

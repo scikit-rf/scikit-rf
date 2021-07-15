@@ -1,0 +1,23 @@
+Continuous integration: .github/**/*
+
+Network: skrf/network.py
+
+VectorFitting: skrf/vectorFitting.py
+
+Circuit: skrf/circuit.py
+
+Plotting: skrf/plotting.py
+
+Time: skrf/time.py
+
+TransmissionLines: skrf/tlineFunctions.py
+
+qtapps: qtapps/**/*
+
+Calibration: skrf/calibration/**/*
+
+IO: skrf/io/**/*
+
+Media: skrf/media/**/*
+
+Documentation: doc/**/*

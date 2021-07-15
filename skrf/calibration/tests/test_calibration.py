@@ -17,7 +17,7 @@ from skrf.media import DistributedCircuit
 
 # number of frequency points to test calibration at .
 # i choose 1 for speed, but given that many tests employ *random* 
-# networks values >100 are better for  initialy verification
+# networks values >100 are better for initial verification
 global NPTS  
 NPTS = 1
 
@@ -408,7 +408,7 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
 
     def test_unterminating(self):
         a = self.wg.random(n_ports=self.n_ports)
-        #unermintated measurment
+        #unterminated measurement
         ut =  self.X**a**self.Y
         #terminated measurement
         m = self.measure(a)
@@ -790,7 +790,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
 
 class TwelveTermTest(unittest.TestCase, CalibrationTest):
     '''
-    This test verifys the accuracy of the SOLT calibration. Generating 
+    This test verifies the accuracy of the SOLT calibration. Generating 
     measured networks requires different error networks for forward and 
     reverse excitation states, these are described as follows
     
@@ -938,10 +938,10 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
 class TwelveTermSloppyInitTest(TwelveTermTest):
     '''
     Test the TwelveTerm.__init__'s ability to 
-    1) determine the number of thrus (n_thrus) hueristically
+    1) determine the number of thrus (n_thrus) heuristically
     2) put the standards in correct order if they use sloppy_input
     
-    It must be a entirely seperate test because we want to ensure it 
+    It must be a entirely separate test because we want to ensure it 
     creates an accurate calibration.
     '''
     @suppress_warning_decorator("dictionary passed, sloppy_input")
@@ -1080,7 +1080,7 @@ class TwoPortOnePathTest(TwelveTermTest):
         self.assertEqual(self.cal.apply_cal((f,r)),a)
         
     def test_embed_equal_measure(self):
-        # measurment procedure is different so this test doesnt apply
+        # measurement procedure is different so this test doesnt apply
         raise SkipTest()
 
     @suppress_warning_decorator("n_thrus is None")

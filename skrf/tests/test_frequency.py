@@ -18,6 +18,7 @@ class FrequencyTestCase(unittest.TestCase):
         freq = rf.Frequency(1,10,10,'ghz')
         self.assertTrue((freq.f == npy.linspace(1,10,10)*1e9).all())
         self.assertTrue((freq.f_scaled ==npy.linspace(1,10,10)).all())
+        self.assertTrue((freq.sweep_type == 'lin'))
 
     def test_create_log_sweep(self):
         freq = rf.Frequency(1,10,10,'ghz', sweep_type='log')
@@ -29,12 +30,17 @@ class FrequencyTestCase(unittest.TestCase):
         self.assertTrue(all(s > 1 for s in spacing))
         #Check that ratio of adjacent frequency points is identical
         self.assertTrue(all(abs(spacing[i] - spacing[0]) < 1e-10 for i in range(len(spacing))))
+        self.assertTrue((freq.sweep_type == 'log'))
 
     def test_create_rando_sweep(self):
         f = npy.array([1,5,200])
         freq = rf.Frequency.from_f(f,unit='khz')
         self.assertTrue((freq.f ==f*1e3).all())
         self.assertTrue((freq.f_scaled== f).all())
+        self.assertTrue((freq.sweep_type == 'unknown'))
+        
+        with self.assertRaises(ValueError):
+            freq.npoints = 10
 
     def test_rando_sweep_from_touchstone(self):
         '''
@@ -43,6 +49,7 @@ class FrequencyTestCase(unittest.TestCase):
         rando_sweep_ntwk = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         self.assertTrue((rando_sweep_ntwk.f == \
             npy.array([1,4,10,20])).all())
+        self.assertTrue((rando_sweep_ntwk.frequency.sweep_type == 'unknown'))
 
     def test_slicer(self):
         a = rf.Frequency.from_f([1,2,4,5,6])

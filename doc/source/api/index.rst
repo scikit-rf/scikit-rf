@@ -6,21 +6,28 @@ API
 
 .. toctree::
     :maxdepth: 1
-    
-    frequency
-    network
-    networkSet
-    circuit
 
+
+    network
+    frequency
+    networkSet
     plotting
+
+    media/index
+    calibration/index
+    vi/index
+
+    vectorFitting
+    time
+    circuit
+    media/device
+
     mathFunctions
     tlineFunctions
+    instances
     constants
     util
-    
     io/index
-    calibration/index
-    media/index
-    media/device
-    vi/index
-    vectorFitting
+
+
+

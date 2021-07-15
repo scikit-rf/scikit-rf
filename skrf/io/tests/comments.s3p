@@ -1,0 +1,13 @@
+! Sonnet Data File
+! From: sonnet Version : 17.52.2
+! From Emgraph Data:
+! Data File Written: 02/19/2021 11:48:18
+!< HDATE 02/16/2021 15:44:18
+!< MDATE 02/16/2021 15:44:18
+!< PARAMS
+!< p1 = .03
+!< p2 = 0.03
+!< p3 = 100
+!< p4 = 2.5 um
+!< END PARAMS
+# GHZ S RI R 19.54500

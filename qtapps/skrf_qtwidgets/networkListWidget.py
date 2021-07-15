@@ -200,6 +200,11 @@ class NetworkListWidget(QtWidgets.QListWidget):
             remove = QtWidgets.QAction("Remove Item", self)
             menu.addAction(remove)
             remove.triggered.connect(self.remove_item)
+
+            rename = QtWidgets.QAction("Rename Item", self)
+            menu.addAction(rename)
+            rename.triggered.connect(self.rename_item)
+
         elif len(self.selectedItems()) > 1:
             save = QtWidgets.QAction("Save Items", self)
             menu.addAction(save)
@@ -217,6 +222,11 @@ class NetworkListWidget(QtWidgets.QListWidget):
             self.item_removed.emit()
             for item in items:
                 self.takeItem(self.row(item))
+
+    def rename_item(self):
+        item = self.currentItem()
+        item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+        self.editItem(item)
 
     def get_save_which_mode(self):
         """
@@ -486,7 +496,7 @@ class ParameterizedNetworkListWidget(NetworkListWidget):
         name_prefix : str
             typically "meas", but some text that will be the default name of new measurements
         item_parameters : Iterable
-            a list of dictionaries that contain the attributes each item will ahve
+            a list of dictionaries that contain the attributes each item will have
         parent : QtWidgets.QWidget
             the parent widget of the NetworkListWidget
         """

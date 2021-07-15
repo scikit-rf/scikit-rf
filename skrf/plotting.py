@@ -56,6 +56,7 @@ Misc Functions
 '''
 import os
 import sys
+import getpass
 
 import matplotlib as mpl
 # if running on remote mode on a linux server which does not have a display (like Docker images for CI)
@@ -63,7 +64,8 @@ import matplotlib as mpl
 if os.name == 'posix' and not os.environ.get('DISPLAY', '') and mpl.rcParams['backend'] != 'agg' and sys.version.startswith('2'):
     print('No display found. Using non-interactive Agg backend.')
     # https://matplotlib.org/faq/usage_faq.html
-    mpl.use('Agg')
+    if getpass.getuser() != 'jovyan':  # only if not running on Binder
+        mpl.use('Agg')
 from matplotlib import ticker
 import matplotlib.pyplot as plb
 import numpy as npy
@@ -188,7 +190,7 @@ def smith(smithR=1, chart_type = 'z', draw_labels = False, border=False,
     lightColor = dict(ec='grey', fc='none')
     heavyColor = dict(ec='black', fc='none')
 
-    # vswr circules verylight
+    # vswr circles verylight
     for vswr in vswrVeryLightList:
         radius = (vswr-1.0) / (vswr+1.0)
         contour.append( Circle((0, 0), radius, **veryLightColor))
@@ -513,7 +515,7 @@ def plot_smith(s, smith_r=1, chart_type='z', x_label='Real',
     Parameters
     ------------
     s : complex array-like
-        reflection-coeffient-like data to plot
+        reflection-coefficient-like data to plot
     smith_r : number
         radius of smith chart
     chart_type : ['z','y']
@@ -662,7 +664,7 @@ def add_markers_to_lines(ax=None,marker_list=['o','D','s','+','x'], markevery=10
     '''
     adds markers to existing lings on a plot
 
-    this is convinient if you have already have a plot made, but then
+    this is convenient if you have already have a plot made, but then
     need to add markers afterwards, so that it can be interpreted in
     black and white. The markevery argument makes the markers less
     frequent than the data, which is generally what you want.
@@ -737,7 +739,7 @@ def func_on_all_figs(func, *args, **kwargs):
     ----------
     func : function
         function to call
-    \*args, \*\*kwargs : pased to func
+    \*args, \*\*kwargs : passed to func
 
     Examples
     ----------
@@ -1200,7 +1202,7 @@ def plot_v_frequency(self, y, *args, **kwargs):
     self.labelXAxis()
 
 
-## specific ploting functions
+## specific plotting functions
 def plot(self, *args, **kw):
     '''
     Plot something vs frequency
@@ -1320,7 +1322,7 @@ def plot_s_smith(self,m=None, n=None,r=1,ax = None, show_legend=True,\
     show_legend : boolean, optional
             to turn legend show legend of not, optional
     chart_type : ['z','y']
-        draw impedance or addmitance contours
+        draw impedance or admittance contours
     draw_labels : Boolean
         annotate chart with impedance values
     label_axes : Boolean
@@ -1444,7 +1446,7 @@ def stylely(rc_dict={}, style_file = 'skrf.mplstyle'):
     loads the rc-params from the specified file (file must be located in skrf/data)
     '''
 
-    from skrf.data import pwd # delayed to solve circular import
+    from .data import pwd # delayed to solve circular import
     mpl.style.use(os.path.join(pwd, style_file))
     mpl.rc(rc_dict)
 
@@ -1538,7 +1540,7 @@ def animate(self, attr='s_deg', ylims=(-5, 5), xlims=None, show=True,
     attr : str
         plotting property of a Network (ie 's_db', 's_deg', etc)
     ylims : tuple
-        passed to ylim. needed to have consistent y-limits accross frames
+        passed to ylim. needed to have consistent y-limits across frames
     xlims : tuple
         passed to xlim
     show : bool
@@ -1651,7 +1653,7 @@ def plot_uncertainty_bounds_component(
     Note
     ----
     for phase uncertainty you probably want s_deg_unwrap, or
-    similar. uncerainty for wrapped phase blows up at +-pi.
+    similar. uncertainty for wrapped phase blows up at +-pi.
 
     '''
 
@@ -2025,7 +2027,7 @@ def signature(self, m=0, n=0, component='s_mag',
         ax.yaxis_date()
         # date_format = plb.DateFormatter('%M:%S.%f')
         # ax.yaxis.set_major_formatter(date_format)
-        # cbar.set_label('Magntidue (dB)')
+        # cbar.set_label('Magnitude (dB)')
         plb.ylabel('Time')
     else:
         plb.ylabel('Network #')
@@ -2094,7 +2096,7 @@ def plot_circuit_graph(self, **kwargs):
     all_ntw_names = [ntw.name for ntw in self.networks_list()]
     port_names = [ntw_name for ntw_name in all_ntw_names if 'port' in ntw_name]
     ntw_names = [ntw_name for ntw_name in all_ntw_names if 'port' not in ntw_name]
-    # generate connectins nodes names
+    # generate connecting nodes names
     int_names = ['X'+str(k) for k in range(self.connections_nb)]
 
     fig, ax = plb.subplots(figsize=(10,8))
@@ -2155,7 +2157,7 @@ def plot_circuit_graph(self, **kwargs):
 
 def plot_contour(freq, x, y, z, min0max1, graph=True, cmap='plasma_r', title='',  **kwargs):
     '''
-    Countour plot
+    Contour plot
 
     Parameters
     ----------

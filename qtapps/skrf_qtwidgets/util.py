@@ -59,7 +59,7 @@ def unique_name(name, names, exclude=-1):
         the chosen name, to be modified if necessary
     names : list
         list of names (str)
-    exlcude : int
+    exclude : int
         the index of an item to be excluded from the search
     """
     if not has_duplicate_value(name, names, exclude):

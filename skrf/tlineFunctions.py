@@ -168,7 +168,7 @@ def surface_resistivity(f, rho, mu_r):
 def distributed_circuit_2_propagation_impedance(distributed_admittance,
         distributed_impedance):
     r"""
-    Convert distrubuted circuit values to wave quantities.
+    Convert distributed circuit values to wave quantities.
 
     This converts complex distributed impedance and admittance to
     propagation constant and characteristic impedance. The relation is
@@ -299,7 +299,7 @@ def electrical_length_2_distance(theta, gamma, f0, deg=True):
     Parameters
     ----------
     theta : number or array-like
-            electical length. units depend on `deg` option
+            electrical length. units depend on `deg` option
     gamma : number, array-like or function
             propagation constant. See Notes.
             If passed as a function, takes frequency in Hz as a sole argument.
@@ -691,7 +691,7 @@ def zl_2_total_loss(z0, zl, theta):
         
     References
     ----------
-    .. [#]: Steve Stearns (K6OIK), Transmission Line Power Paradoxand Its Resolution. ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014. https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
+    .. [#]: Steve Stearns (K6OIK), Transmission Line Power Paradox and Its Resolution. ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014. https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
     
     
     '''

@@ -8,6 +8,7 @@
 *.p
 *generated*
 doc/build/*
+doc/build.log
 doc/gh-pages
 build/
 scikit_rf.egg-info/
@@ -16,3 +17,6 @@ dist/
 *__pycache__/
 qtapps/sandbox*
 *.iml
+
+.vscode/
+.coverage

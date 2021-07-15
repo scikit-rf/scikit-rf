@@ -39,14 +39,6 @@ from subprocess import Popen, PIPE
 import sys
 from functools import wraps
 
-# globals
-
-try:
-    basestring
-except NameError:
-    basestring = (str, bytes)
-
-
 def now_string():
     '''
     returns a unique sortable string, representing the current time
@@ -164,7 +156,7 @@ def get_fid(file, *args, **kwargs):
     \*args, \*\*kwargs : arguments and keyword arguments to `open()`
 
     '''
-    if isinstance(file, basestring):
+    if isinstance(file, str):
         return open(file, *args, **kwargs)
     else:
         return file
@@ -582,12 +574,12 @@ def smooth(x, window_len=11, window='flat'):
     http://scipy-cookbook.readthedocs.io/items/SignalSmooth.html
 
     This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal 
+    The signal is prepared by introducing reflected copies of the signal
     (with the window size) in both ends so that transient parts are minimized
-    in the begining and end part of the output signal.
+    in the beginning and end part of the output signal.
 
     input:
-        x: the input signal 
+        x: the input signal
         window_len: the dimension of the smoothing window; should be an odd integer
         window: the type of window from 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'
             flat window will produce a moving average smoothing.
@@ -601,7 +593,7 @@ def smooth(x, window_len=11, window='flat'):
     x=sin(t)+randn(len(t))*0.1
     y=smooth(x)
 
-    see also: 
+    see also:
 
     npy.hanning, npy.hamming, npy.bartlett, npy.blackman, npy.convolve
     scipy.signal.lfilter

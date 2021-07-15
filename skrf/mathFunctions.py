@@ -61,6 +61,7 @@ Special Functions
         null
 
 '''
+from typing import Callable
 import numpy as npy
 from numpy import pi,angle,unwrap, real, imag, array
 from scipy import signal
@@ -123,6 +124,19 @@ def complex_2_quadrature(z):
     '''
     return ( npy.abs(z), npy.angle(z)*npy.abs(z))
 
+def complex_2_reim(z):
+    '''
+    returns real and imaginary parts of a complex number.
+    
+    takes:
+            input: complex number or array
+    return:
+            real: real part of input
+            imag: imaginary part of input
+
+    '''
+    return (npy.real(z), npy.imag(z))
+
 def complex_components(z):
     '''
     break up a complex array into all possible scalar components
@@ -135,25 +149,9 @@ def complex_components(z):
             c_mag:  magnitude
             c_arc:  arclength from real axis, angle*magnitude
     '''
-    return (npy.real(z), npy.imag(z), npy.angle(z,deg=True), complex_2_quadrature(z)[0], complex_2_quadrature(z)[1])
+    return (*complex_2_reim(z), npy.angle(z,deg=True), *complex_2_quadrature(z))
 
-def complex_2_reim(z):
-    '''
-    returns real and imaginary parts of a complex number.
-    
-    takes:
-            input: complex number or array
-    return:
-            real: real part of input
-            imag: imaginary part of input
-
-
-    note: this just calls 'complex_components'
-    '''
-    out = complex_components(z)
-    return (out[0],out[1])
-
-def magnitude_2_db(input,zero_nan=True):
+def magnitude_2_db(input, zero_nan:bool = True):
     '''
     converts linear magnitude to db
 
@@ -161,23 +159,14 @@ def magnitude_2_db(input,zero_nan=True):
             20*log10(|z|)
     where z is a complex number
     '''
+    out = 20 * npy.log10(input)
     if zero_nan:
-        out = 20 * npy.log10(input)
-        try:
-            out[npy.isnan(out)] = LOG_OF_NEG
-        except (TypeError):
-            # input is a number not array-like
-            if npy.isnan(out):
-                return LOG_OF_NEG
-
-    else:
-        out = 20*npy.log10(input)
-
+        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG, neginf=-npy.inf)
     return out
 
 mag_2_db = magnitude_2_db
 
-def mag_2_db10(input,zero_nan=True):
+def mag_2_db10(input,zero_nan:bool = True):
     '''
     converts linear magnitude to db
 
@@ -187,14 +176,7 @@ def mag_2_db10(input,zero_nan=True):
     '''
     out = 10 * npy.log10(input)
     if zero_nan:
-        try:
-            out[npy.isnan(out)] = LOG_OF_NEG
-        except (TypeError):
-            # input is a number not array-like
-            if npy.isnan(out):
-                return LOG_OF_NEG
-
-
+        return npy.nan_to_num(out, copy=False, nan=LOG_OF_NEG, neginf=-npy.inf)
     return out
 
 def db_2_magnitude(input):
@@ -221,13 +203,13 @@ def db10_2_mag(input):
     return 10**((input)/10.)
 
 
-def magdeg_2_reim(mag,deg):
+def magdeg_2_reim(mag ,deg):
     '''
     converts linear magnitude and phase (in deg) arrays into a complex array
     '''
     return mag*npy.exp(1j*deg*pi/180.)
 
-def dbdeg_2_reim(db,deg):
+def dbdeg_2_reim(db ,deg):
     '''
     converts dB magnitude and phase (in deg) arrays into a complex array
     '''
@@ -253,7 +235,7 @@ def radian_2_degree(rad):
 def degree_2_radian(deg):
     return (deg)*pi/180.
 
-def feet_2_meter(feet=1):
+def feet_2_meter(feet = 1):
     '''
     Convert length in feet to meter.
     
@@ -272,7 +254,7 @@ def feet_2_meter(feet=1):
     '''
     return 0.3048*feet
 
-def meter_2_feet(meter=1):
+def meter_2_feet(meter = 1):
     '''
     Convert length in meter to feet.
     
@@ -292,7 +274,7 @@ def meter_2_feet(meter=1):
     return 3.28084*meter
 
 
-def db_per_100feet_2_db_per_100meter(db_per_100feet=1):
+def db_per_100feet_2_db_per_100meter(db_per_100feet = 1):
     '''
     Convert attenuation values given in dB/100ft to dB/100m.
     
@@ -343,7 +325,7 @@ def sqrt_known_sign(z_squared, z_approx):
         npy.sign(npy.angle(z)) == npy.sign(npy.angle(z_approx)),
         z, z.conj())
 
-def find_correct_sign(z1,z2,z_approx):
+def find_correct_sign(z1 ,z2 ,z_approx):
     '''
     Create new vector from z1, z2 choosing elements with sign matching z_approx
 
@@ -374,7 +356,7 @@ def find_correct_sign(z1,z2,z_approx):
     return npy.where(
     npy.sign(npy.angle(z1)) == npy.sign(npy.angle(z_approx)),z1, z2)
 
-def find_closest(z1,z2,z_approx):
+def find_closest(z1 ,z2 ,z_approx):
     '''
     Returns z1 or z2  depending on which is  closer to z_approx
 
@@ -417,6 +399,8 @@ def dirac_delta(x):
     can take numpy arrays or numbers
     returns 1 or 0 '''
     return (x==0)*1.+(x!=0)*0.
+
+
 def neuman(x):
     '''
     neumans number
@@ -425,7 +409,9 @@ def neuman(x):
 
     '''
     return 2. - dirac_delta(x)
-def null(A, eps=1e-15):
+
+
+def null(A , eps=1e-15):
     '''
      calculates the null space of matrix A.
     i found this on stack overflow.
@@ -446,18 +432,10 @@ def inf_to_num(x):
     Returns
     -------
     '''
-    #TODO: make this valid for complex arrays
-    try:
-        x[npy.isposinf(x)] = INF
-        x[npy.isneginf(x)] = -1*INF
-
-    except(TypeError):
-        x = npy.array(x)
-        x[npy.isposinf(x)] = INF
-        x[npy.isneginf(x)] = -1*INF
+    x = npy.nan_to_num(x, copy=False, nan=npy.nan, posinf=INF, neginf=-1*INF)
 
 
-def cross_ratio(a,b,c,d):
+def cross_ratio(a, b, c, d):
     '''
     The cross ratio
 
@@ -479,11 +457,7 @@ def cross_ratio(a,b,c,d):
     return ((a-b)*(c-d))/((a-d)*(c-b))
 
 
-
-
-    
-
-def complexify(f, name=None):
+def complexify(f, name = None):
     '''
     make  f(scalar)  into f(complex)
     
@@ -508,7 +482,7 @@ def complexify(f, name=None):
 # old functions just for reference
 def complex2Scalar(input):
     '''
-    Serializes a list/arary of complex numbers
+    Serializes a list/array of complex numbers
     
     
     produces the following output for input list `x`
@@ -537,7 +511,7 @@ def complex2dB(complx):
     dB = 20 * npy.log10(npy.abs( (npy.real(complx) + 1j*npy.imag(complx) )))
     return dB
 
-def flatten_c_mat(s, order ='F'):
+def flatten_c_mat(s, order = 'F'):
     '''
     take a 2D (mxn) complex matrix and serialize and flatten it
     
@@ -559,10 +533,10 @@ def flatten_c_mat(s, order ='F'):
 def complex2ReIm(complx):
     return npy.real(complx), npy.imag(complx)
 
-def complex2MagPhase(complx,deg=False):
+def complex2MagPhase(complx , deg = False):
     return npy.abs(complx), npy.angle(complx,deg=deg)
 
-def rand_c(*args):
+def rand_c(*args) -> npy.ndarray:
     '''
     Creates a complex random array of shape s.
 
@@ -578,13 +552,12 @@ def rand_c(*args):
     ---------
     >>> x = rf.rand_c(2,2)
     '''
-    s = npy.array(args)
-    return 1-2*npy.random.rand(npy.product(s)).reshape(s) + \
-        1j-2j*npy.random.rand(npy.product(s)).reshape(s)
+    return 1-2*npy.random.rand(*args) + \
+        1j-2j*npy.random.rand(*args)
 
 
 
-def psd2TimeDomain(f,y, windowType='hamming'):
+def psd2TimeDomain(f: npy.ndarray ,y: npy.ndarray, windowType: str = 'hamming'):
     '''convert a one sided complex spectrum into a real time-signal.
     takes
             f: frequency array,
@@ -625,7 +598,7 @@ def psd2TimeDomain(f,y, windowType='hamming'):
     #
     return timeVector, signalVector
 
-def rational_interp(x, y, d=4, epsilon=1e-9, axis=0):
+def rational_interp(x: npy.ndarray, y: npy.ndarray, d:int = 4, epsilon:float = 1e-9, axis:int = 0) -> Callable:
     """
     Interpolates function using rational polynomials of degree `d`.
 
@@ -689,7 +662,7 @@ def ifft(x):
     """
     return npy.fft.fftshift(npy.fft.ifft(x, axis=0), axes=0)
 
-def irfft(x, n=None):
+def irfft(x: npy.ndarray, n:int = None) -> npy.ndarray:
     """
     Transforms S-parameters to time-domain, assuming complex conjugates for
     values corresponding to negative frequencies.
@@ -699,7 +672,7 @@ def irfft(x, n=None):
 
 # Matrix functions
 
-def is_square(mat):
+def is_square(mat: npy.ndarray):
     """
     Tests whether mat is a square matrix
 
@@ -711,7 +684,7 @@ def is_square(mat):
     return mat.shape[0] == mat.shape[1]
 
 
-def is_unitary(mat, tol=ALMOST_ZERO):
+def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests mat for unitariness
 
@@ -728,7 +701,7 @@ def is_unitary(mat, tol=ALMOST_ZERO):
                         npy.identity(mat.shape[0]), atol=tol)
 
 
-def is_symmetric(mat, tol=ALMOST_ZERO):
+def is_symmetric(mat: npy.ndarray, tol: int = ALMOST_ZERO) -> bool:
     """
     Tests mat for symmetry
 
@@ -744,7 +717,7 @@ def is_symmetric(mat, tol=ALMOST_ZERO):
     return npy.allclose(mat, mat.transpose(), atol=tol)
 
 
-def get_Hermitian_transpose(mat):
+def get_Hermitian_transpose(mat: npy.ndarray) -> npy.ndarray:
     """
     Returns the conjugate transpose of mat
 
@@ -756,7 +729,7 @@ def get_Hermitian_transpose(mat):
     return mat.transpose().conjugate()
 
 
-def is_Hermitian(mat, tol=ALMOST_ZERO):
+def is_Hermitian(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests whether mat is Hermitian
 
@@ -772,7 +745,7 @@ def is_Hermitian(mat, tol=ALMOST_ZERO):
     return npy.allclose(mat, get_Hermitian_transpose(mat), atol=tol)
 
 
-def is_positive_definite(mat, tol=ALMOST_ZERO):
+def is_positive_definite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests mat for positive definiteness by verifying that
     (1) mat is symmetric
@@ -794,7 +767,7 @@ def is_positive_definite(mat, tol=ALMOST_ZERO):
         return False
 
 
-def is_positive_semidefinite(mat, tol=ALMOST_ZERO):
+def is_positive_semidefinite(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     Tests mat for positive semidefiniteness by checking
     whether all eigenvalues of mat are nonnegative within a certain tolerance

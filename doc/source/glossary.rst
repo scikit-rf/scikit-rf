@@ -9,7 +9,7 @@ Glossary
       Described in [1]_ by Roger Marks, switch-terms account for the fact that the 8-term (aka *error-box* ) model is overly simplified.  The two error networks change slightly depending on which port is being excited. This is due to the internal switch within the VNA.
 
    port impedance
-      The impedance of a given port on a microwave Network. Frequenctly
+      The impedance of a given port on a microwave Network. Frequently
       this is the same as the characteristic impedance of a given 
       transmission line mode, but may be arbitrarily set. 
       terminating a port with any impedance other than its port impedance

@@ -31,11 +31,11 @@ from .. import mathFunctions as mf
 
 from ..constants import to_meters ,ZERO
 
-from abc import ABCMeta, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 import re
 from copy import deepcopy as copy
 
-class Media(object):
+class Media(ABC):
     '''
     Abstract Base Class for a single mode on a transmission line media.
     
@@ -44,7 +44,7 @@ class Media(object):
     attributes shared by all media. Methods defined here make use of the 
     properties :
     
-    * `gamma` - (complex) propgation constant
+    * `gamma` - (complex) propagation constant
     * `Z0` - (complex) characteristic impedance
     
     Which define the properties of specific media. Any sub-class of Media 
@@ -64,7 +64,7 @@ class Media(object):
 
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
+        from the characteristic impedance of the transmission
         line. if z0 is None then will default to Z0
 
 
@@ -78,7 +78,6 @@ class Media(object):
     prevent accidental impedance mis-match, you may want to manually
     set the z0 .
     '''
-    __metaclass__ = ABCMeta
     def __init__(self, frequency=None, z0=None):
         if frequency is None:
             frequency = Frequency(1,10,101,'ghz')
@@ -142,7 +141,8 @@ class Media(object):
     def z0(self, val):
         self._z0 = val
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def gamma(self):
         '''
         Propagation constant
@@ -160,9 +160,6 @@ class Media(object):
         '''
         return None
     
-    @gamma.setter
-    def gamma(self, val):
-        pass
         
     @property
     def alpha(self):
@@ -178,15 +175,11 @@ class Media(object):
         '''
         return imag(self.gamma)
     
-    @abstractproperty
+    @property
+    @abstractmethod
     def Z0(self):
         return None
-    
-    @Z0.setter
-    def Z0(self, val):
-        pass 
         
-    
 
     @property
     def v_p(self):
@@ -207,7 +200,7 @@ class Media(object):
 
         See Also
         -----------
-        propgation_constant
+        propagation_constant
 
         '''
         return 1j*(self.frequency.w/self.gamma)
@@ -228,7 +221,7 @@ class Media(object):
     
         Notes
         -----
-        the `j` is used to make propgation real, this is needed  because 
+        the `j` is used to make propagation real, this is needed  because 
         skrf defined the gamma as \\gamma= \\alpha +j\\beta.
         
     
@@ -238,7 +231,7 @@ class Media(object):
 
         See Also
         -----------
-        propgation_constant
+        propagation_constant
         v_p
         '''
         dw = self.frequency.dw
@@ -665,7 +658,7 @@ class Media(object):
             # mean group velocity is used to translate time-based
             # units to distance
             if 's' in unit:
-                # they are specifiying  a time unit so calculate
+                # they are specifying  a time unit so calculate
                 # the group velocity. (note this fails for media of 
                 # too little points, as it uses gradient)
                 v_g = -self.v_g.imag.mean()
@@ -686,7 +679,7 @@ class Media(object):
         Returns
         --------
         thru : :class:`~skrf.network.Network` object
-                matched tranmission line of 0 length
+                matched transmission line of 0 length
 
         See Also
         ---------
@@ -706,7 +699,7 @@ class Media(object):
         Parameters
         ----------
         d : number
-                the length of transmissin line (see unit argument)
+                the length of transmission line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
         z0 : number, string, or array-like
@@ -725,7 +718,7 @@ class Media(object):
         Returns
         --------
         line : :class:`~skrf.network.Network` object
-                matched tranmission line of given length
+                matched transmission line of given length
 
         Examples
         ----------
@@ -765,7 +758,7 @@ class Media(object):
         Gamma0 : number, array-like
                 reflection coefficient of load (not in dB)
         d : number
-                the length of transmissin line (see unit argument)
+                the length of transmission line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
                 the units of d.  See :func:`to_meters`, for details
         \*\*kwargs : key word arguments
@@ -957,7 +950,7 @@ class Media(object):
         Returns
         --------
         shunt_capacitor : :class:`~skrf.network.Network` object
-                shunted capcitor(2-port)
+                shunted capacitor (2-port)
 
         Notes
         --------
@@ -1000,7 +993,7 @@ class Media(object):
         Parameters
         ----------
         s21 : number, array-like
-            the attenutation
+            the attenuation
         db : bool
             is s21 in db? otherwise assumes linear
         d : number
@@ -1012,7 +1005,7 @@ class Media(object):
         Returns
         --------
         ntwk : :class:`~skrf.network.Network` object
-                2-port attentuator
+                2-port attenuator
 
         '''
         if db:
@@ -1119,7 +1112,7 @@ class Media(object):
         Complex random network.
 
         Creates a n-port network whose s-matrix is filled with random
-        complex numbers. Optionaly, result can be matched or reciprocal.
+        complex numbers. Optionally, result can be matched or reciprocal.
 
         Parameters
         ----------
@@ -1165,7 +1158,7 @@ class Media(object):
         '''
         Determines physical distance from a transmission or reflection ntwk
         
-        Given a matched transmission or reflection measurment the 
+        Given a matched transmission or reflection measurement the 
         physical distance is estimated at each frequency point based on 
         the scattering parameter phase of the ntwk and propagation constant.
 
@@ -1242,7 +1235,7 @@ class DefinedGammaZ0(Media):
 
     z0 : number, array-like, or None
         The port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
+        from the characteristic impedance of the transmission
         line. if `z0` is `None` then it will default to `Z0`
  
     gamma : number, array-like
@@ -1317,7 +1310,7 @@ class DefinedGammaZ0(Media):
     def frequency(self, val):
         if hasattr(self, '_frequency') and self._frequency is not None:
             
-            # they are updating the frequency, we may have to do somethign
+            # they are updating the frequency, we may have to do something
             attrs_to_test = [self._gamma, self._Z0, self._z0]
             if any([has_len(k) for k in attrs_to_test]):
                  raise NotImplementedError('updating a Media frequency, with non-constant gamma/Z0/z0 is not worked out yet')

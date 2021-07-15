@@ -4,21 +4,17 @@
 time (:mod:`skrf.time`)
 ========================================
 
-time domain functions 
+Time domain functions 
 
-Methods
-------------
 
 .. autosummary::
-    :toctree: generated/
+   :toctree: generated/
 
-    time_gate
-    detect_span 
-    find_n_peaks
-    indexes
-    
+   time_gate
+   detect_span 
+   find_n_peaks
+   indexes
 
-    
 """
 
 from .util import  find_nearest_index
@@ -31,7 +27,8 @@ import numpy as np # so i dont have to change indexes (from peakutils)
 from numpy import fft
 
 def indexes(y, thres=0.3, min_dist=1):
-    """Peak detection routine.
+    """
+    Peak detection routine.
 
     Finds the numeric index of the peaks in *y* by taking its first order difference. By using
     *thres* and *min_dist* parameters, it is possible to reduce the number of
@@ -60,7 +57,7 @@ def indexes(y, thres=0.3, min_dist=1):
     
     """
     #This function  was taken from peakutils, and is covered 
-    # by the MIT license, inlcuded below: 
+    # by the MIT license, included below: 
     
     #The MIT License (MIT)
 
@@ -174,7 +171,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
      * ('kaiser', 6)
      * 6 # integers are interpreted as kaiser beta-values
      * 'hamming'
-     * 'boxcar'  # a staightup rect
+     * 'boxcar'  # a straight up rect
      
     If no parameters are passed this will try to auto-gate the largest
     peak. 
@@ -248,7 +245,7 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
         stop = center + span / 2.
 
     
-    # find start/stop gate indecies
+    # find start/stop gate indices
     t = ntwk.frequency.t
     start_idx = find_nearest_index(t, start)
     stop_idx = find_nearest_index(t, stop)

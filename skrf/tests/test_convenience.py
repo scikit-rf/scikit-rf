@@ -66,7 +66,7 @@ class ConvenienceTestCase(unittest.TestCase):
         Scattering matrices are given for a given impedance z0, 
         which is usually assumed to be 50 Ohm, unless otherwise stated.
         
-        Touchstone files are not necessarly indicating such impedances, 
+        Touchstone files are not necessarily indicating such impedances, 
         especially if they vary with frequency.
         
         HFSS Touchstone file format supports port informations (as an option) for gamma and z0
@@ -131,7 +131,7 @@ class ConvenienceTestCase(unittest.TestCase):
         '''		
         filename = 'Agilent_E5071B.s4p'		
         ntwk = rf.Network(os.path.join(self.test_dir, filename))				          
-        # Check if port characteric impedance is correctly parsed        
+        # Check if port characteristic impedance is correctly parsed        
         self.assertTrue(npy.isclose(npy.unique(ntwk.z0), 75)) 
         
         self.assertTrue(npy.allclose(ntwk.s_db[0][1], # check s2n_mag
@@ -145,7 +145,7 @@ class ConvenienceTestCase(unittest.TestCase):
         '''		
         filename = 'RS_ZNB8.s4p'		
         ntwk = rf.Network(os.path.join(self.test_dir, filename))		
-        # Check if port characteric impedance is correctly parsed		
+        # Check if port characteristic impedance is correctly parsed		
         self.assertTrue(npy.isclose(npy.unique(ntwk.z0), 50))		
         # For this specific file, the port#1 min return loss is @55.5MHz		
         self.assertTrue(ntwk.frequency.f[npy.argmin(ntwk.s11.s_mag)], 55.5e6)
