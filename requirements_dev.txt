@@ -7,3 +7,7 @@ ipywidgets
 nose
 nose-exclude
 coverage
+flake8
+pytest
+pytest-cov
+nbval
