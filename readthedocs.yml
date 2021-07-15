@@ -8,8 +8,7 @@ build:
 
 python:
   version: 3.7
-  pip_install: true
-  extra_requirements:
-    - tests
-    - docs
+  install:
+    - requirements: requirements.txt
+    - requirements: requirements_dev.txt
 

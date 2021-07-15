@@ -1,0 +1,9 @@
+jupyter_client
+python-ivi
+pyvisa
+ipython
+ipykernel
+ipywidgets
+nose
+nose-exclude
+coverage
