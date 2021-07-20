@@ -498,8 +498,9 @@ class VectorFitting:
 
     def _get_ABCDE(self):
         """
+        Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as
-        defined in [6]_.
+        defined in [1]_.
 
         Returns
         -------
@@ -517,7 +518,7 @@ class VectorFitting:
 
         References
         ----------
-        .. [6] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
+        .. [1] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
             Test Matrix," in IEEE Transactions on Microwave Theory and Techniques, vol. 56, no. 12, pp. 2701-2708,
             Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
         """
@@ -615,6 +616,27 @@ class VectorFitting:
 
     @staticmethod
     def _get_s_from_ABCDE(freq, A, B, C, D, E):
+        """
+        Private method.
+        Returns the S-matrix of the vector fitted model calculated from the real-valued system matrices of the state-
+        space representation, as provided by `_get_ABCDE()`.
+
+        Parameters
+        ----------
+        freq : float
+            Frequency (in Hz) at which to calculate the S-matrix.
+        A : ndarray
+        B : ndarray
+        C : ndarray
+        D : ndarray
+        E : ndarray
+
+        Returns
+        -------
+        ndarray
+            Complex-valued S-matrix (NxN) calculated at frequency `freq`.
+        """
+
         dim_A = np.shape(A)[0]
         stsp_poles = np.linalg.inv(2j * np.pi * freq * np.identity(dim_A) - A)
         stsp_S = np.matmul(np.matmul(C, stsp_poles), B)
