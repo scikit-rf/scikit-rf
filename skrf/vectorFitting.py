@@ -764,7 +764,7 @@ class VectorFitting:
         else:
             return False
 
-    def passivity_enforcement(self, n_samples=100, parameter_type='S'):
+    def passivity_enforce(self, n_samples=100, parameter_type='S'):
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
         presented in [1]_.
