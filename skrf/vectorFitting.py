@@ -540,6 +540,7 @@ class VectorFitting:
         # assemble real-valued state-space matrices A, B, C, D, E from fitted complex-valued pole-residue model
 
         # determine size of the matrix system
+        n_ports = int(np.sqrt(len(self.constant_coeff)))
         n_poles_real = 0
         n_poles_cplx = 0
         for pole in self.poles:
@@ -547,7 +548,7 @@ class VectorFitting:
                 n_poles_real += 1
             else:
                 n_poles_cplx += 1
-        n_matrix = (n_poles_real + 2 * n_poles_cplx) * self.network.nports
+        n_matrix = (n_poles_real + 2 * n_poles_cplx) * n_ports
 
         # state-space matrix A holds the poles on the diagonal as real values with imaginary parts on the sub-diagonal
         # state-space matrix B holds coefficients (1, 2, or 0), depending on the respective type of pole in A
@@ -555,9 +556,9 @@ class VectorFitting:
         #               [0,            real(poles_cplx),   imag(poles_cplx],
         #               [0,            -imag(poles_cplx),  real(poles_cplx]]
         A = np.identity(n_matrix)
-        B = np.zeros(shape=(n_matrix, self.network.nports))
+        B = np.zeros(shape=(n_matrix, n_ports))
         i_A = 0  # index on diagonal of A
-        for j in range(self.network.nports):
+        for j in range(n_ports):
             for pole in self.poles:
                 if np.imag(pole) == 0.0:
                     # adding a real pole
@@ -575,12 +576,12 @@ class VectorFitting:
 
         # state-space matrix C holds the residues (zeros)
         # assemble C = [[R1.11, R1.12, R1.13, ...], [R2.11, R2.12, R2.13, ...], ...]
-        C = np.zeros(shape=(self.network.nports, n_matrix))
-        for i in range(self.network.nports):
-            for j in range(self.network.nports):
+        C = np.zeros(shape=(n_ports, n_matrix))
+        for i in range(n_ports):
+            for j in range(n_ports):
                 # i: row index
                 # j: column index
-                i_response = i * self.network.nports + j
+                i_response = i * n_ports + j
 
                 j_zeros = 0
                 for zero in self.zeros[i_response]:
@@ -594,22 +595,22 @@ class VectorFitting:
 
         # state-space matrix D holds the constants
         # assemble D = [[d11, d12, ...], [d21, d22, ...], ...]
-        D = np.zeros(shape=(self.network.nports, self.network.nports))
-        for i in range(self.network.nports):
-            for j in range(self.network.nports):
+        D = np.zeros(shape=(n_ports, n_ports))
+        for i in range(n_ports):
+            for j in range(n_ports):
                 # i: row index
                 # j: column index
-                i_response = i * self.network.nports + j
+                i_response = i * n_ports + j
                 D[i, j] = self.constant_coeff[i_response]
 
         # state-space matrix E holds the proportional coefficients (usually 0 in case of fitted S-parameters)
         # assemble E = [[e11, e12, ...], [e21, e22, ...], ...]
-        E = np.zeros(shape=(self.network.nports, self.network.nports))
-        for i in range(self.network.nports):
-            for j in range(self.network.nports):
+        E = np.zeros(shape=(n_ports, n_ports))
+        for i in range(n_ports):
+            for j in range(n_ports):
                 # i: row index
                 # j: column index
-                i_response = i * self.network.nports + j
+                i_response = i * n_ports + j
                 E[i, j] = self.proportional_coeff[i_response]
 
         return A, B, C, D, E
@@ -690,10 +691,11 @@ class VectorFitting:
 
         # get state-space matrices
         A, B, C, D, E = self._get_ABCDE()
+        n_ports = np.shape(D)[0]
 
         # build half-size test matrix P from state-space matrices A, B, C, D
-        inv_neg = np.linalg.inv(D - np.identity(self.network.nports))
-        inv_pos = np.linalg.inv(D + np.identity(self.network.nports))
+        inv_neg = np.linalg.inv(D - np.identity(n_ports))
+        inv_pos = np.linalg.inv(D + np.identity(n_ports))
         prod_neg = np.matmul(np.matmul(B, inv_neg), C)
         prod_pos = np.matmul(np.matmul(B, inv_pos), C)
         P = np.matmul(A - prod_neg, A - prod_pos)
@@ -890,10 +892,11 @@ class VectorFitting:
         # save/update model parameters (perturbed residues)
         self.history_max_sigma = np.array(self.history_max_sigma)
 
-        for i in range(self.network.nports):
+        n_ports = np.shape(D)[0]
+        for i in range(n_ports):
             k = 0   # column index in C_t
-            for j in range(self.network.nports):
-                i_response = i * self.network.nports + j
+            for j in range(n_ports):
+                i_response = i * n_ports + j
                 z = 0   # column index self.zeros
                 for pole in self.poles:
                     if np.imag(pole) == 0.0:
@@ -977,7 +980,8 @@ class VectorFitting:
             proportional_coeff = data['proportionals']
             constant_coeff = data['constants']
 
-            n_resp = self.network.nports ** 2
+            n_ports = int(np.sqrt(len(constant_coeff)))
+            n_resp = n_ports ** 2
             if np.shape(zeros)[0] == np.shape(proportional_coeff)[0] == np.shape(constant_coeff)[0] == n_resp:
                 self.poles = poles
                 self.zeros = zeros
@@ -1024,7 +1028,8 @@ class VectorFitting:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
         s = 2j * np.pi * np.array(freqs)
-        i_response = i * self.network.nports + j
+        n_ports = int(np.sqrt(len(self.constant_coeff)))
+        i_response = i * n_ports + j
         zeros = self.zeros[i_response]
 
         resp = self.proportional_coeff[i_response] * s + self.constant_coeff[i_response]
@@ -1191,7 +1196,8 @@ class VectorFitting:
         if ax is None:
             ax = mplt.gca()
 
-        i_response = i * self.network.nports + j
+        n_ports = int(np.sqrt(len(self.constant_coeff)))
+        i_response = i * n_ports + j
 
         ax.scatter((np.real(self.poles), np.real(self.poles)),
                      (np.imag(self.poles), -1 * np.imag(self.poles)),
