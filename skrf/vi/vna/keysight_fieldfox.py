@@ -173,7 +173,7 @@ class FieldFox(abcvna.VNA):
         # for channel in channels:
         #     meas_list = self.scpi.query_meas_name_list(channel)
         #     if len(meas_list) == 1:
-        #         continue  # if there isnt a single comma, then there aren't any measurments
+        #         continue  # if there isnt a single comma, then there aren't any measurements
         #     parameters = dict([(meas_list[k], meas_list[k + 1]) for k in range(0, len(meas_list) - 1, 2)])
         #
         #     meas_numbers = self.scpi.query_meas_number_list()

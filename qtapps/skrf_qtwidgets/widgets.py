@@ -10,7 +10,7 @@ from . import qt
 from .analyzers import analyzers
 
 
-def load_network_file(caption="load network file", filter="touchstone file (*.s*p)"):
+def load_network_file(caption="load network file", filter="touchstone file (*.s*p *.S*P)"):
     fname = qt.getOpenFileName_Global(caption, filter)
     if not fname:
         return None
@@ -24,7 +24,7 @@ def load_network_file(caption="load network file", filter="touchstone file (*.s*
     return ntwk
 
 
-def load_network_files(caption="load network file", filter="touchstone file (*.s*p)"):
+def load_network_files(caption="load network file", filter="touchstone file (*.s*p *.S*P)"):
     fnames = qt.getOpenFileNames_Global(caption, filter)
     if not fnames:
         return None
@@ -359,7 +359,7 @@ class VnaController(QtWidgets.QWidget):
         self.vna.set_frequency_sweep(channel=channel, f_unit=f_unit, f_start=f_start, f_stop=f_stop,
                                      f_npoints=f_npoints)
 
-    def set_start_freequency(self, value):
+    def set_start_frequency(self, value):
         self._start_frequency = float(value)
         self.lineEdit_startFrequency.setText("{:g}".format(self._start_frequency))
 
@@ -367,9 +367,9 @@ class VnaController(QtWidgets.QWidget):
         self._start_frequency = float(self.lineEdit_startFrequency.text())
         return self._start_frequency
 
-    start_frequency = property(get_start_frequency, set_start_freequency)
+    start_frequency = property(get_start_frequency, set_start_frequency)
 
-    def set_stop_freequency(self, value):
+    def set_stop_frequency(self, value):
         self._stop_frequency = float(value)
         self.lineEdit_stopFrequency.setText("{:g}".format(self._stop_frequency))
 
@@ -377,7 +377,7 @@ class VnaController(QtWidgets.QWidget):
         self._stop_frequency = float(self.lineEdit_stopFrequency.text())
         return self._stop_frequency
 
-    stop_frequency = property(get_stop_frequency, set_stop_freequency)
+    stop_frequency = property(get_stop_frequency, set_stop_frequency)
 
     def frequency_changed(self):
         self.funit = self.comboBox_funit.currentText()
@@ -676,9 +676,9 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.horizontalLayout_timeout.addWidget(self.spinBox_timeout)
         self.checkBox_sweepNew = QtWidgets.QCheckBox("Sweep New", self.groupBox_options)
         self.checkBox_autoTimeOut = QtWidgets.QCheckBox("Auto Timeout", self.groupBox_options)
-        self.horizonatlLayout_sweep = QtWidgets.QHBoxLayout()
-        self.horizonatlLayout_sweep.addWidget(self.checkBox_sweepNew)
-        self.horizonatlLayout_sweep.addWidget(self.checkBox_autoTimeOut)
+        self.horizontalLayout_sweep = QtWidgets.QHBoxLayout()
+        self.horizontalLayout_sweep.addWidget(self.checkBox_sweepNew)
+        self.horizontalLayout_sweep.addWidget(self.checkBox_autoTimeOut)
         self.label_channel = QtWidgets.QLabel("Channel", self.groupBox_options)
         self.spinBox_channel = QtWidgets.QSpinBox(self.groupBox_options)
         self.horizontalLayout_channel = QtWidgets.QHBoxLayout()
@@ -688,7 +688,7 @@ class MeasurementDialog(QtWidgets.QDialog):
         self.verticalLayout_options = QtWidgets.QVBoxLayout(self.groupBox_options)
         self.verticalLayout_options.addLayout(self.horizontalLayout_namePrefix)
         self.verticalLayout_options.addLayout(self.horizontalLayout_timeout)
-        self.verticalLayout_options.addLayout(self.horizonatlLayout_sweep)
+        self.verticalLayout_options.addLayout(self.horizontalLayout_sweep)
         self.verticalLayout_options.addLayout(self.horizontalLayout_channel)
         self.verticalLayout_left.addWidget(self.groupBox_options)
 

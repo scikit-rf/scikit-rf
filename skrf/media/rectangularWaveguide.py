@@ -46,7 +46,7 @@ class RectangularWaveguide(Media):
             frequency band of this transmission line medium
     z0 : number, array-like, or None
         the port impedance for media. Only needed if  its different
-        from the characterisitc impedance of the transmission
+        from the characteristic impedance of the transmission
         line. if z0 is None then will default to Z0.
     a : number
             width of waveguide, in meters.
@@ -71,7 +71,7 @@ class RectangularWaveguide(Media):
         surface roughness of the conductor walls in units of RMS
         deviation from surface
 
-    *args,**kwargs : arguments, keywrod arguments
+    *args,**kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
 
@@ -123,7 +123,7 @@ class RectangularWaveguide(Media):
     @classmethod
     def from_Z0(cls,frequency, Z0,f, ep_r=1, mu_r=1, **kw):
         '''
-        Initialize from specfied impedance at a given frequency, assuming 
+        Initialize from specified impedance at a given frequency, assuming 
         the fundamental TE10 mode.
         
         Parameters
@@ -264,7 +264,7 @@ class RectangularWaveguide(Media):
     @property
     def rho(self):
         '''
-        conductivty of sidewalls in ohm*m
+        conductivity of sidewalls in ohm*m
 
         Parameters
         --------------
@@ -306,7 +306,7 @@ class RectangularWaveguide(Media):
     @property
     def lambda_cutoff(self):
         '''
-        cuttoff wavelength
+        cutoff wavelength
 
         .. math::
             v/f

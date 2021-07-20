@@ -33,7 +33,7 @@ Functions
 
 # from matplotlib.pyplot import gca,plot, autoscale
 from numbers import Number
-from skrf.constants import NumberLike
+from .constants import NumberLike
 from typing import Sequence, Union
 from numpy import pi, linspace, geomspace
 import numpy as npy
@@ -162,7 +162,7 @@ class Frequency(object):
         key : str, int, or slice
             if int; then it is interpreted as the index of the frequency
             if str, then should be like '50.1-75.5ghz', or just '50'.
-            If the frequency unit is omited then self.frequency.unit is
+            If the frequency unit is omitted then self.frequency.unit is
             used.
 
         Examples
@@ -265,7 +265,7 @@ class Frequency(object):
 
     def __len__(self) -> int:
         '''
-        The number of frequeny points
+        The number of frequency points
         '''
         return self.npoints
 
@@ -634,7 +634,7 @@ def f_2_frequency(f: Union[Sequence[float], npy.ndarray]) -> 'Frequency':
     '''
     converts a frequency vector to a Frequency object
 
-    Depricated
+    Deprecated
     -------------
     Use the class method :func:`Frequency.from_f`
     convenience function

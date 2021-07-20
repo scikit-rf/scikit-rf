@@ -34,11 +34,11 @@ class DefinedAEpTandZ0(Media):
     Djirdjevic/Svennson dispersion model is provided for dielectric, default
     behaviour is frequency invariant.
     
-    A DefinedAEpTandZ0 medium is contructed: 
+    A DefinedAEpTandZ0 medium is constructed: 
      * from scalar attenuation `A`, relative permittivity `Ep_r`,
        loss angle `tand` and characteristic impedance `Z0`.
        Frequency invariant behaviour or Djirdjevic/Svennson dispersion can be
-       choosed trough `model`. Default is frequency invariant.
+       chosen trough `model`. Default is frequency invariant.
      
      See Examples.
 
@@ -48,7 +48,7 @@ class DefinedAEpTandZ0(Media):
         Frequency band of this transmission line medium
     z0 : number, array-like, or None
         The port impedance for this medium. Only needed if different from the
-        characterisitc impedance of the transmission line.
+        characteristic impedance of the transmission line.
         If z0 is None then will default to Z0
     A : number, array-like, default 0.0
         Attenuation due to conductor loss in dB/m/sqrt(Hz)
@@ -124,13 +124,13 @@ class DefinedAEpTandZ0(Media):
     @property
     def ep_r_f(self):
         '''
-        Frequency dependant complex relative permittivity of dielectric
+        Frequency dependent complex relative permittivity of dielectric
         '''
         ep_r, tand  = self.ep_r, self.tanD
         f_low, f_high, f_ep = self.f_low, self.f_high, self.f_ep
         f = self.frequency.f
         if self.model == 'djordjevicsvensson':
-            # compute the slope for a log frequency scale, tanD dependant.
+            # compute the slope for a log frequency scale, tanD dependent.
             m = (ep_r*tand)  * (pi/(2*log(10)))
             # value for frequency above f_high
             ep_inf = (ep_r - 1j*ep_r*tand - m*log((f_high + 1j*f_ep)/(f_low + 1j*f_ep)))
@@ -143,7 +143,7 @@ class DefinedAEpTandZ0(Media):
     @property
     def tand_f(self):
         '''
-        Frequency dependant dielectric loss factor
+        Frequency dependent dielectric loss factor
         '''
         ep_r = self.ep_r_f
         return -imag(ep_r) / real(ep_r)

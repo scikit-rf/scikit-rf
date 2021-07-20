@@ -402,7 +402,7 @@ class NetworkSet(object):
         Parameters
         ----------
         func: a function to be applied to the network_property
-                accross the first axis of the property's output
+                across the first axis of the property's output
         network_property_name: str
             a property of the Network class,
             which must have a matrix output of shape (f, n, n)
@@ -767,13 +767,16 @@ class NetworkSet(object):
         return fon(self.ntwk_set, func, a_property, *args, **kwargs)
 
 
-    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3):
+    def uncertainty_ntwk_triplet(self, attribute: str, n_deviations: int = 3) -> (Network, Network, Network):
         """
         Return a 3-tuple of Network objects which contain the
         mean, upper_bound, and lower_bound for the given Network
         attribute.
 
-        Used to save and plot uncertainty information data
+        Used to save and plot uncertainty information data.
+
+        Note that providing 's' and 's_mag' as attributes will provide different results.
+        For those who want to directly find uncertainty on dB performance, use 's_mag'.
 
         Parameters
         ----------
@@ -794,6 +797,7 @@ class NetworkSet(object):
         Example
         -------
         >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s')
+        >>> (ntwk_mean, ntwk_lb, ntwk_ub) = my_ntwk_set.uncertainty_ntwk_triplet('s_mag')
 
         """
         ntwk_mean = self.__getattribute__('mean_'+attribute)
@@ -920,7 +924,7 @@ class NetworkSet(object):
         x : real
             Point to evaluate the interpolated network at
         interp_kind: str
-            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailled description.
+            Specifies the kind of interpolation as a string: 'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic'.  Cf :class:`scipy.interpolate.interp1d` for detailed description.
             Default is 'linear'.
 
         Returns
@@ -1052,5 +1056,4 @@ def tuner_constellation(name='tuner', singlefreq=76, Z0=50, r_lin = 9, phi_lin=2
         return TNW, x,y,g
     else :
         return x,y,g
-
 
