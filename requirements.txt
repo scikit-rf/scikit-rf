@@ -3,16 +3,7 @@ scipy
 numpy
 pandas
 nbsphinx
-ipython
-ipykernel
-ipywidgets
-jupyter_client
-python-ivi
-pyvisa
 networkx
 pathlib
-nose
-nose-exclude
-coverage
 xlwt
 openpyxl
