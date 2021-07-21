@@ -50,7 +50,7 @@ class VectorFitting:
     =========================================================
 
     This class provides a Python implementation of the Vector Fitting algorithm and various functions for the fit
-    analysis and export of SPICE equivalent circuits.
+    analysis, passivity evaluation and enforcement, and export of SPICE equivalent circuits.
 
     Notes
     -----
@@ -500,7 +500,7 @@ class VectorFitting:
         """
         Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as
-        defined in [1]_.
+        defined in [8]_.
 
         Returns
         -------
@@ -518,7 +518,7 @@ class VectorFitting:
 
         References
         ----------
-        .. [1] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
+        .. [8] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
             Test Matrix," in IEEE Transactions on Microwave Theory and Techniques, vol. 56, no. 12, pp. 2701-2708,
             Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
         """
@@ -646,7 +646,7 @@ class VectorFitting:
 
     def passivity_test(self, parameter_type='S'):
         """
-        Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [1]_. Any
+        Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [6]_. Any
         existing frequency bands of passivity violations will be returned as a sorted list.
 
         Parameters
@@ -668,7 +668,7 @@ class VectorFitting:
 
         References
         ----------
-        .. [1] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
+        .. [6] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
             Test Matrix," in IEEE Transactions on Microwave Theory and Techniques, vol. 56, no. 12, pp. 2701-2708,
             Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
         """
@@ -744,7 +744,7 @@ class VectorFitting:
 
     def is_passive(self, parameter_type='S'):
         """
-        Provides the passivity status of the model as a boolean value.
+        Returns the passivity status of the model as a boolean value.
 
         Parameters
         ----------
@@ -756,7 +756,7 @@ class VectorFitting:
         Returns
         -------
         bool
-            :attr:`True` is model is passive, else :attr:`False`.
+            :attr:`True` if model is passive, else :attr:`False`.
         """
         viol_bands = self.passivity_test(parameter_type)
         if len(viol_bands) == 0:
@@ -767,7 +767,7 @@ class VectorFitting:
     def passivity_enforce(self, n_samples=100, parameter_type='S'):
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
-        presented in [1]_.
+        presented in [7]_.
 
         Parameters
         ----------
@@ -790,7 +790,7 @@ class VectorFitting:
 
         References
         ----------
-        .. [1] T. Dhaene, D. Deschrijver and N. Stevens, "Efficient Algorithm for Passivity Enforcement of S-Parameter-
+        .. [7] T. Dhaene, D. Deschrijver and N. Stevens, "Efficient Algorithm for Passivity Enforcement of S-Parameter-
             Based Macromodels," in IEEE Transactions on Microwave Theory and Techniques, vol. 57, no. 2, pp. 415-420,
             Feb. 2009, DOI: 10.1109/TMTT.2008.2011201.
         """
