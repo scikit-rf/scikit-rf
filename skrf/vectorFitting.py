@@ -1164,7 +1164,7 @@ class VectorFitting:
 
         # plot the frequency response of each singular value
         for n in range(n_ports):
-            ax.plot(freqs, singvals[n, :], label='$\sigma_{}$'.format(n))
+            ax.plot(freqs, singvals[n, :], label='$\sigma_{}$'.format(n + 1))
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude')
         ax.legend(loc='best')
