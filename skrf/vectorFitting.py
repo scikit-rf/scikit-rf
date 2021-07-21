@@ -811,7 +811,7 @@ class VectorFitting:
             logging.info('Passivity enforcement: The model is already passive. Nothing to do.')
             return
 
-        freqs_eval = np.linspace(0, 1.2 * violation_bands[0, -1], n_samples)
+        freqs_eval = np.linspace(0, 1.2 * violation_bands[-1, -1], n_samples)
         A, B, C, D, E = self._get_ABCDE()
         dim_A = np.shape(A)[0]
         C_t = C
