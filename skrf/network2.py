@@ -761,7 +761,7 @@ def s2z(s,z0=50):
         z[fidx] = sqrtz0 * (I-s[fidx])**-1 * (I+s[fidx]) * sqrtz0
     return z
 
-def s2y(s,z0=50):
+def s2y(s, z0=50):
     '''
     convert scattering parameters [#]_ to admittance parameters [#]_
 

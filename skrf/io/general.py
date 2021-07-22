@@ -69,6 +69,7 @@ import warnings
 import sys
 import json
 import numpy as npy
+import glob
 
 from ..util import get_extn, get_fid
 from ..network import Network
@@ -242,7 +243,7 @@ def write(file, obj, overwrite = True):
         pickle.dump(obj, fid, protocol=2)
         fid.close()
 
-def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None):
+def read_all(dir: str ='.', contains = None, f_unit = None, obj_type=None, files: list=None, recursive=False) -> dict:
     '''
     Read all skrf objects in a directory
 
@@ -264,6 +265,8 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None)
         Name of skrf object types to read (ie 'Network')
     files : list, optional
         list of files to load, bypasses dir parameter.
+    recursive : bool, optional
+        If True, search in the specified directory and all other nested directories
 
     Returns
     ---------
@@ -300,19 +303,22 @@ def read_all(dir='.', contains = None, f_unit = None, obj_type=None, files=None)
 
     out={}
 
-    filelist = files
-    if files == None:
-        filelist = sorted(os.listdir(dir))
+    filelist = []
+    if files is None:
+        if recursive:
+            if not dir.endswith(os.path.sep):
+                dir += os.path.sep
+            dir += '**'
+        for filename in glob.iglob(os.path.join(dir, '*.s*p'), recursive=recursive):
+            filelist.append(filename)
+    else:
+        filelist.extend(files)
 
     for filename in filelist:
         if contains is not None and contains not in filename:
             continue
-        if files == None:
-            fullname = os.path.join(dir,filename)
-            keyname = os.path.splitext(filename)[0]
-        else:
-            fullname = filename
-            keyname = os.path.splitext(os.path.basename(filename))[0]
+        fullname = filename
+        keyname = os.path.splitext(filename.split(os.path.sep)[-1])[0]
         try:
             out[keyname] = read(fullname)
             continue
