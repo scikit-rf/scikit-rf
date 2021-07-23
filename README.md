@@ -9,6 +9,8 @@
 
 ## Description 
 
+![scikit-rf_logo](doc/source/_static/scikit-rf-title-flat.png)
+
 **scikit-rf** (aka `skrf`) is an Open Source, BSD-licensed package for RF/Microwave engineering implemented 
 in the Python programming language. It provides a modern, object-oriented library which is both 
 flexible and scalable.  
@@ -42,10 +44,14 @@ conda install -c conda-forge scikit-rf
 * Chat: scikit-rf have channels on both [Slack](https://join.slack.com/t/scikit-rf/shared_invite/zt-d82b62wg-0bdSJjZVhHBKf6687V80Jg) and [Matrix](https://app.element.io/#/room/#scikit-rf:matrix.org)  
 * [Suggestion box](https://docs.google.com/forms/d/e/1FAIpQLSfkSNy8KzoHwdDxYGCmHHiA3GsHgN6zKTFI2NrcUR29U7Xx6A/viewform?usp=sf_link): if you would like to suggest a feature/topic for consideration (optionally anonymous).
 
-## Join the **scikit-rf** team!
+## Contributing to the scikit-rf project
 
-* [Development Guide](https://github.com/scikit-rf/scikit-rf/wiki/Development)
- 
+There is multiple ways to contribute to an open-source project like scikit-rf! 
+
+* [Sponsoring the project](https://scikit-rf.readthedocs.io/en/latest/contributing/index.html#sponsoring-the-project)
+* [Contributing to the code](https://scikit-rf.readthedocs.io/en/latest/contributing/index.html#contributing-to-the-code)
+* [Contributing to the Documentation](https://scikit-rf.readthedocs.io/en/latest/contributing/index.html#contributing-to-the-documentation)
+
  
 ![skrfshirt](https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/logo/skrfshirtwhite.png)
 
