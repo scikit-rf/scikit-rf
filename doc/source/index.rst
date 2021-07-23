@@ -1,6 +1,7 @@
 .. _home:
     :github_url:
-    .. image:: _static/scikit-rf-title-flat.svg
+    
+.. image:: _static/scikit-rf-title-flat.svg
     :target: scikitrf_
     :height: 100
     :align: center
