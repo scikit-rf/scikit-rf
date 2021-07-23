@@ -8,8 +8,9 @@ build:
 
 python:
   version: 3.7
-  pip_install: true
   install:
     - requirements: requirements.txt
     - requirements: requirements_dev.txt
+    - method: pip
+      path: ./skrf
 
