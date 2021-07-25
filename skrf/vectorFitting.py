@@ -50,7 +50,7 @@ class VectorFitting:
     =========================================================
 
     This class provides a Python implementation of the Vector Fitting algorithm and various functions for the fit
-    analysis and export of SPICE equivalent circuits.
+    analysis, passivity evaluation and enforcement, and export of SPICE equivalent circuits.
 
     Notes
     -----
@@ -110,6 +110,7 @@ class VectorFitting:
 
         self.d_res_history = []
         self.delta_max_history = []
+        self.history_max_sigma = []
 
     def vector_fit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
                    fit_constant=True, fit_proportional=False):
@@ -495,6 +496,419 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
+    def _get_ABCDE(self):
+        """
+        Private method.
+        Returns the real-valued system matrices of the state-space representation of the current rational model, as
+        defined in [8]_.
+
+        Returns
+        -------
+        A : ndarray
+            State-space matrix A holding the poles on the diagonal as real values with imaginary parts on the sub-
+            diagonal
+        B : ndarray
+            State-space matrix B holding coefficients (1, 2, or 0), depending on the respective type of pole in A
+        C : ndarray
+            State-space matrix C holding the residues (zeros)
+        D : ndarray
+            State-space matrix D holding the constants
+        E : ndarray
+            State-space matrix E holding the proportional coefficients (usually 0 in case of fitted S-parameters)
+
+        References
+        ----------
+        .. [8] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
+            Test Matrix," in IEEE Transactions on Microwave Theory and Techniques, vol. 56, no. 12, pp. 2701-2708,
+            Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
+        """
+
+        # initial checks
+        if self.poles is None:
+            logging.error('self.poles = None; nothing to do. You need to run vector_fit() first.')
+            return
+        if self.zeros is None:
+            logging.error('self.zeros = None; nothing to do. You need to run vector_fit() first.')
+            return
+        if self.proportional_coeff is None:
+            logging.error('self.proportional_coeff = None; nothing to do. You need to run vector_fit() first.')
+            return
+        if self.constant_coeff is None:
+            logging.error('self.constant_coeff = None; nothing to do. You need to run vector_fit() first.')
+            return
+
+        # assemble real-valued state-space matrices A, B, C, D, E from fitted complex-valued pole-residue model
+
+        # determine size of the matrix system
+        n_ports = int(np.sqrt(len(self.constant_coeff)))
+        n_poles_real = 0
+        n_poles_cplx = 0
+        for pole in self.poles:
+            if np.imag(pole) == 0.0:
+                n_poles_real += 1
+            else:
+                n_poles_cplx += 1
+        n_matrix = (n_poles_real + 2 * n_poles_cplx) * n_ports
+
+        # state-space matrix A holds the poles on the diagonal as real values with imaginary parts on the sub-diagonal
+        # state-space matrix B holds coefficients (1, 2, or 0), depending on the respective type of pole in A
+        # assemble A = [[poles_real,   0,                  0],
+        #               [0,            real(poles_cplx),   imag(poles_cplx],
+        #               [0,            -imag(poles_cplx),  real(poles_cplx]]
+        A = np.identity(n_matrix)
+        B = np.zeros(shape=(n_matrix, n_ports))
+        i_A = 0  # index on diagonal of A
+        for j in range(n_ports):
+            for pole in self.poles:
+                if np.imag(pole) == 0.0:
+                    # adding a real pole
+                    A[i_A, i_A] = np.real(pole)
+                    B[i_A, j] = 1
+                    i_A += 1
+                else:
+                    # adding a complex-conjugate pole
+                    A[i_A, i_A] = np.real(pole)
+                    A[i_A, i_A + 1] = np.imag(pole)
+                    A[i_A + 1, i_A] = -1 * np.imag(pole)
+                    A[i_A + 1, i_A + 1] = np.real(pole)
+                    B[i_A, j] = 2
+                    i_A += 2
+
+        # state-space matrix C holds the residues (zeros)
+        # assemble C = [[R1.11, R1.12, R1.13, ...], [R2.11, R2.12, R2.13, ...], ...]
+        C = np.zeros(shape=(n_ports, n_matrix))
+        for i in range(n_ports):
+            for j in range(n_ports):
+                # i: row index
+                # j: column index
+                i_response = i * n_ports + j
+
+                j_zeros = 0
+                for zero in self.zeros[i_response]:
+                    if np.imag(zero) == 0.0:
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros] = np.real(zero)
+                        j_zeros += 1
+                    else:
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros] = np.real(zero)
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros + 1] = np.imag(zero)
+                        j_zeros += 2
+
+        # state-space matrix D holds the constants
+        # assemble D = [[d11, d12, ...], [d21, d22, ...], ...]
+        D = np.zeros(shape=(n_ports, n_ports))
+        for i in range(n_ports):
+            for j in range(n_ports):
+                # i: row index
+                # j: column index
+                i_response = i * n_ports + j
+                D[i, j] = self.constant_coeff[i_response]
+
+        # state-space matrix E holds the proportional coefficients (usually 0 in case of fitted S-parameters)
+        # assemble E = [[e11, e12, ...], [e21, e22, ...], ...]
+        E = np.zeros(shape=(n_ports, n_ports))
+        for i in range(n_ports):
+            for j in range(n_ports):
+                # i: row index
+                # j: column index
+                i_response = i * n_ports + j
+                E[i, j] = self.proportional_coeff[i_response]
+
+        return A, B, C, D, E
+
+    @staticmethod
+    def _get_s_from_ABCDE(freq, A, B, C, D, E):
+        """
+        Private method.
+        Returns the S-matrix of the vector fitted model calculated from the real-valued system matrices of the state-
+        space representation, as provided by `_get_ABCDE()`.
+
+        Parameters
+        ----------
+        freq : float
+            Frequency (in Hz) at which to calculate the S-matrix.
+        A : ndarray
+        B : ndarray
+        C : ndarray
+        D : ndarray
+        E : ndarray
+
+        Returns
+        -------
+        ndarray
+            Complex-valued S-matrix (NxN) calculated at frequency `freq`.
+        """
+
+        dim_A = np.shape(A)[0]
+        stsp_poles = np.linalg.inv(2j * np.pi * freq * np.identity(dim_A) - A)
+        stsp_S = np.matmul(np.matmul(C, stsp_poles), B)
+        stsp_S += D + 2j * np.pi * freq * E
+        return stsp_S
+
+    def passivity_test(self, parameter_type='S'):
+        """
+        Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [6]_. Any
+        existing frequency bands of passivity violations will be returned as a sorted list.
+
+        Parameters
+        ----------
+        parameter_type: str, optional
+            Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
+            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). Currently, only scattering
+            parameters are supported for passivity evaluation.
+
+        Returns
+        -------
+        ndarray
+            NumPy array with frequency bands of passivity violation:
+            [[f_start_1, f_stop_1], [f_start_2, f_stop_2], ...].
+
+        See Also
+        --------
+        is_passive : Query the model passivity as a boolean value.
+
+        References
+        ----------
+        .. [6] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
+            Test Matrix," in IEEE Transactions on Microwave Theory and Techniques, vol. 56, no. 12, pp. 2701-2708,
+            Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
+        """
+
+        if parameter_type.lower() != 's':
+            logging.error('Passivity testing is currently only supported for scattering (S) parameters.')
+            return
+        if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional_coeff)) > 0:
+            logging.error('Passivity testing of scattering parameters with nonzero proportional coefficients does not '
+                          'make any sense; you need to run vector_fit() with option \'fit_proportional=False\' first.')
+            return
+
+        # # the network needs to be reciprocal for this passivity test method to work: S = transpose(S)
+        # if not np.allclose(self.zeros, np.transpose(self.zeros)) or \
+        #         not np.allclose(self.constant_coeff, np.transpose(self.constant_coeff)) or \
+        #         not np.allclose(self.proportional_coeff, np.transpose(self.proportional_coeff)):
+        #     logging.error('Passivity testing with unsymmetrical model parameters is not supported. '
+        #                   'The model needs to be reciprocal.')
+        #     return
+
+        # get state-space matrices
+        A, B, C, D, E = self._get_ABCDE()
+        n_ports = np.shape(D)[0]
+
+        # build half-size test matrix P from state-space matrices A, B, C, D
+        inv_neg = np.linalg.inv(D - np.identity(n_ports))
+        inv_pos = np.linalg.inv(D + np.identity(n_ports))
+        prod_neg = np.matmul(np.matmul(B, inv_neg), C)
+        prod_pos = np.matmul(np.matmul(B, inv_pos), C)
+        P = np.matmul(A - prod_neg, A - prod_pos)
+
+        # extract eigenvalues of P
+        P_eigs = np.linalg.eigvals(P)
+
+        # purely imaginary square roots of eigenvalues identify frequencies (2*pi*f) of borders of passivity violations
+        freqs_violation = []
+        for sqrt_eigenval in np.sqrt(P_eigs):
+            if np.real(sqrt_eigenval) == 0.0:
+                freqs_violation.append(np.imag(sqrt_eigenval) / 2 / np.pi)
+
+        # sort the output from lower to higher frequencies
+        freqs_violation = np.sort(freqs_violation)
+
+        # identify frequency bands of passivity violations
+
+        # sweep the bands between crossover frequencies and identify bands of passivity violations
+        violation_bands = []
+        for i, freq in enumerate(freqs_violation):
+            if i == 0:
+                f_start = 0
+                f_stop = freq
+            else:
+                f_start = freqs_violation[i - 1]
+                f_stop = freq
+
+            # calculate singular values at the center frequency between crossover frequencies to identify violations
+            f_center = 0.5 * (f_start + f_stop)
+            s_center = self._get_s_from_ABCDE(f_center, A, B, C, D, E)
+            u, sigma, vh = np.linalg.svd(s_center)
+            passive = True
+            for singval in sigma:
+                if singval > 1:
+                    # passivity violation in this band
+                    passive = False
+            if not passive:
+                # add this band to the list of passivity violations
+                if violation_bands is None:
+                    violation_bands = [[f_start, f_stop]]
+                else:
+                    violation_bands.append([f_start, f_stop])
+
+        return np.array(violation_bands)
+
+    def is_passive(self, parameter_type='S'):
+        """
+        Returns the passivity status of the model as a boolean value.
+
+        Parameters
+        ----------
+        parameter_type : str, optional
+            Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
+            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). Currently, only scattering
+            parameters are supported for passivity evaluation.
+
+        Returns
+        -------
+        bool
+            :attr:`True` if model is passive, else :attr:`False`.
+        """
+        viol_bands = self.passivity_test(parameter_type)
+        if len(viol_bands) == 0:
+            return True
+        else:
+            return False
+
+    def passivity_enforce(self, n_samples=100, parameter_type='S'):
+        """
+        Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
+        presented in [7]_.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            Number of linearly spaced frequency samples at which passivity will be evaluated and enforce. (Default: 100)
+
+        parameter_type : str, optional
+            Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
+            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). Currently, only scattering
+            parameters are supported for passivity evaluation.
+
+        Returns
+        -------
+        None
+
+        See Also
+        --------
+        passivity_test : More verbose passivity evaluation routine.
+        plot_passivation : Convergence plot for passivity enforcement iterations.
+
+        References
+        ----------
+        .. [7] T. Dhaene, D. Deschrijver and N. Stevens, "Efficient Algorithm for Passivity Enforcement of S-Parameter-
+            Based Macromodels," in IEEE Transactions on Microwave Theory and Techniques, vol. 57, no. 2, pp. 415-420,
+            Feb. 2009, DOI: 10.1109/TMTT.2008.2011201.
+        """
+
+        if parameter_type.lower() != 's':
+            logging.error('Passivity testing is currently only supported for scattering (S) parameters.')
+            return
+        if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional_coeff)) > 0:
+            logging.error('Passivity testing of scattering parameters with nonzero proportional coefficients does not '
+                          'make any sense; you need to run vector_fit() with option \'fit_proportional=False\' first.')
+            return
+
+        # always run passivity test first; this will write 'self.violation_bands'
+        violation_bands = self.passivity_test()
+
+        if len(violation_bands) == 0:
+            # model is already passive; do nothing and return
+            logging.info('Passivity enforcement: The model is already passive. Nothing to do.')
+            return
+
+        freqs_eval = np.linspace(0, 1.2 * violation_bands[-1, -1], n_samples)
+        A, B, C, D, E = self._get_ABCDE()
+        dim_A = np.shape(A)[0]
+        C_t = C
+        delta = 0.999   # predefined tolerance parameter (users should not need to change this)
+
+        # iterative compensation of passivity violations
+        t = 0
+        self.history_max_sigma = []
+        while t < self.max_iterations:
+            logging.info('Passivity enforcement; Iteration {}'.format(t + 1))
+
+            A_matrix = []
+            b_vector = []
+            sigma_max = 0
+
+            # sweep through evaluation frequencies
+            for i_eval, freq_eval in enumerate(freqs_eval):
+                # calculate S-matrix at this frequency
+                s_eval = self._get_s_from_ABCDE(freq_eval, A, B, C_t, D, E)
+
+                # singular value decomposition
+                u, sigma, vh = np.linalg.svd(s_eval)
+
+                # keep track of the greatest singular value in every iteration step
+                if np.amax(sigma) > sigma_max:
+                    sigma_max = np.amax(sigma)
+
+                # prepare and fill the square matrices 'gamma' and 'psi' marking passivity violations
+                gamma = np.diag(sigma)
+                psi = np.diag(sigma)
+                for i, sigma_i in enumerate(sigma):
+                    if sigma_i <= delta:
+                        gamma[i, i] = 0
+                        psi[i, i] = 0
+                    else:
+                        gamma[i, i] = 1
+                        psi[i, i] = delta
+
+                # calculate violation S-matrix
+                # s_viol is again a complex NxN S-matrix (N: number of network ports)
+                sigma_viol = np.matmul(np.diag(sigma), gamma) - psi
+                s_viol = np.matmul(np.matmul(u, sigma_viol), vh)
+
+                # Laplace frequency of this sample in the sweep
+                s_k = 2j * np.pi * freq_eval
+
+                # build matrix system for least-squares fitting of new set of violation residues C_viol
+                # using rule for transpose of matrix products: transpose(A * B) = transpose(B) * transpose(A)
+                # hence, S = C * coeffs <===> transpose(S) = transpose(coeffs) * transpose(C)
+                coeffs = np.transpose(np.matmul(np.linalg.inv(s_k * np.identity(dim_A) - A), B))
+                if i_eval == 0:
+                    A_matrix = np.vstack([np.real(coeffs), np.imag(coeffs)])
+                    b_vector = np.vstack([np.real(np.transpose(s_viol)), np.imag(np.transpose(s_viol))])
+                else:
+                    A_matrix = np.concatenate((A_matrix, np.vstack([np.real(coeffs),
+                                                                    np.imag(coeffs)])), axis=0)
+                    b_vector = np.concatenate((b_vector, np.vstack([np.real(np.transpose(s_viol)),
+                                                                    np.imag(np.transpose(s_viol))])), axis=0)
+
+            # solve least squares
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
+
+            C_viol = np.transpose(x)
+
+            # calculate and update C_t for next iteration
+            C_t = C_t - C_viol
+            t += 1
+            self.history_max_sigma.append(sigma_max)
+
+            # stop iterations when model is passive
+            if sigma_max < 1.0:
+                break
+
+        # PASSIVATION PROCESS DONE; model is either passive or max. number of iterations have been exceeded
+        if t == self.max_iterations - 1:
+            logging.error('Passivity enforcement: Aborting after the max. number of iterations has been exceeded.')
+
+        # save/update model parameters (perturbed residues)
+        self.history_max_sigma = np.array(self.history_max_sigma)
+
+        n_ports = np.shape(D)[0]
+        for i in range(n_ports):
+            k = 0   # column index in C_t
+            for j in range(n_ports):
+                i_response = i * n_ports + j
+                z = 0   # column index self.zeros
+                for pole in self.poles:
+                    if np.imag(pole) == 0.0:
+                        # real pole --> real residue
+                        self.zeros[i_response, z] = C_t[i, k]
+                        k += 1
+                    else:
+                        # complex-conjugate pole --> complex-conjugate residue
+                        self.zeros[i_response, z] = C_t[i, k] + 1j * C_t[i, k + 1]
+                        k += 2
+                    z += 1
+
     def write_npz(self, path):
         """
         Writes the model parameters in :attr:`poles`, :attr:`zeros`,
@@ -566,7 +980,8 @@ class VectorFitting:
             proportional_coeff = data['proportionals']
             constant_coeff = data['constants']
 
-            n_resp = self.network.nports ** 2
+            n_ports = int(np.sqrt(len(constant_coeff)))
+            n_resp = n_ports ** 2
             if np.shape(zeros)[0] == np.shape(proportional_coeff)[0] == np.shape(constant_coeff)[0] == n_resp:
                 self.poles = poles
                 self.zeros = zeros
@@ -613,7 +1028,8 @@ class VectorFitting:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
 
         s = 2j * np.pi * np.array(freqs)
-        i_response = i * self.network.nports + j
+        n_ports = int(np.sqrt(len(self.constant_coeff)))
+        i_response = i * n_ports + j
         zeros = self.zeros[i_response]
 
         resp = self.proportional_coeff[i_response] * s + self.constant_coeff[i_response]
@@ -709,6 +1125,52 @@ class VectorFitting:
         return ax
 
     @check_plotting
+    def plot_s_singular(self, freqs=None, ax=None):
+        """
+        Plots the singular values of the vector fitted S-matrix in linear scale.
+
+        Parameters
+        ----------
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
+        Returns
+        -------
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        # get system matrices of state-space representation
+        A, B, C, D, E = self._get_ABCDE()
+
+        n_ports = np.shape(D)[0]
+        singvals = np.zeros((n_ports, len(freqs)))
+
+        # calculate and save singular values for each frequency
+        for i, f in enumerate(freqs):
+            u, sigma, vh = np.linalg.svd(self._get_s_from_ABCDE(f, A, B, C, D, E))
+            singvals[:, i] = sigma
+
+        # plot the frequency response of each singular value
+        for n in range(n_ports):
+            ax.plot(freqs, singvals[n, :], label='$\sigma_{}$'.format(n + 1))
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Magnitude')
+        ax.legend(loc='best')
+        return ax
+
+    @check_plotting
     def plot_pz(self, i, j, ax=None):
         """
         Plots a pole-zero diagram of the fit of the response **S_(i+1,j+1)**.
@@ -734,7 +1196,8 @@ class VectorFitting:
         if ax is None:
             ax = mplt.gca()
 
-        i_response = i * self.network.nports + j
+        n_ports = int(np.sqrt(len(self.constant_coeff)))
+        i_response = i * n_ports + j
 
         ax.scatter((np.real(self.poles), np.real(self.poles)),
                      (np.imag(self.poles), -1 * np.imag(self.poles)),
@@ -775,6 +1238,33 @@ class VectorFitting:
         ax2 = ax.twinx()
         ax2.plot(np.arange(np.alen(self.d_res_history)) + 1, self.d_res_history, color='orangered')
         ax2.set_ylabel('Residue', color='orangered')
+        return ax
+
+    @check_plotting
+    def plot_passivation(self, ax=None):
+        """
+        Plots the history of the greatest singular value during the iterative passivity enforcement process, which
+        should eventually converge to a value slightly lower than 1.0 or stop after exceeding the maximum number of
+        iterations specified in the class variable :attr:`history_max_sigma`.
+
+        Parameters
+        ----------
+        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+
+        Returns
+        -------
+        :class:`matplotlib.axes.AxesSubplot`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.plot(np.arange(len(self.history_max_sigma)) + 1, self.history_max_sigma)
+        ax.set_xlabel('Iteration step')
+        ax.set_ylabel('Max. singular value')
         return ax
 
     def write_spice_subcircuit_s(self, file):
