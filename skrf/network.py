@@ -1605,7 +1605,8 @@ class Network(object):
         offs = npy.array(range(0, n_ports))  # port index offsets from each mirror line
         for k in range(0, n_ports, n_ports // n):  # iterate through n mirror lines
             mirror = k * npy.ones_like(offs)
-            i, j = mirror - 1 - offs, mirror + offs
+            i = mirror - 1 - offs
+            j = mirror + offs
             if not npy.allclose(test_network.s[:, i, i], test_network.s[:, j, j], atol=tol):
                 return False
         return True
