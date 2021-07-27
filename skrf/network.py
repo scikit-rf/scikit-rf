@@ -2819,6 +2819,34 @@ class Network(object):
         self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
 
+    def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> 'Network':
+        '''
+        Returns a renumbered Network, leave self alone.
+
+        Parameters
+        ----------
+        from_ports : list-like
+            List of port indices to change. Size between 1 and N_ports.
+        to_ports : list-like
+            List of desired port indices. Size between 1 and N_ports.
+
+        NB: from_ports and to_ports must have same size.
+
+        Returns
+        -------
+        ntwk : :class:`Network` object
+            Resulting renumbered Network
+
+        See Also
+        --------
+        renumber
+        flip
+        flipped
+
+        '''
+        out = self.copy()
+        out.renumber(from_ports, to_ports)
+        return out        
 
     def rotate(self, theta: NumberLike, unit: str = 'deg') -> None:
         '''
