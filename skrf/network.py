@@ -2718,23 +2718,95 @@ class Network(object):
 
     def renumber(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> None:
         '''
-        renumbers  ports of a  Network
+        Renumbers ports of a Network (inplace).
 
         Parameters
         -----------
         from_ports : list-like
-        to_ports: list-like
+            List of port indices to change. Size between 1 and N_ports.
+        to_ports : list-like
+            List of desired port indices. Size between 1 and N_ports.
+
+        NB : from_ports and to_ports must have same size.
+
+        Return
+        ------
+            None
+            The reorganization of the Network's port is performed inplace.
+        
 
         Examples
-        ---------
+        --------
+        
+        In the following example, the ports of a 3-ports Network are 
+        reorganized. Dummy reference impedances are set only to follow more
+        easily the renumbering.
+        
+        >>> f = rf.Frequency(1, 1, 1)
+        >>> s = np.ones((1, 3, 3))
+        >>> z0 = [10, 20, 30]
+        >>> ntw = rf.Network(frequency=f, s=s, z0=z0)  # our OEM Network
+
+        In picture, we have::
+    
+            Order in          Original Order
+            skrf.Network      
+                        ┌───────────────────┐
+                        │       OEM         │
+                        │                   │
+            0   ────────┤  A  (10 Ω)        │
+                        │                   │
+                        │                   │
+            1   ────────┤  B  (20 Ω)        │
+                        │                   │
+                        │                   │
+            2   ────────┤  C  (30 Ω)        │
+                        │                   │
+                        └───────────────────┘
+
+        While after renumbering
+        
+        >>> ntw.renumber([0,1,2], [1, 2, 0])
+
+
+        we now have::
+
+            Order in          Original Order
+            skrf.Network                  
+                        ┌───────────────────┐
+                        │       OEM         │
+                        │                   │
+            1   ────────┤  A  (10 Ω)        │
+                        │                   │
+                        │                   │
+            2   ────────┤  B  (20 Ω)        │
+                        │                   │
+                        │                   │
+            0   ────────┤  C  (30 Ω)        │
+                        │                   │
+                        └───────────────────┘
+
+        **Other examples:**
+
+
         To flip the ports of a 2-port network 'foo':
+
         >>> foo.renumber( [0,1], [1,0] )
 
         To rotate the ports of a 3-port network 'bar' so that port 0 becomes port 1:
+
         >>> bar.renumber( [0,1,2], [1,2,0] )
 
-        To swap the first and last ports of a network 'duck':
+        To swap the first and last ports of a N-port (N>=2) Network 'duck':
+
         >>> duck.renumber( [0,-1], [-1,0] )
+
+        See Also
+        --------
+        renumbered
+        flip
+        flipped
+
         '''
         from_ports = npy.array(from_ports)
         to_ports = npy.array(to_ports)
