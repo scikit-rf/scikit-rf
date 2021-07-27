@@ -1554,11 +1554,10 @@ class Network(object):
         '''
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
-    def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {},
-        tol: float = mf.ALMOST_ZERO) -> bool:
-        '''
-        Returns whether the 2N-port network has n-th order reflection symmetry
-        by checking s_ii == s_jj for appropriate pair(s) of i and j.
+    def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
+        """
+        Returns whether the 2N-port network has n-th order reflection symmetry by checking
+        :math:`S_{i,i} == S_{j,j}` for appropriate pair(s) of :math:`i` and :math:`j`.
 
         https://en.wikipedia.org/wiki/Two-port_network#Scattering_parameters_(S-parameters)
 
@@ -1568,8 +1567,12 @@ class Network(object):
             Order of line symmetry to test for
         port_order : dict[int, int]
             Renumbering of zero-indexed ports before testing
-        tol: float
+        tol : float
             Tolerance in numeric comparisons
+
+        Returns
+        -------
+        bool
 
         Raises
         ------
@@ -1580,17 +1583,18 @@ class Network(object):
             (4) If port_order is not a valid reindexing of ports
             e.g. specifying x->y but not y->z, specifying x->y twice,
             or using an index outside the range 0 to 2N-1
-        '''
-        z, y, x = self.s.shape  # z is number of frequencies, and x is number of ports (2N)
-        if x % 2 != 0 or x != y:
-            raise ValueError('test of symmetric is only valid for a 2N-port network')
-        N = x // 2
-        if n <= 0 or n > N:
+        """
+
+        nfreqs, ny, nx = self.s.shape  # nfreqs is number of frequencies, and nx, ny both are number of ports (2N)
+        if nx % 2 != 0 or nx != ny:
+            raise ValueError('Using is_symmetric() is only valid for a 2N-port network (N=2,4,6,8,...)')
+        n_ports = nx // 2
+        if n <= 0 or n > n_ports:
             raise ValueError('specified order n = ' + str(n) + ' must be ' +
-                             'between 1 and N = ' + str(N) + ', inclusive')
-        if x % n != 0:
+                             'between 1 and N = ' + str(n_ports) + ', inclusive')
+        if nx % n != 0:
             raise ValueError('specified order n = ' + str(n) + ' must evenly divide ' +
-                             'N = ' + str(N))
+                             'N = ' + str(n_ports))
 
         from_ports = list(map(lambda key: int(key), port_order.keys()))
         to_ports = list(map(lambda val: int(val), port_order.values()))
@@ -1598,12 +1602,12 @@ class Network(object):
         if len(from_ports) > 0 and len(to_ports) > 0:
             test_network.renumber(from_ports, to_ports)
 
-        mat = npy.matrix(test_network.s)
-        offs = npy.array(range(0, N))  # port index offsets from each mirror line
-        for k in range(0, N, N // n):  # iterate through n mirror lines
-            mirror = k*npy.ones_like(offs)
-            i, j = mirror-1 - offs, mirror + offs
-            if not npy.allclose(mat[i, i], mat[j, j], atol=tol):
+        offs = npy.array(range(0, n_ports))  # port index offsets from each mirror line
+        for k in range(0, n_ports, n_ports // n):  # iterate through n mirror lines
+            mirror = k * npy.ones_like(offs)
+            i = mirror - 1 - offs
+            j = mirror + offs
+            if not npy.allclose(test_network.s[:, i, i], test_network.s[:, j, j], atol=tol):
                 return False
         return True
 

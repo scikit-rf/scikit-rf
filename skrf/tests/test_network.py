@@ -610,31 +610,40 @@ class NetworkTestCase(unittest.TestCase):
 
     def test_is_symmetric(self):
         # 2-port
-        a = rf.Network(f=[1],
-                       s=[[-1, 0],
-                          [0, -1]],
+        a = rf.Network(f=[1, 2, 3],
+                       s=[[[-1, 0], [0, -1]],
+                          [[-2, 0], [0, -2]],
+                          [[1, 0], [0, 1]]],
                        z0=50)
         self.assertTrue(a.is_symmetric(), 'A short is symmetric.')
         self.assertRaises(ValueError, a.is_symmetric, port_order={1: 2})  # error raised by renumber()
         a.s[0, 0, 0] = 1
         self.assertFalse(a.is_symmetric(), 'non-symmetrical')
 
+        # another 2-port (transmission line with 201 frequency samples)
+        nw_line = rf.data.line
+        self.assertTrue(nw_line.is_symmetric())
+
+        # another 2-port (ring slot with 201 frequency samples)
+        nw_ringslot = rf.data.ring_slot
+        self.assertFalse(nw_ringslot.is_symmetric())
+
         # 3-port
-        b = rf.Network(f=[1],
-                       s=[[0, 0.5, 0.5],
-                          [0.5, 0, 0.5],
-                          [0.5, 0.5, 0]],
+        b = rf.Network(f=[1, 3],
+                       s=[[[0, 0.5, 0.5], [0.5, 0, 0.5], [0.5, 0.5, 0]],
+                          [[0, 0.2, 0.2], [0.2, 0, 0.2], [0.2, 0.2, 0]]],
                        z0=50)
         with self.assertRaises(ValueError) as context:
             b.is_symmetric()
-        self.assertEqual(str(context.exception), 'test of symmetric is only valid for a 2N-port network')
+        self.assertEqual(str(context.exception),
+                         'Using is_symmetric() is only valid for a 2N-port network (N=2,4,6,8,...)')
 
         # 4-port
-        c = rf.Network(f=[1],
-                       s=[[0, 1j, 1, 0],
-                          [1j, 0, 0, 1],
-                          [1, 0, 0, 1j],
-                          [0, 1, 1j, 0]],
+        c = rf.Network(f=[1, 3, 5, 6],
+                       s=[[[0, 1j, 1, 0], [1j, 0, 0, 1], [1, 0, 0, 1j], [0, 1, 1j, 0]],
+                          [[0, 0.8j, 0.7, 0], [0.8j, 0, 0, 0.7], [0.7, 0, 0, 0.8j], [0, 0.7, 0.8j, 0]],
+                          [[0, 0.3j, 1, 0], [0.3j, 0, 0, 1], [1, 0, 0, 0.3j], [0, 1, 0.3j, 0]],
+                          [[0, -1j, -1, 0], [-1j, 0, 0, -1], [-1, 0, 0, -1j], [0, -1, -1j, 0]]],
                        z0=50)
         self.assertTrue(c.is_symmetric(n=2), 'This quadrature hybrid coupler is symmetric.')
         self.assertTrue(c.is_symmetric(n=2, port_order={0: 1, 1: 2, 2: 3, 3: 0}),
