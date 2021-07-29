@@ -9,6 +9,9 @@ constants (:mod:`skrf.constants`)
 
 This module contains constants, numerical approximations, and unit conversions
 
+.. data:: c
+
+    Velocity of light constant (from scipy)
 
 .. data:: INF
 

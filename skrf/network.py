@@ -200,7 +200,7 @@ class Network(object):
 
     For instructions on how to create Network see  :func:`__init__`.
 
-    A n-port network may be defined by three quantities,
+    A n-port network may be defined by three quantities:
      * network parameter matrix (s, z, or y-matrix)
      * port characteristic impedance matrix
      * frequency information
@@ -275,11 +275,16 @@ class Network(object):
     (Attributes) are given below
 
     References
-    ------------
+    ----------
     .. [#] http://en.wikipedia.org/wiki/Two-port_network
+
     """
 
     PRIMARY_PROPERTIES = ['s', 'z', 'y', 'a', 'h']
+    '''
+    Primary Network Properties list like 's', 'z', 'y', etc.
+    '''
+
     COMPONENT_FUNC_DICT = {
         're': npy.real,
         'im': npy.imag,
@@ -302,6 +307,10 @@ class Network(object):
         'time_impulse': None,
         'time_step': None,
     }
+    '''
+    Component functions like 're', 'im', 'mag', 'db', etc.
+    '''
+
     # provides y-axis labels to the plotting functions
     Y_LABEL_DICT = {
         're': 'Real Part',
@@ -326,8 +335,14 @@ class Network(object):
         'time_impulse': 'Magnitude',
         'time_step': 'Magnitude',
     }
+    '''
+    y-axis labels to the plotting functions
+    '''
 
     noise_interp_kind = 'linear'
+    '''
+    Default interpolation method.
+    '''
 
     # CONSTRUCTOR
     def __init__(self, file: str = None, name : str = None, comments: str = None,
@@ -340,7 +355,7 @@ class Network(object):
         is created.
 
         Parameters
-        ------------
+        ----------
 
         file : str or file-object
             file to load information from. supported formats are:
@@ -362,7 +377,7 @@ class Network(object):
             Network, such as `s`, `f` and `z0`.
 
         Examples
-        ------------
+        --------
         From a touchstone
 
         >>> n = rf.Network('ntwk1.s2p')
@@ -382,7 +397,7 @@ class Network(object):
         >>> n = rf.Network(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
 
         See Also
-        -----------
+        --------
         from_z : init from impedance values
         read : read a network from a file
         write : write a network to a file, using pickle
@@ -457,8 +472,8 @@ class Network(object):
         '''
         Create a Network from its Z-parameters
 
-        Parameters:
-        ------------
+        Parameters
+        ----------
         z : Numpy array
             Impedance matrix. Should be of shape fxnxn,
             where f is frequency axis and n is number of ports
@@ -467,12 +482,12 @@ class Network(object):
             Network, `f` and `z0`.
 
         Return
-        --------
+        ------
         ntw : :class:`Network`
             Created Network
 
         Example
-        --------
+        -------
         >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
         >>> z = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port z-matrix: shape=(4,2,2)
         >>> ntw = rf.Network.from_z(z, f=f)
@@ -507,7 +522,7 @@ class Network(object):
         :return: skrf.Network: De-embedded network
 
         See Also
-        ----------
+        --------
         inv : inverse s-parameters
         """
 
@@ -672,7 +687,7 @@ class Network(object):
         Slices a Network object based on an index, or human readable string
 
         Parameters
-        -----------
+        ----------
         key : str, or slice
             if slice; like [2-10] then it is interpreted as the index of
             the frequency.
@@ -688,14 +703,14 @@ class Network(object):
             network based on matrix notation (indices starts at 1 not 0)
 
         Returns
-        -----------
+        -------
             skrf.Network :
                 interpolated in frequency if single dimension provided
                 OR
                 1-port network if multi-dimensional index provided
 
         Examples
-        -----------
+        --------
         >>> from skrf.data import ring_slot
         >>> a = ring_slot['80-90ghz']
         >>> a.plot_s_db()
@@ -854,12 +869,12 @@ class Network(object):
 
 
         Returns
-        ---------
+        -------
         s : complex :class:`numpy.ndarray` of shape `fxnxn`
             The scattering parameter matrix.
 
         See Also
-        ------------
+        --------
         s
         y
         z
@@ -867,7 +882,7 @@ class Network(object):
         a
 
         References
-        ------------
+        ----------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters
         """
         return self._s
@@ -908,12 +923,12 @@ class Network(object):
 
 
         Returns
-        ---------
+        -------
         h : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the hybrid parameter matrix.
 
         See Also
-        ------------
+        --------
         s
         y
         z
@@ -922,7 +937,7 @@ class Network(object):
         h
 
         References
-        ------------
+        ----------
         .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
         """
         return s2h(self.s, self.z0)
@@ -943,12 +958,12 @@ class Network(object):
 
 
         Returns
-        ---------
+        -------
         y : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the admittance parameter matrix.
 
         See Also
-        ------------
+        --------
         s
         y
         z
@@ -956,7 +971,7 @@ class Network(object):
         a
 
         References
-        ------------
+        ----------
         .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
         """
         return s2y(self._s, self.z0, s_def=self.s_def)
@@ -977,12 +992,12 @@ class Network(object):
 
 
         Returns
-        ---------
+        -------
         z : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the Impedance parameter matrix.
 
         See Also
-        ------------
+        --------
         s
         y
         z
@@ -990,7 +1005,7 @@ class Network(object):
         a
 
         References
-        ------------
+        ----------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
         return s2z(self._s, self.z0, s_def=self.s_def)
@@ -1013,13 +1028,13 @@ class Network(object):
         only defined for a 2-port Network.
 
         Returns
-        --------
+        -------
         t : complex numpy.ndarray of shape `fx2x2`
                 t-parameters, aka scattering transfer parameters
 
 
         See Also
-        ------------
+        --------
         s
         y
         z
@@ -1046,12 +1061,12 @@ class Network(object):
 
 
         Returns
-        ---------
+        -------
         s_inv : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the inverted scattering parameter matrix.
 
         See Also
-        ------------
+        --------
         s
         y
         z
@@ -1076,12 +1091,12 @@ class Network(object):
 
 
         Returns
-        ---------
+        -------
         abcd : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the Impedance parameter matrix.
 
         See Also
-        ------------
+        --------
         s
         y
         z
@@ -1090,7 +1105,7 @@ class Network(object):
         abcd
 
         References
-        ------------
+        ----------
         .. [#] http://en.wikipedia.org/wiki/impedance_parameters
         """
         return s2a(self.s, self.z0)
@@ -1113,7 +1128,7 @@ class Network(object):
         be set with just number as well.
 
         Returns
-        --------
+        -------
         z0 : :class:`numpy.ndarray` of shape fxn
                 characteristic impedance for network
 
@@ -1184,13 +1199,13 @@ class Network(object):
         as start, stop, etc.
 
         Returns
-        --------
+        -------
         frequency :  :class:`~skrf.frequency.Frequency` object
                 frequency information for the network.
 
 
         See Also
-        ---------
+        --------
         f : property holding frequency vector in Hz
         change_frequency : updates frequency property, and
             interpolates s-parameters if needed
@@ -1225,12 +1240,12 @@ class Network(object):
         It is defined such that the inverse of the s-matrix cascaded with itself is a unity scattering transfer parameter (T) matrix.
 
         Returns
-        ---------
+        -------
         inv : a :class:`Network` object
                 a :class:`Network` object with 'inverse' s-parameters.
 
         See Also
-        ----------
+        --------
                 inv : function which implements the inverse s-matrix
         """
         if self.number_of_ports < 2:
@@ -1246,12 +1261,12 @@ class Network(object):
         the frequency vector for the network, in Hz.
 
         Returns
-        --------
+        -------
         f : :class:`numpy.ndarray`
                 frequency vector in Hz
 
         See Also
-        ---------
+        --------
                 frequency : frequency property that holds all frequency
                         information
         """
@@ -1372,15 +1387,6 @@ class Network(object):
           nfdb = 10.*npy.log10(self.nf( g.z[:,0,0]))
       return nfdb
 
-    '''
-    newnetw.nfdb_gs(complex(.7,-0.2))
-    gs = complex(.7,-0.2)
-    gs = np.arange(0,0.9,0.1)
-    self = newnetw
-    self.
-
-    '''
-
     @property
     def rn(self) -> npy.ndarray:
       """
@@ -1395,7 +1401,7 @@ class Network(object):
         the number of ports the network has.
 
         Returns
-        --------
+        -------
         number_of_ports : number
                 the number of ports the network has.
 
@@ -1411,7 +1417,7 @@ class Network(object):
         the number of ports the network has.
 
         Returns
-        --------
+        -------
         number_of_ports : number
                 the number of ports the network has.
 
@@ -1423,11 +1429,24 @@ class Network(object):
         """
         Returns a list of tuples, for each port index pair
 
-        A convenience function for the common task fo iterating over
+        A convenience function for the common task for iterating over
         all s-parameters index pairs
 
-        This just calls:
-        `[(y,x) for x in range(self.nports) for y in range(self.nports)]`
+        This just calls::
+
+            [(y,x) for x in range(self.nports) for y in range(self.nports)]
+
+
+        Returns
+        -------
+        ports_ind : list of tuples
+            list of all port index tuples.
+
+        Example
+        -------
+        >>> ntwk = skrf.data.ring_slot
+        >>> for (idx_i, idx_j) in ntwk.port_tuples: print(idx_i, idx_j)
+
         """
         return [(y, x) for x in range(self.nports) for y in range(self.nports)]
 
@@ -1459,11 +1478,11 @@ class Network(object):
         is dot product.
 
         Returns
-        ---------
+        -------
         passivity : :class:`numpy.ndarray` of shape fxnxn
 
         References
-        ------------
+        ----------
         .. [#] http://en.wikipedia.org/wiki/Scattering_parameters#Lossless_networks
         """
         return passivity(self.s)
@@ -1482,13 +1501,11 @@ class Network(object):
 
                 S - S^T
 
-
-
         where :math:`T` is transpose of S
 
         Returns
-        ---------
-        reciprocity : :class:`numpy.ndarray` of shape fxnxn
+        -------
+        reciprocity : :class:`numpy.ndarray` of shape `fxnxn`
 
         """
         return reciprocity(self.s)
@@ -1505,6 +1522,10 @@ class Network(object):
         for the two port case, this evaluates to the distance of the
         determinant of the wave-cascading matrix from unity.
 
+        Returns
+        -------
+        reciprocity : :class:`numpy.ndarray` of shape `fxnxn`
+
         """
         return abs(1 - self.s / self.s.swapaxes(1, 2))
 
@@ -1514,11 +1535,17 @@ class Network(object):
         Stability factor
 
         .. math::
+
                 K = ( 1 - |S_{11}|^2 - |S_{22}|^2 + |D|^2 ) / (2 * |S_{12}| * |S_{21}|)
+
+            with
+
                 D = S_{11} S_{22} - S_{12} S_{21}
 
         Returns
-        ---------
+        -------
+        K : :class:`numpy.ndarray` of shape `f`
+        
         """
         assert self.nports == 2, "Stability factor K is only defined for two ports"
 
@@ -1535,11 +1562,16 @@ class Network(object):
         Usually used as a measure of dispersion (or distortion).
 
         Defined as the derivative of the unwrapped s-parameter phase
-        (in rad) with respect to the frequency.
+        (in rad) with respect to the frequency::
 
-        -d(self.s_rad_unwrap)/d(self.frequency.w)
+            -d(self.s_rad_unwrap)/d(self.frequency.w)
 
+        Returns
+        -------
+        gd : :class:`numpy.ndarray` of shape `xnxn`
 
+        References
+        ----------
         https://en.wikipedia.org/wiki/Group_delay_and_phase_delay
         """
         gd = self.s * 0  # quick way to make a new array of correct shape
@@ -1555,17 +1587,29 @@ class Network(object):
 
     ## NETWORK CLASSIFIERs
     def is_reciprocal(self, tol: float = mf.ALMOST_ZERO) -> bool:
-        '''
-        test for reciprocity
-        '''
+        """
+        Test for reciprocity
+
+        Parameters
+        ----------
+        tol : float, optional
+            Numerical tolerance. The default is :data:`skrf.mathFunctions.ALMOST_ZERO`.
+
+        Returns
+        -------
+        bool : boolean
+        
+        See Also
+        --------
+        reciprocity
+
+        """
         return npy.allclose(reciprocity(self.s), npy.zeros_like(self.s), atol=tol)
 
     def is_symmetric(self, n: int = 1, port_order: Dict[int, int] = {}, tol: float = mf.ALMOST_ZERO) -> bool:
         """
         Returns whether the 2N-port network has n-th order reflection symmetry by checking
         :math:`S_{i,i} == S_{j,j}` for appropriate pair(s) of :math:`i` and :math:`j`.
-
-        https://en.wikipedia.org/wiki/Two-port_network#Scattering_parameters_(S-parameters)
 
         Parameters
         ----------
@@ -1574,11 +1618,11 @@ class Network(object):
         port_order : dict[int, int]
             Renumbering of zero-indexed ports before testing
         tol : float
-            Tolerance in numeric comparisons
+            Tolerance in numeric comparisons. Default is :data:`skrf.mathFunctions.ALMOST_ZERO`.
 
         Returns
         -------
-        bool
+        bool : boolean
 
         Raises
         ------
@@ -1589,6 +1633,12 @@ class Network(object):
             (4) If port_order is not a valid reindexing of ports
             e.g. specifying x->y but not y->z, specifying x->y twice,
             or using an index outside the range 0 to 2N-1
+
+        References
+        ----------
+
+        https://en.wikipedia.org/wiki/Two-port_network#Scattering_parameters_(S-parameters)
+
         """
 
         nfreqs, ny, nx = self.s.shape  # nfreqs is number of frequencies, and nx, ny both are number of ports (2N)
@@ -1618,9 +1668,19 @@ class Network(object):
         return True
 
     def is_passive(self, tol: float = mf.ALMOST_ZERO) -> bool:
-        '''
-        test for passivity
-        '''
+        """
+        Test for passivity
+
+        Parameters
+        ----------
+        tol : float, optional
+            Numerical tolerance. The default is :data:`skrf.mathFunctions.ALMOST_ZERO`
+
+        Returns
+        -------
+        bool : boolean
+
+        """
         try:
             M = npy.square(self.passivity)
         except ValueError:
@@ -1635,13 +1695,29 @@ class Network(object):
         return True
 
     def is_lossless(self, tol: float = mf.ALMOST_ZERO) -> bool:
-        '''
-        test for losslessness
+        """
+        Test for losslessness
+        
+        [S] is lossless if [S] is unitary, i.e. if :math:`([S][S]^* = [1])`        
 
-        [S] is lossless iff [S] is unitary ([S][S]* = [1])
 
+        Parameters
+        ----------
+        tol : float, optional
+            Numerical tolerance. The default is :data:`skrf.mathFunctions.ALMOST_ZERO`
+
+        Returns
+        -------
+        bool : boolean
+        
+        See Also
+        --------
+        is_passive, is_symmetric, is_reciprocal
+        
+        References
+        ----------
         https://en.wikipedia.org/wiki/Unitary_matrix
-        '''
+        """
         for f_idx in range(len(self.s)):
             mat = npy.matrix(self.s[f_idx, :, :])
             if not mf.is_unitary(mat, tol=tol):
@@ -1650,12 +1726,18 @@ class Network(object):
 
     ## CLASS METHODS
     def copy(self) -> 'Network':
-        '''
+        """
         Returns a copy of this Network
 
         Needed to allow pass-by-value for a Network instead of
-        pass-by-reference
-        '''
+        pass-by-reference        
+
+        Returns
+        -------
+        ntwk : :class:`Network`
+            Copy of the Network
+
+        """
         ntwk = Network(s=self.s,
                        frequency=self.frequency.copy(),
                        z0=self.z0, s_def=self.s_def
@@ -1683,12 +1765,12 @@ class Network(object):
         Uses copy, so that the data is passed-by-value, not reference
 
         Parameters
-        -----------
+        ----------
         other : Network
             the network to copy the contents of
 
         Examples
-        -----------
+        --------
         >>> a = rf.N()
         >>> b = rf.N('my_file.s2p')
         >>> a.copy_from (b)
@@ -1707,6 +1789,12 @@ class Network(object):
         -----------
         key : numpy array
             the array indices of the frequencies to take
+
+        Returns
+        -------
+        ntwk : :class:`Network`
+            Copy of the frequency subset of the Network            
+
         '''
         ntwk = Network(s=self.s[key,:],
                        frequency=self.frequency[key].copy(),
@@ -1840,7 +1928,7 @@ class Network(object):
     @classmethod
     def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> 'Network':
         """
-        read a Network from a touchstone file in a ziparchive
+        read a Network from a Touchstone file in a ziparchive
 
         Parameters
         ----------
@@ -1848,6 +1936,11 @@ class Network(object):
             the full path filename of the touchstone file
         archive : zipfile.ZipFile
             the opened zip archive
+
+        Returns
+        -------
+        ntwk : :class:`Network`
+            Network from the Touchstone file
 
         """
         with archive.open(filename) as touchstone_file:
@@ -2514,7 +2607,7 @@ class Network(object):
         coords : str
             Coordinate system to use for interpolation: 'cart' or 'polar'. 
             'cart' is cartesian is Re/Im, 'polar' is unwrapped phase/mag.
-             Passed to :func:`Network.interpolate`
+            Passed to :func:`Network.interpolate`
 
         Returns
         -----------
@@ -2694,12 +2787,12 @@ class Network(object):
         In case the network is 2n-port and n > 1, 'second' numbering scheme is
         assumed to be consistent with the ** cascade operator::
 
-         +--------+                 +--------+
-       0-|0      n|-n             0-|n      0|-n
-       1-|1    n+1|-n+1    flip   1-|n+1    1|-n+1
-        ...      ...       =>       ...      ...
-     n-1-|n-1 2n-1|-2n-1        n-1-|2n-1 n-1|-2n-1
-         +--------+                 +--------+
+                 +--------+                 +--------+
+               0-|0      n|-n             0-|n      0|-n
+               1-|1    n+1|-n+1    flip   1-|n+1    1|-n+1
+                ...      ...       =>       ...      ...
+             n-1-|n-1 2n-1|-2n-1        n-1-|2n-1 n-1|-2n-1
+                 +--------+                 +--------+
 
         See Also
         --------
@@ -3023,7 +3116,7 @@ class Network(object):
         standard deviation for magnitude and phase
 
         Parameters
-        ------------
+        ----------
         mag_dev : number
                 standard deviation of magnitude
         phase_dev : number
@@ -3044,7 +3137,7 @@ class Network(object):
         given standard deviations for magnitude and phase
 
         Parameters
-        ------------
+        ----------
         mag_dev : number
                 standard deviation of magnitude
         phase_dev : number
@@ -3086,7 +3179,7 @@ class Network(object):
         This is useful to work-around numerical bugs.
 
         Parameters
-        ------------
+        ----------
         amount : float
             amount to add to s parameters
 
@@ -3096,7 +3189,7 @@ class Network(object):
             Resulting renumbered Network
 
         Notes
-        -----------
+        -----
         This function is::
             
             self.s = self.s + amount
@@ -3114,7 +3207,7 @@ class Network(object):
         `func(ntwkA.s[f,:,:], *args, **kwargs)`
 
         Parameters
-        ------------
+        ----------
         func : func
             function to apply to s-parameters, on a single-frequency slice.
             (ie func(ntwkA.s[0,:,:], *args, **kwargs)
@@ -3131,7 +3224,7 @@ class Network(object):
             Resulting renumbered Network
 
         Examples
-        -----------
+        --------
         >>> from numpy.linalg import inv
         >>> ntwk.func_on_parameter(inv)
         '''
@@ -3187,7 +3280,7 @@ class Network(object):
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
 
         Parameters
-        ------------
+        ----------
 
         p : int
             number of differential ports
@@ -3240,7 +3333,7 @@ class Network(object):
             Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
 
         Parameters
-        ------------
+        ----------
 
         p : int, number of differential ports
         z0_mm: f x n x n matrix of single ended impedances, optional
@@ -3345,7 +3438,7 @@ class Network(object):
         Y-axis is the reflection coefficient.
 
         Parameters
-        -----------
+        ----------
         window : string
                 FFT windowing function.
         n : int
@@ -3362,14 +3455,14 @@ class Network(object):
                 frequency vector begins from 0.
 
         Returns
-        ---------
+        -------
         t : class:`numpy.ndarray`
             Time vector
         y : class:`numpy.ndarray`
             Impulse response
 
         See Also
-        -----------
+        --------
             step_response
             extrapolate_to_dc
         """
@@ -3406,7 +3499,7 @@ class Network(object):
         Y-axis is the reflection coefficient.
 
         Parameters
-        -----------
+        ----------
         window : string
                 FFT windowing function.
         n : int
@@ -3418,7 +3511,7 @@ class Network(object):
                 Adding more zeros improves accuracy of peaks.
 
         Returns
-        ---------
+        -------
         t : class:`numpy.ndarray`
             Time vector
         y : class:`numpy.ndarray`
@@ -3433,7 +3526,7 @@ class Network(object):
             If used with non equidistant sampled frequency vector
 
         See Also
-        -----------
+        --------
             impulse_response
             extrapolate_to_dc
         """
@@ -3473,12 +3566,12 @@ class Network(object):
             forward wave complex amplitude (pseudowave formulation [#]_)
 
         Returns
-        ---------
+        -------
         s_act : complex array of shape (n_freqs, n_ports)
             active S-parameters for the excitation a
 
         See Also
-        -----------
+        --------
             z_active : active Z-parameters
             y_active : active Y-parameters
             vswr_active : active VSWR
@@ -3511,12 +3604,12 @@ class Network(object):
             forward wave complex amplitude
 
         Returns
-        ----------
+        -------
         z_act : complex array of shape (nfreqs, nports)
             active Z-parameters for the excitation a
 
         See Also
-        -----------
+        --------
             s_active : active S-parameters
             y_active : active Y-parameters
             vswr_active : active VSWR
@@ -3542,12 +3635,12 @@ class Network(object):
             forward wave complex amplitude
 
         Returns
-        ----------
+        -------
         y_act : complex array of shape (nfreqs, nports)
             active Y-parameters for the excitation a
 
         See Also
-        -----------
+        --------
             s_active : active S-parameters
             z_active : active Z-parameters
             vswr_active : active VSWR
@@ -3572,12 +3665,12 @@ class Network(object):
             forward wave complex amplitude
 
         Returns
-        ----------
+        -------
         vswr_act : complex array of shape (nfreqs, nports)
             active VSWR for the excitation a
 
         See Also
-        -----------
+        --------
             s_active : active S-parameters
             z_active : active Z-parameters
             y_active : active Y-parameters
@@ -3603,7 +3696,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     network will contain only the overlapping frequencies.
 
     Parameters
-    -----------
+    ----------
     ntwkA : :class:`Network`
             network 'A'
     k : int
@@ -3617,25 +3710,25 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
 
 
     Returns
-    ---------
+    -------
     ntwkC : :class:`Network`
             new network of rank (ntwkA.nports + ntwkB.nports - 2*num)
 
 
     See Also
-    -----------
+    --------
             connect_s : actual  S-parameter connection algorithm.
             innerconnect_s : actual S-parameter connection algorithm.
 
     Notes
-    -------
+    -----
             the effect of mis-matched port impedances is handled by inserting
             a 2-port 'mismatch' network between the two connected ports.
             This mismatch Network is calculated with the
             :func:`impedance_mismatch` function.
 
     Examples
-    ---------
+    --------
     To implement a *cascade* of two networks
 
     >>> ntwkA = rf.Network('ntwkA.s2p')
@@ -3781,7 +3874,7 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     start from 0. Port impedances **are** taken into account.
 
     Parameters
-    -----------
+    ----------
     ntwkA : :class:`Network`
             network 'A'
     k : int
@@ -3793,17 +3886,17 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
 
 
     Returns
-    ---------
+    -------
     ntwkC : :class:`Network`
             new network of rank (ntwkA.nports + ntwkB.nports - 2)
 
 
     See Also
-    -----------
+    --------
         :mod:`skrf.src`
 
     Notes
-    -------
+    -----
             the effect of mis-matched port impedances is handled by inserting
             a 2-port 'mismatch' network between the two connected ports.
             This mismatch Network is calculated with the
@@ -3860,7 +3953,7 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     from 0.
 
     Parameters
-    -----------
+    ----------
     ntwkA : :class:`Network`
         network 'A'
     k,l : int
@@ -3869,22 +3962,22 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
         number of consecutive ports to connect
 
     Returns
-    ---------
+    -------
     ntwkC : :class:`Network`
         new network of rank (ntwkA.nports - 2*num)
 
     See Also
-    -----------
+    --------
         connect_s : actual  S-parameter connection algorithm.
         innerconnect_s : actual S-parameter connection algorithm.
 
     Notes
-    -------
+    -----
         a 2-port 'mismatch' network is inserted between the connected ports
         if their impedances are not equal.
 
     Examples
-    ---------
+    --------
     To connect ports '0' and port '1' on ntwkA
 
     >>> ntwkA = rf.Network('ntwkA.s3p')
@@ -3935,7 +4028,7 @@ def cascade(ntwkA: Network, ntwkB: Network) -> Network:
     Use `Network.renumber` to change port order if needed.
 
     Notes
-    ------
+    -----
     connection diagram::
 
               A                B
@@ -3948,19 +4041,19 @@ def cascade(ntwkA: Network, ntwkB: Network) -> Network:
            +---------+   +---------+
 
     Parameters
-    -----------
+    ----------
     ntwkA : :class:`Network`
         network `ntwkA`
     ntwkB : :class:`Network`
         network `ntwkB`
 
     Returns
-    --------
+    -------
     C : :class:`Network`
         the resultant network of ntwkA cascaded with ntwkB
 
     See Also
-    ---------
+    --------
     connect : connects two Networks together at arbitrary ports.
     Network.renumber : changes the port order of a network
 
@@ -3996,12 +4089,12 @@ def cascade_list(l: Sequence[Network]) -> Network:
     all networks must have same frequency
 
     Parameters
-    --------------
+    ----------
     l : list-like
         (ordered) list of networks
 
     Returns
-    ----------
+    -------
     out : 2-port Network
         the results of cascading all networks in the list `l`
 
@@ -4018,19 +4111,19 @@ def de_embed(ntwkA: Network, ntwkB: Network) -> Network:
     function.
 
     Parameters
-    -----------
+    ----------
     ntwkA : :class:`Network`
             network `ntwkA`
     ntwkB : :class:`Network`
             network `ntwkB`
 
     Returns
-    --------
+    -------
     C : Network
             the resultant network of ntwkB de-embedded from ntwkA
 
     See Also
-    ---------
+    --------
     connect : connects two Networks together at arbitrary ports.
 
     '''
@@ -4046,7 +4139,7 @@ def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
     into a single network.
 
     Parameters
-    ------------
+    ----------
     ntwkA, ntwkB : :class:`Network` objects
         Networks to stitch together
 
@@ -4054,12 +4147,12 @@ def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
         passed to :class:`Network` constructor, for output network
 
     Returns
-    ---------
+    -------
     ntwkC : :class:`Network`
         result of stitching the networks `ntwkA` and `ntwkB` together
 
     Examples
-    ----------
+    --------
     >>> from skrf.data import wr2p2_line, wr1p5_line
     >>> rf.stitch(wr2p2_line, wr1p5_line)
     2-Port Network: 'wr2p2,line',  330-750 GHz, 402 pts, z0=[ 50.+0.j  50.+0.j]
@@ -4086,14 +4179,14 @@ def overlap(ntwkA: Network, ntwkB: Network) -> Tuple[Network, Network]:
     frequencies.
 
     Parameters
-    ------------
+    ----------
     ntwkA : :class:`Network`
         a ntwk which overlaps `ntwkB`. (the `dominant` network)
     ntwkB : :class:`Network`
         a ntwk which overlaps `ntwkA`.
 
     Returns
-    -----------
+    -------
     ntwkA_new : :class:`Network`
         part of `ntwkA` that overlapped `ntwkB`
     ntwkB_new : :class:`Network`
@@ -4101,7 +4194,7 @@ def overlap(ntwkA: Network, ntwkB: Network) -> Tuple[Network, Network]:
 
 
     See Also
-    ------------
+    --------
 
     :func:`skrf.frequency.overlap_freq`
 
@@ -4118,7 +4211,7 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
 
 
     Notes
-    -------
+    -----
     The `port_order` ='first', means front-to-back, while
     `port_order`='second' means left-to-right. So, for example, when
     concatenating two 2-networks, `A` and `B`, the ports are ordered as follows:
@@ -4135,13 +4228,13 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
     use `Network.renumber` to change port ordering.
 
     Parameters
-    -----------
+    ----------
     ntwk_list  : list of skrf.Networks
         ntwks to concatenate
     port_order : ['first', 'second']
 
     Examples
-    -----------
+    --------
 
     >>>concat([ntwkA,ntwkB])
     >>>concat([ntwkA,ntwkB,ntwkC,ntwkD], port_order='second')
@@ -4208,22 +4301,22 @@ def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network
 
 
     Parameters
-    -----------
+    ----------
     list_of_networks : list of :class:`Network` objects
         the list of networks to average
 
     Returns
-    ---------
+    -------
     ntwk : :class:`Network`
             the resultant averaged Network
 
     Notes
-    ------
+    -----
     This same function can be accomplished with properties of a
     :class:`~skrf.networkset.NetworkSet` class.
 
     Examples
-    ---------
+    --------
 
     >>> ntwk_list = [rf.Network('myntwk.s1p'), rf.Network('myntwk2.s1p')]
     >>> mean_ntwk = rf.average(ntwk_list)
@@ -4252,19 +4345,19 @@ def stdev(list_of_networks: Sequence[Network], attr: str = 's') -> npy.ndarray:
 
 
     Parameters
-    -----------
+    ----------
     list_of_networks : list of :class:`Network` objects
         the list of networks to average
     attr : str, optional
         name of attribute to average
 
     Returns
-    ---------
+    -------
     stdev_array : ndarray
     An array of standard deviation values computed after combining the s-parameter values of the given networks.
 
     Examples
-    ---------
+    --------
 
     >>> ntwk_list = [rf.Network('myntwk.s1p'), rf.Network('myntwk2.s1p')]
     >>> ntwk_stdev = rf.stdev(ntwk_list)
@@ -4306,7 +4399,7 @@ def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
 
 
         Notes
-        --------
+        -----
         In other words, given
 
         .. math::
@@ -4325,7 +4418,7 @@ def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
             a_{12}^2 = b_{21}(1-\\frac{b_{11}b_{22}}{(1+b_{12})^2}
 
         Parameters
-        ------------
+        ----------
         ntwk : :class:`Network`
             a 2-port  that is equal to two identical two-ports in cascade
 
@@ -4368,13 +4461,14 @@ def evenodd2delta(n: Network, z0: NumberLike = 50, renormalize: bool = True,
     doublehalf: Bool
         convert even/odd impedances to double/half their values. this is
         required if data comes from hfss waveports .
+
     Returns
-    ----------
+    -------
     out: skrf.Network
         same network as `n` but with s-matrix in normal delta basis
 
     See Also
-    ----------
+    --------
     Network.se2gmm, Network.gmm2se
 
     '''
@@ -4420,7 +4514,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     of functions such as n_twoports_2_nport.
 
     Parameters
-    -----------
+    ----------
     ntwk : :class:`Network` object
         Network to split into a subnetwork
     ports : list of int
@@ -4431,7 +4525,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
         A value of `1`, assumes that a s21 = ntwk.s[:,1,0]. Default is 1.
 
     Returns
-    --------
+    -------
     subntwk : :class:`Network` object
         Resulting subnetwork from the given ports
 
@@ -4440,7 +4534,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     Network.subnetwork, n_twoports_2_nport
 
     Example
-    --------
+    -------
 
     >>> tee = rf.data.tee  # 3 port Network
     >>> tee12 = rf.subnetwork(tee, [0, 1])  # 2 port Network from ports 1 & 2, port 3 matched
@@ -4462,14 +4556,14 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
     Builds a N-port Network from list of N one-ports
 
     Parameters
-    -----------
+    ----------
     ntwk_list : list of :class:`Network` objects
         must follow left-right, top-bottom order, ie, s11,s12,s21,s22
     \*args, \*\*kwargs :
         passed to :func:`Network.__init__` for the N-port
 
     Returns
-    ----------
+    -------
     nport : n-port :class:`Network`
         result
     '''
@@ -4500,7 +4594,7 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
     dont fully specify the entire s-matrix of the resultant ntwk.
 
     Parameters
-    -----------
+    ----------
     ntwk_list : list of :class:`Network` objects
         the names must contain the port index, ie 'p12' or 'p43',
         ie. define the Network.name property of the :class:`Network` object.
@@ -4512,7 +4606,7 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
         passed to :func:`Network.__init__` for the N-port
 
     Returns
-    ----------
+    -------
     nport : n-port :class:`Network`
         result
 
@@ -4548,7 +4642,7 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
     Builds a 2-port Network from list of four 1-ports
 
     Parameters
-    -----------
+    ----------
     s11 : one-port :class:`Network`
         s11
     s12 : one-port :class:`Network`
@@ -4561,12 +4655,12 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
         passed to :func:`Network.__init__` for the twoport
 
     Returns
-    ----------
+    -------
     twoport : two-port :class:`Network`
         result
 
     See Also
-    -----------
+    --------
     n_oneports_2_nport
     three_twoports_2_threeport
     '''
@@ -4583,7 +4677,7 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
     a three port device on a 2-port VNA.
 
     Notes
-    ---------
+    -----
     if `auto_order` is False,  ntwk_triplet must be of port orderings:
          [p12, p13, p23]
 
@@ -4592,7 +4686,7 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
     For example, their names may be like `me12`, `me13`, `me23`
 
     Parameters
-    --------------
+    ----------
     ntwk_triplet : list of 2-port Network objects
         list of three 2-ports. see notes about order.
 
@@ -4605,15 +4699,15 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
         passed to :func:`Network.__init__` for resultant network
 
     Returns
-    ------------
+    -------
     threeport : 3-port Network
 
     See Also
-    -----------
+    --------
     n_oneports_2_nport
 
     Examples
-    -----------
+    --------
     >>> rf.three_twoports_2_threeport(rf.read_all('.').values())
     '''
     raise DeprecationWarning('Use n_twoports_2_nport instead')
@@ -4681,7 +4775,7 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
     :func:`connect` operates on :class:`Network` types.
 
     Parameters
-    -----------
+    ----------
     A : :class:`numpy.ndarray`
             S-parameter matrix of `A`, shape is fxnxn
     k : int
@@ -4698,7 +4792,7 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
 
 
     Notes
-    -------
+    -----
     internally, this function creates a larger composite network
     and calls the  :func:`innerconnect_s` function. see that function for more
     details about the implementation
@@ -4739,7 +4833,7 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
     :class:`Network` types.
 
     Parameters
-    -----------
+    ----------
     A : :class:`numpy.ndarray`
         S-parameter matrix of `A`, shape is fxnxn
     k : int
@@ -4813,7 +4907,7 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
 
     Parameters
-    ------------
+    ----------
     s : complex array-like
         scattering parameters
     z0 : complex array-like or number
@@ -4825,7 +4919,7 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
         Default is 'power'.
 
     Returns
-    ---------
+    -------
     z : complex array-like
         impedance parameters
 
@@ -4898,7 +4992,7 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
     Equations are the inverse of :func:`s2z`.
 
     Parameters
-    ------------
+    ----------
     s : complex array-like
         scattering parameters
     z0 : complex array-like or number
@@ -4910,12 +5004,12 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
         Default is 'power'.
 
     Returns
-    ---------
+    -------
     y : complex array-like
         admittance parameters
 
     See Also
-    ----------
+    --------
     s2z
     s2y
     s2t
@@ -5000,7 +5094,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
     'balanced networks'.
 
     Parameters
-    -----------
+    ----------
     s : :class:`numpy.ndarray` (shape fx2nx2n)
         scattering parameter matrix
 
@@ -5010,7 +5104,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
         scattering transfer parameters (aka wave cascading matrix)
 
     See Also
-    ---------
+    --------
     inv : calculates inverse s-parameters
 
     s2z
@@ -5031,7 +5125,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
     Network.t
 
     References
-    -----------
+    ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     .. [#] Janusz A. Dobrowolski, "Scattering Parameter in RF and Microwave Circuit Analysis and Design",
@@ -5080,7 +5174,7 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
 
 
     Parameters
-    ------------
+    ----------
     z : complex array-like
         impedance parameters
     z0 : complex array-like or number
@@ -5092,7 +5186,7 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
         Default is 'power'.
 
     Returns
-    ---------
+    -------
     s : complex array-like
         scattering parameters
 
@@ -5163,17 +5257,17 @@ def z2y(z: npy.ndarray) -> npy.ndarray:
         y = z^{-1}
 
     Parameters
-    ------------
+    ----------
     z : complex array-like
         impedance parameters
 
     Returns
-    ---------
+    -------
     y : complex array-like
         admittance parameters
 
     See Also
-    ----------
+    --------
     s2z
     s2y
     s2t
@@ -5207,17 +5301,17 @@ def z2t(z: npy.ndarray) -> NoReturn:
 
 
     Parameters
-    ------------
+    ----------
     z : complex array-like or number
         impedance parameters
 
     Returns
-    ---------
+    -------
     s : complex array-like or number
         scattering parameters
 
     See Also
-    ----------
+    --------
     s2z
     s2y
     s2t
@@ -5249,14 +5343,14 @@ def a2s(a: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
     convert abcd parameters to s parameters
 
     Parameters
-    ------------
+    ----------
     a : complex array-like
         abcd parameters
     z0 : complex array-like or number
         port impedances
 
     Returns
-    ---------
+    -------
     s : complex array-like
         abcd parameters
 
@@ -5297,7 +5391,7 @@ def a2z(a: npy.ndarray) -> npy.ndarray:
 
 
     Parameters
-    -----------
+    ----------
     a : :class:`numpy.ndarray` (shape fx2x2)
         abcd parameter matrix
 
@@ -5307,7 +5401,7 @@ def a2z(a: npy.ndarray) -> npy.ndarray:
         impedance parameters
 
     See Also
-    ---------
+    --------
     inv : calculates inverse s-parameters
 
     s2z
@@ -5341,7 +5435,7 @@ def z2a(z: npy.ndarray) -> npy.ndarray:
 
 
     Parameters
-    -----------
+    ----------
     z : :class:`numpy.ndarray` (shape fx2x2)
         impedance parameter matrix
 
@@ -5351,7 +5445,7 @@ def z2a(z: npy.ndarray) -> npy.ndarray:
         scattering transfer parameters (aka wave cascading matrix)
 
     See Also
-    ---------
+    --------
     inv : calculates inverse s-parameters
 
     s2z
@@ -5372,7 +5466,7 @@ def z2a(z: npy.ndarray) -> npy.ndarray:
     Network.t
 
     References
-    -----------
+    ----------
     .. [#] https://en.wikipedia.org/wiki/Two-port_network
     '''
     abcd = npy.array([
@@ -5389,7 +5483,7 @@ def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
     Converts scattering parameters to abcd parameters [#]_ .
 
     Parameters
-    -----------
+    ----------
     s : :class:`numpy.ndarray` (shape `fx2x2`)
         impedance parameter matrix
 
@@ -5402,7 +5496,7 @@ def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
         scattering transfer parameters (aka wave cascading matrix)
 
     References
-    -----------
+    ----------
     .. [#] https://en.wikipedia.org/wiki/Two-port_network   
     
     '''
@@ -5448,7 +5542,7 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
 
 
     Parameters
-    ------------
+    ----------
     y : complex array-like
         admittance parameters
 
@@ -5462,12 +5556,12 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
         Default is 'power'.
 
     Returns
-    ---------
+    -------
     s : complex array-like or number
         scattering parameters
 
     See Also
-    ----------
+    --------
     s2z
     s2y
     s2t
@@ -5550,17 +5644,17 @@ def y2z(y: npy.ndarray) -> npy.ndarray:
         z = y^{-1}
 
     Parameters
-    ------------
+    ----------
     y : complex array-like
         admittance parameters
 
     Returns
-    ---------
+    -------
     z : complex array-like
         impedance parameters
 
     See Also
-    ----------
+    --------
     s2z
     s2y
     s2t
@@ -5594,17 +5688,17 @@ def y2t(y: npy.ndarray) -> NoReturn:
 
 
     Parameters
-    ------------
+    ----------
     y : complex array-like or number
         impedance parameters
 
     Returns
-    ---------
+    -------
     t : complex array-like or number
         scattering parameters
 
     See Also
-    ----------
+    --------
     s2z
     s2y
     s2t
@@ -5640,7 +5734,7 @@ def t2s(t: npy.ndarray) -> npy.ndarray:
     'balanced networks'.
 
     Parameters
-    -----------
+    ----------
     t : :class:`numpy.ndarray` (shape fx2nx2n)
             scattering transfer parameters
 
@@ -5650,7 +5744,7 @@ def t2s(t: npy.ndarray) -> npy.ndarray:
             scattering parameter matrix.
 
     See Also
-    ---------
+    -------
     inv : calculates inverse s-parameters
     s2z
     s2y
@@ -5701,24 +5795,24 @@ def t2s(t: npy.ndarray) -> npy.ndarray:
 
 def t2z(t: npy.ndarray) -> NoReturn:
     '''
-    Not Implemented  Yet
+    Not Implemented Yet
 
     Convert scattering transfer parameters [#]_ to impedance parameters [#]_
 
 
 
     Parameters
-    ------------
+    ----------
     t : complex array-like or number
         impedance parameters
 
     Returns
-    ---------
+    -------
     z : complex array-like or number
         scattering parameters
 
     See Also
-    ----------
+    ---------
     s2z
     s2y
     s2t
@@ -5764,7 +5858,7 @@ def t2y(t: npy.ndarray) -> NoReturn:
         admittance parameters
 
     See Also
-    ----------
+    --------
     s2z
     s2y
     s2t
@@ -6033,7 +6127,7 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
     See the [1]_ and [2]_ for more details.
 
     Parameters
-    ---------------
+    ----------
     s : complex array of shape FxNxN
         s-parameter matrix
 
@@ -6051,7 +6145,7 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
         NB: results are the same for real-valued characteristic impedances.
 
     Notes
-    ------
+    -----
     The impedance renormalization. This just calls ::
 
         z2s(s2z(s,z0 = z_old), z0 = z_new)
@@ -6062,19 +6156,19 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
 
     See Also
     --------
-    Network.renormalize : method of Network  to renormalize s
+    Network.renormalize : method of Network to renormalize s
     fix_z0_shape
-    ssz
+    s2z
     z2s
 
     References
-    -------------
+    ----------
     .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
 
     .. [2] Anritsu Application Note: Arbitrary Impedance, https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
 
     Examples
-    ------------
+    --------
     >>> s = zeros(shape=(101,2,2))
     >>> renormalize_s(s, 50,25)
 
@@ -6094,7 +6188,7 @@ def fix_z0_shape(z0: NumberLike, nfreqs: int, nports: int) -> npy.ndarray:
         npy.shape(z0) == (nfreqs,nports)
 
     Parameters
-    --------------
+    ----------
     z0 : number, array-like
         z0 can be:
         * a number (same at all ports and frequencies)
@@ -6108,12 +6202,12 @@ def fix_z0_shape(z0: NumberLike, nfreqs: int, nports: int) -> npy.ndarray:
         number of ports
 
     Returns
-    ----------
+    -------
     z0 : array of shape ==(nfreqs,nports)
         z0  with the right shape for a nport Network
 
     Examples
-    ----------
+    --------
     For a two-port network with 201 frequency points, possible uses may
     be
 
@@ -6163,7 +6257,7 @@ def inv(s: npy.ndarray) -> npy.ndarray:
     transformed into a scattering parameters matrix.
 
     Parameters
-    -----------
+    ----------
     s : :class:`numpy.ndarray` (shape fx2nx2n)
             scattering parameter matrix.
 
@@ -6173,7 +6267,7 @@ def inv(s: npy.ndarray) -> npy.ndarray:
             inverse scattering parameter matrix.
 
     See Also
-    ---------
+    --------
     t2s : converts scattering transfer parameters to scattering parameters
     s2t : converts scattering parameters to scattering transfer parameters
 
@@ -6205,7 +6299,7 @@ def flip(a: npy.ndarray) -> npy.ndarray:
          +--------+                 +--------+
 
     Parameters
-    -----------
+    ----------
     a : :class:`numpy.ndarray`
             scattering parameter matrix. shape should be should be `2nx2n`, or
             `fx2nx2n`
@@ -6216,7 +6310,7 @@ def flip(a: npy.ndarray) -> npy.ndarray:
             flipped scattering parameter matrix
 
     Note
-    -----
+    ----
         See renumber
     '''
     c = a.copy()
@@ -6297,14 +6391,14 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike) -> npy.ndarray:
     creates a two-port s-matrix for a impedance mis-match
 
     Parameters
-    -----------
+    ----------
     z1 : number or array-like
             complex impedance of port 1
     z2 : number or array-like
             complex impedance of port 2
 
     Returns
-    ---------
+    -------
     s' : 2-port s-matrix for the impedance mis-match
     '''
     gamma = zl_2_Gamma0(z1, z2)
@@ -6335,12 +6429,12 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
             two-port reflective network
 
     Notes
-    -------
+    -----
         The resultant Network is copied from `ntwk1`, so its various
     properties(name, frequency, etc) are inherited from that Network.
 
     Examples
-    ---------
+    --------
     >>> short,open = rf.Network('short.s1p', rf.Network('open.s1p')
     >>> rf.two_port_reflect(short,open)
     '''
@@ -6386,12 +6480,12 @@ def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
         forward wave complex amplitude (pseudowave formulation [#]_)
 
     Returns
-    ---------
+    -------
     s_act : complex array of shape (n_freqs, n_ports)
         active S-parameters for the excitation a
 
     See Also
-    -----------
+    --------
         s2z_active : active Z-parameters
         s2y_active : active Y-parameters
         s2vswr_active : active VSWR
@@ -6437,12 +6531,12 @@ def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
         forward wave complex amplitude
 
     Returns
-    ----------
+    -------
     z_act : complex array of shape (nfreqs, nports)
         active Z-parameters for the excitation a
 
     See Also
-    -----------
+    --------
         s2s_active : active S-parameters
         s2y_active : active Y-parameters
         s2vswr_active : active VSWR
@@ -6483,12 +6577,12 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
         forward wave complex amplitude
 
     Returns
-    ----------
+    -------
     y_act : complex array of shape (nfreqs, nports)
         active Y-parameters for the excitation a
 
     See Also
-    -----------
+    --------
         s2s_active : active S-parameters
         s2z_active : active Z-parameters
         s2vswr_active : active VSWR
@@ -6524,12 +6618,12 @@ def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
         forward wave complex amplitude
 
     Returns
-    ----------
+    -------
     vswr_act : complex array of shape (nfreqs, nports)
         active VSWR for the excitation a
 
     See Also
-    -----------
+    --------
         s2s_active : active S-parameters
         s2z_active : active Z-parameters
         s2y_active : active Y-parameters

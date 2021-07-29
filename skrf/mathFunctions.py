@@ -7,6 +7,15 @@ mathFunctions (:mod:`skrf.mathFunctions`)
 
 Provides commonly used mathematical functions.
 
+Mathematical Constants
+----------------------
+.. autosummary::
+    :toctree: generated/
+    
+    INF
+    ALMOST_ZERO
+    LOG_OF_NEG
+
 Complex Component Conversion
 ---------------------------------
 .. autosummary::
@@ -69,12 +78,21 @@ from scipy.interpolate import interp1d
 
 global LOG_OF_NEG
 LOG_OF_NEG = -100
+'''
+Very low but minus infinity value for numerical purposes.
+'''
 
 global INF
 INF = 1e99
+'''
+High but not infinite value for numerical purposes.
+'''
 
 global ALMOST_ZERO
 ALMOST_ZERO = 1e-12
+'''
+Tiny but not zero value for numerical purposes.
+'''
 
 ## simple conversions
 def complex_2_magnitude(input):
