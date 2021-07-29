@@ -88,7 +88,7 @@ IO
 
     skrf.io.general.read
     skrf.io.general.write
-    skrf.io.general.ntwk_2_spreadsheet
+    skrf.io.general.network_2_spreadsheet
     Network.write
     Network.write_touchstone
     Network.read
@@ -117,6 +117,7 @@ Supporting Functions
     s2y
     s2t
     s2a
+    s2h
     z2s
     z2y
     z2t
@@ -127,6 +128,8 @@ Supporting Functions
     t2s
     t2z
     t2y
+    h2s
+    h2z
     fix_z0_shape
     renormalize_s
     passivity
@@ -196,14 +199,13 @@ if TYPE_CHECKING:
 
 class Network(object):
     """
-    A n-port electrical network [#]_.
+    A n-port electrical network.
 
     For instructions on how to create Network see  :func:`__init__`.
-
-    A n-port network may be defined by three quantities:
-     * network parameter matrix (s, z, or y-matrix)
-     * port characteristic impedance matrix
-     * frequency information
+    A n-port network [#TwoPortWiki]_ may be defined by three quantities
+    * network parameter matrix (s, z, or y-matrix)
+    * port characteristic impedance matrix
+    * frequency information
 
     The :class:`Network` class stores these data structures internally
     in the form of complex :class:`numpy.ndarray`'s. These arrays are not
@@ -249,7 +251,7 @@ class Network(object):
     Different components of the :class:`Network` can be visualized
     through various plotting methods. These methods can be used to plot
     individual elements of the s-matrix or all at once. For more info
-    about plotting see the :doc:`../../tutorials/plotting` tutorial.
+    about plotting see the :doc:`../../tutorials/Plotting` tutorial.
 
     =========================  =============================================
     Method                     Meaning
@@ -274,9 +276,10 @@ class Network(object):
     An exhaustive list of :class:`Network` Methods and Properties
     (Attributes) are given below
 
+
     References
     ----------
-    .. [#] http://en.wikipedia.org/wiki/Two-port_network
+    .. [#TwoPortWiki] http://en.wikipedia.org/wiki/Two-port_network
 
     """
 
@@ -389,12 +392,12 @@ class Network(object):
         Create a blank network, then fill in values
 
         >>> n = rf.Network()
-        >>> freq = rf.Frequency(1,3,3,'ghz')
-        >>> n.frequency, n.s, n.z0 = freq,[1,2,3], [1,2,3]
+        >>> freq = rf.Frequency(1, 3, 3, 'ghz')
+        >>> n.frequency, n.s, n.z0 = freq, [1,2,3], [1,2,3]
 
         Directly from values
 
-        >>> n = rf.Network(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
+        >>> n = rf.Network(f=[1,2,3], s=[1,2,3], z0=[1,2,3])
 
         See Also
         --------
@@ -501,9 +504,17 @@ class Network(object):
     # OPERATORS
     def __pow__(self, other: 'Network') -> 'Network':
         """
-        cascade this network with another network
+        Cascade this network with another network
 
-        See `cascade`
+        Return
+        ------
+        ntw : :class:`Network`
+            Cascaded Network
+
+        See Also
+        --------
+        cascade
+
         """
         # if they pass a number then use power operator
         if isinstance(other, Number):
@@ -520,6 +531,10 @@ class Network(object):
 
         :param other: skrf.Network, list, tuple: Network(s) to de-embed
         :return: skrf.Network: De-embedded network
+
+        Return
+        ------
+        ntw : :class:`Network`
 
         See Also
         --------
@@ -565,6 +580,10 @@ class Network(object):
     def __mul__(self, other:'Network') -> 'Network':
         """
         Element-wise complex multiplication of s-matrix
+
+        Return
+        ------
+        ntw : :class:`Network`
         """
         result = self.copy()
 
@@ -580,6 +599,10 @@ class Network(object):
     def __rmul__(self, other: 'Network') -> 'Network':
         """
         Element-wise complex multiplication of s-matrix
+
+        Return
+        ------
+        ntw : :class:`Network`        
         """
 
         result = self.copy()
@@ -596,6 +619,10 @@ class Network(object):
     def __add__(self, other:'Network') -> 'Network':
         """
         Element-wise complex addition of s-matrix
+
+        Return
+        ------
+        ntw : :class:`Network`        
         """
         result = self.copy()
 
@@ -611,6 +638,10 @@ class Network(object):
     def __radd__(self, other:'Network') -> 'Network':
         """
         Element-wise complex addition of s-matrix
+
+        Return
+        ------
+        ntw : :class:`Network`
         """
         result = self.copy()
 
@@ -641,6 +672,10 @@ class Network(object):
     def __rsub__(self, other:'Network') -> 'Network':
         """
         Element-wise complex subtraction of s-matrix
+
+        Return
+        ------
+        ntw : :class:`Network`
         """
         result = self.copy()
 
@@ -659,6 +694,10 @@ class Network(object):
     def __div__(self, other: 'Network') -> 'Network':
         """
         Element-wise complex multiplication of s-matrix
+
+        Return
+        ------
+        ntw : :class:`Network`
         """
         result = self.copy()
 
@@ -1972,7 +2011,7 @@ class Network(object):
             return the file_string rather than write to a file
         to_archive : zipfile.Zipfile
             opened ZipFile object to place touchstone file in
-        form : 'db','ma','ri'
+        form : string
             format to write data:
             'db': db, deg. 'ma': mag, deg. 'ri': real, imag.
         format_spec_A : string, optional
@@ -1987,14 +2026,17 @@ class Network(object):
             Any valid format specifying string as given by https://docs.python.org/3/library/string.html#format-string-syntax
             This specifies the formatting in the resulting touchstone file for the frequency.
 
-        Notes
-        -------
-        format supported at the moment are,
-                [Hz/kHz/MHz/GHz] S [DB/MA/RI]
-        Frequency unit can be changed by setting Network.frequency.unit property
 
-        The functionality of this function should take place in the
-        :class:`~skrf.touchstone.touchstone` class.
+        .. note::
+
+            format supported at the moment are [Hz/kHz/MHz/GHz] S [DB/MA/RI]
+            Frequency unit can be changed by setting Network.frequency.unit property
+
+
+        .. note::
+
+            The functionality of this function should take place in the
+            :class:`~skrf.io.touchstone.Touchstone` class.
 
         """
         # according to Touchstone 2.0 spec
@@ -3037,7 +3079,7 @@ class Network(object):
         When using time domain through :attr:`s_time_db`,
         or similar properties, the spectrum is usually windowed,
         before the IFFT is taken. This is done to
-        compensate for the band-pass nature of a spectrum [1]_ .
+        compensate for the band-pass nature of a spectrum [#]_ .
 
         This function calls :func:`scipy.signal.get_window` which gives
         more details about the windowing.
@@ -3070,7 +3112,7 @@ class Network(object):
 
         References
         -------------
-        .. [1] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
+        .. [#] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
 
         '''
 
@@ -3204,13 +3246,13 @@ class Network(object):
 
         This is useful for functions that can only operate on 2d arrays,
         like numpy.linalg.inv. This loops over f and calls
-        `func(ntwkA.s[f,:,:], *args, **kwargs)`
+        `func(ntwkA.s[f,:,:], \*args, \*\*kwargs)`
 
         Parameters
         ----------
         func : func
             function to apply to s-parameters, on a single-frequency slice.
-            (ie func(ntwkA.s[0,:,:], *args, **kwargs)
+            (ie `func(ntwkA.s[0,:,:], \*args, \*\*kwargs)`
         attr: string
             Name of the parameter to operate on. Ex: 's', 'z', etc. 
             Default is 's'.
@@ -3274,44 +3316,54 @@ class Network(object):
     # TODO: automated test cases
     def se2gmm(self, p: int, z0_mm: npy.ndarray = None) -> None:
         '''
-        Transform network from single ended parameters to generalized mixed mode parameters [1]
+        Transform network from single ended parameters to generalized mixed mode parameters [#]_
 
-        [1] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
-            Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+        .. warning::
+            This is not fully tested, and should be considered as experimental                                                                                             
 
         Parameters
         ----------
 
         p : int
             number of differential ports
-        z0_mm: f x n x n matrix of mixed mode impedances, optional
+        z0_mm : Numpy array 
+            `f x n x n` matrix of mixed mode impedances, optional
             if input is None, 100 Ohms differential and 25 Ohms common mode reference impedance
 
-        Odd Number of Ports
-        -------------------
 
-        In the case where there are an odd number of ports (such as a 3-port network
-        with ports 0, 1, and 2), se2gmm() assumes that the last port (port 2) remains
-        single-ended and ports 0 and 1 are converted to differential mode and common
-        mode, respectively. For networks in which the port ordering is not suitable,
-        port renumbering can be used.
+        .. note:: Odd Number of Ports
 
+            In the case where there are an odd number of ports (such as a 3-port network
+            with ports 0, 1, and 2), se2gmm() assumes that the last port (port 2) remains
+            single-ended and ports 0 and 1 are converted to differential mode and common
+            mode, respectively. For networks in which the port ordering is not suitable,
+            port renumbering can be used.
+
+        Example
+        -------
         For example, a 3-port single-ended network is converted to mixed-mode
-        parameters.
+        parameters::
 
-          | Port 0 (single-ended, 50 ohms) --> Port 0 (single-ended, 50 ohms)
-          | Port 1 (single-ended, 50 ohms) --> Port 1 (differential mode, 100 ohms)
-          | Port 2 (single-ended, 50 ohms) --> Port 2 (common mode, 25 ohms)
+            | Port 0 (single-ended, 50 ohms) --> Port 0 (single-ended, 50 ohms)
+            | Port 1 (single-ended, 50 ohms) --> Port 1 (differential mode, 100 ohms)
+            | Port 2 (single-ended, 50 ohms) --> Port 2 (common mode, 25 ohms)
 
-        >>> ntwk.renumber([0,1,2],[2,1,0])
+        >>> ntwk.renumber([0,1,2], [2,1,0])
         >>> ntwk.se2gmm(p=1)
-        >>> ntwk.renumber([2,1,0],[0,1,2])
+        >>> ntwk.renumber([2,1,0], [0,1,2])
 
         In the resulting network, port 0 is single-ended, port 1 is
         differential mode, and port 2 is common mode.
 
-        .. warning::
-            This is not fully tested, and should be considered as experimental
+        References
+        ----------
+        .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
+            Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+
+        See Also
+        --------
+        gmm2se
+
         '''
         # XXX: assumes 'proper' order (first differential ports, then single ended ports)
         if z0_mm is None:
@@ -3327,20 +3379,29 @@ class Network(object):
 
     def gmm2se(self, p: int, z0_se: NumberLike = None) -> None:
         '''
-        Transform network from generalized mixed mode parameters [1] to single ended parameters
+        Transform network from generalized mixed mode parameters [#]_ to single ended parameters
 
-        [1] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
-            Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+        .. warning::
+            This is not fully tested, and should be considered as experimental                                                                  
 
         Parameters
         ----------
 
-        p : int, number of differential ports
-        z0_mm: f x n x n matrix of single ended impedances, optional
+        p : int
+            number of differential ports
+        z0_mm: Numpy array
+            `f x n x n` matrix of single ended impedances, optional
             if input is None, assumes 50 Ohm reference impedance
 
-        .. warning::
-            This is not fully tested, and should be considered as experimental
+        References
+        ----------
+        .. [#] Ferrero and Pirola; Generalized Mixed-Mode S-Parameters; IEEE Transactions on
+            Microwave Theory and Techniques; Vol. 54; No. 1; Jan 2006
+
+        See Also
+        --------
+        se2gmm
+
         '''
         # TODO: testing of reverse transformation
         # XXX: assumes 'proper' order (differential ports, single ended ports)
@@ -4889,17 +4950,17 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 ## network parameter conversion
 def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.ndarray:
     '''
-    Convert scattering parameters [1]_ to impedance parameters [2]_
+    Convert scattering parameters [#]_ to impedance parameters [#]_
 
 
-    For power-waves, Eq.(19) from [3]_:
+    For power-waves, Eq.(19) from [#Kurokawa]_:
 
     .. math::
         Z = F^{-1} (1 - S)^{-1} (S G + G^*) F
 
     where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
 
-    For pseudo-waves, Eq.(74) from [4]_:
+    For pseudo-waves, Eq.(74) from [#Marks]_:
 
     .. math::
         Z = (1 - U^{-1} S U)^{-1}  (1 + U^{-1} S U) G
@@ -4913,8 +4974,8 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     z0 : complex array-like or number
         port impedances.
     s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
-        Scattering parameter definition : 'power' for power-waves definition [3]_,
-        'pseudo' for pseudo-waves definition [4]_.
+        Scattering parameter definition : 'power' for power-waves definition [#Kurokawa]_,
+        'pseudo' for pseudo-waves definition [#Marks]_.
         'traveling' corresponds to the initial implementation.
         Default is 'power'.
 
@@ -4927,10 +4988,10 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
 
     References
     ----------
-    .. [1] http://en.wikipedia.org/wiki/S-parameters
-    .. [2] http://en.wikipedia.org/wiki/impedance_parameters
-    .. [3] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [4] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
     '''
     nfreqs, nports, nports = s.shape
@@ -4951,7 +5012,7 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     npy.einsum('ijj->ij', Id)[...] = 1.0
 
     if s_def == 'power':
-        # Power-waves. Eq.(19) from [3]
+        # Power-waves. Eq.(19) from [Kurokawa et al.]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         F, G = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
@@ -4962,7 +5023,7 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
                                   npy.matmul(npy.matmul(s, G) + npy.conjugate(G), F)))
 
     elif s_def == 'pseudo':
-        # Pseudo-waves. Eq.(74) from [4]
+        # Pseudo-waves. Eq.(74) from [Marks et al.]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         ZR, U = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
@@ -4998,8 +5059,8 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
     z0 : complex array-like or number
         port impedances
     s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
-        Scattering parameter definition : 'power' for power-waves definition [3]_,
-        'pseudo' for pseudo-waves definition [4]_.
+        Scattering parameter definition : 'power' for power-waves definition [#]_,
+        'pseudo' for pseudo-waves definition [#]_.
         'traveling' corresponds to the initial implementation.
         Default is 'power'.
 
@@ -5031,8 +5092,8 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
-    .. [3] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [4] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+    .. [#] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+    .. [#] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
     """
     nfreqs, nports, nports = s.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -5052,7 +5113,7 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
     npy.einsum('ijj->ij', Id)[...] = 1.0
 
     if s_def == 'power':
-        # Power-waves. Inverse of Eq.(19) from [3]
+        # Power-waves. Inverse of Eq.(19) from [Kurokawa et al.]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         F, G = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
@@ -5063,7 +5124,7 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
                                   npy.matmul((Id - s), F)))
 
     elif s_def == 'pseudo':
-        # pseudo-waves. Inverse of Eq.(74) from [4]
+        # pseudo-waves. Inverse of Eq.(74) from [Marks et al.]
         YR, U = npy.zeros_like(s), npy.zeros_like(s)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
         npy.einsum('ijj->ij', YR)[...] = 1/z0
@@ -5089,7 +5150,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
     Converts scattering parameters [#]_ to scattering transfer parameters [#]_ .
 
     transfer parameters are also referred to as
-    'wave cascading matrix', this function only operates on 2N-ports
+    'wave cascading matrix' [#]_, this function only operates on 2N-ports
     networks with same number of input and output ports, also known as
     'balanced networks'.
 
@@ -5156,16 +5217,16 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
 
 def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.ndarray:
     """
-    convert impedance parameters [1]_ to scattering parameters [2]_
+    convert impedance parameters [#]_ to scattering parameters [#]_
 
-    For power-waves, Eq.(18) from [3]_:
+    For power-waves, Eq.(18) from [#Kurokawa]_:
 
     .. math::
         S = F (Z – G^*) (Z + G)^{-1} F^{-1}
 
     where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
 
-    For pseudo-waves, Eq.(73) from [4]_:
+    For pseudo-waves, Eq.(73) from [#Marks]_:
 
     .. math::
         S = U (Z - G) (Z + G)^{-1}  U^{-1}
@@ -5180,8 +5241,8 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
     z0 : complex array-like or number
         port impedances
     s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
-        Scattering parameter definition : 'power' for power-waves definition [3]_,
-        'pseudo' for pseudo-waves definition [4]_.
+        Scattering parameter definition : 'power' for power-waves definition [#Kurokawa]_,
+        'pseudo' for pseudo-waves definition [#Marks]_.
         'traveling' corresponds to the initial implementation.
         Default is 'power'.
 
@@ -5194,10 +5255,10 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
 
     References
     ----------
-    .. [1] http://en.wikipedia.org/wiki/impedance_parameters
-    .. [2] http://en.wikipedia.org/wiki/S-parameters
-    .. [3] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [4] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+    .. [#] http://en.wikipedia.org/wiki/impedance_parameters
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
 
     """
     nfreqs, nports, nports = z.shape
@@ -5209,7 +5270,7 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
     z0[z0.real == 0] += ZERO
 
     if s_def == 'power':
-        # Power-waves. Eq.(18) from [3]
+        # Power-waves. Eq.(18) from [Kurokawa et al.3]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         F, G = npy.zeros_like(z), npy.zeros_like(z)
         npy.einsum('ijj->ij', F)[...] = 1.0/npy.sqrt(z0.real)*0.5
@@ -5221,7 +5282,7 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
 
 
     elif s_def == 'pseudo':
-        # Pseudo-waves. Eq.(73) from [4]
+        # Pseudo-waves. Eq.(73) from [Marks et al.]
         # Creating diagonal matrices of shape (nports,nports) for each nfreqs
         ZR, U = npy.zeros_like(z), npy.zeros_like(z)
         npy.einsum('ijj->ij', U)[...] = npy.sqrt(z0.real)/npy.abs(z0)
@@ -5526,14 +5587,14 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     '''
     convert admittance parameters [#]_ to scattering parameters [#]_
 
-    For power-waves, from [3]_:
+    For power-waves, from [#Kurokawa]_:
 
     .. math::
         S = F (1 – G Y) (1 + G Y)^{-1} F^{-1}
 
     where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
 
-    For pseudo-waves, Eq.(73) from [4]_:
+    For pseudo-waves, Eq.(73) from [#Marks]_:
 
     .. math::
         S = U (Y^{-1} - G) (Y^{-1} + G)^{-1}  U^{-1}
@@ -5550,8 +5611,8 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
         port impedances
 
     s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
-        Scattering parameter definition : 'power' for power-waves definition [3]_,
-        'pseudo' for pseudo-waves definition [4]_.
+        Scattering parameter definition : 'power' for power-waves definition [#Kurokawa]_,
+        'pseudo' for pseudo-waves definition [#Marks]_.
         'traveling' corresponds to the initial implementation.
         Default is 'power'.
 
@@ -5584,8 +5645,8 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/S-parameters
-    .. [3] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
-    .. [4] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
+    .. [#Kurokawa] Kurokawa, Kaneyuki "Power waves and the scattering matrix", IEEE Transactions on Microwave Theory and Techniques, vol.13, iss.2, pp. 194–202, March 1965.
+    .. [#Marks] Marks, R. B. and Williams, D. F. "A general waveguide circuit theory", Journal of Research of National Institute of Standard and Technology, vol.97, iss.5, pp. 533–562, 1992.
     '''
     nfreqs, nports, nports = y.shape
     z0 = fix_z0_shape(z0, nfreqs, nports)
@@ -5951,7 +6012,7 @@ def h2s(h: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
 def s2h(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
     '''
-    Convert scattering parameters [1]_ to hybrid parameters
+    Convert scattering parameters [#]_ to hybrid parameters [#]_
 
 
     Parameters
@@ -5970,8 +6031,8 @@ def s2h(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
     References
     ----------
-    .. [1] http://en.wikipedia.org/wiki/S-parameters
-    .. [2] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
+    .. [#] http://en.wikipedia.org/wiki/S-parameters
+    .. [#] http://en.wikipedia.org/wiki/Two-port_network#Hybrid_parameters_(h-parameters)
 
     '''
     return z2h(s2z(s, z0))
@@ -6124,7 +6185,7 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
     This re-normalization assumes power-wave formulation per default.
     To use the pseudo-wave formulation, use s_def='pseudo'.
     However, results should be the same for real-valued characteristic impedances.
-    See the [1]_ and [2]_ for more details.
+    See the [#Marks]_ and [#Anritsu]_ for more details.
 
     Parameters
     ----------
@@ -6148,9 +6209,9 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
     -----
     The impedance renormalization. This just calls ::
 
-        z2s(s2z(s,z0 = z_old), z0 = z_new)
+        z2s(s2z(s, z0=z_old), z0=z_new)
 
-    However, you can see ref [1]_ or [2]_ for some theoretical background.
+    However, you can see ref [#Marks]_ or [#Anritsu]_ for some theoretical background.
 
 
 
@@ -6163,9 +6224,9 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
 
     References
     ----------
-    .. [1] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
+    .. [#Marks] R. B. Marks and D. F. Williams, "A general waveguide circuit theory," Journal of Research of the National Institute of Standards and Technology, vol. 97, no. 5, pp. 533-561, 1992.
 
-    .. [2] Anritsu Application Note: Arbitrary Impedance, https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
+    .. [#Anritsu] Anritsu Application Note: Arbitrary Impedance, https://web.archive.org/web/20200111134414/https://archive.eetasia.com/www.eetasia.com/ARTICLES/2002MAY/2002MAY02_AMD_ID_NTES_AN.PDF?SOURCES=DOWNLOAD
 
     Examples
     --------
