@@ -128,7 +128,7 @@ Reference (API) or static documentation
 
 The documentation source files can be found in ``doc/source/``. 
 
-The reference documentation for the functions, classes, and submodules are documented in docstrings following the conventions put forth by `Numpy/Scipy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_. The documentation as a whole is generated using sphinx, and  written using reStructed (.rst) Text. 
+The reference documentation for the functions, classes, and submodules are documented in docstrings following the conventions put forth by `Numpy/Scipy docstring format <https://numpydoc.readthedocs.io/en/latest/format.html>`_. The documentation as a whole is generated using sphinx, and  written using reStructed (.rst) Text. 
 
 .. tip:: If you want to write some .rst file yourself, please use a RST format editor and checker (ex: `<https://livesphinx.herokuapp.com/>`_), as Sphinx is (very) picky with the syntax...
 
