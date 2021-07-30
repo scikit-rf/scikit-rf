@@ -181,14 +181,8 @@ import unittest  # fotr unitest.skip
 
 from . import mathFunctions as mf
 from .frequency import Frequency
-from .tlineFunctions import zl_2_Gamma0
 from .util import get_fid, get_extn, find_nearest_index, slice_domain
 from .time import time_gate
-# later imports. delayed to solve circular dependencies
-# from .io.general import read, write
-# from .io import touchstone
-# from .io.general import network_2_spreadsheet
-# from media import Freespace
 
 from .constants import NumberLike, ZERO, K_BOLTZMANN, T0
 from .constants import S_DEFINITIONS, S_DEF_DEFAULT
@@ -6487,6 +6481,7 @@ def impedance_mismatch(z1: NumberLike, z2: NumberLike) -> npy.ndarray:
     -------
     s' : 2-port s-matrix for the impedance mis-match
     '''
+    from .tlineFunctions import zl_2_Gamma0
     gamma = zl_2_Gamma0(z1, z2)
     result = npy.zeros(shape=(len(gamma), 2, 2), dtype='complex')
 
