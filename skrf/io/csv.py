@@ -1,5 +1,5 @@
 
-'''
+"""
 .. module:: skrf.io.csv
 
 ========================================
@@ -16,7 +16,7 @@ Functions for reading and writing standard csv files
    AgilentCSV
 
 
-Reading/Writing Agilent 
+Reading/Writing Agilent
 ------------------------
 
 .. autosummary::
@@ -35,7 +35,7 @@ Reading/Writing R&S
 
    read_zva_dat
    read_all_zva_dat
-   zva_dat_2_ntwks 
+   zva_dat_2_ntwks
 
 Reading/Writing Anritsu VectorStar
 -----------------------------------
@@ -47,7 +47,7 @@ Reading/Writing Anritsu VectorStar
    read_vectorstar_csv
 
 
-'''
+"""
 import numpy as npy
 import os
 from ..network import Network
@@ -60,7 +60,7 @@ from warnings import warn
 # from pandas import Series, Index, DataFrame
 
 def read_pna_csv(filename, *args, **kwargs):
-    '''
+    """
     Reads data from a csv file written by an Agilient PNA.
 
     This function returns a triplet containing the header, comments,
@@ -68,13 +68,13 @@ def read_pna_csv(filename, *args, **kwargs):
 
 
     Parameters
-    -------------
+    ----------
     filename : str
         the file
     \*args, \*\*kwargs :
 
     Returns
-    ---------
+    -------
     header : str
         The header string, which is the line following the 'BEGIN'
     comments : str
@@ -84,13 +84,13 @@ def read_pna_csv(filename, *args, **kwargs):
         the header.
 
     See Also
-    ----------
+    --------
     pna_csv_2_ntwks : Reads a csv file which contains s-parameter data
 
     Examples
-    -----------
+    --------
     >>> header, comments, data = rf.read_pna_csv('myfile.csv')
-    '''
+    """
     warn("deprecated", DeprecationWarning)
     with open(filename,'r') as fid:
         begin_line = -2
@@ -135,11 +135,20 @@ def read_pna_csv(filename, *args, **kwargs):
 
     return header, comments, data
 
-def pna_csv_2_df(filename, *args, **kwargs):
-    '''
-    Reads data from a csv file written by an Agilient PNA
+def pna_csv_2_df(filename):
+    """
+    Reads data from a csv file written by an Agilient PNA as a pandas DataFrame.
 
-    '''
+    Parameters
+    ----------
+    filename : string
+        filename
+
+    Returns
+    -------
+    df : `pandas.DataFrame`
+
+    """
     warn("deprecated", DeprecationWarning)
     from pandas import Series, Index, DataFrame
     header, comments, d = read_pna_csv(filename)
@@ -187,23 +196,21 @@ def pna_csv_2_ntwks2(filename, *args, **kwargs):
         return ntwk_dict
 
 def pna_csv_2_ntwks3(filename):
-    '''
-    Read a CSV file exported from an Agilent PNA in dB/deg format
+    """
+    Read a CSV file exported from an Agilent PNA in dB/deg format.
 
     Parameters
-    --------------
+    ----------
     filename : str
         full path or filename
 
     Returns
-    ---------
+    -------
     out : n
         2-Port Network
 
-    Examples
-    ----------
 
-    '''
+    """
     header, comments, d = read_pna_csv(filename)
     col_headers = pna_csv_header_split(filename)
 
@@ -236,31 +243,23 @@ def pna_csv_2_ntwks3(filename):
         warn("File does not seem to be formatted properly (only dB/deg supported for now)")
 
 def read_all_csv(dir='.', contains = None):
-    '''
-    Read all CSV files in a directory
+    """
+    Read all CSV files in a directory.
 
     Parameters
-    --------------
+    ----------
     dir : str, optional
         the directory to load from, default  \'.\'
     contains : str, optional
         if not None, only files containing this substring will be loaded
 
     Returns
-    ---------
+    -------
     out : dictionary
         dictionary containing all loaded CSV objects. keys are the
         filenames without extensions, and the values are the objects
 
-
-    Examples
-    ----------
-
-
-    See Also
-    ----------
-
-    '''
+    """
 
     out={}
     for filename in os.listdir(dir):
@@ -284,14 +283,14 @@ def read_all_csv(dir='.', contains = None):
 
 
 class AgilentCSV(object):
-    '''
+    """
     Agilent-style csv file representing either scalar traces vs frequency
-    or complex data vs. frequency
+    or complex data vs. frequency.
 
 
-    '''
+    """
     def __init__(self, filename, *args, **kwargs):
-        '''
+        """
         Init.
 
         Parameters
@@ -300,20 +299,20 @@ class AgilentCSV(object):
             filename
         \*args ,\*\*kwargs :
             passed to Network.__init__ in :func:`networks` and :func:`scalar_networks`
-        '''
+        """
         self.filename = filename
         self.header, self.comments, self.data = self.read()
         self.args, self.kwargs = args, kwargs
 
     def read(self):
-        '''
-        Reads data from  file
+        """
+        Reads data from  file.
 
         This function returns a triplet containing the header, comments,
         and data.
 
         Returns
-        ---------
+        -------
         header : str
             The header string, which is the line following the 'BEGIN'
         comments : str
@@ -321,7 +320,7 @@ class AgilentCSV(object):
         data : :class:`numpy.ndarray`
             An array containing the data. The meaning of which depends on
             the header.
-        '''
+        """
         with open(self.filename, 'r') as fid:
             begin_line = -2
             end_line = -1
@@ -362,9 +361,9 @@ class AgilentCSV(object):
 
     @property
     def frequency(self):
-        '''
-        Frequency object : :class:`~skrf.frequency.Frequency`
-        '''
+        """
+        Frequency object : :class:`~skrf.frequency.Frequency`.
+        """
         header, comments, d = self.header, self.comments, self.data
         #try to pull out frequency unit
         cols = self.columns
@@ -378,23 +377,24 @@ class AgilentCSV(object):
 
     @property
     def n_traces(self):
-        '''
+        """
         number of data traces : int
-        '''
+        """
         return   self.data.shape[1] - 1
 
     @property
     def columns(self):
-        '''
-        List of column names : list of str
+        """
+        List of column names : list of str.
 
         This function is needed because Agilent allows the delimiter
         of a csv file (ie `'`) to be present in the header name. ridiculous.
 
         If splitting the header fails, then a suitable list is returned of
-        the correct length, which looks like
-         * ['Freq(?)','filename-0','filename-1',..]
-        '''
+        the correct length, which looks like::
+            
+            ['Freq(?)','filename-0','filename-1',..]
+        """
         header,  d = self.header, self.data
 
         n_traces =  d.shape[1] - 1 # because theres is one frequency column
@@ -418,12 +418,14 @@ class AgilentCSV(object):
 
     @property
     def scalar_networks(self):
-        '''
-        Returns list of Networks for each column : list
+        """
+        Returns list of Networks for each column.
 
-        the data is stored in the Network's `.s`  property, so its up
-        to you to interpret results. if 'db' is in the column name then
-        it is converted to linear before being store into `s`.
+
+        .. note::
+            The data is stored in the Network's `.s` property, so its up
+            to you to interpret results. if 'db' is in the column name then
+            it is converted to linear before being store into `s`.
 
 
         Returns
@@ -431,7 +433,7 @@ class AgilentCSV(object):
         out : list of :class:`~skrf.network.Network` objects
             list of Networks representing the data contained in each column
 
-        '''
+        """
         header, comments, d = self.header, self.comments, self.data
         n_traces =  d.shape[1] - 1 # because theres is one frequency column
         cols = self.columns
@@ -454,22 +456,25 @@ class AgilentCSV(object):
 
     @property
     def networks(self):
-        '''
-        Reads a PNAX csv file, and returns a list of one-port Networks
+        """
+        Reads a PNAX csv file, and returns a list of one-port Networks.
+        
+        
+        .. note::
+            Note this only works if csv is save in Real/Imaginary format for now
 
-        Note this only works if csv is save in Real/Imaginary format for now
 
         Parameters
-        -----------
+        ----------
         filename : str
             filename
 
         Returns
-        --------
+        -------
         out : list of :class:`~skrf.network.Network` objects
             list of Networks representing the data contained in column pairs
 
-        '''
+        """
         names = self.columns
         header, comments, d= self.header,self.comments, self.data
 
@@ -499,17 +504,27 @@ class AgilentCSV(object):
 
     @property
     def dict(self):
-        '''
-        '''
+        """
+        Dictionnary representation of csv file.
+        
+        Returns
+        -------
+        dict : dict
+
+        """
         return { self.columns[k]:self.data[:,k] \
             for k in range(self.n_traces+1)}
+
     @property
     def dataframe(self):
-        '''
-        Pandas DataFrame representation of csv file
+        """
+        Pandas DataFrame representation of csv file.
 
-        obviously this requires pandas
-        '''
+        Returns
+        -------
+        df : `pandas.DataFrame`
+
+        """
         from pandas import  Index, DataFrame
 
         index = Index(
@@ -523,7 +538,7 @@ class AgilentCSV(object):
                 )
 
 def pna_csv_header_split(filename):
-    '''
+    """
     Split a Agilent csv file's header into a list
 
     This function is needed because Agilent allows the delimiter
@@ -542,7 +557,7 @@ def pna_csv_header_split(filename):
     --------
     cols : list of str's
         list of column names
-    '''
+    """
     warn("deprecated", DeprecationWarning)
     header, comments, d = read_pna_csv(filename)
 
@@ -566,22 +581,29 @@ def pna_csv_header_split(filename):
     return cols
 
 def pna_csv_2_ntwks(filename):
-    '''
-    Reads a PNAX csv file, and returns a list of one-port Networks
+    """
+    Reads a PNAX csv file, and returns a list of one-port Networks.
 
-    Note this only works if csv is save in Real/Imaginary format for now
+
+    .. deprecated::
+        Use :func:`pna_csv_2_ntwks3` instead.
+
+
+    .. note::    
+        Note this only works if csv is save in Real/Imaginary format for now
+
 
     Parameters
-    -----------
+    ----------
     filename : str
         filename
 
     Returns
-    --------
+    -------
     out : list of :class:`~skrf.network.Network` objects
         list of Networks representing the data contained in column pairs
 
-    '''
+    """
     warn("deprecated", DeprecationWarning)
     #TODO: check the data's format (Real-imag or db/angle , ..)
     header, comments, d = read_pna_csv(filename)
@@ -635,7 +657,7 @@ def pna_csv_2_freq(filename):
 
 
 def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
-    '''
+    """
     Reads a PNAX csv file containing scalar traces, returning Networks
 
 
@@ -650,7 +672,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
     out : list of :class:`~skrf.network.Network` objects
         list of Networks representing the data contained in column pairs
 
-    '''
+    """
     warn("deprecated", DeprecationWarning)
     header, comments, d = read_pna_csv(filename)
 
@@ -689,27 +711,27 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
 
 
 def read_zva_dat(filename, *args, **kwargs):
-    '''
-    Reads data from a dat file written by a R&S ZVA in dB/deg or re/im format
+    """
+    Reads data from a dat file written by a R&S ZVA in dB/deg or re/im format.
 
     This function returns a triplet containing header, comments and data.
 
 
     Parameters
-    -------------
+    ----------
     filename : str
         the file
     \*args, \*\*kwargs :
 
     Returns
-    ---------
+    -------
     header : str
         The header string, which is the line following the 'BEGIN'
     data : :class:`numpy.ndarray`
         An array containing the data. The meaning of which depends on
         the header.
 
-    '''
+    """
     #warn("deprecated", DeprecationWarning)
     with open(filename,'r') as fid:
         begin_line = -2
@@ -730,23 +752,21 @@ def read_zva_dat(filename, *args, **kwargs):
     return header, comments, data
 
 def zva_dat_2_ntwks(filename):
-    '''
-    Read a dat file exported from a R&S ZVA in dB/deg or re/im format
+    """
+    Read a dat file exported from a R&S ZVA in dB/deg or re/im format.
 
     Parameters
-    --------------
+    ----------
     filename : str
         full path or filename
 
     Returns
-    ---------
+    -------
     out : n
         2-Port Network
 
-    Examples
-    ----------
 
-    '''
+    """
     header, comments, d = read_zva_dat(filename)
     col_headers = header.split(',')
 
@@ -792,31 +812,24 @@ def zva_dat_2_ntwks(filename):
         warn("File does not seem to be formatted properly (dB/deg or re/im)")
 
 def read_all_zva_dat(dir='.', contains = None):
-    '''
-    Read all DAT files in a directory (from R&S ZVA)
+    """
+    Read all DAT files in a directory (from R&S ZVA).
 
     Parameters
-    --------------
+    ----------
     dir : str, optional
         the directory to load from, default  \'.\'
     contains : str, optional
         if not None, only files containing this substring will be loaded
 
     Returns
-    ---------
+    -------
     out : dictionary
         dictionary containing all loaded DAT objects. keys are the
         filenames without extensions, and the values are the objects
 
 
-    Examples
-    ----------
-
-
-    See Also
-    ----------
-
-    '''
+    """
 
     out={}
     for filename in os.listdir(dir):
@@ -841,17 +854,17 @@ def read_all_zva_dat(dir='.', contains = None):
 
 
 def read_vectorstar_csv(filename, *args, **kwargs):
-    '''
-    Reads data from a csv file written by an Anritsu VectorStar
+    """
+    Reads data from a csv file written by an Anritsu VectorStar.
 
     Parameters
-    -------------
+    ----------
     filename : str
         the file
     \*args, \*\*kwargs :
 
     Returns
-    ---------
+    -------
     header : str
         The header string, which is the line just before the data
     comments : str
@@ -861,7 +874,7 @@ def read_vectorstar_csv(filename, *args, **kwargs):
         the header.
 
 
-    '''
+    """
     with open(filename,'r') as fid:
         comments = ''.join([line for line in fid if line.startswith('!')])
         fid.seek(0)
@@ -878,22 +891,25 @@ def read_vectorstar_csv(filename, *args, **kwargs):
     return header, comments, data
 
 def vectorstar_csv_2_ntwks(filename):
-    '''
-    Reads a vectorstar csv file, and returns a list of one-port Networks
+    """
+    Reads a vectorstar csv file, and returns a list of one-port Networks.
 
-    Note this only works if csv is save in Real/Imaginary format for now
+    
+    .. note::
+        Note this only works if csv is save in Real/Imaginary format for now
+
 
     Parameters
-    -----------
+    ----------
     filename : str
         filename
 
     Returns
-    --------
+    -------
     out : list of :class:`~skrf.network.Network` objects
         list of Networks representing the data contained in column pairs
 
-    '''
+    """
     #TODO: check the data's format (Real-imag or db/angle , ..)
     header, comments, d = read_vectorstar_csv(filename)
     names = [line for line in comments.split('\n') \

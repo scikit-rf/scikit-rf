@@ -4383,6 +4383,8 @@ def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network
     ----------
     list_of_networks : list of :class:`Network` objects
         the list of networks to average
+    polar : boolean, optional
+        Average the mag/phase components individually. Default is False.
 
     Returns
     -------
