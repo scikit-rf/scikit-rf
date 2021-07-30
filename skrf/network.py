@@ -66,13 +66,17 @@ Interpolation and Concatenation Along Frequency Axis
     Network.resample
     Network.interpolate
     Network.interpolate_self
+   
 
-Combining Networks
+Combining and Splitting Networks
 ===================================
 
 .. autosummary::
     :toctree: generated/
 
+    subnetwork
+
+    one_port_2_two_port
     n_oneports_2_nport
     four_oneports_2_twoport
     three_twoports_2_threeport
