@@ -178,7 +178,7 @@ class VectorFitting:
         # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
         norm = np.average(self.network.f)
-        freqs_norm = self.network.f / norm
+        freqs_norm = np.array(self.network.f) / norm
 
         fmin = np.amin(freqs_norm)
         fmax = np.amax(freqs_norm)
