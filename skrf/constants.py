@@ -57,17 +57,17 @@ High but not infinite value for numerical purposes.
 
 ALMOST_ZERO = 1e-12
 """
-Tiny but not zero value for numerical purposes.
+Very tiny but not zero value to handle mathematical singularities.
+"""
+
+ZERO = 1e-4
+"""
+A very small values, often used for numerical comparisons.
 """
 
 ONE = 1.0 + 1/1e14
 """
-Almost one but not one to handle mathematical singularities
-"""
-
-ZERO = 1e-6
-"""
-Almost zero but not zero to handle mathematical singularities
+Almost one but not one to handle mathematical singularities.
 """
 
 LOG_OF_NEG = -100
@@ -93,51 +93,54 @@ S_DEF_DEFAULT = 'power'
 NumberLike = Union[Number, Sequence[Number], npy.ndarray]
 
 global distance_dict
-distance_dict = {'m':1.,
-                 'cm':1e-2,
-                 'mm':1e-3,
-                 'um':1e-6,
-                 'in':inch,
-                 'mil': mil,
-                 's':c,
-                 'us':1e-6*c,
-                 'ns':1e-9*c,
-                 'ps':1e-12*c,
-                 }
+distance_dict = {
+    'm': 1.,
+    'cm': 1e-2,
+    'mm': 1e-3,
+    'um': 1e-6,
+    'in': inch,
+    'mil': mil,
+    's': c,
+    'us': 1e-6*c,
+    'ns': 1e-9*c,
+    'ps': 1e-12*c,
+}
 
-def to_meters( d, unit='m',v_g=c):
+
+def to_meters(d: NumberLike, unit: str = 'm', v_g: float = c) -> NumberLike:
     """
-    Translate various  units of distance into meters
-
-    
+    Translate various units of distance into meters.
 
     Parameters
-    ------------
+    ----------
     d : number or array-like
-        the value
+        value(s) to convert
     unit : str
         the unit to that x is in:
         ['m','cm','um','in','mil','s','us','ns','ps']
-    v_g : 
+    v_g : float
+        group velocity in m/s
 
+    Returns
+    -------
+    d_m : number of array-like
+        distance in meters
     """
-    
-    distance_dict = {'m':1.,
-                 'cm':1e-2,
-                 'mm':1e-3,
-                 'um':1e-6,
-                 'in':inch,
-                 'mil': mil,
-                 's':v_g,
-                 'us':1e-6*v_g,
-                 'ns':1e-9*v_g,
-                 'ps':1e-12*v_g,
-                 }
-                 
-                 
+    _distance_dict = {
+        'm': 1.,
+        'cm': 1e-2,
+        'mm': 1e-3,
+        'um': 1e-6,
+        'in': inch,
+        'mil': mil,
+        's': v_g,
+        'us': 1e-6*v_g,
+        'ns': 1e-9*v_g,
+        'ps': 1e-12*v_g,
+    }
+
     unit = unit.lower()
     try:
-        return distance_dict[unit]*d
+        return _distance_dict[unit]*d
     except(KeyError):
         raise(ValueError('Incorrect unit'))
-

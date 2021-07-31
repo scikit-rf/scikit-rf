@@ -30,17 +30,14 @@ Functions
 
 # from matplotlib.pyplot import gca,plot, autoscale
 from numbers import Number
-from .constants import NumberLike
-from typing import Sequence, Union
+from .constants import NumberLike, ZERO
+from typing import Union
 from numpy import pi, linspace, geomspace
 import numpy as npy
-from numpy import fft, shape, gradient# used to center attribute `t` at 0
+from numpy import gradient  # used to center attribute `t` at 0
 import re
-from .util import slice_domain,find_nearest_index
-#from .constants import ZERO
-global ZER0
-ZERO=1e-4 # currently needed to allow frequency __eq__ method to work
-# comparing 1e-4hz is very small for most applications
+from .util import slice_domain, find_nearest_index
+
 
 class Frequency(object):
     """

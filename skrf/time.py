@@ -21,6 +21,8 @@ from scipy.ndimage.filters import convolve1d
 from scipy import signal
 import numpy as npy
 from numpy import fft
+from typing import List
+
 
 def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarray:
     """
@@ -127,7 +129,8 @@ def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarra
 
     return peaks
 
-def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs):
+
+def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> List[int]:
     """
     Find a given number of peaks in a signal.
 
@@ -143,7 +146,7 @@ def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs):
 
     Returns
     -------
-    peak_idxs : list
+    peak_idxs : list of int
         List containing the numeric indexes of the peaks that were detected
 
     Raises
@@ -185,9 +188,9 @@ def detect_span(ntwk) -> float:
     return span
 
 
-def time_gate(ntwk, start: float = None, stop: float = None, center: float = None, span: float = None,
+def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6), media=None,
-              boundary: str = 'reflect', return_all: bool = False):
+              boundary: str = 'reflect', return_all: bool = False) -> 'Network':
     """
     Time-gate one-port s-parameters.
 
@@ -205,6 +208,8 @@ def time_gate(ntwk, start: float = None, stop: float = None, center: float = Non
 
     Parameters
     ----------
+    ntwk : :class:`~skrf.network.Network`
+        network to operate on
     start : number, or None
         start of time gate, (ns).
     stop : number, or None
@@ -326,7 +331,3 @@ def time_gate(ntwk, start: float = None, stop: float = None, center: float = Non
                 'gate':gate_ntwk}
     else:
         return out
-
-
-
-
