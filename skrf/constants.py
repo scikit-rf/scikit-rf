@@ -1,8 +1,6 @@
-
-
-'''
-
+"""
 .. currentmodule:: skrf.constants
+
 ========================================
 constants (:mod:`skrf.constants`)
 ========================================
@@ -45,7 +43,7 @@ This module contains constants, numerical approximations, and unit conversions
 
    to_meters
 
-'''
+"""
 from numbers import Number
 from typing import Sequence, Union
 import numpy as npy
@@ -81,7 +79,7 @@ distance_dict = {'m':1.,
                  }
 
 def to_meters( d, unit='m',v_g=c):
-    '''
+    """
     Translate various  units of distance into meters
 
     
@@ -95,7 +93,7 @@ def to_meters( d, unit='m',v_g=c):
         ['m','cm','um','in','mil','s','us','ns','ps']
     v_g : 
 
-    '''
+    """
     
     distance_dict = {'m':1.,
                  'cm':1e-2,
