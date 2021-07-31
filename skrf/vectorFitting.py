@@ -10,7 +10,7 @@ Vector Fitting (:mod:`skrf.vectorFitting`)
 
 import numpy as np
 import os
-from network import Network
+from .network import Network
 from typing import Any
 from functools import wraps
 try:
@@ -1326,7 +1326,7 @@ class VectorFitting:
             return subcircuits[-1]
 
         # use engineering notation for the numbers in the SPICE file (1000 --> 1k)
-        formatter = EngFormatter(sep="", places=3)
+        formatter = EngFormatter(sep="", places=3, usetex=False)
         # replace "micron" sign by "u" and "mega" sign by "meg"
         letters_dict = formatter.ENG_PREFIXES
         letters_dict.update({-6: 'u', 6: 'meg'})
@@ -1373,9 +1373,9 @@ class VectorFitting:
                     # control current is measured by the dummy voltage source at the transfer network Y_nj
                     # the scattered current is injected into the port (source positive connected to ground)
                     f.write('F{}{} 0 a{} V{}{} {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                            1 / np.real(self.network.z0[0, n])))
+                                                            formatter(1 / np.real(self.network.z0[0, n]))))
                     f.write('F{}{}_inv a{} 0 V{}{}_inv {}\n'.format(n + 1, j + 1, n + 1, n + 1, j + 1,
-                                                                    1 / np.real(self.network.z0[0, n])))
+                                                                    formatter(1 / np.real(self.network.z0[0, n]))))
 
                     # add dummy voltage source (V=0) in series with Y_nj to measure current through transfer admittance
                     f.write('V{}{} nt{} nt{}{} 0\n'.format(n + 1, j + 1, j + 1, n + 1, j + 1))
