@@ -103,14 +103,13 @@ Transmission Line Physics
         surface_resistivity
 """
 
+from . constants import NumberLike, INF, ONE
 import numpy as npy
 from numpy import pi, sqrt, exp, array, imag, real
 
 from scipy.constants import mu_0
 from . import mathFunctions as mf
 
-INF = 1e99
-ONE = 1.0 + 1/1e14
 
 
 def skin_depth(f, rho, mu_r):

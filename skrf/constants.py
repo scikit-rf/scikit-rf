@@ -49,15 +49,42 @@ from typing import Sequence, Union
 import numpy as npy
 from scipy.constants import c, micron, mil, inch, centi, milli, nano, micro,pi
 
-
-
 # used as substitutes to handle mathematical singularities.
 INF = 1e99
+"""
+High but not infinite value for numerical purposes.
+"""
+
+ALMOST_ZERO = 1e-12
+"""
+Tiny but not zero value for numerical purposes.
+"""
+
 ONE = 1.0 + 1/1e14
+"""
+Almost one but not one to handle mathematical singularities
+"""
+
 ZERO = 1e-6
+"""
+Almost zero but not zero to handle mathematical singularities
+"""
+
+LOG_OF_NEG = -100
+"""
+Very low but minus infinity value for numerical purposes.
+"""
 
 K_BOLTZMANN = 1.38064852e-23
+"""
+Boltzmann constant (1.38064852e-23)
+"""
+
 T0 = 290.
+"""
+Room temperature (kind of)
+"""
+
 
 # S-parameter definition labels and default definition
 S_DEFINITIONS = ['power', 'pseudo', 'traveling']

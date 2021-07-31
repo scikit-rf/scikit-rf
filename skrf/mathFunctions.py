@@ -97,28 +97,7 @@ from numpy import pi, angle, unwrap, real, imag, array
 from scipy import signal
 from scipy.interpolate import interp1d
 
-from numbers import Number
-from typing import Sequence, Union
-
-NumberLike = Union[Number, Sequence[Number], npy.ndarray]
-
-global LOG_OF_NEG
-LOG_OF_NEG = -100
-"""
-Very low but minus infinity value for numerical purposes.
-"""
-
-global INF
-INF = 1e99
-"""
-High but not infinite value for numerical purposes.
-"""
-
-global ALMOST_ZERO
-ALMOST_ZERO = 1e-12
-"""
-Tiny but not zero value for numerical purposes.
-"""
+from . constants import NumberLike, INF, ALMOST_ZERO, LOG_OF_NEG
 
 # simple conversions
 def complex_2_magnitude(z: NumberLike):
