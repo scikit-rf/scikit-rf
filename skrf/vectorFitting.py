@@ -7,14 +7,11 @@ Vector Fitting (:mod:`skrf.vectorFitting`)
     :member-order: groupwise
 
 """
-
-from __future__ import annotations  # according to PEP 563 (will become default in Python 3.11)
-
 import numpy as np
 import os
 
 # imports for type hinting
-from typing import Any, TYPE_CHECKING
+from typing import Any, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from .network import Network
 
@@ -93,7 +90,7 @@ class VectorFitting:
     .. [#vectfit_website] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
-    def __init__(self, network: Network):
+    def __init__(self, network: 'Network'):
         """
         Creates a VectorFitting instance based on a supplied :class:`skrf.network.Network` containing the frequency
         responses of the N-port.
@@ -517,7 +514,7 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
-    def _get_ABCDE(self) -> np.ndarray:
+    def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as
@@ -537,6 +534,11 @@ class VectorFitting:
         E : ndarray
             State-space matrix E holding the proportional coefficients (usually 0 in case of fitted S-parameters)
 
+        Raises
+        ------
+        ValueError
+            If the model parameters have not been initialized (by running :func:`vector_fit()` or :func:`read_npz()`).
+
         References
         ----------
         .. [#] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
@@ -546,17 +548,13 @@ class VectorFitting:
 
         # initial checks
         if self.poles is None:
-            logging.error('self.poles = None; nothing to do. You need to run vector_fit() first.')
-            return
+            raise ValueError('self.poles = None; nothing to do. You need to run vector_fit() first.')
         if self.zeros is None:
-            logging.error('self.zeros = None; nothing to do. You need to run vector_fit() first.')
-            return
+            raise ValueError('self.zeros = None; nothing to do. You need to run vector_fit() first.')
         if self.proportional_coeff is None:
-            logging.error('self.proportional_coeff = None; nothing to do. You need to run vector_fit() first.')
-            return
+            raise ValueError('self.proportional_coeff = None; nothing to do. You need to run vector_fit() first.')
         if self.constant_coeff is None:
-            logging.error('self.constant_coeff = None; nothing to do. You need to run vector_fit() first.')
-            return
+            raise ValueError('self.constant_coeff = None; nothing to do. You need to run vector_fit() first.')
 
         # assemble real-valued state-space matrices A, B, C, D, E from fitted complex-valued pole-residue model
 
@@ -678,6 +676,14 @@ class VectorFitting:
             *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`). Currently, only scattering
             parameters are supported for passivity evaluation.
 
+        Raises
+        ------
+        NotImplementedError
+            If the function is called for `parameter_type` different than `S` (scattering).
+
+        ValueError
+            If the function is used with a model containing nonzero proportional coefficients.
+
         Returns
         -------
         violation_bands : ndarray
@@ -697,12 +703,11 @@ class VectorFitting:
         """
 
         if parameter_type.lower() != 's':
-            logging.error('Passivity testing is currently only supported for scattering (S) parameters.')
-            return
+            raise NotImplementedError('Passivity testing is currently only supported for scattering (S) parameters.')
         if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional_coeff)) > 0:
-            logging.error('Passivity testing of scattering parameters with nonzero proportional coefficients does not '
-                          'make any sense; you need to run vector_fit() with option \'fit_proportional=False\' first.')
-            return
+            raise ValueError('Passivity testing of scattering parameters with nonzero proportional coefficients does '
+                             'not make any sense; you need to run vector_fit() with option \'fit_proportional=False\' '
+                             'first.')
 
         # # the network needs to be reciprocal for this passivity test method to work: S = transpose(S)
         # if not np.allclose(self.zeros, np.transpose(self.zeros)) or \
@@ -812,6 +817,14 @@ class VectorFitting:
         -------
         None
 
+        Raises
+        ------
+        NotImplementedError
+            If the function is called for `parameter_type` different than `S` (scattering).
+
+        ValueError
+            If the function is used with a model containing nonzero proportional coefficients.
+
         See Also
         --------
         is_passive : Returns the passivity status of the model as a boolean value.
@@ -826,12 +839,11 @@ class VectorFitting:
         """
 
         if parameter_type.lower() != 's':
-            logging.error('Passivity testing is currently only supported for scattering (S) parameters.')
-            return
+            raise NotImplementedError('Passivity testing is currently only supported for scattering (S) parameters.')
         if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional_coeff)) > 0:
-            logging.error('Passivity testing of scattering parameters with nonzero proportional coefficients does not '
-                          'make any sense; you need to run vector_fit() with option \'fit_proportional=False\' first.')
-            return
+            raise ValueError('Passivity testing of scattering parameters with nonzero proportional coefficients does '
+                             'not make any sense; you need to run vector_fit() with option \'fit_proportional=False\' '
+                             'first.')
 
         # always run passivity test first; this will write 'self.violation_bands'
         violation_bands = self.passivity_test()
@@ -1262,11 +1274,11 @@ class VectorFitting:
         if ax is None:
             ax = mplt.gca()
 
-        ax.semilogy(np.arange(np.alen(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
+        ax.semilogy(np.arange(len(self.delta_max_history)) + 1, self.delta_max_history, color='darkblue')
         ax.set_xlabel('Iteration step')
         ax.set_ylabel('Max. relative change', color='darkblue')
         ax2 = ax.twinx()
-        ax2.plot(np.arange(np.alen(self.d_res_history)) + 1, self.d_res_history, color='orangered')
+        ax2.plot(np.arange(len(self.d_res_history)) + 1, self.d_res_history, color='orangered')
         ax2.set_ylabel('Residue', color='orangered')
         return ax
 
