@@ -10,8 +10,13 @@ Vector Fitting (:mod:`skrf.vectorFitting`)
 
 import numpy as np
 import os
-from .network import Network
-from typing import Any
+
+# imports for type hinting
+from __future__ import annotations  # according to PEP 563 (will become default in Python 3.11)
+from typing import Any, TYPE_CHECKING
+if TYPE_CHECKING:
+    from .network import Network
+
 from functools import wraps
 try:
     from . import plotting    # will perform the correct setup for matplotlib before it is called below
