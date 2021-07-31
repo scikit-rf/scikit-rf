@@ -10,6 +10,8 @@ Vector Fitting (:mod:`skrf.vectorFitting`)
 
 import numpy as np
 import os
+from network import Network
+from typing import Any
 from functools import wraps
 try:
     from . import plotting    # will perform the correct setup for matplotlib before it is called below
@@ -85,7 +87,7 @@ class VectorFitting:
     .. [#vectfit_website] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
-    def __init__(self, network):
+    def __init__(self, network: Network):
         """
         Creates a VectorFitting instance based on a supplied :class:`skrf.network.Network` containing the frequency
         responses of the N-port.
@@ -124,8 +126,8 @@ class VectorFitting:
         self.delta_max_history = []
         self.history_max_sigma = []
 
-    def vector_fit(self, n_poles_real=2, n_poles_cmplx=2, init_pole_spacing='lin', parameter_type='S',
-                   fit_constant=True, fit_proportional=False):
+    def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
+                   parameter_type: str = 'S', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
         :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
@@ -509,7 +511,7 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished.\n')
 
-    def _get_ABCDE(self):
+    def _get_ABCDE(self) -> np.ndarray:
         """
         Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as
@@ -629,7 +631,8 @@ class VectorFitting:
         return A, B, C, D, E
 
     @staticmethod
-    def _get_s_from_ABCDE(freq, A, B, C, D, E):
+    def _get_s_from_ABCDE(freq: float,
+                          A: np.ndarray, B: np.ndarray, C: np.ndarray, D: np.ndarray, E: np.ndarray) -> np.ndarray:
         """
         Private method.
         Returns the S-matrix of the vector fitted model calculated from the real-valued system matrices of the state-
@@ -657,7 +660,7 @@ class VectorFitting:
         stsp_S += D + 2j * np.pi * freq * E
         return stsp_S
 
-    def passivity_test(self, parameter_type='S'):
+    def passivity_test(self, parameter_type: str = 'S') -> np.ndarray:
         """
         Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [#]_. Any
         existing frequency bands of passivity violations will be returned as a sorted list.
@@ -756,7 +759,7 @@ class VectorFitting:
 
         return np.array(violation_bands)
 
-    def is_passive(self, parameter_type='S'):
+    def is_passive(self, parameter_type: str = 'S') -> bool:
         """
         Returns the passivity status of the model as a boolean value.
 
@@ -784,7 +787,7 @@ class VectorFitting:
         else:
             return False
 
-    def passivity_enforce(self, n_samples=100, parameter_type='S'):
+    def passivity_enforce(self, n_samples: int = 100, parameter_type: str = 'S') -> None:
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
         presented in [#]_.
@@ -930,7 +933,7 @@ class VectorFitting:
                         k += 2
                     z += 1
 
-    def write_npz(self, path):
+    def write_npz(self, path: str) -> None:
         """
         Writes the model parameters in :attr:`poles`, :attr:`zeros`,
         :attr:`proportional_coeff` and :attr:`constant_coeff` to a labeled NumPy .npz file.
@@ -970,7 +973,7 @@ class VectorFitting:
                             poles=self.poles, zeros=self.zeros, proportionals=self.proportional_coeff,
                             constants=self.constant_coeff)
 
-    def read_npz(self, file):
+    def read_npz(self, file: str) -> None:
         """
         Reads all model parameters :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`
         from a labeled NumPy .npz file.
@@ -1011,7 +1014,7 @@ class VectorFitting:
             else:
                 logging.error('Length of the provided parameters does not match the network size.')
 
-    def get_model_response(self, i, j, freqs=None):
+    def get_model_response(self, i: int, j: int, freqs: Any = None) -> np.ndarray:
         """
         Returns one of the frequency responses :math:`H_{i+1,j+1}` of the fitted model :math:`H`.
 
@@ -1064,7 +1067,7 @@ class VectorFitting:
         return resp
 
     @check_plotting
-    def plot_s_db(self, i, j, freqs=None, ax=None):
+    def plot_s_db(self, i: int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the magnitude in dB of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
 
@@ -1080,12 +1083,12 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used.
 
-        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+        ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
-        :class:`matplotlib.axes.AxesSubplot`
+        :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
         """
@@ -1105,7 +1108,7 @@ class VectorFitting:
         return ax
 
     @check_plotting
-    def plot_s_mag(self, i, j, freqs=None, ax=None):
+    def plot_s_mag(self, i: int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the magnitude in linear scale of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
 
@@ -1121,12 +1124,12 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used.
 
-        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+        ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
-        :class:`matplotlib.axes.AxesSubplot`
+        :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
         """
@@ -1146,7 +1149,7 @@ class VectorFitting:
         return ax
 
     @check_plotting
-    def plot_s_singular(self, freqs=None, ax=None):
+    def plot_s_singular(self, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
 
@@ -1156,12 +1159,12 @@ class VectorFitting:
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
             :attr:`network` are used.
 
-        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+        ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
-        :class:`matplotlib.axes.AxesSubplot`
+        :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
         """
@@ -1192,7 +1195,7 @@ class VectorFitting:
         return ax
 
     @check_plotting
-    def plot_pz(self, i, j, ax=None):
+    def plot_pz(self, i: int, j: int, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots a pole-zero diagram of the fit of the model response :math:`H_{i+1,j+1}`.
 
@@ -1204,12 +1207,12 @@ class VectorFitting:
         j : int
             Column index of the response.
 
-        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+        ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
-        :class:`matplotlib.axes.AxesSubplot`
+        :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
         """
@@ -1232,7 +1235,7 @@ class VectorFitting:
         return ax
 
     @check_plotting
-    def plot_convergence(self, ax=None):
+    def plot_convergence(self, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
         vector fitting, which should eventually converge to a fixed value. Additionally, the relative change of the
@@ -1240,12 +1243,12 @@ class VectorFitting:
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+        ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
-        :class:`matplotlib.axes.AxesSubplot`
+        :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
         """
@@ -1262,7 +1265,7 @@ class VectorFitting:
         return ax
 
     @check_plotting
-    def plot_passivation(self, ax=None):
+    def plot_passivation(self, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
         should eventually converge to a value slightly lower than 1.0 or stop after exceeding the maximum number of
@@ -1270,12 +1273,12 @@ class VectorFitting:
 
         Parameters
         ----------
-        ax : :class:`matplotlib.axes.AxesSubplot` object or None
+        ax : :class:`matplotlib.Axes` object or None
             matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
-        :class:`matplotlib.axes.AxesSubplot`
+        :class:`matplotlib.Axes`
             matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
             figure.
         """
@@ -1288,7 +1291,7 @@ class VectorFitting:
         ax.set_ylabel('Max. singular value')
         return ax
 
-    def write_spice_subcircuit_s(self, file):
+    def write_spice_subcircuit_s(self, file: str) -> None:
         """
         Creates an equivalent N-port SPICE subcircuit based on its vector fitted S parameter responses.
 
