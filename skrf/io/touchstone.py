@@ -430,8 +430,8 @@ class Touchstone:
         -------
         param : tuple of arrays
 
-        Example
-        -------
+        Examples
+        --------
         >>> f, a = self.sgetparameter_arrays()
         >>> s11 = a[:, 0, 0]
 
@@ -489,8 +489,8 @@ class Touchstone:
         """
         Extracts Z0 and Gamma comments from fid.
         
-        Parameter
-        ---------
+        Parameters
+        ----------
         fid : file object
         """
         gamma = []

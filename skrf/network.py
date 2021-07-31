@@ -66,7 +66,7 @@ Interpolation and Concatenation Along Frequency Axis
     Network.resample
     Network.interpolate
     Network.interpolate_self
-   
+
 
 Combining and Splitting Networks
 ===================================
@@ -487,8 +487,8 @@ class Network(object):
         ntw : :class:`Network`
             Created Network
 
-        Example
-        -------
+        Examples
+        --------
         >>> f = rf.Frequency(start=1, stop=2, npoints=4)  # 4 frequency points
         >>> z = np.random.rand(len(f),2,2) + np.random.rand(len(f),2,2)*1j  # 2-port z-matrix: shape=(4,2,2)
         >>> ntw = rf.Network.from_z(z, f=f)
@@ -741,7 +741,7 @@ class Network(object):
 
         Returns
         -------
-        ntwk : skrf.Network 
+        ntwk : skrf.Network
             interpolated in frequency if single dimension provided
             OR
             1-port network if multi-dimensional index provided
@@ -868,7 +868,7 @@ class Network(object):
 
 
                 See Also
-                ----------
+                --------
                 %s
                 """ % (func_name, prop_name, prop_name)
 
@@ -929,8 +929,8 @@ class Network(object):
         """
         Scattering parameter matrix.
 
-        Parameter
-        --------
+        Parameters
+        ----------
         s : :class:`numpy.ndarray`
             The input s-matrix should be of shape `fxnxn`,
             where f is frequency axis and n is number of ports.
@@ -1479,8 +1479,8 @@ class Network(object):
         ports_ind : list of tuples
             list of all port index tuples.
 
-        Example
-        -------
+        Examples
+        --------
         >>> ntwk = skrf.data.ring_slot
         >>> for (idx_i, idx_j) in ntwk.port_tuples: print(idx_i, idx_j)
 
@@ -1892,10 +1892,10 @@ class Network(object):
             touchstone file name.
 
 
-        Notes
-        ------
-        only the scattering parameters format is supported at the
-        moment
+        Note
+        ----
+        Only the scattering parameters format is supported at the moment
+
 
         """
         from .io import touchstone
@@ -2025,16 +2025,16 @@ class Network(object):
             This specifies the formatting in the resulting touchstone file for the frequency.
 
 
-        .. note::
+        Note
+        ----
+        Format supported at the moment are [Hz/kHz/MHz/GHz] S [DB/MA/RI]
+        Frequency unit can be changed by setting Network.frequency.unit property
 
-            format supported at the moment are [Hz/kHz/MHz/GHz] S [DB/MA/RI]
-            Frequency unit can be changed by setting Network.frequency.unit property
 
-
-        .. note::
-
-            The functionality of this function should take place in the
-            :class:`~skrf.io.touchstone.Touchstone` class.
+        Note
+        ----
+        The functionality of this function should take place in the
+        :class:`~skrf.io.touchstone.Touchstone` class.
 
         """
         # according to Touchstone 2.0 spec
@@ -2243,11 +2243,13 @@ class Network(object):
         \*args, \*\*kwargs :
             passed through to :func:`~skrf.io.general.write`
 
-        Notes
-        -----
+
+        Note
+        ----
         If the self.name is not None and file is  can left as None
         and the resultant file will have the `.ntwk` extension appended
         to the filename.
+
 
         Examples
         --------
@@ -2280,11 +2282,13 @@ class Network(object):
         Parameters
         ----------
         \*args, \*\*kwargs : args and kwargs
-            passed to :func:`skrf.io.general.write`
+            passed to :func:`skrf.io.general.read`
 
-        Notes
-        -----
+
+        Note
+        ----
         This function calls :func:`skrf.io.general.read`.
+
 
         Examples
         --------
@@ -2293,9 +2297,9 @@ class Network(object):
 
         See Also
         --------
+        skrf.io.general.read
         write
         skrf.io.general.write
-        skrf.io.general.read
         """
         from .io.general import read
         self.copy_from(read(*args, **kwargs))
@@ -2305,7 +2309,7 @@ class Network(object):
         Write contents of network to a spreadsheet, for your boss to use.
 
         See Also
-        ---------
+        --------
         skrf.io.general.network_2_spreadsheet
         """
         from .io.general import network_2_spreadsheet
@@ -2314,9 +2318,9 @@ class Network(object):
     def to_dataframe(self, *args, **kwargs) -> 'pd.DataFrame':
         """
         Convert attributes of a Network to a pandas DataFrame
-        
+
         Use the same parameters than :func:`skrf.io.general.network_2_dataframe`
-        
+
         Parameters
         ----------
         attrs : list of string
@@ -2341,7 +2345,7 @@ class Network(object):
         """
         Serialize and convert network to a JSON string.
 
-        This is ~3x faster than writing to and reading back from touchstone 
+        This is ~3x faster than writing to and reading back from touchstone
         for a 4port 20,000 point device.
 
         Returns
@@ -2350,7 +2354,7 @@ class Network(object):
             JSON string
 
         See Also
-        ---------
+        --------
         skrf.io.general.to_json_string
         """
         from .io.general import to_json_string
@@ -2410,8 +2414,8 @@ class Network(object):
         result : :class:`Network`
             an interpolated Network, or array
 
-        Notes
-        -----
+        Note
+        ----
         The interpolation coordinate system (`coords`)  makes  a big
         difference for large amounts of interpolation. polar works well
         for duts with slowly changing magnitude. try them all.
@@ -2433,7 +2437,7 @@ class Network(object):
         interpolate_from_f
 
         Examples
-        -----------
+        --------
         .. ipython::
 
             @suppress
@@ -2523,6 +2527,11 @@ class Network(object):
         Interpolate network based on a new number of frequency points
 
 
+        Note
+        ----
+        The function :func:`~Network.resample` is an alias for
+        :func:`~Network.interpolate_self_npoints`.
+
         Parameters
         ----------
         npoints : int
@@ -2538,10 +2547,6 @@ class Network(object):
                 object and returns a new Network, instead of updating
                 itself.
 
-        Notes
-        -----
-        The function :func:`~Network.resample` is an alias for
-        :func:`~Network.interpolate_self_npoints`.
 
         Examples
         --------
@@ -2573,14 +2578,14 @@ class Network(object):
         See :func:`~Network.interpolate` for more information.
 
         Parameters
-        -----------
+        ----------
         new_frequency : :class:`~skrf.frequency.Frequency`
                 frequency information to interpolate at
         **kwargs : keyword arguments
                 passed to :func:`scipy.interpolate.interp1d` initializer.
 
         See Also
-        ----------
+        --------
         resample
         interpolate
         interpolate_from_f
@@ -2604,10 +2609,15 @@ class Network(object):
         See :func:`~Network.interpolate` for more information.
 
 
+        Note
+        ----
+        This creates a new :class:`~skrf.frequency.Frequency`, object
+        using the method :func:`~skrf.frequency.Frequency.from_f`,
+        and then calls :func:`~Network.interpolate_self`.
 
 
         Parameters
-        -----------
+        ----------
         new_frequency : :class:`~skrf.frequency.Frequency`
             frequency information to interpolate at
         interp_kwargs :
@@ -2616,19 +2626,11 @@ class Network(object):
         \*\*kwargs :
             passed to :func:`scipy.interpolate.interp1d` initializer.
 
-        Notes
-        ---------
-        This creates a new :class:`~skrf.frequency.Frequency`, object
-        using the method :func:`~skrf.frequency.Frequency.from_f`, and then calls
-        :func:`~Network.interpolate_self`.
-
         See Also
-        ----------
+        --------
         resample
         interpolate
         interpolate_self
-
-
         """
         warnings.warn('Use interpolate', DeprecationWarning)
         return self.interpolate(freq_or_n=f, f_kwargs=kwargs,
@@ -2648,7 +2650,7 @@ class Network(object):
         frequency points.
 
         Parameters
-        -----------
+        ----------
         points : int or None
             Number of frequency points to be used in interpolation.
             If None number of points is calculated based on the frequency step size
@@ -2672,12 +2674,12 @@ class Network(object):
             Passed to :func:`Network.interpolate`
 
         Returns
-        -----------
+        -------
         result : :class:`Network`
             Extrapolated Network
 
         See Also
-        ----------
+        --------
         interpolate
         impulse_response
         step_response
@@ -2734,7 +2736,7 @@ class Network(object):
         of functions such as n_twoports_2_nport.
 
         Parameters
-        -----------
+        ----------
         ports : list of int
             List of ports to keep in the resultant Network.
             Indices are the Python indices (starts at 0)
@@ -2743,7 +2745,7 @@ class Network(object):
             A value of `1`, assumes that a s21 = ntwk.s[:,1,0]. Default is 1.
 
         Returns
-        --------
+        -------
         subntw : :class:`Network` object
             Resulting subnetwork of the Network from the given ports
 
@@ -2761,7 +2763,7 @@ class Network(object):
         No interpolation is done.
 
         Parameters
-        -----------
+        ----------
         f_start : number
             start frequency of crop range, in units of self.frequency.unit.
             If `f_start` is lower than the lowest frequency, no change to the network is made by the lower bound.
@@ -2817,7 +2819,7 @@ class Network(object):
         Returns a cropped network, leaves self alone.
 
         Parameters
-        -----------
+        ----------
         f_start : number
             start frequency of crop range, in units of self.frequency.unit.
             If `f_start` is lower than the lowest frequency, no change to the network is made by the lower bound.
@@ -2834,7 +2836,7 @@ class Network(object):
             Resulting cropped network
 
         See Also
-        ---------
+        --------
         crop
 
         """
@@ -2881,7 +2883,7 @@ class Network(object):
             Resulting flipped Network
 
         See Also
-        ---------
+        --------
         flip
         renumber
         renumbered
@@ -2896,7 +2898,7 @@ class Network(object):
         Renormalize s-parameter matrix given a new port impedances.
 
         Parameters
-        ---------------
+        ----------
         z_new : complex array of shape FxN, F, N or a  scalar
             new port impedances
 
@@ -2908,7 +2910,7 @@ class Network(object):
             NB: results are the same for real-valued characteristic impedances.
 
         See Also
-        ----------
+        --------
         renormalize_s
         fix_z0_shape
         """
@@ -2920,7 +2922,7 @@ class Network(object):
         Renumbers ports of a Network (inplace).
 
         Parameters
-        -----------
+        ----------
         from_ports : list-like
             List of port indices to change. Size between 1 and N_ports.
         to_ports : list-like
@@ -3105,7 +3107,7 @@ class Network(object):
         more details about the windowing.
 
         Parameters
-        -----------
+        ----------
         window : string, float, or tuple
             The type of window to create. See :func:`scipy.signal.get_window`
             for details.
@@ -3125,13 +3127,13 @@ class Network(object):
             Resulting windowed Network
 
         Examples
-        -----------
+        --------
         >>> ntwk = rf.Network('myfile.s2p')
         >>> ntwk_w = ntwk.windowed()
         >>> ntwk_w.plot_s_time_db()
 
         References
-        -------------
+        ----------
         .. [#] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
 
         """
@@ -3250,8 +3252,9 @@ class Network(object):
         ntwk : :class:`Network` object
             Resulting renumbered Network
 
-        Notes
-        -----
+
+        Note
+        ----
         This function is::
 
             self.s = self.s + amount
@@ -3351,7 +3354,7 @@ class Network(object):
             if input is None, 100 Ohms differential and 25 Ohms common mode reference impedance
 
 
-        .. note:: Odd Number of Ports
+        Note Odd Number of Ports
 
             In the case where there are an odd number of ports (such as a 3-port network
             with ports 0, 1, and 2), se2gmm() assumes that the last port (port 2) remains
@@ -3359,8 +3362,8 @@ class Network(object):
             mode, respectively. For networks in which the port ordering is not suitable,
             port renumbering can be used.
 
-        Example
-        -------
+        Examples
+        --------
         For example, a 3-port single-ended network is converted to mixed-mode
         parameters::
 
@@ -3765,14 +3768,23 @@ Y_LABEL_DICT = Network.Y_LABEL_DICT
 ## Functions operating on Network[s]
 def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Network:
     """
-    connect two n-port networks together.
+    Connect two n-port networks together.
 
-    specifically, connect ports `k` thru `k+num-1` on `ntwkA` to ports
+    Connect ports `k` thru `k+num-1` on `ntwkA` to ports
     `l` thru `l+num-1` on `ntwkB`. The resultant network has
     (ntwkA.nports+ntwkB.nports-2*num) ports. The port indices ('k','l')
     start from 0. Port impedances **are** taken into account.
     When the two networks have overlapping frequencies, the resulting
     network will contain only the overlapping frequencies.
+
+
+    Note
+    ----
+    The effect of mis-matched port impedances is handled by inserting
+    a 2-port 'mismatch' network between the two connected ports.
+    This mismatch Network is calculated with the
+    :func:`impedance_mismatch` function.
+
 
     Parameters
     ----------
@@ -3796,15 +3808,9 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
 
     See Also
     --------
-            connect_s : actual  S-parameter connection algorithm.
-            innerconnect_s : actual S-parameter connection algorithm.
+    connect_s : actual  S-parameter connection algorithm.
+    innerconnect_s : actual S-parameter connection algorithm.
 
-    Notes
-    -----
-            the effect of mis-matched port impedances is handled by inserting
-            a 2-port 'mismatch' network between the two connected ports.
-            This mismatch Network is calculated with the
-            :func:`impedance_mismatch` function.
 
     Examples
     --------
@@ -3949,7 +3955,7 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
 
     Specifically, connect ports `k` on `ntwkA` to ports
     `l` thru  on `ntwkB`. The resultant network has
-    (ntwkA.nports+ntwkB.nports-2) ports. The port indices ('k','l')
+    `(ntwkA.nports + ntwkB.nports - 2)` ports. The port indices ('k','l')
     start from 0. Port impedances **are** taken into account.
 
     Parameters
@@ -3967,22 +3973,18 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     Returns
     -------
     ntwkC : :class:`Network`
-            new network of rank (ntwkA.nports + ntwkB.nports - 2)
+            new network of rank `(ntwkA.nports + ntwkB.nports - 2)`
 
+    Note
+    ----
+    The effect of mis-matched port impedances is handled by inserting
+    a 2-port 'mismatch' network between the two connected ports.
+    This mismatch Network is calculated with the
+    :func:`impedance_mismatch` function.
 
-    See Also
-    --------
-        :mod:`skrf.src`
-
-    Notes
-    -----
-            the effect of mis-matched port impedances is handled by inserting
-            a 2-port 'mismatch' network between the two connected ports.
-            This mismatch Network is calculated with the
-            :func:`impedance_mismatch` function.
 
     Examples
-    ---------
+    --------
     To implement a *cascade* of two networks
 
     >>> ntwkA = rf.Network('ntwkA.s2p')
@@ -4031,6 +4033,13 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     this results in a (n-2)-port network. remember port indices start
     from 0.
 
+
+    Note
+    ----
+    A 2-port 'mismatch' network is inserted between the connected ports
+    if their impedances are not equal.
+
+
     Parameters
     ----------
     ntwkA : :class:`Network`
@@ -4047,13 +4056,9 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
 
     See Also
     --------
-        connect_s : actual  S-parameter connection algorithm.
-        innerconnect_s : actual S-parameter connection algorithm.
+    connect_s : actual  S-parameter connection algorithm.
+    innerconnect_s : actual S-parameter connection algorithm.
 
-    Notes
-    -----
-        a 2-port 'mismatch' network is inserted between the connected ports
-        if their impedances are not equal.
 
     Examples
     --------
@@ -4106,8 +4111,8 @@ def cascade(ntwkA: Network, ntwkB: Network) -> Network:
     `ntwkB`. This calls `connect()`, which is a more general function.
     Use `Network.renumber` to change port order if needed.
 
-    Notes
-    -----
+    Note
+    ----
     connection diagram::
 
               A                B
@@ -4289,8 +4294,8 @@ def concat_ports(ntwk_list: Sequence[Network], port_order: str = 'second',
     Concatenate networks along the port axis
 
 
-    Notes
-    -----
+    Note
+    ----
     The `port_order` ='first', means front-to-back, while
     `port_order`='second' means left-to-right. So, for example, when
     concatenating two 2-networks, `A` and `B`, the ports are ordered as follows:
@@ -4391,8 +4396,8 @@ def average(list_of_networks: Sequence[Network], polar: bool = False) -> Network
     ntwk : :class:`Network`
             the resultant averaged Network
 
-    Notes
-    -----
+    Note
+    ----
     This same function can be accomplished with properties of a
     :class:`~skrf.networkset.NetworkSet` class.
 
@@ -4477,38 +4482,38 @@ def one_port_2_two_port(ntwk: Network) -> Network:
 
 def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
     """
-        Chops a sandwich of identical, reciprocal 2-ports in half.
+    Chops a sandwich of identical, reciprocal 2-ports in half.
 
-        Given two identical, reciprocal 2-ports measured in series,
-        this returns one.
-
-
-        Notes
-        -----
-        In other words, given
-
-        .. math::
-
-            B = A\\cdot A
-
-        Return A, where A port2 is connected to A port1. The result may
-        be found through signal flow graph analysis and is,
-
-        .. math::
-
-            a_{11} = \\frac{b_{11}}{1+b_{12}}
-
-            a_{22} = \\frac{b_{22}}{1+b_{12}}
-
-            a_{12}^2 = b_{21}(1-\\frac{b_{11}b_{22}}{(1+b_{12})^2}
-
-        Parameters
-        ----------
-        ntwk : :class:`Network`
-            a 2-port  that is equal to two identical two-ports in cascade
+    Given two identical, reciprocal 2-ports measured in series,
+    this returns one.
 
 
-        """
+    Note
+    ----
+    In other words, given
+
+    .. math::
+
+        B = A\\cdot A
+
+    Return A, where A port2 is connected to A port1. The result may
+    be found through signal flow graph analysis and is,
+
+    .. math::
+
+        a_{11} = \\frac{b_{11}}{1+b_{12}}
+
+        a_{22} = \\frac{b_{22}}{1+b_{12}}
+
+        a_{12}^2 = b_{21}(1-\\frac{b_{11}b_{22}}{(1+b_{12})^2}
+
+    Parameters
+    ----------
+    ntwk : :class:`Network`
+        a 2-port  that is equal to two identical two-ports in cascade
+
+
+    """
     if ntwk.nports != 2:
         raise ValueError('Only valid on 2ports')
 
@@ -4618,8 +4623,8 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
     --------
     Network.subnetwork, n_twoports_2_nport
 
-    Example
-    -------
+    Examples
+    --------
 
     >>> tee = rf.data.tee  # 3 port Network
     >>> tee12 = rf.subnetwork(tee, [0, 1])  # 2 port Network from ports 1 & 2, port 3 matched
@@ -4761,8 +4766,8 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
     from a set of 2-port measurements. Which may occur when measuring
     a three port device on a 2-port VNA.
 
-    Notes
-    -----
+    Note
+    ----
     if `auto_order` is False,  ntwk_triplet must be of port orderings:
          [p12, p13, p23]
 
@@ -4852,9 +4857,9 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
 ## Functions operating on s-parameter matrices
 def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
     """
-    connect two n-port networks' s-matrices together.
+    Connect two n-port networks' s-matrices together.
 
-    specifically, connect port `k` on network `A` to port `l` on network
+    Specifically, connect port `k` on network `A` to port `l` on network
     `B`. The resultant network has nports = (A.rank + B.rank-2). This
     function operates on, and returns s-matrices. The function
     :func:`connect` operates on :class:`Network` types.
@@ -4876,17 +4881,17 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
         new S-parameter matrix
 
 
-    Notes
-    -----
-    internally, this function creates a larger composite network
+    Note
+    ----
+    Internally, this function creates a larger composite network
     and calls the  :func:`innerconnect_s` function. see that function for more
     details about the implementation
 
+
     See Also
     --------
-        connect : operates on :class:`Network` types
-        innerconnect_s : function which implements the connection
-            connection algorithm
+    connect : operates on :class:`Network` types
+    innerconnect_s : function which implements the connection algorithm
 
 
     """
@@ -4917,6 +4922,14 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
     s-matrices. The function :func:`innerconnect` operates on
     :class:`Network` types.
 
+
+    Note
+    ----
+    The algorithm used to calculate the resultant network is called a
+    'sub-network growth',  can be found in [#]_. The original paper
+    describing the  algorithm is given in [#]_.
+
+
     Parameters
     ----------
     A : :class:`numpy.ndarray`
@@ -4931,11 +4944,6 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
     C : :class:`numpy.ndarray`
             new S-parameter matrix
 
-    Notes
-    -----
-    The algorithm used to calculate the resultant network is called a
-    'sub-network growth',  can be found in [#]_. The original paper
-    describing the  algorithm is given in [#]_.
 
     References
     ----------
@@ -5829,7 +5837,7 @@ def t2s(t: npy.ndarray) -> npy.ndarray:
             scattering parameter matrix.
 
     See Also
-    -------
+    --------
     inv : calculates inverse s-parameters
     s2z
     s2y
@@ -6137,13 +6145,14 @@ def passivity(s: npy.ndarray) -> npy.ndarray:
     where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
     is dot product.
 
-    Notes
-    -----
+    Note
+    ----
     The total amount of power dissipated in a network depends on the
     port matches. For example, given a matched attenuator, this metric
     will yield the attenuation value. However, if the attenuator is
     cascaded with a mismatch, the power dissipated will not be equivalent
     to the attenuator value, nor equal for each excitation port.
+
 
     Returns
     -------
@@ -6200,13 +6209,26 @@ def reciprocity(s: npy.ndarray) -> npy.ndarray:
 
 ## renormalize
 def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:str = S_DEF_DEFAULT) -> npy.ndarray:
+    
     """
     Renormalize a s-parameter matrix given old and new port impedances
 
-    .. note:: This re-normalization assumes power-wave formulation per default.
-        To use the pseudo-wave formulation, use s_def='pseudo'.
-        However, results should be the same for real-valued characteristic impedances.
-        See the [#Marks]_ and [#Anritsu]_ for more details.
+
+    Note
+    ----
+     This re-normalization assumes power-wave formulation per default.
+     To use the pseudo-wave formulation, use s_def='pseudo'.
+     However, results should be the same for real-valued characteristic impedances.
+     See the [#Marks]_ and [#Anritsu]_ for more details.
+    
+    
+    Note
+    ----
+    This just calls ::
+   
+        z2s(s2z(s, z0=z_old), z0=z_new, s_def=s_def)
+
+
 
     Parameters
     ----------
@@ -6230,13 +6252,6 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
     -------
     :class:`numpy.ndarray`
         renormalized s-parameter matrix (shape `fxnxn`)
-
-    Notes
-    -----
-    This just calls ::
-
-        z2s(s2z(s, z0=z_old), z0=z_new, s_def=s_def)
-
 
     See Also
     --------
@@ -6393,9 +6408,9 @@ def flip(a: npy.ndarray) -> npy.ndarray:
     c : :class:`numpy.ndarray`
             flipped scattering parameter matrix
 
-    Note
-    ----
-        See renumber
+    See Also
+    --------
+    renumber
     """
     c = a.copy()
     n2 = a.shape[-1]
@@ -6513,10 +6528,12 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
     result : Network object
             two-port reflective network
 
-    Notes
-    -----
-        The resultant Network is copied from `ntwk1`, so its various
+
+    Note
+    ----
+    The resultant Network is copied from `ntwk1`, so its various
     properties(name, frequency, etc) are inherited from that Network.
+
 
     Examples
     --------
