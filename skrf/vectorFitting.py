@@ -1,12 +1,10 @@
 """
-=========================================
-VectorFitting (:mod:`skrf.vectorFitting`)
-=========================================
+Vector Fitting (:mod:`skrf.vectorFitting`)
+==========================================
 
 .. autoclass:: VectorFitting
     :members:
     :member-order: groupwise
-    :special-members: __init__
 
 """
 
@@ -45,32 +43,46 @@ def check_plotting(func):
 
 class VectorFitting:
     """
-    =========================================================
-    VectorFitting (:class:`skrf.vectorFitting.VectorFitting`)
-    =========================================================
-
     This class provides a Python implementation of the Vector Fitting algorithm and various functions for the fit
     analysis, passivity evaluation and enforcement, and export of SPICE equivalent circuits.
 
+    Parameters
+    ----------
+    network : :class:`skrf.network.Network`
+            Network instance of the :math:`N`-port holding the frequency responses to be fitted, for example a
+            scattering, impedance or admittance matrix.
+
+    Examples
+    --------
+    Load the `Network`, create a `VectorFitting` instance, perform the fit with a given number of real and
+    complex-conjugate starting poles:
+
+    >>> nw_3port = skrf.Network('my3port.s3p')
+    >>> vf = skrf.VectorFitting(nw_3port)
+    >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+
     Notes
     -----
-    The fitting code is based on the original algorithm [1]_ and on two improvements for relaxed pole relocation [2]_
-    and efficient (fast) solving [3]_. See also the Vector Fitting website [4]_ for further information and download of
-    the papers listed below. A Matlab implementation is also available there for reference.
+    The fitting code is based on the original algorithm [#Gustavsen_vectfit]_ and on two improvements for relaxed pole
+    relocation [#Gustavsen_relaxed]_ and efficient (fast) solving [#Deschrijver_fast]_. See also the Vector Fitting
+    website [#vectfit_website]_ for further information and download of the papers listed below. A Matlab implementation
+    is also available there for reference.
 
     References
     ----------
-    .. [1] B. Gustavsen, A. Semlyen, "Rational Approximation of Frequency Domain Responses by Vector Fitting", IEEE
-        Transactions on Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999, DOI: https://doi.org/10.1109/61.772353
+    .. [#Gustavsen_vectfit] B. Gustavsen, A. Semlyen, "Rational Approximation of Frequency Domain Responses by Vector
+        Fitting", IEEE Transactions on Power Delivery, vol. 14, no. 3, pp. 1052-1061, July 1999,
+        DOI: https://doi.org/10.1109/61.772353
 
-    .. [2] B. Gustavsen, "Improving the Pole Relocating Properties of Vector Fitting", IEEE Transactions on Power
-        Delivery, vol. 21, no. 3, pp. 1587-1592, July 2006, DOI: https://doi.org/10.1109/TPWRD.2005.860281
+    .. [#Gustavsen_relaxed] B. Gustavsen, "Improving the Pole Relocating Properties of Vector Fitting", IEEE
+        Transactions on Power Delivery, vol. 21, no. 3, pp. 1587-1592, July 2006,
+        DOI: https://doi.org/10.1109/TPWRD.2005.860281
 
-    .. [3] D. Deschrijver, M. Mrozowski, T. Dhaene, D. De Zutter, "Marcomodeling of Multiport Systems Using a Fast
-        Implementation of the Vector Fitting Method", IEEE Microwave and Wireless Components Letters, vol. 18, no. 6,
-        pp. 383-385, June 2008, DOI: https://doi.org/10.1109/LMWC.2008.922585
+    .. [#Deschrijver_fast] D. Deschrijver, M. Mrozowski, T. Dhaene, D. De Zutter, "Marcomodeling of Multiport Systems
+        Using a Fast Implementation of the Vector Fitting Method", IEEE Microwave and Wireless Components Letters,
+        vol. 18, no. 6, pp. 383-385, June 2008, DOI: https://doi.org/10.1109/LMWC.2008.922585
 
-    .. [4] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
+    .. [#vectfit_website] Vector Fitting website: https://www.sintef.no/projectweb/vectorfitting/
     """
 
     def __init__(self, network):
@@ -146,6 +158,7 @@ class VectorFitting:
         Returns
         -------
         None
+            No return value.
 
         Notes
         -----
@@ -500,7 +513,7 @@ class VectorFitting:
         """
         Private method.
         Returns the real-valued system matrices of the state-space representation of the current rational model, as
-        defined in [8]_.
+        defined in [#]_.
 
         Returns
         -------
@@ -518,7 +531,7 @@ class VectorFitting:
 
         References
         ----------
-        .. [8] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
+        .. [#] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
             Test Matrix," in IEEE Transactions on Microwave Theory and Techniques, vol. 56, no. 12, pp. 2701-2708,
             Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
         """
@@ -646,7 +659,7 @@ class VectorFitting:
 
     def passivity_test(self, parameter_type='S'):
         """
-        Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [6]_. Any
+        Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [#]_. Any
         existing frequency bands of passivity violations will be returned as a sorted list.
 
         Parameters
@@ -658,17 +671,18 @@ class VectorFitting:
 
         Returns
         -------
-        ndarray
+        violation_bands : ndarray
             NumPy array with frequency bands of passivity violation:
-            [[f_start_1, f_stop_1], [f_start_2, f_stop_2], ...].
+            `[[f_start_1, f_stop_1], [f_start_2, f_stop_2], ...]`.
 
         See Also
         --------
         is_passive : Query the model passivity as a boolean value.
+        passivity_enforce : Enforces the passivity of the vector fitted model, if required.
 
         References
         ----------
-        .. [6] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
+        .. [#] B. Gustavsen and A. Semlyen, "Fast Passivity Assessment for S-Parameter Rational Models Via a Half-Size
             Test Matrix," in IEEE Transactions on Microwave Theory and Techniques, vol. 56, no. 12, pp. 2701-2708,
             Dec. 2008, DOI: 10.1109/TMTT.2008.2007319.
         """
@@ -755,9 +769,15 @@ class VectorFitting:
 
         Returns
         -------
-        bool
+        passivity : bool
             :attr:`True` if model is passive, else :attr:`False`.
+
+        See Also
+        --------
+        passivity_test : Verbose passivity evaluation routine.
+        passivity_enforce : Enforces the passivity of the vector fitted model, if required.
         """
+
         viol_bands = self.passivity_test(parameter_type)
         if len(viol_bands) == 0:
             return True
@@ -767,7 +787,7 @@ class VectorFitting:
     def passivity_enforce(self, n_samples=100, parameter_type='S'):
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
-        presented in [7]_.
+        presented in [#]_.
 
         Parameters
         ----------
@@ -785,12 +805,13 @@ class VectorFitting:
 
         See Also
         --------
-        passivity_test : More verbose passivity evaluation routine.
+        is_passive : Returns the passivity status of the model as a boolean value.
+        passivity_test : Verbose passivity evaluation routine.
         plot_passivation : Convergence plot for passivity enforcement iterations.
 
         References
         ----------
-        .. [7] T. Dhaene, D. Deschrijver and N. Stevens, "Efficient Algorithm for Passivity Enforcement of S-Parameter-
+        .. [#] T. Dhaene, D. Deschrijver and N. Stevens, "Efficient Algorithm for Passivity Enforcement of S-Parameter-
             Based Macromodels," in IEEE Transactions on Microwave Theory and Techniques, vol. 57, no. 2, pp. 415-420,
             Feb. 2009, DOI: 10.1109/TMTT.2008.2011201.
         """
@@ -992,15 +1013,15 @@ class VectorFitting:
 
     def get_model_response(self, i, j, freqs=None):
         """
-        Returns the frequency response of the fitted model.
+        Returns one of the frequency responses :math:`H_{i+1,j+1}` of the fitted model :math:`H`.
 
         Parameters
         ----------
         i : int
-            Row index of the response.
+            Row index of the response in the response matrix.
 
         j : int
-            Column index of the response.
+            Column index of the response in the response matrix.
 
         freqs : list of float or ndarray or None, optional
             List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
@@ -1008,8 +1029,8 @@ class VectorFitting:
 
         Returns
         -------
-        ndarray
-            Model response at the frequencies specified in freqs (complex-valued ndarray).
+        response : ndarray
+            Model response :math:`H_{i+1,j+1}` at the frequencies specified in `freqs` (complex-valued Numpy array).
         """
 
         if self.poles is None:
@@ -1045,7 +1066,7 @@ class VectorFitting:
     @check_plotting
     def plot_s_db(self, i, j, freqs=None, ax=None):
         """
-        Plots the magnitude in dB of the response **S_(i+1,j+1)** in the fit.
+        Plots the magnitude in dB of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
 
         Parameters
         ----------
@@ -1060,7 +1081,7 @@ class VectorFitting:
             :attr:`network` are used.
 
         ax : :class:`matplotlib.axes.AxesSubplot` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
@@ -1086,7 +1107,7 @@ class VectorFitting:
     @check_plotting
     def plot_s_mag(self, i, j, freqs=None, ax=None):
         """
-        Plots the magnitude in linear scale of the response **S_(i+1,j+1)** in the fit.
+        Plots the magnitude in linear scale of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
 
         Parameters
         ----------
@@ -1101,7 +1122,7 @@ class VectorFitting:
             :attr:`network` are used.
 
         ax : :class:`matplotlib.axes.AxesSubplot` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
@@ -1136,7 +1157,7 @@ class VectorFitting:
             :attr:`network` are used.
 
         ax : :class:`matplotlib.axes.AxesSubplot` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
@@ -1173,7 +1194,7 @@ class VectorFitting:
     @check_plotting
     def plot_pz(self, i, j, ax=None):
         """
-        Plots a pole-zero diagram of the fit of the response **S_(i+1,j+1)**.
+        Plots a pole-zero diagram of the fit of the model response :math:`H_{i+1,j+1}`.
 
         Parameters
         ----------
@@ -1184,7 +1205,7 @@ class VectorFitting:
             Column index of the response.
 
         ax : :class:`matplotlib.axes.AxesSubplot` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
@@ -1220,7 +1241,7 @@ class VectorFitting:
         Parameters
         ----------
         ax : :class:`matplotlib.axes.AxesSubplot` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
@@ -1250,7 +1271,7 @@ class VectorFitting:
         Parameters
         ----------
         ax : :class:`matplotlib.axes.AxesSubplot` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with gca().
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
 
         Returns
         -------
@@ -1284,11 +1305,11 @@ class VectorFitting:
         -----
         In the SPICE subcircuit, all ports will share a common reference node (global SPICE ground on node 0). The
         equivalent circuit uses linear dependent current sources on all ports, which are controlled by the currents
-        through equivalent admittances modelling the parameters from a vector fit. This approach is based on [5]_.
+        through equivalent admittances modelling the parameters from a vector fit. This approach is based on [#]_.
 
         References
         ----------
-        .. [5] G. Antonini, "SPICE Equivalent Circuits of Frequency-Domain Responses", IEEE Transactions on
+        .. [#] G. Antonini, "SPICE Equivalent Circuits of Frequency-Domain Responses", IEEE Transactions on
             Electromagnetic Compatibility, vol. 45, no. 3, pp. 502-512, August 2003,
             DOI: https://doi.org/10.1109/TEMC.2003.815528
         """
