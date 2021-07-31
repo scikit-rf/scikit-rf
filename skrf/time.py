@@ -188,9 +188,9 @@ def detect_span(ntwk) -> float:
     return span
 
 
-def time_gate(ntwk: 'Network', start: float = None, stop: float = None, center: float = None, span: float = None,
+def time_gate(ntwk, start: float = None, stop: float = None, center: float = None, span: float = None,
               mode: str = 'bandpass', window=('kaiser', 6), media=None,
-              boundary: str = 'reflect', return_all: bool = False) -> 'Network':
+              boundary: str = 'reflect', return_all: bool = False):
     """
     Time-gate one-port s-parameters.
 
