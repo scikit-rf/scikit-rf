@@ -8,11 +8,12 @@ Vector Fitting (:mod:`skrf.vectorFitting`)
 
 """
 
+from __future__ import annotations  # according to PEP 563 (will become default in Python 3.11)
+
 import numpy as np
 import os
 
 # imports for type hinting
-from __future__ import annotations  # according to PEP 563 (will become default in Python 3.11)
 from typing import Any, TYPE_CHECKING
 if TYPE_CHECKING:
     from .network import Network
