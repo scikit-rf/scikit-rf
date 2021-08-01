@@ -14,6 +14,7 @@ API
     plotting
 
     media/index
+    taper
     calibration/index
     vi/index
 
