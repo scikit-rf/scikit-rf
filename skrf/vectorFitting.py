@@ -91,16 +91,6 @@ class VectorFitting:
     """
 
     def __init__(self, network: 'Network'):
-        """
-        Creates a VectorFitting instance based on a supplied :class:`skrf.network.Network` containing the frequency
-        responses of the N-port.
-
-        Parameters
-        ----------
-        network : :class:`skrf.network.Network`
-            Network instance of the N-port holding the S-matrix to be fitted.
-        """
-
         self.network = network
         self.initial_poles = None
 
