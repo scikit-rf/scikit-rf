@@ -120,7 +120,7 @@ class VectorFitting:
         self.history_max_sigma = []
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
-                   parameter_type: str = 'S', fit_constant: bool = True, fit_proportional: bool = False) -> None:
+                   parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
         :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
@@ -654,7 +654,7 @@ class VectorFitting:
         stsp_S += D + 2j * np.pi * freq * E
         return stsp_S
 
-    def passivity_test(self, parameter_type: str = 'S') -> np.ndarray:
+    def passivity_test(self, parameter_type: str = 's') -> np.ndarray:
         """
         Evaluates the passivity of reciprocal vector fitted models by means of a half-size test matrix [#]_. Any
         existing frequency bands of passivity violations will be returned as a sorted list.
@@ -760,7 +760,7 @@ class VectorFitting:
 
         return np.array(violation_bands)
 
-    def is_passive(self, parameter_type: str = 'S') -> bool:
+    def is_passive(self, parameter_type: str = 's') -> bool:
         """
         Returns the passivity status of the model as a boolean value.
 
@@ -788,7 +788,7 @@ class VectorFitting:
         else:
             return False
 
-    def passivity_enforce(self, n_samples: int = 100, parameter_type: str = 'S') -> None:
+    def passivity_enforce(self, n_samples: int = 100, parameter_type: str = 's') -> None:
         """
         Enforces the passivity of the vector fitted model, if required. This is an implementation of the method
         presented in [#]_.
