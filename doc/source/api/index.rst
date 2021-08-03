@@ -27,6 +27,7 @@ API
     tlineFunctions
     instances
     constants
+    data/index
     util
     io/index
 
