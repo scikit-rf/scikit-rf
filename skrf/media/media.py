@@ -76,7 +76,7 @@ class Media(ABC):
     set the `z0`.
     """
 
-    def __init__(self, frequency: Union[Frequency, None] = None,
+    def __init__(self, frequency: Union['Frequency', None] = None,
                  z0: Union[NumberLike, None] = None):
         if frequency is None:
             frequency = Frequency(1,10,101,'ghz')

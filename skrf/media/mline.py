@@ -1,46 +1,8 @@
 
 
 '''
-.. module:: skrf.media.mline
-========================================
 MLine (:mod:`skrf.media.MLine`)
 ========================================
-
-Microstripline class
-
-
-This class was made from the technical documentation [#]_ provided
-by the qucs project [#]_ .
-The variables  and properties of this class are coincident with
-their derivations.
-
-In addition, Djordjevic/Svensson wideband debye dielectric model is considered
-to provide more realistic modelling of broadband microstrip as well as causal
-time domain response.
-
-* Quasi-static characteristic impedance model:
-    In the case another model is used for effective dielectric constant,
-    Hammerstad and Jensen method is used for the impedance.
-    + Kirschning and Jansen
-    + Hammerstad and Jensen
-    + None
-* Quasi-static effective dielectric constant:
-    + Kirschning and Jansen
-    + Hammerstad and Jensen
-    + Yamashita
-    + Kobayashi
-    + None
-* Strip thickness correction:
-    + Hammerstad and Jensen, add a certain amount to W if T > 0.
-
-.. [#] http://qucs.sourceforge.net/docs/technical.pdf
-.. [#] http://www.qucs.sourceforge.net/
-.. C. Svensson, G.E. Dermer,
-    Time domain modeling of lossy interconnects,
-    IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
-.. Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
-    Wideband frequency-domain characterization of FR-4 and time-domain causality,
-    IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
 
 .. autosummary::
    :toctree: generated/
@@ -49,18 +11,54 @@ time domain response.
 
 '''
 import numpy as npy
-from scipy.constants import  epsilon_0, mu_0, c
-from numpy import real, imag, pi, sqrt,log, exp, log10, zeros, ones, tanh, \
-    cosh, arctan, absolute
+from numpy import log, tanh, sqrt, exp, real, imag, cosh, \
+                            ones, zeros, arctan
+from scipy.constants import  epsilon_0, mu_0, c, pi
 from .media import Media
 from ..tlineFunctions import skin_depth, surface_resistivity
+from ..constants import NumberLike
+from typing import Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .. frequency import Frequency
+
 
 class MLine(Media):
     '''
-    Microstripline initializer
+    Microstripline class
+
+    This class was made from the technical documentation [#]_ provided
+    by the qucs project [#]_ .
+    The variables  and properties of this class are coincident with
+    their derivations.
+
+    In addition, Djordjevic [#]_ /Svensson [#]_  wideband debye dielectric
+    model is considered to provide more realistic modelling of broadband
+    microstrip as well as causal time domain response.
+
+    * Quasi-static characteristic impedance models:
+
+        + Kirschning and Jansen
+        + Hammerstad and Jensen
+        + None
+
+    * Quasi-static effective dielectric constant models:
+
+        + Kirschning and Jansen
+        + Hammerstad and Jensen
+        + Yamashita
+        + Kobayashi
+        + None
+
+    * Strip thickness correction model:
+
+        + Hammerstad and Jensen, add a certain amount to W if T > 0.
+
+    In the case another model is used for effective dielectric constant,
+    Hammerstad and Jensen method is used for the impedance.
 
     Parameters
-    -------------
+    ----------
     frequency : :class:`~skrf.frequency.Frequency` object
         frequency band of the media
     z0 : number, array-like, or None
@@ -70,48 +68,67 @@ class MLine(Media):
         width of conductor, in m.
     h : number, or array-like
         height of substrate between ground plane and conductor, in m.
-    t : number, or array-like, optional
-        conductor thickness, in m.
+    t : number, or array-like or None, optional
+        conductor thickness, in m. Default is None.
     ep_r : number, or array-like
         relative permittivity of dielectric at frequency f_epr_tand
     mu_r : number, or array-like
         relative permeability of dielectric (assumed frequency invariant)
-    diel : number, or array-like
-        dielectric dispersion model: djordjevicsvensson or frequencyinvariant.
+    diel : str
+        dielectric dispersion model: 'djordjevicsvensson' or 'frequencyinvariant'.
     rho: number, or array-like, optional
         resistivity of conductor (None)
-    tand: number, or array-like
+    tand : number, or array-like
         dielectric loss factor at frequency f_epr_tand
-    rough: number, or array-like
+    rough : number, or array-like
         RMS roughness of conductor in m.
-    disp: number, or array-like
-        microstripline dispersion model in
-        * kirschningjansen
-        * hammerstadjensen
-        * yamashita
-        * kobayashi
-        * none
-    f_low: number, or array-like
+    disp : str
+        microstripline dispersion model in:
+
+        * 'kirschningjansen'
+        * 'hammerstadjensen'
+        * 'yamashita'
+        * 'kobayashi'
+        * None
+
+    f_low : number, or array-like
         lower frequency for wideband Debye Djordjevic/Svensson dielectric model
-    f_high: number, or array-like
+    f_high : number, or array-like
         higher frequency for wideband Debye Djordjevic/Svensson dielectric model
-    f_epr_tand: number, or array-like
+    f_epr_tand : number, or array-like
         measurement frequency for ep_r and tand of dielectric
+
+    References
+    ----------
+    .. [#] http://qucs.sourceforge.net/docs/technical.pdf
+    .. [#] http://www.qucs.sourceforge.net/
+    .. [#] C. Svensson, G.E. Dermer,
+        Time domain modeling of lossy interconnects,
+        IEEE Trans. on Advanced Packaging, May 2001, N2, Vol. 24, pp.191-196.
+    .. [#] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
+        Wideband frequency-domain characterization of FR-4 and time-domain causality,
+        IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
     '''
-    def __init__(self, frequency=None, z0=None, w=3, h=1.6, t=None,
-                 ep_r=4.5, mu_r=1, diel='djordjevicsvensson',
-                 rho=1.68e-8, tand=0, rough=0.15e-6, disp='kirschningjansen',
-                 f_low=1e3, f_high=1e12, f_epr_tand=1e9,
+    def __init__(self, frequency: Union['Frequency', None] = None,
+                 z0: Union[NumberLike, None] = None,
+                 w: NumberLike = 3, h: NumberLike = 1.6,
+                 t: Union[NumberLike, None] = None,
+                 ep_r: NumberLike = 4.5, mu_r: NumberLike = 1,
+                 diel: str = 'djordjevicsvensson',
+                 rho: NumberLike = 1.68e-8, tand: NumberLike = 0,
+                 rough: NumberLike = 0.15e-6, disp: str = 'kirschningjansen',
+                 f_low: NumberLike = 1e3, f_high: NumberLike = 1e12,
+                 f_epr_tand: NumberLike = 1e9,
                  *args, **kwargs):
         Media.__init__(self, frequency=frequency,z0=z0)
-        
+
         self.w, self.h, self.t = w, h, t
         self.ep_r, self.mu_r, self.diel = ep_r, mu_r, diel
         self.rho, self.tand, self.rough, self.disp =  rho, tand, rough, disp
         self.f_low, self.f_high, self.f_epr_tand = f_low, f_high, f_epr_tand
 
 
-    def __str__(self):
+    def __str__(self) -> str:
         f=self.frequency
         output =  \
                 'Microstripline Media.  %i-%i %s.  %i points'%\
@@ -120,13 +137,13 @@ class MLine(Media):
                 (self.w,self.h)
         return output
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     @property
-    def delta_w1(self):
+    def delta_w1(self) -> NumberLike:
         '''
-        intermediary parameter. see qucs docs on microstrip lines.
+        Intermediary parameter. see qucs docs on microstrip lines.
         '''
         w, h, t = self.w, self.h, self.t
         if t > 0.:
@@ -134,22 +151,22 @@ class MLine(Media):
             return t/pi * log(1. + 4*exp(1.)*tanh(sqrt(6.517*w/h))**2/t) * h
         else:
             return 0.
-    
+
     @property
-    def delta_wr(self):
+    def delta_wr(self) -> NumberLike:
         '''
-        intermediary parameter. see qucs docs on microstrip lines.
+        Intermediary parameter. see qucs docs on microstrip lines.
         '''
         delta_w1, ep_r = self.delta_w1, real(self.ep_r_f)
         if self.t > 0.:
             return delta_w1/2 * (1+1/cosh(sqrt(ep_r-1)))
         else:
             return 0.
-    
+
     @property
-    def ep_r_f(self):
+    def ep_r_f(self) -> NumberLike:
         '''
-        Frequency dependent relative permittivity of dielectric
+        Frequency dependent relative permittivity of dielectric.
         '''
         ep_r, tand  = self.ep_r, self.tand
         f_low, f_high, f_epr_tand = self.f_low, self.f_high, self.f_epr_tand
@@ -164,37 +181,37 @@ class MLine(Media):
             return ones(self.frequency.f.shape) * (ep_r - 1j*ep_r*tand)
         else:
             raise ValueError('Unknown dielectric dispersion model')
-    
+
     @property
-    def tand_f(self):
+    def tand_f(self) -> NumberLike:
         '''
-        Frequency dependent dielectric loss factor
+        Frequency dependent dielectric loss tangent.
         '''
         ep_r = self.ep_r_f
         return -imag(ep_r) / real(ep_r)
-    
+
     @property
-    def ep_reff(self):
+    def ep_reff(self) -> NumberLike:
         '''
-        Quasistatic effective relative permittivity of dielectric.
-        Accounting for the filling factor between air and substrate.
+        Quasistatic effective relative permittivity of dielectric,
+        accounting for the filling factor between air and substrate.
         '''
         h, ep_r  = self.h, self.ep_r_f
         w1 = self.w + self.delta_w1
         wr = self.w + self.delta_wr
         return ep_re(wr, h, ep_r) * (ZL1(w1, h)/ZL1(wr, h))**2
-    
+
     @property
-    def G(self):
+    def G(self) -> NumberLike:
         '''
         intermediary parameter. see qucs docs on microstrip lines.
         '''
         ep_r, ep_reff, ZL = self.ep_r_f, self.ep_reff, self.Z0
         ZF0 = npy.sqrt(mu_0/epsilon_0)
         return (pi**2)/12 * (ep_r-1)/ep_reff * sqrt(2*pi*ZL/ZF0)
-    
+
     @property
-    def ep_reff_f(self):
+    def ep_reff_f(self) -> NumberLike:
         '''
         Frequency dependent effective relative permittivity of dielectric,
         accounting for microstripline dispersion.
@@ -234,18 +251,18 @@ class MLine(Media):
             raise ValueError('Unknown microstripline dispersion model')
 
     @property
-    def Z0(self):
+    def Z0(self) -> NumberLike:
         '''
-        Quasistatic characteristic impedance
+        Quasistatic characteristic impedance.
         '''
         h, ep_reff = self.h, real(self.ep_reff)
         wr = self.w + self.delta_wr
         return ZL1(wr, h)/sqrt(ep_reff)
-    
+
     @property
-    def Z0_f(self):
+    def Z0_f(self) -> NumberLike:
         '''
-        Frequency dependent characteristic impedance
+        Frequency dependent characteristic impedance.
         '''
         ZL, ep_reff, ep_reff_f = self.Z0, real(self. ep_reff), real(self.ep_reff_f)
         wr, h = self.w + self.delta_wr, self.h
@@ -283,16 +300,16 @@ class MLine(Media):
             raise ValueError('Unknown microstripline dispersion model')
 
     @property
-    def alpha_conductor(self):
+    def alpha_conductor(self) -> NumberLike:
         '''
-        Losses due to conductor resistivity
+        Losses due to conductor resistivity.
 
         Returns
-        --------
+        -------
         alpha_conductor : array-like
                 lossyness due to conductor losses
         See Also
-        ----------
+        --------
         surface_resistivity : calculates surface resistivity
         '''
         if self.rho is None or self.t is None:
@@ -307,21 +324,21 @@ class MLine(Media):
             Ki  = exp(-1.2*(ZL/ZF0)**0.7)
             Rs  = surface_resistivity(f=f, rho=rho, mu_r=1)
         return  Rs*Kr*Ki/(ZL*w)
-    
+
     @property
-    def alpha_dielectric(self):
+    def alpha_dielectric(self) -> NumberLike:
         '''
-        Losses due to dielectric
+        Losses due to dielectric.
 
         '''
         ep_r, ep_reff, tand = real(self.ep_r_f), real(self.ep_reff), self.tand_f
         f = self.frequency.f
         return pi*f/c * ep_r/sqrt(ep_reff) * (ep_reff-1)/(ep_r-1) * tand
-    
+
     @property
     def beta_phase(self):
         '''
-        Phase parameter
+        Phase parameter.
         '''
         ep_reff, f = real(self.ep_reff_f), self.frequency.f
         return 2*pi*f*sqrt(ep_reff)/c
@@ -329,8 +346,7 @@ class MLine(Media):
     @property
     def gamma(self):
         '''
-        Propagation constant
-
+        Propagation constant.
 
         See Also
         --------
@@ -347,24 +363,25 @@ class MLine(Media):
             alpha += self.alpha_conductor
         return alpha + 1j*beta
 
-def a(u):
+def a(u: NumberLike) -> NumberLike:
     '''
-    intermediary parameter. see qucs docs on microstrip lines.
+    Intermediary parameter. see qucs docs on microstrip lines.
     '''
     return 1. + 1./49.*log((u**4+(u/52)**2)/(u**4+0.432)) + 1./18.7*log(1+(u/18.1)**3)
-    
-def b(ep_r):
+
+def b(ep_r: NumberLike) -> NumberLike:
     '''
     intermediary parameter. see qucs docs on microstrip lines.
     '''
     return 0.564 * ((ep_r-0.9)/(ep_r+3.))**0.053
-def f(u):
+
+def f(u: NumberLike) -> NumberLike:
     '''
     intermediary parameter. see qucs docs on microstrip lines.
     '''
     return 6 + (2*pi-6)*exp(-(30.666/u)**0.7528)
-    
-def ZL1(w, h):
+
+def ZL1(w: NumberLike, h: NumberLike) -> NumberLike:
     '''
     intermediary parameter. see qucs docs on microstrip lines.
     '''
@@ -372,7 +389,7 @@ def ZL1(w, h):
     ZF0 = sqrt(mu_0/epsilon_0)
     return ZF0/(2*pi)*log(f(u)/u + sqrt(1.+(2./u)**2))
 
-def ep_re(w, h, ep_r):
+def ep_re(w: NumberLike, h: NumberLike, ep_r: NumberLike) -> NumberLike:
     '''
     intermediary parameter. see qucs docs on microstrip lines.
     '''

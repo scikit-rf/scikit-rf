@@ -75,7 +75,7 @@ class RectangularWaveguide(Media):
     rho : number, array-like, string
         resistivity (ohm-m) of the conductor walls. If array-like
         must be same length as frequency. if str, it must be a key in
-        `skrf.data.materials`.
+        :data:`skrf.data.materials`.
     roughness : number, or array-like
         surface roughness of the conductor walls in units of RMS
         deviation from surface
@@ -175,7 +175,7 @@ class RectangularWaveguide(Media):
         Returns
         -------
         ep : number
-            filling material's relative permittivity in F/m.
+            filling material's permittivity in F/m.
         """
         return self.ep_r * epsilon_0
 
@@ -188,11 +188,10 @@ class RectangularWaveguide(Media):
 
             \\mu = \\mu_r \\mu_0
 
-
         Returns
         -------
         mu : number
-            filling material's relative permeability in H/m.
+            filling material's permeability in H/m.
 
         """
         return self.mu_r * mu_0
@@ -205,11 +204,6 @@ class RectangularWaveguide(Media):
         .. math::
 
             k_0 = \\frac{\\omega}{v} = \\omega \\sqrt{\\varepsilon_r \\mu_r}
-
-        Note
-        ----
-        This is guided wavenumber, sometime written :math:`k_g` or :math:`\\beta_g`,
-        *not* the wavenumber in vacuum (:math:`\\omega/c`).
 
         Returns
         -------
