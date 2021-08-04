@@ -14,7 +14,7 @@ The results are returned in :class:`~skrf.circuit.Circuit` object.
 
 
 Building a Circuit
-==================
+------------------
 .. autosummary::
    :toctree: generated/
 
@@ -23,14 +23,14 @@ Building a Circuit
    Circuit.Ground
 
 Representing a Circuit
-=======================
+----------------------
 .. autosummary::
    :toctree: generated/
 
    Circuit.plot_graph
 
 Network Representations
-========================
+-----------------------
 .. autosummary::
    :toctree: generated/
 
@@ -44,7 +44,7 @@ Network Representations
    Circuit.port_z0
 
 Voltages and Currents
-=====================
+---------------------
 .. autosummary::
    :toctree: generated/
 
@@ -54,7 +54,7 @@ Voltages and Currents
    Circuit.currents_external
 
 Circuit internals
-==================
+------------------
 .. autosummary::
    :toctree: generated/
 
@@ -70,7 +70,7 @@ Circuit internals
    Circuit.X
 
 Graph representation
-========================
+--------------------
 .. autosummary::
    :toctree: generated/
 

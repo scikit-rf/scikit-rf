@@ -1,7 +1,4 @@
 """
-.. currentmodule:: skrf.mathFunctions
-
-=============================================
 mathFunctions (:mod:`skrf.mathFunctions`)
 =============================================
 
@@ -10,12 +7,7 @@ Provides commonly used mathematical functions.
 
 Mathematical Constants
 ----------------------
-.. autosummary::
-    :toctree: generated/
-
-    INF
-    ALMOST_ZERO
-    LOG_OF_NEG
+Some convenient constants are defined in the :mod:`skrf.constants` module.
 
 Complex Component Conversion
 ---------------------------------
