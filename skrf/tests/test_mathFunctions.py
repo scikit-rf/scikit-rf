@@ -1,6 +1,7 @@
 from skrf.mathFunctions import LOG_OF_NEG
 import skrf as rf
 import unittest
+import numpy as np
 from numpy import e, log, pi, isnan, inf
 from numpy.testing import assert_equal, run_module_suite, assert_almost_equal
 
@@ -151,6 +152,19 @@ class TestUnitConversions(unittest.TestCase):
         assert_almost_equal(rf.db_per_100feet_2_db_per_100meter(), rf.meter_2_feet(), decimal=2)
         assert_almost_equal(rf.db_per_100feet_2_db_per_100meter(2.5), 8.2, decimal=2)
         assert_almost_equal(rf.db_per_100feet_2_db_per_100meter(0.28), 0.92, decimal=2)
+
+    def test_inf_to_num(self):
+        """
+        Test inf_to_num function
+        """
+        # scalar
+        assert_equal(rf.inf_to_num(np.inf), rf.INF)
+        assert_equal(rf.inf_to_num(-np.inf), -rf.INF)
+        
+        # array
+        x = np.array([0, np.inf, 0, -np.inf])
+        y = np.array([0, rf.INF, 0, -rf.INF])
+        assert_equal(rf.inf_to_num(x), y)
 
 if __name__ == "__main__":
     # Launch all tests

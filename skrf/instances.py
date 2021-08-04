@@ -1,6 +1,4 @@
-
-
-'''
+"""
 
 .. currentmodule:: skrf.instances
 ========================================
@@ -19,7 +17,7 @@ Standard Waveguide Bands
 These are predefined :class:`~skrf.frequency.Frequency` objects
 that correspond to standard waveguide bands. This information is taken
 from the VDI Application Note 1002 [#]_ . IEEE designators are taken
-from Spinner TD-00036 [*]_ .
+from Spinner TD-00036 [#]_ .
 
 
 =======================  ===============================================
@@ -53,21 +51,17 @@ wr1                      WR-1, 750-1100 GHz
 
 
 References
--------------
+----------
 .. [#] VDI Application Note:  VDI Waveguide Band Designations (VDI-1002) http://vadiodes.com/VDI/pdf/waveguidechart200908.pdf
-.. [*] Spinner Technical Information: Cross Reference For Hollow Metallic Waveguides (TD-00036) https://www.spinner-group.com/images/download/technical_documents/SPINNER_TD00036.pdf
-'''
+.. [#] Spinner Technical Information: Cross Reference For Hollow Metallic Waveguides (TD-00036) https://www.spinner-group.com/images/download/technical_documents/SPINNER_TD00036.pdf
+"""
 
 from . frequency import Frequency
 from . media import RectangularWaveguide, Freespace, DefinedGammaZ0
 from .constants import mil
 
-
-
-
 air = Freespace()
 air50 = Freespace(z0=50)
-
 
 ######## waveguide bands
 f_wr51  = Frequency(15,22,1001, 'ghz')
