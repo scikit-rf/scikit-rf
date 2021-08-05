@@ -6,7 +6,7 @@ implemented in Python.
 from __future__ import absolute_import, print_function, division
 from six.moves import xrange 
 
-__version__ = '0.18.1'
+__version__ = '0.19.0'
 ## Import all  module names for coherent reference of name-space
 #import io
 
