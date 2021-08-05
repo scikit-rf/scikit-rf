@@ -208,7 +208,7 @@ class Taper1D(object):
         return [self.section_at(k) for k in self.value_vector]
 
     @property
-    def ntwk(self):
+    def network(self):
         """
         Resulting Network
 
