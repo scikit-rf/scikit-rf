@@ -3351,7 +3351,8 @@ class Network(object):
             number of differential ports
         z0_mm : Numpy array
             `f x n x n` matrix of mixed mode impedances, optional
-            if input is None, 100 Ohms differential and 25 Ohms common mode reference impedance
+            if input is None, 2 * z_o Ohms differential and z_0 / 2 Ohms common mode 
+            reference impedance is used
 
 
         Note Odd Number of Ports
@@ -3391,8 +3392,8 @@ class Network(object):
         # XXX: assumes 'proper' order (first differential ports, then single ended ports)
         if z0_mm is None:
             z0_mm = self.z0.copy()
-            z0_mm[:, 0:p] = 100  # differential mode impedance
-            z0_mm[:, p:2 * p] = 25  # common mode impedance
+            z0_mm[:, 0:p] *= 2  # differential mode impedance
+            z0_mm[:, p:2 * p] /= 2  # common mode impedance
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, self.z0, z0_mm)
         A = Xi_tilde_21 + npy.einsum('...ij,...jk->...ik', Xi_tilde_22, self.s)
         B = Xi_tilde_11 + npy.einsum('...ij,...jk->...ik', Xi_tilde_12, self.s)
@@ -3414,7 +3415,7 @@ class Network(object):
             number of differential ports
         z0_mm: Numpy array
             `f x n x n` matrix of single ended impedances, optional
-            if input is None, assumes 50 Ohm reference impedance
+            if input is None, extract the reference impedance from the differential network
 
         References
         ----------
@@ -3430,7 +3431,8 @@ class Network(object):
         # XXX: assumes 'proper' order (differential ports, single ended ports)
         if z0_se is None:
             z0_se = self.z0.copy()
-            z0_se[:] = 50
+            z0_se[:, 0:p] /= 2  # differential mode impedance
+            z0_se[:, p:2 * p] *= 2  # common mode impedance
         Xi_tilde_11, Xi_tilde_12, Xi_tilde_21, Xi_tilde_22 = self._Xi_tilde(p, z0_se, self.z0)
         A = Xi_tilde_22 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_12)
         B = Xi_tilde_21 - npy.einsum('...ij,...jk->...ik', self.s, Xi_tilde_11)
