@@ -70,6 +70,15 @@ Mixed Mode
 
     mixedmodeanalysis/*
 
+Taper
+------------------
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    taper/*
+
+
 Internals
 ------------------
 
