@@ -811,14 +811,21 @@ class NetworkTestCase(unittest.TestCase):
 
 
     def test_se2gmm2se_mag(self):
-        ntwk4 = rf.Network(os.path.join(self.test_dir, 'cst_example_4ports.s4p'))
-        ntwk4t = deepcopy(ntwk4)
-        ntwk4t.se2gmm(p=2)
-        ntwk4t.gmm2se(p=2)
 
-        self.assertTrue(npy.allclose(abs(ntwk4.s), abs(ntwk4t.s), rtol=1E-7, atol=0))
-        # phase testing does not pass - see #367
-        #self.assertTrue(npy.allclose(npy.angle(ntwk4.s), npy.angle(ntwk4t.s), rtol=1E-7, atol=1E-10))
+        for z0 in [None, 45, 75]:
+            ntwk4 = rf.Network(os.path.join(self.test_dir, 'cst_example_4ports.s4p'))
+
+            if z0 is not None:
+                ntwk4.z0 = z0
+
+            ntwk4t = deepcopy(ntwk4)
+            ntwk4t.se2gmm(p=2)
+            ntwk4t.gmm2se(p=2)
+
+            self.assertTrue(npy.allclose(abs(ntwk4.s), abs(ntwk4t.s), rtol=1E-7, atol=0))
+            self.assertTrue(npy.allclose(ntwk4.z0, ntwk4t.z0))
+            # phase testing does not pass - see #367
+            #self.assertTrue(npy.allclose(npy.angle(ntwk4.s), npy.angle(ntwk4t.s), rtol=1E-7, atol=1E-10))
 
     def test_s_active(self):
         '''
