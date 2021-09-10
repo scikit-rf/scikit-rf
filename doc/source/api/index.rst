@@ -15,6 +15,7 @@ API
 
     media/index
     calibration/index
+    calibration/deembedding
     vi/index
 
     vectorFitting
