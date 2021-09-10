@@ -20,5 +20,6 @@ ipython `notebook <http://ipython.org/notebook.html>`_
     Circuit
     VirtualInstruments 
     Calibration
+    Deembedding
     Media       
     VectorFitting
