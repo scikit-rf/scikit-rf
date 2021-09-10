@@ -1,22 +1,20 @@
 # -*- coding: utf-8 -*-
-'''
-.. module:: skrf.circuit
-========================================
+"""
 circuit (:mod:`skrf.circuit`)
 ========================================
 
-Circuit class represents a circuit of arbitrary topology,
-consisting of an arbitrary number of N-ports networks. 
+The Circuit class represents a circuit of arbitrary topology,
+consisting of an arbitrary number of N-ports networks.
 
-Like in an electronic circuit simulator, the circuit must have one or more ports 
-connected to the circuit. The Circuit object allows one retrieving the M-ports network, 
-where M is the number of ports defined. 
+Like in an electronic circuit simulator, the circuit must have one or more ports
+connected to the circuit. The Circuit object allows one retrieving the M-ports network,
+where M is the number of ports defined.
 
-The results are returned in :class:`~skrf.network.Circuit` object.
+The results are returned in :class:`~skrf.circuit.Circuit` object.
 
-   
-Building a Circuit 
-==================
+
+Building a Circuit
+------------------
 .. autosummary::
    :toctree: generated/
 
@@ -25,17 +23,17 @@ Building a Circuit
    Circuit.Ground
 
 Representing a Circuit
-=======================
+----------------------
 .. autosummary::
    :toctree: generated/
-   
+
    Circuit.plot_graph
 
 Network Representations
-========================
+-----------------------
 .. autosummary::
    :toctree: generated/
-   
+
    Circuit.network
    Circuit.s
    Circuit.s_external
@@ -45,11 +43,21 @@ Network Representations
    Circuit.vswr_active
    Circuit.port_z0
 
-Circuit internals
-==================
+Voltages and Currents
+---------------------
 .. autosummary::
    :toctree: generated/
-   
+
+   Circuit.voltages
+   Circuit.voltages_external
+   Circuit.currents
+   Circuit.currents_external
+
+Circuit internals
+------------------
+.. autosummary::
+   :toctree: generated/
+
    Circuit.networks_dict
    Circuit.networks_list
    Circuit.connections_nb
@@ -62,19 +70,20 @@ Circuit internals
    Circuit.X
 
 Graph representation
-========================
+--------------------
 .. autosummary::
    :toctree: generated/
-   
+
    Circuit.graph
    Circuit.G
    Circuit.edges
    Circuit.edge_labels
 
-'''
+"""
+from numbers import Number
 from . network import Network, a2s
 from . media import media
-from . constants import INF
+from . constants import INF, NumberLike
 
 import numpy as np
 
@@ -86,13 +95,20 @@ except ImportError as e:
 from itertools import chain, product
 from scipy.linalg import block_diag
 
+from typing import Iterable, List, TYPE_CHECKING, Tuple
+
+
+if TYPE_CHECKING:
+    from .frequency import Frequency
+
+
 class Circuit():
-    '''
+    """
     Creates a circuit made of a set of N-ports networks.
-    
+
     For instructions on how to create Circuit see  :func:`__init__`.
-    
-    A Circuit object is representation a circuit assembly of an arbitrary 
+
+    A Circuit object is representation a circuit assembly of an arbitrary
     number of N-ports networks connected together via an arbitrary topology.
 
     The algorithm used to calculate the resultant network can be found in [#]_.
@@ -101,35 +117,35 @@ class Circuit():
     ----------
     .. [#] P. Hallbjörner, Microw. Opt. Technol. Lett. 38, 99 (2003).
 
-    '''
-    def __init__(self, connections):
-        '''
+    """
+    def __init__(self, connections: List[List[Tuple]]) -> None:
+        """
         Circuit constructor. Creates a circuit made of a set of N-ports networks.
 
         Parameters
-        -----------
+        ----------
         connections : list of list of tuples
             Description of circuit connections.
-            Each connection is a described by a list of tuple. 
-            Each tuple contains (network, network_port_nb). 
+            Each connection is a described by a list of tuple.
+            Each tuple contains (network, network_port_nb).
             Port number indexing starts from zero.
-            
-        
-        Example
-        ------------
+
+
+        Examples
+        --------
         Example of connections between two 1-port networks:
         ::
-            connections = [ 
+            connections = [
                 [(network1, 0), (network2, 0)],
             ]
-        
-        Example of a connection between three 1-port networks connected 
+
+        Example of a connection between three 1-port networks connected
         to a single node:
         ::
-            connections = [ 
+            connections = [
                 [(network1, 0), (network2, 0), (network3, 0)]
             ]
-            
+
         Example of a connection between two 1-port networks (port1 and port2)
         and two 2-ports networks (ntw1 and ntw2):
         ::
@@ -151,13 +167,13 @@ class Circuit():
         NB1: Creating 1-port network to be used a port can be made with :func:`Port`
 
         NB2: The external ports indexing is defined by the order of appearance of
-        the ports in the connections list. Thus, the first network identified 
-        as a port will be the 1st port of the resulting network (index 0), 
-        the second network identified as a port will be the second port (index 1), 
+        the ports in the connections list. Thus, the first network identified
+        as a port will be the 1st port of the resulting network (index 0),
+        the second network identified as a port will be the second port (index 1),
         etc.
 
 
-        '''
+        """
         self.connections = connections
 
         # check if all networks have a name
@@ -178,24 +194,24 @@ class Circuit():
         self.frequency = ntws[0].frequency
 
     def _is_named(self, ntw):
-        '''
+        """
         Return True is the network has a name, False otherwise
-        '''
+        """
         if not ntw.name or ntw.name == '':
             return False
         else:
             return True
 
     @classmethod
-    def Port(cls, frequency, name, z0=50):
-        '''
-        Return a 1-port Network to be used as a Circuit port. 
-        
-        Passing the frequency and name is mandatory. Port name must include 
+    def Port(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 1-port Network to be used as a Circuit port.
+
+        Passing the frequency and name is mandatory. Port name must include
         the word 'port' inside. (ex: 'Port1' or 'port_3')
 
         Parameters
-        -----------
+        ----------
         frequency : :class:`~skrf.frequency.Frequency`
             Frequency common to all other networks in the circuit
         name : string
@@ -204,13 +220,13 @@ class Circuit():
         z0 : real
             Characteristic impedance of the port. Default is 50 Ohm.
 
-        Return
-        --------
+        Returns
+        -------
         port : :class:`~skrf.network.Network` object
             (External) 1-port network
 
         Examples
-        -----------
+        --------
         .. ipython::
 
             @suppress
@@ -219,21 +235,21 @@ class Circuit():
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
             In [18]: port1 = rf.Circuit.Port(freq, name='Port1')
-        '''
+        """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
         return _media.match(name=name)
 
     @classmethod
-    def Ground(cls, frequency, name, z0=50):
-        '''
-        Return a 1-port network of a grounded link, to be used in a Circuit description. 
-        
+    def Ground(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 1-port network of a grounded link, to be used in a Circuit description.
+
         Passing the frequency and name is mandatory.
-        
+
         The ground link is modelled as an infinite admittance.
-        
+
         Parameters
-        -----------
+        ----------
         frequency : :class:`~skrf.frequency.Frequency`
             Frequency common to all other networks in the circuit
         name : string
@@ -241,13 +257,13 @@ class Circuit():
         z0 : real
             Characteristic impedance of the port. Default is 50 Ohm.
 
-        Return
-        --------
+        Returns
+        -------
         ground : :class:`~skrf.network.Network` object
             (External) 2-port network
 
         Examples
-        -----------
+        --------
         .. ipython::
 
             @suppress
@@ -256,8 +272,8 @@ class Circuit():
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
             In [18]: ground = rf.Circuit.Ground(freq, name='GND')
-        
-        '''
+
+        """
         Y = INF
         A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
         A[:, 0, 0] = 1
@@ -268,10 +284,22 @@ class Circuit():
         ntw.s = a2s(A)
         return ntw
 
-    def networks_dict(self, connections=None, min_nports=1):
-        '''
-        Return the dictionary of Networks from the connection setup X
-        '''
+    def networks_dict(self, connections: List = None, min_nports: int = 1) -> dict:
+        """
+        Return the dictionary of Networks from the connection setup X.
+
+        Parameters
+        ----------
+        connections : List, optional
+            connections list, by default None (then uses the `self.connections`)
+        min_nports : int, optional
+            min number of ports, by default 1
+
+        Returns
+        -------
+        dict
+            Dictionnary of Networks
+        """
         if not connections:
             connections = self.connections
 
@@ -281,10 +309,22 @@ class Circuit():
                 ntws.append(ntw)
         return {ntw.name: ntw for ntw in ntws  if ntw.nports >= min_nports}
 
-    def networks_list(self, connections=None, min_nports=1):
-        '''
-        Return a list of unique networks (sorted by appearing order in connections)
-        '''
+    def networks_list(self, connections: List = None, min_nports: int = 1) -> List:
+        """
+        Return a list of unique networks (sorted by appearing order in connections).
+
+        Parameters
+        ----------
+        connections : List, optional
+            connections list, by default None (then uses the `self.connections`)
+        min_nports : int, optional
+            min number of ports, by default 1
+
+        Returns
+        -------
+        list
+            List of unique networks
+        """
         if not connections:
             connections = self.connections
 
@@ -292,16 +332,17 @@ class Circuit():
         return [ntw for ntw in ntw_dict.values() if ntw.nports >= min_nports]
 
     @property
-    def connections_nb(self):
-        '''
+    def connections_nb(self) -> int:
+        """
         Return the number of intersections in the circuit.
-        '''
+        """
         return len(self.connections)
 
     @property
-    def connections_list(self):
-        '''
+    def connections_list(self) -> list:
+        """
         Return the full list of connections, including intersections.
+
         The resulting list if of the form:
         ::
             [
@@ -309,52 +350,52 @@ class Circuit():
              [connexion_number, connexion],
              ...
             ]
-        '''
+        """
         return [[idx_cnx, cnx] for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections))]
 
-
-
     @property
-    def networks_nb(self):
-        '''
-        Return the number of connected networks (port excluded)
-        '''
+    def networks_nb(self) -> int:
+        """
+        Return the number of connected networks (port excluded).
+        """
         return len(self.networks_list(self.connections))
 
     @property
-    def nodes_nb(self):
-        '''
+    def nodes_nb(self) -> int:
+        """
         Return the number of nodes in the circuit.
-        '''
+        """
         return self.connections_nb + self.networks_nb
 
     @property
-    def dim(self):
-        '''
+    def dim(self) -> int:
+        """
         Return the dimension of the C, X and global S matrices.
 
-        It correspond to the sum of all connections
-        '''
+        It correspond to the sum of all connections.
+        """
         return np.sum([len(cnx) for cnx in self.connections])
 
     @property
     def G(self):
-        '''
-        Generate the graph of the circuit. Same as :func:`graph`.
-        '''
+        """
+        Generate the graph of the circuit. Convenience shortname for :func:`graph`.
+        """
         return self.graph()
 
     def graph(self):
-        '''
+        """
         Generate the graph of the circuit.
-        
-        Return
-        ------
-        G: `networkx  <https://networkx.github.io/>`_ 
-            graph object.
-        
-        
-        '''
+
+        Returns
+        -------
+        G: :class:`networkx.Graph`
+            graph object [#]_ .
+
+        References
+        ----------
+        .. [#] https://networkx.github.io/
+        """
         try:
             import networkx as nx
         except ImportError as e:
@@ -374,24 +415,26 @@ class Circuit():
                 G.add_edge(cnx_name, ntw_name)
         return G
 
-    def is_connected(self):
-        '''
-        Check if the circuit's graph is connected, that is if
-        if every pair of vertices in the graph is connected.
-        '''
+    def is_connected(self) -> bool:
+        """
+        Check if the circuit's graph is connected.
+
+        Check if every pair of vertices in the graph is connected.
+        """
         # Get the circuit graph. Will raise an error if the networkx package
-        # is not installed. 
+        # is not installed.
         G = self.G
-    
+
         return nx.algorithms.components.is_connected(G)
 
     @property
-    def intersections_dict(self):
-        '''
+    def intersections_dict(self) -> dict:
+        """
         Return a dictionary of all intersections with associated ports and z0:
+
         ::
             { k: [(ntw1_name, ntw1_port), (ntw1_z0, ntw2_name, ntw2_port), ntw2_z0], ... }
-        '''
+        """
         inter_dict = {}
         # for k in range(self.connections_nb):
         #     # get all edges connected to intersection Xk
@@ -403,15 +446,15 @@ class Circuit():
         return inter_dict
 
     @property
-    def edges(self):
-        '''
+    def edges(self) -> list:
+        """
         Return the list of all circuit connections
-        '''
+        """
         return list(self.G.edges)
 
     @property
-    def edge_labels(self):
-        '''
+    def edge_labels(self) -> dict:
+        """
         Return a dictionary describing the port and z0 of all graph edges.
 
         Dictionary is in the form:
@@ -419,10 +462,10 @@ class Circuit():
             {('ntw1_name', 'X0'): '3 (50+0j)',
              ('ntw2_name', 'X0'): '0 (50+0j)',
              ('ntw2_name', 'X1'): '2 (50+0j)', ... }
-        
+
         which can be used in `networkx.draw_networkx_edge_labels`
-        '''
-        # for all intersections, 
+        """
+        # for all intersections,
         # get the N interconnected networks and associated ports and z0
         # and forge the edge label dictionary containing labels between
         # two nodes
@@ -438,10 +481,19 @@ class Circuit():
         return edge_labels
 
 
-    def _Y_k(self, cnx):
-        '''
-        Return the sum of the system admittances of each intersection
-        '''
+    def _Y_k(self, cnx: List[Tuple]) -> np.ndarray:
+        """
+        Return the sum of the system admittances of each intersection.
+
+        Parameters
+        ----------
+        cnx : list of tuples
+            each tuple contains (network, port)
+
+        Returns
+        -------
+        y_k : :class:`numpy.ndarray`
+        """
         y_ns = []
         for (ntw, ntw_port) in cnx:
             # formula (2)
@@ -450,10 +502,20 @@ class Circuit():
         y_k = np.array(y_ns).sum(axis=0)  # shape: (nb_freq,)
         return y_k
 
-    def _Xnn_k(self, cnx_k):
-        '''
-        Return the reflection coefficients x_nn of the connection matrix [X]_k
-        '''
+    def _Xnn_k(self, cnx_k: List[Tuple]) -> np.ndarray:
+        """
+        Return the reflection coefficients x_nn of the connection matrix [X]_k.
+
+        Parameters
+        ----------
+        cnx_k : list of tuples
+            each tuple contains (network, port)
+
+        Returns
+        -------
+        X_nn : :class:`numpy.ndarray`
+            shape `f x n`
+        """
         X_nn = []
         y_k = self._Y_k(cnx_k)
 
@@ -463,11 +525,21 @@ class Circuit():
 
         return np.array(X_nn).T  # shape: (nb_freq, nb_n)
 
-    def _Xmn_k(self, cnx_k):
-        '''
-        Return the transmission coefficient x_mn of the mth column of
-        intersection scattering matrix matrix [X]_k
-        '''
+    def _Xmn_k(self, cnx_k: List[Tuple]) -> np.ndarray:
+        """
+        Return the transmission coefficient X_mn of the mth column of
+        intersection scattering matrix matrix [X]_k.
+
+        Parameters
+        ----------
+        cnx_k : list of tuples
+            each tuple contains (network, port)
+
+        Returns
+        -------
+        X_mn : :class:`numpy.ndarray`
+            shape `f x n`
+        """
         # get the char.impedance of the n
         X_mn = []
         y_k = self._Y_k(cnx_k)
@@ -493,10 +565,20 @@ class Circuit():
 
         return np.array(X_mn).T  # shape: (nb_freq, nb_n)
 
-    def _Xk(self, cnx_k):
-        '''
-        Return the scattering matrices [X]_k of the individual intersections k
-        '''
+    def _Xk(self, cnx_k: List[Tuple]) -> np.ndarray:
+        """
+        Return the scattering matrices [X]_k of the individual intersections k.
+
+        Parameters
+        ----------
+        cnx_k : list of tuples
+            each tuple contains (network, port)
+
+        Returns
+        -------
+        Xs : :class:`numpy.ndarray`
+            shape `f x n x n`
+        """
         Xnn = self._Xnn_k(cnx_k)  # shape: (nb_freq, nb_n)
         Xmn = self._Xmn_k(cnx_k)  # shape: (nb_freq, nb_n)
         # # for loop version
@@ -522,13 +604,27 @@ class Circuit():
         # return Xs.s
 
     @property
-    def X(self):
-        '''
+    def X(self) -> np.ndarray:
+        """
         Return the concatenated intersection matrix [X] of the circuit.
 
         It is composed of the individual intersection matrices [X]_k assembled
-        by bloc diagonal.
-        '''
+        by block diagonal.
+
+        Returns
+        -------
+        X : :class:`numpy.ndarray`
+
+        Note
+        ----
+        There is a numerical bottleneck in this function,
+        when creating the block diagonal matrice [X] from the [X]_k matrices.
+        The difficulty comes from the fact that the shape of each [X]_k
+        matrix is `fxnxn`, so there is a loop over the frequencies
+        to create f times a block matrix [X]. I am still looking for a
+        vectorized implementation but didn't find it.
+
+        """
         # Xk = []
         # for cnx in self.connections:
         #     Xk.append(self._Xk(cnx))
@@ -547,15 +643,21 @@ class Circuit():
         # TODO: avoid this for loop which is a bottleneck for large frequencies
         for idx in np.nditer(np.arange(len(self.frequency))):
             mat_list = [Xk[idx,:] for Xk in Xks]
-            Xf[idx,:] = block_diag(*mat_list)  # bottleneck 
+            Xf[idx,:] = block_diag(*mat_list)  # bottleneck
         return Xf
 
     @property
-    def C(self):
-        '''
-        Return the global scattering matrix of the networks
-        '''
-        # list all networks which are not considered as "ports", 
+    def C(self) -> np.ndarray:
+        """
+        Return the global scattering matrix of the networks.
+
+        Returns
+        -------
+        S : :class:`numpy.ndarray`
+            Global scattering matrix of the networks.
+            Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
+        """
+        # list all networks which are not considered as "ports",
         # that is which do not contain "port" in their network name
         ntws = {k:v for k,v in self.networks_dict().items() if 'port' not in k.lower()}
 
@@ -584,11 +686,17 @@ class Circuit():
         return S  # shape (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
 
     @property
-    def s(self):
-        '''
-        Return the global scattering parameters of the circuit, that is with
-        both "inner" and "outer" ports
-        '''
+    def s(self) -> np.ndarray:
+        """
+        Return the global scattering parameters of the circuit.
+
+        Return the scattering parameters of both "inner" and "outer" ports.
+
+        Returns
+        -------
+        S : :class:`numpy.ndarray`
+            global scattering parameters of the circuit.
+        """
         # transpose is necessary to get expected result
         #return np.transpose(self.X @ np.linalg.inv(np.identity(self.dim) - self.C @ self.X), axes=(0,2,1))
         # does not use the @ operator for backward Python version compatibility
@@ -596,10 +704,14 @@ class Circuit():
 
 
     @property
-    def port_indexes(self):
-        '''
-        Return the indexes of the "external" ports. These must be labelled "port"
-        '''
+    def port_indexes(self) -> list:
+        """
+        Return the indexes of the "external" ports. These must be labelled "port".
+
+        Returns
+        -------
+        port_indexes : list
+        """
         port_indexes = []
         for (idx_cnx, cnx) in enumerate(chain.from_iterable(self.connections)):
             ntw, ntw_port = cnx
@@ -607,10 +719,20 @@ class Circuit():
                 port_indexes.append(idx_cnx)
         return port_indexes
 
-    def _cnx_z0(self, cnx_k):
-        '''
-        Return the characteristic impedances of a specific connection
-        '''
+    def _cnx_z0(self, cnx_k: List[Tuple]) -> np.ndarray:
+        """
+        Return the characteristic impedances of a specific connections.
+
+        Parameters
+        ----------
+        cnx_k : list of tuples
+            each tuple contains (network, port)
+
+        Returns
+        -------
+        z0s : :class:`numpy.ndarray`
+            shape `f x nb_ports_at_cnx`
+        """
         z0s = []
         for (ntw, ntw_port) in cnx_k:
             z0s.append(ntw.z0[:,ntw_port])
@@ -618,10 +740,15 @@ class Circuit():
         return np.array(z0s).T  # shape (nb_freq, nb_ports_at_cnx)
 
     @property
-    def port_z0(self):
-        '''
-        Return the external port impedances
-        '''
+    def port_z0(self) -> np.ndarray:
+        """
+        Return the external port impedances.
+
+        Returns
+        -------
+        z0s : :class:`numpy.ndarray`
+            shape `f x nb_ports`
+        """
         z0s = []
         for cnx in self.connections:
             for (ntw, ntw_port) in cnx:
@@ -630,20 +757,31 @@ class Circuit():
         return np.array(z0s)[self.port_indexes, :].T  # shape (nb_freq, nb_ports)
 
     @property
-    def s_external(self):
-        '''
-        Return the scattering parameters for the external ports
-        '''
+    def s_external(self) -> np.ndarray:
+        """
+        Return the scattering parameters for the external ports.
+
+        Returns
+        -------
+        S : :class:`numpy.ndarray`
+            Scattering parameters of the circuit for the external ports.
+            Shape `f x nb_ports x nb_ports`
+        """
         port_indexes = self.port_indexes
         a, b = np.meshgrid(port_indexes, port_indexes)
         S_ext = self.s[:, a, b]
         return S_ext  # shape (nb_frequency, nb_ports, nb_ports)
 
     @property
-    def network(self):
-        '''
-        Return the Network associated to external ports
-        '''
+    def network(self) -> 'Network':
+        """
+        Return the Network associated to external ports.
+
+        Returns
+        -------
+        ntw : :class:`~skrf.network.Network`
+            Network associated to external ports
+        """
         ntw = Network()
         ntw.frequency = self.frequency
         ntw.z0 = self.port_z0
@@ -651,220 +789,218 @@ class Circuit():
         return ntw
 
 
-    def s_active(self, a):
-        '''
-        Return active s-parameters of the circuit's network for a defined wave excitation a.
-        
-        The active s-parameter at a port is the reflection coefficients 
+    def s_active(self, a: NumberLike) -> np.ndarray:
+        """
+        Return "active" s-parameters of the circuit's network for a defined wave excitation `a`.
+
+        The "active" s-parameter at a port is the reflection coefficients
         when other ports are excited. It is an important quantity for active
         phased array antennas.
-        
+
         Active s-parameters are defined by [#]_:
-        
+
         .. math::
-                    
+
             \mathrm{active}(s)_{mn} = \sum_i s_{mi} \\frac{a_i}{a_n}
-        
+
         Parameters
         ----------
         a : complex array of shape (n_ports)
-            forward wave complex amplitude (pseudowave formulation [#]_)
-        
-        Return
-        ---------
+            forward wave complex amplitude (power-wave formulation [#]_)
+
+        Returns
+        -------
         s_act : complex array of shape (n_freqs, n_ports)
             active s-parameters for the excitation a
-        
-        
+
+
         References
-        ---------- 
+        ----------
         .. [#] D. M. Pozar, IEEE Trans. Antennas Propag. 42, 1176 (1994).
-        
+
         .. [#] D. Williams, IEEE Microw. Mag. 14, 38 (2013).
-        
-        '''
+
+        """
         return self.network.s_active(a)
 
-    def z_active(self, a):
-        '''
-        Return the active Z-parameters of the circuit's network for a defined wave excitation a.
-        
-        The active Z-parameters are defined by:
-            
+    def z_active(self, a: NumberLike) -> np.ndarray:
+        """
+        Return the "active" Z-parameters of the circuit's network for a defined wave excitation a.
+
+        The "active" Z-parameters are defined by:
+
         .. math::
-                    
+
             \mathrm{active}(z)_{m} = z_{0,m} \\frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
-            
+
         where :math:`z_{0,m}` is the characteristic impedance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
-        
+
         Parameters
         ----------
         a : complex array of shape (n_ports)
             forward wave complex amplitude
-    
-        Return
-        ----------
+
+        Returns
+        -------
         z_act : complex array of shape (nfreqs, nports)
             active Z-parameters for the excitation a
-            
+
         See Also
-        -----------
+        --------
             s_active : active S-parameters
             y_active : active Y-parameters
-            vswr_active : active VSWR        
-        '''
+            vswr_active : active VSWR
+        """
         return self.network.z_active(a)
 
-    def y_active(self, a):
-        '''
-        Return the active Y-parameters of the circuit's network for a defined wave excitation a.
-        
-        The active Y-parameters are defined by:
-            
-        .. math::
-                    
-            \mathrm{active}(y)_{m} = y_{0,m} \\frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
-            
-        where :math:`y_{0,m}` is the characteristic admittance and
-        :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.    
-        
-        Parameters
-        ----------            
-        a : complex array of shape (n_ports)
-            forward wave complex amplitude 
-        
-        Return
-        ----------
-        y_act : complex array of shape (nfreqs, nports)
-            active Y-parameters for the excitation a
-            
-        See Also
-        -----------
-            s_active : active S-parameters
-            z_active : active Z-parameters
-            vswr_active : active VSWR       
-        '''
-        return self.network.y_active(a)
+    def y_active(self, a: NumberLike) -> np.ndarray:
+        """
+        Return the "active" Y-parameters of the circuit's network for a defined wave excitation a.
 
-    def vswr_active(self, a):
-        '''
-        Return the active VSWR of the circuit's network for a defined wave excitation a.
-        
-        The active VSWR is defined by :
-            
+        The "active" Y-parameters are defined by:
+
         .. math::
-                    
-            \mathrm{active}(vswr)_{m} = \\frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
-    
-        where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
-        
+
+            \mathrm{active}(y)_{m} = y_{0,m} \\frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+
+        where :math:`y_{0,m}` is the characteristic admittance and
+        :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
+
         Parameters
-        ----------       
+        ----------
         a : complex array of shape (n_ports)
             forward wave complex amplitude
-    
-        Return
-        ----------
-        vswr_act : complex array of shape (nfreqs, nports)
-            active VSWR for the excitation a
-            
+
+        Returns
+        -------
+        y_act : complex array of shape (nfreqs, nports)
+            active Y-parameters for the excitation a
+
         See Also
-        -----------
+        --------
             s_active : active S-parameters
             z_active : active Z-parameters
-            y_active : active Y-parameters  
-        '''        
+            vswr_active : active VSWR
+        """
+        return self.network.y_active(a)
+
+    def vswr_active(self, a: NumberLike) -> np.ndarray:
+        """
+        Return the "active" VSWR of the circuit's network for a defined wave excitation a.
+
+        The "active" VSWR is defined by :
+
+        .. math::
+
+            \mathrm{active}(vswr)_{m} = \\frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+
+        where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
+
+        Parameters
+        ----------
+        a : complex array of shape (n_ports)
+            forward wave complex amplitude
+
+        Returns
+        -------
+        vswr_act : complex array of shape (nfreqs, nports)
+            active VSWR for the excitation a
+
+        See Also
+        --------
+            s_active : active S-parameters
+            z_active : active Z-parameters
+            y_active : active Y-parameters
+        """
         return self.network.vswr_active(a)
-    
+
     @property
-    def z0(self):
-        '''
-        Characteristic impedances of "internal" ports
+    def z0(self) -> np.ndarray:
+        """
+        Characteristic impedances of "internal" ports.
 
         Returns
         -------
         z0 : complex array of shape (nfreqs, nports)
             Characteristic impedances of both "inner" and "outer" ports
 
-        '''
+        """
         z0s = []
         for cnx_idx, (ntw, ntw_port) in self.connections_list:
             z0s.append(ntw.z0[:,ntw_port])
         return np.array(z0s).T
 
     @property
-    def connections_pair(self):
-        '''
-        List the connections by pair. 
-        
-        Each connection in the circuit is between a specific pair of two 
-        (networks, port, z0).  
+    def connections_pair(self) -> List:
+        """
+        List the connections by pair.
+
+        Each connection in the circuit is between a specific pair of two
+        (networks, port, z0).
 
         Returns
         -------
         connections_pair : list
             list of pair of connections
 
-        '''
+        """
         return [self.connections_list[i:i+2] for i in range(0, len(self.connections_list), 2)]
-        
-    
+
+
     @property
-    def _currents_directions(self):
-        '''
+    def _currents_directions(self) -> np.ndarray:
+        """
         Create a array of indices to define the sign of the current.
-        
+
         The currents are defined positive when entering an internal network.
-        
-        
 
         Returns
         -------
         directions : array of int (nports, 2)
-        
+
         Note
         ----
         This function is used in internal currents and voltages calculations.
 
-        '''
+        """
         directions = np.zeros((self.dim,2), dtype='int')
         for cnx_pair in self.connections_pair:
             (cnx_idx_A, cnx_A), (cnx_idx_B, cnx_B) = cnx_pair
             directions[cnx_idx_A,:] = cnx_idx_A, cnx_idx_B
             directions[cnx_idx_B,:] = cnx_idx_B, cnx_idx_A
         return directions
-    
-    def _a(self, a_external):
-        '''
-        Wave input array at "internal" ports
+
+    def _a(self, a_external: NumberLike) -> np.ndarray:
+        """
+        Wave input array at "internal" ports.
 
         Parameters
         ----------
         a_external : array
             power-wave input vector at ports
-            
+
         Returns
         -------
         a_internal : array
             Wave input array at internal ports
 
-        '''
+        """
         # create a zero array and fill the values corresponding to ports
         a_internal = np.zeros(self.dim, dtype='complex')
         a_internal[self.port_indexes] = a_external
         return a_internal
 
-    def _a_external(self, power, phase):
-        '''
+    def _a_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
+        """
         Wave input array at Circuit's ports ("external" ports).
-        
+
         The array is defined from power and phase by:
-        
+
         .. math::
-            
+
             a = \sqrt(2 P_{in} ) e^{j \phi}
-            
+
         The factor 2 is in order to deal with peak values.
 
         Parameters
@@ -881,42 +1017,42 @@ class Circuit():
         a_external: array
             Wave input array  at Circuit's ports
 
-        '''
+        """
         if len(power) != len(self.port_indexes):
             raise ValueError('Length of power array does not match the number of ports of the circuit.')
         if len(phase) != len(self.port_indexes):
             raise ValueError('Length of phase array does not match the number of ports of the circuit.')
         return np.sqrt(2*np.array(power))*np.exp(1j*np.array(phase))
-    
-    def _b(self, a_internal):
-        '''
+
+    def _b(self, a_internal: NumberLike) -> np.ndarray:
+        """
         Wave output array at "internal" ports
-        
+
         Parameters
         ----------
         a_internal : array
             Wave input array at internal ports
-        
+
         Returns
         -------
         b_internal : array
             Wave output array at internal ports
-            
+
         Note
         ----
-        Wave input array at internal ports can be derived from power and 
+        Wave input array at internal ports can be derived from power and
         phase excitation at "external" ports using `_a(power, phase)` method.
-        
-        '''
+
+        """
         # return self.s @ a_internal
         return np.matmul(self.s, a_internal)
-    
-    def currents(self, power, phase):
-        '''
-        Currents at internal ports. 
-        
+
+    def currents(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
+        """
+        Currents at internal ports.
+
         NB: current direction is defined as positive when entering a node.
-        
+
         NB: external current sign are opposite than corresponding internal ones,
             as the internal currents are actually flowing into the "port" networks
 
@@ -932,9 +1068,9 @@ class Circuit():
         I : complex array of shape (nfreqs, nports)
             Currents in Amperes [A] (peak) at internal ports.
 
-        '''
-        # It is possible with Circuit to define connections between 
-        # multiple (>2) ports at the same time in the connection setup, like : 
+        """
+        # It is possible with Circuit to define connections between
+        # multiple (>2) ports at the same time in the connection setup, like :
         # cnx = [
         #       [(ntw1, portA), (ntw2, portB), (ntw3, portC)], ...
         #]
@@ -969,11 +1105,9 @@ class Circuit():
         return Is
 
 
-    def voltages(self, power, phase):
-        '''
-        Voltages at internal ports. 
-        
-        NB: 
+    def voltages(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
+        """
+        Voltages at internal ports.
 
         Parameters
         ----------
@@ -987,7 +1121,7 @@ class Circuit():
         V : complex array of shape (nfreqs, nports)
             Voltages in Amperes [A] (peak) at internal ports.
 
-        '''
+        """
         # cf currents() for more details
         for inter_idx, inter in self.intersections_dict.items():
             if len(inter) > 2:
@@ -998,12 +1132,12 @@ class Circuit():
         z0s = self.z0
         directions = self._currents_directions
         Vs = (b[:,directions[:,0]] + b[:,directions[:,1]])*np.sqrt(z0s)
-        return Vs        
-    
-    def currents_external(self, power, phase):
-        '''
-        Currents at external ports. 
-        
+        return Vs
+
+    def currents_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
+        """
+        Currents at external ports.
+
         NB: current direction is defined positive when "entering" into port.
 
         Parameters
@@ -1016,9 +1150,9 @@ class Circuit():
         Returns
         -------
         I : complex array of shape (nfreqs, nports)
-            Currents in Amperes [A] (peak) at external ports. 
+            Currents in Amperes [A] (peak) at external ports.
 
-        '''
+        """
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0
@@ -1026,9 +1160,9 @@ class Circuit():
         for port_idx in self.port_indexes:
             Is.append((a[port_idx] - b[:,port_idx])/np.sqrt(z0s[:,port_idx]))
         return np.array(Is).T
-    
-    def voltages_external(self, power, phase):
-        '''
+
+    def voltages_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
+        """
         Voltages at external ports
 
         Parameters
@@ -1043,7 +1177,7 @@ class Circuit():
         V : complex array of shape (nfreqs, nports)
             Voltages in Volt [V] (peak)  at ports
 
-        '''        
+        """
         a = self._a(self._a_external(power, phase))
         b = self._b(a)
         z0s = self.z0

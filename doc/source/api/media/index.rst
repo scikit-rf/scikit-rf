@@ -3,12 +3,12 @@ Media
 .. automodule:: skrf.media
 
 
-Transmission Line Classes
--------------------------
+Media Classes
+-------------
 
 .. autosummary::
    :toctree: generated/
- 
+
    ~media.DefinedGammaZ0
    ~distributedCircuit.DistributedCircuit
    ~rectangularWaveguide.RectangularWaveguide

@@ -4,29 +4,27 @@
 time (:mod:`skrf.time`)
 ========================================
 
-Time domain functions 
+Time domain functions
 
 
 .. autosummary::
    :toctree: generated/
 
    time_gate
-   detect_span 
+   detect_span
    find_n_peaks
    indexes
 
 """
-
-from .util import  find_nearest_index
-
-
+from .util import find_nearest_index
 from scipy.ndimage.filters import convolve1d
-from scipy import  signal
+from scipy import signal
 import numpy as npy
-import numpy as np # so i dont have to change indexes (from peakutils)
 from numpy import fft
+from typing import List
 
-def indexes(y, thres=0.3, min_dist=1):
+
+def indexes(y: npy.ndarray, thres: float = 0.3, min_dist: int = 1) -> npy.ndarray:
     """
     Peak detection routine.
 
@@ -38,27 +36,27 @@ def indexes(y, thres=0.3, min_dist=1):
     ----------
     y : ndarray (signed)
         1D amplitude data to search for peaks.
-    thres : float between [0., 1.]
+    thres : float between [0., 1.], optional
         Normalized threshold. Only the peaks with amplitude higher than the
-        threshold will be detected.
-    min_dist : int
+        threshold will be detected. Default is 0.3
+    min_dist : int, optional
         Minimum distance between each detected peak. The peak with the highest
-        amplitude is preferred to satisfy this constraint.
+        amplitude is preferred to satisfy this constraint. Default is 1
 
     Returns
     -------
     ndarray
         Array containing the numeric indexes of the peaks that were detected
-    
+
     Notes
-    --------
-    This function was taken from peakutils-1.1.0 
+    -----
+    This function was taken from peakutils-1.1.0
     http://pythonhosted.org/PeakUtils/index.html
-    
+
     """
-    #This function  was taken from peakutils, and is covered 
-    # by the MIT license, included below: 
-    
+    #This function was taken from peakutils, and is covered
+    # by the MIT license, included below:
+
     #The MIT License (MIT)
 
     #Copyright (c) 2014 Lucas Hermann Negri
@@ -80,45 +78,45 @@ def indexes(y, thres=0.3, min_dist=1):
     #LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
     #OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
     #THE SOFTWARE.
-    
-    if isinstance(y, np.ndarray) and np.issubdtype(y.dtype, np.unsignedinteger):
+
+    if isinstance(y, npy.ndarray) and npy.issubdtype(y.dtype, npy.unsignedinteger):
         raise ValueError("y must be signed")
 
-    thres = thres * (np.max(y) - np.min(y)) + np.min(y)
+    thres = thres * (npy.max(y) - npy.min(y)) + npy.min(y)
     min_dist = int(min_dist)
 
     # compute first order difference
-    dy = np.diff(y)
+    dy = npy.diff(y)
 
     # propagate left and right values successively to fill all plateau pixels (0-value)
-    zeros,=np.where(dy == 0)
-    
+    zeros, = npy.where(dy == 0)
+
     # check if the singal is totally flat
     if len(zeros) == len(y) - 1:
-        return np.array([])
-    
+        return npy.array([])
+
     while len(zeros):
         # add pixels 2 by 2 to propagate left and right value onto the zero-value pixel
-        zerosr = np.hstack([dy[1:], 0.])
-        zerosl = np.hstack([0., dy[:-1]])
+        zerosr = npy.hstack([dy[1:], 0.])
+        zerosl = npy.hstack([0., dy[:-1]])
 
         # replace 0 with right value if non zero
         dy[zeros]=zerosr[zeros]
-        zeros,=np.where(dy == 0)
+        zeros, = npy.where(dy == 0)
 
         # replace 0 with left value if non zero
-        dy[zeros]=zerosl[zeros]
-        zeros,=np.where(dy == 0)
+        dy[zeros] = zerosl[zeros]
+        zeros, = npy.where(dy == 0)
 
     # find the peaks by using the first order difference
-    peaks = np.where((np.hstack([dy, 0.]) < 0.)
-                     & (np.hstack([0., dy]) > 0.)
+    peaks = npy.where((npy.hstack([dy, 0.]) < 0.)
+                     & (npy.hstack([0., dy]) > 0.)
                      & (y > thres))[0]
 
     # handle multiple peaks, respecting the minimum distance
     if peaks.size > 1 and min_dist > 1:
-        highest = peaks[np.argsort(y[peaks])][::-1]
-        rem = np.ones(y.size, dtype=bool)
+        highest = peaks[npy.argsort(y[peaks])][::-1]
+        rem = npy.ones(y.size, dtype=bool)
         rem[peaks] = False
 
         for peak in highest:
@@ -127,100 +125,135 @@ def indexes(y, thres=0.3, min_dist=1):
                 rem[sl] = True
                 rem[peak] = False
 
-        peaks = np.arange(y.size)[~rem]
+        peaks = npy.arange(y.size)[~rem]
 
     return peaks
 
-def find_n_peaks(x,n, thres=.9, **kw):
-    '''
-    Find a given number of peaks in a signal
-    '''
-    
-    for dummy  in range(10):
-        
-        idx = indexes(x, **kw)
-        if len(idx) < n:
-            thres*=.5
-            
-        else:
-            peak_vals = sorted(x[idx], reverse=True)[:n]
-            peak_idxs =[x.tolist().index(k) for k in peak_vals]
 
-            return peak_idxs
-    raise ValueError('Couldnt find %i peaks'%n)
-    
-def detect_span(ntwk):
-    '''
-    detect the correct time-span between two largest peaks
-    '''
-    x = ntwk.s_time_db.flatten()
-    p1,p2 = find_n_peaks(x,n=2)
-    #distance to nearest neighbor peak
-    span = abs(ntwk.frequency.t_ns[p1]-ntwk.frequency.t_ns[p2])
-    return span 
-    
-def time_gate(ntwk, start=None, stop=None, center=None, span=None,
-              mode='bandpass', window=('kaiser', 6),media=None, 
-              boundary='reflect',return_all=False):
-    '''
-    Time-gate one-port s-parameters.
-    
-    The gate can be defined with start/stop times, or by 
-    center/span. all times are in units of nanoseconds. common 
-    windows are:
-     * ('kaiser', 6)
-     * 6 # integers are interpreted as kaiser beta-values
-     * 'hamming'
-     * 'boxcar'  # a straight up rect
-     
-    If no parameters are passed this will try to auto-gate the largest
-    peak. 
+def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> List[int]:
+    """
+    Find a given number of peaks in a signal.
 
     Parameters
-    ------------
+    ----------
+    x : numpy.ndarray
+        signal
+    n : int
+        number of peaks to search for
+    thres : float, optional
+        threshold, default is 0.9
+    **kwargs : optional keyword arguments passed to :func:`indexes`
+
+    Returns
+    -------
+    peak_idxs : list of int
+        List containing the numeric indexes of the peaks that were detected
+
+    Raises
+    ------
+    ValueError
+        If no peaks are found.
+    """
+    for dummy in range(10):
+
+        idx = indexes(x, **kwargs)
+        if len(idx) < n:
+            thres *= .5
+
+        else:
+            peak_vals = sorted(x[idx], reverse=True)[:n]
+            peak_idxs = [x.tolist().index(k) for k in peak_vals]
+
+            return peak_idxs
+    raise ValueError('Couldnt find %i peaks' % n)
+
+
+def detect_span(ntwk) -> float:
+    """
+    Detect the correct time-span between two largest peaks.
+
+    Parameters
+    ----------
+    ntwk : :class:`~skrf.network.Network`
+        network to get data from
+
+    Returns
+    -------
+    span : float
+    """
+    x = ntwk.s_time_db.flatten()
+    p1, p2 = find_n_peaks(x, n=2)
+    # distance to nearest neighbor peak
+    span = abs(ntwk.frequency.t_ns[p1]-ntwk.frequency.t_ns[p2])
+    return span
+
+
+def time_gate(ntwk, start: float = None, stop: float = None, center: float = None, span: float = None,
+              mode: str = 'bandpass', window=('kaiser', 6), media=None,
+              boundary: str = 'reflect', return_all: bool = False):
+    """
+    Time-gate one-port s-parameters.
+
+    The gate can be defined with start/stop times, or by
+    center/span. all times are in units of nanoseconds. common
+    windows are:
+
+    * ('kaiser', 6)
+    * 6 # integers are interpreted as kaiser beta-values
+    * 'hamming'
+    * 'boxcar'  # a straight up rect
+
+    If no parameters are passed this will try to auto-gate the largest
+    peak.
+
+    Parameters
+    ----------
+    ntwk : :class:`~skrf.network.Network`
+        network to operate on
     start : number, or None
-        start of time gate, (ns). 
+        start of time gate, (ns).
     stop : number, or None
-        stop of time gate (ns). 
+        stop of time gate (ns).
     center : number, or None
-        center of time gate, (ns). If None, and span is given, 
+        center of time gate, (ns). If None, and span is given,
         the gate will be centered on the peak.
     span : number, or None
-        span of time gate, (ns).  If None span will be half of the 
+        span of time gate, (ns).  If None span will be half of the
         distance to the second tallest peak
     mode: ['bandpass','bandstop']
-        mode of gate 
+        mode of gate
     boundary:  {'reflect', 'constant', 'nearest', 'mirror', 'wrap'},
         passed to `scipy.ndimage.filters.convolve1d`
-    window : string, float, or tuple 
+    window : string, float, or tuple
         passed to `window` arg of `scipy.signal.get_window`
-    
-    Notes
-    ------
-    You cant gate things that are 'behind' strong reflections. This 
-    is due to the multiple reflections that occur. 
-    
-    If `center!=0`, then the ntwk's time response is shifted 
-    to t=0, gated, then shifted back to where it was. This is 
+
+    Note
+    ----
+    You cant gate things that are 'behind' strong reflections. This
+    is due to the multiple reflections that occur.
+
+    If `center!=0`, then the ntwk's time response is shifted
+    to t=0, gated, then shifted back to where it was. This is
     done in frequency domain using `ntwk.delay()`. If the media being
-    gated is dispersive (ie waveguide), then the gate `span` will be 
+    gated is dispersive (ie waveguide), then the gate `span` will be
     span at t=0, which is different.
-    
-    If you need to time-gate an N-port network, then you should 
-    gate each s-parameter independently. 
-    
+
+    If you need to time-gate an N-port network, then you should
+    gate each s-parameter independently.
+
     Returns
-    --------
+    -------
     ntwk : Network
         copy of ntwk with time-gated s-parameters
 
+
     .. warning::
-        Depending on sharpness of the gate, the  band edges may be 
+        Depending on sharpness of the gate, the band edges may be
         inaccurate, due to properties of FFT. We do not re-normalize
         anything.
 
 
-    '''
+    """
     if ntwk.nports >1:
         raise ValueError('Time-gating only works on one-ports. try taking ntwk.s11 or ntwk.s21 first')
 
@@ -229,22 +262,22 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
         stop *= 1e-9
         span = abs(stop-start)
         center = (stop+start)/2.
-    
+
     else:
-        if center is None:    
+        if center is None:
             # they didnt provide center, so find the peak
             n = ntwk.s_time_mag.argmax()
             center = ntwk.frequency.t_ns[n]
-            
+
         if span is None:
             span = detect_span(ntwk)
-            
+
         center *= 1e-9
         span *= 1e-9
         start = center - span / 2.
         stop = center + span / 2.
 
-    
+
     # find start/stop gate indices
     t = ntwk.frequency.t
     start_idx = find_nearest_index(t, start)
@@ -263,14 +296,14 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
     kernel=fft.ifftshift(fft.fft(fft.fftshift(gate, axes=0), axis=0))
     kernel =abs(kernel).flatten() # take mag and flatten
     kernel=kernel/sum(kernel) # normalize kernel
-    
+
     out = ntwk.copy()
-    
-    # conditionally delay ntwk, to center at t=0, this is 
+
+    # conditionally delay ntwk, to center at t=0, this is
     # equivalent to gating at center.  (this is probably very inefficient)
     if center!=0:
         out = out.delay(-center*1e9, 'ns',port=0,media=media)
-    
+
     # waste of code to handle convolve1d suck
     re = out.s_re[:,0,0]
     im = out.s_im[:,0,0]
@@ -293,12 +326,8 @@ def time_gate(ntwk, start=None, stop=None, center=None, span=None,
         gate_ntwk = out.s11.copy()
         gate_ntwk.s = kernel
         gate_ntwk= gate_ntwk.delay(center*1e9, 'ns', media=media)
-        
+
         return {'gated_ntwk':out,
                 'gate':gate_ntwk}
     else:
         return out
-    
-
-
-

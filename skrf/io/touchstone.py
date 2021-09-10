@@ -5,7 +5,7 @@
 touchstone (:mod:`skrf.io.touchstone`)
 ========================================
 
-Touchstone class
+Touchstone class and utilities
 
 .. autosummary::
    :toctree: generated/
@@ -41,26 +41,28 @@ from .. import mathFunctions as mf
 
 class Touchstone:
     """
-    class to read touchstone s-parameter files
+    Class to read touchstone s-parameter files.
 
     The reference for writing this class is the draft of the
     Touchstone(R) File Format Specification Rev 2.0 [#]_ and
-    Touchstone(R) File Format Specification Version 2.0 [##]_
-
+    Touchstone(R) File Format Specification Version 2.0 [#]_
+                                                         
+    References
+    ----------
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
-    .. [##] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
+    .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
     def __init__(self, file):
         """
         constructor
 
         Parameters
-        -------------
+        ----------
         file : str or file-object
             touchstone file to load
 
         Examples
-        ---------
+        --------
         From filename
 
         >>> t = rf.Touchstone('network.s2p')
@@ -116,7 +118,12 @@ class Touchstone:
 
     def load_file(self, fid):
         """
-        Load the touchstone file into the internal data structures
+        Load the touchstone file into the internal data structures.
+
+        Parameters
+        ----------
+        fid : file object
+
         """
 
         filename=self.filename
@@ -257,11 +264,18 @@ class Touchstone:
         if not self.reference:
             self.reference = [self.resistance] * self.rank
 
-    def get_comments(self, ignored_comments = ['Created with skrf']):
+    def get_comments(self, ignored_comments=['Created with skrf']):
         """
-        Returns the comments which appear anywhere in the file.  Comment lines
-        containing ignored comments are removed.  By default these are comments
-        which contain special meaning withing skrf and are not user comments.
+        Returns the comments which appear anywhere in the file.  
+        
+        Comment lines containing ignored comments are removed.
+        By default these are comments which contain special meaning withing 
+        skrf and are not user comments.
+        
+        Returns
+        -------
+        processed_comments : string
+
         """
         processed_comments = ''
         if self.comments is None:
@@ -275,9 +289,14 @@ class Touchstone:
         return processed_comments
     
     def get_comment_variables(self):
-        '''
-        convert hfss variable comments to a dict of vars:(numbers,units)
-        '''
+        """
+        Convert hfss variable comments to a dict of vars.
+        
+        Returns
+        -------
+        var_dict : dict (numbers, units)
+            Dictionnary containing the comments
+        """
         comments = self.comments
         p1 = re.compile(r'\w* = \w*.*')
         p2 = re.compile(r'\s*(\d*\.?\d*)\s*(\w*)')
@@ -293,8 +312,14 @@ class Touchstone:
     
     def get_format(self, format="ri"):
         """
-        returns the file format string used for the given format.
+        Returns the file format string used for the given format.
+        
         This is useful to get some information.
+        
+        Returns
+        -------
+        format : string
+
         """
         if format == 'orig':
             frequency = self.frequency_unit
@@ -333,7 +358,7 @@ class Touchstone:
 
     def get_sparameter_data(self, format='ri'):
         """
-        get the data of the s-parameter with the given format.
+        Get the data of the s-parameter with the given format.
 
         Parameters
         ----------
@@ -401,10 +426,14 @@ class Touchstone:
         The first element is the frequency vector (in Hz) and the s-parameters are a 3d numpy array.
         The values of the s-parameters are complex number.
 
-        Example
+        Returns
         -------
-          f,a = self.sgetparameter_arrays()
-          s11 = a[:,0,0]
+        param : tuple of arrays
+
+        Examples
+        --------
+        >>> f, a = self.sgetparameter_arrays()
+        >>> s11 = a[:, 0, 0]
 
         """
         v = self.sparameters
@@ -426,33 +455,28 @@ class Touchstone:
                     v_complex.reshape((-1, self.rank, self.rank)))
 
     def get_noise_names(self):
-        """
-        TODO: NIY
-        """
-        TBD = 1
+        raise NotImplementedError('not yet implemented')        
 
 
     def get_noise_data(self):
-        """
-        TODO: NIY
-        """
         # TBD = 1
         # noise_frequency = noise_values[:,0]
         # noise_minimum_figure = noise_values[:,1]
         # noise_source_reflection = noise_values[:,2]
         # noise_source_phase = noise_values[:,3]
         # noise_normalized_resistance = noise_values[:,4]
+        raise NotImplementedError('not yet implemented') 
         
     def is_from_hfss(self):
-        '''
-        Check if the Touchstone file has been produced by HFSS
+        """
+        Check if the Touchstone file has been produced by HFSS.
         
         Returns
-        ------------
+        -------
         status : boolean
             True if the Touchstone file has been produced by HFSS
             False otherwise
-        '''
+        """
         if self.comments is None:
             return False
 
@@ -462,13 +486,13 @@ class Touchstone:
         return False
 
     def get_gamma_z0_from_fid(self, fid):
-        '''
-        Extracts Z0 and Gamma comments from fid
+        """
+        Extracts Z0 and Gamma comments from fid.
         
-        Parameter
-        -------------
+        Parameters
+        ----------
         fid : file object
-        '''
+        """
         gamma = []
         z0 = []
         def line2ComplexVector(s):
@@ -526,33 +550,33 @@ class Touchstone:
         self.z0 = npy.array(z0)
 
     def get_gamma_z0(self):
-        '''
-        Extracts Z0 and Gamma comments from touchstone file (if provided)
+        """
+        Extracts Z0 and Gamma comments from touchstone file (if provided).
         
         Returns
-        --------
+        -------
         gamma : complex numpy.ndarray
             complex  propagation constant
         z0 : numpy.ndarray
             complex port impedance    
-        '''
+        """
         return self.gamma, self.z0
 
 def hfss_touchstone_2_gamma_z0(filename):
-    '''
-    Extracts Z0 and Gamma comments from touchstone file
+    """
+    Extracts Z0 and Gamma comments from touchstone file.
 
-    Takes a HFSS-style touchstone file with Gamma and Z0 comments and
+    Takes a HFSS-style Touchstone file with Gamma and Z0 comments and
     extracts a triplet of arrays being: (frequency, Gamma, Z0)
 
     Parameters
-    ------------
+    ----------
     filename : string
-        the HFSS-style touchstone file
+        the HFSS-style Touchstone file
 
 
     Returns
-    --------
+    -------
     f : numpy.ndarray
         frequency vector (in Hz)
     gamma : complex numpy.ndarray
@@ -561,39 +585,40 @@ def hfss_touchstone_2_gamma_z0(filename):
         complex port impedance
 
     Examples
-    ----------
+    --------
     >>> f,gamm,z0 = rf.hfss_touchstone_2_gamma_z0('line.s2p')
-    '''
+    """
     ntwk = Network(filename)
 
     return ntwk.frequency.f, ntwk.gamma, ntwk.z0
 
 
 def hfss_touchstone_2_media(filename, f_unit='ghz'):
-    '''
-    Creates a :class:`~skrf.media.Media` object from a a HFSS-style touchstone file with Gamma and Z0 comments
+    """
+    Creates a :class:`~skrf.media.Media` object from a a HFSS-style Touchstone file with Gamma and Z0 comments.
 
     Parameters
-    ------------
+    ----------
     filename : string
-        the HFSS-style touchstone file
-    f_unit : ['hz','khz','mhz','ghz']
-        passed to f_unit parameters of Frequency constructor
+        the HFSS-style Touchstone file
+    f_unit : string 
+        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter 
+        to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
-    --------
-    my_media : skrf.media.Media object
+    -------
+    my_media : :class:`~skrf.media.media.Media` object
         the transmission line model defined by the gamma, and z0
         comments in the HFSS file.
 
     Examples
-    ----------
+    --------
     >>> port1_media, port2_media = rf.hfss_touchstone_2_media('line.s2p')
 
     See Also
-    ---------
+    --------
     hfss_touchstone_2_gamma_z0 : returns gamma, and z0
-    '''
+    """
     ntwk = Network(filename)
 
     freq = ntwk.frequency
@@ -617,41 +642,42 @@ def hfss_touchstone_2_media(filename, f_unit='ghz'):
 
 
 def hfss_touchstone_2_network(filename, f_unit='ghz'):
-    '''
-    Creates a :class:`~skrf.Network` object from a a HFSS-style touchstone file
+    """
+    Creates a :class:`~skrf.Network` object from a a HFSS-style Touchstone file.
 
     Parameters
-    ------------
+    ----------
     filename : string
-        the HFSS-style touchstone file
-    f_unit : ['hz','khz','mhz','ghz']
-        passed to f_unit parameters of Frequency constructor
+        the HFSS-style Touchstone file
+    f_unit : string 
+        'hz', 'khz', 'mhz' or 'ghz', which is passed to the `f_unit` parameter 
+        to :class:`~skrf.frequency.Frequency` constructor
 
     Returns
-    --------
-    my_network : skrf.Network object
+    -------
+    my_network : :class:`~skrf.network.Network` object
         the n-port network model
 
     Examples
-    ----------
+    --------
     >>> my_network = rf.hfss_touchstone_2_network('DUT.s2p')
 
     See Also
-    ---------
+    --------
     hfss_touchstone_2_gamma_z0 : returns gamma, and z0
-    '''
+    """
     my_network = Network(file=filename, f_unit=f_unit)
     return(my_network)
 
 
 def read_zipped_touchstones(ziparchive, dir=""):
     """
-    similar to skrf.io.read_all_networks, which works for directories but only for touchstones in ziparchives
+    similar to skrf.io.read_all_networks, which works for directories but only for Touchstones in ziparchives.
 
     Parameters
     ----------
-    ziparchive : zipfile.ZipFile
-        an zip archive file, containing touchstone files and open for reading
+    ziparchive : :class:`zipfile.ZipFile`
+        an zip archive file, containing Touchstone files and open for reading
     dir : str
         the directory of the ziparchive to read networks from, default is "" which reads only the root directory
 

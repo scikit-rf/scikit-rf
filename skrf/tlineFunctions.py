@@ -60,17 +60,24 @@ Short names
         :toctree: generated/
 
         theta
+
         zl_2_Gamma0
-        Gamma0_2_zl
         zl_2_zin
         zl_2_Gamma_in
+        zl_2_swr
+        zl_2_total_loss
+
+        Gamma0_2_zl
         Gamma0_2_Gamma_in
         Gamma0_2_zin
+        Gamma0_2_swr
 
 Long-names
 ++++++++++++++
 .. autosummary::
         :toctree: generated/
+
+        electrical_length
 
         distance_2_electrical_length
         electrical_length_2_distance
@@ -78,11 +85,13 @@ Long-names
         reflection_coefficient_at_theta
         reflection_coefficient_2_input_impedance
         reflection_coefficient_2_input_impedance_at_theta
+        reflection_coefficient_2_propagation_constant
 
         input_impedance_at_theta
         load_impedance_2_reflection_coefficient
         load_impedance_2_reflection_coefficient_at_theta
 
+        voltage_current_propagation
 
 
 
@@ -103,98 +112,125 @@ Transmission Line Physics
         surface_resistivity
 """
 
+from . constants import NumberLike, INF, ONE
 import numpy as npy
 from numpy import pi, sqrt, exp, array, imag, real
 
 from scipy.constants import mu_0
 from . import mathFunctions as mf
 
-INF = 1e99
-ONE = 1.0 + 1/1e14
 
-
-def skin_depth(f, rho, mu_r):
+def skin_depth(f: NumberLike, rho: float, mu_r: float):
     """
     Skin depth for a material.
 
-    see www.microwaves101.com for more info.
+    The skin depth is calculated as:
+
+
+    .. math::
+
+        \delta = \\sqrt{\\frac{ \\rho }{ \\pi f \\mu_r \\mu_0 }}
+
+    See www.microwaves101.com [#]_ or wikipedia [#]_ for more info.
 
     Parameters
     ----------
     f : number or array-like
-            frequency, in Hz
+        frequency, in Hz
     rho : number of array-like
-            bulk resistivity of material, in ohm*m
+        bulk resistivity of material, in ohm*m
     mu_r : number or array-like
-            relative permeability of material
+        relative permeability of material
 
     Returns
     -------
     skin depth : number or array-like
-            the skin depth, in m
+        the skin depth, in meter
 
     References
     ----------
-    .. [1] http://en.wikipedia.org/wiki/Skin_effect
+    .. [#] https://www.microwaves101.com/encyclopedias/skin-depth
+    .. [#] http://en.wikipedia.org/wiki/Skin_effect
+
+    See Also
+    --------
+    surface_resistivity
 
     """
     return sqrt(rho/(pi*f*mu_r*mu_0))
 
 
-def surface_resistivity(f, rho, mu_r):
+def surface_resistivity(f: NumberLike, rho: float, mu_r: float):
     """
     Surface resistivity.
 
-    see www.microwaves101.com for more info.
+    The surface resistivity is calculated as:
+
+
+    .. math::
+
+        \\frac{ \\rho }{ \delta }
+
+    where :math:`\delta` is the skin depth from :func:`skin_depth`.
+
+    See www.microwaves101.com [#]_ or wikipedia [#]_ for more info.
 
     Parameters
     ----------
     f : number or array-like
-            frequency, in Hz
+        frequency, in Hz
     rho : number or array-like
-            bulk resistivity of material, in ohm*m
+        bulk resistivity of material, in ohm*m
     mu_r : number or array-like
-            relative permeability of material
+        relative permeability of material
 
     Returns
     -------
-    surface resistivity: ohms/square
+    surface resistivity : number of array-like
+        Surface resistivity in ohms/square
 
+    References
+    ----------
+    .. [#] https://www.microwaves101.com/encyclopedias/sheet-resistance
+    .. [#] https://en.wikipedia.org/wiki/Sheet_resistance
 
+    See Also
+    --------
+    skin_depth
     """
     return rho/skin_depth(rho=rho, f=f, mu_r=mu_r)
 
 
-def distributed_circuit_2_propagation_impedance(distributed_admittance,
-        distributed_impedance):
-    r"""
+def distributed_circuit_2_propagation_impedance(distributed_admittance: NumberLike,
+        distributed_impedance: NumberLike):
+    """
     Convert distributed circuit values to wave quantities.
 
     This converts complex distributed impedance and admittance to
     propagation constant and characteristic impedance. The relation is
 
     .. math::
-            Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
-            \\quad\\quad
-            \\gamma = \\sqrt{ Z^{'}  Y^{'}}
+        Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
+        \\quad\\quad
+        \\gamma = \\sqrt{ Z^{'}  Y^{'}}
 
     Parameters
     ----------
     distributed_admittance : number, array-like
-            distributed admittance
+        distributed admittance
     distributed_impedance :  number, array-like
-            distributed impedance
+        distributed impedance
 
     Returns
     -------
     propagation_constant : number, array-like
-            distributed impedance
+        distributed impedance
     characteristic_impedance : number, array-like
-            distributed impedance
+        distributed impedance
 
     See Also
     --------
-            propagation_impedance_2_distributed_circuit : opposite conversion
+        propagation_impedance_2_distributed_circuit : opposite conversion
     """
     propagation_constant = \
             sqrt(distributed_impedance*distributed_admittance)
@@ -203,76 +239,75 @@ def distributed_circuit_2_propagation_impedance(distributed_admittance,
     return (propagation_constant, characteristic_impedance)
 
 
-def propagation_impedance_2_distributed_circuit(propagation_constant,
-        characteristic_impedance):
-    r"""
+def propagation_impedance_2_distributed_circuit(propagation_constant: NumberLike,
+        characteristic_impedance: NumberLike):
+    """
     Convert wave quantities to distributed circuit values.
 
     Convert complex propagation constant and characteristic impedance
     to distributed impedance and admittance. The relation is,
 
     .. math::
-            Z^{'} = \\gamma  Z_0 \\quad\\quad
-            Y^{'} = \\frac{\\gamma}{Z_0}
+        Z^{'} = \\gamma  Z_0 \\quad\\quad
+        Y^{'} = \\frac{\\gamma}{Z_0}
 
     Parameters
     ----------
     propagation_constant : number, array-like
-            distributed impedance
+        distributed impedance
     characteristic_impedance : number, array-like
-            distributed impedance
+        distributed impedance
 
     Returns
     -------
     distributed_admittance : number, array-like
-            distributed admittance
+        distributed admittance
     distributed_impedance :  number, array-like
-            distributed impedance
+        distributed impedance
 
 
     See Also
     --------
-            distributed_circuit_2_propagation_impedance : opposite conversion
+        distributed_circuit_2_propagation_impedance : opposite conversion
     """
     distributed_admittance = propagation_constant/characteristic_impedance
     distributed_impedance = propagation_constant*characteristic_impedance
     return (distributed_admittance, distributed_impedance)
 
 
-def electrical_length(gamma, f, d, deg=False):
-    r"""
-    Calculates the electrical length of a section of transmission line.
+def electrical_length(gamma: NumberLike, f: NumberLike, d: NumberLike, deg: bool = False):
+    """
+    Electrical length of a section of transmission line.
 
     .. math::
-            \\theta = \\gamma(f) \\cdot d
+        \\theta = \\gamma(f) \\cdot d
 
     Parameters
     ----------
     gamma : number, array-like or function
-            propagation constant. See Notes.
-            If passed as a function, takes frequency in Hz as a sole argument. 
+        propagation constant. See Notes.
+        If passed as a function, takes frequency in Hz as a sole argument.
     f : number or array-like
-            frequency at which to calculate
+        frequency at which to calculate
     d : number or array-like
-            length of line, in meters
+        length of line, in meters
     deg : Boolean
-            return in degrees or not.
+        return in degrees or not.
 
     Returns
     -------
-    theta :  number or array-like
-            electrical length in radians or degrees, depending on  value of
-            deg.
+    theta : number or array-like
+        electrical length in radians or degrees, depending on  value of deg.
 
     See Also
     --------
-            electrical_length_2_distance : opposite conversion
+        electrical_length_2_distance : opposite conversion
 
-    Notes
-    -----
-    the convention has been chosen that forward propagation is
+    Note
+    ----
+    The convention has been chosen that forward propagation is
     represented by the positive imaginary part of the value returned by
-    the gamma function
+    the gamma function.
     """
     # if gamma is not a function, create a dummy function which return gamma
     if not callable(gamma):
@@ -289,39 +324,39 @@ def electrical_length(gamma, f, d, deg=False):
         return  mf.radian_2_degree(gamma(f)*d )
 
 
-def electrical_length_2_distance(theta, gamma, f0, deg=True):
-    r"""
+def electrical_length_2_distance(theta: NumberLike, gamma: NumberLike, f0: NumberLike, deg: bool = True):
+    """
     Convert electrical length to a physical distance.
 
     .. math::
-            d = \\frac{\\theta}{\\gamma(f_0)}
+        d = \\frac{\\theta}{\\gamma(f_0)}
 
     Parameters
     ----------
     theta : number or array-like
-            electrical length. units depend on `deg` option
+        electrical length. units depend on `deg` option
     gamma : number, array-like or function
-            propagation constant. See Notes.
-            If passed as a function, takes frequency in Hz as a sole argument.
+        propagation constant. See Notes.
+        If passed as a function, takes frequency in Hz as a sole argument.
     f0 : number or array-like
-            frequency at which to calculate gamma
+        frequency at which to calculate gamma
     deg : Boolean
-            return in degrees or not.
+        return in degrees or not.
 
     Returns
     -------
     d : number or array-like (real)
         physical distance in m
 
-    Notes
-    -----
-    the convention has been chosen that forward propagation is
+    Note
+    ----
+    The convention has been chosen that forward propagation is
     represented by the positive imaginary part of the value returned by
-    the gamma function
+    the gamma function.
 
     See Also
     --------
-            distance_2_electrical_length: opposite conversion
+        distance_2_electrical_length: opposite conversion
     """
     # if gamma is not a function, create a dummy function which return gamma
     if not callable(gamma):
@@ -333,9 +368,9 @@ def electrical_length_2_distance(theta, gamma, f0, deg=True):
     return real(theta / gamma(f0))
 
 
-def load_impedance_2_reflection_coefficient(z0, zl):
-    r"""
-    Reflection coefficient from a load impedance.    
+def load_impedance_2_reflection_coefficient(z0: NumberLike, zl: NumberLike):
+    """
+    Reflection coefficient from a load impedance.
 
     Return the reflection coefficient for a given load impedance, and
     characteristic impedance.
@@ -345,30 +380,27 @@ def load_impedance_2_reflection_coefficient(z0, zl):
     coefficient is given by,
 
     .. math::
-            \\Gamma = \\frac {Z_l - Z_0}{Z_l + Z_0}
-
+        \\Gamma = \\frac {Z_l - Z_0}{Z_l + Z_0}
 
     Parameters
     ----------
-    z0 :  number or array-like
-            characteristic impedance
-    zl :  number or array-like
-            load impedance (aka input impedance)
-
+    z0 : number or array-like
+        characteristic impedance
+    zl : number or array-like
+        load impedance (aka input impedance)
 
     Returns
     -------
     gamma : number or array-like
-            reflection coefficient
+        reflection coefficient
 
     See Also
     --------
-            Gamma0_2_zl : reflection coefficient to load impedance
+        Gamma0_2_zl : reflection coefficient to load impedance
 
-
-    Notes
-    -----
-            inputs are typecasted to 1D complex array
+    Note
+    ----
+    Inputs are typecasted to 1D complex array.
     """
     # typecast to a complex 1D array. this makes everything easier
     z0 = array(z0, dtype=complex).reshape(-1)
@@ -380,28 +412,27 @@ def load_impedance_2_reflection_coefficient(z0, zl):
     return ((zl - z0)/(zl + z0))
 
 
-def reflection_coefficient_2_input_impedance(z0, Gamma):
-    r"""
+def reflection_coefficient_2_input_impedance(z0: NumberLike, Gamma: NumberLike):
+    """
     Input impedance from a load reflection coefficient.
 
     Calculate the input impedance given a reflection coefficient and
     characteristic impedance.
 
     .. math::
-            Z_0 (\\frac {1 + \\Gamma}{1-\\Gamma})
-
+        Z_0 \\left(\\frac {1 + \\Gamma}{1-\\Gamma} \\right)
 
     Parameters
     ----------
     Gamma : number or array-like
-            complex reflection coefficient
+        complex reflection coefficient
     z0 : number or array-like
-            characteristic impedance
+        characteristic impedance
 
     Returns
     -------
     zin : number or array-like
-            input impedance
+        input impedance
 
     """
     # typecast to a complex 1D array. this makes everything easier
@@ -414,8 +445,8 @@ def reflection_coefficient_2_input_impedance(z0, Gamma):
     return z0*((1.0 + Gamma)/(1.0 - Gamma))
 
 
-def reflection_coefficient_at_theta(Gamma0, theta):
-    r"""
+def reflection_coefficient_at_theta(Gamma0: NumberLike, theta: NumberLike):
+    """
     Reflection coefficient at a given electrical length.
 
     .. math::
@@ -424,14 +455,14 @@ def reflection_coefficient_at_theta(Gamma0, theta):
     Parameters
     ----------
     Gamma0 : number or array-like
-            reflection coefficient at theta=0
+        reflection coefficient at theta=0
     theta : number or array-like
-            electrical length (may be complex)
+        electrical length (may be complex)
 
     Returns
     -------
     Gamma_in : number or array-like
-            input reflection coefficient
+        input reflection coefficient
 
     """
     Gamma0 = array(Gamma0, dtype=complex).reshape(-1)
@@ -439,7 +470,7 @@ def reflection_coefficient_at_theta(Gamma0, theta):
     return Gamma0 * exp(-2*theta)
 
 
-def input_impedance_at_theta(z0, zl, theta):
+def input_impedance_at_theta(z0: NumberLike, zl: NumberLike, theta: NumberLike):
     """
     Input impedance from load impedance at a given electrical length.
 
@@ -466,7 +497,7 @@ def input_impedance_at_theta(z0, zl, theta):
     return reflection_coefficient_2_input_impedance(z0=z0, Gamma=Gamma_in)
 
 
-def load_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
+def load_impedance_2_reflection_coefficient_at_theta(z0: NumberLike, zl: NumberLike, theta: NumberLike):
     """
     Reflection coefficient of load at a given electrical length.
 
@@ -493,7 +524,7 @@ def load_impedance_2_reflection_coefficient_at_theta(z0, zl, theta):
     return Gamma_in
 
 
-def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
+def reflection_coefficient_2_input_impedance_at_theta(z0: NumberLike, Gamma0: NumberLike, theta: NumberLike):
     """
     Input impedance from load reflection coefficient at a given electrical length.
 
@@ -520,35 +551,35 @@ def reflection_coefficient_2_input_impedance_at_theta(z0, Gamma0, theta):
     return zin
 
 
-def reflection_coefficient_2_propagation_constant(Gamma_in, Gamma_l, d):
-    r"""
+def reflection_coefficient_2_propagation_constant(Gamma_in: NumberLike, Gamma_l: NumberLike, d: NumberLike):
+    """
     Propagation constant from line input and load reflection coefficients.
 
     Calculate the propagation constant of a line of length d, given the
     reflection coefficient and characteristic impedance of the medium.
 
-        .. math::
-            \\Gamma_{in} = \\Gamma_l e^{-2 j \\gamma \\cdot d}
-            \\to \\gamma = -\\frac{1}{2 d} \\ln \\left ( \\frac{ \\Gamma_{in} }{ \\Gamma_l } \\right )
+    .. math::
+        \\Gamma_{in} = \\Gamma_l e^{-2 j \\gamma \\cdot d}
+        \\to \\gamma = -\\frac{1}{2 d} \\ln \\left ( \\frac{ \\Gamma_{in} }{ \\Gamma_l } \\right )
 
     Parameters
     ----------
-    Gamma_in :  number or array-like
-            input reflection coefficient
+    Gamma_in : number or array-like
+        input reflection coefficient
     Gamma_l :  number or array-like
-            load reflection coefficient
+        load reflection coefficient
     d : number or array-like
-            length of line, in meters
+        length of line, in meters
 
     Returns
     -------
     gamma : number (complex) or array-like
-            propagation constant (see notes)
+        propagation constant (see notes)
 
-    Notes
-    -----
-    the convention has been chosen that forward propagation is
-    represented by the positive imaginary part of gamma
+    Note
+    ----
+    The convention has been chosen that forward propagation is
+    represented by the positive imaginary part of gamma.
 
     """
     gamma = -1/(2*d) * npy.log(Gamma_in/Gamma_l)
@@ -559,14 +590,14 @@ def reflection_coefficient_2_propagation_constant(Gamma_in, Gamma_l, d):
     return gamma
 
 
-def Gamma0_2_swr(Gamma0):
-    r"""
-    Return Standing Wave Ratio (SWR) for a given reflection coefficient.
+def Gamma0_2_swr(Gamma0: NumberLike):
+    """
+    Standing Wave Ratio (SWR) for a given reflection coefficient.
 
     Standing Wave Ratio value is defined by:
 
-        .. math::
-            VSWR = \\frac{1 + |\\Gamma_0|}{1 - |\Gamma_0|}
+    .. math::
+        VSWR = \\frac{1 + |\\Gamma_0|}{1 - |\\Gamma_0|}
 
     Parameters
     ----------
@@ -582,16 +613,19 @@ def Gamma0_2_swr(Gamma0):
     return (1 + npy.abs(Gamma0)) / (1 - npy.abs(Gamma0))
 
 
-def zl_2_swr(z0, zl):
-    r"""
-    Return Standing Wave Ratio (SWR) for a given load impedance.
+def zl_2_swr(z0: NumberLike, zl: NumberLike):
+    """
+    Standing Wave Ratio (SWR) for a given load impedance.
 
     Standing Wave Ratio value is defined by:
 
-        .. math::
-            VSWR = \\frac{1 + |\\Gamma|}{1 - |\Gamma|}
-            where
-            \\Gamma = \\frac{Z_L - Z_0}{Z_L + Z_0}
+    .. math::
+        VSWR = \\frac{1 + |\\Gamma|}{1 - |\Gamma|}
+
+    where
+
+    .. math::
+        \\Gamma = \\frac{Z_L - Z_0}{Z_L + Z_0}
 
     Parameters
     ----------
@@ -610,27 +644,28 @@ def zl_2_swr(z0, zl):
     return Gamma0_2_swr(Gamma0)
 
 
-def voltage_current_propagation(v1, i1, z0, theta):
+def voltage_current_propagation(v1: NumberLike, i1: NumberLike, z0: NumberLike, theta: NumberLike):
     """
-    Propagate voltage and current on electrical length theta of a transmission line.
+    Voltages and currents calculated on electrical length theta of a transmission line.
 
     Give voltage v2 and current i1 at theta, given voltage v1 
-    and current i1 (at theta=0) and given characteristic parameters gamma and z0.
-    
-    
-      i1                     i2
-    ○-->---------------------->--○
-    
-    v1         gamma,z0         v2
-    
-    ○----------------------------○
-    
-    <------------ d ------------->
-    
-    0                         theta
-    
-    Use (inverse) ABCD parameters of a transmission line. 
-    
+    and current i1 at theta=0 and given characteristic parameters gamma and z0.
+
+    ::
+
+        i1                          i2
+        ○-->---------------------->--○
+
+        v1         gamma,z0         v2
+
+        ○----------------------------○
+
+        <------------ d ------------->
+
+        theta=0                   theta
+
+    Uses (inverse) ABCD parameters of a transmission line.
+
     Parameters
     ----------
     v1 : array-like (nfreqs,)
@@ -641,40 +676,40 @@ def voltage_current_propagation(v1, i1, z0, theta):
         characteristic impedance
     theta : number or array-like (nfreq, ntheta)
         electrical length of the line (may be complex).
-    
+
     Return
     ------
     v2 : array-like (nfreqs, ntheta)
         total voltage at z=d
     i2 : array-like (nfreqs, ndtheta
-        total current at z=d, directed outtoward the transmission line
+        total current at z=d, directed outward the transmission line
     """
     # outer product by broadcasting of the electrical length
-    #theta = gamma[:, npy.newaxis] * d  # (nbfreqs x nbd)
+    # theta = gamma[:, npy.newaxis] * d  # (nbfreqs x nbd)
     # ABCD parameters of a transmission line (gamma, z0)
     A = npy.cosh(theta)
     B = z0*npy.sinh(theta)
     C = npy.sinh(theta)/z0
     D = npy.cosh(theta)
-    # transpose and de-transpose operations are necessary 
+    # transpose and de-transpose operations are necessary
     # for linalg.inv to inverse square matrices
-    ABCD = npy.array([[A, B],[C, D]]).transpose()   
+    ABCD = npy.array([[A, B],[C, D]]).transpose()
     inv_ABCD = npy.linalg.inv(ABCD).transpose()
-    
+
     v2 = inv_ABCD[0,0] * v1 + inv_ABCD[0,1] * i1
     i2 = inv_ABCD[1,0] * v1 + inv_ABCD[1,1] * i1
     return v2, i2
 
 
-def zl_2_total_loss(z0, zl, theta):
+def zl_2_total_loss(z0: NumberLike, zl: NumberLike, theta: NumberLike):
     '''
-    Total loss of terminated transmission line (in natural unit)
-    
-    The total loss expressed in terms of the load impedance is [#]_:
+    Total loss of a terminated transmission line (in natural unit).
 
-        .. math::
-            TL = \\frac{R_{in}}{R_L} \\left| \\cosh \\theta  + \\frac{Z_L}{Z_0} \\sinh\\theta \\right|^2
-    
+    The total loss expressed in terms of the load impedance is [#]_ :
+
+    .. math::
+        TL = \\frac{R_{in}}{R_L} \\left| \\cosh \\theta  + \\frac{Z_L}{Z_0} \\sinh\\theta \\right|^2
+
     Parameters
     ----------
     z0 : number or array-like
@@ -688,12 +723,13 @@ def zl_2_total_loss(z0, zl, theta):
     -------
     total_loss: number or array-like
         total loss in natural unit
-        
+
     References
     ----------
-    .. [#]: Steve Stearns (K6OIK), Transmission Line Power Paradox and Its Resolution. ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014. https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
-    
-    
+    .. [#] Steve Stearns (K6OIK), Transmission Line Power Paradox and Its Resolution.
+        ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014.
+        https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
+
     '''
     Rin = npy.real(zl_2_zin(z0, zl, theta))
     total_loss = Rin/npy.real(zl)*npy.abs(npy.cosh(theta) + zl/z0*npy.sinh(theta))**2
@@ -714,7 +750,3 @@ zl_2_Gamma_in = load_impedance_2_reflection_coefficient_at_theta
 
 Gamma0_2_Gamma_in = reflection_coefficient_at_theta
 Gamma0_2_zin = reflection_coefficient_2_input_impedance_at_theta
-
-
-
-

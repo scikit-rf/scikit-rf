@@ -216,6 +216,30 @@ class VectorFittingTestCase(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             vf.plot_convergence()
 
+    def test_passivity_enforcement(self):
+        vf = skrf.VectorFitting(None)
+
+        # non-passive example parameters from Gustavsen's passivity assessment paper:
+        vf.poles = np.array([-1, -5 + 6j])
+        vf.zeros = np.array([[0.3, 4 + 5j], [0.1, 2 + 3j], [0.1, 2 + 3j], [0.4, 3 + 4j]])
+        vf.constant_coeff = np.array([0.2, 0.1, 0.1, 0.3])
+        vf.proportional_coeff = np.array([0.0, 0.0, 0.0, 0.0])
+
+        # testing is_passive() implicitly also tests passivity_test()
+        self.assertFalse(vf.is_passive())
+
+        # enforce passivity with default settings
+        vf.passivity_enforce()
+
+        # check if model is now passive
+        self.assertTrue(vf.is_passive())
+
+        # verify that perturbed zeros are correct
+        passive_zeros = np.array([[0.11758964+0.j, 2.65059197+3.29414469j],
+                                  [-0.06802029+0.j, 0.77242142+1.44226975j],
+                                  [-0.06802029+0.j, 0.77242142+1.44226975j],
+                                  [0.24516918+0.j, 1.88377719+2.57735204j]])
+        self.assertTrue(np.allclose(vf.zeros, passive_zeros))
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(VectorFittingTestCase)

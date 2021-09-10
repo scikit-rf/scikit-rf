@@ -1,36 +1,30 @@
 
 
-'''
-.. module:: skrf.media.distributedCircuit
-
-============================================================
+"""
 distributedCircuit (:mod:`skrf.media.distributedCircuit`)
 ============================================================
 
-A transmission line mode defined in terms of distributed impedance and admittance values. 
+A transmission line mode defined in terms of distributed impedance and admittance values.
 
 .. autosummary::
    :toctree: generated/
 
    DistributedCircuit
 
-'''
+"""
 
-from copy import deepcopy
-from scipy.constants import  epsilon_0, mu_0, c,pi, mil
-import numpy as npy
-from numpy import sqrt, exp, array,tan,sin,cos,inf, log, real,imag,\
-         interp, linspace, shape,zeros, reshape
-
-from ..tlineFunctions import electrical_length
+from numpy import sqrt, real, imag
 from .media import Media, DefinedGammaZ0
+from ..constants import NumberLike
+from typing import Union, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from .. frequency import Frequency
 
-from ..constants import INF, ONE, ZERO
 
 class DistributedCircuit(Media):
-    '''
-    A transmission line mode defined in terms of distributed impedance and admittance values. 
+    """
+    A transmission line mode defined in terms of distributed impedance and admittance values.
 
     Parameters
     ------------
@@ -43,7 +37,7 @@ class DistributedCircuit(Media):
     C : number, or array-like
             distributed capacitance, in F/m
     L : number, or array-like
-            distributed inductance, in  H/m
+            distributed inductance, in H/m
     R : number, or array-like
             distributed resistance, in Ohm/m
     G : number, or array-like
@@ -51,15 +45,15 @@ class DistributedCircuit(Media):
 
 
     Notes
-    ----------
+    -----
     if C,I,R,G are vectors they should be the same length
-    
-    :class:`DistributedCircuit` is `Media` object representing a 
-    transmission line mode defined in terms of  distributed impedance
-    and admittance values. 
 
-    A Distributed Circuit may be defined in terms
-    of the following attributes,
+    :class:`DistributedCircuit` is `Media` object representing a
+    transmission line mode defined in terms of distributed impedance
+    and admittance values.
+
+    A `DistributedCircuit` may be defined in terms
+    of the following attributes:
 
     ================================  ================  ================
     Quantity                          Symbol            Property
@@ -71,7 +65,7 @@ class DistributedCircuit(Media):
     ================================  ================  ================
 
 
-    The following quantities may be calculated, which are functions of 
+    The following quantities may be calculated, which are functions of
     angular frequency (:math:`\omega`):
 
     ===================================  ==================================================  ==============================
@@ -95,25 +89,29 @@ class DistributedCircuit(Media):
     constant are interpreted as follows:
 
     .. math::
+
         +\\Re e\\{\\gamma\\} = \\text{attenuation}
 
         -\\Im m\\{\\gamma\\} = \\text{forward propagation}
-    
 
-    See Also 
+
+    See Also
     --------
     from_media
 
-    '''
-    
-    def __init__(self, frequency=None, z0=None, C=90e-12, L=280e-9, R=0, G=0,
+    """
+
+    def __init__(self, frequency: Union['Frequency', None] = None,
+                 z0: Union[NumberLike, None] = None,
+                 C: NumberLike = 90e-12, L: NumberLike = 280e-9,
+                 R: NumberLike = 0, G: NumberLike = 0,
                 *args, **kwargs):
-        super(DistributedCircuit, self).__init__(frequency=frequency, 
+        super(DistributedCircuit, self).__init__(frequency=frequency,
                                                  z0=z0)
         self.C, self.L, self.R, self.G = C,L,R,G
 
 
-    def __str__(self):
+    def __str__(self) -> str:
         f=self.frequency
         try:
             output =  \
@@ -129,20 +127,24 @@ class DistributedCircuit(Media):
                 (self.L[0], self.C[0],self.R[0], self.G[0])
         return output
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self.__str__()
 
     @classmethod
-    def from_media(cls, my_media, *args, **kwargs):
-        '''
-        Initializes a DistributedCircuit from an existing
-        :class:'~skrf.media.media.Media' instance.
+    def from_media(cls, my_media: Media, *args, **kwargs) -> Media:
+        """
+        Initializes a `DistributedCircuit` from an existing
+        :class:`~skrf.media.media.Media` instance.
 
         Parameters
-        ------------
-        my_media : :class:'~skrf.media.media.Media' instance.
+        ----------
+        my_media : :class:`~skrf.media.media.Media` instance.
             the media object
-        '''
+            
+        See Also
+        --------
+        :class:`~skrf.media.media.Media`
+        """
 
         w  =  my_media.frequency.w
         gamma = my_media.gamma
@@ -153,88 +155,106 @@ class DistributedCircuit(Media):
         Z = gamma*Z0
         G,C = real(Y), imag(Y)/w
         R,L = real(Z), imag(Z)/w
-        return cls(frequency = my_media.frequency, 
+        return cls(frequency = my_media.frequency,
                    z0 = z0, C=C, L=L, R=R, G=G, *args, **kwargs)
-    
+
     @classmethod
     def from_csv(self, *args, **kw):
+        """
+        Create a `DistributedCircuit` from numerical values stored in a csv file.
+
+        The csv file format must be written by the function :func:`write_csv`,
+        or similar method which produces the following format::
+
+            f[$unit], Re(Z0), Im(Z0), Re(gamma), Im(gamma), Re(port Z0), Im(port Z0)
+            1, 1, 1, 1, 1, 1, 1
+            2, 1, 1, 1, 1, 1, 1
+            .....
+
+        See Also
+        --------
+        write_csv
+        """        
         d = DefinedGammaZ0.from_csv(*args,**kw)
         return self.from_media(d)
 
     @property
-    def Z(self):
-        '''
-        Distributed Impedance, :math:`Z^{'}`
+    def Z(self) -> NumberLike:
+        """
+        Distributed Impedance, :math:`Z^{'}`.
 
         Defined as
 
         .. math::
+
                 Z^{'} = R^{'} + j \\omega L^{'}
 
-
         Returns
-        --------
+        -------
         Z : numpy.ndarray
-                Distributed impedance in units of ohm/m
-        '''
+            Distributed impedance in units of ohm/m
+        """
         w  = self.frequency.w
         return self.R + 1j*w*self.L
 
     @property
-    def Y(self):
-        '''
-        Distributed Admittance, :math:`Y^{'}`
+    def Y(self) -> NumberLike:
+        """
+        Distributed Admittance, :math:`Y^{'}`.
 
         Defined as
 
         .. math::
+
                 Y^{'} = G^{'} + j \\omega C^{'}
 
         Returns
-        --------
+        -------
         Y : numpy.ndarray
-                Distributed Admittance in units of S/m
-        '''
+            Distributed Admittance in units of S/m
+        """
 
         w  = self.frequency.w
         return self.G + 1j*w*self.C
 
     @property
-    def Z0(self):
-        '''
+    def Z0(self) -> NumberLike:
+        """
         Characteristic Impedance, :math:`Z0`
 
         .. math::
+
                 Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
 
         Returns
-        --------
+        -------
         Z0 : numpy.ndarray
-                Characteristic Impedance in units of ohms
-        '''
+            Characteristic Impedance in units of ohms
+        """
 
         return sqrt(self.Z/self.Y)
 
     @property
-    def gamma(self):
-        '''
-        Propagation Constant, :math:`\\gamma`
+    def gamma(self) -> NumberLike:
+        """
+        Propagation Constant, :math:`\\gamma`.
 
         Defined as,
 
         .. math::
+
                 \\gamma =  \\sqrt{ Z^{'}  Y^{'}}
 
         Returns
-        --------
+        -------
         gamma : numpy.ndarray
                 Propagation Constant,
 
-        Notes
-        ---------
+        Note
+        ----
         The components of propagation constant are interpreted as follows:
 
-        positive real(gamma) = attenuation
-        positive imag(gamma) = forward propagation
-        '''
+        * positive real(gamma) = attenuation
+        * positive imag(gamma) = forward propagation
+        """
         return sqrt(self.Z*self.Y)

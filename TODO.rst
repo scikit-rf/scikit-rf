@@ -45,10 +45,6 @@ vi
 * use consistent method names so VNA's are inter-changable as much as possible
 * make a generic VNA that uses IDN? to load the correct class (durrants idea)
 
-VectorFitting
--------------
-* implement passivity evaluation and enforcement routines
-
 Other
 ------
 * switch to BSD license similar to scipy/numpy/etc

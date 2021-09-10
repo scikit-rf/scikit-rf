@@ -14,6 +14,7 @@ API
     plotting
 
     media/index
+    taper
     calibration/index
     calibration/deembedding
     vi/index
@@ -27,6 +28,7 @@ API
     tlineFunctions
     instances
     constants
+    data/index
     util
     io/index
 

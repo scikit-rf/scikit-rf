@@ -64,6 +64,9 @@ nbsphinx_kernel_name = 'python'
 numpydoc_show_class_members = False
 nbsphinx_timeout = 120
 
+# Autodoc settings
+autodoc_typehints = "description"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
