@@ -30,8 +30,6 @@ import zipfile
 import numpy
 import numpy as npy
 
-from six.moves import xrange
-
 from ..util import get_fid
 from ..network import Network
 from ..frequency import Frequency
@@ -350,8 +348,8 @@ class Touchstone:
         if format == 'orig':
             format = self.format
         ext1, ext2 = {'ri':('R','I'),'ma':('M','A'), 'db':('DB','A')}.get(format)
-        for r1 in xrange(self.rank):
-            for r2 in xrange(self.rank):
+        for r1 in range(self.rank):
+            for r2 in range(self.rank):
                 names.append("S%i%i%s"%(r1+1,r2+1,ext1))
                 names.append("S%i%i%s"%(r1+1,r2+1,ext2))
         return names

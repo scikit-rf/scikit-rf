@@ -2,10 +2,10 @@ import unittest
 import os
 import io
 import tempfile
-import six
 import sys
 import numpy as npy
-import six.moves.cPickle as pickle
+from pathlib import Path
+import pickle
 import skrf as rf
 from copy import deepcopy
 from nose.plugins.skip import SkipTest
@@ -141,9 +141,7 @@ class NetworkTestCase(unittest.TestCase):
         self.assertFalse(npy.isclose(ntwk_hfss.z0[0,0], 50))
 
     def test_constructor_from_pathlib(self):
-        if sys.version_info.major == 3 and sys.version_info.minor >= 4:  # pathlib added in 3.4
-            from pathlib import Path
-            rf.Network(Path(self.test_dir) / 'ntwk1.ntwk')
+        rf.Network(Path(self.test_dir) / 'ntwk1.ntwk')
 
     def test_constructor_from_pickle(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.ntwk'))
