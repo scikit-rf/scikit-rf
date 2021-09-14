@@ -39,6 +39,10 @@ import re
 from .util import slice_domain, find_nearest_index
 
 
+class InvalidFrequencyException(Exception):
+    pass
+
+
 class Frequency(object):
     """
     A frequency band.
@@ -241,6 +245,11 @@ class Frequency(object):
         myfrequency : :class:`Frequency` object
             the Frequency object
 
+        Raises
+        ------
+        InvalidFrequencyException:
+            If frequency points are not monotonously increasing
+
         Examples
         --------
         >>> f = npy.linspace(75,100,101)
@@ -250,6 +259,7 @@ class Frequency(object):
             f = [f]
         temp_freq =  cls(0,0,0,*args, **kwargs)
         temp_freq.f = npy.array(f) * temp_freq.multiplier
+        temp_freq.check_values()
 
         return temp_freq
 
@@ -288,6 +298,18 @@ class Frequency(object):
         out = self.copy()
         out.f = self.f/other
         return out
+
+    def check_values(self) -> None:
+        """Validate the frequency values
+
+        Raises
+        ------
+        InvalidFrequencyException:
+            If frequency points are not monotonously increasing
+        """
+        increase = npy.diff(self.f) > 0
+        if not increase.all():
+            raise InvalidFrequencyException("Frequency values are not monotonously increasing")
 
     @property
     def start(self) -> float:
@@ -428,6 +450,11 @@ class Frequency(object):
     def f(self,new_f: NumberLike) -> None:
         """
         Sets the frequency object by passing a vector in Hz.
+
+        Raises
+        ------
+        InvalidFrequencyException:
+            If frequency points are not monotonously increasing
         """
         self._f = npy.array(new_f)
 
@@ -439,6 +466,8 @@ class Frequency(object):
             self.sweep_type = 'log'
         else:
             self.sweep_type = 'unknown'
+
+        self.check_values()
 
 
 
