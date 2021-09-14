@@ -1,3 +1,4 @@
+from skrf.frequency import InvalidFrequencyException
 import unittest
 import os
 import numpy as npy
@@ -57,6 +58,10 @@ class FrequencyTestCase(unittest.TestCase):
         b = a['2-5ghz']
         tinyfloat = 1e-12
         self.assertTrue((abs(b.f - [2e9,4e9,5e9]) < tinyfloat).all())
+
+    def test_frequency_check(self):
+        with self.assertRaises(InvalidFrequencyException):
+            a = rf.Frequency.from_f([2,1])
 
 suite = unittest.TestLoader().loadTestsFromTestCase(FrequencyTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
