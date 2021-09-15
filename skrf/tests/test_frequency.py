@@ -1,9 +1,11 @@
-from skrf.frequency import InvalidFrequencyWarning
-import unittest
 import os
+import unittest
+import warnings
+
 import numpy as npy
 
 import skrf as rf
+from skrf.frequency import InvalidFrequencyWarning
 
 
 class FrequencyTestCase(unittest.TestCase):
@@ -61,7 +63,26 @@ class FrequencyTestCase(unittest.TestCase):
 
     def test_frequency_check(self):
         with self.assertWarns(InvalidFrequencyWarning):
-            a = rf.Frequency.from_f([2,1])
+            freq = rf.Frequency.from_f([2,1])
+
+        with self.assertWarns(InvalidFrequencyWarning):
+            freq = rf.Frequency.from_f([1,2,2])
+
+        with warnings.catch_warnings(record=True) as warns:
+            freq = rf.Frequency.from_f([1,2,2], unit="Hz")
+
+            w = [w for w in warns if issubclass(w.category, InvalidFrequencyWarning)]
+            if w:
+                inv = freq.drop_invalid()
+                self.assertListEqual(inv, [2])
+            
+            else:
+                self.fail("Warning is not triggered")
+            
+            self.assertTrue(npy.allclose(freq.f, [1,2]))
+
+
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(FrequencyTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
