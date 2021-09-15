@@ -314,6 +314,24 @@ class Frequency(object):
         if not increase.all():
             warnings.warn("Frequency values are not monotonously increasing", InvalidFrequencyWarning)
 
+    def drop_invalid(self) -> List[int]:
+        """Drop duplicate and invalid frequency values and return the dropped indices
+
+        Returns:
+            list[int]: The dropped indices
+        """
+        invalid = npy.zeros(len(self.f), dtype=bool)
+        for i, val in enumerate(self.f):
+            if not i:
+                last_valid = val
+            else:
+                if val > last_valid:
+                    last_valid = val
+                else:
+                    invalid[i] = True
+        self._f = self._f[~invalid]
+        return list(npy.flatnonzero(invalid))
+
     @property
     def start(self) -> float:
         """
