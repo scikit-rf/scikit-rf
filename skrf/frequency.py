@@ -29,6 +29,9 @@ Functions
 """
 
 # from matplotlib.pyplot import gca,plot, autoscale
+from typing import List
+import warnings
+
 from numbers import Number
 from .constants import NumberLike, ZERO
 from typing import Union
@@ -39,7 +42,7 @@ import re
 from .util import slice_domain, find_nearest_index
 
 
-class InvalidFrequencyException(Exception):
+class InvalidFrequencyWarning(UserWarning):
     pass
 
 
@@ -247,7 +250,7 @@ class Frequency(object):
 
         Raises
         ------
-        InvalidFrequencyException:
+        InvalidFrequencyWarning:
             If frequency points are not monotonously increasing
 
         Examples
@@ -304,12 +307,12 @@ class Frequency(object):
 
         Raises
         ------
-        InvalidFrequencyException:
+        InvalidFrequencyWarning:
             If frequency points are not monotonously increasing
         """
         increase = npy.diff(self.f) > 0
         if not increase.all():
-            raise InvalidFrequencyException("Frequency values are not monotonously increasing")
+            warnings.warn("Frequency values are not monotonously increasing", InvalidFrequencyWarning)
 
     @property
     def start(self) -> float:
@@ -453,7 +456,7 @@ class Frequency(object):
 
         Raises
         ------
-        InvalidFrequencyException:
+        InvalidFrequencyWarning:
             If frequency points are not monotonously increasing
         """
         self._f = npy.array(new_f)
