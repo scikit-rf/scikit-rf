@@ -19,12 +19,20 @@ Frequency Class
    Frequency
 
 Functions
-=============
+=========
 
 .. autosummary::
     :toctree: generated/
 
     overlap_freq
+
+Misc
+====
+
+.. autosummary::
+    :toctree: generated/
+
+    InvalidFrequencyWarning
 
 """
 
@@ -43,6 +51,8 @@ from .util import slice_domain, find_nearest_index
 
 
 class InvalidFrequencyWarning(UserWarning):
+    """Thrown if frequency values aren't monotonously increasing
+    """
     pass
 
 

@@ -149,6 +149,7 @@ Misc Functions
     chopinhalf
     Network.nudge
     Network.renormalize
+    Network.drop_invalid
 
 """
 from typing import (Any, NoReturn, Optional, Sequence,
@@ -1853,6 +1854,26 @@ class Network(object):
         return ntwk
     
     def drop_invalid(self):
+        """Drop invalid values based on duplicate and non increasing frequency values
+
+        Example
+        -------
+
+        The following example shows how to use the :func:`drop_invalid` automatically, 
+        if invalid frequency data is detected and an 
+        :class:`~skrf.frequency.InvalidFrequencyWarning` is thrown.
+
+
+        >>> import warnings
+        >>> import skrf as rf
+        >>> from skrf.frequency import InvalidFrequencyWarning
+        >>> with warnings.catch_warnings(record=True) as warns:
+        >>>     net = rf.Network('corrupted_network.s2p')
+        >>>     w = [w for w in warns if issubclass(w.category, InvalidFrequencyWarning)]
+        >>>     if w:
+        >>>         net.drop_invalid()
+
+        """
         npoints = self.frequency.npoints
         idx = self.frequency.drop_invalid()
         self.s = npy.delete(self.s, idx, axis=0)
