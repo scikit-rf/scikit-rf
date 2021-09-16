@@ -312,7 +312,8 @@ class Frequency(object):
         """
         increase = npy.diff(self.f) > 0
         if not increase.all():
-            warnings.warn("Frequency values are not monotonously increasing", InvalidFrequencyWarning)
+            warnings.warn("Frequency values are not monotonously increasing!\n"
+            "To get rid of the invalid values call `drop_invalid`", InvalidFrequencyWarning)
 
     def drop_invalid(self) -> List[int]:
         """Drop duplicate and invalid frequency values and return the dropped indices
