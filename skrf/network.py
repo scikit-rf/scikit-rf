@@ -1222,7 +1222,6 @@ class Network(object):
             if z0.shape == (self.frequency.npoints, self.nports):
                 self._z0 = z0
                 return
-
         raise AttributeError('Unable to broadcast z0 to s shape')
 
     @property
@@ -1852,6 +1851,21 @@ class Network(object):
         except(AttributeError):
             ntwk.port_names = None
         return ntwk
+    
+    def drop_invalid(self):
+        npoints = self.frequency.npoints
+        idx = self.frequency.drop_invalid()
+        self.s = npy.delete(self.s, idx, axis=0)
+
+        # z0 is broadcasted automatically if set to an single scalar like 50 Ohm
+        # Deleting the value is not necessary in this case.
+        if self._z0.shape[0] == npoints:
+            self._z0 = npy.delete(self._z0, idx)
+
+        if self.noisy:
+            idx = self.noise_freq.drop_invalid()
+            self.noise = npy.delete(self.noise, idx)
+
 
     def set_noise_a(self, noise_freq: Frequency = None, nfmin_db: float = 0,
         gamma_opt: float = 0, rn: NumberLike = 1 ) -> None:
