@@ -1853,7 +1853,7 @@ class Network(object):
             ntwk.port_names = None
         return ntwk
     
-    def drop_invalid(self):
+    def drop_invalid(self) -> None:
         """Drop invalid values based on duplicate and non increasing frequency values
 
         Example
