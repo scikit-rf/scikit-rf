@@ -499,7 +499,7 @@ class Short(Deembedding):
         '''
 
         # check if the frequencies match with dummy frequencies
-        if ntwk.frequency != self.open.frequency:
+        if ntwk.frequency != self.short.frequency:
             raise(ValueError('Network frequencies dont match dummy frequencies.'))
 
         # TODO: attempt to interpolate if frequencies do not match
