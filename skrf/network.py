@@ -2711,6 +2711,10 @@ class Network(object):
         result.frequency.f = npy.insert(result.frequency.f, 0, 0)
         result.z0 = npy.insert(result.z0, 0, result.z0[0], axis=0)
 
+        if result.noisy:
+            result.noise = npy.insert(result.noise, 0, 0, axis=0)
+            result.noise_freq.f = npy.insert(result.noise_freq.f, 0, 0)
+
         new_f = Frequency(0, result.frequency.f_scaled[-1], points,
                 unit=result.frequency.unit)
         #None of the default interpolation methods are too good

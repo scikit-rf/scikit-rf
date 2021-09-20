@@ -770,6 +770,12 @@ class NetworkTestCase(unittest.TestCase):
 
         return
 
+    def test_noise_dc_extrapolation(self):
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk_noise.s2p'))
+        ntwk = ntwk["0-1.5GHz"] # using only the first samples, as ntwk_noise has duplicate x value
+        s11 = ntwk.s11
+        s11_dc = s11.extrapolate_to_dc(kind='cubic')
+
     def test_noise_deembed(self):
 
 
