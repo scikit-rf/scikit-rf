@@ -62,20 +62,17 @@ JSON
 
 
 """
-import sys
-
-import six.moves.cPickle as pickle
-from six.moves.cPickle import UnpicklingError
-
-
-import inspect
-import os
-import zipfile
-import warnings
-import sys
-import json
-import numpy as npy
 import glob
+import inspect
+import json
+import os
+import pickle
+from pickle import UnpicklingError
+import sys
+import warnings
+import zipfile
+
+import numpy as npy
 
 from ..util import get_extn, get_fid
 from ..network import Network

@@ -24,8 +24,6 @@ requirements:
     - numpy
     - scipy
     - matplotlib
-    - six 
-    - future
     - openpyxl
 
     
@@ -37,8 +35,6 @@ requirements:
     - numpy
     - scipy
     - matplotlib
-    - six 
-    - future    
     - xlwt
     - xlrd
     - networkx
