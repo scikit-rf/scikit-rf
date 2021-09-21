@@ -24,7 +24,6 @@ Example/Test Networks
 
 """
 import os
-import six
 
 from ..network import Network
 from ..io.general import read
@@ -56,8 +55,7 @@ Numpy arrays pickled in Python2 can't be reopened using Python3,
 as a consequence (?) of the utf8 support in Python3.
 So the following lines shall only work with Python2.  
 """
-if six.PY2:
-    one_port_cal = read(os.path.join(pwd, 'one_port.cal'))
+one_port_cal = read(os.path.join(pwd, 'one_port.cal'), encoding='latin1')
 
 mpl_rc_fname = os.path.join(pwd, 'skrf.mplstyle')
 

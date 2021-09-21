@@ -154,15 +154,14 @@ Misc Functions
 from typing import (Any, NoReturn, Optional, Sequence,
     Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
 from numbers import Number
-from six.moves import xrange
 from functools import reduce
 
 import os
 import warnings
 from io import StringIO
-
-import six.moves.cPickle as pickle
-from six.moves.cPickle import UnpicklingError
+from pathlib import Path
+import pickle
+from pickle import UnpicklingError
 
 import sys
 import re
@@ -423,14 +422,9 @@ class Network(object):
         else:
             self.s_def = s_def
 
-        if file is not None:
-            # Check for pathlib Path object, convert to string
-            if sys.version_info.major == 3 and sys.version_info.minor >= 4:  # pathlib added in 3.4
-                from pathlib import Path
-                if isinstance(file, Path):
-                    file = str(file.resolve())
-                else:
-                    pass
+        if file is not None:              
+            if isinstance(file, Path):
+                file = str(file.resolve())
 
             # allows user to pass StringIO, filename or file obj
             if isinstance(file,StringIO):
@@ -2710,6 +2704,10 @@ class Network(object):
         result.s = npy.insert(result.s, 0, dc_sparam, axis=0)
         result.frequency.f = npy.insert(result.frequency.f, 0, 0)
         result.z0 = npy.insert(result.z0, 0, result.z0[0], axis=0)
+
+        if result.noisy:
+            result.noise = npy.insert(result.noise, 0, 0, axis=0)
+            result.noise_freq.f = npy.insert(result.noise_freq.f, 0, 0)
 
         new_f = Frequency(0, result.frequency.f_scaled[-1], points,
                 unit=result.frequency.unit)
@@ -5385,7 +5383,7 @@ def z2y(z: npy.ndarray) -> npy.ndarray:
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     """
-    return npy.array([npy.mat(z[f, :, :]) ** -1 for f in xrange(z.shape[0])])
+    return npy.array([npy.mat(z[f, :, :]) ** -1 for f in range(z.shape[0])])
 
 
 def z2t(z: npy.ndarray) -> NoReturn:
@@ -5772,7 +5770,7 @@ def y2z(y: npy.ndarray) -> npy.ndarray:
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     """
-    return npy.array([npy.mat(y[f, :, :]) ** -1 for f in xrange(y.shape[0])])
+    return npy.array([npy.mat(y[f, :, :]) ** -1 for f in range(y.shape[0])])
 
 
 def y2t(y: npy.ndarray) -> NoReturn:
@@ -6606,7 +6604,7 @@ def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
     s_act = npy.zeros((nfreqs, nports), dtype='complex')
     s[ s == 0 ] = 1e-12  # solve numerical singularity
 
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         s_act[fidx] = npy.matmul(s[fidx], a) / a
     return s_act  # shape : (n_freqs, n_ports)
 
@@ -6652,7 +6650,7 @@ def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     z_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
 
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         z_act[fidx] = z0[fidx] * (1 + s_act[fidx])/(1 - s_act[fidx])
     return z_act
 
@@ -6696,7 +6694,7 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     y_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
 
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         y_act[fidx] = 1/z0[fidx] * (1 - s_act[fidx])/(1 + s_act[fidx])
     return y_act
 
@@ -6736,7 +6734,7 @@ def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
     vswr_act = npy.zeros((nfreqs, nports), dtype='complex')
     s_act = s2s_active(s, a)
 
-    for fidx in xrange(s.shape[0]):
+    for fidx in range(s.shape[0]):
         vswr_act[fidx] = (1 + npy.abs(s_act[fidx]))/(1 - npy.abs(s_act[fidx]))
 
     return vswr_act

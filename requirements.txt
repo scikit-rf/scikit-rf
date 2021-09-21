@@ -4,6 +4,5 @@ numpy
 pandas
 nbsphinx
 networkx
-pathlib
 xlwt
 openpyxl

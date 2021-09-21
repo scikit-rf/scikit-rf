@@ -1,7 +1,7 @@
 import unittest
 import os
 import warnings
-import six.moves.cPickle as pickle
+import pickle
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand, uniform
