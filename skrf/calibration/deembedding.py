@@ -25,7 +25,7 @@ Each de-embedding method inherits from the common abstract base
 class :class:`Deembedding`.
 
 Base Class
----------------
+----------
 
 .. autosummary::
    :toctree: generated/
@@ -33,7 +33,7 @@ Base Class
    Deembedding
 
 De-embedding Methods
------------------------
+--------------------
 
 .. autosummary::
    :toctree: generated/
@@ -42,6 +42,7 @@ De-embedding Methods
    Open
    ShortOpen
    Short
+
 '''
 
 from abc import ABC, abstractmethod
@@ -498,7 +499,7 @@ class Short(Deembedding):
         '''
 
         # check if the frequencies match with dummy frequencies
-        if ntwk.frequency != self.open.frequency:
+        if ntwk.frequency != self.short.frequency:
             raise(ValueError('Network frequencies dont match dummy frequencies.'))
 
         # TODO: attempt to interpolate if frequencies do not match
