@@ -58,6 +58,7 @@ jobs:
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
+      continue-on-error: true
       if: ${{ always() }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
