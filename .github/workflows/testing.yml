@@ -70,6 +70,7 @@ jobs:
   
   coveralls:
     name: Indicate completion to coveralls.io (Finish)
+    continue-on-error: true
     if: ${{ always() }}
     needs: Tests
     runs-on: ubuntu-latest
