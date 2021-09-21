@@ -896,7 +896,7 @@ class NetworkTestCase(unittest.TestCase):
         with self.assertWarns(InvalidFrequencyWarning):
             net = rf.Network(s=s, frequency=freq, z0=dat)
 
-        net.drop_invalid()
+        net.drop_non_monotonic_increasing()
 
         self.assertTrue(npy.allclose(net.f, freq.f[:4]))
         self.assertTrue(npy.allclose(net.s, s[:4]))

@@ -149,7 +149,7 @@ Misc Functions
     chopinhalf
     Network.nudge
     Network.renormalize
-    Network.drop_invalid
+    Network.drop_non_monotonic_increasing
 
 """
 from typing import (Any, NoReturn, Optional, Sequence,
@@ -1853,13 +1853,13 @@ class Network(object):
             ntwk.port_names = None
         return ntwk
     
-    def drop_invalid(self):
+    def drop_non_monotonic_increasing(self):
         """Drop invalid values based on duplicate and non increasing frequency values
 
         Example
         -------
 
-        The following example shows how to use the :func:`drop_invalid` automatically, 
+        The following example shows how to use the :func:`drop_non_monotonic_increasing` automatically, 
         if invalid frequency data is detected and an 
         :class:`~skrf.frequency.InvalidFrequencyWarning` is thrown.
 
@@ -1871,11 +1871,11 @@ class Network(object):
         >>>     net = rf.Network('corrupted_network.s2p')
         >>>     w = [w for w in warns if issubclass(w.category, InvalidFrequencyWarning)]
         >>>     if w:
-        >>>         net.drop_invalid()
+        >>>         net.drop_non_monotonic_increasing()
 
         """
         npoints = self.frequency.npoints
-        idx = self.frequency.drop_invalid()
+        idx = self.frequency.drop_non_monotonic_increasing()
         self.s = npy.delete(self.s, idx, axis=0)
 
         # z0 is broadcasted automatically if set to an single scalar like 50 Ohm
@@ -1884,7 +1884,7 @@ class Network(object):
             self._z0 = npy.delete(self._z0, idx)
 
         if self.noisy:
-            idx = self.noise_freq.drop_invalid()
+            idx = self.noise_freq.drop_non_monotonic_increasing()
             self.noise = npy.delete(self.noise, idx)
 
 
