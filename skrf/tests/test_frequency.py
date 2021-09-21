@@ -73,7 +73,7 @@ class FrequencyTestCase(unittest.TestCase):
 
             w = [w for w in warns if issubclass(w.category, InvalidFrequencyWarning)]
             if w:
-                inv = freq.drop_invalid()
+                inv = freq.drop_non_monotonic_increasing()
                 self.assertListEqual(inv, [2])
             
             else:
