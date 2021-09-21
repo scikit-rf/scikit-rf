@@ -272,7 +272,7 @@ class Frequency(object):
             f = [f]
         temp_freq =  cls(0,0,0,*args, **kwargs)
         temp_freq.f = npy.array(f) * temp_freq.multiplier
-        temp_freq.check_values()
+        temp_freq.check_monotonic_increasing()
 
         return temp_freq
 
@@ -312,7 +312,7 @@ class Frequency(object):
         out.f = self.f/other
         return out
 
-    def check_values(self) -> None:
+    def check_monotonic_increasing(self) -> None:
         """Validate the frequency values
 
         Raises
@@ -500,7 +500,7 @@ class Frequency(object):
         else:
             self.sweep_type = 'unknown'
 
-        self.check_values()
+        self.check_monotonic_increasing()
 
 
 

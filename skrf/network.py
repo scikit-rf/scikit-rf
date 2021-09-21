@@ -1859,8 +1859,8 @@ class Network(object):
         Example
         -------
 
-        The following example shows how to use the :func:`drop_non_monotonic_increasing` automatically, 
-        if invalid frequency data is detected and an 
+        The following example shows how to use the :func:`drop_non_monotonic_increasing` 
+        automatically, if invalid frequency data is detected and an 
         :class:`~skrf.frequency.InvalidFrequencyWarning` is thrown.
 
 
