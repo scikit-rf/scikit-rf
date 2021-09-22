@@ -918,7 +918,7 @@ class VectorFitting:
                 break
 
         # PASSIVATION PROCESS DONE; model is either passive or max. number of iterations have been exceeded
-        if t == self.max_iterations - 1:
+        if t == self.max_iterations:
             logging.error('Passivity enforcement: Aborting after the max. number of iterations has been exceeded.')
 
         # save/update model parameters (perturbed residues)
