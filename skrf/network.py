@@ -149,6 +149,7 @@ Misc Functions
     chopinhalf
     Network.nudge
     Network.renormalize
+    Network.drop_non_monotonic_increasing
 
 """
 from typing import (Any, NoReturn, Optional, Sequence,
@@ -1216,7 +1217,6 @@ class Network(object):
             if z0.shape == (self.frequency.npoints, self.nports):
                 self._z0 = z0
                 return
-
         raise AttributeError('Unable to broadcast z0 to s shape')
 
     @property
@@ -1846,6 +1846,41 @@ class Network(object):
         except(AttributeError):
             ntwk.port_names = None
         return ntwk
+    
+    def drop_non_monotonic_increasing(self) -> None:
+        """Drop invalid values based on duplicate and non increasing frequency values
+
+        Example
+        -------
+
+        The following example shows how to use the :func:`drop_non_monotonic_increasing` 
+        automatically, if invalid frequency data is detected and an 
+        :class:`~skrf.frequency.InvalidFrequencyWarning` is thrown.
+
+
+        >>> import warnings
+        >>> import skrf as rf
+        >>> from skrf.frequency import InvalidFrequencyWarning
+        >>> with warnings.catch_warnings(record=True) as warns:
+        >>>     net = rf.Network('corrupted_network.s2p')
+        >>>     w = [w for w in warns if issubclass(w.category, InvalidFrequencyWarning)]
+        >>>     if w:
+        >>>         net.drop_non_monotonic_increasing()
+
+        """
+        npoints = self.frequency.npoints
+        idx = self.frequency.drop_non_monotonic_increasing()
+        self.s = npy.delete(self.s, idx, axis=0)
+
+        # z0 is broadcasted automatically if set to an single scalar like 50 Ohm
+        # Deleting the value is not necessary in this case.
+        if self._z0.shape[0] == npoints:
+            self._z0 = npy.delete(self._z0, idx)
+
+        if self.noisy:
+            idx = self.noise_freq.drop_non_monotonic_increasing()
+            self.noise = npy.delete(self.noise, idx)
+
 
     def set_noise_a(self, noise_freq: Frequency = None, nfmin_db: float = 0,
         gamma_opt: float = 0, rn: NumberLike = 1 ) -> None:

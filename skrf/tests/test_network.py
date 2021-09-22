@@ -1,3 +1,4 @@
+from skrf.frequency import InvalidFrequencyWarning
 import unittest
 import os
 import io
@@ -9,6 +10,7 @@ import pickle
 import skrf as rf
 from copy import deepcopy
 from nose.plugins.skip import SkipTest
+import warnings
 
 from skrf import setup_pylab
 from skrf.media import CPW
@@ -884,6 +886,25 @@ class NetworkTestCase(unittest.TestCase):
         ntw_list = [tee12, tee23, tee13]
         tee2 = rf.n_twoports_2_nport(ntw_list, nports=3)
         self.assertTrue(tee2 == tee)
+
+    def test_invalid_freq(self):
+
+        dat = npy.arange(5)
+        dat[4] = 3
+
+        with self.assertWarns(InvalidFrequencyWarning):
+            freq = rf.Frequency.from_f(dat, unit='Hz')
+
+        s = npy.tile(dat,4).reshape(2,2,-1).T
+
+        with self.assertWarns(InvalidFrequencyWarning):
+            net = rf.Network(s=s, frequency=freq, z0=dat)
+
+        net.drop_non_monotonic_increasing()
+
+        self.assertTrue(npy.allclose(net.f, freq.f[:4]))
+        self.assertTrue(npy.allclose(net.s, s[:4]))
+        self.assertFalse(npy.allclose(net.s.shape, s.shape))
 
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkTestCase)
