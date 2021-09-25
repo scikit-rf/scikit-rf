@@ -77,6 +77,7 @@ import numpy as npy
 from numpy import linalg
 from numpy.linalg import det
 from numpy import mean, std, angle, real, imag, exp, ones, zeros, poly1d, invert, einsum, sqrt, unwrap,log,log10
+from scipy.optimize import least_squares
 import json
 from numbers import Number
 from collections import OrderedDict
@@ -3512,6 +3513,374 @@ class UnknownThru(EightTerm):
         coefs.update({'k':k_})
 
         self.coefs = coefs
+
+class LRRM(EightTerm):
+    '''
+    Line-Reflect-Reflect-Match self-calibration.
+
+    The required calibration standards are:
+
+        Line: Fully known.
+        Reflect: Unknown reflect, phase needs to be known within 90 degrees.
+        Reflect: Lossless reflect, phase needs to be known within 90 degrees.
+                 Different from the other reflect.
+        Match: Match with known resistance in series with unknown inductance.
+
+    Reflects are assumed to be identical on both ports. Note that the first
+    reflect doesn't need to be lossless, but the second one does. Match needs to
+    be only measured on the first port, the second port of match measurement is
+    not used during the calibration.
+
+    Implementation is based on papers [1] and [2].
+
+    [1] Zhao, W.; Liu, S.; Wang, H.; Liu, Y.; Zhang, S.; Cheng, C.; Feng,
+        K.; Ocket, I.; Schreurs, D.; Nauwelaers, B.; Qin, H.; Yang, X.
+        A Unified Approach for Reformulations of LRM/LRMM/LRRM Calibration
+        Algorithms Based on the T-Matrix Representation. Appl. Sci. 2017, 7,
+        866. https://doi.org/10.3390/app7090866
+
+    [2] F. Purroy and L. Pradell, "New theoretical analysis of the LRRM
+        calibration technique for vector network analyzers," in IEEE
+        Transactions on Instrumentation and Measurement, vol. 50, no. 5,
+        pp. 1307-1314, Oct. 2001.
+    '''
+
+    family = 'EightTerm'
+    def __init__(self, measured, ideals, switch_terms=None, isolation=None,
+            z0=50, match_fit='l', *args, **kwargs):
+        '''
+        Parameters
+        --------------
+        measured : list of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must be line, reflect, reflect, match and must align with the
+            `ideals` parameter
+
+        ideals : list of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `measured` list
+
+        switch_terms : tuple of :class:`~skrf.network.Network` objects
+            the pair of switch terms in the order (forward, reverse)
+
+        isolation : :class:`~skrf.network.Network` object
+            Measurement with loads on both ports with a perfect isolation
+            between the ports. Used for determining the isolation error terms.
+            If no measurement is given leakage is assumed to be zero.
+
+        z0 : int
+            Calibration reference impedance. Only affects the solved match
+            inductance. Has no effect to the solved calibration parameters.
+
+        match_fit : string or None
+            Match model. Valid choices are 'l' to fit a single inductance over
+            all frequencies. 'none' to not fit inductance and let it be
+            different for each frequency. Fitting is recommended as individual
+            inductance estimates can be noisy.
+        '''
+
+        self.z0 = z0
+        # TODO: Second port not implemented.
+        self.match_port = 0
+
+        self.match_fit = match_fit
+
+        if self.match_port not in [0, 1]:
+            raise ValueError('match_port must be either 0 or 1.')
+
+        super().__init__(
+            measured = measured,
+            ideals = ideals,
+            switch_terms = switch_terms,
+            isolation = isolation,
+            *args, **kwargs)
+
+    def run(self):
+        mList = [k for k in self.measured_unterminated]
+        lm = mList[0]
+        r1m = mList[1]
+        r2m = mList[2]
+        mm = mList[3]
+
+        inv = npy.linalg.inv
+
+        tl = self.ideals[0].t
+
+        fpoints = len(mList[0])
+
+        r11 = r1m.s[:,0,0]
+        r12 = r1m.s[:,1,1]
+        r21 = r2m.s[:,0,0]
+        r22 = r2m.s[:,1,1]
+
+        lm11 = lm.s[:,0,0]
+        lm12 = lm.s[:,0,1]
+        lm21 = lm.s[:,1,0]
+        lm22 = lm.s[:,1,1]
+
+        mm1 = mm.s[:,0,0]
+
+        thru_s21 = self.ideals[0].s[:,1,0]
+
+        ones = npy.ones(fpoints, dtype=npy.complex)
+        zeros = npy.zeros(fpoints, dtype=npy.complex)
+
+        wlr1 = npy.transpose(npy.array([[ones, ones], [r11, r21]]), [2,0,1])
+        wll1 = npy.transpose(npy.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
+        wll2 = npy.transpose(npy.array([[zeros, ones], [lm21, lm22]]), [2,0,1])
+        wlr2 = npy.transpose(npy.array([[ones, ones], [r12, r22]]), [2,0,1])
+
+        wl = inv(wlr1) @ wll1 @ inv(wll2) @ wlr2
+
+        # xyz2 == (x/y)*z**2
+        xyz2 = -npy.linalg.det(tl) / npy.linalg.det(wl)
+
+        c2 = wl[:, 0, 0]
+        c1 = -tl[:, 1, 0] - tl[:, 0, 1]
+        c0 = wl[:, 1, 1] * xyz2
+
+        z0 = -c1 + npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        z1 = -c1 - npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        zs = npy.stack([z0, z1])
+
+        # wm and solve_gr equations are different if match is on the second port.
+        assert self.match_port == 0
+        wm_t1 = inv(npy.transpose(npy.array([[ones, ones],[r11, r21]]), [2,0,1]))
+        wm_t2 = npy.transpose(npy.array([[ones], [mm1]]), [2,0,1])
+        wm = wm_t1 @ wm_t2
+        wm1 = wm[:, 0, 0]
+        wm2 = wm[:, 1, 0]
+
+        def solve_gr(gm):
+            gr1s = npy.zeros((2, fpoints), dtype=npy.complex)
+            gr2s = npy.zeros((2, fpoints), dtype=npy.complex)
+            xs = npy.zeros((2, fpoints), dtype=npy.complex)
+            er = npy.zeros((2, fpoints), dtype=npy.complex)
+            efs = npy.zeros((2, 4, fpoints), dtype=npy.complex)
+
+            for root in [0, 1]:
+                z = zs[root]
+                xyz = xyz2 / z
+
+                w11 = wl[:, 0, 0] * z
+                w21 = wl[:, 1, 0] * z
+                w12 = wl[:, 0, 1] * xyz
+                w22 = wl[:, 1, 1] * xyz
+
+                e1 = (tl[:, 1, 1]**2) * wm1
+                e0 = tl[:, 1, 1] * (tl[:, 1, 0] - w22) * wm1 + tl[:, 1, 1] * wm2 * w12
+                f1 = tl[:, 1, 1] * (w11 - tl[:, 1, 0]) * wm1 + tl[:, 1, 1] * wm2 * w12
+                f0 = (w11 - tl[:, 1, 0]) * (tl[:, 1, 0] - w22) * wm1 + wm1 * w21 * w12
+
+                gr2 = -(f0 - e0 * gm) / (f1 - e1 * gm)
+
+                x = w12 / (tl[:, 1, 0] + tl[:, 1, 1]*gr2 - w22)
+                gr1 = ((w11 - tl[:, 1, 0]) * (tl[:, 1, 0] + tl[:, 1, 1] * gr2 - w22) + w21*w12) \
+                        / (tl[:, 1, 1] * (tl[:, 1, 0] + tl[:, 1, 1] * gr2 - w22))
+
+                egr1 = npy.abs(gr1 - self.ideals[1].s[:,0,0])
+                egr2 = npy.abs(gr2 - self.ideals[2].s[:,0,0])
+
+                er[root] = egr1 + egr2
+                gr1s[root] = gr1
+                gr2s[root] = gr2
+                efs[root, 0, :] = e1
+                efs[root, 1, :] = e0
+                efs[root, 2, :] = f1
+                efs[root, 3, :] = f0
+                xs[root] = x
+
+            one_ints = npy.ones(fpoints, dtype=npy.int)
+            zero_ints = npy.zeros(fpoints, dtype=npy.int)
+            root = er[0] < er[1]
+
+            gr1 = npy.where(root, gr1s[0], gr1s[1])
+            gr2 = npy.where(root, gr2s[0], gr2s[1])
+            x = npy.where(root, xs[0], xs[1])
+            z = npy.where(root, zs[0], zs[1])
+            efs = npy.where(root, efs[0], efs[1])
+            y = x * z**2 / xyz2
+
+            return gr1, gr2, x, y, z, efs
+
+        # Solve first reflects assuming gm = 0
+        gr1, gr2, x, y, z, efs = solve_gr(zeros)
+
+        # Next solve for match inductance
+        gmi = self.ideals[3].s[:, self.match_port, self.match_port]
+        R = (self.z0 * (1 + gmi)/(1 - gmi)).real # Resistance of the match
+
+        a = 2*gr2.real + npy.abs(gr2)**2 - \
+            2*(gr2*thru_s21**(-2)).real - npy.abs(gr2*thru_s21**(-2))**2
+        b = 4*R*(gr2.imag + (gr2*thru_s21**(-2)).imag )
+        c = 4*R**2*(npy.abs(gr2)**2 - 1)
+
+        det = b**2 - 4*a*c
+        if npy.any(det < 0):
+            warnings.warn('Load inductance determination failed. Calibration might be incorrect.')
+        det[det < 0] = 0
+        wL = [None, None]
+        wL[0] = (-b+npy.sqrt(det))/(2*a)
+        wL[1] = (-b-npy.sqrt(det))/(2*a)
+
+        gm_guess = [None, None]
+        for p in [0,1]:
+            gm_guess[p] = (R + 1j*wL[p] - self.z0)/(R + 1j*wL[p] + self.z0)
+
+        # Choose the root according to which one is closer to the ideal
+        m_ideal = self.ideals[3].s[:,0,0]
+        root = (npy.abs(gm_guess[0] - m_ideal) > npy.abs(gm_guess[1] - m_ideal)).astype(npy.int)
+
+        # L from reactance
+        match_l = npy.choose(root, wL)/(2*npy.pi*self.measured[0].f)
+
+        w = 2*npy.pi*self.measured[0].f
+
+        if self.match_fit == 'l':
+
+            # Weight L estimate by frequency
+            l0 = npy.sum(w * match_l) / npy.sum(w)
+
+            e1 = efs[0, :]
+            e0 = efs[1, :]
+            f1 = efs[2, :]
+            f0 = efs[3, :]
+
+            gr2_abs = npy.abs(self.ideals[2].s[:,0,0])
+
+            def min_l(l):
+                """
+                Calculates gr2 absolute value error as a function of
+                the match inductance.
+                """
+                gm = (R + 1j*w*l - self.z0)/(R + 1j*w*l + self.z0)
+                return gr2_abs - npy.abs((f0 - e0 * gm) / (f1 - e1 * gm))
+
+            # Try some alternative initial guesses
+            init_x = npy.linspace(-10, 10, 10)
+            init_l = init_x / (w[-1])
+            init_guess = [npy.mean(min_l(l)**2) for l in init_l]
+            li = npy.argmin(init_guess)
+            best_guess = init_l[li]
+
+            # Choose the best guess for the least squares initial value
+            if init_guess[li] < npy.mean(min_l(l0)**2):
+                l0 = best_guess
+
+            sol = least_squares(min_l, l0)
+            match_l = sol.x * npy.ones(match_l.shape)
+
+        elif self.match_fit == 'none' or self.match_fit is None:
+            pass
+        else:
+            raise ValueError('Unknown match_fit {}'.format(self.match_fit))
+
+        gamma_m = (R + 1j*w*match_l - self.z0)/(R + 1j*w*match_l + self.z0)
+
+        # Solve finally reflects and calibration parameters using the solved match
+        gr1, gr2, x, y, z, _ = solve_gr(gamma_m)
+
+        self._solved_l = match_l
+        self._solved_m = Network(s=gamma_m, frequency=self.measured[0].frequency)
+        self._solved_r1 = Network(s=gr1, frequency=self.measured[0].frequency)
+        self._solved_r2 = Network(s=gr2, frequency=self.measured[0].frequency)
+
+        # Calculate error matrices
+        t10 = npy.transpose(npy.array([[ones, x], [gr1, gr2*x]]), [2,0,1]) \
+                @ inv(npy.transpose(npy.array([[ones,ones],[r11, r21]]), [2,0,1]))
+        t23 = npy.transpose((1/z)*npy.array([[ones, y], [gr1, gr2*y]]), [2,0,1]) \
+                @ inv(npy.transpose(npy.array([[ones,ones],[r12, r22]]), [2,0,1]))
+
+        Smat1 = t2s(t10)
+        Smat2 = t2s(t23)
+
+        #Convert the error coefficients to
+        #definitions used by the EightTerm class.
+        dx = linalg.det(Smat1)
+        dy = linalg.det(Smat2)
+
+        k = Smat1[:,0,1]/Smat2[:,0,1]
+
+        #Error coefficients
+        e = [Smat1[:,0,0],
+             Smat1[:,1,1],
+             dx,
+             Smat2[:,0,0],
+             Smat2[:,1,1],
+             dy,
+             k]
+
+        self._coefs = {\
+                'forward directivity':e[1],
+                'forward source match':e[0],
+                'forward reflection tracking':e[0]*e[1]-e[2],
+                'reverse directivity':e[4],
+                'reverse source match':e[3],
+                'reverse reflection tracking':e[4]*e[3]- e[5],
+                'k':e[6],
+                }
+
+        self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
+        self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
+
+        if self.switch_terms is not None:
+            self._coefs.update({
+                'forward switch term': self.switch_terms[0].s.flatten(),
+                'reverse switch term': self.switch_terms[1].s.flatten(),
+                })
+        else:
+            self._coefs.update({
+                'forward switch term': npy.zeros(fpoints, dtype=complex),
+                'reverse switch term': npy.zeros(fpoints, dtype=complex),
+                })
+        # output is a dictionary of information
+        self._output_from_run = {
+                'error vector':e
+                }
+
+    @property
+    def solved_l(self):
+        '''
+        Solved inductance of the load
+        '''
+        try:
+            return self._solved_l
+        except(AttributeError):
+            self.run()
+            return self._solved_l
+
+    @property
+    def solved_m(self):
+        '''
+        Solved match
+        '''
+        try:
+            return self._solved_m
+        except(AttributeError):
+            self.run()
+            return self._solved_m
+
+    @property
+    def solved_r1(self):
+        '''
+        Solved reflect1
+        '''
+        try:
+            return self._solved_r1
+        except(AttributeError):
+            self.run()
+            return self._solved_r1
+
+    @property
+    def solved_r2(self):
+        '''
+        Solved reflect2
+        '''
+        try:
+            return self._solved_r2
+        except(AttributeError):
+            self.run()
+            return self._solved_r2
 
 class MRC(UnknownThru):
     '''
