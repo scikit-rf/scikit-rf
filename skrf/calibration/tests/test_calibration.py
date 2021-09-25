@@ -906,21 +906,16 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
             self.Ir.s11,
             self.cal.coefs_ntwks['reverse isolation'])
     
-    @nottest
     def test_convert_12term_2_8term(self):
         converted = rf.convert_8term_2_12term(
-                    rf.convert_12term_2_8term(self.cal.coefs))
+                    rf.convert_12term_2_8term(self.cal.coefs, redundant_k=True))
         
-        
-        for k in converted:
-            print(('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k]))))
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
         
-    @nottest
     def test_convert_12term_2_8term_correction_accuracy(self):
         converted = rf.convert_8term_2_12term(
-                    rf.convert_12term_2_8term(self.cal.coefs))
+                    rf.convert_12term_2_8term(self.cal.coefs, redundant_k=True))
         
         self.cal._coefs = converted
         a = self.wg.random(n_ports=2)
@@ -929,11 +924,6 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
                
         self.assertEqual(a,c)
     
-    @nottest
-    def test_verify_12term(self):
-        
-        self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
-
 
 class TwelveTermSloppyInitTest(TwelveTermTest):
     '''
@@ -1107,6 +1097,9 @@ class TwoPortOnePathTest(TwelveTermTest):
     def test_reverse_transmission_tracking_accuracy(self):
         raise SkipTest()  
 
+    def test_convert_12term_2_8term_correction_accuracy(self):
+        raise SkipTest()
+
 
 class UnknownThruTest(EightTermTest):
     def setUp(self):
@@ -1231,7 +1224,7 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
             )
 
 
-        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs, redundant_k=1)
+        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs)
         coefs = NetworkSet.from_s_dict(coefs,
                                     frequency=self.cal.frequency).to_dict()
         self.coefs= coefs

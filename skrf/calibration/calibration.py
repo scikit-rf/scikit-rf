@@ -4599,7 +4599,7 @@ def convert_12term_2_8term(coefs_12term, redundant_k = False):
 
     k_first  =   Etf/(Err + Edr*(Elf  - Esr) )
     k_second =1/(Etr/(Erf + Edf *(Elr - Esf)))
-    k = k_first #npy.sqrt(k_second*k_first)# (k_first +k_second )/2.
+    k = (k_first + k_second)/2.
     coefs_8term = {}
     for l in ['forward directivity','forward source match',
         'forward reflection tracking','reverse directivity',
@@ -4629,13 +4629,15 @@ def convert_8term_2_12term(coefs_8term):
     gamma_f = coefs_8term['forward switch term']
     gamma_r = coefs_8term['reverse switch term']
     k = coefs_8term['k']
+    k_first = coefs_8term.get('k first', k)
+    k_second = coefs_8term.get('k second', k)
 
     # taken from eq (36)-(39) in the Roger Marks paper given in the
     # docstring
     Elf  = Esr + (Err*gamma_f)/(1. - Edr * gamma_f)
     Elr = Esf  + (Erf *gamma_r)/(1. - Edf  * gamma_r)
-    Etf  = ((Elf  - Esr)/gamma_f) * k
-    Etr = ((Elr - Esf )/gamma_r) * 1./k
+    Etf  = ((Elf  - Esr)/gamma_f) * k_first
+    Etr = ((Elr - Esf )/gamma_r) * 1./k_second
 
     coefs_12term = {}
     for l in ['forward directivity','forward source match',
