@@ -37,6 +37,7 @@ Two-port
    SOLT
    EightTerm
    UnknownThru
+   LRRM
    TRL
    MultilineTRL
    NISTMultilineTRL
@@ -3527,10 +3528,14 @@ class LRRM(EightTerm):
         Match: Match with known resistance in series with unknown inductance.
 
     Reflects are assumed to be identical on both ports. Note that the first
-    reflect can be lossy, but the second reflect's magnitude of the reflection
-    coefficient needs to be known. Match needs to be only measured on the first
-    port, the second port of match measurement is not used during the
-    calibration.
+    reflect's |S11| can be unknown, but the second reflect's magnitude of the
+    reflection coefficient needs to be known. Match needs to be only measured
+    on the first port, the second port of match measurement is not used during
+    the calibration.
+
+    If match_fit == 'lc' then the second reflect is assumed to be a lossless
+    capacitor. Measurements should then include low frequencies for accurate
+    open capacitance determination.
 
     Implementation is based on papers [1] and [2]. 'lc' match_fit based on [3].
 
@@ -3713,6 +3718,10 @@ class LRRM(EightTerm):
             return gr1, gr2, x, y, z, efs
 
         def calc_gm(R, l, c=0):
+            """
+            Calculates reflection coefficient of resistor R in series with inductance
+            l in parallel with capacitor c.
+            """
             return (self.z0 + R*(-1 + 1j*c*w*self.z0) - l*w*(1j + c*w*self.z0)) \
                  /(-self.z0 + R*(-1 - 1j*c*w*self.z0) + l*w*(-1j + c*w*self.z0))
 
@@ -3933,7 +3942,7 @@ class LRRM(EightTerm):
     def solved_c(self):
         '''
         Solved capacitance of the load.
-        Zero if lc_fit = 'l'.
+        Zero if match_fit != 'lc'.
         '''
         try:
             return self._solved_c
