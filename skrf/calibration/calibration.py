@@ -3522,27 +3522,33 @@ class LRRM(EightTerm):
 
         Line: Fully known.
         Reflect: Unknown reflect, phase needs to be known within 90 degrees.
-        Reflect: Lossless reflect, phase needs to be known within 90 degrees.
-                 Different from the other reflect.
+        Reflect: Reflect with known |S11|, phase needs to be known within 90
+                 degrees.  Different from the other reflect.
         Match: Match with known resistance in series with unknown inductance.
 
     Reflects are assumed to be identical on both ports. Note that the first
-    reflect doesn't need to be lossless, but the second one does. Match needs to
-    be only measured on the first port, the second port of match measurement is
-    not used during the calibration.
+    reflect can be lossy, but the second reflect's magnitude of the reflection
+    coefficient needs to be known. Match needs to be only measured on the first
+    port, the second port of match measurement is not used during the
+    calibration.
 
-    Implementation is based on papers [1] and [2].
+    Implementation is based on papers [1] and [2]. 'lc' match_fit based on [3].
 
     [1] Zhao, W.; Liu, S.; Wang, H.; Liu, Y.; Zhang, S.; Cheng, C.; Feng,
         K.; Ocket, I.; Schreurs, D.; Nauwelaers, B.; Qin, H.; Yang, X.
         A Unified Approach for Reformulations of LRM/LRMM/LRRM Calibration
         Algorithms Based on the T-Matrix Representation. Appl. Sci. 2017, 7,
-        866. https://doi.org/10.3390/app7090866
+        866.
 
     [2] F. Purroy and L. Pradell, "New theoretical analysis of the LRRM
         calibration technique for vector network analyzers," in IEEE
         Transactions on Instrumentation and Measurement, vol. 50, no. 5,
         pp. 1307-1314, Oct. 2001.
+
+    [3] S. Liu, I. Ocket, A. Lewandowski, D. Schreurs and B. Nauwelaers, "An
+        Improved Line-Reflect-Reflect-Match Calibration With an Enhanced Load
+        Model," in IEEE Microwave and Wireless Components Letters, vol. 27,
+        no. 1, pp. 97-99, Jan. 2017.
     '''
 
     family = 'EightTerm'
@@ -3575,8 +3581,10 @@ class LRRM(EightTerm):
         match_fit : string or None
             Match model. Valid choices are 'l' to fit a single inductance over
             all frequencies. 'none' to not fit inductance and let it be
-            different for each frequency. Fitting is recommended as individual
-            inductance estimates can be noisy.
+            different for each frequency. 'lc' to fit match with series
+            inductor and parallel capacitor and assuming that the second
+            reflect is open with unknown capacitance. Fitting is recommended as
+            individual inductance estimates can be noisy.
         '''
 
         self.z0 = z0
@@ -3584,7 +3592,7 @@ class LRRM(EightTerm):
         self.match_port = 0
 
         self.match_fit = match_fit
-
+        self.lc_fit_iters = kwargs.get('lc_fit_iters', 5)
         if self.match_port not in [0, 1]:
             raise ValueError('match_port must be either 0 or 1.')
 
@@ -3606,6 +3614,7 @@ class LRRM(EightTerm):
 
         tl = self.ideals[0].t
 
+        w = 2*npy.pi*self.measured[0].f
         fpoints = len(mList[0])
 
         r11 = r1m.s[:,0,0]
@@ -3703,6 +3712,10 @@ class LRRM(EightTerm):
 
             return gr1, gr2, x, y, z, efs
 
+        def calc_gm(R, l, c=0):
+            return (self.z0 + R*(-1 + 1j*c*w*self.z0) - l*w*(1j + c*w*self.z0)) \
+                 /(-self.z0 + R*(-1 - 1j*c*w*self.z0) + l*w*(-1j + c*w*self.z0))
+
         # Solve first reflects assuming gm = 0
         gr1, gr2, x, y, z, efs = solve_gr(zeros)
 
@@ -3733,8 +3746,16 @@ class LRRM(EightTerm):
 
         # L from reactance
         match_l = npy.choose(root, wL)/(2*npy.pi*self.measured[0].f)
+        match_c = -1/(npy.choose(root, wL)*2*npy.pi*self.measured[0].f)
 
-        w = 2*npy.pi*self.measured[0].f
+        # Weight L estimate by frequency
+        l0 = npy.sum(w * match_l) / npy.sum(w)
+        c0 = npy.sum(w * match_c) / npy.sum(w)
+
+        e1 = efs[0, :]
+        e0 = efs[1, :]
+        f1 = efs[2, :]
+        f0 = efs[3, :]
 
         if self.match_fit == 'l':
 
@@ -3767,20 +3788,77 @@ class LRRM(EightTerm):
             if init_guess[li] < npy.mean(min_l(l0)**2):
                 l0 = best_guess
 
-            sol = least_squares(min_l, l0)
+            sol = least_squares(min_l, l0, method='lm')
             match_l = sol.x * npy.ones(match_l.shape)
+            match_c = zeros
+
+        elif self.match_fit == 'lc':
+
+            if self.ideals[2].s[0,0,0].real < 0:
+                warnings.warn("2nd reflect assumed to be open, but 2nd ideal ' \
+                'doesn't look like open. Calibration is likely incorrect.")
+
+            for iteration in range(self.lc_fit_iters):
+                # Fit capacitance to gr2
+                cgr2 = (1j*(-1 + gr2))/((1 + gr2)*w*self.z0)
+                # Weight lower frequencies as there the match is probably more
+                # accurate. Slight offset to avoid problems if frequency is
+                # very low.
+                cw = w[-1]/(w + 2*npy.pi*100e6)
+                cgr2 = npy.sum(cw * cgr2.real) / npy.sum(cw)
+                gr2_c = (1j + cgr2*w*self.z0)/(1j - cgr2*w*self.z0)
+
+                def min_lc(x):
+                    l, c = x
+                    gm = calc_gm(R, l, c)
+                    e = gr2_c + (f0 - e0 * gm) / (f1 - e1 * gm)
+                    r = list(e.real)
+                    r.extend(e.imag)
+                    return npy.array(r)
+
+                if iteration == 0:
+                    # Biggest capacitance value assuming given gm matching.
+                    worst_match = 0.4 # -7 dB
+                    max_init_c = (2*worst_match)/(npy.sqrt(1 - worst_match**2)*w[-1]*self.z0)
+
+                    # Initial reactance guess, try to find positive L, C.
+                    init_x = npy.linspace(0, 20, 10)
+                    init_l = init_x / (w[-1])
+                    init_c = npy.linspace(0, max_init_c, 10)
+                    init_lc = [(l, c) for l in init_l for c in init_c]
+                    if l0 > 0:
+                        init_lc.append((l0, 0))
+                    if c0 > 0:
+                        init_lc.append((0, c0))
+                    init_guess = [npy.mean(min_lc(x)**2) for x in init_lc]
+                    best_guess = init_lc[npy.argmin(init_guess)]
+
+                    l0 = best_guess[0]
+                    c0 = best_guess[1]
+                else:
+                    init_lc.append((match_l[0], match_c[0]))
+
+                sol = least_squares(min_lc, [l0, c0], method='lm')
+                match_l = sol.x[0] * npy.ones(match_l.shape)
+                match_c = sol.x[1] * npy.ones(match_l.shape)
+
+                # Recalculate gr2 if not the last iteration.
+                if iteration != self.lc_fit_iters - 1:
+                    gamma_m = calc_gm(R, match_l, match_c)
+                    gr1, gr2, x, y, z, _ = solve_gr(gamma_m)
 
         elif self.match_fit == 'none' or self.match_fit is None:
             pass
         else:
             raise ValueError('Unknown match_fit {}'.format(self.match_fit))
 
-        gamma_m = (R + 1j*w*match_l - self.z0)/(R + 1j*w*match_l + self.z0)
+        gamma_m = calc_gm(R, match_l, match_c)
 
         # Solve finally reflects and calibration parameters using the solved match
         gr1, gr2, x, y, z, _ = solve_gr(gamma_m)
 
         self._solved_l = match_l
+        self._solved_c = match_c
         self._solved_m = Network(s=gamma_m, frequency=self.measured[0].frequency)
         self._solved_r1 = Network(s=gr1, frequency=self.measured[0].frequency)
         self._solved_r2 = Network(s=gr2, frequency=self.measured[0].frequency)
@@ -3848,6 +3926,18 @@ class LRRM(EightTerm):
         except(AttributeError):
             self.run()
             return self._solved_l
+
+    @property
+    def solved_c(self):
+        '''
+        Solved capacitance of the load.
+        Zero if lc_fit = 'l'.
+        '''
+        try:
+            return self._solved_c
+        except(AttributeError):
+            self.run()
+            return self._solved_c
 
     @property
     def solved_m(self):
