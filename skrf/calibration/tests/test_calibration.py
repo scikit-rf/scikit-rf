@@ -1216,11 +1216,75 @@ class LRRMTest(EightTermTest):
         self.assertTrue(npy.abs(self.match_l - solved_l) < 1e-3*self.match_l)
 
     def test_solved_r1(self):
-        self.assertTrue(npy.abs(self.s.s - self.cal.solved_r1.s) < 1e-7)
+        self.assertTrue(all(npy.abs(self.s.s - self.cal.solved_r1.s) < 1e-7))
 
     def test_solved_r2(self):
-        self.assertTrue(npy.abs(self.o.s - self.cal.solved_r2.s) < 1e-7)
+        self.assertTrue(all(npy.abs(self.o.s - self.cal.solved_r2.s) < 1e-7))
 
+class LRRMTestNoFit(LRRMTest):
+    def setUp(self):
+
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+        self.X = wg.random(n_ports=2, name='X')
+        self.Y = wg.random(n_ports=2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+        self.gamma_f = wg.random(n_ports=1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports=1, name='gamma_r')
+
+        # Our guess of the standards
+        o_i = wg.load(1, nports=1, name='open')
+        s_i = wg.short(nports=1, name='short')
+        # Doesn't work correctly for non-50 ohm match.
+        m_i = wg.load(0, nports=1, name='load')
+        thru = wg.line(d=50, unit='um', name='thru')
+
+        # Actual reflects with parasitics
+        s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
+        o = wg.shunt_capacitor(5e-15) ** wg.open(nports=1, name='open')
+
+        self.match_l = npy.random.uniform(1e-12, 20e-12)
+        l = wg.inductor(L=self.match_l)
+        m = l**m_i
+
+        # Make standards two-ports
+        oo = rf.two_port_reflect(o, o)
+        ss = rf.two_port_reflect(s, s)
+        mm = rf.two_port_reflect(m, o)
+
+        oo_i = rf.two_port_reflect(o_i, o_i)
+        ss_i = rf.two_port_reflect(s_i, s_i)
+        mm_i = rf.two_port_reflect(m_i, m_i)
+
+        # Store open and short for other tests.
+        self.s = s
+        self.o = o
+
+        approx_ideals = [
+            thru,
+            ss_i,
+            oo_i,
+            mm_i
+            ]
+
+        ideals = [
+            thru,
+            ss,
+            oo,
+            mm
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal = rf.LRRM(
+            ideals = approx_ideals,
+            measured = measured,
+            switch_terms = [self.gamma_f, self.gamma_r],
+            isolation = measured[3],
+            match_fit = 'none'
+            )
 
 class MRCTest(EightTermTest):
     def setUp(self):

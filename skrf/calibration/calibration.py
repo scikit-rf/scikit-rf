@@ -3746,11 +3746,10 @@ class LRRM(EightTerm):
 
         # L from reactance
         match_l = npy.choose(root, wL)/(2*npy.pi*self.measured[0].f)
-        match_c = -1/(npy.choose(root, wL)*2*npy.pi*self.measured[0].f)
+        match_c = zeros
 
         # Weight L estimate by frequency
         l0 = npy.sum(w * match_l) / npy.sum(w)
-        c0 = npy.sum(w * match_c) / npy.sum(w)
 
         e1 = efs[0, :]
         e0 = efs[1, :]
@@ -3798,6 +3797,9 @@ class LRRM(EightTerm):
                 warnings.warn("2nd reflect assumed to be open, but 2nd ideal ' \
                 'doesn't look like open. Calibration is likely incorrect.")
 
+            match_c = -1/(npy.choose(root, wL)*2*npy.pi*self.measured[0].f)
+            c0 = npy.sum(w * match_c) / npy.sum(w)
+
             for iteration in range(self.lc_fit_iters):
                 # Fit capacitance to gr2
                 cgr2 = (1j*(-1 + gr2))/((1 + gr2)*w*self.z0)
@@ -3816,7 +3818,7 @@ class LRRM(EightTerm):
                     r.extend(e.imag)
                     return npy.array(r)
 
-                if iteration == 0:
+                if iteration == 0 or l0 < 0 or c0 < 0:
                     # Biggest capacitance value assuming given gm matching.
                     worst_match = 0.4 # -7 dB
                     max_init_c = (2*worst_match)/(npy.sqrt(1 - worst_match**2)*w[-1]*self.z0)
