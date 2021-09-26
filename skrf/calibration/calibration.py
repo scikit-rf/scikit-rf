@@ -37,6 +37,7 @@ Two-port
    SOLT
    EightTerm
    UnknownThru
+   LRM
    TRL
    MultilineTRL
    NISTMultilineTRL
@@ -3512,6 +3513,204 @@ class UnknownThru(EightTerm):
         coefs.update({'k':k_})
 
         self.coefs = coefs
+
+class LRM(EightTerm):
+    '''
+    Line-Reflect-Match self-calibration.
+
+    The required calibration standards are:
+
+        Line: Fully known.
+        Reflect: Unknown reflect, phase needs to be known within 90 degrees.
+        Match: Fully known.
+
+    Reflect and match are assumed to be identical on both ports. The measured
+    and ideals lists must be given in LRM order.
+
+    Implementation is based on [1].
+
+    [1] Zhao, W.; Liu, S.; Wang, H.; Liu, Y.; Zhang, S.; Cheng, C.; Feng,
+        K.; Ocket, I.; Schreurs, D.; Nauwelaers, B.; Qin, H.; Yang, X.
+        A Unified Approach for Reformulations of LRM/LRMM/LRRM Calibration
+        Algorithms Based on the T-Matrix Representation. Appl. Sci. 2017, 7,
+        866.
+    '''
+
+    family = 'EightTerm'
+    def __init__(self, measured, ideals, switch_terms=None, isolation=None,
+                 *args, **kwargs):
+        '''
+        Parameters
+        --------------
+        measured : list of :class:`~skrf.network.Network` objects
+            Raw measurements of the calibration standards. The order
+            must align with the `ideals` parameter
+
+        ideals : list of :class:`~skrf.network.Network` objects
+            Predicted ideal response of the calibration standards.
+            The order must align with `measured` list
+
+        switch_terms : tuple of :class:`~skrf.network.Network` objects
+            the pair of switch terms in the order (forward, reverse)
+
+        isolation : :class:`~skrf.network.Network` object
+            Measurement with loads on both ports with a perfect isolation
+            between the ports. Used for determining the isolation error terms.
+            If no measurement is given leakage is assumed to be zero.
+        '''
+
+        super().__init__(
+            measured = measured,
+            ideals = ideals,
+            switch_terms = switch_terms,
+            isolation = isolation,
+            *args, **kwargs)
+
+    def run(self):
+        mList = [k for k in self.measured_unterminated]
+        lm = mList[0]
+        rm = mList[1]
+        mm = mList[2]
+
+        gm = self.ideals[2].s[:,0,0]
+        if self.ideals[2].nports > 1:
+            if any(gm != self.ideals[2].s[:,1,1]):
+                warnings.warn('Match ideal port 1 and port 2 are different. Using port 1 match also for port 2.')
+
+        if self.ideals[1].nports > 1:
+            if any(self.ideals[1].s[:,0,0] != self.ideals[1].s[:,1,1]):
+                warnings.warn('Reflect ideal port 1 and port 2 are different. Using port 1 reflect also for port 2.')
+
+        inv = npy.linalg.inv
+
+        tl = self.ideals[0].t
+
+        fpoints = len(mList[0])
+
+        r1 = rm.s[:,0,0]
+        r2 = rm.s[:,1,1]
+        m1 = mm.s[:,0,0]
+        m2 = mm.s[:,1,1]
+
+        lm11 = lm.s[:,0,0]
+        lm12 = lm.s[:,0,1]
+        lm21 = lm.s[:,1,0]
+        lm22 = lm.s[:,1,1]
+
+        ones = npy.ones(fpoints, dtype=npy.complex)
+        zeros = npy.zeros(fpoints, dtype=npy.complex)
+
+        wlr1 = npy.transpose(npy.array([[ones, ones], [r1, m1]]), [2,0,1])
+        wll1 = npy.transpose(npy.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
+        wll2 = npy.transpose(npy.array([[zeros, ones], [lm21, lm22]]), [2,0,1])
+        wlr2 = npy.transpose(npy.array([[ones, ones], [r2, m2]]), [2,0,1])
+
+        wl = inv(wlr1) @ wll1 @ inv(wll2) @ wlr2
+
+        # xyz2 == (x/y)*z**2
+        xyz2 = -npy.linalg.det(tl) / npy.linalg.det(wl)
+
+        c2 = wl[:, 0, 0]
+        c1 = -tl[:, 1, 0] - tl[:, 0, 1]
+        c0 = wl[:, 1, 1] * xyz2
+
+        z0 = -c1 + npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        z1 = -c1 - npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
+        zs = npy.stack([z0, z1])
+
+        grs = npy.zeros((2, fpoints), dtype=npy.complex)
+        xs = npy.zeros((2, fpoints), dtype=npy.complex)
+        er = npy.zeros((2, fpoints), dtype=npy.complex)
+
+        for root in [0, 1]:
+            z = zs[root]
+            xyz = xyz2 / z
+
+            w11 = wl[:, 0, 0] * z
+            w21 = wl[:, 1, 0] * z
+            w12 = wl[:, 0, 1] * xyz
+            w22 = wl[:, 1, 1] * xyz
+
+            x = w12 / (tl[:, 1, 0] + tl[:, 1, 1]*gm - w22)
+            gr = (w11 - tl[:, 1, 0] + w21*x) / tl[:, 1, 1]
+
+            er[root] = npy.abs(gr - self.ideals[1].s[:,0,0])
+
+            grs[root] = gr
+            xs[root] = x
+
+        root = er[0] < er[1]
+
+        gr = npy.where(root, grs[0], grs[1])
+        x = npy.where(root, xs[0], xs[1])
+        z = npy.where(root, zs[0], zs[1])
+        y = x * z**2 / xyz2
+
+        self._solved_r = Network(s=gr, frequency=self.measured[0].frequency)
+
+        # Calculate error matrices
+        t10 = npy.transpose(npy.array([[ones, x], [gr, gm*x]]), [2,0,1]) \
+                @ inv(npy.transpose(npy.array([[ones,ones],[r1, m1]]), [2,0,1]))
+        t23 = npy.transpose((1/z)*npy.array([[ones, y], [gr, gm*y]]), [2,0,1]) \
+                @ inv(npy.transpose(npy.array([[ones,ones],[r2, m2]]), [2,0,1]))
+
+        Smat1 = t2s(t10)
+        Smat2 = t2s(t23)
+
+        #Convert the error coefficients to
+        #definitions used by the EightTerm class.
+        dx = linalg.det(Smat1)
+        dy = linalg.det(Smat2)
+
+        k = Smat1[:,0,1]/Smat2[:,0,1]
+
+        #Error coefficients
+        e = [Smat1[:,0,0],
+             Smat1[:,1,1],
+             dx,
+             Smat2[:,0,0],
+             Smat2[:,1,1],
+             dy,
+             k]
+
+        self._coefs = {\
+                'forward directivity':e[1],
+                'forward source match':e[0],
+                'forward reflection tracking':e[0]*e[1]-e[2],
+                'reverse directivity':e[4],
+                'reverse source match':e[3],
+                'reverse reflection tracking':e[4]*e[3]- e[5],
+                'k':e[6],
+                }
+
+        self._coefs['forward isolation'] = self.isolation.s[:,1,0].flatten()
+        self._coefs['reverse isolation'] = self.isolation.s[:,0,1].flatten()
+
+        if self.switch_terms is not None:
+            self._coefs.update({
+                'forward switch term': self.switch_terms[0].s.flatten(),
+                'reverse switch term': self.switch_terms[1].s.flatten(),
+                })
+        else:
+            self._coefs.update({
+                'forward switch term': npy.zeros(fpoints, dtype=complex),
+                'reverse switch term': npy.zeros(fpoints, dtype=complex),
+                })
+        # output is a dictionary of information
+        self._output_from_run = {
+                'error vector':e
+                }
+
+    @property
+    def solved_r(self):
+        '''
+        Solved reflect
+        '''
+        try:
+            return self._solved_r
+        except(AttributeError):
+            self.run()
+            return self._solved_r
 
 class MRC(UnknownThru):
     '''
