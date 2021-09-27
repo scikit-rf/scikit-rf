@@ -3521,42 +3521,47 @@ class LRRM(EightTerm):
 
     The required calibration standards are:
 
-        Line: Fully known.
-        Reflect: Unknown reflect, phase needs to be known within 90 degrees.
-        Reflect: Reflect with known |S11|, phase needs to be known within 90
-                 degrees.  Different from the other reflect.
-        Match: Match with known resistance in series with unknown inductance.
+    * Line: Fully known.
+    * Reflect: Unknown reflect, phase needs to be known within 90 degrees.
+    * Reflect: Reflect with known absolute value of the reflection coefficient, \
+            phase needs to be known within 90 degrees. \
+            Different from the other reflect.
+    * Match: Match with known resistance in series with unknown inductance.
 
     Reflects are assumed to be identical on both ports. Note that the first
-    reflect's |S11| can be unknown, but the second reflect's magnitude of the
-    reflection coefficient needs to be known. Match needs to be only measured
-    on the first port, the second port of match measurement is not used during
-    the calibration.
+    reflect's magnitude of the reflection coefficient can be unknown, but the
+    second reflect's magnitude of the reflection coefficient needs to be known.
+    Match needs to be only measured on the first port, the second port of match
+    measurement is not used during the calibration.
 
     If match_fit == 'lc' then the second reflect is assumed to be a lossless
     capacitor. Measurements should then include low frequencies for accurate
     open capacitance determination.
 
-    Implementation is based on papers [1] and [2]. 'lc' match_fit based on [3].
+    Implementation is based on papers [1]_ and [2]_. 'lc' match_fit based on
+    [3]_.
 
-    [1] Zhao, W.; Liu, S.; Wang, H.; Liu, Y.; Zhang, S.; Cheng, C.; Feng,
+    References
+    -----------
+    .. [1] Zhao, W.; Liu, S.; Wang, H.; Liu, Y.; Zhang, S.; Cheng, C.; Feng,
         K.; Ocket, I.; Schreurs, D.; Nauwelaers, B.; Qin, H.; Yang, X.
         A Unified Approach for Reformulations of LRM/LRMM/LRRM Calibration
         Algorithms Based on the T-Matrix Representation. Appl. Sci. 2017, 7,
         866.
 
-    [2] F. Purroy and L. Pradell, "New theoretical analysis of the LRRM
+    .. [2] F. Purroy and L. Pradell, "New theoretical analysis of the LRRM
         calibration technique for vector network analyzers," in IEEE
         Transactions on Instrumentation and Measurement, vol. 50, no. 5,
         pp. 1307-1314, Oct. 2001.
 
-    [3] S. Liu, I. Ocket, A. Lewandowski, D. Schreurs and B. Nauwelaers, "An
+    .. [3] S. Liu, I. Ocket, A. Lewandowski, D. Schreurs and B. Nauwelaers, "An
         Improved Line-Reflect-Reflect-Match Calibration With an Enhanced Load
         Model," in IEEE Microwave and Wireless Components Letters, vol. 27,
         no. 1, pp. 97-99, Jan. 2017.
     '''
 
-    family = 'EightTerm'
+    family = 'LRRM'
+
     def __init__(self, measured, ideals, switch_terms=None, isolation=None,
             z0=50, match_fit='l', *args, **kwargs):
         '''
@@ -3690,7 +3695,7 @@ class LRRM(EightTerm):
 
                 x = w12 / (tl[:, 1, 0] + tl[:, 1, 1]*gr2 - w22)
                 gr1 = ((w11 - tl[:, 1, 0]) * (tl[:, 1, 0] + tl[:, 1, 1] * gr2 - w22) + w21*w12) \
-                        / (tl[:, 1, 1] * (tl[:, 1, 0] + tl[:, 1, 1] * gr2 - w22))
+                    / (tl[:, 1, 1] * (tl[:, 1, 0] + tl[:, 1, 1] * gr2 - w22))
 
                 egr1 = npy.abs(gr1 - self.ideals[1].s[:,0,0])
                 egr2 = npy.abs(gr2 - self.ideals[2].s[:,0,0])
@@ -3704,8 +3709,6 @@ class LRRM(EightTerm):
                 efs[root, 3, :] = f0
                 xs[root] = x
 
-            one_ints = npy.ones(fpoints, dtype=npy.int)
-            zero_ints = npy.zeros(fpoints, dtype=npy.int)
             root = er[0] < er[1]
 
             gr1 = npy.where(root, gr1s[0], gr1s[1])
@@ -3754,7 +3757,7 @@ class LRRM(EightTerm):
         root = (npy.abs(gm_guess[0] - m_ideal) > npy.abs(gm_guess[1] - m_ideal)).astype(npy.int)
 
         # L from reactance
-        match_l = npy.choose(root, wL)/(2*npy.pi*self.measured[0].f)
+        match_l = npy.choose(root, wL)/w
         match_c = zeros
 
         # Weight L estimate by frequency
@@ -3766,14 +3769,6 @@ class LRRM(EightTerm):
         f0 = efs[3, :]
 
         if self.match_fit == 'l':
-
-            # Weight L estimate by frequency
-            l0 = npy.sum(w * match_l) / npy.sum(w)
-
-            e1 = efs[0, :]
-            e0 = efs[1, :]
-            f1 = efs[2, :]
-            f0 = efs[3, :]
 
             gr2_abs = npy.abs(self.ideals[2].s[:,0,0])
 
@@ -3806,7 +3801,7 @@ class LRRM(EightTerm):
                 warnings.warn("2nd reflect assumed to be open, but 2nd ideal ' \
                 'doesn't look like open. Calibration is likely incorrect.")
 
-            match_c = -1/(npy.choose(root, wL)*2*npy.pi*self.measured[0].f)
+            match_c = -1/(npy.choose(root, wL)*w)
             c0 = npy.sum(w * match_c) / npy.sum(w)
 
             for iteration in range(self.lc_fit_iters):
@@ -3883,14 +3878,14 @@ class LRRM(EightTerm):
         Smat1 = t2s(t10)
         Smat2 = t2s(t23)
 
-        #Convert the error coefficients to
-        #definitions used by the EightTerm class.
+        # Convert the error coefficients to
+        # definitions used by the EightTerm class.
         dx = linalg.det(Smat1)
         dy = linalg.det(Smat2)
 
         k = Smat1[:,0,1]/Smat2[:,0,1]
 
-        #Error coefficients
+        # Error coefficients
         e = [Smat1[:,0,0],
              Smat1[:,1,1],
              dx,
