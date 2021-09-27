@@ -3520,23 +3520,26 @@ class LRM(EightTerm):
 
     The required calibration standards are:
 
-        Line: Fully known.
-        Reflect: Unknown reflect, phase needs to be known within 90 degrees.
-        Match: Fully known.
+    * Line: Fully known.
+    * Reflect: Unknown reflect, phase needs to be known within 90 degrees.
+    * Match: Fully known.
 
     Reflect and match are assumed to be identical on both ports. The measured
     and ideals lists must be given in LRM order.
 
-    Implementation is based on [1].
+    Implementation is based on [1]_.
 
-    [1] Zhao, W.; Liu, S.; Wang, H.; Liu, Y.; Zhang, S.; Cheng, C.; Feng,
+    References
+    -----------
+    .. [1] Zhao, W.; Liu, S.; Wang, H.; Liu, Y.; Zhang, S.; Cheng, C.; Feng,
         K.; Ocket, I.; Schreurs, D.; Nauwelaers, B.; Qin, H.; Yang, X.
         A Unified Approach for Reformulations of LRM/LRMM/LRRM Calibration
         Algorithms Based on the T-Matrix Representation. Appl. Sci. 2017, 7,
         866.
     '''
 
-    family = 'EightTerm'
+    family = 'LRM'
+
     def __init__(self, measured, ideals, switch_terms=None, isolation=None,
                  *args, **kwargs):
         '''
@@ -3657,14 +3660,14 @@ class LRM(EightTerm):
         Smat1 = t2s(t10)
         Smat2 = t2s(t23)
 
-        #Convert the error coefficients to
-        #definitions used by the EightTerm class.
+        # Convert the error coefficients to
+        # definitions used by the EightTerm class.
         dx = linalg.det(Smat1)
         dy = linalg.det(Smat2)
 
         k = Smat1[:,0,1]/Smat2[:,0,1]
 
-        #Error coefficients
+        # Error coefficients
         e = [Smat1[:,0,0],
              Smat1[:,1,1],
              dx,
