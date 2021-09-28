@@ -2529,8 +2529,8 @@ class NISTMultilineTRL(EightTerm):
         NISTMultilineTRL initializer
 
         Note that the order of `measured` is strict.
-        It must be [Thru, Reflect, Line]. Multiple reflects can
-        also be used, see `n_reflects` argument.
+        It must be [Thru, Reflects, Lines]. Multiple reflects can
+        also be used.
 
         Notes
         -------
@@ -2541,7 +2541,7 @@ class NISTMultilineTRL(EightTerm):
         Parameters
         --------------
         measured : list of :class:`~skrf.network.Network`
-             must be in order [Thru, Reflect, Line]
+             must be in order [Thru, Reflects, Lines]
 
         Grefls : complex or list of complex
             Estimated reflection coefficients of reflect standards.
@@ -2559,7 +2559,8 @@ class NISTMultilineTRL(EightTerm):
             Negative imaginary part indicates losses.
 
         refl_offset : float or list of float
-            Estimated offsets of the reflect standards from the center of the through.
+            Estimated offsets of the reflect standards from the reference plane
+            at the end of the lines.
             Negative length is towards the VNA. Units are in meters.
 
         ref_plane : float or list of float
