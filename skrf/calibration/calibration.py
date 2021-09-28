@@ -2548,7 +2548,10 @@ class NISTMultilineTRL(EightTerm):
             Usually -1 for short or +1 for open.
 
         l : list of float
-            Lengths of through and lines.
+            Lengths of through and lines. If through is non-zero length its
+            length is subtracted from the line lengths for the calibration and
+            afterwards the calibration reference planes are shifted back by half
+            thru on both ports using the solved propagation constant.
 
         er_est : complex
             Estimated effective permittivity of the lines.
@@ -2671,6 +2674,16 @@ class NISTMultilineTRL(EightTerm):
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
         self.measured_lines.extend(m_sw[1+n_reflects:])
+
+        try:
+            self.ref_plane[0] -= l[0]/2
+            self.ref_plane[1] -= l[0]/2
+        except TypeError:
+            self.ref_plane -= l[0]/2
+        self.refl_offset = [r - l[0]/2 for r in self.refl_offset]
+
+        # The first line is thru
+        self.l = [i - self.l[0] for i in self.l]
 
         if len(l) != len(self.measured_lines):
             raise ValueError("Different amount of lines and line lengths found")
