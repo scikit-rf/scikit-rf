@@ -253,7 +253,7 @@ class Circuit():
         Z : complex array of shape n_freqs
             Impedance
         name : string
-            Name of the serie impedance
+            Name of the series impedance
         z0 : real, optional
             Characteristic impedance of the port. Default is 50 Ohm.
 
@@ -297,7 +297,7 @@ class Circuit():
         Y : complex array of shape n_freqs
             Admittance
         name : string
-            Name of the serie impedance
+            Name of the shunt admittance
         z0 : real, optional
             Characteristic impedance of the port. Default is 50 Ohm.
 
