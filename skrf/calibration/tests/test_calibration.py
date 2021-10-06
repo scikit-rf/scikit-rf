@@ -650,10 +650,9 @@ class NISTMultilineTRLTest(EightTermTest):
         self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
 
 
-class NISTMultilineTRLTest2(unittest.TestCase):
+class NISTMultilineTRLTest2(NISTMultilineTRLTest):
     """ Test characteristic impedance change and reference plane shift.
-    Due to the transformations solved error boxes are not equal to the initial
-    error boxes so CalibrationTestCase can't be used."""
+    """
     def setUp(self):
         global NPTS
         self.n_ports = 2
@@ -670,44 +669,48 @@ class NISTMultilineTRLTest2(unittest.TestCase):
 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name = 'Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
         actuals = [
-            rlgc.thru(),
-            rlgc.short(nports=2),
-            rlgc.line(10,'um'),
-            rlgc.line(100,'um'),
-            rlgc.line(500,'um'),
+            rlgc.line(1000,'um'),
+            rlgc.line(500,'um') ** rlgc.short(nports=2) ** rlgc.line(500,'um'),
+            rlgc.line(1010,'um'),
+            rlgc.line(1100,'um'),
+            rlgc.line(1800,'um'),
             ]
 
         self.actuals=actuals
 
         measured = [self.measure(k) for k in actuals]
-
         self.measured = measured
 
         self.cal = NISTMultilineTRL(
             measured = measured,
+            isolation = measured[1],
             Grefls = [-1],
-            l = [0, 10e-6, 100e-6, 500e-6],
+            refl_offset = 500e-6,
+            l = [1000e-6, 1010e-6, 1100e-6, 1800e-6],
             switch_terms = (self.gamma_f, self.gamma_r),
-            ref_plane=50e-6,
             c0=c,
             z0_ref=50,
             gamma_root_choice = 'real'
             )
 
-    def terminate(self, ntwk):
-        '''
-        terminate a measured network with the switch terms
-        '''
-        return terminate(ntwk,self.gamma_f, self.gamma_r)
-
-    def measure(self,ntwk):
-        out =  self.terminate(self.X**ntwk**self.Y)
-        out.name = ntwk.name
-        return out
+        self.cal_shift = NISTMultilineTRL(
+            measured = measured,
+            isolation = measured[1],
+            Grefls = [-1],
+            refl_offset = 0,
+            l = [0, 10e-6, 100e-6, 800e-6],
+            switch_terms = (self.gamma_f, self.gamma_r),
+            ref_plane = -500e-6,
+            c0=c,
+            z0_ref=50,
+            gamma_root_choice = 'real'
+            )
 
     def test_gamma(self):
         self.assertTrue(max(npy.abs(self.rlgc.gamma-self.cal.gamma)) < 1e-3)
@@ -716,17 +719,9 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         self.assertTrue(max(npy.abs(self.rlgc.z0-self.cal.z0)) < 1e-3)
 
     def test_shift(self):
-        npy.testing.assert_allclose(self.cal.apply_cal(self.measured[3]).s, 
-                                    self.wg.thru().s, atol=1e-11)
-        
-    def test_shift2(self):
-        feed = self.rlgc.line(50,'um')
-        dut = self.wg.random(n_ports=2)
-        #Thrus convert the port impedances to 50 ohm
-        dut_feed = self.wg.thru()**feed**dut**feed**self.wg.thru()
-        dut_meas = self.measure(dut_feed)
-        npy.testing.assert_allclose(self.cal.apply_cal(dut_meas).s, 
-                                    dut.s, atol=1e-11)
+        for k in self.cal.coefs.keys():
+            self.assertTrue(all(npy.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
+
 
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):

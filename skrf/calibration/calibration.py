@@ -2529,8 +2529,8 @@ class NISTMultilineTRL(EightTerm):
         NISTMultilineTRL initializer
 
         Note that the order of `measured` is strict.
-        It must be [Thru, Reflect, Line]. Multiple reflects can
-        also be used, see `n_reflects` argument.
+        It must be [Thru, Reflects, Lines]. Multiple reflects can
+        also be used.
 
         Notes
         -------
@@ -2541,14 +2541,17 @@ class NISTMultilineTRL(EightTerm):
         Parameters
         --------------
         measured : list of :class:`~skrf.network.Network`
-             must be in order [Thru, Reflect, Line]
+             must be in order [Thru, Reflects, Lines]
 
         Grefls : complex or list of complex
             Estimated reflection coefficients of reflect standards.
             Usually -1 for short or +1 for open.
 
         l : list of float
-            Lengths of through and lines.
+            Lengths of through and lines. If through is non-zero length its
+            length is subtracted from the line lengths for the calibration and
+            afterwards the calibration reference planes are shifted back by half
+            thru on both ports using the solved propagation constant.
 
         er_est : complex
             Estimated effective permittivity of the lines.
@@ -2556,7 +2559,8 @@ class NISTMultilineTRL(EightTerm):
             Negative imaginary part indicates losses.
 
         refl_offset : float or list of float
-            Estimated offsets of the reflect standards from the center of the through.
+            Estimated offsets of the reflect standards from the reference plane
+            at the end of the lines.
             Negative length is towards the VNA. Units are in meters.
 
         ref_plane : float or list of float
@@ -2671,6 +2675,16 @@ class NISTMultilineTRL(EightTerm):
         self.measured_reflects = m_sw[1:1+n_reflects]
         self.measured_lines = [m_sw[0]]
         self.measured_lines.extend(m_sw[1+n_reflects:])
+
+        try:
+            self.ref_plane[0] -= l[0]/2
+            self.ref_plane[1] -= l[0]/2
+        except TypeError:
+            self.ref_plane -= l[0]/2
+        self.refl_offset = [r - l[0]/2 for r in self.refl_offset]
+
+        # The first line is thru
+        self.l = [i - self.l[0] for i in self.l]
 
         if len(l) != len(self.measured_lines):
             raise ValueError("Different amount of lines and line lengths found")
