@@ -217,13 +217,13 @@ class Circuit():
         name : string
             Name of the port.
             Must include the word 'port' inside. (ex: 'Port1' or 'port_3')
-        z0 : real
+        z0 : real, optional
             Characteristic impedance of the port. Default is 50 Ohm.
 
         Returns
         -------
         port : :class:`~skrf.network.Network` object
-            (External) 1-port network
+            1-port network
 
         Examples
         --------
@@ -240,13 +240,101 @@ class Circuit():
         return _media.match(name=name)
 
     @classmethod
-    def Ground(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+    def SeriesImpedance(cls, frequency: 'Frequency', Z: NumberLike, name: str, z0: float = 50) -> 'Network':
         """
-        Return a 1-port network of a grounded link, to be used in a Circuit description.
+        Return a 2-port network of a series impedance.
 
         Passing the frequency and name is mandatory.
 
-        The ground link is modelled as an infinite admittance.
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        Z : complex array of shape n_freqs
+            Impedance
+        name : string
+            Name of the series impedance
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        serie_impedance : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: open = rf.Circuit.SeriesImpedance(freq, name='series_impedance')
+
+        """
+        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
+        A[:, 0, 0] = 1
+        A[:, 0, 1] = Z
+        A[:, 1, 0] = 0
+        A[:, 1, 1] = 1
+        ntw = Network(frequency=frequency, z0=z0, name=name)
+        ntw.s = a2s(A)
+        return ntw
+
+    @classmethod
+    def ShuntAdmittance(cls, frequency: 'Frequency', Y: NumberLike, name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 2-port network of a shunt admittance.
+
+        Passing the frequency and name is mandatory.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        Y : complex array of shape n_freqs
+            Admittance
+        name : string
+            Name of the shunt admittance
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        shunt_admittance : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: open = rf.Circuit.ShuntAdmittance(freq, name='shunt_admittance')
+
+        """
+        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
+        A[:, 0, 0] = 1
+        A[:, 0, 1] = 0
+        A[:, 1, 0] = Y
+        A[:, 1, 1] = 1
+        ntw = Network(frequency=frequency, z0=z0, name=name)
+        ntw.s = a2s(A)
+        return ntw
+
+    @classmethod
+    def Ground(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 2-port network of a grounded link.
+
+        Passing the frequency and a name is mandatory.
+
+        The ground link is modelled as an infinite shunt admittance.
 
         Parameters
         ----------
@@ -254,13 +342,13 @@ class Circuit():
             Frequency common to all other networks in the circuit
         name : string
             Name of the ground.
-        z0 : real
+        z0 : real, optional
             Characteristic impedance of the port. Default is 50 Ohm.
 
         Returns
         -------
         ground : :class:`~skrf.network.Network` object
-            (External) 2-port network
+            2-port network
 
         Examples
         --------
@@ -274,15 +362,44 @@ class Circuit():
             In [18]: ground = rf.Circuit.Ground(freq, name='GND')
 
         """
-        Y = INF
-        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
-        A[:, 0, 0] = 1
-        A[:, 0, 1] = 0
-        A[:, 1, 0] = Y
-        A[:, 1, 1] = 1
-        ntw = Network(frequency=frequency, z0=z0, name=name)
-        ntw.s = a2s(A)
-        return ntw
+        return cls.ShuntAdmittance(frequency, Y=INF, name=name)
+
+    @classmethod
+    def Open(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 2-port network of an open link.
+
+        Passing the frequency and name is mandatory.
+
+        The open link is modelled as an infinite series impedance.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        name : string
+            Name of the open.
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        open : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: open = rf.Circuit.Open(freq, name='open')
+
+        """
+        return cls.SeriesImpedance(frequency, Z=INF, name=name)
 
     def networks_dict(self, connections: List = None, min_nports: int = 1) -> dict:
         """

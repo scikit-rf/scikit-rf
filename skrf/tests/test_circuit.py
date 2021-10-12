@@ -5,7 +5,6 @@ import unittest
 import os, sys
 from numpy.testing import assert_array_almost_equal, run_module_suite
 
-
 class CircuitTestConstructor(unittest.TestCase):
     '''
     Various tests on the Circuit constructor.
@@ -61,6 +60,75 @@ class CircuitTestConstructor(unittest.TestCase):
         # s_act should be equal to s22 if a = [0,1]
         assert_array_almost_equal(circuit.s_active([0, 1])[:,1], circuit.s_external[:,1,1])
 
+
+class CircuitClassMethods(unittest.TestCase):
+    """
+    Test the various class methods of Circuit such as Ground, Port, etc.
+    """
+    def setUp(self):
+        self.freq = rf.Frequency(start=1, stop=2, npoints=101)
+        self.media = rf.DefinedGammaZ0(self.freq)
+
+    def test_ground(self):
+        """
+        Ground object are infinite shunt admittance (ie. a 2-port short)
+        """
+        # should raise an exception if no name is passed
+        with self.assertRaises(TypeError):
+            gnd = rf.Circuit.Ground(self.freq)
+
+        gnd = rf.Circuit.Ground(self.freq, 'gnd')
+        gnd_ref = rf.Network(frequency=self.freq, 
+                             s=np.tile(np.array([[-1, 0],
+                                                 [0, -1]]), 
+                                       (len(self.freq),1,1)))
+
+        assert_array_almost_equal(gnd.s, gnd_ref.s)
+
+
+    def test_open(self):
+        """
+        Open object are infinite series resistance (ie. a 2-port open)
+        """
+        # should raise an exception if no name is passed
+        with self.assertRaises(TypeError):
+            opn = rf.Circuit.Open(self.freq)
+
+        opn = rf.Circuit.Open(self.freq, 'open')
+        opn_ref = rf.Network(frequency=self.freq, 
+                             s=np.tile(np.array([[1, 0],
+                                                 [0, 1]]), 
+                                       (len(self.freq),1,1)))
+
+        assert_array_almost_equal(opn.s, opn_ref.s)
+    
+    def test_series_impedance(self):
+        Zs = [1, 1 + 1j, rf.INF]
+        for Z in Zs:
+            assert_array_almost_equal(
+                rf.Circuit.SeriesImpedance(self.freq, Z, 'imp').s, 
+                self.media.resistor(Z).s
+                )
+            
+        # Z=0 is a thru
+        assert_array_almost_equal(
+            rf.Circuit.SeriesImpedance(self.freq, Z=0, name='imp').s,
+            self.media.thru().s
+            )
+
+    def test_shunt_admittance(self):
+        Ys = [1, 1 + 1j, rf.INF]
+        for Y in Ys:
+            assert_array_almost_equal(
+                rf.Circuit.ShuntAdmittance(self.freq, Y, 'imp').s, 
+                self.media.shunt(self.media.load(rf.zl_2_Gamma0(self.media.z0, 1/Y))).s
+                )
+        
+        # Y=INF is a a 2-ports short, aka a ground
+        assert_array_almost_equal(
+            rf.Circuit.ShuntAdmittance(self.freq, rf.INF, 'imp').s,
+            rf.Circuit.Ground(self.freq, 'ground').s
+            )
 
 class CircuitTestWilkinson(unittest.TestCase):
     '''
