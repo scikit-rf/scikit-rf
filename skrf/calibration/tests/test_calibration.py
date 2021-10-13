@@ -1141,6 +1141,57 @@ class UnknownThruTest(EightTermTest):
             switch_terms = [self.gamma_f, self.gamma_r]
             )
 
+class LRMTest(EightTermTest):
+    def setUp(self):
+
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+        self.X = wg.random(n_ports=2, name='X')
+        self.Y = wg.random(n_ports=2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+        self.gamma_f = wg.random(n_ports=1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports=1, name='gamma_r')
+
+        # Our guess of the standards
+        ss_i = wg.short(nports=2, name='short')
+        thru = wg.line(d=50, unit='um', name='thru')
+
+        # Actual reflects with parasitics
+        s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
+        ss = rf.two_port_reflect(s, s)
+
+        m = wg.load(0, nports=1, name='match')
+        mm = rf.two_port_reflect(m, m)
+
+        # Store reflect for other tests
+        self.s = s
+
+        approx_ideals = [
+            thru,
+            ss_i,
+            mm
+            ]
+
+        ideals = [
+            thru,
+            ss,
+            mm
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal = rf.LRM(
+            ideals = approx_ideals,
+            measured = measured,
+            switch_terms = [self.gamma_f, self.gamma_r],
+            isolation = measured[2]
+            )
+
+    def test_solved_r(self):
+        self.assertTrue(all(npy.abs(self.s.s - self.cal.solved_r.s) < 1e-7))
+
 class LRRMTest(EightTermTest):
     def setUp(self):
 
