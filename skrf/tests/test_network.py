@@ -867,15 +867,26 @@ class NetworkTestCase(unittest.TestCase):
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
         npy.testing.assert_array_almost_equal(
             ntwk.s[:,4,5],
-            ntwk.__getattribute__(f's{4+1}{5+1}').s[:,0,0]
+            ntwk.__getattribute__(f's{4+1}_{5+1}').s[:,0,0]
         )
 
     def test_generate_subnetworks_nportsabove10(self):
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
         npy.testing.assert_array_almost_equal(
             ntwk.s[:,1,15],
-            ntwk.__getattribute__(f's{1+1}{15+1}').s[:,0,0]
+            ntwk.__getattribute__(f's{1+1}_{15+1}').s[:,0,0]
         )
+
+
+    def test_generate_subnetwork_nounderscore(self):
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+        for m in range(ntwk.nports):
+            for n in range(ntwk.nports):
+                if m < 9 and n < 9:
+                    npy.testing.assert_array_almost_equal(
+                        ntwk.s[:, m, n],
+                        ntwk.__getattribute__(f's{m+1}{n+1}').s[:, 0, 0]
+                    )
 
 
     def test_generate_subnetworks_allports(self):
@@ -884,17 +895,8 @@ class NetworkTestCase(unittest.TestCase):
             for n in range(ntwk.nports):
                 npy.testing.assert_array_almost_equal(
                     ntwk.s[:,m,n],
-                    ntwk.__getattribute__(f's{m+1}{n+1}').s[:,0,0]
+                    ntwk.__getattribute__(f's{m+1}_{n+1}').s[:,0,0]
                 )
-
-
-
-    # def test_generate_subnetwork_nounderscore(self):
-    #     ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
-    #     for m in range(ntwk.nports):
-    #         for n in range(ntwk.nports):
-    #             if m < 10 and n < 10:
-    #                 assert ntwk.s(m=m, n=n) == ntwk.__getattribute__(f's{m+1}{n+1}')
 
 
     def test_subnetwork(self):
