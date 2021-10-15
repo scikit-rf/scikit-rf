@@ -20,7 +20,10 @@ Building a Circuit
 
    Circuit
    Circuit.Port
+   Circuit.SeriesImpedance
+   Circuit.ShuntAdmittance
    Circuit.Ground
+   Circuit.Open
 
 Representing a Circuit
 ----------------------
@@ -250,7 +253,7 @@ class Circuit():
         ----------
         frequency : :class:`~skrf.frequency.Frequency`
             Frequency common to all other networks in the circuit
-        Z : complex array of shape n_freqs
+        Z : complex array of shape n_freqs or complex
             Impedance
         name : string
             Name of the series impedance
@@ -271,7 +274,7 @@ class Circuit():
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: open = rf.Circuit.SeriesImpedance(freq, name='series_impedance')
+            In [18]: open = rf.Circuit.SeriesImpedance(freq, rf.INF, name='series_impedance')
 
         """
         A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
@@ -294,7 +297,7 @@ class Circuit():
         ----------
         frequency : :class:`~skrf.frequency.Frequency`
             Frequency common to all other networks in the circuit
-        Y : complex array of shape n_freqs
+        Y : complex array of shape n_freqs or complex
             Admittance
         name : string
             Name of the shunt admittance
@@ -315,7 +318,7 @@ class Circuit():
 
             In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
 
-            In [18]: open = rf.Circuit.ShuntAdmittance(freq, name='shunt_admittance')
+            In [18]: short = rf.Circuit.ShuntAdmittance(freq, rf.INF, name='shunt_admittance')
 
         """
         A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
