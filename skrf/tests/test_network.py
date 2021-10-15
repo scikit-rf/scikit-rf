@@ -862,6 +862,54 @@ class NetworkTestCase(unittest.TestCase):
         # vswr_act should be equal to vswr22 if a = [0,1]
         npy.testing.assert_array_almost_equal(self.ntwk1.vswr_active([0, 1])[:,1], vswr_ref[:,1,1])
 
+
+    def test_generate_subnetworks_nportsbelow10(self):
+        '''
+        Testing generation of one-port subnetworks for ports below 10
+        '''
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+        npy.testing.assert_array_almost_equal(
+            ntwk.s[:,4,5],
+            ntwk.s5_6.s[:,0,0]
+        )
+
+    def test_generate_subnetworks_nportsabove10(self):
+        '''
+        Testing generation of one-port subnetworks for ports above 10
+        '''
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+        npy.testing.assert_array_almost_equal(
+            ntwk.s[:,1,15],
+            ntwk.s2_16.s[:,0,0]
+        )
+
+
+    def test_generate_subnetwork_nounderscore(self):
+        '''
+        Testing no underscore alias of one-port subnetworks for ports below 10.
+        This is for backward compatibility with old code.
+        '''
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+
+        npy.testing.assert_array_almost_equal(
+            ntwk.s[:, 8, 8],
+            ntwk.s99.s[:,0,0]
+        )
+
+
+    def test_generate_subnetworks_allports(self):
+        '''
+        Testing generation of all one-port subnetworks in case of edge problems.
+        '''
+        ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
+        for m in range(ntwk.nports):
+            for n in range(ntwk.nports):
+                npy.testing.assert_array_almost_equal(
+                    ntwk.s[:,m,n],
+                    ntwk.__getattribute__(f's{m+1}_{n+1}').s[:,0,0]
+                )
+
+
     def test_subnetwork(self):
         ''' Test subnetwork creation and recombination '''
         tee = rf.data.tee # 3 port Network
