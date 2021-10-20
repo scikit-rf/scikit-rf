@@ -99,7 +99,7 @@ OBJ_EXTN = [
 
 
 def read(file, *args, **kwargs):
-    """
+    r"""
     Read  skrf object[s] from a pickle file.
 
     Reads a skrf object that is written with :func:`write`, which uses
@@ -370,7 +370,7 @@ def read_all_networks(*args, **kwargs):
 ran = read_all_networks
 
 def write_all(dict_objs, dir='.', *args, **kwargs):
-    """
+    r"""
     Write a dictionary of skrf objects individual files in `dir`.
 
     Each object is written to its own file. The filename used for each
@@ -630,7 +630,7 @@ def statistical_2_touchstone(file_name, new_file_name=None,\
 
 def network_2_spreadsheet(ntwk, file_name =None, file_type= 'excel', form='db',
     *args, **kwargs):
-    """
+    r"""
     Write a Network object to a spreadsheet, for your boss.
 
     Write the s-parameters  of a network to a spreadsheet, in a variety
@@ -744,7 +744,7 @@ def network_2_dataframe(ntwk, attrs=['s_db'], ports = None):
 
 def networkset_2_spreadsheet(ntwkset: 'NetworkSet', file_name: str = None, file_type: str = 'excel',
     *args, **kwargs):
-    """
+    r"""
     Write a NetworkSet object to a spreadsheet, for your boss.
 
     Write  the s-parameters  of a each network in the networkset to a

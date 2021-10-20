@@ -196,7 +196,7 @@ if TYPE_CHECKING:
 #from scipy.interpolate import interp1d
 
 class Network(object):
-    """
+    r"""
     A n-port electrical network.
 
     For instructions on how to create Network see  :func:`__init__`.
@@ -348,7 +348,7 @@ class Network(object):
     # CONSTRUCTOR
     def __init__(self, file: str = None, name : str = None, comments: str = None,
         f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
-        """
+        r"""
         Network constructor.
 
         Creates an n-port microwave network from a `file` or directly
@@ -465,7 +465,7 @@ class Network(object):
 
     @classmethod
     def from_z(cls, z: npy.ndarray, *args, **kw) -> 'Network':
-        """
+        r"""
         Create a Network from its Z-parameters
 
         Parameters
@@ -1483,7 +1483,7 @@ class Network(object):
 
     @property
     def passivity(self) -> ndarray:
-        """
+        r"""
         passivity metric for a multi-port network.
 
         This returns a matrix who's diagonals are equal to the total
@@ -2255,7 +2255,7 @@ class Network(object):
                 return output.getvalue()
 
     def write(self, file: str = None, *args, **kwargs) -> None:
-        """
+        r"""
         Write the Network to disk using the :mod:`pickle` module.
 
         The resultant file can be read either by using the Networks
@@ -2302,7 +2302,7 @@ class Network(object):
         write(file, self, *args, **kwargs)
 
     def read(self, *args, **kwargs) -> None:
-        """
+        r"""
         Read a Network from a 'ntwk' file
 
         A ntwk file is written with :func:`write`. It is just a pickled
@@ -2395,7 +2395,7 @@ class Network(object):
     def interpolate(self, freq_or_n: Union[Frequency, NumberLike], basis: str = 's',
                     coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
                     **kwargs) -> Union['Network', npy.ndarray]:
-        """
+        r"""
         Interpolate a Network along frequency axis
 
         The input 'freq_or_n` can be either a new
@@ -2628,7 +2628,7 @@ class Network(object):
     resample = interpolate_self
 
     def interpolate_from_f(self, f: Frequency, interp_kwargs: dict = {}, **kwargs) -> 'Network':
-        """
+        r"""
         Interpolates s-parameters from a frequency vector.
 
         Given a frequency vector, and optionally a `unit` (see \*\*kwargs)
@@ -3297,7 +3297,7 @@ class Network(object):
 
     # other
     def func_on_parameter(self, func: Callable, attr: str = 's', *args, **kwargs) -> 'Network':
-        """
+        r"""
         Applies a function parameter matrix, one frequency slice at a time
 
         This is useful for functions that can only operate on 2d arrays,
@@ -3664,7 +3664,7 @@ class Network(object):
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active s-parameters of the network for a defined wave excitation a.
 
         The active s-parameter at a port is the reflection coefficients
@@ -3705,7 +3705,7 @@ class Network(object):
         return s2s_active(self.s, a)
 
     def z_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active Z-parameters of the network for a defined wave excitation a.
 
         The active Z-parameters are defined by:
@@ -3736,7 +3736,7 @@ class Network(object):
         return s2z_active(self.s, self.z0, a)
 
     def y_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active Y-parameters of the network for a defined wave excitation a.
 
         The active Y-parameters are defined by:
@@ -3767,7 +3767,7 @@ class Network(object):
         return s2y_active(self.s, self.z0, a)
 
     def vswr_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active VSWR of the network for a defined wave excitation a.
 
         The active VSWR is defined by :
@@ -4250,7 +4250,7 @@ def de_embed(ntwkA: Network, ntwkB: Network) -> Network:
 
 
 def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
-    """
+    r"""
     Stitches ntwkA and ntwkB together.
 
     Concatenates two networks' data. Given two networks that cover
@@ -4677,7 +4677,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network:
-    """
+    r"""
     Builds a N-port Network from list of N one-ports
 
     Parameters
@@ -4707,7 +4707,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
 
 def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
         offby:int = 1, **kwargs) -> Network:
-    """
+    r"""
     Builds a N-port Network from list of two-ports
 
     This  method was made to reconstruct a n-port network from 2-port
@@ -4763,7 +4763,7 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
 
 
 def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Network, *args, **kwargs) -> Network:
-    """
+    r"""
     Builds a 2-port Network from list of four 1-ports
 
     Parameters
@@ -4794,7 +4794,7 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
 
 def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool = True, *args,
                                **kwargs) -> Network:
-    """
+    r"""
     Creates 3-port from  three 2-port Networks
 
     This function provides a convenient way to build a 3-port Network
@@ -6153,7 +6153,7 @@ def z2h(z: npy.ndarray) -> npy.ndarray:
 
 ## these methods are used in the secondary properties
 def passivity(s: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Passivity metric for a multi-port network.
 
     A metric which is proportional to the amount of power lost in a
@@ -6593,7 +6593,7 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
     return result
 
 def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns active s-parameters for a defined wave excitation a.
 
     The active s-parameter at a port is the reflection coefficients
@@ -6644,7 +6644,7 @@ def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
     return s_act  # shape : (n_freqs, n_ports)
 
 def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns the active Z-parameters for a defined wave excitation a.
 
     The active Z-parameters are defined by:
@@ -6690,7 +6690,7 @@ def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     return z_act
 
 def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns the active Y-parameters for a defined wave excitation a.
 
     The active Y-parameters are defined by:
@@ -6734,7 +6734,7 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     return y_act
 
 def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns the active VSWR for a defined wave excitation a..
 
     The active VSWR is defined by :
