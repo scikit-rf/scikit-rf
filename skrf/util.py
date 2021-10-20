@@ -367,7 +367,7 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
 
 # general purpose objects
 
-class HomoList(collections.Sequence):
+class HomoList(collections.abc.Sequence):
     '''
     A Homogeneous Sequence.
 
@@ -464,7 +464,7 @@ class HomoList(collections.Sequence):
         return pprint.pformat(self.store)
 
 
-class HomoDict(collections.MutableMapping):
+class HomoDict(collections.abc.MutableMapping):
     '''
     A Homogeneous Mutable Mapping.
 
