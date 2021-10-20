@@ -5066,7 +5066,7 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     s = s.copy()  # to prevent the original array from being altered
@@ -5167,7 +5167,7 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     s = s.copy()  # to prevent the original array from being altered
@@ -5333,7 +5333,7 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     if s_def == 'power':
@@ -5720,7 +5720,7 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     # The following is a vectorized version of a for loop for all frequencies.

@@ -2710,21 +2710,21 @@ class NISTMultilineTRL(EightTerm):
         freqs = measured_lines[0].f
         fpoints = len(freqs)
         lines = len(l)
-        gamma = npy.zeros(fpoints, dtype=npy.complex)
-        z0 = npy.zeros(fpoints, dtype=npy.complex)
+        gamma = npy.zeros(fpoints, dtype=complex)
+        z0 = npy.zeros(fpoints, dtype=complex)
 
         gamma_est = (1j*2*pi*freqs[0]/c)*npy.sqrt(er_est.real + 1j*er_est.imag/(freqs[0]*1e-9))
 
         line_c = npy.zeros(fpoints, dtype=int)
-        er_eff = npy.zeros(fpoints, dtype=npy.complex)
+        er_eff = npy.zeros(fpoints, dtype=complex)
 
-        Tmat1 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
-        Tmat2 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
+        Tmat1 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
+        Tmat2 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
 
-        Smat1 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
-        Smat2 = npy.ones(shape=(fpoints, 2, 2), dtype=npy.complex)
+        Smat1 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
+        Smat2 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
 
-        e = npy.zeros(shape=(fpoints, 7), dtype=npy.complex)
+        e = npy.zeros(shape=(fpoints, 7), dtype=complex)
         nstd = npy.zeros(shape=(fpoints), dtype=npy.float)
 
         def t2s_single(t):
@@ -2780,18 +2780,18 @@ class NISTMultilineTRL(EightTerm):
             #Unreachable
             return e_val
 
-        V_inv = npy.eye(lines-1, dtype=npy.complex) \
-                - (1.0/lines)*npy.ones(shape=(lines-1, lines-1), dtype=npy.complex)
+        V_inv = npy.eye(lines-1, dtype=complex) \
+                - (1.0/lines)*npy.ones(shape=(lines-1, lines-1), dtype=complex)
 
-        b1_vec = npy.zeros(lines-1, dtype=npy.complex)
-        b2_vec = npy.zeros(lines-1, dtype=npy.complex)
-        CoA1_vec = npy.zeros(lines-1, dtype=npy.complex)
-        CoA2_vec = npy.zeros(lines-1, dtype=npy.complex)
+        b1_vec = npy.zeros(lines-1, dtype=complex)
+        b2_vec = npy.zeros(lines-1, dtype=complex)
+        CoA1_vec = npy.zeros(lines-1, dtype=complex)
+        CoA2_vec = npy.zeros(lines-1, dtype=complex)
 
-        b1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
-        b2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
-        CoA1_vec2 = npy.zeros(lines-1, dtype=npy.complex)
-        CoA2_vec2 = npy.zeros(lines-1, dtype=npy.complex)
+        b1_vec2 = npy.zeros(lines-1, dtype=complex)
+        b2_vec2 = npy.zeros(lines-1, dtype=complex)
+        CoA1_vec2 = npy.zeros(lines-1, dtype=complex)
+        CoA2_vec2 = npy.zeros(lines-1, dtype=complex)
 
 
         for m in range(fpoints):
@@ -2815,8 +2815,8 @@ class NISTMultilineTRL(EightTerm):
             #Propagation constant extraction
             #Compute eigenvalues of each line pair
 
-            g_dl = npy.zeros(lines-1, dtype=npy.complex)
-            dl_vec = npy.zeros(lines-1, dtype=npy.complex)
+            g_dl = npy.zeros(lines-1, dtype=complex)
+            dl_vec = npy.zeros(lines-1, dtype=complex)
             k = 0
 
             for n in range(lines):
@@ -2924,7 +2924,7 @@ class NISTMultilineTRL(EightTerm):
                 d1[1] += npy.sum(dB1[:,int(not root1[-1][1])]) + npy.sum(dCoA1[:,int(not root1[-1][1])])
 
                 #Port 2
-                k = npy.array([[0,1],[1,0]], dtype=npy.complex)
+                k = npy.array([[0,1],[1,0]], dtype=complex)
 
                 T = s2t_single(k.dot(measured_lines[n].s[m]).dot(k)).dot(\
                         inv(s2t_single(k.dot(measured_lines[line_c[m]].s[m]).dot(k))))
@@ -2963,8 +2963,8 @@ class NISTMultilineTRL(EightTerm):
 
                 p += 1
 
-            Vb = npy.zeros(shape=(lines-1,lines-1), dtype=npy.complex)
-            Vc = npy.zeros(shape=(lines-1,lines-1), dtype=npy.complex)
+            Vb = npy.zeros(shape=(lines-1,lines-1), dtype=complex)
+            Vc = npy.zeros(shape=(lines-1,lines-1), dtype=complex)
             #Fill in upper triangular matrix
             l_not_common = [i for i in l if i != l[line_c[m]]]
             for b in range(len(l_not_common)):
@@ -3006,8 +3006,8 @@ class NISTMultilineTRL(EightTerm):
                 Ap = B1*B2 - B1*S_thru[1,1] - B2*S_thru[0,0] + linalg.det(S_thru)
                 Ap = -Ap/(1 - CoA1*S_thru[0,0] - CoA2*S_thru[1,1] + CoA1*CoA2*linalg.det(S_thru))
 
-                A1_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
-                A2_vals = npy.zeros(len(measured_reflects), dtype=npy.complex)
+                A1_vals = npy.zeros(len(measured_reflects), dtype=complex)
+                A2_vals = npy.zeros(len(measured_reflects), dtype=complex)
 
                 for n in range(len(measured_reflects)):
                     S_r = measured_reflects[n].s[m]
@@ -3237,7 +3237,7 @@ class NISTMultilineTRL(EightTerm):
         if self.z0_ref is not None and npy.any(z0 != self.z0_ref):
             powerwave = self.kwargs.get('powerwave', False)
             if npy.shape(self.z0_ref) != (fpoints,):
-                z0_ref = self.z0_ref*npy.ones(fpoints, dtype=npy.complex)
+                z0_ref = self.z0_ref*npy.ones(fpoints, dtype=complex)
             self.renormalize(z0, z0_ref, powerwave=powerwave)
 
     @classmethod
@@ -3784,10 +3784,10 @@ class SixteenTerm(Calibration):
         for i in range(len(e[0])):
             e[:,i] *= c
 
-        T1 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
-        T2 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
-        T3 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
-        T4 = npy.zeros(shape=(fLength, 2, 2), dtype=npy.complex)
+        T1 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
+        T2 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
+        T3 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
+        T4 = npy.zeros(shape=(fLength, 2, 2), dtype=complex)
 
         T1[:,0,0] = e[:,0]
         T1[:,0,1] = e[:,1]
@@ -3929,7 +3929,7 @@ class SixteenTerm(Calibration):
                 [ e401 , e411]])\
                 .transpose().reshape(-1,2,2)
 
-        T1 = npy.zeros(E1.shape, dtype=npy.complex)
+        T1 = npy.zeros(E1.shape, dtype=complex)
         T2 = T1.copy()
         T3 = T1.copy()
         T4 = T1.copy()
@@ -3950,10 +3950,10 @@ class SixteenTerm(Calibration):
 
         inv = linalg.inv
 
-        E1 = npy.zeros(T1.shape, dtype=npy.complex)
-        E2 = npy.zeros(T2.shape, dtype=npy.complex)
-        E3 = npy.zeros(T3.shape, dtype=npy.complex)
-        E4 = npy.zeros(T4.shape, dtype=npy.complex)
+        E1 = npy.zeros(T1.shape, dtype=complex)
+        E2 = npy.zeros(T2.shape, dtype=complex)
+        E3 = npy.zeros(T3.shape, dtype=complex)
+        E4 = npy.zeros(T4.shape, dtype=complex)
 
         invT4 = inv(npy.array(T4))
         for i in range(len(T1)):

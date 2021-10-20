@@ -822,7 +822,7 @@ class TouchstoneEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, npy.ndarray):
             return obj.tolist()
-        if isinstance(obj, npy.complex):
+        if isinstance(obj, complex):
             return npy.real(obj), npy.imag(obj)  # split into [real, im]
         if isinstance(obj, Frequency):
             return {'flist': obj.f_scaled.tolist(), 'funit': obj.unit}
