@@ -183,7 +183,7 @@ def slice_domain(x: npy.ndarray, domain: tuple):
 
 
 def get_fid(file, *args, **kwargs):
-    '''
+    r'''
     Return a file object, given a filename or file object.
 
     Useful when you want to allow the arguments of a function to
@@ -331,7 +331,7 @@ def dict_2_recarray(d: dict, delim: str, dtype: List[Tuple]) -> npy.ndarray:
 
 
 def findReplace(directory: str, find: str, replace: str, file_pattern: str):
-    '''
+    r'''
     Find/replace some txt in all files in a directory, recursively.
 
     This was found in [1]_ .
@@ -654,7 +654,7 @@ def unique_name(name: str, names: list, exclude: int = -1) -> str:
     if not has_duplicate_value(name, names, exclude):
         return name
     else:
-        if re.match("_\d\d", name[-3:]):
+        if re.match(r"_\d\d", name[-3:]):
             name_base = name[:-3]
             suffix = int(name[-2:])
         else:

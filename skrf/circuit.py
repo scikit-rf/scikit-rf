@@ -910,7 +910,7 @@ class Circuit():
 
 
     def s_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return "active" s-parameters of the circuit's network for a defined wave excitation `a`.
 
         The "active" s-parameter at a port is the reflection coefficients
@@ -944,7 +944,7 @@ class Circuit():
         return self.network.s_active(a)
 
     def z_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return the "active" Z-parameters of the circuit's network for a defined wave excitation a.
 
         The "active" Z-parameters are defined by:
@@ -975,7 +975,7 @@ class Circuit():
         return self.network.z_active(a)
 
     def y_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return the "active" Y-parameters of the circuit's network for a defined wave excitation a.
 
         The "active" Y-parameters are defined by:
@@ -1006,7 +1006,7 @@ class Circuit():
         return self.network.y_active(a)
 
     def vswr_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return the "active" VSWR of the circuit's network for a defined wave excitation a.
 
         The "active" VSWR is defined by :
@@ -1112,7 +1112,7 @@ class Circuit():
         return a_internal
 
     def _a_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
-        """
+        r"""
         Wave input array at Circuit's ports ("external" ports).
 
         The array is defined from power and phase by:
