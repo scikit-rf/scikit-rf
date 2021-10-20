@@ -885,8 +885,12 @@ class Network(object):
                 doc = """
                 one-port sub-network.
                 """
-                setattr(self.__class__, 's%i%i' % (m + 1, n + 1), \
+                setattr(self.__class__, 's%i_%i'%(m+1, n+1),
                         property(fget, doc=doc))
+                if m < 9 and n < 9:
+                    setattr(self.__class__, 's%i%i' % (m + 1, n + 1),
+                            getattr(self.__class__, 's%i_%i'%(m+1, n+1)))
+
 
     # PRIMARY PROPERTIES
     @property
