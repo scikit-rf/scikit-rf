@@ -3617,8 +3617,8 @@ class LRM(EightTerm):
         lm21 = lm.s[:,1,0]
         lm22 = lm.s[:,1,1]
 
-        ones = npy.ones(fpoints, dtype=npy.complex)
-        zeros = npy.zeros(fpoints, dtype=npy.complex)
+        ones = npy.ones(fpoints, dtype=complex)
+        zeros = npy.zeros(fpoints, dtype=complex)
 
         wlr1 = npy.transpose(npy.array([[ones, ones], [r1, m1]]), [2,0,1])
         wll1 = npy.transpose(npy.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
@@ -3638,9 +3638,9 @@ class LRM(EightTerm):
         z1 = -c1 - npy.sqrt(c1**2 - 4*c2*c0)/(2*c2)
         zs = npy.stack([z0, z1])
 
-        grs = npy.zeros((2, fpoints), dtype=npy.complex)
-        xs = npy.zeros((2, fpoints), dtype=npy.complex)
-        er = npy.zeros((2, fpoints), dtype=npy.complex)
+        grs = npy.zeros((2, fpoints), dtype=complex)
+        xs = npy.zeros((2, fpoints), dtype=complex)
+        er = npy.zeros((2, fpoints), dtype=complex)
 
         for root in [0, 1]:
             z = zs[root]
@@ -3859,8 +3859,8 @@ class LRRM(EightTerm):
 
         thru_s21 = self.ideals[0].s[:,1,0]
 
-        ones = npy.ones(fpoints, dtype=npy.complex)
-        zeros = npy.zeros(fpoints, dtype=npy.complex)
+        ones = npy.ones(fpoints, dtype=complex)
+        zeros = npy.zeros(fpoints, dtype=complex)
 
         wlr1 = npy.transpose(npy.array([[ones, ones], [r11, r21]]), [2,0,1])
         wll1 = npy.transpose(npy.array([[ones, zeros], [lm11, lm12]]), [2,0,1])
@@ -3889,11 +3889,11 @@ class LRRM(EightTerm):
         wm2 = wm[:, 1, 0]
 
         def solve_gr(gm):
-            gr1s = npy.zeros((2, fpoints), dtype=npy.complex)
-            gr2s = npy.zeros((2, fpoints), dtype=npy.complex)
-            xs = npy.zeros((2, fpoints), dtype=npy.complex)
-            er = npy.zeros((2, fpoints), dtype=npy.complex)
-            efs = npy.zeros((2, 4, fpoints), dtype=npy.complex)
+            gr1s = npy.zeros((2, fpoints), dtype=complex)
+            gr2s = npy.zeros((2, fpoints), dtype=complex)
+            xs = npy.zeros((2, fpoints), dtype=complex)
+            er = npy.zeros((2, fpoints), dtype=complex)
+            efs = npy.zeros((2, 4, fpoints), dtype=complex)
 
             for root in [0, 1]:
                 z = zs[root]
