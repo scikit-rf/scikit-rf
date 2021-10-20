@@ -1352,7 +1352,7 @@ class PNA(Driver):
         out = self.ask('SENS%i:CORR:CSET:ETERM:cat?'%self.channel)[1:-1]
         # agilent mixes the delimiter with values! this requires that
         # we use regex to only split on comma's that follow parenthesis
-        return re.split('(?<=\)),',out)
+        return re.split(r'(?<=\)),',out)
 
     cal_coefs_list = property(get_cal_coefs_list)
 

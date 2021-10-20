@@ -459,8 +459,8 @@ class Network(object):
         if isinstance(key, str):
             # they passed a string. try to read the string and convert
             # it into a  slice. then slice self on that
-            re_numbers = re.compile('.*\d')
-            re_hyphen = re.compile('\s*-\s*')
+            re_numbers = re.compile(r'.*\d')
+            re_hyphen = re.compile(r'\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
 
             freq_unit = re.findall(re_letters,key)

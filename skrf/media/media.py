@@ -1529,7 +1529,7 @@ def parse_z0(s: str) -> NumberLike:
         If could not arse the z0 string.
     """
     # they passed a string for z0, try to parse it
-    re_numbers = re.compile('\d+')
+    re_numbers = re.compile(r'\d+')
     numbers = re.findall(re_numbers, s)
     if len(numbers)==2:
         out = float(numbers[0]) +1j*float(numbers[1])
