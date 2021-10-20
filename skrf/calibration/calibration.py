@@ -3972,7 +3972,7 @@ class LRRM(EightTerm):
 
         # Choose the root according to which one is closer to the ideal
         m_ideal = self.ideals[3].s[:,0,0]
-        root = (npy.abs(gm_guess[0] - m_ideal) > npy.abs(gm_guess[1] - m_ideal)).astype(npy.int)
+        root = (npy.abs(gm_guess[0] - m_ideal) > npy.abs(gm_guess[1] - m_ideal)).astype(int)
 
         # L from reactance
         match_l = npy.choose(root, wL)/w
