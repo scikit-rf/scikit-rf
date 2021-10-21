@@ -62,7 +62,7 @@ class CalibrationSet(object):
     """
 
     def __init__(self, cal_class, ideals, measured_sets,*args, **kwargs):
-        """
+        r"""
         Parameters
         ----------
         cal_class : a Calibration class
@@ -76,7 +76,7 @@ class CalibrationSet(object):
             set to the ideals element of the same index. The sets
             themselves  can be anything list-like
 
-        \\*args\\**kargs :
+        \*args\**kargs :
             passed to self.run(),
 
         """

@@ -1507,9 +1507,9 @@ class Network(object):
 
         .. math::
 
-                S^H \\cdot S
+                S^H \cdot S
 
-        where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
+        where :math:`H` is conjugate transpose of S, and :math:`\cdot`
         is dot product.
 
         Returns
@@ -3337,7 +3337,7 @@ class Network(object):
         return ntwkB
 
     def nonreciprocity(self, m: int, n: int, normalize: bool = False) -> 'Network':
-        """
+        r"""
         Normalized non-reciprocity metric.
 
         This is a port-by-port measure of how non-reciprocal a n-port
@@ -3345,7 +3345,7 @@ class Network(object):
 
         .. math::
 
-            (S_{mn} - S_{nm}) / \\sqrt ( S_{mn} S_{nm} )
+            (S_{mn} - S_{nm}) / \sqrt ( S_{mn} S_{nm} )
 
         Parameters
         ----------
@@ -3679,7 +3679,7 @@ class Network(object):
 
         .. math::
 
-           \mathrm{active(s)}_{m} = \sum_{i=1}^N s_{mi}\\frac{a_i}{a_m}
+           \mathrm{active(s)}_{m} = \sum_{i=1}^N s_{mi}\frac{a_i}{a_m}
 
         where :math:`s` are the scattering parameters and :math:`N` the number of ports
 
@@ -3716,7 +3716,7 @@ class Network(object):
 
         .. math::
 
-           \mathrm{active}(z)_{m} = z_{0,m} \\frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
+           \mathrm{active}(z)_{m} = z_{0,m} \frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
 
         where :math:`z_{0,m}` is the characteristic impedance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
@@ -3747,7 +3747,7 @@ class Network(object):
 
         .. math::
 
-           \mathrm{active}(y)_{m} = y_{0,m} \\frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+           \mathrm{active}(y)_{m} = y_{0,m} \frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
 
         where :math:`y_{0,m}` is the characteristic admittance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
@@ -3778,7 +3778,7 @@ class Network(object):
 
         .. math::
 
-           \mathrm{active}(vswr)_{m} = \\frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+           \mathrm{active}(vswr)_{m} = \frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
 
         where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
 
@@ -4520,7 +4520,7 @@ def one_port_2_two_port(ntwk: Network) -> Network:
 
 
 def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
-    """
+    r"""
     Chops a sandwich of identical, reciprocal 2-ports in half.
 
     Given two identical, reciprocal 2-ports measured in series,
@@ -4533,18 +4533,18 @@ def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
 
     .. math::
 
-        B = A\\cdot A
+        B = A\cdot A
 
     Return A, where A port2 is connected to A port1. The result may
     be found through signal flow graph analysis and is,
 
     .. math::
 
-        a_{11} = \\frac{b_{11}}{1+b_{12}}
+        a_{11} = \frac{b_{11}}{1+b_{12}}
 
-        a_{22} = \\frac{b_{22}}{1+b_{12}}
+        a_{22} = \frac{b_{22}}{1+b_{12}}
 
-        a_{12}^2 = b_{21}(1-\\frac{b_{11}b_{22}}{(1+b_{12})^2}
+        a_{12}^2 = b_{21}(1-\frac{b_{11}b_{22}}{(1+b_{12})^2}
 
     Parameters
     ----------
@@ -5020,7 +5020,7 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 
 ## network parameter conversion
 def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.ndarray:
-    """
+    r"""
     Convert scattering parameters [#]_ to impedance parameters [#]_
 
 
@@ -5029,14 +5029,14 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     .. math::
         Z = F^{-1} (1 - S)^{-1} (S G + G^*) F
 
-    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
+    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\sqrt{|Re(Z_0)|}])`
 
     For pseudo-waves, Eq.(74) from [#Marks]_:
 
     .. math::
         Z = (1 - U^{-1} S U)^{-1}  (1 + U^{-1} S U) G
 
-    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+    where :math:`U = \sqrt{Re(Z_0)}/|Z_0|`
 
     Parameters
     ----------
@@ -5287,7 +5287,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
 
 
 def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.ndarray:
-    """
+    r"""
     convert impedance parameters [#]_ to scattering parameters [#]_
 
     For power-waves, Eq.(18) from [#Kurokawa]_:
@@ -5295,14 +5295,14 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
     .. math::
         S = F (Z – G^*) (Z + G)^{-1} F^{-1}
 
-    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
+    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\sqrt{|Re(Z_0)|}])`
 
     For pseudo-waves, Eq.(73) from [#Marks]_:
 
     .. math::
         S = U (Z - G) (Z + G)^{-1}  U^{-1}
 
-    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+    where :math:`U = \sqrt{Re(Z_0)}/|Z_0|`
 
 
     Parameters
@@ -5655,7 +5655,7 @@ def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
 
 def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Network:
-    """
+    r"""
     convert admittance parameters [#]_ to scattering parameters [#]_
 
     For power-waves, from [#Kurokawa]_:
@@ -5663,14 +5663,14 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     .. math::
         S = F (1 – G Y) (1 + G Y)^{-1} F^{-1}
 
-    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
+    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\sqrt{|Re(Z_0)|}])`
 
     For pseudo-waves, Eq.(73) from [#Marks]_:
 
     .. math::
         S = U (Y^{-1} - G) (Y^{-1} + G)^{-1}  U^{-1}
 
-    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+    where :math:`U = \sqrt{Re(Z_0)}/|Z_0|`
 
 
     Parameters
@@ -6179,9 +6179,9 @@ def passivity(s: npy.ndarray) -> npy.ndarray:
 
     .. math::
 
-            \\sqrt( S^H \\cdot S)
+            \sqrt( S^H \cdot S)
 
-    where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
+    where :math:`H` is conjugate transpose of S, and :math:`\cdot`
     is dot product.
 
     Note

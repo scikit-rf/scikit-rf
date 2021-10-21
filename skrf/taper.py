@@ -234,10 +234,10 @@ class Linear(Taper1D):
 
 
 class Exponential(Taper1D):
-    """
+    r"""
     An Exponential Taper.
 
-    Defined by :math:`f(x) = f_0 \\exp\\left[ \\frac{x}{x_1}  \\ln\\left( \\frac{f_1}{f_0} \\right) \\right]`
+    Defined by :math:`f(x) = f_0 \exp\left[ \frac{x}{x_1}  \ln\left( \frac{f_1}{f_0} \right) \right]`
 
     where:
 

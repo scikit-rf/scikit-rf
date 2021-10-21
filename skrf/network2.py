@@ -717,12 +717,12 @@ def fix_parameter_shape(s):
 ## network parameter conversion
 
 def s2z(s,z0=50):
-    """
+    r"""
     Convert scattering parameters [1]_ to impedance parameters [2]_
 
 
     .. math::
-        z = \\sqrt {z_0} \\cdot (I + s) (I - s)^{-1} \\cdot \\sqrt{z_0}
+        z = \sqrt {z_0} \cdot (I + s) (I - s)^{-1} \cdot \sqrt{z_0}
 
     Parameters
     ------------
@@ -760,12 +760,12 @@ def s2z(s,z0=50):
     return z
 
 def s2y(s, z0=50):
-    """
+    r"""
     convert scattering parameters [#]_ to admittance parameters [#]_
 
 
     .. math::
-        y = \\sqrt {y_0} \\cdot (I - s)(I + s)^{-1} \\cdot \\sqrt{y_0}
+        y = \sqrt {y_0} \cdot (I - s)(I + s)^{-1} \cdot \sqrt{y_0}
 
     Parameters
     ------------
@@ -893,11 +893,11 @@ def s2time(s,window =('kaiser',6),  normalize = True):
 
 
 def z2s(z, z0=50):
-    """
+    r"""
     convert impedance parameters [1]_ to scattering parameters [2]_
 
     .. math::
-        s = (\\sqrt{y_0} \\cdot z \\cdot \\sqrt{y_0} - I)(\\sqrt{y_0} \\cdot z \\cdot\\sqrt{y_0} + I)^{-1}
+        s = (\sqrt{y_0} \cdot z \cdot \sqrt{y_0} - I)(\sqrt{y_0} \cdot z \cdot\sqrt{y_0} + I)^{-1}
 
     Parameters
     ------------
@@ -930,7 +930,7 @@ def z2s(z, z0=50):
     return s
 
 def z2y(z):
-    """
+    r"""
     convert impedance parameters [#]_ to admittance parameters [#]_
 
 
@@ -1020,12 +1020,12 @@ def z2t(z):
     raise (NotImplementedError)
 
 def y2s(y, z0=50):
-    """
+    r"""
     convert admittance parameters [#]_ to scattering parameters [#]_
 
 
     .. math::
-        s = (I - \\sqrt{z_0} \\cdot y \\cdot \\sqrt{z_0})(I + \\sqrt{z_0} \\cdot y \\cdot \\sqrt{z_0})^{-1}
+        s = (I - \sqrt{z_0} \cdot y \cdot \sqrt{z_0})(I + \sqrt{z_0} \cdot y \cdot \sqrt{z_0})^{-1}
 
     Parameters
     ------------

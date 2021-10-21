@@ -205,7 +205,7 @@ class NetworkSet(object):
         sort_filenames: Boolean
             sort the filenames in the zip file before constructing the
             NetworkSet
-        \\*args, \\*\\*kwargs : arguments
+        \*args, \*\*kwargs : arguments
             passed to NetworkSet constructor
 
         Examples
@@ -263,7 +263,7 @@ class NetworkSet(object):
         dir : str
             directory containing Network files.
 
-        \\*args, \\*\\*kwargs :
+        \*args, \*\*kwargs :
             passed to NetworkSet constructor
 
         Examples
@@ -292,7 +292,7 @@ class NetworkSet(object):
         frequency: :class:`~skrf.frequency.Frequency` object
             frequency assigned to each network
 
-        \\*args, \\*\\*kwargs :
+        \*args, \*\*kwargs :
             passed to Network.__init__ for each key/value pair of d
 
         Returns
@@ -549,7 +549,7 @@ class NetworkSet(object):
             Sort the NetworkSet object directly if True, 
             return the sorted NetworkSet if False. Default is True.
         
-        \\*\\*kwargs : dict
+        \*\*kwargs : dict
             keyword args passed to builtin sorted acting on self.ntwk_set
 
         Return
@@ -834,7 +834,7 @@ class NetworkSet(object):
             filename or a file-object. If left as None then the
             filename will be set to Calibration.name, if its not None.
             If both are None, ValueError is raised.
-        \\*args, \\*\\*kwargs : arguments and keyword arguments
+        \*args, \*\*kwargs : arguments and keyword arguments
             passed through to :func:`~skrf.io.general.write`
 
         Notes

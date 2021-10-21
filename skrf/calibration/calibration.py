@@ -4666,7 +4666,7 @@ class LMR16(SixteenTerm):
     family = 'SixteenTerm'
     def __init__(self, measured, ideals, ideal_is_reflect=True, sign=None,
                  switch_terms=None, *args, **kwargs):
-        """
+        r"""
         LMR16 initializer
 
         Due to needing to solve a second order equation during the calibration a
@@ -4674,7 +4674,7 @@ class LMR16(SixteenTerm):
         given to make the root choice.
 
         If sign argument is not given it is tried to be solved automatically by
-        choosing the sign that makes :math:`k = \\frac{t_{15}}{t_{12}}` closer to +1, which holds
+        choosing the sign that makes :math:`k = \frac{t_{15}}{t_{12}}` closer to +1, which holds
         if test fixture is symmetric.
 
         Parameters
@@ -4977,7 +4977,7 @@ def ideal_coefs_12term(frequency):
     return ideal_coefs
 
 def unterminate(ntwk, gamma_f, gamma_r):
-        """
+        r"""
         Unterminates switch terms from a raw measurement.
 
         In order to use the 8-term error model on a VNA which employs a
@@ -4987,8 +4987,8 @@ def unterminate(ntwk, gamma_f, gamma_r):
 
         .. math ::
 
-            \\Gamma_f = \\frac{a2}{b2} ,\\qquad\\text{sourced by port 1}\\
-            \\Gamma_r = \\frac{a1}{b1} ,\\qquad\\text{sourced by port 2}
+            \Gamma_f = \frac{a2}{b2} ,\qquad\text{sourced by port 1}\
+            \Gamma_r = \frac{a1}{b1} ,\qquad\text{sourced by port 2}
 
         These can be measured by four-sampler VNA's by setting up
         user-defined traces onboard the VNA. If the VNA doesnt have
@@ -5080,7 +5080,7 @@ def terminate(ntwk, gamma_f, gamma_r):
         return m
 
 def determine_line(thru_m, line_m, line_approx=None):
-    """
+    r"""
     Determine S21 of a matched line.
 
     Given raw measurements of a `thru` and a matched `line` with unknown
@@ -5098,12 +5098,12 @@ def determine_line(thru_m, line_m, line_approx=None):
 
     .. math::
 
-        M_t = X \\cdot A_t \\cdot Y    \\\\
-        M_l = X \\cdot A_l \\cdot Y\\\\
+        M_t = X \cdot A_t \cdot Y    \\
+        M_l = X \cdot A_l \cdot Y\\
 
-        M_t \\cdot M_{l}^{-1} = X \\cdot A_t \\cdot A_{l}^{-1} \\cdot X^{-1}\\\\
+        M_t \cdot M_{l}^{-1} = X \cdot A_t \cdot A_{l}^{-1} \cdot X^{-1}\\
 
-        eig(M_t \\cdot M_{l}^{-1}) = eig( A_t \\cdot A_{l}^{-1})\\\\
+        eig(M_t \cdot M_{l}^{-1}) = eig( A_t \cdot A_{l}^{-1})\\
 
     which can be solved to yield S21 of the line
 
