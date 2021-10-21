@@ -71,10 +71,10 @@ class DetermineTest(unittest.TestCase):
 
 
 class CalibrationTest(object):
-    '''
+    """
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement
-    '''
+    """
 
     def test_accuracy_of_dut_correction(self):
         a = self.wg.random(n_ports=self.n_ports, name = 'actual')
@@ -119,11 +119,11 @@ class CalibrationTest(object):
 
 
 class OnePortTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     One-port calibration test.
 
 
-    '''
+    """
     def setUp(self):
         self.n_ports = 1
         self.wg = WG
@@ -272,11 +272,11 @@ class SDDLWeikle(OnePortTest):
 
 
 class SDDMTest(OnePortTest):
-    '''
+    """
     This is a specific test of SDDL to verify it works when the load is 
     a matched load. This test has been used to show that the SDDLWeikle 
     variant fails, with a perfect matched load. 
-    '''
+    """
     def setUp(self):
         
         self.n_ports = 1
@@ -315,8 +315,8 @@ class SDDMTest(OnePortTest):
 
 @SkipTest
 class PHNTest(OnePortTest):
-    '''
-    '''
+    """
+    """
     def setUp(self):
         
         self.n_ports = 1
@@ -394,9 +394,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
         
     def measure(self,ntwk):
@@ -784,7 +784,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
 
 
 class TwelveTermTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     This test verifies the accuracy of the SOLT calibration. Generating 
     measured networks requires different error networks for forward and 
     reverse excitation states, these are described as follows
@@ -798,7 +798,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         Mr = Xr ** S ** Yr
     
     
-    '''
+    """
     def setUp(self):
         self.n_ports = 2
         self.wg = WG
@@ -921,14 +921,14 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
     
 
 class TwelveTermSloppyInitTest(TwelveTermTest):
-    '''
+    """
     Test the TwelveTerm.__init__'s ability to 
     1) determine the number of thrus (n_thrus) heuristically
     2) put the standards in correct order if they use sloppy_input
     
     It must be a entirely separate test because we want to ensure it 
     creates an accurate calibration.
-    '''
+    """
     @suppress_warning_decorator("dictionary passed, sloppy_input")
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
@@ -1373,12 +1373,12 @@ class MRCTest(EightTermTest):
 
 
 class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     This test verifies the accuracy of the SOLT calibration, when used 
     on an error-box (8-term) model.
     
     
-    '''
+    """
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
         self.n_ports = 2
@@ -1415,9 +1415,9 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
         self.coefs= coefs
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
@@ -1518,9 +1518,9 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
@@ -1694,9 +1694,9 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):

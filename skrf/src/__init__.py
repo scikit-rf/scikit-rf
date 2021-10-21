@@ -13,7 +13,7 @@ else:
 connect_lib = npy.ctypeslib.load_library(lib_name, src_path)
 
 def connect_s_fast(A,k,B,l):
-    '''
+    """
     connect two n-port networks' s-matrices together.
 
     specifically, connect port `k` on network `A` to port `l` on network
@@ -51,7 +51,7 @@ def connect_s_fast(A,k,B,l):
                     connection algorithm
 
 
-    '''
+    """
     if k > A.shape[-1]-1 or l>B.shape[-1]-1:
         raise(ValueError('port indices are out of range'))
 

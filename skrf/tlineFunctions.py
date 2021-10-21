@@ -702,7 +702,7 @@ def voltage_current_propagation(v1: NumberLike, i1: NumberLike, z0: NumberLike, 
 
 
 def zl_2_total_loss(z0: NumberLike, zl: NumberLike, theta: NumberLike):
-    '''
+    """
     Total loss of a terminated transmission line (in natural unit).
 
     The total loss expressed in terms of the load impedance is [#]_ :
@@ -730,7 +730,7 @@ def zl_2_total_loss(z0: NumberLike, zl: NumberLike, theta: NumberLike):
         ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014.
         https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
 
-    '''
+    """
     Rin = npy.real(zl_2_zin(z0, zl, theta))
     total_loss = Rin/npy.real(zl)*npy.abs(npy.cosh(theta) + zl/z0*npy.sinh(theta))**2
     return total_loss

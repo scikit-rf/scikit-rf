@@ -3532,7 +3532,7 @@ class UnknownThru(EightTerm):
 
 
 class LRM(EightTerm):
-    '''
+    """
     Line-Reflect-Match self-calibration.
 
     The required calibration standards are:
@@ -3553,13 +3553,13 @@ class LRM(EightTerm):
         A Unified Approach for Reformulations of LRM/LRMM/LRRM Calibration
         Algorithms Based on the T-Matrix Representation. Appl. Sci. 2017, 7,
         866.
-    '''
+    """
 
     family = 'LRM'
 
     def __init__(self, measured, ideals, switch_terms=None, isolation=None,
                  *args, **kwargs):
-        '''
+        """
         Parameters
         --------------
         measured : list of :class:`~skrf.network.Network` objects
@@ -3577,7 +3577,7 @@ class LRM(EightTerm):
             Measurement with loads on both ports with a perfect isolation
             between the ports. Used for determining the isolation error terms.
             If no measurement is given leakage is assumed to be zero.
-        '''
+        """
 
         super().__init__(
             measured = measured,
@@ -3723,9 +3723,9 @@ class LRM(EightTerm):
 
     @property
     def solved_r(self):
-        '''
+        """
         Solved reflect
-        '''
+        """
         try:
             return self._solved_r
         except(AttributeError):
@@ -3734,7 +3734,7 @@ class LRM(EightTerm):
 
 
 class LRRM(EightTerm):
-    '''
+    """
     Line-Reflect-Reflect-Match self-calibration.
 
     The required calibration standards are:
@@ -3776,13 +3776,13 @@ class LRRM(EightTerm):
         Improved Line-Reflect-Reflect-Match Calibration With an Enhanced Load
         Model," in IEEE Microwave and Wireless Components Letters, vol. 27,
         no. 1, pp. 97-99, Jan. 2017.
-    '''
+    """
 
     family = 'LRRM'
 
     def __init__(self, measured, ideals, switch_terms=None, isolation=None,
             z0=50, match_fit='l', *args, **kwargs):
-        '''
+        """
         Parameters
         --------------
         measured : list of :class:`~skrf.network.Network` objects
@@ -3813,7 +3813,7 @@ class LRRM(EightTerm):
             inductor and parallel capacitor and assuming that the second
             reflect is open with unknown capacitance. Fitting is recommended as
             individual inductance estimates can be noisy.
-        '''
+        """
 
         self.z0 = z0
         # TODO: Second port not implemented.
@@ -4142,9 +4142,9 @@ class LRRM(EightTerm):
 
     @property
     def solved_l(self):
-        '''
+        """
         Solved inductance of the load
-        '''
+        """
         try:
             return self._solved_l
         except(AttributeError):
@@ -4153,10 +4153,10 @@ class LRRM(EightTerm):
 
     @property
     def solved_c(self):
-        '''
+        """
         Solved capacitance of the load.
         Zero if match_fit != 'lc'.
-        '''
+        """
         try:
             return self._solved_c
         except(AttributeError):
@@ -4165,9 +4165,9 @@ class LRRM(EightTerm):
 
     @property
     def solved_m(self):
-        '''
+        """
         Solved match
-        '''
+        """
         try:
             return self._solved_m
         except(AttributeError):
@@ -4176,9 +4176,9 @@ class LRRM(EightTerm):
 
     @property
     def solved_r1(self):
-        '''
+        """
         Solved reflect1
-        '''
+        """
         try:
             return self._solved_r1
         except(AttributeError):
@@ -4187,9 +4187,9 @@ class LRRM(EightTerm):
 
     @property
     def solved_r2(self):
-        '''
+        """
         Solved reflect2
-        '''
+        """
         try:
             return self._solved_r2
         except(AttributeError):
