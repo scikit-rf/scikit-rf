@@ -322,7 +322,7 @@ class Frequency(object):
         """
         increase = npy.diff(self.f) > 0
         if not increase.all():
-            warnings.warn(r"Frequency values are not monotonously increasing!\n"
+            warnings.warn("Frequency values are not monotonously increasing!\n"
             "To get rid of the invalid values call `drop_non_monotonic_increasing`", 
                 InvalidFrequencyWarning)
 
