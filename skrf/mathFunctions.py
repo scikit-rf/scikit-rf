@@ -1111,7 +1111,7 @@ def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     if not is_square(mat):
         return False
-    return npy.allclose(get_Hermitian_transpose(mat) * mat,
+    return npy.allclose(get_Hermitian_transpose(mat) @ mat,
                         npy.identity(mat.shape[0]), atol=tol)
 
 

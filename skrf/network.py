@@ -1754,7 +1754,7 @@ class Network(object):
         https://en.wikipedia.org/wiki/Unitary_matrix
         """
         for f_idx in range(len(self.s)):
-            mat = npy.array(self.s[f_idx, :, :])
+            mat = self.s[f_idx, :, :]
             if not mf.is_unitary(mat, tol=tol):
                 return False
         return True
