@@ -468,7 +468,7 @@ class Frequency(object):
 
         Returns
         ----------
-        f : :class:`numpy.ndarray`
+        f : :class:`npy.ndarray`
             The frequency vector  in Hz
 
         See Also
@@ -511,7 +511,7 @@ class Frequency(object):
 
         Returns
         -------
-        f_scaled :  :class:`numpy.ndarray`
+        f_scaled :  :class:`npy.ndarray`
             A frequency vector in units of :attr:`unit`
 
         See Also
@@ -530,7 +530,7 @@ class Frequency(object):
 
         Returns
         -------
-        w : :class:`numpy.ndarray`
+        w : :class:`npy.ndarray`
             Angular frequency in rad/s
             
         References

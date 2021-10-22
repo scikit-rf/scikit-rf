@@ -288,7 +288,7 @@ class NetworkSet(object):
         -------------
         d : dict
             dictionary of s-parameters data. values of this should be
-            :class:`numpy.ndarray` assignable to :attr:`skrf.network.Network.s`
+            :class:`npy.ndarray` assignable to :attr:`skrf.network.Network.s`
         frequency: :class:`~skrf.frequency.Frequency` object
             frequency assigned to each network
 
@@ -637,7 +637,7 @@ class NetworkSet(object):
             
         Return
         ------
-        x : :class: Numpy.ndarray
+        x : :class: npy.ndarray
             
         """
         ntwk = self[0]

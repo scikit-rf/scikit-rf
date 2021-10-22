@@ -895,9 +895,9 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
 
     Parameters
     ----------
-    f : list or numpy.ndarray
+    f : list or npy.ndarray
         frequency array
-    y : list of numpy.ndarray
+    y : list of npy.ndarray
         complex PSD array
     windowType: string
         windowing function, defaults to 'hamming''
@@ -1094,7 +1094,7 @@ def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
 
     Parameters
     ----------
-    mat : npy.matrix
+    mat : npy.ndarray
         Matrix to test for unitariness
     tol : float
         Absolute tolerance. Defaults to :data:`ALMOST_ZERO`
@@ -1163,7 +1163,7 @@ def is_Hermitian(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
 
     Parameters
     ----------
-    mat : npy.matrix
+    mat : npy.ndarray
         Matrix to test for being Hermitian
     tol : float
         Absolute tolerance

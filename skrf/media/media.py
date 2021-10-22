@@ -164,7 +164,7 @@ class Media(ABC):
 
         Returns
         -------
-        z0 : :class:`numpy.ndarray`
+        z0 : :class:`npy.ndarray`
         """
         if self._z0 is None:
             return self.Z0
@@ -184,7 +184,7 @@ class Media(ABC):
 
         Returns
         -------
-        gamma : :class:`numpy.ndarray`
+        gamma : :class:`npy.ndarray`
             complex propagation constant for this media
 
         Note
@@ -204,7 +204,7 @@ class Media(ABC):
 
         Returns
         -------
-        alpha : :class:`numpy.ndarray`
+        alpha : :class:`npy.ndarray`
         """
         return real(self.gamma)
 
@@ -215,7 +215,7 @@ class Media(ABC):
 
         Returns
         -------
-        beta : :class:`numpy.ndarray`
+        beta : :class:`npy.ndarray`
         """
         return imag(self.gamma)
 
@@ -245,7 +245,7 @@ class Media(ABC):
 
         Returns
         -------
-        v_p : :class:`numpy.ndarray`
+        v_p : :class:`npy.ndarray`
 
         See Also
         --------
@@ -277,7 +277,7 @@ class Media(ABC):
 
         Returns
         -------
-        v_g : :class:`numpy.ndarray`
+        v_g : :class:`npy.ndarray`
 
         References
         ----------
@@ -1482,7 +1482,7 @@ class DefinedGammaZ0(Media):
 
         Returns
         ---------
-        gamma : :class:`numpy.ndarray`
+        gamma : :class:`npy.ndarray`
             complex propagation constant for this media
 
         Notes
@@ -1521,7 +1521,7 @@ def parse_z0(s: str) -> NumberLike:
 
     Returns
     -------
-    z0 : numpy.ndarray
+    z0 : npy.ndarray
 
     Raises
     ------

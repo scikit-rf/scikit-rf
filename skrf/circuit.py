@@ -612,7 +612,7 @@ class Circuit():
 
         Returns
         -------
-        y_k : :class:`numpy.ndarray`
+        y_k : :class:`npy.ndarray`
         """
         y_ns = []
         for (ntw, ntw_port) in cnx:
@@ -633,7 +633,7 @@ class Circuit():
 
         Returns
         -------
-        X_nn : :class:`numpy.ndarray`
+        X_nn : :class:`npy.ndarray`
             shape `f x n`
         """
         X_nn = []
@@ -657,7 +657,7 @@ class Circuit():
 
         Returns
         -------
-        X_mn : :class:`numpy.ndarray`
+        X_mn : :class:`npy.ndarray`
             shape `f x n`
         """
         # get the char.impedance of the n
@@ -696,7 +696,7 @@ class Circuit():
 
         Returns
         -------
-        Xs : :class:`numpy.ndarray`
+        Xs : :class:`npy.ndarray`
             shape `f x n x n`
         """
         Xnn = self._Xnn_k(cnx_k)  # shape: (nb_freq, nb_n)
@@ -733,7 +733,7 @@ class Circuit():
 
         Returns
         -------
-        X : :class:`numpy.ndarray`
+        X : :class:`npy.ndarray`
 
         Note
         ----
@@ -773,7 +773,7 @@ class Circuit():
 
         Returns
         -------
-        S : :class:`numpy.ndarray`
+        S : :class:`npy.ndarray`
             Global scattering matrix of the networks.
             Shape `f x (nb_inter*nb_n) x (nb_inter*nb_n)`
         """
@@ -814,7 +814,7 @@ class Circuit():
 
         Returns
         -------
-        S : :class:`numpy.ndarray`
+        S : :class:`npy.ndarray`
             global scattering parameters of the circuit.
         """
         # transpose is necessary to get expected result
@@ -850,7 +850,7 @@ class Circuit():
 
         Returns
         -------
-        z0s : :class:`numpy.ndarray`
+        z0s : :class:`npy.ndarray`
             shape `f x nb_ports_at_cnx`
         """
         z0s = []
@@ -866,7 +866,7 @@ class Circuit():
 
         Returns
         -------
-        z0s : :class:`numpy.ndarray`
+        z0s : :class:`npy.ndarray`
             shape `f x nb_ports`
         """
         z0s = []
@@ -883,7 +883,7 @@ class Circuit():
 
         Returns
         -------
-        S : :class:`numpy.ndarray`
+        S : :class:`npy.ndarray`
             Scattering parameters of the circuit for the external ports.
             Shape `f x nb_ports x nb_ports`
         """

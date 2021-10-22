@@ -191,7 +191,7 @@ class DistributedCircuit(Media):
 
         Returns
         -------
-        Z : numpy.ndarray
+        Z : npy.ndarray
             Distributed impedance in units of ohm/m
         """
         w  = self.frequency.w
@@ -210,7 +210,7 @@ class DistributedCircuit(Media):
 
         Returns
         -------
-        Y : numpy.ndarray
+        Y : npy.ndarray
             Distributed Admittance in units of S/m
         """
 
@@ -228,7 +228,7 @@ class DistributedCircuit(Media):
 
         Returns
         -------
-        Z0 : numpy.ndarray
+        Z0 : npy.ndarray
             Characteristic Impedance in units of ohms
         """
 
@@ -247,7 +247,7 @@ class DistributedCircuit(Media):
 
         Returns
         -------
-        gamma : numpy.ndarray
+        gamma : npy.ndarray
                 Propagation Constant,
 
         Note

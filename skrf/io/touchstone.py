@@ -553,9 +553,9 @@ class Touchstone:
         
         Returns
         -------
-        gamma : complex numpy.ndarray
+        gamma : complex npy.ndarray
             complex  propagation constant
-        z0 : numpy.ndarray
+        z0 : npy.ndarray
             complex port impedance    
         """
         return self.gamma, self.z0
@@ -575,11 +575,11 @@ def hfss_touchstone_2_gamma_z0(filename):
 
     Returns
     -------
-    f : numpy.ndarray
+    f : npy.ndarray
         frequency vector (in Hz)
-    gamma : complex numpy.ndarray
+    gamma : complex npy.ndarray
         complex  propagation constant
-    z0 : numpy.ndarray
+    z0 : npy.ndarray
         complex port impedance
 
     Examples

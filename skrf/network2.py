@@ -826,12 +826,12 @@ def s2t(s):
 
     Parameters
     -----------
-    s : :class:`numpy.ndarray` (shape fx2x2)
+    s : :class:`npy.ndarray` (shape fx2x2)
         scattering parameter matrix
 
     Returns
     -------
-    t : numpy.ndarray
+    t : npy.ndarray
         scattering transfer parameters (aka wave cascading matrix)
 
     See Also
@@ -1176,12 +1176,12 @@ def t2s(t):
 
     Parameters
     -----------
-    t : :class:`numpy.ndarray` (shape fx2x2)
+    t : :class:`npy.ndarray` (shape fx2x2)
             scattering transfer parameters
 
     Returns
     -------
-    s : :class:`numpy.ndarray`
+    s : :class:`npy.ndarray`
             scattering parameter matrix.
 
     See Also

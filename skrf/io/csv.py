@@ -79,7 +79,7 @@ def read_pna_csv(filename, *args, **kwargs):
         The header string, which is the line following the 'BEGIN'
     comments : str
         All lines that begin with a '!'
-    data : :class:`numpy.ndarray`
+    data : :class:`npy.ndarray`
         An array containing the data. The meaning of which depends on
         the header.
 
@@ -317,7 +317,7 @@ class AgilentCSV(object):
             The header string, which is the line following the 'BEGIN'
         comments : str
             All lines that begin with a '!'
-        data : :class:`numpy.ndarray`
+        data : :class:`npy.ndarray`
             An array containing the data. The meaning of which depends on
             the header.
         """
@@ -727,7 +727,7 @@ def read_zva_dat(filename, *args, **kwargs):
     -------
     header : str
         The header string, which is the line following the 'BEGIN'
-    data : :class:`numpy.ndarray`
+    data : :class:`npy.ndarray`
         An array containing the data. The meaning of which depends on
         the header.
 
@@ -869,7 +869,7 @@ def read_vectorstar_csv(filename, *args, **kwargs):
         The header string, which is the line just before the data
     comments : str
         All lines that begin with a '!'
-    data : :class:`numpy.ndarray`
+    data : :class:`npy.ndarray`
         An array containing the data. The meaning of which depends on
         the header.
 

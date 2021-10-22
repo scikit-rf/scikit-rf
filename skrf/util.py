@@ -114,7 +114,7 @@ def find_nearest(array: npy.ndarray, value: Number) -> Number:
 
     Parameters
     ----------
-    array :  numpy.ndarray
+    array :  npy.ndarray
         array we are searching for a value in
     value : element of the array
         value to search for
@@ -135,7 +135,7 @@ def find_nearest_index(array: npy.ndarray, value: Number) -> int:
 
     Parameters
     ----------
-    array :  numpy.ndarray
+    array :  npy.ndarray
         array we are searching for a value in
     value : element of the array
         value to search for
@@ -162,7 +162,7 @@ def slice_domain(x: npy.ndarray, domain: tuple):
 
     Parameters
     ----------
-    vector : numpy.ndarray
+    vector : npy.ndarray
         an array of values
     domain : tuple
         tuple of (start,stop) values defining the domain over
