@@ -288,7 +288,7 @@ class NetworkSet(object):
         -------------
         d : dict
             dictionary of s-parameters data. values of this should be
-            :class:`npy.ndarray` assignable to :attr:`skrf.network.Network.s`
+            :class:`numpy.ndarray` assignable to :attr:`skrf.network.Network.s`
         frequency: :class:`~skrf.frequency.Frequency` object
             frequency assigned to each network
 
@@ -489,7 +489,7 @@ class NetworkSet(object):
         The resultant keys of the dictionary are the names of the Networks
         in NetworkSet
 
-         Returns
+        Returns
         -------
         s_dict : dictionary
             contains s-parameters in the form of complex numpy arrays
@@ -700,7 +700,7 @@ class NetworkSet(object):
                        
         which is NOT the same as
                 
-        `std(s_db)
+        `std(s_db)`
                         
         """
         ntwk= self.std_s_mag

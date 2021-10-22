@@ -206,7 +206,7 @@ class Network(object):
     * frequency information
 
     The :class:`Network` class stores these data structures internally
-    in the form of complex :class:`npy.ndarray`'s. These arrays are not
+    in the form of complex :class:`numpy.ndarray`'s. These arrays are not
     interfaced directly but instead through the use of the properties:
 
     =====================  =============================================
@@ -221,7 +221,7 @@ class Network(object):
     representations such as :attr:`z` and  :attr:`y` are
     available. Scalar projections of the complex network parameters
     are accessible through properties as well. These also return
-    :class:`npy.ndarray`'s.
+    :class:`numpy.ndarray`'s.
 
     =====================  =============================================
     Property               Meaning
@@ -898,7 +898,7 @@ class Network(object):
         """
         Scattering parameter matrix.
 
-        The s-matrix [#]_ is a 3-dimensional :class:`npy.ndarray` which has shape
+        The s-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so s11 can be accessed by
         taking the slice s[:,0,0].
@@ -906,7 +906,7 @@ class Network(object):
 
         Returns
         -------
-        s : complex :class:`npy.ndarray` of shape `fxnxn`
+        s : complex :class:`numpy.ndarray` of shape `fxnxn`
             The scattering parameter matrix.
 
         See Also
@@ -930,7 +930,7 @@ class Network(object):
 
         Parameters
         ----------
-        s : :class:`npy.ndarray`
+        s : :class:`numpy.ndarray`
             The input s-matrix should be of shape `fxnxn`,
             where f is frequency axis and n is number of ports.
 
@@ -952,7 +952,7 @@ class Network(object):
         """
         Hybrid parameter matrix.
 
-        The h-matrix [#]_ is a 3-dimensional :class:`npy.ndarray` which has shape
+        The h-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so h11 can be accessed by
         taking the slice `h[:,0,0]`.
@@ -960,7 +960,7 @@ class Network(object):
 
         Returns
         -------
-        h : complex :class:`npy.ndarray` of shape `fxnxn`
+        h : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the hybrid parameter matrix.
 
         See Also
@@ -987,7 +987,7 @@ class Network(object):
         """
         Admittance parameter matrix.
 
-        The y-matrix [#]_ is a 3-dimensional :class:`npy.ndarray` which has shape
+        The y-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so y11 can be accessed by
         taking the slice `y[:,0,0]`.
@@ -995,7 +995,7 @@ class Network(object):
 
         Returns
         -------
-        y : complex :class:`npy.ndarray` of shape `fxnxn`
+        y : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the admittance parameter matrix.
 
         See Also
@@ -1021,7 +1021,7 @@ class Network(object):
         """
         Impedance parameter matrix.
 
-        The z-matrix  [#]_ is a 3-dimensional :class:`npy.ndarray` which has shape
+        The z-matrix  [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so z11 can be accessed by
         taking the slice `z[:,0,0]`.
@@ -1029,7 +1029,7 @@ class Network(object):
 
         Returns
         -------
-        z : complex :class:`npy.ndarray` of shape `fxnxn`
+        z : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the Impedance parameter matrix.
 
         See Also
@@ -1055,7 +1055,7 @@ class Network(object):
         """
         Scattering transfer parameters
 
-        The t-matrix [#]_ is a 3-dimensional :class:`npy.ndarray`
+        The t-matrix [#]_ is a 3-dimensional :class:`numpy.ndarray`
         which has shape `fx2x2`, where `f` is frequency axis.
         Note that indexing starts at 0, so t11 can be accessed by
         taking the slice `t[:,0,0]`.
@@ -1090,7 +1090,7 @@ class Network(object):
 
         Inverted scattering parameters are simply inverted s-parameters,
         defined as a = 1/s. Useful in analysis of active networks.
-        The a-matrix is a 3-dimensional :class:`npy.ndarray` which has shape
+        The a-matrix is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so a11 can be accessed by
         taking the slice a[:,0,0].
@@ -1098,7 +1098,7 @@ class Network(object):
 
         Returns
         -------
-        s_inv : complex :class:`npy.ndarray` of shape `fxnxn`
+        s_inv : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the inverted scattering parameter matrix.
 
         See Also
@@ -1120,7 +1120,7 @@ class Network(object):
         """
         abcd parameter matrix. Used to cascade two-ports
 
-        The abcd-matrix  [#]_ is a 3-dimensional :class:`npy.ndarray` which has shape
+        The abcd-matrix  [#]_ is a 3-dimensional :class:`numpy.ndarray` which has shape
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so abcd11 can be accessed by
         taking the slice `abcd[:,0,0]`.
@@ -1128,7 +1128,7 @@ class Network(object):
 
         Returns
         -------
-        abcd : complex :class:`npy.ndarray` of shape `fxnxn`
+        abcd : complex :class:`numpy.ndarray` of shape `fxnxn`
                 the Impedance parameter matrix.
 
         See Also
@@ -1165,7 +1165,7 @@ class Network(object):
 
         Returns
         -------
-        z0 : :class:`npy.ndarray` of shape fxn
+        z0 : :class:`numpy.ndarray` of shape fxn
                 characteristic impedance for network
 
         """
@@ -1297,7 +1297,7 @@ class Network(object):
 
         Returns
         -------
-        f : :class:`npy.ndarray`
+        f : :class:`numpy.ndarray`
                 frequency vector in Hz
 
         See Also
@@ -1514,7 +1514,7 @@ class Network(object):
 
         Returns
         -------
-        passivity : :class:`npy.ndarray` of shape fxnxn
+        passivity : :class:`numpy.ndarray` of shape fxnxn
 
         References
         ----------
@@ -1540,7 +1540,7 @@ class Network(object):
 
         Returns
         -------
-        reciprocity : :class:`npy.ndarray` of shape `fxnxn`
+        reciprocity : :class:`numpy.ndarray` of shape `fxnxn`
 
         """
         return reciprocity(self.s)
@@ -1559,7 +1559,7 @@ class Network(object):
 
         Returns
         -------
-        reciprocity : :class:`npy.ndarray` of shape `fxnxn`
+        reciprocity : :class:`numpy.ndarray` of shape `fxnxn`
 
         """
         return abs(1 - self.s / self.s.swapaxes(1, 2))
@@ -1579,7 +1579,7 @@ class Network(object):
 
         Returns
         -------
-        K : :class:`npy.ndarray` of shape `f`
+        K : :class:`numpy.ndarray` of shape `f`
 
         """
         assert self.nports == 2, "Stability factor K is only defined for two ports"
@@ -1603,7 +1603,7 @@ class Network(object):
 
         Returns
         -------
-        gd : :class:`npy.ndarray` of shape `xnxn`
+        gd : :class:`numpy.ndarray` of shape `xnxn`
 
         References
         ----------
@@ -4905,18 +4905,18 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
 
     Parameters
     ----------
-    A : :class:`npy.ndarray`
+    A : :class:`numpy.ndarray`
             S-parameter matrix of `A`, shape is fxnxn
     k : int
             port index on `A` (port indices start from 0)
-    B : :class:`npy.ndarray`
+    B : :class:`numpy.ndarray`
             S-parameter matrix of `B`, shape is fxnxn
     l : int
             port index on `B`
 
     Returns
     -------
-    C : :class:`npy.ndarray`
+    C : :class:`numpy.ndarray`
         new S-parameter matrix
 
 
@@ -4971,7 +4971,7 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 
     Parameters
     ----------
-    A : :class:`npy.ndarray`
+    A : :class:`numpy.ndarray`
         S-parameter matrix of `A`, shape is fxnxn
     k : int
         port index on `A` (port indices start from 0)
@@ -4980,7 +4980,7 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 
     Returns
     -------
-    C : :class:`npy.ndarray`
+    C : :class:`numpy.ndarray`
             new S-parameter matrix
 
 
@@ -5227,7 +5227,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    s : :class:`npy.ndarray` (shape fx2nx2n)
+    s : :class:`numpy.ndarray` (shape fx2nx2n)
         scattering parameter matrix
 
     Returns
@@ -5524,7 +5524,7 @@ def a2z(a: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    a : :class:`npy.ndarray` (shape fx2x2)
+    a : :class:`numpy.ndarray` (shape fx2x2)
         abcd parameter matrix
 
     Returns
@@ -5568,7 +5568,7 @@ def z2a(z: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    z : :class:`npy.ndarray` (shape fx2x2)
+    z : :class:`numpy.ndarray` (shape fx2x2)
         impedance parameter matrix
 
     Returns
@@ -5616,10 +5616,10 @@ def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
     Parameters
     ----------
-    s : :class:`npy.ndarray` (shape `fx2x2`)
+    s : :class:`numpy.ndarray` (shape `fx2x2`)
         impedance parameter matrix
 
-    z0: number or, :class:`npy.ndarray` (shape `fx2`)
+    z0: number or, :class:`numpy.ndarray` (shape `fx2`)
         port impedance
 
     Returns
@@ -5867,12 +5867,12 @@ def t2s(t: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    t : :class:`npy.ndarray` (shape fx2nx2n)
+    t : :class:`numpy.ndarray` (shape fx2nx2n)
             scattering transfer parameters
 
     Returns
     -------
-    s : :class:`npy.ndarray`
+    s : :class:`numpy.ndarray`
             scattering parameter matrix.
 
     See Also
@@ -6020,7 +6020,7 @@ def h2z(h: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    h : :class:`npy.ndarray` (shape fx2x2)
+    h : :class:`numpy.ndarray` (shape fx2x2)
         hybrid parameter matrix
 
     Returns
@@ -6113,7 +6113,7 @@ def z2h(z: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    z : :class:`npy.ndarray` (shape fx2x2)
+    z : :class:`numpy.ndarray` (shape fx2x2)
         impedance parameter matrix
 
     Returns
@@ -6195,7 +6195,7 @@ def passivity(s: npy.ndarray) -> npy.ndarray:
 
     Returns
     -------
-    passivity : :class:`npy.ndarray` of shape fxnxn
+    passivity : :class:`numpy.ndarray` of shape fxnxn
 
     References
     ------------
@@ -6229,12 +6229,12 @@ def reciprocity(s: npy.ndarray) -> npy.ndarray:
 
         Parameters
         ----------
-        s : :class:`npy.ndarray` of shape `fxnxn`
+        s : :class:`numpy.ndarray` of shape `fxnxn`
             s-parameter matrix
 
         Returns
         -------
-        reciprocity : :class:`npy.ndarray` of shape `fxnxn`
+        reciprocity : :class:`numpy.ndarray` of shape `fxnxn`
         """
     if s.shape[-1] == 1:
         raise (ValueError('Doesn\'t exist for one ports'))
@@ -6289,7 +6289,7 @@ def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:st
 
     Returns
     -------
-    :class:`npy.ndarray`
+    :class:`numpy.ndarray`
         renormalized s-parameter matrix (shape `fxnxn`)
 
     See Also
@@ -6396,12 +6396,12 @@ def inv(s: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    s : :class:`npy.ndarray` (shape fx2nx2n)
+    s : :class:`numpy.ndarray` (shape fx2nx2n)
             scattering parameter matrix.
 
     Returns
     -------
-    s' : :class:`npy.ndarray`
+    s' : :class:`numpy.ndarray`
             inverse scattering parameter matrix.
 
     See Also
@@ -6438,13 +6438,13 @@ def flip(a: npy.ndarray) -> npy.ndarray:
 
     Parameters
     ----------
-    a : :class:`npy.ndarray`
+    a : :class:`numpy.ndarray`
             scattering parameter matrix. shape should be should be `2nx2n`, or
             `fx2nx2n`
 
     Returns
     -------
-    c : :class:`npy.ndarray`
+    c : :class:`numpy.ndarray`
             flipped scattering parameter matrix
 
     See Also
