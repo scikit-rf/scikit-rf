@@ -127,6 +127,9 @@ class NetworkTestCase(unittest.TestCase):
         with self.assertRaises(ValueError):
             t, y = dut_dc.step_response()
 
+    def test_network_from_timeseries(self):
+        netw = rf.Network(os.path.join(self.test_dir, 'time_series_touchstone.s2p'))
+
     def test_constructor_empty(self):
         rf.Network()
 
