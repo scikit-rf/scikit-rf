@@ -36,6 +36,21 @@ from ..frequency import Frequency
 from ..media import Media, DefinedGammaZ0
 from .. import mathFunctions as mf
 
+class InvalidFrequencyUnit(Exception):
+    pass
+
+
+class TimeseriesFrequencyUnit(InvalidFrequencyUnit):
+    pass
+
+
+class InvalidParameterValue(Exception):
+    pass
+
+
+class InvalidFormatValue(Exception):
+    pass
+
 
 class Touchstone:
     """
@@ -50,6 +65,9 @@ class Touchstone:
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
+
+    allowed_units = ['hz', 'khz', 'mhz', 'ghz']
+
     def __init__(self, file):
         """
         constructor
@@ -218,15 +236,17 @@ class Touchstone:
                 self.parameter = toks[1]
                 self.format = toks[2]
                 self.resistance = toks[4]
-                if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
-                    print('ERROR: illegal frequency_unit [%s]',  self.frequency_unit)
-                    # TODO: Raise
+
+                if self.frequency_unit not in self.allowed_units:
+                    if self.frequency_unit != 'sec':
+                        raise InvalidFrequencyUnit('Invalid frequency_unit [%s]',  self.frequency_unit)
+                    else:
+                        raise TimeseriesFrequencyUnit('Time series touchstone file detected.\n' + 
+                            'Use Network.from_timeseries(file) to load this file.')
                 if self.parameter not in 'syzgh':
-                    print('ERROR: illegal parameter value [%s]', self.parameter)
-                    # TODO: Raise
+                    raise InvalidParameterValue('Invalid parameter value [%s]', self.parameter)
                 if self.format not in ['ma', 'db', 'ri']:
-                    print('ERROR: illegal format value [%s]', self.format)
-                    # TODO: Raise
+                    raise InvalidFormatValue('Invalid format value [%s]', self.format)
 
                 continue
 
@@ -559,6 +579,10 @@ class Touchstone:
             complex port impedance    
         """
         return self.gamma, self.z0
+
+class TimeseriesTouchstone(Touchstone):
+    allowed_units = ['sec']
+
 
 def hfss_touchstone_2_gamma_z0(filename):
     """
