@@ -583,6 +583,9 @@ class Touchstone:
 class TimeseriesTouchstone(Touchstone):
     allowed_units = ['sec']
 
+    def __init__(self, file):
+        super().__init__(file)
+        raise NotImplementedError
 
 def hfss_touchstone_2_gamma_z0(filename):
     """

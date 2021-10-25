@@ -153,7 +153,7 @@ Misc Functions
 
 """
 from typing import (Any, NoReturn, Optional, Sequence,
-    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
+    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TypeVar)
 from numbers import Number
 from functools import reduce
 
@@ -423,34 +423,9 @@ class Network(object):
         else:
             self.s_def = s_def
 
-        if file is not None:              
-            if isinstance(file, Path):
-                file = str(file.resolve())
-
-            # allows user to pass StringIO, filename or file obj
-            if isinstance(file,StringIO):
-                self.read_touchstone(file)
-
-            else:
-                # open file in 'binary' mode because we are going to try and
-                # unpickle it first
-                fid = get_fid(file, 'rb')
-
-                try:
-                    self.read(fid)
-                except UnicodeDecodeError:  # Support for pickles created in Python2 and loaded in Python3
-                    self.read(fid, encoding='latin1')
-                except (UnpicklingError,TypeError):
-                    # if unpickling doesn't work then, close fid, reopen in
-                    # non-binary mode and try to read it as touchstone
-                    filename = fid.name
-                    fid.close()
-                    self.read_touchstone(filename)
-
-
-
-            if name is None and isinstance(file, str):
-                name = os.path.splitext(os.path.basename(file))[0]
+        if file is not None:
+            from .io.touchstone import Touchstone
+            self._open_file(file, Touchstone)    
 
         if self.frequency is not None and f_unit is not None:
             self.frequency.unit = f_unit
@@ -493,6 +468,37 @@ class Network(object):
         me = cls(s=s, *args, **kw)
         me.z = z
         return me
+
+    @classmethod
+    def from_timeseries(cls, file: str):
+        ret = cls()
+        from .io.touchstone import TimeseriesTouchstone
+        ret._open_file(file, reader=TimeseriesTouchstone)
+
+    def _open_file(self, file: str, reader):
+        print(file, reader)
+        if isinstance(file, Path):
+            file = str(file.resolve())
+
+        # allows user to pass StringIO, filename or file obj
+        if isinstance(file,StringIO):
+            self.read_touchstone(file, reader)
+
+        else:
+            # open file in 'binary' mode because we are going to try and
+            # unpickle it first
+            fid = get_fid(file, 'rb')
+
+            try:
+                self.read(fid)
+            except UnicodeDecodeError:  # Support for pickles created in Python2 and loaded in Python3
+                self.read(fid, encoding='latin1')
+            except (UnpicklingError,TypeError):
+                # if unpickling doesn't work then, close fid, reopen in
+                # non-binary mode and try to read it as touchstone
+                filename = fid.name
+                fid.close()
+                self.read_touchstone(filename, reader)
 
     # OPERATORS
     def __pow__(self, other: 'Network') -> 'Network':
@@ -1912,7 +1918,7 @@ class Network(object):
 
 
     # touchstone file IO
-    def read_touchstone(self, filename: str) -> None:
+    def read_touchstone(self, filename: str, reader = None) -> None:
         """
         loads values from a touchstone file.
 
@@ -1931,8 +1937,12 @@ class Network(object):
 
 
         """
-        from .io import touchstone
-        touchstoneFile = touchstone.Touchstone(filename)
+        from .io.touchstone import Touchstone
+        print(reader)
+        if reader is None:
+            touchstoneFile = Touchstone(filename)
+        else:
+            touchstoneFile: Touchstone = reader(filename)
 
         if touchstoneFile.get_format().split()[1] != 's':
             raise NotImplementedError('only s-parameters supported for now.')

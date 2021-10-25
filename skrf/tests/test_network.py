@@ -13,6 +13,7 @@ from nose.plugins.skip import SkipTest
 import warnings
 
 from skrf import setup_pylab
+from skrf.io.touchstone import TimeseriesFrequencyUnit
 from skrf.media import CPW
 from skrf.media import DistributedCircuit
 from skrf.constants import S_DEFINITIONS
@@ -128,7 +129,10 @@ class NetworkTestCase(unittest.TestCase):
             t, y = dut_dc.step_response()
 
     def test_network_from_timeseries(self):
-        netw = rf.Network(os.path.join(self.test_dir, 'time_series_touchstone.s2p'))
+        path = os.path.join(self.test_dir, 'time_series_touchstone.s2p')
+        with self.assertRaises(TimeseriesFrequencyUnit):
+            netw = rf.Network(path)
+        netw = rf.Network.from_timeseries(path)
 
     def test_constructor_empty(self):
         rf.Network()
