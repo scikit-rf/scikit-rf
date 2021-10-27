@@ -471,12 +471,48 @@ class Network(object):
 
     @classmethod
     def from_timeseries(cls, file: str):
+        """Create a Network from a time series touchstone file
+
+        Parameters
+        ----------
+
+        file : str or file-object
+            file to load information from. supported formats are:
+             * time series touchstone file (.s?p)
+
+    
+        Examples
+        --------
+
+        Detect if the file is a time series touchstone file and use 
+        the appropriate method.
+
+        >>> import skrf as rf
+        >>> ts = 'network.s2p'
+        >>> try:
+        >>>     netw = rf.Network(ts)
+        >>> except rf.io.touchstone.TimeseriesFrequencyUnit:
+        >>>     netw = rf.Network.from_timeseries(ts)
+
+        """
         ret = cls()
         from .io.touchstone import TimeseriesTouchstone
         ret._open_file(file, reader=TimeseriesTouchstone)
         return ret
 
     def _open_file(self, file: str, reader):
+        """Internal method for easier file reading
+
+        Parameters
+        ----------
+            file : str or file-object
+                file to load information from. supported formats are:
+                * touchstone file (.s?p)
+                * time series touchstone file (.s?p)
+                * pickled Network (.ntwk, .p) see :func:`write`
+
+            reader: reader class, either Touchstone or TimeseriesTouchstone
+        """
         if isinstance(file, Path):
             file = str(file.resolve())
 
