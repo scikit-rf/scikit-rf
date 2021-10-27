@@ -1,0 +1,14 @@
+!Agilent Technologies,E8364B,MYxxxxxxxx,A.09.20.08
+!Agilent E8364B: A.09.20.08
+!Date: Wednesday, October 20, 2021 20:11:09
+!Correction: S11(Full 1 Port(1)) 
+!S2P File: Measurements: S11:
+# Sec S  RI   R 50
+-4e-9 0 0
+-3e-9 0 0
+-2e-9 0 0
+-1e-9 0 0
+0 1 0
+1e-9 2 0 
+2e-9 3 0 
+3e-9 4 0

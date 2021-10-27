@@ -129,10 +129,26 @@ class NetworkTestCase(unittest.TestCase):
             t, y = dut_dc.step_response()
 
     def test_network_from_timeseries(self):
-        path = os.path.join(self.test_dir, 'time_series_touchstone.s2p')
-        with self.assertRaises(TimeseriesFrequencyUnit):
-            netw = rf.Network(path)
-        netw = rf.Network.from_timeseries(path)
+        test1 = (os.path.join(self.test_dir, 'time_series_touchstone_0.s1p'),
+            npy.arange(-4e-9, 4e-9, 1e-9),
+            [0,0,0,0,1,2,3,4])
+
+        test2 = (os.path.join(self.test_dir, 'time_series_touchstone_1.s1p'),
+            npy.arange(-3e-9, 3e-9, 1e-9),
+            [0,0,0,1,2,3])
+        
+        test3 = (os.path.join(self.test_dir, 'time_series_touchstone_2.s1p'),
+            npy.arange(-3e-9, 3e-9, 1e-9),
+            [0,0,1,2,3,4])
+
+        for (path, t_true, y_true) in [test1, test2, test3]:
+            with self.assertRaises(TimeseriesFrequencyUnit):
+                netw = rf.Network(path)
+            netw = rf.Network.from_timeseries(path)
+
+            t, y = netw.impulse_response(window='boxcar', pad = 0)
+            self.assertTrue(npy.allclose(t, t_true) and npy.allclose(y, y_true))
+
 
     def test_constructor_empty(self):
         rf.Network()
