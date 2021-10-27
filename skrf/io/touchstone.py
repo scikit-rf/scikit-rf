@@ -585,7 +585,28 @@ class TimeseriesTouchstone(Touchstone):
 
     def __init__(self, file):
         super().__init__(file)
-        raise NotImplementedError
+        self.frequency_mult = 1.0
+
+        if len(self.sparameters) % 2:
+            self.sparameters = self.sparameters[:-1]
+        
+        t = self.sparameters[:,0]
+        dt = t[1] - t[0]
+
+        v = self.sparameters[:,1::2]
+
+        f = npy.fft.rfftfreq(len(t), dt)
+        s = npy.fft.rfft(npy.fft.fftshift(v), axis=0)
+
+        sparam = npy.zeros((len(f), self.sparameters.shape[1]))
+        sparam[:,0] = f
+        sparam[:,1::2] = s.real
+        sparam[:,2::2] = s.imag
+
+        self.sparameters = sparam
+
+        self.frequency_unit = 'Hz'
+        
 
 def hfss_touchstone_2_gamma_z0(filename):
     """

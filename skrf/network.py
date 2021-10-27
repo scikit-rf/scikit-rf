@@ -474,9 +474,9 @@ class Network(object):
         ret = cls()
         from .io.touchstone import TimeseriesTouchstone
         ret._open_file(file, reader=TimeseriesTouchstone)
+        return ret
 
     def _open_file(self, file: str, reader):
-        print(file, reader)
         if isinstance(file, Path):
             file = str(file.resolve())
 
@@ -1938,7 +1938,6 @@ class Network(object):
 
         """
         from .io.touchstone import Touchstone
-        print(reader)
         if reader is None:
             touchstoneFile = Touchstone(filename)
         else:
