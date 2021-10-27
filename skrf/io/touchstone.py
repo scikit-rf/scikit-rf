@@ -621,16 +621,17 @@ class TimeseriesTouchstone(Touchstone):
         super().__init__(file)
         self.frequency_mult = 1.0
 
-        if len(self.sparameters) % 2:
-            self.sparameters = self.sparameters[:-1]
+        samples = npy.diff(self.sparameters[:,1::2], axis=0)
+        t = self.sparameters[:-1,0]
+
+        if len(t) % 2:
+            samples = samples[:-1]
+            t = t[:-1]
         
-        t = self.sparameters[:,0]
         dt = t[1] - t[0]
 
-        v = self.sparameters[:,1::2]
-
         f = npy.fft.rfftfreq(len(t), dt)
-        s = npy.fft.rfft(npy.fft.fftshift(v), axis=0)
+        s = npy.fft.rfft(npy.fft.fftshift(samples), axis=0)
 
         sparam = npy.zeros((len(f), self.sparameters.shape[1]))
         sparam[:,0] = f
