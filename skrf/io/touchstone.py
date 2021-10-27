@@ -541,7 +541,7 @@ class Touchstone:
 
         # If the file does not contain valid port impedance comments, set to default one
         if len(z0) == 0:
-            z0 = npy.complex(self.resistance)
+            z0 = npy.array(self.resistance, dtype=complex)
             #raise ValueError('Touchstone does not contain valid gamma, port impedance comments')
 
         self.gamma = npy.array(gamma) 
@@ -553,9 +553,9 @@ class Touchstone:
         
         Returns
         -------
-        gamma : complex numpy.ndarray
+        gamma : complex npy.ndarray
             complex  propagation constant
-        z0 : numpy.ndarray
+        z0 : npy.ndarray
             complex port impedance    
         """
         return self.gamma, self.z0
@@ -575,11 +575,11 @@ def hfss_touchstone_2_gamma_z0(filename):
 
     Returns
     -------
-    f : numpy.ndarray
+    f : npy.ndarray
         frequency vector (in Hz)
-    gamma : complex numpy.ndarray
+    gamma : complex npy.ndarray
         complex  propagation constant
-    z0 : numpy.ndarray
+    z0 : npy.ndarray
         complex port impedance
 
     Examples

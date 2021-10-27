@@ -38,6 +38,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
     'sphinx.ext.viewcode',
+    'sphinx.ext.intersphinx',
     'nbsphinx',
     #'inheritance_diagram',
     'IPython.sphinxext.ipython_directive',
@@ -86,14 +87,14 @@ exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store', "**/*.rst.rst", '**.ipyn
 # built documents.
 #
 # The short X.Y version.
-'''
+"""
 setup_lines = open('../../setup.py').readlines()
 version = VERSION#'vUndefined'
 for l in setup_lines:
     if l.startswith('VERSION'):
         version = l.split("'")[1]
         break
-'''
+"""
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
@@ -192,7 +193,8 @@ man_pages = [
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-    'http://docs.python.org/': None,
-    'http://docs.scipy.org/doc/numpy': None,
-    'http://docs.scipy.org/doc/scipy/reference': None,
-    }
+    'python': ('http://docs.python.org/3', None),
+    'numpy': ('https://numpy.org/doc/stable', None),
+    'pd': ('https://pandas.pydata.org/docs', None),
+    'scipy': ('https://docs.scipy.org/doc/scipy/', None),
+}

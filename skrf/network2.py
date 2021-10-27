@@ -21,17 +21,17 @@ import re
 ##
 
 class Parameter(object):
-    '''
+    """
     a complex network parameter
-    '''
+    """
 
     def __init__(self,  network):
         self._network = network
 
     def __len__(self):
-        '''
+        """
         length of frequency axis
-        '''
+        """
         return len(self.val)
 
     def __getattr__(self,name):
@@ -137,12 +137,12 @@ class Parameter(object):
         return Image(self._repr_png_(), embed=True)
 
 class S(Parameter):
-    '''
+    """
     S parameters
 
     This Parameter is special, because they are the internal storage format
 
-    '''
+    """
     def __init__(self,  network, s):
         Parameter.__init__(self, network)
         s = fix_parameter_shape(s)
@@ -167,38 +167,38 @@ class S(Parameter):
         return Parameter.plot(self,*args, **kwargs)
 
 class Z(Parameter):
-    '''
+    """
     Impedance parameters
-    '''
+    """
     def __str__(self): return 'z'
     @property
     def val(self):
         return s2z(self._network.s.val)
 
 class Y(Parameter):
-    '''
+    """
     Admittance Parameters
-    '''
+    """
     def __str__(self): return 'y'
     @property
     def val(self):
         return s2y(self._network.s.val)
 
 class T(Parameter):
-    '''
+    """
     Wave Cascading Parameters
 
     Only exists for 2-ports
-    '''
+    """
     def __str__(self): return 't'
     @property
     def val(self):
         return s2t(self._network.s.val)
 
 class STime(Parameter):
-    '''
+    """
     Scattering Parameters in Time Domain
-    '''
+    """
     def __str__(self): return 's'
     @property
     def _xaxis(self):return 'time'
@@ -208,9 +208,9 @@ class STime(Parameter):
 ##
 
 class Projection(object):
-    '''
+    """
     a scalar projection of a parameter
-    '''
+    """
     def __init__(self, param):
         self._param = param
         self._network = param._network
@@ -383,8 +383,8 @@ class Im(Projection):
 class Network(object):
     def __init__(self, frequency=None, z0=50, name='', comments='',
                  *args,  **kw):
-        '''
-        '''
+        """
+        """
         if 's' in kw:
             self.s = kw['s']
         elif 'z' in kw:
@@ -432,13 +432,13 @@ class Network(object):
         return n
 
     def __len__(self):
-        '''
+        """
         length of frequency axis
-        '''
+        """
         return len(self.frequency)
 
     def __getitem__(self,key):
-        '''
+        """
         Slices a Network object based on an index, or human readable string
 
         Parameters
@@ -454,13 +454,13 @@ class Network(object):
         >>> from skrf.data import ring_slot
         >>> a = ring_slot['80-90ghz']
         >>> a.plot_s_db()
-        '''
+        """
 
         if isinstance(key, str):
             # they passed a string. try to read the string and convert
             # it into a  slice. then slice self on that
-            re_numbers = re.compile('.*\d')
-            re_hyphen = re.compile('\s*-\s*')
+            re_numbers = re.compile(r'.*\d')
+            re_hyphen = re.compile(r'\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
 
             freq_unit = re.findall(re_letters,key)
@@ -510,9 +510,9 @@ class Network(object):
 
     @property
     def s(self):
-        '''
+        """
         Scattering Parameters
-        '''
+        """
         return self._s
 
     @s.setter
@@ -557,7 +557,7 @@ class Network(object):
 
     @property
     def nports(self):
-        '''
+        """
         the number of ports the network has.
 
         Returns
@@ -565,7 +565,7 @@ class Network(object):
         nports : number
                 the number of ports the network has.
 
-        '''
+        """
         try:
             return self.s.val.shape[1]
         except (AttributeError):
@@ -573,9 +573,9 @@ class Network(object):
 
     @property
     def z0(self):
-        '''
+        """
         The port impedance
-        '''
+        """
         return self._z0
 
     @z0.setter
@@ -584,7 +584,7 @@ class Network(object):
 
     @property
     def port_tuples(self):
-        '''
+        """
         Returns a list of tuples, for each port index pair
 
         A convenience function for the common task fo iterating over
@@ -592,11 +592,11 @@ class Network(object):
 
         This just calls:
         `[(y,x) for x in range(self.nports) for y in range(self.nports)]`
-        '''
+        """
         return [(y,x) for x in range(self.nports) for y in range(self.nports)]
 
     def windowed(self, window=('kaiser',6),  normalize = True):
-        '''
+        """
         Return a windowed version of s-matrix. Used in time-domain analysis.
 
         When using time domain through :attr:`s_time_db`,
@@ -626,7 +626,7 @@ class Network(object):
         -------------
         .. [1] Agilent Time Domain Analysis Using a Network Analyzer Application Note 1287-12
 
-        '''
+        """
 
         windowed = self.copy()
         window = signal.get_window(window, len(self))
@@ -644,7 +644,7 @@ class Network(object):
 
 
 def fix_z0_shape( z0, nfreqs, nports):
-    '''
+    """
     Make a port impedance of correct shape for a given network's matrix
 
     This attempts to broadcast z0 to satisfy
@@ -679,7 +679,7 @@ def fix_z0_shape( z0, nfreqs, nports):
     >>> z0 = rf.fix_z0_shape(range(201) , 201,2)
 
 
-    '''
+    """
 
 
 
@@ -717,12 +717,12 @@ def fix_parameter_shape(s):
 ## network parameter conversion
 
 def s2z(s,z0=50):
-    '''
+    r"""
     Convert scattering parameters [1]_ to impedance parameters [2]_
 
 
     .. math::
-        z = \\sqrt {z_0} \\cdot (I + s) (I - s)^{-1} \\cdot \\sqrt{z_0}
+        z = \sqrt {z_0} \cdot (I + s) (I - s)^{-1} \cdot \sqrt{z_0}
 
     Parameters
     ------------
@@ -743,7 +743,7 @@ def s2z(s,z0=50):
     .. [1] http://en.wikipedia.org/wiki/S-parameters
     .. [2] http://en.wikipedia.org/wiki/impedance_parameters
 
-    '''
+    """
     s = s.copy() # to prevent the original array from being altered
     s = fix_parameter_shape(s)
     nfreqs, nports, nports = s.shape
@@ -760,12 +760,12 @@ def s2z(s,z0=50):
     return z
 
 def s2y(s, z0=50):
-    '''
+    r"""
     convert scattering parameters [#]_ to admittance parameters [#]_
 
 
     .. math::
-        y = \\sqrt {y_0} \\cdot (I - s)(I + s)^{-1} \\cdot \\sqrt{y_0}
+        y = \sqrt {y_0} \cdot (I - s)(I + s)^{-1} \cdot \sqrt{y_0}
 
     Parameters
     ------------
@@ -802,7 +802,7 @@ def s2y(s, z0=50):
     ----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
-    '''
+    """
     s = s.copy() # to prevent the original array from being altered
     s = fix_parameter_shape(s)
     nfreqs, nports, nports = s.shape
@@ -817,7 +817,7 @@ def s2y(s, z0=50):
     return y
 
 def s2t(s):
-    '''
+    """
     Converts scattering parameters [#]_ to scattering transfer parameters [#]_ .
 
     transfer parameters are also referred to as
@@ -831,7 +831,7 @@ def s2t(s):
 
     Returns
     -------
-    t : numpy.ndarray
+    t : npy.ndarray
         scattering transfer parameters (aka wave cascading matrix)
 
     See Also
@@ -859,7 +859,7 @@ def s2t(s):
     -----------
     .. [#] http://en.wikipedia.org/wiki/S-parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
-    '''
+    """
     #TODO: check rank(s) ==2
     s = s.copy() # to prevent the original array from being altered
     s = fix_parameter_shape(s)
@@ -872,8 +872,8 @@ def s2t(s):
     return t
 
 def s2time(s,window =('kaiser',6),  normalize = True):
-    '''
-    '''
+    """
+    """
     s = s.copy() # to prevent the original array from being altered
     s = fix_parameter_shape(s)
     nfreqs, nports, nports = s.shape
@@ -893,11 +893,11 @@ def s2time(s,window =('kaiser',6),  normalize = True):
 
 
 def z2s(z, z0=50):
-    '''
+    r"""
     convert impedance parameters [1]_ to scattering parameters [2]_
 
     .. math::
-        s = (\\sqrt{y_0} \\cdot z \\cdot \\sqrt{y_0} - I)(\\sqrt{y_0} \\cdot z \\cdot\\sqrt{y_0} + I)^{-1}
+        s = (\sqrt{y_0} \cdot z \cdot \sqrt{y_0} - I)(\sqrt{y_0} \cdot z \cdot\sqrt{y_0} + I)^{-1}
 
     Parameters
     ------------
@@ -917,7 +917,7 @@ def z2s(z, z0=50):
     ----------
     .. [1] http://en.wikipedia.org/wiki/impedance_parameters
     .. [2] http://en.wikipedia.org/wiki/S-parameters
-    '''
+    """
     z = z.copy() # to prevent the original array from being altered
     z = fix_parameter_shape(z)
     nfreqs, nports, nports = z.shape
@@ -930,7 +930,7 @@ def z2s(z, z0=50):
     return s
 
 def z2y(z):
-    '''
+    r"""
     convert impedance parameters [#]_ to admittance parameters [#]_
 
 
@@ -970,13 +970,13 @@ def z2y(z):
     ----------
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
-    '''
+    """
     z = z.copy() # to prevent the original array from being altered
     z = fix_parameter_shape(z)
     return npy.array([npy.mat(z[f,:,:])**-1 for f in range(z.shape[0])])
 
 def z2t(z):
-    '''
+    """
     Not Implemented yet
 
     convert impedance parameters [#]_ to scattering transfer parameters [#]_
@@ -1016,16 +1016,16 @@ def z2t(z):
     ----------
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
-    '''
+    """
     raise (NotImplementedError)
 
 def y2s(y, z0=50):
-    '''
+    r"""
     convert admittance parameters [#]_ to scattering parameters [#]_
 
 
     .. math::
-        s = (I - \\sqrt{z_0} \\cdot y \\cdot \\sqrt{z_0})(I + \\sqrt{z_0} \\cdot y \\cdot \\sqrt{z_0})^{-1}
+        s = (I - \sqrt{z_0} \cdot y \cdot \sqrt{z_0})(I + \sqrt{z_0} \cdot y \cdot \sqrt{z_0})^{-1}
 
     Parameters
     ------------
@@ -1064,7 +1064,7 @@ def y2s(y, z0=50):
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/S-parameters
-    '''
+    """
     y = y.copy() # to prevent the original array from being altered
     y = fix_parameter_shape(y)
     nfreqs, nports, nports = y.shape
@@ -1077,7 +1077,7 @@ def y2s(y, z0=50):
     return s
 
 def y2z(y):
-    '''
+    """
     convert admittance parameters [#]_ to impedance parameters [#]_
 
 
@@ -1117,13 +1117,13 @@ def y2z(y):
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
-    '''
+    """
     y = y.copy() # to prevent the original array from being altered
     y = fix_parameter_shape(y)
     return npy.array([npy.mat(y[f,:,:])**-1 for f in range(y.shape[0])])
 
 def y2t(y):
-    '''
+    """
     Not Implemented Yet
 
     convert admittance parameters [#]_ to scattering-transfer parameters [#]_
@@ -1162,11 +1162,11 @@ def y2t(y):
     ----------
     .. [#] http://en.wikipedia.org/wiki/Admittance_parameters
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
-    '''
+    """
     raise (NotImplementedError)
 
 def t2s(t):
-    '''
+    """
     converts scattering transfer parameters [#]_ to scattering parameters [#]_
 
     transfer parameters are also referred to as
@@ -1208,7 +1208,7 @@ def t2s(t):
     -----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     .. [#] http://en.wikipedia.org/wiki/S-parameters
-    '''
+    """
     #TODO: check rank(s) ==2
     t = t.copy() # to prevent the original array from being altered
     t = fix_parameter_shape(t)
@@ -1221,7 +1221,7 @@ def t2s(t):
     return s
 
 def t2z(t):
-    '''
+    """
     Not Implemented  Yet
 
     Convert scattering transfer parameters [#]_ to impedance parameters [#]_
@@ -1261,11 +1261,11 @@ def t2z(t):
     ----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
     .. [#] http://en.wikipedia.org/wiki/impedance_parameters
-    '''
+    """
     raise (NotImplementedError)
 
 def t2y(t):
-    '''
+    """
     Not Implemented Yet
 
     Convert scattering transfer parameters to admittance parameters [#]_
@@ -1306,5 +1306,5 @@ def t2y(t):
     ----------
     .. [#] http://en.wikipedia.org/wiki/Scattering_transfer_parameters#Scattering_transfer_parameters
 
-    '''
+    """
     raise (NotImplementedError)

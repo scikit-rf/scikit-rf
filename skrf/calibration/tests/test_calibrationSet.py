@@ -10,24 +10,24 @@ from skrf.util import suppress_warning_decorator
 class CalsetTest(object):
     @suppress_warning_decorator("No switch terms")
     def test_run(self):
-        '''
+        """
         ensure cal_set can be generated
-        '''
+        """
         self.calset.run()
 
     @suppress_warning_decorator("No switch terms")
     def test_correct_ntwk(self):
-        '''
+        """
         ensure a network can be corrected
-        '''
+        """
         ntwk = self.wg.random(n_ports = self.n_ports)
         self.calset.apply_cal(ntwk)
 
 class DotOneport(unittest.TestCase,CalsetTest):
-    '''
+    """
     
 
-    '''
+    """
     def setUp(self):
         self.wg = rf.RectangularWaveguide(rf.F(75,100,11), a=100*rf.mil,z0=50)
         wg = self.wg

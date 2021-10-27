@@ -43,7 +43,7 @@ if TYPE_CHECKING:
 
 
 class RectangularWaveguide(Media):
-    """
+    r"""
     A single mode of a homogeneously filled rectangular waveguide.
 
     Parameters
@@ -79,7 +79,7 @@ class RectangularWaveguide(Media):
     roughness : number, or array-like
         surface roughness of the conductor walls in units of RMS
         deviation from surface
-    \\*args, \\*\\*kwargs : arguments, keyword arguments
+    \*args, \*\*kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`
 
@@ -165,12 +165,12 @@ class RectangularWaveguide(Media):
 
     @property
     def ep(self) -> NumberLike:
-        """
+        r"""
         The permittivity of the filling material.
 
         .. math:
 
-            \\varepsilon = \\varepsilon_r \\varepsilon_0
+            \varepsilon = \varepsilon_r \varepsilon_0
 
         Returns
         -------
@@ -181,12 +181,12 @@ class RectangularWaveguide(Media):
 
     @property
     def mu(self) -> NumberLike:
-        """
+        r"""
         The permeability of the filling material.
 
         .. math::
 
-            \\mu = \\mu_r \\mu_0
+            \mu = \mu_r \mu_0
 
         Returns
         -------
@@ -198,12 +198,12 @@ class RectangularWaveguide(Media):
 
     @property
     def k0(self) -> NumberLike:
-        """
+        r"""
         Characteristic wave number.
 
         .. math::
 
-            k_0 = \\frac{\\omega}{v} = \\omega \\sqrt{\\varepsilon_r \\mu_r}
+            k_0 = \frac{\omega}{v} = \omega \sqrt{\varepsilon_r \mu_r}
 
         Returns
         -------
@@ -214,14 +214,14 @@ class RectangularWaveguide(Media):
 
     @property
     def ky(self) -> NumberLike:
-        """
+        r"""
         Eigenvalue in the `b` direction.
 
         Defined as
 
         .. math::
 
-            k_y = n \\frac{\\pi}{b}
+            k_y = n \frac{\pi}{b}
 
         Returns
         -------
@@ -232,14 +232,14 @@ class RectangularWaveguide(Media):
 
     @property
     def kx(self) -> NumberLike:
-        """
+        r"""
         Eigenvalue in the 'a' direction.
 
         Defined as
 
         .. math::
 
-            k_x = m \\frac{\\pi}{a}
+            k_x = m \frac{\pi}{a}
 
         Returns
         -------
@@ -250,15 +250,15 @@ class RectangularWaveguide(Media):
 
     @property
     def kc(self) -> NumberLike:
-        """
+        r"""
         Cut-off wave number.
 
         Defined as
 
         .. math::
 
-            k_c = \\sqrt {k_x^2 + k_y^2} = \\sqrt {
-                {m \\frac{\\pi}{a}}^2 + {n \\frac{\\pi}{b}}^2}
+            k_c = \sqrt {k_x^2 + k_y^2} = \sqrt {
+                {m \frac{\pi}{a}}^2 + {n \frac{\pi}{b}}^2}
 
         Returns
         -------
@@ -270,15 +270,15 @@ class RectangularWaveguide(Media):
 
     @property
     def f_cutoff(self) -> NumberLike:
-        """
+        r"""
         cutoff frequency for this mode.
 
         .. math::
 
-            f_c = \\frac{v}{2 \\pi} \\sqrt {
-                {m \\frac{\pi}{a}}^2 + {n \\frac{\pi}{b}}^2}
+            f_c = \frac{v}{2 \pi} \sqrt {
+                {m \frac{\pi}{a}}^2 + {n \frac{\pi}{b}}^2}
 
-        where :math:`v= 1/\\sqrt{\\varepsilon \\mu}`.
+        where :math:`v= 1/\sqrt{\varepsilon \mu}`.
 
         """
         v = 1/sqrt(self.ep*self.mu)
@@ -326,12 +326,12 @@ class RectangularWaveguide(Media):
 
     @property
     def lambda_guide(self) -> NumberLike:
-        """
+        r"""
         Guide wavelength.
 
         .. math::
 
-            \\lambda_g = \\frac{2\\pi}{\\beta}
+            \lambda_g = \frac{2\pi}{\beta}
 
         The distance in which the phase of the field increases by 2 pi.
 
@@ -343,14 +343,14 @@ class RectangularWaveguide(Media):
 
     @property
     def lambda_cutoff(self) -> NumberLike:
-        """
+        r"""
         Cutoff wavelength.
 
         .. math::
 
-            \\lambda_c = v/f_c
+            \lambda_c = v/f_c
 
-        where :math:`v= 1/\\sqrt{\\varepsilon \\mu}` and :math:`f_c` the cut-off frequency.
+        where :math:`v= 1/\sqrt{\varepsilon \mu}` and :math:`f_c` the cut-off frequency.
 
         See Also
         --------
@@ -361,14 +361,14 @@ class RectangularWaveguide(Media):
 
     @property
     def gamma(self) -> NumberLike:
-        """
+        r"""
         The propagation constant (aka Longitudinal wave number).
 
         Defined as
 
         .. math::
 
-            k_z = \\pm j \\sqrt {k_0^2 - k_c^2}
+            k_z = \pm j \sqrt {k_0^2 - k_c^2}
 
         This is:
 
@@ -405,7 +405,7 @@ class RectangularWaveguide(Media):
 
     @property
     def alpha_c(self) -> NumberLike:
-        """
+        r"""
         Loss due to finite conductivity and roughness of sidewalls.
 
         In units of np/m
@@ -418,18 +418,18 @@ class RectangularWaveguide(Media):
 
         .. math::
 
-            \\sigma_c = \\frac{\\sigma}{k_w^2}
+            \sigma_c = \frac{\sigma}{k_w^2}
 
 
         where
 
         .. math::
 
-            k_w = 1 + e^{(-\\delta/2h)^{1.6}}
+            k_w = 1 + e^{(-\delta/2h)^{1.6}}
 
-            \\delta = \\mbox{skin depth}
+            \delta = \mbox{skin depth}
 
-            h = \\mbox{surface roughness }
+            h = \mbox{surface roughness }
 
 
         This is taken from Ansoft HFSS help documents.

@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     
 
 class CircularWaveguide(Media):
-    """
+    r"""
     A single mode of a homogeneously filled Circular Waveguide
         
     Represents a single mode of a homogeneously filled circular
@@ -70,7 +70,7 @@ class CircularWaveguide(Media):
         must be same length as frequency. if str, it must be a key in
         `skrf.data.materials`.
     
-    \\*args, \\*\\*kwargs : arguments, keyword arguments
+    \*args, \*\*kwargs : arguments, keyword arguments
         passed to :class:`~skrf.media.media.Media`'s constructor
         (:func:`~skrf.media.media.Media.__init__`
 
@@ -125,7 +125,7 @@ class CircularWaveguide(Media):
     def from_Z0(cls, frequency: 'Frequency', Z0: NumberLike,
                 f: NumberLike, ep_r: NumberLike = 1, mu_r: NumberLike = 1, 
                 **kwargs):
-        """
+        r"""
         Initialize from specified impedance at a given frequency, assuming the 
         fundamental TE11 mode.
         
@@ -141,7 +141,7 @@ class CircularWaveguide(Media):
             filling material's relative permittivity
         mu_r : number, array-like
             filling material's relative permeability
-        \\*\\*kwargs : arguments, keyword arguments
+        \*\*kwargs : arguments, keyword arguments
             passed to :class:`~skrf.media.media.Media`'s constructor
             (:func:`~skrf.media.media.Media.__init__`            
         """
@@ -184,12 +184,12 @@ class CircularWaveguide(Media):
 
     @property
     def k0(self) -> NumberLike:
-        """
+        r"""
         Characteristic wave number.
         
         .. math::
             
-            k_0 = \\omega \\sqrt{\\varepsilon \\mu}
+            k_0 = \omega \sqrt{\varepsilon \mu}
 
         Returns
         -------
@@ -200,14 +200,14 @@ class CircularWaveguide(Media):
     
     @property
     def kc(self) -> NumberLike:
-        """
+        r"""
         Cut-off wave number.
 
         Defined as
 
         .. math::
 
-                k_c = \\frac{u_{mn}}{R}
+                k_c = \frac{u_{mn}}{R}
 
         where R is the radius of the waveguide, and u_mn is:
 
@@ -227,12 +227,12 @@ class CircularWaveguide(Media):
 
     @property
     def f_cutoff(self) -> NumberLike:
-        """
+        r"""
         cutoff frequency for this mode
 
         .. math::
 
-            f_c = \\frac{v}{2 \\pi} \\frac{u_{mn}}{R}
+            f_c = \frac{v}{2 \pi} \frac{u_{mn}}{R}
 
         where R is the radius of the waveguide, and u_mn is:
 
@@ -286,12 +286,12 @@ class CircularWaveguide(Media):
 
     @property
     def lambda_guide(self) -> NumberLike:
-        """
+        r"""
         Guide wavelength.
         
         .. math::
             
-            \\lambda_g = 2\\pi/\\beta
+            \lambda_g = 2\pi/\beta
 
         the distance in which the phase of the field increases by 2 pi.
         """
@@ -299,12 +299,12 @@ class CircularWaveguide(Media):
 
     @property
     def lambda_cutoff(self) -> NumberLike:
-        """
+        r"""
         Cutoff wavelength.
 
         .. math::
 
-            \\lambda_c = v/f_c
+            \lambda_c = v/f_c
 
         where v= 1/sqrt(ep*mu)
         """
@@ -313,14 +313,14 @@ class CircularWaveguide(Media):
 
     @property
     def gamma(self) -> NumberLike:
-        """
+        r"""
         The propagation constant (aka Longitudinal wave number)
 
         Defined as
 
         .. math::
 
-                k_z = \\pm j \\sqrt {k_0^2 - k_c^2}
+                k_z = \pm j \sqrt {k_0^2 - k_c^2}
 
         This is:
 

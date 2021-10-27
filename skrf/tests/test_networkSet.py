@@ -5,14 +5,14 @@ import skrf as rf
 
 
 class NetworkSetTestCase(unittest.TestCase):
-    '''
+    """
     NetworkSet class operation test case.
-    '''
+    """
 
     def setUp(self):
-        '''
+        """
         Initialize tests.
-        '''
+        """
         # Touchstone files
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))

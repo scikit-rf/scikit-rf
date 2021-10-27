@@ -25,7 +25,7 @@ from .media import Media
 
 
 class DefinedAEpTandZ0(Media):
-    """
+    r"""
     Transmission line medium defined by A, Ep, Tand and Z0.
 
     This medium is defined by attenuation `A`, relative permittivity `Ep_r`,
@@ -48,36 +48,36 @@ class DefinedAEpTandZ0(Media):
 
         .. math::
 
-            A(f) = A\\sqrt{\\frac{f}{f_A}}
+            A(f) = A\sqrt{\frac{f}{f_A}}
 
     f_A : number, default 1.0
         Frequency scaling in Hz for the attenuation. See A.
     ep_r : number, array-like, default 1.0
         Real part of the relative permittivity of the dielectric:
-        :math:`\\epsilon_r'=\\Re[\\epsilon]`.
+        :math:`\epsilon_r'=\Re[\epsilon]`.
 
         If `model='frequencyinvariant'`, the complex relative permittivity is:
 
         .. math::
 
-            \\epsilon_r(f) = \\epsilon'_r + j \\cdot \\epsilon'_r \\cdot \\tan\\delta
+            \epsilon_r(f) = \epsilon'_r + j \cdot \epsilon'_r \cdot \tan\delta
 
         if `model='djordjevicsvensson'`, the complex relative permittivity is:
 
         .. math::
 
-            \\epsilon_r(f) = \\epsilon_\\inf + m \\cdot \\ln{\\frac{f_{high} + j f_\\epsilon}{f_{low} + j f_\\epsilon}}
+            \epsilon_r(f) = \epsilon_\inf + m \cdot \ln{\frac{f_{high} + j f_\epsilon}{f_{low} + j f_\epsilon}}
 
-        where :math:`\\epsilon_\\inf` is the permittivity value when frequency approaches infinity.
-        In this case, the value of :math:`\\epsilon_r` and :math:`\\tan\\delta` (tanD)
-        are given for frequency :math:`f_\\epsilon`:
+        where :math:`\epsilon_\inf` is the permittivity value when frequency approaches infinity.
+        In this case, the value of :math:`\epsilon_r` and :math:`\tan\delta` (tanD)
+        are given for frequency :math:`f_\epsilon`:
 
         .. math::
 
-            \\epsilon_r(f_\\epsilon) = \\epsilon'_r+ j \\cdot \\epsilon'_r \\cdot \\tan\\delta
+            \epsilon_r(f_\epsilon) = \epsilon'_r+ j \cdot \epsilon'_r \cdot \tan\delta
 
     tanD : number, array-like, default 0.0
-        Dielectric relative permittivity loss tangent :math:`\\tan\\delta`. See `ep_r`.
+        Dielectric relative permittivity loss tangent :math:`\tan\delta`. See `ep_r`.
     Z0 : number, array-like, default 50.0
         Quasi-static characteristic impedance of the medium.
     f_low : number, default 1e3, optional
@@ -92,7 +92,7 @@ class DefinedAEpTandZ0(Media):
     model : string, 'frequencyinvariant' or 'djordjevicsvensson', optional
         Use Djirdjevic/Svennson wideband Debye dispersion model or not.
         Default is frequency invariant behaviour.
-    \\*args, \\*\\*kwargs : arguments and keyword arguments
+    \*args, \*\*kwargs : arguments and keyword arguments
 
 
     Examples

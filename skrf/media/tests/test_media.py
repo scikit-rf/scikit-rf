@@ -23,8 +23,8 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
             )
 
     def test_impedance_mismatch(self):
-        '''
-        '''
+        """
+        """
         fname = os.path.join(self.files_dir,\
                 'impedanceMismatch,50to25.s2p')
         qucs_ntwk = Network(fname)
@@ -35,8 +35,8 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.assertEqual(qucs_ntwk, skrf_ntwk)
 
     def test_resistor(self):
-        '''
-        '''
+        """
+        """
         fname = os.path.join(self.files_dir,\
                 'resistor,1ohm.s2p')
         qucs_ntwk = Network(fname)
@@ -45,8 +45,8 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
         self.assertEqual(qucs_ntwk, skrf_ntwk)
 
     def test_capacitor(self):
-        '''
-        '''
+        """
+        """
         fname = os.path.join(self.files_dir,\
                 'capacitor,p01pF.s2p')
         qucs_ntwk = Network(fname)
@@ -56,8 +56,8 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
 
 
     def test_inductor(self):
-        '''
-        '''
+        """
+        """
         fname = os.path.join(self.files_dir,\
                 'inductor,p1nH.s2p')
         qucs_ntwk = Network(fname)
@@ -67,10 +67,10 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
 
 
     def test_scalar_gamma_z0_media(self):
-        '''
+        """
         test ability to create a Media from scalar quantities for gamma/z0
         and change frequency resolution
-        '''
+        """
         a = DefinedGammaZ0 (Frequency(1,10,101),gamma=1j,z0 = 50)
         self.assertEqual(a.line(1),a.line(1))
 
@@ -82,9 +82,9 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
 
 
     def test_vector_gamma_z0_media(self):
-        '''
+        """
         test ability to create a Media from vector quantities for gamma/z0
-        '''
+        """
         freq = Frequency(1,10,101)
         a = DefinedGammaZ0(freq,
                            gamma = 1j*npy.ones(len(freq)) ,
@@ -113,9 +113,9 @@ class DefinedGammaZ0TestCase(unittest.TestCase):
 
 
 class STwoPortsNetworkTestCase(unittest.TestCase):
-    '''
+    """
     Check that S parameters of media base elements versus theoretical results.
-    '''
+    """
     def setUp(self):
         self.dummy_media = DefinedGammaZ0(
             frequency=Frequency(1, 100, 21, 'GHz'),
@@ -124,7 +124,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
             )
 
     def test_s_series_element(self):
-        '''
+        """
         Series elements of impedance Z:
 
         ○---[Z]---○
@@ -134,7 +134,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         have S matrix of the form:
         [ Z/Z0 / (Z/Z0 + 2)     2/(Z/Z0 + 2) ]
         [ 2/(Z/Z0 + 2)          Z/Z0 / (Z/Z0 + 2) ]
-        '''
+        """
         R = 1.0  # Ohm
         ntw = self.dummy_media.resistor(R)
         Z0 = self.dummy_media.z0
@@ -146,7 +146,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
 
     def test_s_shunt_element(self):
-        '''
+        """
         Shunt elements of admittance Y:
 
         ○---------○
@@ -158,7 +158,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         have S matrix of the form:
         [ -Y Z0 / (Y Z0 + 2)     2/(Y Z0 + 2) ]
         [ 2/(Y Z0 + 2)          Z/Z0 / (Y Z0 + 2) ]
-        '''
+        """
         R = 1.0  # Ohm
         ntw = self.dummy_media.shunt(self.dummy_media.resistor(R)**self.dummy_media.short())
         Z0 = self.dummy_media.z0
@@ -170,7 +170,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
 
     def test_s_lossless_line(self):
-        '''
+        """
         Lossless transmission line of characteristic impedance z1, length l
         and wavenumber beta
               _______
@@ -178,7 +178,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
           z0     z1    z0
         ○-----_______-----○
 
-        '''
+        """
         l = 5.0
         z1 = 30.0
         z0 = self.dummy_media.z0
@@ -199,7 +199,7 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.s[:,1,1], S11)
 
     def test_s_lossy_line(self):
-        '''
+        """
         Lossy transmission line of characteristic impedance Z0, length l
         and propagation constant gamma = alpha + j beta
 
@@ -211,14 +211,14 @@ class STwoPortsNetworkTestCase(unittest.TestCase):
 
         [ cosh(gamma l)       Z0 sinh(gamma l) ]
         [ 1/Z0 sinh(gamma l)  cosh(gamma l) ]
-        '''
+        """
 
 
 class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
-    '''
+    """
     Check that ABCD parameters of media base elements (such as lumped elements)
     versus theoretical results.
-    '''
+    """
     def setUp(self):
         self.dummy_media = DefinedGammaZ0(
             frequency=Frequency(1, 100, 21,'GHz'),
@@ -227,7 +227,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
             )
 
     def test_abcd_series_element(self):
-        '''
+        """
         Series elements of impedance Z:
 
         ○---[Z]---○
@@ -237,7 +237,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         have ABCD matrix of the form:
         [ 1  Z ]
         [ 0  1 ]
-        '''
+        """
         R = 1.0  # Ohm
         ntw = self.dummy_media.resistor(R)
         npy.testing.assert_array_almost_equal(ntw.a[:,0,0], 1.0)
@@ -246,7 +246,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_shunt_element(self):
-        '''
+        """
         Shunt elements of admittance Y:
 
         ○---------○
@@ -258,7 +258,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         have ABCD matrix of the form:
         [ 1  0 ]
         [ Y  1 ]
-        '''
+        """
         R = 1.0  # Ohm
         ntw = self.dummy_media.shunt(self.dummy_media.resistor(R)**self.dummy_media.short())
         npy.testing.assert_array_almost_equal(ntw.a[:,0,0], 1.0)
@@ -267,7 +267,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_series_shunt_elements(self):
-        '''
+        """
         Series and Shunt elements of impedance Zs and Zp:
 
         ○---[Zs]--------○
@@ -278,7 +278,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         have ABCD matrix of the form:
         [ 1 + Zs/Zp    Zs ]
         [ 1/Zp          1 ]
-        '''
+        """
         Rs = 2.0
         Rp = 3.0
         serie_resistor = self.dummy_media.resistor(Rs)
@@ -292,11 +292,11 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_thru(self):
-        '''
+        """
         Thru has ABCD matrix of the form:
         [ 1  0 ]
         [ 0  1 ]
-        '''
+        """
         ntw = self.dummy_media.thru()
         npy.testing.assert_array_almost_equal(ntw.a[:,0,0], 1.0)
         npy.testing.assert_array_almost_equal(ntw.a[:,0,1], 0.0)
@@ -304,7 +304,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.a[:,1,1], 1.0)
 
     def test_abcd_lossless_line(self):
-        '''
+        """
         Lossless transmission line of characteristic impedance Z0, length l
         and wavenumber beta
 
@@ -316,7 +316,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
 
         [ cos(beta l)       j Z0 sin(beta l) ]
         [ j/Z0 sin(beta l)  cos(beta l) ]
-        '''
+        """
         l = 5
         z0 = 80
         ntw = self.dummy_media.line(d=l, unit='m', z0=z0)
@@ -327,7 +327,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(ntw.a[:,1,1], npy.cos(beta*l))
 
     def test_abcd_lossy_line(self):
-        '''
+        """
         Lossy transmission line of characteristic impedance Z0, length l
         and propagation constant gamma = alpha + j beta
 
@@ -339,7 +339,7 @@ class ABCDTwoPortsNetworkTestCase(unittest.TestCase):
 
         [ cosh(gamma l)       Z0 sinh(gamma l) ]
         [ 1/Z0 sinh(gamma l)  cosh(gamma l) ]
-        '''
+        """
         l = 5.0
         z0 = 30.0
         alpha = 0.5

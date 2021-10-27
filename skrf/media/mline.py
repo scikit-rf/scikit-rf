@@ -1,6 +1,6 @@
 
 
-'''
+"""
 MLine (:mod:`skrf.media.MLine`)
 ========================================
 
@@ -9,7 +9,7 @@ MLine (:mod:`skrf.media.MLine`)
 
    MLine
 
-'''
+"""
 import numpy as npy
 from numpy import log, tanh, sqrt, exp, real, imag, cosh, \
                             ones, zeros, arctan
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 
 
 class MLine(Media):
-    '''
+    """
     Microstripline class
 
     This class was made from the technical documentation [#]_ provided
@@ -108,7 +108,7 @@ class MLine(Media):
     .. [#] Djordjevic, R.M. Biljic, V.D. Likar-Smiljanic, T.K. Sarkar,
         Wideband frequency-domain characterization of FR-4 and time-domain causality,
         IEEE Trans. on EMC, vol. 43, N4, 2001, p. 662-667.
-    '''
+    """
     def __init__(self, frequency: Union['Frequency', None] = None,
                  z0: Union[NumberLike, None] = None,
                  w: NumberLike = 3, h: NumberLike = 1.6,
@@ -142,9 +142,9 @@ class MLine(Media):
 
     @property
     def delta_w1(self) -> NumberLike:
-        '''
+        """
         Intermediary parameter. see qucs docs on microstrip lines.
-        '''
+        """
         w, h, t = self.w, self.h, self.t
         if t > 0.:
             # Qucs formula 11.22 is wrong, normalized w has to be used instead (see Hammerstad and Jensen Article)
@@ -154,9 +154,9 @@ class MLine(Media):
 
     @property
     def delta_wr(self) -> NumberLike:
-        '''
+        """
         Intermediary parameter. see qucs docs on microstrip lines.
-        '''
+        """
         delta_w1, ep_r = self.delta_w1, real(self.ep_r_f)
         if self.t > 0.:
             return delta_w1/2 * (1+1/cosh(sqrt(ep_r-1)))
@@ -165,9 +165,9 @@ class MLine(Media):
 
     @property
     def ep_r_f(self) -> NumberLike:
-        '''
+        """
         Frequency dependent relative permittivity of dielectric.
-        '''
+        """
         ep_r, tand  = self.ep_r, self.tand
         f_low, f_high, f_epr_tand = self.f_low, self.f_high, self.f_epr_tand
         f = self.frequency.f
@@ -184,18 +184,18 @@ class MLine(Media):
 
     @property
     def tand_f(self) -> NumberLike:
-        '''
+        """
         Frequency dependent dielectric loss tangent.
-        '''
+        """
         ep_r = self.ep_r_f
         return -imag(ep_r) / real(ep_r)
 
     @property
     def ep_reff(self) -> NumberLike:
-        '''
+        """
         Quasistatic effective relative permittivity of dielectric,
         accounting for the filling factor between air and substrate.
-        '''
+        """
         h, ep_r  = self.h, self.ep_r_f
         w1 = self.w + self.delta_w1
         wr = self.w + self.delta_wr
@@ -203,19 +203,19 @@ class MLine(Media):
 
     @property
     def G(self) -> NumberLike:
-        '''
+        """
         intermediary parameter. see qucs docs on microstrip lines.
-        '''
+        """
         ep_r, ep_reff, ZL = self.ep_r_f, self.ep_reff, self.Z0
         ZF0 = npy.sqrt(mu_0/epsilon_0)
         return (pi**2)/12 * (ep_r-1)/ep_reff * sqrt(2*pi*ZL/ZF0)
 
     @property
     def ep_reff_f(self) -> NumberLike:
-        '''
+        """
         Frequency dependent effective relative permittivity of dielectric,
         accounting for microstripline dispersion.
-        '''
+        """
         ep_r, ep_reff  = self.ep_r_f, self.ep_reff
         w, h = self.w + self.delta_wr, self.h
         f = self.frequency.f
@@ -252,18 +252,18 @@ class MLine(Media):
 
     @property
     def Z0(self) -> NumberLike:
-        '''
+        """
         Quasistatic characteristic impedance.
-        '''
+        """
         h, ep_reff = self.h, real(self.ep_reff)
         wr = self.w + self.delta_wr
         return ZL1(wr, h)/sqrt(ep_reff)
 
     @property
     def Z0_f(self) -> NumberLike:
-        '''
+        """
         Frequency dependent characteristic impedance.
-        '''
+        """
         ZL, ep_reff, ep_reff_f = self.Z0, real(self. ep_reff), real(self.ep_reff_f)
         wr, h = self.w + self.delta_wr, self.h
         if self.disp == 'hammerstadjensen':
@@ -301,7 +301,7 @@ class MLine(Media):
 
     @property
     def alpha_conductor(self) -> NumberLike:
-        '''
+        """
         Losses due to conductor resistivity.
 
         Returns
@@ -311,7 +311,7 @@ class MLine(Media):
         See Also
         --------
         surface_resistivity : calculates surface resistivity
-        '''
+        """
         if self.rho is None or self.t is None:
             raise(AttributeError('must provide values conductivity to calculate this. see initializer help'))
         else:
@@ -327,25 +327,25 @@ class MLine(Media):
 
     @property
     def alpha_dielectric(self) -> NumberLike:
-        '''
+        """
         Losses due to dielectric.
 
-        '''
+        """
         ep_r, ep_reff, tand = real(self.ep_r_f), real(self.ep_reff), self.tand_f
         f = self.frequency.f
         return pi*f/c * ep_r/sqrt(ep_reff) * (ep_reff-1)/(ep_r-1) * tand
 
     @property
     def beta_phase(self):
-        '''
+        """
         Phase parameter.
-        '''
+        """
         ep_reff, f = real(self.ep_reff_f), self.frequency.f
         return 2*pi*f*sqrt(ep_reff)/c
 
     @property
     def gamma(self):
-        '''
+        """
         Propagation constant.
 
         See Also
@@ -353,7 +353,7 @@ class MLine(Media):
         alpha_conductor : calculates losses to conductor
         alpha_dielectric: calculates losses to dielectric
         beta            : calculates phase parameter
-        '''
+        """
         f = self.frequency.f
         alpha = zeros(len(f))
         beta  = zeros(len(f))
@@ -364,34 +364,34 @@ class MLine(Media):
         return alpha + 1j*beta
 
 def a(u: NumberLike) -> NumberLike:
-    '''
+    """
     Intermediary parameter. see qucs docs on microstrip lines.
-    '''
+    """
     return 1. + 1./49.*log((u**4+(u/52)**2)/(u**4+0.432)) + 1./18.7*log(1+(u/18.1)**3)
 
 def b(ep_r: NumberLike) -> NumberLike:
-    '''
+    """
     intermediary parameter. see qucs docs on microstrip lines.
-    '''
+    """
     return 0.564 * ((ep_r-0.9)/(ep_r+3.))**0.053
 
 def f(u: NumberLike) -> NumberLike:
-    '''
+    """
     intermediary parameter. see qucs docs on microstrip lines.
-    '''
+    """
     return 6 + (2*pi-6)*exp(-(30.666/u)**0.7528)
 
 def ZL1(w: NumberLike, h: NumberLike) -> NumberLike:
-    '''
+    """
     intermediary parameter. see qucs docs on microstrip lines.
-    '''
+    """
     u = w/h
     ZF0 = sqrt(mu_0/epsilon_0)
     return ZF0/(2*pi)*log(f(u)/u + sqrt(1.+(2./u)**2))
 
 def ep_re(w: NumberLike, h: NumberLike, ep_r: NumberLike) -> NumberLike:
-    '''
+    """
     intermediary parameter. see qucs docs on microstrip lines.
-    '''
+    """
     u = w/h
     return (ep_r+1)/2 + (ep_r-1)/2 * (1.+10./u)**(-a(u)*b(ep_r))

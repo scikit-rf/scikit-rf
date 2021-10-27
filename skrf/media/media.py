@@ -85,7 +85,7 @@ class Media(ABC):
         self.z0 = z0
 
     def mode(self,  **kw) -> 'Media':
-        """
+        r"""
         Create another mode in this medium.
 
         Convenient way to return a copy this Media object
@@ -93,12 +93,12 @@ class Media(ABC):
 
         Parameters
         ----------
-        \\*\\*kwargs : keyword arguments passed to the copy
+        \*\*kwargs : keyword arguments passed to the copy
 
         Returns
         -------
         copy : :class:`Media`
-            A copy of this Media object with \\*\\*kwargs attribute
+            A copy of this Media object with \*\*kwargs attribute
         """
         out = copy(self)
         for k in kw:
@@ -177,10 +177,10 @@ class Media(ABC):
     @property
     @abstractmethod
     def gamma(self):
-        """
+        r"""
         Propagation constant.
 
-        In skrf, defined as :math:`\\gamma = \\alpha + j \\beta`.
+        In skrf, defined as :math:`\gamma = \alpha + j \beta`.
 
         Returns
         -------
@@ -227,11 +227,11 @@ class Media(ABC):
 
     @property
     def v_p(self) -> npy.ndarray:
-        """
+        r"""
         Complex phase velocity (in m/s).
 
         .. math::
-            j \cdot \\omega / \\gamma
+            j \cdot \omega / \gamma
 
         Note
         ----
@@ -240,8 +240,8 @@ class Media(ABC):
 
         where:
 
-        * :math:`\\omega` is angular frequency (rad/s),
-        * :math:`\\gamma` is complex propagation constant (rad/m)
+        * :math:`\omega` is angular frequency (rad/s),
+        * :math:`\gamma` is complex propagation constant (rad/m)
 
         Returns
         -------
@@ -258,22 +258,22 @@ class Media(ABC):
 
     @property
     def v_g(self):
-        """
+        r"""
         Complex group velocity (in m/s).
 
         .. math::
-            j \cdot d \\omega / d \\gamma
+            j \cdot d \omega / d \gamma
 
 
         where:
 
-        * :math:`\\omega` is angular frequency (rad/s),
-        * :math:`\\gamma` is complex propagation constant (rad/m)
+        * :math:`\omega` is angular frequency (rad/s),
+        * :math:`\gamma` is complex propagation constant (rad/m)
 
         Note
         ----
         the `j` is used to make propagation real, this is needed because
-        skrf defined the gamma as :math:`\\gamma= \\alpha +j\\beta`.
+        skrf defined the gamma as :math:`\gamma= \alpha +j\beta`.
 
         Returns
         -------
@@ -307,10 +307,10 @@ class Media(ABC):
 
     ## Other Functions
     def theta_2_d(self, theta: NumberLike, deg:bool = True, bc: bool = True) -> NumberLike:
-        """
+        r"""
         Convert electrical length to physical distance.
 
-        The electrical length is given by :math:`d=\\theta/\\beta`.
+        The electrical length is given by :math:`d=\theta/\beta`.
 
         The given electrical length can be given either at the center frequency
         or on the entire band depending of the parameter `bc`.
@@ -342,10 +342,10 @@ class Media(ABC):
                 return 1.0*theta/npy.imag(gamma)
 
     def electrical_length(self, d: NumberLike, deg: bool = False) -> NumberLike:
-        """
+        r"""
         Calculate the complex electrical length for a given distance.
 
-        Electrical length is given by :math:`\\theta=\\gamma d`.
+        Electrical length is given by :math:`\theta=\gamma d`.
 
         Parameters
         ----------
@@ -373,8 +373,8 @@ class Media(ABC):
     # lumped elements
     def match(self, nports: int = 1, z0: Union[NumberLike, None] = None,
               z0_norm: bool = False, **kwargs) -> Network:
-        """
-        Perfect matched load (:math:`\\Gamma_0 = 0`).
+        r"""
+        Perfect matched load (:math:`\Gamma_0 = 0`).
 
         Parameters
         ----------
@@ -387,7 +387,7 @@ class Media(ABC):
             :attr:`~skrf.network.Network.z0`.
         z0_norm : bool
             is z0 normalized to this media's `z0`?
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :class:`~skrf.network.Network` initializer
 
         Returns
@@ -416,7 +416,7 @@ class Media(ABC):
         return result
 
     def load(self, Gamma0: NumberLike, nports: int = 1, **kwargs) -> Network:
-        """
+        r"""
         Load of given reflection coefficient.
 
         Parameters
@@ -427,7 +427,7 @@ class Media(ABC):
             points in media, and n is `nports`
         nports : int
             number of ports
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -453,14 +453,14 @@ class Media(ABC):
         return result
 
     def short(self, nports: int = 1, **kwargs) -> Network:
-        """
-        Short (:math:`\\Gamma_0 = -1`)
+        r"""
+        Short (:math:`\Gamma_0 = -1`)
 
         Parameters
         ----------
         nports : int
             number of ports
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -478,14 +478,14 @@ class Media(ABC):
         return self.load(-1., nports, **kwargs)
 
     def open(self, nports: int = 1, **kwargs) -> Network:
-        """
-        Open (:math:`\\Gamma_0 = 1`).
+        r"""
+        Open (:math:`\Gamma_0 = 1`).
 
         Parameters
         ----------
         nports : int
             number of ports
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -504,7 +504,7 @@ class Media(ABC):
         return self.load(1., nports, **kwargs)
 
     def resistor(self, R: NumberLike, *args, **kwargs) -> Network:
-        """
+        r"""
         Resistor.
 
         Parameters
@@ -512,7 +512,7 @@ class Media(ABC):
         R : number, array
             Resistance , in Ohms. If this is an array, must be of
             same length as frequency vector.
-        \\*args, \\*\\*kwargs : arguments, key word arguments
+        \*args, \*\*kwargs : arguments, key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -539,7 +539,7 @@ class Media(ABC):
         return result
 
     def capacitor(self, C: NumberLike, **kwargs) -> Network:
-        """
+        r"""
         Capacitor.
 
         Parameters
@@ -547,7 +547,7 @@ class Media(ABC):
         C : number, array
             Capacitance, in Farads. If this is an array, must be of
             same length as frequency vector.
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -575,7 +575,7 @@ class Media(ABC):
         return result
 
     def inductor(self, L: NumberLike, **kwargs) -> Network:
-        """
+        r"""
         Inductor.
 
         Parameters
@@ -583,7 +583,7 @@ class Media(ABC):
         L : number, array
             Inductance, in Henrys. If this is an array, must be of
             same length as frequency vector.
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -611,7 +611,7 @@ class Media(ABC):
         return result
 
     def impedance_mismatch(self, z1: NumberLike, z2: NumberLike, **kwargs) -> Network:
-        """
+        r"""
         Two-port network for an impedance mismatch.
 
         Parameters
@@ -620,7 +620,7 @@ class Media(ABC):
             complex impedance of port 1
         z2 : number, or array-like
             complex impedance of port 2
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -655,12 +655,12 @@ class Media(ABC):
 
     # splitter/couplers
     def tee(self, **kwargs) -> Network:
-        """
+        r"""
         Ideal, lossless tee. (3-port splitter).
 
         Parameters
         ----------
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -677,14 +677,14 @@ class Media(ABC):
         return self.splitter(3,**kwargs)
 
     def splitter(self, nports,**kwargs) -> Network:
-        """
+        r"""
         Ideal, lossless n-way splitter.
 
         Parameters
         ----------
         nports : int
                 number of ports
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
                 passed to :func:`match`, which is called initially to create a
                 'blank' network.
 
@@ -756,12 +756,12 @@ class Media(ABC):
             return to_meters(d=d,unit=unit, v_g=v_g)
 
     def thru(self, **kwargs) -> Network:
-        """
+        r"""
         Matched transmission line of length 0.
 
         Parameters
         ----------
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -779,7 +779,7 @@ class Media(ABC):
 
     def line(self, d: NumberLike, unit: str = 'deg',
              z0: Union[NumberLike, str, None] = None, embed: bool = False, **kwargs) -> Network:
-        """
+        r"""
         Transmission line of a given length and impedance.
 
         The units of `length` are interpreted according to the value
@@ -801,7 +801,7 @@ class Media(ABC):
             if `Z0` is given, should the line be embedded in z0
             environment? or left in a `z` environment. if embedded,
             there will be reflections
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -837,7 +837,7 @@ class Media(ABC):
 
 
     def delay_load(self, Gamma0: NumberLike, d: Number, unit: str = 'deg', **kwargs) -> Network:
-        """
+        r"""
         Delayed load.
 
         A load with reflection coefficient `Gamma0` at the end of a
@@ -851,7 +851,7 @@ class Media(ABC):
             the length of transmission line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -881,7 +881,7 @@ class Media(ABC):
                 self.load(Gamma0=Gamma0,**kwargs)
 
     def delay_short(self, d: Number, unit: str = 'deg', **kwargs) -> Network:
-        """
+        r"""
         Delayed Short.
 
         A transmission line of given length terminated with a short.
@@ -892,7 +892,7 @@ class Media(ABC):
             the length of transmission line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -909,7 +909,7 @@ class Media(ABC):
         return self.delay_load(Gamma0=-1., d=d, unit=unit, **kwargs)
 
     def delay_open(self, d: Number, unit: str = 'deg', **kwargs) -> Network:
-        """
+        r"""
         Delayed open transmission line.
 
         Parameters
@@ -918,7 +918,7 @@ class Media(ABC):
             the length of transmission line (see unit argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
             the units of d.  See :func:`to_meters`, for details
-        \\*\\*kwargs : key word arguments
+        \*\*kwargs : key word arguments
             passed to :func:`match`, which is called initially to create a
             'blank' network.
 
@@ -935,7 +935,7 @@ class Media(ABC):
         return self.delay_load(Gamma0=1., d=d, unit=unit,**kwargs)
 
     def shunt(self, ntwk: Network, **kwargs) -> Network:
-        """
+        r"""
         Shunts a :class:`~skrf.network.Network`.
 
         This creates a :func:`tee` and connects
@@ -944,7 +944,7 @@ class Media(ABC):
         Parameters
         ----------
         ntwk : :class:`~skrf.network.Network` object
-        \\*\\*kwargs : keyword arguments
+        \*\*kwargs : keyword arguments
             passed to :func:`tee`
 
         Returns
@@ -964,12 +964,12 @@ class Media(ABC):
         return connect(self.tee(**kwargs),1,ntwk,0)
 
     def shunt_delay_load(self, *args, **kwargs) -> Network:
-        """
+        r"""
         Shunted delayed load.
 
         Parameters
         ----------
-        \\*args,\\*\\*kwargs : arguments, keyword arguments
+        \*args,\*\*kwargs : arguments, keyword arguments
             passed to func:`delay_load`
 
         Returns
@@ -994,12 +994,12 @@ class Media(ABC):
         return self.shunt(self.delay_load(*args, **kwargs))
 
     def shunt_delay_open(self,*args,**kwargs) -> Network:
-        """
+        r"""
         Shunted delayed open.
 
         Parameters
         ----------
-        \\*args,\\*\\*kwargs : arguments, keyword arguments
+        \*args,\*\*kwargs : arguments, keyword arguments
             passed to func:`delay_open`
 
         Returns
@@ -1024,12 +1024,12 @@ class Media(ABC):
         return self.shunt(self.delay_open(*args, **kwargs))
 
     def shunt_delay_short(self, *args, **kwargs) -> Network:
-        """
+        r"""
         Shunted delayed short.
 
         Parameters
         ----------
-        \\*args,\\*\\*kwargs : arguments, keyword arguments
+        \*args,\*\*kwargs : arguments, keyword arguments
                 passed to func:`delay_open`
 
         Returns
@@ -1054,14 +1054,14 @@ class Media(ABC):
         return self.shunt(self.delay_short(*args, **kwargs))
 
     def shunt_capacitor(self, C: NumberLike, *args, **kwargs) -> Network:
-        """
+        r"""
         Shunted capacitor.
 
         Parameters
         ----------
         C : number, array-like
             Capacitance in Farads.
-        \\*args,\\*\\*kwargs : arguments, keyword arguments
+        \*args,\*\*kwargs : arguments, keyword arguments
             passed to func:`delay_open`
 
         Returns
@@ -1086,14 +1086,14 @@ class Media(ABC):
         return self.shunt(self.capacitor(C=C,*args,**kwargs)**self.short())
 
     def shunt_inductor(self, L: NumberLike, *args, **kwargs) -> Network:
-        """
+        r"""
         Shunted inductor.
 
         Parameters
         ----------
         L : number, array-like
             Inductance in Farads.
-        \\*args,\\*\\*kwargs : arguments, keyword arguments
+        \*args,\*\*kwargs : arguments, keyword arguments
             passed to func:`delay_open`
 
         Returns
@@ -1211,7 +1211,7 @@ class Media(ABC):
 
     def white_gaussian_polar(self, phase_dev: Number, mag_dev: Number,
                              n_ports: int = 1, **kwargs) -> Network:
-        """
+        r"""
         Complex zero-mean gaussian white-noise network.
 
         Creates a network whose s-matrix is complex zero-mean gaussian
@@ -1228,7 +1228,7 @@ class Media(ABC):
             standard deviation of phase
         n_ports : int
             number of ports.
-        \\*\\*kwargs : passed to :class:`~skrf.network.Network`
+        \*\*kwargs : passed to :class:`~skrf.network.Network`
             initializer
 
         Returns
@@ -1247,7 +1247,7 @@ class Media(ABC):
 
     def random(self, n_ports: int = 1, reciprocal: bool = False, matched: bool = False,
                symmetric: bool = False, **kwargs) -> Network:
-        """
+        r"""
         Complex random network.
 
         Creates a n-port network whose s-matrix is filled with random
@@ -1264,7 +1264,7 @@ class Media(ABC):
         matched : bool
             makes diagonals of s-matrix zero
 
-        \\*\\*kwargs : passed to :class:`~skrf.network.Network`
+        \*\*kwargs : passed to :class:`~skrf.network.Network`
                 initializer
 
         Returns
@@ -1521,7 +1521,7 @@ def parse_z0(s: str) -> NumberLike:
 
     Returns
     -------
-    z0 : numpy.ndarray
+    z0 : npy.ndarray
 
     Raises
     ------
@@ -1529,7 +1529,7 @@ def parse_z0(s: str) -> NumberLike:
         If could not arse the z0 string.
     """
     # they passed a string for z0, try to parse it
-    re_numbers = re.compile('\d+')
+    re_numbers = re.compile(r'\d+')
     numbers = re.findall(re_numbers, s)
     if len(numbers)==2:
         out = float(numbers[0]) +1j*float(numbers[1])

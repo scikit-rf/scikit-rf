@@ -1,6 +1,6 @@
 
 
-'''
+"""
 .. module:: skrf.vi.sa
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 Spectrum Analyzers  (:mod:`skrf.vi.sa`)
@@ -11,7 +11,7 @@ Spectrum Analyzers  (:mod:`skrf.vi.sa`)
     :toctree: generated/
 
     HP8500
-'''
+"""
 
 
 import numpy as npy
@@ -24,7 +24,7 @@ from .. import mathFunctions as mf
 from . ivihack import Driver
 
 class HP8500(Driver):
-    '''
+    """
     HP8500's series Spectrum Analyzers
 
     Examples
@@ -42,9 +42,9 @@ class HP8500(Driver):
     >>> my_sa.sweep()
     >>> trace_a = my_sa.trace_a
     >>> my_sa.cont_sweep()
-    '''
+    """
     def __init__(self, address=18, *args, **kwargs):
-        '''
+        """
         Initializer
 
         Parameters
@@ -53,19 +53,19 @@ class HP8500(Driver):
             GPIB address
         \*args, \*\*kwargs :
             passed to ``ivi.Driver.__init__``
-        '''
+        """
         Driver.__init__(self,'GPIB::'+str(address),*args,**kwargs)
 
     @property
     def frequency(self):
-        '''
-        '''
+        """
+        """
         f = Frequency(self.f_start, self.f_stop, len(self.trace_a),'hz')
         f.unit = 'ghz'
         return f
 
     def get_ntwk(self, trace='a', goto_local=False, *args, **kwargs):
-        '''
+        """
         Get a trace and return the data in a :class:`~skrf.network.Network` format
 
         This will save instrument stage to reg 1, activate single sweep
@@ -86,7 +86,7 @@ class HP8500(Driver):
         \*args,\*\*kwargs :
             passed to :func:`~skrf.network.Network.__init__`
 
-        '''
+        """
         trace = trace.lower()
         if trace not in ['a','b']:
             raise ValueError('\'trace\' should be \'a\' or \'b\'')
@@ -110,66 +110,66 @@ class HP8500(Driver):
 
     @property
     def f_start(self):
-        '''
+        """
         starting frequency
-        '''
+        """
         return float(self.ask('fa?'))
 
     @property
     def f_stop(self):
-        '''
+        """
         stopping frequency
-        '''
+        """
         return float(self.ask('fb?'))
 
     @property
     def trace_a(self):
-        '''
+        """
         trace 'a'
-        '''
+        """
         return self.ask_for_values("tra?")
 
     @property
     def trace_b(self):
-        '''
+        """
         trace 'b'
-        '''
+        """
         return self.ask_for_values("trb?")
 
     def sweep(self):
-        '''
+        """
         trigger a sweep, return when done
-        '''
+        """
         self.write('ts')
         return self.ask('done?')
 
     def single_sweep(self):
-        '''
+        """
         Activate single sweep mode
-        '''
+        """
         self.write('sngls')
 
     def cont_sweep(self):
-        '''
+        """
         Activate continuous sweep mode
-        '''
+        """
         self.write('conts')
 
     def goto_local(self):
-        '''
+        """
         Switches from remote to local control
-        '''
+        """
         pass#visa.vpp43.gpib_control_ren(self.vi,0)
 
     def save_state(self, reg_n=1):
-        '''
+        """
         Save current state to a given register
-        '''
+        """
         self.write('saves %i'%reg_n)
 
     def recall_state(self, reg_n=1):
-        '''
+        """
         Recall current state to a given register
-        '''
+        """
         self.write('rcls %i'%reg_n)
 

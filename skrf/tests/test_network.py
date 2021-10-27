@@ -20,7 +20,7 @@ from skrf.networkSet import tuner_constellation
 from skrf.plotting import plot_contour
 
 class NetworkTestCase(unittest.TestCase):
-    '''
+    """
     Network class operation test case.
     The following is true, as tested by lihan in ADS,
         test3 == test1 ** test2
@@ -40,12 +40,12 @@ class NetworkTestCase(unittest.TestCase):
     -----
     due to the complexity of inv computations, there will be an unavoidable
     precision loss. thus Fix.inv ** Meas will show a small difference with DUT.
-    '''
+    """
     def setUp(self):
-        '''
+        """
         this also tests the ability to read touchstone files
         without an error
-        '''
+        """
         setup_pylab()
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
         self.ntwk1 = rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
@@ -342,11 +342,11 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(rf.t2s(rf.s2t(self.Fix.s)), self.Fix.s)
 
     def test_sparam_conversion_with_complex_char_impedance(self):
-        '''
+        """
         Renormalize a 2-port network wrt to complex characteristic impedances
         using power-waves definition of s-param
         Example based on scikit-rf issue #313
-        '''
+        """
         f0 = rf.Frequency(75.8, npoints=1, unit='GHz')
         s0 = npy.array([
                 [-0.194 - 0.228j, -0.721 + 0.160j],
@@ -385,10 +385,10 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_allclose(ntw.y, y_ref, atol=1e-4)
 
     def test_sparam_conversion_vs_sdefinition(self):
-        '''
+        """
         Check that power-wave or pseudo-waves scattering parameters definitions
         give same results for real characteristic impedances
-        '''
+        """
         f0 = rf.Frequency(75.8, npoints=1, unit='GHz')
         s_ref = npy.array([[  # random values
             [-0.1000 -0.2000j, -0.3000 +0.4000j],
@@ -834,9 +834,9 @@ class NetworkTestCase(unittest.TestCase):
             #self.assertTrue(npy.allclose(npy.angle(ntwk4.s), npy.angle(ntwk4t.s), rtol=1E-7, atol=1E-10))
 
     def test_s_active(self):
-        '''
+        """
         Test the active s-parameters of a 2-ports network
-        '''
+        """
         s_ref = self.ntwk1.s
         # s_act should be equal to s11 if a = [1,0]
         npy.testing.assert_array_almost_equal(rf.s2s_active(s_ref, [1, 0])[:,0], s_ref[:,0,0])
@@ -848,9 +848,9 @@ class NetworkTestCase(unittest.TestCase):
         npy.testing.assert_array_almost_equal(self.ntwk1.s_active([0, 1])[:,1], s_ref[:,1,1])
 
     def test_vswr_active(self):
-        '''
+        """
         Test the active vswr-parameters of a 2-ports network
-        '''
+        """
         s_ref = self.ntwk1.s
         vswr_ref = self.ntwk1.s_vswr
         # vswr_act should be equal to vswr11 if a = [1,0]
@@ -864,9 +864,9 @@ class NetworkTestCase(unittest.TestCase):
 
 
     def test_generate_subnetworks_nportsbelow10(self):
-        '''
+        """
         Testing generation of one-port subnetworks for ports below 10
-        '''
+        """
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
         npy.testing.assert_array_almost_equal(
             ntwk.s[:,4,5],
@@ -874,9 +874,9 @@ class NetworkTestCase(unittest.TestCase):
         )
 
     def test_generate_subnetworks_nportsabove10(self):
-        '''
+        """
         Testing generation of one-port subnetworks for ports above 10
-        '''
+        """
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
         npy.testing.assert_array_almost_equal(
             ntwk.s[:,1,15],
@@ -885,10 +885,10 @@ class NetworkTestCase(unittest.TestCase):
 
 
     def test_generate_subnetwork_nounderscore(self):
-        '''
+        """
         Testing no underscore alias of one-port subnetworks for ports below 10.
         This is for backward compatibility with old code.
-        '''
+        """
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
 
         npy.testing.assert_array_almost_equal(
@@ -898,9 +898,9 @@ class NetworkTestCase(unittest.TestCase):
 
 
     def test_generate_subnetworks_allports(self):
-        '''
+        """
         Testing generation of all one-port subnetworks in case of edge problems.
-        '''
+        """
         ntwk = rf.Network(os.path.join(self.test_dir,'ntwk.s32p'))
         for m in range(ntwk.nports):
             for n in range(ntwk.nports):
@@ -911,7 +911,7 @@ class NetworkTestCase(unittest.TestCase):
 
 
     def test_subnetwork(self):
-        ''' Test subnetwork creation and recombination '''
+        """ Test subnetwork creation and recombination """
         tee = rf.data.tee # 3 port Network
 
         # modify the z0 to dummy values just to check it works for any z0
