@@ -467,7 +467,7 @@ class Network(object):
         return me
 
     @classmethod
-    def from_timeseries(cls, file: str):
+    def from_timeseries(cls, file: str) -> 'Network':
         """Create a Network from a time series touchstone file
 
         Parameters
