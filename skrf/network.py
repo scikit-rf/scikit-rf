@@ -153,7 +153,7 @@ Misc Functions
 
 """
 from typing import (Any, NoReturn, Optional, Sequence,
-    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TypeVar)
+    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
 from numbers import Number
 from functools import reduce
 
@@ -161,11 +161,8 @@ import os
 import warnings
 from io import StringIO
 from pathlib import Path
-import pickle
 from pickle import UnpicklingError
 
-import sys
-import re
 import zipfile
 from copy import deepcopy as copy
 from numbers import Number
