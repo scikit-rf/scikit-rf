@@ -183,17 +183,20 @@ class VectorFitting:
             logging.warning('Invalid choice of initial pole spacing; proceeding with linear spacing')
             pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
-        poles = []
+
+        # init poles array of correct length
+        poles = np.empty(len(pole_freqs_real) + len(pole_freqs_cmplx), dtype=np.complex)
 
         # add real poles
         for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            poles.append((-1 / 100 + 0j) * omega)
+            poles[i] = (-1 / 100 + 0j) * omega
+
         # add complex-conjugate poles (store only positive imaginary parts)
+        i_offset = len(pole_freqs_real)
         for i, f in enumerate(pole_freqs_cmplx):
             omega = 2 * np.pi * f
-            poles.append((-1 / 100 + 1j) * omega)
-        poles = np.array(poles)
+            poles[i_offset + i] = (-1 / 100 + 1j) * omega
 
         # save initial poles (un-normalize first)
         self.initial_poles = poles * norm
@@ -227,24 +230,36 @@ class VectorFitting:
         while iterations > 0:
             logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
 
+            # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
+            # (ratio #real/#complex poles might change during iterations)
+            n_cols = 0
+            for pole in poles:
+                if np.imag(pole) == 0.0:
+                    n_cols += 1
+                else:
+                    n_cols += 2
+            n_cols += 1
+            n_rows = (n_cols + 1) * len(freq_responses)
+
             # generate coefficients of approximation function for each target frequency response
             # responses will be treated independently using QR decomposition
             # simplified coeff matrices of all responses will be stacked for least-squares solver
-            A_matrix = []
-            b_vector = []
+            A_matrix = np.empty((n_rows, n_cols))
+            b_vector = np.zeros(n_rows)
 
-            for freq_response in freq_responses:
+            for i_response, freq_response in enumerate(freq_responses):
                 # calculate coefficients (row A_k in matrix) for each frequency sample s_k of the target response
                 # row will be appended to submatrix A_sub of complete coeff matrix A_matrix
                 # 2 rows per pole in result vector (1st for real part, 2nd for imaginary part)
                 # --> 2 columns per pole in coeff matrix
-                A_sub = []
-                b_sub = []
+                A_sub = np.empty((2 * len(freqs_norm), 2 * n_cols))
+                # declare n_unused
                 n_unused = 0
 
                 for k, f_sample in enumerate(freqs_norm):
                     s_k = 2j * np.pi * f_sample
-                    A_k = []
+                    i_col = 0
+                    # reset n_unused
                     n_unused = 0
 
                     # add coefficients for a pair of complex conjugate poles
@@ -252,56 +267,78 @@ class VectorFitting:
                     for pole in poles:
                         # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                         if np.imag(pole) == 0.0:
-                            A_k.append(1 / (s_k - pole))
+                            coeff_cplx = 1 / (s_k - pole)
+                            A_sub[2 * k, i_col] = np.real(coeff_cplx)
+                            A_sub[2 * k + 1, i_col] = np.imag(coeff_cplx)
+                            i_col += 1
                             n_unused += 1
                         else:
                             # complex pole of a conjugated pair
-                            A_k.append(1 / (s_k - pole) + 1 / (s_k - np.conjugate(pole)))       # real part of residue
-                            A_k.append(1j / (s_k - pole) - 1j / (s_k - np.conjugate(pole)))     # imaginary part of residue
+                            # add real part of residue
+                            coeff_cplx = 1 / (s_k - pole) + 1 / (s_k - np.conjugate(pole))
+                            A_sub[2 * k, i_col] = np.real(coeff_cplx)
+                            A_sub[2 * k + 1, i_col] = np.imag(coeff_cplx)
+                            i_col += 1
+                            # add imaginary part of residue
+                            coeff_cplx = 1j / (s_k - pole) - 1j / (s_k - np.conjugate(pole))
+                            A_sub[2 * k, i_col] = np.real(coeff_cplx)
+                            A_sub[2 * k + 1, i_col] = np.imag(coeff_cplx)
+                            i_col += 1
                             n_unused += 2
 
                     # part 2: constant (variable d) and proportional term (variable e)
                     if fit_constant:
-                        A_k.append(1)
+                        A_sub[2 * k, i_col] = 1.0
+                        A_sub[2 * k + 1, i_col] = 0.0
+                        i_col += 1
                         n_unused += 1
                     if fit_proportional:
-                        A_k.append(s_k)
+                        A_sub[2 * k, i_col] = 0.0
+                        A_sub[2 * k + 1, i_col] = np.imag(s_k)
+                        i_col += 1
                         n_unused += 1
 
                     # part 3: second sum of rational functions (variable c_res)
                     for pole in poles:
                         # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                         if np.imag(pole) == 0.0:
-                            A_k.append(-1 * freq_response[k] / (s_k - pole))
+                            coeff_cplx = -1 * freq_response[k] / (s_k - pole)
+                            A_sub[2 * k, i_col] = np.real(coeff_cplx)
+                            A_sub[2 * k + 1, i_col] = np.imag(coeff_cplx)
+                            i_col += 1
                         else:
                             # complex pole of a conjugated pair
-                            A_k.append(-1 * freq_response[k] / (s_k - pole)
-                                       - freq_response[k] / (s_k - np.conjugate(pole)))
-                            A_k.append(-1j * freq_response[k] / (s_k - pole)
-                                       + 1j * freq_response[k] / (s_k - np.conjugate(pole)))
+                            coeff_cplx = (-1 * freq_response[k] / (s_k - pole)
+                                          - freq_response[k] / (s_k - np.conjugate(pole)))
+                            A_sub[2 * k, i_col] = np.real(coeff_cplx)
+                            A_sub[2 * k + 1, i_col] = np.imag(coeff_cplx)
+                            i_col += 1
+                            coeff_cplx = (-1j * freq_response[k] / (s_k - pole)
+                                          + 1j * freq_response[k] / (s_k - np.conjugate(pole)))
+                            A_sub[2 * k, i_col] = np.real(coeff_cplx)
+                            A_sub[2 * k + 1, i_col] = np.imag(coeff_cplx)
+                            i_col += 1
 
                     # part 4: constant (variable d_res)
-                    A_k.append(-1 * freq_response[k])
+                    coeff_cplx = -1 * freq_response[k]
+                    A_sub[2 * k, i_col] = np.real(coeff_cplx)
+                    A_sub[2 * k + 1, i_col] = np.imag(coeff_cplx)
+                    i_col += 1
 
-                    A_sub.append(np.sqrt(weight_regular) * np.real(A_k))
-                    A_sub.append(np.sqrt(weight_regular) * np.imag(A_k))
-                    b_sub.append(np.sqrt(weight_regular) * 0.0)
-                    b_sub.append(np.sqrt(weight_regular) * 0.0)
+                # proper weighting
+                A_sub = np.sqrt(weight_regular) * A_sub
 
                 # QR decomposition
                 Q, R = np.linalg.qr(A_sub, 'reduced')
 
                 # only R22 is required to solve for c_res and d_res
-                R22 = R[n_unused:, n_unused:]
+                R22 = R[n_cols:, n_cols:]
                 # similarly, only right half of Q is required
-                Q2 = Q[:, n_unused:]
+                #Q2 = Q[:, n_cols:]
 
-                if len(A_matrix) == 0:
-                    A_matrix = R22
-                    b_vector = np.matmul(np.transpose(Q2), b_sub)
-                else:
-                    A_matrix = np.vstack((A_matrix, R22))
-                    b_vector = np.append(b_vector, np.matmul(np.transpose(Q2), b_sub))
+                A_matrix[i_response * (n_cols + 1):(i_response + 1) * (n_cols + 1) - 1, :] = R22
+                # multiplication of Q2 by 0 omitted
+                # b_vector[i_response * (n_cols + 1):(i_response + 1) * (n_cols + 1) - 1] = np.matmul(np.transpose(Q2), b_sub)
 
                 # add extra equation to avoid trivial solution
                 # use weight=1 for all equations, except for this extra equation
@@ -325,8 +362,8 @@ class VectorFitting:
                     # part 4: constant (d_res)
                     A_k[i] += 1
 
-                A_matrix = np.vstack((A_matrix, np.sqrt(weight_extra) * A_k))
-                b_vector = np.append(b_vector, np.sqrt(weight_extra) * len(freqs_norm))
+                A_matrix[(i_response + 1) * (n_cols + 1) - 1, :] = np.sqrt(weight_extra) * A_k
+                b_vector[n_cols + i_response * (n_cols + 1)] = np.sqrt(weight_extra) * len(freqs_norm)
 
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
