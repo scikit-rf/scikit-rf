@@ -3,6 +3,7 @@ import unittest
 import os
 import io
 import tempfile
+import zipfile
 import sys
 import numpy as npy
 from pathlib import Path
@@ -154,6 +155,7 @@ class NetworkTestCase(unittest.TestCase):
             rf.Network(fid)
         with open(filename) as fid:
             rf.Network(fid)
+
     def test_constructor_from_stringio(self):
         filename= os.path.join(self.test_dir, 'ntwk1.s2p')
         with open(filename) as fid:
@@ -168,6 +170,11 @@ class NetworkTestCase(unittest.TestCase):
             sio = io.StringIO(data)
             sio.name = os.path.basename(filename) # hack a bug to touchstone reader
             rf.Network(sio)
+
+    def test_zipped_touchstone(self):
+        zippath = os.path.join(self.test_dir, 'ntwks.zip')
+        fname = 'ntwk1.s2p'
+        rf.Network.zipped_touchstone(fname, zipfile.ZipFile(zippath))
 
     def test_open_saved_touchstone(self):
         self.ntwk1.write_touchstone('ntwk1Saved',dir=self.test_dir)
