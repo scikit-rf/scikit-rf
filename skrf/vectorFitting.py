@@ -553,6 +553,21 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
 
+    def get_rms_error(self):
+        """
+        Returns the rms error of the fit.
+
+        Returns
+        -------
+        rms_error : ndarray
+        The overall root-mean-square error between the vector fitted model and the original network data.
+        """
+        nw_fitted = np.zeros_like(self.network.s)
+        for i in range(self.network.nports):
+            for j in range(self.network.nports):
+                nw_fitted[:, i, j] = self.get_model_response(i, j, self.network.f)
+        return np.sqrt(np.mean(np.square(np.abs(nw_fitted - self.network.s))))
+
     def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Private method.

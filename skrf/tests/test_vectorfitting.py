@@ -5,15 +5,6 @@ import tempfile
 import os
 
 
-def get_rms_error(nw, vf):
-    nw_fitted = np.zeros_like(nw.s)
-    for i in range(nw.nports):
-        for j in range(nw.nports):
-            nw_fitted[:, i, j] = vf.get_model_response(i, j, nw.f)
-    error_rms = np.sqrt(np.mean(np.square(np.abs(nw_fitted - nw.s))))
-    return error_rms
-
-
 class VectorFittingTestCase(unittest.TestCase):
 
     def test_ringslot_with_proportional(self):
@@ -21,28 +12,28 @@ class VectorFittingTestCase(unittest.TestCase):
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=2, n_poles_cmplx=0, fit_proportional=True, fit_constant=True)
-        self.assertLess(get_rms_error(nw, vf), 0.01)
+        self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_ringslot_default_log(self):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, init_pole_spacing='log')
-        self.assertLess(get_rms_error(nw, vf), 0.01)
+        self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_ringslot_without_prop_const(self):
         # perform the fit without proportional term
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=0, fit_proportional=False, fit_constant=False)
-        self.assertLess(get_rms_error(nw, vf), 0.01)
+        self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_190ghz_measured(self):
         # perform the fit without proportional term
         nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=4, fit_proportional=False, fit_constant=True)
-        self.assertLess(get_rms_error(nw, vf), 0.01)
+        self.assertLess(vf.get_rms_error(), 0.01)
 
     def test_spice_subcircuit(self):
         # fit ring slot example network
