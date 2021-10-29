@@ -24,6 +24,7 @@ except ImportError:
     mplt = None
 
 import logging
+from timeit import default_timer as timer
 
 
 def check_plotting(func):
@@ -118,6 +119,7 @@ class VectorFitting:
         self.d_res_history = []
         self.delta_max_history = []
         self.history_max_sigma = []
+        self.wall_clock_time = 0
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -164,6 +166,8 @@ class VectorFitting:
         poles will not only increase the computation workload during the fitting and the subsequent use of the model,
         but they can also introduce unwanted resonances at frequencies well outside the fit interval.
         """
+
+        timer_start = timer()
 
         # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
@@ -262,7 +266,7 @@ class VectorFitting:
                 A_sub = np.empty((2 * len(freqs_norm), n_cols_used + n_cols_unused))
 
                 # responses will be weighted equally; alternative: weight_response = 1 / np.linalg.norm(freq_response)
-                weight_response = 1.0
+                weight_response = np.linalg.norm(freq_response)
 
                 for k, f_sample in enumerate(freqs_norm):
                     # this loop is performance critical, as it gets repeated many times (N_responses * N_frequencies)
@@ -544,7 +548,10 @@ class VectorFitting:
         self.constant_coeff = np.array(constant_coeff)
         self.proportional_coeff = np.array(proportional_coeff) / norm
 
-        logging.info('\n### Vector fitting finished.\n')
+        timer_stop = timer()
+        self.wall_clock_time = timer_stop - timer_start
+
+        logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
 
     def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
