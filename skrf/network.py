@@ -153,13 +153,13 @@ Misc Functions
 
 """
 from typing import (Any, NoReturn, Optional, Sequence,
-    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List)
+    Sized, Union, Tuple, Callable, TYPE_CHECKING, Dict, List, TextIO)
 from numbers import Number
 from functools import reduce
 
 import os
 import warnings
-from io import StringIO
+import io
 from pathlib import Path
 import pickle
 from pickle import UnpicklingError
@@ -346,8 +346,8 @@ class Network(object):
     """
 
     # CONSTRUCTOR
-    def __init__(self, file: str = None, name : str = None, comments: str = None,
-        f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
+    def __init__(self, file: str = None, name: str = None, comments: str = None,
+                 f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
         r"""
         Network constructor.
 
@@ -423,12 +423,12 @@ class Network(object):
         else:
             self.s_def = s_def
 
-        if file is not None:              
+        if file is not None:
             if isinstance(file, Path):
                 file = str(file.resolve())
 
             # allows user to pass StringIO, filename or file obj
-            if isinstance(file,StringIO):
+            if isinstance(file, io.StringIO):
                 self.read_touchstone(file)
 
             else:
@@ -440,14 +440,12 @@ class Network(object):
                     self.read(fid)
                 except UnicodeDecodeError:  # Support for pickles created in Python2 and loaded in Python3
                     self.read(fid, encoding='latin1')
-                except (UnpicklingError,TypeError):
+                except (UnpicklingError, TypeError):
                     # if unpickling doesn't work then, close fid, reopen in
                     # non-binary mode and try to read it as touchstone
                     filename = fid.name
                     fid.close()
                     self.read_touchstone(filename)
-
-
 
             if name is None and isinstance(file, str):
                 name = os.path.splitext(os.path.basename(file))[0]
@@ -459,8 +457,6 @@ class Network(object):
         for attr in PRIMARY_PROPERTIES + ['frequency', 'f', 'z0', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
-
-
                 # self.nports = self.number_of_ports
 
     @classmethod
@@ -1850,7 +1846,7 @@ class Network(object):
         except(AttributeError):
             ntwk.port_names = None
         return ntwk
-    
+
     def drop_non_monotonic_increasing(self) -> None:
         """Drop invalid values based on duplicate and non increasing frequency values
 
@@ -1912,7 +1908,7 @@ class Network(object):
 
 
     # touchstone file IO
-    def read_touchstone(self, filename: str) -> None:
+    def read_touchstone(self, filename: Union[str, TextIO]) -> None:
         """
         loads values from a touchstone file.
 
@@ -1993,8 +1989,6 @@ class Network(object):
                     self.name = ''
                 pass
 
-
-
     @classmethod
     def zipped_touchstone(cls, filename: str, archive: zipfile.ZipFile) -> 'Network':
         """
@@ -2013,7 +2007,7 @@ class Network(object):
             Network from the Touchstone file
 
         """
-        with archive.open(filename) as touchstone_file:
+        with io.TextIOWrapper(archive.open(filename)) as touchstone_file:
             ntwk = cls()
             ntwk.read_touchstone(touchstone_file)
         return ntwk
@@ -2111,7 +2105,7 @@ class Network(object):
             """Function which takes a complex number for B part of param and returns an appropriately formatted string"""
             return format_spec_B.format(funcB(c))
 
-        def get_buffer() -> StringIO:
+        def get_buffer() -> io.StringIO:
             if return_string is True or type(to_archive) is zipfile.ZipFile:
                 from .io.general import StringBuffer  # avoid circular import
                 buf = StringBuffer()
@@ -6248,7 +6242,7 @@ def reciprocity(s: npy.ndarray) -> npy.ndarray:
 
 ## renormalize
 def renormalize_s(s: npy.ndarray, z_old: NumberLike, z_new: NumberLike, s_def:str = S_DEF_DEFAULT) -> npy.ndarray:
-    
+
     """
     Renormalize a s-parameter matrix given old and new port impedances
 
