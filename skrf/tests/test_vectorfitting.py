@@ -12,7 +12,7 @@ class VectorFittingTestCase(unittest.TestCase):
         nw = skrf.data.ring_slot
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=2, n_poles_cmplx=0, fit_proportional=True, fit_constant=True)
-        self.assertLess(vf.get_rms_error(), 0.01)
+        self.assertLess(vf.get_rms_error(), 0.02)
 
     def test_ringslot_default_log(self):
         # perform the fit without proportional term
@@ -33,7 +33,7 @@ class VectorFittingTestCase(unittest.TestCase):
         nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=4, fit_proportional=False, fit_constant=True)
-        self.assertLess(vf.get_rms_error(), 0.01)
+        self.assertLess(vf.get_rms_error(), 0.02)
 
     def test_spice_subcircuit(self):
         # fit ring slot example network
