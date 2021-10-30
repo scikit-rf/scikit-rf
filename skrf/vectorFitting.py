@@ -553,20 +553,70 @@ class VectorFitting:
 
         logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
 
-    def get_rms_error(self):
+    def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
         """
-        Returns the rms error of the fit.
+        Returns the root-mean-square (rms) error magnitude of the fit, i.e.
+        :math:`\sqrt{ \mathrm{mean}(|S_{i,j} - S_{i,j,\mathrm{fit}} |^2) }`,
+        either for an individual response :math:`S_{i,j}` or for larger slices of the network.
+
+        Parameters
+        ----------
+        i : int, optional
+            Row indices of the responses to be evaluated. Either a single row selected by an integer
+            :math:`i \in [0, N_\mathrm{ports}]`, or multiple rows selected by a list of integers, or all rows
+            selected by :math:`i = -1` (*default*).
+
+        j : int, optional
+            Column indices of the responses to be evaluated. Either a single column selected by an integer
+            :math:`j \in [0, N_\mathrm{ports}]`, or multiple columns selected by a list of integers, or all columns
+            selected by :math:`j = -1` (*default*).
+
+        parameter_type: str, optional
+            Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
+            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`).
 
         Returns
         -------
         rms_error : ndarray
-        The overall root-mean-square error between the vector fitted model and the original network data.
+            The rms error magnitude between the vector fitted model and the original network data.
+
+        Raises
+        ------
+        ValueError
+            If the specified parameter representation type is not :attr:`s`, :attr:`z`, nor :attr:`y`.
         """
-        nw_fitted = np.zeros_like(self.network.s)
-        for i in range(self.network.nports):
-            for j in range(self.network.nports):
-                nw_fitted[:, i, j] = self.get_model_response(i, j, self.network.f)
-        return np.sqrt(np.mean(np.square(np.abs(nw_fitted - self.network.s))))
+
+        if i == -1:
+            list_i = range(self.network.nports)
+        elif isinstance(i, int):
+            list_i = [i]
+        else:
+            list_i = i
+
+        if j == -1:
+            list_j = range(self.network.nports)
+        elif isinstance(j, int):
+            list_j = [j]
+        else:
+            list_j = j
+
+        if parameter_type.lower() == 's':
+            nw_responses = self.network.s
+        elif parameter_type.lower() == 'z':
+            nw_responses = self.network.z
+        elif parameter_type.lower() == 'y':
+            nw_responses = self.network.y
+        else:
+            raise ValueError('Invalid parameter type \'{}\'. Valid options: \`s\`, \`z\`, or \`y\`'.format(parameter_type))
+
+        error_mean_squared = 0
+        for i in list_i:
+            for j in list_j:
+                nw_ij = nw_responses[:, i, j]
+                fit_ij = self.get_model_response(i, j, self.network.f)
+                error_mean_squared += np.mean(np.square(np.abs(nw_ij - fit_ij)))
+
+        return np.sqrt(error_mean_squared)
 
     def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
