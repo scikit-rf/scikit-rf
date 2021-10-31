@@ -2007,9 +2007,12 @@ class Network(object):
             Network from the Touchstone file
 
         """
-        with io.TextIOWrapper(archive.open(filename)) as touchstone_file:
-            ntwk = cls()
-            ntwk.read_touchstone(touchstone_file)
+        # Touchstone requires file objects to be seekable (for get_gamma_z0_from_fid)
+        # A ZipExtFile object is not seekable prior to Python 3.7, so use StringIO
+        # and manually add a name attribute
+        fileobj = io.StringIO(archive.open(filename).read().decode('UTF-8'))
+        fileobj.name = filename
+        ntwk = Network(fileobj)
         return ntwk
 
     def write_touchstone(self, filename: str = None, dir: str = None,
