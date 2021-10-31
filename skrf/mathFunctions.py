@@ -110,10 +110,10 @@ def complex_2_magnitude(z: NumberLike):
 
 
 def complex_2_db(z: NumberLike):
-    """
-    Return the magnitude in dB of a complex number (as :math:`20\\log_{10}(|z|)`)..
+    r"""
+    Return the magnitude in dB of a complex number (as :math:`20\log_{10}(|z|)`)..
 
-    The magnitude in dB is defined as :math:`20\\log_{10}(|z|)`
+    The magnitude in dB is defined as :math:`20\log_{10}(|z|)`
     where :math:`z` is a complex number.
 
     Parameters
@@ -129,10 +129,10 @@ def complex_2_db(z: NumberLike):
 
 
 def complex_2_db10(z: NumberLike):
-    """
-    Return the magnitude in dB of a complex number (as :math:`10\\log_{10}(|z|)`).
+    r"""
+    Return the magnitude in dB of a complex number (as :math:`10\log_{10}(|z|)`).
 
-    The magnitude in dB is defined as :math:`10\\log_{10}(|z|)`
+    The magnitude in dB is defined as :math:`10\log_{10}(|z|)`
     where :math:`z` is a complex number.
 
     Parameters
@@ -182,10 +182,10 @@ def complex_2_degree(z: NumberLike):
 
 
 def complex_2_quadrature(z: NumberLike):
-    """
+    r"""
     Take a complex number and returns quadrature, which is (length, arc-length from real axis)
 
-    Arc-length is calculated as :math:`|z| \\arg(z)`.
+    Arc-length is calculated as :math:`|z| \arg(z)`.
 
     Parameters
     ----------
@@ -546,7 +546,7 @@ def sqrt_known_sign(z_squared: NumberLike, z_approx: NumberLike):
 
 
 def find_correct_sign(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
-    """
+    r"""
     Create new vector from z1, z2 choosing elements with sign matching z_approx.
 
     This is used when you have to make a root choice on a complex number.
@@ -554,7 +554,7 @@ def find_correct_sign(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
 
     .. math::
 
-        z1,z2 = \\pm \\sqrt(z^2)
+        z1,z2 = \pm \sqrt(z^2)
 
 
     Parameters
@@ -602,14 +602,14 @@ def find_closest(z1: NumberLike, z2: NumberLike, z_approx: NumberLike):
     return npy.where(z1_dist<z2_dist,z1, z2)
 
 def sqrt_phase_unwrap(z: NumberLike):
-    """
+    r"""
     Take the square root of a complex number with unwrapped phase.
 
     This idea came from Lihan Chen.
 
     .. math::
 
-        \sqrt{|z|} \\exp( \\arg_{unwrap}(z) / 2 )
+        \sqrt{|z|} \exp( \arg_{unwrap}(z) / 2 )
 
 
     Parameters
@@ -628,7 +628,7 @@ def sqrt_phase_unwrap(z: NumberLike):
 
 # mathematical functions
 def dirac_delta(x: NumberLike):
-    """
+    r"""
     Calculate Dirac function.
 
     Dirac function :math:`\delta(x)` defined as :math:`\delta(x)=1` if x=0,
@@ -653,7 +653,7 @@ def dirac_delta(x: NumberLike):
 
 
 def neuman(x: NumberLike):
-    """
+    r"""
     Calculate Neumans number.
 
     It is defined as:
@@ -723,7 +723,7 @@ def inf_to_num(x: NumberLike):
 
 
 def cross_ratio(a: NumberLike, b: NumberLike, c: NumberLike, d:NumberLike):
-    """
+    r"""
     Calculate the cross ratio of a quadruple of distinct points on the real line.
 
 
@@ -732,7 +732,7 @@ def cross_ratio(a: NumberLike, b: NumberLike, c: NumberLike, d:NumberLike):
 
     .. math::
 
-        r = \\frac{ (a-b)(c-d) }{ (a-d)(c-b) }
+        r = \frac{ (a-b)(c-d) }{ (a-d)(c-b) }
 
 
 
@@ -895,9 +895,9 @@ def psd2TimeDomain(f: npy.ndarray, y: npy.ndarray, windowType: str = 'hamming'):
 
     Parameters
     ----------
-    f : list or numpy.ndarray
+    f : list or npy.ndarray
         frequency array
-    y : list of numpy.ndarray
+    y : list of npy.ndarray
         complex PSD array
     windowType: string
         windowing function, defaults to 'hamming''
@@ -1094,7 +1094,7 @@ def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
 
     Parameters
     ----------
-    mat : npy.matrix
+    mat : npy.ndarray
         Matrix to test for unitariness
     tol : float
         Absolute tolerance. Defaults to :data:`ALMOST_ZERO`
@@ -1111,7 +1111,7 @@ def is_unitary(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
     """
     if not is_square(mat):
         return False
-    return npy.allclose(get_Hermitian_transpose(mat) * mat,
+    return npy.allclose(get_Hermitian_transpose(mat) @ mat,
                         npy.identity(mat.shape[0]), atol=tol)
 
 
@@ -1163,7 +1163,7 @@ def is_Hermitian(mat: npy.ndarray, tol: float = ALMOST_ZERO) -> bool:
 
     Parameters
     ----------
-    mat : npy.matrix
+    mat : npy.ndarray
         Matrix to test for being Hermitian
     tol : float
         Absolute tolerance

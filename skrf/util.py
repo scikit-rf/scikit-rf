@@ -66,7 +66,7 @@ from functools import wraps
 from .constants import Number, NumberLike
 
 def now_string() -> str:
-    '''
+    """
     Return a unique sortable string, representing the current time.
 
     Nice for generating date-time stamps to be used in file-names,
@@ -82,12 +82,12 @@ def now_string() -> str:
     --------
     now_string_2_dt
 
-    '''
+    """
     return datetime.now().__str__().replace('-','.').replace(':','.').replace(' ','.')
 
 
 def now_string_2_dt(s: str) -> datetime:
-    '''
+    """
     Converts the output of :func:`now_string` to a datetime object.
 
     Parameters
@@ -104,17 +104,17 @@ def now_string_2_dt(s: str) -> datetime:
     --------
     now_string
 
-    '''
+    """
     return datetime(*[int(k) for k in s.split('.')])
 
 
 def find_nearest(array: npy.ndarray, value: Number) -> Number:
-    '''
+    """
     Find the nearest value in array.
 
     Parameters
     ----------
-    array :  numpy.ndarray
+    array :  npy.ndarray
         array we are searching for a value in
     value : element of the array
         value to search for
@@ -124,18 +124,18 @@ def find_nearest(array: npy.ndarray, value: Number) -> Number:
     found_value : an element of the array
         the value that is numerically closest to `value`
 
-    '''
+    """
     idx = find_nearest_index(array, value)
     return array[idx]
 
 
 def find_nearest_index(array: npy.ndarray, value: Number) -> int:
-    '''
+    """
     Find the nearest index for a value in array.
 
     Parameters
     ----------
-    array :  numpy.ndarray
+    array :  npy.ndarray
         array we are searching for a value in
     value : element of the array
         value to search for
@@ -150,19 +150,19 @@ def find_nearest_index(array: npy.ndarray, value: Number) -> int:
     ----------
     taken from  http://stackoverflow.com/questions/2566412/find-nearest-value-in-numpy-array
 
-    '''
+    """
     return (npy.abs(array-value)).argmin()
 
 
 def slice_domain(x: npy.ndarray, domain: tuple):
-    '''
+    """
     Returns a slice object closest to the `domain` of `x`
 
     domain = x[slice_domain(x, (start, stop))]
 
     Parameters
     ----------
-    vector : numpy.ndarray
+    vector : npy.ndarray
         an array of values
     domain : tuple
         tuple of (start,stop) values defining the domain over
@@ -174,7 +174,7 @@ def slice_domain(x: npy.ndarray, domain: tuple):
     >>> idx = slice_domain(x, (2,6))
     >>> x[idx]
 
-    '''
+    """
     start = find_nearest_index(x, domain[0])
     stop = find_nearest_index(x, domain[1])
     return slice(start, stop+1)
@@ -183,7 +183,7 @@ def slice_domain(x: npy.ndarray, domain: tuple):
 
 
 def get_fid(file, *args, **kwargs):
-    '''
+    r"""
     Return a file object, given a filename or file object.
 
     Useful when you want to allow the arguments of a function to
@@ -199,7 +199,7 @@ def get_fid(file, *args, **kwargs):
     -------
     fid : file object
 
-    '''
+    """
     if isinstance(file, str):
         return open(file, *args, **kwargs)
     else:
@@ -207,7 +207,7 @@ def get_fid(file, *args, **kwargs):
 
 
 def get_extn(filename: str) -> str:
-    '''
+    """
     Get the extension from a filename.
 
     The extension is defined as everything passed the last '.'.
@@ -224,7 +224,7 @@ def get_extn(filename: str) -> str:
         either the extension (not including '.') or None if there
         isn't one
 
-    '''
+    """
     ext = os.path.splitext(filename)[-1]
     if len(ext) == 0:
         return None
@@ -233,7 +233,7 @@ def get_extn(filename: str) -> str:
 
 
 def basename_noext(filename: str) -> str:
-    '''
+    """
     Get the basename and strips extension.
 
     Parameters
@@ -246,13 +246,13 @@ def basename_noext(filename: str) -> str:
     basename : str
         file basename (ie. without extension)
 
-    '''
+    """
     return os.path.splitext(os.path.basename(filename))[0]
 
 
 # git
 def git_version(modname: str) -> str:
-    '''
+    """
     Return output 'git describe', executed in a module's root directory.
 
     Parameters
@@ -265,7 +265,7 @@ def git_version(modname: str) -> str:
     out : str
         output of 'git describe'
 
-    '''
+    """
     mod = __import__(modname)
     mod_dir = os.path.split(mod.__file__)[0]
     p = Popen(['git', 'describe'], stdout=PIPE, stderr=PIPE, cwd=mod_dir)
@@ -282,7 +282,7 @@ def git_version(modname: str) -> str:
 
 
 def dict_2_recarray(d: dict, delim: str, dtype: List[Tuple]) -> npy.ndarray:
-    '''
+    """
     Turn a dictionary of structured keys to a record array of objects.
 
     This is useful if you save data-base like meta-data in the form
@@ -323,7 +323,7 @@ def dict_2_recarray(d: dict, delim: str, dtype: List[Tuple]) -> npy.ndarray:
     array([1-Port Network: 'a2,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
            1-Port Network: 'b1,0.0,3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
            1-Port Network: 'a1,0.0,-3.0',  450-800 GHz, 101 pts, z0=[ 50.+0.j],
-    '''
+    """
 
     split_keys = [tuple(k.split(delim)+[d[k]]) for k in d.keys()]
     x = npy.array(split_keys, dtype=dtype+[('values',object)])
@@ -331,7 +331,7 @@ def dict_2_recarray(d: dict, delim: str, dtype: List[Tuple]) -> npy.ndarray:
 
 
 def findReplace(directory: str, find: str, replace: str, file_pattern: str):
-    '''
+    r"""
     Find/replace some txt in all files in a directory, recursively.
 
     This was found in [1]_ .
@@ -354,7 +354,7 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
     References
     ----------
     .. [1] http://stackoverflow.com/questions/4205854/python-way-to-recursively-find-and-replace-string-in-text-files
-    '''
+    """
     for path, dirs, files in os.walk(os.path.abspath(directory)):
         for filename in fnmatch.filter(files, file_pattern):
             filepath = os.path.join(path, filename)
@@ -367,8 +367,8 @@ def findReplace(directory: str, find: str, replace: str, file_pattern: str):
 
 # general purpose objects
 
-class HomoList(collections.Sequence):
-    '''
+class HomoList(collections.abc.Sequence):
+    """
     A Homogeneous Sequence.
 
     Provides a class for a list-like object which contains
@@ -406,7 +406,7 @@ class HomoList(collections.Sequence):
     Combos:
 
     >>> h[h.prop==value].func()
-    '''
+    """
 
 
     def __init__(self, list_):
@@ -464,8 +464,8 @@ class HomoList(collections.Sequence):
         return pprint.pformat(self.store)
 
 
-class HomoDict(collections.MutableMapping):
-    '''
+class HomoDict(collections.abc.MutableMapping):
+    """
     A Homogeneous Mutable Mapping.
 
     Provides a class for a dictionary-like object which contains
@@ -503,7 +503,7 @@ class HomoDict(collections.MutableMapping):
     Combos:
 
     >>> h[h.prop==value].func()
-    '''
+    """
     def __init__(self, dict_):
         self.store = dict(dict_)
 
@@ -572,7 +572,7 @@ class HomoDict(collections.MutableMapping):
                         if self.store[k] is not None}
 
     def filter(self, **kwargs):
-        '''
+        """
         Filter self based on kwargs
 
         This is equivalent to:
@@ -589,7 +589,7 @@ class HomoDict(collections.MutableMapping):
         >>> h = HomoDict(...)
         >>> h.filter(name='jean', age = '18', gender ='!female')
 
-        '''
+        """
         a = self
         for k in kwargs:
             if kwargs[k][0] == '!':
@@ -654,7 +654,7 @@ def unique_name(name: str, names: list, exclude: int = -1) -> str:
     if not has_duplicate_value(name, names, exclude):
         return name
     else:
-        if re.match("_\d\d", name[-3:]):
+        if re.match(r"_\d\d", name[-3:]):
             name_base = name[:-3]
             suffix = int(name[-2:])
         else:

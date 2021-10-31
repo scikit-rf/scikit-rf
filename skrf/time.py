@@ -136,7 +136,7 @@ def find_n_peaks(x: npy.ndarray, n: int, thres: float = 0.9, **kwargs) -> List[i
 
     Parameters
     ----------
-    x : numpy.ndarray
+    x : npy.ndarray
         signal
     n : int
         number of peaks to search for

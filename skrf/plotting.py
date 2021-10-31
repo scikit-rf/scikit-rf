@@ -352,7 +352,7 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
                      title: Union[str, None] = None, show_legend: bool = True,
                      axis: str = 'tight', ax: Union[plt.Axes, None] = None,
                      *args, **kwargs):
-    """
+    r"""
     Plot rectangular data and optionally label axes.
 
     Parameters
@@ -373,7 +373,7 @@ def plot_rectangular(x: NumberLike, y: NumberLike,
         whether or not to autoscale the axis. Default is 'tight'
     ax : :class:`matplotlib.axes.AxesSubplot` object or None, optional.
         axes to draw on. Default is None (creates a new figure)
-    \\*args, \\*\\*kwargs : passed to pylab.plot
+    \*args, \*\*kwargs : passed to pylab.plot
 
     """
     if ax is None:
@@ -410,7 +410,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
                title: Union[str, None] = None, show_legend: bool = True,
                axis_equal: bool = False, ax: Union[plt.Axes, None] = None,
                *args, **kwargs):
-    """
+    r"""
     Plot polar data on a polar plot and optionally label axes.
 
     Parameters
@@ -429,7 +429,7 @@ def plot_polar(theta: NumberLike, r: NumberLike,
         controls the drawing of the legend. Default is True.
     ax : :class:`matplotlib.axes.AxesSubplot` object or None.
         axes to draw on. Default is None (creates a new figure).
-    \\*args, \\*\\*kwargs : passed to pylab.plot
+    \*args, \*\*kwargs : passed to pylab.plot
 
     See Also
     --------
@@ -471,7 +471,7 @@ def plot_complex_rectangular(z: NumberLike,
                              title: str = 'Complex Plane', show_legend: bool = True,
                              axis: str = 'equal', ax: Union[plt.Axes, None] = None,
                              *args, **kwargs):
-    """
+    r"""
     Plot complex data on the complex plane.
 
     Parameters
@@ -488,7 +488,7 @@ def plot_complex_rectangular(z: NumberLike,
         controls the drawing of the legend. Default is True.
     ax : :class:`matplotlib.axes.AxesSubplot` object or None.
         axes to draw on. Default is None (creates a new figure)
-    \\*args, \\*\\*kwargs : passed to pylab.plot
+    \*args, \*\*kwargs : passed to pylab.plot
 
     See Also
     --------
@@ -511,7 +511,7 @@ def plot_complex_polar(z: NumberLike,
                        title: Union[str, None] = None, show_legend: bool = True,
                        axis_equal: bool = False, ax: Union[plt.Axes, None] = None,
                        *args, **kwargs):
-    """
+    r"""
     Plot complex data in polar format.
 
     Parameters
@@ -528,7 +528,7 @@ def plot_complex_polar(z: NumberLike,
         controls the drawing of the legend. Default is True.
     ax : :class:`matplotlib.axes.AxesSubplot` object or None.
         axes to draw on. Default is None (creates a new figure).
-    \\*args, \\*\\*kwargs : passed to pylab.plot
+    \*args, \*\*kwargs : passed to pylab.plot
 
     See Also
     --------
@@ -550,7 +550,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
                show_legend: bool = True, axis: str = 'equal', ax: Union[plt.Axes, None] = None,
                force_chart: bool = False, draw_vswr: Union[List, bool, None] = None,
                *args, **kwargs):
-    """
+    r"""
     plot complex data on smith chart.
 
     Parameters
@@ -580,7 +580,7 @@ def plot_smith(s: NumberLike, smith_r: float = 1, chart_type: str = 'z',
     draw_vswr : list of numbers, Boolean or None, optional
         draw VSWR circles. If True, default values are used.
         Default is None.
-    \\*args, \\*\\*kwargs : passed to pylab.plot
+    \*args, \*\*kwargs : passed to pylab.plot
 
     See Also
     ----------
@@ -664,7 +664,7 @@ def subplot_params(ntwk, param: str = 's', proj: str = 'db',
 
 def shade_bands(edges: NumberLike, y_range: Union[Tuple, None] = None,
                 cmap: str = 'prism', **kwargs):
-    """
+    r"""
     Shades frequency bands.
 
     When plotting data over a set of frequency bands it is nice to
@@ -680,7 +680,7 @@ def shade_bands(edges: NumberLike, y_range: Union[Tuple, None] = None,
     cmap : str, optional.
         see matplotlib.cm  or matplotlib.colormaps for acceptable values.
         Default is 'prism'.
-    \\*\\*kwargs : key word arguments
+    \*\*kwargs : key word arguments
         passed to `matplotlib.fill_between`
 
     Examples
@@ -823,7 +823,7 @@ def scrape_legend(n: Union[int, None] = None,
 
 
 def func_on_all_figs(func: Callable, *args, **kwargs):
-    """
+    r"""
     Run a function after making all open figures current.
 
     useful if you need to change the properties of many open figures
@@ -833,7 +833,7 @@ def func_on_all_figs(func: Callable, *args, **kwargs):
     ----------
     func : function
         function to call
-    \\*args, \\*\\*kwargs : passed to func
+    \*args, \*\*kwargs : passed to func
 
     Examples
     --------
@@ -979,7 +979,7 @@ def __generate_plot_functions(self):
             #     plt.draw()
             #     plt.show()
 
-        plot_prop_polar.__doc__ = """
+        plot_prop_polar.__doc__ = r"""
 plot the Network attribute :attr:`%s` vs frequency.
 
 Parameters
@@ -997,7 +997,7 @@ attribute : string
 y_label : string, optional
     the y-axis label
 
-\*args,\\**kwargs : arguments, keyword arguments
+\*args,\**kwargs : arguments, keyword arguments
     passed to :func:`matplotlib.plot`
 
 Note
@@ -1069,7 +1069,7 @@ Examples
             #    plt.draw()
             #    plt.show()
 
-        plot_prop_rect.__doc__ = """
+        plot_prop_rect.__doc__ = r"""
 plot the Network attribute :attr:`%s` vs frequency.
 
 Parameters
@@ -1087,7 +1087,7 @@ attribute : string
 y_label : string, optional
     the y-axis label
 
-\*args,\\**kwargs : arguments, keyword arguments
+\*args,\**kwargs : arguments, keyword arguments
     passed to :func:`matplotlib.plot`
 
 Note
@@ -1224,7 +1224,7 @@ Examples
                 #    plt.draw()
                 #    #plt.show()
 
-            plot_func.__doc__ = """
+            plot_func.__doc__ = r"""
     plot the Network attribute :attr:`%s` vs frequency.
 
     Parameters
@@ -1244,7 +1244,7 @@ Examples
     logx : Boolean, optional
         Enable logarithmic x-axis, default off
 
-    \\*args,\\**kwargs : arguments, keyword arguments
+    \*args,\**kwargs : arguments, keyword arguments
         passed to :func:`matplotlib.plot`
 
     Note
@@ -1418,7 +1418,7 @@ def plot_s_db_time(self,center_to_dc=None,*args,**kwargs):
 # plotting
 def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
         chart_type='z', draw_labels=False, label_axes=False, draw_vswr=None, *args,**kwargs):
-    """
+    r"""
     plots the scattering parameter on a smith chart
 
     plots indices `m`, `n`, where `m` and `n` can be integers or
@@ -1447,9 +1447,9 @@ def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
     draw_vswr : list of numbers, Boolean or None
         draw VSWR circles. If True, default values are used.
 
-    \\*args : arguments, optional
+    \*args : arguments, optional
             passed to the matplotlib.plot command
-    \\*\\*kwargs : keyword arguments, optional
+    \*\*kwargs : keyword arguments, optional
             passed to the matplotlib.plot command
 
 
@@ -1520,7 +1520,7 @@ def plot_s_smith(self, m=None, n=None,r=1, ax=None, show_legend=True,\
 
 
 def plot_it_all(self, *args, **kwargs):
-    """
+    r"""
     Plot dB, deg, smith, and complex in subplots.
 
     Plots the magnitude in dB in subplot 1, the phase in degrees in
@@ -1529,9 +1529,9 @@ def plot_it_all(self, *args, **kwargs):
 
     Parameters
     ----------
-    \\*args : arguments, optional
+    \*args : arguments, optional
             passed to the matplotlib.plot command
-    \\*\\*kwargs : keyword arguments, optional
+    \*\*kwargs : keyword arguments, optional
             passed to the matplotlib.plot command
 
     See Also
@@ -1593,7 +1593,7 @@ def plot_calibration_errors(self, *args, **kwargs):
 
 
 def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, **kwargs):
-    """
+    r"""
     Plot corrected calibration standards.
 
     Given that the calibration is overdetermined, this may be used
@@ -1606,7 +1606,7 @@ def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, **k
         Default is 's_smith'
     show_legend : bool, optional
         draw a legend or not. Default is False.
-    \\*\\*kwargs : kwargs
+    \*\*kwargs : kwargs
         passed to the plot method of Network
     """
     ns = networkSet.NetworkSet(self.caled_ntwks)
@@ -1626,7 +1626,7 @@ def plot_caled_ntwks(self, attr: str = 's_smith', show_legend: bool = False, **k
 
 
 def plot_residuals(self, attr: str = 's_db', **kwargs):
-    """
+    r"""
     Plot residual networks.
 
     Given that the calibration is overdetermined, this may be used
@@ -1637,7 +1637,7 @@ def plot_residuals(self, attr: str = 's_db', **kwargs):
     attr : str, optional.
         Network property to plot, ie 's_db', 's_smith', etc.
         Default is 's_db'
-    \\*\\*kwargs : kwargs
+    \*\*kwargs : kwargs
         passed to the plot method of Network
 
     See Also
@@ -1652,12 +1652,12 @@ def plot_residuals(self, attr: str = 's_db', **kwargs):
 def animate(self, attr: str = 's_deg', ylims: Tuple = (-5, 5),
             xlims: Union[Tuple, None] = None, show: bool = True,
             savefigs: bool = False, dir_: str = '.', *args, **kwargs):
-    """
+    r"""
     Animate a property of the networkset.
 
     This loops through all elements in the NetworkSet and calls
-    a plotting attribute (ie Network.plot_`attr`), with given \\*args
-    and \\*\\*kwargs.
+    a plotting attribute (ie Network.plot_`attr`), with given \*args
+    and \*\*kwargs.
 
     Parameters
     ----------
@@ -1674,7 +1674,7 @@ def animate(self, attr: str = 's_deg', ylims: Tuple = (-5, 5),
     savefigs : bool, optional
         save each frame as a png. Default is False.
 
-    \\*args, \\*\\*kwargs :
+    \*args, \*\*kwargs :
         passed to the Network plotting function
 
     Note
@@ -1737,7 +1737,7 @@ def plot_uncertainty_bounds_component(
         markevery_error: int = 20, ax: Union[plt.Axes, None] = None,
         ppf: bool = None, kwargs_error: dict = {},
         *args, **kwargs):
-    """
+    r"""
     Plot mean value of a NetworkSet with +/- uncertainty bounds in an Network's attribute.
 
     This is designed to represent uncertainty in a scalar component of the s-parameter.
@@ -1778,7 +1778,7 @@ def plot_uncertainty_bounds_component(
      kwargs_error : dict
          dictionary of kwargs to pass to the fill_between or
          errorbar plot command depending on value of type.
-    \\*args, \\*\\*kwargs :
+    \*args, \*\*kwargs :
         passed to Network.plot_s_re command used to plot mean response
 
     Note
@@ -1857,7 +1857,7 @@ def plot_minmax_bounds_component(self, attribute: str, m: int = 0, n: int = 0,
                                  markevery_error: int = 20, ax: Union[plt.Axes, None] = None,
                                  ppf: bool = None, kwargs_error: dict = {},
                                  *args, **kwargs):
-    """
+    r"""
     plots mean value of the NetworkSet with +/- uncertainty bounds in an Network's attribute.
 
     This is designed to represent uncertainty in a scalar component of the s-parameter. for example
@@ -1897,7 +1897,7 @@ def plot_minmax_bounds_component(self, attribute: str, m: int = 0, n: int = 0,
      kwargs_error : dict
          dictionary of kwargs to pass to the fill_between or
          errorbar plot command depending on value of type.
-    \\*args,  \\*\\*kwargs :
+    \*args,  \*\*kwargs :
         passed to Network.plot_s_re command used to plot mean response
 
     Note
@@ -2077,7 +2077,7 @@ def plot_uncertainty_bounds_s(self, multiplier: float = 200, *args, **kwargs):
     plt.show()
 
 def plot_logsigma(self, label_axis: bool = True, *args,**kwargs):
-    """
+    r"""
     Plot the uncertainty for the set in units of log-sigma.
 
     Log-sigma is the complex standard deviation, plotted in units
@@ -2087,7 +2087,7 @@ def plot_logsigma(self, label_axis: bool = True, *args,**kwargs):
     ----------
     label_axis : bool, optional
         Default is True.
-    \\*args, \\*\\*kwargs : arguments
+    \*args, \*\*kwargs : arguments
         passed to self.std_s.plot_s_db()
     """
     self.std_s.plot_s_db(*args,**kwargs)
@@ -2099,7 +2099,7 @@ def signature(self, m: int = 0, n: int = 0, component: str = 's_mag',
               vmax: Union[Number, None] = None, vs_time: bool = False,
               cbar_label: Union[str, None] = None,
               *args, **kwargs):
-    """
+    r"""
     Visualization of a NetworkSet.
 
     Creates a colored image representing the some component
@@ -2124,7 +2124,7 @@ def signature(self, m: int = 0, n: int = 0, component: str = 's_mag',
         Default is False.
     cbar_label: String or None, optional
         label for the colorbar. Default is None
-    \\*args,\\*\\*kw : arguments, keyword arguments
+    \*args,\*\*kw : arguments, keyword arguments
         passed to :func:`~pylab.imshow`
     """
 
@@ -2292,7 +2292,7 @@ def plot_contour(freq: frequency.Frequency,
                  min0max1: int, graph: bool = True,
                  cmap: str = 'plasma_r', title: str = '',
                  **kwargs):
-    """
+    r"""
     Create a contour plot.
 
     Parameters
@@ -2313,7 +2313,7 @@ def plot_contour(freq: frequency.Frequency,
         Colormap label. The default is 'plasma_r'.
     title : str, optional
         Figure title. The default is ''.
-    \\*\\*kwargs : dict
+    \*\*kwargs : dict
         Other parameters passed to `matplotlib.plot()`.
 
     Returns

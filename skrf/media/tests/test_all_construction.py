@@ -1,8 +1,8 @@
-'''
+"""
 this test on tests ability for all media class to pass construction
 of all general circuit components
 
-'''
+"""
 import unittest
 import skrf as rf
 from scipy.constants import *

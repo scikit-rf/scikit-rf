@@ -1,6 +1,6 @@
 
 
-'''
+"""
 .. module:: skrf.calibration.calibrationSet
 ================================================================
 calibrationSet (:mod:`skrf.calibration.calibrationSet`)
@@ -17,7 +17,7 @@ CalibrationSet Class
 
    CalibrationSet
 
-'''
+"""
 from itertools import product, combinations, permutations
 from .calibration import Calibration
 from ..networkSet import NetworkSet
@@ -25,15 +25,15 @@ from ..networkSet import NetworkSet
 
 
 def cartesian_product(ideals, measured_sets, *args, **kwargs):
-    '''
-    '''
+    """
+    """
     measured_lists = product(*[k[:] for k in measured_sets])
     return [Calibration(ideals = ideals, measured = measured,
         *args, **kwargs) for measured in measured_lists ]
 
 def dot_product(ideals, measured_sets, *args, **kwargs):
-    '''
-    '''
+    """
+    """
     for measured_set in measured_sets:
         if len(measured_set) != len(measured_sets[0]):
             raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
@@ -49,7 +49,7 @@ def dot_product(ideals, measured_sets, *args, **kwargs):
     return cal_list
 
 class CalibrationSet(object):
-    '''
+    """
     A set of Calibrations
 
     This is designed to support experimental uncertainty analysis [1]_.
@@ -59,10 +59,10 @@ class CalibrationSet(object):
 
     .. [1] A. Arsenovic, L. Chen, M. F. Bauwens, H. Li, N. S. Barker, and R. M. Weikle, "An Experimental Technique for Calibration Uncertainty Analysis," IEEE Transactions on Microwave Theory and Techniques, vol. 61, no. 1, pp. 263-269, 2013.
 
-    '''
+    """
 
     def __init__(self, cal_class, ideals, measured_sets,*args, **kwargs):
-        '''
+        r"""
         Parameters
         ----------
         cal_class : a Calibration class
@@ -76,10 +76,10 @@ class CalibrationSet(object):
             set to the ideals element of the same index. The sets
             themselves  can be anything list-like
 
-        \\*args\\**kargs :
+        \*args\**kargs :
             passed to self.run(),
 
-        '''
+        """
         self.cal_class = cal_class
         self.ideals = ideals
         self.measured_sets = measured_sets
@@ -91,19 +91,19 @@ class CalibrationSet(object):
         return self.cal_list[key]
 
     def apply_cal(self, raw_ntwk, *args, **kwargs):
-        '''
-        '''
+        """
+        """
         return NetworkSet([k.apply_cal(raw_ntwk) for k in self.cal_list],
             *args, **kwargs)
 
     def plot_uncertainty_per_standard(self):
-        '''
-        '''
+        """
+        """
         self.dankness('std_s','plot_s_mag')
 
     def dankness(self, prop, func, *args, **kwargs):
-        '''
-        '''
+        """
+        """
         try:
             [k.__getattribute__(prop).__getattribute__(func)\
                 (*args, **kwargs) for k in self.measured_sets]
@@ -116,10 +116,10 @@ class CalibrationSet(object):
 
     @property
     def corrected_sets(self):
-        '''
+        """
         The set of corrected networks, each is corrected by its corresponding
         element in the cal_list
-        '''
+        """
         n_meas = len(self.cal_list[0].measured)
         mat = [k.caled_ntwks for k in self.cal_list]
         return [NetworkSet([k[l] for k in mat]) for l in range(n_meas)]

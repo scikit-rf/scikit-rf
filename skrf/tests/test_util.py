@@ -4,8 +4,8 @@ import unittest
 
 
 class HomoDictTest(unittest.TestCase):
-    '''
-    '''
+    """
+    """
     def setUp(self):
         self.h = rf.util.HomoDict({'a':'asdf','b':'ZZZZ'})
 
@@ -22,8 +22,8 @@ class HomoDictTest(unittest.TestCase):
 
 
 class HomoListTest(unittest.TestCase):
-    '''
-    '''
+    """
+    """
     def setUp(self):
         self.h = rf.util.HomoList(['asdf','ZZZZ'])
 

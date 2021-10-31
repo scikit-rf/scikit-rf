@@ -83,7 +83,7 @@ class CPW(Media):
 
     @property
     def ep_re(self) -> NumberLike:
-        """
+        r"""
         Effective permittivity of the CPW (also known as Keff).
 
         If the thickness of the dielectric substrate is large,
@@ -91,7 +91,7 @@ class CPW(Media):
 
         .. math::
 
-                \\varepsilon_{eff} = \\frac{\\varepsilon_r + 1}{2}
+                \varepsilon_{eff} = \frac{\varepsilon_r + 1}{2}
 
         The effective permittivity can be defined as in the case of a
         microstrip line, that is as the square of ratio
@@ -101,14 +101,14 @@ class CPW(Media):
 
     @property
     def k1(self) -> NumberLike:
-        """
+        r"""
         Intermediary parameter. see qucs docs on cpw lines.
 
         Defined as:
 
         .. math::
 
-                k = \\frac{w}{w + 2s}
+                k = \frac{w}{w + 2s}
 
         """
         return self.w/(self.w +2*self.s)

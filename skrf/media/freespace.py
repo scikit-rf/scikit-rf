@@ -28,7 +28,7 @@ if TYPE_CHECKING:
 
 
 class Freespace(Media):
-    """
+    r"""
     A plane-wave (TEM Mode) in Freespace.
 
     A Freespace media can be constructed in two ways:
@@ -64,7 +64,7 @@ class Freespace(Media):
         must be same length as frequency. if str, it must be a key in
         :data:`skrf.data.materials`.
         Default is None (lossless).
-    \\*args, \\*\\*kwargs : arguments and keyword arguments
+    \*args, \*\*kwargs : arguments and keyword arguments
 
 
     Examples
@@ -106,22 +106,22 @@ class Freespace(Media):
 
     @property
     def ep(self) -> NumberLike:
-        """
+        r"""
         Complex dielectric permittivity.
 
-        If :math:`\\tan\\delta_e` is not defined:
+        If :math:`\tan\delta_e` is not defined:
 
         .. math::
 
-            \\varepsilon = \\varepsilon_0 \\varepsilon_r
+            \varepsilon = \varepsilon_0 \varepsilon_r
 
         otherwise,
 
         .. math::
 
-            \\varepsilon = \\varepsilon_0 \\Re[\\varepsilon_r] (1 - j\\tan\\delta_e)
+            \varepsilon = \varepsilon_0 \Re[\varepsilon_r] (1 - j\tan\delta_e)
 
-        where :math:`\\tan\\delta_e` is the electric loss tangent.
+        where :math:`\tan\delta_e` is the electric loss tangent.
 
         Returns
         -------
@@ -138,22 +138,22 @@ class Freespace(Media):
 
     @property
     def mu(self) -> NumberLike:
-        """
+        r"""
         Complex dielectric permeability.
 
-        If :math:`\\tan\\delta_m` is not defined:
+        If :math:`\tan\delta_m` is not defined:
 
         .. math::
 
-            \\mu = \\mu_0 \\mu_r
+            \mu = \mu_0 \mu_r
 
         otherwise,
 
         .. math::
 
-            \\mu = \\mu_0 \\Re[\\mu_r] (1 - j\\tan\\delta_m)
+            \mu = \mu_0 \Re[\mu_r] (1 - j\tan\delta_m)
 
-        where :math:`\\tan\\delta_m` is the magnetic loss tangent.
+        where :math:`\tan\delta_m` is the magnetic loss tangent.
 
         Returns
         -------
@@ -169,14 +169,14 @@ class Freespace(Media):
 
     @classmethod
     def from_distributed_circuit(cls, dc, *args, **kwargs) -> Media:
-        """
+        r"""
         Initialize a freespace from :class:`~skrf.media.distributedCircuit.DistributedCircuit`.
 
         Parameters
         ----------
         dc: :class:`~skrf.media.distributedCircuit.DistributedCircuit`
             a DistributedCircuit object
-        \\*args, \\*\\*kwargs :
+        \*args, \*\*kwargs :
             passed to `Freespace.__init__
 
         Notes
@@ -236,12 +236,12 @@ class Freespace(Media):
 
     @property
     def ep_with_rho(self) -> NumberLike:
-        """
+        r"""
         Complex permittivity with resistivity absorbed into its imaginary component.
                           
         .. math::
             
-            \\varepsilon - j \\frac{1}{\\rho\\omega}
+            \varepsilon - j \frac{1}{\rho\omega}
         
         See Also
         --------
@@ -255,18 +255,18 @@ class Freespace(Media):
 
     @property
     def gamma(self) -> NumberLike:
-        """
-        Propagation Constant, :math:`\\gamma`.
+        r"""
+        Propagation Constant, :math:`\gamma`.
 
         Defined as,
 
         .. math::
             
-                \\gamma =  \\sqrt{ Z^{'}  Y^{'}}
+                \gamma =  \sqrt{ Z^{'}  Y^{'}}
 
         Returns
         -------
-        gamma : numpy.ndarray
+        gamma : npy.ndarray
             Propagation Constant,
 
         Note
@@ -281,16 +281,16 @@ class Freespace(Media):
 
     @property
     def Z0(self) -> NumberLike:
-        """
+        r"""
         Characteristic Impedance, :math:`Z0`.
 
         .. math::
 
-                Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
+                Z_0 = \sqrt{ \frac{Z^{'}}{Y^{'}}}
 
         Returns
         -------
-        Z0 : numpy.ndarray
+        Z0 : npy.ndarray
             Characteristic Impedance in units of ohms
         """
         ep = self.ep_with_rho

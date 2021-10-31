@@ -39,7 +39,7 @@ class Taper1D(object):
     def __init__(self, med, start: Number, stop: Number, n_sections: int, f: Callable,
                  length: Number, length_unit: str = 'm', param: str = 'z0', f_is_normed: bool = True,
                  med_kw: dict = {}, f_kw: dict = {}):
-        '''
+        """
         Generic 1D Taper Constructor.
 
         Parameters
@@ -102,7 +102,7 @@ class Taper1D(object):
                             f=lambda x: x,
                             f_is_normed=True,
                             med_kw={'frequency':Frequency(75,110,101,'ghz')})
-        '''
+        """
         self.med = med
         self.param = param
         self.start = start
@@ -150,7 +150,7 @@ class Taper1D(object):
         return y
 
     def media_at(self, val: Number):
-        '''
+        """
         Create a media instance for the taper with parameter value `val`.
 
         Parameters
@@ -162,13 +162,13 @@ class Taper1D(object):
         -------
         media : :class:`~skrf.media.media.Media`
             media instance for the taper for the given parameter value
-        '''
+        """
         med_kw = self.med_kw.copy()
         med_kw.update({self.param: val})
         return self.med(**med_kw)
 
     def section_at(self, val: Number):
-        '''
+        """
         Create a single section of the taper with parameter value `val`.
 
         Parameters
@@ -181,7 +181,7 @@ class Taper1D(object):
         media : :class:`~skrf.network.Network`
             Network instance for the section of the taper
             for the given parameter value
-        '''
+        """
         return self.media_at(val).line(self.section_length,
                                        unit=self.length_unit)
 
@@ -221,12 +221,12 @@ class Taper1D(object):
 
 
 class Linear(Taper1D):
-    '''
+    """
     A linear Taper.
 
     Defined by :math:`f(x)=x`
 
-    '''
+    """
     def __init__(self, **kw):
         opts = dict(f=lambda x:x, f_is_normed=True)
         kw.update(opts)
@@ -234,10 +234,10 @@ class Linear(Taper1D):
 
 
 class Exponential(Taper1D):
-    '''
+    r"""
     An Exponential Taper.
 
-    Defined by :math:`f(x) = f_0 \\exp\\left[ \\frac{x}{x_1}  \\ln\\left( \\frac{f_1}{f_0} \\right) \\right]`
+    Defined by :math:`f(x) = f_0 \exp\left[ \frac{x}{x_1}  \ln\left( \frac{f_1}{f_0} \right) \right]`
 
     where:
 
@@ -246,7 +246,7 @@ class Exponential(Taper1D):
     *    :math:`x`: independent variable (position along taper)
     *    :math:`x_1`: length of taper
 
-    '''
+    """
     def __init__(self, **kw):
         """
         Exponential Taper Constructor
@@ -261,7 +261,7 @@ class Exponential(Taper1D):
 
 
 class SmoothStep(Taper1D):
-    '''
+    """
     A smoothstep Taper.
 
     There is no analytical basis for this in the EE world that I know
@@ -273,7 +273,7 @@ class SmoothStep(Taper1D):
     ----------
     https://en.wikipedia.org/wiki/Smoothstep
 
-    '''
+    """
     def __init__(self, **kw):
         """
         Smoothstep Taper Constructor.

@@ -1,4 +1,4 @@
-'''
+"""
 this is just a hack to allow ivi Drivers to be back-ward compatible 
 with the pyvisa GpibInstrument class. 
 
@@ -7,7 +7,7 @@ group https://github.com/LabPy, so this hack will go way and the
 instrument backends will be cleaned up soon. 
 
 
-'''
+"""
 from ivi import Driver
 import numpy as npy
 

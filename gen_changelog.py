@@ -1,15 +1,15 @@
 #!/usr/bin/env python
-'''Script to build a changelog for all version tags'''
+"""Script to build a changelog for all version tags"""
 from subprocess import Popen, PIPE, CalledProcessError, check_call
 import datetime
 
 ## Variables
 changelog_filename = 'CHANGELOG.txt'
-header = '''Changelog For scikit-rf
+header = """Changelog For scikit-rf
 Generated on %s
 
 
-'''%(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
+"""%(datetime.datetime.now().strftime("%Y-%m-%d %H:%M"))
 
 
 

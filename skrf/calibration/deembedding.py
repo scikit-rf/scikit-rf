@@ -1,4 +1,4 @@
-'''
+"""
 .. module:: skrf.calibration.deembedding
 
 ====================================================
@@ -43,7 +43,7 @@ De-embedding Methods
    ShortOpen
    Short
 
-'''
+"""
 
 from abc import ABC, abstractmethod
 from ..frequency import *
@@ -51,7 +51,7 @@ from ..network import *
 
 
 class Deembedding(ABC):
-    '''
+    """
     Abstract Base Class for all de-embedding objects.
 
     This class implements the common mechanisms for all de-embedding
@@ -59,10 +59,10 @@ class Deembedding(ABC):
     class and over-ride the methods:
     * :func:`Deembedding.deembed`
 
-    '''
+    """
 
     def __init__(self, dummies, name=None, *args, **kwargs):
-        '''
+        """
         De-embedding Initializer
 
         Notes
@@ -88,7 +88,7 @@ class Deembedding(ABC):
         \*args, \*\*kwargs : keyword arguments
             stored in self.args and self.kwargs, which may be used
             by sub-classes if needed.
-        '''
+        """
 
        # ensure all the dummy Networks' frequency's are the same
         for dmyntwk in dummies:
@@ -120,14 +120,14 @@ class Deembedding(ABC):
 
     @abstractmethod
     def deembed(self, ntwk):
-        '''
+        """
         Apply de-embedding correction to a Network
-        '''
+        """
         pass
 
 
 class OpenShort(Deembedding):
-    '''
+    """
     Remove open parasitics followed by short parasitics. 
 
     This is a commonly used de-embedding method for on-wafer applications.
@@ -168,10 +168,10 @@ class OpenShort(Deembedding):
 
     >>> realdut = dm.deembed(dut)
 
-    '''
+    """
 
     def __init__(self, dummy_open, dummy_short, name=None, *args, **kwargs):
-        '''
+        """
         Open-Short De-embedding Initializer
 
         Parameters
@@ -193,7 +193,7 @@ class OpenShort(Deembedding):
         ---------
         :func:`Deembedding.__init__`
 
-        '''
+        """
         self.open = dummy_open.copy()
         self.short = dummy_short.copy()
         dummies = [self.open, self.short]
@@ -201,7 +201,7 @@ class OpenShort(Deembedding):
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
 
     def deembed(self, ntwk):
-        '''
+        """
         Perform the de-embedding calculation
 
         Parameters
@@ -216,7 +216,7 @@ class OpenShort(Deembedding):
         caled : :class:`~skrf.network.Network` object
             Network data of the device after de-embedding
 
-        '''
+        """
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
@@ -235,7 +235,7 @@ class OpenShort(Deembedding):
 
 
 class Open(Deembedding):
-    '''
+    """
     Remove open parasitics only.
 
     A deembedding object is created with just one open dummy measurement,
@@ -264,10 +264,10 @@ class Open(Deembedding):
     Remove parasitics to get the actual device network
 
     >>> realdut = dm.deembed(dut)
-    '''
+    """
 
     def __init__(self, dummy_open, name=None, *args, **kwargs):
-        '''
+        """
         Open De-embedding Initializer
 
         Parameters
@@ -286,14 +286,14 @@ class Open(Deembedding):
         ---------
         :func:`Deembedding.__init__`
 
-        '''
+        """
         self.open = dummy_open.copy()
         dummies = [self.open]
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
 
     def deembed(self, ntwk):
-        '''
+        """
         Perform the de-embedding calculation
 
         Parameters
@@ -307,7 +307,7 @@ class Open(Deembedding):
         caled : :class:`~skrf.network.Network` object
             Network data of the device after de-embedding
 
-        '''
+        """
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
@@ -324,7 +324,7 @@ class Open(Deembedding):
 
 
 class ShortOpen(Deembedding):
-    '''
+    """
     Remove short parasitics followed by open parasitics.
 
     A deembedding object is created with two dummy measurements: `dummy_open` 
@@ -356,10 +356,10 @@ class ShortOpen(Deembedding):
 
     >>> realdut = dm.deembed(dut)
 
-    '''
+    """
 
     def __init__(self, dummy_short, dummy_open, name=None, *args, **kwargs):
-        '''
+        """
         Short-Open De-embedding Initializer
 
         Parameters
@@ -381,7 +381,7 @@ class ShortOpen(Deembedding):
         ---------
         :func:`Deembedding.__init__`
 
-        '''
+        """
         self.open = dummy_open.copy()
         self.short = dummy_short.copy()
         dummies = [self.open, self.short]
@@ -389,7 +389,7 @@ class ShortOpen(Deembedding):
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
 
     def deembed(self, ntwk):
-        '''
+        """
         Perform the de-embedding calculation
 
         Parameters
@@ -403,7 +403,7 @@ class ShortOpen(Deembedding):
         caled : :class:`~skrf.network.Network` object
             Network data of the device after de-embedding
 
-        '''
+        """
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.open.frequency:
@@ -422,7 +422,7 @@ class ShortOpen(Deembedding):
 
 
 class Short(Deembedding):
-    '''
+    """
     Remove short parasitics only. 
 
     This is a useful method to remove pad contact resistances from measurement.
@@ -453,10 +453,10 @@ class Short(Deembedding):
 
     >>> realdut = dm.deembed(dut)
 
-    '''
+    """
 
     def __init__(self, dummy_short, name=None, *args, **kwargs):
-        '''
+        """
         Short De-embedding Initializer
 
         Parameters
@@ -475,14 +475,14 @@ class Short(Deembedding):
         ---------
         :func:`Deembedding.__init__`
 
-        '''
+        """
         self.short = dummy_short.copy()
         dummies = [self.short]
 
         Deembedding.__init__(self, dummies, name, *args, **kwargs)
 
     def deembed(self, ntwk):
-        '''
+        """
         Perform the de-embedding calculation
 
         Parameters
@@ -496,7 +496,7 @@ class Short(Deembedding):
         caled : :class:`~skrf.network.Network` object
             Network data of the device after de-embedding
 
-        '''
+        """
 
         # check if the frequencies match with dummy frequencies
         if ntwk.frequency != self.short.frequency:

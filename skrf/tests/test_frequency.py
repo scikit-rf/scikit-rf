@@ -9,12 +9,12 @@ from skrf.frequency import InvalidFrequencyWarning
 
 
 class FrequencyTestCase(unittest.TestCase):
-    '''
+    """
 
-    '''
+    """
     def setUp(self):
-        '''
-        '''
+        """
+        """
         self.test_dir = os.path.dirname(os.path.abspath(__file__))+'/'
 
     def test_create_linear_sweep(self):
@@ -46,9 +46,9 @@ class FrequencyTestCase(unittest.TestCase):
             freq.npoints = 10
 
     def test_rando_sweep_from_touchstone(self):
-        '''
+        """
         this also tests the ability to read a touchstone file.
-        '''
+        """
         rando_sweep_ntwk = rf.Network(os.path.join(self.test_dir, 'ntwk_arbitrary_frequency.s2p'))
         self.assertTrue((rando_sweep_ntwk.f == \
             npy.array([1,4,10,20])).all())

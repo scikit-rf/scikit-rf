@@ -71,10 +71,10 @@ class DetermineTest(unittest.TestCase):
 
 
 class CalibrationTest(object):
-    '''
+    """
     This is the generic Calibration test case which all Calibration 
     Subclasses should be able to pass. They must implement
-    '''
+    """
 
     def test_accuracy_of_dut_correction(self):
         a = self.wg.random(n_ports=self.n_ports, name = 'actual')
@@ -119,11 +119,11 @@ class CalibrationTest(object):
 
 
 class OnePortTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     One-port calibration test.
 
 
-    '''
+    """
     def setUp(self):
         self.n_ports = 1
         self.wg = WG
@@ -272,11 +272,11 @@ class SDDLWeikle(OnePortTest):
 
 
 class SDDMTest(OnePortTest):
-    '''
+    """
     This is a specific test of SDDL to verify it works when the load is 
     a matched load. This test has been used to show that the SDDLWeikle 
     variant fails, with a perfect matched load. 
-    '''
+    """
     def setUp(self):
         
         self.n_ports = 1
@@ -315,8 +315,8 @@ class SDDMTest(OnePortTest):
 
 @SkipTest
 class PHNTest(OnePortTest):
-    '''
-    '''
+    """
+    """
     def setUp(self):
         
         self.n_ports = 1
@@ -394,9 +394,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
         
     def measure(self,ntwk):
@@ -650,10 +650,9 @@ class NISTMultilineTRLTest(EightTermTest):
         self.assertTrue(max(npy.abs(self.wg.gamma-self.cal.gamma)) < 1e-3)
 
 
-class NISTMultilineTRLTest2(unittest.TestCase):
+class NISTMultilineTRLTest2(NISTMultilineTRLTest):
     """ Test characteristic impedance change and reference plane shift.
-    Due to the transformations solved error boxes are not equal to the initial
-    error boxes so CalibrationTestCase can't be used."""
+    """
     def setUp(self):
         global NPTS
         self.n_ports = 2
@@ -670,44 +669,48 @@ class NISTMultilineTRLTest2(unittest.TestCase):
 
         self.X = wg.random(n_ports =2, name = 'X')
         self.Y = wg.random(n_ports =2, name = 'Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
         self.gamma_f = wg.random(n_ports =1, name='gamma_f')
         self.gamma_r = wg.random(n_ports =1, name='gamma_r')
 
         actuals = [
-            rlgc.thru(),
-            rlgc.short(nports=2),
-            rlgc.line(10,'um'),
-            rlgc.line(100,'um'),
-            rlgc.line(500,'um'),
+            rlgc.line(1000,'um'),
+            rlgc.line(500,'um') ** rlgc.short(nports=2) ** rlgc.line(500,'um'),
+            rlgc.line(1010,'um'),
+            rlgc.line(1100,'um'),
+            rlgc.line(1800,'um'),
             ]
 
         self.actuals=actuals
 
         measured = [self.measure(k) for k in actuals]
-
         self.measured = measured
 
         self.cal = NISTMultilineTRL(
             measured = measured,
+            isolation = measured[1],
             Grefls = [-1],
-            l = [0, 10e-6, 100e-6, 500e-6],
+            refl_offset = 500e-6,
+            l = [1000e-6, 1010e-6, 1100e-6, 1800e-6],
             switch_terms = (self.gamma_f, self.gamma_r),
-            ref_plane=50e-6,
             c0=c,
             z0_ref=50,
             gamma_root_choice = 'real'
             )
 
-    def terminate(self, ntwk):
-        '''
-        terminate a measured network with the switch terms
-        '''
-        return terminate(ntwk,self.gamma_f, self.gamma_r)
-
-    def measure(self,ntwk):
-        out =  self.terminate(self.X**ntwk**self.Y)
-        out.name = ntwk.name
-        return out
+        self.cal_shift = NISTMultilineTRL(
+            measured = measured,
+            isolation = measured[1],
+            Grefls = [-1],
+            refl_offset = 0,
+            l = [0, 10e-6, 100e-6, 800e-6],
+            switch_terms = (self.gamma_f, self.gamma_r),
+            ref_plane = -500e-6,
+            c0=c,
+            z0_ref=50,
+            gamma_root_choice = 'real'
+            )
 
     def test_gamma(self):
         self.assertTrue(max(npy.abs(self.rlgc.gamma-self.cal.gamma)) < 1e-3)
@@ -716,17 +719,9 @@ class NISTMultilineTRLTest2(unittest.TestCase):
         self.assertTrue(max(npy.abs(self.rlgc.z0-self.cal.z0)) < 1e-3)
 
     def test_shift(self):
-        npy.testing.assert_allclose(self.cal.apply_cal(self.measured[3]).s, 
-                                    self.wg.thru().s, atol=1e-11)
-        
-    def test_shift2(self):
-        feed = self.rlgc.line(50,'um')
-        dut = self.wg.random(n_ports=2)
-        #Thrus convert the port impedances to 50 ohm
-        dut_feed = self.wg.thru()**feed**dut**feed**self.wg.thru()
-        dut_meas = self.measure(dut_feed)
-        npy.testing.assert_allclose(self.cal.apply_cal(dut_meas).s, 
-                                    dut.s, atol=1e-11)
+        for k in self.cal.coefs.keys():
+            self.assertTrue(all(npy.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
+
 
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
@@ -789,7 +784,7 @@ class TREightTermTest(unittest.TestCase, CalibrationTest):
 
 
 class TwelveTermTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     This test verifies the accuracy of the SOLT calibration. Generating 
     measured networks requires different error networks for forward and 
     reverse excitation states, these are described as follows
@@ -803,7 +798,7 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         Mr = Xr ** S ** Yr
     
     
-    '''
+    """
     def setUp(self):
         self.n_ports = 2
         self.wg = WG
@@ -906,21 +901,16 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
             self.Ir.s11,
             self.cal.coefs_ntwks['reverse isolation'])
     
-    @nottest
     def test_convert_12term_2_8term(self):
         converted = rf.convert_8term_2_12term(
-                    rf.convert_12term_2_8term(self.cal.coefs))
+                    rf.convert_12term_2_8term(self.cal.coefs, redundant_k=True))
         
-        
-        for k in converted:
-            print(('{}-{}'.format(k,abs(self.cal.coefs[k] - converted[k]))))
         for k in converted:
             self.assertTrue(abs(self.cal.coefs[k] - converted[k])<1e-9)
         
-    @nottest
     def test_convert_12term_2_8term_correction_accuracy(self):
         converted = rf.convert_8term_2_12term(
-                    rf.convert_12term_2_8term(self.cal.coefs))
+                    rf.convert_12term_2_8term(self.cal.coefs, redundant_k=True))
         
         self.cal._coefs = converted
         a = self.wg.random(n_ports=2)
@@ -929,21 +919,16 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
                
         self.assertEqual(a,c)
     
-    @nottest
-    def test_verify_12term(self):
-        
-        self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
-
 
 class TwelveTermSloppyInitTest(TwelveTermTest):
-    '''
+    """
     Test the TwelveTerm.__init__'s ability to 
     1) determine the number of thrus (n_thrus) heuristically
     2) put the standards in correct order if they use sloppy_input
     
     It must be a entirely separate test because we want to ensure it 
     creates an accurate calibration.
-    '''
+    """
     @suppress_warning_decorator("dictionary passed, sloppy_input")
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
@@ -1107,6 +1092,9 @@ class TwoPortOnePathTest(TwelveTermTest):
     def test_reverse_transmission_tracking_accuracy(self):
         raise SkipTest()  
 
+    def test_convert_12term_2_8term_correction_accuracy(self):
+        raise SkipTest()
+
 
 class UnknownThruTest(EightTermTest):
     def setUp(self):
@@ -1146,6 +1134,196 @@ class UnknownThruTest(EightTermTest):
             switch_terms = [self.gamma_f, self.gamma_r]
             )
 
+class LRMTest(EightTermTest):
+    def setUp(self):
+
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+        self.X = wg.random(n_ports=2, name='X')
+        self.Y = wg.random(n_ports=2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+        self.gamma_f = wg.random(n_ports=1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports=1, name='gamma_r')
+
+        # Our guess of the standards
+        ss_i = wg.short(nports=2, name='short')
+        thru = wg.line(d=50, unit='um', name='thru')
+
+        # Actual reflects with parasitics
+        s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
+        ss = rf.two_port_reflect(s, s)
+
+        m = wg.load(0, nports=1, name='match')
+        mm = rf.two_port_reflect(m, m)
+
+        # Store reflect for other tests
+        self.s = s
+
+        approx_ideals = [
+            thru,
+            ss_i,
+            mm
+            ]
+
+        ideals = [
+            thru,
+            ss,
+            mm
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal = rf.LRM(
+            ideals = approx_ideals,
+            measured = measured,
+            switch_terms = [self.gamma_f, self.gamma_r],
+            isolation = measured[2]
+            )
+
+    def test_solved_r(self):
+        self.assertTrue(all(npy.abs(self.s.s - self.cal.solved_r.s) < 1e-7))
+
+class LRRMTest(EightTermTest):
+    def setUp(self):
+
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+        self.X = wg.random(n_ports=2, name='X')
+        self.Y = wg.random(n_ports=2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+        self.gamma_f = wg.random(n_ports=1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports=1, name='gamma_r')
+
+        # Our guess of the standards
+        o_i = wg.load(1, nports=1, name='open')
+        s_i = wg.short(nports=1, name='short')
+        m_i = wg.load(0.1, nports=1, name='load')
+        thru = wg.line(d=50, unit='um', name='thru')
+
+        # Actual reflects with parasitics
+        s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
+        o = wg.shunt_capacitor(5e-15) ** wg.open(nports=1, name='open')
+
+        self.match_l = npy.random.uniform(1e-12, 20e-12)
+        l = wg.inductor(L=self.match_l)
+        m = l**m_i
+
+        # Make standards two-ports
+        oo = rf.two_port_reflect(o, o)
+        ss = rf.two_port_reflect(s, s)
+        mm = rf.two_port_reflect(m, o)
+
+        oo_i = rf.two_port_reflect(o_i, o_i)
+        ss_i = rf.two_port_reflect(s_i, s_i)
+        mm_i = rf.two_port_reflect(m_i, m_i)
+
+        # Store open and short for other tests.
+        self.s = s
+        self.o = o
+
+        approx_ideals = [
+            thru,
+            ss_i,
+            oo_i,
+            mm_i
+            ]
+
+        ideals = [
+            thru,
+            ss,
+            oo,
+            mm
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal = rf.LRRM(
+            ideals = approx_ideals,
+            measured = measured,
+            switch_terms = [self.gamma_f, self.gamma_r],
+            isolation = measured[3]
+            )
+
+    # Test the solved standards, don't use exact equality because of inductance
+    # fitting tolerance.
+    def test_solved_inductance(self):
+        solved_l = npy.mean(self.cal.solved_l)
+        self.assertTrue(npy.abs(self.match_l - solved_l) < 1e-3*self.match_l)
+
+    def test_solved_r1(self):
+        self.assertTrue(all(npy.abs(self.s.s - self.cal.solved_r1.s) < 1e-7))
+
+    def test_solved_r2(self):
+        self.assertTrue(all(npy.abs(self.o.s - self.cal.solved_r2.s) < 1e-7))
+
+class LRRMTestNoFit(LRRMTest):
+    def setUp(self):
+
+        self.n_ports = 2
+        self.wg = WG
+        wg = self.wg
+        self.X = wg.random(n_ports=2, name='X')
+        self.Y = wg.random(n_ports=2, name='Y')
+        self.If = wg.random(n_ports=1, name='If')
+        self.Ir = wg.random(n_ports=1, name='Ir')
+        self.gamma_f = wg.random(n_ports=1, name='gamma_f')
+        self.gamma_r = wg.random(n_ports=1, name='gamma_r')
+
+        # Our guess of the standards
+        o_i = wg.load(1, nports=1, name='open')
+        s_i = wg.short(nports=1, name='short')
+        # Doesn't work correctly for non-50 ohm match.
+        m_i = wg.load(0, nports=1, name='load')
+        thru = wg.line(d=50, unit='um', name='thru')
+
+        # Actual reflects with parasitics
+        s = wg.inductor(5e-12) ** wg.load(-0.95, nports=1, name='short')
+        o = wg.shunt_capacitor(5e-15) ** wg.open(nports=1, name='open')
+
+        self.match_l = npy.random.uniform(1e-12, 20e-12)
+        l = wg.inductor(L=self.match_l)
+        m = l**m_i
+
+        # Make standards two-ports
+        oo = rf.two_port_reflect(o, o)
+        ss = rf.two_port_reflect(s, s)
+        mm = rf.two_port_reflect(m, o)
+
+        oo_i = rf.two_port_reflect(o_i, o_i)
+        ss_i = rf.two_port_reflect(s_i, s_i)
+        mm_i = rf.two_port_reflect(m_i, m_i)
+
+        # Store open and short for other tests.
+        self.s = s
+        self.o = o
+
+        approx_ideals = [
+            thru,
+            ss_i,
+            oo_i,
+            mm_i
+            ]
+
+        ideals = [
+            thru,
+            ss,
+            oo,
+            mm
+            ]
+
+        measured = [self.measure(k) for k in ideals]
+
+        self.cal = rf.LRRM(
+            ideals = approx_ideals,
+            measured = measured,
+            switch_terms = [self.gamma_f, self.gamma_r],
+            isolation = measured[3],
+            match_fit = 'none'
+            )
 
 class MRCTest(EightTermTest):
     def setUp(self):
@@ -1195,12 +1373,12 @@ class MRCTest(EightTermTest):
 
 
 class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
-    '''
+    """
     This test verifies the accuracy of the SOLT calibration, when used 
     on an error-box (8-term) model.
     
     
-    '''
+    """
     @suppress_warning_decorator("n_thrus is None")
     def setUp(self):
         self.n_ports = 2
@@ -1231,15 +1409,15 @@ class TwelveTermToEightTermTest(unittest.TestCase, CalibrationTest):
             )
 
 
-        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs, redundant_k=1)
+        coefs = rf.calibration.convert_12term_2_8term(self.cal.coefs)
         coefs = NetworkSet.from_s_dict(coefs,
                                     frequency=self.cal.frequency).to_dict()
         self.coefs= coefs
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
@@ -1340,9 +1518,9 @@ class SixteenTermTest(unittest.TestCase, CalibrationTest):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):
@@ -1516,9 +1694,9 @@ class SixteenTermCoefficientsTest(unittest.TestCase):
             )
 
     def terminate(self, ntwk):
-        '''
+        """
         terminate a measured network with the switch terms
-        '''
+        """
         return terminate(ntwk,self.gamma_f, self.gamma_r)
 
     def measure(self,ntwk):

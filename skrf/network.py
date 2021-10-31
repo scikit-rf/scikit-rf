@@ -196,7 +196,7 @@ if TYPE_CHECKING:
 #from scipy.interpolate import interp1d
 
 class Network(object):
-    """
+    r"""
     A n-port electrical network.
 
     For instructions on how to create Network see  :func:`__init__`.
@@ -348,7 +348,7 @@ class Network(object):
     # CONSTRUCTOR
     def __init__(self, file: str = None, name : str = None, comments: str = None,
         f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
-        """
+        r"""
         Network constructor.
 
         Creates an n-port microwave network from a `file` or directly
@@ -465,7 +465,7 @@ class Network(object):
 
     @classmethod
     def from_z(cls, z: npy.ndarray, *args, **kw) -> 'Network':
-        """
+        r"""
         Create a Network from its Z-parameters
 
         Parameters
@@ -885,8 +885,12 @@ class Network(object):
                 doc = """
                 one-port sub-network.
                 """
-                setattr(self.__class__, 's%i%i' % (m + 1, n + 1), \
+                setattr(self.__class__, 's%i_%i'%(m+1, n+1),
                         property(fget, doc=doc))
+                if m < 9 and n < 9:
+                    setattr(self.__class__, 's%i%i' % (m + 1, n + 1),
+                            getattr(self.__class__, 's%i_%i'%(m+1, n+1)))
+
 
     # PRIMARY PROPERTIES
     @property
@@ -1061,7 +1065,7 @@ class Network(object):
 
         Returns
         -------
-        t : complex numpy.ndarray of shape `fx2x2`
+        t : complex npy.ndarray of shape `fx2x2`
                 t-parameters, aka scattering transfer parameters
 
 
@@ -1483,7 +1487,7 @@ class Network(object):
 
     @property
     def passivity(self) -> ndarray:
-        """
+        r"""
         passivity metric for a multi-port network.
 
         This returns a matrix who's diagonals are equal to the total
@@ -1503,9 +1507,9 @@ class Network(object):
 
         .. math::
 
-                S^H \\cdot S
+                S^H \cdot S
 
-        where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
+        where :math:`H` is conjugate transpose of S, and :math:`\cdot`
         is dot product.
 
         Returns
@@ -1750,7 +1754,7 @@ class Network(object):
         https://en.wikipedia.org/wiki/Unitary_matrix
         """
         for f_idx in range(len(self.s)):
-            mat = npy.matrix(self.s[f_idx, :, :])
+            mat = self.s[f_idx, :, :]
             if not mf.is_unitary(mat, tol=tol):
                 return False
         return True
@@ -2255,7 +2259,7 @@ class Network(object):
                 return output.getvalue()
 
     def write(self, file: str = None, *args, **kwargs) -> None:
-        """
+        r"""
         Write the Network to disk using the :mod:`pickle` module.
 
         The resultant file can be read either by using the Networks
@@ -2302,7 +2306,7 @@ class Network(object):
         write(file, self, *args, **kwargs)
 
     def read(self, *args, **kwargs) -> None:
-        """
+        r"""
         Read a Network from a 'ntwk' file
 
         A ntwk file is written with :func:`write`. It is just a pickled
@@ -2395,7 +2399,7 @@ class Network(object):
     def interpolate(self, freq_or_n: Union[Frequency, NumberLike], basis: str = 's',
                     coords: str = 'cart', f_kwargs: dict = {}, return_array: bool = False,
                     **kwargs) -> Union['Network', npy.ndarray]:
-        """
+        r"""
         Interpolate a Network along frequency axis
 
         The input 'freq_or_n` can be either a new
@@ -2628,7 +2632,7 @@ class Network(object):
     resample = interpolate_self
 
     def interpolate_from_f(self, f: Frequency, interp_kwargs: dict = {}, **kwargs) -> 'Network':
-        """
+        r"""
         Interpolates s-parameters from a frequency vector.
 
         Given a frequency vector, and optionally a `unit` (see \*\*kwargs)
@@ -2684,7 +2688,7 @@ class Network(object):
             Number of frequency points to be used in interpolation.
             If None number of points is calculated based on the frequency step size
             and spacing between 0 Hz and first measured frequency point.
-        dc_sparam : class:`numpy.ndarray` or None
+        dc_sparam : class:`npy.ndarray` or None
             NxN S-parameters matrix at 0 Hz.
             If None S-parameters at 0 Hz are determined by linear extrapolation.
         kind : str or int
@@ -3297,7 +3301,7 @@ class Network(object):
 
     # other
     def func_on_parameter(self, func: Callable, attr: str = 's', *args, **kwargs) -> 'Network':
-        """
+        r"""
         Applies a function parameter matrix, one frequency slice at a time
 
         This is useful for functions that can only operate on 2d arrays,
@@ -3333,7 +3337,7 @@ class Network(object):
         return ntwkB
 
     def nonreciprocity(self, m: int, n: int, normalize: bool = False) -> 'Network':
-        """
+        r"""
         Normalized non-reciprocity metric.
 
         This is a port-by-port measure of how non-reciprocal a n-port
@@ -3341,7 +3345,7 @@ class Network(object):
 
         .. math::
 
-            (S_{mn} - S_{nm}) / \\sqrt ( S_{mn} S_{nm} )
+            (S_{mn} - S_{nm}) / \sqrt ( S_{mn} S_{nm} )
 
         Parameters
         ----------
@@ -3575,9 +3579,9 @@ class Network(object):
 
         Returns
         -------
-        t : class:`numpy.ndarray`
+        t : class:`npy.ndarray`
             Time vector
-        y : class:`numpy.ndarray`
+        y : class:`npy.ndarray`
             Impulse response
 
         See Also
@@ -3631,9 +3635,9 @@ class Network(object):
 
         Returns
         -------
-        t : class:`numpy.ndarray`
+        t : class:`npy.ndarray`
             Time vector
-        y : class:`numpy.ndarray`
+        y : class:`npy.ndarray`
             Step response
 
         Raises
@@ -3664,7 +3668,7 @@ class Network(object):
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active s-parameters of the network for a defined wave excitation a.
 
         The active s-parameter at a port is the reflection coefficients
@@ -3675,7 +3679,7 @@ class Network(object):
 
         .. math::
 
-           \mathrm{active(s)}_{m} = \sum_{i=1}^N s_{mi}\\frac{a_i}{a_m}
+           \mathrm{active(s)}_{m} = \sum_{i=1}^N s_{mi}\frac{a_i}{a_m}
 
         where :math:`s` are the scattering parameters and :math:`N` the number of ports
 
@@ -3705,14 +3709,14 @@ class Network(object):
         return s2s_active(self.s, a)
 
     def z_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active Z-parameters of the network for a defined wave excitation a.
 
         The active Z-parameters are defined by:
 
         .. math::
 
-           \mathrm{active}(z)_{m} = z_{0,m} \\frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
+           \mathrm{active}(z)_{m} = z_{0,m} \frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
 
         where :math:`z_{0,m}` is the characteristic impedance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
@@ -3736,14 +3740,14 @@ class Network(object):
         return s2z_active(self.s, self.z0, a)
 
     def y_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active Y-parameters of the network for a defined wave excitation a.
 
         The active Y-parameters are defined by:
 
         .. math::
 
-           \mathrm{active}(y)_{m} = y_{0,m} \\frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+           \mathrm{active}(y)_{m} = y_{0,m} \frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
 
         where :math:`y_{0,m}` is the characteristic admittance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
@@ -3767,14 +3771,14 @@ class Network(object):
         return s2y_active(self.s, self.z0, a)
 
     def vswr_active(self, a: npy.ndarray) -> npy.ndarray:
-        """
+        r"""
         Returns the active VSWR of the network for a defined wave excitation a.
 
         The active VSWR is defined by :
 
         .. math::
 
-           \mathrm{active}(vswr)_{m} = \\frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+           \mathrm{active}(vswr)_{m} = \frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
 
         where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
 
@@ -4250,7 +4254,7 @@ def de_embed(ntwkA: Network, ntwkB: Network) -> Network:
 
 
 def stitch(ntwkA: Network, ntwkB: Network, **kwargs) -> Network:
-    """
+    r"""
     Stitches ntwkA and ntwkB together.
 
     Concatenates two networks' data. Given two networks that cover
@@ -4516,7 +4520,7 @@ def one_port_2_two_port(ntwk: Network) -> Network:
 
 
 def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
-    """
+    r"""
     Chops a sandwich of identical, reciprocal 2-ports in half.
 
     Given two identical, reciprocal 2-ports measured in series,
@@ -4529,18 +4533,18 @@ def chopinhalf(ntwk: Network, *args, **kwargs) -> Network:
 
     .. math::
 
-        B = A\\cdot A
+        B = A\cdot A
 
     Return A, where A port2 is connected to A port1. The result may
     be found through signal flow graph analysis and is,
 
     .. math::
 
-        a_{11} = \\frac{b_{11}}{1+b_{12}}
+        a_{11} = \frac{b_{11}}{1+b_{12}}
 
-        a_{22} = \\frac{b_{22}}{1+b_{12}}
+        a_{22} = \frac{b_{22}}{1+b_{12}}
 
-        a_{12}^2 = b_{21}(1-\\frac{b_{11}b_{22}}{(1+b_{12})^2}
+        a_{12}^2 = b_{21}(1-\frac{b_{11}b_{22}}{(1+b_{12})^2}
 
     Parameters
     ----------
@@ -4677,7 +4681,7 @@ def subnetwork(ntwk: Network, ports: int, offby:int = 1) -> Network:
 
 ## Building composit networks from sub-networks
 def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network:
-    """
+    r"""
     Builds a N-port Network from list of N one-ports
 
     Parameters
@@ -4707,7 +4711,7 @@ def n_oneports_2_nport(ntwk_list: Sequence[Network], *args, **kwargs) -> Network
 
 def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
         offby:int = 1, **kwargs) -> Network:
-    """
+    r"""
     Builds a N-port Network from list of two-ports
 
     This  method was made to reconstruct a n-port network from 2-port
@@ -4763,7 +4767,7 @@ def n_twoports_2_nport(ntwk_list: Sequence[Network], nports: int,
 
 
 def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Network, *args, **kwargs) -> Network:
-    """
+    r"""
     Builds a 2-port Network from list of four 1-ports
 
     Parameters
@@ -4794,7 +4798,7 @@ def four_oneports_2_twoport(s11: Network, s12: Network, s21: Network, s22: Netwo
 
 def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool = True, *args,
                                **kwargs) -> Network:
-    """
+    r"""
     Creates 3-port from  three 2-port Networks
 
     This function provides a convenient way to build a 3-port Network
@@ -5016,7 +5020,7 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 
 ## network parameter conversion
 def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.ndarray:
-    """
+    r"""
     Convert scattering parameters [#]_ to impedance parameters [#]_
 
 
@@ -5025,14 +5029,14 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
     .. math::
         Z = F^{-1} (1 - S)^{-1} (S G + G^*) F
 
-    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
+    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\sqrt{|Re(Z_0)|}])`
 
     For pseudo-waves, Eq.(74) from [#Marks]_:
 
     .. math::
         Z = (1 - U^{-1} S U)^{-1}  (1 + U^{-1} S U) G
 
-    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+    where :math:`U = \sqrt{Re(Z_0)}/|Z_0|`
 
     Parameters
     ----------
@@ -5066,7 +5070,7 @@ def s2z(s: npy.ndarray, z0: NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     s = s.copy()  # to prevent the original array from being altered
@@ -5167,7 +5171,7 @@ def s2y(s: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.n
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     s = s.copy()  # to prevent the original array from being altered
@@ -5228,7 +5232,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
 
     Returns
     -------
-    t : numpy.ndarray
+    t : npy.ndarray
         scattering transfer parameters (aka wave cascading matrix)
 
     See Also
@@ -5283,7 +5287,7 @@ def s2t(s: npy.ndarray) -> npy.ndarray:
 
 
 def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.ndarray:
-    """
+    r"""
     convert impedance parameters [#]_ to scattering parameters [#]_
 
     For power-waves, Eq.(18) from [#Kurokawa]_:
@@ -5291,14 +5295,14 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
     .. math::
         S = F (Z – G^*) (Z + G)^{-1} F^{-1}
 
-    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
+    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\sqrt{|Re(Z_0)|}])`
 
     For pseudo-waves, Eq.(73) from [#Marks]_:
 
     .. math::
         S = U (Z - G) (Z + G)^{-1}  U^{-1}
 
-    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+    where :math:`U = \sqrt{Re(Z_0)}/|Z_0|`
 
 
     Parameters
@@ -5333,7 +5337,7 @@ def z2s(z: NumberLike, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> npy.nd
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     if s_def == 'power':
@@ -5525,7 +5529,7 @@ def a2z(a: npy.ndarray) -> npy.ndarray:
 
     Returns
     -------
-    z : numpy.ndarray
+    z : npy.ndarray
         impedance parameters
 
     See Also
@@ -5569,7 +5573,7 @@ def z2a(z: npy.ndarray) -> npy.ndarray:
 
     Returns
     -------
-    abcd : numpy.ndarray
+    abcd : npy.ndarray
         scattering transfer parameters (aka wave cascading matrix)
 
     See Also
@@ -5620,7 +5624,7 @@ def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
     Returns
     -------
-    abcd : numpy.ndarray
+    abcd : npy.ndarray
         scattering transfer parameters (aka wave cascading matrix)
 
     References
@@ -5651,7 +5655,7 @@ def s2a(s: npy.ndarray, z0: NumberLike = 50) -> npy.ndarray:
 
 
 def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Network:
-    """
+    r"""
     convert admittance parameters [#]_ to scattering parameters [#]_
 
     For power-waves, from [#Kurokawa]_:
@@ -5659,14 +5663,14 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
     .. math::
         S = F (1 – G Y) (1 + G Y)^{-1} F^{-1}
 
-    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\\sqrt{|Re(Z_0)|}])`
+    where :math:`G = diag([Z_0])` and :math:`F = diag([1/2\sqrt{|Re(Z_0)|}])`
 
     For pseudo-waves, Eq.(73) from [#Marks]_:
 
     .. math::
         S = U (Y^{-1} - G) (Y^{-1} + G)^{-1}  U^{-1}
 
-    where :math:`U = \\sqrt{Re(Z_0)}/|Z_0|`
+    where :math:`U = \sqrt{Re(Z_0)}/|Z_0|`
 
 
     Parameters
@@ -5720,7 +5724,7 @@ def y2s(y: npy.ndarray, z0:NumberLike = 50, s_def: str = S_DEF_DEFAULT) -> Netwo
 
     # Add a small real part in case of pure imaginary char impedance
     # to prevent numerical errors for both pseudo and power waves definitions
-    z0 = z0.astype(dtype=npy.complex)
+    z0 = z0.astype(dtype=complex)
     z0[z0.real == 0] += ZERO
 
     # The following is a vectorized version of a for loop for all frequencies.
@@ -6021,7 +6025,7 @@ def h2z(h: npy.ndarray) -> npy.ndarray:
 
     Returns
     -------
-    z : numpy.ndarray
+    z : npy.ndarray
         impedance parameters
 
     See Also
@@ -6114,7 +6118,7 @@ def z2h(z: npy.ndarray) -> npy.ndarray:
 
     Returns
     -------
-    h : numpy.ndarray
+    h : npy.ndarray
         hybrid parameters
 
     See Also
@@ -6153,7 +6157,7 @@ def z2h(z: npy.ndarray) -> npy.ndarray:
 
 ## these methods are used in the secondary properties
 def passivity(s: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Passivity metric for a multi-port network.
 
     A metric which is proportional to the amount of power lost in a
@@ -6175,9 +6179,9 @@ def passivity(s: npy.ndarray) -> npy.ndarray:
 
     .. math::
 
-            \\sqrt( S^H \\cdot S)
+            \sqrt( S^H \cdot S)
 
-    where :math:`H` is conjugate transpose of S, and :math:`\\cdot`
+    where :math:`H` is conjugate transpose of S, and :math:`\cdot`
     is dot product.
 
     Note
@@ -6593,7 +6597,7 @@ def two_port_reflect(ntwk1: Network, ntwk2: Network = None) -> Network:
     return result
 
 def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns active s-parameters for a defined wave excitation a.
 
     The active s-parameter at a port is the reflection coefficients
@@ -6644,7 +6648,7 @@ def s2s_active(s: npy.ndarray, a:npy.ndarray) -> npy.ndarray:
     return s_act  # shape : (n_freqs, n_ports)
 
 def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns the active Z-parameters for a defined wave excitation a.
 
     The active Z-parameters are defined by:
@@ -6690,7 +6694,7 @@ def s2z_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     return z_act
 
 def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns the active Y-parameters for a defined wave excitation a.
 
     The active Y-parameters are defined by:
@@ -6734,7 +6738,7 @@ def s2y_active(s: npy.ndarray, z0: NumberLike, a: npy.ndarray) -> npy.ndarray:
     return y_act
 
 def s2vswr_active(s: npy.ndarray, a: npy.ndarray) -> npy.ndarray:
-    """
+    r"""
     Returns the active VSWR for a defined wave excitation a..
 
     The active VSWR is defined by :

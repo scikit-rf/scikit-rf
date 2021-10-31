@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 .. module:: skrf.tlineFunctions
 ===============================================
 tlineFunctions (:mod:`skrf.tlineFunctions`)
@@ -20,9 +20,9 @@ Symbol                Variable Name           Long Name
 ====================  ======================  ================================
 :math:`Z_l`           z_l                     load_impedance
 :math:`Z_{in}`        z_in                    input_impedance
-:math:`\\Gamma_0`      Gamma_0                 reflection_coefficient
-:math:`\\Gamma_{in}`   Gamma_in                reflection_coefficient_at_theta
-:math:`\\theta`        theta                   electrical_length
+:math:`\Gamma_0`      Gamma_0                 reflection_coefficient
+:math:`\Gamma_{in}`   Gamma_in                reflection_coefficient_at_theta
+:math:`\theta`        theta                   electrical_length
 ====================  ======================  ================================
 
 There may be a bit of confusion about the difference between the load
@@ -32,26 +32,26 @@ useful reference.
 
 Below is a (bad) illustration of a section of uniform transmission line
 of characteristic impedance :math:`Z_0`, and electrical length
-:math:`\\theta`. The line is terminated on the right with some
+:math:`\theta`. The line is terminated on the right with some
 load impedance, :math:`Z_l`. The input impedance :math:`Z_{in}` and
-input reflection coefficient :math:`\\Gamma_{in}` are
-looking in towards the load from the distance :math:`\\theta` from the
+input reflection coefficient :math:`\Gamma_{in}` are
+looking in towards the load from the distance :math:`\theta` from the
 load.
 
 .. math::
-        Z_0, \\theta
+        Z_0, \theta
 
-        \\text{o===============o=}[Z_l]
+        \text{o===============o=}[Z_l]
 
-        \\to\\qquad\\qquad\\qquad\\quad\\qquad \\qquad \\to \\qquad \\quad
+        \to\qquad\qquad\qquad\quad\qquad \qquad \to \qquad \quad
 
-        Z_{in},\\Gamma_{in}\\qquad\\qquad\\qquad\\qquad\\quad Z_l,\\Gamma_0
+        Z_{in},\Gamma_{in}\qquad\qquad\qquad\qquad\quad Z_l,\Gamma_0
 
 So, to clarify the confusion,
 
 .. math::
-        Z_{in}= Z_{l},\\qquad\\qquad
-        \\Gamma_{in}=\\Gamma_l \\text{ at }  \\theta=0
+        Z_{in}= Z_{l},\qquad\qquad
+        \Gamma_{in}=\Gamma_l \text{ at }  \theta=0
 
 
 Short names
@@ -121,7 +121,7 @@ from . import mathFunctions as mf
 
 
 def skin_depth(f: NumberLike, rho: float, mu_r: float):
-    """
+    r"""
     Skin depth for a material.
 
     The skin depth is calculated as:
@@ -129,7 +129,7 @@ def skin_depth(f: NumberLike, rho: float, mu_r: float):
 
     .. math::
 
-        \delta = \\sqrt{\\frac{ \\rho }{ \\pi f \\mu_r \\mu_0 }}
+        \delta = \sqrt{\frac{ \rho }{ \pi f \mu_r \mu_0 }}
 
     See www.microwaves101.com [#]_ or wikipedia [#]_ for more info.
 
@@ -161,7 +161,7 @@ def skin_depth(f: NumberLike, rho: float, mu_r: float):
 
 
 def surface_resistivity(f: NumberLike, rho: float, mu_r: float):
-    """
+    r"""
     Surface resistivity.
 
     The surface resistivity is calculated as:
@@ -169,7 +169,7 @@ def surface_resistivity(f: NumberLike, rho: float, mu_r: float):
 
     .. math::
 
-        \\frac{ \\rho }{ \delta }
+        \frac{ \rho }{ \delta }
 
     where :math:`\delta` is the skin depth from :func:`skin_depth`.
 
@@ -203,16 +203,16 @@ def surface_resistivity(f: NumberLike, rho: float, mu_r: float):
 
 def distributed_circuit_2_propagation_impedance(distributed_admittance: NumberLike,
         distributed_impedance: NumberLike):
-    """
+    r"""
     Convert distributed circuit values to wave quantities.
 
     This converts complex distributed impedance and admittance to
     propagation constant and characteristic impedance. The relation is
 
     .. math::
-        Z_0 = \\sqrt{ \\frac{Z^{'}}{Y^{'}}}
-        \\quad\\quad
-        \\gamma = \\sqrt{ Z^{'}  Y^{'}}
+        Z_0 = \sqrt{ \frac{Z^{'}}{Y^{'}}}
+        \quad\quad
+        \gamma = \sqrt{ Z^{'}  Y^{'}}
 
     Parameters
     ----------
@@ -241,15 +241,15 @@ def distributed_circuit_2_propagation_impedance(distributed_admittance: NumberLi
 
 def propagation_impedance_2_distributed_circuit(propagation_constant: NumberLike,
         characteristic_impedance: NumberLike):
-    """
+    r"""
     Convert wave quantities to distributed circuit values.
 
     Convert complex propagation constant and characteristic impedance
     to distributed impedance and admittance. The relation is,
 
     .. math::
-        Z^{'} = \\gamma  Z_0 \\quad\\quad
-        Y^{'} = \\frac{\\gamma}{Z_0}
+        Z^{'} = \gamma  Z_0 \quad\quad
+        Y^{'} = \frac{\gamma}{Z_0}
 
     Parameters
     ----------
@@ -276,11 +276,11 @@ def propagation_impedance_2_distributed_circuit(propagation_constant: NumberLike
 
 
 def electrical_length(gamma: NumberLike, f: NumberLike, d: NumberLike, deg: bool = False):
-    """
+    r"""
     Electrical length of a section of transmission line.
 
     .. math::
-        \\theta = \\gamma(f) \\cdot d
+        \theta = \gamma(f) \cdot d
 
     Parameters
     ----------
@@ -325,11 +325,11 @@ def electrical_length(gamma: NumberLike, f: NumberLike, d: NumberLike, deg: bool
 
 
 def electrical_length_2_distance(theta: NumberLike, gamma: NumberLike, f0: NumberLike, deg: bool = True):
-    """
+    r"""
     Convert electrical length to a physical distance.
 
     .. math::
-        d = \\frac{\\theta}{\\gamma(f_0)}
+        d = \frac{\theta}{\gamma(f_0)}
 
     Parameters
     ----------
@@ -369,7 +369,7 @@ def electrical_length_2_distance(theta: NumberLike, gamma: NumberLike, f0: Numbe
 
 
 def load_impedance_2_reflection_coefficient(z0: NumberLike, zl: NumberLike):
-    """
+    r"""
     Reflection coefficient from a load impedance.
 
     Return the reflection coefficient for a given load impedance, and
@@ -380,7 +380,7 @@ def load_impedance_2_reflection_coefficient(z0: NumberLike, zl: NumberLike):
     coefficient is given by,
 
     .. math::
-        \\Gamma = \\frac {Z_l - Z_0}{Z_l + Z_0}
+        \Gamma = \frac {Z_l - Z_0}{Z_l + Z_0}
 
     Parameters
     ----------
@@ -413,14 +413,14 @@ def load_impedance_2_reflection_coefficient(z0: NumberLike, zl: NumberLike):
 
 
 def reflection_coefficient_2_input_impedance(z0: NumberLike, Gamma: NumberLike):
-    """
+    r"""
     Input impedance from a load reflection coefficient.
 
     Calculate the input impedance given a reflection coefficient and
     characteristic impedance.
 
     .. math::
-        Z_0 \\left(\\frac {1 + \\Gamma}{1-\\Gamma} \\right)
+        Z_0 \left(\frac {1 + \Gamma}{1-\Gamma} \right)
 
     Parameters
     ----------
@@ -446,11 +446,11 @@ def reflection_coefficient_2_input_impedance(z0: NumberLike, Gamma: NumberLike):
 
 
 def reflection_coefficient_at_theta(Gamma0: NumberLike, theta: NumberLike):
-    """
+    r"""
     Reflection coefficient at a given electrical length.
 
     .. math::
-            \\Gamma_{in} = \\Gamma_0 e^{-2 \\theta}
+            \Gamma_{in} = \Gamma_0 e^{-2 \theta}
 
     Parameters
     ----------
@@ -552,15 +552,15 @@ def reflection_coefficient_2_input_impedance_at_theta(z0: NumberLike, Gamma0: Nu
 
 
 def reflection_coefficient_2_propagation_constant(Gamma_in: NumberLike, Gamma_l: NumberLike, d: NumberLike):
-    """
+    r"""
     Propagation constant from line input and load reflection coefficients.
 
     Calculate the propagation constant of a line of length d, given the
     reflection coefficient and characteristic impedance of the medium.
 
     .. math::
-        \\Gamma_{in} = \\Gamma_l e^{-2 j \\gamma \\cdot d}
-        \\to \\gamma = -\\frac{1}{2 d} \\ln \\left ( \\frac{ \\Gamma_{in} }{ \\Gamma_l } \\right )
+        \Gamma_{in} = \Gamma_l e^{-2 j \gamma \cdot d}
+        \to \gamma = -\frac{1}{2 d} \ln \left ( \frac{ \Gamma_{in} }{ \Gamma_l } \right )
 
     Parameters
     ----------
@@ -591,13 +591,13 @@ def reflection_coefficient_2_propagation_constant(Gamma_in: NumberLike, Gamma_l:
 
 
 def Gamma0_2_swr(Gamma0: NumberLike):
-    """
+    r"""
     Standing Wave Ratio (SWR) for a given reflection coefficient.
 
     Standing Wave Ratio value is defined by:
 
     .. math::
-        VSWR = \\frac{1 + |\\Gamma_0|}{1 - |\\Gamma_0|}
+        VSWR = \frac{1 + |\Gamma_0|}{1 - |\Gamma_0|}
 
     Parameters
     ----------
@@ -614,18 +614,18 @@ def Gamma0_2_swr(Gamma0: NumberLike):
 
 
 def zl_2_swr(z0: NumberLike, zl: NumberLike):
-    """
+    r"""
     Standing Wave Ratio (SWR) for a given load impedance.
 
     Standing Wave Ratio value is defined by:
 
     .. math::
-        VSWR = \\frac{1 + |\\Gamma|}{1 - |\Gamma|}
+        VSWR = \frac{1 + |\Gamma|}{1 - |\Gamma|}
 
     where
 
     .. math::
-        \\Gamma = \\frac{Z_L - Z_0}{Z_L + Z_0}
+        \Gamma = \frac{Z_L - Z_0}{Z_L + Z_0}
 
     Parameters
     ----------
@@ -702,13 +702,13 @@ def voltage_current_propagation(v1: NumberLike, i1: NumberLike, z0: NumberLike, 
 
 
 def zl_2_total_loss(z0: NumberLike, zl: NumberLike, theta: NumberLike):
-    '''
+    r"""
     Total loss of a terminated transmission line (in natural unit).
 
     The total loss expressed in terms of the load impedance is [#]_ :
 
     .. math::
-        TL = \\frac{R_{in}}{R_L} \\left| \\cosh \\theta  + \\frac{Z_L}{Z_0} \\sinh\\theta \\right|^2
+        TL = \frac{R_{in}}{R_L} \left| \cosh \theta  + \frac{Z_L}{Z_0} \sinh\theta \right|^2
 
     Parameters
     ----------
@@ -730,7 +730,7 @@ def zl_2_total_loss(z0: NumberLike, zl: NumberLike, theta: NumberLike):
         ARRL PacificonAntenna Seminar, Santa Clara, CA, October 10-12, 2014.
         https://www.fars.k6ya.org/docs/K6OIK-A_Transmission_Line_Power_Paradox_and_Its_Resolution.pdf
 
-    '''
+    """
     Rin = npy.real(zl_2_zin(z0, zl, theta))
     total_loss = Rin/npy.real(zl)*npy.abs(npy.cosh(theta) + zl/z0*npy.sinh(theta))**2
     return total_loss

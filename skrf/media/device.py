@@ -1,6 +1,6 @@
 
 
-'''
+"""
 .. currentmodule:: skrf.media.device
 
 ========================================
@@ -27,7 +27,7 @@ Example Devices
     Hybrid180
     DualCoupler
 
-'''
+"""
 
 
 import numpy as npy
@@ -38,13 +38,13 @@ from numpy import sqrt,exp
 
 
 class Device(object):
-    '''
+    """
     A n-port microwave device
     
     Parameters 
     -----------
     media : skrf.media.Media
-    '''
+    """
     __metaclass__ = ABCMeta
     
     def __init__(self, media):
@@ -52,14 +52,14 @@ class Device(object):
         
     @abstractproperty
     def ntwk(self):
-        '''
+        """
         the network representation of a given device
-        '''
+        """
         return None
         
         
 class MatchedSymmetricCoupler(Device):
-    '''
+    """
     A Matched Symmetric Coupler
     
     The resultant ntwk port assignment is as follows:
@@ -67,7 +67,7 @@ class MatchedSymmetricCoupler(Device):
         * 1 - transmit
         * 2 - coupled 
         * 3 - isolated
-    '''
+    """
     def __init__(self, media, c=None, t=None, t_phase=0, phase_diff=0, 
                  nports=4, *args, **kw):
         Device.__init__(self, media=media, *args, **kw)
@@ -93,7 +93,7 @@ class MatchedSymmetricCoupler(Device):
   
     @classmethod
     def from_dbdeg(cls, media, db, deg=0, *args,**kw):
-        '''
+        """
         Create a coupler in terms of couping(dB) and phase offset(deg)
         
         Parameters 
@@ -107,7 +107,7 @@ class MatchedSymmetricCoupler(Device):
             as : coupled arm = transmit arm +phase offset
         \*args,\*\*kw: passed to self.__init__()    
         
-        '''
+        """
         c = mf.db_2_mag(-1*abs(db))
         return cls(media=media, c=c, phase_diff=deg, *args,**kw)
     
@@ -149,9 +149,9 @@ class MatchedSymmetricCoupler(Device):
 
     
 class Hybrid(MatchedSymmetricCoupler):
-    '''
+    """
     A 3dB Coupler of given phase difference
-    '''
+    """
     def __init__(self, media, t_phase=180,phase_diff=0, *args, **kw):
         c = 1/sqrt(2)
         MatchedSymmetricCoupler.__init__(self,media=media, c=c, 
@@ -161,9 +161,9 @@ class Hybrid(MatchedSymmetricCoupler):
 
         
 class QuadratureHybrid(MatchedSymmetricCoupler):
-    '''
+    """
     A 3dB Coupler with 90deg phase diff between transmit and coupled arms
-    '''
+    """
     def __init__(self, media,t_phase=0, *args, **kw):
         c = 1/sqrt(2)
         MatchedSymmetricCoupler.__init__(self,media=media,c=c,t_phase=t_phase,
@@ -171,7 +171,7 @@ class QuadratureHybrid(MatchedSymmetricCoupler):
 
     
 class Hybrid180(Device):
-    '''
+    """
     180degree hybrid
     
     This device can be used to combine two signals  in and out of phase,
@@ -185,7 +185,7 @@ class Hybrid180(Device):
         
         
     http://www.microwaves101.com/encyclopedias/hybrid-couplers
-    '''
+    """
     def __init__(self, media, nports=4, *args, **kw):
         Device.__init__(self, media=media, *args, **kw)
         self.nports = nports
@@ -204,7 +204,7 @@ class Hybrid180(Device):
         return a
         
 class DualCoupler(Device):
-    '''
+    """
     Pair of back-to-back directional couplers
     
     Ports are as follows:
@@ -212,7 +212,7 @@ class DualCoupler(Device):
         * 1 : insertion on coupler 2
         * 2 : coupled on coupler 1
         * 3 : coupled on coupler 2
-    '''
+    """
     def __init__(self, media, c1=1/sqrt(2), c2=None, c1kw={},c2kw ={}):
         Device.__init__(self,media=media)
         if c2 is None:

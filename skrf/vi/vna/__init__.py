@@ -1,4 +1,4 @@
-'''
+"""
 .. module:: skrf.vi.vna
 ++++++++++++++++++++++++++++++++++++++++++++++++++++
 Vector Network Analyzers (:mod:`skrf.vi.vna`)
@@ -34,7 +34,7 @@ Available VNAs
     ZVA40
     HP8510C
     HP8720
-'''
+"""
 
 from .abcvna import VNA
 from .keysight_pna import PNA, PNAX

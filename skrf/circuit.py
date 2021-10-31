@@ -20,7 +20,10 @@ Building a Circuit
 
    Circuit
    Circuit.Port
+   Circuit.SeriesImpedance
+   Circuit.ShuntAdmittance
    Circuit.Ground
+   Circuit.Open
 
 Representing a Circuit
 ----------------------
@@ -217,13 +220,13 @@ class Circuit():
         name : string
             Name of the port.
             Must include the word 'port' inside. (ex: 'Port1' or 'port_3')
-        z0 : real
+        z0 : real, optional
             Characteristic impedance of the port. Default is 50 Ohm.
 
         Returns
         -------
         port : :class:`~skrf.network.Network` object
-            (External) 1-port network
+            1-port network
 
         Examples
         --------
@@ -237,16 +240,107 @@ class Circuit():
             In [18]: port1 = rf.Circuit.Port(freq, name='Port1')
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
+        if not 'port' in name.lower():
+            raise ValueError("Port name should contain the string 'port',"
+                             " like 'Port1' or 'port_3'")
         return _media.match(name=name)
+
+    @classmethod
+    def SeriesImpedance(cls, frequency: 'Frequency', Z: NumberLike, name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 2-port network of a series impedance.
+
+        Passing the frequency and name is mandatory.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        Z : complex array of shape n_freqs or complex
+            Impedance
+        name : string
+            Name of the series impedance
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        serie_impedance : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: open = rf.Circuit.SeriesImpedance(freq, rf.INF, name='series_impedance')
+
+        """
+        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
+        A[:, 0, 0] = 1
+        A[:, 0, 1] = Z
+        A[:, 1, 0] = 0
+        A[:, 1, 1] = 1
+        ntw = Network(frequency=frequency, z0=z0, name=name)
+        ntw.s = a2s(A)
+        return ntw
+
+    @classmethod
+    def ShuntAdmittance(cls, frequency: 'Frequency', Y: NumberLike, name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 2-port network of a shunt admittance.
+
+        Passing the frequency and name is mandatory.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        Y : complex array of shape n_freqs or complex
+            Admittance
+        name : string
+            Name of the shunt admittance
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        shunt_admittance : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: short = rf.Circuit.ShuntAdmittance(freq, rf.INF, name='shunt_admittance')
+
+        """
+        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
+        A[:, 0, 0] = 1
+        A[:, 0, 1] = 0
+        A[:, 1, 0] = Y
+        A[:, 1, 1] = 1
+        ntw = Network(frequency=frequency, z0=z0, name=name)
+        ntw.s = a2s(A)
+        return ntw
 
     @classmethod
     def Ground(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
         """
-        Return a 1-port network of a grounded link, to be used in a Circuit description.
+        Return a 2-port network of a grounded link.
 
-        Passing the frequency and name is mandatory.
+        Passing the frequency and a name is mandatory.
 
-        The ground link is modelled as an infinite admittance.
+        The ground link is modelled as an infinite shunt admittance.
 
         Parameters
         ----------
@@ -254,13 +348,13 @@ class Circuit():
             Frequency common to all other networks in the circuit
         name : string
             Name of the ground.
-        z0 : real
+        z0 : real, optional
             Characteristic impedance of the port. Default is 50 Ohm.
 
         Returns
         -------
         ground : :class:`~skrf.network.Network` object
-            (External) 2-port network
+            2-port network
 
         Examples
         --------
@@ -274,15 +368,44 @@ class Circuit():
             In [18]: ground = rf.Circuit.Ground(freq, name='GND')
 
         """
-        Y = INF
-        A = np.zeros(shape=(len(frequency), 2, 2), dtype=complex)
-        A[:, 0, 0] = 1
-        A[:, 0, 1] = 0
-        A[:, 1, 0] = Y
-        A[:, 1, 1] = 1
-        ntw = Network(frequency=frequency, z0=z0, name=name)
-        ntw.s = a2s(A)
-        return ntw
+        return cls.ShuntAdmittance(frequency, Y=INF, name=name)
+
+    @classmethod
+    def Open(cls, frequency: 'Frequency', name: str, z0: float = 50) -> 'Network':
+        """
+        Return a 2-port network of an open link.
+
+        Passing the frequency and name is mandatory.
+
+        The open link is modelled as an infinite series impedance.
+
+        Parameters
+        ----------
+        frequency : :class:`~skrf.frequency.Frequency`
+            Frequency common to all other networks in the circuit
+        name : string
+            Name of the open.
+        z0 : real, optional
+            Characteristic impedance of the port. Default is 50 Ohm.
+
+        Returns
+        -------
+        open : :class:`~skrf.network.Network` object
+            2-port network
+
+        Examples
+        --------
+        .. ipython::
+
+            @suppress
+            In [16]: import skrf as rf
+
+            In [17]: freq = rf.Frequency(start=1, stop=2, npoints=101)
+
+            In [18]: open = rf.Circuit.Open(freq, name='open')
+
+        """
+        return cls.SeriesImpedance(frequency, Z=INF, name=name)
 
     def networks_dict(self, connections: List = None, min_nports: int = 1) -> dict:
         """
@@ -790,7 +913,7 @@ class Circuit():
 
 
     def s_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return "active" s-parameters of the circuit's network for a defined wave excitation `a`.
 
         The "active" s-parameter at a port is the reflection coefficients
@@ -801,7 +924,7 @@ class Circuit():
 
         .. math::
 
-            \mathrm{active}(s)_{mn} = \sum_i s_{mi} \\frac{a_i}{a_n}
+            \mathrm{active}(s)_{mn} = \sum_i s_{mi} \frac{a_i}{a_n}
 
         Parameters
         ----------
@@ -824,14 +947,14 @@ class Circuit():
         return self.network.s_active(a)
 
     def z_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return the "active" Z-parameters of the circuit's network for a defined wave excitation a.
 
         The "active" Z-parameters are defined by:
 
         .. math::
 
-            \mathrm{active}(z)_{m} = z_{0,m} \\frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
+            \mathrm{active}(z)_{m} = z_{0,m} \frac{1 + \mathrm{active}(s)_m}{1 - \mathrm{active}(s)_m}
 
         where :math:`z_{0,m}` is the characteristic impedance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
@@ -855,14 +978,14 @@ class Circuit():
         return self.network.z_active(a)
 
     def y_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return the "active" Y-parameters of the circuit's network for a defined wave excitation a.
 
         The "active" Y-parameters are defined by:
 
         .. math::
 
-            \mathrm{active}(y)_{m} = y_{0,m} \\frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
+            \mathrm{active}(y)_{m} = y_{0,m} \frac{1 - \mathrm{active}(s)_m}{1 + \mathrm{active}(s)_m}
 
         where :math:`y_{0,m}` is the characteristic admittance and
         :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
@@ -886,14 +1009,14 @@ class Circuit():
         return self.network.y_active(a)
 
     def vswr_active(self, a: NumberLike) -> np.ndarray:
-        """
+        r"""
         Return the "active" VSWR of the circuit's network for a defined wave excitation a.
 
         The "active" VSWR is defined by :
 
         .. math::
 
-            \mathrm{active}(vswr)_{m} = \\frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
+            \mathrm{active}(vswr)_{m} = \frac{1 + |\mathrm{active}(s)_m|}{1 - |\mathrm{active}(s)_m|}
 
         where :math:`\mathrm{active}(s)_m` the active S-parameter of port :math:`m`.
 
@@ -992,7 +1115,7 @@ class Circuit():
         return a_internal
 
     def _a_external(self, power: NumberLike, phase: NumberLike) -> np.ndarray:
-        """
+        r"""
         Wave input array at Circuit's ports ("external" ports).
 
         The array is defined from power and phase by:

@@ -327,7 +327,7 @@ class VNA(object):
         Parameters
         ----------
         freq : float or np.ndarray
-            a float or numpy.ndarray of floats of the frequency in f_units
+            a float or npy.ndarray of floats of the frequency in f_units
         f_unit : str
             the units of frequency (Hz, kHz, MHz, GHz, THz)
 

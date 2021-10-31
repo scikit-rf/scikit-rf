@@ -200,8 +200,8 @@ class Frequency(object):
         if isinstance(key, str):
 
             # they passed a string try and do some interpretation
-            re_numbers = re.compile('.*\d')
-            re_hyphen = re.compile('\s*-\s*')
+            re_numbers = re.compile(r'.*\d')
+            re_hyphen = re.compile(r'\s*-\s*')
             re_letters = re.compile('[a-zA-Z]+')
 
             freq_unit = re.findall(re_letters,key)
@@ -511,7 +511,7 @@ class Frequency(object):
 
         Returns
         -------
-        f_scaled :  :class:`numpy.ndarray`
+        f_scaled : numpy.ndarray
             A frequency vector in units of :attr:`unit`
 
         See Also
