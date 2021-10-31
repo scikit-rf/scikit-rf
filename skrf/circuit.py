@@ -240,6 +240,9 @@ class Circuit():
             In [18]: port1 = rf.Circuit.Port(freq, name='Port1')
         """
         _media = media.DefinedGammaZ0(frequency, z0=z0)
+        if not 'port' in name.lower():
+            raise ValueError("Port name should contain the string 'port',"
+                             " like 'Port1' or 'port_3'")
         return _media.match(name=name)
 
     @classmethod
