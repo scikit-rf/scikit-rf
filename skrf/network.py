@@ -3096,25 +3096,26 @@ class Network(object):
         """
         Add phase delay to a given port.
 
-        This will cascade a matched line of length `d/2` from a given `media`
-        in front of `port`. If `media==None`, then freespace is used.
+        This will connect a transmission line of length `d/2` to the selected `port`. If no propagation properties are
+        specified for the line (`media=None`), then freespace is assumed to convert a distance `d` into an electrical
+        length. If a phase angle is specified for `d`, it will be evaluated at the center frequency of the network.
 
         Parameters
         ----------
-        d : number
-                the length of transmission line (see unit argument)
+        d : float
+            The angle/length/delay of the transmission line (see `unit` argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
-                the units of d.  See :func:`Media.to_meters`, for details
+            The units of d.  See :func:`Media.to_meters`, for details
         port : int
-            port to add delay to.
+            Port to add the delay to.
         media: skrf.media.Media
-            media object to use for generating delay. If None, this will
+            Media object to use for generating the delay. If None, this will
             default to freespace.
 
         Returns
         -------
         ntwk : :class:`Network` object
-            Resulting delayed Network
+            A delayed copy of the `Network`.
 
         """
         if d ==0:
