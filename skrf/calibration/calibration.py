@@ -3296,13 +3296,13 @@ class NISTMultilineTRL(EightTerm):
 
     @property
     def er_eff(self):
-        """
+        r"""
         Effective permittivity of the solved line.
-        
-        
-        Currently, this only works for TEM media. If you are using 
-        non-TEM media (ie rectangular waveguide) then you need to compute
-        er yourself from gamma. 
+
+        Defined in terms of the propagation constant:
+
+        .. math::
+            \gamma = \alpha + j \beta = \frac{2\pi f}{c} \sqrt{\epsilon_{r,eff}}
         """
         try:
             return self._er_eff
