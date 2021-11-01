@@ -70,7 +70,6 @@ import pickle
 from pickle import UnpicklingError
 import sys
 import warnings
-import zipfile
 
 import numpy as npy
 

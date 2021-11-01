@@ -47,7 +47,7 @@ NetworkSet Utilities
 import zipfile
 import numpy as npy
 import typing
-from io import StringIO, BytesIO
+from io import BytesIO
 from scipy.interpolate import interp1d
 from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
 from . import mathFunctions as mf
@@ -222,18 +222,10 @@ class NetworkSet(object):
         if sort_filenames:
             filename_list.sort()
 
-
         for filename in filename_list:
             # try/except block in case not all files are touchstones
-
             try:  # Ascii files (Touchstone, etc)
-                # convert ZipExtFile to StringIO
-                # io.StringIO doesn't have an attribute called name like in
-                # file objects created with open(). So create it as it is
-                # required for the touchstone parser.
-                fileobj = StringIO(z.open(filename).read().decode('UTF-8'))
-                fileobj.name = filename
-                n = Network(fileobj)
+                n = Network.zipped_touchstone(filename, z)
                 ntwk_list.append(n)
                 continue
             except:
@@ -273,8 +265,6 @@ class NetworkSet(object):
         """
         from . io.general import read_all_networks
         return cls(read_all_networks(dir), *args, **kwargs)
-
-
 
     @classmethod
     def from_s_dict(cls, d: dict, frequency: Frequency, *args, **kwargs):

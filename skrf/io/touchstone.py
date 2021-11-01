@@ -26,6 +26,7 @@ Functions related to reading/writing touchstones.
 """
 import re
 import os
+import typing
 import zipfile
 import numpy
 import numpy as npy
@@ -50,7 +51,7 @@ class Touchstone:
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
-    def __init__(self, file):
+    def __init__(self, file: typing.Union[str, typing.TextIO]):
         """
         constructor
 
@@ -103,7 +104,7 @@ class Touchstone:
         ## Store port names in a list if they exist in the file
         self.port_names = None
 
-        self.comment_variables=None
+        self.comment_variables = None
         self.load_file(fid)
 
         self.gamma = []
@@ -114,7 +115,7 @@ class Touchstone:
 
         fid.close()
 
-    def load_file(self, fid):
+    def load_file(self, fid: typing.TextIO):
         """
         Load the touchstone file into the internal data structures.
 
@@ -124,7 +125,7 @@ class Touchstone:
 
         """
 
-        filename=self.filename
+        filename = self.filename
 
         # Check the filename extension. 
         # Should be .sNp for Touchstone format V1.0, and .ts for V2
@@ -147,7 +148,7 @@ class Touchstone:
             if not line:
                 break
             # store comments if they precede the option line
-            line = line.split('!',1)
+            line = line.split('!', 1)
             if len(line) == 2:
                 if not self.parameter:
                     if self.comments == None:
@@ -668,7 +669,7 @@ def hfss_touchstone_2_network(filename, f_unit='ghz'):
     return(my_network)
 
 
-def read_zipped_touchstones(ziparchive, dir=""):
+def read_zipped_touchstones(ziparchive: zipfile.ZipFile, dir: str = "") -> typing.Dict[str, Network]:
     """
     similar to skrf.io.read_all_networks, which works for directories but only for Touchstones in ziparchives.
 
@@ -682,6 +683,8 @@ def read_zipped_touchstones(ziparchive, dir=""):
     Returns
     -------
     dict
+        keys are touchstone filenames without extensions
+        values are network objects created from the touchstone files
     """
     networks = dict()
     for fname in ziparchive.namelist():  # type: str
