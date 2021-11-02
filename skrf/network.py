@@ -505,6 +505,8 @@ class Network(object):
         cascade
 
         """
+        check_frequency_exist(self)
+
         # if they pass a number then use power operator
         if isinstance(other, Number):
             out = self.copy()
@@ -574,6 +576,8 @@ class Network(object):
         -------
         ntw : :class:`Network`
         """
+        check_frequency_exist(self)
+
         result = self.copy()
 
         if isinstance(other, Network):
@@ -6477,6 +6481,14 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 
+def check_frequency_exist(ntwk) -> None:
+    """
+    Check if a Network has a non-zero Frequency.
+    """
+    if assert_frequency_exist(ntwk) == False:
+        raise ValueError('Network has no Frequency. Frequency points must be defined.')
+
+
 def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     checks if two Networks have same port impedances
@@ -6499,6 +6511,18 @@ def assert_frequency_equal(ntwkA: Network, ntwkB: Network) -> bool:
     """
     """
     return (ntwkA.frequency == ntwkB.frequency)
+
+
+def assert_frequency_exist(ntwk: Network) -> bool:
+    """
+    Test if the Network Frequency is defined.
+
+    Returns
+    -------
+    bool: boolean
+
+    """
+    return bool(len(ntwk.frequency))
 
 
 def assert_z0_equal(ntwkA: Network, ntwkB: Network) -> bool:
