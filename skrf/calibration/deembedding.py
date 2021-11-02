@@ -603,10 +603,12 @@ class SplitPi(Deembedding):
         # TODO: attempt to interpolate if frequencies do not match
 
         left = self.thru.copy()
-        left.y[:,0,0] = (self.thru.y[:,0,0] - self.thru.y[:,1,0] + self.thru.y[:,1,1] - self.thru.y[:,0,1]) / 2
-        left.y[:,0,1] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
-        left.y[:,1,0] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
-        left.y[:,1,1] = - self.thru.y[:,1,0] - self.thru.y[:,0,1]
+        left_y = left.y
+        left_y[:,0,0] = (self.thru.y[:,0,0] - self.thru.y[:,1,0] + self.thru.y[:,1,1] - self.thru.y[:,0,1]) / 2
+        left_y[:,0,1] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
+        left_y[:,1,0] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
+        left_y[:,1,1] = - self.thru.y[:,1,0] - self.thru.y[:,0,1]
+        left.y = left_y
         right = left.flipped()
         caled = left.inv ** ntwk ** right.inv
 
@@ -700,10 +702,12 @@ class SplitTee(Deembedding):
         # TODO: attempt to interpolate if frequencies do not match
 
         left = self.thru.copy()
-        left.z[:,0,0] = (self.thru.z[:,0,0] + self.thru.z[:,1,0] + self.thru.z[:,1,1] + self.thru.z[:,0,1]) / 2
-        left.z[:,0,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
-        left.z[:,1,0] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
-        left.z[:,1,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left_z = left.z
+        left_z[:,0,0] = (self.thru.z[:,0,0] + self.thru.z[:,1,0] + self.thru.z[:,1,1] + self.thru.z[:,0,1]) / 2
+        left_z[:,0,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left_z[:,1,0] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left_z[:,1,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left.z = left_z
         right = left.flipped()
         caled = left.inv ** ntwk ** right.inv
 

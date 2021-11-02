@@ -98,7 +98,7 @@ class DeembeddingTestCase(unittest.TestCase):
         Dut_ind (1 2) inductor l=1nH
         Cpad2   (2 0) capacitor c=25fF
         P2      (2 0) port
-    - deemb_thru3.s2p
+    - deemb_thru5.s2p
         P1      (1 0) port
         Cpad1   (1 0) capacitor c=25fF
         Cpad2   (1 0) capacitor c=25fF
