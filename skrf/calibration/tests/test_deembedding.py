@@ -6,9 +6,7 @@ import numpy as np
 class DeembeddingTestCase(unittest.TestCase):
     """
     Testcase for the Deembedding class
-
     Pseudo-netlists for s-parameter files used in these tests
-
     For open-short, open and short de-embedding:
     - deemb_ind.s2p
         P1      (1 0) port
@@ -35,7 +33,6 @@ class DeembeddingTestCase(unittest.TestCase):
         Cpad2   (4 0) capacitor c=25fF
         Cp2p    (1 4) capacitor c=10fF
         P2      (4 0) port
-
     For short-open de-embedding:
     - deemb_ind2.s2p
         P1      (1 0) port
@@ -62,6 +59,62 @@ class DeembeddingTestCase(unittest.TestCase):
         Cp2p    (0 0) capacitor c=10fF
         Rline2  (0 4) resistor r=2ohm
         P2      (4 0) port
+    For SplitPi de-embedding:
+    - deemb_ind3.s2p
+        P1      (1 0) port
+        Cpad1   (1 0) capacitor c=25fF
+        Rline1  (1 2) resistor r=2ohm
+        Dut_ind (2 3) inductor l=1nH
+        Rline2  (3 4) resistor r=2ohm
+        Cpad2   (4 0) capacitor c=25fF
+        P2      (4 0) port
+    - deemb_thru3.s2p
+        P1      (1 0) port
+        Cpad1   (1 0) capacitor c=25fF
+        Rline1  (1 2) resistor r=2ohm
+        Rline2  (3 4) resistor r=2ohm
+        Cpad2   (4 0) capacitor c=25fF
+        P2      (4 0) port
+    For SplitTee de-embedding:
+    - deemb_ind4.s2p
+        P1      (1 0) port
+        Rline1  (1 2) resistor r=2ohm
+        Cpad1   (2 0) capacitor c=25fF
+        Dut_ind (2 3) inductor l=1nH
+        Cpad2   (3 0) capacitor c=25fF
+        Rline2  (3 4) resistor r=2ohm
+        P2      (4 0) port
+    - deemb_thru4.s2p
+        P1      (1 0) port
+        Rline1  (1 2) resistor r=2ohm
+        Cpad1   (2 0) capacitor c=25fF
+        Cpad2   (3 0) capacitor c=25fF
+        Rline2  (3 4) resistor r=2ohm
+        P2      (4 0) port
+    For AdmittanceCancel de-embedding:
+    - deemb_ind5.s2p
+        P1      (1 0) port
+        Cpad1   (1 0) capacitor c=25fF
+        Dut_ind (1 2) inductor l=1nH
+        Cpad2   (2 0) capacitor c=25fF
+        P2      (2 0) port
+    - deemb_thru3.s2p
+        P1      (1 0) port
+        Cpad1   (1 0) capacitor c=25fF
+        Cpad2   (1 0) capacitor c=25fF
+        P2      (1 0) port
+    For ImpedanceCancel de-embedding:
+    - deemb_ind6.s2p
+        P1      (1 0) port
+        Rline1  (1 2) resistor r=2ohm
+        Dut_ind (2 3) inductor l=1nH
+        Rline2  (3 4) resistor r=2ohm
+        P2      (4 0) port
+    - deemb_thru6.s2p
+        P1      (1 0) port
+        Rline1  (1 2) resistor r=2ohm
+        Rline2  (2 3) resistor r=2ohm
+        P2      (3 0) port
     """
 
     def setUp(self):
@@ -90,12 +143,48 @@ class DeembeddingTestCase(unittest.TestCase):
         self.open2_1f = self.open2['10GHz'] 
         self.short2_1f = self.short2['10GHz']
 
+        # for spilit-pi testing
+        self.raw3 = rf.Network(os.path.join(self.test_dir, 'deemb_ind3.s2p'))
+        self.thru3 = rf.Network(os.path.join(self.test_dir, 'deemb_thru3.s2p'))
+        
+        # for spot frequency checking
+        self.raw3_1f = self.raw3['10GHz'] 
+        self.thru3_1f = self.thru3['10GHz'] 
+
+        # for spilit-tee testing
+        self.raw4 = rf.Network(os.path.join(self.test_dir, 'deemb_ind4.s2p'))
+        self.thru4 = rf.Network(os.path.join(self.test_dir, 'deemb_thru4.s2p'))
+        
+        # for spot frequency checking
+        self.raw4_1f = self.raw4['10GHz'] 
+        self.thru4_1f = self.thru4['10GHz'] 
+
+        # for admittance cancel testing
+        self.raw5 = rf.Network(os.path.join(self.test_dir, 'deemb_ind5.s2p'))
+        self.thru5 = rf.Network(os.path.join(self.test_dir, 'deemb_thru5.s2p'))
+        
+        # for spot frequency checking
+        self.raw5_1f = self.raw5['10GHz'] 
+        self.thru5_1f = self.thru5['10GHz'] 
+
+        # for impedance cancel cancel testing
+        self.raw6 = rf.Network(os.path.join(self.test_dir, 'deemb_ind6.s2p'))
+        self.thru6 = rf.Network(os.path.join(self.test_dir, 'deemb_thru6.s2p'))
+        
+        # for spot frequency checking
+        self.raw6_1f = self.raw6['10GHz'] 
+        self.thru6_1f = self.thru6['10GHz'] 
+
         # create de-embedding objects
         self.dm = rf.OpenShort(self.open, self.short)
         self.dm_os = rf.OpenShort(self.open_1f, self.short_1f) 
         self.dm_o = rf.Open(self.open_1f)
         self.dm_s = rf.Short(self.short_1f)
         self.dm_so = rf.ShortOpen(self.short2_1f, self.open2_1f)
+        self.dm_pi = rf.SplitPi(self.thru3_1f)
+        self.dm_tee = rf.SplitPi(self.thru4_1f)
+        self.dm_ac = rf.SplitPi(self.thru5_1f)
+        self.dm_ic = rf.SplitPi(self.thru6_1f)
 
         # relative tolerance for comparisons
         self.rtol = 1e-3
@@ -147,5 +236,41 @@ class DeembeddingTestCase(unittest.TestCase):
         The resulting network should be a pure inductor of 1nH.
         """
         dut = self.dm_so.deembed(self.raw2_1f)
+        ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
+        self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
+
+    def test_spilitpi(self):
+        """
+        After de-embedding, the network is a pure inductor of 1nH.
+        Test that this is true at a spot frequency.
+        """
+        dut = self.dm_pi.deembed(self.raw3_1f)
+        ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
+        self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
+
+    def test_spilittee(self):
+        """
+        After de-embedding, the network is a pure inductor of 1nH.
+        Test that this is true at a spot frequency.
+        """
+        dut = self.dm_tee.deembed(self.raw4_1f)
+        ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
+        self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
+
+    def test_admittance_cancel(self):
+        """
+        After de-embedding, the network is a pure inductor of 1nH.
+        Test that this is true at a spot frequency.
+        """
+        dut = self.dm_ac.deembed(self.raw5_1f)
+        ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
+        self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
+
+    def test_impedance_cancel(self):
+        """
+        After de-embedding, the network is a pure inductor of 1nH.
+        Test that this is true at a spot frequency.
+        """
+        dut = self.dm_ic.deembed(self.raw5_1f)
         ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
         self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
