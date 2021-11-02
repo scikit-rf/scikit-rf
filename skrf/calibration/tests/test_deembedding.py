@@ -182,9 +182,9 @@ class DeembeddingTestCase(unittest.TestCase):
         self.dm_s = rf.Short(self.short_1f)
         self.dm_so = rf.ShortOpen(self.short2_1f, self.open2_1f)
         self.dm_pi = rf.SplitPi(self.thru3_1f)
-        self.dm_tee = rf.SplitPi(self.thru4_1f)
-        self.dm_ac = rf.SplitPi(self.thru5_1f)
-        self.dm_ic = rf.SplitPi(self.thru6_1f)
+        self.dm_tee = rf.SplitTee(self.thru4_1f)
+        self.dm_ac = rf.AdmittanceCancel(self.thru5_1f)
+        self.dm_ic = rf.ImpedanceCancel(self.thru6_1f)
 
         # relative tolerance for comparisons
         self.rtol = 1e-3
@@ -271,6 +271,6 @@ class DeembeddingTestCase(unittest.TestCase):
         After de-embedding, the network is a pure inductor of 1nH.
         Test that this is true at a spot frequency.
         """
-        dut = self.dm_ic.deembed(self.raw5_1f)
+        dut = self.dm_ic.deembed(self.raw6_1f)
         ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
         self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
