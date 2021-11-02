@@ -42,6 +42,10 @@ De-embedding Methods
    Open
    ShortOpen
    Short
+   SplitPi
+   SplitTee
+   AdmittanceCancel
+   ImpedanceCancel
 
 """
 
