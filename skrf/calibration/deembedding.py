@@ -248,7 +248,7 @@ class Open(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are assumed to be negiligible, 
+    where the series parasitics are assumed to be negligible, 
     but parallel parasitics are unwanted. 
 
     Example
@@ -518,10 +518,10 @@ class Short(Deembedding):
 
 class SplitPi(Deembedding):
     """
-    Remove shunt and series parasitics assumming pi-type embedding network.
+    Remove shunt and series parasitics assuming pi-type embedding network.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thrh dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, two test pads connected directly to each other.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance and series impedance of the thru dummy are removed.
@@ -540,7 +540,7 @@ class SplitPi(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import AdmittanceCancel
+    >>> from skrf.calibration import SplitPi
 
     Create network objects for dummy structure and dut
 
@@ -617,10 +617,10 @@ class SplitPi(Deembedding):
 
 class SplitTee(Deembedding):
     """
-    Remove series and shunt parasitics assumming tee-type embedding network.
+    Remove series and shunt parasitics assuming tee-type embedding network.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thrh dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, two test pads connected directly to each other.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance and series impedance of the thru dummy are removed.
@@ -639,7 +639,7 @@ class SplitTee(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import AdmittanceCancel
+    >>> from skrf.calibration import SplitTee
 
     Create network objects for dummy structure and dut
 
@@ -718,7 +718,7 @@ class AdmittanceCancel(Deembedding):
     """
     Cancel shunt admittance by swapping (a.k.a Mangan's method).
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thrh dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, two test pads connected directly to each other.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance of the thru dummy are canceled,
@@ -816,7 +816,7 @@ class ImpedanceCancel(Deembedding):
     Cancel series impedance by swapping.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thrh dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, two test pads connected directly to each other.
     When :func:`Deembedding.deembed` is applied,
 
     the series impedance of the thru dummy are canceled,
@@ -837,7 +837,7 @@ class ImpedanceCancel(Deembedding):
     Example
     --------
     >>> import skrf as rf
-    >>> from skrf.calibration import AdmittanceCancel
+    >>> from skrf.calibration import ImpedanceCancel
 
     Create network objects for dummy structure and dut
 

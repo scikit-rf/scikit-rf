@@ -239,7 +239,7 @@ class DeembeddingTestCase(unittest.TestCase):
         ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
         self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
 
-    def test_spilitpi(self):
+    def test_splitpi(self):
         """
         After de-embedding, the network is a pure inductor of 1nH.
         Test that this is true at a spot frequency.
@@ -248,7 +248,7 @@ class DeembeddingTestCase(unittest.TestCase):
         ind_calc = 1e9*np.imag(1/dut.y[0,0,0])/2/np.pi/dut.f
         self.assertTrue(np.isclose(ind_calc, 1, rtol=self.rtol))
 
-    def test_spilittee(self):
+    def test_splittee(self):
         """
         After de-embedding, the network is a pure inductor of 1nH.
         Test that this is true at a spot frequency.
