@@ -236,6 +236,17 @@ class NetworkTestCase(unittest.TestCase):
                         z0_expected
                     )
 
+    def test_connect_no_frequency(self):
+        """ Connecting 2 networks defined without frequency returns Error
+        """
+        # try to connect two networks defined without their frequency properties
+        s = npy.random.rand(10, 2, 2)
+        ntwk1 = rf.Network(s=s)
+        ntwk2 = rf.Network(s=s)
+
+        with self.assertRaises(ValueError):
+            ntwk1**ntwk2
+
     def test_delay(self):
         ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
         self.assertTrue(

@@ -505,6 +505,8 @@ class Network(object):
         cascade
 
         """
+        check_frequency_exist(self)
+
         # if they pass a number then use power operator
         if isinstance(other, Number):
             out = self.copy()
@@ -574,6 +576,8 @@ class Network(object):
         -------
         ntw : :class:`Network`
         """
+        check_frequency_exist(self)
+
         result = self.copy()
 
         if isinstance(other, Network):
@@ -3096,25 +3100,26 @@ class Network(object):
         """
         Add phase delay to a given port.
 
-        This will cascade a matched line of length `d/2` from a given `media`
-        in front of `port`. If `media==None`, then freespace is used.
+        This will connect a transmission line of length `d/2` to the selected `port`. If no propagation properties are
+        specified for the line (`media=None`), then freespace is assumed to convert a distance `d` into an electrical
+        length. If a phase angle is specified for `d`, it will be evaluated at the center frequency of the network.
 
         Parameters
         ----------
-        d : number
-                the length of transmission line (see unit argument)
+        d : float
+            The angle/length/delay of the transmission line (see `unit` argument)
         unit : ['deg','rad','m','cm','um','in','mil','s','us','ns','ps']
-                the units of d.  See :func:`Media.to_meters`, for details
+            The units of d.  See :func:`Media.to_meters`, for details
         port : int
-            port to add delay to.
+            Port to add the delay to.
         media: skrf.media.Media
-            media object to use for generating delay. If None, this will
+            Media object to use for generating the delay. If None, this will
             default to freespace.
 
         Returns
         -------
         ntwk : :class:`Network` object
-            Resulting delayed Network
+            A delayed copy of the `Network`.
 
         """
         if d ==0:
@@ -6476,6 +6481,14 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
 
+def check_frequency_exist(ntwk) -> None:
+    """
+    Check if a Network has a non-zero Frequency.
+    """
+    if assert_frequency_exist(ntwk) == False:
+        raise ValueError('Network has no Frequency. Frequency points must be defined.')
+
+
 def check_z0_equal(ntwkA: Network, ntwkB: Network) -> None:
     """
     checks if two Networks have same port impedances
@@ -6498,6 +6511,18 @@ def assert_frequency_equal(ntwkA: Network, ntwkB: Network) -> bool:
     """
     """
     return (ntwkA.frequency == ntwkB.frequency)
+
+
+def assert_frequency_exist(ntwk: Network) -> bool:
+    """
+    Test if the Network Frequency is defined.
+
+    Returns
+    -------
+    bool: boolean
+
+    """
+    return bool(len(ntwk.frequency))
 
 
 def assert_z0_equal(ntwkA: Network, ntwkB: Network) -> bool:
