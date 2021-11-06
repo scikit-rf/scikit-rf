@@ -271,7 +271,9 @@ class VectorFitting:
                 A_sub = np.empty((2 * len(freqs_norm), n_cols_unused + n_cols_used))
                 A_row_extra = np.zeros(n_cols_used)
 
-                # responses will be weighted equally; alternative: weight_response = 1 / np.linalg.norm(freq_response)
+                # responses will be weighted according to their norm;
+                # alternative: equal weights with weight_response = 1.0
+                # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
                 weight_response = np.linalg.norm(freq_response)
 
                 for k, f_sample in enumerate(freqs_norm):
@@ -495,33 +497,62 @@ class VectorFitting:
             # row will be appended to submatrix A_sub of complete coeff matrix A_matrix
             # 2 rows per pole in result vector (1st for real part, 2nd for imaginary part)
             # --> 2 columns per pole in coeff matrix
-            A_matrix = []
-            b_vector = []
+            n_cols = 0
+            for pole_im in poles_im:
+                if pole_im == 0.0:
+                    n_cols += 1
+                else:
+                    n_cols += 2
+            if fit_constant:
+                n_cols += 1
+            if fit_proportional:
+                n_cols += 1
+            A_matrix = np.empty((2 * len(freqs_norm), n_cols))
+            b_vector = np.empty((2 * len(freqs_norm)))
 
             for k, f_sample in enumerate(freqs_norm):
-                s_k = 2j * np.pi * f_sample
-                A_k = []
+                omega_k = 2 * np.pi * f_sample
+                resp_re = np.real(freq_response[k])
+                resp_im = np.imag(freq_response[k])
+                i_row_re = 2 * k
+                i_row_im = i_row_re + 1
+                i_col = 0
+
                 # add coefficients for a pair of complex conjugate poles
                 # part 1: first sum of rational functions (residue variable c)
-                for pole in poles:
+                for i_pole in range(len(poles_im)):
+                    pole_re = poles_re[i_pole]
+                    pole_im = poles_im[i_pole]
+
                     # separate and stack real and imaginary part to preserve conjugacy of the pole pair
-                    if np.imag(pole) == 0.0:
-                        A_k.append(1 / (s_k - pole))
+                    if pole_im == 0.0:
+                        denom = pole_re ** 2 + omega_k ** 2
+                        A_matrix[i_row_re, i_col] = -1 * pole_re / denom
+                        A_matrix[i_row_im, i_col] = -1 * omega_k / denom
+                        i_col += 1
                     else:
-                        A_k.append(1 / (s_k - pole) + 1 / (s_k - np.conjugate(pole)))       # real part of residue
-                        A_k.append(1j / (s_k - pole) - 1j / (s_k - np.conjugate(pole)))     # imaginary part of residue
+                        # coefficient for real part of residue
+                        denom1 = pole_re ** 2 + (omega_k - pole_im) ** 2
+                        denom2 = pole_re ** 2 + (omega_k + pole_im) ** 2
+                        A_matrix[i_row_re, i_col] = -1 * pole_re * (1 / denom1 + 1 / denom2)
+                        A_matrix[i_row_im, i_col] = (pole_im - omega_k) / denom1 - (pole_im + omega_k) / denom2
+                        i_col += 1
+                        # coefficient for imaginary part of residue
+                        A_matrix[i_row_re, i_col] = (omega_k - pole_im) / denom1 - (pole_im + omega_k) / denom2
+                        A_matrix[i_row_im, i_col] = pole_re * (1 / denom2 - 1 / denom1)
+                        i_col += 1
 
                 # part 2: constant (variable d) and proportional term (variable e)
                 if fit_constant:
-                    A_k.append(1.0)
+                    A_matrix[i_row_re, i_col] = 1.0
+                    A_matrix[i_row_im, i_col] = 0.0
+                    i_col += 1
                 if fit_proportional:
-                    A_k.append(s_k)
+                    A_matrix[i_row_re, i_col] = 0.0
+                    A_matrix[i_row_im, i_col] = omega_k
 
-                A_matrix.append(np.array(A_k))
-                b_vector.append(np.array(freq_response[k]))
-
-            A_matrix = np.vstack((np.real(A_matrix), np.imag(A_matrix)))
-            b_vector = np.append(np.real(b_vector), np.imag(b_vector))
+                b_vector[i_row_re] = resp_re
+                b_vector[i_row_im] = resp_im
 
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
@@ -530,8 +561,11 @@ class VectorFitting:
 
             i = 0
             zeros_response = []
-            for pole in poles:
-                if np.imag(pole) == 0.0:
+            for i_pole in range(len(poles_im)):
+                pole_re = poles_re[i_pole]
+                pole_im = poles_im[i_pole]
+
+                if pole_im == 0.0:
                     zeros_response.append(x[i] + 0j)
                     i += 1
                 else:
