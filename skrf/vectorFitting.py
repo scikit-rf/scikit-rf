@@ -188,21 +188,27 @@ class VectorFitting:
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
 
         # init poles array of correct length
-        poles = np.empty(len(pole_freqs_real) + len(pole_freqs_cmplx), dtype=np.complex)
+        #poles = np.empty(len(pole_freqs_real) + len(pole_freqs_cmplx), dtype=np.complex)
+        poles_re = np.zeros(len(pole_freqs_real) + len(pole_freqs_cmplx))
+        poles_im = np.zeros(len(pole_freqs_real) + len(pole_freqs_cmplx))
 
         # add real poles
         for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            poles[i] = (-1 / 100 + 0j) * omega
+            #poles[i] = (-1 / 100 + 0j) * omega
+            poles_re[i] = -1 / 100 * omega
 
         # add complex-conjugate poles (store only positive imaginary parts)
         i_offset = len(pole_freqs_real)
         for i, f in enumerate(pole_freqs_cmplx):
             omega = 2 * np.pi * f
-            poles[i_offset + i] = (-1 / 100 + 1j) * omega
+            #poles[i_offset + i] = (-1 / 100 + 1j) * omega
+            poles_re[i_offset + i] = -1 / 100 * omega
+            poles_im[i_offset + i] = omega
 
         # save initial poles (un-normalize first)
-        self.initial_poles = poles * norm
+        #self.initial_poles = poles * norm
+        self.initial_poles = (poles_re + 1j * poles_im) * norm
         max_singular = 1
 
         logging.info('### Starting pole relocation process.\n')
@@ -236,8 +242,8 @@ class VectorFitting:
             # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
             # (ratio #real/#complex poles might change during iterations)
             n_cols_unused = 0
-            for pole in poles:
-                if np.imag(pole) == 0.0:
+            for pole in poles_im:
+                if pole == 0.0:
                     n_cols_unused += 1
                 else:
                     n_cols_unused += 2
@@ -270,7 +276,9 @@ class VectorFitting:
 
                 for k, f_sample in enumerate(freqs_norm):
                     # this loop is performance critical, as it gets repeated many times (N_responses * N_frequencies)
-                    s_k = 2j * np.pi * f_sample
+                    omega_k = 2 * np.pi * f_sample
+                    resp_re = np.real(freq_response[k])
+                    resp_im = np.imag(freq_response[k])
                     i_col = 0
                     i_row_re = 2 * k
                     i_row_im = i_row_re + 1
@@ -283,76 +291,79 @@ class VectorFitting:
                     # part 1: first sum of rational functions (residue variable c)
                     # merged with
                     # part 3: second sum of rational functions (variable c_res)
-                    for pole in poles:
-                        # only calculate these coefficient partials once
-                        coeff_pole_inv = 1 / (s_k - pole)
-                        coeff_pole_conj_inv = 1 / (s_k - np.conjugate(pole))
+                    for i_pole in range(len(poles_im)):
+                        pole_re = poles_re[i_pole]
+                        pole_im = poles_im[i_pole]
 
-                        # separate and stack real and imaginary part to preserve conjugacy of the pole pair
-                        if np.imag(pole) == 0.0:
-                            # real pole
+                        if pole_im == 0.0:
+                            # coefficient for a real pole: p = p'
+                            denom = (omega_k ** 2 + pole_re ** 2)
+                            coeff_re = -1 * pole_re / denom
+                            coeff_im = -1 * omega_k / denom
 
-                            # part 1: coeff = 1 / (s_k - pole)
-                            A_sub[i_row_re, i_col] = np.real(coeff_pole_inv)
-                            A_sub[i_row_im, i_col] = np.imag(coeff_pole_inv)
+                            # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
+                            A_sub[i_row_re, i_col] = coeff_re
+                            A_sub[i_row_im, i_col] = coeff_im
                             # part 3: coeff = -1 * H(s_k) / (s_k - pole)
-                            coeff_cplx = -1 * freq_response[k] * coeff_pole_inv
-                            A_sub[i_row_re, n_cols_unused + i_col] = np.real(coeff_cplx)
-                            A_sub[i_row_im, n_cols_unused + i_col] = np.imag(coeff_cplx)
+                            # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
                             # extra equation to avoid trivial solution:
-                            # coeff += Re(1 / (s_k - pole))
-                            A_row_extra[i_col] += np.real(coeff_pole_inv)
-
+                            # coeff += Re(1 / (s_k - pole)) = coeff_re
+                            A_row_extra[i_col] += coeff_re
                             i_col += 1
                         else:
-                            # complex pole of a conjugated pair
+                            # coefficient for a complex pole of a conjugated pair: p = p' + jp''
+                            denom1 = pole_re ** 2 + (omega_k - pole_im) ** 2
+                            denom2 = pole_re ** 2 + (omega_k + pole_im) ** 2
 
-                            # row 1: add real part of residue
+                            # row 1: add coefficient for real part of residue
                             # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                            coeff_cplx = coeff_pole_inv + coeff_pole_conj_inv
-                            A_sub[i_row_re, i_col] = np.real(coeff_cplx)
-                            A_sub[i_row_im, i_col] = np.imag(coeff_cplx)
+                            coeff_re = -1 * pole_re * (1 / denom1 + 1 / denom2)
+                            coeff_im = (pole_im - omega_k) / denom1 - (pole_im + omega_k) / denom2
+                            A_sub[i_row_re, i_col] = coeff_re
+                            A_sub[i_row_im, i_col] = coeff_im
                             # extra equation to avoid trivial solution:
-                            # coeff += Re(1 / (s_k - pole) + 1 / (s_k - conj(pole)))
-                            A_row_extra[i_col] += np.real(coeff_cplx)
+                            # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
+                            A_row_extra[i_col] += coeff_re
                             # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                            coeff_cplx = -1 * freq_response[k] * coeff_cplx
-                            A_sub[i_row_re, n_cols_unused + i_col] = np.real(coeff_cplx)
-                            A_sub[i_row_im, n_cols_unused + i_col] = np.imag(coeff_cplx)
+                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
                             i_col += 1
 
-                            # row 2: add imaginary part of residue
+                            # row 2: add coefficient for imaginary part of residue
                             # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
-                            coeff_cplx = 1j * coeff_pole_inv - 1j * coeff_pole_conj_inv
-                            A_sub[i_row_re, i_col] = np.real(coeff_cplx)
-                            A_sub[i_row_im, i_col] = np.imag(coeff_cplx)
+                            #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
+                            coeff_re = (omega_k - pole_im) / denom1 - (omega_k + pole_im) / denom2
+                            coeff_im = pole_re * (1 / denom2 - 1 / denom1)
+                            A_sub[i_row_re, i_col] = coeff_re
+                            A_sub[i_row_im, i_col] = coeff_im
                             # extra equation to avoid trivial solution:
                             # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
-                            A_row_extra[i_col] += np.real(coeff_cplx)
+                            A_row_extra[i_col] += coeff_re
                             # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                            coeff_cplx = -1 * freq_response[k] * coeff_cplx
-                            A_sub[i_row_re, n_cols_unused + i_col] = np.real(coeff_cplx)
-                            A_sub[i_row_im, n_cols_unused + i_col] = np.imag(coeff_cplx)
+                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
                             i_col += 1
 
                     # part 4: constant (variable d_res)
                     # coeff = -1 * H(s_k)
-                    coeff_cplx = -1 * freq_response[k]
-                    A_sub[i_row_re, n_cols_unused + i_col] = np.real(coeff_cplx)
-                    A_sub[i_row_im, n_cols_unused + i_col] = np.imag(coeff_cplx)
+                    A_sub[i_row_re, n_cols_unused + i_col] = -1 * resp_re
+                    A_sub[i_row_im, n_cols_unused + i_col] = -1 * resp_im
                     # extra equation to avoid trivial solution: coeff += 1
                     A_row_extra[i_col] += 1
 
                     # part 2: constant (variable d) and proportional term (variable e)
                     if fit_constant:
-                        # coeff = 1 + 0j
+                        # coeff = 1 + j0
                         A_sub[i_row_re, i_col] = 1.0
                         A_sub[i_row_im, i_col] = 0.0
                         i_col += 1
                     if fit_proportional:
-                        # coeff = s_k = 2j * pi * f
+                        # coeff = s_k = j omega_k
                         A_sub[i_row_re, i_col] = 0.0
-                        A_sub[i_row_im, i_col] = np.imag(s_k)
+                        A_sub[i_row_im, i_col] = omega_k
 
                 # QR decomposition
                 Q, R = np.linalg.qr(A_sub, 'reduced')
@@ -395,10 +406,10 @@ class VectorFitting:
             # build test matrix H, which will hold the new poles as eigenvalues
             H = np.zeros((len(c_res), len(c_res)))
             i = 0
-            for pole in poles:
+            for i_pole in range(len(poles_im)):
                 # fill diagonal with previous poles
-                pole_re = np.real(pole)
-                pole_im = np.imag(pole)
+                pole_re = poles_re[i_pole]
+                pole_im = poles_im[i_pole]
                 if pole_im == 0.0:
                     # one row for a real pole
                     H[i, i] = pole_re
@@ -415,18 +426,18 @@ class VectorFitting:
             poles_new = np.linalg.eigvals(H)
 
             # replace poles for next iteration
-            poles = []
+            poles_re = []
+            poles_im = []
             for k, pole in enumerate(poles_new):
-                # flip real part of unstable poles (real part needs to be negative for stability)
                 pole_re = np.real(pole)
                 pole_im = np.imag(pole)
                 if pole_re > 0.0:
-                    pole = -1 * pole_re + 1j * pole_im
+                    # flip real part of unstable poles (real part needs to be negative for stability)
+                    pole_re = -1 * pole_re
                 if pole_im >= 0.0:
                     # complex poles need to come in complex conjugate pairs; append only the positive part
-                    poles.append(pole)
-
-            poles = np.sort_complex(poles)
+                    poles_re.append(pole_re)
+                    poles_im.append(pole_im)
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
@@ -464,7 +475,7 @@ class VectorFitting:
                 iterations = 0
 
         # ITERATIONS DONE
-        poles = np.array(poles)
+        poles = np.array(poles_re) + 1j * np.array(poles_im)
 
         logging.info('Initial poles before relocation:')
         logging.info(self.initial_poles)
