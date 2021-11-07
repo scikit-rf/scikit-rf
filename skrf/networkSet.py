@@ -943,7 +943,7 @@ class NetworkSet(object):
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
-    """
+    r"""
     Applies a function to some attribute of a list of networks.
 
 
@@ -992,7 +992,7 @@ fon = func_on_networks
 
 
 def getset(ntwk_dict, s, *args, **kwargs):
-    """
+    r"""
     Creates a :class:`NetworkSet`, of all :class:`~skrf.network.Network`s
     objects in a dictionary that contain `s` in its key. This is useful
     for dealing with the output of
