@@ -1319,6 +1319,170 @@ class VectorFitting:
         return ax
 
     @check_plotting
+    def plot_s_deg(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.rad2deg(np.angle(self.network.s[:, i, j])), color='r', label='Samples')
+        ax.plot(freqs, np.rad2deg(np.angle(self.get_model_response(i, j, freqs))), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Phase (Degrees)')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_deg_unwrap(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the unwrapped phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j]))), color='r', label='Samples')
+        ax.plot(freqs, np.rad2deg(np.unwrap(np.angle(self.get_model_response(i, j, freqs)))), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Phase (Degrees)')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_re(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the real part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.real(self.network.s[:, i, j]), color='r', label='Samples')
+        ax.plot(freqs, np.real(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Real Part')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_im(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the imaginary part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.imag(self.network.s[:, i, j]), color='r', label='Samples')
+        ax.plot(freqs, np.imag(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Imaginary Part')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
     def plot_s_singular(self, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the singular values of the vector fitted S-matrix in linear scale.
