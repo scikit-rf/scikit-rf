@@ -2,11 +2,11 @@ import unittest
 import os
 import warnings
 import pickle
+
 import skrf as rf
 import numpy as npy
 from numpy.random  import rand, uniform
-from nose.tools import nottest
-from nose.plugins.skip import SkipTest
+import pytest
 
 from skrf.calibration import OnePort, PHN, SDDL, TRL, SOLT, UnknownThru, EightTerm, TwoPortOnePath, EnhancedResponse,TwelveTerm, SixteenTerm, LMR16, terminate, determine_line, determine_reflect, NISTMultilineTRL
 
@@ -171,7 +171,6 @@ class OnePortTest(unittest.TestCase, CalibrationTest):
 
 class SDDLTest(OnePortTest):
     def setUp(self):
-        #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
         #Exact only with a lossless waveguide
         self.wg = WG_lossless
@@ -228,15 +227,17 @@ class SDDLTest(OnePortTest):
             )
         self.cal.run()
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable ')
+        pass
+
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
 class SDDLWeikle(OnePortTest):
     def setUp(self):
-        #raise SkipTest('Doesnt work yet')
         self.n_ports = 1
         #Exact only with a lossless waveguide
         self.wg = WG_lossless
@@ -265,10 +266,13 @@ class SDDLWeikle(OnePortTest):
             measured = measured,
             )
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable ')
+        pass
+
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
 class SDDMTest(OnePortTest):
@@ -306,14 +310,16 @@ class SDDMTest(OnePortTest):
             measured = measured,
             )
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable ')
+        pass
     
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
-@SkipTest
+@pytest.mark.skip()
 class PHNTest(OnePortTest):
     """
     """
@@ -357,10 +363,13 @@ class PHNTest(OnePortTest):
         self.assertEqual(self.actuals[0], self.cal.ideals[0])
         self.assertEqual(self.actuals[1], self.cal.ideals[1])
             
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs(self):
-        raise SkipTest('not applicable')
+        pass
+
+    @pytest.mark.skip(reason='not applicable ')
     def test_from_coefs_ntwks(self):
-        raise SkipTest('not applicable ')
+        pass
 
 
 class EightTermTest(unittest.TestCase, CalibrationTest):
@@ -723,9 +732,9 @@ class NISTMultilineTRLTest2(NISTMultilineTRLTest):
             self.assertTrue(all(npy.abs(self.cal.coefs[k] - self.cal_shift.coefs[k]) < 1e-9))
 
 
+@pytest.mark.skip()
 class TREightTermTest(unittest.TestCase, CalibrationTest):
     def setUp(self):
-        raise SkipTest()
         self.n_ports = 2
         self.wg = WG
         wg= self.wg
@@ -1063,10 +1072,10 @@ class TwoPortOnePathTest(TwelveTermTest):
         f = self.cal.embed(a)
         r = self.cal.embed(a.flipped())
         self.assertEqual(self.cal.apply_cal((f,r)),a)
-        
+    
+    @pytest.mark.skip(reason='measurement procedure is different so this test doesnt apply')
     def test_embed_equal_measure(self):
-        # measurement procedure is different so this test doesnt apply
-        raise SkipTest()
+        pass
 
     @suppress_warning_decorator("n_thrus is None")
     def test_from_coefs(self):
@@ -1077,23 +1086,29 @@ class TwoPortOnePathTest(TwelveTermTest):
     def test_from_coefs_ntwks(self):
         cal_from_coefs = self.cal.from_coefs_ntwks(self.cal.coefs_ntwks)
 
+    @pytest.mark.skip()
     def test_reverse_source_match_accuracy(self):
-        raise SkipTest()   
+        pass
     
+    @pytest.mark.skip()
     def test_reverse_directivity_accuracy(self):
-        raise SkipTest()      
-    
-    def test_reverse_load_match_accuracy(self):
-        raise SkipTest()  
-    
-    def test_reverse_reflection_tracking_accuracy(self):
-        raise SkipTest()  
-    
-    def test_reverse_transmission_tracking_accuracy(self):
-        raise SkipTest()  
+        pass
 
+    @pytest.mark.skip()
+    def test_reverse_load_match_accuracy(self):
+        pass  
+    
+    @pytest.mark.skip()
+    def test_reverse_reflection_tracking_accuracy(self):
+        pass  
+    
+    @pytest.mark.skip()
+    def test_reverse_transmission_tracking_accuracy(self):
+        pass  
+
+    @pytest.mark.skip()
     def test_convert_12term_2_8term_correction_accuracy(self):
-        raise SkipTest()
+        pass
 
 
 class UnknownThruTest(EightTermTest):

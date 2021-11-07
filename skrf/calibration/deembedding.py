@@ -42,6 +42,10 @@ De-embedding Methods
    Open
    ShortOpen
    Short
+   SplitPi
+   SplitTee
+   AdmittanceCancel
+   ImpedanceCancel
 
 """
 
@@ -62,7 +66,7 @@ class Deembedding(ABC):
     """
 
     def __init__(self, dummies, name=None, *args, **kwargs):
-        """
+        r"""
         De-embedding Initializer
 
         Notes
@@ -244,7 +248,7 @@ class Open(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are assumed to be negiligible, 
+    where the series parasitics are assumed to be negligible, 
     but parallel parasitics are unwanted. 
 
     Example
@@ -508,5 +512,400 @@ class Short(Deembedding):
 
         # remove short parasitics
         caled.z = ntwk.z - self.short.z
+
+        return caled
+
+
+class SplitPi(Deembedding):
+    """
+    Remove shunt and series parasitics assuming pi-type embedding network.
+
+    A deembedding object is created with just one thru dummy measurement `dummy_thru`.
+    The thru dummy is, for example, two test pads connected directly to each other.
+
+    When :func:`Deembedding.deembed` is applied,
+    the shunt admittance and series impedance of the thru dummy are removed.
+
+    This method is applicable only when there is a-priori knowledge of the
+    equivalent circuit model of the parasitic network to be de-embedded,
+    where the series parasitics are closest to device-under-test, 
+    followed by parallel parasitics. For more information, see [4]_
+
+    References
+    ------------
+    ..  [4] L. Nan, K. Mouthaan, Y.-Z. Xiong, J. Shi, S. C. Rustagi, and B.-L. Ooi, 
+        “Experimental Characterization of the Effect of Metal Dummy Fills on Spiral Inductors,”
+        in 2007 IEEE Radio Frequency Integrated Circuits (RFIC) Symposium, Jun. 2007, pp. 307–310.
+
+    Example
+    --------
+    >>> import skrf as rf
+    >>> from skrf.calibration import SplitPi
+
+    Create network objects for dummy structure and dut
+
+    >>> th = rf.Network('thru_ckt.s2p')
+    >>> dut = rf.Network('full_ckt.s2p')
+
+    Create de-embedding object
+
+    >>> dm = SplitPi(dummy_thru = th, name = 'test_thru')
+
+    Remove parasitics to get the actual device network
+
+    >>> realdut = dm.deembed(dut)
+    """
+
+    def __init__(self, dummy_thru, name=None, *args, **kwargs):
+        """
+        SplitPi De-embedding Initializer
+
+        Parameters
+        -----------
+        dummy_thru : :class:`~skrf.network.Network` object
+            Measurement of the dummy thru structure
+
+        name : string
+            Optional name of de-embedding object
+
+        args, kwargs:
+            Passed to :func:`Deembedding.__init__`
+
+        See Also
+        ---------
+        :func:`Deembedding.__init__`
+        """
+        self.thru = dummy_thru.copy()
+        dummies = [self.thru]
+
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+
+    def deembed(self, ntwk):
+        """
+        Perform the de-embedding calculation
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network data of device measurement from which
+            parasitics needs to be removed via de-embedding
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+        """
+
+        # check if the frequencies match with dummy frequencies
+        if ntwk.frequency != self.thru.frequency:
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
+        # TODO: attempt to interpolate if frequencies do not match
+
+        left = self.thru.copy()
+        left_y = left.y
+        left_y[:,0,0] = (self.thru.y[:,0,0] - self.thru.y[:,1,0] + self.thru.y[:,1,1] - self.thru.y[:,0,1]) / 2
+        left_y[:,0,1] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
+        left_y[:,1,0] = self.thru.y[:,1,0] + self.thru.y[:,0,1]
+        left_y[:,1,1] = - self.thru.y[:,1,0] - self.thru.y[:,0,1]
+        left.y = left_y
+        right = left.flipped()
+        caled = left.inv ** ntwk ** right.inv
+
+        return caled
+
+
+class SplitTee(Deembedding):
+    """
+    Remove series and shunt parasitics assuming tee-type embedding network.
+
+    A deembedding object is created with just one thru dummy measurement `dummy_thru`.
+    The thru dummy is, for example, two test pads connected directly to each other.
+
+    When :func:`Deembedding.deembed` is applied,
+    the shunt admittance and series impedance of the thru dummy are removed.
+
+    This method is applicable only when there is a-priori knowledge of the
+    equivalent circuit model of the parasitic network to be de-embedded,
+    where the shunt parasitics are closest to device-under-test, 
+    followed by series parasitics. For more information, see [5]_
+
+    References
+    ------------
+    ..  [5] M. J. Kobrinsky, S. Chakravarty, D. Jiao, M. C. Harmes, S. List, and M. Mazumder,
+        “Experimental validation of crosstalk simulations for on-chip interconnects using S-parameters,”
+        IEEE Transactions on Advanced Packaging, vol. 28, no. 1, pp. 57–62, Feb. 2005.
+
+    Example
+    --------
+    >>> import skrf as rf
+    >>> from skrf.calibration import SplitTee
+
+    Create network objects for dummy structure and dut
+
+    >>> th = rf.Network('thru_ckt.s2p')
+    >>> dut = rf.Network('full_ckt.s2p')
+
+    Create de-embedding object
+
+    >>> dm = SplitTee(dummy_thru = th, name = 'test_thru')
+
+    Remove parasitics to get the actual device network
+
+    >>> realdut = dm.deembed(dut)
+    """
+
+    def __init__(self, dummy_thru, name=None, *args, **kwargs):
+        """
+        SplitTee De-embedding Initializer
+
+        Parameters
+        -----------
+        dummy_thru : :class:`~skrf.network.Network` object
+            Measurement of the dummy thru structure
+
+        name : string
+            Optional name of de-embedding object
+
+        args, kwargs:
+            Passed to :func:`Deembedding.__init__`
+
+        See Also
+        ---------
+        :func:`Deembedding.__init__`
+        """
+        self.thru = dummy_thru.copy()
+        dummies = [self.thru]
+
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+
+    def deembed(self, ntwk):
+        """
+        Perform the de-embedding calculation
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network` object
+            Network data of device measurement from which
+            parasitics needs to be removed via de-embedding
+            
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+        """
+
+        # check if the frequencies match with dummy frequencies
+        if ntwk.frequency != self.thru.frequency:
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
+        # TODO: attempt to interpolate if frequencies do not match
+
+        left = self.thru.copy()
+        left_z = left.z
+        left_z[:,0,0] = (self.thru.z[:,0,0] + self.thru.z[:,1,0] + self.thru.z[:,1,1] + self.thru.z[:,0,1]) / 2
+        left_z[:,0,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left_z[:,1,0] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left_z[:,1,1] = self.thru.z[:,1,0] + self.thru.z[:,0,1]
+        left.z = left_z
+        right = left.flipped()
+        caled = left.inv ** ntwk ** right.inv
+
+        return caled
+
+
+class AdmittanceCancel(Deembedding):
+    """
+    Cancel shunt admittance by swapping (a.k.a Mangan's method).
+    A deembedding object is created with just one thru dummy measurement `dummy_thru`.
+    The thru dummy is, for example, two test pads connected directly to each other.
+
+    When :func:`Deembedding.deembed` is applied,
+    the shunt admittance of the thru dummy are canceled,
+    from the DUT measurement by left-right mirroring operation.
+
+    This method is applicable to only symmetric (i.e. S11=S22 and S12=S21) 2-port DUTs,
+    but suitable for the characterization of transmission lines at mmW frequencies.
+    For more information, see [2]_
+
+    References
+    ------------
+    ..  [2] A. M. Mangan, S. P. Voinigescu, Ming-Ta Yang, and M. Tazlauanu,
+        “De-embedding transmission line measurements for accurate modeling of IC designs,”
+        IEEE Trans. Electron Devices, vol. 53, no. 2, pp. 235–241, Feb. 2006.
+
+    Example
+    --------
+    >>> import skrf as rf
+    >>> from skrf.calibration import AdmittanceCancel
+
+    Create network objects for dummy structure and dut
+
+    >>> th = rf.Network('thru_ckt.s2p')
+    >>> dut = rf.Network('full_ckt.s2p')
+
+    Create de-embedding object
+
+    >>> dm = AdmittanceCancel(dummy_thru = th, name = 'test_thru')
+
+    Remove parasitics to get the actual device network
+
+    >>> realdut = dm.deembed(dut)
+    """
+
+    def __init__(self, dummy_thru, name=None, *args, **kwargs):
+        """
+        AdmittanceCancel De-embedding Initializer
+
+        Parameters
+        -----------
+
+        dummy_thru : :class:`~skrf.network.Network` object
+            Measurement of the dummy thru structure
+
+        name : string
+            Optional name of de-embedding object
+
+        args, kwargs:
+            Passed to :func:`Deembedding.__init__`
+
+        See Also
+        ---------
+        :func:`Deembedding.__init__`
+
+        """
+        self.thru = dummy_thru.copy()
+        dummies = [self.thru]
+
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+
+    def deembed(self, ntwk):
+        """
+        Perform the de-embedding calculation
+
+        Parameters
+        ----------
+
+        ntwk : :class:`~skrf.network.Network` object
+            Network data of device measurement from which
+            parasitics needs to be removed via de-embedding
+
+        Returns
+        -------
+
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+        """
+
+        # check if the frequencies match with dummy frequencies
+        if ntwk.frequency != self.thru.frequency:
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
+        # TODO: attempt to interpolate if frequencies do not match
+
+        caled = ntwk.copy()
+        h = ntwk ** self.thru.inv
+        h_ = h.flipped()
+        caled.y = (h.y + h_.y) / 2
+
+        return caled
+
+
+class ImpedanceCancel(Deembedding):
+    """
+    Cancel series impedance by swapping.
+
+    A deembedding object is created with just one thru dummy measurement `dummy_thru`.
+    The thru dummy is, for example, two test pads connected directly to each other.
+    When :func:`Deembedding.deembed` is applied,
+
+    the series impedance of the thru dummy are canceled,
+    from the DUT measurement by left-right mirroring operation.
+
+    This method is applicable to only symmetric (i.e. S11=S22 and S12=S21) 2-port DUTs,
+    but suitable for the characterization of transmission lines at mmW frequencies.
+    For more information, see [3]_
+
+    References
+    ------------
+    ..  [3] S. Amakawa, K. Katayama, K. Takano, T. Yoshida, and M. Fujishima,
+        “Comparative analysis of on-chip transmission line de-embedding techniques,”
+        in 2015 IEEE International Symposium on Radio-Frequency Integration Technology,
+        Sendai, Japan, Aug. 2015, pp. 91–93.
+
+
+    Example
+    --------
+    >>> import skrf as rf
+    >>> from skrf.calibration import ImpedanceCancel
+
+    Create network objects for dummy structure and dut
+
+    >>> th = rf.Network('thru_ckt.s2p')
+    >>> dut = rf.Network('full_ckt.s2p')
+
+    Create de-embedding object
+
+    >>> dm = ImpedanceCancel(dummy_thru = th, name = 'test_thru')
+
+    Remove parasitics to get the actual device network
+
+    >>> realdut = dm.deembed(dut)
+    """
+
+    def __init__(self, dummy_thru, name=None, *args, **kwargs):
+        """
+        ImpedanceCancel De-embedding Initializer
+
+        Parameters
+        -----------
+
+        dummy_thru : :class:`~skrf.network.Network` object
+            Measurement of the dummy thru structure
+
+        name : string
+            Optional name of de-embedding object
+
+        args, kwargs:
+            Passed to :func:`Deembedding.__init__`
+
+        See Also
+        ---------
+
+        :func:`Deembedding.__init__`
+        """
+        self.thru = dummy_thru.copy()
+        dummies = [self.thru]
+
+        Deembedding.__init__(self, dummies, name, *args, **kwargs)
+
+    def deembed(self, ntwk):
+        """
+        Perform the de-embedding calculation
+
+        Parameters
+        ----------
+
+        ntwk : :class:`~skrf.network.Network` object
+            Network data of device measurement from which
+            parasitics needs to be removed via de-embedding
+
+        Returns
+        -------
+
+        caled : :class:`~skrf.network.Network` object
+            Network data of the device after de-embedding
+        """
+
+        # check if the frequencies match with dummy frequencies
+        if ntwk.frequency != self.thru.frequency:
+            raise(ValueError('Network frequencies dont match dummy frequencies.'))
+
+        # TODO: attempt to interpolate if frequencies do not match
+
+        caled = ntwk.copy()
+        h = ntwk ** self.thru.inv
+        h_ = h.flipped()
+        caled.z = (h.z + h_.z) / 2
 
         return caled

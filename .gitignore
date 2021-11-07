@@ -20,3 +20,4 @@ qtapps/sandbox*
 
 .vscode/
 .coverage
+.tox/

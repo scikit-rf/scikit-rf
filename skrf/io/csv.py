@@ -60,7 +60,7 @@ from warnings import warn
 # from pandas import Series, Index, DataFrame
 
 def read_pna_csv(filename, *args, **kwargs):
-    """
+    r"""
     Reads data from a csv file written by an Agilient PNA.
 
     This function returns a triplet containing the header, comments,
@@ -290,7 +290,7 @@ class AgilentCSV(object):
 
     """
     def __init__(self, filename, *args, **kwargs):
-        """
+        r"""
         Init.
 
         Parameters
@@ -711,7 +711,7 @@ def pna_csv_2_scalar_ntwks(filename, *args, **kwargs):
 
 
 def read_zva_dat(filename, *args, **kwargs):
-    """
+    r"""
     Reads data from a dat file written by a R&S ZVA in dB/deg or re/im format.
 
     This function returns a triplet containing header, comments and data.
@@ -854,7 +854,7 @@ def read_all_zva_dat(dir='.', contains = None):
 
 
 def read_vectorstar_csv(filename, *args, **kwargs):
-    """
+    r"""
     Reads data from a csv file written by an Anritsu VectorStar.
 
     Parameters

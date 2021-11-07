@@ -808,7 +808,7 @@ class CircuitTestGraph(unittest.TestCase):
     """
     def test_is_networkx_available(self):
         'The networkx package should be available to run these tests'
-        self.failUnless('networkx' in sys.modules)
+        self.assertTrue('networkx' in sys.modules)
 
     def setUp(self):
         """
@@ -838,15 +838,15 @@ class CircuitTestGraph(unittest.TestCase):
     def test_intersection_dict(self):
         inter_dict = self.C.intersections_dict
         # should have 3 intersections
-        self.assert_(len(inter_dict) == 3)
+        self.assertTrue(len(inter_dict) == 3)
         # All intersections should have at least 2 edges
         for it in inter_dict.items():
             k, cnx = it
-            self.assert_(len(cnx) >= 2)
+            self.assertTrue(len(cnx) >= 2)
 
     def test_edge_labels(self):
         edge_labels = self.C.edge_labels
-        self.assert_(len(edge_labels) == 7)
+        self.assertTrue(len(edge_labels) == 7)
 
 
 class CircuitTestComplexCharacteristicImpedance(unittest.TestCase):

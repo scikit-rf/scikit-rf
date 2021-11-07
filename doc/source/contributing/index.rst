@@ -13,7 +13,7 @@ Contributing to scikit-rf
 
 Sponsoring the Project
 ----------------------
-It is possible to sponsor the maintainers and developpers of the scikit-rf package, using the GitHub Sponsor option ("Sponsor this project") visible in the `scikit-rf GitHub page <https://github.com/scikit-rf/scikit-rf>`_. 
+It is possible to sponsor the maintainers and developers of the scikit-rf package, using the GitHub Sponsor option ("Sponsor this project") visible in the `scikit-rf GitHub page <https://github.com/scikit-rf/scikit-rf>`_. 
 
 Sponsoring is one more way to contribute to open source: financially supporting the people who build and maintain it. Funding individuals helps them keep doing important work, expands opportunities to participate, and gives developers the recognition they deserve.
 
@@ -89,24 +89,30 @@ Tests are vital for software reliability and maintainability. Writing tests ofte
 Before making a Pull Request, we advise contributors to run the tests locally to check if nothing has been broken following their modifications. In addition, we highly recommend to provide new tests when adding new features.
 
 The structure of the testing generally follows the conventions of `numpy/scipy <https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt>`_. Test cases live in the module, or submodule, which they are testing, and are located in a directory called `tests`. So, the tests of the media module are located at `skrf/media/tests/`. 
-Tests can be run most easily with `nosetest <http://nose.readthedocs.org/en/latest/>`_. 
+Tests can be run most easily with `pytest <https://docs.pytest.org/en/latest/index.html`_. 
 
-You probably **don't** want to run the tests for the virtual instruments ``skrf.vi`` with the rest of the tests, so to prevent this, also install `nose-exclude <https://pypi.python.org/pypi/nose-exclude>`_ via pip (``pip install nose-exclude``) or conda. 
+You probably **don't** want to run the tests for the virtual instruments ``skrf.vi`` with the rest of the tests, so these tests are excluded by default.
 
 To run all the tests (except the virtual instruments)
 
 .. code-block:: sh
 
     cd scikit-rf
-    nosetests skrf -c nose.cfg
+    pytest 
+
+Or, to run tests for every installed python installation in an isolated environment. 
+
+.. code-block:: sh
+
+    tox 
 
 Or, to run test a single module or single test, 
 
 .. code-block:: sh
 
-    nosetests media/
+    pytest skrf/media/
     # ...
-    nosetests tests/test_network.py
+    pytest skrf/tests/test_network.py
     # ...
     
 

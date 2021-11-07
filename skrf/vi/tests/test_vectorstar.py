@@ -1,13 +1,13 @@
 
 from numpy.testing import dec
 import unittest
-from nose.plugins.skip import SkipTest, Skip
+import pytest
 import skrf 
 
 try:
     from skrf.vi.vna import VectorStar
 except:
-    raise SkipTest('visa failed to import, skipping')
+    pytest.skip("visa failed to import, skipping")
 
 class VectorStarTestCase(unittest.TestCase):
     def setUp(self):

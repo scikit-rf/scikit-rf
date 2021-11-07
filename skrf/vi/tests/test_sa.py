@@ -1,13 +1,14 @@
 
 from numpy.testing import dec
 import unittest
-from nose.plugins.skip import SkipTest, Skip
+
+import pytest
 import skrf 
 
 try:
     from skrf.vi.sa import HP8500
 except:
-    raise SkipTest('visa failed to import, skipping')
+    pytest.skip("visa failed to import, skipping")
 
 class HP8500Test(unittest.TestCase):
     def setUp(self):
