@@ -1,11 +1,11 @@
 
 import unittest
+import pytest
 import os
 import numpy as npy
 
 import skrf as rf
 
-from nose.plugins.skip import SkipTest
 from skrf.util import suppress_warning_decorator
 
 class AgilentCSVTestCase(unittest.TestCase):
@@ -29,7 +29,8 @@ class AgilentCSVTestCase(unittest.TestCase):
         self.assertEqual(self.acsv.columns, ['Freq(Hz)', '"A,1"(REAL)',
                                              '"A,1"(IMAG)', '"R1,1"(REAL)',
                                              '"R1,1"(IMAG)'])
-    @SkipTest # unicode error with carrage returns for p3 vs p2
+
+    @pytest.mark.skip(reason='unicode error with carrage returns for p3 vs p2')
     def test_comments(self):
         """ 
         This tests reading of comment lines in the test file.

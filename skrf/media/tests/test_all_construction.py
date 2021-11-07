@@ -4,8 +4,10 @@ of all general circuit components
 
 """
 import unittest
-import skrf as rf
 from scipy.constants import *
+
+import skrf as rf
+from skrf.media import Freespace, CPW, RectangularWaveguide, DistributedCircuit
 
 
 class MediaTestCase():
@@ -79,7 +81,7 @@ class MediaTestCase():
 class FreespaceTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
         self.frequency = rf.Frequency(75,110,101,'ghz')
-        self.media = rf.media.Freespace(self.frequency)
+        self.media = Freespace(self.frequency)
 
     def test_Z0_value(self):
         self.assertEqual(round(\
@@ -89,7 +91,7 @@ class FreespaceTestCase(MediaTestCase, unittest.TestCase):
 class CPWTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
         self.frequency = rf.Frequency(75,110,101,'ghz')
-        self.media = rf.media.CPW(\
+        self.media = CPW(\
             frequency=self.frequency,
             w=10e-6,
             s=5e-6,
@@ -101,7 +103,7 @@ class CPWTestCase(MediaTestCase, unittest.TestCase):
 class RectangularWaveguideTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
         self.frequency = rf.Frequency(75,110,101,'ghz')
-        self.media = rf.media.RectangularWaveguide(\
+        self.media = RectangularWaveguide(\
             frequency=self.frequency,
             a=100*mil,
             )
@@ -110,7 +112,7 @@ class RectangularWaveguideTestCase(MediaTestCase, unittest.TestCase):
 class DistributedCircuitTestCase(MediaTestCase, unittest.TestCase):
     def setUp(self):
         self.frequency = rf.Frequency(75,110,101,'ghz')
-        self.media = rf.media.DistributedCircuit(\
+        self.media = DistributedCircuit(\
             frequency=self.frequency,
             L=1,C=1,R=0,G=0
             )
