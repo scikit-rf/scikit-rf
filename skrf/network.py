@@ -3507,12 +3507,12 @@ class Network(object):
     def _P(self, p: int) -> npy.ndarray:  # (27) (28)
         n = self.nports
 
-        Pda = npy.zeros((p, 2 * n), dtype=npy.bool)
-        Pdb = npy.zeros((p, 2 * n), dtype=npy.bool)
-        Pca = npy.zeros((p, 2 * n), dtype=npy.bool)
-        Pcb = npy.zeros((p, 2 * n), dtype=npy.bool)
-        Pa = npy.zeros((n - 2 * p, 2 * n), dtype=npy.bool)
-        Pb = npy.zeros((n - 2 * p, 2 * n), dtype=npy.bool)
+        Pda = npy.zeros((p, 2 * n), dtype=bool)
+        Pdb = npy.zeros((p, 2 * n), dtype=bool)
+        Pca = npy.zeros((p, 2 * n), dtype=bool)
+        Pcb = npy.zeros((p, 2 * n), dtype=bool)
+        Pa = npy.zeros((n - 2 * p, 2 * n), dtype=bool)
+        Pb = npy.zeros((n - 2 * p, 2 * n), dtype=bool)
         for l in npy.arange(p):
             Pda[l, 4 * (l + 1) - 3 - 1] = True
             Pca[l, 4 * (l + 1) - 1 - 1] = True
@@ -3526,8 +3526,8 @@ class Network(object):
     def _Q(self) -> npy.ndarray:  # (29) error corrected
         n = self.nports
 
-        Qa = npy.zeros((n, 2 * n), dtype=npy.bool)
-        Qb = npy.zeros((n, 2 * n), dtype=npy.bool)
+        Qa = npy.zeros((n, 2 * n), dtype=bool)
+        Qb = npy.zeros((n, 2 * n), dtype=bool)
         for l in npy.arange(n):
             Qa[l, 2 * (l + 1) - 1 - 1] = True
             Qb[l, 2 * (l + 1) - 1] = True

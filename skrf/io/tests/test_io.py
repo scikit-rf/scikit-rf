@@ -4,6 +4,7 @@ import os
 import numpy as npy
 
 import skrf as rf
+from skrf.io import Touchstone
 
 
 class IOTestCase(unittest.TestCase):
@@ -162,5 +163,5 @@ class IOTestCase(unittest.TestCase):
         """
 
         given = {'p1': ('.03', ''), 'p2': ('0.03', ''), 'p3': ('100', ''), 'p4': ('2.5', 'um')}
-        actual = rf.io.Touchstone(self.ntwk_comments_file).get_comment_variables()
+        actual = Touchstone(self.ntwk_comments_file).get_comment_variables()
         self.assertEqual(given, actual)

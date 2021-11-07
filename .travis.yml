@@ -18,7 +18,7 @@ before_install:
 install:
 - conda create -n test-environment python=$TRAVIS_PYTHON_VERSION
 - source activate test-environment
-- conda install numpy matplotlib scipy pandas networkx nose pip ipython openpyxl
+- conda install numpy matplotlib scipy pandas networkx pytest pip ipython openpyxl
 - pip install -r tools/travis-requirements.txt
 - python setup.py install
 script:
@@ -26,7 +26,7 @@ script:
 - python -c "import numpy; print('numpy %s' % numpy.__version__)"
 - python -c "import scipy; print('scipy %s' % scipy.__version__)"
 - python -c "import skrf; print('skrf %s' % skrf.__version__)"
-- nosetests skrf --nocapture -c nose.cfg
+- pytest
 after_success:
 - coveralls
 #deploy:
