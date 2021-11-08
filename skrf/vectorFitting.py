@@ -1,12 +1,3 @@
-"""
-Vector Fitting (:mod:`skrf.vectorFitting`)
-==========================================
-
-.. autoclass:: VectorFitting
-    :members:
-    :member-order: groupwise
-
-"""
 import numpy as np
 import os
 
