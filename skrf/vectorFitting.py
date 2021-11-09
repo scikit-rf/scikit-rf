@@ -179,33 +179,29 @@ class VectorFitting:
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
 
         # init poles array of correct length
-        #poles = np.empty(len(pole_freqs_real) + len(pole_freqs_cmplx), dtype=np.complex)
-        poles_re = np.zeros(len(pole_freqs_real) + len(pole_freqs_cmplx))
-        poles_im = np.zeros(len(pole_freqs_real) + len(pole_freqs_cmplx))
+        poles_re = np.zeros(n_poles_real + n_poles_cmplx)
+        poles_im = np.zeros(n_poles_real + n_poles_cmplx)
 
         # add real poles
         for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            #poles[i] = (-1 / 100 + 0j) * omega
             poles_re[i] = -1 / 100 * omega
 
         # add complex-conjugate poles (store only positive imaginary parts)
         i_offset = len(pole_freqs_real)
         for i, f in enumerate(pole_freqs_cmplx):
             omega = 2 * np.pi * f
-            #poles[i_offset + i] = (-1 / 100 + 1j) * omega
             poles_re[i_offset + i] = -1 / 100 * omega
             poles_im[i_offset + i] = omega
 
         # save initial poles (un-normalize first)
-        #self.initial_poles = poles * norm
         self.initial_poles = (poles_re + 1j * poles_im) * norm
         max_singular = 1
 
         logging.info('### Starting pole relocation process.\n')
 
         # stack frequency responses as a single vector
-        # stacking order:
+        # stacking order (row-major):
         # s11, s12, s13, ..., s21, s22, s23, ...
         freq_responses = []
         for i in range(self.network.nports):
@@ -553,7 +549,6 @@ class VectorFitting:
             i = 0
             zeros_response = []
             for i_pole in range(len(poles_im)):
-                pole_re = poles_re[i_pole]
                 pole_im = poles_im[i_pole]
 
                 if pole_im == 0.0:
