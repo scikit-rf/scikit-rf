@@ -185,7 +185,7 @@ class VectorFitting:
         # add real poles
         for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            poles_re[i] = -1 / 100 * omega
+            poles_re[i] = -1 * omega
 
         # add complex-conjugate poles (store only positive imaginary parts)
         i_offset = len(pole_freqs_real)
