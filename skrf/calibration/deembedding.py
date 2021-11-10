@@ -143,8 +143,8 @@ class OpenShort(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are closest to device-under-test, 
-    followed by parallel parasitics. For more information, see [1]_
+    where the series parasitics are closest to device under test, 
+    followed by the parallel parasitics. For more information, see [1]_
 
     References
     ------------
@@ -338,8 +338,8 @@ class ShortOpen(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the parallel parasitics are closest to device-under-test, 
-    followed by series parasitics. 
+    where the parallel parasitics are closest to device under test, 
+    followed by the series parasitics.
 
     Example
     --------
@@ -521,15 +521,15 @@ class SplitPi(Deembedding):
     Remove shunt and series parasitics assuming pi-type embedding network.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance and series impedance of the thru dummy are removed.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are closest to device-under-test, 
-    followed by parallel parasitics. For more information, see [4]_
+    where the series parasitics are closest to device under test, 
+    followed by the shunt parasitics. For more information, see [4]_
 
     References
     ------------
@@ -620,15 +620,15 @@ class SplitTee(Deembedding):
     Remove series and shunt parasitics assuming tee-type embedding network.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance and series impedance of the thru dummy are removed.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the shunt parasitics are closest to device-under-test, 
-    followed by series parasitics. For more information, see [5]_
+    where the shunt parasitics are closest to device under test, 
+    followed by the series parasitics. For more information, see [5]_
 
     References
     ------------
@@ -718,7 +718,7 @@ class AdmittanceCancel(Deembedding):
     """
     Cancel shunt admittance by swapping (a.k.a Mangan's method).
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance of the thru dummy are canceled,
@@ -816,9 +816,9 @@ class ImpedanceCancel(Deembedding):
     Cancel series impedance by swapping.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
-    When :func:`Deembedding.deembed` is applied,
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
+    When :func:`Deembedding.deembed` is applied,
     the series impedance of the thru dummy are canceled,
     from the DUT measurement by left-right mirroring operation.
 
