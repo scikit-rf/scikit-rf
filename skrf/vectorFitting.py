@@ -107,10 +107,13 @@ class VectorFitting:
         """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
          user before calling :func:`vector_fit`. """
 
+        self.wall_clock_time = 0
+        """ Instance variable holding the wall-clock time (in seconds) consumed by the most recent fitting process in 
+        :func:`vector_fit`. Subsequent calls of :func:`vector_fit` will overwrite this value. """
+
         self.d_res_history = []
         self.delta_max_history = []
         self.history_max_sigma = []
-        self.wall_clock_time = 0
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
