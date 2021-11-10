@@ -143,8 +143,8 @@ class OpenShort(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are closest to device-under-test, 
-    followed by parallel parasitics. For more information, see [1]_
+    where the series parasitics are closest to device under test, 
+    followed by the parallel parasitics. For more information, see [1]_
 
     References
     ------------
@@ -338,8 +338,8 @@ class ShortOpen(Deembedding):
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the parallel parasitics are closest to device-under-test, 
-    followed by series parasitics. 
+    where the parallel parasitics are closest to device under test, 
+    followed by the series parasitics.
 
     Example
     --------
@@ -521,19 +521,19 @@ class SplitPi(Deembedding):
     Remove shunt and series parasitics assuming pi-type embedding network.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance and series impedance of the thru dummy are removed.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the series parasitics are closest to device-under-test, 
-    followed by parallel parasitics. For more information, see [4]_
+    where the series parasitics are closest to device under test, 
+    followed by the shunt parasitics. For more information, see [2]_
 
     References
     ------------
-    ..  [4] L. Nan, K. Mouthaan, Y.-Z. Xiong, J. Shi, S. C. Rustagi, and B.-L. Ooi, 
+    ..  [2] L. Nan, K. Mouthaan, Y.-Z. Xiong, J. Shi, S. C. Rustagi, and B.-L. Ooi, 
         “Experimental Characterization of the Effect of Metal Dummy Fills on Spiral Inductors,”
         in 2007 IEEE Radio Frequency Integrated Circuits (RFIC) Symposium, Jun. 2007, pp. 307–310.
 
@@ -620,19 +620,19 @@ class SplitTee(Deembedding):
     Remove series and shunt parasitics assuming tee-type embedding network.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance and series impedance of the thru dummy are removed.
 
     This method is applicable only when there is a-priori knowledge of the
     equivalent circuit model of the parasitic network to be de-embedded,
-    where the shunt parasitics are closest to device-under-test, 
-    followed by series parasitics. For more information, see [5]_
+    where the shunt parasitics are closest to device under test, 
+    followed by the series parasitics. For more information, see [3]_
 
     References
     ------------
-    ..  [5] M. J. Kobrinsky, S. Chakravarty, D. Jiao, M. C. Harmes, S. List, and M. Mazumder,
+    ..  [3] M. J. Kobrinsky, S. Chakravarty, D. Jiao, M. C. Harmes, S. List, and M. Mazumder,
         “Experimental validation of crosstalk simulations for on-chip interconnects using S-parameters,”
         IEEE Transactions on Advanced Packaging, vol. 28, no. 1, pp. 57–62, Feb. 2005.
 
@@ -718,7 +718,7 @@ class AdmittanceCancel(Deembedding):
     """
     Cancel shunt admittance by swapping (a.k.a Mangan's method).
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
     When :func:`Deembedding.deembed` is applied,
     the shunt admittance of the thru dummy are canceled,
@@ -726,11 +726,11 @@ class AdmittanceCancel(Deembedding):
 
     This method is applicable to only symmetric (i.e. S11=S22 and S12=S21) 2-port DUTs,
     but suitable for the characterization of transmission lines at mmW frequencies.
-    For more information, see [2]_
+    For more information, see [4]_
 
     References
     ------------
-    ..  [2] A. M. Mangan, S. P. Voinigescu, Ming-Ta Yang, and M. Tazlauanu,
+    ..  [4] A. M. Mangan, S. P. Voinigescu, Ming-Ta Yang, and M. Tazlauanu,
         “De-embedding transmission line measurements for accurate modeling of IC designs,”
         IEEE Trans. Electron Devices, vol. 53, no. 2, pp. 235–241, Feb. 2006.
 
@@ -816,19 +816,19 @@ class ImpedanceCancel(Deembedding):
     Cancel series impedance by swapping.
 
     A deembedding object is created with just one thru dummy measurement `dummy_thru`.
-    The thru dummy is, for example, two test pads connected directly to each other.
-    When :func:`Deembedding.deembed` is applied,
+    The thru dummy is, for example, a direct cascaded connection of the left and right test pads.
 
+    When :func:`Deembedding.deembed` is applied,
     the series impedance of the thru dummy are canceled,
     from the DUT measurement by left-right mirroring operation.
 
     This method is applicable to only symmetric (i.e. S11=S22 and S12=S21) 2-port DUTs,
     but suitable for the characterization of transmission lines at mmW frequencies.
-    For more information, see [3]_
+    For more information, see [5]_
 
     References
     ------------
-    ..  [3] S. Amakawa, K. Katayama, K. Takano, T. Yoshida, and M. Fujishima,
+    ..  [5] S. Amakawa, K. Katayama, K. Takano, T. Yoshida, and M. Fujishima,
         “Comparative analysis of on-chip transmission line de-embedding techniques,”
         in 2015 IEEE International Symposium on Radio-Frequency Integration Technology,
         Sendai, Japan, Aug. 2015, pp. 91–93.
