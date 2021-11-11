@@ -15,6 +15,7 @@ except ImportError:
     mplt = None
 
 import logging
+import warnings
 from timeit import default_timer as timer
 
 
@@ -114,6 +115,7 @@ class VectorFitting:
         self.d_res_history = []
         self.delta_max_history = []
         self.history_max_sigma = []
+        self.history_cond_A = []
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -225,6 +227,7 @@ class VectorFitting:
         iterations = self.max_iterations
         self.d_res_history = []
         self.delta_max_history = []
+        self.history_cond_A = []
         converged = False
         while iterations > 0:
             logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
@@ -376,7 +379,9 @@ class VectorFitting:
                 A[(i_response + 1) * n_cols_used - 1, :] = np.sqrt(weight_extra) * A_row_extra
                 b[(i_response + 1) * n_cols_used - 1] = np.sqrt(weight_extra) * len(freq_response)
 
-            logging.info('Condition number of coeff. matrix A = {}'.format(np.linalg.cond(A)))
+            cond_A = np.linalg.cond(A)
+            logging.info('Condition number of coeff. matrix A = {}'.format(cond_A))
+            self.history_cond_A.append(cond_A)
 
             # solve least squares for real parts
             x, residuals, rank, singular_vals = np.linalg.lstsq(A, b, rcond=None)
@@ -390,7 +395,8 @@ class VectorFitting:
             if np.abs(d_res) < tol_res:
                 # d_res is too small, discard solution and proceed the |d_res| = tol_res
                 d_res = tol_res * (d_res / np.abs(d_res))
-                logging.warning('Replacing d_res solution as it was too small')
+                warnings.warn('Replacing d_res solution as it was too small. This is not a good sign and probably '
+                              'means that more starting poles are required', RuntimeWarning)
 
             self.d_res_history.append(d_res)
             logging.info('d_res = {}'.format(d_res))
@@ -456,12 +462,22 @@ class VectorFitting:
             iterations -= 1
 
             if iterations == 0:
-                if converged and stop is False:
-                    logging.warning('Reached tolerance only after max. number of iterations (N_max = {}). '
-                                    'Results might not have converged properly.'.format(self.max_iterations))
+                max_cond = np.amax(self.history_cond_A)
+                if max_cond > 1e10:
+                    msg_illcond = 'Hint: the linear system was ill-conditioned (max. condition number = {}). ' \
+                                  'This often means that more poles are required.'.format(max_cond)
                 else:
-                    logging.warning('Reached maximum number of iterations (N_max = {}). '
-                                    'Results did not converge.'.format(self.max_iterations))
+                    msg_illcond = ''
+                if converged and stop is False:
+                    warnings.warn('Vector Fitting: The pole relocation process barely converged to tolerance. '
+                                  'It took the max. number of iterations (N_max = {}). '
+                                  'The results might not have converged properly. '.format(self.max_iterations)
+                                  + msg_illcond, RuntimeWarning)
+                else:
+                    warnings.warn('Vector Fitting: The pole relocation process stopped after reaching the '
+                                  'maximum number of iterations (N_max = {}). '
+                                  'The results did not converge properly. '.format(self.max_iterations)
+                                  + msg_illcond, RuntimeWarning)
 
             if stop:
                 iterations = 0

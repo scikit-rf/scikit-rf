@@ -3,6 +3,7 @@ import skrf
 import numpy as np
 import tempfile
 import os
+import warnings
 
 
 class VectorFittingTestCase(unittest.TestCase):
@@ -34,6 +35,14 @@ class VectorFittingTestCase(unittest.TestCase):
         vf = skrf.vectorFitting.VectorFitting(nw)
         vf.vector_fit(n_poles_real=4, n_poles_cmplx=4, fit_proportional=False, fit_constant=True)
         self.assertLess(vf.get_rms_error(), 0.02)
+
+    def test_no_convergence(self):
+        # perform a bad fit that does not converge and check if a RuntimeWarning is given
+        with warnings.catch_warnings(record=True) as warning:
+            nw = skrf.network.Network('./doc/source/examples/vectorfitting/190ghz_tx_measured.S2P')
+            vf = skrf.vectorFitting.VectorFitting(nw)
+            vf.vector_fit(n_poles_real=0, n_poles_cmplx=5, fit_proportional=False, fit_constant=True)
+            self.assertEqual(warning[-1].category, RuntimeWarning)
 
     def test_spice_subcircuit(self):
         # fit ring slot example network
