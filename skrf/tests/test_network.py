@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import squeeze
 import pytest
 from skrf.frequency import InvalidFrequencyWarning
 import unittest
@@ -125,8 +126,16 @@ class NetworkTestCase(unittest.TestCase):
     def test_time_transform_multiport(self):
         dut_dc = self.ntwk1.extrapolate_to_dc()
 
-        with self.assertRaises(ValueError):
-            t, y = dut_dc.step_response()
+        y1 = npy.zeros((1000, dut_dc.nports, dut_dc.nports))
+
+        for (i,j) in dut_dc.port_tuples:
+            oneport = getattr(dut_dc, 's{0}{1}'.format(i+1, j+1))
+            t1, y1[:,i,j] = oneport.step_response(n=1000)
+
+        t2, y2 = dut_dc.step_response(n=1000)
+
+        assert npy.allclose(t1, t2)
+        assert npy.allclose(y1, y2)
 
     def test_constructor_empty(self):
         rf.Network()
