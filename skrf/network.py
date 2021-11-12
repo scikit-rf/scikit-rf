@@ -3578,6 +3578,11 @@ class Network(object):
                 If True full window is used and low frequencies are attenuated.
                 If None value is determined automatically based on if the
                 frequency vector begins from 0.
+        squeeze: bool
+                Squeeze impulse response to one dimension, 
+                if a oneport gets transformed.
+                Has no effect when transforming a multiport.
+                Default = True
 
         Returns
         -------
@@ -3637,6 +3642,11 @@ class Network(object):
         pad : int
                 Number of zeros to add as padding for FFT.
                 Adding more zeros improves accuracy of peaks.
+        squeeze: bool
+                Squeeze step response to one dimension, 
+                if a oneport gets transformed.
+                Has no effect when transforming a multiport.
+                Default = True
 
         Returns
         -------
