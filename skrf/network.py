@@ -2720,9 +2720,10 @@ class Network(object):
         """
         if kind == 'warn':
             warnings.warn("The default `kind` parameter will change "
-                          "from `rational` to `cubic` in future version."
+                          "from `rational` to `cubic` in future versions."
                           "Use `kind='rational'` to keep the old default."
-                          "To silent this warning, explitly define `kind`.")
+                          "To silent this warning, explitly define `kind`.",
+                          category=DeprecationWarning, stacklevel=2)
             kind = 'rational'
         
         result = self.copy()
