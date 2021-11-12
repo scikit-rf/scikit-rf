@@ -133,9 +133,9 @@ class NetworkTestCase(unittest.TestCase):
             t1, y1[:,i,j] = oneport.step_response(n=1000)
 
         t2, y2 = dut_dc.step_response(n=1000)
-
-        assert npy.allclose(t1, t2)
-        assert npy.allclose(y1, y2)
+        
+        npy.testing.assert_almost_equal(t1, t2)
+        npy.testing.assert_almost_equal(y1, y2)
 
     def test_time_transform_squeeze(self):
         dut_dc = self.ntwk1.extrapolate_to_dc()
