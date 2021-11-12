@@ -137,6 +137,13 @@ class NetworkTestCase(unittest.TestCase):
         assert npy.allclose(t1, t2)
         assert npy.allclose(y1, y2)
 
+    def test_time_transform_squeeze(self):
+        dut_dc = self.ntwk1.extrapolate_to_dc()
+        assert dut_dc.s11.impulse_response()[1].ndim == 1
+        assert dut_dc.s11.impulse_response(squeeze=False)[1].ndim == 3
+        assert dut_dc.impulse_response()[1].ndim == 3
+        assert dut_dc.impulse_response(squeeze=False)[1].ndim == 3
+
     def test_constructor_empty(self):
         rf.Network()
 
