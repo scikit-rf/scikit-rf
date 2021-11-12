@@ -3549,7 +3549,7 @@ class Network(object):
         return Xi_tilde[:, :n, :n], Xi_tilde[:, :n, n:], Xi_tilde[:, n:, :n], Xi_tilde[:, n:, n:]
 
     def impulse_response(self, window: str = 'hamming', n: int = None, pad: int = 1000,
-                        bandpass: bool = None) -> Tuple[npy.ndarray, npy.ndarray]:
+                        bandpass: bool = None, squeeze: bool = True) -> Tuple[npy.ndarray, npy.ndarray]:
         """Calculates time-domain impulse response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -3591,8 +3591,6 @@ class Network(object):
             step_response
             extrapolate_to_dc
         """
-        if self.nports != 1:
-            raise ValueError('Only one-ports are supported')
         if n is None:
             # Use zero-padding specification. Note that this does not allow n odd.
             n = 2 * (self.frequency.npoints + pad - 1)
@@ -3610,9 +3608,14 @@ class Network(object):
             w = self.windowed(window=window, normalize=False, center_to_dc=center_to_dc)
         else:
             w = self
-        return t, mf.irfft(w.s, n=n).ravel()
 
-    def step_response(self, window: str = 'hamming', n: int = None, pad: int = 1000) -> Tuple[npy.ndarray, npy.ndarray]:
+        ir = mf.irfft(w.s, n=n)
+        if squeeze:
+            ir = ir.squeeze()
+
+        return t, ir
+
+    def step_response(self, window: str = 'hamming', n: int = None, pad: int = 1000, squeeze: bool = True) -> Tuple[npy.ndarray, npy.ndarray]:
         """Calculates time-domain step response of one-port.
 
         First frequency must be 0 Hz for the transformation to be accurate and
@@ -3665,8 +3668,8 @@ class Network(object):
                 RuntimeWarning
             )
 
-        t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False)
-        return t, npy.cumsum(y)
+        t, y = self.impulse_response(window=window, n=n, pad=pad, bandpass=False, squeeze=squeeze)
+        return t, npy.cumsum(y, axis=0)
 
     # Network Active s/z/y/vswr parameters
     def s_active(self, a: npy.ndarray) -> npy.ndarray:
