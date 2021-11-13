@@ -2693,6 +2693,7 @@ class Network(object):
             NxN S-parameters matrix at 0 Hz.
             If None S-parameters at 0 Hz are determined by linear extrapolation.
         kind : str or int, default is 'rational'
+            Default value will be changed to 'cubic' in future version.
             Specifies the kind of interpolation as a string ('linear',
             'nearest', 'zero', 'slinear', 'quadratic, 'cubic') or
             as an integer specifying the order of the spline
