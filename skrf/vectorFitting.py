@@ -1,12 +1,3 @@
-"""
-Vector Fitting (:mod:`skrf.vectorFitting`)
-==========================================
-
-.. autoclass:: VectorFitting
-    :members:
-    :member-order: groupwise
-
-"""
 import numpy as np
 import os
 
@@ -24,6 +15,8 @@ except ImportError:
     mplt = None
 
 import logging
+import warnings
+from timeit import default_timer as timer
 
 
 def check_plotting(func):
@@ -115,9 +108,14 @@ class VectorFitting:
         """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
          user before calling :func:`vector_fit`. """
 
+        self.wall_clock_time = 0
+        """ Instance variable holding the wall-clock time (in seconds) consumed by the most recent fitting process in 
+        :func:`vector_fit`. Subsequent calls of :func:`vector_fit` will overwrite this value. """
+
         self.d_res_history = []
         self.delta_max_history = []
         self.history_max_sigma = []
+        self.history_cond_A = []
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
@@ -165,6 +163,8 @@ class VectorFitting:
         but they can also introduce unwanted resonances at frequencies well outside the fit interval.
         """
 
+        timer_start = timer()
+
         # create initial poles and space them across the frequencies in the provided Touchstone file
         # use normalized frequencies during the iterations (seems to be more stable during least-squares fit)
         norm = np.average(self.network.f)
@@ -172,7 +172,6 @@ class VectorFitting:
 
         fmin = np.amin(freqs_norm)
         fmax = np.amax(freqs_norm)
-        weight_regular = 1.0
         if init_pole_spacing == 'log':
             pole_freqs_real = np.geomspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.geomspace(fmin, fmax, n_poles_cmplx)
@@ -183,26 +182,31 @@ class VectorFitting:
             logging.warning('Invalid choice of initial pole spacing; proceeding with linear spacing')
             pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
-        poles = []
+
+        # init poles array of correct length
+        poles_re = np.zeros(n_poles_real + n_poles_cmplx)
+        poles_im = np.zeros(n_poles_real + n_poles_cmplx)
 
         # add real poles
         for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            poles.append((-1 / 100 + 0j) * omega)
+            poles_re[i] = -1 * omega
+
         # add complex-conjugate poles (store only positive imaginary parts)
+        i_offset = len(pole_freqs_real)
         for i, f in enumerate(pole_freqs_cmplx):
             omega = 2 * np.pi * f
-            poles.append((-1 / 100 + 1j) * omega)
-        poles = np.array(poles)
+            poles_re[i_offset + i] = -1 / 100 * omega
+            poles_im[i_offset + i] = omega
 
         # save initial poles (un-normalize first)
-        self.initial_poles = poles * norm
+        self.initial_poles = (poles_re + 1j * poles_im) * norm
         max_singular = 1
 
         logging.info('### Starting pole relocation process.\n')
 
         # stack frequency responses as a single vector
-        # stacking order:
+        # stacking order (row-major):
         # s11, s12, s13, ..., s21, s22, s23, ...
         freq_responses = []
         for i in range(self.network.nports):
@@ -223,115 +227,164 @@ class VectorFitting:
         iterations = self.max_iterations
         self.d_res_history = []
         self.delta_max_history = []
+        self.history_cond_A = []
         converged = False
         while iterations > 0:
             logging.info('Iteration {}'.format(self.max_iterations - iterations + 1))
 
-            # generate coefficients of approximation function for each target frequency response
-            # responses will be treated independently using QR decomposition
-            # simplified coeff matrices of all responses will be stacked for least-squares solver
-            A_matrix = []
-            b_vector = []
+            # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
+            # (ratio #real/#complex poles might change during iterations)
+            n_cols_unused = 0
+            for pole in poles_im:
+                if pole == 0.0:
+                    n_cols_unused += 1
+                else:
+                    n_cols_unused += 2
+            n_cols_used = n_cols_unused
+            n_cols_used += 1
+            if fit_constant:
+                n_cols_unused += 1
+            if fit_proportional:
+                n_cols_unused += 1
+            n_rows_A = n_cols_used * len(freq_responses)
 
-            for freq_response in freq_responses:
-                # calculate coefficients (row A_k in matrix) for each frequency sample s_k of the target response
-                # row will be appended to submatrix A_sub of complete coeff matrix A_matrix
-                # 2 rows per pole in result vector (1st for real part, 2nd for imaginary part)
-                # --> 2 columns per pole in coeff matrix
-                A_sub = []
-                b_sub = []
-                n_unused = 0
+            # generate coefficients of approximation function for each target frequency response
+            # responses will be reduced independently using QR decomposition
+            # simplified coeff. matrices of all responses will be stacked in matrix A for least-squares solver
+            A = np.empty((n_rows_A, n_cols_used))
+            b = np.zeros(n_rows_A)
+
+            for i_response, freq_response in enumerate(freq_responses):
+                # calculate coefficients for each frequency response
+                # A_sub which will be reduced first (QR decomposition) and then filled into the main
+                # coefficient matrix A
+                # each frequency sample s_k of the target response generates two rows in the matrix
+                # (1st for real part, 2nd for imaginary part)
+
+                A_sub = np.empty((2 * len(freqs_norm), n_cols_unused + n_cols_used))
+                A_row_extra = np.zeros(n_cols_used)
+
+                # responses will be weighted according to their norm;
+                # alternative: equal weights with weight_response = 1.0
+                # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
+                weight_response = np.linalg.norm(freq_response)
 
                 for k, f_sample in enumerate(freqs_norm):
-                    s_k = 2j * np.pi * f_sample
-                    A_k = []
-                    n_unused = 0
+                    # this loop is performance critical, as it gets repeated many times (N_responses * N_frequencies)
+                    omega_k = 2 * np.pi * f_sample
+                    resp_re = np.real(freq_response[k])
+                    resp_im = np.imag(freq_response[k])
+                    i_col = 0
+                    i_row_re = 2 * k
+                    i_row_im = i_row_re + 1
+
+                    # layout of this row in A_sub:
+                    # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
+                    # to avoid looping through the poles twice, both loops are merged (faster, but less comprehensible)
 
                     # add coefficients for a pair of complex conjugate poles
                     # part 1: first sum of rational functions (residue variable c)
-                    for pole in poles:
-                        # separate and stack real and imaginary part to preserve conjugacy of the pole pair
-                        if np.imag(pole) == 0.0:
-                            A_k.append(1 / (s_k - pole))
-                            n_unused += 1
+                    # merged with
+                    # part 3: second sum of rational functions (variable c_res)
+                    for i_pole in range(len(poles_im)):
+                        pole_re = poles_re[i_pole]
+                        pole_im = poles_im[i_pole]
+
+                        if pole_im == 0.0:
+                            # coefficient for a real pole: p = p'
+                            denom = (omega_k ** 2 + pole_re ** 2)
+                            coeff_re = -1 * pole_re / denom
+                            coeff_im = -1 * omega_k / denom
+
+                            # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
+                            A_sub[i_row_re, i_col] = coeff_re
+                            A_sub[i_row_im, i_col] = coeff_im
+                            # part 3: coeff = -1 * H(s_k) / (s_k - pole)
+                            # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            # extra equation to avoid trivial solution:
+                            # coeff += Re(1 / (s_k - pole)) = coeff_re
+                            A_row_extra[i_col] += coeff_re
+                            i_col += 1
                         else:
-                            # complex pole of a conjugated pair
-                            A_k.append(1 / (s_k - pole) + 1 / (s_k - np.conjugate(pole)))       # real part of residue
-                            A_k.append(1j / (s_k - pole) - 1j / (s_k - np.conjugate(pole)))     # imaginary part of residue
-                            n_unused += 2
+                            # coefficient for a complex pole of a conjugated pair: p = p' + jp''
+                            denom1 = pole_re ** 2 + (omega_k - pole_im) ** 2
+                            denom2 = pole_re ** 2 + (omega_k + pole_im) ** 2
+
+                            # row 1: add coefficient for real part of residue
+                            # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
+                            coeff_re = -1 * pole_re * (1 / denom1 + 1 / denom2)
+                            coeff_im = (pole_im - omega_k) / denom1 - (pole_im + omega_k) / denom2
+                            A_sub[i_row_re, i_col] = coeff_re
+                            A_sub[i_row_im, i_col] = coeff_im
+                            # extra equation to avoid trivial solution:
+                            # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
+                            A_row_extra[i_col] += coeff_re
+                            # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
+                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            i_col += 1
+
+                            # row 2: add coefficient for imaginary part of residue
+                            # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
+                            #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
+                            coeff_re = (omega_k - pole_im) / denom1 - (omega_k + pole_im) / denom2
+                            coeff_im = pole_re * (1 / denom2 - 1 / denom1)
+                            A_sub[i_row_re, i_col] = coeff_re
+                            A_sub[i_row_im, i_col] = coeff_im
+                            # extra equation to avoid trivial solution:
+                            # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
+                            A_row_extra[i_col] += coeff_re
+                            # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
+                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
+                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            i_col += 1
+
+                    # part 4: constant (variable d_res)
+                    # coeff = -1 * H(s_k)
+                    A_sub[i_row_re, n_cols_unused + i_col] = -1 * resp_re
+                    A_sub[i_row_im, n_cols_unused + i_col] = -1 * resp_im
+                    # extra equation to avoid trivial solution: coeff += 1
+                    A_row_extra[i_col] += 1
 
                     # part 2: constant (variable d) and proportional term (variable e)
                     if fit_constant:
-                        A_k.append(1)
-                        n_unused += 1
+                        # coeff = 1 + j0
+                        A_sub[i_row_re, i_col] = 1.0
+                        A_sub[i_row_im, i_col] = 0.0
+                        i_col += 1
                     if fit_proportional:
-                        A_k.append(s_k)
-                        n_unused += 1
-
-                    # part 3: second sum of rational functions (variable c_res)
-                    for pole in poles:
-                        # separate and stack real and imaginary part to preserve conjugacy of the pole pair
-                        if np.imag(pole) == 0.0:
-                            A_k.append(-1 * freq_response[k] / (s_k - pole))
-                        else:
-                            # complex pole of a conjugated pair
-                            A_k.append(-1 * freq_response[k] / (s_k - pole)
-                                       - freq_response[k] / (s_k - np.conjugate(pole)))
-                            A_k.append(-1j * freq_response[k] / (s_k - pole)
-                                       + 1j * freq_response[k] / (s_k - np.conjugate(pole)))
-
-                    # part 4: constant (variable d_res)
-                    A_k.append(-1 * freq_response[k])
-
-                    A_sub.append(np.sqrt(weight_regular) * np.real(A_k))
-                    A_sub.append(np.sqrt(weight_regular) * np.imag(A_k))
-                    b_sub.append(np.sqrt(weight_regular) * 0.0)
-                    b_sub.append(np.sqrt(weight_regular) * 0.0)
+                        # coeff = s_k = j omega_k
+                        A_sub[i_row_re, i_col] = 0.0
+                        A_sub[i_row_im, i_col] = omega_k
 
                 # QR decomposition
                 Q, R = np.linalg.qr(A_sub, 'reduced')
 
                 # only R22 is required to solve for c_res and d_res
-                R22 = R[n_unused:, n_unused:]
-                # similarly, only right half of Q is required
-                Q2 = Q[:, n_unused:]
+                R22 = R[n_cols_unused:, n_cols_unused:]
 
-                if len(A_matrix) == 0:
-                    A_matrix = R22
-                    b_vector = np.matmul(np.transpose(Q2), b_sub)
-                else:
-                    A_matrix = np.vstack((A_matrix, R22))
-                    b_vector = np.append(b_vector, np.matmul(np.transpose(Q2), b_sub))
+                # similarly, only right half of Q is required (not used here, because RHS is zero)
+                # Q2 = Q[:, n_cols_unused:]
+
+                # apply weight of this response and add coefficients to the system matrix
+                A[i_response * n_cols_used:(i_response + 1) * n_cols_used, :] = np.sqrt(weight_response) * R22
+                # multiplication of Q2 by rhs=0 omitted; right-hand side would also require weighting
+                # b[i_response * n_cols_used:(i_response + 1) * n_cols_used] = np.matmul(np.transpose(Q2), rhs)
 
                 # add extra equation to avoid trivial solution
-                # use weight=1 for all equations, except for this extra equation
-                weight_extra = np.linalg.norm(weight_regular * freq_response) / len(freq_response)
-                A_k = np.zeros(np.shape(A_matrix)[1])
-                for k, f_sample in enumerate(freqs_norm):
-                    s_k = 2j * np.pi * f_sample
-                    i = 0
+                weight_extra = np.linalg.norm(weight_response * freq_response) / len(freq_response)
+                A[(i_response + 1) * n_cols_used - 1, :] = np.sqrt(weight_extra) * A_row_extra
+                b[(i_response + 1) * n_cols_used - 1] = np.sqrt(weight_extra) * len(freq_response)
 
-                    # part 3: second sum of rational functions (variable c_res)
-                    for pole in poles:
-                        if np.imag(pole) == 0.0:
-                            # real pole
-                            A_k[i] += np.real(1 / (s_k - pole))
-                            i += 1
-                        else:
-                            # complex pole of a conjugated pair
-                            A_k[i] += np.real(1 / (s_k - pole) + 1 / (s_k - np.conjugate(pole)))
-                            A_k[i+1] += np.real(1j / (s_k - pole) - 1j / (s_k - np.conjugate(pole)))
-                            i += 2
-                    # part 4: constant (d_res)
-                    A_k[i] += 1
-
-                A_matrix = np.vstack((A_matrix, np.sqrt(weight_extra) * A_k))
-                b_vector = np.append(b_vector, np.sqrt(weight_extra) * len(freqs_norm))
-
-            logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
+            cond_A = np.linalg.cond(A)
+            logging.info('Condition number of coeff. matrix A = {}'.format(cond_A))
+            self.history_cond_A.append(cond_A)
 
             # solve least squares for real parts
-            x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
+            x, residuals, rank, singular_vals = np.linalg.lstsq(A, b, rcond=None)
 
             # assemble individual result vectors from single LS result x
             c_res = x[:-1]
@@ -342,42 +395,47 @@ class VectorFitting:
             if np.abs(d_res) < tol_res:
                 # d_res is too small, discard solution and proceed the |d_res| = tol_res
                 d_res = tol_res * (d_res / np.abs(d_res))
-                logging.warning('Replacing d_res solution as it was too small')
+                warnings.warn('Replacing d_res solution as it was too small. This is not a good sign and probably '
+                              'means that more starting poles are required', RuntimeWarning)
 
             self.d_res_history.append(d_res)
             logging.info('d_res = {}'.format(d_res))
 
-            # build test matrix H, which will hold the new poles as Eigenvalues
-            A_matrix = np.zeros((len(c_res), len(c_res)))
+            # build test matrix H, which will hold the new poles as eigenvalues
+            H = np.zeros((len(c_res), len(c_res)))
             i = 0
-            for pole in poles:
+            for i_pole in range(len(poles_im)):
                 # fill diagonal with previous poles
-                if np.imag(pole) == 0.0:
+                pole_re = poles_re[i_pole]
+                pole_im = poles_im[i_pole]
+                if pole_im == 0.0:
                     # one row for a real pole
-                    A_matrix[i, i] = np.real(pole)
-                    A_matrix[i] -= c_res / d_res
+                    H[i, i] = pole_re
+                    H[i] -= c_res / d_res
                     i += 1
                 else:
                     # two rows for a complex pole of a conjugated pair
-                    A_matrix[i, i] = np.real(pole)
-                    A_matrix[i, i + 1] = np.imag(pole)
-                    A_matrix[i + 1, i] = -1 * np.imag(pole)
-                    A_matrix[i + 1, i + 1] = np.real(pole)
-                    A_matrix[i] -= 2 * c_res / d_res
+                    H[i, i] = pole_re
+                    H[i, i + 1] = pole_im
+                    H[i + 1, i] = -1 * pole_im
+                    H[i + 1, i + 1] = pole_re
+                    H[i] -= 2 * c_res / d_res
                     i += 2
-            poles_new = np.linalg.eigvals(A_matrix)
+            poles_new = np.linalg.eigvals(H)
 
             # replace poles for next iteration
-            poles = []
+            poles_re = []
+            poles_im = []
             for k, pole in enumerate(poles_new):
-                # flip real part of unstable poles (real part needs to be negative for stability)
-                if np.real(pole) > 0.0:
-                    pole = -1 * np.real(pole) + 1j * np.imag(pole)
-                if np.imag(pole) >= 0.0:
+                pole_re = np.real(pole)
+                pole_im = np.imag(pole)
+                if pole_re > 0.0:
+                    # flip real part of unstable poles (real part needs to be negative for stability)
+                    pole_re = -1 * pole_re
+                if pole_im >= 0.0:
                     # complex poles need to come in complex conjugate pairs; append only the positive part
-                    poles.append(pole)
-
-            poles = np.sort_complex(poles)
+                    poles_re.append(pole_re)
+                    poles_im.append(pole_im)
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
@@ -404,18 +462,28 @@ class VectorFitting:
             iterations -= 1
 
             if iterations == 0:
-                if converged and stop is False:
-                    logging.warning('Reached tolerance only after max. number of iterations (N_max = {}). '
-                                    'Results might not have converged properly.'.format(self.max_iterations))
+                max_cond = np.amax(self.history_cond_A)
+                if max_cond > 1e10:
+                    msg_illcond = 'Hint: the linear system was ill-conditioned (max. condition number = {}). ' \
+                                  'This often means that more poles are required.'.format(max_cond)
                 else:
-                    logging.warning('Reached maximum number of iterations (N_max = {}). '
-                                    'Results did not converge.'.format(self.max_iterations))
+                    msg_illcond = ''
+                if converged and stop is False:
+                    warnings.warn('Vector Fitting: The pole relocation process barely converged to tolerance. '
+                                  'It took the max. number of iterations (N_max = {}). '
+                                  'The results might not have converged properly. '.format(self.max_iterations)
+                                  + msg_illcond, RuntimeWarning)
+                else:
+                    warnings.warn('Vector Fitting: The pole relocation process stopped after reaching the '
+                                  'maximum number of iterations (N_max = {}). '
+                                  'The results did not converge properly. '.format(self.max_iterations)
+                                  + msg_illcond, RuntimeWarning)
 
             if stop:
                 iterations = 0
 
         # ITERATIONS DONE
-        poles = np.array(poles)
+        poles = np.array(poles_re) + 1j * np.array(poles_im)
 
         logging.info('Initial poles before relocation:')
         logging.info(self.initial_poles)
@@ -435,33 +503,62 @@ class VectorFitting:
             # row will be appended to submatrix A_sub of complete coeff matrix A_matrix
             # 2 rows per pole in result vector (1st for real part, 2nd for imaginary part)
             # --> 2 columns per pole in coeff matrix
-            A_matrix = []
-            b_vector = []
+            n_cols = 0
+            for pole_im in poles_im:
+                if pole_im == 0.0:
+                    n_cols += 1
+                else:
+                    n_cols += 2
+            if fit_constant:
+                n_cols += 1
+            if fit_proportional:
+                n_cols += 1
+            A_matrix = np.empty((2 * len(freqs_norm), n_cols))
+            b_vector = np.empty((2 * len(freqs_norm)))
 
             for k, f_sample in enumerate(freqs_norm):
-                s_k = 2j * np.pi * f_sample
-                A_k = []
+                omega_k = 2 * np.pi * f_sample
+                resp_re = np.real(freq_response[k])
+                resp_im = np.imag(freq_response[k])
+                i_row_re = 2 * k
+                i_row_im = i_row_re + 1
+                i_col = 0
+
                 # add coefficients for a pair of complex conjugate poles
                 # part 1: first sum of rational functions (residue variable c)
-                for pole in poles:
+                for i_pole in range(len(poles_im)):
+                    pole_re = poles_re[i_pole]
+                    pole_im = poles_im[i_pole]
+
                     # separate and stack real and imaginary part to preserve conjugacy of the pole pair
-                    if np.imag(pole) == 0.0:
-                        A_k.append(1 / (s_k - pole))
+                    if pole_im == 0.0:
+                        denom = pole_re ** 2 + omega_k ** 2
+                        A_matrix[i_row_re, i_col] = -1 * pole_re / denom
+                        A_matrix[i_row_im, i_col] = -1 * omega_k / denom
+                        i_col += 1
                     else:
-                        A_k.append(1 / (s_k - pole) + 1 / (s_k - np.conjugate(pole)))       # real part of residue
-                        A_k.append(1j / (s_k - pole) - 1j / (s_k - np.conjugate(pole)))     # imaginary part of residue
+                        # coefficient for real part of residue
+                        denom1 = pole_re ** 2 + (omega_k - pole_im) ** 2
+                        denom2 = pole_re ** 2 + (omega_k + pole_im) ** 2
+                        A_matrix[i_row_re, i_col] = -1 * pole_re * (1 / denom1 + 1 / denom2)
+                        A_matrix[i_row_im, i_col] = (pole_im - omega_k) / denom1 - (pole_im + omega_k) / denom2
+                        i_col += 1
+                        # coefficient for imaginary part of residue
+                        A_matrix[i_row_re, i_col] = (omega_k - pole_im) / denom1 - (pole_im + omega_k) / denom2
+                        A_matrix[i_row_im, i_col] = pole_re * (1 / denom2 - 1 / denom1)
+                        i_col += 1
 
                 # part 2: constant (variable d) and proportional term (variable e)
                 if fit_constant:
-                    A_k.append(1.0)
+                    A_matrix[i_row_re, i_col] = 1.0
+                    A_matrix[i_row_im, i_col] = 0.0
+                    i_col += 1
                 if fit_proportional:
-                    A_k.append(s_k)
+                    A_matrix[i_row_re, i_col] = 0.0
+                    A_matrix[i_row_im, i_col] = omega_k
 
-                A_matrix.append(np.array(A_k))
-                b_vector.append(np.array(freq_response[k]))
-
-            A_matrix = np.vstack((np.real(A_matrix), np.imag(A_matrix)))
-            b_vector = np.append(np.real(b_vector), np.imag(b_vector))
+                b_vector[i_row_re] = resp_re
+                b_vector[i_row_im] = resp_im
 
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
@@ -470,8 +567,10 @@ class VectorFitting:
 
             i = 0
             zeros_response = []
-            for pole in poles:
-                if np.imag(pole) == 0.0:
+            for i_pole in range(len(poles_im)):
+                pole_im = poles_im[i_pole]
+
+                if pole_im == 0.0:
                     zeros_response.append(x[i] + 0j)
                     i += 1
                 else:
@@ -502,7 +601,75 @@ class VectorFitting:
         self.constant_coeff = np.array(constant_coeff)
         self.proportional_coeff = np.array(proportional_coeff) / norm
 
-        logging.info('\n### Vector fitting finished.\n')
+        timer_stop = timer()
+        self.wall_clock_time = timer_stop - timer_start
+
+        logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
+
+    def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
+        """
+        Returns the root-mean-square (rms) error magnitude of the fit, i.e.
+        :math:`\sqrt{ \mathrm{mean}(|S_{i,j} - S_{i,j,\mathrm{fit}} |^2) }`,
+        either for an individual response :math:`S_{i,j}` or for larger slices of the network.
+
+        Parameters
+        ----------
+        i : int, optional
+            Row indices of the responses to be evaluated. Either a single row selected by an integer
+            :math:`i \in [0, N_\mathrm{ports}]`, or multiple rows selected by a list of integers, or all rows
+            selected by :math:`i = -1` (*default*).
+
+        j : int, optional
+            Column indices of the responses to be evaluated. Either a single column selected by an integer
+            :math:`j \in [0, N_\mathrm{ports}]`, or multiple columns selected by a list of integers, or all columns
+            selected by :math:`j = -1` (*default*).
+
+        parameter_type: str, optional
+            Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
+            *impedance* (:attr:`z` or :attr:`Z`) or *admittance* (:attr:`y` or :attr:`Y`).
+
+        Returns
+        -------
+        rms_error : ndarray
+            The rms error magnitude between the vector fitted model and the original network data.
+
+        Raises
+        ------
+        ValueError
+            If the specified parameter representation type is not :attr:`s`, :attr:`z`, nor :attr:`y`.
+        """
+
+        if i == -1:
+            list_i = range(self.network.nports)
+        elif isinstance(i, int):
+            list_i = [i]
+        else:
+            list_i = i
+
+        if j == -1:
+            list_j = range(self.network.nports)
+        elif isinstance(j, int):
+            list_j = [j]
+        else:
+            list_j = j
+
+        if parameter_type.lower() == 's':
+            nw_responses = self.network.s
+        elif parameter_type.lower() == 'z':
+            nw_responses = self.network.z
+        elif parameter_type.lower() == 'y':
+            nw_responses = self.network.y
+        else:
+            raise ValueError('Invalid parameter type \'{}\'. Valid options: \`s\`, \`z\`, or \`y\`'.format(parameter_type))
+
+        error_mean_squared = 0
+        for i in list_i:
+            for j in list_j:
+                nw_ij = nw_responses[:, i, j]
+                fit_ij = self.get_model_response(i, j, self.network.f)
+                error_mean_squared += np.mean(np.square(np.abs(nw_ij - fit_ij)))
+
+        return np.sqrt(error_mean_squared)
 
     def _get_ABCDE(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -1152,6 +1319,170 @@ class VectorFitting:
         ax.plot(freqs, np.abs(self.get_model_response(i, j, freqs)), color='k', label='Fit')
         ax.set_xlabel('Frequency (Hz)')
         ax.set_ylabel('Magnitude')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_deg(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.rad2deg(np.angle(self.network.s[:, i, j])), color='r', label='Samples')
+        ax.plot(freqs, np.rad2deg(np.angle(self.get_model_response(i, j, freqs))), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Phase (Degrees)')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_deg_unwrap(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the unwrapped phase in degrees of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.rad2deg(np.unwrap(np.angle(self.network.s[:, i, j]))), color='r', label='Samples')
+        ax.plot(freqs, np.rad2deg(np.unwrap(np.angle(self.get_model_response(i, j, freqs)))), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Phase (Degrees)')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_re(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the real part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.real(self.network.s[:, i, j]), color='r', label='Samples')
+        ax.plot(freqs, np.real(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Real Part')
+        ax.legend(loc='best')
+        ax.set_title('Response i={}, j={}'.format(i, j))
+        return ax
+
+    @check_plotting
+    def plot_s_im(self, i : int, j: int, freqs: Any = None, ax: mplt.Axes = None) -> mplt.Axes:
+        """
+        Plots the imaginary part of the scattering parameter response :math:`S_{i+1,j+1}` in the fit.
+
+        Parameters
+        ----------
+        i : int
+            Row index of the response.
+
+        j : int
+            Column index of the response.
+
+        freqs : list of float or ndarray or None, optional
+            List of frequencies for the response plot. If None, the sample frequencies of the fitted network in
+            :attr:`network` are used.
+
+        ax : :class:`matplotlib.Axes` object or None
+            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
+
+        Returns
+        -------
+        :class:`matplotlib.Axes`
+            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
+            figure.
+        """
+
+        if freqs is None:
+            freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
+
+        if ax is None:
+            ax = mplt.gca()
+
+        ax.scatter(self.network.f, np.imag(self.network.s[:, i, j]), color='r', label='Samples')
+        ax.plot(freqs, np.imag(self.get_model_response(i, j, freqs)), color='k', label='Fit')
+        ax.set_xlabel('Frequency (Hz)')
+        ax.set_ylabel('Imaginary Part')
         ax.legend(loc='best')
         ax.set_title('Response i={}, j={}'.format(i, j))
         return ax
