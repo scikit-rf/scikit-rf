@@ -129,7 +129,7 @@ class NetworkTestCase(unittest.TestCase):
         y1 = npy.zeros((1000, dut_dc.nports, dut_dc.nports))
 
         for (i,j) in dut_dc.port_tuples:
-            oneport = getattr(dut_dc, 's{0}{1}'.format(i+1, j+1))
+            oneport = getattr(dut_dc, f's{i+1}{j+1}')
             t1, y1[:,i,j] = oneport.step_response(n=1000)
 
         t2, y2 = dut_dc.step_response(n=1000)
