@@ -523,7 +523,7 @@ class Frequency(object):
 
     @property
     def w(self) -> npy.ndarray:
-        """
+        r"""
         Angular frequency in radians/s.
         
         Angular frequency is defined as :math:`\omega=2\pi f` [#]_

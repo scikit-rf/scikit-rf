@@ -2728,7 +2728,7 @@ class NISTMultilineTRL(EightTerm):
         Smat2 = npy.ones(shape=(fpoints, 2, 2), dtype=complex)
 
         e = npy.zeros(shape=(fpoints, 7), dtype=complex)
-        nstd = npy.zeros(shape=(fpoints), dtype=npy.float)
+        nstd = npy.zeros(shape=(fpoints), dtype=float)
 
         def t2s_single(t):
             return t2s(t[npy.newaxis,:,:])[0]

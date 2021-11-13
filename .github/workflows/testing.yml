@@ -40,10 +40,10 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
     # tests suites & creates coverage report
-    - name: Test with nose
+    - name: Test with pytest
       if: ${{ always() }}    
       run: |
-        nosetests skrf --nocapture --with-coverage -c nose.cfg
+        pytest
 
     # test notebooks
     - name: Run tutorials notebooks with nbval

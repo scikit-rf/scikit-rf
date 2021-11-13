@@ -40,8 +40,6 @@ setup(name='scikit-rf',
 			'ipywidgets',
 		],
 		'tests': [
-			'nose',
-			'nose-exclude',
 			'coverage',
 			'flake8',
 			'pytest',

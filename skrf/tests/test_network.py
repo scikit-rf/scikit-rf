@@ -1,3 +1,4 @@
+import pytest
 from skrf.frequency import InvalidFrequencyWarning
 import unittest
 import os
@@ -10,7 +11,6 @@ from pathlib import Path
 import pickle
 import skrf as rf
 from copy import deepcopy
-from nose.plugins.skip import SkipTest
 import warnings
 
 from skrf import setup_pylab
@@ -236,6 +236,17 @@ class NetworkTestCase(unittest.TestCase):
                         z0_expected
                     )
 
+    def test_connect_no_frequency(self):
+        """ Connecting 2 networks defined without frequency returns Error
+        """
+        # try to connect two networks defined without their frequency properties
+        s = npy.random.rand(10, 2, 2)
+        ntwk1 = rf.Network(s=s)
+        ntwk2 = rf.Network(s=s)
+
+        with self.assertRaises(ValueError):
+            ntwk1**ntwk2
+
     def test_delay(self):
         ntwk1_delayed = self.ntwk1.delay(1,'ns',port=0)
         self.assertTrue(
@@ -277,8 +288,8 @@ class NetworkTestCase(unittest.TestCase):
         d=rf.connect(a,0,b,0,3)
         self.assertTrue((d.z0==[4,13]).all())
 
+    @pytest.mark.skip(reason="not supporting this function currently ")
     def test_connect_fast(self):
-        raise SkipTest('not supporting this function currently ')
         self.assertEqual(rf.connect_fast(self.ntwk1, 1, self.ntwk2, 0) , \
             self.ntwk3)
 

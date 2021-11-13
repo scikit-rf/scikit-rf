@@ -185,6 +185,7 @@ class NetworkSetTestCase(unittest.TestCase):
         # using a name        
         ns.name = 'testing'
         ns.write()  # write 'testing.ns'
+        os.remove('testing.ns')
         
     def test_write_spreadsheet(self):
         """
@@ -196,8 +197,10 @@ class NetworkSetTestCase(unittest.TestCase):
         # passing a name
         ns.name = 'testing'
         ns.write_spreadsheet()  # write 'testing.xlsx'
+        os.remove('testing.xlsx')
         # passing a filename
         ns.write_spreadsheet(file_name='testing2.xlsx')
+        os.remove('testing2.xlsx')
         
     def test_ntwk_attr_2_df(self):
         """

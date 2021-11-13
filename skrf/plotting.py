@@ -325,9 +325,9 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
 
             #Annotate 0 and inf
             if y_flip_sign == 1:  # z and zy charts
-                label_left, label_right = '0.0', '$\infty$'
+                label_left, label_right = '0.0', r'$\infty$'
             else:  # y and yz charts
-                label_left, label_right = '$\infty$', '0.0'
+                label_left, label_right = r'$\infty$', '0.0'
             ax1.annotate(label_left, xy=(-1.02, 0), xytext=(-1.02, 0),
                              ha = "right", va = "center")
             ax1.annotate(label_right, xy=(radialScaleFactor, 0), xytext=(radialScaleFactor, 0),

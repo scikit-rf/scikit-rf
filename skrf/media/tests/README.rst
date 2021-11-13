@@ -4,9 +4,9 @@ skrf.media tests
 
 Running Tests
 -----------------
-These tests are most easily run using nosetests, like so ::
+These tests are most easily run using pytest, like so ::
     
-    nosetests skrf/media/tests/
+    pytest skrf/media/tests/
 
 Using QUCS for test-cases
 --------------------------
