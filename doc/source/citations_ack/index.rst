@@ -3,7 +3,7 @@
 
 
 .. image:: ../_static/scikit-rf-title-flat.svg
-    :target: scikitrf_
+    :target: ../_static/scikit-rf-title-flat.svg
     :height: 100
     :align: center
 
