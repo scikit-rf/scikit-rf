@@ -3,7 +3,7 @@
 
 
 .. image:: ../_static/scikit-rf-title-flat.svg
-    :target: scikitrf_
+    :target: ../_static/scikit-rf-title-flat.svg
     :height: 100
     :align: center
 
@@ -89,7 +89,7 @@ Tests are vital for software reliability and maintainability. Writing tests ofte
 Before making a Pull Request, we advise contributors to run the tests locally to check if nothing has been broken following their modifications. In addition, we highly recommend to provide new tests when adding new features.
 
 The structure of the testing generally follows the conventions of `numpy/scipy <https://github.com/numpy/numpy/blob/master/doc/TESTS.rst.txt>`_. Test cases live in the module, or submodule, which they are testing, and are located in a directory called `tests`. So, the tests of the media module are located at `skrf/media/tests/`. 
-Tests can be run most easily with `pytest <https://docs.pytest.org/en/latest/index.html`_. 
+Tests can be run most easily with `pytest <https://docs.pytest.org/en/latest/index.html>`_.
 
 You probably **don't** want to run the tests for the virtual instruments ``skrf.vi`` with the rest of the tests, so these tests are excluded by default.
 
