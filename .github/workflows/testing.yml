@@ -39,22 +39,22 @@ jobs:
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-    # test notebooks
-    - name: Run tutorials notebooks with nbval
-      if: ${{ always() }}    
-      run: |
-        python -m pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
-
-    - name: Run examples notebooks with nbval
-      if: ${{ always() }}    
-      run: |
-        python -m pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
-
     # tests suites & creates coverage report
     - name: Test with pytest
       if: ${{ always() }}    
       run: |
         pytest
+
+    # test notebooks
+    - name: Run tutorials notebooks with nbval
+      if: ${{ always() }}    
+      run: |
+        pytest --nbval-lax --current-env -p no:python --cov-append doc/source/tutorials/
+
+    - name: Run examples notebooks with nbval
+      if: ${{ always() }}    
+      run: |
+        pytest --nbval-lax --current-env -p no:python --cov-append --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
