@@ -42,18 +42,18 @@ jobs:
     - name: Test with pytest
       if: ${{ always() }}    
       run: |
-        tox -e ${{ matrix.python-version }}
+        tox
 
     # test notebooks
     - name: Run tutorials notebooks with nbval
       if: ${{ always() }}    
       run: |
-        tox -e ${{ matrix.python-version }} -- --nbval-lax --current-env -p no:python --cov-append doc/source/tutorials/
+        tox -- --nbval-lax --current-env -p no:python --cov-append doc/source/tutorials/
 
     - name: Run examples notebooks with nbval
       if: ${{ always() }}    
       run: |
-        tox -e ${{ matrix.python-version }} -- --nbval-lax --current-env -p no:python --cov-append --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
+        tox -- --nbval-lax --current-env -p no:python --cov-append --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
