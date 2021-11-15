@@ -12,3 +12,4 @@ nbval
 sphinx>=4.0
 sphinx-rtd-theme
 tox
+tox-gh-actions
