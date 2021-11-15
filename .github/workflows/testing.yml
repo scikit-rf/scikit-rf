@@ -20,14 +20,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install tox
-        
-    #- name: Installing package locally for pytest and nbval
-    #  if: ${{ always() }}    
-    #  run: |
-    #    # this is required to test the notebooks. If not done, module skrf will not be found
-    #    python setup.py install
-
+        pip install tox tox-gh-actions flake8
+    
     # code quality check (linting)
     - name: Lint with flake8
       if: ${{ always() }}    
