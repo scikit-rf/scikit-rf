@@ -30,9 +30,15 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+  
+    # test notebooks
+    - name: Run tutorial & example notebooks with nbval
+      if: ${{ always() }}    
+      run: |
+        tox -- --nbval-lax --current-env --cov-append
 
     # Upload coverage data to coveralls.io
-    - name: Run tests and upload coverage data to coveralls.io
+    - name: Upload coverage data to coveralls.io
       continue-on-error: true
       if: ${{ always() }}
       env:
@@ -40,7 +46,8 @@ jobs:
         COVERALLS_FLAG_NAME: ${{ matrix.test-name }}
         COVERALLS_PARALLEL: true
       run: |
-        tox
+        pip install coveralls    
+        coveralls --service=github
   
   coveralls:
     name: Indicate completion to coveralls.io (Finish)
