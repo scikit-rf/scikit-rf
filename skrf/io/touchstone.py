@@ -151,7 +151,7 @@ class Touchstone:
             line = line.split('!', 1)
             if len(line) == 2:
                 if not self.parameter:
-                    if self.comments == None:
+                    if self.comments is None:
                         self.comments = ''
                     self.comments = self.comments + line[1]
                 elif line[1].startswith(' Port['):
