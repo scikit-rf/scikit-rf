@@ -9,5 +9,6 @@ flake8
 pytest
 pytest-cov
 nbval
+nbsphinx
 sphinx>=4.0
 sphinx-rtd-theme

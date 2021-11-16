@@ -109,7 +109,7 @@ class VectorFitting:
          user before calling :func:`vector_fit`. """
 
         self.wall_clock_time = 0
-        """ Instance variable holding the wall-clock time (in seconds) consumed by the most recent fitting process in 
+        """ Instance variable holding the wall-clock time (in seconds) consumed by the most recent fitting process with 
         :func:`vector_fit`. Subsequent calls of :func:`vector_fit` will overwrite this value. """
 
         self.d_res_history = []
@@ -609,19 +609,19 @@ class VectorFitting:
     def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
         """
         Returns the root-mean-square (rms) error magnitude of the fit, i.e.
-        :math:`\sqrt{ \mathrm{mean}(|S_{i,j} - S_{i,j,\mathrm{fit}} |^2) }`,
-        either for an individual response :math:`S_{i,j}` or for larger slices of the network.
+        :math:`\sqrt{ \mathrm{mean}(|S - S_\mathrm{fit} |^2) }`,
+        either for an individual response :math:`S_{i+1,j+1}` or for larger slices of the network.
 
         Parameters
         ----------
         i : int, optional
             Row indices of the responses to be evaluated. Either a single row selected by an integer
-            :math:`i \in [0, N_\mathrm{ports}]`, or multiple rows selected by a list of integers, or all rows
+            :math:`i \in [0, N_\mathrm{ports}-1]`, or multiple rows selected by a list of integers, or all rows
             selected by :math:`i = -1` (*default*).
 
         j : int, optional
             Column indices of the responses to be evaluated. Either a single column selected by an integer
-            :math:`j \in [0, N_\mathrm{ports}]`, or multiple columns selected by a list of integers, or all columns
+            :math:`j \in [0, N_\mathrm{ports}-1]`, or multiple columns selected by a list of integers, or all columns
             selected by :math:`j = -1` (*default*).
 
         parameter_type: str, optional
