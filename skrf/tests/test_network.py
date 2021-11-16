@@ -810,6 +810,11 @@ class NetworkTestCase(unittest.TestCase):
         s11 = ntwk.s11
         s11_dc = s11.extrapolate_to_dc(kind='cubic')
 
+    def test_dc_extrapolation_dc_sparam(self):
+        zeros = npy.zeros((self.ntwk1.nports, self.ntwk1.nports))
+        net_dc = self.ntwk1.extrapolate_to_dc(dc_sparam=zeros)
+        net_dc = self.ntwk1.extrapolate_to_dc(dc_sparam=zeros.tolist())
+
     def test_noise_deembed(self):
 
 
