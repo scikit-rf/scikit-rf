@@ -2733,10 +2733,10 @@ class Network(object):
         if self.frequency.f[0] == 0:
             return result
 
-        if points == None:
+        if points is None:
             fstep = self.frequency.f[1] - self.frequency.f[0]
             points = len(self) + int(round(self.frequency.f[0]/fstep))
-        if dc_sparam == None:
+        if dc_sparam is None:
             #Interpolate DC point alone first using linear interpolation, because
             #interp1d can't extrapolate with other methods.
             #TODO: Option to enforce passivity
@@ -2827,9 +2827,9 @@ class Network(object):
         cropped
 
         """
-        if f_start == None:
+        if f_start is None:
             f_start = -npy.inf
-        if f_stop == None:
+        if f_stop is None:
             f_stop = npy.inf
 
         if f_stop<f_start:
@@ -3187,7 +3187,7 @@ class Network(object):
 
         """
 
-        if center_to_dc == None:
+        if center_to_dc is None:
             center_to_dc = self.frequency.f[0] == 0
 
         if center_to_dc:
@@ -4909,7 +4909,7 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order:bool 
     ntwk_list = [s11, s12, s13, s21, s22, s23, s31, s32, s33]
 
     for k in range(len(ntwk_list)):
-        if ntwk_list[k] == None:
+        if ntwk_list[k] is None:
             frequency = ntwk_triplet[0].frequency
             s = npy.zeros((len(ntwk_triplet[0]), 1, 1))
             ntwk_list[k] = Network(s=s, frequency=frequency)
