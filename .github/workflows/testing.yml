@@ -35,7 +35,7 @@ jobs:
     - name: Test the code, tutorials and examples
       if: ${{ always() }}    
       run: |
-        tox -- --nbval-lax --current-env --cov-append
+        tox -- --nbval-lax --current-env
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
