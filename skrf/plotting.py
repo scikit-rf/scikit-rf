@@ -165,7 +165,7 @@ def smith(smithR: Number = 1, chart_type: str = 'z', draw_labels: bool = False,
 
     """
     ##TODO: fix this function so it doesnt suck
-    if ax == None:
+    if ax is None:
         ax1 = plt.gca()
     else:
         ax1 = ax
@@ -1346,7 +1346,7 @@ def plot_passivity(self, port=None, label_prefix=None, *args, **kwargs):
     else:
         ports = [port]
     for k in ports:
-        if label_prefix == None:
+        if label_prefix is None:
             label = name + ', port %i' % (k + 1)
         else:
             label = label_prefix + ', port %i' % (k + 1)
