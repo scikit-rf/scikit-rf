@@ -20,16 +20,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements_dev.txt
-        sudo apt-get install xvfb
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Installing package locally for pytest and nbval
-      if: ${{ always() }}    
-      run: |
-        # this is required to test the notebooks. If not done, module skrf will not be found
-        python setup.py install
-
+        pip install tox tox-gh-actions flake8
+    
     # code quality check (linting)
     - name: Lint with flake8
       if: ${{ always() }}    
@@ -38,23 +30,12 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
-    # tests suites & creates coverage report
-    - name: Test with pytest
+  
+    # test code and notebooks (tutorials and examples)
+    - name: Test the code, tutorials and examples
       if: ${{ always() }}    
       run: |
-        pytest
-
-    # test notebooks
-    - name: Run tutorials notebooks with nbval
-      if: ${{ always() }}    
-      run: |
-        python -m pytest --nbval-lax --current-env -p no:python doc/source/tutorials/
-
-    - name: Run examples notebooks with nbval
-      if: ${{ always() }}    
-      run: |
-        python -m pytest --nbval-lax --current-env -p no:python --ignore=doc/source/examples/instrumentcontrol/ doc/source/examples/
+        tox -- --nbval-lax --current-env
 
     # Upload coverage data to coveralls.io
     - name: Upload coverage data to coveralls.io
