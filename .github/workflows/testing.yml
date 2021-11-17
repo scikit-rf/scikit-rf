@@ -32,7 +32,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
   
     # test code and notebooks (tutorials and examples)
-    - name: Run tutorial & example notebooks with nbval
+    - name: Test the code, tutorials and examples
       if: ${{ always() }}    
       run: |
         tox -- --nbval-lax --current-env --cov-append
