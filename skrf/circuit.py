@@ -89,11 +89,6 @@ from . constants import INF, NumberLike
 
 import numpy as np
 
-try:
-    import networkx as nx
-except ImportError as e:
-    pass
-
 from itertools import chain, product
 
 from typing import List, TYPE_CHECKING, Tuple
