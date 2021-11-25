@@ -83,7 +83,6 @@ Graph representation
    Circuit.edge_labels
 
 """
-from numbers import Number
 from . network import Network, a2s
 from . media import media
 from . constants import INF, NumberLike
@@ -96,9 +95,8 @@ except ImportError as e:
     pass
 
 from itertools import chain, product
-from scipy.linalg import block_diag
 
-from typing import Iterable, List, TYPE_CHECKING, Tuple
+from typing import List, TYPE_CHECKING, Tuple
 
 
 if TYPE_CHECKING:
