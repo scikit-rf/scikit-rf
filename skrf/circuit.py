@@ -541,7 +541,12 @@ class Circuit:
         # is not installed.
         G = self.G
 
-        return nx.algorithms.components.is_connected(G)
+        try:
+            import networkx as nx
+            return nx.algorithms.components.is_connected(G)
+        except ImportError as e:
+            raise ImportError('networkx package as not been installed and is required. ')
+
 
     @property
     def intersections_dict(self) -> dict:
