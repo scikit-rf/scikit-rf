@@ -98,7 +98,7 @@ if TYPE_CHECKING:
     from .frequency import Frequency
 
 
-class Circuit():
+class Circuit:
     """
     Creates a circuit made of a set of N-ports networks.
 
