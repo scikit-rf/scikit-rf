@@ -106,15 +106,23 @@ Or, to run tests for every installed python installation in an isolated environm
 
     tox 
 
-Or, to run test a single module or single test, 
+
+If you want to test a single file or directory, you need to override the defaukt pytest configuration (defined in the tox.ini file) and to indicate the test path. By example, to run only the tests associated to the Network object (-v to increase the verbosity):   
 
 .. code-block:: sh
 
-    pytest skrf/media/
-    # ...
-    pytest skrf/tests/test_network.py
-    # ...
-    
+    pytest -v -c "" skrf/tests/test_network.py
+
+
+It is also possible to select some particular tests using the regex option (-k):
+
+.. code-block:: sh
+
+    pytest -v -c "" skrf/calibration/tests/test_calibration.py -k "test_error_ntwk"
+
+
+
+
 
 Contributing to the Documentation
 ----------------------------------
