@@ -83,29 +83,22 @@ Graph representation
    Circuit.edge_labels
 
 """
-from numbers import Number
 from . network import Network, a2s
 from . media import media
 from . constants import INF, NumberLike
 
 import numpy as np
 
-try:
-    import networkx as nx
-except ImportError as e:
-    pass
-
 from itertools import chain, product
-from scipy.linalg import block_diag
 
-from typing import Iterable, List, TYPE_CHECKING, Tuple
+from typing import List, TYPE_CHECKING, Tuple
 
 
 if TYPE_CHECKING:
     from .frequency import Frequency
 
 
-class Circuit():
+class Circuit:
     """
     Creates a circuit made of a set of N-ports networks.
 
@@ -548,7 +541,12 @@ class Circuit():
         # is not installed.
         G = self.G
 
-        return nx.algorithms.components.is_connected(G)
+        try:
+            import networkx as nx
+            return nx.algorithms.components.is_connected(G)
+        except ImportError as e:
+            raise ImportError('networkx package as not been installed and is required. ')
+
 
     @property
     def intersections_dict(self) -> dict:
@@ -742,31 +740,15 @@ class Circuit():
         ----
         There is a numerical bottleneck in this function,
         when creating the block diagonal matrice [X] from the [X]_k matrices.
-        The difficulty comes from the fact that the shape of each [X]_k
-        matrix is `fxnxn`, so there is a loop over the frequencies
-        to create f times a block matrix [X]. I am still looking for a
-        vectorized implementation but didn't find it.
-
         """
-        # Xk = []
-        # for cnx in self.connections:
-        #     Xk.append(self._Xk(cnx))
-        # Xk = np.array(Xk)
-
-        # #X = np.zeros(len(C.frequency), )
-        # Xf = []
-        # for (idx, f) in enumerate(self.frequency):
-        #     Xf.append(block_diag(*Xk[:,idx,:]))
-        # return np.array(Xf)  # shape: (nb_frequency, nb_inter*nb_n, nb_inter*nb_n)
-
-        # Slightly faster version
         Xks = [self._Xk(cnx) for cnx in self.connections]
 
         Xf = np.zeros((len(self.frequency), self.dim, self.dim), dtype='complex')
-        # TODO: avoid this for loop which is a bottleneck for large frequencies
-        for idx in np.nditer(np.arange(len(self.frequency))):
-            mat_list = [Xk[idx,:] for Xk in Xks]
-            Xf[idx,:] = block_diag(*mat_list)  # bottleneck
+        off = np.array([0, 0])
+        for Xk in Xks:
+            Xf[:, off[0]:off[0] + Xk.shape[1], off[1]:off[1]+Xk.shape[2]] = Xk
+            off += Xk.shape[1:]
+        
         return Xf
 
     @property

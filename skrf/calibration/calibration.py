@@ -2610,22 +2610,22 @@ class NISTMultilineTRL(EightTerm):
 
             Assumes TEM mode and conductance/length to be zero.
 
-            If `c0` == `z0_line` == None, the characteristic impedance is not renormalized.
+            If `c0` == `z0_line` is None, the characteristic impedance is not renormalized.
             In this case reference impedance of the calibration is characteristic
             impedance of the transmission lines.
 
         z0_ref : None, complex or list of complex
             New reference impedance for the characteristic impedance renormalizarion.
 
-            No effect if `c0` == None and `z0_line` == None.
+            No effect if `c0` is None and `z0_line` is None.
 
-            If `z0_ref` == None, no renormalization is done.
+            If `z0_ref` is None, no renormalization is done.
 
         z0_line : None, complex or list of complex
             Characteristic impedance of the transmission lines. Used for reference
             impedance renormalization.
 
-            If `z0` == `z0_line` == None, the characteristic impedance is not renormalized.
+            If `z0` == `z0_line` is None, the characteristic impedance is not renormalized.
             In this case reference impedance of the calibration is characteristic
             impedance of the transmission lines.
 
@@ -2650,7 +2650,7 @@ class NISTMultilineTRL(EightTerm):
         except TypeError:
             self.Grefls = [self.Grefls]
 
-        if self.refl_offset == None:
+        if self.refl_offset is None:
             self.refl_offset = [0]*len(self.Grefls)
 
         try:
@@ -3093,7 +3093,7 @@ class NISTMultilineTRL(EightTerm):
                         embedded = t2s_single(T1.dot(ideal).dot(g.dot(inv(T2).dot(g))))
 
                         error += npy.sum(abs(embedded - meas))
-                    if best_error == None or error < best_error:
+                    if best_error is None or error < best_error:
                         best_error = error
                         best_values = v
                 B1, B2, CoA1, CoA2 = best_values[1:]
@@ -4736,7 +4736,7 @@ class LMR16(SixteenTerm):
         T3 = []
         T4 = []
 
-        auto_sign = self.sign == None
+        auto_sign = self.sign is None
 
         for f in range(fLength):
             ma = mList[0][f] #Through
@@ -4765,7 +4765,7 @@ class LMR16(SixteenTerm):
 
             for sign_tries in [0,1,2]:
                 gt = self.sign*npy.sqrt(m*o/(n*p))
-                if self.through == None:
+                if self.through is None:
                     g = self.reflect.s[f][0,0]
                     t = g/gt
                     self._solved_through.s[f] = npy.array([[0,t],[t,0]])
