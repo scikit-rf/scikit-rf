@@ -1,6 +1,6 @@
 matplotlib
 scipy
-numpy>=1.9.5
+numpy>=1.19.5
 pandas
 nbsphinx
 networkx
