@@ -3,8 +3,8 @@
 Examples
 =========
 
-These examples are meant to give an overview of how skrf can be used. 
-Each page can be followed along in a browser, or downloaded as an 
+These examples are meant to give an overview of how skrf can be used.
+Each page can be followed along in a browser, or downloaded as an
 ipython `notebook <http://ipython.org/notebook.html>`_
 
 Network Theory
@@ -13,7 +13,7 @@ Network Theory
 .. toctree::
     :maxdepth: 1
     :glob:
-    
+
     networktheory/*
 
 Matching
@@ -30,7 +30,7 @@ Metrology and Calibration
 .. toctree::
     :maxdepth: 1
     :glob:
-    
+
     metrology/*
 
 
@@ -40,18 +40,18 @@ NetworkSets
 .. toctree::
     :maxdepth: 1
     :glob:
-    
+
     networksets/*
-    
+
 Plotting
 ------------------
 
 .. toctree::
     :maxdepth: 1
     :glob:
-    
+
     plotting/*
-    
+
 Circuit
 ------------------
 
@@ -70,6 +70,15 @@ Mixed Mode
 
     mixedmodeanalysis/*
 
+Vector Fitting
+------------------
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    vectorfitting/*
+
 Taper
 ------------------
 .. toctree::
@@ -85,7 +94,7 @@ Internals
 .. toctree::
     :maxdepth: 1
     :glob:
-    
+
     internals/*
 
 Instrument Control
@@ -103,14 +112,6 @@ Interactive
 .. toctree::
     :maxdepth: 1
     :glob:
-    
+
     interactive/*
 
-Vector Fitting
-------------------
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    vectorfitting/*
