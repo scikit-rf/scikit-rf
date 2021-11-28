@@ -107,7 +107,7 @@ Or, to run tests for every installed python installation in an isolated environm
     tox 
 
 
-If you want to test a single file or directory, you need to override the defaukt pytest configuration (defined in the tox.ini file) and to indicate the test path. By example, to run only the tests associated to the Network object (-v to increase the verbosity):   
+If you want to test a single file or directory, you need to override the default pytest configuration (defined in the tox.ini file) and to indicate the test path. By example, to run only the tests associated to the Network object (-v to increase the verbosity):   
 
 .. code-block:: sh
 
