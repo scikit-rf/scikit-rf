@@ -4,7 +4,7 @@ pyvisa
 ipython
 ipykernel
 ipywidgets
-coverage==6.1.2  # coverage 6.2 fails with notebooks
+coverage
 flake8
 pytest
 pytest-cov
