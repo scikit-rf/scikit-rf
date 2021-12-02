@@ -675,7 +675,7 @@ class VectorFitting:
         elif parameter_type.lower() == 'y':
             nw_responses = self.network.y
         else:
-            raise ValueError('Invalid parameter type \'{}\'. Valid options: \`s\`, \`z\`, or \`y\`'.format(parameter_type))
+            raise ValueError('Invalid parameter type `{}`. Valid options: `s`, `z`, or `y`'.format(parameter_type))
 
         error_mean_squared = 0
         for i in list_i:
@@ -878,7 +878,7 @@ class VectorFitting:
             raise NotImplementedError('Passivity testing is currently only supported for scattering (S) parameters.')
         if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional_coeff)) > 0:
             raise ValueError('Passivity testing of scattering parameters with nonzero proportional coefficients does '
-                             'not make any sense; you need to run vector_fit() with option \'fit_proportional=False\' '
+                             'not make any sense; you need to run vector_fit() with option `fit_proportional=False` '
                              'first.')
 
         # # the network needs to be reciprocal for this passivity test method to work: S = transpose(S)
@@ -1014,7 +1014,7 @@ class VectorFitting:
             raise NotImplementedError('Passivity testing is currently only supported for scattering (S) parameters.')
         if parameter_type.lower() == 's' and len(np.flatnonzero(self.proportional_coeff)) > 0:
             raise ValueError('Passivity testing of scattering parameters with nonzero proportional coefficients does '
-                             'not make any sense; you need to run vector_fit() with option \'fit_proportional=False\' '
+                             'not make any sense; you need to run vector_fit() with option `fit_proportional=False` '
                              'first.')
 
         # always run passivity test first; this will write 'self.violation_bands'
