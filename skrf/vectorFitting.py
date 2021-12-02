@@ -122,10 +122,14 @@ class VectorFitting:
     # legacy getter and setter methods to support deprecated 'zeros' attribute (now correctly called 'residues')
     @property
     def zeros(self):
+        warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
+                      'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         return self.residues
 
     @zeros.setter
     def zeros(self, value):
+        warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
+                      'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         self.residues = value
 
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
