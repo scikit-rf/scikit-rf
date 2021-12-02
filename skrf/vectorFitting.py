@@ -1160,7 +1160,7 @@ class VectorFitting:
 
         filename = self.network.name
 
-        warnings.warn('Exporting results as compressed NumPy array to {}'.format(path), RuntimeWarning, stacklevel=2)
+        logging.info('Exporting results as compressed NumPy array to {}'.format(path))
         np.savez_compressed(os.path.join(path, 'coefficients_{}'.format(filename)),
                             poles=self.poles, residues=self.residues, proportionals=self.proportional_coeff,
                             constants=self.constant_coeff)
