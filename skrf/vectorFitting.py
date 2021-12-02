@@ -91,7 +91,9 @@ class VectorFitting:
         """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
 
         self.zeros = None
-        """ Instance variable holding the list of fitted zeros. Will be initialized by :func:`vector_fit`. """
+
+        self.residues = None
+        """ Instance variable holding the list of fitted residues. Will be initialized by :func:`vector_fit`. """
 
         self.proportional_coeff = None
         """ Instance variable holding the list of fitted proportional coefficients. Will be initialized by 
@@ -117,11 +119,20 @@ class VectorFitting:
         self.history_max_sigma = []
         self.history_cond_A = []
 
+    # legacy getter and setter methods to support deprecated 'zeros' attribute (now correctly called 'residues')
+    @property
+    def zeros(self):
+        return self.residues
+
+    @zeros.setter
+    def zeros(self, value):
+        self.residues = value
+
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
         Main work routine performing the vector fit. The results will be stored in the class variables
-        :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
+        :attr:`poles`, :attr:`residues`, :attr:`proportional_coeff` and :attr:`constant_coeff`.
 
         Parameters
         ----------
@@ -491,10 +502,10 @@ class VectorFitting:
         logging.info('Final poles:')
         logging.info(poles * norm)
 
-        logging.info('\n### Starting zeros calculation process.\n')
+        logging.info('\n### Starting residues calculation process.\n')
 
         # finally, solve for the residues with the previously calculated poles
-        zeros = []
+        residues = []
         constant_coeff = []
         proportional_coeff = []
 
@@ -566,17 +577,17 @@ class VectorFitting:
             x, residuals, rank, singular_vals = np.linalg.lstsq(A_matrix, b_vector, rcond=None)
 
             i = 0
-            zeros_response = []
+            residues_response = []
             for i_pole in range(len(poles_im)):
                 pole_im = poles_im[i_pole]
 
                 if pole_im == 0.0:
-                    zeros_response.append(x[i] + 0j)
+                    residues_response.append(x[i] + 0j)
                     i += 1
                 else:
-                    zeros_response.append(x[i] + 1j * x[i + 1])
+                    residues_response.append(x[i] + 1j * x[i + 1])
                     i += 2
-            zeros.append(zeros_response)
+            residues.append(residues_response)
 
             if fit_constant and fit_proportional:
                 # both constant d and proportional e were fitted
@@ -595,9 +606,9 @@ class VectorFitting:
                 constant_coeff.append(0.0)
                 proportional_coeff.append(0.0)
 
-        # save poles, zeros, d, e in actual frequencies (un-normalized)
+        # save poles, residues, d, e in actual frequencies (un-normalized)
         self.poles = poles * norm
-        self.zeros = np.array(zeros) * norm
+        self.residues = np.array(residues) * norm
         self.constant_coeff = np.array(constant_coeff)
         self.proportional_coeff = np.array(proportional_coeff) / norm
 
@@ -685,7 +696,7 @@ class VectorFitting:
         B : ndarray
             State-space matrix B holding coefficients (1, 2, or 0), depending on the respective type of pole in A
         C : ndarray
-            State-space matrix C holding the residues (zeros)
+            State-space matrix C holding the residues
         D : ndarray
             State-space matrix D holding the constants
         E : ndarray
@@ -706,8 +717,8 @@ class VectorFitting:
         # initial checks
         if self.poles is None:
             raise ValueError('self.poles = None; nothing to do. You need to run vector_fit() first.')
-        if self.zeros is None:
-            raise ValueError('self.zeros = None; nothing to do. You need to run vector_fit() first.')
+        if self.residues is None:
+            raise ValueError('self.residues = None; nothing to do. You need to run vector_fit() first.')
         if self.proportional_coeff is None:
             raise ValueError('self.proportional_coeff = None; nothing to do. You need to run vector_fit() first.')
         if self.constant_coeff is None:
@@ -750,7 +761,7 @@ class VectorFitting:
                     B[i_A, j] = 2
                     i_A += 2
 
-        # state-space matrix C holds the residues (zeros)
+        # state-space matrix C holds the residues
         # assemble C = [[R1.11, R1.12, R1.13, ...], [R2.11, R2.12, R2.13, ...], ...]
         C = np.zeros(shape=(n_ports, n_matrix))
         for i in range(n_ports):
@@ -759,15 +770,15 @@ class VectorFitting:
                 # j: column index
                 i_response = i * n_ports + j
 
-                j_zeros = 0
-                for zero in self.zeros[i_response]:
+                j_residues = 0
+                for zero in self.residues[i_response]:
                     if np.imag(zero) == 0.0:
-                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros] = np.real(zero)
-                        j_zeros += 1
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_residues] = np.real(zero)
+                        j_residues += 1
                     else:
-                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros] = np.real(zero)
-                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_zeros + 1] = np.imag(zero)
-                        j_zeros += 2
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_residues] = np.real(zero)
+                        C[i, j * (n_poles_real + 2 * n_poles_cplx) + j_residues + 1] = np.imag(zero)
+                        j_residues += 2
 
         # state-space matrix D holds the constants
         # assemble D = [[d11, d12, ...], [d21, d22, ...], ...]
@@ -867,7 +878,7 @@ class VectorFitting:
                              'first.')
 
         # # the network needs to be reciprocal for this passivity test method to work: S = transpose(S)
-        # if not np.allclose(self.zeros, np.transpose(self.zeros)) or \
+        # if not np.allclose(self.residues, np.transpose(self.residues)) or \
         #         not np.allclose(self.constant_coeff, np.transpose(self.constant_coeff)) or \
         #         not np.allclose(self.proportional_coeff, np.transpose(self.proportional_coeff)):
         #     logging.error('Passivity testing with unsymmetrical model parameters is not supported. '
@@ -1096,21 +1107,21 @@ class VectorFitting:
             k = 0   # column index in C_t
             for j in range(n_ports):
                 i_response = i * n_ports + j
-                z = 0   # column index self.zeros
+                z = 0   # column index self.residues
                 for pole in self.poles:
                     if np.imag(pole) == 0.0:
                         # real pole --> real residue
-                        self.zeros[i_response, z] = C_t[i, k]
+                        self.residues[i_response, z] = C_t[i, k]
                         k += 1
                     else:
                         # complex-conjugate pole --> complex-conjugate residue
-                        self.zeros[i_response, z] = C_t[i, k] + 1j * C_t[i, k + 1]
+                        self.residues[i_response, z] = C_t[i, k] + 1j * C_t[i, k + 1]
                         k += 2
                     z += 1
 
     def write_npz(self, path: str) -> None:
         """
-        Writes the model parameters in :attr:`poles`, :attr:`zeros`,
+        Writes the model parameters in :attr:`poles`, :attr:`residues`,
         :attr:`proportional_coeff` and :attr:`constant_coeff` to a labeled NumPy .npz file.
 
         Parameters
@@ -1131,8 +1142,8 @@ class VectorFitting:
         if self.poles is None:
             logging.error('Nothing to export; Poles have not been fitted.')
             return
-        if self.zeros is None:
-            logging.error('Nothing to export; Zeros have not been fitted.')
+        if self.residues is None:
+            logging.error('Nothing to export; Residues have not been fitted.')
             return
         if self.proportional_coeff is None:
             logging.error('Nothing to export; Proportional coefficients have not been fitted.')
@@ -1145,13 +1156,13 @@ class VectorFitting:
 
         logging.warning('Exporting results as compressed NumPy array to {}'.format(path))
         np.savez_compressed(os.path.join(path, 'coefficients_{}'.format(filename)),
-                            poles=self.poles, zeros=self.zeros, proportionals=self.proportional_coeff,
+                            poles=self.poles, residues=self.residues, proportionals=self.proportional_coeff,
                             constants=self.constant_coeff)
 
     def read_npz(self, file: str) -> None:
         """
-        Reads all model parameters :attr:`poles`, :attr:`zeros`, :attr:`proportional_coeff` and :attr:`constant_coeff`
-        from a labeled NumPy .npz file.
+        Reads all model parameters :attr:`poles`, :attr:`residues`, :attr:`proportional_coeff` and
+        :attr:`constant_coeff` from a labeled NumPy .npz file.
 
         Parameters
         ----------
@@ -1165,8 +1176,9 @@ class VectorFitting:
         Notes
         -----
         The .npz file needs to include the model parameters as individual NumPy arrays (ndarray) labeled '*poles*',
-        '*zeros*', '*proportionals*' and '*constants*'. The shapes of those arrays need to match the network properties
-        in :class:`network` (correct number of ports). Preferably, the .npz file was created by :func:`write_npz`.
+        '*residues*', '*proportionals*' and '*constants*'. The shapes of those arrays need to match the network
+        properties in :class:`network` (correct number of ports). Preferably, the .npz file was created by
+        :func:`write_npz`.
 
         See Also
         --------
@@ -1175,15 +1187,23 @@ class VectorFitting:
 
         with np.load(file) as data:
             poles = data['poles']
-            zeros = data['zeros']
+
+            # legacy support for exported residues
+            if 'zeros' in data:
+                # old .npz file from deprecated write_npz() with residues called 'zeros'
+                residues = data['zeros']
+            else:
+                # new .npz file from current write_npz()
+                residues = data['residues']
+
             proportional_coeff = data['proportionals']
             constant_coeff = data['constants']
 
             n_ports = int(np.sqrt(len(constant_coeff)))
             n_resp = n_ports ** 2
-            if np.shape(zeros)[0] == np.shape(proportional_coeff)[0] == np.shape(constant_coeff)[0] == n_resp:
+            if np.shape(residues)[0] == np.shape(proportional_coeff)[0] == np.shape(constant_coeff)[0] == n_resp:
                 self.poles = poles
-                self.zeros = zeros
+                self.residues = residues
                 self.proportional_coeff = proportional_coeff
                 self.constant_coeff = constant_coeff
             else:
@@ -1212,16 +1232,16 @@ class VectorFitting:
         """
 
         if self.poles is None:
-            logging.error('Returning zero; Poles have not been fitted.')
+            logging.error('Returning a zero-vector; Poles have not been fitted.')
             return np.zeros_like(freqs)
-        if self.zeros is None:
-            logging.error('Returning zero; Zeros have not been fitted.')
+        if self.residues is None:
+            logging.error('Returning a zero-vector; Residues have not been fitted.')
             return np.zeros_like(freqs)
         if self.proportional_coeff is None:
-            logging.error('Returning zero; Proportional coefficients have not been fitted.')
+            logging.error('Returning a zero-vector; Proportional coefficients have not been fitted.')
             return np.zeros_like(freqs)
         if self.constant_coeff is None:
-            logging.error('Returning zero; Constants have not been fitted.')
+            logging.error('Returning a zero-vector; Constants have not been fitted.')
             return np.zeros_like(freqs)
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
@@ -1229,16 +1249,16 @@ class VectorFitting:
         s = 2j * np.pi * np.array(freqs)
         n_ports = int(np.sqrt(len(self.constant_coeff)))
         i_response = i * n_ports + j
-        zeros = self.zeros[i_response]
+        residues = self.residues[i_response]
 
         resp = self.proportional_coeff[i_response] * s + self.constant_coeff[i_response]
         for i, pole in enumerate(self.poles):
             if np.imag(pole) == 0.0:
                 # real pole
-                resp += zeros[i] / (s - pole)
+                resp += residues[i] / (s - pole)
             else:
                 # complex conjugate pole
-                resp += zeros[i] / (s - pole) + np.conjugate(zeros[i]) / (s - np.conjugate(pole))
+                resp += residues[i] / (s - pole) + np.conjugate(residues[i]) / (s - np.conjugate(pole))
         return resp
 
     @check_plotting
@@ -1565,8 +1585,8 @@ class VectorFitting:
         ax.scatter((np.real(self.poles), np.real(self.poles)),
                      (np.imag(self.poles), -1 * np.imag(self.poles)),
                      marker='x', label='Pole')
-        ax.scatter((np.real(self.zeros[i_response]), np.real(self.zeros[i_response])),
-                     (np.imag(self.zeros[i_response]), -1 * np.imag(self.zeros[i_response])),
+        ax.scatter((np.real(self.residues[i_response]), np.real(self.residues[i_response])),
+                     (np.imag(self.residues[i_response]), -1 * np.imag(self.residues[i_response])),
                      marker='o', label='Zero')
         ax.set_xlabel('Re{s} (rad/s)')
         ax.set_ylabel('Im{s} (rad/s)')
@@ -1742,29 +1762,29 @@ class VectorFitting:
                     elif c > 0:
                         f.write('C{}{} nt{}{} 0 {}\n'.format(n + 1, j + 1, n + 1, j + 1, formatter(c)))
 
-                    # add pairs of poles and zeros
+                    # add pairs of poles and residues
                     for i_pole in range(len(self.poles)):
                         pole = self.poles[i_pole]
-                        zero = self.zeros[i_response, i_pole]
+                        residue = self.residues[i_response, i_pole]
                         node = get_new_subckt_identifier() + ' nt{}{}'.format(n + 1, j + 1)
 
-                        if np.real(zero) < 0.0:
+                        if np.real(residue) < 0.0:
                             # multiplication with -1 required, otherwise the values for RLC would be negative
                             # this gets compensated by inverting the transfer current direction for this subcircuit
-                            zero = -1 * zero
+                            residue = -1 * residue
                             node += '_inv'
 
                         if np.imag(pole) == 0.0:
                             # real pole; add rl_admittance
-                            l = 1 / np.real(zero)
-                            r = -1 * np.real(pole) / np.real(zero)
+                            l = 1 / np.real(residue)
+                            r = -1 * np.real(pole) / np.real(residue)
                             f.write(node + ' 0 rl_admittance res={} ind={}\n'.format(formatter(r), formatter(l)))
                         else:
                             # complex pole of a conjugate pair; add rcl_vccs_admittance
-                            l = 1 / (2 * np.real(zero))
-                            b = -2 * (np.real(zero) * np.real(pole) + np.imag(zero) * np.imag(pole))
-                            r = -1 * np.real(pole) / np.real(zero)
-                            c = 2 * np.real(zero) / (np.abs(pole) ** 2)
+                            l = 1 / (2 * np.real(residue))
+                            b = -2 * (np.real(residue) * np.real(pole) + np.imag(residue) * np.imag(pole))
+                            r = -1 * np.real(pole) / np.real(residue)
+                            c = 2 * np.real(residue) / (np.abs(pole) ** 2)
                             gm_add = b * l * c
                             if gm_add < 0:
                                 m = -1
@@ -1781,11 +1801,11 @@ class VectorFitting:
 
             f.write('*\n')
 
-            # subcircuit for an active RCL+VCCS equivalent admittance Y(s) of a complex conjugated pole-zero pair H(s)
-            # z = z' + j * z"
-            # p = p' + j * p"
-            # H(s)  = z / (s - p) + conj(z) / (s - conj(p))
-            #       = (2 * z' * s - 2 * (z'p' + z"p")) / (s ** 2 - 2 * p' * s + |p| ** 2)
+            # subcircuit for an active RCL+VCCS equivalent admittance Y(s) of a complex-conjugate pole-residue pair H(s)
+            # Residue: c = c' + j * c"
+            # Pole: p = p' + j * p"
+            # H(s)  = c / (s - p) + conj(c) / (s - conj(p))
+            #       = (2 * c' * s - 2 * (c'p' + c"p")) / (s ** 2 - 2 * p' * s + |p| ** 2)
             # Y(S)  = (1 / L * s + b) / (s ** 2 + R / L * s + 1 / (L * C))
             f.write('.SUBCKT rcl_vccs_admittance n_pos n_neg res=1k cap=1n ind=100p gm=1m mult=1\n')
             f.write('L1 n_pos 1 {ind}\n')
@@ -1796,8 +1816,8 @@ class VectorFitting:
 
             f.write('*\n')
 
-            # subcircuit for a passive RL equivalent admittance Y(s) of a real pole-zero H(s)
-            # H(s) = z / (s - p)
+            # subcircuit for a passive RL equivalent admittance Y(s) of a real pole-residue pair H(s)
+            # H(s) = c / (s - p)
             # Y(s) = 1 / L / (s + s * R / L)
             f.write('.SUBCKT rl_admittance n_pos n_neg res=1k ind=100p\n')
             f.write('L1 n_pos 1 {ind}\n')
