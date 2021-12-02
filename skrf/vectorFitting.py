@@ -622,7 +622,7 @@ class VectorFitting:
         logging.info('\n### Vector fitting finished in {} seconds.\n'.format(self.wall_clock_time))
 
     def get_rms_error(self, i=-1, j=-1, parameter_type: str = 's'):
-        """
+        r"""
         Returns the root-mean-square (rms) error magnitude of the fit, i.e.
         :math:`\sqrt{ \mathrm{mean}(|S - S_\mathrm{fit} |^2) }`,
         either for an individual response :math:`S_{i+1,j+1}` or for larger slices of the network.
