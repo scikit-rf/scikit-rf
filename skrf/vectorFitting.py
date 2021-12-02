@@ -1554,46 +1554,6 @@ class VectorFitting:
         return ax
 
     @check_plotting
-    def plot_pz(self, i: int, j: int, ax: mplt.Axes = None) -> mplt.Axes:
-        """
-        Plots a pole-zero diagram of the fit of the model response :math:`H_{i+1,j+1}`.
-
-        Parameters
-        ----------
-        i : int
-            Row index of the response.
-
-        j : int
-            Column index of the response.
-
-        ax : :class:`matplotlib.Axes` object or None
-            matplotlib axes to draw on. If None, the current axes is fetched with :func:`gca()`.
-
-        Returns
-        -------
-        :class:`matplotlib.Axes`
-            matplotlib axes used for drawing. Either the passed :attr:`ax` argument or the one fetch from the current
-            figure.
-        """
-
-        if ax is None:
-            ax = mplt.gca()
-
-        n_ports = int(np.sqrt(len(self.constant_coeff)))
-        i_response = i * n_ports + j
-
-        ax.scatter((np.real(self.poles), np.real(self.poles)),
-                     (np.imag(self.poles), -1 * np.imag(self.poles)),
-                     marker='x', label='Pole')
-        ax.scatter((np.real(self.residues[i_response]), np.real(self.residues[i_response])),
-                     (np.imag(self.residues[i_response]), -1 * np.imag(self.residues[i_response])),
-                     marker='o', label='Zero')
-        ax.set_xlabel('Re{s} (rad/s)')
-        ax.set_ylabel('Im{s} (rad/s)')
-        ax.legend(loc='best')
-        return ax
-
-    @check_plotting
     def plot_convergence(self, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the history of the model residue parameter **d_res** during the iterative pole relocation process of the
