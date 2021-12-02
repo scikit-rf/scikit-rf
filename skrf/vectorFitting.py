@@ -190,7 +190,8 @@ class VectorFitting:
             pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
         else:
-            logging.warning('Invalid choice of initial pole spacing; proceeding with linear spacing')
+            warnings.warn('Invalid choice of initial pole spacing; proceeding with linear spacing.', UserWarning,
+                          stacklevel=2)
             pole_freqs_real = np.linspace(fmin, fmax, n_poles_real)
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
 
@@ -229,7 +230,8 @@ class VectorFitting:
                 elif parameter_type.lower() == 'y':
                     freq_responses.append(self.network.y[:, i, j])
                 else:
-                    logging.warning('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with S representation.')
+                    warnings.warn('Invalid choice of matrix parameter type (S, Z, or Y); proceeding with scattering '
+                                  'representation.', UserWarning, stacklevel=2)
                     freq_responses.append(self.network.s[:, i, j])
         freq_responses = np.array(freq_responses)
 
@@ -407,7 +409,7 @@ class VectorFitting:
                 # d_res is too small, discard solution and proceed the |d_res| = tol_res
                 d_res = tol_res * (d_res / np.abs(d_res))
                 warnings.warn('Replacing d_res solution as it was too small. This is not a good sign and probably '
-                              'means that more starting poles are required', RuntimeWarning)
+                              'means that more starting poles are required', RuntimeWarning, stacklevel=2)
 
             self.d_res_history.append(d_res)
             logging.info('d_res = {}'.format(d_res))
@@ -483,12 +485,12 @@ class VectorFitting:
                     warnings.warn('Vector Fitting: The pole relocation process barely converged to tolerance. '
                                   'It took the max. number of iterations (N_max = {}). '
                                   'The results might not have converged properly. '.format(self.max_iterations)
-                                  + msg_illcond, RuntimeWarning)
+                                  + msg_illcond, RuntimeWarning, stacklevel=2)
                 else:
                     warnings.warn('Vector Fitting: The pole relocation process stopped after reaching the '
                                   'maximum number of iterations (N_max = {}). '
                                   'The results did not converge properly. '.format(self.max_iterations)
-                                  + msg_illcond, RuntimeWarning)
+                                  + msg_illcond, RuntimeWarning, stacklevel=2)
 
             if stop:
                 iterations = 0
@@ -1097,7 +1099,8 @@ class VectorFitting:
 
         # PASSIVATION PROCESS DONE; model is either passive or max. number of iterations have been exceeded
         if t == self.max_iterations:
-            logging.error('Passivity enforcement: Aborting after the max. number of iterations has been exceeded.')
+            warnings.warn('Passivity enforcement: Aborting after the max. number of iterations has been exceeded.',
+                          RuntimeWarning, stacklevel=2)
 
         # save/update model parameters (perturbed residues)
         self.history_max_sigma = np.array(self.history_max_sigma)
@@ -1140,21 +1143,22 @@ class VectorFitting:
         """
 
         if self.poles is None:
-            logging.error('Nothing to export; Poles have not been fitted.')
+            warnings.warn('Nothing to export; Poles have not been fitted.', RuntimeWarning, stacklevel=2)
             return
         if self.residues is None:
-            logging.error('Nothing to export; Residues have not been fitted.')
+            warnings.warn('Nothing to export; Residues have not been fitted.', RuntimeWarning, stacklevel=2)
             return
         if self.proportional_coeff is None:
-            logging.error('Nothing to export; Proportional coefficients have not been fitted.')
+            warnings.warn('Nothing to export; Proportional coefficients have not been fitted.', RuntimeWarning,
+                          stacklevel=2)
             return
         if self.constant_coeff is None:
-            logging.error('Nothing to export; Constants have not been fitted.')
+            warnings.warn('Nothing to export; Constants have not been fitted.', RuntimeWarning, stacklevel=2)
             return
 
         filename = self.network.name
 
-        logging.warning('Exporting results as compressed NumPy array to {}'.format(path))
+        warnings.warn('Exporting results as compressed NumPy array to {}'.format(path), RuntimeWarning, stacklevel=2)
         np.savez_compressed(os.path.join(path, 'coefficients_{}'.format(filename)),
                             poles=self.poles, residues=self.residues, proportionals=self.proportional_coeff,
                             constants=self.constant_coeff)
@@ -1172,6 +1176,11 @@ class VectorFitting:
         Returns
         -------
         None
+
+        Raises
+        ------
+        ValueError
+            If the length of the parameters from the file does not match the size of the Network in :attr:`network`.
 
         Notes
         -----
@@ -1207,7 +1216,8 @@ class VectorFitting:
                 self.proportional_coeff = proportional_coeff
                 self.constant_coeff = constant_coeff
             else:
-                logging.error('Length of the provided parameters does not match the network size.')
+                raise ValueError('Length of the provided parameters does not match the network size. Please initialize '
+                                 'VectorFitting with a suited Network first.')
 
     def get_model_response(self, i: int, j: int, freqs: Any = None) -> np.ndarray:
         """
@@ -1232,16 +1242,17 @@ class VectorFitting:
         """
 
         if self.poles is None:
-            logging.error('Returning a zero-vector; Poles have not been fitted.')
+            warnings.warn('Returning a zero-vector; Poles have not been fitted.', RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.residues is None:
-            logging.error('Returning a zero-vector; Residues have not been fitted.')
+            warnings.warn('Returning a zero-vector; Residues have not been fitted.', RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if self.proportional_coeff is None:
-            logging.error('Returning a zero-vector; Proportional coefficients have not been fitted.')
+            warnings.warn('Returning a zero-vector; Proportional coefficients have not been fitted.', RuntimeWarning,
+                          stacklevel=2)
             return np.zeros_like(freqs)
         if self.constant_coeff is None:
-            logging.error('Returning a zero-vector; Constants have not been fitted.')
+            warnings.warn('Returning a zero-vector; Constants have not been fitted.', RuntimeWarning, stacklevel=2)
             return np.zeros_like(freqs)
         if freqs is None:
             freqs = np.linspace(np.amin(self.network.f), np.amax(self.network.f), 1000)
