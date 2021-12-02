@@ -1,11 +1,12 @@
-name: Documentation notebooks testing
+name: notebooks testing
 
 on: [push, pull_request]
 
 jobs:
-  Tests:
+  test-notebooks:
 
     runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
     strategy:
       matrix:
         python-version: ['3.9']
