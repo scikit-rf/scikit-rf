@@ -90,8 +90,6 @@ class VectorFitting:
         self.poles = None
         """ Instance variable holding the list of fitted poles. Will be initialized by :func:`vector_fit`. """
 
-        self.zeros = None
-
         self.residues = None
         """ Instance variable holding the list of fitted residues. Will be initialized by :func:`vector_fit`. """
 
