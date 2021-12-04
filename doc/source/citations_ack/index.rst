@@ -23,7 +23,7 @@ You can also include a link to `<www.scikit-rf.org>`_ (if the journal allows thi
 For academic citations, please cite the `IEEE Microwave Magazine article <https://ieeexplore.ieee.org/document/9632487>`_ that some of the community members wrote.
 The IEEE-style citation for this paper is
 
-``A. Arsenovic et al., "scikit-rf: An Open Source Python Package for Microwave Network Creation, Analysis, and Calibration [Speaker’s Corner]," in IEEE Microwave Magazine, vol. 23, no. 1, pp. 98-105, Jan. 2022, doi: 10.1109/MMM.2021.3117139.``
+  A. Arsenovic *et al.*, "scikit-rf: An Open Source Python Package for Microwave Network Creation, Analysis, and Calibration [Speaker’s Corner]," in *IEEE Microwave Magazine*, vol. 23, no. 1, pp. 98-105, Jan. 2022, doi: 10.1109/MMM.2021.3117139.
 
 and in BibTex format
 
