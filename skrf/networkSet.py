@@ -47,6 +47,7 @@ NetworkSet Utilities
 import zipfile
 import numpy as npy
 import typing
+from typing import (Any, Union, List, Dict)
 from io import BytesIO
 from scipy.interpolate import interp1d
 from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
@@ -56,7 +57,7 @@ from . util import now_string_2_dt
 try:
     from numpy.typing import ArrayLike
 except ImportError:
-    ArrayLike = typing.Any
+    ArrayLike = Any
 
 class NetworkSet(object):
     """
@@ -119,7 +120,7 @@ class NetworkSet(object):
 
     """
 
-    def __init__(self, ntwk_set: typing.Union[list, dict], name: str = None):
+    def __init__(self, ntwk_set: Union[list, dict], name: str = None):
         """
         Initialize for NetworkSet.
 
@@ -131,6 +132,9 @@ class NetworkSet(object):
                 the name of the NetworkSet, given to the Networks returned
                 from properties of this class.
         """
+        self.dims = None
+        self.coords = None
+            
         if not isinstance(ntwk_set, (list, dict)):
             raise ValueError('NetworkSet requires a list as argument')
 
@@ -143,23 +147,46 @@ class NetworkSet(object):
         if len(ntwk_set) == 0:
             raise ValueError('Input list should not be empty')
 
-        # did they pass a list of Networks?
-        if not all([isinstance(ntwk, Network) for ntwk in ntwk_set]):
-            raise(TypeError('input must be list of Network types'))
+        # did they pass a list of Networks or a list of list (of len=3)?
+        if all([isinstance(ntwk, Network) for ntwk in ntwk_set]):
+            # convert the list of Network into a the internal NetworkSet structure
+            ntwk_set = [(None, None, ntwk) for ntwk in ntwk_set]
 
+        elif all(len(item)==3 for item in ntwk_set):           
+            # are all the dimensions the same?
+            if any(dims != ntwk_set[0][0] for (dims, _, _) in ntwk_set):
+                raise(ValueError('Dimensions should all the same.'))
+            
+            self.dims = list(ntwk_set[0][0]) if ntwk_set[0][0] is not None else None
+                        
+            if self.dims is not None:
+                # are the number of coords equals the number of dimensions?
+                if any(len(coord) != len(self.dims) for (_, coord, _) in ntwk_set):
+                    raise(ValueError('Coordinates length should match dimensions length'))
+            
+                # extract the coordinates
+                # could have been much simpler using numpy but the coords can be string
+                coords_list = [coord for (_, coord, _) in ntwk_set]
+                coords_all = [[coord[idx_dim] for coord in coords_list] \
+                              for (idx_dim, dim) in enumerate(self.dims)]
+                self.coords = {dim:list(set(coord_all)) \
+                               for (dim, coord_all) in zip(self.dims, coords_all)}
+             
+        else:
+            raise(TypeError('input must be list of Network types or a list of (tuple, tuple, Network)'))
+
+
+        self.ntwk_set = ntwk_set
+        self.name = name        
+        
         # do all Networks have the same # ports?
-        if len (set([ntwk.number_of_ports for ntwk in ntwk_set])) > 1:
-            raise(ValueError('All elements in list of Networks must have same number of ports'))
+        if len (set([ntwk.number_of_ports for ntwk in self._ntwk_list])) > 1:
+            raise(ValueError('All Networks must have the same number of ports'))
 
         # is all frequency information the same?
-        if npy.all([(ntwk_set[0].frequency == ntwk.frequency) \
-                for ntwk in ntwk_set]) == False:
+        if npy.all([(self._ntwk_list[0].frequency == ntwk.frequency) \
+                for ntwk in self._ntwk_list]) == False:
             raise(ValueError('All elements in list of Networks must have same frequency information'))
-
-        ## initialization
-        # we are good to go
-        self.ntwk_set = ntwk_set
-        self.name = name
 
         # create list of network properties, which we use to dynamically
         # create a statistical properties of this set
@@ -192,6 +219,50 @@ class NetworkSet(object):
         for operator_name in \
                 ['__pow__','__floordiv__','__mul__','__div__','__add__','__sub__']:
             self.__add_a_operator(operator_name)
+
+    @property
+    def _ntwk_list(self) -> list:
+        "Return a list of all the Networks contained in the networkset."
+        return [ntwk for (_, _, ntwk) in self.ntwk_set]
+
+    @property
+    def dims(self) -> Union[None, List]:
+        """
+        Return the networkset dimensions.
+
+        Returns
+        -------
+        dims : list or None
+            list of the dimension names or None.
+
+        """
+        return self._dims if self._dims is not None else None
+    
+    @dims.setter
+    def dims(self, values):
+        # if self.dims > 0:
+        #     if len(values) != self.dims:
+        #         raise(ValueError('Passed dimensions must have the same size than current ones.'))
+        self._dims = values
+        # else:
+            # raise(ValueError('No dimensions have been passed during the construction of this networkset.'))
+    
+    @property
+    def coords(self) -> Union[None, Dict]:
+        """
+        Return the networset coordinates.
+
+        Returns
+        -------
+        coords : dict or None
+            Dictionnary containing dimensions and assoiated unique coordinates 
+
+        """
+        return self._coords
+
+    @coords.setter
+    def coords(self, values):
+        self._coords = values
 
     @classmethod
     def from_zip(cls, zip_file_name: str, sort_filenames: bool = True, *args, **kwargs):
@@ -329,16 +400,60 @@ class NetworkSet(object):
     def __repr__(self):
         return self.__str__()
 
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         """
         Return an element of the network set.
         """
         if isinstance(key, str):
             # if they pass a string then slice each network in this set
-            return NetworkSet([k[key] for k in self.ntwk_set],
+            return NetworkSet([(dims, coords, k[key]) for (dims, coords, k) in self.ntwk_set],
                               name = self.name)
         else:
             return self.ntwk_set[key]
+
+    def __setitem__(self, i, v):
+        """
+        Set an element of the network set.
+
+        Parameters
+        ----------
+        i : int
+            index where to set the element.
+        v : Network or list (dims, coords, Network)
+            Network to set.
+
+        Returns
+        -------
+        None.
+
+        """
+        if isinstance(v, (list, tuple)) and (len(v) == 3):
+            self.ntwk_set[i] = v
+        elif isinstance(v, Network):
+            self.ntwk_set[i] = (None, None, v)
+        else:
+            raise(TypeError('value should be a Network or a list or tuple like (dims, coords, Network'))
+
+    def append(self, v):
+        """
+        Append an element to the network set.
+
+        Parameters
+        ----------
+        v : Network or list (dims, coords, Network)
+            Network to set.
+
+        Returns
+        -------
+        None.
+
+        """
+        if isinstance(v, (list, tuple)) and (len(v) == 3):
+            self.ntwk_set.append(v)
+        elif isinstance(v, Network):
+            self.ntwk_set.append(None, None, v)
+        else:
+            raise(TypeError('value should be a Network or a list or tuple like (dims, coords, Network'))        
 
     def __len__(self) -> int:
         """
@@ -369,7 +484,7 @@ class NetworkSet(object):
             return False
         # compare all networks in the order of the list
         # return False as soon as 2 networks are different
-        for (ntwk, ntwk_other) in zip(self.ntwk_set, other):
+        for ((_, _, ntwk), (_, _, ntwk_other)) in zip(self.ntwk_set, other):
             if ntwk != ntwk_other:
                 return False
         
@@ -403,7 +518,7 @@ class NetworkSet(object):
 
 
         """
-        fget = lambda self: fon(self.ntwk_set,func,network_property_name,\
+        fget = lambda self: fon(self._ntwk_list,func,network_property_name,\
                 name = self.name)
         setattr(self.__class__,func.__name__+'_'+network_property_name,\
                 property(fget))
@@ -470,7 +585,7 @@ class NetworkSet(object):
             and the Networks as values.
 
         """
-        return dict([(k.name, k) for k in self.ntwk_set])
+        return dict([(ntwk.name, ntwk) for (_, _, ntwk) in self.ntwk_set])
 
     def to_s_dict(self):
         """
@@ -510,7 +625,7 @@ class NetworkSet(object):
         ns: :class: `~skrf.networkSet.NetworkSet`
             
         """
-        output = [ntwk.__getattribute__(network_method_name)(*args, **kwargs) for ntwk in self.ntwk_set]
+        output = [ntwk.__getattribute__(network_method_name)(*args, **kwargs) for ntwk in self._ntwk_list]
         if isinstance(output[0],Network):
             return NetworkSet(output)
         else:
@@ -518,29 +633,31 @@ class NetworkSet(object):
 
     def copy(self) -> 'NetworkSet':
         """
-        Copie each network of the network set.
+        Copies each network of the network set.
         
         Return
         ------
         ns: :class: `~skrf.networkSet.NetworkSet`
         
         """
-        return NetworkSet([k.copy() for k in self.ntwk_set])
+        return NetworkSet([(dims, coords, ntwk.copy()) \
+                           for (dims, coords, ntwk) in self.ntwk_set])
 
-    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> typing.Union[None, 'NetworkSet']:
+    def sort(self, key=lambda x: x[2].name, inplace: bool = True, **kwargs) -> Union[None, 'NetworkSet']:
         r"""
         Sort this network set.
 
         Parameters
         ----------
-        key:
+        key: string or sorting function
+            key to sort the networkset. Default is sorting by network name.
             
         inplace: bool
             Sort the NetworkSet object directly if True, 
             return the sorted NetworkSet if False. Default is True.
         
         \*\*kwargs : dict
-            keyword args passed to builtin sorted acting on self.ntwk_set
+            keyword args passed to builtin sorted acting on self._ntwk_list
 
         Return
         ------
@@ -561,6 +678,9 @@ class NetworkSet(object):
         
 
         """
+        # no key passed: sort by network name
+        
+        # TODO : deal with parameters
         sorted_ns = sorted(self.ntwk_set, key = key, **kwargs)
         if inplace:
             self.ntwk_set = sorted_ns
@@ -578,7 +698,7 @@ class NetworkSet(object):
 
         """
         idx = npy.random.randint(0,len(self), n)
-        out = [self.ntwk_set[k] for k in idx]
+        out = [self._ntwk_list[k] for k in idx]
 
         if n ==1:
             return out[0]
@@ -593,7 +713,7 @@ class NetworkSet(object):
         -----
         This is just
 
-        `NetworkSet([k for k in self if s in k.name])`
+        `NetworkSet([k for (_, _, k) in self if s in k.name])`
 
         Parameters
         ----------
@@ -610,7 +730,7 @@ class NetworkSet(object):
         >>> ns.filter('monday')
 
         """
-        return NetworkSet([k for k in self if s in k.name])
+        return NetworkSet([k for (_, _, k) in self if s in k.name])
 
     def scalar_mat(self, param: str = 's') -> npy.ndarray:
         """
@@ -630,11 +750,11 @@ class NetworkSet(object):
         x : :class: npy.ndarray
             
         """
-        ntwk = self[0]
+        ntwk = self._ntwk_list[0]
         nfreq = len(ntwk)
         # x will have the axes (frequency, observations, ports)
         x = npy.array([[mf.flatten_c_mat(k.__getattribute__(param)[f]) \
-            for k in self] for f in range(nfreq)])
+            for (_, _, k) in self.ntwk_set] for f in range(nfreq)])
 
         return x
 
@@ -708,7 +828,7 @@ class NetworkSet(object):
             NetworkSet of inverted Networks
 
         """
-        return NetworkSet( [ntwk.inv for ntwk in self.ntwk_set])
+        return NetworkSet( [(dim, coord, ntwk.inv) for (dim, coord, ntwk) in self.ntwk_set])
 
     def add_polar_noise(self, ntwk: Network) -> Network:
         """
@@ -884,13 +1004,13 @@ class NetworkSet(object):
         """
         from pandas import DataFrame, Series, Index
         index = Index(
-            self[0].frequency.f_scaled,
-            name='Freq(%s)'%self[0].frequency.unit
+            self[0][2].frequency.f_scaled,
+            name='Freq(%s)'%self[0][2].frequency.unit
             )
         df = DataFrame(
             dict([('%s'%(k.name),
                 Series(k.__getattribute__(attr)[:,m,n],index=index))
-                for k in self]),
+                for (_, _, k) in self]),
             index = index,
             )
         return df
@@ -932,9 +1052,9 @@ class NetworkSet(object):
 
 
         """
-        ntw = self[0].copy()
+        ntw = self[0][2].copy()
         # Interpolating the scattering parameters
-        s = npy.array([self[idx].s for idx in range(len(self))])
+        s = npy.array([self[idx][2].s for idx in range(len(self))])
         f = interp1d(ntw_param, s, axis=0, kind=interp_kind)
         ntw.s = f(x)
 

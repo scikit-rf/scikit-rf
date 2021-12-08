@@ -135,8 +135,8 @@ class Dot(CalibrationSet):
             raise(IndexError('all measured NetworkSets must have same length for dot product combinatoric function'))
 
         self.cal_list = []
-        for k in range(len(measured_sets[0])):
-            measured = [measured_set[k] for measured_set in measured_sets]
+        for k in range(len(measured_sets[0][2])):
+            measured = [measured_set[k][2] for measured_set in measured_sets]
             cal = self.cal_class(ideals=ideals, measured= measured,
                                  *args,**kwargs)
             self.cal_list.append(cal)
