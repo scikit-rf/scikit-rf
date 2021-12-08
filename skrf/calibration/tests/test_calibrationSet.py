@@ -98,6 +98,3 @@ class DotEightTerm(unittest.TestCase, CalsetTest):
         out.name = ntwk.name
         return out
     
-
-suite = unittest.TestLoader().loadTestsFromTestCase(DotOneport)
-unittest.TextTestRunner(verbosity=2).run(suite)

@@ -35,34 +35,7 @@ class NetworkSetTestCase(unittest.TestCase):
         # Test nominal 
         self.ns = rf.NetworkSet([self.ntwk1, self.ntwk2, self.ntwk3])
         
-        # Test multi-dim networkset
-        # total number of different networks
-        M = 5
-        # create M dummy networks
-        ntwks = [rf.Network(frequency=self.freq1, s=np.random.rand(len(self.freq1),2,2), 
-                            name=f'ntwk_{m}') for m in range(M) ]
-        # dimensions
-        dims = ('a', 'b')
-        # coordinates
-        a = [0, 1, 2]
-        b = [10, 20]
-        
-        data_vars = [
-            (('a', 'b'), (0, 10), ntwks[0]),
-            (('a', 'b'), (1, 10), ntwks[1]),
-            (('a', 'b'), (2, 10), ntwks[2]),
-            (('a', 'b'), (0, 20), ntwks[3]),
-            (('a', 'b'), (1, 20), ntwks[4]),
-            ]
-        self.ns_ndims = rf.NetworkSet(data_vars)
-        
-        # various cases
-        data_vars = [
-            (None, None, ntwks[0]),
-            (None, None, ntwks[1]),
-            ]
-        self.ns_ndims = rf.NetworkSet(data_vars)
-                
+
     def test_constructor(self):
         """
         Test the `NetworkSet()` constructor.
@@ -93,18 +66,6 @@ class NetworkSetTestCase(unittest.TestCase):
         ntwk_set1 = rf.NetworkSet([self.ntwk_freq1_1p, self.ntwk_freq1_1p])
         ntwk_set2 = rf.NetworkSet([self.ntwk_freq2_1p, self.ntwk_freq2_1p])
 
-    def test_setItems(self):
-        """
-        Test the item setter.
-        """
-        ns = self.ns.copy()
-        # set just a Network
-        ns[0] = self.ntwk4
-        # set a Network with dims and coords
-        ns[1] = [None, None, self.ntwk1]
-        ns[1] = [('a', 'b'), (0, 1), self.ntwk2]
-
-
     def test_from_zip(self):
         """
         Test the `NetworkSet.from_zip()` constructor class method.
@@ -128,8 +89,8 @@ class NetworkSetTestCase(unittest.TestCase):
         Test the `NetworkSet.from_s_dict()` constructor class method.
         """
         d = {'ntwk1': self.ntwk1.s,
-              'ntwk2': self.ntwk2.s, 
-              'ntwk3': self.ntwk3.s}
+             'ntwk2': self.ntwk2.s, 
+             'ntwk3': self.ntwk3.s}
         ntwk_set = rf.NetworkSet.from_s_dict(d, frequency=self.ntwk1.frequency)
 
     def test_to_dict(self):
@@ -139,7 +100,7 @@ class NetworkSetTestCase(unittest.TestCase):
         d = self.ns.to_dict()
         self.assertIsInstance(d, dict)
         self.assertEqual(len(d), len(self.ns))
-        for (key, (dims, coords, ntwk)) in zip(d.keys(), self.ns):
+        for (key, ntwk) in zip(d.keys(), self.ns):
             self.assertEqual(d[key], ntwk)
         
     def test_to_s_dict(self):
@@ -149,7 +110,7 @@ class NetworkSetTestCase(unittest.TestCase):
         s_d = self.ns.to_s_dict()
         self.assertIsInstance(s_d, dict)
         self.assertEqual(len(s_d), len(self.ns))
-        for (key, (dims, coords, ntwk)) in zip(s_d.keys(), self.ns):
+        for (key, ntwk) in zip(s_d.keys(), self.ns):
             np.testing.assert_equal(s_d[key], ntwk.s)
 
     def test_copy(self):
@@ -162,22 +123,20 @@ class NetworkSetTestCase(unittest.TestCase):
         copy_inversed = rf.NetworkSet([self.ntwk3, self.ntwk2, self.ntwk1])
         self.assertNotEqual(copy_inversed, self.ns)
 
-        copy_ndims = self.ns_ndims.copy()
-        self.assertEqual(copy_ndims, self.ns_ndims)
 
     def test_sort(self):
-        """
+        """    
         Test the `sort` method.
         """
         ns_unsorted = rf.NetworkSet([self.ntwk2, self.ntwk1, self.ntwk3])
         # not inplace sorting
         ns_sorted = ns_unsorted.sort(inplace=False)
-        for (idx, (_, _, ntwk)) in enumerate(ns_sorted):
+        for (idx, ntwk) in enumerate(ns_sorted):
             self.assertEqual(ntwk.name, f'ntwk{idx+1}')
             
         # inplace sorting
         ns_unsorted.sort()
-        for (idx, (_, _, ntwk)) in enumerate(ns_unsorted):
+        for (idx, ntwk) in enumerate(ns_unsorted):
             self.assertEqual(ntwk.name, f'ntwk{idx+1}')  
             
         # sorting with respect to a property
@@ -185,9 +144,9 @@ class NetworkSetTestCase(unittest.TestCase):
         self.ntwk2.dummy = 10
         self.ntwk3.dummy = 40
         ns_unsorted = rf.NetworkSet([self.ntwk2, self.ntwk1, self.ntwk3])
-        ns_unsorted.sort(key=lambda x: x[2].dummy)  # dummy -> 10, 40, 100
+        ns_unsorted.sort(key=lambda x: x.dummy)  # dummy -> 10, 40, 100
         self.assertEqual(ns_unsorted, 
-                          rf.NetworkSet([self.ntwk2, self.ntwk3, self.ntwk1]))
+                         rf.NetworkSet([self.ntwk2, self.ntwk3, self.ntwk1]))
         
     def test_filter(self):
         """
@@ -196,7 +155,7 @@ class NetworkSetTestCase(unittest.TestCase):
         ns_unfiltered = rf.NetworkSet([self.ntwk2, self.ntwk1, self.ntwk3])
         ns_filtered = ns_unfiltered.filter('ntwk2')
         self.assertEqual(len(ns_filtered), 1)
-        self.assertEqual(ns_filtered[0][2], self.ntwk2)
+        self.assertEqual(ns_filtered[0], self.ntwk2)
 
     def test_scalar_mat(self):
         """
@@ -204,14 +163,14 @@ class NetworkSetTestCase(unittest.TestCase):
         """
         mat = self.ns.scalar_mat()
         # check the resulting shape
-        self.assertEqual(mat.shape, (len(self.ns[0][2].f), len(self.ns), 2*self.ns[0][2].nports**2))
+        self.assertEqual(mat.shape, (len(self.ns[0].f), len(self.ns), 2*self.ns[0].nports**2))
 
     def test_inv(self):
         """
         Test the `inv` method.
         """
         ns_inverted = self.ns.inv
-        for ((_, _, ntwk), (_, _, ntwk_inv)) in zip(self.ns, ns_inverted):
+        for (ntwk, ntwk_inv) in zip(self.ns, ns_inverted):
             self.assertEqual(ntwk.inv, ntwk_inv)
             
     def test_write(self):
@@ -257,9 +216,6 @@ class NetworkSetTestCase(unittest.TestCase):
         param = [1, 2, 3]
         x0 = 1.5
         interp_ntwk = self.ns.interpolate_from_network(param, x0)
-
-
-        
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)
