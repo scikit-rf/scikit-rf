@@ -101,8 +101,8 @@ class VectorFitting:
         """ Instance variable holding the list of fitted constants. Will be initialized by :func:`vector_fit`. """
 
         self.max_iterations = 100
-        """ Instance variable specifying the maximum number of iterations for the fitting process. To be changed by the
-         user before calling :func:`vector_fit`. """
+        """ Instance variable specifying the maximum number of iterations for the fitting process and for the passivity 
+        enforcement. To be changed by the user before calling :func:`vector_fit` and/or :func:`passivity_enforce`. """
 
         self.max_tol = 1e-6
         """ Instance variable specifying the convergence criterion in terms of relative tolerance. To be changed by the
@@ -120,6 +120,9 @@ class VectorFitting:
     # legacy getter and setter methods to support deprecated 'zeros' attribute (now correctly called 'residues')
     @property
     def zeros(self):
+        """
+        **Deprecated**; Please use :attr:`residues` instead.
+        """
         warnings.warn('Attribute `zeros` is deprecated and will be removed in a future version. Please use the new '
                       'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         return self.residues
@@ -978,7 +981,8 @@ class VectorFitting:
         Parameters
         ----------
         n_samples : int, optional
-            Number of linearly spaced frequency samples at which passivity will be evaluated and enforce. (Default: 100)
+            Number of linearly spaced frequency samples at which passivity will be evaluated and enforced.
+            (Default: 100)
 
         parameter_type : str, optional
             Representation type of the fitted frequency responses. Either *scattering* (:attr:`s` or :attr:`S`),
@@ -1241,6 +1245,15 @@ class VectorFitting:
         -------
         response : ndarray
             Model response :math:`H_{i+1,j+1}` at the frequencies specified in `freqs` (complex-valued Numpy array).
+
+        Examples
+        --------
+        Get fitted S11 at 101 frequencies from 0 Hz to 10 GHz:
+
+        >>> import skrf
+        >>> vf = skrf.VectorFitting(skrf.data.ring_slot)
+        >>> vf.vector_fit(3, 0)
+        >>> s11_fit = vf.get_model_response(0, 0, numpy.linspace(0, 10e9, 101))
         """
 
         if self.poles is None:
@@ -1600,8 +1613,8 @@ class VectorFitting:
     def plot_passivation(self, ax: mplt.Axes = None) -> mplt.Axes:
         """
         Plots the history of the greatest singular value during the iterative passivity enforcement process, which
-        should eventually converge to a value slightly lower than 1.0 or stop after exceeding the maximum number of
-        iterations specified in the class variable :attr:`history_max_sigma`.
+        should eventually converge to a value slightly lower than 1.0 or stop after reaching the maximum number of
+        iterations specified in the class variable :attr:`max_iterations`.
 
         Parameters
         ----------
@@ -1641,6 +1654,15 @@ class VectorFitting:
         In the SPICE subcircuit, all ports will share a common reference node (global SPICE ground on node 0). The
         equivalent circuit uses linear dependent current sources on all ports, which are controlled by the currents
         through equivalent admittances modelling the parameters from a vector fit. This approach is based on [#]_.
+
+        Examples
+        --------
+        Load and fit the `Network`, then export the equivalent SPICE subcircuit:
+
+        >>> nw_3port = skrf.Network('my3port.s3p')
+        >>> vf = skrf.VectorFitting(nw_3port)
+        >>> vf.vector_fit(n_poles_real=1, n_poles_cmplx=4)
+        >>> vf.write_spice_subcircuit_s('/my3port_model.sp')
 
         References
         ----------
