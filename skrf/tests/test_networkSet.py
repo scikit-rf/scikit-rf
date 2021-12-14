@@ -31,10 +31,29 @@ class NetworkSetTestCase(unittest.TestCase):
         self.ntwk_freq2_1p.s = np.random.rand(len(self.freq2), 1, 1)
         self.ntwk_freq2_2p = rf.Network(frequency=self.freq2)
         self.ntwk_freq2_2p.s = np.random.rand(len(self.freq2), 2, 2)
+
+        # dummy networks with associated parameters
+        # total number of different networks       
+        self.params = [
+                dict(a=0, b=10, c='A'),
+                dict(a=1, b=10, c='A'),
+                dict(a=2, b=10, c='A'),
+                dict(a=0, b=20, c='A'),
+                dict(a=1, b=20, c='A')
+            ]
+        # create M dummy networks
+        self.ntwks_params = [rf.Network(frequency=self.freq1, 
+                                        s=np.random.rand(len(self.freq1),2,2), 
+                                        name=f'ntwk_{m}',
+                                        comment=f'ntwk_{m}',
+                                        params=params) \
+                             for (m, params) in enumerate(self.params) ]
         
         # Test nominal 
         self.ns = rf.NetworkSet([self.ntwk1, self.ntwk2, self.ntwk3])
-        
+
+        # Create NetworkSet from a list of Network containing a .params dict parameters
+        self.ns_params = rf.NetworkSet(self.ntwks_params)        
 
     def test_constructor(self):
         """
@@ -216,6 +235,35 @@ class NetworkSetTestCase(unittest.TestCase):
         param = [1, 2, 3]
         x0 = 1.5
         interp_ntwk = self.ns.interpolate_from_network(param, x0)
+
+    def test_has_params(self):
+        """ Test the .has_params() method """
+        # all params have been set
+        self.assertTrue(self.ns_params.has_params())
+
+        # at least one params property is None (>=v0.21.0)
+        self.assertFalse(self.ns.has_params())
+        
+        # at least one params property does not exist (<v0.21.0)
+        ns_wo_params = self.ns.copy()
+        for ntwk in ns_wo_params:
+            delattr(ntwk, 'params')
+        self.assertFalse(ns_wo_params.has_params())
+               
+        # some params do not have the same length
+        ns_wo_all_same_params_length = self.ns_params.copy()
+        ns_wo_all_same_params_length[0].params = {'a': 0, 'c': 'A'}
+        self.assertFalse(ns_wo_params.has_params())
+        ns_wo_all_same_params_length[0].params = {'a': 0, 'b': 10, 'c':'A', 'd':'hu ho'}
+        self.assertFalse(ns_wo_params.has_params())
+        
+        # not all keys of the params are the same
+        ns_params_diff_keys = self.ns_params.copy()
+        ns_params_diff_keys[0].params = {'X': 0, 'Y': 10, 'Z' : 'A'}
+        self.assertFalse(ns_params_diff_keys.has_params())        
+        
+        
+
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

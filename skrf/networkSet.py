@@ -939,6 +939,39 @@ class NetworkSet(object):
         ntw.s = f(x)
 
         return ntw
+    
+    def has_params(self) -> bool:
+        """
+        Check is all Networks in the NetworkSet have a similar params dictionnary.   
+
+        Returns
+        -------
+        bool
+            True is all Networks have a .params dictionnay (of same size), 
+            False otherwise
+
+        """
+        # does all networks have a params property?
+        if not all(hasattr(ntwk, 'params') for ntwk in self.ntwk_set):
+            return False
+        
+        # are all params property been set?
+        if any(ntwk.params is None for ntwk in self.ntwk_set):
+            return False
+        
+        # are they all of the same size?
+        params_len = len(self.ntwk_set[0].params)
+        if not all(len(ntwk.params) == params_len for ntwk in self.ntwk_set):
+            return False
+        
+        # are all the dict keys the same?
+        params_keys = self.ntwk_set[0].params.keys()
+        if not all(ntwk.params.keys() == params_keys for ntwk in self.ntwk_set):
+            return False
+        
+        # then we are all good
+        return True
+        
 
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
