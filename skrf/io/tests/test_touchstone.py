@@ -37,6 +37,11 @@ class TouchstoneTestCase(unittest.TestCase):
         self.assertTrue((s == s_true).all())
         self.assertTrue((z0 == z0_true))
 
+    def test_read_touchstone_with_special_char(self):
+        """
+        Read a Touchstone file with encoding different than the default UTF-8
+        """
+        touch = Touchstone('test_encoding_ISO-8859-1.s2p') 
 
     def test_read_from_fid(self):
         """

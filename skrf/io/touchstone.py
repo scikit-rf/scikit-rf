@@ -71,11 +71,6 @@ class Touchstone:
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
         """
-        fid = get_fid(file)
-        filename = fid.name
-        ## file name of the touchstone data file
-        self.filename = filename
-
         ## file format version. 
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
         self.version = '1.0'
@@ -105,7 +100,19 @@ class Touchstone:
         self.port_names = None
 
         self.comment_variables = None
-        self.load_file(fid)
+        
+        # Correctly detecting the encoding all times is impossible (chardet FAQ)
+        try:
+            # Assume default UTF-8 encoding
+            fid = get_fid(file)
+            self.filename = fid.name
+            self.load_file(fid)
+
+        except UnicodeDecodeError as e:
+            # Force Latin-1
+            fid = get_fid(file, encoding='ISO-8859-1')
+            self.filename = fid.name
+            self.load_file(fid)      
 
         self.gamma = []
         self.z0 = []
