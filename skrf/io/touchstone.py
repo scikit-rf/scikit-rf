@@ -51,7 +51,8 @@ class Touchstone:
     .. [#] https://ibis.org/interconnect_wip/touchstone_spec2_draft.pdf
     .. [#] https://ibis.org/touchstone_ver2.0/touchstone_ver2_0.pdf
     """
-    def __init__(self, file: typing.Union[str, typing.TextIO]):
+    def __init__(self, file: typing.Union[str, typing.TextIO],
+                 encoding: typing.Union[str, None] = None):
         """
         constructor
 
@@ -59,17 +60,33 @@ class Touchstone:
         ----------
         file : str or file-object
             touchstone file to load
+        encoding : str, optional
+            define the file encoding to use. Default value is None, 
+            meaning the encoding is guessed (ANSI, UTF-8 or Latin-1).
 
         Examples
         --------
         From filename
 
         >>> t = rf.Touchstone('network.s2p')
+        
+        File encoding can be specified to help parsing the special characters:
+        
+        >>> t = rf.Touchstone('network.s2p', encoding='ISO-8859-1')
 
         From file-object
 
         >>> file = open('network.s2p')
         >>> t = rf.Touchstone(file)
+        
+        From a io.StringIO object
+        
+        >>> link = 'https://raw.githubusercontent.com/scikit-rf/scikit-rf/master/examples/basic_touchstone_plotting/horn antenna.s1p'
+        >>> r = requests.get(link)
+        >>> stringio = io.StringIO(r.text)
+        >>> stringio.name = 'horn.s1p'  # must be provided for the Touchstone parser
+        >>> horn = rf.Touchstone(stringio)
+
         """
         ## file format version. 
         # Defined by default to 1.0, since version number can be omitted in V1.0 format
@@ -101,18 +118,34 @@ class Touchstone:
 
         self.comment_variables = None
         
-        # Correctly detecting the encoding all times is impossible (chardet FAQ)
+        # open the file depending on encoding
+        # Guessing the encoding by trial-and-error, unless specified encoding
         try:
-            # Assume default UTF-8 encoding
-            fid = get_fid(file)
+            if encoding is not None:
+                print(encoding)
+                fid = get_fid(file, encoding=encoding)
+                self.filename = fid.name
+                self.load_file(fid)       
+            else:
+                # Assume default encoding
+                fid = get_fid(file)
+                self.filename = fid.name
+                self.load_file(fid)
+            
+        except ValueError:
+            # Assume UTF-8 encoding with ommited BOM (get rid of \ufeff)
+            fid = get_fid(file, encoding='utf-8-sig')
             self.filename = fid.name
             self.load_file(fid)
 
-        except UnicodeDecodeError as e:
-            # Force Latin-1
+        except UnicodeDecodeError:
+            # Unicode fails -> Force Latin-1
             fid = get_fid(file, encoding='ISO-8859-1')
             self.filename = fid.name
-            self.load_file(fid)      
+            self.load_file(fid)
+
+        except Exception as e:
+                raise ValueError(f'Something went wrong by the file openning: {e}')
 
         self.gamma = []
         self.z0 = []
