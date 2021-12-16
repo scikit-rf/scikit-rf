@@ -122,7 +122,6 @@ class Touchstone:
         # Guessing the encoding by trial-and-error, unless specified encoding
         try:
             if encoding is not None:
-                print(encoding)
                 fid = get_fid(file, encoding=encoding)
                 self.filename = fid.name
                 self.load_file(fid)       
@@ -132,15 +131,15 @@ class Touchstone:
                 self.filename = fid.name
                 self.load_file(fid)
             
-        except ValueError:
-            # Assume UTF-8 encoding with ommited BOM (get rid of \ufeff)
-            fid = get_fid(file, encoding='utf-8-sig')
-            self.filename = fid.name
-            self.load_file(fid)
-
         except UnicodeDecodeError:
             # Unicode fails -> Force Latin-1
             fid = get_fid(file, encoding='ISO-8859-1')
+            self.filename = fid.name
+            self.load_file(fid)
+
+        except ValueError:
+            # Assume Microsoft UTF-8 variant encoding with BOM
+            fid = get_fid(file, encoding='utf-8-sig')
             self.filename = fid.name
             self.load_file(fid)
 
