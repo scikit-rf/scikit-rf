@@ -474,6 +474,12 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     def test_verify_12term(self):
         self.assertTrue(self.cal.verify_12term_ntwk.s_mag.max() < 1e-3)
 
+    def test_coefs_8term(self):
+        self.assertEqual(self.cal.coefs_8term, self.cal.coefs)
+
+    def test_coefs_12term(self):
+        self.assertEqual(self.cal.coefs_12term, rf.convert_8term_2_12term(self.cal.coefs))
+
 
 class TRLTest(EightTermTest):
     def setUp(self):
@@ -927,6 +933,12 @@ class TwelveTermTest(unittest.TestCase, CalibrationTest):
         c = self.cal.apply_cal(m)
                
         self.assertEqual(a,c)
+
+    def test_coefs_8term(self):
+        self.assertEqual(self.cal.coefs_8term, rf.convert_12term_2_8term(self.cal.coefs))
+
+    def test_coefs_12term(self):
+        self.assertEqual(self.cal.coefs_12term, self.cal.coefs)
     
 
 class TwelveTermSloppyInitTest(TwelveTermTest):

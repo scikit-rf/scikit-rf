@@ -131,7 +131,7 @@ coefs_list_8term = [
     'forward source match',
     'forward reflection tracking',
     'reverse directivity',
-    'reverse load match',
+    'reverse source match',
     'reverse reflection tracking',
     'forward switch term',
     'reverse switch term',
@@ -626,7 +626,7 @@ class Calibration(object):
             * forward source match
             * forward reflection tracking
             * reverse directivity
-            * reverse load match
+            * reverse source match
             * reverse reflection tracking
             * forward switch term
             * reverse switch term
@@ -649,10 +649,12 @@ class Calibration(object):
         """
 
         d = self.coefs
+        if all([k in d.keys() for k in coefs_list_3term]):
+            raise ValueError("Can't convert one port error terms to two port error terms")
 
-        for k in coefs_list_8term:
-            if k not in d and k in coefs_list_12term:
-                return convert_12term_2_8term(d)
+        # Check if we have all 12-term keys and convert to 8-term if we do.
+        if all([k in d.keys() for k in coefs_list_12term]):
+            return convert_12term_2_8term(d)
 
         return d
 
@@ -699,12 +701,14 @@ class Calibration(object):
 
         """
         d = self.coefs
+        if all([k in d.keys() for k in coefs_list_3term]):
+            raise ValueError("Can't convert one port error terms to two port error terms")
 
-        for k in coefs_list_12term:
-            if k not in d and k in coefs_list_8term:
-                return convert_8term_2_12term(d)
+        # Check if we have all 12-term keys and return the coefs if we do
+        if all([k in d.keys() for k in coefs_list_12term]):
+            return d
 
-        return d
+        return convert_8term_2_12term(d)
 
     @property
     def coefs_12term_ntwks(self):
