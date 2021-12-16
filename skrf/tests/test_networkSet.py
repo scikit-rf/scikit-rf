@@ -35,11 +35,11 @@ class NetworkSetTestCase(unittest.TestCase):
         # dummy networks with associated parameters
         # total number of different networks       
         self.params = [
-                dict(a=0, b=10, c='A'),
-                dict(a=1, b=10, c='A'),
-                dict(a=2, b=10, c='A'),
-                dict(a=0, b=20, c='A'),
-                dict(a=1, b=20, c='A')
+                {'a':0, 'X':10, 'c':'A'},
+                {'a':1, 'X':10, 'c':'A'},
+                {'a':2, 'X':10, 'c':'A'},
+                {'a':1, 'X':20, 'c':'A'},
+                {'a':0, 'X':20, 'c':'A'},
             ]
         # create M dummy networks
         self.ntwks_params = [rf.Network(frequency=self.freq1, 
@@ -261,9 +261,34 @@ class NetworkSetTestCase(unittest.TestCase):
         ns_params_diff_keys = self.ns_params.copy()
         ns_params_diff_keys[0].params = {'X': 0, 'Y': 10, 'Z' : 'A'}
         self.assertFalse(ns_params_diff_keys.has_params())        
-        
-        
 
+    def test_dims_param(self):
+        """ Tests associated to the .dims parameter """
+        from collections import Counter
+        
+        # unassigned params NetworkSet
+        self.assertEqual(Counter(self.ns.dims), Counter(None))
+        # assigned params
+        expected_dims = self.params[0].keys()
+        self.assertEqual(Counter(self.ns_params.dims), Counter(expected_dims))
+
+    def test_coords_param(self):
+        """ Tests associated to the .coords parameter """
+        from collections import Counter
+        
+        # unassigned params NetworkSet
+        self.assertEqual(Counter(self.ns.coords), Counter(None))
+
+        # assigned params
+        # get a dict of unique values for each param
+        expected_coords = {p: [] for p in self.params[0]}
+        for params in self.params:
+            for p in expected_coords.keys():
+                expected_coords[p].append(params[p])
+        for p in expected_coords.keys():
+            expected_coords[p] = list(set(expected_coords[p]))
+
+        self.assertEqual(Counter(self.ns_params.coords), Counter(expected_coords))
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

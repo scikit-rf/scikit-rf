@@ -160,6 +160,26 @@ class NetworkSet(object):
         # we are good to go
         self.ntwk_set = ntwk_set
         self.name = name
+        
+        # extract the dimensions of the set
+        try:
+            self.dims = self.ntwk_set[0].params.keys()
+        except AttributeError:  # .params is None
+            self.dims = None
+        
+        # extract the coordinates of the set
+        try:
+            self.coords = {p: [] for p in self.dims}
+    
+            for k in self.ntwk_set:
+                for p in self.dims:
+                    self.coords[p].append(k.params[p])
+                    
+            # keep only unique terms
+            for p in self.coords.keys():
+                self.coords[p] = list(set(self.coords[p]))
+        except TypeError:  # .params is None
+            self.coords = None
 
         # create list of network properties, which we use to dynamically
         # create a statistical properties of this set
