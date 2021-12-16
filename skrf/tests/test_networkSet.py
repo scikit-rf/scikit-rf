@@ -290,5 +290,17 @@ class NetworkSetTestCase(unittest.TestCase):
 
         self.assertEqual(Counter(self.ns_params.coords), Counter(expected_coords))
 
+    def test_sel(self):
+        """ Tests associated to the .sel method """
+        # searching for a parameter which do not exist return None
+        self.assertEqual(self.ns.sel('a', 1), None)
+        self.assertEqual(self.ns_params.sel('ho ho', 1), None)
+        self.assertEqual(self.ns_params.sel('a', 10), None)
+        
+        # there is two times the param key/value 'a':1 
+        self.assertEqual(len(self.ns_params.sel('a', 1)), 2)
+        
+        
+
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

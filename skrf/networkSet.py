@@ -46,7 +46,8 @@ NetworkSet Utilities
 """
 import zipfile
 import numpy as npy
-import typing
+from numbers import Number
+from typing import Union, Any
 from io import BytesIO
 from scipy.interpolate import interp1d
 from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
@@ -56,7 +57,7 @@ from . util import now_string_2_dt
 try:
     from numpy.typing import ArrayLike
 except ImportError:
-    ArrayLike = typing.Any
+    ArrayLike = Any
 
 class NetworkSet(object):
     """
@@ -119,7 +120,7 @@ class NetworkSet(object):
 
     """
 
-    def __init__(self, ntwk_set: typing.Union[list, dict], name: str = None):
+    def __init__(self, ntwk_set: Union[list, dict], name: str = None):
         """
         Initialize for NetworkSet.
 
@@ -547,7 +548,7 @@ class NetworkSet(object):
         """
         return NetworkSet([k.copy() for k in self.ntwk_set])
 
-    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> typing.Union[None, 'NetworkSet']:
+    def sort(self, key=lambda x: x.name, inplace: bool = True, **kwargs) -> Union[None, 'NetworkSet']:
         r"""
         Sort this network set.
 
@@ -992,6 +993,49 @@ class NetworkSet(object):
         # then we are all good
         return True
         
+    def sel(self, p: str, v: Union[str, Number]) -> Union[None, 'NetworkSet']:
+        """
+        Select Network(s) in the NetworkSet from a given value of a parameter.
+
+        Parameters
+        ----------
+        p : str
+            parameter.
+        v : str or number
+            value to select
+
+        Returns
+        -------
+        ns : NetworkSet or None
+            NetworkSet containing the selected Networks or None if no match found
+
+        Example
+        -------
+        Select all Network(s) having the parameter key 'a' equal to 1 in the NetworkSet ns 
+        
+        >>> ns.sel('a', 1)
+
+        Selection based on multiple criteria can be made by chaining sel
+        
+        >>> ns.sel('model', 'A').sel('voltage', 0).sel('temperature', 25)
+
+        """
+        if not self.has_params():
+            return None
+        
+        if p not in self.dims:
+            return None
+        #raise KeyError(f'Parameter {p} is not a parameter of this NetworkSet.')
+
+        ntwk_list = []
+        for k in self.ntwk_set:
+            if k.params[p] == v:
+                ntwk_list.append(k)
+
+        if ntwk_list:
+            return NetworkSet(ntwk_list)
+        else:  # no match found
+            return None
 
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
