@@ -144,7 +144,7 @@ class Touchstone:
             self.load_file(fid)
 
         except Exception as e:
-                raise ValueError(f'Something went wrong by the file openning: {e}')
+            raise ValueError(f'Something went wrong by the file openning: {e}')
 
         self.gamma = []
         self.z0 = []
