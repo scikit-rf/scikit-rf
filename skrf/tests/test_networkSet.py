@@ -299,6 +299,9 @@ class NetworkSetTestCase(unittest.TestCase):
         
         # there is two times the param key/value 'a':1 
         self.assertEqual(len(self.ns_params.sel('a', 1)), 2)
+        # Iterable values
+        self.assertEqual(len(self.ns_params.sel('a', [0,1])), 4)
+        self.assertEqual(len(self.ns_params.sel('a', range(0,2))), 4)
         
         
 

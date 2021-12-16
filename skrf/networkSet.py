@@ -1020,18 +1020,22 @@ class NetworkSet(object):
         >>> ns.sel('model', 'A').sel('voltage', 0).sel('temperature', 25)
 
         """
+        from collections.abc import Iterable
+        
         if not self.has_params():
             return None
         
         if p not in self.dims:
             return None
-        #raise KeyError(f'Parameter {p} is not a parameter of this NetworkSet.')
+
+        if not isinstance(v, Iterable):
+            v = [v]  # makes it an iterable to allow the use of 'is' after
 
         ntwk_list = []
         for k in self.ntwk_set:
-            if k.params[p] == v:
-                ntwk_list.append(k)
-
+           if k.params[p] in v:
+               ntwk_list.append(k)
+           
         if ntwk_list:
             return NetworkSet(ntwk_list)
         else:  # no match found
