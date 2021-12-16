@@ -41,7 +41,8 @@ class TouchstoneTestCase(unittest.TestCase):
         """
         Read a Touchstone file with encoding different than the default UTF-8
         """
-        touch = Touchstone('test_encoding_ISO-8859-1.s2p') 
+        filename = os.path.join(self.test_dir, 'test_encoding_ISO-8859-1.s2p')
+        touch = Touchstone(filename)
 
     def test_read_from_fid(self):
         """
