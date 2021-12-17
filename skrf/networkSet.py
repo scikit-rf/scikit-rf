@@ -120,7 +120,7 @@ class NetworkSet(object):
 
     """
 
-    def __init__(self, ntwk_set: Union[list, dict], name: str = None):
+    def __init__(self, ntwk_set: Union[list, dict] = [], name: str = None):
         """
         Initialize for NetworkSet.
 
@@ -139,10 +139,6 @@ class NetworkSet(object):
         # but if a dict is passed instead of a list -> list
         if hasattr(ntwk_set, 'values'):
             ntwk_set = list(ntwk_set.values())
-
-        # list should not be empty
-        if len(ntwk_set) == 0:
-            raise ValueError('Input list should not be empty')
 
         # did they pass a list of Networks?
         if not all([isinstance(ntwk, Network) for ntwk in ntwk_set]):
@@ -165,7 +161,7 @@ class NetworkSet(object):
         # extract the dimensions of the set
         try:
             self.dims = self.ntwk_set[0].params.keys()
-        except AttributeError:  # .params is None
+        except (AttributeError, IndexError):  # .params is None
             self.dims = None
         
         # extract the coordinates of the set
@@ -993,7 +989,7 @@ class NetworkSet(object):
         # then we are all good
         return True
         
-    def sel(self, p: str, v: Union[str, Number]) -> Union[None, 'NetworkSet']:
+    def sel(self, p: str, v: Union[str, Number]) -> 'NetworkSet':
         """
         Select Network(s) in the NetworkSet from a given value of a parameter.
 
@@ -1006,7 +1002,7 @@ class NetworkSet(object):
 
         Returns
         -------
-        ns : NetworkSet or None
+        ns : NetworkSet
             NetworkSet containing the selected Networks or None if no match found
 
         Example
@@ -1023,10 +1019,10 @@ class NetworkSet(object):
         from collections.abc import Iterable
         
         if not self.has_params():
-            return None
+            return NetworkSet()
         
         if p not in self.dims:
-            return None
+            return NetworkSet()
 
         if not isinstance(v, Iterable):
             v = [v]  # makes it an iterable to allow the use of 'is' after
@@ -1039,7 +1035,7 @@ class NetworkSet(object):
         if ntwk_list:
             return NetworkSet(ntwk_list)
         else:  # no match found
-            return None
+            return NetworkSet()
 
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\

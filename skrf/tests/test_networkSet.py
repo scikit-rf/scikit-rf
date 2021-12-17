@@ -49,7 +49,7 @@ class NetworkSetTestCase(unittest.TestCase):
                                         params=params) \
                              for (m, params) in enumerate(self.params) ]
         
-        # Test nominal 
+        # Test nominal
         self.ns = rf.NetworkSet([self.ntwk1, self.ntwk2, self.ntwk3])
 
         # Create NetworkSet from a list of Network containing a .params dict parameters
@@ -59,17 +59,13 @@ class NetworkSetTestCase(unittest.TestCase):
         """
         Test the `NetworkSet()` constructor.
         """
-        # NetworkSet requires at least one parameter
-        self.assertRaises(TypeError, rf.NetworkSet)
+        # NetworkSet without input parameter is an empty NetworkSet
+        self.assertEqual(rf.NetworkSet(), rf.NetworkSet([]))
 
         # the required parameter must be a list
         self.assertRaises(ValueError, rf.NetworkSet, 0)
         self.assertRaises(ValueError, rf.NetworkSet, 'wrong')
         self.assertRaises(ValueError, rf.NetworkSet, False)
-
-        # the list (or dict) must not be empty
-        self.assertRaises(ValueError, rf.NetworkSet, [])
-        self.assertRaises(ValueError, rf.NetworkSet, {})
 
         # all elements should be of Network type
         self.assertRaises(TypeError, rf.NetworkSet, [self.ntwk1, 0])
@@ -292,10 +288,10 @@ class NetworkSetTestCase(unittest.TestCase):
 
     def test_sel(self):
         """ Tests associated to the .sel method """
-        # searching for a parameter which do not exist return None
-        self.assertEqual(self.ns.sel('a', 1), None)
-        self.assertEqual(self.ns_params.sel('ho ho', 1), None)
-        self.assertEqual(self.ns_params.sel('a', 10), None)
+        # searching for a parameter which do not exist returns empty networkset
+        self.assertEqual(self.ns.sel('a', 1), rf.NetworkSet())
+        self.assertEqual(self.ns_params.sel('ho ho', 1), rf.NetworkSet())
+        self.assertEqual(self.ns_params.sel('a', 10), rf.NetworkSet())
         
         # there is two times the param key/value 'a':1 
         self.assertEqual(len(self.ns_params.sel('a', 1)), 2)
