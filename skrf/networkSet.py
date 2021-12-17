@@ -47,7 +47,7 @@ NetworkSet Utilities
 import zipfile
 import numpy as npy
 from numbers import Number
-from typing import Union, Any
+from typing import Union, Any, Mapping
 from io import BytesIO
 from scipy.interpolate import interp1d
 from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
@@ -989,21 +989,22 @@ class NetworkSet(object):
         # then we are all good
         return True
         
-    def sel(self, p: str, v: Union[str, Number]) -> 'NetworkSet':
+    def sel(self, indexers: Mapping[Any, Any] = None) -> 'NetworkSet':
         """
         Select Network(s) in the NetworkSet from a given value of a parameter.
 
         Parameters
         ----------
-        p : str
-            parameter.
-        v : str or number
-            value to select
-
+        indexers : dict, optional
+            A dict with keys matching dimensions and values given by scalars,
+            or arrays of parameters. 
+            Default is None, which returns the entire NetworkSet
+            
         Returns
         -------
         ns : NetworkSet
-            NetworkSet containing the selected Networks or None if no match found
+            NetworkSet containing the selected Networks or 
+            empty NetworkSet if no match found
 
         Example
         -------
@@ -1017,20 +1018,26 @@ class NetworkSet(object):
 
         """
         from collections.abc import Iterable
-        
+
+        if not indexers:  # None or {}
+            return self.copy()
+
         if not self.has_params():
             return NetworkSet()
         
-        if p not in self.dims:
-            return NetworkSet()
+        if not isinstance(indexers, dict):
+            raise TypeError('indexers should be a dictionnary.')
 
-        if not isinstance(v, Iterable):
-            v = [v]  # makes it an iterable to allow the use of 'is' after
+        for p in indexers.keys():
+            if p not in self.dims:
+                return NetworkSet()
 
         ntwk_list = []
         for k in self.ntwk_set:
-           if k.params[p] in v:
-               ntwk_list.append(k)
+            match_list = [k.params[p] in (v if isinstance(v, Iterable) else [v])
+                          for (p, v) in indexers.items()]
+            if all(match_list):
+                ntwk_list.append(k)
            
         if ntwk_list:
             return NetworkSet(ntwk_list)

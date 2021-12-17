@@ -287,18 +287,29 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertEqual(Counter(self.ns_params.coords), Counter(expected_coords))
 
     def test_sel(self):
-        """ Tests associated to the .sel method """
+        """ Tests associated to the .sel method """      
+        # passing nothing or empty dict returns the complete NetworkSet
+        self.assertEqual(self.ns_params.sel(), self.ns_params)
+        self.assertEqual(self.ns_params.sel({}), self.ns_params)
+        
+        # should pass a dictionnary
+        self.assertRaises(TypeError, self.ns_params.sel, 'wrong')
+        self.assertRaises(TypeError, self.ns_params.sel, 1)
+        
         # searching for a parameter which do not exist returns empty networkset
-        self.assertEqual(self.ns.sel('a', 1), rf.NetworkSet())
-        self.assertEqual(self.ns_params.sel('ho ho', 1), rf.NetworkSet())
-        self.assertEqual(self.ns_params.sel('a', 10), rf.NetworkSet())
+        self.assertEqual(self.ns.sel({'a': 1}), rf.NetworkSet())
+        self.assertEqual(self.ns_params.sel({'ho ho': 1}), rf.NetworkSet())
+        self.assertEqual(self.ns_params.sel({'a': 10}), rf.NetworkSet())        
         
         # there is two times the param key/value 'a':1 
-        self.assertEqual(len(self.ns_params.sel('a', 1)), 2)
+        self.assertEqual(len(self.ns_params.sel({'a': 1})), 2)
         # Iterable values
-        self.assertEqual(len(self.ns_params.sel('a', [0,1])), 4)
-        self.assertEqual(len(self.ns_params.sel('a', range(0,2))), 4)
-        
+        self.assertEqual(len(self.ns_params.sel({'a': [0,1]})), 4)
+        self.assertEqual(len(self.ns_params.sel({'a': range(0,2)})), 4)
+        # Multiple parameters
+        self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': 10})), 1)
+        self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': [10,20]})), 2)
+        self.assertEqual(len(self.ns_params.sel({'a': [0,1], 'X': [10,20]})), 4)
         
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
