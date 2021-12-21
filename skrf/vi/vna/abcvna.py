@@ -109,7 +109,6 @@ class VNA(object):
         self.write = self.resource.write
         self.read = self.resource.read
         self.query = self.resource.query
-        self.query_values = self.resource.query_values
 
     def __enter__(self):
         """
