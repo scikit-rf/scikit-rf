@@ -102,7 +102,7 @@ class VNA(object):
 
         self.resource.read_termination = "\n"  # most queries are terminated with a newline
         self.resource.write_termination = "\n"
-        if "instr" in resource_string.lower():
+        if "instr" in resource_string.lower() and interface.lower()=="gpib":
             self.resource.control_ren(2)
 
         # convenience pyvisa functions
