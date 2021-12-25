@@ -2519,9 +2519,15 @@ class Network(object):
 
         # interpolate z0  ( this must happen first, because its needed
         # to compute the basis transform below (like y2s), if basis!='s')
-        interp_z0_re = f_interp(f, self.z0.real, axis=0, **kwargs)
-        interp_z0_im = f_interp(f, self.z0.imag, axis=0, **kwargs)
-        result.z0 = interp_z0_re(f_new) + 1j * interp_z0_im(f_new)
+        if npy.all(self.z0 == self.z0[0]):
+            # If z0 is constant we don't need to interpolate it
+            z0_shape = list(self.z0.shape)
+            z0_shape[0] = len(f_new)
+            result.z0 = npy.ones(z0_shape) * self.z0[0]
+        else:
+            interp_z0_re = f_interp(f, self.z0.real, axis=0, **kwargs)
+            interp_z0_im = f_interp(f, self.z0.imag, axis=0, **kwargs)
+            result.z0 = interp_z0_re(f_new) + 1j * interp_z0_im(f_new)
 
         # interpolate  parameter for a given basis
         x = self.__getattribute__(basis)
