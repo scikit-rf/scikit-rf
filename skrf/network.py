@@ -2525,32 +2525,26 @@ class Network(object):
             z0_shape[0] = len(f_new)
             result.z0 = npy.ones(z0_shape) * self.z0[0]
         else:
-            interp_z0_re = f_interp(f, self.z0.real, axis=0, **kwargs)
-            interp_z0_im = f_interp(f, self.z0.imag, axis=0, **kwargs)
-            result.z0 = interp_z0_re(f_new) + 1j * interp_z0_im(f_new)
+            result.z0 = f_interp(f, self.z0, axis=0, **kwargs)(f_new)
 
         # interpolate  parameter for a given basis
         x = self.__getattribute__(basis)
         if coords == 'cart':
-            interp_re = f_interp(f, x.real, axis=0, **kwargs)
-            interp_im = f_interp(f, x.imag, axis=0, **kwargs)
-            x_new =  interp_re(f_new) + 1j * interp_im(f_new)
-
-
+            x_new = f_interp(f, x, axis=0, **kwargs)(f_new)
         elif coords == 'polar':
             rad = npy.unwrap(npy.angle(x), axis=0)
             mag = npy.abs(x)
             interp_rad = f_interp(f, rad, axis=0, **kwargs)
             interp_mag = f_interp(f, mag, axis=0, **kwargs)
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
+        else:
+            raise ValueError(f'Unknown coords {coords}')
 
         # interpolate noise data too
         if self.noisy:
           f_noise = self.noise_freq.f
           f_noise_new = new_frequency.f
-          interp_noise_re = f_interp(f_noise, self.noise.real, axis=0, **kwargs)
-          interp_noise_im = f_interp(f_noise, self.noise.imag, axis=0, **kwargs)
-          noise_new = interp_noise_re(f_noise_new) + 1j * interp_noise_im(f_noise_new)
+          noise_new = f_interp(f_noise, self.noise, axis=0, **kwargs)(f_noise_new)
 
         if return_array:
             return x_new
