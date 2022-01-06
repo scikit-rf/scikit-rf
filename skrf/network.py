@@ -1386,38 +1386,59 @@ class Network(object):
         """
         return mf.complex_2_db10(self.nfmin)
 
-    def nf(self, z: NumberLike, passive=False, Ta=290, Tp=290) -> npy.ndarray:
+    @property
+    def nf_bosma(self, tol: float = mf.ALMOST_ZERO, ta: float = 290.0, tp: float = 290.0) -> npy.ndarray:
+        """
+        Calculate the noise figure of any arbitrary passive N-Port
+        in thermodynamic equilibrium using Bosma's Theorem.
+
+        Parameters
+        ----------
+        tol : float
+            tolerance for passivity check
+        ta : float
+            ambient temperature of network
+        tp : float
+            temperature of ports (typically = ambient temperature)
+
+        Returns
+        -------
+        nfs : multi-dimensional array
+            column vector of noise figures at each port for each network freqeuncy point
+            shape = (ntwk.f.size, ntwk.number_of_ports, 1)
+
+        """
+        if self.number_of_ports < 2:
+            raise AttributeError("The network must have two or more ports.")
+
+        if not self.is_passive(tol=tol):
+            raise AttributeError("The network is not passive.")
+
+        nfs = npy.empty((self.f.size, self.number_of_ports, 1))
+        for f in range(0, self.f.size):
+            for i in range(0, self.number_of_ports):
+                psum = 0
+                for j in range(0, self.number_of_ports):
+                    if j == i:
+                        continue
+                    else:
+                        psum += abs(self.s[f][i][j]) ** 2
+                nfs[f][i][0] = (tp - ta) / tp + ta / tp * (1 - abs(self.s[f][i][i]) ** 2) / psum
+        return nfs
+
+    def nf(self, z: NumberLike) -> npy.ndarray:
         """
         the noise figure for the network if the source impedance is z
         """
+
         z0 = self.z0
+        y_opt = self.y_opt
+        fmin = self.nfmin
+        rn = self.rn
 
-        if self.number_of_ports < 2:
-            raise ValueError("The network must have two or more ports.")
-
-        # if n-port ntwk is passive, calculate noise figure via Bosma's Thm
-        if passive and self.noise is None:
-            nfs = npy.empty((self.f.size, self.number_of_ports, 1))
-            for f in range(0, self.f.size):
-                for i in range(0, self.number_of_ports):
-                    SUM = 0
-                    for j in range(0, self.number_of_ports):
-                        if j == i:
-                            continue
-                        else:
-                            SUM += abs(self.s[f][i][j]) ** 2
-                    nfs[f][i][0] = (Tp - Ta) / Tp + Ta / Tp * (1 - abs(self.s[f][i][i]) ** 2) / SUM
-            return nfs
-
-        # if 2-port ntwk is not passive, or if the noise is defined by self.n
-        else:
-            y_opt = self.y_opt
-            fmin = self.nfmin
-            rn = self.rn
-
-            ys = 1. / z
-            gs = npy.real(ys)
-            return fmin + rn / gs * npy.square(npy.absolute(ys - y_opt))
+        ys = 1. / z
+        gs = npy.real(ys)
+        return fmin + rn / gs * npy.square(npy.absolute(ys - y_opt))
 
     def nfdb_gs(self, gs: NumberLike) -> npy.ndarray:
         """
@@ -4938,7 +4959,7 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order: bool
 
 
 ## Functions operating on s-parameter matrices
-def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
+def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int, dtype: str = 'complex') -> npy.ndarray:
     """
     Connect two n-port networks' s-matrices together.
 
@@ -4957,6 +4978,8 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
             S-parameter matrix of `B`, shape is fxnxn
     l : int
             port index on `B`
+    dtype: str
+            In order to use the subnetwork growth functions symbolically, dtype must be set to 'object'.
 
     Returns
     -------
@@ -4988,7 +5011,7 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
     nC = nA + nB  # num ports on C
 
     # create composite matrix, appending each sub-matrix diagonally
-    C = npy.zeros((nf, nC, nC), dtype='complex')
+    C = npy.zeros((nf, nC, nC), dtype=dtype)
     C[:, :nA, :nA] = A.copy()
     C[:, nA:, nA:] = B.copy()
 
@@ -4996,7 +5019,7 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int) -> npy.ndarray:
     return innerconnect_s(C, k, nA + l)
 
 
-def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
+def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex') -> npy.ndarray:
     """
     connect two ports of a single n-port network's s-matrix.
 
@@ -5021,6 +5044,8 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
         port index on `A` (port indices start from 0)
     l : int
         port index on `A`
+    dtype: str
+        In order to use the subnetwork growth functions symbolically, dtype must be set to 'object'.
 
     Returns
     -------
@@ -5042,7 +5067,7 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int) -> npy.ndarray:
 
     nA = A.shape[1]  # num of ports on input s-matrix
     # create an empty s-matrix, to store the result
-    C = npy.zeros(shape=A.shape, dtype='complex')
+    C = npy.zeros(shape=A.shape, dtype=dtype)
 
     # loop through ports and calculates resultant s-parameters
     for i in range(nA):
