@@ -1334,7 +1334,15 @@ class Network(object):
         if self.noise_freq.f.size > 1:
             noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind)
             noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind)
-            return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
+            try:
+                return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
+            except ValueError:
+                warnings.warn("Frequencies out of range of interpolation. Allowing extrapolation.", Warning)
+                noise_real = interp1d(self.noise_freq.f, self.noise.real, axis=0, kind=Network.noise_interp_kind,
+                                      fill_value="extrapolate", bounds_error=False)
+                noise_imag = interp1d(self.noise_freq.f, self.noise.imag, axis=0, kind=Network.noise_interp_kind,
+                                      fill_value="extrapolate", bounds_error=False)
+                return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
         else:
             noise_real = self.noise.real
             noise_imag = self.noise.imag
@@ -1351,7 +1359,15 @@ class Network(object):
         if self.noise_freq.f.size > 1:
             noise_real = interp1d(self.noise_freq.f, self.noisew.real, axis=0, kind=Network.noise_interp_kind)
             noise_imag = interp1d(self.noise_freq.f, self.noisew.imag, axis=0, kind=Network.noise_interp_kind)
-            return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
+            try:
+                return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
+            except ValueError:
+                warnings.warn("Frequencies out of range of interpolation. Allowing extrapolation.", Warning)
+                noise_real = interp1d(self.noise_freq.f, self.noisew.real, axis=0, kind=Network.noise_interp_kind,
+                                      fill_value="extrapolate", bounds_error=False)
+                noise_imag = interp1d(self.noise_freq.f, self.noisew.imag, axis=0, kind=Network.noise_interp_kind,
+                                      fill_value="extrapolate", bounds_error=False)
+                return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
         else:
             noise_real = self.noisew.real
             noise_imag = self.noisew.imag
@@ -1431,15 +1447,14 @@ class Network(object):
 
         nfs = npy.empty((self.f.size, self.number_of_ports, 1))
         if self.noisew is not None:
-            for f in range(0, self.f.size):
-                for i in range(0, self.number_of_ports):
-                    psum = 0
-                    for j in range(0, self.number_of_ports):
-                        if j == i:
-                            continue
-                        else:
-                            psum += npy.abs(self.s[f][i][j]) ** 2
-                    nfs[f, i, 0] = 1 + npy.abs(self.nosiew[f, i, i]) ** 2 / (K_BOLTZMANN * Ta * psum)
+            for i in range(0, self.number_of_ports):
+                psum = 0
+                for j in range(0, self.number_of_ports):
+                    if j == i:
+                        continue
+                    else:
+                        psum += npy.abs(self.s[:, i, j]) ** 2
+                nfs[:, i, 0] = 1 + self.nwcm[:, i, i].real / (K_BOLTZMANN * Ta * psum)
             return nfs
 
     def nf(self, z: NumberLike) -> npy.ndarray:
@@ -1495,7 +1510,7 @@ class Network(object):
         """
         try:
             return self.s.shape[1]
-        except (AttributeError):
+        except AttributeError:
             return 0
 
     @property
