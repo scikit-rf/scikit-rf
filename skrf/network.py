@@ -416,7 +416,7 @@ class Network(object):
 
         self.deembed = None
         self.noise = None
-        self.nwcm = None
+        self.noisew = None
         self.noise_freq = None
         self._z0 = npy.array(50, dtype=complex)
 
@@ -1319,7 +1319,7 @@ class Network(object):
         whether this network has noise
         """
         try:
-            return self.noise is not None and self.noise_freq is not None
+            return (self.noise is not None and self.noise_freq is not None) or self.noisew is not None
         except:
             return False
 
@@ -1338,6 +1338,23 @@ class Network(object):
         else:
             noise_real = self.noise.real
             noise_imag = self.noise.imag
+            return noise_real + 1.0j * noise_imag
+
+    @property
+    def nwcm(self) -> npy.ndarray:
+        """
+        the wave form of the noise correlation matrix for the network
+        """
+        if self.noisew is None:
+            raise ValueError('network does not have noise')
+
+        if self.noise_freq.f.size > 1:
+            noise_real = interp1d(self.noise_freq.f, self.noisew.real, axis=0, kind=Network.noise_interp_kind)
+            noise_imag = interp1d(self.noise_freq.f, self.noisew.imag, axis=0, kind=Network.noise_interp_kind)
+            return noise_real(self.frequency.f) + 1.0j * noise_imag(self.frequency.f)
+        else:
+            noise_real = self.noisew.real
+            noise_imag = self.noisew.imag
             return noise_real + 1.0j * noise_imag
 
     @property
@@ -1388,7 +1405,7 @@ class Network(object):
         return mf.complex_2_db10(self.nfmin)
 
     @property
-    def nf_w(self, tol: float = mf.ALMOST_ZERO, Ta: float = T0) -> npy.ndarray:
+    def nf_w(self, Ta: float = T0) -> npy.ndarray:
         """
         Calculate the noise figure at each port of any arbitrary N-Port using wave representation.
         For passive networks in thermodynamic equilibrium, this is trivial and completely
@@ -1413,7 +1430,7 @@ class Network(object):
             raise AttributeError("The network must have two or more ports.")
 
         nfs = npy.empty((self.f.size, self.number_of_ports, 1))
-        if self.nwcm is not None:
+        if self.noisew is not None:
             for f in range(0, self.f.size):
                 for i in range(0, self.number_of_ports):
                     psum = 0
@@ -1422,7 +1439,7 @@ class Network(object):
                             continue
                         else:
                             psum += npy.abs(self.s[f][i][j]) ** 2
-                    nfs[f, i, 0] = 1 + npy.abs(self.nwcm[f, i, i]) ** 2 / (K_BOLTZMANN * Ta * psum)
+                    nfs[f, i, 0] = 1 + npy.abs(self.nosiew[f, i, i]) ** 2 / (K_BOLTZMANN * Ta * psum)
             return nfs
 
     def nf(self, z: NumberLike) -> npy.ndarray:
@@ -1944,11 +1961,17 @@ class Network(object):
     def set_noise_w(self, noise_freq: Frequency = None, nfmin_db: float = 0,
                     gamma_opt: float = 0, rn: NumberLike = 1) -> None:
         """
-        sets the wave representation of the noise correlation matrix of a 2-port, based on the
+        Sets the wave representation of the noise wave correlation matrix (NWCM) of a 2-port, based on the
         noise frequency and input parameters. The port impedances are assumed to be 50 Ohms.
+        This function calculates the NWCM and then interpolates over the network's frequencies.
 
         Relations taken from S.W. Wedge's PhD Dissertation.
         """
+        # only valid for 2-ports
+        if self.number_of_ports != 2:
+            raise AttributeError("Conventional noise parameters are only "
+                                 "defined for two-port networks.")
+
         # TODO test this!
         z0 = 50
         # TODO allow for different port impedances
@@ -1958,20 +1981,28 @@ class Network(object):
         rn = npy.broadcast_to(npy.atleast_1d(rn), sh_fr)
         Tmin = T0 * (10 ** (nfmin_db / 10) - 1)
 
+        if len(noise_freq.f) > 1:
+            s = interp1d(self.f, self.s, axis=0, kind='linear')(noise_freq.f)
+        else:
+            s = self.s
+
         kt = 4 * K_BOLTZMANN * T0 * rn / z0
-        c1mag2 = K_BOLTZMANN * Tmin * (npy.abs(self.s[:, 0, 0] ** 2) - 1) +\
-            kt * npy.abs(1 - self.s[:, 0, 0] * gamma_opt) ** 2 / npy.abs(1 + gamma_opt) ** 2
-        c2mag2 = npy.abs(self.s[:, 1, 0]) ** 2 * (K_BOLTZMANN * Tmin +
+        c1mag2 = K_BOLTZMANN * Tmin * (npy.abs(s[:, 0, 0] ** 2) - 1) +\
+            kt * npy.abs(1 - s[:, 0, 0] * gamma_opt) ** 2 / npy.abs(1 + gamma_opt) ** 2
+        c2mag2 = npy.abs(s[:, 1, 0]) ** 2 * (K_BOLTZMANN * Tmin +
                                                   kt * npy.abs(gamma_opt) ** 2 /
                                                   npy.abs(1 + gamma_opt) ** 2)
-        c1conjc2 = -npy.conjugate(self.s[:, 1, 0]) * npy.conjugate(gamma_opt) * kt /\
-            npy.abs(1 + gamma_opt) ** 2 + self.s[:, 0, 0] * npy.conjugate(self.s[:, 1, 0]) * \
+        c1conjc2 = -npy.conjugate(s[:, 1, 0]) * npy.conjugate(gamma_opt) * kt /\
+            npy.abs(1 + gamma_opt) ** 2 + s[:, 0, 0] * npy.conjugate(s[:, 1, 0]) * \
                    (K_BOLTZMANN * Tmin + kt * npy.abs(gamma_opt) ** 2 /
                     npy.abs(1 + gamma_opt) ** 2)
         c2conjc1 = npy.conjugate(c1conjc2)
         noise = npy.array([[c1mag2, c1conjc2],
                            [c2conjc1, c2mag2]])
-        self.nwcm = noise.swapaxes(0, 2).swapaxes(1, 2)
+
+        noise = noise.swapaxes(0, 2).swapaxes(1, 2)
+        self.noisew = noise
+        self.noise_freq = noise_freq
 
     def set_passive_noise_w(self, tol: float = mf.ALMOST_ZERO, Ta: float = T0,
                             dtype: str = 'complex'):
@@ -1991,13 +2022,14 @@ class Network(object):
                 type for underlying data structure, change to 'object' for symbolic operation
 
         """
-        if not self.is_passive(tol=tol):
-            raise AttributeError("The network is not passive.")
-        nwcm = npy.zeros(shape=self.s.shape, dtype=dtype)
-        for f in range(0, len(self.f)):
-            nwcm[f] = K_BOLTZMANN * Ta * (npy.identity(self.number_of_ports) -
-                                          npy.dot(self.s[f] *
-                                                  npy.transpose(npy.conjugate(self.s[f]))))
+        if self.is_passive(tol=tol):
+            nwcm = npy.zeros(shape=self.s.shape, dtype=dtype)
+            for f in range(0, len(self.f)):
+                nwcm[f] = K_BOLTZMANN * Ta * (npy.identity(self.number_of_ports) -
+                                              npy.dot(self.s[f],
+                                                      npy.transpose(npy.conjugate(self.s[f]))))
+            self.noisew = nwcm
+            self.noise_freq = self.frequency
 
 
     # touchstone file IO
@@ -2634,7 +2666,7 @@ class Network(object):
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
 
         # interpolate noise data too
-        if self.noisy:
+        if self.noisy and self.noise is not None:
             f_noise = self.noise_freq.f
             f_noise_new = new_frequency.f
             interp_noise_re = f_interp(f_noise, self.noise.real, axis=0, **kwargs)
@@ -2645,7 +2677,7 @@ class Network(object):
             return x_new
         else:
             result.__setattr__(basis, x_new)
-            if self.noisy:
+            if self.noisy and self.noise is not None:
                 result.noise = noise_new
                 result.noise_freq = new_frequency
         return result
@@ -4000,6 +4032,20 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
             ntwkA = ntwkA[common_freq[1]]
             ntwkB = ntwkB[common_freq[2]]
             warnings.warn("Using a frequency subset:\n" + str(ntwkA.frequency))
+    if ntwkA.noisew is not None and ntwkB.noisew is not None:
+        try:
+            check_noise_frequency_equal(ntwkA, ntwkB)
+        except IndexError as e:
+            common_freq = npy.intersect1d(ntwkA.noise_freq.f, ntwkB.noise_freq.f, return_indices=True)
+            if common_freq[0].size == 0:
+                raise e
+            else:
+                ntwkA.noise = ntwkA.noise[common_freq[1]]
+                ntwkB.noise = ntwkB.noise[common_freq[2]]
+                ntwkA.noisew = ntwkA.noisew[common_freq[1]]
+                ntwkB.noisew = ntwkB.noisew[common_freq[2]]
+                warnings.warn("Using a noise frequency subset:\n" + str(ntwkA.noise_freq))
+
 
     if (k + num - 1 > ntwkA.nports - 1):
         raise IndexError('Port `k` out of range')
@@ -4024,9 +4070,12 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
 
-    if ntwkA.nwcm is not None and ntwkB.nwcm is not None:
+    if ntwkA.noisew is not None and ntwkB.noisew is not None:
         # call s-matrix connection function
-        ntwkC.s, ntwkC.nwcm = connect_s(ntwkC.s, k, ntwkB.s, l, nwcmA=ntwkA.nwcm, nwcmB=ntwkB.nwcm)
+        noise_sA = interp1d(ntwkA.f, ntwkA.s, axis=0, kind=Network.noise_interp_kind)(ntwkA.noise_freq.f)
+        noise_sB = interp1d(ntwkB.f, ntwkB.s, axis=0, kind=Network.noise_interp_kind)(ntwkB.noise_freq.f)
+        ntwkC.s, ntwkC.noisew = connect_s(ntwkC.s, k, ntwkB.s, l, noisewA=ntwkA.noisew, noisewB=ntwkB.noisew,
+                                          nsA=noise_sA, nsB=noise_sB)
     else:
         # call s-matrix connection function
         ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l)
@@ -4044,7 +4093,7 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
     if ntwkB.nports == 2 and ntwkA.nports > 2 and num == 1:
         from_ports = list(range(ntwkC.nports))
         to_ports = list(range(ntwkC.nports))
-        to_ports.pop(k);
+        to_ports.pop(k)
         to_ports.append(k)
 
         ntwkC.renumber(from_ports=from_ports,
@@ -4262,9 +4311,10 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
                        to_ports=list(range(k, ntwkC.nports)))
 
     # for now, the nwcm is defined assuming all port impedances are 50 Ohms
-    if ntwkA.nwcm is not None:
+    if ntwkA.noisew is not None:
         # call s-matrix connection function
-        ntwkC.s, ntwkC.nwcm = innerconnect_s(ntwkC.s, k, l, nwcmA=ntwkA.nwcm)
+        noise_s = interp1d(ntwkA.f, ntwkA.s, axis=0, kind=Network.noise_interp_kind)(ntwkA.noise_freq)
+        ntwkC.s, ntwkC.noisew = innerconnect_s(ntwkC.s, k, l, noisewA=ntwkA.noisew, ns=noise_s)
 
     else:
         # call s-matrix connection function
@@ -5034,7 +5084,8 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order: bool
 
 ## Functions operating on s-parameter matrices
 def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int, dtype: str = 'complex',
-              nwcmA: npy.ndarray = None, nwcmB: npy.ndarray = None) -> npy.ndarray:
+              noisewA: npy.ndarray = None, noisewB: npy.ndarray = None,
+              nsA: npy.ndarray = None, nsB: npy.ndarray = None) -> npy.ndarray:
     """
     Connect two n-port networks' s-matrices together.
 
@@ -5090,20 +5141,25 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int, dtype: str = 'comp
     C[:, :nA, :nA] = A.copy()
     C[:, nA:, nA:] = B.copy()
 
-    if nwcmA is not None and nwcmB is not None:
-        nwcmC = npy.zeros((nf, nC, nC), dtype=dtype)
-        nwcmC[:, :nA, :nA] = nwcmA.copy()
-        nwcmC[:, nA:, nA:] = nwcmB.copy()
+    if noisewA is not None and noisewB is not None:
+        nf_noise = nsA.shape[0]
+        noisewC = npy.zeros((nf_noise, nC, nC), dtype=dtype)
+        noisewC[:, :nA, :nA] = noisewA.copy()
+        noisewC[:, nA:, nA:] = noisewB.copy()
+
+        nsC = npy.zeros((nf_noise, nC, nC), dtype=dtype)
+        nsC[:, :nA, :nA] = nsA.copy()
+        nsC[:, nA:, nA:] = nsB.copy()
 
         # call innerconnect_s() on composit matrix C
-        return innerconnect_s(C, k, nA + l, nwcmA=nwcmC)
+        return innerconnect_s(C, k, nA + l, noisewA=noisewC, ns=nsC)
     else:
         # call innerconnect_s() on composit matrix C
         return innerconnect_s(C, k, nA + l)
 
 
 def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex',
-                   nwcmA: npy.ndarray = None) -> npy.ndarray:
+                   noisewA: npy.ndarray = None, ns: npy.ndarray = None) -> npy.ndarray:
     """
     connect two ports of a single n-port network's s-matrix.
 
@@ -5152,7 +5208,10 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex',
     nA = A.shape[1]  # num of ports on input s-matrix
     # create an empty s-matrix, to store the result
     C = npy.zeros(shape=A.shape, dtype=dtype)
-    nwcmC = npy.zeros(shape=A.shape, dtype=dtype)
+    try:
+        noisewC = npy.zeros(shape=noisewA.shape, dtype=dtype)
+    except:
+        pass
 
     # loop through ports and calculates resultant s-parameters
     for i in range(nA):
@@ -5165,38 +5224,41 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex',
                  A[:, l, j] * A[:, k, k] * A[:, i, l]) / \
                 ((1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l])
 
-            if nwcmA is not None:
-                denom = (1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l]
-                nwcmC[:, i, j] = nwcmA[:, i, j] + \
-                 nwcmA[:, l, k] * (A[:, i, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, i, l]) * \
-                 npy.conjugate(A[:, j, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, j, k]) / \
+            if noisewA is not None:
+                denom = (1 - ns[:, k, l]) * (1 - ns[:, l, k]) - ns[:, k, k] * ns[:, l, l]
+                noisewC[:, i, j] = noisewA[:, i, j] + \
+                 noisewA[:, l, k] * (ns[:, i, k] * (1 - ns[:, k, l]) + ns[:, k, k] * ns[:, i, l]) * \
+                 npy.conjugate(ns[:, j, l] * (1 - ns[:, l, k]) + ns[:, l, l] * ns[:, j, k]) / \
                  npy.abs(denom) ** 2 + \
-                 nwcmA[:, k, l] * (A[:, i, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, i, k]) * \
-                 npy.conjugate(A[:, j, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, j, l]) / \
+                 noisewA[:, k, l] * (ns[:, i, l] * (1 - ns[:, l, k]) + ns[:, l, l] * ns[:, i, k]) * \
+                 npy.conjugate(ns[:, j, k] * (1 - ns[:, k, l]) + ns[:, k, k] * ns[:, j, l]) / \
                  npy.abs(denom) ** 2 + \
-                 nwcmA[:, l, l] * (A[:, i, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, i, l]) * \
-                 npy.conjugate(A[:, j, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, j, l]) / \
+                 noisewA[:, l, l] * (ns[:, i, k] * (1 - ns[:, k, l]) + ns[:, k, k] * ns[:, i, l]) * \
+                 npy.conjugate(ns[:, j, k] * (1 - ns[:, k, l]) + ns[:, k, k] * ns[:, j, l]) / \
                  npy.abs(denom) ** 2 + \
-                 nwcmA[:, k, k] * (A[:, i, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, i, k]) * \
-                 npy.conjugate(A[:, j, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, j, k]) / \
+                 noisewA[:, k, k] * (ns[:, i, l] * (1 - ns[:, l, k]) + ns[:, l, l] * ns[:, i, k]) * \
+                 npy.conjugate(ns[:, j, l] * (1 - ns[:, l, k]) + ns[:, l, l] * ns[:, j, k]) / \
                  npy.abs(denom) ** 2 + \
-                 nwcmA[:, l, j] * (A[:, i, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, i, l]) / \
+                 noisewA[:, l, j] * (ns[:, i, k] * (1 - ns[:, k, l]) + ns[:, k, k] * ns[:, i, l]) / \
                  denom + \
-                 nwcmA[:, k, j] * (A[:, i, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, i, k]) / \
+                 noisewA[:, k, j] * (ns[:, i, l] * (1 - ns[:, l, k]) + ns[:, l, l] * ns[:, i, k]) / \
                  denom + \
-                 nwcmA[:, i, l] * npy.conjugate((A[:, j, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, j, l]) / \
+                 noisewA[:, i, l] * npy.conjugate((ns[:, j, k] * (1 - ns[:, k, l]) + ns[:, k, k] * ns[:, j, l]) / \
                                                 denom) + \
-                 nwcmA[:, i, k] * npy.conjugate((A[:, j, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, j, k]) / \
+                 noisewA[:, i, k] * npy.conjugate((ns[:, j, l] * (1 - ns[:, l, k]) + ns[:, l, l] * ns[:, j, k]) / \
                                                 denom)
 
     # remove ports that were `connected`
     C = npy.delete(C, (k, l), 1)
     C = npy.delete(C, (k, l), 2)
-    nwcmC = npy.delete(nwcmC, (k, l), 1)
-    nwcmC = npy.delete(nwcmC, (k, l), 2)
+    try:
+        nosiewC = npy.delete(noisewC, (k, l), 1)
+        noisewC = npy.delete(noisewC, (k, l), 2)
+    except:
+        pass
 
-    if nwcmA is not None:
-        return C, nwcmC
+    if noisewA is not None:
+        return C, noisewC
     else:
         return C
 
@@ -6661,6 +6723,13 @@ def check_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
     if assert_frequency_equal(ntwkA, ntwkB) == False:
         raise IndexError('Networks don\'t have matching frequency. See `Network.interpolate`')
 
+def check_noise_frequency_equal(ntwkA: Network, ntwkB: Network) -> None:
+    """
+    checks if two Networks have same noise frequency
+    """
+    if not assert_noise_frequency_equal(ntwkA, ntwkB):
+        raise IndexError('Networks don\'t have matching noise frequency. See `Network.interpolate`')
+
 
 def check_frequency_exist(ntwk) -> None:
     """
@@ -6692,6 +6761,15 @@ def assert_frequency_equal(ntwkA: Network, ntwkB: Network) -> bool:
     """
     """
     return (ntwkA.frequency == ntwkB.frequency)
+
+
+def assert_noise_frequency_equal(ntwkA: Network, ntwkB: Network) -> bool:
+    """
+    """
+    try:
+        return ntwkA.noise_freq == ntwkB.noise_freq
+    except:
+        return False
 
 
 def assert_frequency_exist(ntwk: Network) -> bool:
