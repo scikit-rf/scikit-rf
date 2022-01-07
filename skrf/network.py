@@ -4024,8 +4024,12 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
 
-    # call s-matrix connection function
-    ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l)
+    if ntwkA.nwcm is not None and ntwkB.nwcm is not None:
+        # call s-matrix connection function
+        ntwkC.s, ntwkC.nwcm = connect_s(ntwkC.s, k, ntwkB.s, l, nwcmA=ntwkA.nwcm, nwcmB=ntwkB.nwcm)
+    else:
+        # call s-matrix connection function
+        ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l)
 
     # combine z0 arrays and remove ports which were `connected`
     ntwkC.z0 = npy.hstack(
@@ -4257,8 +4261,14 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
 
-    # call s-matrix connection function
-    ntwkC.s = innerconnect_s(ntwkC.s, k, l)
+    # for now, the nwcm is defined assuming all port impedances are 50 Ohms
+    if ntwkA.nwcm is not None:
+        # call s-matrix connection function
+        ntwkC.s, ntwkC.nwcm = innerconnect_s(ntwkC.s, k, l, nwcmA=ntwkA.nwcm)
+
+    else:
+        # call s-matrix connection function
+        ntwkC.s = innerconnect_s(ntwkC.s, k, l)
 
     # update the characteristic impedance matrix
     ntwkC.z0 = npy.delete(ntwkC.z0, list(range(k, k + 1)) + list(range(l, l + 1)), 1)
