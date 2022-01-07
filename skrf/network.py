@@ -416,6 +416,7 @@ class Network(object):
 
         self.deembed = None
         self.noise = None
+        self.nwcm = None
         self.noise_freq = None
         self._z0 = npy.array(50, dtype=complex)
 
@@ -1387,51 +1388,50 @@ class Network(object):
         return mf.complex_2_db10(self.nfmin)
 
     @property
-    def nf_bosma(self, tol: float = mf.ALMOST_ZERO, ta: float = 290.0, tp: float = 290.0) -> npy.ndarray:
+    def nf_w(self, tol: float = mf.ALMOST_ZERO, Ta: float = T0) -> npy.ndarray:
         """
-        Calculate the noise figure of any arbitrary passive N-Port
-        in thermodynamic equilibrium using Bosma's Theorem.
+        Calculate the noise figure at each port of any arbitrary N-Port using wave representation.
+        For passive networks in thermodynamic equilibrium, this is trivial and completely
+        determined by the network's s-parameters. For active devices, the diagonal terms of the
+        noise wave correlation matrix must be known.
 
         Parameters
         ----------
         tol : float
             tolerance for passivity check
-        ta : float
+        Ta : float
             ambient temperature of network
-        tp : float
-            temperature of ports (typically = ambient temperature)
 
         Returns
         -------
         nfs : multi-dimensional array
-            column vector of noise figures at each port for each network freqeuncy point
+            column vector of noise figures at each port for each network frequency point
             shape = (ntwk.f.size, ntwk.number_of_ports, 1)
 
         """
         if self.number_of_ports < 2:
             raise AttributeError("The network must have two or more ports.")
 
-        if not self.is_passive(tol=tol):
-            raise AttributeError("The network is not passive.")
-
         nfs = npy.empty((self.f.size, self.number_of_ports, 1))
-        for f in range(0, self.f.size):
-            for i in range(0, self.number_of_ports):
-                psum = 0
-                for j in range(0, self.number_of_ports):
-                    if j == i:
-                        continue
+        if self.nwcm is not None:
+            for f in range(0, self.f.size):
+                for i in range(0, self.number_of_ports):
+                    psum = 0
+                    for j in range(0, self.number_of_ports):
+                        if j == i:
+                            continue
+                        else:
+                            psum += npy.abs(self.s[f][i][j]) ** 2
+                    if self.is_passive(tol=tol):
+                        nfs[f][i][0] = (1 - npy.abs(self.s[f][i][i]) ** 2) / psum
                     else:
-                        psum += abs(self.s[f][i][j]) ** 2
-                nfs[f][i][0] = (tp - ta) / tp + ta / tp * (1 - abs(self.s[f][i][i]) ** 2) / psum
-        return nfs
+                        nfs[f][i][0] = 1 + npy.abs(self.nwcm) ** 2 / (K_BOLTZMANN * Ta * psum)
+            return nfs
 
     def nf(self, z: NumberLike) -> npy.ndarray:
         """
         the noise figure for the network if the source impedance is z
         """
-
-        z0 = self.z0
         y_opt = self.y_opt
         fmin = self.nfmin
         rn = self.rn
@@ -1944,6 +1944,65 @@ class Network(object):
         self.noise = noise.swapaxes(0, 2).swapaxes(1, 2)
         self.noise_freq = noise_freq
 
+    def set_noise_w(self, noise_freq: Frequency = None, nfmin_db: float = 0,
+                    gamma_opt: float = 0, rn: NumberLike = 1) -> None:
+        """
+        sets the wave representation of the noise correlation matrix of a 2-port, based on the
+        noise frequency and input parameters. The port impedances are assumed to be 50 Ohms.
+
+        Relations taken from S.W. Wedge's PhD Dissertation.
+        """
+        # TODO test this!
+        z0 = 50
+        # TODO allow for different port impedances
+        sh_fr = noise_freq.f.shape
+        nfmin_db = npy.broadcast_to(npy.atleast_1d(nfmin_db), sh_fr)
+        gamma_opt = npy.broadcast_to(npy.atleast_1d(gamma_opt), sh_fr)
+        rn = npy.broadcast_to(npy.atleast_1d(rn), sh_fr)
+        Tmin = T0 * (10 ** (nfmin_db / 10) - 1)
+
+        kt = 4 * K_BOLTZMANN * T0 * rn / z0
+        c1mag2 = K_BOLTZMANN * Tmin * (npy.abs(self.s[:, 0, 0] ** 2) - 1) +\
+            kt * npy.abs(1 - self.s[:, 0, 0] * gamma_opt) ** 2 / npy.abs(1 + gamma_opt) ** 2
+        c2mag2 = npy.abs(self.s[:, 1, 0]) ** 2 * (K_BOLTZMANN * Tmin +
+                                                  kt * npy.abs(gamma_opt) ** 2 /
+                                                  npy.abs(1 + gamma_opt) ** 2)
+        c1conjc2 = -npy.conjugate(self.s[:, 1, 0]) * npy.conjugate(gamma_opt) * kt /\
+            npy.abs(1 + gamma_opt) ** 2 + self.s[:, 0, 0] * npy.conjugate(self.s[:, 1, 0]) * \
+                   (K_BOLTZMANN * Tmin + kt * npy.abs(gamma_opt) ** 2 /
+                    npy.abs(1 + gamma_opt) ** 2)
+        c2conjc1 = npy.conjugate(c1conjc2)
+        noise = npy.array([[c1mag2, c1conjc2],
+                           [c2conjc1, c2mag2]])
+        self.nwcm = noise.swapaxes(0, 2).swapaxes(1, 2)
+
+    def set_passive_noise_w(self, tol: float = mf.ALMOST_ZERO, Ta: float = T0,
+                            dtype: str = 'complex'):
+        """
+        Sets the noise wave correlation matrix of an N-Port network given the following:
+        1) the network is in thermodynamic equilibrium
+        2) the network is passive
+        3) the network has reflectionless terminations
+
+        Parameters
+        ----------
+        tol : float
+                tolerance for passivity check
+        Ta : float
+                ambient temperature
+        dtype : str
+                type for underlying data structure, change to 'object' for symbolic operation
+
+        """
+        if not self.is_passive(tol=tol):
+            raise AttributeError("The network is not passive.")
+        nwcm = npy.zeros(shape=self.s.shape, dtype=dtype)
+        for f in range(0, len(self.f)):
+            nwcm[f] = K_BOLTZMANN * Ta * (npy.identity(self.number_of_ports) -
+                                          npy.dot(self.s[f] *
+                                                  npy.transpose(npy.conjugate(self.s[f]))))
+
+
     # touchstone file IO
     def read_touchstone(self, filename: Union[str, TextIO]) -> None:
         """
@@ -2011,6 +2070,14 @@ class Network(object):
             self.noise_freq = Frequency.from_f(noise_freq, unit='hz')
             self.noise_freq.unit = touchstoneFile.frequency_unit
             self.set_noise_a(self.noise_freq, nfmin_db, gamma_opt, rn)
+            self.set_noise_w(self.noise_freq, nfmin_db, gamma_opt, rn)
+
+        # if the noise parameters are not defined in the touchstone file
+        # and the network is passive, nwcm can be defined via s-parameters alone
+        # i.e. Bosma's Theorem
+        else:
+            # this function checks for passivity
+            self.set_passive_noise_w()
 
         if self.name is None:
             try:
