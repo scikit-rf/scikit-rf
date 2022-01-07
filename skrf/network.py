@@ -1422,10 +1422,7 @@ class Network(object):
                             continue
                         else:
                             psum += npy.abs(self.s[f][i][j]) ** 2
-                    if self.is_passive(tol=tol):
-                        nfs[f][i][0] = (1 - npy.abs(self.s[f][i][i]) ** 2) / psum
-                    else:
-                        nfs[f][i][0] = 1 + npy.abs(self.nwcm) ** 2 / (K_BOLTZMANN * Ta * psum)
+                    nfs[f, i, 0] = 1 + npy.abs(self.nwcm[f, i, i]) ** 2 / (K_BOLTZMANN * Ta * psum)
             return nfs
 
     def nf(self, z: NumberLike) -> npy.ndarray:
@@ -5026,7 +5023,8 @@ def three_twoports_2_threeport(ntwk_triplet: Sequence[Network], auto_order: bool
 
 
 ## Functions operating on s-parameter matrices
-def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int, dtype: str = 'complex') -> npy.ndarray:
+def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int, dtype: str = 'complex',
+              nwcmA: npy.ndarray = None, nwcmB: npy.ndarray = None) -> npy.ndarray:
     """
     Connect two n-port networks' s-matrices together.
 
@@ -5082,11 +5080,20 @@ def connect_s(A: npy.ndarray, k: int, B: npy.ndarray, l: int, dtype: str = 'comp
     C[:, :nA, :nA] = A.copy()
     C[:, nA:, nA:] = B.copy()
 
-    # call innerconnect_s() on composit matrix C
-    return innerconnect_s(C, k, nA + l)
+    if nwcmA is not None and nwcmB is not None:
+        nwcmC = npy.zeros((nf, nC, nC), dtype=dtype)
+        nwcmC[:, :nA, :nA] = nwcmA.copy()
+        nwcmC[:, nA:, nA:] = nwcmB.copy()
+
+        # call innerconnect_s() on composit matrix C
+        return innerconnect_s(C, k, nA + l, nwcmA=nwcmC)
+    else:
+        # call innerconnect_s() on composit matrix C
+        return innerconnect_s(C, k, nA + l)
 
 
-def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex') -> npy.ndarray:
+def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex',
+                   nwcmA: npy.ndarray = None) -> npy.ndarray:
     """
     connect two ports of a single n-port network's s-matrix.
 
@@ -5135,6 +5142,7 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex') -> np
     nA = A.shape[1]  # num of ports on input s-matrix
     # create an empty s-matrix, to store the result
     C = npy.zeros(shape=A.shape, dtype=dtype)
+    nwcmC = npy.zeros(shape=A.shape, dtype=dtype)
 
     # loop through ports and calculates resultant s-parameters
     for i in range(nA):
@@ -5147,11 +5155,40 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex') -> np
                  A[:, l, j] * A[:, k, k] * A[:, i, l]) / \
                 ((1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l])
 
+            if nwcmA is not None:
+                denom = (1 - A[:, k, l]) * (1 - A[:, l, k]) - A[:, k, k] * A[:, l, l]
+                nwcmC[:, i, j] = nwcmA[:, i, j] + \
+                 nwcmA[:, l, k] * (A[:, i, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, i, l]) * \
+                 npy.conjugate(A[:, j, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, j, k]) / \
+                 npy.abs(denom) ** 2 + \
+                 nwcmA[:, k, l] * (A[:, i, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, i, k]) * \
+                 npy.conjugate(A[:, j, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, j, l]) / \
+                 npy.abs(denom) ** 2 + \
+                 nwcmA[:, l, l] * (A[:, i, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, i, l]) * \
+                 npy.conjugate(A[:, j, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, j, l]) / \
+                 npy.abs(denom) ** 2 + \
+                 nwcmA[:, k, k] * (A[:, i, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, i, k]) * \
+                 npy.conjugate(A[:, j, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, j, k]) / \
+                 npy.abs(denom) ** 2 + \
+                 nwcmA[:, l, j] * (A[:, i, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, i, l]) / \
+                 denom + \
+                 nwcmA[:, k, j] * (A[:, i, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, i, k]) / \
+                 denom + \
+                 nwcmA[:, i, l] * npy.conjugate((A[:, j, k] * (1 - A[:, k, l]) + A[:, k, k] * A[:, j, l]) / \
+                                                denom) + \
+                 nwcmA[:, i, k] * npy.conjugate((A[:, j, l] * (1 - A[:, l, k]) + A[:, l, l] * A[:, j, k]) / \
+                                                denom)
+
     # remove ports that were `connected`
     C = npy.delete(C, (k, l), 1)
     C = npy.delete(C, (k, l), 2)
+    nwcmC = npy.delete(nwcmC, (k, l), 1)
+    nwcmC = npy.delete(nwcmC, (k, l), 2)
 
-    return C
+    if nwcmA is not None:
+        return C, nwcmC
+    else:
+        return C
 
 
 ## network parameter conversion
