@@ -3974,6 +3974,41 @@ class Network(object):
         """
         return s2vswr_active(self.s, a)
 
+    def calculate_noise_powers(self, input_temps: npy.ndarray = None, input_voltages: npy.ndarray = None,
+                               cC: npy.ndarray = None, Ta: float = T0, bw: float = 1.0) -> npy.ndarray:
+        """
+        This function will calculate the output noise power of the network given the incident noise at each of
+        its ports. This function works on active and passive networks as long as the diagonal terms of the nwcm
+        are known. Uncorrelated and/or correlated noise powers (with corresponding correlation coefficients)
+        can be specified. The function requires each port is perfectly matched. That can be implemented in the
+        future, but all of the elements of the nwcm must be known.
+
+        Parameters
+        ----------
+        input_temps : numpy.ndarray
+                array with shape=(self.f, self.number_of_ports, 1), this vector specifies uncorrelated
+                thermal noise power (equivalent noise temperatures, in Kelvin) incident on each port
+        input_voltages : numpy.ndarray
+                array with shape=(self.f, self.number_of_ports, 1), this vector is used to specify potentially
+                correlated noise sources incident on each port. The cross-correlation of these sources
+                is defined in cC
+        cC : numpy.ndarray
+                array with shape=(self.f, self.number_of_ports, self.number_of_ports), this matrix is used to
+                specify the cross-correlation terms
+        Ta : float
+                reference temperature, default is 290K
+        bw : float
+                noise bandwidth
+
+        Returns
+        -------
+        output_noise : numpy.ndarray
+                array with shape=(self.f, self.number_of_ports, 1), this vector specifies the resulting output
+                noise power at each port
+
+        """
+        raise NotImplementedError
+
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
 PRIMARY_PROPERTIES = Network.PRIMARY_PROPERTIES
