@@ -3977,11 +3977,11 @@ class Network(object):
     def calculate_noise_powers(self, input_temps: npy.ndarray = None, input_voltages: npy.ndarray = None,
                                cC: npy.ndarray = None, Ta: float = T0, bw: float = 1.0) -> npy.ndarray:
         """
-        This function will calculate the output noise power of the network given the incident noise at each of
-        its ports. This function works on active and passive networks as long as the diagonal terms of the nwcm
-        are known. Uncorrelated and/or correlated noise powers (with corresponding correlation coefficients)
-        can be specified. The function requires each port is perfectly matched. That can be implemented in the
-        future, but all of the elements of the nwcm must be known.
+        This function calculates the output noise power at each port of the network given the incident
+        noise at each of its ports. This function works on active and passive networks as long as the diagonal
+        terms of the noise wave correlation matrix (nwcm) are known. Uncorrelated and/or correlated noise powers
+        (with corresponding correlation coefficients) can be specified. The function requires each port to be
+        perfectly matched.
 
         Parameters
         ----------
@@ -3991,7 +3991,7 @@ class Network(object):
         input_voltages : numpy.ndarray
                 array with shape=(self.f, self.number_of_ports, 1), this vector is used to specify potentially
                 correlated noise sources incident on each port. The cross-correlation of these sources
-                is defined in cC
+                is defined in cC. The choice to represent them as voltages was kind of arbitrary.
         cC : numpy.ndarray
                 array with shape=(self.f, self.number_of_ports, self.number_of_ports), this matrix is used to
                 specify the cross-correlation terms
@@ -4004,10 +4004,55 @@ class Network(object):
         -------
         output_noise : numpy.ndarray
                 array with shape=(self.f, self.number_of_ports, 1), this vector specifies the resulting output
-                noise power at each port
+                noise power at each port in Watts
 
         """
-        raise NotImplementedError
+        if input_temps is None and input_voltages is None:
+            return self.nf_w
+        if input_temps is None:
+            input_temps = npy.zeros((self.f.size, self.number_of_ports, 1))
+        elif input_temps.shape != (self.f.size, self.number_of_ports, 1):
+            raise ValueError("input_temps shape is incorrect!")
+        if input_voltages is None:
+            input_voltages = npy.zeros((self.f.size, self.number_of_ports, 1))
+        elif input_voltages.shape != (self.f.size, self.number_of_ports, 1):
+            raise ValueError("input_voltages shape is incorrect!")
+        if cC is None:
+            cC = npy.zeros((self.f.size, self.number_of_ports, self.number_of_ports))
+        elif cC.shape != (self.f.size, self.number_of_ports, self.number_of_ports):
+            raise ValueError("cC shape is incorrect!")
+
+        output_noise = npy.empty((self.f.size, self.number_of_ports, 1))
+
+        for i in range(0, self.number_of_ports):
+            nfi = self.nf_w[:, i]
+            # noise power from network
+            term1 = 0
+            # noise power from incident noise powers
+            term2 = 0
+            # noise power from incident noise voltages (magnitude)
+            term3 = 0
+            # correlation terms
+            term4 = 0
+            for j in range(0, self.number_of_ports):
+                Tj = input_temps[:, j, 0]
+                vj = input_voltages[:, j, 0]
+                zj = self.z0[:, j]
+                sij = self.s[:, i, j]
+                if j != i:
+                    term1 += K_BOLTZMANN * Ta * bw * npy.abs(sij) ** 2
+                    term2 += K_BOLTZMANN * Tj * bw * npy.abs(sij) ** 2
+                else:
+                    term2 += K_BOLTZMANN * Tj * bw * npy.abs(1 + sij) ** 2
+                term3 += npy.abs(vj / npy.sqrt(zj) * sij) ** 2
+                if j < self.number_of_ports - 1:
+                    for k in range(j + 1, self.number_of_ports):
+                        vk = input_voltages[:, k, 0]
+                        zk = self.z0[:, k]
+                        term4 += 2 * (cC[:, j, k] * sij * npy.conjugate(self.s[:, i, k])).real * \
+                            npy.sqrt(npy.abs(vj / npy.sqrt(zj)) ** 2 * npy.abs(vk / npy.sqrt(zk)) ** 2)
+            output_noise[:, i, 0] = (nfi - 1) * term1 + term2 + term3 + term4
+        raise output_noise
 
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
