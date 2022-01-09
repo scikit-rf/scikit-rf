@@ -153,6 +153,18 @@ class NetworkTestCase(unittest.TestCase):
     def test_constructor_from_touchstone(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
 
+    def test_constructor_from_touchstone_special_encoding(self):
+        " Test creating Network from Touchstone file with various file encodings."
+        filename_latin1 = os.path.join(self.test_dir, '../io/tests/test_encoding_ISO-8859-1.s2p')
+        filename_utf8 = os.path.join(self.test_dir, '../io/tests/test_encoding_UTF-8-SIG.s2p')
+
+        ntwk1 = rf.Network(filename_latin1)
+        ntwk1_ = rf.Network(filename_latin1, encoding='latin_1')
+        self.assertEqual(ntwk1.comments, ntwk1_.comments)
+
+        ntwk2 = rf.Network(filename_utf8, encoding='utf_8_sig')
+        self.assertEqual(ntwk1.comments, ntwk2.comments)
+
     def test_constructor_from_hfss_touchstone(self):
         # HFSS can provide the port characteristic impedances in its generated touchstone file.
         # Check if reading a HFSS touchstone file with non-50Ohm impedances
