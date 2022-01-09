@@ -1420,7 +1420,6 @@ class Network(object):
         """
         return mf.complex_2_db10(self.nfmin)
 
-    @property
     def nf_w(self, Ta: float = T0) -> npy.ndarray:
         """
         Calculate the noise figure at each port of any arbitrary N-Port using wave representation.
