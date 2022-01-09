@@ -1420,7 +1420,7 @@ class Network(object):
         """
         return mf.complex_2_db10(self.nfmin)
 
-    def nf_w(self, Ta: float = T0) -> npy.ndarray:
+    def nf_w(self, Ta: float = T0, dB: bool = False) -> npy.ndarray:
         """
         Calculate the noise figure at each port of any arbitrary N-Port using wave representation.
         For passive networks in thermodynamic equilibrium, this is trivial and completely
@@ -1454,7 +1454,10 @@ class Network(object):
                     else:
                         psum += npy.abs(self.s[:, i, j]) ** 2
                 nfs[:, i, 0] = 1 + self.nwcm[:, i, i].real / (K_BOLTZMANN * Ta * psum)
-            return nfs
+            if dB:
+                return 10 * npy.log10(nfs)
+            else:
+                return nfs
 
     def nf(self, z: NumberLike) -> npy.ndarray:
         """
