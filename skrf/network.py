@@ -835,6 +835,24 @@ class Network(object):
         return len(self.s)
 
     # INTERNAL CODE GENERATION METHODS
+    def __build_sub_nwcm(self, i: int, j: int) -> (npy.ndarray, npy.ndarray):
+        """
+        builds subnetwork noise waver correlation matrix for noise parameter definitions
+        """
+        if i == j:
+            raise ValueError("Ports must not be the same.")
+        s = npy.empty((self.f, 2, 2))
+        nwcm = npy.empty((self.f, 2, 2))
+        s[:, 0, 0] = self.s[:, i, i]
+        s[:, 0, 1] = self.s[:, i, j]
+        s[:, 1, 0] = self.s[:, j, i]
+        s[:, 1, 1] = self.s[:, j, j]
+        nwcm[:, 0, 0] = self.nwcm[:, i, i]
+        nwcm[:, 0, 1] = self.nwcm[:, i, j]
+        nwcm[:, 1, 0] = self.nwcm[:, j, i]
+        nwcm[:, 1, 1] = self.nwcm[:, j, j]
+        return s, nwcm
+
     def __compatable_for_scalar_operation_test(self, other: 'Network') -> None:
         """
         tests to make sure other network's s-matrix is of same shape
@@ -1441,9 +1459,6 @@ class Network(object):
             shape = (ntwk.f.size, ntwk.number_of_ports, 1)
 
         """
-        if self.number_of_ports < 2:
-            raise AttributeError("The network must have two or more ports.")
-
         nfs = npy.empty((self.f.size, self.number_of_ports, 1))
         if self.noisew is not None:
             for i in range(0, self.number_of_ports):
@@ -1498,55 +1513,58 @@ class Network(object):
         """
         return npy.real(self.n[:, 0, 0] / (4. * K_BOLTZMANN * T0))
 
-    def rn_w(self, z0: float = 50, Ta: float = T0) -> npy.ndarray:
+    def rn_w(self, z0: float = 50, Ta: float = T0, i: int = 0, j: int = 1) -> npy.ndarray:
         """
         the equivalent noise resistance for the network
         calculated from nwcm
         """
-        if self.number_of_ports != 2:
-            raise ValueError("Conversion from NWCM to noise parameters is only supported for 2-port networks.")
-        t = (1 + self.s[:, 0, 0]) / self.s[:, 1, 0]
-        return (z0 / (4 * K_BOLTZMANN * Ta) * (self.nwcm[:, 0, 0] + self.nwcm[:, 1, 1] * npy.abs(t) ** 2 -
-                                               self.nwcm[:, 0, 1] * npy.conjugate(t) -
-                                               self.nwcm[:, 1, 0] * t)).real
+        if self.number_of_ports < 2:
+            raise ValueError("Conversion from NWCM to noise parameters is not supported for 1-port networks.")
+        s, nwcm = self.__build_sub_nwcm(i, j)
+        t = (1 + s[:, 0, 0]) / s[:, 1, 0]
+        return (z0 / (4 * K_BOLTZMANN * Ta) * (nwcm[:, 0, 0] + nwcm[:, 1, 1] * npy.abs(t) ** 2 -
+                                               nwcm[:, 0, 1] * npy.conjugate(t) -
+                                               nwcm[:, 1, 0] * t)).real
 
-    def gopt_w(self) -> npy.ndarray:
+    def gopt_w(self, i: int = 0, j: int = 1) -> npy.ndarray:
         """
         source reflection coefficient for nfmin
         """
-        if self.number_of_ports != 2:
-            raise ValueError("Conversion from NWCM to noise parameters is only supported for 2-port networks.")
-        eta = (self.nwcm[:, 1, 1] + self.nwcm[:, 0, 0] * npy.abs(self.s[:, 1, 0]) ** 2 +
-               self.nwcm[:, 1, 1] * npy.abs(self.s[:, 0, 0]) ** 2 -
-               self.nwcm[:, 0, 1] * self.s[:, 1, 0] * npy.conjugate(self.s[:, 0, 0]) -
-               self.nwcm[:, 1, 0] * self.s[:, 0, 0] * npy.conjugate(self.s[:, 1, 0])) / (self.nwcm[:, 1, 1] *\
-                                                                                         self.s[:, 0, 0] -\
-                                                                                         self.nwcm[:, 0, 1] *\
-                                                                                         self.s[:, 1, 0])
+        if self.number_of_ports < 2:
+            raise ValueError("Conversion from NWCM to noise parameters is not supported for 1-port networks.")
+        s, nwcm = self.__build_sub_nwcm(i, j)
+        eta = (nwcm[:, 1, 1] + nwcm[:, 0, 0] * npy.abs(s[:, 1, 0]) ** 2 +
+               nwcm[:, 1, 1] * npy.abs(s[:, 0, 0]) ** 2 -
+               nwcm[:, 0, 1] * s[:, 1, 0] * npy.conjugate(s[:, 0, 0]) -
+               nwcm[:, 1, 0] * s[:, 0, 0] * npy.conjugate(s[:, 1, 0])) / (nwcm[:, 1, 1] *\
+                                                                          s[:, 0, 0] -\
+                                                                          nwcm[:, 0, 1] *\
+                                                                          s[:, 1, 0])
         return eta / 2 * (1 - npy.sqrt(1 - 4 / npy.abs(eta) ** 2))
 
-    def Tmin(self) -> npy.ndarray:
+    def Tmin(self, i: int = 0, j: int = 1) -> npy.ndarray:
         """
         minimum noise temperature in K
         """
-        if self.number_of_ports != 2:
-            raise ValueError("Conversion from NWCM to noise parameters is only supported for 2-port networks.")
-        num = self.nwcm[:, 1, 1]-npy.abs(self.gopt_w())**2 * (self.nwcm[:, 0, 0] * npy.abs(self.s[:, 1, 0])**2 +
-                                                              self.nwcm[:, 1, 1] * npy.abs(self.s[:, 0, 0])**2 -
-                                                              self.nwcm[:, 0, 1] * self.s[:, 1, 0] *
-                                                              npy.conjugate(self.s[:, 0, 0])-self.nwcm[:, 1, 0] *
-                                                              self.s[:, 0, 0] * npy.conjugate(self.s[:, 1, 0]))
-        denom = npy.abs(self.s[:, 1, 0])**2 * (1 + npy.abs(self.gopt_w())**2)
+        if self.number_of_ports < 2:
+            raise ValueError("Conversion from NWCM to noise parameters is not supported for 1-port networks.")
+        s, nwcm = self.__build_sub_nwcm(i, j)
+        num = nwcm[:, 1, 1]-npy.abs(self.gopt_w(i, j))**2 * (nwcm[:, 0, 0] * npy.abs(s[:, 1, 0])**2 +
+                                                             nwcm[:, 1, 1] * npy.abs(s[:, 0, 0])**2 -
+                                                             nwcm[:, 0, 1] * s[:, 1, 0] *
+                                                             npy.conjugate(s[:, 0, 0])-nwcm[:, 1, 0] *
+                                                             s[:, 0, 0] * npy.conjugate(s[:, 1, 0]))
+        denom = npy.abs(s[:, 1, 0])**2 * (1 + npy.abs(self.gopt_w(i, j))**2)
         return (num / denom / K_BOLTZMANN).real
 
-    def nfmin_w(self, Ta: float = T0, dB: bool = False) -> npy.ndarray:
+    def nfmin_w(self, i: int = 0, j: int = 1, Ta: float = T0, dB: bool = False) -> npy.ndarray:
         """
         minimum noise factor calculated from nwcm
         """
         if dB:
-            return 10 * npy.log10(self.Tmin() / Ta + 1)
+            return 10 * npy.log10(self.Tmin(i, j) / Ta + 1)
         else:
-            return self.Tmin() / Ta + 1
+            return self.Tmin(i, j) / Ta + 1
 
     # SECONDARY PROPERTIES
     @property
