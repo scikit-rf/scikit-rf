@@ -2779,7 +2779,7 @@ class Network(object):
         ntwk = self.interpolate(freq_or_n, **kwargs)
         self.frequency, self.s, self.z0 = ntwk.frequency, ntwk.s, ntwk.z0
         if self.noisy:
-            self.noise, self.noise_freq = ntwk.noise, ntwk.noise_freq
+            self.noise, self.noisew, self.noise_freq = ntwk.noise, ntwk.nosiew, ntwk.noise_freq
 
     ##convenience
     resample = interpolate_self
