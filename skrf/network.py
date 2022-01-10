@@ -2683,23 +2683,27 @@ class Network(object):
             x_new = interp_mag(f_new) * npy.exp(1j * interp_rad(f_new))
 
         # interpolate noise data too
-        if self.noisy and self.noise is not None:
+        if self.noisy:
             f_noise = self.noise_freq.f
             f_noise_new = new_frequency.f
-            interp_noise_re = f_interp(f_noise, self.noise.real, axis=0, **kwargs)
-            interp_noise_im = f_interp(f_noise, self.noise.imag, axis=0, **kwargs)
-            interp_noisew_re = f_interp(f_noise, self.noisew.real, axis=0, **kwargs)
-            interp_noisew_im = f_interp(f_noise, self.noisew.imag, axis=0, **kwargs)
-            noise_new = interp_noise_re(f_noise_new) + 1j * interp_noise_im(f_noise_new)
-            noisew_new = interp_noisew_re(f_noise_new) + 1j * interp_noisew_im(f_noise_new)
+            if self.noise is not None:
+                interp_noise_re = f_interp(f_noise, self.noise.real, axis=0, **kwargs)
+                interp_noise_im = f_interp(f_noise, self.noise.imag, axis=0, **kwargs)
+                noise_new = interp_noise_re(f_noise_new) + 1j * interp_noise_im(f_noise_new)
+            if self.noisew is not None:
+                interp_noisew_re = f_interp(f_noise, self.noisew.real, axis=0, **kwargs)
+                interp_noisew_im = f_interp(f_noise, self.noisew.imag, axis=0, **kwargs)
+                noisew_new = interp_noisew_re(f_noise_new) + 1j * interp_noisew_im(f_noise_new)
 
         if return_array:
             return x_new
         else:
             result.__setattr__(basis, x_new)
-            if self.noisy and self.noise is not None:
-                result.noise = noise_new
-                result.nosiew = noisew_new
+            if self.noisy:
+                if self.noise is not None:
+                    result.noise = noise_new
+                if self.noisew is not None:
+                    result.nosiew = noisew_new
                 result.noise_freq = new_frequency
         return result
 
