@@ -5363,10 +5363,8 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex',
     nA = A.shape[1]  # num of ports on input s-matrix
     # create an empty s-matrix, to store the result
     C = npy.zeros(shape=A.shape, dtype=dtype)
-    try:
+    if noisewA is not None:
         noisewC = npy.zeros(shape=noisewA.shape, dtype=dtype)
-    except:
-        pass
 
     # loop through ports and calculates resultant s-parameters
     for i in range(nA):
@@ -5406,13 +5404,9 @@ def innerconnect_s(A: npy.ndarray, k: int, l: int, dtype: str = 'complex',
     # remove ports that were `connected`
     C = npy.delete(C, (k, l), 1)
     C = npy.delete(C, (k, l), 2)
-    try:
-        nosiewC = npy.delete(noisewC, (k, l), 1)
-        noisewC = npy.delete(noisewC, (k, l), 2)
-    except:
-        pass
-
     if noisewA is not None:
+        noisewC = npy.delete(noisewC, (k, l), 1)
+        noisewC = npy.delete(noisewC, (k, l), 2)
         return C, noisewC
     else:
         return C
