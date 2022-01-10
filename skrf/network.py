@@ -2688,7 +2688,10 @@ class Network(object):
             f_noise_new = new_frequency.f
             interp_noise_re = f_interp(f_noise, self.noise.real, axis=0, **kwargs)
             interp_noise_im = f_interp(f_noise, self.noise.imag, axis=0, **kwargs)
+            interp_noisew_re = f_interp(f_noise, self.noisew.real, axis=0, **kwargs)
+            interp_noisew_im = f_interp(f_noise, self.noisew.imag, axis=0, **kwargs)
             noise_new = interp_noise_re(f_noise_new) + 1j * interp_noise_im(f_noise_new)
+            noisew_new = interp_noisew_re(f_noise_new) + 1j * interp_noisew_im(f_noise_new)
 
         if return_array:
             return x_new
@@ -2696,6 +2699,7 @@ class Network(object):
             result.__setattr__(basis, x_new)
             if self.noisy and self.noise is not None:
                 result.noise = noise_new
+                result.nosiew = noisew_new
                 result.noise_freq = new_frequency
         return result
 
@@ -4010,7 +4014,7 @@ class Network(object):
 
         """
         if input_temps is None and input_voltages is None:
-            return self.nf_w
+            return self.nf_w(Ta=Ta)
         if input_temps is None:
             input_temps = npy.zeros((self.f.size, self.number_of_ports, 1))
         elif input_temps.shape != (self.f.size, self.number_of_ports, 1):
