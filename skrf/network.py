@@ -4108,7 +4108,7 @@ class Network(object):
         output_noise = npy.empty((self.f.size, self.number_of_ports, 1))
 
         for i in range(0, self.number_of_ports):
-            nfi = self.nf_w[:, i]
+            nfi = self.nf_w(Ta=Ta)[:, i, 0]
             # noise power from network
             term1 = 0
             # noise power from incident noise powers
@@ -4117,7 +4117,7 @@ class Network(object):
             term3 = 0
             # correlation terms
             term4 = 0
-            for j in range(0, self.number_of_ports):
+            for j in range(self.number_of_ports):
                 Tj = input_temps[:, j, 0]
                 vj = input_voltages[:, j, 0]
                 zj = self.z0[:, j]
@@ -4125,17 +4125,28 @@ class Network(object):
                 if j != i:
                     term1 += K_BOLTZMANN * Ta * bw * npy.abs(sij) ** 2
                     term2 += K_BOLTZMANN * Tj * bw * npy.abs(sij) ** 2
+                    term3 += npy.abs(vj / npy.sqrt(zj))**2 * npy.abs(sij)**2
                 else:
                     term2 += K_BOLTZMANN * Tj * bw * npy.abs(1 + sij) ** 2
-                term3 += npy.abs(vj / npy.sqrt(zj) * sij) ** 2
-                if j < self.number_of_ports - 1:
-                    for k in range(j + 1, self.number_of_ports):
-                        vk = input_voltages[:, k, 0]
-                        zk = self.z0[:, k]
-                        term4 += 2 * (cC[:, j, k] * sij * npy.conjugate(self.s[:, i, k])).real * \
-                            npy.sqrt(npy.abs(vj / npy.sqrt(zj)) ** 2 * npy.abs(vk / npy.sqrt(zk)) ** 2)
-            output_noise[:, i, 0] = (nfi - 1) * term1 + term2 + term3 + term4
-        raise output_noise
+                    term3 += npy.abs(vj / npy.sqrt(zj))**2 * npy.abs(1 + sij)**2
+                for k in range(self.number_of_ports):
+                    if k == j:
+                        continue
+                    vk = input_voltages[:, k, 0]
+                    zk = self.z0[:, k]
+                    norm = npy.sqrt(npy.abs(vj / npy.sqrt(zj)) ** 2 * npy.abs(vk / npy.sqrt(zk)) ** 2)
+                    sik = self.s[:, i, k]
+                    if j == i:
+                        sij = 1 + sij
+                    if k == i:
+                        sik = 1 + sik
+                    term4 += cC[:, j, k] * sij * npy.conjugate(sik) * norm
+                    if j == i:
+                        sij = sij - 1
+                    if k == i:
+                        sik = sik - 1
+            output_noise[:, i, 0] = (nfi - 1) * term1 + term2 + term3 + term4.real
+        return output_noise
 
 
 COMPONENT_FUNC_DICT = Network.COMPONENT_FUNC_DICT
