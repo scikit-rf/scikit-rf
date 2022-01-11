@@ -1083,6 +1083,10 @@ class Network(object):
         """
         return s2t(self.s)
 
+    @t.setter
+    def t(self, value: npy.ndarray) -> None:
+        self._s = t2s(value)
+
     @property
     def s_invert(self) -> npy.ndarray:
         """

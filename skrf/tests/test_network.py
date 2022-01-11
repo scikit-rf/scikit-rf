@@ -375,6 +375,23 @@ class NetworkTestCase(unittest.TestCase):
                 npy.testing.assert_allclose(rf.t2s(rf.s2t(ntwk.s)), ntwk.s)
         npy.testing.assert_allclose(rf.t2s(rf.s2t(self.Fix.s)), self.Fix.s)
 
+    def test_setters(self):
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        ntwk = rf.Network(s=s_random, frequency=self.freq)
+        ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
+        ntwk.s = ntwk.s
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.a = ntwk.a
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.z = ntwk.z
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.y = ntwk.y
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.t = ntwk.t
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.h = ntwk.h
+        npy.testing.assert_allclose(ntwk.s, s_random)
+
     def test_sparam_conversion_with_complex_char_impedance(self):
         """
         Renormalize a 2-port network wrt to complex characteristic impedances
