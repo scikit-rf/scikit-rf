@@ -841,8 +841,8 @@ class Network(object):
         """
         if i == j:
             raise ValueError("Ports must not be the same.")
-        s = npy.empty((self.f, 2, 2))
-        nwcm = npy.empty((self.f, 2, 2))
+        s = npy.empty((self.f.size, 2, 2), dtype='complex')
+        nwcm = npy.empty((self.f.size, 2, 2), dtype='complex')
         s[:, 0, 0] = self.s[:, i, i]
         s[:, 0, 1] = self.s[:, i, j]
         s[:, 1, 0] = self.s[:, j, i]
@@ -1922,6 +1922,9 @@ class Network(object):
                 ntwk.noise = npy.copy(self.noise)
                 ntwk.noise_freq = npy.copy(self.noise_freq)
             ntwk.noise = self.noise.copy()
+            ntwk.noise_freq = self.noise_freq.copy()
+        if self.noisew is not None and self.noise_freq is not None:
+            ntwk.noisew = self.noisew.copy()
             ntwk.noise_freq = self.noise_freq.copy()
 
         try:
@@ -3293,6 +3296,8 @@ class Network(object):
 
         self.s[:, to_ports, :] = self.s[:, from_ports, :]  # renumber rows
         self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
+        self.noisew[:, to_ports, :] = self.noisew[:, from_ports, :]  # renumber rows
+        self.noisew[:, :, to_ports] = self.noisew[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
 
     def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> 'Network':
@@ -4139,7 +4144,7 @@ Y_LABEL_DICT = Network.Y_LABEL_DICT
 
 
 ## Functions operating on Network[s]
-def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Network:
+def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1, tol: float = mf.ALMOST_ZERO) -> Network:
     """
     Connect two n-port networks together.
 
@@ -4240,15 +4245,18 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         #   ntwkC's ports.  Fix the new port's impedance, then insert it
         #   at position k where it belongs.
         ntwkC.z0[:, k:] = npy.hstack((ntwkC.z0[:, k + 1:], ntwkB.z0[:, [l]]))
+        # TODO apply z0 mismatch to nwcm
+        ntwkC.noisew = ntwkA.noisew
+        ntwkC.noise_freq = ntwkA.noise_freq
         ntwkC.renumber(from_ports=[ntwkC.nports - 1] + list(range(k, ntwkC.nports - 1)),
                        to_ports=list(range(k, ntwkC.nports)))
 
     if ntwkA.noisew is not None and ntwkB.noisew is not None:
         # call s-matrix connection function
-        noise_sA = interp1d(ntwkA.f, ntwkA.s, axis=0, kind=Network.noise_interp_kind)(ntwkA.noise_freq.f)
+        noise_sC = interp1d(ntwkC.f, ntwkC.s, axis=0, kind=Network.noise_interp_kind)(ntwkC.noise_freq.f)
         noise_sB = interp1d(ntwkB.f, ntwkB.s, axis=0, kind=Network.noise_interp_kind)(ntwkB.noise_freq.f)
         ntwkC.s, ntwkC.noisew = connect_s(ntwkC.s, k, ntwkB.s, l, noisewA=ntwkA.noisew, noisewB=ntwkB.noisew,
-                                          nsA=noise_sA, nsB=noise_sB)
+                                          nsA=noise_sC, nsB=noise_sB)
     else:
         # call s-matrix connection function
         ntwkC.s = connect_s(ntwkC.s, k, ntwkB.s, l)
@@ -4339,6 +4347,13 @@ def connect(ntwkA: Network, k: int, ntwkB: Network, l: int, num: int = 1) -> Net
         ntwkC.noise = cC
         ntwkC.noise_freq = noise_freq
 
+    if ntwkA.noisew is not None and ntwkB.noisew is not None and ntwkC.noise_freq is None:
+        if ntwkA.noise_freq == ntwkB.noise_freq:
+            ntwkC.noise_freq = ntwkA.noise_freq
+    try:
+        ntwkC.set_passive_noise_w(tol=tol)
+    except:
+        pass
     return ntwkC
 
 
@@ -4419,7 +4434,7 @@ def connect_fast(ntwkA: Network, k: int, ntwkB: Network, l: int) -> Network:
     return ntwkC
 
 
-def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
+def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1, tol: float = mf.ALMOST_ZERO) -> Network:
     """
     connect ports of a single n-port network.
 
@@ -4486,8 +4501,12 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     # for now, the nwcm is defined assuming all port impedances are 50 Ohms
     if ntwkA.noisew is not None:
         # call s-matrix connection function
-        noise_s = interp1d(ntwkA.f, ntwkA.s, axis=0, kind=Network.noise_interp_kind)(ntwkA.noise_freq)
+        if ntwkA.noise_freq == ntwkA.frequency:
+            noise_s = ntwkA.s
+        else:
+            noise_s = interp1d(ntwkA.f, ntwkA.s, axis=0, kind=Network.noise_interp_kind)(ntwkA.noise_freq.f)
         ntwkC.s, ntwkC.noisew = innerconnect_s(ntwkC.s, k, l, noisewA=ntwkA.noisew, ns=noise_s)
+        ntwkC.noise_freq = ntwkA.noise_freq
 
     else:
         # call s-matrix connection function
@@ -4500,6 +4519,10 @@ def innerconnect(ntwkA: Network, k: int, l: int, num: int = 1) -> Network:
     if num > 1:
         ntwkC = innerconnect(ntwkC, k, l - 1, num - 1)
 
+    try:
+        ntwkC.set_passive_noise_w(tol=tol)
+    except:
+        pass
     return ntwkC
 
 
