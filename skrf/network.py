@@ -4063,8 +4063,7 @@ class Network(object):
         This function calculates the output noise power at each port of the network given the incident
         noise at each of its ports. This function works on active and passive networks as long as the diagonal
         terms of the noise wave correlation matrix (nwcm) are known. Uncorrelated and/or correlated noise powers
-        (with corresponding correlation coefficients) can be specified. The function requires each port to be
-        perfectly matched.
+        (with corresponding correlation coefficients) can be specified.
 
         Parameters
         ----------
