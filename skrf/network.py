@@ -3296,8 +3296,9 @@ class Network(object):
 
         self.s[:, to_ports, :] = self.s[:, from_ports, :]  # renumber rows
         self.s[:, :, to_ports] = self.s[:, :, from_ports]  # renumber columns
-        self.noisew[:, to_ports, :] = self.noisew[:, from_ports, :]  # renumber rows
-        self.noisew[:, :, to_ports] = self.noisew[:, :, from_ports]  # renumber columns
+        if self.noisew is not None:
+            self.noisew[:, to_ports, :] = self.noisew[:, from_ports, :]  # renumber rows
+            self.noisew[:, :, to_ports] = self.noisew[:, :, from_ports]  # renumber columns
         self.z0[:, to_ports] = self.z0[:, from_ports]
 
     def renumbered(self, from_ports: Sequence[int], to_ports: Sequence[int]) -> 'Network':
