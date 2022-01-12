@@ -2762,6 +2762,7 @@ class Network(object):
                 interp_noise_im = f_interp(f_noise, self.noise.imag, axis=0, **kwargs)
                 noise_new = interp_noise_re(f_noise_new) + 1j * interp_noise_im(f_noise_new)
             if self.noisew is not None:
+                # print(len(f_noise), len(self.noisew.real))
                 interp_noisew_re = f_interp(f_noise, self.noisew.real, axis=0, **kwargs)
                 interp_noisew_im = f_interp(f_noise, self.noisew.imag, axis=0, **kwargs)
                 noisew_new = interp_noisew_re(f_noise_new) + 1j * interp_noisew_im(f_noise_new)
