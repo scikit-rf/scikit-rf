@@ -286,6 +286,11 @@ class NetworkSetTestCase(unittest.TestCase):
 
         self.assertEqual(Counter(self.ns_params.coords), Counter(expected_coords))
 
+    def test_params_param(self):
+        """ Test the params property """
+        self.assertEqual(self.ns_params.params, list(self.ns_params.dims))
+        self.assertEqual(self.ns.params, [])
+
     def test_sel(self):
         """ Tests associated to the .sel method """      
         # passing nothing or empty dict returns the complete NetworkSet
@@ -310,6 +315,30 @@ class NetworkSetTestCase(unittest.TestCase):
         self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': 10})), 1)
         self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': [10,20]})), 2)
         self.assertEqual(len(self.ns_params.sel({'a': [0,1], 'X': [10,20]})), 4)
+        
+    def test_interpolate_from_params(self):
+        """ Tests associated to the .interpolate_from_params method """
+        ## error handling
+        # param does not exist
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'duh!', 0)
+        # param values should be bounded by bounded by existing param values
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'a', -1, {'X': 10})
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'a', 100, {'X': 10})
+        # cannot interpolate string-valued param
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'c', 'duh!', {'X': 10})       
+        # ambiguity: could interpolate a for X=10 or X=20...
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'a', 0.5)
+   
+        ## working cases
+        # returns a Network ?
+        self.assertIsInstance(self.ns_params.interpolate_from_params('a', 0.5, {'X':10}), rf.Network)
+        
+        # test interpolated values
+        f1 = rf.Frequency(1, 1, 1)
+        ntwk0 = rf.Network(frequency=f1, s=[[0]], params={'s': 0})
+        ntwk1 = rf.Network(frequency=f1, s=[[1]], params={'s': 1})
+        ns2 = rf.NetworkSet([ntwk0, ntwk1])
+        self.assertTrue(np.all(ns2.interpolate_from_params('s', 0.3).s == 0.3))
         
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)

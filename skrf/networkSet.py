@@ -162,7 +162,7 @@ class NetworkSet(object):
         try:
             self.dims = self.ntwk_set[0].params.keys()
         except (AttributeError, IndexError):  # .params is None
-            self.dims = None
+            self.dims = dict()
         
         # extract the coordinates of the set
         try:
@@ -341,7 +341,7 @@ class NetworkSet(object):
     def __str__(self):
         """
         """
-        return self.ntwk_set.__str__()
+        return f'{len(self.ntwk_set)}-Networks NetworkSet: '+self.ntwk_set.__str__()
 
     def __repr__(self):
         return self.__str__()
@@ -956,7 +956,7 @@ class NetworkSet(object):
         ntw.s = f(x)
 
         return ntw
-    
+   
     def has_params(self) -> bool:
         """
         Check is all Networks in the NetworkSet have a similar params dictionnary.   
@@ -988,7 +988,22 @@ class NetworkSet(object):
         
         # then we are all good
         return True
-        
+
+    @property
+    def params(self) -> list:
+        """
+        Return the list of parameters stored in the Network of the NetworkSet.
+
+        Similar to the `dims` property, except it returns a list instead of a view.
+
+        Returns
+        -------
+        list: list
+            list of the parameters if any. Empty list if no parameter found.
+
+        """
+        return list(self.dims)
+
     def sel(self, indexers: Mapping[Any, Any] = None) -> 'NetworkSet':
         """
         Select Network(s) in the NetworkSet from a given value of a parameter.
@@ -1008,13 +1023,38 @@ class NetworkSet(object):
 
         Example
         -------
-        Select all Network(s) having the parameter key 'a' equal to 1 in the NetworkSet ns 
-        
-        >>> ns.sel('a', 1)
+        Creating a dummy example:
 
-        Selection based on multiple criteria can be made by chaining sel
+        >>> params = [
+                {'a':0, 'X':10, 'c':'A'},
+                {'a':1, 'X':10, 'c':'A'},
+                {'a':2, 'X':10, 'c':'A'},
+                {'a':1, 'X':20, 'c':'A'},
+                {'a':0, 'X':20, 'c':'A'},
+                ]
+        >>> freq1 = rf.Frequency(75, 110, 101, 'ghz')
+        >>> ntwks_params = [rf.Network(frequency=freq1, 
+                                       s=np.random.rand(len(freq1),2,2), 
+                                       name=f'ntwk_{m}',
+                                       comment=f'ntwk_{m}',
+                                       params=params) \
+                                    for (m, params) in enumerate(params) ]     
+        >>> ns = rf.NetworkSet(ntwks_params)
         
-        >>> ns.sel('model', 'A').sel('voltage', 0).sel('temperature', 25)
+        Selecting the sub-NetworkSet matching scalar parameters:
+        
+        >>> ns.sel({'a': 1})  # len == 2
+        >>> ns.sel({'a': 0, 'X': 10})  # len == 1
+        
+        Selectong the sub-NetworkSet matching a range of parameters:
+        
+        >>> ns.sel({'a': 0, 'X': [10,20]})  # len == 2
+        >>> ns.sel({'a': [0,1], 'X': [10,20]}) # len == 4
+        
+        If using a parameter name of value that does not exist, returns empty NetworkSet:
+
+        >>> ns.sel({'a': -1})  # len == 0
+        >>> ns.sel({'duh': 0})  # len == 0
 
         """
         from collections.abc import Iterable
@@ -1044,6 +1084,91 @@ class NetworkSet(object):
         else:  # no match found
             return NetworkSet()
 
+
+    def interpolate_from_params(self, param: str, x: float, 
+                                sub_params: dict={}, interp_kind: str = 'linear'):
+        """
+        Interpolate a Network from given parameters of NetworkSet's Networks.
+
+        Parameters
+        ----------
+        param : string
+            Name of the parameter to interpolate the NetworkSet with
+        x : float
+            Point to evaluate the interpolated network at
+        sub_params : dict, optional
+            Dictionnary of parameter/values to filter the NetworkSet,
+            if necessary to avoid an ambiguity.
+            Default is empty dict.
+        interp_kind: str
+            Specifies the kind of interpolation as a string: 'linear', 'nearest', 
+            'zero', 'slinear', 'quadratic', 'cubic'. 
+            Cf :class:`scipy.interpolate.interp1d` for detailed description.
+            Default is 'linear'.
+
+        Returns
+        -------
+        ntw : class:`~skrf.network.Network`
+            Network interpolated at x
+
+        Raises
+        ------
+        ValueError : if the interpolating param/value are incorrect or ambiguous
+
+        Example
+        -------
+        Creating a dummy example:
+
+        >>> params = [
+                {'a':0, 'X':10, 'c':'A'},
+                {'a':1, 'X':10, 'c':'A'},
+                {'a':2, 'X':10, 'c':'A'},
+                {'a':1, 'X':20, 'c':'A'},
+                {'a':0, 'X':20, 'c':'A'},
+                ]
+        >>> freq1 = rf.Frequency(75, 110, 101, 'ghz')
+        >>> ntwks_params = [rf.Network(frequency=freq1, 
+                                       s=np.random.rand(len(freq1),2,2), 
+                                       name=f'ntwk_{m}',
+                                       comment=f'ntwk_{m}',
+                                       params=params) \
+                                    for (m, params) in enumerate(params) ]     
+        >>> ns = rf.NetworkSet(ntwks_params)
+        
+        Interpolated Network for a=1.2 within X=10 Networks:
+        
+        >>> ns.interpolate_from_params('a', 1.2, {'X': 10})
+
+        """
+        # checking interpolating param and values
+        if not param in self.params:
+            raise ValueError(f'Parameter {param} is not found in the NetworkSet params.')
+        if isinstance(x, Number):
+            if not (min(self.coords[param]) < x < max(self.coords[param])):
+                ValueError(f'Out of bound values: {x} is not inside {self.coords[param]}. Cannot interpolate.')
+        else:
+            raise ValueError('Cannot interpolate between string-based parameters.')
+    
+        # checking sub-parameters
+        if sub_params:
+            for (p, v) in sub_params.items():
+                # of course it should exist
+                if p not in self.dims:
+                    raise ValueError(f'Parameter {p} is not found in the NetworkSet params.')    
+                       
+                # check if each sub-param exist in the parameters
+                if not v in self.coords[p]:  # also deals with string case
+                    raise ValueError(f'Parameter {p} value {v} is not found in the NetworkSet params.')
+            
+
+        
+        # interpolating the sub-NetworkSet matching the passed sub-parameters
+        sub_ns = self.sel(sub_params)
+        interp_ntwk = sub_ns.interpolate_from_network(sub_ns.coords[param], 
+                                                      x, interp_kind)       
+        
+        return interp_ntwk
+        
 
 def func_on_networks(ntwk_list, func, attribute='s',name=None, *args,\
         **kwargs):
