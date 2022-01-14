@@ -52,6 +52,7 @@ class VectorFittingTestCase(unittest.TestCase):
 
         # write equivalent SPICE subcircuit to tmp file
         tmp_file = tempfile.NamedTemporaryFile(suffix='.sp')
+        tmp_file.close()  # tmp_file.name can be used to open the file a second time on Linux but not on Windows
         vf.write_spice_subcircuit_s(tmp_file.name)
 
         # written tmp file should contain 69 lines
