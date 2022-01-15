@@ -1,0 +1,32 @@
+VAR mag=0.25
+VAR Phase=0
+Begin ACDATA
+# GHz S MA R 50
+% F   N11X  N11Y
+1	0.1	0
+2	0.2	0
+3	0.3	0
+4	0.4	0
+End
+
+VAR mag=0.25
+VAR Phase=180
+Begin ACDATA
+# GHz S MA R 50
+% F   N11X  N11Y
+1	0.1	180
+2	0.2	181
+3	0.3	182
+4	0.4	183
+End
+
+VAR mag=0.5
+VAR Phase=90
+Begin ACDATA
+# GHz S MA R 50
+% F   N11X  N11Y
+1	0.1	90
+2	0.2	91
+3	0.3	92
+4	0.4	93
+End
