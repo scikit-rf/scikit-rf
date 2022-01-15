@@ -360,7 +360,8 @@ class Network(object):
 
         file : str or file-object
             file to load information from. supported formats are:
-             * touchstone file (.s?p)
+             * touchstone file (.s?p) (or .ts)  
+             * io.StringIO object (with `.name` property which contains the file extension, such as `myfile.s4p`)
              * pickled Network (.ntwk, .p) see :func:`write`
         name : str
             Name of this Network. if None will try to use file, if
@@ -376,6 +377,7 @@ class Network(object):
         \*\*kwargs :
             key word arguments can be used to assign properties of the
             Network, such as `s`, `f` and `z0`.
+            keyword `encoding` can be used to define the Touchstone file encoding.
 
         Examples
         --------
@@ -412,7 +414,8 @@ class Network(object):
         self.name = name
         self.comments = comments
         self.port_names = None
-
+        self.encoding = kwargs.pop('encoding', None)
+                
         self.deembed = None
         self.noise = None
         self.noise_freq = None
@@ -429,7 +432,7 @@ class Network(object):
 
             # allows user to pass StringIO, filename or file obj
             if isinstance(file, io.StringIO):
-                self.read_touchstone(file)
+                self.read_touchstone(file, self.encoding)
 
             else:
                 # open file in 'binary' mode because we are going to try and
@@ -445,7 +448,7 @@ class Network(object):
                     # non-binary mode and try to read it as touchstone
                     filename = fid.name
                     fid.close()
-                    self.read_touchstone(filename)
+                    self.read_touchstone(filename, self.encoding)
 
             if name is None and isinstance(file, str):
                 name = os.path.splitext(os.path.basename(file))[0]
@@ -1912,7 +1915,8 @@ class Network(object):
 
 
     # touchstone file IO
-    def read_touchstone(self, filename: Union[str, TextIO]) -> None:
+    def read_touchstone(self, filename: Union[str, TextIO],
+                        encoding: Union[str, None] = None) -> None:
         """
         loads values from a touchstone file.
 
@@ -1923,7 +1927,9 @@ class Network(object):
         ----------
         filename : str or file-object
             touchstone file name.
-
+        encoding : str, optional
+            define the file encoding to use. Default value is None, 
+            meaning the encoding is guessed.            
 
         Note
         ----
@@ -1932,7 +1938,7 @@ class Network(object):
 
         """
         from .io import touchstone
-        touchstoneFile = touchstone.Touchstone(filename)
+        touchstoneFile = touchstone.Touchstone(filename, encoding=encoding)
 
         if touchstoneFile.get_format().split()[1] != 's':
             raise NotImplementedError('only s-parameters supported for now.')
