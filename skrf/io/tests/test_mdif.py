@@ -8,7 +8,7 @@ from zipfile import ZipFile
 
 class MdifTestCase(unittest.TestCase):
     """
-    TouchstoneTestCase tests the IO of Touchstone files
+    Test the IO of GMDIF files
     """
     def setUp(self):
         """
