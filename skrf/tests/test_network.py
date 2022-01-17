@@ -387,6 +387,23 @@ class NetworkTestCase(unittest.TestCase):
                 npy.testing.assert_allclose(rf.t2s(rf.s2t(ntwk.s)), ntwk.s)
         npy.testing.assert_allclose(rf.t2s(rf.s2t(self.Fix.s)), self.Fix.s)
 
+    def test_setters(self):
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        ntwk = rf.Network(s=s_random, frequency=self.freq)
+        ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
+        ntwk.s = ntwk.s
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.a = ntwk.a
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.z = ntwk.z
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.y = ntwk.y
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.t = ntwk.t
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.h = ntwk.h
+        npy.testing.assert_allclose(ntwk.s, s_random)
+
     def test_sparam_conversion_with_complex_char_impedance(self):
         """
         Renormalize a 2-port network wrt to complex characteristic impedances
@@ -614,10 +631,31 @@ class NetworkTestCase(unittest.TestCase):
         # TODO: numerically test for correct interpolation
 
     def test_interpolate_rational(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
-        freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
+        a = rf.N(f=npy.linspace(1,2,5),s=npy.linspace(0,1,5)*(1+1j),z0=1)
+        freq = rf.F.from_f(npy.linspace(1,2,6,endpoint=True))
         b = a.interpolate(freq, kind='rational')
-        # TODO: numerically test for correct interpolation
+        self.assertFalse(any(npy.isnan(b.s)))
+        # Test that the endpoints are the equal
+        self.assertTrue(b.s[0] == a.s[0])
+        self.assertTrue(b.s[-1] == a.s[-1])
+        # Check that abs(S) is increasing
+        self.assertTrue(all(npy.diff(npy.abs(b.s.flatten())) > 0))
+        self.assertTrue(b.z0[0] == a.z0[0])
+
+    def test_interpolate_linear(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2])
+        freq = rf.F.from_f(npy.linspace(1,2,3,endpoint=True))
+        b = a.interpolate(freq, kind='linear')
+        self.assertFalse(any(npy.isnan(b.s)))
+        # Test that the endpoints are the equal
+        # Middle point can also be calculated in this case
+        self.assertTrue(b.s[0] == a.s[0])
+        self.assertTrue(b.s[1] == 0.5*(a.s[0] + a.s[1]))
+        self.assertTrue(b.s[-1] == a.s[-1])
+        # Check Z0 interpolation
+        self.assertTrue(b.z0[0] == a.z0[0])
+        self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
+        self.assertTrue(b.z0[-1] == a.z0[-1])
 
     def test_interpolate_self_npoints(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
