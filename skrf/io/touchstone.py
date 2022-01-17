@@ -257,7 +257,7 @@ class Touchstone:
                 self.frequency_unit = toks[0]
                 self.parameter = toks[1]
                 self.format = toks[2]
-                self.resistance = toks[4]
+                self.resistance = complex(toks[4])
                 if self.frequency_unit not in ['hz', 'khz', 'mhz', 'ghz']:
                     print('ERROR: illegal frequency_unit [%s]',  self.frequency_unit)
                     # TODO: Raise
