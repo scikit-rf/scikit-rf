@@ -2984,8 +2984,8 @@ class NISTMultilineTRL(EightTerm):
                         Vb[a,b] = exp_factor*exp_factor2.conjugate() + \
                                 (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
                                 exp(-gamma[m]*len_a)*(exp(-gamma[m]*len_b)).conjugate()
-                        n = (exp_factor - 1/exp_factor).conjugate()* \
-                                (exp_factor2-1/exp_factor2)
+                        n = (exp_factor - 1/exp_factor)* \
+                                (exp_factor2-1/exp_factor2).conjugate()
                         Vb[a,b] /= n
                         Vb[b,a] = Vb[a,b].conjugate()
 
