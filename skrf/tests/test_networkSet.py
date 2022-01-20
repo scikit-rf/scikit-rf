@@ -2,7 +2,7 @@ import unittest
 import os
 import numpy as np
 import skrf as rf
-
+import glob
 
 class NetworkSetTestCase(unittest.TestCase):
     """
@@ -339,7 +339,20 @@ class NetworkSetTestCase(unittest.TestCase):
         ntwk1 = rf.Network(frequency=f1, s=[[1]], params={'s': 1})
         ns2 = rf.NetworkSet([ntwk0, ntwk1])
         self.assertTrue(np.all(ns2.interpolate_from_params('s', 0.3).s == 0.3))
+
+    def test_from_mdif(self):
+        """ Create NetworkSets from MDIF files """
+        mdif_files = glob.glob(self.test_dir+'../io/tests/MDIF_CITI_MDL/test_*.mdf')
+        for mdif_file in mdif_files:
+            print(mdif_file)
+            self.assertIsInstance(rf.NetworkSet.from_mdif(mdif_file), rf.NetworkSet)
         
+    def test_from_citi(self):
+        """ Create NetworkSets from CITI files """
+        citi_files = glob.glob(self.test_dir+'../io/tests/MDIF_CITI_MDL/test_*.cti')
+        for citi_file in citi_files:
+            print(citi_file)
+            self.assertIsInstance(rf.NetworkSet.from_citi(citi_file), rf.NetworkSet)                
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

@@ -47,7 +47,7 @@ NetworkSet Utilities
 import zipfile
 import numpy as npy
 from numbers import Number
-from typing import Union, Any, Mapping
+from typing import Union, Any, Mapping, TextIO
 from io import BytesIO
 from scipy.interpolate import interp1d
 from . network import Network, Frequency, PRIMARY_PROPERTIES, COMPONENT_FUNC_DICT
@@ -312,6 +312,50 @@ class NetworkSet(object):
         """
         return cls([Network(s=d[k], frequency=frequency, name=k,
                             *args, **kwargs)  for k in d])
+
+    @classmethod
+    def from_mdif(cls, file: Union[str, TextIO]) -> 'NetworkSet':
+        """
+        Create a NetworkSet from a MDIF file.
+
+        Parameters
+        ----------
+        file : str or file-object
+            MDIF file to load
+
+        Returns
+        -------
+        ns : :class: `~skrf.networkSet.NetworkSet`
+        
+        See Also
+        --------
+        Mdif
+
+        """
+        from . io import Mdif
+        return Mdif(file).to_networkset()
+
+    @classmethod
+    def from_citi(cls, file: Union[str, TextIO]) -> 'NetworkSet':
+        """
+        Create a NetworkSet from a CITI file.
+
+        Parameters
+        ----------
+        file : str or file-object
+            CITI file to load
+
+        Returns
+        -------
+        ns : :class: `~skrf.networkSet.NetworkSet`
+        
+        See Also
+        --------
+        Citi
+
+        """
+        from . io import Citi
+        return Citi(file).to_networkset()
 
     def __add_a_operator(self, operator_name):
         """
