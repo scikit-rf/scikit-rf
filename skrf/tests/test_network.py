@@ -153,6 +153,18 @@ class NetworkTestCase(unittest.TestCase):
     def test_constructor_from_touchstone(self):
         rf.Network(os.path.join(self.test_dir, 'ntwk1.s2p'))
 
+    def test_constructor_from_touchstone_special_encoding(self):
+        " Test creating Network from Touchstone file with various file encodings."
+        filename_latin1 = os.path.join(self.test_dir, '../io/tests/test_encoding_ISO-8859-1.s2p')
+        filename_utf8 = os.path.join(self.test_dir, '../io/tests/test_encoding_UTF-8-SIG.s2p')
+
+        ntwk1 = rf.Network(filename_latin1)
+        ntwk1_ = rf.Network(filename_latin1, encoding='latin_1')
+        self.assertEqual(ntwk1.comments, ntwk1_.comments)
+
+        ntwk2 = rf.Network(filename_utf8, encoding='utf_8_sig')
+        self.assertEqual(ntwk1.comments, ntwk2.comments)
+
     def test_constructor_from_hfss_touchstone(self):
         # HFSS can provide the port characteristic impedances in its generated touchstone file.
         # Check if reading a HFSS touchstone file with non-50Ohm impedances
@@ -374,6 +386,23 @@ class NetworkTestCase(unittest.TestCase):
                 npy.testing.assert_allclose(rf.h2s(rf.s2h(ntwk.s, test_z0), test_z0), ntwk.s)
                 npy.testing.assert_allclose(rf.t2s(rf.s2t(ntwk.s)), ntwk.s)
         npy.testing.assert_allclose(rf.t2s(rf.s2t(self.Fix.s)), self.Fix.s)
+
+    def test_setters(self):
+        s_random = npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2)) + 1j * npy.random.uniform(-10, 10, (self.freq.npoints, 2, 2))
+        ntwk = rf.Network(s=s_random, frequency=self.freq)
+        ntwk.z0 = npy.random.uniform(1, 100, len(ntwk.z0)) + 1j*npy.random.uniform(-100, 100, len(ntwk.z0))
+        ntwk.s = ntwk.s
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.a = ntwk.a
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.z = ntwk.z
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.y = ntwk.y
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.t = ntwk.t
+        npy.testing.assert_allclose(ntwk.s, s_random)
+        ntwk.h = ntwk.h
+        npy.testing.assert_allclose(ntwk.s, s_random)
 
     def test_sparam_conversion_with_complex_char_impedance(self):
         """
@@ -602,10 +631,31 @@ class NetworkTestCase(unittest.TestCase):
         # TODO: numerically test for correct interpolation
 
     def test_interpolate_rational(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
-        freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
+        a = rf.N(f=npy.linspace(1,2,5),s=npy.linspace(0,1,5)*(1+1j),z0=1)
+        freq = rf.F.from_f(npy.linspace(1,2,6,endpoint=True))
         b = a.interpolate(freq, kind='rational')
-        # TODO: numerically test for correct interpolation
+        self.assertFalse(any(npy.isnan(b.s)))
+        # Test that the endpoints are the equal
+        self.assertTrue(b.s[0] == a.s[0])
+        self.assertTrue(b.s[-1] == a.s[-1])
+        # Check that abs(S) is increasing
+        self.assertTrue(all(npy.diff(npy.abs(b.s.flatten())) > 0))
+        self.assertTrue(b.z0[0] == a.z0[0])
+
+    def test_interpolate_linear(self):
+        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=[1,2])
+        freq = rf.F.from_f(npy.linspace(1,2,3,endpoint=True))
+        b = a.interpolate(freq, kind='linear')
+        self.assertFalse(any(npy.isnan(b.s)))
+        # Test that the endpoints are the equal
+        # Middle point can also be calculated in this case
+        self.assertTrue(b.s[0] == a.s[0])
+        self.assertTrue(b.s[1] == 0.5*(a.s[0] + a.s[1]))
+        self.assertTrue(b.s[-1] == a.s[-1])
+        # Check Z0 interpolation
+        self.assertTrue(b.z0[0] == a.z0[0])
+        self.assertTrue(b.z0[1] == 0.5*(a.z0[0] + a.z0[1]))
+        self.assertTrue(b.z0[-1] == a.z0[-1])
 
     def test_interpolate_self_npoints(self):
         a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
