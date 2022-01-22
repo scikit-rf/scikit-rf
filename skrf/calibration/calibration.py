@@ -2382,13 +2382,16 @@ class TRL(EightTerm):
         >>> reflect = rf.Network('reflect.s2p')
         >>> line = rf.Network('line.s2p')
         
-        # ideals is None, so we assume it's close to a flush short
+        Ideals is None, so we assume it's close to a flush short:
+        
         >>> trl = TRL(measured=[thru,reflect,line], ideals=None)
         
-        # reflect is given as close to a flush short
+        Reflect is given as close to a flush short:
+        
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,-1,None])
         
-        # reflect is given as close to a flush open
+        Reflect is given as close to a flush open:
+        
         >>> trl = TRL(measured=[thru,reflect,line], ideals=[None,+1,None])
         
         See Also
