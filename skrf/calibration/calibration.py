@@ -2158,35 +2158,50 @@ class EightTerm(Calibration):
         return None
 
     def apply_cal(self, ntwk):
+        """Applies the calibration to the input network.
+        Inverse of `embed`.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network`
+            Uncalibrated input network.
+
+        Returns
+        -------
+        caled : :class:`~skrf.network.Network`
+            Calibrated network.
+        """
         caled = ntwk.copy()
-        inv = linalg.inv
 
         T1,T2,T3,T4 = self.T_matrices
 
-        ntwk.s[:,1,0] -= self.coefs['forward isolation']
-        ntwk.s[:,0,1] -= self.coefs['reverse isolation']
+        caled.s[:,1,0] -= self.coefs['forward isolation']
+        caled.s[:,0,1] -= self.coefs['reverse isolation']
 
-        ntwk = self.unterminate(ntwk)
-        
-        for f in list(range(len(ntwk.s))):
-            t1,t2,t3,t4,m = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
-                            T4[f,:,:],ntwk.s[f,:,:]
-            caled.s[f,:,:] = inv(-1*m.dot(t3)+t1).dot(m.dot(t4)-t2)
+        caled = self.unterminate(caled)
+        caled.s = linalg.inv(-caled.s @ T3 + T1) @ (caled.s @ T4 - T2)
+
         return caled
 
     def embed(self, ntwk):
-        """
+        """Applies the error boxes to the calibrated input network.
+        Inverse of `apply_cal`.
+
+        Parameters
+        ----------
+        ntwk : :class:`~skrf.network.Network`
+            Calibrated input network.
+
+        Returns
+        -------
+        embedded : :class:`~skrf.network.Network`
+            Network with error boxes applied.
         """
         embedded = ntwk.copy()
-        inv = linalg.inv
 
         T1,T2,T3,T4 = self.T_matrices
 
-        for f in list(range(len(ntwk.s))):
-            t1,t2,t3,t4,a = T1[f,:,:],T2[f,:,:],T3[f,:,:],\
-                            T4[f,:,:],ntwk.s[f,:,:]
-            embedded.s[f,:,:] = (t1.dot(a)+t2).dot(inv(t3.dot(a)+t4))
-
+        embedded.s = (T1 @ ntwk.s + T2) @ linalg.inv(T3 @ ntwk.s + T4)
         embedded = self.terminate(embedded)
 
         embedded.s[:,1,0] += self.coefs['forward isolation']

@@ -392,9 +392,9 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
             wg.match(nports=2, name='load'),
             wg.thru(name='thru'),
             ]
-            
+
         measured = [self.measure(k) for k in ideals]
-        
+
         self.cal = rf.EightTerm(
             ideals = ideals,
             measured = measured,
@@ -480,6 +480,10 @@ class EightTermTest(unittest.TestCase, CalibrationTest):
     def test_coefs_12term(self):
         self.assertEqual(self.cal.coefs_12term, rf.convert_8term_2_12term(self.cal.coefs))
 
+    def test_input_not_modified(self):
+        dut_before = self.X.copy()
+        self.cal.apply_cal(self.X)
+        self.assertEqual(dut_before, self.X)
 
 class TRLTest(EightTermTest):
     def setUp(self):
