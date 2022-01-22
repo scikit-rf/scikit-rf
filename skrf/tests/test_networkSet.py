@@ -2,7 +2,7 @@ import unittest
 import os
 import numpy as np
 import skrf as rf
-
+import glob
 
 class NetworkSetTestCase(unittest.TestCase):
     """
@@ -31,26 +31,41 @@ class NetworkSetTestCase(unittest.TestCase):
         self.ntwk_freq2_1p.s = np.random.rand(len(self.freq2), 1, 1)
         self.ntwk_freq2_2p = rf.Network(frequency=self.freq2)
         self.ntwk_freq2_2p.s = np.random.rand(len(self.freq2), 2, 2)
+
+        # dummy networks with associated parameters
+        # total number of different networks       
+        self.params = [
+                {'a':0, 'X':10, 'c':'A'},
+                {'a':1, 'X':10, 'c':'A'},
+                {'a':2, 'X':10, 'c':'A'},
+                {'a':1, 'X':20, 'c':'A'},
+                {'a':0, 'X':20, 'c':'A'},
+            ]
+        # create M dummy networks
+        self.ntwks_params = [rf.Network(frequency=self.freq1, 
+                                        s=np.random.rand(len(self.freq1),2,2), 
+                                        name=f'ntwk_{m}',
+                                        comment=f'ntwk_{m}',
+                                        params=params) \
+                             for (m, params) in enumerate(self.params) ]
         
-        # Test nominal 
+        # Test nominal
         self.ns = rf.NetworkSet([self.ntwk1, self.ntwk2, self.ntwk3])
-        
+
+        # Create NetworkSet from a list of Network containing a .params dict parameters
+        self.ns_params = rf.NetworkSet(self.ntwks_params)        
 
     def test_constructor(self):
         """
         Test the `NetworkSet()` constructor.
         """
-        # NetworkSet requires at least one parameter
-        self.assertRaises(TypeError, rf.NetworkSet)
+        # NetworkSet without input parameter is an empty NetworkSet
+        self.assertEqual(rf.NetworkSet(), rf.NetworkSet([]))
 
         # the required parameter must be a list
         self.assertRaises(ValueError, rf.NetworkSet, 0)
         self.assertRaises(ValueError, rf.NetworkSet, 'wrong')
         self.assertRaises(ValueError, rf.NetworkSet, False)
-
-        # the list (or dict) must not be empty
-        self.assertRaises(ValueError, rf.NetworkSet, [])
-        self.assertRaises(ValueError, rf.NetworkSet, {})
 
         # all elements should be of Network type
         self.assertRaises(TypeError, rf.NetworkSet, [self.ntwk1, 0])
@@ -216,6 +231,128 @@ class NetworkSetTestCase(unittest.TestCase):
         param = [1, 2, 3]
         x0 = 1.5
         interp_ntwk = self.ns.interpolate_from_network(param, x0)
+
+    def test_has_params(self):
+        """ Test the .has_params() method """
+        # all params have been set
+        self.assertTrue(self.ns_params.has_params())
+
+        # at least one params property is None (>=v0.21.0)
+        self.assertFalse(self.ns.has_params())
+        
+        # at least one params property does not exist (<v0.21.0)
+        ns_wo_params = self.ns.copy()
+        for ntwk in ns_wo_params:
+            delattr(ntwk, 'params')
+        self.assertFalse(ns_wo_params.has_params())
+               
+        # some params do not have the same length
+        ns_wo_all_same_params_length = self.ns_params.copy()
+        ns_wo_all_same_params_length[0].params = {'a': 0, 'c': 'A'}
+        self.assertFalse(ns_wo_params.has_params())
+        ns_wo_all_same_params_length[0].params = {'a': 0, 'b': 10, 'c':'A', 'd':'hu ho'}
+        self.assertFalse(ns_wo_params.has_params())
+        
+        # not all keys of the params are the same
+        ns_params_diff_keys = self.ns_params.copy()
+        ns_params_diff_keys[0].params = {'X': 0, 'Y': 10, 'Z' : 'A'}
+        self.assertFalse(ns_params_diff_keys.has_params())        
+
+    def test_dims_param(self):
+        """ Tests associated to the .dims parameter """
+        from collections import Counter
+        
+        # unassigned params NetworkSet
+        self.assertEqual(Counter(self.ns.dims), Counter(None))
+        # assigned params
+        expected_dims = self.params[0].keys()
+        self.assertEqual(Counter(self.ns_params.dims), Counter(expected_dims))
+
+    def test_coords_param(self):
+        """ Tests associated to the .coords parameter """
+        from collections import Counter
+        
+        # unassigned params NetworkSet
+        self.assertEqual(Counter(self.ns.coords), Counter(None))
+
+        # assigned params
+        # get a dict of unique values for each param
+        expected_coords = {p: [] for p in self.params[0]}
+        for params in self.params:
+            for p in expected_coords.keys():
+                expected_coords[p].append(params[p])
+        for p in expected_coords.keys():
+            expected_coords[p] = list(set(expected_coords[p]))
+
+        self.assertEqual(Counter(self.ns_params.coords), Counter(expected_coords))
+
+    def test_params_param(self):
+        """ Test the params property """
+        self.assertEqual(self.ns_params.params, list(self.ns_params.dims))
+        self.assertEqual(self.ns.params, [])
+
+    def test_sel(self):
+        """ Tests associated to the .sel method """      
+        # passing nothing or empty dict returns the complete NetworkSet
+        self.assertEqual(self.ns_params.sel(), self.ns_params)
+        self.assertEqual(self.ns_params.sel({}), self.ns_params)
+        
+        # should pass a dictionnary
+        self.assertRaises(TypeError, self.ns_params.sel, 'wrong')
+        self.assertRaises(TypeError, self.ns_params.sel, 1)
+        
+        # searching for a parameter which do not exist returns empty networkset
+        self.assertEqual(self.ns.sel({'a': 1}), rf.NetworkSet())
+        self.assertEqual(self.ns_params.sel({'ho ho': 1}), rf.NetworkSet())
+        self.assertEqual(self.ns_params.sel({'a': 10}), rf.NetworkSet())        
+        
+        # there is two times the param key/value 'a':1 
+        self.assertEqual(len(self.ns_params.sel({'a': 1})), 2)
+        # Iterable values
+        self.assertEqual(len(self.ns_params.sel({'a': [0,1]})), 4)
+        self.assertEqual(len(self.ns_params.sel({'a': range(0,2)})), 4)
+        # Multiple parameters
+        self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': 10})), 1)
+        self.assertEqual(len(self.ns_params.sel({'a': 0, 'X': [10,20]})), 2)
+        self.assertEqual(len(self.ns_params.sel({'a': [0,1], 'X': [10,20]})), 4)
+        
+    def test_interpolate_from_params(self):
+        """ Tests associated to the .interpolate_from_params method """
+        ## error handling
+        # param does not exist
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'duh!', 0)
+        # param values should be bounded by bounded by existing param values
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'a', -1, {'X': 10})
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'a', 100, {'X': 10})
+        # cannot interpolate string-valued param
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'c', 'duh!', {'X': 10})       
+        # ambiguity: could interpolate a for X=10 or X=20...
+        self.assertRaises(ValueError, self.ns_params.interpolate_from_params, 'a', 0.5)
+   
+        ## working cases
+        # returns a Network ?
+        self.assertIsInstance(self.ns_params.interpolate_from_params('a', 0.5, {'X':10}), rf.Network)
+        
+        # test interpolated values
+        f1 = rf.Frequency(1, 1, 1)
+        ntwk0 = rf.Network(frequency=f1, s=[[0]], params={'s': 0})
+        ntwk1 = rf.Network(frequency=f1, s=[[1]], params={'s': 1})
+        ns2 = rf.NetworkSet([ntwk0, ntwk1])
+        self.assertTrue(np.all(ns2.interpolate_from_params('s', 0.3).s == 0.3))
+
+    def test_from_mdif(self):
+        """ Create NetworkSets from MDIF files """
+        mdif_files = glob.glob(self.test_dir+'../io/tests/MDIF_CITI_MDL/test_*.mdf')
+        for mdif_file in mdif_files:
+            print(mdif_file)
+            self.assertIsInstance(rf.NetworkSet.from_mdif(mdif_file), rf.NetworkSet)
+        
+    def test_from_citi(self):
+        """ Create NetworkSets from CITI files """
+        citi_files = glob.glob(self.test_dir+'../io/tests/MDIF_CITI_MDL/test_*.cti')
+        for citi_file in citi_files:
+            print(citi_file)
+            self.assertIsInstance(rf.NetworkSet.from_citi(citi_file), rf.NetworkSet)                
 
 suite = unittest.TestLoader().loadTestsFromTestCase(NetworkSetTestCase)
 unittest.TextTestRunner(verbosity=2).run(suite)

@@ -346,8 +346,9 @@ class Network(object):
     """
 
     # CONSTRUCTOR
-    def __init__(self, file: str = None, name: str = None, comments: str = None,
-                 f_unit: str = None, s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
+    def __init__(self, file: str = None, name: str = None, params: dict = None,
+                 comments: str = None, f_unit: str = None, 
+                 s_def: str = S_DEF_DEFAULT, **kwargs) -> None:
         r"""
         Network constructor.
 
@@ -363,10 +364,11 @@ class Network(object):
              * touchstone file (.s?p) (or .ts)  
              * io.StringIO object (with `.name` property which contains the file extension, such as `myfile.s4p`)
              * pickled Network (.ntwk, .p) see :func:`write`
-        name : str
-            Name of this Network. if None will try to use file, if
-            its a str
-        comments : str
+        name : str, optional
+            Name of this Network. if None will try to use file, if it is a str
+        params : dict, optional
+            Dictionnary of parameters associated with the Network            
+        comments : str, optional
             Comments associated with the Network
         s_def : str -> s_def :  can be: 'power', 'pseudo' or 'traveling'
             Scattering parameter definition : 'power' for power-waves definition,
@@ -398,6 +400,10 @@ class Network(object):
         Directly from values
 
         >>> n = rf.Network(f=[1,2,3], s=[1,2,3], z0=[1,2,3])
+        
+        Define some parameters associated with the Network
+        
+        >>> n = rf.Network('ntwk1.s2p', params={'temperature': 25, 'voltage':5})
 
         See Also
         --------
@@ -412,6 +418,7 @@ class Network(object):
             file = kwargs['touchstone_filename']
 
         self.name = name
+        self.params = params
         self.comments = comments
         self.port_names = None
         self.encoding = kwargs.pop('encoding', None)
@@ -1782,7 +1789,8 @@ class Network(object):
         """
         ntwk = Network(s=self.s,
                        frequency=self.frequency.copy(),
-                       z0=self.z0, s_def=self.s_def
+                       z0=self.z0, s_def=self.s_def,
+                       comments=self.comments, params=self.params
                        )
 
         ntwk.name = self.name

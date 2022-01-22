@@ -30,3 +30,5 @@ through the Network constructor, :func:`~skrf.network.Network.__init__`
 from .general import * 
 from .csv import * 
 from .touchstone import * 
+from .mdif import *
+from .citi import *
