@@ -2491,6 +2491,8 @@ class NISTMultilineTRL(EightTerm):
     calibration. Different line measurements are combined in a way that minimizes
     the error in calibration.
 
+    Calibration reference plane is at the edges of the lines.
+
     At every frequency point there should be at least one line pair that has phase
     difference that is not 0 degrees or a multiple of 180 degrees otherwise
     calibration equations are singular and accuracy is very poor.
@@ -2514,7 +2516,7 @@ class NISTMultilineTRL(EightTerm):
     family = 'TRL'
     def __init__(self, measured, Grefls, l,
                  er_est=1, refl_offset=None, ref_plane=0,
-                 gamma_root_choice='estimate', k_method='multical', c0=None,
+                 gamma_root_choice='auto', k_method='multical', c0=None,
                  z0_ref=50, z0_line=None, *args, **kwargs):
         r"""
         NISTMultilineTRL initializer.
@@ -2743,9 +2745,9 @@ class NISTMultilineTRL(EightTerm):
                 Da[i] = abs(ga[i]*dl - gamma_est*dl)/abs(gamma_est*dl)
 
                 eb = (eij2 + 1/eij1)/2
-                periods = npy.round(((gamma_est*dl).imag - (-log(eb)).imag)/(2*pi))
+                periods = npy.round(-((gamma_est*dl).imag + (-log(eb)).imag)/(2*pi))
                 gb[i] = (-log(eb) + 1j*2*pi*periods)/dl
-                Da[i] = abs(gb[i]*dl + gamma_est*dl)/abs(-gamma_est*dl)
+                Db[i] = abs(gb[i]*dl + gamma_est*dl)/abs(-gamma_est*dl)
             if Da[0] + Db[0] < 0.1*(Da[1] + Db[1]):
                 return e_val
             if Da[1] + Db[1] < 0.1*(Da[0] + Db[0]):
@@ -2784,18 +2786,19 @@ class NISTMultilineTRL(EightTerm):
         CoA1_vec2 = npy.zeros(lines-1, dtype=complex)
         CoA2_vec2 = npy.zeros(lines-1, dtype=complex)
 
-
         for m in range(fpoints):
             min_phi_eff = pi*npy.ones(lines)
             #Find the best common line to use
             for n in range(lines):
-                for k in range(n-1):
+                for k in range(lines):
+                    if n == k:
+                        continue
                     dl = l[k] - l[n]
                     pd = abs(exp(-gamma_est*dl) - exp(gamma_est*dl))/2
                     if -1 <= pd <= 1:
                         phi_eff = npy.arcsin( pd )
                     else:
-                        phi_eff = 0
+                        phi_eff = npy.pi/2
                     min_phi_eff[n] = min(min_phi_eff[n], phi_eff)
             #Common line is selected to be one with the largest phase difference
             line_c[m] = npy.argmax(min_phi_eff)
@@ -2978,17 +2981,17 @@ class NISTMultilineTRL(EightTerm):
                         len_b = l_not_common[b]
                         exp_factor = exp(-gamma[m]*(len_a -l[line_c[m]]))
                         exp_factor2 = exp(-gamma[m]*(len_b -l[line_c[m]]))
-                        Vb[a,b] = exp_factor2*exp_factor.conjugate() + \
+                        Vb[a,b] = exp_factor*exp_factor2.conjugate() + \
                                 (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
-                                exp(-gamma[m]*len_b)*(exp(-gamma[m]*len_a)).conjugate()
-                        n = (exp_factor - 1/exp_factor).conjugate()* \
-                                (exp_factor2-1/exp_factor2)
+                                exp(-gamma[m]*len_a)*(exp(-gamma[m]*len_b)).conjugate()
+                        n = (exp_factor - 1/exp_factor)* \
+                                (exp_factor2-1/exp_factor2).conjugate()
                         Vb[a,b] /= n
                         Vb[b,a] = Vb[a,b].conjugate()
 
-                        Vc[a,b] = 1/(exp_factor2*exp_factor.conjugate()) + \
+                        Vc[a,b] = 1/(exp_factor*exp_factor2.conjugate()) + \
                                 1/( (abs(exp(-gamma[m]*l[line_c[m]])))**2 * \
-                                exp(-gamma[m]*len_b)*(exp(-gamma[m]*len_a)).conjugate() )
+                                exp(-gamma[m]*len_a)*(exp(-gamma[m]*len_b)).conjugate() )
                         Vc[a,b] /= n
                         Vc[b,a] = Vc[a,b].conjugate()
 
@@ -3009,7 +3012,7 @@ class NISTMultilineTRL(EightTerm):
                     Arr = (S_r11 - B1)/(1 - S_r11*CoA1)* \
                             (1 - S_r22*CoA2)/(S_r22 - B2)
                     Gr_est = self.Grefls[n]*exp(-2*gamma[m]*(self.refl_offset[n] - l[0]/2.))
-                    G_trial = (S_r[0,0] - B1)/(npy.sqrt(Ap*Arr)*(1 - S_r[0,0]*CoA1))
+                    G_trial = (S_r11 - B1)/(npy.sqrt(Ap*Arr)*(1 - S_r11*CoA1))
                     if abs( Gr_est/abs(Gr_est) - G_trial/abs(G_trial) ) > npy.sqrt(2):
                         A1_vals[n] = -npy.sqrt(Ap*Arr)
                     else:
@@ -3020,6 +3023,10 @@ class NISTMultilineTRL(EightTerm):
                 A2 = npy.mean(A2_vals)
                 return A1, A2
 
+            inv_Vb = inv(Vb)
+            inv_Vc = inv(Vc)
+            sum_inv_Vb = npy.sum(inv_Vb)
+            sum_inv_Vc = npy.sum(inv_Vc)
             values = []
             #List possible root choices for B and CoA
             for i in [(0,0), (0,1), (1,0), (1,1)]:
@@ -3036,11 +3043,6 @@ class NISTMultilineTRL(EightTerm):
                 else:
                     b2 = b2_vec2
                     coa2 = CoA2_vec2
-
-                inv_Vb = inv(Vb)
-                inv_Vc = inv(Vc)
-                sum_inv_Vb = npy.sum(inv_Vb)
-                sum_inv_Vc = npy.sum(inv_Vc)
 
                 B1 = npy.sum(inv_Vb.dot(b1))/sum_inv_Vb
                 B2 = npy.sum(inv_Vb.dot(b2))/sum_inv_Vb
@@ -3087,8 +3089,8 @@ class NISTMultilineTRL(EightTerm):
                 B1, B2, CoA1, CoA2 = best_values[1:]
                 A1, A2 = solve_A(B1, B2, CoA1, CoA2)
 
-            sigmab = npy.sqrt(1/(npy.sum(inv(Vb)).real))
-            sigmac = npy.sqrt(1/(npy.sum(inv(Vc)).real))
+            sigmab = npy.sqrt(1/(npy.sum(inv_Vb).real))
+            sigmac = npy.sqrt(1/(npy.sum(inv_Vc).real))
 
             nstd[m] = (sigmab + sigmac)/2
 
