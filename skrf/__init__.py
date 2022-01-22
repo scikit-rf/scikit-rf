@@ -5,7 +5,7 @@ implemented in Python.
 # Python 3 compatibility
 from __future__ import absolute_import, print_function, division
 
-__version__ = '0.20.0'
+__version__ = '0.21.0'
 ## Import all  module names for coherent reference of name-space
 #import io
 
