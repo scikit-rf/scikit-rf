@@ -279,7 +279,7 @@ class VectorFitting:
                 # each frequency sample s_k of the target response generates two rows in the matrix
                 # (1st for real part, 2nd for imaginary part)
 
-                A_sub = np.empty((2 * len(freqs_norm), n_cols_unused + n_cols_used))
+                A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
                 A_row_extra = np.zeros(n_cols_used)
 
                 # responses will be weighted according to their norm;
@@ -290,11 +290,12 @@ class VectorFitting:
                 for k, f_sample in enumerate(freqs_norm):
                     # this loop is performance critical, as it gets repeated many times (N_responses * N_frequencies)
                     omega_k = 2 * np.pi * f_sample
-                    resp_re = np.real(freq_response[k])
-                    resp_im = np.imag(freq_response[k])
+                    resp = freq_response[k]
+                    #resp_re = np.real(freq_response[k])
+                    #resp_im = np.imag(freq_response[k])
                     i_col = 0
-                    i_row_re = 2 * k
-                    i_row_im = i_row_re + 1
+                    #i_row_re = 2 * k
+                    #i_row_im = i_row_re + 1
 
                     # layout of this row in A_sub:
                     # [pole1, pole2, ..., (constant), (proportional), pole1, pole2, ..., constant]
@@ -304,6 +305,8 @@ class VectorFitting:
                     # part 1: first sum of rational functions (residue variable c)
                     # merged with
                     # part 3: second sum of rational functions (variable c_res)
+                    
+
                     for i_pole in range(len(poles_im)):
                         pole_re = poles_re[i_pole]
                         pole_im = poles_im[i_pole]
@@ -313,15 +316,14 @@ class VectorFitting:
                             denom = (omega_k ** 2 + pole_re ** 2)
                             coeff_re = -1 * pole_re / denom
                             coeff_im = -1 * omega_k / denom
+                            coeff = coeff_re + 1j * coeff_im
 
                             # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
-                            A_sub[i_row_re, i_col] = coeff_re
-                            A_sub[i_row_im, i_col] = coeff_im
+                            A_sub[k, i_col] = coeff
                             # part 3: coeff = -1 * H(s_k) / (s_k - pole)
                             # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
                             # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
-                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
-                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            A_sub[k, n_cols_unused + i_col] = - coeff * resp
                             # extra equation to avoid trivial solution:
                             # coeff += Re(1 / (s_k - pole)) = coeff_re
                             A_row_extra[i_col] += coeff_re
@@ -335,14 +337,13 @@ class VectorFitting:
                             # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
                             coeff_re = -1 * pole_re * (1 / denom1 + 1 / denom2)
                             coeff_im = (pole_im - omega_k) / denom1 - (pole_im + omega_k) / denom2
-                            A_sub[i_row_re, i_col] = coeff_re
-                            A_sub[i_row_im, i_col] = coeff_im
+                            coeff = coeff_re +1j * coeff_im
+                            A_sub[k, i_col] = coeff
                             # extra equation to avoid trivial solution:
                             # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
                             A_row_extra[i_col] += coeff_re
                             # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
-                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            A_sub[k, n_cols_unused + i_col] = - coeff * resp
                             i_col += 1
 
                             # row 2: add coefficient for imaginary part of residue
@@ -350,36 +351,37 @@ class VectorFitting:
                             #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
                             coeff_re = (omega_k - pole_im) / denom1 - (omega_k + pole_im) / denom2
                             coeff_im = pole_re * (1 / denom2 - 1 / denom1)
-                            A_sub[i_row_re, i_col] = coeff_re
-                            A_sub[i_row_im, i_col] = coeff_im
+                            coeff = coeff_re + 1j * coeff_im
+                            A_sub[k, i_col] = coeff
                             # extra equation to avoid trivial solution:
                             # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
                             A_row_extra[i_col] += coeff_re
                             # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                            A_sub[i_row_re, n_cols_unused + i_col] = -1 * coeff_re * resp_re + coeff_im * resp_im
-                            A_sub[i_row_im, n_cols_unused + i_col] = -1 * coeff_re * resp_im - coeff_im * resp_re
+                            A_sub[k, n_cols_unused + i_col] = - coeff * resp
                             i_col += 1
 
                     # part 4: constant (variable d_res)
                     # coeff = -1 * H(s_k)
-                    A_sub[i_row_re, n_cols_unused + i_col] = -1 * resp_re
-                    A_sub[i_row_im, n_cols_unused + i_col] = -1 * resp_im
+                    A_sub[k, n_cols_unused + i_col] = - resp
                     # extra equation to avoid trivial solution: coeff += 1
                     A_row_extra[i_col] += 1
 
                     # part 2: constant (variable d) and proportional term (variable e)
                     if fit_constant:
                         # coeff = 1 + j0
-                        A_sub[i_row_re, i_col] = 1.0
-                        A_sub[i_row_im, i_col] = 0.0
+                        A_sub[k, i_col] = 1
                         i_col += 1
                     if fit_proportional:
                         # coeff = s_k = j omega_k
-                        A_sub[i_row_re, i_col] = 0.0
-                        A_sub[i_row_im, i_col] = omega_k
+                        A_sub[k, i_col] = 1j * omega_k
 
                 # QR decomposition
-                Q, R = np.linalg.qr(A_sub, 'reduced')
+
+                A_ri = np.empty((2 * A_sub.shape[0], A_sub.shape[1]))
+                A_ri[::2] = A_sub.real
+                A_ri[1::2] = A_sub.imag
+
+                Q, R = np.linalg.qr(A_ri, 'reduced')
 
                 # only R22 is required to solve for c_res and d_res
                 R22 = R[n_cols_unused:, n_cols_unused:]
