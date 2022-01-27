@@ -517,15 +517,12 @@ class VectorFitting:
                 n_cols += 1
             if fit_proportional:
                 n_cols += 1
-            A_matrix = np.empty((2 * len(freqs_norm), n_cols))
-            b_vector = np.empty((2 * len(freqs_norm)))
+            A_matrix = np.empty((len(freqs_norm), n_cols), dtype=complex)
+            b_vector = np.empty((len(freqs_norm)), dtype=complex)
 
             for k, f_sample in enumerate(freqs_norm):
                 omega_k = 2 * np.pi * f_sample
-                resp_re = np.real(freq_response[k])
-                resp_im = np.imag(freq_response[k])
-                i_row_re = 2 * k
-                i_row_im = i_row_re + 1
+                resp = freq_response[k]
                 i_col = 0
 
                 # add coefficients for a pair of complex conjugate poles
@@ -534,32 +531,32 @@ class VectorFitting:
                     # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                     if pole.imag == 0.0:
                         denom = pole.real ** 2 + omega_k ** 2
-                        A_matrix[i_row_re, i_col] = -1 * pole.real / denom
-                        A_matrix[i_row_im, i_col] = -1 * omega_k / denom
+                        A_matrix[k, i_col] = - (pole.real + omega_k) / denom
                         i_col += 1
                     else:
                         # coefficient for real part of residue
                         denom1 = pole.real ** 2 + (omega_k - pole.imag) ** 2
                         denom2 = pole.real ** 2 + (omega_k + pole.imag) ** 2
-                        A_matrix[i_row_re, i_col] = -1 * pole.real * (1 / denom1 + 1 / denom2)
-                        A_matrix[i_row_im, i_col] = (pole.imag - omega_k) / denom1 - (pole.imag + omega_k) / denom2
+                        A_matrix[k, i_col] = (
+                            -1 * pole.real * (1 / denom1 + 1 / denom2)
+                            + 1j * ((pole.imag - omega_k) / denom1 - (pole.imag + omega_k) / denom2)
+                        )
                         i_col += 1
                         # coefficient for imaginary part of residue
-                        A_matrix[i_row_re, i_col] = (omega_k - pole.imag) / denom1 - (pole.imag + omega_k) / denom2
-                        A_matrix[i_row_im, i_col] = pole.real * (1 / denom2 - 1 / denom1)
+                        A_matrix[k, i_col] = (
+                            (omega_k - pole.imag) / denom1 - (pole.imag + omega_k) / denom2
+                            + 1j * pole.real * (1 / denom2 - 1 / denom1)
+                        )
                         i_col += 1
 
                 # part 2: constant (variable d) and proportional term (variable e)
                 if fit_constant:
-                    A_matrix[i_row_re, i_col] = 1.0
-                    A_matrix[i_row_im, i_col] = 0.0
+                    A_matrix[k, i_col] = 1
                     i_col += 1
                 if fit_proportional:
-                    A_matrix[i_row_re, i_col] = 0.0
-                    A_matrix[i_row_im, i_col] = omega_k
+                    A_matrix[k, i_col] = 1j * omega_k
 
-                b_vector[i_row_re] = resp_re
-                b_vector[i_row_im] = resp_im
+                b_vector[k] = resp
 
             logging.info('A_matrix: condition number = {}'.format(np.linalg.cond(A_matrix)))
 
