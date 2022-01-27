@@ -328,7 +328,7 @@ class VectorFitting:
                             # row 1: add coefficient for real part of residue
                             # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
                             coeff = (-1 * pole.real * (1 / denom1 + 1 / denom2)
-                                 +1j * (pole.imag - omega_k) / denom1 - (pole.imag + omega_k) / denom2)
+                                 +1j * ((pole.imag - omega_k) / denom1 - (pole.imag + omega_k) / denom2))
                             A_sub[k, i_col] = coeff
                             # extra equation to avoid trivial solution:
                             # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
