@@ -201,23 +201,21 @@ class VectorFitting:
             pole_freqs_cmplx = np.linspace(fmin, fmax, n_poles_cmplx)
 
         # init poles array of correct length
-        poles_re = np.zeros(n_poles_real + n_poles_cmplx)
-        poles_im = np.zeros(n_poles_real + n_poles_cmplx)
+        poles = np.zeros(n_poles_real + n_poles_cmplx, dtype=complex)
 
         # add real poles
         for i, f in enumerate(pole_freqs_real):
             omega = 2 * np.pi * f
-            poles_re[i] = -1 * omega
+            poles[i] = - omega
 
         # add complex-conjugate poles (store only positive imaginary parts)
         i_offset = len(pole_freqs_real)
         for i, f in enumerate(pole_freqs_cmplx):
             omega = 2 * np.pi * f
-            poles_re[i_offset + i] = -1 / 100 * omega
-            poles_im[i_offset + i] = omega
+            poles[i_offset + i] = (-0.01 + 1j) * omega
 
         # save initial poles (un-normalize first)
-        self.initial_poles = (poles_re + 1j * poles_im) * norm
+        self.initial_poles = poles * norm
         max_singular = 1
 
         logging.info('### Starting pole relocation process.\n')
@@ -252,12 +250,8 @@ class VectorFitting:
 
             # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
             # (ratio #real/#complex poles might change during iterations)
-            n_cols_unused = 0
-            for pole in poles_im:
-                if pole == 0.0:
-                    n_cols_unused += 1
-                else:
-                    n_cols_unused += 2
+            n_cols_unused = np.sum((poles.imag != 0) + 1)
+
             n_cols_used = n_cols_unused
             n_cols_used += 1
             if fit_constant:
@@ -307,16 +301,14 @@ class VectorFitting:
                     # part 3: second sum of rational functions (variable c_res)
                     
 
-                    for i_pole in range(len(poles_im)):
-                        pole_re = poles_re[i_pole]
-                        pole_im = poles_im[i_pole]
+                    for i_pole in range(len(poles)):
 
-                        if pole_im == 0.0:
+                        pole = poles[i_pole]
+
+                        if pole.imag == 0.0:
                             # coefficient for a real pole: p = p'
-                            denom = (omega_k ** 2 + pole_re ** 2)
-                            coeff_re = -1 * pole_re / denom
-                            coeff_im = -1 * omega_k / denom
-                            coeff = coeff_re + 1j * coeff_im
+                            denom = (omega_k ** 2 + pole.real ** 2)
+                            coeff = - (pole.real + 1j * omega_k) / denom
 
                             # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
                             A_sub[k, i_col] = coeff
@@ -326,22 +318,21 @@ class VectorFitting:
                             A_sub[k, n_cols_unused + i_col] = - coeff * resp
                             # extra equation to avoid trivial solution:
                             # coeff += Re(1 / (s_k - pole)) = coeff_re
-                            A_row_extra[i_col] += coeff_re
+                            A_row_extra[i_col] += coeff.real
                             i_col += 1
                         else:
                             # coefficient for a complex pole of a conjugated pair: p = p' + jp''
-                            denom1 = pole_re ** 2 + (omega_k - pole_im) ** 2
-                            denom2 = pole_re ** 2 + (omega_k + pole_im) ** 2
+                            denom1 = pole.real ** 2 + (omega_k - pole.imag) ** 2
+                            denom2 = pole.real ** 2 + (omega_k + pole.imag) ** 2
 
                             # row 1: add coefficient for real part of residue
                             # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                            coeff_re = -1 * pole_re * (1 / denom1 + 1 / denom2)
-                            coeff_im = (pole_im - omega_k) / denom1 - (pole_im + omega_k) / denom2
-                            coeff = coeff_re +1j * coeff_im
+                            coeff = (-1 * pole.real * (1 / denom1 + 1 / denom2)
+                                 +1j * (pole.imag - omega_k) / denom1 - (pole.imag + omega_k) / denom2)
                             A_sub[k, i_col] = coeff
                             # extra equation to avoid trivial solution:
                             # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
-                            A_row_extra[i_col] += coeff_re
+                            A_row_extra[i_col] += coeff.real
                             # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
                             A_sub[k, n_cols_unused + i_col] = - coeff * resp
                             i_col += 1
@@ -349,13 +340,13 @@ class VectorFitting:
                             # row 2: add coefficient for imaginary part of residue
                             # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
                             #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
-                            coeff_re = (omega_k - pole_im) / denom1 - (omega_k + pole_im) / denom2
-                            coeff_im = pole_re * (1 / denom2 - 1 / denom1)
-                            coeff = coeff_re + 1j * coeff_im
+                            coeff = ((omega_k - pole.imag) / denom1 - (omega_k + pole.imag) / denom2
+                                + 1j * pole.real * (1 / denom2 - 1 / denom1)
+                            )
                             A_sub[k, i_col] = coeff
                             # extra equation to avoid trivial solution:
                             # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
-                            A_row_extra[i_col] += coeff_re
+                            A_row_extra[i_col] += coeff.real
                             # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
                             A_sub[k, n_cols_unused + i_col] = - coeff * resp
                             i_col += 1
@@ -424,10 +415,10 @@ class VectorFitting:
             # build test matrix H, which will hold the new poles as eigenvalues
             H = np.zeros((len(c_res), len(c_res)))
             i = 0
-            for i_pole in range(len(poles_im)):
+            for i_pole in range(len(poles)):
                 # fill diagonal with previous poles
-                pole_re = poles_re[i_pole]
-                pole_im = poles_im[i_pole]
+                pole_re = poles.real[i_pole]
+                pole_im = poles.imag[i_pole]
                 if pole_im == 0.0:
                     # one row for a real pole
                     H[i, i] = pole_re
@@ -444,18 +435,17 @@ class VectorFitting:
             poles_new = np.linalg.eigvals(H)
 
             # replace poles for next iteration
-            poles_re = []
-            poles_im = []
+            poles_lst = []
+
             for k, pole in enumerate(poles_new):
-                pole_re = np.real(pole)
-                pole_im = np.imag(pole)
-                if pole_re > 0.0:
-                    # flip real part of unstable poles (real part needs to be negative for stability)
-                    pole_re = -1 * pole_re
-                if pole_im >= 0.0:
+                if pole.imag >= 0.0:
                     # complex poles need to come in complex conjugate pairs; append only the positive part
-                    poles_re.append(pole_re)
-                    poles_im.append(pole_im)
+                    poles_lst.append(pole)
+
+            poles = np.array(poles_lst)
+            # flip real part of unstable poles (real part needs to be negative for stability)
+            poles.real = - np.abs(poles.real)
+            #print(np.allclose(poles, poles2))
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
@@ -503,8 +493,6 @@ class VectorFitting:
                 iterations = 0
 
         # ITERATIONS DONE
-        poles = np.array(poles_re) + 1j * np.array(poles_im)
-
         logging.info('Initial poles before relocation:')
         logging.info(self.initial_poles)
 
@@ -523,12 +511,8 @@ class VectorFitting:
             # row will be appended to submatrix A_sub of complete coeff matrix A_matrix
             # 2 rows per pole in result vector (1st for real part, 2nd for imaginary part)
             # --> 2 columns per pole in coeff matrix
-            n_cols = 0
-            for pole_im in poles_im:
-                if pole_im == 0.0:
-                    n_cols += 1
-                else:
-                    n_cols += 2
+            n_cols = np.sum((poles.imag != 0) + 1)
+
             if fit_constant:
                 n_cols += 1
             if fit_proportional:
@@ -546,26 +530,23 @@ class VectorFitting:
 
                 # add coefficients for a pair of complex conjugate poles
                 # part 1: first sum of rational functions (residue variable c)
-                for i_pole in range(len(poles_im)):
-                    pole_re = poles_re[i_pole]
-                    pole_im = poles_im[i_pole]
-
+                for pole in poles:
                     # separate and stack real and imaginary part to preserve conjugacy of the pole pair
-                    if pole_im == 0.0:
-                        denom = pole_re ** 2 + omega_k ** 2
-                        A_matrix[i_row_re, i_col] = -1 * pole_re / denom
+                    if pole.imag == 0.0:
+                        denom = pole.real ** 2 + omega_k ** 2
+                        A_matrix[i_row_re, i_col] = -1 * pole.real / denom
                         A_matrix[i_row_im, i_col] = -1 * omega_k / denom
                         i_col += 1
                     else:
                         # coefficient for real part of residue
-                        denom1 = pole_re ** 2 + (omega_k - pole_im) ** 2
-                        denom2 = pole_re ** 2 + (omega_k + pole_im) ** 2
-                        A_matrix[i_row_re, i_col] = -1 * pole_re * (1 / denom1 + 1 / denom2)
-                        A_matrix[i_row_im, i_col] = (pole_im - omega_k) / denom1 - (pole_im + omega_k) / denom2
+                        denom1 = pole.real ** 2 + (omega_k - pole.imag) ** 2
+                        denom2 = pole.real ** 2 + (omega_k + pole.imag) ** 2
+                        A_matrix[i_row_re, i_col] = -1 * pole.real * (1 / denom1 + 1 / denom2)
+                        A_matrix[i_row_im, i_col] = (pole.imag - omega_k) / denom1 - (pole.imag + omega_k) / denom2
                         i_col += 1
                         # coefficient for imaginary part of residue
-                        A_matrix[i_row_re, i_col] = (omega_k - pole_im) / denom1 - (pole_im + omega_k) / denom2
-                        A_matrix[i_row_im, i_col] = pole_re * (1 / denom2 - 1 / denom1)
+                        A_matrix[i_row_re, i_col] = (omega_k - pole.imag) / denom1 - (pole.imag + omega_k) / denom2
+                        A_matrix[i_row_im, i_col] = pole.real * (1 / denom2 - 1 / denom1)
                         i_col += 1
 
                 # part 2: constant (variable d) and proportional term (variable e)
@@ -587,9 +568,7 @@ class VectorFitting:
 
             i = 0
             residues_response = []
-            for i_pole in range(len(poles_im)):
-                pole_im = poles_im[i_pole]
-
+            for pole_im in poles.imag:
                 if pole_im == 0.0:
                     residues_response.append(x[i] + 0j)
                     i += 1
