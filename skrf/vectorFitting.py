@@ -531,7 +531,7 @@ class VectorFitting:
                     # separate and stack real and imaginary part to preserve conjugacy of the pole pair
                     if pole.imag == 0.0:
                         denom = pole.real ** 2 + omega_k ** 2
-                        A_matrix[k, i_col] = - (pole.real + omega_k) / denom
+                        A_matrix[k, i_col] = - (pole.real + 1j * omega_k) / denom
                         i_col += 1
                     else:
                         # coefficient for real part of residue
