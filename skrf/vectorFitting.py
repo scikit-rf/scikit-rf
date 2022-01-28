@@ -295,81 +295,77 @@ class VectorFitting:
                 # or anti-proportional weights with weight_response = 1 / np.linalg.norm(freq_response)
                 weight_response = np.linalg.norm(freq_response)
 
-                for k, f_sample in enumerate(freqs_norm):
-                    # this loop is performance critical, as it gets repeated many times (N_responses * N_frequencies)
-                    omega_k = 2 * np.pi * f_sample
-                    resp = freq_response[k]
-                    i_col = 0
+                omega = 2 * np.pi * freqs_norm
 
-                    # add coefficients for a pair of complex conjugate poles
-                    # part 1: first sum of rational functions (residue variable c)
-                    # merged with
-                    # part 3: second sum of rational functions (variable c_res)
+                # add coefficients for a pair of complex conjugate poles
+                # part 1: first sum of rational functions (residue variable c)
+                # merged with
+                # part 3: second sum of rational functions (variable c_res)
+                real_mask = poles.imag == 0
+                poles_real = np.ma.masked_array(poles, ~real_mask).compressed()
 
-                    real_mask = poles.imag == 0
-                    poles_real = np.ma.masked_array(poles, ~real_mask).compressed()
+                denom = (omega[:, None] ** 2 + poles_real ** 2)
+                coeff = - (poles_real + 1j * omega[:, None]) / denom
 
-                    denom = (omega_k ** 2 + poles_real ** 2)
-                    coeff = - (poles_real + 1j * omega_k) / denom
+                # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
+                A_sub_real[:, :, 0] = coeff
 
-                    # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
-                    A_sub_real[k, :, 0] = coeff
+                # part 3: coeff = -1 * H(s_k) / (s_k - pole)
+                # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
+                # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
+                A_sub_real[:, :, 1] = - coeff * freq_response[:, None]
 
-                    # part 3: coeff = -1 * H(s_k) / (s_k - pole)
-                    # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
-                    # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
-                    A_sub_real[k, :, 1] = - coeff * resp
+                # extra equation to avoid trivial solution:
+                # coeff += Re(1 / (s_k - pole)) = coeff_re
+                A_row_extra_real = np.sum(coeff.real, axis=0)
 
-                    # extra equation to avoid trivial solution:
-                    # coeff += Re(1 / (s_k - pole)) = coeff_re
-                    A_row_extra_real += coeff.real
 
-                    poles_cplx = np.ma.masked_array(poles, real_mask).compressed()
+                poles_cplx = np.ma.masked_array(poles, real_mask).compressed()
 
-                    # coefficient for a complex pole of a conjugated pair: p = p' + jp''
-                    denom1 = poles_cplx.real ** 2 + (omega_k - poles_cplx.imag) ** 2
-                    denom2 = poles_cplx.real ** 2 + (omega_k + poles_cplx.imag) ** 2
+                # coefficient for a complex pole of a conjugated pair: p = p' + jp''
+                denom1 = poles_cplx.real ** 2 + (omega[:, None] - poles_cplx.imag) ** 2
+                denom2 = poles_cplx.real ** 2 + (omega[:, None] + poles_cplx.imag) ** 2
 
-                    # row 1: add coefficient for real part of residue
-                    # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                    coeff = (-1 * poles_cplx.real * (1 / denom1 + 1 / denom2)
-                                 +1j * ((poles_cplx.imag - omega_k) / denom1 - (poles_cplx.imag + omega_k) / denom2))
-                    A_sub_cplx[k, :, 0, 0] = coeff
+                # row 1: add coefficient for real part of residue
+                # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
+                coeff = (-1 * poles_cplx.real * (1 / denom1 + 1 / denom2)
+                                +1j * ((poles_cplx.imag - omega[:, None]) / denom1 - (poles_cplx.imag + omega[:, None]) / denom2))
+                A_sub_cplx[:, :, 0, 0] = coeff
 
-                    # extra equation to avoid trivial solution:
-                    # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
+                # extra equation to avoid trivial solution:
+                # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
 
-                    A_row_extra_cplx[:, 0] += coeff.real
-                    # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                    A_sub_cplx[k, :, 1, 0] = - coeff * resp
+                A_row_extra_cplx[:, 0] = np.sum(coeff.real, axis=0)
+                # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
+                A_sub_cplx[:, :, 1, 0] = - coeff * freq_response[:, None]
 
-                    # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
-                    #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
-                    coeff = ((omega_k - poles_cplx.imag) / denom1 - (omega_k + poles_cplx.imag) / denom2
-                                + 1j * poles_cplx.real * (1 / denom2 - 1 / denom1)
-                            )
-                    A_sub_cplx[k, :, 0, 1] = coeff
+                # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
+                #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
+                coeff = ((omega[:, None] - poles_cplx.imag) / denom1 - (omega[:, None] + poles_cplx.imag) / denom2
+                            + 1j * poles_cplx.real * (1 / denom2 - 1 / denom1)
+                        )
+                A_sub_cplx[:, :, 0, 1] = coeff
 
-                    # extra equation to avoid trivial solution:
-                    # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
+                # extra equation to avoid trivial solution:
+                # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
 
-                    A_row_extra_cplx[:, 1] += coeff.real
-                    # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                    A_sub_cplx[k, :, 1, 1] = -coeff * resp
+                A_row_extra_cplx[:, 1] = np.sum(coeff.real, axis=0)
+                # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
+                A_sub_cplx[:, :, 1, 1] = -coeff * freq_response[:, None]
 
-                    # part 4: constant (variable d_res)
-                    # coeff = -1 * H(s_k)
-                    A_sub_dres[k] = -resp
+                # part 4: constant (variable d_res)
+                # coeff = -1 * H(s_k)
+                A_sub_dres[:] = -freq_response
 
-                    # part 2: constant (variable d) and proportional term (variable e)
-                    if fit_constant:
-                        # coeff = 1 + j0
-                        A_sub_const[k] = 1
-                        
-                    if fit_proportional:
-                        # coeff = s_k = j omega_k
-                        A_sub_prop[k] = 1j * omega_k
-
+                # part 2: constant (variable d) and proportional term (variable e)
+                if fit_constant:
+                    # coeff = 1 + j0
+                    A_sub_const[:] = 1
+                    
+                if fit_proportional:
+                    # coeff = s_k = j omega_k
+                    A_sub_prop[:] = 1j * omega    
+                
                 col_real = 0
                 col_cplx = 0
                 offset = 0
@@ -410,11 +406,6 @@ class VectorFitting:
 
                 # only R22 is required to solve for c_res and d_res
                 R22 = R[n_cols_unused:, n_cols_unused:]
-
-
-                if iterations == 99:
-                    print(A_row_extra, A_row_extra.shape)
-                    raise NotImplementedError
 
                 # similarly, only right half of Q is required (not used here, because RHS is zero)
                 # Q2 = Q[:, n_cols_unused:]
