@@ -306,7 +306,8 @@ class VectorFitting:
                     # merged with
                     # part 3: second sum of rational functions (variable c_res)
 
-                    poles_real = poles[:n_poles_real_it].real
+                    real_mask = poles.imag == 0
+                    poles_real = np.ma.masked_array(poles, ~real_mask).compressed()
 
                     denom = (omega_k ** 2 + poles_real ** 2)
                     coeff = - (poles_real + 1j * omega_k) / denom
@@ -323,8 +324,7 @@ class VectorFitting:
                     # coeff += Re(1 / (s_k - pole)) = coeff_re
                     A_row_extra_real += coeff.real
 
-
-                    poles_cplx = poles[n_poles_real_it:]
+                    poles_cplx = np.ma.masked_array(poles, real_mask).compressed()
 
                     # coefficient for a complex pole of a conjugated pair: p = p' + jp''
                     denom1 = poles_cplx.real ** 2 + (omega_k - poles_cplx.imag) ** 2
