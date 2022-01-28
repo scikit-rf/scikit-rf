@@ -276,7 +276,7 @@ class VectorFitting:
                 # A_sub which will be reduced first (QR decomposition) and then filled into the main
                 # coefficient matrix A
 
-                A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
+                A_sub = np.zeros((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
                 A_sub_real = np.empty((len(freqs_norm), n_poles_real_it, 2), dtype=complex)
                 A_sub_cplx = np.empty((len(freqs_norm), n_poles_cplx_it, 2, 2), dtype=complex)
                 A_sub_dres = np.empty((len(freqs_norm)), dtype=complex)
@@ -370,11 +370,28 @@ class VectorFitting:
                         # coeff = s_k = j omega_k
                         A_sub_prop[k] = 1j * omega_k
 
-                for i, offset in enumerate([0, n_cols_unused]):
-                    A_sub[:, offset: offset + n_poles_real_it] = A_sub_real[:,:,i]
-                    A_sub[:, offset + n_poles_real_it: offset + n_poles_real_it + n_poles_cplx_it * 2] = A_sub_cplx[:,:,i,:].reshape(len(freqs_norm), -1)
+                col_real = 0
+                col_cplx = 0
+                offset = 0
 
-                A_row_extra = np.concatenate((A_row_extra_real, A_row_extra_cplx.flatten(), [len(freqs_norm)]))
+                A_row_extra = np.zeros(n_cols_used)
+                for i in range(len(poles)):
+                    if real_mask[i]:
+                        A_sub[:, offset] = A_sub_real[:, col_real, 0]
+                        A_sub[:, offset + n_cols_unused] = A_sub_real[:, col_real, 1]
+                        A_row_extra[offset] = A_row_extra_real[col_real]
+                        col_real += 1
+                        offset += 1
+                    if ~real_mask[i]:
+                        A_sub[:, offset] = A_sub_cplx[:, col_cplx, 0, 0]
+                        A_sub[:, offset + n_cols_unused] = A_sub_cplx[:, col_cplx, 1, 0]
+                        A_sub[:, offset + 1] = A_sub_cplx[:, col_cplx, 0, 1]
+                        A_sub[:, offset + n_cols_unused + 1] = A_sub_cplx[:, col_cplx, 1, 1]
+                        A_row_extra[offset: offset+2] = A_row_extra_cplx[col_cplx].flatten()
+                        col_cplx += 1
+                        offset += 2
+
+                A_row_extra[-1] = len(freqs_norm)
 
                 A_sub[:, -1] = A_sub_dres
                 offset = n_cols_unused - 1
@@ -393,6 +410,11 @@ class VectorFitting:
 
                 # only R22 is required to solve for c_res and d_res
                 R22 = R[n_cols_unused:, n_cols_unused:]
+
+
+                if iterations == 99:
+                    print(A_row_extra, A_row_extra.shape)
+                    raise NotImplementedError
 
                 # similarly, only right half of Q is required (not used here, because RHS is zero)
                 # Q2 = Q[:, n_cols_unused:]
@@ -463,6 +485,7 @@ class VectorFitting:
             # flip real part of unstable poles (real part needs to be negative for stability)
             poles.real = - np.abs(poles.real)
             #print(np.allclose(poles, poles2))
+
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
             new_max_singular = np.amax(singular_vals)
