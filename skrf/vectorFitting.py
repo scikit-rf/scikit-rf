@@ -286,7 +286,9 @@ class VectorFitting:
                 #if fit_proportional:
                 A_sub_prop = np.empty((len(freqs_norm)), dtype=complex)
                 
-                A_row_extra = np.zeros(n_cols_used)
+                A_row_extra_real = np.zeros(A_sub_real.shape[1])
+                A_row_extra_cplx = np.zeros((A_sub_cplx.shape[1], 2))
+
 
                 # responses will be weighted according to their norm;
                 # alternative: equal weights with weight_response = 1.0
@@ -304,75 +306,66 @@ class VectorFitting:
                     # merged with
                     # part 3: second sum of rational functions (variable c_res)
 
-                    #denom = (omega_k ** 2 + poles.real ** 2)
-                    #coeff = - (poles.real + 1j * omega_k) / denom
+                    poles_real = poles[:n_poles_real_it].real
 
-                    i_col2 = 0          
+                    denom = (omega_k ** 2 + poles_real ** 2)
+                    coeff = - (poles_real + 1j * omega_k) / denom
 
-                    for i_pole in range(len(poles)):
-                    
-                        pole = poles[i_pole]
+                    # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
+                    A_sub_real[k, :, 0] = coeff
 
-                        if pole.imag == 0.0:
-                            # coefficient for a real pole: p = p'
-                            denom = (omega_k ** 2 + pole.real ** 2)
-                            coeff = - (pole.real + 1j * omega_k) / denom
+                    # part 3: coeff = -1 * H(s_k) / (s_k - pole)
+                    # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
+                    # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
+                    A_sub_real[k, :, 1] = - coeff * resp
 
-                            # part 1: coeff = 1 / (s_k - p') = coeff_re + j coeff_im
-                            A_sub_real[k, i_col, 0] = coeff
-                            # part 3: coeff = -1 * H(s_k) / (s_k - pole)
-                            # Re{coeff} = -1 * coeff_re * resp_re + coeff_im * resp_im
-                            # Im{coeff} = -1 * coeff_re * resp_im - coeff_im * resp_re
-                            A_sub_real[k, i_col, 1] = - coeff * resp
-                            # extra equation to avoid trivial solution:
-                            # coeff += Re(1 / (s_k - pole)) = coeff_re
-                            A_row_extra[i_col] += coeff.real
-                            i_col += 1
-                        else:
-                            
-                    
-                            # coefficient for a complex pole of a conjugated pair: p = p' + jp''
-                            denom1 = pole.real ** 2 + (omega_k - pole.imag) ** 2
-                            denom2 = pole.real ** 2 + (omega_k + pole.imag) ** 2
+                    # extra equation to avoid trivial solution:
+                    # coeff += Re(1 / (s_k - pole)) = coeff_re
+                    A_row_extra_real += coeff.real
 
-                            # row 1: add coefficient for real part of residue
-                            # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
-                            coeff = (-1 * pole.real * (1 / denom1 + 1 / denom2)
-                                 +1j * ((pole.imag - omega_k) / denom1 - (pole.imag + omega_k) / denom2))
-                            A_sub_cplx[k, i_col2, 0, 0] = coeff
-                            # extra equation to avoid trivial solution:
-                            # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
-                            A_row_extra[i_col] += coeff.real
-                            # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
-                            A_sub_cplx[k, i_col2, 1, 0] = - coeff * resp
-                            i_col += 1
 
-                            # row 2: add coefficient for imaginary part of residue
-                            # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
-                            #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
-                            coeff = ((omega_k - pole.imag) / denom1 - (omega_k + pole.imag) / denom2
-                                + 1j * pole.real * (1 / denom2 - 1 / denom1)
+                    poles_cplx = poles[n_poles_real_it:]
+
+                    # coefficient for a complex pole of a conjugated pair: p = p' + jp''
+                    denom1 = poles_cplx.real ** 2 + (omega_k - poles_cplx.imag) ** 2
+                    denom2 = poles_cplx.real ** 2 + (omega_k + poles_cplx.imag) ** 2
+
+                    # row 1: add coefficient for real part of residue
+                    # part 1: coeff = 1 / (s_k - pole) + 1 / (s_k - conj(pole))
+                    coeff = (-1 * poles_cplx.real * (1 / denom1 + 1 / denom2)
+                                 +1j * ((poles_cplx.imag - omega_k) / denom1 - (poles_cplx.imag + omega_k) / denom2))
+                    A_sub_cplx[k, :, 0, 0] = coeff
+
+                    # extra equation to avoid trivial solution:
+                    # coeff += Re{1 / (s_k - pole) + 1 / (s_k - conj(pole))}
+
+                    A_row_extra_cplx[:, 0] += coeff.real
+                    # part 3: coeff = -1 * H(s_k) * [1 / (s_k - pole) + 1 / (s_k - conj(pole))]
+                    A_sub_cplx[k, :, 1, 0] = - coeff * resp
+
+                    # part 1: coeff = 1j / (s_k - pole) - 1j / (s_k - conj(pole))
+                    #               = (p'' - omega + j p') * (1 / denom2 - 1 / denom1)
+                    coeff = ((omega_k - poles_cplx.imag) / denom1 - (omega_k + poles_cplx.imag) / denom2
+                                + 1j * poles_cplx.real * (1 / denom2 - 1 / denom1)
                             )
-                            A_sub_cplx[k, i_col2, 0, 1] = coeff
-                            # extra equation to avoid trivial solution:
-                            # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
-                            A_row_extra[i_col] += coeff.real
-                            # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
-                            A_sub_cplx[k, i_col2, 1, 1] = -coeff * resp
-                            i_col += 1
-                            i_col2 += 1
+                    A_sub_cplx[k, :, 0, 1] = coeff
+
+                    # extra equation to avoid trivial solution:
+                    # coeff += Re(1j / (s_k - pole) - 1j / (s_k - conj(pole)))
+
+                    A_row_extra_cplx[:, 1] += coeff.real
+                    # part 3: coeff = -1 * H(s_k) * [1j / (s_k - pole) - 1j / (s_k - conj(pole))]
+                    A_sub_cplx[k, :, 1, 1] = -coeff * resp
 
                     # part 4: constant (variable d_res)
                     # coeff = -1 * H(s_k)
                     A_sub_dres[k] = -resp
-                    # extra equation to avoid trivial solution: coeff += 1
-                    A_row_extra[i_col] += 1
 
                     # part 2: constant (variable d) and proportional term (variable e)
                     if fit_constant:
                         # coeff = 1 + j0
                         A_sub_const[k] = 1
-                        i_col += 1
+                        
                     if fit_proportional:
                         # coeff = s_k = j omega_k
                         A_sub_prop[k] = 1j * omega_k
@@ -381,6 +374,7 @@ class VectorFitting:
                     A_sub[:, offset: offset + n_poles_real_it] = A_sub_real[:,:,i]
                     A_sub[:, offset + n_poles_real_it: offset + n_poles_real_it + n_poles_cplx_it * 2] = A_sub_cplx[:,:,i,:].reshape(len(freqs_norm), -1)
 
+                A_row_extra = np.concatenate((A_row_extra_real, A_row_extra_cplx.flatten(), [len(freqs_norm)]))
 
                 A_sub[:, -1] = A_sub_dres
                 offset = n_cols_unused - 1
