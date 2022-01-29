@@ -134,7 +134,6 @@ class VectorFitting:
                       'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         self.residues = value
 
-    #@profile
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
@@ -276,7 +275,7 @@ class VectorFitting:
                 # A_sub which will be reduced first (QR decomposition) and then filled into the main
                 # coefficient matrix A
 
-                A_sub = np.zeros((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
+                A_sub = np.empty((len(freqs_norm), n_cols_unused + n_cols_used), dtype=complex)
                 A_sub_real = np.empty((len(freqs_norm), n_poles_real_it, 2), dtype=complex)
                 A_sub_cplx = np.empty((len(freqs_norm), n_poles_cplx_it, 2, 2), dtype=complex)
                 A_sub_dres = np.empty((len(freqs_norm)), dtype=complex)
@@ -286,9 +285,7 @@ class VectorFitting:
                 #if fit_proportional:
                 A_sub_prop = np.empty((len(freqs_norm)), dtype=complex)
                 
-                A_row_extra_real = np.zeros(A_sub_real.shape[1])
-                A_row_extra_cplx = np.zeros((A_sub_cplx.shape[1], 2))
-
+                A_row_extra_cplx = np.empty((A_sub_cplx.shape[1], 2))
 
                 # responses will be weighted according to their norm;
                 # alternative: equal weights with weight_response = 1.0
@@ -302,7 +299,10 @@ class VectorFitting:
                 # merged with
                 # part 3: second sum of rational functions (variable c_res)
                 real_mask = poles.imag == 0
-                poles_real = np.ma.masked_array(poles, ~real_mask).compressed()
+                poles_real_idx = np.nonzero(real_mask)
+                poles_real = poles[poles_real_idx]
+
+                A_sub_real_idx = poles_real_idx[0] * 2
 
                 denom = (omega[:, None] ** 2 + poles_real ** 2)
                 coeff = - (poles_real + 1j * omega[:, None]) / denom
@@ -319,8 +319,9 @@ class VectorFitting:
                 # coeff += Re(1 / (s_k - pole)) = coeff_re
                 A_row_extra_real = np.sum(coeff.real, axis=0)
 
-
-                poles_cplx = np.ma.masked_array(poles, real_mask).compressed()
+                poles_cplx_idx = np.nonzero(~real_mask)
+                poles_cplx = poles[poles_cplx_idx]
+                A_sub_real_idx = np.concatenate((2 * poles_cplx_idx[0], 2 * poles_cplx_idx[0] + 1))
 
                 # coefficient for a complex pole of a conjugated pair: p = p' + jp''
                 denom1 = poles_cplx.real ** 2 + (omega[:, None] - poles_cplx.imag) ** 2
