@@ -134,6 +134,19 @@ class VectorFitting:
                       'attribute `residues` instead.', DeprecationWarning, stacklevel=2)
         self.residues = value
 
+    def _get_real_pole_mask(self, poles: np.ndarray) -> np.ndarray:
+        """
+        Returns a mask need for addressing the A matrices
+        """
+        A_sub_real_mask = []
+        for rm in poles.imag == 0:
+            if rm:
+                A_sub_real_mask += [True]
+            else:
+                A_sub_real_mask += [False, False]
+        
+        return np.array(A_sub_real_mask)
+
     def vector_fit(self, n_poles_real: int = 2, n_poles_cmplx: int = 2, init_pole_spacing: str = 'lin',
                    parameter_type: str = 's', fit_constant: bool = True, fit_proportional: bool = False) -> None:
         """
@@ -251,8 +264,6 @@ class VectorFitting:
 
             # count number of rows and columns in final coefficient matrix to solve for (c_res, d_res)
             # (ratio #real/#complex poles might change during iterations)
-            n_poles_real_it = np.sum(poles.imag == 0)
-            n_poles_cplx_it = np.sum(poles.imag != 0)
 
             n_cols_unused = np.sum((poles.imag != 0) + 1)
 
@@ -285,25 +296,19 @@ class VectorFitting:
 
                 omega = 2 * np.pi * freqs_norm
 
+                # Split up real and complex poles and store the correspondend column from A_sub
+                real_mask = poles.imag == 0
+                poles_real = poles[np.nonzero(real_mask)]
+                poles_cplx = poles[np.nonzero(~real_mask)]
+
+                A_sub_real_idx = np.nonzero(self._get_real_pole_mask(poles))[0]
+                A_sub_cplx_idx = np.nonzero(~self._get_real_pole_mask(poles))[0][::2]
+
+
                 # add coefficients for a pair of complex conjugate poles
                 # part 1: first sum of rational functions (residue variable c)
                 # merged with
                 # part 3: second sum of rational functions (variable c_res)
-                real_mask = poles.imag == 0
-                poles_real_idx = np.nonzero(real_mask)
-                poles_real = poles[poles_real_idx]
-
-                A_sub_real_mask = []
-                for rm in real_mask:
-                    if rm:
-                        A_sub_real_mask += [True]
-                    else:
-                        A_sub_real_mask += [False, False]
-                
-                A_sub_real_mask = np.array(A_sub_real_mask)
-                
-                A_sub_real_idx = np.nonzero(A_sub_real_mask)[0]
-
                 denom = (omega[:, None] ** 2 + poles_real ** 2)
                 coeff = - (poles_real + 1j * omega[:, None]) / denom
 
@@ -319,9 +324,6 @@ class VectorFitting:
                 # coeff += Re(1 / (s_k - pole)) = coeff_re
                 A_row_extra[A_sub_real_idx] = np.sum(coeff.real, axis=0)
 
-                poles_cplx_idx = np.nonzero(~real_mask)
-                poles_cplx = poles[poles_cplx_idx]
-                A_sub_cplx_idx = np.nonzero(~A_sub_real_mask)[0][::2]
 
                 # coefficient for a complex pole of a conjugated pair: p = p' + jp''
                 denom1 = poles_cplx.real ** 2 + (omega[:, None] - poles_cplx.imag) ** 2
@@ -450,7 +452,6 @@ class VectorFitting:
             poles = np.array(poles_lst)
             # flip real part of unstable poles (real part needs to be negative for stability)
             poles.real = - np.abs(poles.real)
-            #print(np.allclose(poles, poles2))
 
 
             # calculate relative changes in the singular values; stop iteration loop once poles have converged
