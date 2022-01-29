@@ -1,4 +1,3 @@
-from line_profiler import line_profiler
 import numpy as np
 import os
 
